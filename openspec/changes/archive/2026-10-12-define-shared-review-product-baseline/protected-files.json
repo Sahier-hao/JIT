@@ -1,0 +1,712 @@
+{
+  "date": "2026-10-12",
+  "scope": "read-only inputs and pre-existing archive evidence",
+  "files": [
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\产品需求文档（模板） .md",
+      "sha256": "a5c0d4a68f35892a2841024e109a6c171183ac960fe9924e5f4a6e56dea34854"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\产品设计文档（模板）.md",
+      "sha256": "e6a7162a397026a9e5f58c5011f5dbda0364f264230ac0eef414ca8f418b3c00"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\团队分工.md",
+      "sha256": "f16c3876d3794488f7d5421766f2c1eba8e4f247b720cee91b47b8f327fe82c3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\课程资料\\2026-2027-1 软件开发与测试综合实训 项目要求.md",
+      "sha256": "d1d21ca1ffa168567e6dda9fbea6edcfd519033e9fc7a9852cf7cff09252d9df"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\config.yaml",
+      "sha256": "f0082e9c22e8ce1d611c0f3b4d4915ce445e7ff2553cda6b713b6c25f390984c"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\specs\\commit-risk-review\\spec.md",
+      "sha256": "3ea8ba7d866032322bf6b870a7c7671f3c409d4cf11b7c336b770235ba0f1acb"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\specs\\public-data-baseline\\spec.md",
+      "sha256": "276c4db8670b703ba31fe3be79b7cf73ca8fe6df77caa7221905a8cb51711730"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\DATA.md",
+      "sha256": "d145228c16ea92e468a82f156247159458493fa8e6764f02583d9bda1389f49a"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\PROTOCOL.md",
+      "sha256": "6d83b0635107025ee109da194fedf53e434362e1b8a810cd9dde120f01911fb4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\api.py",
+      "sha256": "c6cae33c82623c3227feb08fa8937e0de9bf5f3679dc796aa0e3d709930ebdb5"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\config.py",
+      "sha256": "e862f46857d20d7efbf5919a3bb171784be5f557e3d27ec40078164f4edb837d"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\data.py",
+      "sha256": "d8324b015a1796fdc8b25d43f68499a27a5db393a424ad2b57f6d8c847ce34fb"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\model.py",
+      "sha256": "c409f3e4976b3b316109681c7a5c65b9cc77c066092c20c94c9e081548a43973"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\metrics.py",
+      "sha256": "ad4d4dee90b3cd05048aa75566e00b93043c400088f34bee5ee622e43b337f29"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\artifacts.py",
+      "sha256": "bd1884979d807a1f8a1fe6a2b1b98acdbd3e10469cb7574258d90876e0c63d51"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\frontend\\src\\App.tsx",
+      "sha256": "74f71526009a7b24258f4ec758841f3e0eb1f2689478df075fdae68a469fcbd3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\frontend\\src\\historicalContract.ts",
+      "sha256": "7082684a205be75026d2c1da566f0b6b55983e41a8e33de9ef109255b240e4f3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\frontend\\src\\shortlist.ts",
+      "sha256": "cb8139ba42d4624d526f9acae875772150c0c0e6b86f4bc2e5f7d7861c120ce8"
+    },
+    {
+      "path": "D:\\code\\mycode\\jit-defect-prediction\\docs\\需求与设计\\产品需求文档.md",
+      "sha256": "b89a9c3787222310680b84eabba174554e8819bc377ea4b09e10127d1b01d66b"
+    },
+    {
+      "path": "D:\\code\\mycode\\jit-defect-prediction\\docs\\需求与设计\\产品设计文档.md",
+      "sha256": "f375eee2b2e9bb5b2b58abe6748bb7b68d7eda7931b561e38299e079d5abec6d"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\archived-evidence-integrity.json",
+      "sha256": "7f51b12a8fe36134584be14be40068c706b4c0c29070bee493a6c094d394b885"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\browser-results.json",
+      "sha256": "f000fb1e250941287eec624a20e139a2c877fc6b43b3aa4aeb769fa1946bab9f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\desktop-1280-real-chain.json",
+      "sha256": "0031c33c94f29452599d5636290fc576482a3d28a1642384ff6bb8391a7e6165"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\desktop-1440-real-chain.json",
+      "sha256": "b606de232867c838ac1dd43fd2ec6d131454a434ebdf126d2c5683c7bc38c2c2"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\fixtures\\runtime-context-fixture-batch.json",
+      "sha256": "c5781b47b192667db9b96bac5128010bb8e98b021d505ec7f842b6df0cb9f9b4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\freeze-check.json",
+      "sha256": "4ca1104f8866c5d9e156d2170b0da22a6359e265fbe69c2470228db60d9b9f57"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\freeze-report.json",
+      "sha256": "c3d7dda5e3e2502b192f6487ba2c760f409d74e88de4c7b5f622cf5c06833249"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\http-lifecycle.json",
+      "sha256": "02fb19c49db27fffaf4e008043f10329c003078a2731729bff0a05a89f70138e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\reproduction-comparison.json",
+      "sha256": "61afca8d0256d6929316c76817359e79f4caaf00e80a53ba657ba2b4d34857d6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-detail.png",
+      "sha256": "8ac653410419cacec8f214f007daac6424a50b2e60d9406379ba1f21223f72d8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-keyboard-focus.png",
+      "sha256": "c3387e338da17360f41df380fc074a057a6b00677f46f85150cca3989d78ea83"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-load-error.png",
+      "sha256": "a856b146be76fd7acfa5fd522f39c26a3a0f8d78691fba9621d04ae6ca655ce1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-real-baseline.png",
+      "sha256": "68530cd9f200c1d40278b6a3004124135b35a58d484fc13dc3b521d1540cc7a6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-real-detail.png",
+      "sha256": "b758a921ca44a58456d29550373c8adb346cad7640e61611801584aa8e1ead46"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-real-keyboard.png",
+      "sha256": "6c5f2bde371f5bf24db43a0e436429b21f3ba70c30e678de2dd29d0050caffc3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-real-list.png",
+      "sha256": "a46467ac21eef41a7c22a0a838a6549314e6cb4fec71a3e6c7fc2711ed8345b1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-real-service-error.png",
+      "sha256": "8eb1268c536012c568feda585b4fc133ee7c1911f35fd1b53a36b4e7f1d3f4b7"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-real-shortlist.png",
+      "sha256": "2594e3aa2959b99cbd74cee459028d61839d4f759897a0f2786f165b9c7b6c41"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-save-error.png",
+      "sha256": "ff68bfa22c066c5b95a9a2b42ffb11a321ad2ae32ac32119c157c577af50b9a2"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-shortlist.png",
+      "sha256": "e201df3173c1749687291719dd44acb34941526d44a9fe66e85ef79bdd4914f4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1280-workbench.png",
+      "sha256": "f42ceeffb7bcd93ce90d984224d814f18ca045a28b2ee2c5786333c6d80a5515"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-detail.png",
+      "sha256": "1a01eff2f4f40d203c60e301b1a1eb60b4e76d7186d19024898e494b783d20a8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-keyboard-focus.png",
+      "sha256": "f3c71a10d10d8ba1fa1458a386eef7ae467d36d610e1a78e47df6b1a050f8d6f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-load-error.png",
+      "sha256": "4208e83cb0bd9a8043f481984ed935a7c41d1cf6abfc5ca45e7ed2fe034fcbf4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-real-baseline.png",
+      "sha256": "8a6c288d6b6f70b4e4b5d330481c2463898e9164e421ee6ecf51e97142a13225"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-real-detail.png",
+      "sha256": "af198778364efd70c03280bb04b447b97fbbf633afec8996137629297914707e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-real-keyboard.png",
+      "sha256": "20b1826518d3a9cacbd657e014d68cd24a2f2e603e84f32bb743273edfced357"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-real-list.png",
+      "sha256": "46e317b66470e6da867bd911b5e7d0f903e61f559a842d0d4aa08b50cb4b41ff"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-real-service-error.png",
+      "sha256": "7f39c6233edc93956df9b9f5e9db7634e7c2496524cde7ebcedaec8d214df022"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-real-shortlist.png",
+      "sha256": "2f8fb279b6fa97b1fb3660684afdd03df61104e2a71d101ba0dbcafeeb81f7c8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-save-error.png",
+      "sha256": "85e4f46fdfb3cd49b947fe27cf1166623409bd2ec8532c68211bbdd5decf22bb"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-shortlist.png",
+      "sha256": "187259037c9b5059967a334310b8ffeb42b4817499020583250bd2d13f46dc86"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\screenshots\\desktop-1440-workbench.png",
+      "sha256": "d4776d02f6526f1699d8e07296b776ccd7b5840e4a2a273b374e4b2d6fea6c49"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\unit-results.json",
+      "sha256": "5903b968468341339d88d15b4137c6735817065c4c3aae375702e54477673f7e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\verification.json",
+      "sha256": "c3f5b65a0aa86cf18d997723f9e160db86b404627a323e1478f5639a09eaf57b"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\_run\\verification.log",
+      "sha256": "b78e2d78f1ed1e4faf3a47e64e40cabc7a80d957884311f222215ddfa186a148"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\acceptance.md",
+      "sha256": "433784938a28bd372735781923ed8b546851d56f445f957104bd4c8272227f20"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\archive-verification.json",
+      "sha256": "73bfd93c0e1cdafc7a0a8061b5970426ee69272a1a9bc9466a88e864da588b3b"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\browser-results.json",
+      "sha256": "3d08d173f9f0f8d23eb3f35b9bd694f7f1a70ed4728fbe895ece393b1ac78124"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\initial\\browser-results.json",
+      "sha256": "36c78b130d8f6644f2faab002fc622e8e33ee7be4dbe463012ba2407df2693b1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\initial\\detail.png",
+      "sha256": "c51b8722824f7364391a9a7c53428e5598cdc641ba0fc64a71537f60ee3d0160"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\initial\\unit-results.json",
+      "sha256": "c18e22a571358616ef99826788f8c892af28c89f9e808585fa0beb89c7cf0bfb"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\initial\\verification.json",
+      "sha256": "9094c5d9c301e821ccd02edfc5a03a4bf659b783e3419c0fb4bc8cac9d263dae"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\initial\\verification.log",
+      "sha256": "2b6c6604c804093260dccca58b5b79be5d14713d45d32eb497ac264a824e38af"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\initial\\workbench.png",
+      "sha256": "3b7fa381229bb443ac6fc7d8dfd05dff69c767833345498d50446932bed1c6ac"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\visual-keyboard-failure\\browser-results.json",
+      "sha256": "168a72714ed8dd877d0bb58475b9ba90589c378f9aef269d1d19314c7959f2d4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\visual-keyboard-failure\\unit-results.json",
+      "sha256": "616be7f23bbc3ee9a09b0ac08d290b919680c7554bddca94941b1739c2583121"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\visual-keyboard-failure\\verification.json",
+      "sha256": "a0e27720e9d404eb57e0a5fa30edf3d237402fc71cff027f1b285c119cc044dd"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\iterations\\visual-keyboard-failure\\verification.log",
+      "sha256": "48df984872d6d3e58665de20cb764d020a9ae298b766da9e0ce8d40f9a55c8e6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1280-detail.png",
+      "sha256": "d5c48757f4635b7639076cef536a0cf0bdc1e82144cfe187b1285b464e329b80"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1280-keyboard-focus.png",
+      "sha256": "e05f9b60d648cfa02884e8b20532485a09f267db374099db29d93eaec176931a"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1280-load-error.png",
+      "sha256": "e88373f7dab289b9e309380098a92986380b14701462b132e763a7ae0f2938db"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1280-save-error.png",
+      "sha256": "e80b172fdda52ae2cb4863ae0aa8877cf1503c289f61fcf03225f3285e1666e9"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1280-shortlist.png",
+      "sha256": "706a76495c5687e41e5fbcfd46bbb8539aace0eae600de0c07a7db4d9527c954"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1280-workbench.png",
+      "sha256": "76ee78990959511f2ca06db83dad018ef58bb4a4d63137e151a817aab8fcfbb5"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1440-detail.png",
+      "sha256": "182323e074493c916d268ca4ec692320b4d33523f12ccbdd80e4bc600b0666c4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1440-keyboard-focus.png",
+      "sha256": "6ad08de4f6f04fe2b3ca45652a82adc40405d39890203cb8b8e1befb3e5c4088"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1440-load-error.png",
+      "sha256": "1fe3a13c82113f22837aac8ccf89044c3ae0d5ed6d81f78941af1004a276d199"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1440-save-error.png",
+      "sha256": "00952e482dc61667041cb895ceab510af8770b73a31fbcd4edc758adfda9ee2c"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1440-shortlist.png",
+      "sha256": "ce9b37ca4c90f5be747ce4d483305987d091c4e3268232ede28add01ff376a35"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\screenshots\\desktop-1440-workbench.png",
+      "sha256": "0225049eb98543c4932da6d321580b8f925c8538480e6163c05c43b88fbb2922"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\unit-results.json",
+      "sha256": "8d157ce0aaecd0277e43c2c2e34ac82062289ac0af1c622bc861e0cc01211555"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\verification.json",
+      "sha256": "d0598c676ebc1fa5cfdc4c25db91a1ecccc6f5086262ae84c4840b11ac44feeb"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\build-desktop-review-workbench-prototype\\verification.log",
+      "sha256": "5c8f11309f2a8b0361ec3cbf659c0a05a02f83051ccfe40e8b43ad0ccf0d1fee"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\acceptance.md",
+      "sha256": "951f19a2e3db3aae8bf17502685d3a2744b35cd5fdb0dff82bdf95c1187fca0c"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\archive-record.json",
+      "sha256": "0e8b0836be604020a68b76419fd2f8d6f2e5da71b71d639f6d2e802f1934d0c6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\baseline-report.md",
+      "sha256": "ce31aeac085c8309c21853f232b7a5cd9a9486bdb45959497b58b7158551d3f3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\browser-results.json",
+      "sha256": "1a2d53515d67ec8ca9572d4c032d00d56c1a7545d6f720f3ef93973f4660a7d4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\compare.log",
+      "sha256": "690cf14502996dc25c583b6c12ca194a09aa89e7ab8fb9e8c16b3e45bb18cc5c"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\data-quality.json",
+      "sha256": "81628bd9c438f149772534c875f80ac9a428e181b66dcdcc4c03181c6e656ef5"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\desktop-1280-real-chain.json",
+      "sha256": "af1df010d63107b39c7fbcbd133b779c593ec6b5c97f52a421e7c43286cc061a"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\desktop-1440-real-chain.json",
+      "sha256": "a37eb855aac8985528547ade08f5c9d81a486414420be2cbfa0f86d4c4e370ad"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\api-debug.log",
+      "sha256": "99f95a37ccdd7f13ee63ad01daf5d56b70a7fca1ee5e68e6f0af2498f67ba01d"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\artifacts-debug.log",
+      "sha256": "40416b5bf8c3058fcb7ad18dce74787888e039fe38512d5a821d4cdc2e718e18"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\artifacts-debug2.log",
+      "sha256": "8acf0226918d4e48cb875cf388e1a54cf1ed9f2064227dc6d591a130b7812779"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\artifacts-debug3.log",
+      "sha256": "ce4a362bc3469399715352f9a115d23e7dd626a673411465b2e4254316b0dc17"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\artifacts-green.log",
+      "sha256": "2c9373c568aa74c6366ac7dfa3dbe150cb4ef83b05367940b88fc8e22646840c"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\artifacts-red.log",
+      "sha256": "ca789ac6bd771f88ff9c563243b068672943823dad8829f8773a56f48f2b8b87"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\backend-green.log",
+      "sha256": "486b41105869f7b909e6a0e1af35e4b7f548d9e721c04eb7f8c3d80879539b9a"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-focused.json",
+      "sha256": "c6db28d4aa6e1a8a339bfe901b92c2b5addd5d6c86860944a4f9263468f07cee"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-loading-diagnostic.json",
+      "sha256": "7e108fb4d8eba3b5677f1d793bfea1534468a953a77f24c079426687156820fd"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-parallel-recovery-failure.json",
+      "sha256": "0aa0498a6637c1d6d1e3b0c58dc6e1bcb48a454d8e0996df909ad2743ea8131e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-role-and-timing-failure.json",
+      "sha256": "ccec9c412c1ba91bc2756fcd8872d829a23892c584badbb317252f00c718f19b"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-stale-preview-diagnosis.txt",
+      "sha256": "f1800499ce1d547adc3a65d49f2e27eb5e6b5cdedef909da80ceb62641a3d0fa"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-stale-preview-failure.json",
+      "sha256": "9792310936a5ef8b84a59333ddc4fdc5517052d204f4b2db40777eb5b3e4458d"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\browser-summary-selector-failure.json",
+      "sha256": "c39f2cf311057475c92fdce6e1294e5ad346586e02bc8620dc97283bde9441a1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\data-green.log",
+      "sha256": "f9152c7b116ff616b2d42ec83915529842d93afe7e15990d900a920d02b36386"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\data-red.log",
+      "sha256": "3ed1f970032b1b4ecc916164aa345678c2514182057ee9b37411df04c82b36f5"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\environment-smoke.json",
+      "sha256": "e146fb94efe7346fb617fe014d872b09467ce38e451bc06c18924815103fafbf"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\frontend-red.json",
+      "sha256": "74a51b67c29fd3fe8a925e5752e8266f699d6e3724f5644e65db8680b8ef14c8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\http-lifecycle.log",
+      "sha256": "054f1f39059313fe2250be2bf6ec837ca33e859e4ace53ea2a4775bc280b2573"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\metrics-green.log",
+      "sha256": "5df15eb672bfb75e018efc475044deb35872d990170eeef58908bac71898b0c6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\metrics-red.log",
+      "sha256": "b51d3cb736433e9a281dcea8e82c819a2c1a95d09b66c479be8ae2f188f3500e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\model-green.log",
+      "sha256": "2e9c0e6a0f3c2e26b0b6878622da27871ca19d3a927bfef6a907167313f7c195"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\model-red.log",
+      "sha256": "e79c4978ef318cac435e0f7297fcd8ca4a9ae2d9a9796dd22153b5c79c74d061"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\development\\verification-browser-failure.json",
+      "sha256": "f4fa603ccad496745670d1496468a69ff17b07f269a7101d05adedacd260bbd1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\fetch.log",
+      "sha256": "f602f5d5251d9304185e64e81afa22f95ecbf505abeaab346da96a9d7ff7cebe"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\final-change-state.json",
+      "sha256": "b243279e65891c804299b4985a82a40792dccce72f34be8b8ec711b44620d567"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\final-source-hashes.json",
+      "sha256": "3cee28ef28e1ee3be0ee5ab9fe4df4ae0b232278ac6e6c4027024b6eb0cd0eb1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\http-batch.json",
+      "sha256": "7df1ed94e9aaf16886ebf296dcfdce6afd86e0401092419483d3f2e5f10ca9e3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\http-check.json",
+      "sha256": "e608b5c601f668550ca91fe555c5f970592c1516ad726aef267e2c9240ea88c3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\http-lifecycle.json",
+      "sha256": "0ed43fc646871713652f7d0ac0fbdac6ec80f9fa71f0e57abc30c5efd34ddb85"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\localhost-listeners.json",
+      "sha256": "8f50041429cbb080112ca3d1d60031dac78ea9b646e61f55b9ebea9387b01e9f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\manifest.json",
+      "sha256": "f710377199d0c9280dfa327511262e35505efd3e4bc7df2764b44d5f83d37d4d"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\preview-check.json",
+      "sha256": "a65a9bfad93b61fbb4c1fa2ec24cfae92f8b5b098158119d0b1667064d36702f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\reference-predictions.json",
+      "sha256": "0872b79bb63121d6ee83b75aae6a6af97265b3735704c1bee3b23521539b8a51"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\reproduction-comparison.json",
+      "sha256": "61afca8d0256d6929316c76817359e79f4caaf00e80a53ba657ba2b4d34857d6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\reproduction.log",
+      "sha256": "e82e6e7a9a449a163deef672738726c11890691f13837a16c627c4bf68b91ce5"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\run.log",
+      "sha256": "60895a31af93f68d861e0c5249200a9bef569c19d87c58627baa2b8b8d51fa52"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\runtime-context-fixture-batch.json",
+      "sha256": "c5781b47b192667db9b96bac5128010bb8e98b021d505ec7f842b6df0cb9f9b4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\scenario-evidence.json",
+      "sha256": "9c5c7ab4f96649d5e78dbd43a5425e49478a8a3309b5fafccbd5d0b9aeed9706"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-detail.png",
+      "sha256": "8ac653410419cacec8f214f007daac6424a50b2e60d9406379ba1f21223f72d8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-keyboard-focus.png",
+      "sha256": "c3387e338da17360f41df380fc074a057a6b00677f46f85150cca3989d78ea83"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-load-error.png",
+      "sha256": "a856b146be76fd7acfa5fd522f39c26a3a0f8d78691fba9621d04ae6ca655ce1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-real-baseline.png",
+      "sha256": "68530cd9f200c1d40278b6a3004124135b35a58d484fc13dc3b521d1540cc7a6"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-real-detail.png",
+      "sha256": "b758a921ca44a58456d29550373c8adb346cad7640e61611801584aa8e1ead46"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-real-keyboard.png",
+      "sha256": "6c5f2bde371f5bf24db43a0e436429b21f3ba70c30e678de2dd29d0050caffc3"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-real-list.png",
+      "sha256": "a46467ac21eef41a7c22a0a838a6549314e6cb4fec71a3e6c7fc2711ed8345b1"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-real-service-error.png",
+      "sha256": "8eb1268c536012c568feda585b4fc133ee7c1911f35fd1b53a36b4e7f1d3f4b7"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-real-shortlist.png",
+      "sha256": "2594e3aa2959b99cbd74cee459028d61839d4f759897a0f2786f165b9c7b6c41"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-save-error.png",
+      "sha256": "0b957ac2b6c83a1254ded53919efcfe89fd1e279971a5b13b63c699b23d550b8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-shortlist.png",
+      "sha256": "e201df3173c1749687291719dd44acb34941526d44a9fe66e85ef79bdd4914f4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1280-workbench.png",
+      "sha256": "f42ceeffb7bcd93ce90d984224d814f18ca045a28b2ee2c5786333c6d80a5515"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-detail.png",
+      "sha256": "1a01eff2f4f40d203c60e301b1a1eb60b4e76d7186d19024898e494b783d20a8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-keyboard-focus.png",
+      "sha256": "f3c71a10d10d8ba1fa1458a386eef7ae467d36d610e1a78e47df6b1a050f8d6f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-load-error.png",
+      "sha256": "4208e83cb0bd9a8043f481984ed935a7c41d1cf6abfc5ca45e7ed2fe034fcbf4"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-real-baseline.png",
+      "sha256": "8a6c288d6b6f70b4e4b5d330481c2463898e9164e421ee6ecf51e97142a13225"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-real-detail.png",
+      "sha256": "af198778364efd70c03280bb04b447b97fbbf633afec8996137629297914707e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-real-keyboard.png",
+      "sha256": "20b1826518d3a9cacbd657e014d68cd24a2f2e603e84f32bb743273edfced357"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-real-list.png",
+      "sha256": "46e317b66470e6da867bd911b5e7d0f903e61f559a842d0d4aa08b50cb4b41ff"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-real-service-error.png",
+      "sha256": "7f39c6233edc93956df9b9f5e9db7634e7c2496524cde7ebcedaec8d214df022"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-real-shortlist.png",
+      "sha256": "2f8fb279b6fa97b1fb3660684afdd03df61104e2a71d101ba0dbcafeeb81f7c8"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-save-error.png",
+      "sha256": "bd6048f26f6da40a87a5cb25b95be79f43ab2eb7d6055e5489b83b9a8099c015"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-shortlist.png",
+      "sha256": "187259037c9b5059967a334310b8ffeb42b4817499020583250bd2d13f46dc86"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\desktop-1440-workbench.png",
+      "sha256": "d4776d02f6526f1699d8e07296b776ccd7b5840e4a2a273b374e4b2d6fea6c49"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\screenshots\\production-preview.png",
+      "sha256": "46e317b66470e6da867bd911b5e7d0f903e61f559a842d0d4aa08b50cb4b41ff"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\split.json",
+      "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\summary.json",
+      "sha256": "9509210a71824d528ee8104a1aab07a4b29e52a7cb66b5e23f36c6b2ec927e03"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\training-audit.json",
+      "sha256": "bcbb20182b4d4de6b2224466cfab21723ea6985df274fdb02f48ea8638173561"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\unit-results.json",
+      "sha256": "65b0bde056eca7a961fa88b6feb2fd7ba423e3e6e52e605d72bcc11b0b934460"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\verification.json",
+      "sha256": "9d39a64c98e9ff977936ce1ae44545dd71f16c467ddbbc12f4a03539b2e1fee9"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\verification.log",
+      "sha256": "64a777f0f99d5d9198028aeb903c5b7454e261288236de9ec5645efc4bd13f91"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\docs\\evidence\\connect-public-data-baseline-review\\verify-run.log",
+      "sha256": "a7453bb5181243a4a5997c3eb99b41a559dc5d468e9c37dcfd695c2b508cd074"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype\\.openspec.yaml",
+      "sha256": "e61703315c59969805e021ec521ca189369aaf8ea902d52c5e39c7fbc603598f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype\\design.md",
+      "sha256": "f9b7af965ea7dcce6b1d88aabd2d532ccd48660b21acdd9a45385baf6441394c"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype\\proposal.md",
+      "sha256": "c6df51aeb4c33195a17f49018d969413723f2e02ce3aa63f9f28b00ba3dcc218"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype\\specs\\commit-risk-review\\spec.md",
+      "sha256": "b95fce622d3f2148f4e3cbc6b76997626ecb3b929b0d1dec95641c648806199e"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype\\tasks.md",
+      "sha256": "a7c5d5aff42956306a15a93a82bfbab525b6d9c40e197af3d5c72bcb3259c3ff"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review\\.openspec.yaml",
+      "sha256": "e61703315c59969805e021ec521ca189369aaf8ea902d52c5e39c7fbc603598f"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review\\design.md",
+      "sha256": "a140323c44c5c275e7a66f1e76730d70cc2a2ad23242db871422ec1414492a33"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review\\proposal.md",
+      "sha256": "11f24c7ccaee5725e40154eb1371135e92506d0b064e77e2c514d00832575e72"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review\\specs\\commit-risk-review\\spec.md",
+      "sha256": "a16190bee30f90e527cf1a95ae09b82965c0b945557c2b38cdecaa245cc9134d"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review\\specs\\public-data-baseline\\spec.md",
+      "sha256": "6be506f87c4b5c92d535498ee163032a86698a38a35940134f07d5307c6c790b"
+    },
+    {
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review\\tasks.md",
+      "sha256": "81c75a1e6e960607f54bfe92f8705168e082d366a67a5c7178fe8fb5c01a5f99"
+    }
+  ],
+  "preExistingMissingTrackedEvidence": [
+    "docs/evidence/connect-public-data-baseline-review/protected-files.json",
+    "docs/evidence/connect-public-data-baseline-review/protected-files-check.json"
+  ],
+  "originalReadme": "# JIT 缺陷预测 · 提交评审\n\n面向评审员的桌面课程项目：从历史提交的模型风险出发，查看原始改动度量并维护个人优先审查清单。默认真实历史回放，提供明确的人工演示入口。公开数据六字段和一个固定模型是首轮真实链路，完整 Kamei14、后续模型、预测解释与在线预测仍待后续 change。\n\n- [后端安装、固定训练与本机服务](backend/README.md)\n- [数据与标签原始依据](backend/DATA.md)\n- [冻结实验口径](backend/PROTOCOL.md)\n- [前端运行与操作](frontend/README.md)\n- [真实基线结果与复现](docs/evidence/connect-public-data-baseline-review/baseline-report.md)\n- [已归档 change](openspec/changes/archive/2026-10-11-connect-public-data-baseline-review/proposal.md)\n\n前端 dev/preview：127.0.0.1:4173；只读推理：127.0.0.1:8000。模型与原始数据留在本机、通过固定下载命令复现。服务错误显示原因和重试，不自动显示人工分数。历史观测标签与模型风险均不构成已确认缺陷。\n",
+  "gitStatusBefore": " M .gitignore\u0000 M backend/README.md\u0000 M backend/jit_baseline/cli.py\u0000 M backend/tests/test_http_lifecycle.py\u0000D  docs/evidence/connect-public-data-baseline-review/protected-files-check.json\u0000D  docs/evidence/connect-public-data-baseline-review/protected-files.json\u0000 M frontend/README.md\u0000 M frontend/e2e/historical.spec.ts\u0000 M frontend/e2e/storage.spec.ts\u0000 M frontend/e2e/workbench.spec.ts\u0000 M frontend/playwright.config.ts\u0000 M frontend/scripts/verify.ps1\u0000 M frontend/tsconfig.node.json\u0000 M frontend/vitest.config.ts\u0000?? .dsh/\u0000?? backend/.tmp-verify/\u0000?? backend/jit_baseline/evidence.py\u0000?? backend/tests/test_evidence.py\u0000?? docs/产品设计文档（模板）.md\u0000?? docs/产品需求文档（模板） .md\u0000?? docs/团队分工.md\u0000?? docs/课程资料/\u0000?? frontend/evidence.ts\u0000?? openspec/changes/define-shared-review-product-baseline/\u0000?? openspec/changes/separate-run-evidence-from-archive/\u0000"
+}
