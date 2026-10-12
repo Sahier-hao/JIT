@@ -4,14 +4,17 @@ import os
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 import joblib
+import pytest
 
 from test_artifacts import copied_run, real_run  # noqa: F401
+from jit_baseline import evidence
 from jit_baseline.artifacts import BACKEND, identity, write_json
 from jit_baseline.data import sha256
 
@@ -24,14 +27,19 @@ def request(port):
         return exc.code, json.load(exc)
 
 
-def wait_ready(port):
-    deadline = time.monotonic() + 15
+def wait_ready(port, timeout=15):
+    """Poll the owned service until it answers with a parseable batch.
+
+    The service binds its port before the app finishes starting, so an accepted
+    connection can carry an empty or unparseable body. That is not readiness.
+    """
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
             return request(port)
-        except (OSError, TimeoutError):
+        except (OSError, TimeoutError, json.JSONDecodeError):
             time.sleep(.1)
-    raise AssertionError("Own test service did not start within 15s")
+    raise AssertionError(f"Own test service on port {port} did not become ready within {timeout}s")
 
 
 def test_actual_tcp_unavailable_restart_and_new_model_context(copied_run, tmp_path):
@@ -87,11 +95,58 @@ def test_actual_tcp_unavailable_restart_and_new_model_context(copied_run, tmp_pa
         assert status == 200 and variant["runId"] != original["runId"]
         assert variant["records"] == original["records"]
         stages.append({"stage": "same-pipeline-other-serialization", "status": status, "runId": variant["runId"], "sameRecordsAndRisks": True})
-        evidence = BACKEND.parent / "docs/evidence/connect-public-data-baseline-review"
-        write_json(evidence / "http-lifecycle.json", {"kind": "real-tcp-restart-and-context-behavior-check", "host": "127.0.0.1", "port": port,
-                                                        "stages": stages, "formalArtifactsUnmodified": True, "passed": True})
-        write_json(evidence / "runtime-context-fixture-batch.json", variant)
+        write_json(evidence.run_dir() / "http-lifecycle.json", {"kind": "real-tcp-restart-and-context-behavior-check", "host": "127.0.0.1", "port": port,
+                                                                 "stages": stages, "formalArtifactsUnmodified": True, "passed": True})
+        write_json(evidence.fixtures_dir() / "runtime-context-fixture-batch.json", variant)
     finally:
         process.terminate()
         process.wait(timeout=5)
         log.close()
+
+
+class NotYetReady:
+    """A service that binds its port before answering; the first replies are not readiness."""
+
+    def __init__(self, bodies):
+        self._bodies = bodies
+        self._socket = socket.socket()
+        self._socket.bind(("127.0.0.1", 0))
+        self._socket.listen(8)
+        self.port = self._socket.getsockname()[1]
+        threading.Thread(target=self._serve, daemon=True).start()
+
+    def _serve(self):
+        index = 0
+        header = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n"
+        while True:
+            try:
+                connection, _ = self._socket.accept()
+            except OSError:
+                return
+            with connection:
+                connection.recv(65536)
+                body = self._bodies[min(index, len(self._bodies) - 1)]
+                index += 1
+                connection.sendall(header % len(body) + body)
+
+    def close(self):
+        self._socket.close()
+
+
+@pytest.mark.parametrize("early", [b"", b"not json"])
+def test_wait_ready_retries_past_a_transient_unready_reply(early):
+    service = NotYetReady([early, b'{"ok": true}'])
+    try:
+        assert wait_ready(service.port, timeout=5) == (200, {"ok": True})
+    finally:
+        service.close()
+
+
+def test_wait_ready_fails_with_the_waited_target_after_the_timeout():
+    service = NotYetReady([b""])
+    try:
+        with pytest.raises(AssertionError) as failure:
+            wait_ready(service.port, timeout=1)
+        assert str(service.port) in str(failure.value)
+    finally:
+        service.close()

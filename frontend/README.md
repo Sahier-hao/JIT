@@ -23,7 +23,7 @@ npm run test:e2e
 npm run build
 ```
 
-`npm run preview` 可在构建后预览静态产物。运行 preview 前先结束占用相同端口的 dev。测试报告写入 `../docs/evidence/connect-public-data-baseline-review/`，浏览器失败轨迹在 `test-results/`；测试代码不进入产品构建。
+`npm run preview` 可在构建后预览静态产物。运行 preview 前先结束占用相同端口的 dev。测试报告写入**运行工作区** `../docs/evidence/_run/`；该目录可被后续运行覆盖、不进入版本控制，归档证据由显式冻结从运行工作区产生，测试不写任何已归档目录，冻结与校验命令见 [后端说明](../backend/README.md#验证证据的冻结)。浏览器失败轨迹在 `test-results/`；测试代码不进入产品构建。
 
 安装需要 npm registry 与 Playwright 下载站点可访问。若机器配置的镜像无法访问，以上安装命令仅对本次执行指定官方 registry，不修改全局配置。
 
@@ -52,4 +52,4 @@ npm run build
 
 ## 一次复验
 
-结束本项目正在运行的 dev/preview，再执行 `pwsh -File ./scripts/verify.ps1`。脚本先执行后端检查、实际 TCP 恢复检查、固定产物核验与复现比较，再执行前端干净安装、类型检查、行为测试、lint、构建、两个视口的浏览器检查和 OpenSpec 主规格严格校验，遇到失败立即退出。后端产物需事先按固定命令生成；浏览器检查自行启动需要的本机服务，成功链路实际请求真实模型。原始输出、命令退出码、版本与源码校验和保存在验收目录；测试自行启动并结束本地服务器。
+结束本项目正在运行的 dev/preview，再执行 `pwsh -File ./scripts/verify.ps1`。脚本先执行后端检查、实际 TCP 恢复检查、固定产物核验与复现比较，再执行前端干净安装、类型检查、行为测试、lint、构建、两个视口的浏览器检查和 OpenSpec 主规格严格校验，遇到失败立即退出。后端产物需事先按固定命令生成；浏览器检查自行启动需要的本机服务，成功链路实际请求真实模型。原始输出、命令退出码、版本与源码校验和保存在运行工作区 `docs/evidence/_run/`；测试自行启动并结束本地服务器。
