@@ -1,0 +1,214 @@
+{
+  "copiedFromWorkspace": [
+    "archived-evidence-integrity.json",
+    "browser-repeat.json",
+    "browser-repeat.log",
+    "browser-results.json",
+    "desktop-1280-real-chain.json",
+    "desktop-1440-real-chain.json",
+    "freeze-check.json",
+    "freeze-report.json",
+    "freeze-validation.json",
+    "guard-red-green.json",
+    "http-lifecycle.json",
+    "readiness-red-green.json",
+    "reproduction-comparison.json",
+    "screenshots/desktop-1280-detail.png",
+    "screenshots/desktop-1280-keyboard-focus.png",
+    "screenshots/desktop-1280-load-error.png",
+    "screenshots/desktop-1280-real-baseline.png",
+    "screenshots/desktop-1280-real-detail.png",
+    "screenshots/desktop-1280-real-keyboard.png",
+    "screenshots/desktop-1280-real-list.png",
+    "screenshots/desktop-1280-real-service-error.png",
+    "screenshots/desktop-1280-real-shortlist.png",
+    "screenshots/desktop-1280-save-error.png",
+    "screenshots/desktop-1280-shortlist.png",
+    "screenshots/desktop-1280-workbench.png",
+    "screenshots/desktop-1440-detail.png",
+    "screenshots/desktop-1440-keyboard-focus.png",
+    "screenshots/desktop-1440-load-error.png",
+    "screenshots/desktop-1440-real-baseline.png",
+    "screenshots/desktop-1440-real-detail.png",
+    "screenshots/desktop-1440-real-keyboard.png",
+    "screenshots/desktop-1440-real-list.png",
+    "screenshots/desktop-1440-real-service-error.png",
+    "screenshots/desktop-1440-real-shortlist.png",
+    "screenshots/desktop-1440-save-error.png",
+    "screenshots/desktop-1440-shortlist.png",
+    "screenshots/desktop-1440-workbench.png",
+    "unit-results.json",
+    "verification.json",
+    "verification.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 40,
+  "files": [
+    {
+      "path": "archived-evidence-integrity.json",
+      "sha256": "99ece44d56db6bc49bc35e7dc4fc003c384ba08472be3112998d09ed79d1828f"
+    },
+    {
+      "path": "browser-repeat.json",
+      "sha256": "33de9cb44c369767922cb0ced9e9972f342e1bf90705c618fc7d19e69e010df5"
+    },
+    {
+      "path": "browser-repeat.log",
+      "sha256": "6398ef9bf693dc9ea6cdfa5d8242f1979dda0965631149cc059cf1a9f710580c"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "a2470c168af442f29c123d118321c499441ac43e52eb6e8da27531495724318c"
+    },
+    {
+      "path": "desktop-1280-real-chain.json",
+      "sha256": "1a81808371c41f9c7aeec6ffa0d02e6c9403e9d0450e30ff6411fb73887a4fc2"
+    },
+    {
+      "path": "desktop-1440-real-chain.json",
+      "sha256": "73e8a56bf478105f05453d73ba6b025255ba337122a5e62375dd34b3bff45572"
+    },
+    {
+      "path": "freeze-check.json",
+      "sha256": "abe960284931c57d1851ea894580f748fa17def685d7f83fe63dcfef23ae99ce"
+    },
+    {
+      "path": "freeze-report.json",
+      "sha256": "d65711c0b87ce6cbb5c4c0693b962d695d5675b9190f12ebdbb600d100522ba7"
+    },
+    {
+      "path": "freeze-validation.json",
+      "sha256": "ca3732245fea0bf35d6ec234494249084d18933edaf014bdf2b313baec2c9713"
+    },
+    {
+      "path": "guard-red-green.json",
+      "sha256": "c0e9176be9ab503be876c20787a0e29512c548783c508effd93a11dda1347850"
+    },
+    {
+      "path": "http-lifecycle.json",
+      "sha256": "3e2cf5e205ab077b85d31922a471a395d3bd1cfec2fabda5879c1d357ce09f9f"
+    },
+    {
+      "path": "readiness-red-green.json",
+      "sha256": "97efcd7ed19b9c086f88d9daa44addc0692cf91c3c17c4c0859d77ab7279669e"
+    },
+    {
+      "path": "reproduction-comparison.json",
+      "sha256": "61afca8d0256d6929316c76817359e79f4caaf00e80a53ba657ba2b4d34857d6"
+    },
+    {
+      "path": "screenshots/desktop-1280-detail.png",
+      "sha256": "8ac653410419cacec8f214f007daac6424a50b2e60d9406379ba1f21223f72d8"
+    },
+    {
+      "path": "screenshots/desktop-1280-keyboard-focus.png",
+      "sha256": "c3387e338da17360f41df380fc074a057a6b00677f46f85150cca3989d78ea83"
+    },
+    {
+      "path": "screenshots/desktop-1280-load-error.png",
+      "sha256": "a856b146be76fd7acfa5fd522f39c26a3a0f8d78691fba9621d04ae6ca655ce1"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-baseline.png",
+      "sha256": "68530cd9f200c1d40278b6a3004124135b35a58d484fc13dc3b521d1540cc7a6"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-detail.png",
+      "sha256": "b758a921ca44a58456d29550373c8adb346cad7640e61611801584aa8e1ead46"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-keyboard.png",
+      "sha256": "6c5f2bde371f5bf24db43a0e436429b21f3ba70c30e678de2dd29d0050caffc3"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-list.png",
+      "sha256": "a46467ac21eef41a7c22a0a838a6549314e6cb4fec71a3e6c7fc2711ed8345b1"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-service-error.png",
+      "sha256": "8eb1268c536012c568feda585b4fc133ee7c1911f35fd1b53a36b4e7f1d3f4b7"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-shortlist.png",
+      "sha256": "2594e3aa2959b99cbd74cee459028d61839d4f759897a0f2786f165b9c7b6c41"
+    },
+    {
+      "path": "screenshots/desktop-1280-save-error.png",
+      "sha256": "33d554d1186f097cfdd678cb9f851404432b35512b71d32df3766df726217555"
+    },
+    {
+      "path": "screenshots/desktop-1280-shortlist.png",
+      "sha256": "e201df3173c1749687291719dd44acb34941526d44a9fe66e85ef79bdd4914f4"
+    },
+    {
+      "path": "screenshots/desktop-1280-workbench.png",
+      "sha256": "f42ceeffb7bcd93ce90d984224d814f18ca045a28b2ee2c5786333c6d80a5515"
+    },
+    {
+      "path": "screenshots/desktop-1440-detail.png",
+      "sha256": "1a01eff2f4f40d203c60e301b1a1eb60b4e76d7186d19024898e494b783d20a8"
+    },
+    {
+      "path": "screenshots/desktop-1440-keyboard-focus.png",
+      "sha256": "f3c71a10d10d8ba1fa1458a386eef7ae467d36d610e1a78e47df6b1a050f8d6f"
+    },
+    {
+      "path": "screenshots/desktop-1440-load-error.png",
+      "sha256": "4208e83cb0bd9a8043f481984ed935a7c41d1cf6abfc5ca45e7ed2fe034fcbf4"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-baseline.png",
+      "sha256": "8a6c288d6b6f70b4e4b5d330481c2463898e9164e421ee6ecf51e97142a13225"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-detail.png",
+      "sha256": "af198778364efd70c03280bb04b447b97fbbf633afec8996137629297914707e"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-keyboard.png",
+      "sha256": "20b1826518d3a9cacbd657e014d68cd24a2f2e603e84f32bb743273edfced357"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-list.png",
+      "sha256": "46e317b66470e6da867bd911b5e7d0f903e61f559a842d0d4aa08b50cb4b41ff"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-service-error.png",
+      "sha256": "7f39c6233edc93956df9b9f5e9db7634e7c2496524cde7ebcedaec8d214df022"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-shortlist.png",
+      "sha256": "2f8fb279b6fa97b1fb3660684afdd03df61104e2a71d101ba0dbcafeeb81f7c8"
+    },
+    {
+      "path": "screenshots/desktop-1440-save-error.png",
+      "sha256": "bd6048f26f6da40a87a5cb25b95be79f43ab2eb7d6055e5489b83b9a8099c015"
+    },
+    {
+      "path": "screenshots/desktop-1440-shortlist.png",
+      "sha256": "187259037c9b5059967a334310b8ffeb42b4817499020583250bd2d13f46dc86"
+    },
+    {
+      "path": "screenshots/desktop-1440-workbench.png",
+      "sha256": "d4776d02f6526f1699d8e07296b776ccd7b5840e4a2a273b374e4b2d6fea6c49"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "ef111f1bc41c2c155e8d2ee31069863676dd353f44362aed0b15926bb01d2344"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "f9d87c6ce8fb5c17941483e07b69f5f18d386e1e3507f1e4ac4f605a2a0f6d6d"
+    },
+    {
+      "path": "verification.log",
+      "sha256": "e6b5fc2c05317d015e7257c815d3b5130af89a1f53cf5840c1a14b64f7fcdace"
+    }
+  ],
+  "frozenUtc": "2026-10-12T14:13:00.770993+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "22d06eed60a5e4b184fe92997e576dc648f47a6117ac05f86c6ecd7b580980bd",
+  "workspace": "docs/evidence/_run"
+}

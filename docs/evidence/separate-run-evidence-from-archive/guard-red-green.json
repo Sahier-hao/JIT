@@ -1,0 +1,21 @@
+{
+  "kind": "verification-protection-regression",
+  "red": {
+    "failed": 1,
+    "failure": "Protected-file differences were empty after the earlier check failed",
+    "command": "backend/.venv/Scripts/python.exe -m pytest tests/test_verification_guard.py --basetemp=.cache/guard-red -q",
+    "passed": 1,
+    "exitCode": 1
+  },
+  "green": {
+    "failed": 0,
+    "command": "backend/.venv/Scripts/python.exe -m pytest tests/test_verification_guard.py --basetemp=.cache/guard-green -q",
+    "passed": 2,
+    "exitCode": 0
+  },
+  "fixtureOnly": true,
+  "scenarios": [
+    "Added, modified and deleted protected files after successful checks",
+    "Same differences after an earlier check fails; original failure retained"
+  ]
+}

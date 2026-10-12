@@ -1,15 +1,15 @@
 import { test, expect, type Page } from '@playwright/test'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { ensureDir, runEvidenceDir, runFixtureDir, runScreenshotDir } from '../evidence.ts'
 interface Batch { mode: string; runId: string; summary: { runId: string }; records: { id: string; time: string; risk: number; metrics: Record<string, number> }[] }
 
-const evidence = '../docs/evidence/connect-public-data-baseline-review'
 const reference = JSON.parse(readFileSync('../backend/artifacts/baseline/reference-predictions.json', 'utf8')) as { id: string; risk: number }[]
 const commits = (page: Page) => page.getByRole('button', { name: /^查看 [a-f0-9]{40}$/ })
 const label = (risk: number) => `${Number((risk * 100).toFixed(1))}%`
 const day = (time: string) => new Date(Date.parse(time) + 8 * 3600000).toISOString().slice(0, 10)
 async function photo(page: Page, name: string, viewport: string) {
-  mkdirSync(`${evidence}/screenshots`, { recursive: true })
-  await page.screenshot({ path: `${evidence}/screenshots/${viewport}-real-${name}.png`, fullPage: true, animations: 'disabled' })
+  ensureDir(runScreenshotDir)
+  await page.screenshot({ path: `${runScreenshotDir}/${viewport}-real-${name}.png`, fullPage: true, animations: 'disabled' })
 }
 
 test('真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应）', async ({ page }, info) => {
@@ -73,8 +73,8 @@ test('真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦�
   await page.getByRole('button', { name: `移除 ${first.id}` }).click()
   await expect(page.getByText('清单为空', { exact: true })).toBeVisible()
   expect(errors).toEqual([])
-  mkdirSync(evidence, { recursive: true })
-  writeFileSync(`${evidence}/${info.project.name}-real-chain.json`, JSON.stringify({
+  ensureDir(runEvidenceDir)
+  writeFileSync(`${runEvidenceDir}/${info.project.name}-real-chain.json`, JSON.stringify({
     kind: 'real-http-browser-chain', viewport: info.project.use.viewport, runId: data.runId, count: 1853,
     fullIdentitiesAndRoundedRisksMatched: true, loadedMs, searchMs, measuredUnderConcurrentTests: true,
     matchedReferenceTolerance: 1e-8, consoleErrors: errors, passed: true,
@@ -164,7 +164,7 @@ test('实际模型另一序列化上下文隔离清单（TCP产物行为夹具�
   await page.goto('/')
   await expect(commits(page)).toHaveCount(1853)
   const original = await (await page.request.get('/api/review-batch')).json() as Batch
-  const variant = JSON.parse(readFileSync(`${evidence}/runtime-context-fixture-batch.json`, 'utf8')) as Batch
+  const variant = JSON.parse(readFileSync(`${runFixtureDir}/runtime-context-fixture-batch.json`, 'utf8')) as Batch
   expect(variant.runId).not.toBe(original.runId)
   expect(variant.records).toEqual(original.records)
   const id = (await commits(page).first().getAttribute('aria-label'))!.slice(3)
@@ -173,6 +173,9 @@ test('实际模型另一序列化上下文隔离清单（TCP产物行为夹具�
   // This checks UI context behavior; the primary acceptance chain has no response interception.
   await page.route('**/api/review-batch', route => route.fulfill({ json: variant }))
   await page.reload()
+  // Wait for the reloaded list before asserting a row's button state: the row is also the
+  // readiness probe otherwise, and 1853 rows do not always render within the default timeout.
+  await expect(commits(page)).toHaveCount(1853, { timeout: 10000 })
   await expect(page.getByRole('button', { name: `加入 ${id} 到清单` })).toBeEnabled()
   await page.getByRole('button', { name: `加入 ${id} 到清单` }).click()
   await page.unroute('**/api/review-batch')
