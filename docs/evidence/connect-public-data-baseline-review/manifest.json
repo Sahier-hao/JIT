@@ -1,0 +1,76 @@
+{
+  "command": "python -m jit_baseline.cli run --output D:/code/jit-defect-prediction/backend/artifacts/baseline",
+  "config": {
+    "cohort": {
+      "addedLinesGreaterThan": 0,
+      "endEpochExclusive": 1393590700,
+      "maxChurnInclusive": 10000,
+      "maxFilesInclusive": 100,
+      "startEpochInclusive": 1322599384
+    },
+    "coreFiles": {
+      "metrics.json": "b6bf0f952ce15a54a07b47c1b7fc469cc7763eb1738cb47444ccd3f9259322b2",
+      "model.joblib": "beaf967e9b23c6ee45c365e53c0a9bf72ce99cefbddb6717133f0a178d8d8507",
+      "reference-predictions.json": "0872b79bb63121d6ee83b75aae6a6af97265b3735704c1bee3b23521539b8a51",
+      "source.json": "15d2830edba41fd2ccb336ea76a876df35bb9a003823f41ed9a5141dab560b46",
+      "split.json": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+      "test-input.json": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+      "test-labels.json": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805"
+    },
+    "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+    "environment": {
+      "packages": {
+        "fastapi": "0.143.0",
+        "joblib": "1.6.0",
+        "numpy": "2.5.3",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1",
+        "threadpoolctl": "3.7.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "3.14.2"
+    },
+    "features": [
+      "ns",
+      "nd",
+      "nf",
+      "ent",
+      "la",
+      "ld"
+    ],
+    "model": {
+      "C": 1.0,
+      "class_weight": null,
+      "max_iter": 1000,
+      "regularization": "L2",
+      "seed": 2026,
+      "solver": "lbfgs",
+      "threads": 1,
+      "tol": 0.0001
+    },
+    "modelSha256": "beaf967e9b23c6ee45c365e53c0a9bf72ce99cefbddb6717133f0a178d8d8507",
+    "protocol": "openstack-six-v1",
+    "sourceCode": {
+      "artifacts.py": "bd1884979d807a1f8a1fe6a2b1b98acdbd3e10469cb7574258d90876e0c63d51",
+      "config.py": "e862f46857d20d7efbf5919a3bb171784be5f557e3d27ec40078164f4edb837d",
+      "data.py": "d8324b015a1796fdc8b25d43f68499a27a5db393a424ad2b57f6d8c847ce34fb",
+      "metrics.py": "ad4d4dee90b3cd05048aa75566e00b93043c400088f34bee5ee622e43b337f29",
+      "model.py": "c409f3e4976b3b316109681c7a5c65b9cc77c066092c20c94c9e081548a43973"
+    },
+    "threshold": 0.5
+  },
+  "files": {
+    "metrics.json": "b6bf0f952ce15a54a07b47c1b7fc469cc7763eb1738cb47444ccd3f9259322b2",
+    "model.joblib": "beaf967e9b23c6ee45c365e53c0a9bf72ce99cefbddb6717133f0a178d8d8507",
+    "reference-predictions.json": "0872b79bb63121d6ee83b75aae6a6af97265b3735704c1bee3b23521539b8a51",
+    "source.json": "15d2830edba41fd2ccb336ea76a876df35bb9a003823f41ed9a5141dab560b46",
+    "split.json": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+    "summary.json": "9509210a71824d528ee8104a1aab07a4b29e52a7cb66b5e23f36c6b2ec927e03",
+    "test-input.json": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+    "test-labels.json": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805"
+  },
+  "generatedAt": "2026-10-10T14:50:47.847319+00:00",
+  "runId": "a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02",
+  "schema": 1
+}

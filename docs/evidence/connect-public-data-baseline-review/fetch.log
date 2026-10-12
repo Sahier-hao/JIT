@@ -1,0 +1,17 @@
+{
+  "openstack.csv": {
+    "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/data/openstack.csv",
+    "sha256": "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505",
+    "bytes": 4448994
+  },
+  "load_data.r": {
+    "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/scripts/load_data.r",
+    "sha256": "4be31b4663f2dfc677594ca278abfcd814d42d04f09b06be1a5b031c1aace475",
+    "bytes": 3737
+  },
+  "experimental_settings.r": {
+    "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/scripts/experimental_settings.r",
+    "sha256": "2d62ff540dc26ef05864d20862b2966e637eba34b9e66a09a06cdaa2837d3209",
+    "bytes": 1442
+  }
+}

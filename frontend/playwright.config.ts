@@ -1,0 +1,18 @@
+import { defineConfig } from '@playwright/test'
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  retries: 0,
+  workers: 2,
+  reporter: [['list'], ['json', { outputFile: '../docs/evidence/connect-public-data-baseline-review/browser-results.json' }]],
+  use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', trace: 'retain-on-failure' },
+  projects: [
+    { name: 'desktop-1280', use: { viewport: { width: 1280, height: 720 } } },
+    { name: 'desktop-1440', use: { viewport: { width: 1440, height: 900 } } },
+  ],
+  webServer: [
+    { command: '../backend/.venv/Scripts/python.exe -m jit_baseline.cli serve', cwd: '../backend', url: 'http://127.0.0.1:8000/api/review-batch', reuseExistingServer: !process.env.CI },
+    { command: 'npm run dev', url: 'http://127.0.0.1:4173', reuseExistingServer: false },
+  ],
+})

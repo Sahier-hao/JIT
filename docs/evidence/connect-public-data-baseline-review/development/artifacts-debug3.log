@@ -1,0 +1,20 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- D:\code\jit-defect-prediction\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\code\jit-defect-prediction\backend
+configfile: pytest.ini
+plugins: anyio-4.15.1
+collecting ... collected 19 items
+
+tests/test_artifacts.py::test_real_manifest_snapshot_and_reference_are_one_context PASSED [  5%]
+tests/test_artifacts.py::test_service_invokes_loaded_model_and_does_not_read_labels_or_reference PASSED [ 10%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[source.json] PASSED [ 15%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[test-input.json] PASSED [ 21%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[model.joblib] PASSED [ 26%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[summary.json] PASSED [ 31%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[manifest.json] PASSED [ 36%]
+tests/test_artifacts.py::test_corrupted_model_fails_before_deserialization PASSED [ 42%]
+tests/test_artifacts.py::test_hashed_but_wrong_feature_order_still_fails PASSED [ 47%]
+tests/test_artifacts.py::test_hashed_but_partial_input_is_not_a_usable_batch PASSED [ 52%]
+tests/test_artifacts.py::test_model_or_config_change_cannot_reuse_run_identity PASSED [ 57%]
+tests/test_artifacts.py::test_run_never_overwrites_existing_output PASSED [ 63%]

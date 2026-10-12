@@ -1,0 +1,60 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- D:\code\jit-defect-prediction\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\code\jit-defect-prediction\backend
+configfile: pytest.ini
+plugins: anyio-4.15.1
+collecting ... collected 19 items
+
+tests/test_artifacts.py::test_real_manifest_snapshot_and_reference_are_one_context PASSED [  5%]
+tests/test_artifacts.py::test_service_invokes_loaded_model_and_does_not_read_labels_or_reference PASSED [ 10%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[source.json] PASSED [ 15%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[test-input.json] PASSED [ 21%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[model.joblib] PASSED [ 26%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[summary.json] PASSED [ 31%]
+tests/test_artifacts.py::test_missing_necessary_artifact_fails[manifest.json] PASSED [ 36%]
+tests/test_artifacts.py::test_corrupted_model_fails_before_deserialization PASSED [ 42%]
+tests/test_artifacts.py::test_hashed_but_wrong_feature_order_still_fails FAILED [ 47%]
+
+================================== FAILURES ===================================
+_______________ test_hashed_but_wrong_feature_order_still_fails _______________
+
+copied_run = WindowsPath('D:/code/jit-defect-prediction/backend/.cache/artifacts-debug2/test_hashed_but_wrong_feature_0/run')
+
+    def test_hashed_but_wrong_feature_order_still_fails(copied_run):
+        from jit_baseline.artifacts import Snapshot
+>       rewrite_artifact(copied_run, "test-input.json", lambda obj: obj["features"].reverse())
+
+tests\test_artifacts.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_artifacts.py:88: in rewrite_artifact
+    summary = json.loads((target / "summary.json").read_text())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/code/jit-defect-prediction/backend/.cache/artifacts-debug2/test_hashed_but_wrong_feature_0/run/summary.json')
+encoding = 'locale', errors = None, newline = None
+
+    def read_text(self, encoding=None, errors=None, newline=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        # Call io.text_encoding() here to ensure any warning is raised at an
+        # appropriate stack level.
+        encoding = io.text_encoding(encoding)
+        with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+>           return f.read()
+                   ^^^^^^^^
+E           UnicodeDecodeError: 'gbk' codec can't decode byte 0xad in position 413: illegal multibyte sequence
+
+C:\Python314\Lib\pathlib\__init__.py:788: UnicodeDecodeError
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_artifacts.py::test_hashed_but_wrong_feature_order_still_fails - UnicodeDecodeError: 'gbk' codec can't decode byte 0xad in position 413: illegal multibyte sequence
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 failed, 8 passed, 1 warning in 3.32s ====================

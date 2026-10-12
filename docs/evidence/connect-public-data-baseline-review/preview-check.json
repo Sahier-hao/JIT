@@ -1,0 +1,11 @@
+{
+  "kind": "real-production-preview-proxy-check",
+  "url": "http://127.0.0.1:4173/",
+  "httpStatus": 200,
+  "count": 1853,
+  "runId": "a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02",
+  "allReferenceRisksMatched": true,
+  "elapsedMs": 1278,
+  "pageErrors": [],
+  "passed": true
+}

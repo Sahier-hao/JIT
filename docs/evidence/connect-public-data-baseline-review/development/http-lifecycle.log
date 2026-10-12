@@ -1,0 +1,11 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- D:\code\jit-defect-prediction\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\code\jit-defect-prediction\backend
+configfile: pytest.ini
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_http_lifecycle.py::test_actual_tcp_unavailable_restart_and_new_model_context PASSED [100%]
+
+============================= 1 passed in 24.62s ==============================

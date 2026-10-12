@@ -1,0 +1,30 @@
+{
+  "formalArtifactsUnmodified": true,
+  "host": "127.0.0.1",
+  "kind": "real-tcp-restart-and-context-behavior-check",
+  "passed": true,
+  "port": 46071,
+  "stages": [
+    {
+      "error": {
+        "error": {
+          "code": "ARTIFACT_UNAVAILABLE",
+          "message": "产物不可用：model.joblib"
+        }
+      },
+      "stage": "missing-model",
+      "status": 503
+    },
+    {
+      "runId": "a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02",
+      "stage": "restored-and-restarted",
+      "status": 200
+    },
+    {
+      "runId": "166dc8921718993144ff2a63fb70c5706a864deab71095d2b2dc01848d2d9e79",
+      "sameRecordsAndRisks": true,
+      "stage": "same-pipeline-other-serialization",
+      "status": 200
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "real-http-model-integration",
+  "url": "http://127.0.0.1:8000/api/review-batch",
+  "status": 200,
+  "count": 1853,
+  "runId": "a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02",
+  "artifactHashesBeforeAndAfter": {
+    "manifest.json": "f710377199d0c9280dfa327511262e35505efd3e4bc7df2764b44d5f83d37d4d",
+    "metrics.json": "b6bf0f952ce15a54a07b47c1b7fc469cc7763eb1738cb47444ccd3f9259322b2",
+    "model.joblib": "beaf967e9b23c6ee45c365e53c0a9bf72ce99cefbddb6717133f0a178d8d8507",
+    "reference-predictions.json": "0872b79bb63121d6ee83b75aae6a6af97265b3735704c1bee3b23521539b8a51",
+    "source.json": "15d2830edba41fd2ccb336ea76a876df35bb9a003823f41ed9a5141dab560b46",
+    "split.json": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+    "summary.json": "9509210a71824d528ee8104a1aab07a4b29e52a7cb66b5e23f36c6b2ec927e03",
+    "test-input.json": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+    "test-labels.json": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805"
+  },
+  "unchanged": true,
+  "elapsedSeconds": 0.21740419999696314
+}

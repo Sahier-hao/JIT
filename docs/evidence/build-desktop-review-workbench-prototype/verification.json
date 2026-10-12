@@ -1,0 +1,250 @@
+{
+  "startedUtc": "2026-10-10T12:54:16.4769401Z",
+  "finishedUtc": "2026-10-10T12:55:39.2338553Z",
+  "success": true,
+  "node": "v24.13.0",
+  "npm": "11.6.2",
+  "datasetVersion": "demo-v1",
+  "dependencies": {
+    "@playwright/test": {
+      "version": "1.64.0",
+      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.64.0.tgz",
+      "overridden": false
+    },
+    "@testing-library/jest-dom": {
+      "version": "7.0.1",
+      "resolved": "https://registry.npmjs.org/@testing-library/jest-dom/-/jest-dom-7.0.1.tgz",
+      "overridden": false
+    },
+    "@testing-library/react": {
+      "version": "16.3.3",
+      "resolved": "https://registry.npmjs.org/@testing-library/react/-/react-16.3.3.tgz",
+      "overridden": false
+    },
+    "@testing-library/user-event": {
+      "version": "14.6.7",
+      "resolved": "https://registry.npmjs.org/@testing-library/user-event/-/user-event-14.6.7.tgz",
+      "overridden": false
+    },
+    "@types/node": {
+      "version": "24.19.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.19.2.tgz",
+      "overridden": false
+    },
+    "@types/react-dom": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.3.0.tgz",
+      "overridden": false
+    },
+    "@types/react": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz",
+      "overridden": false
+    },
+    "@vitejs/plugin-react": {
+      "version": "6.1.2",
+      "resolved": "https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.1.2.tgz",
+      "overridden": false
+    },
+    "jsdom": {
+      "version": "29.1.1",
+      "resolved": "https://registry.npmjs.org/jsdom/-/jsdom-29.1.1.tgz",
+      "overridden": false
+    },
+    "oxlint": {
+      "version": "1.87.0",
+      "resolved": "https://registry.npmjs.org/oxlint/-/oxlint-1.87.0.tgz",
+      "overridden": false
+    },
+    "react-dom": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.0.tgz",
+      "overridden": false
+    },
+    "react": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.3.0.tgz",
+      "overridden": false
+    },
+    "typescript": {
+      "version": "6.0.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz",
+      "overridden": false
+    },
+    "vite": {
+      "version": "8.3.4",
+      "resolved": "https://registry.npmjs.org/vite/-/vite-8.3.4.tgz",
+      "overridden": false
+    },
+    "vitest": {
+      "version": "5.0.3",
+      "resolved": "https://registry.npmjs.org/vitest/-/vitest-5.0.3.tgz",
+      "overridden": false
+    }
+  },
+  "gitStatus": "?? .agents/\r\n?? .claude/\r\n?? .dsh/\r\n?? .gitignore\r\n?? docs/\r\n?? frontend/\r\n?? openspec/",
+  "sourceHashes": [
+    {
+      "path": "frontend/.oxlintrc.json",
+      "sha256": "b4d344818a1e1bf43997e4744a9153c8eef770c98b58229cd86363dabb85ded4"
+    },
+    {
+      "path": "frontend/e2e/storage.spec.ts",
+      "sha256": "6eeb6a3d106cefb05f4e2830629b17a04b8389a79dbb764fdc885a4a147a4615"
+    },
+    {
+      "path": "frontend/e2e/workbench.spec.ts",
+      "sha256": "9c9815a20bd561571f088cfdc7614259d7eb986a98b4462072004572dc5433d8"
+    },
+    {
+      "path": "frontend/index.html",
+      "sha256": "f5fa4bb18bd6791289a80cee87e7259fbd68e8b73f956208af57eebe211d94c3"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256": "7cfde0103b2fce83c09c68407f74a00667c1bc2519a8952d6fa66b89068a62de"
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "5be671da2e4a34a18b820e6d453828763b082096379947d29d899f7ebb6499fa"
+    },
+    {
+      "path": "frontend/playwright.config.ts",
+      "sha256": "c6e1b3f6f0126b45d1d7e2caeccb5991d39e5a10a60e82a3f12e0dc81c89d938"
+    },
+    {
+      "path": "frontend/public/DEMO-DATA.md",
+      "sha256": "a0601c19a5ade0b8fd495287ce307c8a638f463c3798673947ebd5b726cadc5b"
+    },
+    {
+      "path": "frontend/public/demo-dataset.json",
+      "sha256": "19c640a056173fb4a5b196d098e290fc5123b7d38ff824b865162ced71c1cda0"
+    },
+    {
+      "path": "frontend/README.md",
+      "sha256": "d39c310c45caf2a64983086af2d9b06fa6f5e1074a01365f6e79b09eaa4649fe"
+    },
+    {
+      "path": "frontend/scripts/verify.ps1",
+      "sha256": "4f7773f4caf4a0e867d94649824760b3529c401e374b128bce046b4c62337ebf"
+    },
+    {
+      "path": "frontend/src/App.css",
+      "sha256": "449c3ee9ff1c4494721318653ee61728204d3c33004a81707a484be762a55ec4"
+    },
+    {
+      "path": "frontend/src/App.test.tsx",
+      "sha256": "8a53213a7a584ac9aba65615617ab9b9059e610043dc76317050510071996aa4"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "sha256": "ddc2d2731bd290136f1a25a4015cdf485739b2beced348afaecd08e4eb9461e6"
+    },
+    {
+      "path": "frontend/src/CommitDetail.tsx",
+      "sha256": "64052b94fd1c78f75d4e6593a7f7fd6fcfab61e7463dcff1fbaf8f2b64e40f1b"
+    },
+    {
+      "path": "frontend/src/domain.test.ts",
+      "sha256": "4e4a807c9803d7c4f2eab224948f17b17ff6c92ff1abad83e9d0b251d40dd2f1"
+    },
+    {
+      "path": "frontend/src/domain.ts",
+      "sha256": "995945adddd61c9d4b080dddede7433b28ce3b03a456829561b2eda881962fe4"
+    },
+    {
+      "path": "frontend/src/Icon.tsx",
+      "sha256": "09f39641ef9b821c32b410842bfd7ac792c80fd19165312381c251c8070217df"
+    },
+    {
+      "path": "frontend/src/index.css",
+      "sha256": "eb46b59be98340488842357bd71e8e2d6ee83bc28b871477e57e6b61f98a3a32"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "sha256": "6e9e5807fcbd48b75a96db5cbef36c996262196be42e6d4760dc86babbe61ad2"
+    },
+    {
+      "path": "frontend/src/Risk.tsx",
+      "sha256": "062cc67fe8164da73c2c9e517d2dcec29f3cac08c5bd0157f7e887fda40c53e6"
+    },
+    {
+      "path": "frontend/src/shortlist.test.ts",
+      "sha256": "77e0f0de7ee3df9274b6be6f9ec888042d30202a758c509d803d89f6fb07bef4"
+    },
+    {
+      "path": "frontend/src/shortlist.ts",
+      "sha256": "8f5eba50bb0aa733438c53c329125d966c62b8fdf110b03f9061b6785df95603"
+    },
+    {
+      "path": "frontend/src/test-setup.ts",
+      "sha256": "e20f6c79ce7842f29f0dd93957e8230a5cbb3b5f6ee691fef96d4f393b964cb3"
+    },
+    {
+      "path": "frontend/src/useDataset.test.tsx",
+      "sha256": "70cc26dd4e70298b995162a89c56ff92e3bc30e2564a30e55ef4533ec8d512c5"
+    },
+    {
+      "path": "frontend/src/useDataset.ts",
+      "sha256": "410b6cea4c65698a4253883f79d913b0ce779443b3393354c0b7871a12942fa5"
+    },
+    {
+      "path": "frontend/tsconfig.app.json",
+      "sha256": "4ff2ca2516bd43bcf0e9641fac6ea427d80c52e0371467691f7a3eb4de54e877"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+    },
+    {
+      "path": "frontend/tsconfig.node.json",
+      "sha256": "8f74409ea9e90b0d9f66575686d8cda40a12a8ca2bece235dac27ff6ee0ed69c"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "sha256": "e1eefd0ed1639c88d1213884ef760516884db9e168190e223fee6b063ad3e088"
+    },
+    {
+      "path": "frontend/vitest.config.ts",
+      "sha256": "7ac754755a87b635b590e4000a80b09a128bd1af74c9d9cd8e3537dd8eb4dba8"
+    }
+  ],
+  "checks": [
+    {
+      "name": "clean-install",
+      "command": "npm ci --registry=https://registry.npmjs.org/ --fetch-retries=0 --fetch-timeout=30000",
+      "exitCode": 0,
+      "elapsedSeconds": 5.39
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "elapsedSeconds": 8.87
+    },
+    {
+      "name": "behavior-tests",
+      "command": "npm test",
+      "exitCode": 0,
+      "elapsedSeconds": 45.3
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "elapsedSeconds": 2.47
+    },
+    {
+      "name": "browser-tests",
+      "command": "npm run test:e2e",
+      "exitCode": 0,
+      "elapsedSeconds": 17.78
+    },
+    {
+      "name": "openspec-validation",
+      "command": "openspec validate build-desktop-review-workbench-prototype --strict --no-interactive",
+      "exitCode": 0,
+      "elapsedSeconds": 1.65
+    }
+  ]
+}

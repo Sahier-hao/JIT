@@ -1,0 +1,522 @@
+[
+  {
+    "requirement": "CRR-01",
+    "scenario": "查看演示工作台",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-01",
+    "scenario": "来源信息不完整",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-01",
+    "scenario": "查看真实历史回放",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-01",
+    "scenario": "手动切换模式",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-02",
+    "scenario": "展示可用提交",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-02",
+    "scenario": "变更信息缺失",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-03",
+    "scenario": "合法风险值包含边界",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/src/historical.test.tsx"
+    ]
+  },
+  {
+    "requirement": "CRR-03",
+    "scenario": "缺失或无效风险值",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/src/historical.test.tsx"
+    ]
+  },
+  {
+    "requirement": "CRR-04",
+    "scenario": "搜索并清空",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-04",
+    "scenario": "没有匹配项",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-05",
+    "scenario": "日期边界与搜索组合",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-05",
+    "scenario": "日期范围无效",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-06",
+    "scenario": "风险同分及暂无预测",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-06",
+    "scenario": "切换排序",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/domain.test.ts",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-07",
+    "scenario": "打开并返回",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/App.test.tsx",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-07",
+    "scenario": "提交或解释不可用",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/App.test.tsx",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-07",
+    "scenario": "真实度量不冒充归因",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/App.test.tsx",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "frontend/e2e/workbench.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-08",
+    "scenario": "完成优先审查选择",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-08",
+    "scenario": "重复加入与移除",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-08",
+    "scenario": "清单为空",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-09",
+    "scenario": "刷新后恢复",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/shortlist.test.ts",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/storage.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-09",
+    "scenario": "版本或保存内容不匹配",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/shortlist.test.ts",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/storage.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-09",
+    "scenario": "模式或模型运行改变",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/shortlist.test.ts",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/storage.spec.ts",
+      "frontend/e2e/historical.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-10",
+    "scenario": "保存被拒绝",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/shortlist.test.ts",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/storage.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-10",
+    "scenario": "恢复不可用",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/shortlist.test.ts",
+      "frontend/src/App.test.tsx",
+      "frontend/e2e/storage.spec.ts"
+    ]
+  },
+  {
+    "requirement": "CRR-11",
+    "scenario": "数据加载成功或为空",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/useDataset.test.tsx",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "CRR-11",
+    "scenario": "加载失败并重试",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/useDataset.test.tsx",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "CRR-11",
+    "scenario": "真实服务或来源失效",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/useDataset.test.tsx",
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "CRR-12",
+    "scenario": "桌面核心链路",
+    "result": "passed",
+    "evidence": [
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts",
+      "screenshots/"
+    ]
+  },
+  {
+    "requirement": "CRR-12",
+    "scenario": "键盘操作与焦点返回",
+    "result": "passed",
+    "evidence": [
+      "frontend/e2e/workbench.spec.ts",
+      "frontend/e2e/historical.spec.ts",
+      "screenshots/"
+    ]
+  },
+  {
+    "requirement": "CRR-13",
+    "scenario": "查看同一运行的记录",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "screenshots/*-real-baseline.png"
+    ]
+  },
+  {
+    "requirement": "CRR-13",
+    "scenario": "摘要缺失或来自其他运行",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "screenshots/*-real-baseline.png"
+    ]
+  },
+  {
+    "requirement": "CRR-13",
+    "scenario": "演示来源不显示真实效果",
+    "result": "passed",
+    "evidence": [
+      "frontend/src/historical.test.tsx",
+      "frontend/e2e/historical.spec.ts",
+      "screenshots/*-real-baseline.png"
+    ]
+  },
+  {
+    "requirement": "PDB-01",
+    "scenario": "核验指定版本",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_data.py",
+      "backend/tests/test_artifacts.py",
+      "data-quality.json",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "PDB-01",
+    "scenario": "数据内容不符合约定",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_data.py",
+      "backend/tests/test_artifacts.py",
+      "data-quality.json",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "PDB-02",
+    "scenario": "形成首轮输入与评价标签",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_data.py",
+      "backend/DATA.md",
+      "manifest.json"
+    ]
+  },
+  {
+    "requirement": "PDB-02",
+    "scenario": "标签或字段含义无法确定",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_data.py",
+      "backend/DATA.md",
+      "manifest.json"
+    ]
+  },
+  {
+    "requirement": "PDB-03",
+    "scenario": "冻结分区",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_model.py",
+      "split.json"
+    ]
+  },
+  {
+    "requirement": "PDB-03",
+    "scenario": "时间或类别条件不满足",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_model.py",
+      "split.json"
+    ]
+  },
+  {
+    "requirement": "PDB-04",
+    "scenario": "冻结后评价",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_model.py",
+      "backend/PROTOCOL.md",
+      "baseline-report.md"
+    ]
+  },
+  {
+    "requirement": "PDB-04",
+    "scenario": "测试标签独立于预测",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_model.py",
+      "backend/PROTOCOL.md",
+      "baseline-report.md"
+    ]
+  },
+  {
+    "requirement": "PDB-05",
+    "scenario": "生成实际风险",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_model.py",
+      "backend/tests/test_artifacts.py",
+      "backend/tests/test_api.py",
+      "http-check.json",
+      "reference-predictions.json"
+    ]
+  },
+  {
+    "requirement": "PDB-05",
+    "scenario": "产物或推理不完整",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_model.py",
+      "backend/tests/test_artifacts.py",
+      "backend/tests/test_api.py",
+      "http-check.json",
+      "reference-predictions.json"
+    ]
+  },
+  {
+    "requirement": "PDB-06",
+    "scenario": "核算两类指标",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_metrics.py",
+      "backend/PROTOCOL.md",
+      "baseline-report.md",
+      "summary.json"
+    ]
+  },
+  {
+    "requirement": "PDB-06",
+    "scenario": "无定义或效果有限",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_metrics.py",
+      "backend/PROTOCOL.md",
+      "baseline-report.md",
+      "summary.json"
+    ]
+  },
+  {
+    "requirement": "PDB-07",
+    "scenario": "复现固定基线",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_artifacts.py",
+      "reproduction-comparison.json",
+      "manifest.json",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "PDB-07",
+    "scenario": "上下文变化或记录不全",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_artifacts.py",
+      "reproduction-comparison.json",
+      "manifest.json",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "PDB-08",
+    "scenario": "请求当前回放",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_api.py",
+      "backend/tests/test_artifacts.py",
+      "backend/tests/test_http_lifecycle.py",
+      "http-check.json",
+      "http-lifecycle.json"
+    ]
+  },
+  {
+    "requirement": "PDB-08",
+    "scenario": "产物不可用后恢复",
+    "result": "passed",
+    "evidence": [
+      "backend/tests/test_api.py",
+      "backend/tests/test_artifacts.py",
+      "backend/tests/test_http_lifecycle.py",
+      "http-check.json",
+      "http-lifecycle.json"
+    ]
+  }
+]

@@ -1,0 +1,165 @@
+{
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1393590700,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1322599384
+  },
+  "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+  "features": [
+    "ns",
+    "nd",
+    "nf",
+    "ent",
+    "la",
+    "ld"
+  ],
+  "limitations": [
+    "六项发布者原生字段，尚非完整 Kamei14；预测解释未提供。",
+    "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+    "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+    "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+    "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+    "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+  ],
+  "metrics": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.38293951606100585
+    },
+    "confusion": {
+      "fn": 276,
+      "fp": 7,
+      "tn": 1560,
+      "tp": 10
+    },
+    "counts": {
+      "negative": 1567,
+      "positive": 286,
+      "records": 1853
+    },
+    "effort": {
+      "budgetLoc": 42048.4,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 25,
+      "totalLoc": 210242,
+      "usedLoc": 41090
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.066006600660066
+    },
+    "precision": {
+      "reason": null,
+      "value": 0.5882352941176471
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.03496503496503497
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.04195804195804196
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 286,
+          "fp": 0,
+          "tn": 1567,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.15434430652995143
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.7709845993189962
+    },
+    "threshold": 0.5
+  },
+  "modelSha256": "beaf967e9b23c6ee45c365e53c0a9bf72ce99cefbddb6717133f0a178d8d8507",
+  "protocolVersion": "openstack-six-v1",
+  "runId": "a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02",
+  "source": {
+    "citation": "McIntosh & Kamei (2018), Are Fix-Inducing Changes a Moving Target? TSE 44(5), 412–428.",
+    "files": {
+      "experimental_settings.r": {
+        "bytes": 1442,
+        "sha256": "2d62ff540dc26ef05864d20862b2966e637eba34b9e66a09a06cdaa2837d3209",
+        "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/scripts/experimental_settings.r"
+      },
+      "load_data.r": {
+        "bytes": 3737,
+        "sha256": "4be31b4663f2dfc677594ca278abfcd814d42d04f09b06be1a5b031c1aace475",
+        "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/scripts/load_data.r"
+      },
+      "openstack.csv": {
+        "bytes": 4448994,
+        "sha256": "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505",
+        "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/data/openstack.csv"
+      }
+    },
+    "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。",
+    "publisher": "software-rebels/JITMovingTarget",
+    "quality": {
+      "blankLabels": 9812,
+      "excluded": {
+        "noAddedLines": 812,
+        "outsideWindow": 13646,
+        "tooManyFiles": 20,
+        "tooMuchChurn": 3
+      },
+      "featureMissing": {
+        "ent": 0,
+        "la": 0,
+        "ld": 0,
+        "nd": 0,
+        "nf": 0,
+        "ns": 0
+      },
+      "includedRows": 12374,
+      "positiveLabels": 1616,
+      "rawRows": 26855
+    },
+    "revision": "184403ad3734894c8417cbec72fdef3da5edc0b9",
+    "sha256": "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505",
+    "url": "https://github.com/software-rebels/JITMovingTarget/tree/184403ad3734894c8417cbec72fdef3da5edc0b9"
+  },
+  "split": {
+    "test": {
+      "count": 1853,
+      "end": "2014-02-28T12:31:39Z",
+      "positiveCount": 286,
+      "start": "2013-11-11T08:29:48Z"
+    },
+    "train": {
+      "count": 8669,
+      "end": "2013-08-10T06:42:45Z",
+      "positiveCount": 959,
+      "start": "2011-11-29T20:43:04Z"
+    },
+    "validation": {
+      "count": 1852,
+      "end": "2013-11-11T06:49:17Z",
+      "positiveCount": 371,
+      "start": "2013-08-10T20:12:59Z"
+    }
+  },
+  "threshold": 0.5
+}

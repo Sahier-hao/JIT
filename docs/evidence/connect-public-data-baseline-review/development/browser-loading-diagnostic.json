@@ -1,0 +1,334 @@
+{
+  "config": {
+    "argv": [
+      "D:\\develop\\nodejs\\node.exe",
+      "D:\\code\\jit-defect-prediction\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "e2e/historical.spec.ts",
+      "--grep",
+      "完整批次|摘要",
+      "--reporter=list,json"
+    ],
+    "configFile": "D:\\code\\jit-defect-prediction\\frontend\\playwright.config.ts",
+    "rootDir": "D:/code/jit-defect-prediction/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/code/jit-defect-prediction/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "desktop-1280",
+        "name": "desktop-1280",
+        "testDir": "D:/code/jit-defect-prediction/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/code/jit-defect-prediction/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "desktop-1440",
+        "name": "desktop-1440",
+        "testDir": "D:/code/jit-defect-prediction/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\code\\jit-defect-prediction\\frontend\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "desktop-1280",
+        "testDir": "D:\\code\\jit-defect-prediction\\frontend\\e2e",
+        "snapshotDir": "D:\\code\\jit-defect-prediction\\frontend\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "browserName": "chromium",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop-1280"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\code\\jit-defect-prediction\\frontend\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "name": "desktop-1440",
+        "testDir": "D:\\code\\jit-defect-prediction\\frontend\\e2e",
+        "snapshotDir": "D:\\code\\jit-defect-prediction\\frontend\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "browserName": "chromium",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop-1440"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "historical.spec.ts",
+      "file": "historical.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应）",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 18017,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' })\u001b[22m\n\n    at D:\\code\\jit-defect-prediction\\frontend\\e2e\\historical.spec.ts:87:78",
+                    "location": {
+                      "file": "D:\\code\\jit-defect-prediction\\frontend\\e2e\\historical.spec.ts",
+                      "column": 78,
+                      "line": 87
+                    },
+                    "snippet": "  85 |   await photo(page, 'shortlist', info.project.name)\n  86 |   await page.reload()\n> 87 |   try { await expect(page.getByRole('button', { name: `${first.id} 已在清单` })).toBeDisabled() }\n     |                                                                              ^\n  88 |   catch (error) { console.log('RECOVERY_DIAGNOSTIC', await diagnostic(page)); throw error }\n  89 |   await page.getByRole('button', { name: /优先审查清单/ }).click()\n  90 |   await expect(commits(page)).toHaveCount(1)"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\code\\jit-defect-prediction\\frontend\\e2e\\historical.spec.ts",
+                        "column": 78,
+                        "line": 87
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeDisabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' })\nExpected: disabled\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeDisabled\" getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'ac4e5f446cf183cfdd992cac9c82defea2147c68 已在清单' })\u001b[22m\n\n\n  85 |   await photo(page, 'shortlist', info.project.name)\n  86 |   await page.reload()\n> 87 |   try { await expect(page.getByRole('button', { name: `${first.id} 已在清单` })).toBeDisabled() }\n     |                                                                              ^\n  88 |   catch (error) { console.log('RECOVERY_DIAGNOSTIC', await diagnostic(page)); throw error }\n  89 |   await page.getByRole('button', { name: /优先审查清单/ }).click()\n  90 |   await expect(commits(page)).toHaveCount(1)\n    at D:\\code\\jit-defect-prediction\\frontend\\e2e\\historical.spec.ts:87:78"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "RECOVERY_DIAGNOSTIC {\n  text: \u001b[32m'JIT Review\\n'\u001b[39m +\n    \u001b[32m'提交风险评审\\n'\u001b[39m +\n    \u001b[32m'历史数据\\n'\u001b[39m +\n    \u001b[32m'示例数据\\n'\u001b[39m +\n    \u001b[32m'工作空间\\n'\u001b[39m +\n    \u001b[32m'提交工作台\\n'\u001b[39m +\n    \u001b[32m'优先审查清单\\n'\u001b[39m +\n    \u001b[32m'1\\n'\u001b[39m +\n    \u001b[32m'个人工作空间\\n'\u001b[39m +\n    \u001b[32m'清单保存在当前浏览器\\n'\u001b[39m +\n    \u001b[32m'OpenStack\\n'\u001b[39m +\n    \u001b[32m'提交工作台\\n'\u001b[39m +\n    \u001b[32m'真实历史回放\\n'\u001b[39m +\n    \u001b[32m'openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c\\n'\u001b[39m +\n    \u001b[32m'逻辑回归 · 六字段\\n'\u001b[39m +\n    \u001b[32m'运行\\n'\u001b[39m +\n    \u001b[32m'a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02\\n'\u001b[39m +\n    \u001b[32m'提交评审\\n'\u001b[39m +\n    \u001b[32m'\\n'\u001b[39m +\n    \u001b[32m'从提交风险出发，确定下一次审查的重点。\\n'\u001b[39m +\n    \u001b[32m'\\n'\u001b[39m +\n    \u001b[32m'1,853\\n'\u001b[39m +\n    \u001b[32m'条测试提交\\n'\u001b[39m +\n    \u001b[32m'公开历史数据 · 模型估计\\n'\u001b[39m +\n    \u001b[32m'回顾性评价；发布者历史观测标签，未验证当时标签可获得性。风险不等于已确认缺陷。\\n'\u001b[39m +\n    \u001b[32m'基线记录固定测试批次 · 六字段 · 回顾性评价\\n'\u001b[39m +\n    \u001b[32m'提交标识搜索\\n'\u001b[39m +\n    \u001b[32m'起始日期\\n'\u001b[39m +\n    \u001b[32m'结束日期\\n'\u001b[39m +\n    \u001b[32m'排序\\n'\u001b[39m +\n    \u001b[32m'风险从高到低\\n'\u001b[39m +\n    \u001b[32m'时间从新到旧\\n'\u001b[39m +\n    \u001b[32m'清除筛选\\n'\u001b[39m +\n    \u001b[32m'提交风险列表1853\\n'\u001b[39m +\n    \u001b[32m'时间：Asia/Shanghai (UTC+08:00) · 按模型风险排序\\n'\u001b[39m +\n    \u001b[32m'提交风险列表\\n'\u001b[39m +\n    \u001b[32m'提交 / 改动\\t模型风险\\t提交时间\\t变更行\\t文件\\t审查选择\\n'\u001b[39m +\n    \u001b[32m'ac4e5f446cf1…'\u001b[39m,\n  hooks: [\n    {\n      propsMode: \u001b[32m'historical'\u001b[39m,\n      storedMode: \u001b[32m'historical'\u001b[39m,\n      equalLoader: \u001b[33mtrue\u001b[39m,\n      storedAttempt: \u001b[33m0\u001b[39m,\n      attempt: \u001b[33m0\u001b[39m,\n      resourceState: \u001b[32m'ready'\u001b[39m\n    }\n  ]\n}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T15:19:07.587Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\code\\jit-defect-prediction\\frontend\\test-results\\historical-真实-HTTP-完整批次→查询→详情→清单→刷新（没有拦截模型响应）-desktop-1280\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\code\\jit-defect-prediction\\frontend\\test-results\\historical-真实-HTTP-完整批次→查询→详情→清单→刷新（没有拦截模型响应）-desktop-1280\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\code\\jit-defect-prediction\\frontend\\e2e\\historical.spec.ts",
+                    "column": 78,
+                    "line": 87
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b421e3efd7172a99c9f8-b569742130b04d31f67d",
+          "file": "historical.spec.ts",
+          "line": 33,
+          "column": 1
+        },
+        {
+          "title": "真实基线摘要保持完整批次指标，演示清单与真实隔离",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10793,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T15:19:07.603Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b421e3efd7172a99c9f8-78ba65f524170bbf14a5",
+          "file": "historical.spec.ts",
+          "line": 102,
+          "column": 1
+        },
+        {
+          "title": "真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应）",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 11199,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T15:19:19.157Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b421e3efd7172a99c9f8-fbc62770e1b8722a8b51",
+          "file": "historical.spec.ts",
+          "line": 33,
+          "column": 1
+        },
+        {
+          "title": "真实基线摘要保持完整批次指标，演示清单与真实隔离",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9785,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T15:19:26.870Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b421e3efd7172a99c9f8-8df4f13b1fd1b7333dc1",
+          "file": "historical.spec.ts",
+          "line": 102,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-10T15:19:06.047Z",
+    "duration": 31594.52,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

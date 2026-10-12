@@ -1,0 +1,8 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\code\jit-defect-prediction\backend
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collected 69 items
+

@@ -1,0 +1,194 @@
+{
+  "scope": "人工演示前端原型的OpenSpec同步与归档；不代表新版视觉满意度、真实模型效果或课程整体验收。",
+  "checkedUtc": "2026-10-10T13:17:25.8459625Z",
+  "change": "build-desktop-review-workbench-prototype",
+  "schema": "spec-driven",
+  "tasks": {
+    "completed": 18,
+    "total": 18
+  },
+  "specSync": {
+    "method": "openspec-sync-specs inline; reuse archive-fetched specs instruction snapshot",
+    "capability": "commit-risk-review",
+    "mainSpec": "openspec/specs/commit-risk-review/spec.md",
+    "requirements": 12,
+    "scenarios": 25,
+    "purposeCopiedVerbatim": true,
+    "allAddedBlocksMatch": true,
+    "deltaHeadersAbsent": true,
+    "rules": []
+  },
+  "archive": {
+    "command": "openspec archive build-desktop-review-workbench-prototype --skip-specs --yes --json",
+    "exitCode": 0,
+    "cliResult": {
+      "archive": {
+        "change": "build-desktop-review-workbench-prototype",
+        "archivedAs": "2026-10-10-build-desktop-review-workbench-prototype",
+        "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype",
+        "specsUpdated": false
+      },
+      "root": {
+        "path": "D:\\code\\jit-defect-prediction",
+        "source": "nearest"
+      }
+    },
+    "skipSpecsReason": "Main spec was already synced and verified inline before the CLI move.",
+    "integrity": {
+      "archivedPath": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-10-build-desktop-review-workbench-prototype",
+      "activeChanges": 0,
+      "planningFilesPreserved": 5,
+      "mainRequirements": 12,
+      "mainScenarios": 25,
+      "canonicalSyncMatches": true
+    },
+    "planningHashesPreserved": [
+      {
+        "path": ".openspec.yaml",
+        "sha256": "e61703315c59969805e021ec521ca189369aaf8ea902d52c5e39c7fbc603598f"
+      },
+      {
+        "path": "design.md",
+        "sha256": "f9b7af965ea7dcce6b1d88aabd2d532ccd48660b21acdd9a45385baf6441394c"
+      },
+      {
+        "path": "proposal.md",
+        "sha256": "c6df51aeb4c33195a17f49018d969413723f2e02ce3aa63f9f28b00ba3dcc218"
+      },
+      {
+        "path": "tasks.md",
+        "sha256": "a7c5d5aff42956306a15a93a82bfbab525b6d9c40e197af3d5c72bcb3259c3ff"
+      },
+      {
+        "path": "specs/commit-risk-review/spec.md",
+        "sha256": "b95fce622d3f2148f4e3cbc6b76997626ecb3b929b0d1dec95641c648806199e"
+      }
+    ]
+  },
+  "verification": {
+    "documentationLinks": {"files":7,"localLinksChecked":28,"brokenLinks":0,"currentHashesChecked":4,"checkedUtc":"2026-10-10T13:18:08.8761277Z"},
+    "mainSpecs": {
+      "command": "openspec validate --specs --strict --no-interactive --json",
+      "exitCode": 0,
+      "data": {
+        "items": [
+          {
+            "id": "commit-risk-review",
+            "type": "spec",
+            "valid": true,
+            "issues": [],
+            "durationMs": 6
+          }
+        ],
+        "summary": {
+          "totals": {
+            "items": 1,
+            "passed": 1,
+            "failed": 0
+          },
+          "byType": {
+            "spec": {
+              "items": 1,
+              "passed": 1,
+              "failed": 0
+            }
+          }
+        },
+        "version": "1.0",
+        "root": {
+          "path": "D:\\code\\jit-defect-prediction",
+          "source": "nearest"
+        }
+      }
+    },
+    "archivedTasks": {
+      "command": "openspec validate --archived --strict --no-interactive --json",
+      "exitCode": 0,
+      "data": {
+        "items": [
+          {
+            "id": "2026-10-10-build-desktop-review-workbench-prototype",
+            "type": "change",
+            "valid": true,
+            "issues": [],
+            "durationMs": 16
+          }
+        ],
+        "summary": {
+          "totals": {
+            "items": 1,
+            "passed": 1,
+            "failed": 0
+          },
+          "byType": {
+            "change": {
+              "items": 1,
+              "passed": 1,
+              "failed": 0
+            }
+          }
+        },
+        "version": "1.0",
+        "root": {
+          "path": "D:\\code\\jit-defect-prediction",
+          "source": "nearest"
+        }
+      }
+    },
+    "verifyScript": {
+      "powerShellParseSucceeded": true,
+      "extractedCommand": "openspec validate --specs --strict --no-interactive",
+      "commandExitCode": 0
+    },
+    "originalFunctionalEvidence": {
+      "record": "docs/evidence/build-desktop-review-workbench-prototype/verification.json",
+      "unitReport": "docs/evidence/build-desktop-review-workbench-prototype/unit-results.json",
+      "unitPassed": 53,
+      "browserReport": "docs/evidence/build-desktop-review-workbench-prototype/browser-results.json",
+      "browserExpected": 30,
+      "browserUnexpected": 0,
+      "browserSkipped": 0,
+      "browserFlaky": 0,
+      "all31SourceHashesMatchedBeforeArchive": true,
+      "testsRerunDuringArchive": false,
+      "reportsOverwrittenDuringArchive": false
+    },
+    "sourceIntegrity": {
+      "checkedUtc": "2026-10-10T13:17:25.8459625Z",
+      "originalVerificationSucceeded": true,
+      "originalFiles": 31,
+      "unchangedFiles": 29,
+      "changedFiles": [
+        {
+          "path": "frontend/README.md",
+          "originalSha256": "d39c310c45caf2a64983086af2d9b06fa6f5e1074a01365f6e79b09eaa4649fe",
+          "currentSha256": "1e6274183d0c53edbbe31a1365fe5c4a4c9dc89e1ed8258e19581b744f2b7dc6"
+        },
+        {
+          "path": "frontend/scripts/verify.ps1",
+          "originalSha256": "4f7773f4caf4a0e867d94649824760b3529c401e374b128bce046b4c62337ebf",
+          "currentSha256": "8f186acc92b937929cf221d4511fc8be0352da1f2473a53adc46bdc82c51fbac"
+        }
+      ],
+      "currentRecordHashes": [
+        {
+          "path": "frontend/README.md",
+          "sha256": "1e6274183d0c53edbbe31a1365fe5c4a4c9dc89e1ed8258e19581b744f2b7dc6"
+        },
+        {
+          "path": "frontend/scripts/verify.ps1",
+          "sha256": "8f186acc92b937929cf221d4511fc8be0352da1f2473a53adc46bdc82c51fbac"
+        },
+        {
+          "path": "docs/evidence/build-desktop-review-workbench-prototype/acceptance.md",
+          "sha256": "433784938a28bd372735781923ed8b546851d56f445f957104bd4c8272227f20"
+        },
+        {
+          "path": "openspec/specs/commit-risk-review/spec.md",
+          "sha256": "76d4df010b12fda6016f45bff3204c04d5646ce1c9464821f54f6f98bab2c416"
+        }
+      ]
+    }
+  },
+  "outstanding": "新版用户视觉评审及课堂验收尚未进行；公开数据集、真实模型与正式实验属于后续范围。"
+}

@@ -1,0 +1,368 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFF                                               [100%]
+================================== FAILURES ===================================
+___ test_published_blank_label_is_not_observed_and_features_are_allowlisted ___
+
+    def test_published_blank_label_is_not_observed_and_features_are_allowlisted():
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:24: ModuleNotFoundError
+_______________ test_label_counts_are_binary_observations[0-0] ________________
+
+label = '0', expected = 0
+
+    @pytest.mark.parametrize("label,expected", [("0", 0), ("1", 1), ("29", 1)])
+    def test_label_counts_are_binary_observations(label, expected):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:36: ModuleNotFoundError
+_______________ test_label_counts_are_binary_observations[1-1] ________________
+
+label = '1', expected = 1
+
+    @pytest.mark.parametrize("label,expected", [("0", 0), ("1", 1), ("29", 1)])
+    def test_label_counts_are_binary_observations(label, expected):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:36: ModuleNotFoundError
+_______________ test_label_counts_are_binary_observations[29-1] _______________
+
+label = '29', expected = 1
+
+    @pytest.mark.parametrize("label,expected", [("0", 0), ("1", 1), ("29", 1)])
+    def test_label_counts_are_binary_observations(label, expected):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:36: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch0] _______
+
+patch = {'commit_id': ''}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch1] _______
+
+patch = {'commit_id': 'not-a-sha'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch2] _______
+
+patch = {'author_date': 'invalid'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch3] _______
+
+patch = {'author_date': '1350000000.5'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch4] _______
+
+patch = {'la': ''}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch5] _______
+
+patch = {'la': 'nan'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch6] _______
+
+patch = {'ent': 'inf'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch7] _______
+
+patch = {'ld': '-1'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch8] _______
+
+patch = {'nf': '1.5'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_______ test_invalid_required_data_fails_without_dropping_a_row[patch9] _______
+
+patch = {'bugcount': '-1'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+______ test_invalid_required_data_fails_without_dropping_a_row[patch10] _______
+
+patch = {'bugcount': 'unexpected'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+______ test_invalid_required_data_fails_without_dropping_a_row[patch11] _______
+
+patch = {'bugcount': '1.5'}
+
+    @pytest.mark.parametrize("patch", [
+        {"commit_id": ""}, {"commit_id": "not-a-sha"}, {"author_date": "invalid"},
+        {"author_date": "1350000000.5"}, {"la": ""}, {"la": "nan"},
+        {"ent": "inf"}, {"ld": "-1"}, {"nf": "1.5"}, {"bugcount": "-1"},
+        {"bugcount": "unexpected"}, {"bugcount": "1.5"},
+    ])
+    def test_invalid_required_data_fails_without_dropping_a_row(patch):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:48: ModuleNotFoundError
+_________ test_duplicate_identity_is_rejected_even_outside_the_cohort _________
+
+    def test_duplicate_identity_is_rejected_even_outside_the_cohort():
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:54: ModuleNotFoundError
+_______ test_fixed_cohort_exclusions_are_counted[patch0-outsideWindow] ________
+
+patch = {'author_date': '1322599383'}, reason = 'outsideWindow'
+
+    @pytest.mark.parametrize("patch,reason", [
+        ({"author_date": "1322599383"}, "outsideWindow"),
+        ({"author_date": "1393590700"}, "outsideWindow"),
+        ({"la": "0"}, "noAddedLines"),
+        ({"la": "9996", "ld": "5"}, "tooMuchChurn"),
+        ({"nf": "101"}, "tooManyFiles"),
+    ])
+    def test_fixed_cohort_exclusions_are_counted(patch, reason):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:67: ModuleNotFoundError
+_______ test_fixed_cohort_exclusions_are_counted[patch1-outsideWindow] ________
+
+patch = {'author_date': '1393590700'}, reason = 'outsideWindow'
+
+    @pytest.mark.parametrize("patch,reason", [
+        ({"author_date": "1322599383"}, "outsideWindow"),
+        ({"author_date": "1393590700"}, "outsideWindow"),
+        ({"la": "0"}, "noAddedLines"),
+        ({"la": "9996", "ld": "5"}, "tooMuchChurn"),
+        ({"nf": "101"}, "tooManyFiles"),
+    ])
+    def test_fixed_cohort_exclusions_are_counted(patch, reason):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:67: ModuleNotFoundError
+________ test_fixed_cohort_exclusions_are_counted[patch2-noAddedLines] ________
+
+patch = {'la': '0'}, reason = 'noAddedLines'
+
+    @pytest.mark.parametrize("patch,reason", [
+        ({"author_date": "1322599383"}, "outsideWindow"),
+        ({"author_date": "1393590700"}, "outsideWindow"),
+        ({"la": "0"}, "noAddedLines"),
+        ({"la": "9996", "ld": "5"}, "tooMuchChurn"),
+        ({"nf": "101"}, "tooManyFiles"),
+    ])
+    def test_fixed_cohort_exclusions_are_counted(patch, reason):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:67: ModuleNotFoundError
+________ test_fixed_cohort_exclusions_are_counted[patch3-tooMuchChurn] ________
+
+patch = {'la': '9996', 'ld': '5'}, reason = 'tooMuchChurn'
+
+    @pytest.mark.parametrize("patch,reason", [
+        ({"author_date": "1322599383"}, "outsideWindow"),
+        ({"author_date": "1393590700"}, "outsideWindow"),
+        ({"la": "0"}, "noAddedLines"),
+        ({"la": "9996", "ld": "5"}, "tooMuchChurn"),
+        ({"nf": "101"}, "tooManyFiles"),
+    ])
+    def test_fixed_cohort_exclusions_are_counted(patch, reason):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:67: ModuleNotFoundError
+________ test_fixed_cohort_exclusions_are_counted[patch4-tooManyFiles] ________
+
+patch = {'nf': '101'}, reason = 'tooManyFiles'
+
+    @pytest.mark.parametrize("patch,reason", [
+        ({"author_date": "1322599383"}, "outsideWindow"),
+        ({"author_date": "1393590700"}, "outsideWindow"),
+        ({"la": "0"}, "noAddedLines"),
+        ({"la": "9996", "ld": "5"}, "tooMuchChurn"),
+        ({"nf": "101"}, "tooManyFiles"),
+    ])
+    def test_fixed_cohort_exclusions_are_counted(patch, reason):
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:67: ModuleNotFoundError
+_________________ test_inclusive_start_and_churn_file_limits __________________
+
+    def test_inclusive_start_and_churn_file_limits():
+>       from jit_baseline.data import parse_source
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:75: ModuleNotFoundError
+__________________ test_verified_read_rejects_hash_mismatch ___________________
+
+tmp_path = WindowsPath('D:/code/jit-defect-prediction/backend/.cache/pytest-data-red/test_verified_read_rejects_has0')
+
+    def test_verified_read_rejects_hash_mismatch(tmp_path):
+>       from jit_baseline.data import verified_bytes
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:81: ModuleNotFoundError
+__________________ test_missing_source_is_a_specific_failure __________________
+
+tmp_path = WindowsPath('D:/code/jit-defect-prediction/backend/.cache/pytest-data-red/test_missing_source_is_a_speci0')
+
+    def test_missing_source_is_a_specific_failure(tmp_path):
+>       from jit_baseline.data import verified_bytes
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:89: ModuleNotFoundError
+________________ test_download_failure_cannot_create_a_source _________________
+
+tmp_path = WindowsPath('D:/code/jit-defect-prediction/backend/.cache/pytest-data-red/test_download_failure_cannot_c0')
+
+    def test_download_failure_cannot_create_a_source(tmp_path):
+>       from jit_baseline.data import fetch_sources
+E       ModuleNotFoundError: No module named 'jit_baseline.data'
+
+tests\test_data.py:95: ModuleNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/test_data.py::test_published_blank_label_is_not_observed_and_features_are_allowlisted
+FAILED tests/test_data.py::test_label_counts_are_binary_observations[0-0] - M...
+FAILED tests/test_data.py::test_label_counts_are_binary_observations[1-1] - M...
+FAILED tests/test_data.py::test_label_counts_are_binary_observations[29-1] - ...
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch0]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch1]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch2]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch3]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch4]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch5]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch6]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch7]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch8]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch9]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch10]
+FAILED tests/test_data.py::test_invalid_required_data_fails_without_dropping_a_row[patch11]
+FAILED tests/test_data.py::test_duplicate_identity_is_rejected_even_outside_the_cohort
+FAILED tests/test_data.py::test_fixed_cohort_exclusions_are_counted[patch0-outsideWindow]
+FAILED tests/test_data.py::test_fixed_cohort_exclusions_are_counted[patch1-outsideWindow]
+FAILED tests/test_data.py::test_fixed_cohort_exclusions_are_counted[patch2-noAddedLines]
+FAILED tests/test_data.py::test_fixed_cohort_exclusions_are_counted[patch3-tooMuchChurn]
+FAILED tests/test_data.py::test_fixed_cohort_exclusions_are_counted[patch4-tooManyFiles]
+FAILED tests/test_data.py::test_inclusive_start_and_churn_file_limits - Modul...
+FAILED tests/test_data.py::test_verified_read_rejects_hash_mismatch - ModuleN...
+FAILED tests/test_data.py::test_missing_source_is_a_specific_failure - Module...
+FAILED tests/test_data.py::test_download_failure_cannot_create_a_source - Mod...
+26 failed in 0.30s

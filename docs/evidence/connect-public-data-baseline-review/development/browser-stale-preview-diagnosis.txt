@@ -1,0 +1,4 @@
+First browser run: 30 demo checks passed, 10 historical checks failed.
+Cause: preexisting same-project Vite preview PID 4556 on 127.0.0.1:4173 served previous build/config.
+Read-only process inspection verified exact D:/code/jit-defect-prediction/frontend/node_modules/vite/bin/vite.js preview command.
+Fresh frontend tests now require their own server; this result is not acceptance.

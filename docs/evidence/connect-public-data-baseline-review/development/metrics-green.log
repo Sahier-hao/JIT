@@ -1,0 +1,13 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\code\jit-defect-prediction\backend
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collected 50 items
+
+tests\test_data.py ..........................                            [ 52%]
+tests\test_metrics.py ...........                                        [ 74%]
+tests\test_model.py .............                                        [100%]
+
+============================= 50 passed in 1.75s ==============================

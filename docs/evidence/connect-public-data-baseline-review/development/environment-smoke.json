@@ -1,0 +1,13 @@
+{
+  "kind": "synthetic-dependency-smoke",
+  "success": true,
+  "python": "3.14.2",
+  "packages": {
+    "numpy": "2.5.3",
+    "scikit-learn": "1.9.1",
+    "fastapi": "0.143.0",
+    "uvicorn": "0.54.0",
+    "pytest": "9.1.1",
+    "joblib": "1.6.0"
+  }
+}

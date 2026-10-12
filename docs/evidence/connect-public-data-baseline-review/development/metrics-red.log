@@ -1,0 +1,110 @@
+FFFFFFFFFFF                                                              [100%]
+================================== FAILURES ===================================
+_____________ test_hand_computed_auc_ap_classification_and_effort _____________
+
+    def test_hand_computed_auc_ap_classification_and_effort():
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:12: ModuleNotFoundError
+_____ test_whole_commit_budget_stops_at_first_commit_that_exceeds_budget ______
+
+    def test_whole_commit_budget_stops_at_first_commit_that_exceeds_budget():
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:25: ModuleNotFoundError
+______ test_effort_ties_follow_time_then_identity_without_label_ordering ______
+
+    def test_effort_ties_follow_time_then_identity_without_label_ordering():
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:33: ModuleNotFoundError
+_________ test_no_predicted_positive_precision_is_null_but_f1_is_zero _________
+
+    def test_no_predicted_positive_precision_is_null_but_f1_is_zero():
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:41: ModuleNotFoundError
+_______ test_single_class_auc_and_ap_are_not_reported_as_valid[labels0] _______
+
+labels = (0, 0, 0, 0)
+
+    @pytest.mark.parametrize("labels", [(0, 0, 0, 0), (1, 1, 1, 1)])
+    def test_single_class_auc_and_ap_are_not_reported_as_valid(labels):
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:50: ModuleNotFoundError
+_______ test_single_class_auc_and_ap_are_not_reported_as_valid[labels1] _______
+
+labels = (1, 1, 1, 1)
+
+    @pytest.mark.parametrize("labels", [(0, 0, 0, 0), (1, 1, 1, 1)])
+    def test_single_class_auc_and_ap_are_not_reported_as_valid(labels):
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:50: ModuleNotFoundError
+_________ test_zero_workload_has_a_reason_instead_of_fake_zero_metric _________
+
+    def test_zero_workload_has_a_reason_instead_of_fake_zero_metric():
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:57: ModuleNotFoundError
+_________ test_evaluation_rejects_incomplete_or_illegal_risks[risks0] _________
+
+risks = []
+
+    @pytest.mark.parametrize("risks", [[], [.2] * 3, [.2, .2, .2, float('nan')], [.2, .2, .2, 2]])
+    def test_evaluation_rejects_incomplete_or_illegal_risks(risks):
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:65: ModuleNotFoundError
+_________ test_evaluation_rejects_incomplete_or_illegal_risks[risks1] _________
+
+risks = [0.2, 0.2, 0.2]
+
+    @pytest.mark.parametrize("risks", [[], [.2] * 3, [.2, .2, .2, float('nan')], [.2, .2, .2, 2]])
+    def test_evaluation_rejects_incomplete_or_illegal_risks(risks):
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:65: ModuleNotFoundError
+_________ test_evaluation_rejects_incomplete_or_illegal_risks[risks2] _________
+
+risks = [0.2, 0.2, 0.2, nan]
+
+    @pytest.mark.parametrize("risks", [[], [.2] * 3, [.2, .2, .2, float('nan')], [.2, .2, .2, 2]])
+    def test_evaluation_rejects_incomplete_or_illegal_risks(risks):
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:65: ModuleNotFoundError
+_________ test_evaluation_rejects_incomplete_or_illegal_risks[risks3] _________
+
+risks = [0.2, 0.2, 0.2, 2]
+
+    @pytest.mark.parametrize("risks", [[], [.2] * 3, [.2, .2, .2, float('nan')], [.2, .2, .2, 2]])
+    def test_evaluation_rejects_incomplete_or_illegal_risks(risks):
+>       from jit_baseline.metrics import evaluate
+E       ModuleNotFoundError: No module named 'jit_baseline.metrics'
+
+tests\test_metrics.py:65: ModuleNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/test_metrics.py::test_hand_computed_auc_ap_classification_and_effort
+FAILED tests/test_metrics.py::test_whole_commit_budget_stops_at_first_commit_that_exceeds_budget
+FAILED tests/test_metrics.py::test_effort_ties_follow_time_then_identity_without_label_ordering
+FAILED tests/test_metrics.py::test_no_predicted_positive_precision_is_null_but_f1_is_zero
+FAILED tests/test_metrics.py::test_single_class_auc_and_ap_are_not_reported_as_valid[labels0]
+FAILED tests/test_metrics.py::test_single_class_auc_and_ap_are_not_reported_as_valid[labels1]
+FAILED tests/test_metrics.py::test_zero_workload_has_a_reason_instead_of_fake_zero_metric
+FAILED tests/test_metrics.py::test_evaluation_rejects_incomplete_or_illegal_risks[risks0]
+FAILED tests/test_metrics.py::test_evaluation_rejects_incomplete_or_illegal_risks[risks1]
+FAILED tests/test_metrics.py::test_evaluation_rejects_incomplete_or_illegal_risks[risks2]
+FAILED tests/test_metrics.py::test_evaluation_rejects_incomplete_or_illegal_risks[risks3]
+11 failed in 0.15s

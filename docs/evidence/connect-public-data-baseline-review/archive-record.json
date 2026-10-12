@@ -1,0 +1,151 @@
+{
+  "change": "connect-public-data-baseline-review",
+  "schema": "spec-driven",
+  "archiveDate": "2026-10-11",
+  "checkedUtc": "2026-10-11T03:10:15.9779548Z",
+  "archivePath": "openspec/changes/archive/2026-10-11-connect-public-data-baseline-review",
+  "status": "archived",
+  "tasks": {
+    "total": 23,
+    "complete": 23,
+    "remaining": 0
+  },
+  "userSelection": "同步主规格后归档",
+  "specSync": {
+    "allDeltaRequirementsSynced": true,
+    "existingTitleAndPurposePreserved": true,
+    "unmentionedRequirementsPreserved": 8,
+    "reviewRequirementCount": 13,
+    "baselineRequirementCount": 8,
+    "archiveTargetExists": false,
+    "capabilities": [
+      "commit-risk-review",
+      "public-data-baseline"
+    ],
+    "modifiedRequirements": [
+      "CRR-01",
+      "CRR-07",
+      "CRR-09",
+      "CRR-11"
+    ],
+    "addedRequirements": [
+      "CRR-13",
+      "PDB-01",
+      "PDB-02",
+      "PDB-03",
+      "PDB-04",
+      "PDB-05",
+      "PDB-06",
+      "PDB-07",
+      "PDB-08"
+    ],
+    "performedInlineBeforeCliArchive": true,
+    "strictValidation": {
+      "passed": 2,
+      "failed": 0
+    },
+    "hashes": [
+      {
+        "path": "openspec/specs/commit-risk-review/spec.md",
+        "sha256": "3ea8ba7d866032322bf6b870a7c7671f3c409d4cf11b7c336b770235ba0f1acb"
+      },
+      {
+        "path": "openspec/specs/public-data-baseline/spec.md",
+        "sha256": "276c4db8670b703ba31fe3be79b7cf73ca8fe6df77caa7221905a8cb51711730"
+      }
+    ]
+  },
+  "archiveCommand": "openspec archive connect-public-data-baseline-review --yes --skip-specs --json",
+  "archiveCommandExitCode": 0,
+  "archiveCliResult": {
+    "archive": {
+      "change": "connect-public-data-baseline-review",
+      "archivedAs": "2026-10-11-connect-public-data-baseline-review",
+      "path": "D:\\code\\jit-defect-prediction\\openspec\\changes\\archive\\2026-10-11-connect-public-data-baseline-review",
+      "specsUpdated": false
+    },
+    "root": {
+      "path": "D:\\code\\jit-defect-prediction",
+      "source": "nearest"
+    }
+  },
+  "archiveCliSkipSpecsReason": "主规格已先按同步技能合并并通过内容核对和严格校验；CLI 只负责归档，避免重复同步。",
+  "moveIntegrity": {
+    "checkedFiles": 6,
+    "allContentsPreservedByCli": true,
+    "subsequentDocumentationOnlyEdits": [
+      {
+        "path": "design.md",
+        "reason": "验收记录相对链接增加一级 ../，适配归档目录深度"
+      }
+    ],
+    "beforeHashes": [
+      {
+        "path": ".openspec.yaml",
+        "sha256": "e61703315c59969805e021ec521ca189369aaf8ea902d52c5e39c7fbc603598f"
+      },
+      {
+        "path": "design.md",
+        "sha256": "3127bec514234fede4550fcad16589e809d2416b160e7d37065be744df2c7a21"
+      },
+      {
+        "path": "proposal.md",
+        "sha256": "11f24c7ccaee5725e40154eb1371135e92506d0b064e77e2c514d00832575e72"
+      },
+      {
+        "path": "specs/commit-risk-review/spec.md",
+        "sha256": "a16190bee30f90e527cf1a95ae09b82965c0b945557c2b38cdecaa245cc9134d"
+      },
+      {
+        "path": "specs/public-data-baseline/spec.md",
+        "sha256": "6be506f87c4b5c92d535498ee163032a86698a38a35940134f07d5307c6c790b"
+      },
+      {
+        "path": "tasks.md",
+        "sha256": "81c75a1e6e960607f54bfe92f8705168e082d366a67a5c7178fe8fb5c01a5f99"
+      }
+    ],
+    "afterHashes": [
+      {
+        "path": ".openspec.yaml",
+        "sha256": "e61703315c59969805e021ec521ca189369aaf8ea902d52c5e39c7fbc603598f"
+      },
+      {
+        "path": "design.md",
+        "sha256": "a140323c44c5c275e7a66f1e76730d70cc2a2ad23242db871422ec1414492a33"
+      },
+      {
+        "path": "proposal.md",
+        "sha256": "11f24c7ccaee5725e40154eb1371135e92506d0b064e77e2c514d00832575e72"
+      },
+      {
+        "path": "specs/commit-risk-review/spec.md",
+        "sha256": "a16190bee30f90e527cf1a95ae09b82965c0b945557c2b38cdecaa245cc9134d"
+      },
+      {
+        "path": "specs/public-data-baseline/spec.md",
+        "sha256": "6be506f87c4b5c92d535498ee163032a86698a38a35940134f07d5307c6c790b"
+      },
+      {
+        "path": "tasks.md",
+        "sha256": "81c75a1e6e960607f54bfe92f8705168e082d366a67a5c7178fe8fb5c01a5f99"
+      }
+    ]
+  },
+  "verification": {
+    "activeChanges": 0,
+    "activeChangeExists": false,
+    "archivedChangeExists": true,
+    "verifiedImplementationFilesChecked": 56,
+    "changedVerifiedPaths": [
+      "frontend/README.md"
+    ],
+    "changedVerifiedPathsReason": "仅 frontend/README.md 更新归档与主规格链接；业务源码、测试、配置和演示数据保持原验证哈希。",
+    "localLinksChecked": 206,
+    "missingLocalLinks": [],
+    "priorFullVerification": "verification.json",
+    "priorFullVerificationUtc": "2026-10-10T15:24:19.1170744Z",
+    "fullFunctionalSuiteRerunDuringArchive": false
+  },
+  "scope": "归档当前已实现增量，不代表完整课程验收；原有回顾性实验结果和效果限制保持不变。"
+}

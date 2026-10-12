@@ -1,0 +1,383 @@
+{
+  "startedUtc": "2026-10-10T15:13:27.2231058Z",
+  "finishedUtc": "2026-10-10T15:16:20.5277068Z",
+  "success": false,
+  "node": "v24.13.0",
+  "npm": "11.6.2",
+  "datasetVersion": "demo-v1",
+  "realRunId": "a31140a9a8b3ac2dd29357bb91188ef0a833aa96266e13ab107cc31d12e68a02",
+  "realEnvironment": {
+    "packages": {
+      "fastapi": "0.143.0",
+      "joblib": "1.6.0",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "threadpoolctl": "3.7.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.14.2"
+  },
+  "dependencies": {
+    "@playwright/test": {
+      "version": "1.64.0",
+      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.64.0.tgz",
+      "overridden": false
+    },
+    "@testing-library/jest-dom": {
+      "version": "7.0.1",
+      "resolved": "https://registry.npmjs.org/@testing-library/jest-dom/-/jest-dom-7.0.1.tgz",
+      "overridden": false
+    },
+    "@testing-library/react": {
+      "version": "16.3.3",
+      "resolved": "https://registry.npmjs.org/@testing-library/react/-/react-16.3.3.tgz",
+      "overridden": false
+    },
+    "@testing-library/user-event": {
+      "version": "14.6.7",
+      "resolved": "https://registry.npmjs.org/@testing-library/user-event/-/user-event-14.6.7.tgz",
+      "overridden": false
+    },
+    "@types/node": {
+      "version": "24.19.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.19.2.tgz",
+      "overridden": false
+    },
+    "@types/react-dom": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.3.0.tgz",
+      "overridden": false
+    },
+    "@types/react": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz",
+      "overridden": false
+    },
+    "@vitejs/plugin-react": {
+      "version": "6.1.2",
+      "resolved": "https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.1.2.tgz",
+      "overridden": false
+    },
+    "jsdom": {
+      "version": "29.1.1",
+      "resolved": "https://registry.npmjs.org/jsdom/-/jsdom-29.1.1.tgz",
+      "overridden": false
+    },
+    "oxlint": {
+      "version": "1.87.0",
+      "resolved": "https://registry.npmjs.org/oxlint/-/oxlint-1.87.0.tgz",
+      "overridden": false
+    },
+    "react-dom": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.0.tgz",
+      "overridden": false
+    },
+    "react": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.3.0.tgz",
+      "overridden": false
+    },
+    "typescript": {
+      "version": "6.0.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz",
+      "overridden": false
+    },
+    "vite": {
+      "version": "8.3.4",
+      "resolved": "https://registry.npmjs.org/vite/-/vite-8.3.4.tgz",
+      "overridden": false
+    },
+    "vitest": {
+      "version": "5.0.3",
+      "resolved": "https://registry.npmjs.org/vitest/-/vitest-5.0.3.tgz",
+      "overridden": false
+    }
+  },
+  "gitStatus": "?? .agents/\r\n?? .claude/\r\n?? .dsh/\r\n?? .gitignore\r\n?? README.md\r\n?? backend/\r\n?? docs/\r\n?? frontend/\r\n?? openspec/",
+  "sourceHashes": [
+    {
+      "path": "backend/DATA.md",
+      "sha256": "d145228c16ea92e468a82f156247159458493fa8e6764f02583d9bda1389f49a"
+    },
+    {
+      "path": "backend/jit_baseline/__init__.py",
+      "sha256": "281cd6927babf83f277e5b538b73238813846ba574874df928096cc0c8da662f"
+    },
+    {
+      "path": "backend/jit_baseline/api.py",
+      "sha256": "c6cae33c82623c3227feb08fa8937e0de9bf5f3679dc796aa0e3d709930ebdb5"
+    },
+    {
+      "path": "backend/jit_baseline/artifacts.py",
+      "sha256": "bd1884979d807a1f8a1fe6a2b1b98acdbd3e10469cb7574258d90876e0c63d51"
+    },
+    {
+      "path": "backend/jit_baseline/cli.py",
+      "sha256": "87afd7a14b47c5e45aa967306859f0be6cb6ac681c98c08b86e94470411c5276"
+    },
+    {
+      "path": "backend/jit_baseline/config.py",
+      "sha256": "e862f46857d20d7efbf5919a3bb171784be5f557e3d27ec40078164f4edb837d"
+    },
+    {
+      "path": "backend/jit_baseline/data.py",
+      "sha256": "d8324b015a1796fdc8b25d43f68499a27a5db393a424ad2b57f6d8c847ce34fb"
+    },
+    {
+      "path": "backend/jit_baseline/metrics.py",
+      "sha256": "ad4d4dee90b3cd05048aa75566e00b93043c400088f34bee5ee622e43b337f29"
+    },
+    {
+      "path": "backend/jit_baseline/model.py",
+      "sha256": "c409f3e4976b3b316109681c7a5c65b9cc77c066092c20c94c9e081548a43973"
+    },
+    {
+      "path": "backend/PROTOCOL.md",
+      "sha256": "6d83b0635107025ee109da194fedf53e434362e1b8a810cd9dde120f01911fb4"
+    },
+    {
+      "path": "backend/pytest.ini",
+      "sha256": "37b7898dd0df68d7bacac4726b4836010200403a1abe9542fe229caebe39b8a3"
+    },
+    {
+      "path": "backend/README.md",
+      "sha256": "23f73ccb9ae10ad09de2b0aef4468ee5c2225399d903efbe2a400656a0169b16"
+    },
+    {
+      "path": "backend/requirements.txt",
+      "sha256": "198ef40d13971663adfed9ada5c529f06167c926e2238ddbada773c9d14cda10"
+    },
+    {
+      "path": "backend/scripts/environment_smoke.py",
+      "sha256": "753bc6830650a76a0b76168b55343041d203177bc132f6901ef842ea864a1899"
+    },
+    {
+      "path": "backend/tests/test_api.py",
+      "sha256": "f3b1d140edd2e30eb06db3bd26ff359790d52480e365c8e78e59f73dfda53b20"
+    },
+    {
+      "path": "backend/tests/test_artifacts.py",
+      "sha256": "f166d1b853edbd558103de95db6779801167fe6130f37e2570a69940a6f4742c"
+    },
+    {
+      "path": "backend/tests/test_data.py",
+      "sha256": "344da87c695d3a5c13522bdfac0beb7ef67892f7066869909018ab303df6ab3c"
+    },
+    {
+      "path": "backend/tests/test_http_lifecycle.py",
+      "sha256": "c95d865947b22f44ee6142577bf6d727d1fdb280d733e506a2e39a652e0a6987"
+    },
+    {
+      "path": "backend/tests/test_metrics.py",
+      "sha256": "1cf51b3f78332006e9f68dca3c30797cfa01cfcb51fef24be90ed74b57e73817"
+    },
+    {
+      "path": "backend/tests/test_model.py",
+      "sha256": "a08532c6c5b50b7bf07c58f1ec707462108ba7040d28d5c6829c76c812927dd8"
+    },
+    {
+      "path": "frontend/.oxlintrc.json",
+      "sha256": "b4d344818a1e1bf43997e4744a9153c8eef770c98b58229cd86363dabb85ded4"
+    },
+    {
+      "path": "frontend/e2e/historical.spec.ts",
+      "sha256": "aee248ccbada84e0e71f3b33fa187911da87d079948743acca1163487d5262cb"
+    },
+    {
+      "path": "frontend/e2e/storage.spec.ts",
+      "sha256": "282455c85377c1de3d45d514459bb642a8940b151978ff542a3a014638aec6bc"
+    },
+    {
+      "path": "frontend/e2e/workbench.spec.ts",
+      "sha256": "47fa717f66a877fd4308bb3c749cacf6678290ab39d3314f4c76cb0ab0f3da59"
+    },
+    {
+      "path": "frontend/index.html",
+      "sha256": "f5fa4bb18bd6791289a80cee87e7259fbd68e8b73f956208af57eebe211d94c3"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256": "7cfde0103b2fce83c09c68407f74a00667c1bc2519a8952d6fa66b89068a62de"
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "5be671da2e4a34a18b820e6d453828763b082096379947d29d899f7ebb6499fa"
+    },
+    {
+      "path": "frontend/playwright.config.ts",
+      "sha256": "65b45b4b17162157e20f78f837c326cd83828013cebd7711e2d6aa72cc2e73b0"
+    },
+    {
+      "path": "frontend/public/DEMO-DATA.md",
+      "sha256": "a0601c19a5ade0b8fd495287ce307c8a638f463c3798673947ebd5b726cadc5b"
+    },
+    {
+      "path": "frontend/public/demo-dataset.json",
+      "sha256": "19c640a056173fb4a5b196d098e290fc5123b7d38ff824b865162ced71c1cda0"
+    },
+    {
+      "path": "frontend/README.md",
+      "sha256": "bda2dfaec5eaedadb6ec49a08aeb19606b009fd751428a8a184f91ac73da1e76"
+    },
+    {
+      "path": "frontend/scripts/verify.ps1",
+      "sha256": "b6e5aa7ee8437169956230da4e1f3188b5e7eb61d2ba3958300a899af23d2399"
+    },
+    {
+      "path": "frontend/src/App.css",
+      "sha256": "6e0b6ab6c8e4c37bdff3cb224057b9face20ae5590a62eb40d97e42a225993dc"
+    },
+    {
+      "path": "frontend/src/App.test.tsx",
+      "sha256": "d31359e2add350a4f73069d01f1c7e4c963bad3a159fc2e41160e6a34ceb93c0"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "sha256": "6463b3d940ef468629ebbcd34f6b8ca5494d50619794936d8bdbd40b7f1c6de8"
+    },
+    {
+      "path": "frontend/src/BaselineRecord.tsx",
+      "sha256": "2f7747b7e625c84cbb3bfec705d314187ee096432d113effffa7ec5e2352804d"
+    },
+    {
+      "path": "frontend/src/CommitDetail.tsx",
+      "sha256": "f659137497d9de5669f0a41c6b1776a60150c71ff21c5b7fa352e665e8b03791"
+    },
+    {
+      "path": "frontend/src/domain.test.ts",
+      "sha256": "4e4a807c9803d7c4f2eab224948f17b17ff6c92ff1abad83e9d0b251d40dd2f1"
+    },
+    {
+      "path": "frontend/src/domain.ts",
+      "sha256": "d5e21b445a784080383fc84c72903096a12f50bfa1bd52cd963a586f9a3e754f"
+    },
+    {
+      "path": "frontend/src/historical-fixture.ts",
+      "sha256": "0ceaa2211d5dee78f0e43c9564591eea45e814022106bcdf20c1a6a415baed4f"
+    },
+    {
+      "path": "frontend/src/historical.test.tsx",
+      "sha256": "814cdbec1014b70992d915e74285ca4c27bec9098363df0f840dd4239bfb1395"
+    },
+    {
+      "path": "frontend/src/historicalContract.ts",
+      "sha256": "7082684a205be75026d2c1da566f0b6b55983e41a8e33de9ef109255b240e4f3"
+    },
+    {
+      "path": "frontend/src/Icon.tsx",
+      "sha256": "09f39641ef9b821c32b410842bfd7ac792c80fd19165312381c251c8070217df"
+    },
+    {
+      "path": "frontend/src/index.css",
+      "sha256": "eb46b59be98340488842357bd71e8e2d6ee83bc28b871477e57e6b61f98a3a32"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "sha256": "6e9e5807fcbd48b75a96db5cbef36c996262196be42e6d4760dc86babbe61ad2"
+    },
+    {
+      "path": "frontend/src/Risk.tsx",
+      "sha256": "062cc67fe8164da73c2c9e517d2dcec29f3cac08c5bd0157f7e887fda40c53e6"
+    },
+    {
+      "path": "frontend/src/shortlist.test.ts",
+      "sha256": "2fcd992bbd982441fcd64ffecd35f71e0f065a4da33e13486acf4cee8e8b8d4b"
+    },
+    {
+      "path": "frontend/src/shortlist.ts",
+      "sha256": "cb8139ba42d4624d526f9acae875772150c0c0e6b86f4bc2e5f7d7861c120ce8"
+    },
+    {
+      "path": "frontend/src/test-setup.ts",
+      "sha256": "e20f6c79ce7842f29f0dd93957e8230a5cbb3b5f6ee691fef96d4f393b964cb3"
+    },
+    {
+      "path": "frontend/src/useDataset.test.tsx",
+      "sha256": "70cc26dd4e70298b995162a89c56ff92e3bc30e2564a30e55ef4533ec8d512c5"
+    },
+    {
+      "path": "frontend/src/useDataset.ts",
+      "sha256": "d47bb9a5e5fe4d8b727dde5259c211ff29564639a1ffaa99762e77b4c8cc2453"
+    },
+    {
+      "path": "frontend/tsconfig.app.json",
+      "sha256": "4ff2ca2516bd43bcf0e9641fac6ea427d80c52e0371467691f7a3eb4de54e877"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+    },
+    {
+      "path": "frontend/tsconfig.node.json",
+      "sha256": "8f74409ea9e90b0d9f66575686d8cda40a12a8ca2bece235dac27ff6ee0ed69c"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "sha256": "c55d02960f31e87a5774182a4d5c08966842a27e8fdcac96ab75321496de5856"
+    },
+    {
+      "path": "frontend/vitest.config.ts",
+      "sha256": "46c9ec52670da468a786dbbb63b142d38d8a32363cc5cbc9c7bcb820ed793b5f"
+    }
+  ],
+  "protectedFilesUnchanged": false,
+  "checks": [
+    {
+      "name": "backend-tests",
+      "command": "./.venv/Scripts/python.exe -m pytest --basetemp=.cache/final-verification",
+      "exitCode": 0,
+      "elapsedSeconds": 14.58
+    },
+    {
+      "name": "real-artifact-verification",
+      "command": "./.venv/Scripts/python.exe -m jit_baseline.cli verify",
+      "exitCode": 0,
+      "elapsedSeconds": 1.77
+    },
+    {
+      "name": "independent-reproduction-comparison",
+      "command": "./.venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/connect-public-data-baseline-review/reproduction-comparison.json",
+      "exitCode": 0,
+      "elapsedSeconds": 1.9
+    },
+    {
+      "name": "clean-install",
+      "command": "npm ci --registry=https://registry.npmjs.org/ --fetch-retries=0 --fetch-timeout=30000",
+      "exitCode": 0,
+      "elapsedSeconds": 7.95
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "elapsedSeconds": 11.89
+    },
+    {
+      "name": "behavior-tests",
+      "command": "npm test",
+      "exitCode": 0,
+      "elapsedSeconds": 49.03
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "exitCode": 0,
+      "elapsedSeconds": 0.75
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "elapsedSeconds": 3.09
+    },
+    {
+      "name": "browser-tests",
+      "command": "npm run test:e2e",
+      "exitCode": 1,
+      "elapsedSeconds": 80.71
+    }
+  ]
+}
