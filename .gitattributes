@@ -1,0 +1,2 @@
+# Frozen evidence hashes refer to exact bytes; do not normalize line endings.
+docs/evidence/separate-run-evidence-from-archive/** -text

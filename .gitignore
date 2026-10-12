@@ -9,3 +9,6 @@ backend/data/
 backend/artifacts/
 backend/.pytest_cache/
 **/__pycache__/
+docs/evidence/_run/
+.dsh/
+backend/.tmp-verify/

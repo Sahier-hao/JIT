@@ -1,12 +1,11 @@
 import { test, expect, type Page } from '@playwright/test'
-import { mkdirSync } from 'node:fs'
+import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import demo from '../public/demo-dataset.json' with { type: 'json' }
 
-const evidence = '../docs/evidence/connect-public-data-baseline-review/screenshots'
 async function screenshot(page: Page, name: string, project: string) {
-  mkdirSync(evidence, { recursive: true })
+  ensureDir(runScreenshotDir)
   await page.evaluate(() => window.scrollTo(0, 0))
-  await page.screenshot({ path: `${evidence}/${project}-${name}.png`, fullPage: true, animations: 'disabled' })
+  await page.screenshot({ path: `${runScreenshotDir}/${project}-${name}.png`, fullPage: true, animations: 'disabled' })
 }
 const rows = (page: Page) => page.getByRole('table').getByRole('row').filter({ has: page.getByRole('button', { name: /查看 demo-/ }) })
 

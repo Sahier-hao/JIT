@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { mkdirSync } from 'node:fs'
+import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import demo from '../public/demo-dataset.json' with { type: 'json' }
 
 const key = `jit-review:shortlist:v1:${encodeURIComponent(demo.project)}:${encodeURIComponent(demo.version)}`
@@ -65,8 +65,7 @@ test('CRR-10 保存拒绝仍可加入与移除，显示刷新风险', async ({ p
   await expect(page.getByRole('dialog').getByRole('button', { name: '已在清单' })).toBeDisabled()
   await page.getByRole('button', { name: '关闭详情' }).click()
   await page.getByRole('button', { name: /优先审查清单/ }).click()
-  const directory = '../docs/evidence/connect-public-data-baseline-review/screenshots'
-  mkdirSync(directory, { recursive: true })
+  const directory = ensureDir(runScreenshotDir)
   await page.screenshot({ path: `${directory}/${info.project.name}-save-error.png`, fullPage: true })
   await page.getByRole('button', { name: '移除 demo-0001' }).click()
   await expect(page.getByText('清单为空', { exact: true })).toBeVisible()

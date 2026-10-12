@@ -1,0 +1,111 @@
+
+> jit-review-workbench@0.0.0 test:e2e
+> playwright test historical.spec.ts --grep TCP产物行为夹具 --repeat-each=10 --reporter=line,json
+
+
+[WebServer] (node:28144) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 20 tests using 2 workers
+
+
+(node:8212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(node:7380) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+[2/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+(node:20988) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[3/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:24796) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[4/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:13404) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[5/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:9572) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[6/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+(node:11544) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:33372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[8/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+(node:30116) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[9/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:23808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[10/20] [desktop-1280] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+(node:4324) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[11/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:9756) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[12/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:32204) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+[13/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+(node:26404) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[14/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:17996) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[15/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+
+(node:21104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[16/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:5304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[17/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:28244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[18/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:35628) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[19/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+
+(node:34524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[20/20] [desktop-1440] › e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具）
+  20 passed (1.7m)

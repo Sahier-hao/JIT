@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from .artifacts import DEFAULT_RUN, Snapshot, build_run, compare_runs, verify_run, write_json
+from . import evidence
 from .config import BACKEND
 from .data import BaselineError, fetch_sources
 
@@ -22,6 +23,11 @@ def main():
     compare.add_argument("second", type=Path)
     compare.add_argument("--report", type=Path, required=True)
     commands.add_parser("serve")
+    freeze = commands.add_parser("freeze-evidence")
+    freeze.add_argument("target", type=Path)
+    freeze.add_argument("--workspace", type=Path, default=None)
+    check = commands.add_parser("check-evidence")
+    check.add_argument("target", type=Path)
     args = parser.parse_args()
     try:
         if args.command == "fetch":
@@ -36,6 +42,18 @@ def main():
             result = compare_runs(args.first, args.second)
             args.report.parent.mkdir(parents=True, exist_ok=True)
             write_json(args.report, result)
+        elif args.command == "freeze-evidence":
+            manifest = evidence.freeze(args.target, args.workspace)
+            result = {"kind": manifest["kind"], "target": str(args.target.resolve()),
+                      "sourceRunId": manifest["sourceRunId"], "frozenUtc": manifest["frozenUtc"],
+                      "copied": manifest["copiedFromWorkspace"], "excluded": manifest["excluded"],
+                      "fileCount": manifest["fileCount"]}
+        elif args.command == "check-evidence":
+            result = evidence.check(args.target)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if not result["passed"]:
+                sys.exit(1)
+            return
         else:
             import uvicorn
             uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=8000, workers=1)

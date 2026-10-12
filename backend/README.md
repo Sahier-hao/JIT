@@ -15,7 +15,7 @@ $env:PYTHONIOENCODING='utf-8'
 & .venv/Scripts/python.exe -m jit_baseline.cli run
 & .venv/Scripts/python.exe -m jit_baseline.cli verify
 & .venv/Scripts/python.exe -m jit_baseline.cli run --output artifacts/reproduction
-& .venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/connect-public-data-baseline-review/reproduction-comparison.json
+& .venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/_run/reproduction-comparison.json
 ```
 
 `fetch` 只访问三份固定发布者文件，全部通过 SHA-256 后才保存；已有文件必须重新核验。`run` 按固定方案处理、训练和评价，不接受参数或字段选择。已存在的运行目录会拒绝覆盖；再次独立复现可指定新的输出目录，例如 `artifacts/reproduction-2`。正式模型和源文件不入 Git，使用命令重新取得。`verify` 检查所有文件哈希、关联、真实模型风险与指标。验证集不参与重拟合；测试不用于选阈值、参数或字段。
@@ -42,4 +42,22 @@ $env:PYTHONIOENCODING='utf-8'
 & .venv/Scripts/python.exe -m pytest --basetemp=.cache/verification-tests
 ```
 
-HTTP 测试在本机运行；受限制的执行环境必须允许本机 socket。测试使用明确标识的临时真实模型夹具及独立小样例；正式结果见 [本轮报告](../docs/evidence/connect-public-data-baseline-review/baseline-report.md)。测试日志中的预期 RED 失败与开发故障记录保留，不代表最终验收失败或已通过。
+HTTP 测试在本机运行；受限制的执行环境必须允许本机 socket。测试使用明确标识的临时真实模型夹具及独立小样例；正式结果见 [本轮报告](../docs/evidence/connect-public-data-baseline-review/baseline-report.md)。测试与验证的输出写入运行工作区 `../docs/evidence/_run/`，该目录可被后续运行覆盖、不进入版本控制；归档证据由显式冻结从运行工作区产生，测试不写任何已归档目录。测试日志中的预期 RED 失败与开发故障记录保留，不代表最终验收失败或已通过。
+
+## 验证证据的冻结
+
+验证运行与归档证据分开存放。测试与验证脚本把输出写进**运行工作区** `docs/evidence/_run/`；该目录可被后续运行覆盖，也不进入版本控制。**归档目录 `docs/evidence/<change>/` 只由显式冻结写入**，测试、构建和验证脚本都不会写它，也不会自动触发冻结。
+
+在 backend 执行：
+
+```powershell
+$frozenEvidence = '../docs/evidence/separate-run-evidence-from-archive'
+& .venv/Scripts/python.exe -m jit_baseline.cli freeze-evidence $frozenEvidence
+& .venv/Scripts/python.exe -m jit_baseline.cli check-evidence $frozenEvidence
+```
+
+将目标目录替换为本次 change 的名称；不要使用已有历史归档目录。只演练冻结与校验时，可把 `$frozenEvidence` 设为 `.cache/evidence-freeze-check`，在临时目标检查结果。命令会列出复制的条目、排除项、来源运行标识；校验通过时输出 `passed: true` 并以退出码 0 结束。
+
+`freeze-evidence` 把运行工作区中除 `fixtures/` 外的证据复制到目标目录，并写入 `冻结清单.json`：每个证据文件的相对路径与 SHA256、冻结时刻、来源运行标识（由证据集合内容派生，时间不影响身份）。它只新增或覆盖纳入的条目，**不删除目标目录中未纳入的文件**。内容不变时重复冻结的条目、哈希与来源运行标识相同，冻结时刻按本次执行更新。运行期夹具留在运行工作区，不进入归档。
+
+`check-evidence` 按清单重新校验，报告被修改、被删除和未登记新增的文件，以及缺少冻结时刻或来源运行标识的清单；发现问题时以非零码退出。冻结是**归档前的显式步骤**：完成一次验证运行、确认结果后先冻结，再归档 change。

@@ -1,0 +1,61 @@
+{
+  "kind": "explicit-temporary-freeze-validation",
+  "target": "D:\\code\\jit-defect-prediction\\backend\\.cache\\evidence-freeze-check-20261012T140507148762",
+  "commands": [
+    {
+      "command": [
+        "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "jit_baseline.cli",
+        "freeze-evidence",
+        "D:\\code\\jit-defect-prediction\\backend\\.cache\\evidence-freeze-check-20261012T140507148762"
+      ],
+      "exitCode": 0,
+      "stdout": "{\n  \"kind\": \"verification-evidence-freeze\",\n  \"target\": \"D:\\\\code\\\\jit-defect-prediction\\\\backend\\\\.cache\\\\evidence-freeze-check-20261012T140507148762\",\n  \"sourceRunId\": \"1d5dff1f65ad6c7194dd70c4bf02c4943ef1e74016308fb45154ccfb449a87f1\",\n  \"frozenUtc\": \"2026-10-12T14:05:09.519807+00:00\",\n  \"copied\": [\n    \"archived-evidence-integrity.json\",\n    \"browser-repeat.json\",\n    \"browser-repeat.log\",\n    \"browser-results.json\",\n    \"desktop-1280-real-chain.json\",\n    \"desktop-1440-real-chain.json\",\n    \"guard-red-green.json\",\n    \"http-lifecycle.json\",\n    \"readiness-red-green.json\",\n    \"reproduction-comparison.json\",\n    \"screenshots/desktop-1280-detail.png\",\n    \"screenshots/desktop-1280-keyboard-focus.png\",\n    \"screenshots/desktop-1280-load-error.png\",\n    \"screenshots/desktop-1280-real-baseline.png\",\n    \"screenshots/desktop-1280-real-detail.png\",\n    \"screenshots/desktop-1280-real-keyboard.png\",\n    \"screenshots/desktop-1280-real-list.png\",\n    \"screenshots/desktop-1280-real-service-error.png\",\n    \"screenshots/desktop-1280-real-shortlist.png\",\n    \"screenshots/desktop-1280-save-error.png\",\n    \"screenshots/desktop-1280-shortlist.png\",\n    \"screenshots/desktop-1280-workbench.png\",\n    \"screenshots/desktop-1440-detail.png\",\n    \"screenshots/desktop-1440-keyboard-focus.png\",\n    \"screenshots/desktop-1440-load-error.png\",\n    \"screenshots/desktop-1440-real-baseline.png\",\n    \"screenshots/desktop-1440-real-detail.png\",\n    \"screenshots/desktop-1440-real-keyboard.png\",\n    \"screenshots/desktop-1440-real-list.png\",\n    \"screenshots/desktop-1440-real-service-error.png\",\n    \"screenshots/desktop-1440-real-shortlist.png\",\n    \"screenshots/desktop-1440-save-error.png\",\n    \"screenshots/desktop-1440-shortlist.png\",\n    \"screenshots/desktop-1440-workbench.png\",\n    \"unit-results.json\",\n    \"verification.json\",\n    \"verification.log\"\n  ],\n  \"excluded\": [\n    \"fixtures/\"\n  ],\n  \"fileCount\": 37\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "jit_baseline.cli",
+        "check-evidence",
+        "D:\\code\\jit-defect-prediction\\backend\\.cache\\evidence-freeze-check-20261012T140507148762"
+      ],
+      "exitCode": 0,
+      "stdout": "{\n  \"kind\": \"verification-evidence-check\",\n  \"target\": \"D:\\\\code\\\\jit-defect-prediction\\\\backend\\\\.cache\\\\evidence-freeze-check-20261012T140507148762\",\n  \"frozenUtc\": \"2026-10-12T14:05:09.519807+00:00\",\n  \"sourceRunId\": \"1d5dff1f65ad6c7194dd70c4bf02c4943ef1e74016308fb45154ccfb449a87f1\",\n  \"listedCount\": 37,\n  \"passed\": true,\n  \"problems\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "jit_baseline.cli",
+        "freeze-evidence",
+        "D:\\code\\jit-defect-prediction\\backend\\.cache\\evidence-freeze-check-20261012T140507148762"
+      ],
+      "exitCode": 0,
+      "stdout": "{\n  \"kind\": \"verification-evidence-freeze\",\n  \"target\": \"D:\\\\code\\\\jit-defect-prediction\\\\backend\\\\.cache\\\\evidence-freeze-check-20261012T140507148762\",\n  \"sourceRunId\": \"1d5dff1f65ad6c7194dd70c4bf02c4943ef1e74016308fb45154ccfb449a87f1\",\n  \"frozenUtc\": \"2026-10-12T14:05:14.028046+00:00\",\n  \"copied\": [\n    \"archived-evidence-integrity.json\",\n    \"browser-repeat.json\",\n    \"browser-repeat.log\",\n    \"browser-results.json\",\n    \"desktop-1280-real-chain.json\",\n    \"desktop-1440-real-chain.json\",\n    \"guard-red-green.json\",\n    \"http-lifecycle.json\",\n    \"readiness-red-green.json\",\n    \"reproduction-comparison.json\",\n    \"screenshots/desktop-1280-detail.png\",\n    \"screenshots/desktop-1280-keyboard-focus.png\",\n    \"screenshots/desktop-1280-load-error.png\",\n    \"screenshots/desktop-1280-real-baseline.png\",\n    \"screenshots/desktop-1280-real-detail.png\",\n    \"screenshots/desktop-1280-real-keyboard.png\",\n    \"screenshots/desktop-1280-real-list.png\",\n    \"screenshots/desktop-1280-real-service-error.png\",\n    \"screenshots/desktop-1280-real-shortlist.png\",\n    \"screenshots/desktop-1280-save-error.png\",\n    \"screenshots/desktop-1280-shortlist.png\",\n    \"screenshots/desktop-1280-workbench.png\",\n    \"screenshots/desktop-1440-detail.png\",\n    \"screenshots/desktop-1440-keyboard-focus.png\",\n    \"screenshots/desktop-1440-load-error.png\",\n    \"screenshots/desktop-1440-real-baseline.png\",\n    \"screenshots/desktop-1440-real-detail.png\",\n    \"screenshots/desktop-1440-real-keyboard.png\",\n    \"screenshots/desktop-1440-real-list.png\",\n    \"screenshots/desktop-1440-real-service-error.png\",\n    \"screenshots/desktop-1440-real-shortlist.png\",\n    \"screenshots/desktop-1440-save-error.png\",\n    \"screenshots/desktop-1440-shortlist.png\",\n    \"screenshots/desktop-1440-workbench.png\",\n    \"unit-results.json\",\n    \"verification.json\",\n    \"verification.log\"\n  ],\n  \"excluded\": [\n    \"fixtures/\"\n  ],\n  \"fileCount\": 37\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+        "-m",
+        "jit_baseline.cli",
+        "check-evidence",
+        "D:\\code\\jit-defect-prediction\\backend\\.cache\\evidence-freeze-check-20261012T140507148762"
+      ],
+      "exitCode": 0,
+      "stdout": "{\n  \"kind\": \"verification-evidence-check\",\n  \"target\": \"D:\\\\code\\\\jit-defect-prediction\\\\backend\\\\.cache\\\\evidence-freeze-check-20261012T140507148762\",\n  \"frozenUtc\": \"2026-10-12T14:05:14.028046+00:00\",\n  \"sourceRunId\": \"1d5dff1f65ad6c7194dd70c4bf02c4943ef1e74016308fb45154ccfb449a87f1\",\n  \"listedCount\": 37,\n  \"passed\": true,\n  \"problems\": []\n}\n",
+      "stderr": ""
+    }
+  ],
+  "snapshotFileCount": 37,
+  "snapshotHashesMatchWorkspaceAtFreeze": true,
+  "fixturesExcluded": true,
+  "repeatFilesAndSourceIdentityMatch": true,
+  "protectedFilesUnchanged": true,
+  "passed": true,
+  "note": "Freeze reports were written to the run workspace after the snapshot checks, so they are not self-referential snapshot inputs."
+}
