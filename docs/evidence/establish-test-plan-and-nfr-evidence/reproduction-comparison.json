@@ -1,0 +1,18 @@
+{
+  "firstRunId": "300ace38cf8b51baff96fed4f51ca06cdaefc6532c0de5e4f49c76e1bcf2919b",
+  "kind": "real-independent-reproduction",
+  "maxRiskAbsoluteDifference": 0.0,
+  "metricAbsoluteDifferences": {
+    "averagePrecision": 0.0,
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "recall20Loc": 0.0,
+    "rocAuc": 0.0
+  },
+  "partitionMembershipExact": true,
+  "passed": true,
+  "secondRunId": "300ace38cf8b51baff96fed4f51ca06cdaefc6532c0de5e4f49c76e1bcf2919b",
+  "testCount": 1853,
+  "tolerance": 1e-08
+}

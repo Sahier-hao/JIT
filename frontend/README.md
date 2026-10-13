@@ -27,6 +27,16 @@ npm run build
 
 安装需要 npm registry 与 Playwright 下载站点可访问。若机器配置的镜像无法访问，以上安装命令仅对本次执行指定官方 registry，不修改全局配置。
 
+## 验证环境说明（Windows + 中文路径）
+
+完整验证链 `frontend/scripts/verify.ps1` 需要 PowerShell 7（`pwsh`），并且本机若处于中文系统区域（ANSI 代码页 936），直接运行会遇到编码与路径问题。按以下准备：
+
+1. **PowerShell 7**：首选 `winget install Microsoft.PowerShell`；网络受限时可下载官方便携 zip（GitHub releases 的 `PowerShell-<版本>-win-x64.zip`），解压后把目录加入 PATH。Windows PowerShell 5.1 不满足要求（验证链与 guard 测试硬依赖 `pwsh`）。
+2. **UTF-8 控制台**：运行验证前先执行 `chcp.com 65001`。否则 pwsh 的管道错误输出按 ANSI 代码页（GBK）编码（如错误格式化里的行首省略号“…”），按 UTF-8 解码的测试会失败。
+3. **ASCII 路径**：仓库若位于含中文的路径（如 `D:\Documents\课程相关\...`），guard 测试生成的临时脚本路径含中文，会触发同样问题。用目录联接绕开（无需管理员）：`powershell -NoProfile -Command "New-Item -ItemType Junction -Path 'C:\JIT' -Target '<仓库路径>'"`，之后从 `C:\JIT` 运行验证。
+
+另外，Playwright 官方 chromium 下载在部分网络不可用（CDN 网关返回 400）。当前 `playwright.config.ts` 已声明 `channel: 'msedge'`，使用本机 Edge（chromium 内核）运行浏览器检查，证据记录中如实标注 channel；网络恢复后执行 `npx playwright install chromium` 并移除该 channel 即可回到下载版 chromium。
+
 ## 两种模式操作
 
 默认“真实历史回放”，显示测试提交、固定模型和运行标识；左侧“历史数据／示例数据”始终可切换，错误不会自动回退。真实服务不可用时核验产物并重启后端，再点“重新加载”。`/?mode=demo` 是明确选择演示的入口，刷新保留该模式。

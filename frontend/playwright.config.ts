@@ -7,7 +7,7 @@ export default defineConfig({
   retries: 0,
   workers: 2,
   reporter: [['list'], ['json', { outputFile: `${ensureDir(runEvidenceDir)}/browser-results.json` }]],
-  use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', trace: 'retain-on-failure' },
+  use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', channel: 'msedge', trace: 'retain-on-failure' },
   projects: [
     { name: 'desktop-1280', use: { viewport: { width: 1280, height: 720 } } },
     { name: 'desktop-1440', use: { viewport: { width: 1440, height: 900 } } },

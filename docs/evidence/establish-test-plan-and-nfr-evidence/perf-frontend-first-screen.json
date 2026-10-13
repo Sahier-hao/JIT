@@ -1,0 +1,227 @@
+{
+  "kind": "perf-baseline-frontend",
+  "measuredAt": "2026-10-13T13:20:06.166Z",
+  "baseURL": "http://127.0.0.1:4173",
+  "channel": "msedge",
+  "method": "10 runs per viewport, nearest-rank P95",
+  "viewports": [
+    {
+      "name": "desktop-1280",
+      "samples": [
+        {
+          "run": 1,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 775,
+          "renderMs": 2356,
+          "renderedCount": 1853,
+          "loadEventEndMs": 365,
+          "consoleErrors": []
+        },
+        {
+          "run": 2,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 366,
+          "renderMs": 1806,
+          "renderedCount": 1853,
+          "loadEventEndMs": 234,
+          "consoleErrors": []
+        },
+        {
+          "run": 3,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 352,
+          "renderMs": 1567,
+          "renderedCount": 1853,
+          "loadEventEndMs": 233,
+          "consoleErrors": []
+        },
+        {
+          "run": 4,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 248,
+          "renderMs": 1250,
+          "renderedCount": 1853,
+          "loadEventEndMs": 167,
+          "consoleErrors": []
+        },
+        {
+          "run": 5,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 252,
+          "renderMs": 1153,
+          "renderedCount": 1853,
+          "loadEventEndMs": 151,
+          "consoleErrors": []
+        },
+        {
+          "run": 6,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 235,
+          "renderMs": 1167,
+          "renderedCount": 1853,
+          "loadEventEndMs": 147,
+          "consoleErrors": []
+        },
+        {
+          "run": 7,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 250,
+          "renderMs": 1161,
+          "renderedCount": 1853,
+          "loadEventEndMs": 149,
+          "consoleErrors": []
+        },
+        {
+          "run": 8,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 229,
+          "renderMs": 1123,
+          "renderedCount": 1853,
+          "loadEventEndMs": 142,
+          "consoleErrors": []
+        },
+        {
+          "run": 9,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 260,
+          "renderMs": 1180,
+          "renderedCount": 1853,
+          "loadEventEndMs": 147,
+          "consoleErrors": []
+        },
+        {
+          "run": 10,
+          "viewport": "desktop-1280",
+          "status": 200,
+          "fetchMs": 208,
+          "renderMs": 1104,
+          "renderedCount": 1853,
+          "loadEventEndMs": 137,
+          "consoleErrors": []
+        }
+      ],
+      "fetchP95Ms": 775,
+      "renderP95Ms": 2356,
+      "validSamples": 10,
+      "statement": "本机链路基线，未做阈值判定。"
+    },
+    {
+      "name": "desktop-1440",
+      "samples": [
+        {
+          "run": 1,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 244,
+          "renderMs": 1219,
+          "renderedCount": 1853,
+          "loadEventEndMs": 147,
+          "consoleErrors": []
+        },
+        {
+          "run": 2,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 226,
+          "renderMs": 1110,
+          "renderedCount": 1853,
+          "loadEventEndMs": 139,
+          "consoleErrors": []
+        },
+        {
+          "run": 3,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 241,
+          "renderMs": 1193,
+          "renderedCount": 1853,
+          "loadEventEndMs": 146,
+          "consoleErrors": []
+        },
+        {
+          "run": 4,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 213,
+          "renderMs": 1106,
+          "renderedCount": 1853,
+          "loadEventEndMs": 141,
+          "consoleErrors": []
+        },
+        {
+          "run": 5,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 215,
+          "renderMs": 1127,
+          "renderedCount": 1853,
+          "loadEventEndMs": 142,
+          "consoleErrors": []
+        },
+        {
+          "run": 6,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 240,
+          "renderMs": 1141,
+          "renderedCount": 1853,
+          "loadEventEndMs": 157,
+          "consoleErrors": []
+        },
+        {
+          "run": 7,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 224,
+          "renderMs": 1174,
+          "renderedCount": 1853,
+          "loadEventEndMs": 139,
+          "consoleErrors": []
+        },
+        {
+          "run": 8,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 280,
+          "renderMs": 1226,
+          "renderedCount": 1853,
+          "loadEventEndMs": 166,
+          "consoleErrors": []
+        },
+        {
+          "run": 9,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 233,
+          "renderMs": 1137,
+          "renderedCount": 1853,
+          "loadEventEndMs": 143,
+          "consoleErrors": []
+        },
+        {
+          "run": 10,
+          "viewport": "desktop-1440",
+          "status": 200,
+          "fetchMs": 208,
+          "renderMs": 1198,
+          "renderedCount": 1853,
+          "loadEventEndMs": 139,
+          "consoleErrors": []
+        }
+      ],
+      "fetchP95Ms": 280,
+      "renderP95Ms": 1226,
+      "validSamples": 10,
+      "statement": "本机链路基线，未做阈值判定。"
+    }
+  ]
+}
