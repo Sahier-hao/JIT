@@ -42,6 +42,8 @@ $env:PYTHONIOENCODING='utf-8'
 & .venv/Scripts/python.exe -m pytest --basetemp=.cache/verification-tests
 ```
 
+完整验证链 `frontend/scripts/verify.ps1` 的环境前置（PowerShell 7、UTF-8 控制台、ASCII 路径、浏览器来源）见 [前端说明](../frontend/README.md) 的「验证环境说明」。
+
 HTTP 测试在本机运行；受限制的执行环境必须允许本机 socket。测试使用明确标识的临时真实模型夹具及独立小样例；正式结果见 [本轮报告](../docs/evidence/connect-public-data-baseline-review/baseline-report.md)。测试与验证的输出写入运行工作区 `../docs/evidence/_run/`，该目录可被后续运行覆盖、不进入版本控制；归档证据由显式冻结从运行工作区产生，测试不写任何已归档目录。测试日志中的预期 RED 失败与开发故障记录保留，不代表最终验收失败或已通过。
 
 ## 验证证据的冻结
