@@ -13,7 +13,8 @@ export default defineConfig({
     { name: 'desktop-1440', use: { viewport: { width: 1440, height: 900 } } },
   ],
   webServer: [
-    { command: '../backend/.venv/Scripts/python.exe -m jit_baseline.cli serve', cwd: '../backend', url: 'http://127.0.0.1:8000/api/review-batch', reuseExistingServer: !process.env.CI },
+    // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。
+    { command: '.venv\\Scripts\\python.exe -m jit_baseline.cli serve', cwd: '../backend', url: 'http://127.0.0.1:8000/api/review-batch', reuseExistingServer: !process.env.CI },
     { command: 'npm run dev', url: 'http://127.0.0.1:4173', reuseExistingServer: false },
   ],
 })

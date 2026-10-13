@@ -9,8 +9,22 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from threadpoolctl import threadpool_limits
 
-from .config import FEATURES, MODEL_CONFIG
+from .config import MODEL_CONFIG
 from .data import BaselineError
+from .schemas import DEFAULT_SCHEMA, resolve
+
+
+class Log1pColumns:
+    """按 schema 声明的列做 log1p；模块级类以便 joblib 序列化。"""
+
+    def __init__(self, columns):
+        self.columns = tuple(columns)
+
+    def __call__(self, matrix):
+        result = np.array(matrix, dtype=np.float64, copy=True)
+        if self.columns:
+            result[:, list(self.columns)] = np.log1p(result[:, list(self.columns)])
+        return result
 
 
 def temporal_split(records):
@@ -34,31 +48,27 @@ def temporal_split(records):
     return split, boundaries
 
 
-def feature_matrix(records):
+def feature_matrix(records, schema=None):
+    width = len(resolve(schema if schema is not None else DEFAULT_SCHEMA).in_model_names())
     try:
         matrix = np.asarray([r["features"] for r in records], dtype=np.float64)
     except (KeyError, TypeError, ValueError) as exc:
         raise BaselineError("FEATURES_INVALID", "输入特征矩阵无效") from exc
-    if matrix.ndim != 2 or matrix.shape[1] != len(FEATURES) or not len(matrix):
-        raise BaselineError("FEATURES_INVALID", "输入必须为非空六字段矩阵")
+    if matrix.ndim != 2 or matrix.shape[1] != width or not len(matrix):
+        raise BaselineError("FEATURES_INVALID", f"输入必须为非空 {width} 字段矩阵")
     if not np.isfinite(matrix).all() or (matrix < 0).any():
         raise BaselineError("FEATURES_INVALID", "输入特征含非法数值")
     return matrix
 
 
-def log_counts(matrix):
-    result = np.array(matrix, dtype=np.float64, copy=True)
-    result[:, [0, 1, 2, 4, 5]] = np.log1p(result[:, [0, 1, 2, 4, 5]])
-    return result
-
-
-def fit_model(train_records, *, max_iter=MODEL_CONFIG["max_iter"]):
-    matrix = feature_matrix(train_records)
+def fit_model(train_records, *, schema=None, max_iter=MODEL_CONFIG["max_iter"]):
+    schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    matrix = feature_matrix(train_records, schema)
     labels = np.asarray([r["label"] for r in train_records])
     if set(labels.tolist()) != {0, 1}:
         raise BaselineError("MODEL_INVALID", "训练需要两类发布标签")
     pipeline = Pipeline([
-        ("counts", FunctionTransformer(log_counts)),
+        ("counts", FunctionTransformer(Log1pColumns(schema.log1p_indices()))),
         ("scale", StandardScaler()),
         # sklearn 1.9 uses l1_ratio=0 for L2; penalty='l2' is deprecated.
         ("model", LogisticRegression(C=1.0, l1_ratio=0.0, solver="lbfgs", max_iter=max_iter,
@@ -73,8 +83,8 @@ def fit_model(train_records, *, max_iter=MODEL_CONFIG["max_iter"]):
     return pipeline
 
 
-def predict_risks(pipeline, records):
-    matrix = feature_matrix(records)
+def predict_risks(pipeline, records, schema=None):
+    matrix = feature_matrix(records, schema)
     try:
         positive = pipeline.classes_.tolist().index(1)
         with threadpool_limits(limits=1):

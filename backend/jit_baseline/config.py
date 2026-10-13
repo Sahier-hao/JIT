@@ -2,7 +2,6 @@
 from pathlib import Path
 
 BACKEND = Path(__file__).resolve().parents[1]
-FEATURES = ("ns", "nd", "nf", "ent", "la", "ld")
 REVISION = "184403ad3734894c8417cbec72fdef3da5edc0b9"
 BASE_URL = f"https://raw.githubusercontent.com/software-rebels/JITMovingTarget/{REVISION}/"
 SOURCES = {
@@ -15,9 +14,7 @@ COHORT = {"startEpochInclusive": 1322599384, "endEpochExclusive": 1393590700,
 MODEL_CONFIG = {"regularization": "L2", "C": 1.0, "solver": "lbfgs", "max_iter": 1000,
                 "tol": 1e-4, "class_weight": None, "seed": 2026, "threads": 1}
 THRESHOLD = 0.5
-PROTOCOL_VERSION = "openstack-six-v1"
 LIMITATIONS = [
-    "六项发布者原生字段，尚非完整 Kamei14；预测解释未提供。",
     "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
     "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
     "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",

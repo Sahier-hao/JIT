@@ -16,6 +16,7 @@ def main():
     commands.add_parser("fetch")
     run = commands.add_parser("run")
     run.add_argument("--output", type=Path, default=DEFAULT_RUN)
+    run.add_argument("--schema", default=None, help="具名特征 schema；默认 openstack-six-v1")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -33,7 +34,7 @@ def main():
         if args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
-            manifest = build_run(BACKEND / "data/openstack", args.output)
+            manifest = build_run(BACKEND / "data/openstack", args.output, args.schema)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)

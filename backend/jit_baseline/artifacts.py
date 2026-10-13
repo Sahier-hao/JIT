@@ -10,15 +10,18 @@ import joblib
 import numpy as np
 from sklearn.pipeline import Pipeline
 
-from .config import BACKEND, BASE_URL, COHORT, FEATURES, LIMITATIONS, MODEL_CONFIG, PROTOCOL_VERSION, REVISION, SOURCES, THRESHOLD
+from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
+from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, MODEL_CONFIG, REVISION, SOURCES, THRESHOLD
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .metrics import evaluate
 from .model import feature_matrix, fit_model, predict_risks, temporal_split
+from .schemas import DEFAULT_SCHEMA, get_schema, resolve
 
 DEFAULT_RUN = BACKEND / "artifacts/baseline"
 CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json", "model.joblib", "reference-predictions.json", "metrics.json")
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
-TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py")
+TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
+                 "schemas.py", "algorithms.py", "errors.py")
 
 
 def identity(obj):
@@ -43,19 +46,41 @@ def environment():
             "packages": {name: version(name) for name in ("numpy", "scipy", "scikit-learn", "joblib", "threadpoolctl", "fastapi", "uvicorn")}}
 
 
-def build_run(source_dir, output):
+def feature_schema(schema):
+    """摘要里的特征来源说明：已提供与未提供字段及原因（FSV-01、CRR-13）。"""
+    return {"name": schema.name,
+            "inModel": list(schema.in_model_names()),
+            "unavailable": [{"name": field.name, "reason": field.reason} for field in schema.unavailable()]}
+
+
+def limitations(schema):
+    """按当前 schema 生成局限说明，第一项如实列出未提供字段。"""
+    fields = "、".join(schema.in_model_names())
+    gaps = schema.unavailable()
+    if gaps:
+        first = (f"特征为具名 schema {schema.name}，入模 {len(schema.in_model_names())} 项（{fields}）；"
+                 + "未提供：" + "；".join(f"{field.name}（{field.reason}）" for field in gaps)
+                 + "。预测解释未提供。")
+    else:
+        first = f"特征为具名 schema {schema.name}（{fields}），尚非完整 Kamei14；预测解释未提供。"
+    return [first, *LIMITATIONS]
+
+
+def build_run(source_dir, output, schema=None):
     output, source_dir = Path(output), Path(source_dir)
+    schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    fields = list(schema.in_model_names())
     if output.exists():
         raise BaselineError("OUTPUT_EXISTS", "运行目录已存在，请为独立复现指定新目录")
     sources = {name: {"url": BASE_URL + relative, "sha256": expected, "bytes": len(verified_bytes(source_dir / name, expected))}
                for name, (relative, expected) in SOURCES.items()}
-    records, quality = parse_source(verified_bytes(source_dir / "openstack.csv", SOURCES["openstack.csv"][1]))
+    records, quality = parse_source(verified_bytes(source_dir / "openstack.csv", SOURCES["openstack.csv"][1]), schema)
     split, boundaries = temporal_split(records)
-    pipeline = fit_model(split["train"])
-    risks = predict_risks(pipeline, split["test"])
+    pipeline = fit_model(split["train"], schema=schema)
+    risks = predict_risks(pipeline, split["test"], schema)
     metrics = evaluate(split["test"], risks)
-    dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": FEATURES,
-                                               "labelRule": "bugcount > 0; blank = 0", "protocol": PROTOCOL_VERSION})
+    dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": fields,
+                                               "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
     stats = {key: {"count": len(part), "positiveCount": sum(r["label"] for r in part),
                    "start": part[0]["time"], "end": part[-1]["time"], "ids": [r["id"] for r in part]}
              for key, part in split.items()}
@@ -69,19 +94,24 @@ def build_run(source_dir, output):
     write_json(output / "source.json", source)
     write_json(output / "split.json", {"boundaries": boundaries, "rule": "UTC distinct timestamps, floor(0.70G), floor(0.85G)", "partitions": stats})
     inputs = [{k: r[k] for k in ("id", "time", "epoch", "sourceRow", "metrics", "features")} for r in split["test"]]
-    write_json(output / "test-input.json", {"features": list(FEATURES), "records": inputs})
+    write_json(output / "test-input.json", {"features": fields, "records": inputs})
     write_json(output / "test-labels.json", [{"id": r["id"], "label": r["label"]} for r in split["test"]])
     joblib.dump(pipeline, output / "model.joblib")
     write_json(output / "reference-predictions.json", [{"id": r["id"], "risk": p} for r, p in zip(split["test"], risks, strict=True)])
     write_json(output / "metrics.json", metrics)
     files = {name: sha256((output / name).read_bytes()) for name in CORE_FILES}
-    config = {"protocol": PROTOCOL_VERSION, "datasetVersion": dataset_version, "features": list(FEATURES), "cohort": COHORT,
+    config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": DEFAULT_ALGORITHM,
+              "datasetVersion": dataset_version, "features": fields, "cohort": COHORT,
               "threshold": THRESHOLD, "model": MODEL_CONFIG, "modelSha256": files["model.joblib"], "coreFiles": files,
               "environment": environment(), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     run_id = identity(config)
+    label = model_descriptor(schema.name)
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
-               "features": list(FEATURES), "cohort": COHORT, "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},
-               "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": PROTOCOL_VERSION, "limitations": LIMITATIONS}
+               "features": fields, "featureSchema": feature_schema(schema), "cohort": COHORT,
+               "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},
+               "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": schema.name,
+               "algorithmVersion": DEFAULT_ALGORITHM, "model": {"id": label["id"], "name": label["name"]},
+               "limitations": limitations(schema)}
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
@@ -92,6 +122,11 @@ def build_run(source_dir, output):
     return manifest
 
 
+def declared_schema(config):
+    """运行声明的 schema：新运行用 `schema`，旧运行以 `protocol` 作声明；未知名称被拒绝。"""
+    return get_schema(config.get("schema") or config.get("protocol"))
+
+
 def check_files(directory, names):
     directory = Path(directory)
     manifest = read_json(directory / "manifest.json")
@@ -99,8 +134,14 @@ def check_files(directory, names):
         config = manifest["config"]
         if manifest["schema"] != 1 or identity(config) != manifest["runId"]:
             raise BaselineError("ARTIFACT_INVALID", "运行身份不匹配")
-        if config["features"] != list(FEATURES) or config["protocol"] != PROTOCOL_VERSION or config["model"] != MODEL_CONFIG or config["cohort"] != COHORT or config["threshold"] != THRESHOLD:
-            raise BaselineError("ARTIFACT_INVALID", "固定字段或协议不匹配")
+        # 校验按该运行声明的 schema，而不是模块级常量；旧运行按自身声明继续通过。
+        schema = declared_schema(config)
+        if config["features"] != list(schema.in_model_names()) or config["protocol"] != schema.name:
+            raise BaselineError("ARTIFACT_INVALID", "声明字段或协议与 schema 不一致")
+        if config["model"] != MODEL_CONFIG or config["cohort"] != COHORT or config["threshold"] != THRESHOLD:
+            raise BaselineError("ARTIFACT_INVALID", "固定模型、纳入或阈值不匹配")
+        if config.get("algorithmVersion") is not None:
+            get_algorithm(config["algorithmVersion"])
         if config["modelSha256"] != manifest["files"]["model.joblib"]:
             raise BaselineError("ARTIFACT_INVALID", "模型身份不匹配")
         for name in names:
@@ -112,9 +153,10 @@ def check_files(directory, names):
                 raise BaselineError("INTEGRITY_ERROR", f"产物校验不匹配：{name}")
             if name in CORE_FILES and manifest["files"][name] != config["coreFiles"][name]:
                 raise BaselineError("INTEGRITY_ERROR", f"产物与运行配置校验不匹配：{name}")
-        for name in TRAINING_CODE:
-            if sha256((Path(__file__).parent / name).read_bytes()) != config["sourceCode"][name]:
-                raise BaselineError("INTEGRITY_ERROR", "训练代码版本不匹配，请重新生成独立运行")
+        # 源码指纹是溯源记录（D6）：不再要求与当前文件逐字节相同，运行身份由 identity(config) 与声明算法版本约束。
+        code = config.get("sourceCode")
+        if not isinstance(code, dict) or not code or any(not isinstance(value, str) or len(value) != 64 for value in code.values()):
+            raise BaselineError("ARTIFACT_INVALID", "训练代码溯源记录缺失或无效")
         if environment() != config["environment"]:
             raise BaselineError("ARTIFACT_INVALID", "模型环境版本不匹配")
     except (KeyError, TypeError) as exc:
@@ -128,16 +170,20 @@ class Snapshot:
     records: list
     summary: dict
     manifest: dict
+    schema: object = None
 
     @classmethod
     def load(cls, directory):
         directory = Path(directory)
         manifest = check_files(directory, SERVICE_FILES)
+        config = manifest["config"]
+        schema = declared_schema(config)
+        fields = list(schema.in_model_names())
         inputs, source = read_json(directory / "test-input.json"), read_json(directory / "source.json")
         partitions, summary = read_json(directory / "split.json"), read_json(directory / "summary.json")
         metrics = read_json(directory / "metrics.json")
         try:
-            if inputs["features"] != list(FEATURES) or summary["features"] != list(FEATURES):
+            if inputs["features"] != fields or summary["features"] != fields:
                 raise BaselineError("ARTIFACT_INVALID", "输入字段顺序不匹配")
             if source != summary["source"] or source["revision"] != REVISION or source["sha256"] != SOURCES["openstack.csv"][1]:
                 raise BaselineError("ARTIFACT_INVALID", "摘要来源不匹配")
@@ -147,9 +193,9 @@ class Snapshot:
             expected_ids = partitions["partitions"]["test"]["ids"]
             if not records or [r["id"] for r in records] != expected_ids or len(set(expected_ids)) != len(expected_ids) or len(records) != summary["split"]["test"]["count"] or len(records) != metrics["counts"]["records"]:
                 raise BaselineError("ARTIFACT_INVALID", "测试身份或数量不一致")
-            feature_matrix(records)
+            feature_matrix(records, schema)
             for r in records:
-                if set(r) != {"id", "time", "epoch", "sourceRow", "metrics", "features"} or set(r["metrics"]) != set(FEATURES) or r["features"] != [r["metrics"][f] for f in FEATURES]:
+                if set(r) != {"id", "time", "epoch", "sourceRow", "metrics", "features"} or set(r["metrics"]) != set(fields) or r["features"] != [r["metrics"][f] for f in fields]:
                     raise BaselineError("ARTIFACT_INVALID", "原始字段与模型输入不一致")
                 if datetime.fromisoformat(r["time"]).timestamp() != r["epoch"]:
                     raise BaselineError("ARTIFACT_INVALID", "提交时间与原始时间不一致")
@@ -159,19 +205,20 @@ class Snapshot:
             raise BaselineError("ARTIFACT_INVALID", "输入或摘要结构无效") from exc
         try:
             model = joblib.load(directory / "model.joblib")
-            if not isinstance(model, Pipeline) or model.n_features_in_ != 6 or set(model.classes_.tolist()) != {0, 1}:
+            if not isinstance(model, Pipeline) or model.n_features_in_ != len(fields) or set(model.classes_.tolist()) != {0, 1}:
                 raise ValueError("model shape")
         except Exception as exc:
             raise BaselineError("MODEL_INVALID", "模型无法加载或类型无效") from exc
-        return cls(model, records, summary, manifest)
+        return cls(model, records, summary, manifest, schema)
 
     def batch(self):
-        risks = predict_risks(self.model, self.records)
+        risks = predict_risks(self.model, self.records, self.schema)
         records = [{"id": r["id"], "time": r["time"], "risk": p, "lines": r["metrics"]["la"] + r["metrics"]["ld"],
                     "files": r["metrics"]["nf"], "metrics": r["metrics"]} for r, p in zip(self.records, risks, strict=True)]
+        label = self.summary.get("model") or model_descriptor(self.schema.name)
         return {"contractVersion": 1, "mode": "historical", "project": "OpenStack", "version": self.summary["datasetVersion"],
                 "datasetVersion": self.summary["datasetVersion"], "runId": self.manifest["runId"],
-                "model": {"id": "logistic-regression-six-v1", "name": "逻辑回归 · 六字段", "sha256": self.summary["modelSha256"]},
+                "model": {"id": label["id"], "name": label["name"], "sha256": self.summary["modelSha256"]},
                 "summary": self.summary, "records": records}
 
 
@@ -183,7 +230,7 @@ def verify_run(directory):
     ids = [r["id"] for r in snapshot.records]
     if ids != [r["id"] for r in references] or ids != [r["id"] for r in labels]:
         raise BaselineError("ARTIFACT_INVALID", "参考风险或评价标签身份不一致")
-    current = predict_risks(snapshot.model, snapshot.records)
+    current = predict_risks(snapshot.model, snapshot.records, snapshot.schema)
     if not np.allclose(current, [r["risk"] for r in references], rtol=0, atol=1e-8):
         raise BaselineError("ARTIFACT_INVALID", "参考风险与真实模型不一致")
     evaluation_records = [dict(r, label=y["label"]) for r, y in zip(snapshot.records, labels, strict=True)]
@@ -198,7 +245,7 @@ def compare_runs(first, second):
     verify_run(second)
     if read_json(Path(first) / "split.json") != read_json(Path(second) / "split.json"):
         raise BaselineError("REPRODUCTION_FAILED", "复现分区不一致")
-    maximum = float(np.max(np.abs(np.array(predict_risks(a.model, a.records)) - np.array(predict_risks(b.model, b.records)))))
+    maximum = float(np.max(np.abs(np.array(predict_risks(a.model, a.records, a.schema)) - np.array(predict_risks(b.model, b.records, b.schema)))))
     differences = {}
     for key in ("rocAuc", "averagePrecision", "precision", "recall", "f1", "recall20Loc"):
         x, y = a.summary["metrics"][key]["value"], b.summary["metrics"][key]["value"]

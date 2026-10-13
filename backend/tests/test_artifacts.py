@@ -119,3 +119,53 @@ def test_run_never_overwrites_existing_output(real_run):
     with pytest.raises(ValueError, match="已存在"):
         build_run(BACKEND / "data/openstack", real_run)
     assert (real_run / "manifest.json").read_bytes() == before
+
+
+def rewrite_manifest(target, mutate):
+    """一致地改写 manifest 声明：重算 runId 并刷新 summary 与文件清单。"""
+    from jit_baseline.artifacts import identity
+    from jit_baseline.data import sha256
+    manifest = json.loads((target / "manifest.json").read_text(encoding="utf-8"))
+    mutate(manifest["config"])
+    manifest["runId"] = identity(manifest["config"])
+    summary = json.loads((target / "summary.json").read_text(encoding="utf-8"))
+    summary["runId"] = manifest["runId"]
+    (target / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+    manifest["files"]["summary.json"] = sha256((target / "summary.json").read_bytes())
+    (target / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def test_declared_feature_order_must_match_the_schema(copied_run):
+    from jit_baseline.artifacts import Snapshot
+    from jit_baseline.data import BaselineError
+    rewrite_manifest(copied_run, lambda config: config.__setitem__("features", list(reversed(config["features"]))))
+    with pytest.raises(BaselineError) as info:
+        Snapshot.load(copied_run)
+    assert info.value.code == "ARTIFACT_INVALID" and "schema" in str(info.value)
+
+
+def test_unknown_declared_schema_is_rejected(copied_run):
+    from jit_baseline.artifacts import Snapshot
+    from jit_baseline.data import BaselineError
+    rewrite_manifest(copied_run, lambda config: config.__setitem__("schema", "kamei15-v9"))
+    with pytest.raises(BaselineError) as info:
+        Snapshot.load(copied_run)
+    assert info.value.code == "SCHEMA_UNKNOWN"
+
+
+def test_unknown_algorithm_version_is_rejected(copied_run):
+    from jit_baseline.artifacts import Snapshot
+    from jit_baseline.data import BaselineError
+    rewrite_manifest(copied_run, lambda config: config.__setitem__("algorithmVersion", "logistic-regression-l2-v9"))
+    with pytest.raises(BaselineError) as info:
+        Snapshot.load(copied_run)
+    assert info.value.code == "ALGORITHM_UNKNOWN"
+
+
+def test_legacy_run_without_schema_declaration_still_verifies(copied_run):
+    """旧格式运行（只有 protocol、无 schema/algorithmVersion）在改动后仍可加载。"""
+    from jit_baseline.artifacts import Snapshot
+    rewrite_manifest(copied_run, lambda config: (config.pop("schema"), config.pop("algorithmVersion")))
+    batch = Snapshot.load(copied_run).batch()
+    assert batch["model"]["id"] == "logistic-regression-six-v1"
+    assert len(batch["records"]) == 1853
