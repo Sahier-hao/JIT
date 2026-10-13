@@ -8,13 +8,11 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .config import BASE_URL, COHORT, FEATURES, SOURCES
+from .config import BASE_URL, COHORT, SOURCES
+from .errors import BaselineError
+from .schemas import BLANK_ERROR, BLANK_EXCLUDE, BLANK_ZERO, DEFAULT_SCHEMA, resolve
 
-
-class BaselineError(ValueError):
-    def __init__(self, code, message):
-        super().__init__(message)
-        self.code = code
+__all__ = ["BaselineError", "fetch_sources", "parse_source", "sha256", "verified_bytes"]
 
 
 def sha256(blob):
@@ -63,18 +61,28 @@ def integer(value, field, line):
     return int(value)
 
 
-def parse_source(blob):
+def parse_source(blob, schema=None):
+    """按具名 schema 解析固定来源。
+
+    缺失不填补：`BLANK_EXCLUDE` 字段缺失的行显式排除并计数，`BLANK_ERROR` 字段缺失即数据无效；
+    只有发布者规则（如 `fix := fixcount > 0`）的 `BLANK_ZERO` 字段把空值取 0。
+    """
+    schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    in_model = schema.in_model_fields()
     try:
         reader = csv.DictReader(io.StringIO(blob.decode("utf-8-sig")), strict=True)
-        required = {"commit_id", "author_date", "bugcount", *FEATURES}
+        required = {"commit_id", "author_date", "bugcount", "la", "ld", "nf"}
+        required |= {field.source for field in in_model if field.source}
         if not reader.fieldnames or len(set(reader.fieldnames)) != len(reader.fieldnames) or not required <= set(reader.fieldnames):
             raise BaselineError("DATA_INVALID", "来源字段定义无效或不完整")
         seen, records = set(), []
         quality = {"rawRows": 0, "includedRows": 0, "positiveLabels": 0, "blankLabels": 0,
-                   "excluded": dict.fromkeys(["outsideWindow", "noAddedLines", "tooMuchChurn", "tooManyFiles"], 0)}
+                   "featureMissing": {field.name: 0 for field in in_model},
+                   "excluded": dict.fromkeys(
+                       ["outsideWindow", "noAddedLines", "tooMuchChurn", "tooManyFiles", "missingRequiredField"], 0)}
         for line, raw in enumerate(reader, start=2):
             quality["rawRows"] += 1
-            if None in raw or any(raw[key] is None for key in required):
+            if None in raw or any(raw.get(key) is None for key in required):
                 raise BaselineError("DATA_INVALID", f"第 {line} 行：列数量无效")
             identity = raw["commit_id"]
             if not re.fullmatch(r"[0-9a-f]{40}", identity):
@@ -87,31 +95,49 @@ def parse_source(blob):
                 time = datetime.fromtimestamp(epoch, timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
             except (OverflowError, OSError, ValueError) as exc:
                 raise BaselineError("DATA_INVALID", f"第 {line} 行：提交时间无效") from exc
-            # Required numbers are checked even for excluded rows; exclusions never hide bad data.
-            metrics = {}
-            for field in FEATURES:
+            # 必需数值即使对将被排除的行也先校验；排除规则不会隐藏坏数据。
+            metrics, missing = {}, []
+            for field in in_model:
+                text = (raw.get(field.source) or "").strip() if field.source else ""
+                if text == "":
+                    if field.blank == BLANK_ZERO:
+                        metrics[field.name] = 0
+                    elif field.blank == BLANK_EXCLUDE:
+                        missing.append(field.name)
+                    else:
+                        raise BaselineError("DATA_INVALID", f"第 {line} 行：{field.name} 缺失或无效")
+                    continue
                 try:
-                    value = float(raw[field])
+                    value = float(text)
                 except ValueError as exc:
-                    raise BaselineError("DATA_INVALID", f"第 {line} 行：{field} 缺失或无效") from exc
-                if not math.isfinite(value) or value < 0 or (field != "ent" and not value.is_integer()):
-                    raise BaselineError("DATA_INVALID", f"第 {line} 行：{field} 数值无效")
-                metrics[field] = value if field == "ent" else int(value)
-            count = 0 if raw["bugcount"] == "" else integer(raw["bugcount"], "bugcount", line)
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：{field.name} 缺失或无效") from exc
+                if not math.isfinite(value) or value < 0 or (field.integer and not value.is_integer()):
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：{field.name} 数值无效")
+                metrics[field.name] = int(value > 0) if field.binary else int(value) if field.integer else value
+
+            def number(name):
+                text = (raw.get(name) or "").strip()
+                return float(text) if text else None
+
+            la, ld, nf = number("la"), number("ld"), number("nf")
             reason = ("outsideWindow" if not COHORT["startEpochInclusive"] <= epoch < COHORT["endEpochExclusive"] else
-                      "noAddedLines" if metrics["la"] <= 0 else
-                      "tooMuchChurn" if metrics["la"] + metrics["ld"] > COHORT["maxChurnInclusive"] else
-                      "tooManyFiles" if metrics["nf"] > COHORT["maxFilesInclusive"] else None)
+                      "noAddedLines" if la is not None and la <= 0 else
+                      "tooMuchChurn" if la is not None and ld is not None and la + ld > COHORT["maxChurnInclusive"] else
+                      "tooManyFiles" if nf is not None and nf > COHORT["maxFilesInclusive"] else
+                      "missingRequiredField" if missing else None)
             if reason:
                 quality["excluded"][reason] += 1
+                if reason == "missingRequiredField":
+                    for name in missing:
+                        quality["featureMissing"][name] += 1
                 continue
+            count = 0 if raw["bugcount"] == "" else integer(raw["bugcount"], "bugcount", line)
             label = int(count > 0)
             records.append({"id": identity, "time": time, "epoch": epoch, "sourceRow": line,
-                            "metrics": metrics, "features": [metrics[f] for f in FEATURES], "label": label})
+                            "metrics": metrics, "features": [metrics[field.name] for field in in_model], "label": label})
             quality["positiveLabels"] += label
             quality["blankLabels"] += int(raw["bugcount"] == "")
         quality["includedRows"] = len(records)
-        quality["featureMissing"] = dict.fromkeys(FEATURES, 0)
         return sorted(records, key=lambda r: (r["epoch"], r["id"])), quality
     except (UnicodeDecodeError, csv.Error) as exc:
         raise BaselineError("DATA_INVALID", "来源 CSV 编码或结构无效") from exc
