@@ -1,6 +1,7 @@
 """Auditable fixed runs and a read-only, label-free inference snapshot."""
 import json
 import platform
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
@@ -148,7 +149,9 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
                for name, (relative, expected) in SOURCES.items()}
     records, quality = parse_source(verified_bytes(source_dir / "openstack.csv", SOURCES["openstack.csv"][1]), schema)
     split, boundaries = temporal_split(records)
+    started = time.perf_counter()
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version)
+    training_seconds = round(time.perf_counter() - started, 6)
     risks = predict_risks(pipeline, split["test"], schema)
     metrics = evaluate(split["test"], risks, metric_set)
     dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": fields,
@@ -185,6 +188,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
                "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": schema.name,
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
                "model": {"id": label["id"], "name": label["name"]},
+               "trainingSeconds": training_seconds,
                "limitations": limitations(schema)}
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
@@ -389,3 +393,49 @@ def compare_runs(first, second):
             "partitionMembershipExact": True, "testCount": len(a.records), "maxRiskAbsoluteDifference": maximum,
             "metricAbsoluteDifferences": differences, "method": method_a, "metricSet": set_a,
             "reproducibility": discipline, "tolerance": atol, "passed": True}
+
+
+COMPARISON_PROTOCOL_KEYS = ("name", "ordering", "policy")
+COMPARISON_LABELS = {"test": "测试成员", "datasetVersion": "数据版本", "featureSchema": "特征 schema",
+                     "threshold": "分类阈值", "metricSet": "指标集", "protocol": "评价协议"}
+
+
+def compare_methods(directories):
+    """并列比较多个方法的运行；只有测试成员与评价口径一致时才声明可直接排名（PDB-20）。
+
+    训练耗时是墙钟量，记在摘要里仅供展示，不进入运行身份。
+    """
+    if not directories:
+        raise BaselineError("EVALUATION_INVALID", "没有可比较的运行")
+    entries, reasons, baseline = [], [], None
+    for directory in directories:
+        snapshot = Snapshot.load(directory)
+        summary, config = snapshot.summary, snapshot.manifest["config"]
+        metrics = summary["metrics"]
+        method = config.get("algorithmVersion") or DEFAULT_ALGORITHM
+        entries.append({"method": method, "runId": snapshot.manifest["runId"],
+                        "datasetVersion": summary["datasetVersion"],
+                        "featureSchema": summary["featureSchema"]["name"],
+                        "parameters": config["model"], "threshold": summary["threshold"],
+                        "metricSet": config.get("metricSet") or DEFAULT_METRIC_SET,
+                        "trainingSeconds": summary.get("trainingSeconds"),
+                        "metrics": comparable_metrics(metrics),
+                        "counts": metrics.get("counts"), "confusion": metrics.get("confusion"),
+                        "effort": metrics.get("effort")})
+        current = {"test": tuple(r["id"] for r in snapshot.records),
+                   "datasetVersion": summary["datasetVersion"],
+                   "featureSchema": summary["featureSchema"]["name"],
+                   "threshold": summary["threshold"],
+                   "metricSet": config.get("metricSet") or DEFAULT_METRIC_SET,
+                   "protocol": tuple((metrics.get("effort") or {}).get(key) for key in COMPARISON_PROTOCOL_KEYS)}
+        if baseline is None:
+            baseline = current
+            continue
+        for key, label in COMPARISON_LABELS.items():
+            if current[key] != baseline[key]:
+                reasons.append(f"{entries[-1]['method']} 的{label}与 {entries[0]['method']} 不同")
+    return {"kind": "method-comparison", "directlyRankable": not reasons, "reasons": sorted(set(reasons)),
+            "testCount": len(baseline["test"]), "threshold": baseline["threshold"],
+            "featureSchema": baseline["featureSchema"], "datasetVersion": baseline["datasetVersion"],
+            "metricSet": baseline["metricSet"], "methods": entries,
+            "note": "同口径时可并列比较；口径不一致时不可直接排名，也不得据此择优。"}

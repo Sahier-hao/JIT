@@ -4,8 +4,8 @@ import json
 import sys
 from pathlib import Path
 
-from .artifacts import (DEFAULT_RUN, Snapshot, build_run, compare_runs, declared_reproducibility,
-                        environment, run_origin, verify_run, write_json)
+from .artifacts import (DEFAULT_RUN, Snapshot, build_run, compare_methods, compare_runs,
+                        declared_reproducibility, environment, run_origin, verify_run, write_json)
 from . import evidence
 from .config import BACKEND
 from .data import BaselineError, fetch_sources
@@ -25,6 +25,9 @@ def main():
     compare.add_argument("first", type=Path)
     compare.add_argument("second", type=Path)
     compare.add_argument("--report", type=Path, required=True)
+    methods = commands.add_parser("compare-methods")
+    methods.add_argument("runs", type=Path, nargs="+")
+    methods.add_argument("--report", type=Path, required=True)
     commands.add_parser("serve")
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
@@ -49,6 +52,10 @@ def main():
                       "reproducibility": declared_reproducibility(manifest)[1], "passed": True}
         elif args.command == "compare":
             result = compare_runs(args.first, args.second)
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+            write_json(args.report, result)
+        elif args.command == "compare-methods":
+            result = compare_methods(args.runs)
             args.report.parent.mkdir(parents=True, exist_ok=True)
             write_json(args.report, result)
         elif args.command == "freeze-evidence":

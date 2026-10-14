@@ -58,6 +58,37 @@ ALGORITHMS = {
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
         "explanation": {"method": None, "reason": "本 change 未实现预测解释；树集成模型的候选口径留待解释 change 登记"},
     },
+    "gaussian-naive-bayes-v1": {
+        "label": "高斯朴素贝叶斯",
+        "name": "高斯朴素贝叶斯 · 高斯假设",
+        "category": CLASSIC,
+        "detail": "var_smoothing=1e-9/单线程",
+        # 高斯判定式逐特征建模，不需要标准化；仍沿用 schema 声明的 log1p（counts 步不由方法覆盖）。
+        "params": {"var_smoothing": 1e-9, "threads": 1},
+        "estimator": "gaussian-naive-bayes",
+        "kwargs": {"var_smoothing": 1e-9},
+        "preprocess": (),
+        "requires": (),
+        "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
+        "explanation": {"method": None, "reason": "本 change 未实现预测解释；朴素贝叶斯的候选口径留待解释 change 登记"},
+    },
+    # 小树 + 叶下限的保守取值：控制训练时间，并与既有树方法的正则化取向一致。
+    # 已冻结，不由验证或测试结果调整。
+    "gradient-boosting-v1": {
+        "label": "梯度提升树",
+        "name": "梯度提升树 · 200 棵小树",
+        "category": CLASSIC,
+        "detail": "n_estimators=200/learning_rate=0.1/max_depth=3/min_samples_leaf=50/random_state=2026/单线程",
+        "params": {"n_estimators": 200, "learning_rate": 0.1, "max_depth": 3,
+                   "min_samples_leaf": 50, "seed": 2026, "threads": 1},
+        "estimator": "gradient-boosting",
+        "kwargs": {"n_estimators": 200, "learning_rate": 0.1, "max_depth": 3,
+                   "min_samples_leaf": 50, "random_state": 2026},
+        "preprocess": (),
+        "requires": (),
+        "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
+        "explanation": {"method": None, "reason": "本 change 未实现预测解释；树集成模型的候选口径留待解释 change 登记"},
+    },
 }
 
 DEFAULT_ALGORITHM = "logistic-regression-l2-v1"
