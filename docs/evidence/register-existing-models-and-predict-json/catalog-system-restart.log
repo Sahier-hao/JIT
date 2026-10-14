@@ -1,0 +1,6 @@
+INFO:     Started server process [28864]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:2070 (Press CTRL+C to quit)
+INFO jit.catalog operation=GET role=member requestId=60b6de88-fd21-4a23-8560-de5a61b83deb status=200 modelId=93dc1e7f-53dd-4eae-9018-58ba0330da26 runId=859539f8-4152-4cf6-be87-860b2df28932 batchId=76148698-636e-43b3-a267-9a4cb39ecb11
+INFO:     127.0.0.1:26543 - "GET /api/v1/prediction-batches/76148698-636e-43b3-a267-9a4cb39ecb11 HTTP/1.1" 200 OK

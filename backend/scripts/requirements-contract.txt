@@ -1,0 +1,3 @@
+# Isolated documentation checker only; not part of model/runtime requirements.
+jsonschema==4.25.1
+PyYAML==6.0.3

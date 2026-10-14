@@ -1,0 +1,45 @@
+{
+  "artifactUnchangedByVerification": true,
+  "declaredReproducibility": {
+    "atol": 1e-08,
+    "mode": "tolerance",
+    "rtol": 0.0
+  },
+  "kind": "external-artifact-verification",
+  "origin": "external",
+  "records": 1853,
+  "rejections": {
+    "hash-mismatch": {
+      "error": "INTEGRITY_ERROR",
+      "message": "产物校验不匹配：model.joblib",
+      "passed": false
+    },
+    "missing-needed-file": {
+      "error": "ARTIFACT_UNAVAILABLE",
+      "message": "产物不可用：source.json",
+      "passed": false
+    },
+    "unloadable-here": {
+      "error": "MODEL_INVALID",
+      "message": "模型无法加载或类型无效",
+      "passed": false
+    }
+  },
+  "runId": "abf056e7943155b5a7c44e3099133a1ff6557bedef4ed90f89c31422b171d848",
+  "runIdIsTheProducersAndSelfConsistent": true,
+  "simulatedFor": "在别台（有加速设备的）机器上产生、经仓库交付的运行",
+  "trainingEnvironment": {
+    "packages": {
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "torch": "2.1.0+cu121"
+    },
+    "platform": "Linux-5.15.0-105-generic-x86_64-with-glibc2.35",
+    "python": "3.11.9"
+  },
+  "verdict": {
+    "error": null,
+    "message": null,
+    "passed": true
+  }
+}

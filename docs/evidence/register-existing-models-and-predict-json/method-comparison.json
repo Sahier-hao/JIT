@@ -1,0 +1,197 @@
+{
+  "comparability": {
+    "basis": "同 schema、同数据版本、同冻结测试成员、同指标集时两个方法才可同口径比较；任一不同则只能分别报告。测试成员以排序后标识串的 SHA-256 表示。",
+    "directlyComparable": true,
+    "sameDatasetVersion": true,
+    "sameMetricSet": true,
+    "sameSchema": true,
+    "sameTestMembership": true
+  },
+  "coverageGap": {
+    "classicRegistered": 2,
+    "deepRegistered": 0,
+    "note": "课程要求两类合计不少于八种、深度不少于四种；本次只登记一个新增经典方法用于检验契约，不构成数量达标。"
+  },
+  "kind": "named-method-comparison",
+  "methods": {
+    "decision-tree-v1": {
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "declaredMethod": "decision-tree-v1",
+      "metricSet": "metric-set-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.3288404735927449
+        },
+        "confusion": {
+          "fn": 274,
+          "fp": 17,
+          "tn": 1550,
+          "tp": 12
+        },
+        "counts": {
+          "negative": 1567,
+          "positive": 286,
+          "records": 1853
+        },
+        "effort": {
+          "budgetLoc": 42048.4,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 83,
+          "totalLoc": 210242,
+          "usedLoc": 41103
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0761904761904762
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.41379310344827586
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.04195804195804196
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.1258741258741259
+        },
+        "reference": {
+          "allNegative": {
+            "confusion": {
+              "fn": 286,
+              "fp": 0,
+              "tn": 1567,
+              "tp": 0
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.0
+            },
+            "precision": {
+              "reason": "没有预测为正的提交",
+              "value": null
+            },
+            "recall": {
+              "reason": null,
+              "value": 0.0
+            }
+          },
+          "apNoInformation": 0.15434430652995143
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7433059920296679
+        },
+        "threshold": 0.5
+      },
+      "model": {
+        "id": "decision-tree@openstack-six-v1",
+        "name": "决策树 · openstack-six-v1"
+      },
+      "output": "artifacts/decision-tree-v1",
+      "runId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+      "schema": "openstack-six-v1",
+      "splitCounts": {
+        "test": 1853,
+        "train": 8669,
+        "validation": 1852
+      },
+      "testMembershipCount": 1853,
+      "testMembershipDigest": "d8df907612742c0cad016fa4124333fa13200c9287a1e855825f1ad41eb1fa87"
+    },
+    "logistic-regression-l2-v1": {
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "declaredMethod": "logistic-regression-l2-v1",
+      "metricSet": "metric-set-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.38293951606100585
+        },
+        "confusion": {
+          "fn": 276,
+          "fp": 7,
+          "tn": 1560,
+          "tp": 10
+        },
+        "counts": {
+          "negative": 1567,
+          "positive": 286,
+          "records": 1853
+        },
+        "effort": {
+          "budgetLoc": 42048.4,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 25,
+          "totalLoc": 210242,
+          "usedLoc": 41090
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.066006600660066
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.5882352941176471
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.03496503496503497
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.04195804195804196
+        },
+        "reference": {
+          "allNegative": {
+            "confusion": {
+              "fn": 286,
+              "fp": 0,
+              "tn": 1567,
+              "tp": 0
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.0
+            },
+            "precision": {
+              "reason": "没有预测为正的提交",
+              "value": null
+            },
+            "recall": {
+              "reason": null,
+              "value": 0.0
+            }
+          },
+          "apNoInformation": 0.15434430652995143
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7709845993189962
+        },
+        "threshold": 0.5
+      },
+      "model": {
+        "id": "logistic-regression-six-v1",
+        "name": "逻辑回归 · 六字段"
+      },
+      "output": "artifacts/baseline",
+      "runId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+      "schema": "openstack-six-v1",
+      "splitCounts": {
+        "test": 1853,
+        "train": 8669,
+        "validation": 1852
+      },
+      "testMembershipCount": 1853,
+      "testMembershipDigest": "d8df907612742c0cad016fa4124333fa13200c9287a1e855825f1ad41eb1fa87"
+    }
+  },
+  "purpose": "记录第二个方法（决策树）的指标，并写明它与六字段逻辑回归是否可同口径比较及依据。"
+}

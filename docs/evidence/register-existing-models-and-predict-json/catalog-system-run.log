@@ -1,0 +1,1 @@
+{"passed": true, "requests": 400, "p95Seconds": {"logistic-regression-l2-v1": 0.12639820000185864, "decision-tree-v1": 0.12576580000313697}}

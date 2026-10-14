@@ -1,0 +1,3341 @@
+{
+  "kind": "development-system-evidence",
+  "passed": true,
+  "http": [
+    {
+      "method": "GET",
+      "path": "/api/v1/models",
+      "role": "anonymous",
+      "status": 401,
+      "requestId": "56e47213-8148-447f-acb9-0601ec39b1d3",
+      "request": null,
+      "response": {
+        "error": {
+          "code": "AUTH_REQUIRED",
+          "message": "需要有效的团队 Bearer 凭据",
+          "requestId": "56e47213-8148-447f-acb9-0601ec39b1d3"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/model-candidates",
+      "role": "member",
+      "status": 403,
+      "requestId": "f9109e8f-203b-4c6a-899b-ed5e70bdecd5",
+      "request": null,
+      "response": {
+        "error": {
+          "code": "ACCESS_DENIED",
+          "message": "此操作需要管理员权限",
+          "requestId": "f9109e8f-203b-4c6a-899b-ed5e70bdecd5"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/feature-schemas/openstack-six-v1",
+      "role": "member",
+      "status": 200,
+      "requestId": "ac8894e9-f6d4-491d-b006-21e5fbe9ccf5",
+      "request": null,
+      "response": {
+        "featureSchemaVersion": "openstack-six-v1",
+        "state": "ready",
+        "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+        "inModel": [
+          "ns",
+          "nd",
+          "nf",
+          "ent",
+          "la",
+          "ld"
+        ],
+        "jsonPredictionSupported": true,
+        "fields": [
+          {
+            "name": "ns",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "ns",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ns",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "nd",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "nd",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "nd",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "nf",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "nf",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "nf",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "ent",
+            "type": "number",
+            "unit": "发布者原生单位",
+            "description": "ent",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ent",
+            "transform": "raw",
+            "reason": null
+          },
+          {
+            "name": "la",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "la",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "la",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "ld",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "ld",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ld",
+            "transform": "log1p",
+            "reason": null
+          }
+        ],
+        "transforms": [
+          "log1p",
+          "log1p",
+          "log1p",
+          "raw",
+          "log1p",
+          "log1p"
+        ],
+        "limitations": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/feature-schemas/kamei14-v1",
+      "role": "member",
+      "status": 200,
+      "requestId": "e4df67a2-9772-432b-b2d6-d6f452f6f092",
+      "request": null,
+      "response": {
+        "featureSchemaVersion": "kamei14-v1",
+        "state": "ready",
+        "schemaSha256": "46ae57973b95f00fb6f51ca81ee74c8191f6984112a36abbbe1f0490c9419220",
+        "inModel": [
+          "ns",
+          "nd",
+          "nf",
+          "entropy",
+          "la",
+          "ld",
+          "fix",
+          "ndev",
+          "age",
+          "nuc",
+          "exp",
+          "sexp"
+        ],
+        "jsonPredictionSupported": false,
+        "fields": [
+          {
+            "name": "ns",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "ns",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ns",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "nd",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "nd",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "nd",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "nf",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "nf",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "nf",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "entropy",
+            "type": "number",
+            "unit": "发布者原生单位",
+            "description": "entropy",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ent",
+            "transform": "raw",
+            "reason": null
+          },
+          {
+            "name": "la",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "la",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "la",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "ld",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "ld",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ld",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "lt",
+            "type": "number",
+            "unit": "发布者原生单位",
+            "description": "固定快照不含变更前文件规模（Size 家族只有 la、ld），不能用 la+ld 替代",
+            "sourceStatus": "missing",
+            "inModel": false,
+            "sourceColumn": null,
+            "transform": "raw",
+            "reason": "固定快照不含变更前文件规模（Size 家族只有 la、ld），不能用 la+ld 替代"
+          },
+          {
+            "name": "fix",
+            "type": "boolean",
+            "unit": "发布者原生单位",
+            "description": "发布者规则 fix := fixcount > 0；空值表示该变更未修复缺陷",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "fixcount",
+            "transform": "raw",
+            "reason": "发布者规则 fix := fixcount > 0；空值表示该变更未修复缺陷"
+          },
+          {
+            "name": "ndev",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "ndev",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "ndev",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "age",
+            "type": "number",
+            "unit": "发布者原生单位",
+            "description": "age",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "age",
+            "transform": "raw",
+            "reason": null
+          },
+          {
+            "name": "nuc",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "nuc",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "nuc",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "exp",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "exp",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "aexp",
+            "transform": "log1p",
+            "reason": null
+          },
+          {
+            "name": "rexp",
+            "type": "number",
+            "unit": "发布者原生单位",
+            "description": "同名列 rexp 是 Reviewer experience；候选 arexp 只给标签、无定义，无法核验",
+            "sourceStatus": "missing",
+            "inModel": false,
+            "sourceColumn": null,
+            "transform": "raw",
+            "reason": "同名列 rexp 是 Reviewer experience；候选 arexp 只给标签、无定义，无法核验"
+          },
+          {
+            "name": "sexp",
+            "type": "integer",
+            "unit": "发布者原生单位",
+            "description": "sexp",
+            "sourceStatus": "verified",
+            "inModel": true,
+            "sourceColumn": "asexp",
+            "transform": "log1p",
+            "reason": null
+          }
+        ],
+        "transforms": [
+          "log1p",
+          "log1p",
+          "log1p",
+          "raw",
+          "log1p",
+          "log1p",
+          "raw",
+          "log1p",
+          "raw",
+          "log1p",
+          "log1p",
+          "log1p"
+        ],
+        "limitations": [
+          "固定快照不含变更前文件规模（Size 家族只有 la、ld），不能用 la+ld 替代",
+          "同名列 rexp 是 Reviewer experience；候选 arexp 只给标签、无定义，无法核验"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/model-candidates",
+      "role": "admin",
+      "status": 200,
+      "requestId": "8bd08228-46a2-4aa2-a977-aa1c5d0055e5",
+      "request": null,
+      "response": {
+        "candidates": [
+          {
+            "candidateId": "60d798426642bc57884a60ce50718b49a1157d22723c91a58db39760271cc1a1",
+            "displayName": "baseline",
+            "state": "candidate",
+            "manifestSha256": "7b287bf928cb4466e2d558649a61581691f0be6257cde6f3fa7272397dadacaf",
+            "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+            "method": "logistic-regression-l2-v1",
+            "featureSchemaVersion": "openstack-six-v1"
+          },
+          {
+            "candidateId": "d00ba15194a81f82dd75821bb9b88e90d5dd7378a39ec65914ef1791f01672f7",
+            "displayName": "decision-tree",
+            "state": "candidate",
+            "manifestSha256": "6362f827f792fd5656cb343cd901515e88c2f3a51fd2133679a6ffee859819d2",
+            "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+            "method": "decision-tree-v1",
+            "featureSchemaVersion": "openstack-six-v1"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/register",
+      "role": "admin",
+      "status": 201,
+      "requestId": "b5920997-ba7f-4b98-b97e-9f7d6717281f",
+      "request": {
+        "candidateId": "60d798426642bc57884a60ce50718b49a1157d22723c91a58db39760271cc1a1",
+        "expectedManifestSha256": "7b287bf928cb4466e2d558649a61581691f0be6257cde6f3fa7272397dadacaf"
+      },
+      "response": {
+        "created": true,
+        "model": {
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "name": "逻辑回归 · 六字段",
+          "method": "logistic-regression-l2-v1",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "featureSchemaVersion": "openstack-six-v1",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "state": "ready",
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "fields": [
+              {
+                "name": "ns",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ns",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ns",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nd",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nd",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nd",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nf",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nf",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nf",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ent",
+                "type": "number",
+                "unit": "发布者原生单位",
+                "description": "ent",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ent",
+                "transform": "raw",
+                "reason": null
+              },
+              {
+                "name": "la",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "la",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "la",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ld",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ld",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ld",
+                "transform": "log1p",
+                "reason": null
+              }
+            ],
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ],
+            "limitations": []
+          },
+          "jsonPredictionSupported": true,
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "origin": "local",
+          "verificationEnvironment": {
+            "python": "3.14.2",
+            "platform": "Windows-11-10.0.26300-SP0",
+            "packages": {
+              "numpy": "2.5.3",
+              "scipy": "1.18.1",
+              "scikit-learn": "1.9.1",
+              "joblib": "1.6.0",
+              "threadpoolctl": "3.7.0",
+              "fastapi": "0.143.0",
+              "uvicorn": "0.54.0"
+            }
+          },
+          "reproducibility": {
+            "mode": "tolerance",
+            "atol": 1e-08,
+            "rtol": 0.0
+          },
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "state": "ready"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/register",
+      "role": "admin",
+      "status": 200,
+      "requestId": "a8cd77f9-8e82-433d-a74b-ee7bfd22d870",
+      "request": {
+        "candidateId": "60d798426642bc57884a60ce50718b49a1157d22723c91a58db39760271cc1a1",
+        "expectedManifestSha256": "7b287bf928cb4466e2d558649a61581691f0be6257cde6f3fa7272397dadacaf"
+      },
+      "response": {
+        "created": false,
+        "model": {
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "name": "逻辑回归 · 六字段",
+          "method": "logistic-regression-l2-v1",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "featureSchemaVersion": "openstack-six-v1",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "state": "ready",
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "fields": [
+              {
+                "name": "ns",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ns",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ns",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nd",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nd",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nd",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nf",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nf",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nf",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ent",
+                "type": "number",
+                "unit": "发布者原生单位",
+                "description": "ent",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ent",
+                "transform": "raw",
+                "reason": null
+              },
+              {
+                "name": "la",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "la",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "la",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ld",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ld",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ld",
+                "transform": "log1p",
+                "reason": null
+              }
+            ],
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ],
+            "limitations": []
+          },
+          "jsonPredictionSupported": true,
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "origin": "local",
+          "verificationEnvironment": {
+            "python": "3.14.2",
+            "platform": "Windows-11-10.0.26300-SP0",
+            "packages": {
+              "numpy": "2.5.3",
+              "scipy": "1.18.1",
+              "scikit-learn": "1.9.1",
+              "joblib": "1.6.0",
+              "threadpoolctl": "3.7.0",
+              "fastapi": "0.143.0",
+              "uvicorn": "0.54.0"
+            }
+          },
+          "reproducibility": {
+            "mode": "tolerance",
+            "atol": 1e-08,
+            "rtol": 0.0
+          },
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "state": "ready"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/predictions",
+      "role": "member",
+      "status": 201,
+      "requestId": "dff857f9-1d61-445d-87ef-19d1c98b3c07",
+      "request": {
+        "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+        "featureSchemaVersion": "openstack-six-v1",
+        "project": "OpenStack · 单条功能验收",
+        "record": {
+          "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+          "features": {
+            "ent": 0.9129986686368237,
+            "la": 25,
+            "ld": 1,
+            "nd": 5,
+            "nf": 5,
+            "ns": 1
+          },
+          "time": "2013-11-11T08:29:48Z"
+        }
+      },
+      "response": {
+        "mode": "feature-input",
+        "sourceKind": "client-features",
+        "batchId": "76148698-636e-43b3-a267-9a4cb39ecb11",
+        "project": "OpenStack · 单条功能验收",
+        "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+        "model": {
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "fields": [
+              {
+                "description": "ns",
+                "inModel": true,
+                "name": "ns",
+                "reason": null,
+                "sourceColumn": "ns",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nd",
+                "inModel": true,
+                "name": "nd",
+                "reason": null,
+                "sourceColumn": "nd",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nf",
+                "inModel": true,
+                "name": "nf",
+                "reason": null,
+                "sourceColumn": "nf",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ent",
+                "inModel": true,
+                "name": "ent",
+                "reason": null,
+                "sourceColumn": "ent",
+                "sourceStatus": "verified",
+                "transform": "raw",
+                "type": "number",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "la",
+                "inModel": true,
+                "name": "la",
+                "reason": null,
+                "sourceColumn": "la",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ld",
+                "inModel": true,
+                "name": "ld",
+                "reason": null,
+                "sourceColumn": "ld",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              }
+            ],
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "limitations": [],
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "state": "ready",
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ]
+          },
+          "featureSchemaVersion": "openstack-six-v1",
+          "jsonPredictionSupported": true,
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "method": "logistic-regression-l2-v1",
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "name": "逻辑回归 · 六字段",
+          "origin": "local",
+          "reproducibility": {
+            "atol": 1e-08,
+            "mode": "tolerance",
+            "rtol": 0.0
+          },
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "verificationEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "state": "ready"
+        },
+        "featureSchemaVersion": "openstack-six-v1",
+        "inputSha256": "5e0702f61cc927d3c0d08cb1d0bd9fab312f16ad6a1bf661ef1c9189d8cf0b64",
+        "createdAt": "2026-10-14T14:41:54.027264Z",
+        "records": [
+          {
+            "predictionId": "36ba5ae6-2361-4853-80c1-15925a1d0eb6",
+            "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+            "features": {
+              "ns": 1,
+              "nd": 5,
+              "nf": 5,
+              "ent": 0.9129986686368237,
+              "la": 25,
+              "ld": 1
+            },
+            "commitId": null,
+            "time": "2013-11-11T08:29:48Z",
+            "risk": 0.11575286232078694,
+            "explanationStatus": "not-supported",
+            "explanationReason": "该模型的真实预测解释尚未接入"
+          }
+        ],
+        "limitations": [
+          "原始特征由调用方提供，尚未核验源码提取或真实标签。",
+          "风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。",
+          "本轮未提供真实预测解释或代码定位。",
+          "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+          "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+          "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+          "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+          "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+          "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/prediction-batches/76148698-636e-43b3-a267-9a4cb39ecb11",
+      "role": "member",
+      "status": 200,
+      "requestId": "94d9bf31-8c10-4696-aacf-19ce9a1f4575",
+      "request": null,
+      "response": {
+        "batchId": "76148698-636e-43b3-a267-9a4cb39ecb11",
+        "createdAt": "2026-10-14T14:41:54.027264Z",
+        "featureSchemaVersion": "openstack-six-v1",
+        "inputSha256": "5e0702f61cc927d3c0d08cb1d0bd9fab312f16ad6a1bf661ef1c9189d8cf0b64",
+        "limitations": [
+          "原始特征由调用方提供，尚未核验源码提取或真实标签。",
+          "风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。",
+          "本轮未提供真实预测解释或代码定位。",
+          "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+          "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+          "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+          "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+          "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+          "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+        ],
+        "mode": "feature-input",
+        "model": {
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "fields": [
+              {
+                "description": "ns",
+                "inModel": true,
+                "name": "ns",
+                "reason": null,
+                "sourceColumn": "ns",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nd",
+                "inModel": true,
+                "name": "nd",
+                "reason": null,
+                "sourceColumn": "nd",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nf",
+                "inModel": true,
+                "name": "nf",
+                "reason": null,
+                "sourceColumn": "nf",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ent",
+                "inModel": true,
+                "name": "ent",
+                "reason": null,
+                "sourceColumn": "ent",
+                "sourceStatus": "verified",
+                "transform": "raw",
+                "type": "number",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "la",
+                "inModel": true,
+                "name": "la",
+                "reason": null,
+                "sourceColumn": "la",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ld",
+                "inModel": true,
+                "name": "ld",
+                "reason": null,
+                "sourceColumn": "ld",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              }
+            ],
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "limitations": [],
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "state": "ready",
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ]
+          },
+          "featureSchemaVersion": "openstack-six-v1",
+          "jsonPredictionSupported": true,
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "method": "logistic-regression-l2-v1",
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "name": "逻辑回归 · 六字段",
+          "origin": "local",
+          "reproducibility": {
+            "atol": 1e-08,
+            "mode": "tolerance",
+            "rtol": 0.0
+          },
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "state": "ready",
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "verificationEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          }
+        },
+        "project": "OpenStack · 单条功能验收",
+        "records": [
+          {
+            "commitId": null,
+            "explanationReason": "该模型的真实预测解释尚未接入",
+            "explanationStatus": "not-supported",
+            "features": {
+              "ent": 0.9129986686368237,
+              "la": 25,
+              "ld": 1,
+              "nd": 5,
+              "nf": 5,
+              "ns": 1
+            },
+            "predictionId": "36ba5ae6-2361-4853-80c1-15925a1d0eb6",
+            "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+            "risk": 0.11575286232078694,
+            "time": "2013-11-11T08:29:48Z"
+          }
+        ],
+        "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+        "sourceKind": "client-features"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/register",
+      "role": "admin",
+      "status": 201,
+      "requestId": "b5366fc8-4c3b-4784-92e1-c61ac32ca8e4",
+      "request": {
+        "candidateId": "d00ba15194a81f82dd75821bb9b88e90d5dd7378a39ec65914ef1791f01672f7",
+        "expectedManifestSha256": "6362f827f792fd5656cb343cd901515e88c2f3a51fd2133679a6ffee859819d2"
+      },
+      "response": {
+        "created": true,
+        "model": {
+          "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+          "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "decision-tree@openstack-six-v1",
+          "name": "决策树 · openstack-six-v1",
+          "method": "decision-tree-v1",
+          "sha256": "37a1d8c00c4dd41b9d6f8e16f29fcec9cfe85ab65218eee0c8deadea6538ccba",
+          "featureSchemaVersion": "openstack-six-v1",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "state": "ready",
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "fields": [
+              {
+                "name": "ns",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ns",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ns",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nd",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nd",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nd",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nf",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nf",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nf",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ent",
+                "type": "number",
+                "unit": "发布者原生单位",
+                "description": "ent",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ent",
+                "transform": "raw",
+                "reason": null
+              },
+              {
+                "name": "la",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "la",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "la",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ld",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ld",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ld",
+                "transform": "log1p",
+                "reason": null
+              }
+            ],
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ],
+            "limitations": []
+          },
+          "jsonPredictionSupported": true,
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "origin": "local",
+          "verificationEnvironment": {
+            "python": "3.14.2",
+            "platform": "Windows-11-10.0.26300-SP0",
+            "packages": {
+              "numpy": "2.5.3",
+              "scipy": "1.18.1",
+              "scikit-learn": "1.9.1",
+              "joblib": "1.6.0",
+              "threadpoolctl": "3.7.0",
+              "fastapi": "0.143.0",
+              "uvicorn": "0.54.0"
+            }
+          },
+          "reproducibility": {
+            "mode": "tolerance",
+            "atol": 1e-08,
+            "rtol": 0.0
+          },
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "state": "ready"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/register",
+      "role": "admin",
+      "status": 200,
+      "requestId": "f030df11-a2d2-43dd-a8f9-2948a6c3fb5e",
+      "request": {
+        "candidateId": "d00ba15194a81f82dd75821bb9b88e90d5dd7378a39ec65914ef1791f01672f7",
+        "expectedManifestSha256": "6362f827f792fd5656cb343cd901515e88c2f3a51fd2133679a6ffee859819d2"
+      },
+      "response": {
+        "created": false,
+        "model": {
+          "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+          "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "decision-tree@openstack-six-v1",
+          "name": "决策树 · openstack-six-v1",
+          "method": "decision-tree-v1",
+          "sha256": "37a1d8c00c4dd41b9d6f8e16f29fcec9cfe85ab65218eee0c8deadea6538ccba",
+          "featureSchemaVersion": "openstack-six-v1",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "state": "ready",
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "fields": [
+              {
+                "name": "ns",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ns",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ns",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nd",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nd",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nd",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nf",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nf",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nf",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ent",
+                "type": "number",
+                "unit": "发布者原生单位",
+                "description": "ent",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ent",
+                "transform": "raw",
+                "reason": null
+              },
+              {
+                "name": "la",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "la",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "la",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ld",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ld",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ld",
+                "transform": "log1p",
+                "reason": null
+              }
+            ],
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ],
+            "limitations": []
+          },
+          "jsonPredictionSupported": true,
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "origin": "local",
+          "verificationEnvironment": {
+            "python": "3.14.2",
+            "platform": "Windows-11-10.0.26300-SP0",
+            "packages": {
+              "numpy": "2.5.3",
+              "scipy": "1.18.1",
+              "scikit-learn": "1.9.1",
+              "joblib": "1.6.0",
+              "threadpoolctl": "3.7.0",
+              "fastapi": "0.143.0",
+              "uvicorn": "0.54.0"
+            }
+          },
+          "reproducibility": {
+            "mode": "tolerance",
+            "atol": 1e-08,
+            "rtol": 0.0
+          },
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "state": "ready"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/predictions",
+      "role": "member",
+      "status": 201,
+      "requestId": "4290aa14-1c04-4b18-8c00-98d03969b0be",
+      "request": {
+        "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+        "featureSchemaVersion": "openstack-six-v1",
+        "project": "OpenStack · 单条功能验收",
+        "record": {
+          "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+          "features": {
+            "ent": 0.9129986686368237,
+            "la": 25,
+            "ld": 1,
+            "nd": 5,
+            "nf": 5,
+            "ns": 1
+          },
+          "time": "2013-11-11T08:29:48Z"
+        }
+      },
+      "response": {
+        "mode": "feature-input",
+        "sourceKind": "client-features",
+        "batchId": "c43e1d46-1c29-4a17-a86d-b36330741c12",
+        "project": "OpenStack · 单条功能验收",
+        "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+        "model": {
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "decision-tree@openstack-six-v1",
+          "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "fields": [
+              {
+                "description": "ns",
+                "inModel": true,
+                "name": "ns",
+                "reason": null,
+                "sourceColumn": "ns",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nd",
+                "inModel": true,
+                "name": "nd",
+                "reason": null,
+                "sourceColumn": "nd",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nf",
+                "inModel": true,
+                "name": "nf",
+                "reason": null,
+                "sourceColumn": "nf",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ent",
+                "inModel": true,
+                "name": "ent",
+                "reason": null,
+                "sourceColumn": "ent",
+                "sourceStatus": "verified",
+                "transform": "raw",
+                "type": "number",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "la",
+                "inModel": true,
+                "name": "la",
+                "reason": null,
+                "sourceColumn": "la",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ld",
+                "inModel": true,
+                "name": "ld",
+                "reason": null,
+                "sourceColumn": "ld",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              }
+            ],
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "limitations": [],
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "state": "ready",
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ]
+          },
+          "featureSchemaVersion": "openstack-six-v1",
+          "jsonPredictionSupported": true,
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "method": "decision-tree-v1",
+          "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+          "name": "决策树 · openstack-six-v1",
+          "origin": "local",
+          "reproducibility": {
+            "atol": 1e-08,
+            "mode": "tolerance",
+            "rtol": 0.0
+          },
+          "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+          "sha256": "37a1d8c00c4dd41b9d6f8e16f29fcec9cfe85ab65218eee0c8deadea6538ccba",
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "verificationEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "state": "ready"
+        },
+        "featureSchemaVersion": "openstack-six-v1",
+        "inputSha256": "5e0702f61cc927d3c0d08cb1d0bd9fab312f16ad6a1bf661ef1c9189d8cf0b64",
+        "createdAt": "2026-10-14T14:42:14.577079Z",
+        "records": [
+          {
+            "predictionId": "ea5607d2-3110-45b0-81b6-27c1d6bcc58d",
+            "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+            "features": {
+              "ns": 1,
+              "nd": 5,
+              "nf": 5,
+              "ent": 0.9129986686368237,
+              "la": 25,
+              "ld": 1
+            },
+            "commitId": null,
+            "time": "2013-11-11T08:29:48Z",
+            "risk": 0.11428571428571428,
+            "explanationStatus": "not-supported",
+            "explanationReason": "该模型的真实预测解释尚未接入"
+          }
+        ],
+        "limitations": [
+          "原始特征由调用方提供，尚未核验源码提取或真实标签。",
+          "风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。",
+          "本轮未提供真实预测解释或代码定位。",
+          "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+          "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+          "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+          "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+          "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+          "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/prediction-batches/c43e1d46-1c29-4a17-a86d-b36330741c12",
+      "role": "member",
+      "status": 200,
+      "requestId": "783b6a51-794f-4be1-969b-b0e1f66bf56c",
+      "request": null,
+      "response": {
+        "batchId": "c43e1d46-1c29-4a17-a86d-b36330741c12",
+        "createdAt": "2026-10-14T14:42:14.577079Z",
+        "featureSchemaVersion": "openstack-six-v1",
+        "inputSha256": "5e0702f61cc927d3c0d08cb1d0bd9fab312f16ad6a1bf661ef1c9189d8cf0b64",
+        "limitations": [
+          "原始特征由调用方提供，尚未核验源码提取或真实标签。",
+          "风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。",
+          "本轮未提供真实预测解释或代码定位。",
+          "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+          "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+          "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+          "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+          "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+          "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+        ],
+        "mode": "feature-input",
+        "model": {
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "decision-tree@openstack-six-v1",
+          "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "fields": [
+              {
+                "description": "ns",
+                "inModel": true,
+                "name": "ns",
+                "reason": null,
+                "sourceColumn": "ns",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nd",
+                "inModel": true,
+                "name": "nd",
+                "reason": null,
+                "sourceColumn": "nd",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nf",
+                "inModel": true,
+                "name": "nf",
+                "reason": null,
+                "sourceColumn": "nf",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ent",
+                "inModel": true,
+                "name": "ent",
+                "reason": null,
+                "sourceColumn": "ent",
+                "sourceStatus": "verified",
+                "transform": "raw",
+                "type": "number",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "la",
+                "inModel": true,
+                "name": "la",
+                "reason": null,
+                "sourceColumn": "la",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ld",
+                "inModel": true,
+                "name": "ld",
+                "reason": null,
+                "sourceColumn": "ld",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              }
+            ],
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "limitations": [],
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "state": "ready",
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ]
+          },
+          "featureSchemaVersion": "openstack-six-v1",
+          "jsonPredictionSupported": true,
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "method": "decision-tree-v1",
+          "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+          "name": "决策树 · openstack-six-v1",
+          "origin": "local",
+          "reproducibility": {
+            "atol": 1e-08,
+            "mode": "tolerance",
+            "rtol": 0.0
+          },
+          "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+          "sha256": "37a1d8c00c4dd41b9d6f8e16f29fcec9cfe85ab65218eee0c8deadea6538ccba",
+          "state": "ready",
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "verificationEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          }
+        },
+        "project": "OpenStack · 单条功能验收",
+        "records": [
+          {
+            "commitId": null,
+            "explanationReason": "该模型的真实预测解释尚未接入",
+            "explanationStatus": "not-supported",
+            "features": {
+              "ent": 0.9129986686368237,
+              "la": 25,
+              "ld": 1,
+              "nd": 5,
+              "nf": 5,
+              "ns": 1
+            },
+            "predictionId": "ea5607d2-3110-45b0-81b6-27c1d6bcc58d",
+            "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+            "risk": 0.11428571428571428,
+            "time": "2013-11-11T08:29:48Z"
+          }
+        ],
+        "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+        "sourceKind": "client-features"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models",
+      "role": "member",
+      "status": 200,
+      "requestId": "8d119659-5d5a-47cc-95f6-3734df1d58bd",
+      "request": null,
+      "response": {
+        "models": [
+          {
+            "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+            "artifactModelId": "decision-tree@openstack-six-v1",
+            "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+            "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+            "featureSchema": {
+              "featureSchemaVersion": "openstack-six-v1",
+              "fields": [
+                {
+                  "description": "ns",
+                  "inModel": true,
+                  "name": "ns",
+                  "reason": null,
+                  "sourceColumn": "ns",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "nd",
+                  "inModel": true,
+                  "name": "nd",
+                  "reason": null,
+                  "sourceColumn": "nd",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "nf",
+                  "inModel": true,
+                  "name": "nf",
+                  "reason": null,
+                  "sourceColumn": "nf",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "ent",
+                  "inModel": true,
+                  "name": "ent",
+                  "reason": null,
+                  "sourceColumn": "ent",
+                  "sourceStatus": "verified",
+                  "transform": "raw",
+                  "type": "number",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "la",
+                  "inModel": true,
+                  "name": "la",
+                  "reason": null,
+                  "sourceColumn": "la",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "ld",
+                  "inModel": true,
+                  "name": "ld",
+                  "reason": null,
+                  "sourceColumn": "ld",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                }
+              ],
+              "inModel": [
+                "ns",
+                "nd",
+                "nf",
+                "ent",
+                "la",
+                "ld"
+              ],
+              "jsonPredictionSupported": true,
+              "limitations": [],
+              "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+              "state": "ready",
+              "transforms": [
+                "log1p",
+                "log1p",
+                "log1p",
+                "raw",
+                "log1p",
+                "log1p"
+              ]
+            },
+            "featureSchemaVersion": "openstack-six-v1",
+            "jsonPredictionSupported": true,
+            "limitations": [
+              "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+              "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+              "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+              "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+              "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+              "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+            ],
+            "method": "decision-tree-v1",
+            "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+            "name": "决策树 · openstack-six-v1",
+            "origin": "local",
+            "reproducibility": {
+              "atol": 1e-08,
+              "mode": "tolerance",
+              "rtol": 0.0
+            },
+            "runId": "a957f044-4df3-4120-93b2-08e6b60546a8",
+            "sha256": "37a1d8c00c4dd41b9d6f8e16f29fcec9cfe85ab65218eee0c8deadea6538ccba",
+            "trainingEnvironment": {
+              "packages": {
+                "fastapi": "0.143.0",
+                "joblib": "1.6.0",
+                "numpy": "2.5.3",
+                "scikit-learn": "1.9.1",
+                "scipy": "1.18.1",
+                "threadpoolctl": "3.7.0",
+                "uvicorn": "0.54.0"
+              },
+              "platform": "Windows-11-10.0.26300-SP0",
+              "python": "3.14.2"
+            },
+            "verificationEnvironment": {
+              "packages": {
+                "fastapi": "0.143.0",
+                "joblib": "1.6.0",
+                "numpy": "2.5.3",
+                "scikit-learn": "1.9.1",
+                "scipy": "1.18.1",
+                "threadpoolctl": "3.7.0",
+                "uvicorn": "0.54.0"
+              },
+              "platform": "Windows-11-10.0.26300-SP0",
+              "python": "3.14.2"
+            },
+            "state": "ready"
+          },
+          {
+            "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+            "artifactModelId": "logistic-regression-six-v1",
+            "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+            "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+            "featureSchema": {
+              "featureSchemaVersion": "openstack-six-v1",
+              "fields": [
+                {
+                  "description": "ns",
+                  "inModel": true,
+                  "name": "ns",
+                  "reason": null,
+                  "sourceColumn": "ns",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "nd",
+                  "inModel": true,
+                  "name": "nd",
+                  "reason": null,
+                  "sourceColumn": "nd",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "nf",
+                  "inModel": true,
+                  "name": "nf",
+                  "reason": null,
+                  "sourceColumn": "nf",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "ent",
+                  "inModel": true,
+                  "name": "ent",
+                  "reason": null,
+                  "sourceColumn": "ent",
+                  "sourceStatus": "verified",
+                  "transform": "raw",
+                  "type": "number",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "la",
+                  "inModel": true,
+                  "name": "la",
+                  "reason": null,
+                  "sourceColumn": "la",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "ld",
+                  "inModel": true,
+                  "name": "ld",
+                  "reason": null,
+                  "sourceColumn": "ld",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                }
+              ],
+              "inModel": [
+                "ns",
+                "nd",
+                "nf",
+                "ent",
+                "la",
+                "ld"
+              ],
+              "jsonPredictionSupported": true,
+              "limitations": [],
+              "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+              "state": "ready",
+              "transforms": [
+                "log1p",
+                "log1p",
+                "log1p",
+                "raw",
+                "log1p",
+                "log1p"
+              ]
+            },
+            "featureSchemaVersion": "openstack-six-v1",
+            "jsonPredictionSupported": true,
+            "limitations": [
+              "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+              "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+              "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+              "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+              "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+              "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+            ],
+            "method": "logistic-regression-l2-v1",
+            "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+            "name": "逻辑回归 · 六字段",
+            "origin": "local",
+            "reproducibility": {
+              "atol": 1e-08,
+              "mode": "tolerance",
+              "rtol": 0.0
+            },
+            "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+            "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+            "trainingEnvironment": {
+              "packages": {
+                "fastapi": "0.143.0",
+                "joblib": "1.6.0",
+                "numpy": "2.5.3",
+                "scikit-learn": "1.9.1",
+                "scipy": "1.18.1",
+                "threadpoolctl": "3.7.0",
+                "uvicorn": "0.54.0"
+              },
+              "platform": "Windows-11-10.0.26300-SP0",
+              "python": "3.14.2"
+            },
+            "verificationEnvironment": {
+              "packages": {
+                "fastapi": "0.143.0",
+                "joblib": "1.6.0",
+                "numpy": "2.5.3",
+                "scikit-learn": "1.9.1",
+                "scipy": "1.18.1",
+                "threadpoolctl": "3.7.0",
+                "uvicorn": "0.54.0"
+              },
+              "platform": "Windows-11-10.0.26300-SP0",
+              "python": "3.14.2"
+            },
+            "state": "ready"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/predictions",
+      "role": "member",
+      "status": 503,
+      "requestId": "e2544014-8095-472e-a48e-ada6cea4dd0d",
+      "request": {
+        "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+        "featureSchemaVersion": "openstack-six-v1",
+        "project": "失败路径验收",
+        "record": {
+          "recordId": "invalid-check",
+          "features": {
+            "ns": 1,
+            "nd": 1,
+            "nf": 1,
+            "ent": 0.5,
+            "la": 1,
+            "ld": 0
+          }
+        }
+      },
+      "response": {
+        "error": {
+          "code": "ARTIFACT_UNAVAILABLE",
+          "message": "运行必要文件不可用，请恢复并重新登记",
+          "requestId": "e2544014-8095-472e-a48e-ada6cea4dd0d"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models?state=invalid",
+      "role": "member",
+      "status": 200,
+      "requestId": "ccca44c2-9490-4615-a59b-32576de9c8e5",
+      "request": null,
+      "response": {
+        "models": [
+          {
+            "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+            "artifactModelId": "logistic-regression-six-v1",
+            "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+            "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+            "featureSchema": {
+              "featureSchemaVersion": "openstack-six-v1",
+              "fields": [
+                {
+                  "description": "ns",
+                  "inModel": true,
+                  "name": "ns",
+                  "reason": null,
+                  "sourceColumn": "ns",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "nd",
+                  "inModel": true,
+                  "name": "nd",
+                  "reason": null,
+                  "sourceColumn": "nd",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "nf",
+                  "inModel": true,
+                  "name": "nf",
+                  "reason": null,
+                  "sourceColumn": "nf",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "ent",
+                  "inModel": true,
+                  "name": "ent",
+                  "reason": null,
+                  "sourceColumn": "ent",
+                  "sourceStatus": "verified",
+                  "transform": "raw",
+                  "type": "number",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "la",
+                  "inModel": true,
+                  "name": "la",
+                  "reason": null,
+                  "sourceColumn": "la",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                },
+                {
+                  "description": "ld",
+                  "inModel": true,
+                  "name": "ld",
+                  "reason": null,
+                  "sourceColumn": "ld",
+                  "sourceStatus": "verified",
+                  "transform": "log1p",
+                  "type": "integer",
+                  "unit": "发布者原生单位"
+                }
+              ],
+              "inModel": [
+                "ns",
+                "nd",
+                "nf",
+                "ent",
+                "la",
+                "ld"
+              ],
+              "jsonPredictionSupported": true,
+              "limitations": [],
+              "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+              "state": "ready",
+              "transforms": [
+                "log1p",
+                "log1p",
+                "log1p",
+                "raw",
+                "log1p",
+                "log1p"
+              ]
+            },
+            "featureSchemaVersion": "openstack-six-v1",
+            "jsonPredictionSupported": true,
+            "limitations": [
+              "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+              "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+              "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+              "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+              "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+              "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+            ],
+            "method": "logistic-regression-l2-v1",
+            "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+            "name": "逻辑回归 · 六字段",
+            "origin": "local",
+            "reproducibility": {
+              "atol": 1e-08,
+              "mode": "tolerance",
+              "rtol": 0.0
+            },
+            "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+            "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+            "trainingEnvironment": {
+              "packages": {
+                "fastapi": "0.143.0",
+                "joblib": "1.6.0",
+                "numpy": "2.5.3",
+                "scikit-learn": "1.9.1",
+                "scipy": "1.18.1",
+                "threadpoolctl": "3.7.0",
+                "uvicorn": "0.54.0"
+              },
+              "platform": "Windows-11-10.0.26300-SP0",
+              "python": "3.14.2"
+            },
+            "verificationEnvironment": {
+              "packages": {
+                "fastapi": "0.143.0",
+                "joblib": "1.6.0",
+                "numpy": "2.5.3",
+                "scikit-learn": "1.9.1",
+                "scipy": "1.18.1",
+                "threadpoolctl": "3.7.0",
+                "uvicorn": "0.54.0"
+              },
+              "platform": "Windows-11-10.0.26300-SP0",
+              "python": "3.14.2"
+            },
+            "state": "invalid",
+            "error": {
+              "code": "ARTIFACT_UNAVAILABLE",
+              "message": "运行必要文件不可用，请恢复并重新登记"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/prediction-batches/76148698-636e-43b3-a267-9a4cb39ecb11",
+      "role": "member",
+      "status": 200,
+      "requestId": "4585ed45-9cb6-4111-8013-734d7598e02b",
+      "request": null,
+      "response": {
+        "batchId": "76148698-636e-43b3-a267-9a4cb39ecb11",
+        "createdAt": "2026-10-14T14:41:54.027264Z",
+        "featureSchemaVersion": "openstack-six-v1",
+        "inputSha256": "5e0702f61cc927d3c0d08cb1d0bd9fab312f16ad6a1bf661ef1c9189d8cf0b64",
+        "limitations": [
+          "原始特征由调用方提供，尚未核验源码提取或真实标签。",
+          "风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。",
+          "本轮未提供真实预测解释或代码定位。",
+          "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+          "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+          "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+          "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+          "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+          "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+        ],
+        "mode": "feature-input",
+        "model": {
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "fields": [
+              {
+                "description": "ns",
+                "inModel": true,
+                "name": "ns",
+                "reason": null,
+                "sourceColumn": "ns",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nd",
+                "inModel": true,
+                "name": "nd",
+                "reason": null,
+                "sourceColumn": "nd",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nf",
+                "inModel": true,
+                "name": "nf",
+                "reason": null,
+                "sourceColumn": "nf",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ent",
+                "inModel": true,
+                "name": "ent",
+                "reason": null,
+                "sourceColumn": "ent",
+                "sourceStatus": "verified",
+                "transform": "raw",
+                "type": "number",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "la",
+                "inModel": true,
+                "name": "la",
+                "reason": null,
+                "sourceColumn": "la",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ld",
+                "inModel": true,
+                "name": "ld",
+                "reason": null,
+                "sourceColumn": "ld",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              }
+            ],
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "limitations": [],
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "state": "ready",
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ]
+          },
+          "featureSchemaVersion": "openstack-six-v1",
+          "jsonPredictionSupported": true,
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "method": "logistic-regression-l2-v1",
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "name": "逻辑回归 · 六字段",
+          "origin": "local",
+          "reproducibility": {
+            "atol": 1e-08,
+            "mode": "tolerance",
+            "rtol": 0.0
+          },
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "state": "ready",
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "verificationEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          }
+        },
+        "project": "OpenStack · 单条功能验收",
+        "records": [
+          {
+            "commitId": null,
+            "explanationReason": "该模型的真实预测解释尚未接入",
+            "explanationStatus": "not-supported",
+            "features": {
+              "ent": 0.9129986686368237,
+              "la": 25,
+              "ld": 1,
+              "nd": 5,
+              "nf": 5,
+              "ns": 1
+            },
+            "predictionId": "36ba5ae6-2361-4853-80c1-15925a1d0eb6",
+            "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+            "risk": 0.11575286232078694,
+            "time": "2013-11-11T08:29:48Z"
+          }
+        ],
+        "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+        "sourceKind": "client-features"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/register",
+      "role": "admin",
+      "status": 200,
+      "requestId": "426a2105-964a-4b9b-9a2a-37bbf22e3871",
+      "request": {
+        "candidateId": "60d798426642bc57884a60ce50718b49a1157d22723c91a58db39760271cc1a1",
+        "expectedManifestSha256": "7b287bf928cb4466e2d558649a61581691f0be6257cde6f3fa7272397dadacaf"
+      },
+      "response": {
+        "created": false,
+        "model": {
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "name": "逻辑回归 · 六字段",
+          "method": "logistic-regression-l2-v1",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "featureSchemaVersion": "openstack-six-v1",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "state": "ready",
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "fields": [
+              {
+                "name": "ns",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ns",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ns",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nd",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nd",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nd",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "nf",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "nf",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "nf",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ent",
+                "type": "number",
+                "unit": "发布者原生单位",
+                "description": "ent",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ent",
+                "transform": "raw",
+                "reason": null
+              },
+              {
+                "name": "la",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "la",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "la",
+                "transform": "log1p",
+                "reason": null
+              },
+              {
+                "name": "ld",
+                "type": "integer",
+                "unit": "发布者原生单位",
+                "description": "ld",
+                "sourceStatus": "verified",
+                "inModel": true,
+                "sourceColumn": "ld",
+                "transform": "log1p",
+                "reason": null
+              }
+            ],
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ],
+            "limitations": []
+          },
+          "jsonPredictionSupported": true,
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "origin": "local",
+          "verificationEnvironment": {
+            "python": "3.14.2",
+            "platform": "Windows-11-10.0.26300-SP0",
+            "packages": {
+              "numpy": "2.5.3",
+              "scipy": "1.18.1",
+              "scikit-learn": "1.9.1",
+              "joblib": "1.6.0",
+              "threadpoolctl": "3.7.0",
+              "fastapi": "0.143.0",
+              "uvicorn": "0.54.0"
+            }
+          },
+          "reproducibility": {
+            "mode": "tolerance",
+            "atol": 1e-08,
+            "rtol": 0.0
+          },
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "state": "ready"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/prediction-batches/76148698-636e-43b3-a267-9a4cb39ecb11",
+      "role": "member",
+      "status": 200,
+      "requestId": "60b6de88-fd21-4a23-8560-de5a61b83deb",
+      "request": null,
+      "response": {
+        "batchId": "76148698-636e-43b3-a267-9a4cb39ecb11",
+        "createdAt": "2026-10-14T14:41:54.027264Z",
+        "featureSchemaVersion": "openstack-six-v1",
+        "inputSha256": "5e0702f61cc927d3c0d08cb1d0bd9fab312f16ad6a1bf661ef1c9189d8cf0b64",
+        "limitations": [
+          "原始特征由调用方提供，尚未核验源码提取或真实标签。",
+          "风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。",
+          "本轮未提供真实预测解释或代码定位。",
+          "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+          "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+          "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+          "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+          "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+          "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+        ],
+        "mode": "feature-input",
+        "model": {
+          "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+          "artifactModelId": "logistic-regression-six-v1",
+          "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+          "datasetVersion": "2865efe5-5d18-4e01-aef6-998921f0d639",
+          "featureSchema": {
+            "featureSchemaVersion": "openstack-six-v1",
+            "fields": [
+              {
+                "description": "ns",
+                "inModel": true,
+                "name": "ns",
+                "reason": null,
+                "sourceColumn": "ns",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nd",
+                "inModel": true,
+                "name": "nd",
+                "reason": null,
+                "sourceColumn": "nd",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "nf",
+                "inModel": true,
+                "name": "nf",
+                "reason": null,
+                "sourceColumn": "nf",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ent",
+                "inModel": true,
+                "name": "ent",
+                "reason": null,
+                "sourceColumn": "ent",
+                "sourceStatus": "verified",
+                "transform": "raw",
+                "type": "number",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "la",
+                "inModel": true,
+                "name": "la",
+                "reason": null,
+                "sourceColumn": "la",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              },
+              {
+                "description": "ld",
+                "inModel": true,
+                "name": "ld",
+                "reason": null,
+                "sourceColumn": "ld",
+                "sourceStatus": "verified",
+                "transform": "log1p",
+                "type": "integer",
+                "unit": "发布者原生单位"
+              }
+            ],
+            "inModel": [
+              "ns",
+              "nd",
+              "nf",
+              "ent",
+              "la",
+              "ld"
+            ],
+            "jsonPredictionSupported": true,
+            "limitations": [],
+            "schemaSha256": "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9",
+            "state": "ready",
+            "transforms": [
+              "log1p",
+              "log1p",
+              "log1p",
+              "raw",
+              "log1p",
+              "log1p"
+            ]
+          },
+          "featureSchemaVersion": "openstack-six-v1",
+          "jsonPredictionSupported": true,
+          "limitations": [
+            "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+            "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+            "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+            "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+            "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+            "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+          ],
+          "method": "logistic-regression-l2-v1",
+          "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+          "name": "逻辑回归 · 六字段",
+          "origin": "local",
+          "reproducibility": {
+            "atol": 1e-08,
+            "mode": "tolerance",
+            "rtol": 0.0
+          },
+          "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+          "sha256": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+          "state": "ready",
+          "trainingEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          },
+          "verificationEnvironment": {
+            "packages": {
+              "fastapi": "0.143.0",
+              "joblib": "1.6.0",
+              "numpy": "2.5.3",
+              "scikit-learn": "1.9.1",
+              "scipy": "1.18.1",
+              "threadpoolctl": "3.7.0",
+              "uvicorn": "0.54.0"
+            },
+            "platform": "Windows-11-10.0.26300-SP0",
+            "python": "3.14.2"
+          }
+        },
+        "project": "OpenStack · 单条功能验收",
+        "records": [
+          {
+            "commitId": null,
+            "explanationReason": "该模型的真实预测解释尚未接入",
+            "explanationStatus": "not-supported",
+            "features": {
+              "ent": 0.9129986686368237,
+              "la": 25,
+              "ld": 1,
+              "nd": 5,
+              "nf": 5,
+              "ns": 1
+            },
+            "predictionId": "36ba5ae6-2361-4853-80c1-15925a1d0eb6",
+            "recordId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+            "risk": 0.11575286232078694,
+            "time": "2013-11-11T08:29:48Z"
+          }
+        ],
+        "runId": "859539f8-4152-4cf6-be87-860b2df28932",
+        "sourceKind": "client-features"
+      }
+    }
+  ],
+  "counts": {
+    "experiment_run": 2,
+    "model_version": 2,
+    "run_location": 2,
+    "registration_event": 5,
+    "prediction_batch": 412,
+    "prediction": 412
+  },
+  "originalArtifactsUnchanged": true,
+  "sourceHashes": {
+    "baseline": {
+      "manifest.json": "7b287bf928cb4466e2d558649a61581691f0be6257cde6f3fa7272397dadacaf",
+      "metrics.json": "b6bf0f952ce15a54a07b47c1b7fc469cc7763eb1738cb47444ccd3f9259322b2",
+      "model.joblib": "58189649967a27e5df4bf82dbfb01e8fb732a3d8d08e3553e18e78df5338f9b4",
+      "reference-predictions.json": "0872b79bb63121d6ee83b75aae6a6af97265b3735704c1bee3b23521539b8a51",
+      "source.json": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+      "split.json": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+      "summary.json": "a8d52ba5a01c5ec6621dfac214b0615f1b1739d2d96ab3c01ad03c6e068b7256",
+      "test-input.json": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+      "test-labels.json": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805"
+    },
+    "decision-tree": {
+      "manifest.json": "6362f827f792fd5656cb343cd901515e88c2f3a51fd2133679a6ffee859819d2",
+      "metrics.json": "35736de76010fd4e0b8b455ceab0d7a05b09b7c9d7fb6ccc80244153542ac38d",
+      "model.joblib": "37a1d8c00c4dd41b9d6f8e16f29fcec9cfe85ab65218eee0c8deadea6538ccba",
+      "reference-predictions.json": "5e4561cf339c325958f0521a8f30ac429611cb2f202bbcc44a0bbb28fc983ec4",
+      "source.json": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+      "split.json": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+      "summary.json": "471d4958055d520a78882ae8470cba3891a26d64fd40439be6c80ffc74243829",
+      "test-input.json": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+      "test-labels.json": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805"
+    }
+  },
+  "restartRecovered": true,
+  "environment": {
+    "python": "3.14.2",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "packages": {
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "scikit-learn": "1.9.1",
+      "joblib": "1.6.0",
+      "threadpoolctl": "3.7.0",
+      "fastapi": "0.143.0",
+      "uvicorn": "0.54.0"
+    }
+  },
+  "cpu": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "logicalCpus": 16,
+  "physicalRamBytes": 16907100160,
+  "registrationTimings": [
+    {
+      "method": "logistic-regression-l2-v1",
+      "seconds": [
+        0.3013700000010431,
+        0.2838110000011511
+      ]
+    },
+    {
+      "method": "decision-tree-v1",
+      "seconds": [
+        0.41635999999925843,
+        0.4328821999988577
+      ]
+    }
+  ],
+  "timings": [
+    {
+      "method": "logistic-regression-l2-v1",
+      "modelId": "93dc1e7f-53dd-4eae-9018-58ba0330da26",
+      "artifactRunId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+      "warmup": 5,
+      "requests": 200,
+      "concurrency": 1,
+      "seconds": [
+        0.05387779999728082,
+        0.03798509999978705,
+        0.039523600000393344,
+        0.03501710000273306,
+        0.0337930999994569,
+        0.04017780000140192,
+        0.07185659999959171,
+        0.10087469999780296,
+        0.0866745000021183,
+        0.07957499999974971,
+        0.08761460000096122,
+        0.051301799998327624,
+        0.06784230000266689,
+        0.07508360000065295,
+        0.08871609999914654,
+        0.09922349999760627,
+        0.11295700000118813,
+        0.08773699999801465,
+        0.1002383999984886,
+        0.12567909999779658,
+        0.09265140000206884,
+        0.1167767000006279,
+        0.0677386999996088,
+        0.11603060000197729,
+        0.07974570000078529,
+        0.08193409999876167,
+        0.13669110000046203,
+        0.07323700000051758,
+        0.06323029999839491,
+        0.11449960000027204,
+        0.10350849999667844,
+        0.10653760000059265,
+        0.10214260000066133,
+        0.12596879999910016,
+        0.11203540000133216,
+        0.11673209999935352,
+        0.13074570000026142,
+        0.10152449999804958,
+        0.12106209999910789,
+        0.06579360000250745,
+        0.08284419999836246,
+        0.06972339999992982,
+        0.10014170000067679,
+        0.09002270000200951,
+        0.11490849999972852,
+        0.10453839999900083,
+        0.13831320000099367,
+        0.10929200000100536,
+        0.1236414999984845,
+        0.11555110000335844,
+        0.11702549999972689,
+        0.1120106999987911,
+        0.08689420000155224,
+        0.0941119000017352,
+        0.09921989999929792,
+        0.09534630000052857,
+        0.07214910000038799,
+        0.058881699998892145,
+        0.08460700000068755,
+        0.10560940000141272,
+        0.09178049999900395,
+        0.11292669999966165,
+        0.10332280000147875,
+        0.12639820000185864,
+        0.0984664999996312,
+        0.08192899999994552,
+        0.12586990000272635,
+        0.09800669999822276,
+        0.09191599999758182,
+        0.09327820000180509,
+        0.09903050000139046,
+        0.05712479999783682,
+        0.07710450000013225,
+        0.09261270000206423,
+        0.10436250000202563,
+        0.1032439999980852,
+        0.11672350000299048,
+        0.09796189999906346,
+        0.1152299999994284,
+        0.11896410000190372,
+        0.12126450000141631,
+        0.11316730000180542,
+        0.09551379999902565,
+        0.08385199999975157,
+        0.0835518999992928,
+        0.08650439999837545,
+        0.07648530000005849,
+        0.12983920000260696,
+        0.08622249999825726,
+        0.12336820000200532,
+        0.1152767000021413,
+        0.11089010000068811,
+        0.11433459999898332,
+        0.10607139999774517,
+        0.12312540000129957,
+        0.1136696999965352,
+        0.09438690000024508,
+        0.09733109999797307,
+        0.12375420000171289,
+        0.09127509999962058,
+        0.10723409999991418,
+        0.11278049999964423,
+        0.08093509999889648,
+        0.10203449999971781,
+        0.11623239999971702,
+        0.12371949999942444,
+        0.10831590000088909,
+        0.10313379999934114,
+        0.10970910000105505,
+        0.10130189999836148,
+        0.11816429999817046,
+        0.07395239999823389,
+        0.12688949999937904,
+        0.08931630000006407,
+        0.08328389999951469,
+        0.12384770000062417,
+        0.07053620000078809,
+        0.08202560000063386,
+        0.12886499999876833,
+        0.11911379999946803,
+        0.11617079999996349,
+        0.12762569999904372,
+        0.12375380000230507,
+        0.11576969999805442,
+        0.09614810000130092,
+        0.06724759999997332,
+        0.06914939999842318,
+        0.12627950000023702,
+        0.12711249999847496,
+        0.1047818000006373,
+        0.06287780000275234,
+        0.08681950000027427,
+        0.11702579999837326,
+        0.09648979999838048,
+        0.11436669999966398,
+        0.10608800000045449,
+        0.11058210000192048,
+        0.09802449999915552,
+        0.10402260000046226,
+        0.1176071999980195,
+        0.10264339999775984,
+        0.10008270000253106,
+        0.07070349999776226,
+        0.08502410000073723,
+        0.10205180000048131,
+        0.10030619999815826,
+        0.06682799999907729,
+        0.08071829999971669,
+        0.10103030000027502,
+        0.10581140000067535,
+        0.10920089999854099,
+        0.09039689999917755,
+        0.11796160000085365,
+        0.11187380000046687,
+        0.08627859999978682,
+        0.10664379999798257,
+        0.10212179999871296,
+        0.10714480000024196,
+        0.09403950000341865,
+        0.10925139999744715,
+        0.10198460000174236,
+        0.1105619999980263,
+        0.11898170000131358,
+        0.1206001999998989,
+        0.11596110000027693,
+        0.10177130000010948,
+        0.13263649999862537,
+        0.10884920000171405,
+        0.10428289999981644,
+        0.10278629999811528,
+        0.13687320000099135,
+        0.09712890000082552,
+        0.11072000000058324,
+        0.09941089999847463,
+        0.04927090000273893,
+        0.07374390000040876,
+        0.10719529999914812,
+        0.11285299999872223,
+        0.11925839999821619,
+        0.12548190000234172,
+        0.09209480000208714,
+        0.12020299999858253,
+        0.11560559999998077,
+        0.10393009999825153,
+        0.09141960000124527,
+        0.0841273000005458,
+        0.08335769999757758,
+        0.11990969999897061,
+        0.07985389999885228,
+        0.047763900001882575,
+        0.09480360000088695,
+        0.09381930000017746,
+        0.11102200000095763,
+        0.12171480000324664,
+        0.09432820000074571,
+        0.10583670000050915,
+        0.10440630000084639,
+        0.12073669999881531,
+        0.10520569999789586,
+        0.09553539999978966
+      ],
+      "errors": [],
+      "p95Seconds": 0.12639820000185864
+    },
+    {
+      "method": "decision-tree-v1",
+      "modelId": "13e2ef4b-edb0-45e3-b718-0d74c60fdceb",
+      "artifactRunId": "b9b323d5a03f0dfa5e3137059bea9475268e83897ca077f67215336562494329",
+      "warmup": 5,
+      "requests": 200,
+      "concurrency": 1,
+      "seconds": [
+        0.1118544999990263,
+        0.11916410000048927,
+        0.10841839999920921,
+        0.12246410000079777,
+        0.0845179999996617,
+        0.09981980000156909,
+        0.09168480000153068,
+        0.11237729999993462,
+        0.11056140000073356,
+        0.0657056999989436,
+        0.09750440000061644,
+        0.11893940000300063,
+        0.11254190000181552,
+        0.10370160000093165,
+        0.07800109999880078,
+        0.12255960000038613,
+        0.08351530000072671,
+        0.10399880000113626,
+        0.11411439999938011,
+        0.11544440000216127,
+        0.10738749999654829,
+        0.06056210000315332,
+        0.12118499999996857,
+        0.0880338999995729,
+        0.05983349999951315,
+        0.05850510000163922,
+        0.12576580000313697,
+        0.11259010000139824,
+        0.11481139999887091,
+        0.12764689999676193,
+        0.10324089999994612,
+        0.11686200000258395,
+        0.11627710000175284,
+        0.10127049999937299,
+        0.09162909999940894,
+        0.1016858000002685,
+        0.08449969999855966,
+        0.114727899999707,
+        0.11108180000155699,
+        0.09225819999846863,
+        0.11877820000154315,
+        0.11719230000016978,
+        0.10523670000111451,
+        0.08323100000052364,
+        0.13569320000169682,
+        0.11536550000164425,
+        0.09681310000087251,
+        0.0975789000003715,
+        0.08375130000058562,
+        0.0897804999985965,
+        0.10999669999728212,
+        0.1120827000013378,
+        0.11045670000021346,
+        0.07428259999869624,
+        0.06768659999943338,
+        0.0983265000031679,
+        0.09285649999947054,
+        0.13707170000270708,
+        0.11265800000182935,
+        0.11475890000292566,
+        0.12903349999760394,
+        0.09134640000047511,
+        0.08907050000198069,
+        0.09997260000091046,
+        0.10880230000111624,
+        0.07696439999926952,
+        0.11521429999993416,
+        0.08031880000271485,
+        0.06670509999821661,
+        0.07025050000083866,
+        0.0931315000016184,
+        0.06748929999957909,
+        0.07173249999686959,
+        0.10094019999814918,
+        0.10321219999968889,
+        0.10461290000239387,
+        0.0998911999995471,
+        0.11377139999967767,
+        0.09428119999938644,
+        0.10480010000173934,
+        0.0939658999996027,
+        0.09421509999810951,
+        0.11175450000155251,
+        0.050188599998364225,
+        0.09815530000196304,
+        0.09740539999984321,
+        0.1113723000016762,
+        0.09535179999875254,
+        0.11588660000052187,
+        0.12409929999921587,
+        0.11621000000013737,
+        0.10022430000026361,
+        0.08784310000191908,
+        0.13809849999961443,
+        0.08377630000177305,
+        0.07622400000036578,
+        0.09345759999996517,
+        0.07454859999779728,
+        0.08028310000008787,
+        0.08382179999898653,
+        0.05488350000086939,
+        0.06560799999715528,
+        0.10398370000257273,
+        0.10120029999961844,
+        0.12617949999912526,
+        0.10001759999795468,
+        0.12280379999720026,
+        0.10583240000050864,
+        0.11657070000001113,
+        0.10198160000072676,
+        0.08013519999803975,
+        0.11122880000039004,
+        0.11007120000067516,
+        0.09127600000283564,
+        0.04590509999979986,
+        0.07266570000138017,
+        0.06204739999884623,
+        0.07140590000199154,
+        0.11842609999803244,
+        0.09610969999994268,
+        0.1114348000010068,
+        0.10681660000045667,
+        0.10325229999943986,
+        0.10439229999974486,
+        0.0894244000010076,
+        0.07805849999931525,
+        0.07110240000110934,
+        0.103903100000025,
+        0.07651099999930011,
+        0.09915030000047409,
+        0.08170569999856525,
+        0.1113048000006529,
+        0.11103489999732119,
+        0.10316100000272854,
+        0.1091625999979442,
+        0.12473470000259113,
+        0.10976400000072317,
+        0.1222793000015372,
+        0.11554999999862048,
+        0.11318169999867678,
+        0.10023550000187242,
+        0.05823049999889918,
+        0.07954550000067684,
+        0.12765049999870826,
+        0.06095809999897028,
+        0.08183939999798895,
+        0.07403900000281283,
+        0.11637620000328752,
+        0.07415599999876576,
+        0.11620339999717544,
+        0.10687359999792534,
+        0.10463159999926575,
+        0.08348939999996219,
+        0.0786950000001525,
+        0.11869740000111051,
+        0.10987139999997453,
+        0.09856049999871175,
+        0.10522599999967497,
+        0.05894029999763006,
+        0.05437740000343183,
+        0.08973609999884502,
+        0.10308210000221152,
+        0.07466389999899548,
+        0.10628510000242386,
+        0.06845220000104746,
+        0.09383299999899464,
+        0.10614020000139135,
+        0.12715530000059516,
+        0.10857609999948181,
+        0.11191929999768035,
+        0.11212969999905908,
+        0.10308279999662773,
+        0.10657759999958216,
+        0.07434619999912684,
+        0.10000700000091456,
+        0.06557320000138134,
+        0.07131160000062664,
+        0.09993459999896004,
+        0.05847369999901275,
+        0.08290100000158418,
+        0.08768090000012307,
+        0.08779150000191294,
+        0.09687750000011874,
+        0.127153500001441,
+        0.10201109999979963,
+        0.10667130000001634,
+        0.08033000000068569,
+        0.08824200000162818,
+        0.11075400000117952,
+        0.07372120000218274,
+        0.09074790000158828,
+        0.1040008999989368,
+        0.08772849999877508,
+        0.12858070000220323,
+        0.09101599999848986,
+        0.0879826000018511,
+        0.10833560000173748,
+        0.10138350000124774,
+        0.10651159999906668,
+        0.12572730000101728
+      ],
+      "errors": [],
+      "p95Seconds": 0.12576580000313697
+    }
+  ],
+  "percentile": "nearest-rank",
+  "p95TargetSeconds": 2.0,
+  "p95TargetMet": true,
+  "scope": "单主机本机 HTTP、两种既有模型；不代表 LAN 或在线效果验收"
+}

@@ -1,6 +1,6 @@
 openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
-info: {title: JIT Review 产品接口文档, version: 1.0.0-draft, description: 文档基线评审稿。仅API-01当前已实现，其余14操作为局域网共享目标的候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。}
+info: {title: JIT Review 产品接口文档, version: 1.1.0, description: 文档基线评审稿。API-01及模型候选／登记／列表／schema／JSON预测／结果重开已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。}
 tags:
 - {name: 现有历史回放}
 - {name: 目标共享产品}
@@ -109,28 +109,62 @@ paths:
     get:
       operationId: getFeatureSchema
       summary: 字段定义与映射状态
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-05
-      x-user-stories: [US-04, US-24]
-      x-implementation-status: planned
+      x-user-stories:
+      - US-04
+      - US-24
+      x-implementation-status: implemented
       security:
       - TeamToken: []
       responses:
         '200':
-          description: 候选成功响应，尚未实现
+          description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/FeatureSchema'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-      x-auth-status: proposed
-      x-access-policy: read
+              schema:
+                $ref: '#/components/schemas/FeatureSchema'
+        '401':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '403':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
       parameters:
       - name: featureSchemaVersion
         in: path
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
+      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/experiments:
     post:
       operationId: createExperiment
@@ -188,67 +222,149 @@ paths:
     get:
       operationId: listModels
       summary: 可追溯模型列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-08
-      x-user-stories: [US-08]
-      x-implementation-status: planned
+      x-user-stories:
+      - US-08
+      x-implementation-status: implemented
       security:
       - TeamToken: []
       responses:
         '200':
-          description: 候选成功响应，尚未实现
+          description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ModelList'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-      x-auth-status: proposed
-      x-access-policy: read
+              schema:
+                $ref: '#/components/schemas/ModelList'
+        '401':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '403':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
       parameters:
       - name: state
         in: query
         required: false
         schema:
           type: string
-          enum: [ready, invalid]
+          enum:
+          - ready
+          - invalid
           default: ready
+      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/predictions:
     post:
       operationId: createPrediction
       summary: JSON单条新特征预测
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-09
-      x-user-stories: [US-09, US-16, US-24]
-      x-implementation-status: planned
+      x-user-stories:
+      - US-09
+      - US-16
+      - US-24
+      x-implementation-status: implemented
       security:
       - TeamToken: []
       responses:
         '201':
-          description: 候选成功响应，尚未实现
+          description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/PredictionBatch'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/ModelUnavailable'}
-        '500': {$ref: '#/components/responses/InferenceFailure'}
-      x-auth-status: proposed
-      x-access-policy: write
+              schema:
+                $ref: '#/components/schemas/PredictionBatch'
+        '401':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '403':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '413':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '500':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/PredictionCreate'}
+            schema:
+              $ref: '#/components/schemas/PredictionCreate'
             example:
               modelId: 11111111-1111-4111-8111-111111111111
               featureSchemaVersion: openstack-six-v1
               project: 人工格式示例
               record:
                 recordId: input-example-1
-                features: {ns: 1, nd: 2, nf: 3, ent: 0.8, la: 10, ld: 2}
-      description: JSON建议单条。模型／schema／环境一致，输入无标签，分数由模型生成；解释可pending或failed。成功后存储独立batch，不冒充已验证源码。
+                features:
+                  ns: 1
+                  nd: 2
+                  nf: 3
+                  ent: 0.8
+                  la: 10
+                  ld: 2
+      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/predictions/{predictionId}/explanation:
     get:
       operationId: getExplanation
@@ -280,28 +396,62 @@ paths:
     get:
       operationId: getPredictionBatch
       summary: 重开新输入预测批次
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-11
-      x-user-stories: [US-09, US-11, US-15]
-      x-implementation-status: planned
+      x-user-stories:
+      - US-09
+      - US-11
+      - US-15
+      x-implementation-status: implemented
       security:
       - TeamToken: []
       responses:
         '200':
-          description: 候选成功响应，尚未实现
+          description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/PredictionBatch'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-      x-auth-status: proposed
-      x-access-policy: read
+              schema:
+                $ref: '#/components/schemas/PredictionBatch'
+        '401':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '403':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
       parameters:
       - name: batchId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/prediction-batches:
     post:
       operationId: createPredictionBatch
@@ -433,8 +583,201 @@ paths:
         in: path
         required: true
         schema: {$ref: '#/components/schemas/Uuid'}
+  /api/v1/model-candidates:
+    get:
+      operationId: listModelCandidates
+      summary: 受控运行候选
+      tags:
+      - 目标共享产品
+      x-api-id: API-16
+      x-user-stories:
+      - US-08
+      - US-23
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: admin
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelCandidateList'
+        '401':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '403':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+  /api/v1/models/register:
+    post:
+      operationId: registerExistingModel
+      summary: 登记经完整校验的已有运行
+      tags:
+      - 目标共享产品
+      x-api-id: API-17
+      x-user-stories:
+      - US-08
+      - US-23
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: admin
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelRegistration'
+        '401':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '403':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '201':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelRegistration'
+        '404':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '413':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelRegistrationCreate'
+      description: 201 新模型，200 复用原 runId；仅选择候选，不接受路径／URL／上传。
 components:
   schemas:
+    ModelRegistration:
+      type: object
+      properties:
+        created:
+          type: boolean
+        model:
+          $ref: '#/components/schemas/ModelInfo'
+      required:
+      - created
+      - model
+      additionalProperties: false
+    ModelRegistrationCreate:
+      type: object
+      properties:
+        candidateId:
+          $ref: '#/components/schemas/Hash'
+        expectedManifestSha256:
+          $ref: '#/components/schemas/Hash'
+      required:
+      - candidateId
+      - expectedManifestSha256
+      additionalProperties: false
+    ModelCandidateList:
+      type: object
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelCandidate'
+      required:
+      - candidates
+      additionalProperties: false
+    ModelCandidate:
+      type: object
+      properties:
+        candidateId:
+          $ref: '#/components/schemas/Hash'
+        displayName:
+          type: string
+          minLength: 1
+        state:
+          enum:
+          - candidate
+          - invalid
+        manifestSha256:
+          oneOf:
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
+        artifactRunId:
+          $ref: '#/components/schemas/Hash'
+        method:
+          type:
+          - string
+          - 'null'
+        featureSchemaVersion:
+          type:
+          - string
+          - 'null'
+        error:
+          type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/GlobalErrorCode'
+            message:
+              type: string
+              minLength: 1
+          required:
+          - code
+          - message
+          additionalProperties: false
+      required:
+      - candidateId
+      - displayName
+      - state
+      - manifestSha256
+      additionalProperties: false
     Hash: {type: string, pattern: '^[a-f0-9]{64}$'}
     Uuid: {type: string, format: uuid}
     MetricScore:
@@ -688,7 +1031,7 @@ components:
         DATA_INVALID, OUTPUT_EXISTS, SPLIT_INVALID, FEATURES_INVALID, MODEL_NOT_CONVERGED, EVALUATION_INVALID, REPRODUCTION_FAILED,
         SCHEMA_UNKNOWN, SCHEMA_FIELD_UNAVAILABLE, ALGORITHM_UNKNOWN,
         AUTH_REQUIRED, ACCESS_DENIED, NOT_FOUND, SOURCE_HASH_MISMATCH, INPUT_SCHEMA_MISMATCH, INPUT_INVALID, INPUT_LIMIT_EXCEEDED,
-        CONTEXT_MISMATCH, MODEL_NOT_READY, RUN_NOT_READY, EXPLANATION_FAILED]
+        CONTEXT_MISMATCH, MODEL_NOT_READY, RUN_NOT_READY, EXPLANATION_FAILED, ACCESS_CONFIG_INVALID, STORAGE_UNAVAILABLE]
       description: 码名与HTTP／任务语义的唯一文字定义见../全局错误码表.md；枚举含当前HTTP、相关CLI及候选新接口。
     CurrentError:
       type: object
@@ -738,41 +1081,101 @@ components:
     FeatureField:
       type: object
       properties:
-        name: {type: string, minLength: 1}
+        name:
+          type: string
+          minLength: 1
         type:
           type: string
-          enum: [integer, number, boolean]
-        unit: {type: string, minLength: 1}
-        description: {type: string, minLength: 1}
+          enum:
+          - integer
+          - number
+          - boolean
+        unit:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          minLength: 1
         sourceStatus:
           type: string
-          enum: [verified, pending, missing]
-      required: [name, type, unit, description, sourceStatus]
+          enum:
+          - verified
+          - pending
+          - missing
+        inModel:
+          type: boolean
+        sourceColumn:
+          type:
+          - string
+          - 'null'
+        transform:
+          enum:
+          - log1p
+          - raw
+        reason:
+          type:
+          - string
+          - 'null'
+      required:
+      - name
+      - type
+      - unit
+      - description
+      - sourceStatus
+      - inModel
+      - sourceColumn
+      - transform
+      - reason
       additionalProperties: false
     FeatureSchema:
       type: object
       properties:
-        featureSchemaVersion: {type: string, minLength: 1}
+        featureSchemaVersion:
+          type: string
+          minLength: 1
         state:
           type: string
-          enum: [draft, ready, invalid]
+          enum:
+          - draft
+          - ready
+          - invalid
         fields:
           type: array
-          items: {$ref: '#/components/schemas/FeatureField'}
+          items:
+            $ref: '#/components/schemas/FeatureField'
           minItems: 1
         schemaSha256:
           oneOf:
-          - {$ref: '#/components/schemas/Hash'}
-          - {type: 'null'}
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
         transforms:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
-      required: [featureSchemaVersion, state, fields, schemaSha256, transforms, limitations]
+        inModel:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        jsonPredictionSupported:
+          type: boolean
+      required:
+      - featureSchemaVersion
+      - state
+      - fields
+      - schemaSha256
+      - transforms
+      - limitations
+      - inModel
+      - jsonPredictionSupported
       additionalProperties: false
     LabelRule:
       type: object
@@ -977,20 +1380,87 @@ components:
     ModelInfo:
       type: object
       properties:
-        modelId: {$ref: '#/components/schemas/Uuid'}
-        name: {type: string, minLength: 1}
-        runId: {$ref: '#/components/schemas/Uuid'}
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
-        featureSchemaVersion: {type: string, minLength: 1}
-        sha256: {$ref: '#/components/schemas/Hash'}
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        sha256:
+          $ref: '#/components/schemas/Hash'
         state:
           type: string
-          enum: [ready, invalid]
+          enum:
+          - ready
+          - invalid
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
-      required: [modelId, name, runId, datasetVersion, featureSchemaVersion, sha256, state, limitations]
+        artifactRunId:
+          $ref: '#/components/schemas/Hash'
+        artifactDatasetVersion:
+          type: string
+          minLength: 1
+        artifactModelId:
+          type: string
+          minLength: 1
+        method:
+          type: string
+          minLength: 1
+        featureSchema:
+          $ref: '#/components/schemas/FeatureSchema'
+        jsonPredictionSupported:
+          type: boolean
+        trainingEnvironment:
+          type: object
+        verificationEnvironment:
+          type: object
+        reproducibility:
+          type: object
+        origin:
+          enum:
+          - local
+          - external
+        error:
+          type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/GlobalErrorCode'
+            message:
+              type: string
+              minLength: 1
+          required:
+          - code
+          - message
+          additionalProperties: false
+      required:
+      - modelId
+      - name
+      - runId
+      - datasetVersion
+      - featureSchemaVersion
+      - sha256
+      - state
+      - limitations
+      - artifactRunId
+      - artifactDatasetVersion
+      - artifactModelId
+      - method
+      - featureSchema
+      - jsonPredictionSupported
+      - trainingEnvironment
+      - verificationEnvironment
+      - reproducibility
+      - origin
       additionalProperties: false
     ModelList:
       type: object
@@ -1004,93 +1474,137 @@ components:
     FeatureInputRecord:
       type: object
       properties:
-        recordId: {type: string, minLength: 1, maxLength: 128}
+        recordId:
+          type: string
+          minLength: 1
+          maxLength: 128
         commitId:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
           pattern: ^[a-f0-9]{40}$
         time:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
           format: date-time
         features:
-          oneOf:
-          - {$ref: '#/components/schemas/SixFeatures'}
-          - {$ref: '#/components/schemas/Kamei14Features'}
-      required: [recordId, features]
+          $ref: '#/components/schemas/SixFeatures'
+      required:
+      - recordId
+      - features
       additionalProperties: false
     PredictionCreate:
       type: object
       properties:
-        modelId: {$ref: '#/components/schemas/Uuid'}
+        modelId:
+          $ref: '#/components/schemas/Uuid'
         featureSchemaVersion:
+          const: openstack-six-v1
+        project:
           type: string
-          enum: [openstack-six-v1, kamei14-v1]
-        project: {type: string, minLength: 1}
-        record: {$ref: '#/components/schemas/FeatureInputRecord'}
-      required: [modelId, featureSchemaVersion, project, record]
+          minLength: 1
+          maxLength: 128
+        record:
+          $ref: '#/components/schemas/FeatureInputRecord'
+      required:
+      - modelId
+      - featureSchemaVersion
+      - project
+      - record
       additionalProperties: false
-      allOf:
-      - if:
-          properties:
-            featureSchemaVersion: {const: openstack-six-v1}
-        then:
-          properties:
-            record:
-              properties:
-                features: {$ref: '#/components/schemas/SixFeatures'}
-      - if:
-          properties:
-            featureSchemaVersion: {const: kamei14-v1}
-        then:
-          properties:
-            record:
-              properties:
-                features: {$ref: '#/components/schemas/Kamei14Features'}
-      description: JSON单条建议契约。schema仅表达形状；模型须ready且使用相同已核验schema。kamei14-v1目前是draft目标；请求不得带label／bugcount等额外标签。
+      description: 单条原始六字段 JSON，最多 64 KiB；计数严格整数，拒绝布尔／字符串／重复属性，元数据时间必须带时区。
     PredictionRecord:
       type: object
       properties:
-        predictionId: {$ref: '#/components/schemas/Uuid'}
-        recordId: {type: string, minLength: 1}
+        predictionId:
+          $ref: '#/components/schemas/Uuid'
+        recordId:
+          type: string
+          minLength: 1
         commitId:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
           pattern: ^[a-f0-9]{40}$
         time:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
           format: date-time
-        risk: {type: number, minimum: 0, maximum: 1}
+        risk:
+          type: number
+          minimum: 0
+          maximum: 1
         features:
-          oneOf:
-          - {$ref: '#/components/schemas/SixFeatures'}
-          - {$ref: '#/components/schemas/Kamei14Features'}
+          $ref: '#/components/schemas/SixFeatures'
         explanationStatus:
+          const: not-supported
+        explanationReason:
           type: string
-          enum: [pending, ready, failed]
-      required: [predictionId, recordId, risk, features, explanationStatus]
+          minLength: 1
+      required:
+      - predictionId
+      - recordId
+      - commitId
+      - time
+      - risk
+      - features
+      - explanationStatus
+      - explanationReason
       additionalProperties: false
     PredictionBatch:
       type: object
       properties:
-        mode: {const: feature-input}
-        batchId: {$ref: '#/components/schemas/Uuid'}
-        project: {type: string, minLength: 1}
-        runId: {$ref: '#/components/schemas/Uuid'}
+        mode:
+          const: feature-input
+        batchId:
+          $ref: '#/components/schemas/Uuid'
+        project:
+          type: string
+          minLength: 1
+        runId:
+          $ref: '#/components/schemas/Uuid'
         model:
           allOf:
-          - {$ref: '#/components/schemas/ModelInfo'}
+          - $ref: '#/components/schemas/ModelInfo'
           - properties:
-              state: {const: ready}
-        featureSchemaVersion: {type: string, minLength: 1}
-        inputSha256: {$ref: '#/components/schemas/Hash'}
-        sourceKind: {const: client-features}
+              state:
+                const: ready
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        inputSha256:
+          $ref: '#/components/schemas/Hash'
+        sourceKind:
+          const: client-features
         records:
           type: array
-          items: {$ref: '#/components/schemas/PredictionRecord'}
+          items:
+            $ref: '#/components/schemas/PredictionRecord'
           minItems: 1
+          maxItems: 1
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 1
-      required: [mode, batchId, project, runId, model, featureSchemaVersion, inputSha256, sourceKind, records, limitations]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - mode
+      - batchId
+      - project
+      - runId
+      - model
+      - featureSchemaVersion
+      - inputSha256
+      - sourceKind
+      - records
+      - limitations
+      - createdAt
       additionalProperties: false
     Contribution:
       type: object
@@ -1332,7 +1846,7 @@ components:
         application/json:
           schema: {$ref: '#/components/schemas/SharedError'}
   securitySchemes:
-    TeamToken: {type: http, scheme: bearer, description: 候选共享凭据表示，不预设JWT／登录实现；读取／写入权限及发放方式待对应功能change确认。}
+    TeamToken: {type: http, scheme: bearer, description: 已实现接口使用独立成员／管理员 Bearer 部署凭据；管理员可登记，成员可查询与预测。不提供账户／登录／个人隔离。planned接口仍未实施。}
 x-source-date: '2026-10-12'
 x-contract-status: product-design-draft
 x-errors-document: ../全局错误码表.md

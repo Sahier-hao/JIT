@@ -1,0 +1,16 @@
+{
+  "kind": "real-http-browser-chain",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "runId": "07b6102b038aa93810932ca15c1c9ec3d0c83b2f4466bd6b5164922006efe4e5",
+  "count": 1853,
+  "fullIdentitiesAndRoundedRisksMatched": true,
+  "loadedMs": 1586,
+  "searchMs": 673,
+  "measuredUnderConcurrentTests": true,
+  "matchedReferenceTolerance": 1e-8,
+  "consoleErrors": [],
+  "passed": true
+}

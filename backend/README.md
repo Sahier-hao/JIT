@@ -34,6 +34,70 @@ $env:PYTHONIOENCODING='utf-8'
 
 ## 本机 HTTP
 
+### 模型目录存储（register-existing-models-and-predict-json）
+
+目录使用标准库 SQLite；默认运行库 `storage/catalog.sqlite3` 及其伴随文件被 Git 忽略。
+初始化／迁移是维护者的显式操作，HTTP 启动不自动建表：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli catalog-init
+# 独立验收库可指定 --database .cache/catalog-check.sqlite3
+```
+
+重复初始化同版本保留已有数据。版本不兼容、缺库、不可写或锁等待超过 5 秒返回
+`STORAGE_UNAVAILABLE`，不产生部分成功目录或预测；原历史 GET 不依赖目录库。
+备份时停止服务，保存数据库及所有被引用的运行目录；恢复后先核对版本，并重新校验登记的产物。
+回滚停用新接口并保留数据库与产物，禁止以删除成功结果代替回滚。
+
+新 `/api/v1` 接口从服务器环境变量 `JIT_MEMBER_TOKEN` 与 `JIT_ADMIN_TOKEN` 读取独立 Bearer 凭据。
+两者须非空且不同；缺配置返回 503 `ACCESS_CONFIG_INVALID`，无效认证返回 401，成员请求管理员操作返回 403。
+凭据由维护者通过主机环境设置，不能提交到仓库、打印或写进命令行参数／日志。
+成员可查询模型、schema 和预测／结果；管理员还可发现与登记候选。共享角色不提供个人账户、个人隔离或个人审计。
+每个新请求使用服务器生成的 `X-Request-Id`；错误含同一 requestId，日志只记角色、操作及状态。
+原 `GET /api/review-batch` 保留无鉴权和本机监听，且不因新凭据或数据库未初始化而改变行为。
+
+### 已有模型登记
+
+维护者运行 `cli register-model --run-key baseline`（完整命令为
+`& .venv/Scripts/python.exe -m jit_baseline.cli register-model --run-key baseline`）。
+可用 `--database`、`--artifact-root` 指定独立验收环境；服务对应环境配置为
+`JIT_CATALOG_DATABASE`、`JIT_ARTIFACT_ROOT`，默认仍为本机 storage 与 artifacts。
+
+管理员通过 `GET /api/v1/model-candidates` 选择已有运行，再向
+`POST /api/v1/models/register` 提交 `{candidateId, expectedManifestSha256}`。
+不接受绝对路径、下载 URL 或浏览器模型上传。默认只扫描 artifacts 的直接运行目录及 external 的直接交付目录，
+排除 development／隐藏目录，不在发现候选时加载模型；候选不代表已可用。
+CLI 与 HTTP 复用完整 verify 准入，失败不登记模型，正常失败写脱敏登记诊断。
+新登记返回 201，相同原 runId 复用身份返回 200；复现目录的生成时刻／训练耗时可不同，位置快照分别保存。
+重新登记合法位置明确切换首选位置并恢复可用性，不自动切换其他位置。
+成员用 `GET /api/v1/models` 读取实际登记版本；五种方法条目不代表已有五个可用模型。
+模型目录可保存十二字段运行，但 `jsonPredictionSupported=false`，本轮新输入仅支持六字段。
+
+### 单条 JSON 预测与结果重开
+
+成员或管理员向 `POST /api/v1/predictions` 提交 `modelId`、`featureSchemaVersion=openstack-six-v1`、
+`project` 和 `record:{recordId,features}`，可选真实 commitId／带时区 time。features 恰含原始
+ns、nd、nf、ent、la、ld；不需要预先 log1p／标准化，也不接受标签、缺失／额外字段、布尔计数、
+小数计数、数值字符串或非有限值。实际请求体上限 64 KiB，任一输入错误不发布结果。
+
+成功完成真实推理并原子保存后返回 201，含 batchId、predictionId、业务 UUID、原产物身份、模型 hash、
+schema、输入 hash、UTC 创建时刻及恰一条风险；`explanationStatus=not-supported` 并说明原因。
+风险仍是模型估计，调用方特征尚未核验源码／标签，不代表在线仓库效果或已确认缺陷。
+`GET /api/v1/prediction-batches/{batchId}` 重开保存结果，不重新计算；模型删除或更新不改写过去来源快照。
+重复合法 POST 创建独立批次；存储失败 503 不返回已算风险，模型不存在 404、不可用 503、推理失败 500。
+
+OpenAPI 与实际响应检查使用独立工具环境，不改变应用 requirements：
+
+```powershell
+uv venv .cache/contract-tools --python .venv/Scripts/python.exe
+uv pip install --python .cache/contract-tools/Scripts/python.exe jsonschema==4.25.1 PyYAML==6.0.3
+& .venv/Scripts/python.exe scripts/catalog_system_evidence.py
+& .cache/contract-tools/Scripts/python.exe scripts/check_catalog_contract.py
+```
+
+系统脚本只启动独立临时本机服务和数据库，不触碰既有服务，运行两种现有模型各 200 次计时，并输出
+`docs/evidence/_run/catalog-system.json`、服务日志与 `catalog-contract.json`；不自动冻结归档。
+
 在 backend 执行：
 
 ```powershell

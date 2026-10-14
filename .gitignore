@@ -13,3 +13,4 @@ backend/.pytest_cache/
 **/__pycache__/
 docs/evidence/_run/
 backend/.tmp-verify/
+backend/storage/
