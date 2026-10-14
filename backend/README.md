@@ -20,9 +20,17 @@ $env:PYTHONIOENCODING='utf-8'
 
 `fetch` 只访问三份固定发布者文件，全部通过 SHA-256 后才保存；已有文件必须重新核验。`run` 按选定方案处理、训练和评价，接受 `--schema`（具名特征 schema，默认 `openstack-six-v1`）与 `--algorithm`（具名方法，默认 `logistic-regression-l2-v1`）两个参数；不带参数时仍产出六字段逻辑回归运行。已存在的运行目录会拒绝覆盖；再次独立复现可指定新的输出目录，例如 `artifacts/reproduction-2`。正式模型和源文件不入 Git，使用命令重新取得。`verify` 检查所有文件哈希、关联、真实模型风险与指标。验证集不参与重拟合；测试不用于选阈值、参数或字段。
 
-已登记的方法见 [PROTOCOL.md](PROTOCOL.md)：`logistic-regression-l2-v1`（经典）与 `decision-tree-v1`（经典）。方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按每个运行**自身声明**的方法、依赖与指标集进行，因此新增方法、新增依赖或新增指标都不会作废既有运行。未注册的方法名以 `ALGORITHM_UNKNOWN` 拒绝，不退回默认方法。
+已登记的方法见 [PROTOCOL.md](PROTOCOL.md)：`logistic-regression-l2-v1`（经典）、`decision-tree-v1`（经典）与 `random-forest-v1`（经典，首个声明所需依赖的方法）。方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按每个运行**自身声明**的方法、依赖与指标集进行，因此新增方法、新增依赖或新增指标都不会作废既有运行。未注册的方法名以 `ALGORITHM_UNKNOWN` 拒绝，不退回默认方法。
 
-`artifacts/baseline` 是服务的固定运行（六字段逻辑回归）；`artifacts/reproduction*` 是独立重跑；`artifacts/decision-tree-v1` 与 `artifacts/decision-tree-reproduction` 是第二个方法（决策树）的独立运行与其复现，**不替换服务所用的运行**；`artifacts/development`、`.cache/` 和测试临时目录是技术与行为检查，不能作为正式效果。`data/openstack` 保存原始三文件。manifest 包含环境、训练代码哈希、核心文件、固定协议、方法声明、指标集、模型参数与运行身份，生成时间不影响身份。模型、数据或协议变化会形成其他上下文。
+`artifacts/baseline` 是服务的固定运行（六字段逻辑回归）；`artifacts/reproduction*` 是独立重跑；`artifacts/decision-tree-v1` 与 `artifacts/decision-tree-reproduction` 是第二个方法（决策树）的独立运行与其复现，**不替换服务所用的运行**；`artifacts/external/` 放**经仓库交付的外部运行**（见下一节）；`artifacts/development`、`.cache/` 和测试临时目录是技术与行为检查，不能作为正式效果。`data/openstack` 保存原始三文件。manifest 包含环境、训练代码哈希、核心文件、固定协议、方法声明、指标集、模型参数与运行身份，生成时间不影响身份。模型、数据或协议变化会形成其他上下文。
+
+## 跨机器交付的运行
+
+在别的机器上产生、经仓库交付的运行（例如在有加速设备的机器上训练的方法）放在 `artifacts/external/`。它是 `artifacts/` 下**唯一纳入版本控制**的路径：其余运行由 `cli run` 在本机现场重训而得，可随环境重建，故被 `.gitignore` 忽略；外部产物在本机**无法重算**，只能随仓库交付，否则无处可取、也无法进入 PR 评审。
+
+交付与校验只走仓库既有流程，**不另造打包或收包协议**：产方开 `feature/` 分支，把整个产物目录提交到该路径，在 PR 中说明方法与产方环境，并由至少一位非作者席位审阅；校验方（算法与实验席位）用与本机运行**同一个** `verify` 入口校验。方法条目由校验方登记——产方只提供方法与冻结超参，避免同一件事在两处各自登记而漂移。产方的完整交付约定见 [artifacts/external/README.md](artifacts/external/README.md)。
+
+跨机器时环境声明的含义见 [PROTOCOL.md](PROTOCOL.md) 的「环境声明与跨机器语义」一节：`trainingEnvironment` 是产方的产出环境（溯源），本机平台或 Python 与之不同**不是失败理由**；校验**实际加载**模型并用交付的无标签输入重算，输出中的 `origin` 标明该运行是外部产生、`verificationEnvironment` 记录本次校验时的本机环境。校验不重训、不覆盖产方声明，任一席位在任一台机器上得到一致判定。
 
 ## 本机 HTTP
 

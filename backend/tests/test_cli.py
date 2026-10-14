@@ -33,3 +33,31 @@ def test_run_help_lists_the_algorithm_option(monkeypatch, capsys):
     with pytest.raises(SystemExit):
         cli.main()
     assert "--algorithm" in capsys.readouterr().out
+
+
+def test_verify_records_this_machines_verification_environment(monkeypatch, capsys):
+    """校验记录本机验证环境与本次判定，与运行声明的产方训练环境分开（PDB-16、PDB-19）。"""
+    import json
+    from jit_baseline import cli
+
+    class FakeSnapshot:
+        @staticmethod
+        def load(run):
+            return FakeSnapshot()
+
+        def batch(self):
+            return {"records": [1, 2, 3]}
+
+    producer = {"python": "3.11.9", "platform": "Linux-x86_64", "packages": {"numpy": "2.5.3"}}
+    monkeypatch.setattr(cli, "verify_run",
+                        lambda run: {"runId": "fixture", "config": {"trainingEnvironment": producer}})
+    monkeypatch.setattr(cli, "Snapshot", FakeSnapshot)
+    monkeypatch.setattr(sys, "argv", ["jit_baseline.cli", "verify", "--run", "somewhere"])
+    cli.main()
+    result = json.loads(capsys.readouterr().out)
+    assert result["passed"] is True and result["runId"] == "fixture" and result["records"] == 3
+    assert result["origin"] == "external"
+    assert result["trainingEnvironment"] == producer
+    assert set(result["verificationEnvironment"]) == {"python", "platform", "packages"}
+    assert result["verificationEnvironment"]["packages"]
+    assert result["reproducibility"]["mode"] == "tolerance"  # 记录本次比较所用的口径（PDB-18）

@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
@@ -18,6 +19,7 @@ from .schemas import DEFAULT_SCHEMA, resolve
 ESTIMATORS = {
     "logistic-regression": LogisticRegression,
     "decision-tree": DecisionTreeClassifier,
+    "random-forest": RandomForestClassifier,
 }
 
 
