@@ -1,0 +1,92 @@
+{
+  "kind": "nfr-evidence-mapping",
+  "change": "establish-test-plan-and-nfr-evidence",
+  "date": "2026-10-13",
+  "browserChannel": "msedge",
+  "documentation": "../docs/测试计划.md",
+  "items": [
+    {
+      "id": "A11-1",
+      "check": "两视口（1280×720、1440×900）列表/详情/清单无页面级横向溢出",
+      "evidence": [
+        "accessibility-desktop-1280-overflow.json",
+        "accessibility-desktop-1440-overflow.json",
+        "screenshots/desktop-1280-real-accessibility-list.png",
+        "screenshots/desktop-1440-real-accessibility-list.png",
+        "screenshots/desktop-1280-real-accessibility-detail.png",
+        "screenshots/desktop-1440-real-accessibility-detail.png"
+      ]
+    },
+    {
+      "id": "A11-2",
+      "check": "纯键盘完成列表→详情→加入→清单→返回链路，关键操作有可见焦点",
+      "evidence": [
+        "accessibility-desktop-1280-keyboard.json",
+        "accessibility-desktop-1440-keyboard.json",
+        "screenshots/desktop-1280-real-accessibility-keyboard.png",
+        "screenshots/desktop-1440-real-accessibility-keyboard.png"
+      ]
+    },
+    {
+      "id": "A11-3",
+      "check": "关闭详情后焦点返回触发位置",
+      "evidence": [
+        "accessibility-desktop-1280-keyboard.json",
+        "accessibility-desktop-1440-keyboard.json"
+      ]
+    },
+    {
+      "id": "A11-4",
+      "check": "状态不只靠颜色区分：模式与错误有可读文字",
+      "evidence": [
+        "accessibility-desktop-1280-status-text.json",
+        "accessibility-desktop-1440-status-text.json",
+        "screenshots/desktop-1280-real-accessibility-error.png",
+        "screenshots/desktop-1440-real-accessibility-error.png"
+      ]
+    },
+    {
+      "id": "A11-5",
+      "check": "详情内容可滚动（End 后 scrollTop>0）",
+      "evidence": [
+        "accessibility-desktop-1280-keyboard.json",
+        "accessibility-desktop-1440-keyboard.json"
+      ]
+    },
+    {
+      "id": "A11-6",
+      "check": "真实用户走查（非开发者参与者）",
+      "status": "Sprint 3 待补，本 change 不编造",
+      "evidence": []
+    },
+    {
+      "id": "PERF-1",
+      "check": "本机推理服务响应：30 次顺序 GET /api/review-batch，nearest-rank P95",
+      "evidence": [
+        "perf-backend-batch.json"
+      ]
+    },
+    {
+      "id": "PERF-2",
+      "check": "前端首屏加载：两视口各 10 次，fetch 与渲染完成时间，nearest-rank P95",
+      "evidence": [
+        "perf-frontend-first-screen.json"
+      ]
+    },
+    {
+      "id": "PERF-REPORT",
+      "check": "性能基线报告：样本、P95 口径、环境、基线声明",
+      "evidence": [
+        "nfr-performance.md"
+      ]
+    }
+  ],
+  "supporting": {
+    "unit-results.json": "前端 Vitest 单元测试输出（npm test）",
+    "browser-results.json": "Playwright 全量 e2e 输出（48 通过，两视口）",
+    "reproduction-comparison.json": "后端固定运行独立复现比较（passed: true）",
+    "http-lifecycle.json": "后端 HTTP 生命周期检查输出",
+    "desktop-1280-real-chain.json": "真实链路端到端记录（1280×720）",
+    "desktop-1440-real-chain.json": "真实链路端到端记录（1440×900）"
+  }
+}

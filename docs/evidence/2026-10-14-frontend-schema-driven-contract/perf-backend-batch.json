@@ -1,0 +1,199 @@
+{
+  "kind": "perf-baseline-backend",
+  "measuredAt": "2026-10-13T13:03:05.554408+00:00",
+  "endpoint": "http://127.0.0.1:8000/api/review-batch",
+  "method": "30 sequential GET /api/review-batch, nearest-rank P95",
+  "samples": [
+    {
+      "index": 0,
+      "elapsedSeconds": 0.45098999998299405,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 1,
+      "elapsedSeconds": 0.05460639999364503,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 2,
+      "elapsedSeconds": 0.030891200003679842,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 3,
+      "elapsedSeconds": 0.054105999995954335,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 4,
+      "elapsedSeconds": 0.04730509998626076,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 5,
+      "elapsedSeconds": 0.03381769999396056,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 6,
+      "elapsedSeconds": 0.04444409999996424,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 7,
+      "elapsedSeconds": 0.0572534000093583,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 8,
+      "elapsedSeconds": 0.06848819999140687,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 9,
+      "elapsedSeconds": 0.031320199981564656,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 10,
+      "elapsedSeconds": 0.030659500014735386,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 11,
+      "elapsedSeconds": 0.031904300005408004,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 12,
+      "elapsedSeconds": 0.03138519998174161,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 13,
+      "elapsedSeconds": 0.04047639999771491,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 14,
+      "elapsedSeconds": 0.030151199985994026,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 15,
+      "elapsedSeconds": 0.054569500003708526,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 16,
+      "elapsedSeconds": 0.029933899990282953,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 17,
+      "elapsedSeconds": 0.04836439999053255,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 18,
+      "elapsedSeconds": 0.03083669999614358,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 19,
+      "elapsedSeconds": 0.030028200009837747,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 20,
+      "elapsedSeconds": 0.029238899995107204,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 21,
+      "elapsedSeconds": 0.03159369999775663,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 22,
+      "elapsedSeconds": 0.029303799994522706,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 23,
+      "elapsedSeconds": 0.04353059999994002,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 24,
+      "elapsedSeconds": 0.05501949999597855,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 25,
+      "elapsedSeconds": 0.03020829998422414,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 26,
+      "elapsedSeconds": 0.04203949999646284,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 27,
+      "elapsedSeconds": 0.031979899998987094,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 28,
+      "elapsedSeconds": 0.029883499984862283,
+      "status": 200,
+      "ok": true
+    },
+    {
+      "index": 29,
+      "elapsedSeconds": 0.02894749998813495,
+      "status": 200,
+      "ok": true
+    }
+  ],
+  "errors": 0,
+  "p95Seconds": 0.06848819999140687,
+  "meanSeconds": 0.05277589332836215,
+  "environment": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "cpuCount": 16,
+    "ramTotalBytes": 16674390016
+  },
+  "statement": "本机链路基线，未做阈值判定；NFR-01 完整协议（每种模型 200 次单条 JSON、4 个 LAN 客户端、P95<=2s/列表<=3s）待在线预测接口落地后重测。"
+}

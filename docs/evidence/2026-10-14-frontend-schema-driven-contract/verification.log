@@ -1,0 +1,255 @@
+
+[./.venv/Scripts/python.exe -m pytest --basetemp=.cache/final-verification]
+============================= test session starts =============================
+platform win32 -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\JIT\backend
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collected 146 items
+
+tests\test_algorithms.py ........                                        [  5%]
+tests\test_api.py .......                                                [ 10%]
+tests\test_artifacts.py .............................................    [ 41%]
+tests\test_cli.py ....                                                   [ 43%]
+tests\test_data.py ..........................                            [ 61%]
+tests\test_evidence.py .........                                         [ 67%]
+tests\test_http_lifecycle.py ....                                        [ 70%]
+tests\test_metrics.py ...............                                    [ 80%]
+tests\test_model.py ..............                                       [ 90%]
+tests\test_schemas.py ............                                       [ 98%]
+tests\test_verification_guard.py ..                                      [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\JIT\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 146 passed, 1 warning in 27.86s =======================
+
+exit=0
+
+[./.venv/Scripts/python.exe -m jit_baseline.cli verify]
+{
+  "runId": "300ace38cf8b51baff96fed4f51ca06cdaefc6532c0de5e4f49c76e1bcf2919b",
+  "records": 1853,
+  "origin": "local",
+  "trainingEnvironment": {
+    "packages": {
+      "fastapi": "0.143.0",
+      "joblib": "1.6.0",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "threadpoolctl": "3.7.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.6"
+  },
+  "verificationEnvironment": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "packages": {
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "scikit-learn": "1.9.1",
+      "joblib": "1.6.0",
+      "threadpoolctl": "3.7.0",
+      "fastapi": "0.143.0",
+      "uvicorn": "0.54.0"
+    }
+  },
+  "reproducibility": {
+    "mode": "tolerance",
+    "atol": 1e-08,
+    "rtol": 0.0
+  },
+  "passed": true
+}
+
+exit=0
+
+[./.venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/_run/reproduction-comparison.json]
+{
+  "kind": "real-independent-reproduction",
+  "firstRunId": "300ace38cf8b51baff96fed4f51ca06cdaefc6532c0de5e4f49c76e1bcf2919b",
+  "secondRunId": "300ace38cf8b51baff96fed4f51ca06cdaefc6532c0de5e4f49c76e1bcf2919b",
+  "partitionMembershipExact": true,
+  "testCount": 1853,
+  "maxRiskAbsoluteDifference": 0.0,
+  "metricAbsoluteDifferences": {
+    "averagePrecision": 0.0,
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "recall20Loc": 0.0,
+    "rocAuc": 0.0
+  },
+  "method": "logistic-regression-l2-v1",
+  "metricSet": "metric-set-v1",
+  "reproducibility": {
+    "mode": "tolerance",
+    "atol": 1e-08,
+    "rtol": 0.0
+  },
+  "tolerance": 1e-08,
+  "passed": true
+}
+
+exit=0
+
+[npm ci --registry=https://registry.npmjs.org/ --fetch-retries=0 --fetch-timeout=30000]
+
+added 112 packages, and audited 113 packages in 18s
+
+22 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+exit=0
+
+[npm run typecheck]
+
+> jit-review-workbench@0.0.0 typecheck
+> tsc -b
+
+
+exit=0
+
+[npm test]
+
+> jit-review-workbench@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.3 D:/Documents/课程相关/软件开发与测试综合实训/JIT/frontend
+
+ ✓ src/historical.test.tsx (16 tests) 1034ms
+   ✓ 默认真实模式，基线记录与详情不冒用人工解释，过滤不重算指标 538ms
+ ✓ src/domain.test.ts (29 tests) 8ms
+ ✓ src/App.test.tsx (10 tests) 3324ms
+   ✓ CRR-01/02/03 明示来源与边界，缺失度量不填零 369ms
+   ✓ CRR-04/05 无结果可清除，无效日期保留有效结果 1034ms
+   ✓ CRR-07/08 列表、详情与清单共同维护身份和顺序，重复唯一与移除 778ms
+   ✓ CRR-07/12 关闭详情保留查询并返回键盘触发位置 357ms
+ ✓ src/shortlist.test.ts (10 tests) 5ms
+ ✓ src/named.test.tsx (9 tests) 309ms
+ ✓ src/useDataset.test.tsx (4 tests) 323ms
+
+ Test Files  6 passed (6)
+      Tests  78 passed (78)
+   Start at  19:42:29
+   Duration  10.48s (environment 52%, tests 28%, setup 13%, import 4%, transform 2%)
+
+Environment  jsdom was created 6 times · 9.30s total, 52% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JSON report written to D:/Documents/课程相关/软件开发与测试综合实训/JIT/docs/evidence/_run/unit-results.json
+
+exit=0
+
+[npm run lint]
+
+> jit-review-workbench@0.0.0 lint
+> oxlint
+
+
+exit=0
+
+[npm run build]
+
+> jit-review-workbench@0.0.0 build
+> tsc -b && vite build
+
+[36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 25 modules transformed.
+rendering chunks...
+computing gzip size...
+D:/Documents/课程相关/软件开发与测试综合实训/JIT/frontend/dist/index.html                   0.60 kB │ gzip:  0.42 kB
+D:/Documents/课程相关/软件开发与测试综合实训/JIT/frontend/dist/assets/index-Cb8mWyyM.css   17.33 kB │ gzip:  4.73 kB
+D:/Documents/课程相关/软件开发与测试综合实训/JIT/frontend/dist/assets/index-D7qCMXjO.js   251.90 kB │ gzip: 79.05 kB
+
+[32m✓ built in 143ms[39m
+
+exit=0
+
+[npm run test:e2e]
+
+> jit-review-workbench@0.0.0 test:e2e
+> playwright test
+
+[WebServer] INFO:     Started server process [40648]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+Running 50 tests using 2 workers
+
+  ok  1 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\accessibility.spec.ts:24:1 › A11-1 列表、详情与清单无页面级横向溢出 (6.9s)
+  ok  3 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\accessibility.spec.ts:75:1 › A11-4 模式与错误状态有可读文字 (4.3s)
+  ok  4 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\contract-shapes.spec.ts:6:1 › 具名形态按声明解析与展示，未提供字段带原因，旧文案不出现 (945ms)
+  ok  2 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\accessibility.spec.ts:42:1 › A11-2/3/5 纯键盘链路、焦点返回与详情滚动 (12.3s)
+  ok  6 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:84:1 › 真实基线摘要保持完整批次指标，演示清单与真实隔离 (7.2s)
+  ok  5 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:15:1 › 真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应） (7.8s)
+  ok  8 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:139:1 › 网络失败不回退演示，恢复重试实际 HTTP (2.1s)
+  ok  9 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:152:1 › 错误真实来源不能展示旧批次（行为夹具） (633ms)
+  ok 10 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具） (7.4s)
+  ok  7 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:112:1 › 真实完整列表键盘详情与焦点返回 (11.7s)
+  ok 11 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:7:1 › CRR-09 刷新、同地址再次打开恢复成员与顺序 (1.7s)
+  ok 12 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:25:1 › CRR-09 数据版本隔离，切回原版本仍可恢复 (1.4s)
+  ok 13 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:44:3 › CRR-09 损坏内容恢复反馈并可重新选择 (1.1s)
+  ok 14 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:44:3 › CRR-09 格式不支持恢复反馈并可重新选择 (1.1s)
+  ok 15 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:44:3 › CRR-09 未知标识恢复反馈并可重新选择 (1.0s)
+  ok 17 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:77:1 › CRR-10 读取拒绝后列表、详情与内存清单仍可使用 (1.2s)
+  ok 16 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:59:1 › CRR-10 保存拒绝仍可加入与移除，显示刷新风险 (1.5s)
+  ok 19 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:50:1 › CRR-04/05/06/07 查询、日期、排序与详情上下文 (1.5s)
+  ok 18 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:12:1 › CRR-01/02/03/07/08/12 桌面完整评审链路 (2.2s)
+  ok 20 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:84:1 › CRR-12 仅键盘完整操作及可见焦点 (1.4s)
+  ok 21 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:113:1 › CRR-11 加载可见、失败重试、空数据区分 (1.1s)
+  ok 22 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:142:3 › CRR-01/11 缺少来源不显示猜测记录 (631ms)
+  ok 23 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:142:3 › CRR-01/11 重复标识不显示猜测记录 (668ms)
+  ok 24 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:142:3 › CRR-01/11 无效时间不显示猜测记录 (705ms)
+  ok 25 [desktop-1280] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:151:1 › CRR-03 无效风险有文字反馈且排在有效分数之后 (746ms)
+  ok 26 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\accessibility.spec.ts:24:1 › A11-1 列表、详情与清单无页面级横向溢出 (7.3s)
+  ok 28 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\accessibility.spec.ts:75:1 › A11-4 模式与错误状态有可读文字 (4.3s)
+  ok 29 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\contract-shapes.spec.ts:6:1 › 具名形态按声明解析与展示，未提供字段带原因，旧文案不出现 (973ms)
+  ok 27 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\accessibility.spec.ts:42:1 › A11-2/3/5 纯键盘链路、焦点返回与详情滚动 (12.0s)
+  ok 31 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:84:1 › 真实基线摘要保持完整批次指标，演示清单与真实隔离 (7.4s)
+  ok 30 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:15:1 › 真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应） (8.1s)
+  ok 33 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:139:1 › 网络失败不回退演示，恢复重试实际 HTTP (2.2s)
+  ok 34 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:152:1 › 错误真实来源不能展示旧批次（行为夹具） (631ms)
+  ok 35 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:163:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具） (7.3s)
+  ok 32 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\historical.spec.ts:112:1 › 真实完整列表键盘详情与焦点返回 (11.4s)
+  ok 36 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:7:1 › CRR-09 刷新、同地址再次打开恢复成员与顺序 (1.7s)
+  ok 37 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:25:1 › CRR-09 数据版本隔离，切回原版本仍可恢复 (1.4s)
+  ok 38 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:44:3 › CRR-09 损坏内容恢复反馈并可重新选择 (1.0s)
+  ok 39 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:44:3 › CRR-09 格式不支持恢复反馈并可重新选择 (990ms)
+  ok 40 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:44:3 › CRR-09 未知标识恢复反馈并可重新选择 (1.0s)
+  ok 41 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:59:1 › CRR-10 保存拒绝仍可加入与移除，显示刷新风险 (1.6s)
+  ok 42 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\storage.spec.ts:77:1 › CRR-10 读取拒绝后列表、详情与内存清单仍可使用 (1.2s)
+  ok 44 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:50:1 › CRR-04/05/06/07 查询、日期、排序与详情上下文 (1.5s)
+  ok 43 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:12:1 › CRR-01/02/03/07/08/12 桌面完整评审链路 (2.2s)
+  ok 45 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:84:1 › CRR-12 仅键盘完整操作及可见焦点 (1.4s)
+  ok 46 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:113:1 › CRR-11 加载可见、失败重试、空数据区分 (1.1s)
+  ok 47 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:142:3 › CRR-01/11 缺少来源不显示猜测记录 (650ms)
+  ok 48 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:142:3 › CRR-01/11 重复标识不显示猜测记录 (648ms)
+  ok 49 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:142:3 › CRR-01/11 无效时间不显示猜测记录 (652ms)
+  ok 50 [desktop-1440] › D:\Documents\课程相关\软件开发与测试综合实训\JIT\frontend\e2e\workbench.spec.ts:151:1 › CRR-03 无效风险有文字反馈且排在有效分数之后 (865ms)
+
+  50 passed (1.5m)
+
+exit=0
+
+[openspec validate --specs --strict --no-interactive]
+✓ spec/commit-risk-review
+✓ spec/feature-schema-versioning
+✓ spec/public-data-baseline
+✓ spec/verification-evidence
+Totals: 4 passed, 0 failed (4 items)
+
+exit=0

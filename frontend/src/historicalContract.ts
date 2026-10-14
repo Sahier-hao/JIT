@@ -11,6 +11,9 @@ interface BaselineMetrics extends Classification {
 }
 export interface BaselineSummary {
   runId: string; datasetVersion: string; modelSha256: string; features: string[]; threshold: number; protocolVersion: string; limitations: string[];
+  featureSchema: { name: string; inModel: string[]; unavailable: { name: string; reason: string }[] } | null;
+  algorithmVersion: string | null; metricSet: string | null;
+  model: { id: string; name: string } | null;
   source: { publisher: string; revision: string; url: string; sha256: string; citation: string; labelRule: string;
     files: Record<string, { url: string; sha256: string; bytes: number }>;
     quality: { rawRows: number; includedRows: number; positiveLabels: number; blankLabels: number; excluded: Record<string, number> } };
@@ -39,15 +42,15 @@ function classification(value: unknown) {
 function orderedFeatures(value: unknown) { requireCondition(Array.isArray(value) && JSON.stringify(value) === JSON.stringify(features)) }
 function url(value: unknown) { text(value); requireCondition(value.startsWith('https://')) }
 
-export function parseHistorical(input: unknown): Dataset {
-  const raw = object(input)
+// 阶段一：两形态共享的信封校验（D7）——契约版本、身份、来源、分区、指标、记录身份。
+function parseEnvelope(raw: Record<string, unknown>): { parsed: Dataset; test: Record<string, unknown> } {
   requireCondition(raw.contractVersion === 1 && raw.mode === 'historical')
   hash(raw.runId); text(raw.datasetVersion); requireCondition(raw.version === raw.datasetVersion)
   const model = object(raw.model)
   text(model.id); text(model.name); hash(model.sha256)
   const summary = object(raw.summary)
   requireCondition(summary.runId === raw.runId && summary.datasetVersion === raw.datasetVersion && summary.modelSha256 === model.sha256)
-  orderedFeatures(summary.features); requireCondition(summary.threshold === .5); text(summary.protocolVersion)
+  requireCondition(summary.threshold === .5); text(summary.protocolVersion)
   requireCondition(Array.isArray(summary.limitations) && summary.limitations.length > 0); summary.limitations.forEach(text)
   const source = object(summary.source)
   for (const name of ['publisher', 'revision', 'citation', 'labelRule']) text(source[name])
@@ -92,14 +95,66 @@ export function parseHistorical(input: unknown): Dataset {
   const parsed = parseDataset({ project: raw.project, version: raw.version, records: raw.records })
   requireCondition(parsed.records.length === test.count && Array.isArray(raw.records))
   raw.records.forEach(item => {
-    const r = object(item), measures = object(r.metrics)
-    requireCondition(Object.keys(measures).length === 6 && !('label' in r) && !('title' in r) && !('explanation' in r))
+    const r = object(item)
+    requireCondition(!('label' in r) && !('title' in r) && !('explanation' in r))
     requireCondition(typeof r.id === 'string' && /^[a-f0-9]{40}$/.test(r.id) && validRisk(r.risk))
-    for (const name of features) { if (name === 'ent') nonnegative(measures[name]); else count(measures[name]) }
-    requireCondition(r.lines === (measures.la as number) + (measures.ld as number) && r.files === measures.nf)
     requireCondition(Date.parse(r.time as string) >= Date.parse(test.start as string) && Date.parse(r.time as string) <= Date.parse(test.end as string))
   })
+  return { parsed, test }
+}
+
+// 阶段二 · 旧形态：现有六字段与 6 键校验逐行保留（CRR-14 零回退）。
+function legacyForm(summary: Record<string, unknown>, records: unknown[]): BaselineSummary {
+  orderedFeatures(summary.features)
+  records.forEach(item => {
+    const r = object(item), measures = object(r.metrics)
+    requireCondition(Object.keys(measures).length === 6)
+    for (const name of features) { if (name === 'ent') nonnegative(measures[name]); else count(measures[name]) }
+    requireCondition(r.lines === (measures.la as number) + (measures.ld as number) && r.files === measures.nf)
+  })
+  return { ...(summary as unknown as BaselineSummary), featureSchema: null, algorithmVersion: null, metricSet: null, model: null }
+}
+
+// 阶段二 · 具名形态：按声明 schema 与方法校验（D3）。字段顺序由声明决定，
+// features 信息上冗余于 inModel——它的存在价值正是作为一致性校验对象。
+function namedForm(summary: Record<string, unknown>, modelId: unknown, records: unknown[]): BaselineSummary {
+  const schema = object(summary.featureSchema)
+  text(schema.name); requireCondition(summary.protocolVersion === schema.name)
+  requireCondition(Array.isArray(schema.inModel) && schema.inModel.length > 0)
+  schema.inModel.forEach(text)
+  requireCondition(JSON.stringify(summary.features) === JSON.stringify(schema.inModel))
+  requireCondition(Array.isArray(schema.unavailable))
+  const unavailableNames = new Set<string>()
+  const unavailable = schema.unavailable.map(entry => {
+    const field = object(entry); text(field.name); text(field.reason)
+    requireCondition(!unavailableNames.has(field.name as string)); unavailableNames.add(field.name as string)
+    requireCondition(!(schema.inModel as string[]).includes(field.name as string))
+    return { name: field.name as string, reason: field.reason as string }
+  })
+  const declared = schema.inModel as string[]
+  records.forEach(item => {
+    const r = object(item), measures = object(r.metrics)
+    requireCondition(Object.keys(measures).length === declared.length && declared.every(name => name in measures))
+    declared.forEach(name => nonnegative(measures[name]))
+    if (declared.includes('la') && declared.includes('ld')) requireCondition(r.lines === (measures.la as number) + (measures.ld as number))
+    if (declared.includes('nf')) requireCondition(r.files === measures.nf)
+  })
+  const model = object(summary.model)
+  text(model.id); text(model.name); requireCondition(model.id === modelId)
+  text(summary.algorithmVersion); text(summary.metricSet)
+  return { ...(summary as unknown as BaselineSummary),
+    featureSchema: { name: schema.name as string, inModel: declared, unavailable },
+    algorithmVersion: summary.algorithmVersion as string, metricSet: summary.metricSet as string,
+    model: { id: model.id as string, name: model.name as string } }
+}
+
+export function parseHistorical(input: unknown): Dataset {
+  const raw = object(input)
+  const envelope = parseEnvelope(raw)
+  const summary = object(raw.summary)
+  // 形态分派唯一依据：字段声明的存在性（D1），不是契约版本号。
+  const checked = 'featureSchema' in summary ? namedForm(summary, object(raw.model).id, raw.records as unknown[]) : legacyForm(summary, raw.records as unknown[])
   // Return metadata only after the complete required contract has been checked.
-  return { ...parsed, mode: 'historical', runId: raw.runId as string,
-    model: model as unknown as Dataset['model'], summary: summary as unknown as BaselineSummary }
+  return { ...envelope.parsed, mode: 'historical', runId: raw.runId as string,
+    model: object(raw.model) as unknown as Dataset['model'], summary: checked }
 }
