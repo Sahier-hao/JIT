@@ -36,6 +36,19 @@ class Log1pColumns:
         return result
 
 
+def log_counts(matrix):
+    """旧六字段冻结产物的 joblib 兼容入口。
+
+    具名 schema 重构（generalize-model-registry-and-run-contract）之前的冻结产物
+    （backend/artifacts/baseline 与 reproduction）在序列化时引用本模块的 `log_counts`；
+    保留同行为入口使旧产物按其训练时代码加载。列 [0,1,2,4,5] 对应 openstack-six-v1
+    的 ns、nd、nf、la、ld，ent（列 3）不变——与 Log1pColumns 对该 schema 的行为一致。
+    """
+    result = np.array(matrix, dtype=np.float64, copy=True)
+    result[:, [0, 1, 2, 4, 5]] = np.log1p(result[:, [0, 1, 2, 4, 5]])
+    return result
+
+
 def temporal_split(records):
     if not records or len({r["id"] for r in records}) != len(records):
         raise BaselineError("SPLIT_INVALID", "分区为空或提交身份重复")

@@ -142,6 +142,18 @@ def test_real_manifest_snapshot_and_reference_are_one_context(real_run):
     assert manifest["config"]["features"] == ["ns", "nd", "nf", "ent", "la", "ld"]
 
 
+def test_frozen_legacy_baseline_artifacts_still_load_and_reproduce():
+    """仓库内冻结的旧六字段产物必须在当前代码下可加载（joblib 兼容入口，见 model.log_counts）。"""
+    from jit_baseline.artifacts import Snapshot
+    run = BACKEND / "artifacts/baseline"
+    snapshot = Snapshot.load(run)
+    batch = snapshot.batch()
+    reference = json.loads((run / "reference-predictions.json").read_text(encoding="utf-8"))
+    assert len(batch["records"]) == 1853
+    assert {r["id"] for r in batch["records"]} == {r["id"] for r in reference}
+    assert np.max(np.abs([a["risk"] - b["risk"] for a, b in zip(batch["records"], reference, strict=True)])) <= 1e-8
+
+
 def test_service_invokes_loaded_model_and_does_not_read_labels_or_reference(copied_run, monkeypatch):
     from jit_baseline.artifacts import Snapshot
     snapshot = Snapshot.load(copied_run)
