@@ -44,24 +44,43 @@ def read_json(path):
 
 
 def environment(requires=()):
-    """运行记录的环境：基础包加该方法声明的依赖（PDB-11）。"""
+    """运行记录的环境：基础包加该方法声明的依赖（PDB-11）。
+
+    声明的依赖在本机取不到版本时在此给出可定位的领域错误：既不抛出未归类的
+    `PackageNotFoundError`，也不把缺失的依赖从记录里省略——省略会让声明与
+    实际的运行条件不符，而"运行可追踪"要求声明与事实一致。
+    """
     packages = dict.fromkeys((*BASE_PACKAGES, *requires))
+    recorded = {}
+    for name in packages:
+        try:
+            recorded[name] = version(name)
+        except PackageNotFoundError:
+            raise BaselineError("ARTIFACT_INVALID", f"方法声明的依赖未安装：{name}") from None
     return {"python": platform.python_version(), "platform": platform.platform(),
-            "packages": {name: version(name) for name in packages}}
+            "packages": recorded}
 
 
-def check_environment(recorded):
-    """运行声明的依赖必须被当前环境满足，不要求与当前环境全等（PDB-11）。
+def environment_matches_this_machine(recorded):
+    """该运行是否产生于与本机相同的平台与 Python。
 
-    包含关系是单向的：记录里的每个包都必须在当前环境以相同版本存在；
-    当前环境多装其它包不影响既有运行——新增依赖因此不会作废既有运行。
+    这只用于**分类**该运行是本机产生还是外部产生，不再作为准入条件：
+    跨机器时平台与本机不同是常态，不是失败理由（PDB-16）。
+    """
+    return (recorded.get("python") == platform.python_version()
+            and recorded.get("platform") == platform.platform())
+
+
+def check_environment(recorded, *, local=None):
+    """校验收录的环境声明（PDB-11／PDB-16）。
+
+    结构与取值永远校验。**仅当该运行产生于本机环境时**，才要求它声明的依赖在
+    本机以相同版本被满足；外部产生的运行不以此为准入条件——本机满不满足它的
+    训练环境，与本机能否加载并重算它无关，后者由加载与重算把关（PDB-17／PDB-18）。
+    这样新增依赖（如深度框架）不会作废既有运行，也不会把跨机器产物挡在门外。
     """
     if not isinstance(recorded, dict) or set(recorded) != {"python", "platform", "packages"}:
         raise BaselineError("ARTIFACT_INVALID", "环境声明结构不完整")
-    if recorded["python"] != platform.python_version():
-        raise BaselineError("ARTIFACT_INVALID", "Python 版本不匹配")
-    if recorded["platform"] != platform.platform():
-        raise BaselineError("ARTIFACT_INVALID", "平台不匹配")
     packages = recorded["packages"]
     if not isinstance(packages, dict) or not packages:
         raise BaselineError("ARTIFACT_INVALID", "依赖声明缺失")
@@ -69,12 +88,30 @@ def check_environment(recorded):
         expected = packages[name]
         if not isinstance(expected, str) or not expected:
             raise BaselineError("ARTIFACT_INVALID", f"依赖声明无效：{name}")
+    if local is None:
+        local = environment_matches_this_machine(recorded)
+    if not local:
+        return
+    for name in sorted(packages):
+        expected = packages[name]
         try:
             actual = version(name)
         except PackageNotFoundError:
             raise BaselineError("ARTIFACT_INVALID", f"声明的依赖未安装：{name}") from None
         if actual != expected:
             raise BaselineError("ARTIFACT_INVALID", f"依赖版本不符：{name}（声明 {expected}，当前 {actual}）")
+
+
+def run_origin(manifest):
+    """该运行是本机产生还是外部产生（PDB-19）。
+
+    只依赖产物自身声明的产出环境与本机的比较，不依赖任何本机既存的运行目录或
+    某个人本地的状态，因此任一席位在任一台机器上得到一致结论（PDB-15 第四场景）。
+    这是校验方的判定，不写回产物：产物只声明它自己的产出环境。
+    """
+    config = manifest["config"]
+    recorded = config.get("trainingEnvironment") or config.get("environment")
+    return "local" if environment_matches_this_machine(recorded) else "external"
 
 
 def feature_schema(schema):
@@ -139,7 +176,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
               "metricSet": metric_set,
               "datasetVersion": dataset_version, "features": fields, "cohort": COHORT,
               "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
-              "environment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
+              "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     run_id = identity(config)
     label = model_descriptor(schema.name, algorithm_version)
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
@@ -201,7 +238,9 @@ def check_files(directory, names):
         code = config.get("sourceCode")
         if not isinstance(code, dict) or not code or any(not isinstance(value, str) or len(value) != 64 for value in code.values()):
             raise BaselineError("ARTIFACT_INVALID", "训练代码溯源记录缺失或无效")
-        check_environment(config["environment"])
+        # 环境声明按运行自身记录：新运行用 `trainingEnvironment`（产出它的环境），
+        # 无该字段的旧运行回退到 `environment`。是否为本机产生由声明分类，不由外部传参。
+        check_environment(config.get("trainingEnvironment") or config.get("environment"))
     except (KeyError, TypeError) as exc:
         raise BaselineError("ARTIFACT_INVALID", "运行 manifest 结构不完整") from exc
     return manifest
@@ -265,6 +304,30 @@ class Snapshot:
                 "summary": self.summary, "records": records}
 
 
+def declared_reproducibility(manifest):
+    """该运行声明的方法所声明的复现口径（PDB-14）；无方法声明的旧运行回退到首个冻结方法。"""
+    method = manifest["config"].get("algorithmVersion") or DEFAULT_ALGORITHM
+    return method, get_algorithm(method)["reproducibility"]
+
+
+def check_reference_predictions(manifest, current, references):
+    """按方法**声明的复现口径**比较重算风险与交付的参考预测（PDB-18）。
+
+    不套用统一容差：数值容差按其声明的 `atol`／`rtol` 判定；声明了其它口径（如独立
+    协议）的方法，本机不套用数值容差，也不静默接受——以可定位原因判为不可用，该口径
+    的判定方式留待其实现冻结后接入（与 `compare_runs` 的既有立场一致）。
+    """
+    method, discipline = declared_reproducibility(manifest)
+    mode = discipline.get("mode")
+    if mode != "tolerance":
+        raise BaselineError("REPRODUCTION_FAILED",
+                            f"方法 {method} 声明的复现口径为 {mode}，本机校验不套用统一数值容差，"
+                            "该口径的风险比较尚未接入")
+    if not np.allclose(current, references, rtol=discipline["rtol"], atol=discipline["atol"]):
+        raise BaselineError("ARTIFACT_INVALID",
+                            f"参考风险与真实模型不一致（超出方法 {method} 声明的容差 atol={discipline['atol']}）")
+
+
 def verify_run(directory):
     manifest = check_files(directory, (*CORE_FILES, "summary.json"))
     snapshot = Snapshot.load(directory)
@@ -274,8 +337,8 @@ def verify_run(directory):
     if ids != [r["id"] for r in references] or ids != [r["id"] for r in labels]:
         raise BaselineError("ARTIFACT_INVALID", "参考风险或评价标签身份不一致")
     current = predict_risks(snapshot.model, snapshot.records, snapshot.schema)
-    if not np.allclose(current, [r["risk"] for r in references], rtol=0, atol=1e-8):
-        raise BaselineError("ARTIFACT_INVALID", "参考风险与真实模型不一致")
+    # 按该运行声明的方法所声明的复现口径比较，不再写死固定容差（PDB-14、PDB-18）。
+    check_reference_predictions(manifest, current, [r["risk"] for r in references])
     evaluation_records = [dict(r, label=y["label"]) for r, y in zip(snapshot.records, labels, strict=True)]
     # 按该运行声明的指标集重算：新增指标不影响既有运行（PDB-12）。
     metric_set = manifest["config"].get("metricSet")

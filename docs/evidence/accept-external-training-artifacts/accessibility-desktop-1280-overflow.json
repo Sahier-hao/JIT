@@ -1,0 +1,15 @@
+{
+  "kind": "accessibility-checklist",
+  "name": "overflow",
+  "viewport": "desktop-1280",
+  "channel": "msedge",
+  "items": [
+    {
+      "id": "A11-1",
+      "check": "两视口列表/详情/清单无页面级横向溢出",
+      "passed": true
+    }
+  ],
+  "consoleErrors": [],
+  "passed": true
+}

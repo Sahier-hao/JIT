@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 from jit_baseline.config import BACKEND
 
@@ -22,6 +23,108 @@ def copied_run(real_run, tmp_path):
     target = tmp_path / "run"
     shutil.copytree(real_run, target)
     return target
+
+
+@pytest.fixture(scope="session")
+def external_run(real_run, tmp_path_factory):
+    """模拟一份经仓库交付的外部产物：内容同本机运行，但产出环境是另一台（有加速设备的）机器。"""
+    from importlib.metadata import version
+    target = tmp_path_factory.mktemp("external-run") / "delivered"
+    shutil.copytree(real_run, target)
+    rewrite_manifest(target, lambda config: config.__setitem__("trainingEnvironment", {
+        "python": "3.11.9",
+        "platform": "Linux-5.15.0-105-generic-x86_64-with-glibc2.35",
+        "packages": {"numpy": version("numpy"), "scikit-learn": version("scikit-learn"),
+                     "torch": "2.1.0+cu121"},
+    }))
+    return target
+
+
+@pytest.fixture
+def external_copy(external_run, tmp_path):
+    target = tmp_path / "delivered"
+    shutil.copytree(external_run, target)
+    return target
+
+
+class StandInEstimator(ClassifierMixin, BaseEstimator):
+    """替身估计器：模拟"自定义估计器接在流水线末步"的（将来深度）模型。
+
+    模块级 `BaseEstimator` 子类：joblib 能按模块路径重建它，sklearn 流水线能代理它的
+    `classes_`／`n_features_in_`／`predict_proba`。不依赖任何加速设备，即设计里的
+    "设备中立交付"。
+    """
+
+    def __init__(self, n_features=0, positive_rate=0.5):
+        self.n_features = n_features
+        self.positive_rate = positive_rate
+
+    def fit(self, matrix, labels):
+        self.n_features_in_ = matrix.shape[1]
+        self.classes_ = np.unique(np.asarray(labels))
+        return self
+
+    def predict_proba(self, matrix):
+        if matrix.shape[1] != self.n_features_in_:
+            raise ValueError("输入维度与模型不符")
+        return np.column_stack([np.full(len(matrix), 1.0 - self.positive_rate),
+                                np.full(len(matrix), self.positive_rate)])
+
+
+def _resync(run, names):
+    """模型或指标文件被改写后，把清单哈希与运行身份同步到与磁盘一致。"""
+    from jit_baseline.artifacts import identity, read_json, write_json
+    from jit_baseline.data import sha256
+    manifest = read_json(run / "manifest.json")
+    for name in names:
+        manifest["files"][name] = sha256((run / name).read_bytes())
+        if name in manifest["config"]["coreFiles"]:
+            manifest["config"]["coreFiles"][name] = manifest["files"][name]
+    manifest["config"]["modelSha256"] = manifest["files"]["model.joblib"]
+    manifest["runId"] = identity(manifest["config"])
+    summary = read_json(run / "summary.json")
+    summary["runId"] = manifest["runId"]
+    summary["modelSha256"] = manifest["files"]["model.joblib"]
+    write_json(run / "summary.json", summary)
+    manifest["files"]["summary.json"] = sha256((run / "summary.json").read_bytes())
+    write_json(run / "manifest.json", manifest)
+
+
+def _perturb_reference(run, delta):
+    """把参考预测的第一条风险挪动 delta，并把清单哈希与身份同步到磁盘。"""
+    from jit_baseline.artifacts import read_json, write_json
+    references = read_json(run / "reference-predictions.json")
+    references[0]["risk"] = references[0]["risk"] + delta
+    write_json(run / "reference-predictions.json", references)
+    _resync(run, ("reference-predictions.json",))
+
+
+def _install_stand_in_model(run, positive_rate=0.5):
+    """把运行里的模型换成一个设备中立的替身流水线，并同步参考预测、指标与身份。"""
+    import joblib
+    from sklearn.pipeline import Pipeline
+    from jit_baseline.artifacts import read_json, write_json
+    from jit_baseline.metrics import evaluate
+    from jit_baseline.model import predict_risks
+    from jit_baseline.schemas import get_schema
+    config = read_json(run / "manifest.json")["config"]
+    schema = get_schema(config.get("schema") or config.get("protocol"))
+    records = read_json(run / "test-input.json")["records"]
+    labels = {row["id"]: row["label"] for row in read_json(run / "test-labels.json")}
+    # 用两行合成数据拟合，只固定 n_features_in_ 与 classes_，不接触测试数据。
+    stand_in = StandInEstimator(n_features=len(config["features"]), positive_rate=positive_rate)
+    stand_in.fit(np.zeros((2, len(config["features"]))), [0, 1])
+    pipeline = Pipeline([("model", stand_in)])
+    joblib.dump(pipeline, run / "model.joblib")
+    risks = predict_risks(pipeline, records, schema)
+    write_json(run / "reference-predictions.json",
+               [{"id": r["id"], "risk": p} for r, p in zip(records, risks, strict=True)])
+    metrics = evaluate([dict(r, label=labels[r["id"]]) for r in records], risks, config.get("metricSet"))
+    write_json(run / "metrics.json", metrics)
+    summary = read_json(run / "summary.json")
+    summary["metrics"] = metrics
+    write_json(run / "summary.json", summary)
+    _resync(run, ("model.joblib", "reference-predictions.json", "metrics.json"))
 
 
 def test_real_manifest_snapshot_and_reference_are_one_context(real_run):
@@ -125,15 +228,17 @@ def test_model_or_config_change_cannot_reuse_run_identity(real_run):
 
 
 def test_new_run_declares_base_packages_and_method_requirements(real_run):
-    """运行声明记录基础环境加该方法所需依赖（PDB-11）。"""
+    """运行声明记录基础环境加该方法所需依赖（PDB-11）；该字段是本运行的产出环境（PDB-16）。"""
     from jit_baseline.algorithms import DEFAULT_ALGORITHM, get_algorithm
     from jit_baseline.artifacts import BASE_PACKAGES
     manifest = json.loads((real_run / "manifest.json").read_text(encoding="utf-8"))
-    recorded = set(manifest["config"]["environment"]["packages"])
+    config = manifest["config"]
+    assert "trainingEnvironment" in config and "environment" not in config
+    recorded = set(config["trainingEnvironment"]["packages"])
     assert set(BASE_PACKAGES) <= recorded
     assert set(get_algorithm(DEFAULT_ALGORITHM)["requires"]) <= recorded
-    assert manifest["config"]["algorithmVersion"] == DEFAULT_ALGORITHM
-    assert manifest["config"]["metricSet"] == "metric-set-v1"
+    assert config["algorithmVersion"] == DEFAULT_ALGORITHM
+    assert config["metricSet"] == "metric-set-v1"
 
 
 def test_run_never_overwrites_existing_output(real_run):
@@ -219,18 +324,226 @@ def test_declared_dependencies_are_checked_by_containment(copied_run):
     from jit_baseline.artifacts import Snapshot, check_environment, verify_run
 
     def shrink(config):
-        config["environment"]["packages"] = {"numpy": version("numpy")}
+        config["trainingEnvironment"]["packages"] = {"numpy": version("numpy")}
     # 记录只声明一个包、当前环境有更多包：既有运行仍必须通过。
     rewrite_manifest(copied_run, shrink)
     verify_run(copied_run)
     assert Snapshot.load(copied_run).batch()["runId"]
-    # 声明的包必须在当前环境被满足，且版本一致。
+    # 声明的包必须在当前环境被满足，且版本一致（该运行产生于本机，故按本机校验）。
     base = {"python": platform.python_version(), "platform": platform.platform()}
     check_environment({**base, "packages": {"numpy": version("numpy"), "pytest": version("pytest")}})
     for recorded, named in (({"torch": "0.0.1"}, "torch"), ({"numpy": "0.0.1"}, "numpy")):
         with pytest.raises(ValueError) as info:
             check_environment({**base, "packages": recorded})
         assert named in str(info.value)
+
+
+def test_a_foreign_training_environment_is_not_an_admission_condition(copied_run):
+    """产方平台或 Python 与本机不同不是失败理由，本机也不需满足产方依赖（PDB-16、PDB-11）。"""
+    from importlib.metadata import version
+    from jit_baseline.artifacts import Snapshot, verify_run
+
+    def to_a_cuda_machine(config):
+        config["trainingEnvironment"]["platform"] = "Linux-5.15.0-105-generic-x86_64-with-glibc2.35"
+        config["trainingEnvironment"]["python"] = "3.11.9"
+        # 产方环境含本机没有的训练框架：作为溯源记录合法，不要求本机满足它。
+        config["trainingEnvironment"]["packages"] = {"numpy": version("numpy"), "torch": "2.1.0+cu121"}
+
+    rewrite_manifest(copied_run, to_a_cuda_machine)
+    assert verify_run(copied_run)["runId"]
+    assert Snapshot.load(copied_run).batch()["runId"]
+    assert json.loads((copied_run / "manifest.json").read_text(encoding="utf-8"))["config"][
+        "trainingEnvironment"]["packages"]["torch"] == "2.1.0+cu121"
+
+
+def test_omitting_the_producer_environment_breaks_the_run_identity(copied_run):
+    """产方环境是运行身份的一部分：为迎合本机而省略依赖会被识别（PDB-16）。"""
+    from jit_baseline.artifacts import Snapshot
+    from jit_baseline.data import BaselineError
+    manifest = json.loads((copied_run / "manifest.json").read_text(encoding="utf-8"))
+    manifest["config"]["trainingEnvironment"]["packages"].pop("scipy")
+    (copied_run / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(BaselineError) as info:
+        Snapshot.load(copied_run)
+    assert info.value.code == "ARTIFACT_INVALID" and "身份" in str(info.value)
+
+
+def test_an_external_run_is_verified_through_the_same_entry_point(external_run):
+    """外部产物与本机运行共用既有校验入口，不新增"收包"命令（PDB-15）。"""
+    from jit_baseline.artifacts import Snapshot, run_origin, verify_run
+    manifest = verify_run(external_run)
+    assert run_origin(manifest) == "external"
+    assert Snapshot.load(external_run).batch()["runId"] == manifest["runId"]
+
+
+def test_an_external_run_keeps_its_own_run_id_and_shows_its_producer(external_run):
+    """来源如实记录：沿用产方运行标识、标明外部产生、保留产方训练环境（PDB-19）。"""
+    from jit_baseline.artifacts import Snapshot, identity, run_origin, verify_run
+    manifest = verify_run(external_run)
+    config = manifest["config"]
+    assert run_origin(manifest) == "external"
+    assert identity(config) == manifest["runId"]  # 沿用产方标识，本机不重算
+    assert Snapshot.load(external_run).batch()["runId"] == manifest["runId"]
+    assert config["trainingEnvironment"]["packages"]["torch"] == "2.1.0+cu121"
+    assert config["trainingEnvironment"]["platform"].startswith("Linux")
+
+
+def _desync_summary(run):
+    """改写摘要里的指标但不改 metrics.json，使清单与摘要互相矛盾（清单本身仍自洽）。"""
+    from jit_baseline.artifacts import write_json
+    from jit_baseline.data import sha256
+    summary = json.loads((run / "summary.json").read_text(encoding="utf-8"))
+    summary["metrics"] = {"tampered": {"value": 0.0, "reason": None}}
+    write_json(run / "summary.json", summary)
+    manifest = json.loads((run / "manifest.json").read_text(encoding="utf-8"))
+    manifest["files"]["summary.json"] = sha256((run / "summary.json").read_bytes())
+    (run / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+@pytest.mark.parametrize("damage, expected", [
+    (lambda run: (run / "source.json").unlink(), "不可用"),
+    (lambda run: (run / "model.joblib").open("ab").write(b"bad"), "校验"),
+    (_desync_summary, "摘要"),
+])
+def test_a_damaged_external_artifact_is_rejected_with_a_located_reason(external_copy, damage, expected):
+    """缺文件、哈希不符、清单与摘要矛盾三种情形各被拒绝并指出具体项（PDB-15）。"""
+    from jit_baseline.artifacts import verify_run
+    damage(external_copy)
+    with pytest.raises(ValueError, match=expected):
+        verify_run(external_copy)
+
+
+def test_verification_does_not_rewrite_the_delivered_artifact(external_copy):
+    """校验不重训、不覆盖产方声明、不改写产物本身（PDB-15 第三场景）。"""
+    from jit_baseline.artifacts import verify_run
+    before = {p.name: p.read_bytes() for p in sorted(external_copy.iterdir())}
+    config_before = json.loads((external_copy / "manifest.json").read_text(encoding="utf-8"))["config"]
+    assert verify_run(external_copy)["runId"]
+    assert {p.name: p.read_bytes() for p in sorted(external_copy.iterdir())} == before
+    assert json.loads((external_copy / "manifest.json").read_text(encoding="utf-8"))["config"] == config_before
+
+
+def test_the_verdict_does_not_depend_on_the_working_directory_or_local_runs(external_copy, tmp_path):
+    """同一份产物在任一台机器上得到一致判定，不依赖本机既存的运行目录或工作目录（PDB-15 第四场景）。"""
+    import os
+    import subprocess
+    import sys
+    from jit_baseline.artifacts import verify_run
+    expected = verify_run(external_copy)["runId"]
+    elsewhere = tmp_path / "a-clean-checkout" / "delivered"
+    shutil.copytree(external_copy, elsewhere)
+    completed = subprocess.run(
+        [sys.executable, "-m", "jit_baseline.cli", "verify", "--run", str(elsewhere)],
+        cwd=elsewhere.parent, capture_output=True, text=True, encoding="utf-8",
+        env={**os.environ, "PYTHONPATH": str(BACKEND), "PYTHONIOENCODING": "utf-8"})
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
+    assert result["runId"] == expected and result["origin"] == "external" and result["passed"] is True
+
+
+def test_a_device_neutral_stand_in_model_is_actually_loaded_and_run(copied_run):
+    """设备中立的替身产物被**实际加载**并推理，不以声明代替加载（PDB-17）。"""
+    from jit_baseline.artifacts import Snapshot, verify_run
+    _install_stand_in_model(copied_run)
+    assert verify_run(copied_run)["runId"]
+    snapshot = Snapshot.load(copied_run)
+    assert isinstance(snapshot.model.named_steps["model"], StandInEstimator)
+    records = snapshot.batch()["records"]
+    assert len(records) == len(snapshot.records)
+    assert all(0.0 <= record["risk"] <= 1.0 for record in records)
+
+
+def test_a_model_that_only_loads_on_an_accelerator_is_rejected_with_a_located_code(external_copy, monkeypatch):
+    """在加速设备上序列化的形态在本机不可加载：以明确错误码拒绝，不抛未归类异常（PDB-17）。"""
+    import joblib
+    from jit_baseline.artifacts import Snapshot
+    from jit_baseline.data import BaselineError
+
+    def cuda_only(path):
+        raise RuntimeError("Attempting to deserialize object on a CUDA device "
+                           "but torch.cuda.is_available() is False")
+
+    monkeypatch.setattr(joblib, "load", cuda_only)
+    with pytest.raises(BaselineError) as info:
+        Snapshot.load(external_copy)
+    assert info.value.code == "MODEL_INVALID"
+
+
+def test_a_complete_declaration_does_not_redeem_an_unloadable_model(external_copy):
+    """声明声称依赖齐备、校验值自洽，但模型在本机实际加载失败时仍判为不可用（PDB-17）。"""
+    from jit_baseline.artifacts import Snapshot
+    from jit_baseline.data import BaselineError
+    (external_copy / "model.joblib").write_bytes(b"not a serialized pipeline")
+    _resync(external_copy, ("model.joblib",))
+    # 产方声明的依赖（含本机没有的 torch）原样保留，清单也自洽——仍然必须拒绝。
+    assert json.loads((external_copy / "manifest.json").read_text(encoding="utf-8"))["config"][
+        "trainingEnvironment"]["packages"]["torch"] == "2.1.0+cu121"
+    with pytest.raises(BaselineError) as info:
+        Snapshot.load(external_copy)
+    assert info.value.code == "MODEL_INVALID"
+
+
+def test_verification_uses_the_methods_declared_tolerance(copied_run, monkeypatch):
+    """按该运行声明的方法所声明的复现口径比较，不套用统一容差（PDB-18）。"""
+    from jit_baseline.algorithms import ALGORITHMS, DEFAULT_ALGORITHM
+    from jit_baseline.artifacts import declared_reproducibility, verify_run
+    from jit_baseline.data import BaselineError
+    monkeypatch.setitem(ALGORITHMS, DEFAULT_ALGORITHM,
+                        {**ALGORITHMS[DEFAULT_ALGORITHM],
+                         "reproducibility": {"mode": "tolerance", "atol": 1e-3, "rtol": 0.0}})
+    manifest = json.loads((copied_run / "manifest.json").read_text(encoding="utf-8"))
+    assert declared_reproducibility(manifest)[1] == {"mode": "tolerance", "atol": 1e-3, "rtol": 0.0}
+    # 落在该运行声明的口径之内：通过。
+    _perturb_reference(copied_run, 5e-4)
+    assert verify_run(copied_run)["runId"]
+    # 超出该运行声明的口径：判为不可用，并指出所用口径。
+    _perturb_reference(copied_run, 5e-3)
+    with pytest.raises(BaselineError) as info:
+        verify_run(copied_run)
+    assert info.value.code == "ARTIFACT_INVALID" and "容差" in str(info.value)
+
+
+def test_a_non_numeric_caliber_is_not_verified_under_a_uniform_tolerance(copied_run, monkeypatch):
+    """声明了非数值容差口径的方法：本机不套用统一容差，也不静默接受（PDB-18、D7）。"""
+    from jit_baseline.algorithms import ALGORITHMS, DEFAULT_ALGORITHM
+    from jit_baseline.artifacts import verify_run
+    from jit_baseline.data import BaselineError
+    monkeypatch.setitem(ALGORITHMS, DEFAULT_ALGORITHM,
+                        {**ALGORITHMS[DEFAULT_ALGORITHM],
+                         "reproducibility": {"mode": "independent-protocol", "atol": None, "rtol": None}})
+    with pytest.raises(BaselineError) as info:
+        verify_run(copied_run)
+    assert info.value.code == "REPRODUCTION_FAILED"
+    assert "independent-protocol" in str(info.value) and DEFAULT_ALGORITHM in str(info.value)
+
+
+@pytest.fixture(scope="session")
+def declared_dependency_run(tmp_path_factory):
+    """一个 `requires` 非空的方法产生的真实运行（PDB-11）。"""
+    from jit_baseline.artifacts import build_run
+    target = tmp_path_factory.mktemp("declared-dependency") / "run"
+    build_run(BACKEND / "data/openstack", target, algorithm="random-forest-v1")
+    return target
+
+
+def test_a_method_declaring_a_dependency_produces_a_verifiable_run(declared_dependency_run):
+    """方法声明的依赖进入运行记录，且该运行按自身声明通过校验（PDB-11）。"""
+    from jit_baseline.algorithms import get_algorithm
+    from jit_baseline.artifacts import verify_run
+    requires = get_algorithm("random-forest-v1")["requires"]
+    manifest = json.loads((declared_dependency_run / "manifest.json").read_text(encoding="utf-8"))
+    assert requires and set(requires) <= set(manifest["config"]["trainingEnvironment"]["packages"])
+    assert manifest["config"]["algorithmVersion"] == "random-forest-v1"
+    assert verify_run(declared_dependency_run)["runId"]
+
+
+def test_missing_declared_dependency_is_a_located_error():
+    """声明了本机未安装的依赖时给出可定位错误，而不是未归类异常（PDB-16）。"""
+    from jit_baseline.artifacts import environment
+    from jit_baseline.data import BaselineError
+    with pytest.raises(BaselineError) as info:
+        environment(("no-such-declared-package-xyz",))
+    assert info.value.code == "ARTIFACT_INVALID" and "no-such-declared-package-xyz" in str(info.value)
 
 
 def test_unknown_metric_set_declaration_is_rejected(copied_run):

@@ -4,7 +4,7 @@ import pytest
 
 def test_registry_entries_declare_every_required_field():
     from jit_baseline.algorithms import ALGORITHMS, CLASSIC, DEEP
-    assert set(ALGORITHMS) == {"logistic-regression-l2-v1", "decision-tree-v1"}
+    assert set(ALGORITHMS) == {"logistic-regression-l2-v1", "decision-tree-v1", "random-forest-v1"}
     for name, entry in ALGORITHMS.items():
         assert set(entry) >= {"label", "name", "category", "detail", "params", "estimator",
                               "kwargs", "preprocess", "requires", "reproducibility", "explanation"}, name
@@ -14,6 +14,15 @@ def test_registry_entries_declare_every_required_field():
         assert isinstance(entry["kwargs"], dict) and entry["kwargs"], name
         assert isinstance(entry["preprocess"], tuple), name
         assert isinstance(entry["requires"], tuple), name
+
+
+def test_at_least_one_method_declares_a_dependency():
+    """`requires` 非空的方法必须真实存在：这条路径此前从未被走过（PDB-11）。"""
+    from jit_baseline.algorithms import ALGORITHMS
+    declaring = {name: entry["requires"] for name, entry in ALGORITHMS.items() if entry["requires"]}
+    assert declaring, "注册表里没有任何方法声明所需依赖，环境声明与子集校验这条路径无实际对象"
+    for name, requires in declaring.items():
+        assert all(isinstance(package, str) and package for package in requires), name
 
 
 def test_declared_params_and_estimator_kwargs_agree():
@@ -30,6 +39,13 @@ def test_declared_params_and_estimator_kwargs_agree():
     assert (tree["kwargs"]["criterion"], tree["kwargs"]["max_depth"], tree["kwargs"]["min_samples_leaf"]) == \
            (tree["params"]["criterion"], tree["params"]["max_depth"], tree["params"]["min_samples_leaf"])
     assert tree["kwargs"]["random_state"] == tree["params"]["seed"]
+    forest = get_algorithm("random-forest-v1")
+    assert (forest["kwargs"]["n_estimators"], forest["kwargs"]["criterion"], forest["kwargs"]["max_depth"],
+            forest["kwargs"]["min_samples_leaf"]) == \
+           (forest["params"]["n_estimators"], forest["params"]["criterion"], forest["params"]["max_depth"],
+            forest["params"]["min_samples_leaf"])
+    assert forest["kwargs"]["random_state"] == forest["params"]["seed"] == 2026
+    assert forest["requires"] and "scipy" in forest["requires"]
 
 
 def test_reproducibility_discipline_is_declared_per_method():

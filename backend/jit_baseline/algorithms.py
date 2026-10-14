@@ -40,6 +40,24 @@ ALGORITHMS = {
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
         "explanation": {"method": None, "reason": "本 change 未实现预测解释；树模型的候选口径留待解释 change 登记"},
     },
+    # 第一个 `requires` 非空的方法：用于实测"环境声明 → 子集校验 → 无 GPU 机器加载"这条路径
+    # （此前两个方法的 requires 都是空的，该路径从未被走过）。它仍是表格型经典方法，
+    # 不引入新框架；`scipy` 是其数值路径的真实依赖。
+    "random-forest-v1": {
+        "label": "随机森林",
+        "name": "随机森林 · 200 棵 CART",
+        "category": CLASSIC,
+        "detail": "gini/n_estimators=200/max_depth=8/min_samples_leaf=50/random_state=2026/单线程",
+        "params": {"n_estimators": 200, "criterion": "gini", "max_depth": 8,
+                   "min_samples_leaf": 50, "seed": 2026, "threads": 1},
+        "estimator": "random-forest",
+        "kwargs": {"n_estimators": 200, "criterion": "gini", "max_depth": 8,
+                   "min_samples_leaf": 50, "random_state": 2026, "n_jobs": 1},
+        "preprocess": (),
+        "requires": ("scipy",),
+        "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
+        "explanation": {"method": None, "reason": "本 change 未实现预测解释；树集成模型的候选口径留待解释 change 登记"},
+    },
 }
 
 DEFAULT_ALGORITHM = "logistic-regression-l2-v1"
