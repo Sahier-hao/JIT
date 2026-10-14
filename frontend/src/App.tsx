@@ -91,7 +91,7 @@ function Workbench({ data, onMode }: { data: Dataset; onMode: (mode: Mode) => vo
         </section>
         {selected ? <CommitDetail data={data} id={selected} added={shortlist.includes(selected)} onAdd={() => add(selected)} onClose={closeDetail} /> : null}
       </div>
-      <footer className="page-foot"><span>JIT Review</span><span>{historical ? '历史测试批次 · 六字段基线' : '示例数据'} · 个人审查选择</span></footer>
+      <footer className="page-foot"><span>JIT Review</span><span>{historical ? (data.summary?.featureSchema ? `历史测试批次 · ${data.summary.featureSchema.name} 基线` : '历史测试批次 · 六字段基线') : '示例数据'} · 个人审查选择</span></footer>
     </main>
   </div>
 }

@@ -7,13 +7,19 @@ export function BaselineRecord({ data }: { data: Dataset }) {
   const s = data.summary
   if (data.mode !== 'historical' || !s) return null
   const m = s.metrics
-  return <details className="baseline-record"><summary aria-label="基线记录">基线记录<span>固定测试批次 · 六字段 · 回顾性评价</span></summary>
+  const schema = s.featureSchema
+  return <details className="baseline-record"><summary aria-label="基线记录">基线记录<span>{schema ? `固定测试批次 · ${schema.name} · 回顾性评价` : '固定测试批次 · 六字段 · 回顾性评价'}</span></summary>
     <section role="region" aria-label="基线记录" className="baseline-content">
       <div className="baseline-columns">
         <div><h2>数据与运行</h2><p><a href={s.source.url} target="_blank" rel="noreferrer">{s.source.publisher}</a></p><p>{s.source.citation}</p>
           <dl className="baseline-identities"><dt>数据版本</dt><dd><code>{s.datasetVersion}</code></dd><dt>运行标识</dt><dd><code>{s.runId}</code></dd><dt>模型</dt><dd>{data.model?.name} / {data.model?.id}</dd><dt>模型 SHA-256</dt><dd><code>{s.modelSha256}</code></dd><dt>发布版本</dt><dd><code>{s.source.revision}</code></dd></dl>
           {Object.entries(s.source.files).map(([name, file]) => <p className="source-file" key={name}><a href={file.url} target="_blank" rel="noreferrer">{name}</a><code>{file.sha256}</code></p>)}
-          <p>字段：<code>{s.features.join(', ')}</code>，发布者原生度量，尚非完整 Kamei14。</p><p>{s.source.labelRule}</p>
+          {schema ? <>
+            <p>特征 schema：<code>{schema.name}</code>；入模字段：<code>{schema.inModel.join(', ')}</code></p>
+            {schema.unavailable.length > 0 && <p>未提供字段：{schema.unavailable.map(field => `${field.name}（${field.reason}）`).join('；')}。</p>}
+            <p>方法：<code>{s.algorithmVersion}</code>；指标集：<code>{s.metricSet}</code></p>
+          </> : <p>字段：<code>{s.features.join(', ')}</code>，发布者原生度量，尚非完整 Kamei14。</p>}
+          <p>{s.source.labelRule}</p>
           <p>原始 {s.source.quality.rawRows.toLocaleString()} 条 → 纳入 {s.source.quality.includedRows.toLocaleString()} 条；空标签计数 {s.source.quality.blankLabels.toLocaleString()} 条。</p>
           <p>纳入：{s.cohort.startEpochInclusive} ≤ UTC秒 &lt; {s.cohort.endEpochExclusive}；la &gt; {s.cohort.addedLinesGreaterThan}；la+ld ≤ {s.cohort.maxChurnInclusive}；nf ≤ {s.cohort.maxFilesInclusive}。</p>
           <p>排除：{Object.entries(s.source.quality.excluded).map(([name, n]) => `${name}=${n}`).join('；')}。</p>
