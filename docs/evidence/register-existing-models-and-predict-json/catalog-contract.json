@@ -1,0 +1,82 @@
+{
+  "passed": true,
+  "checked": [
+    {
+      "operation": "listModels",
+      "status": 401
+    },
+    {
+      "operation": "listModelCandidates",
+      "status": 403
+    },
+    {
+      "operation": "getFeatureSchema",
+      "status": 200
+    },
+    {
+      "operation": "getFeatureSchema",
+      "status": 200
+    },
+    {
+      "operation": "listModelCandidates",
+      "status": 200
+    },
+    {
+      "operation": "registerExistingModel",
+      "status": 201
+    },
+    {
+      "operation": "registerExistingModel",
+      "status": 200
+    },
+    {
+      "operation": "createPrediction",
+      "status": 201
+    },
+    {
+      "operation": "getPredictionBatch",
+      "status": 200
+    },
+    {
+      "operation": "registerExistingModel",
+      "status": 201
+    },
+    {
+      "operation": "registerExistingModel",
+      "status": 200
+    },
+    {
+      "operation": "createPrediction",
+      "status": 201
+    },
+    {
+      "operation": "getPredictionBatch",
+      "status": 200
+    },
+    {
+      "operation": "listModels",
+      "status": 200
+    },
+    {
+      "operation": "createPrediction",
+      "status": 503
+    },
+    {
+      "operation": "listModels",
+      "status": 200
+    },
+    {
+      "operation": "getPredictionBatch",
+      "status": 200
+    },
+    {
+      "operation": "registerExistingModel",
+      "status": 200
+    },
+    {
+      "operation": "getPredictionBatch",
+      "status": 200
+    }
+  ],
+  "schemas": 54
+}
