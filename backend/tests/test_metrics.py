@@ -65,3 +65,34 @@ def test_evaluation_rejects_incomplete_or_illegal_risks(risks):
     from jit_baseline.metrics import evaluate
     with pytest.raises(ValueError):
         evaluate(examples(), risks)
+
+
+def test_registered_metric_set_lists_exactly_the_computed_metrics():
+    from jit_baseline.metrics import DEFAULT_METRIC_SET, METRIC_SETS, evaluate
+    assert set(METRIC_SETS[DEFAULT_METRIC_SET]) == set(evaluate(examples(), [.9, .8, .2, .1]))
+
+
+def test_evaluation_returns_only_the_declared_metric_set(monkeypatch):
+    """校验按运行声明的集合重算，而不是用当前代码能算的全部指标（PDB-12）。"""
+    from jit_baseline.metrics import METRIC_SETS, evaluate
+    monkeypatch.setitem(METRIC_SETS, "metric-set-subset", ("rocAuc", "averagePrecision"))
+    assert set(evaluate(examples(), [.9, .8, .2, .1], "metric-set-subset")) == {"rocAuc", "averagePrecision"}
+    # 未声明指标集时按首轮冻结集合（旧运行的解析口径）。
+    assert set(evaluate(examples(), [.9, .8, .2, .1])) == set(METRIC_SETS["metric-set-v1"])
+
+
+def test_unknown_metric_set_is_rejected_without_fallback():
+    from jit_baseline.metrics import evaluate
+    from jit_baseline.data import BaselineError
+    with pytest.raises(BaselineError) as info:
+        evaluate(examples(), [.9, .8, .2, .1], "metric-set-v9")
+    assert info.value.code == "METRIC_SET_UNKNOWN"
+
+
+def test_declared_metric_set_must_define_only_known_metrics(monkeypatch):
+    from jit_baseline.data import BaselineError
+    from jit_baseline.metrics import METRIC_SETS, evaluate
+    monkeypatch.setitem(METRIC_SETS, "metric-set-typo", ("rocAuc", "notAMetric"))
+    with pytest.raises(BaselineError) as info:
+        evaluate(examples(), [.9, .8, .2, .1], "metric-set-typo")
+    assert info.value.code == "METRIC_SET_INVALID"

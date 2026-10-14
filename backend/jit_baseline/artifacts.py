@@ -3,7 +3,7 @@ import json
 import platform
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import joblib
@@ -11,9 +11,9 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 
 from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
-from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, MODEL_CONFIG, REVISION, SOURCES, THRESHOLD
+from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
 from .data import BaselineError, parse_source, sha256, verified_bytes
-from .metrics import evaluate
+from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
 from .model import feature_matrix, fit_model, predict_risks, temporal_split
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
 
@@ -22,6 +22,8 @@ CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json"
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
                  "schemas.py", "algorithms.py", "errors.py")
+# 每个运行都记录的基础依赖；方法可在其声明里追加自己需要的包（PDB-11）。
+BASE_PACKAGES = ("numpy", "scipy", "scikit-learn", "joblib", "threadpoolctl", "fastapi", "uvicorn")
 
 
 def identity(obj):
@@ -41,9 +43,38 @@ def read_json(path):
         raise BaselineError("ARTIFACT_INVALID", f"产物格式无效：{Path(path).name}") from exc
 
 
-def environment():
+def environment(requires=()):
+    """运行记录的环境：基础包加该方法声明的依赖（PDB-11）。"""
+    packages = dict.fromkeys((*BASE_PACKAGES, *requires))
     return {"python": platform.python_version(), "platform": platform.platform(),
-            "packages": {name: version(name) for name in ("numpy", "scipy", "scikit-learn", "joblib", "threadpoolctl", "fastapi", "uvicorn")}}
+            "packages": {name: version(name) for name in packages}}
+
+
+def check_environment(recorded):
+    """运行声明的依赖必须被当前环境满足，不要求与当前环境全等（PDB-11）。
+
+    包含关系是单向的：记录里的每个包都必须在当前环境以相同版本存在；
+    当前环境多装其它包不影响既有运行——新增依赖因此不会作废既有运行。
+    """
+    if not isinstance(recorded, dict) or set(recorded) != {"python", "platform", "packages"}:
+        raise BaselineError("ARTIFACT_INVALID", "环境声明结构不完整")
+    if recorded["python"] != platform.python_version():
+        raise BaselineError("ARTIFACT_INVALID", "Python 版本不匹配")
+    if recorded["platform"] != platform.platform():
+        raise BaselineError("ARTIFACT_INVALID", "平台不匹配")
+    packages = recorded["packages"]
+    if not isinstance(packages, dict) or not packages:
+        raise BaselineError("ARTIFACT_INVALID", "依赖声明缺失")
+    for name in sorted(packages):
+        expected = packages[name]
+        if not isinstance(expected, str) or not expected:
+            raise BaselineError("ARTIFACT_INVALID", f"依赖声明无效：{name}")
+        try:
+            actual = version(name)
+        except PackageNotFoundError:
+            raise BaselineError("ARTIFACT_INVALID", f"声明的依赖未安装：{name}") from None
+        if actual != expected:
+            raise BaselineError("ARTIFACT_INVALID", f"依赖版本不符：{name}（声明 {expected}，当前 {actual}）")
 
 
 def feature_schema(schema):
@@ -66,9 +97,13 @@ def limitations(schema):
     return [first, *LIMITATIONS]
 
 
-def build_run(source_dir, output, schema=None):
+def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
     output, source_dir = Path(output), Path(source_dir)
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    algorithm_version = algorithm if algorithm else DEFAULT_ALGORITHM
+    entry = get_algorithm(algorithm_version)
+    metric_set = metric_set if metric_set else DEFAULT_METRIC_SET
+    declared_metric_set(metric_set)
     fields = list(schema.in_model_names())
     if output.exists():
         raise BaselineError("OUTPUT_EXISTS", "运行目录已存在，请为独立复现指定新目录")
@@ -76,9 +111,9 @@ def build_run(source_dir, output, schema=None):
                for name, (relative, expected) in SOURCES.items()}
     records, quality = parse_source(verified_bytes(source_dir / "openstack.csv", SOURCES["openstack.csv"][1]), schema)
     split, boundaries = temporal_split(records)
-    pipeline = fit_model(split["train"], schema=schema)
+    pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version)
     risks = predict_risks(pipeline, split["test"], schema)
-    metrics = evaluate(split["test"], risks)
+    metrics = evaluate(split["test"], risks, metric_set)
     dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": fields,
                                                "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
     stats = {key: {"count": len(part), "positiveCount": sum(r["label"] for r in part),
@@ -100,23 +135,26 @@ def build_run(source_dir, output, schema=None):
     write_json(output / "reference-predictions.json", [{"id": r["id"], "risk": p} for r, p in zip(split["test"], risks, strict=True)])
     write_json(output / "metrics.json", metrics)
     files = {name: sha256((output / name).read_bytes()) for name in CORE_FILES}
-    config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": DEFAULT_ALGORITHM,
+    config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": algorithm_version,
+              "metricSet": metric_set,
               "datasetVersion": dataset_version, "features": fields, "cohort": COHORT,
-              "threshold": THRESHOLD, "model": MODEL_CONFIG, "modelSha256": files["model.joblib"], "coreFiles": files,
-              "environment": environment(), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
+              "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
+              "environment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     run_id = identity(config)
-    label = model_descriptor(schema.name)
+    label = model_descriptor(schema.name, algorithm_version)
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": COHORT,
                "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},
                "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": schema.name,
-               "algorithmVersion": DEFAULT_ALGORITHM, "model": {"id": label["id"], "name": label["name"]},
+               "algorithmVersion": algorithm_version, "metricSet": metric_set,
+               "model": {"id": label["id"], "name": label["name"]},
                "limitations": limitations(schema)}
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
-                "command": f"python -m jit_baseline.cli run --output {output.as_posix()}"}
+                "command": (f"python -m jit_baseline.cli run --output {output.as_posix()}"
+                            f" --schema {schema.name} --algorithm {algorithm_version}")}
     write_json(output / "manifest.json", manifest)
     verify_run(output)
     return manifest
@@ -138,10 +176,16 @@ def check_files(directory, names):
         schema = declared_schema(config)
         if config["features"] != list(schema.in_model_names()) or config["protocol"] != schema.name:
             raise BaselineError("ARTIFACT_INVALID", "声明字段或协议与 schema 不一致")
-        if config["model"] != MODEL_CONFIG or config["cohort"] != COHORT or config["threshold"] != THRESHOLD:
-            raise BaselineError("ARTIFACT_INVALID", "固定模型、纳入或阈值不匹配")
-        if config.get("algorithmVersion") is not None:
-            get_algorithm(config["algorithmVersion"])
+        # 按该运行声明的方法校验超参，不再与模块级常量比较（PDB-10）；
+        # 未注册的方法名在这里以 ALGORITHM_UNKNOWN 被拒绝。
+        algorithm_version = config.get("algorithmVersion") or DEFAULT_ALGORITHM
+        entry = get_algorithm(algorithm_version)
+        if config["model"] != entry["params"]:
+            raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
+        if config["cohort"] != COHORT or config["threshold"] != THRESHOLD:
+            raise BaselineError("ARTIFACT_INVALID", "纳入或阈值不匹配")
+        # 未注册的指标集名称在这里以 METRIC_SET_UNKNOWN 被拒绝（PDB-12）。
+        declared_metric_set(config.get("metricSet"))
         if config["modelSha256"] != manifest["files"]["model.joblib"]:
             raise BaselineError("ARTIFACT_INVALID", "模型身份不匹配")
         for name in names:
@@ -157,8 +201,7 @@ def check_files(directory, names):
         code = config.get("sourceCode")
         if not isinstance(code, dict) or not code or any(not isinstance(value, str) or len(value) != 64 for value in code.values()):
             raise BaselineError("ARTIFACT_INVALID", "训练代码溯源记录缺失或无效")
-        if environment() != config["environment"]:
-            raise BaselineError("ARTIFACT_INVALID", "模型环境版本不匹配")
+        check_environment(config["environment"])
     except (KeyError, TypeError) as exc:
         raise BaselineError("ARTIFACT_INVALID", "运行 manifest 结构不完整") from exc
     return manifest
@@ -215,7 +258,7 @@ class Snapshot:
         risks = predict_risks(self.model, self.records, self.schema)
         records = [{"id": r["id"], "time": r["time"], "risk": p, "lines": r["metrics"]["la"] + r["metrics"]["ld"],
                     "files": r["metrics"]["nf"], "metrics": r["metrics"]} for r, p in zip(self.records, risks, strict=True)]
-        label = self.summary.get("model") or model_descriptor(self.schema.name)
+        label = self.summary.get("model") or model_descriptor(self.schema.name, self.manifest["config"].get("algorithmVersion"))
         return {"contractVersion": 1, "mode": "historical", "project": "OpenStack", "version": self.summary["datasetVersion"],
                 "datasetVersion": self.summary["datasetVersion"], "runId": self.manifest["runId"],
                 "model": {"id": label["id"], "name": label["name"], "sha256": self.summary["modelSha256"]},
@@ -234,26 +277,52 @@ def verify_run(directory):
     if not np.allclose(current, [r["risk"] for r in references], rtol=0, atol=1e-8):
         raise BaselineError("ARTIFACT_INVALID", "参考风险与真实模型不一致")
     evaluation_records = [dict(r, label=y["label"]) for r, y in zip(snapshot.records, labels, strict=True)]
-    if identity(evaluate(evaluation_records, current)) != identity(snapshot.summary["metrics"]):
+    # 按该运行声明的指标集重算：新增指标不影响既有运行（PDB-12）。
+    metric_set = manifest["config"].get("metricSet")
+    if identity(evaluate(evaluation_records, current, metric_set)) != identity(snapshot.summary["metrics"]):
         raise BaselineError("ARTIFACT_INVALID", "指标与完整测试风险不一致")
     return manifest
 
 
+def comparable_metrics(metrics):
+    """可数值比较的标量指标：{value, reason} 形态；混淆矩阵等结构项不参与容差比较。"""
+    return {name: entry for name, entry in metrics.items()
+            if isinstance(entry, dict) and set(entry) == {"value", "reason"}}
+
+
 def compare_runs(first, second):
+    """独立复现比较；容差与指标口径均取自两个运行自身声明的方法（PDB-14）。"""
     a, b = Snapshot.load(first), Snapshot.load(second)
     verify_run(first)
     verify_run(second)
     if read_json(Path(first) / "split.json") != read_json(Path(second) / "split.json"):
         raise BaselineError("REPRODUCTION_FAILED", "复现分区不一致")
+    config_a, config_b = a.manifest["config"], b.manifest["config"]
+    method_a = config_a.get("algorithmVersion") or DEFAULT_ALGORITHM
+    method_b = config_b.get("algorithmVersion") or DEFAULT_ALGORITHM
+    if method_a != method_b:
+        raise BaselineError("REPRODUCTION_FAILED", f"两次运行声明的方法不同（{method_a} 与 {method_b}），不能按同一口径比较")
+    set_a = config_a.get("metricSet") or DEFAULT_METRIC_SET
+    set_b = config_b.get("metricSet") or DEFAULT_METRIC_SET
+    if set_a != set_b:
+        raise BaselineError("REPRODUCTION_FAILED", f"两次运行声明的指标集不同（{set_a} 与 {set_b}），不能按同一口径比较")
+    discipline = get_algorithm(method_a)["reproducibility"]
+    if discipline.get("mode") != "tolerance":
+        raise BaselineError("REPRODUCTION_FAILED", f"方法 {method_a} 声明的复现口径为 {discipline.get('mode')}，本检查只处理数值容差口径")
+    atol = discipline["atol"]
     maximum = float(np.max(np.abs(np.array(predict_risks(a.model, a.records, a.schema)) - np.array(predict_risks(b.model, b.records, b.schema)))))
+    metrics_a, metrics_b = comparable_metrics(a.summary["metrics"]), comparable_metrics(b.summary["metrics"])
+    if set(metrics_a) != set(metrics_b):
+        raise BaselineError("REPRODUCTION_FAILED", "两次运行的标量指标集不一致")
     differences = {}
-    for key in ("rocAuc", "averagePrecision", "precision", "recall", "f1", "recall20Loc"):
-        x, y = a.summary["metrics"][key]["value"], b.summary["metrics"][key]["value"]
+    for key in sorted(metrics_a):
+        x, y = metrics_a[key]["value"], metrics_b[key]["value"]
         if (x is None) != (y is None):
-            raise BaselineError("REPRODUCTION_FAILED", "指标定义状态不同")
+            raise BaselineError("REPRODUCTION_FAILED", f"指标 {key} 的定义状态不同")
         differences[key] = None if x is None else abs(x - y)
-    if maximum > 1e-8 or any(d is not None and d > 1e-8 for d in differences.values()):
-        raise BaselineError("REPRODUCTION_FAILED", "复现数值超出容差")
+    if maximum > atol or any(d is not None and d > atol for d in differences.values()):
+        raise BaselineError("REPRODUCTION_FAILED", f"复现数值超出 {method_a} 声明的容差（atol={atol}）")
     return {"kind": "real-independent-reproduction", "firstRunId": a.manifest["runId"], "secondRunId": b.manifest["runId"],
             "partitionMembershipExact": True, "testCount": len(a.records), "maxRiskAbsoluteDifference": maximum,
-            "metricAbsoluteDifferences": differences, "tolerance": 1e-8, "passed": True}
+            "metricAbsoluteDifferences": differences, "method": method_a, "metricSet": set_a,
+            "reproducibility": discipline, "tolerance": atol, "passed": True}

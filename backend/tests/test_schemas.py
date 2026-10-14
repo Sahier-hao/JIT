@@ -96,3 +96,11 @@ def test_six_schema_still_treats_blank_required_field_as_invalid():
                      "ns": "1", "nd": "2", "nf": "3", "ent": "0.5", "la": "", "ld": "5"})
     with pytest.raises(ValueError, match="行"):
         parse_source(stream.getvalue().encode())
+
+
+def test_unknown_field_name_is_rejected_without_fallback():
+    from jit_baseline.data import BaselineError
+    from jit_baseline.schemas import get_schema
+    with pytest.raises(BaselineError) as info:
+        get_schema("kamei14-v1").by_name("notafield")
+    assert info.value.code == "SCHEMA_FIELD_UNKNOWN"

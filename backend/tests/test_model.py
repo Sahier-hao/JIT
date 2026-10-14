@@ -51,6 +51,7 @@ def test_duplicate_commit_cannot_appear_in_two_partitions():
 
 def test_fixed_model_uses_class_one_and_can_be_reloaded(tmp_path):
     import joblib
+    from jit_baseline.algorithms import DEFAULT_ALGORITHM, get_algorithm
     from jit_baseline.model import fit_model, predict_risks
     train = samples(40)
     model = fit_model(train)
@@ -59,11 +60,26 @@ def test_fixed_model_uses_class_one_and_can_be_reloaded(tmp_path):
     path = tmp_path / "model.joblib"
     joblib.dump(model, path)
     assert np.allclose(predict_risks(joblib.load(path), train), risks, atol=1e-8, rtol=0)
-    assert model.named_steps["model"].C == 1
-    assert model.named_steps["model"].class_weight is None
+    # 估计器与其超参来自该方法的注册声明，而不是写死在流水线构造里。
+    declared = get_algorithm(DEFAULT_ALGORITHM)["kwargs"]
+    fitted = model.named_steps["model"].get_params()
+    assert all(fitted[key] == value for key, value in declared.items())
+
+
+def test_declared_method_selects_its_estimator_and_preprocessing_steps():
+    from jit_baseline.algorithms import DEFAULT_ALGORITHM, get_algorithm
+    from jit_baseline.model import fit_model, predict_risks
+    linear = fit_model(samples(40))
+    assert list(linear.named_steps) == ["counts", "scale", "model"]
+    assert get_algorithm(DEFAULT_ALGORITHM)["preprocess"] == ("scale",)
+    tree = fit_model(samples(40), algorithm="decision-tree-v1")
+    assert list(tree.named_steps) == ["counts", "model"]
+    assert get_algorithm("decision-tree-v1")["preprocess"] == ()
+    assert len(predict_risks(tree, samples(5))) == 5
 
 
 def test_test_labels_do_not_affect_risks_or_training_statistics():
+    from jit_baseline.algorithms import DEFAULT_ALGORITHM, get_algorithm
     from jit_baseline.model import fit_model, predict_risks
     train = samples(40)
     test = samples(12)
@@ -72,28 +88,34 @@ def test_test_labels_do_not_affect_risks_or_training_statistics():
     for r in changed:
         r["label"] = 1 - r["label"]
     assert predict_risks(model, changed) == predict_risks(model, test)
-    expected_train_mean = np.column_stack([np.log1p(np.array([r["features"] for r in train])[:, [0, 1, 2, 4, 5]]), np.full(40, .5)]).mean(axis=0)
-    # Original column order is retained by the transformation.
-    assert np.allclose(model.named_steps["scale"].mean_, expected_train_mean[[0, 1, 2, 5, 3, 4]])
+    if "scale" in get_algorithm(DEFAULT_ALGORITHM)["preprocess"]:
+        expected_train_mean = np.column_stack([np.log1p(np.array([r["features"] for r in train])[:, [0, 1, 2, 4, 5]]), np.full(40, .5)]).mean(axis=0)
+        # Original column order is retained by the transformation.
+        assert np.allclose(model.named_steps["scale"].mean_, expected_train_mean[[0, 1, 2, 5, 3, 4]])
 
 
 def test_test_feature_distribution_cannot_change_a_fitted_model():
+    import pickle
     from jit_baseline.model import fit_model, predict_risks
     train = samples(40)
     model = fit_model(train)
-    before = model.named_steps["scale"].mean_.copy(), model.named_steps["model"].coef_.copy()
+    # 与估计器无关的泄漏检查：推理不得改动已拟合的模型对象本身。
+    before = pickle.dumps(model)
     changed = samples(12)
     for r in changed:
         r["features"][4] = 1_000_000
     predict_risks(model, changed)
-    assert np.array_equal(before[0], model.named_steps["scale"].mean_)
-    assert np.array_equal(before[1], model.named_steps["model"].coef_)
+    assert pickle.dumps(model) == before
 
 
-def test_nonconvergence_is_not_a_usable_model():
+def test_nonconvergence_is_not_a_usable_model(monkeypatch):
+    from jit_baseline.algorithms import ALGORITHMS, DEFAULT_ALGORITHM
     from jit_baseline.model import fit_model
+    # 收敛契约来自方法声明：换一个收紧迭代上限的声明即触发不收敛失败。
+    entry = dict(ALGORITHMS[DEFAULT_ALGORITHM], kwargs={**ALGORITHMS[DEFAULT_ALGORITHM]["kwargs"], "max_iter": 1})
+    monkeypatch.setitem(ALGORITHMS, "test-nonconvergent-v1", entry)
     with pytest.raises(ValueError, match="收敛"):
-        fit_model(samples(100), max_iter=1)
+        fit_model(samples(100), algorithm="test-nonconvergent-v1")
 
 
 @pytest.mark.parametrize("patch", [[1, 2], [1, 2, 3, float('nan'), 4, 5], [1, 2, 3, .5, -1, 5]])

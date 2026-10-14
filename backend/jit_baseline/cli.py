@@ -11,12 +11,13 @@ from .data import BaselineError, fetch_sources
 
 
 def main():
-    parser = argparse.ArgumentParser(description="固定 OpenStack 六字段回顾性基线")
+    parser = argparse.ArgumentParser(description="OpenStack 回顾性基线与具名方法")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("fetch")
     run = commands.add_parser("run")
     run.add_argument("--output", type=Path, default=DEFAULT_RUN)
     run.add_argument("--schema", default=None, help="具名特征 schema；默认 openstack-six-v1")
+    run.add_argument("--algorithm", default=None, help="具名方法；默认 logistic-regression-l2-v1")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -34,7 +35,7 @@ def main():
         if args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
-            manifest = build_run(BACKEND / "data/openstack", args.output, args.schema)
+            manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)
