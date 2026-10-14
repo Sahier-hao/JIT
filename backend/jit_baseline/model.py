@@ -7,11 +7,18 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.tree import DecisionTreeClassifier
 from threadpoolctl import threadpool_limits
 
-from .config import MODEL_CONFIG
+from .algorithms import DEFAULT_ALGORITHM, get_algorithm
 from .data import BaselineError
 from .schemas import DEFAULT_SCHEMA, resolve
+
+# 估计器实现表：注册条目声明用哪一个，这里提供可 joblib 序列化的实现。
+ESTIMATORS = {
+    "logistic-regression": LogisticRegression,
+    "decision-tree": DecisionTreeClassifier,
+}
 
 
 class Log1pColumns:
@@ -61,25 +68,36 @@ def feature_matrix(records, schema=None):
     return matrix
 
 
-def fit_model(train_records, *, schema=None, max_iter=MODEL_CONFIG["max_iter"]):
+def build_estimator(entry):
+    """由方法声明构造估计器；未实现的估计器必须被拒绝。"""
+    factory = ESTIMATORS.get(entry.get("estimator"))
+    if factory is None:
+        raise BaselineError("ALGORITHM_UNKNOWN", f"方法声明的估计器未实现：{entry.get('estimator')}")
+    return factory(**entry["kwargs"])
+
+
+def fit_model(train_records, *, schema=None, algorithm=None):
+    """按 schema 的变换与方法的声明构造流水线。
+
+    `counts` 由 schema 决定、方法不得覆盖；是否标准化与估计器由方法声明。
+    """
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    entry = get_algorithm(algorithm if algorithm else DEFAULT_ALGORITHM)
     matrix = feature_matrix(train_records, schema)
     labels = np.asarray([r["label"] for r in train_records])
     if set(labels.tolist()) != {0, 1}:
         raise BaselineError("MODEL_INVALID", "训练需要两类发布标签")
-    pipeline = Pipeline([
-        ("counts", FunctionTransformer(Log1pColumns(schema.log1p_indices()))),
-        ("scale", StandardScaler()),
-        # sklearn 1.9 uses l1_ratio=0 for L2; penalty='l2' is deprecated.
-        ("model", LogisticRegression(C=1.0, l1_ratio=0.0, solver="lbfgs", max_iter=max_iter,
-                                     tol=1e-4, class_weight=None, random_state=2026)),
-    ])
+    steps = [("counts", FunctionTransformer(Log1pColumns(schema.log1p_indices())))]
+    if "scale" in entry["preprocess"]:
+        steps.append(("scale", StandardScaler()))
+    steps.append(("model", build_estimator(entry)))
+    pipeline = Pipeline(steps)
     try:
         with threadpool_limits(limits=1), warnings.catch_warnings():
             warnings.simplefilter("error", ConvergenceWarning)
             pipeline.fit(matrix, labels)
     except ConvergenceWarning as exc:
-        raise BaselineError("MODEL_NOT_CONVERGED", "固定模型未收敛，不能发布有效产物") from exc
+        raise BaselineError("MODEL_NOT_CONVERGED", "方法按自身声明未收敛，不能发布有效产物") from exc
     return pipeline
 
 
