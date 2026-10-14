@@ -2,6 +2,7 @@
 import argparse
 import json
 import sys
+import os
 from pathlib import Path
 
 from .artifacts import (DEFAULT_RUN, Snapshot, build_run, compare_methods, compare_runs,
@@ -29,6 +30,13 @@ def main():
     methods.add_argument("runs", type=Path, nargs="+")
     methods.add_argument("--report", type=Path, required=True)
     commands.add_parser("serve")
+    from .catalog_storage import DEFAULT_DATABASE
+    initialize = commands.add_parser('catalog-init')
+    initialize.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    register = commands.add_parser('register-model')
+    register.add_argument('--run-key', required=True)
+    register.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    register.add_argument('--artifact-root', type=Path, default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
@@ -36,7 +44,15 @@ def main():
     check.add_argument("target", type=Path)
     args = parser.parse_args()
     try:
-        if args.command == "fetch":
+        if args.command == 'catalog-init':
+            from .catalog_storage import CatalogStorage, VERSION
+            CatalogStorage(args.database).initialize()
+            result = {'kind': 'catalog-initialized', 'version': VERSION}
+        elif args.command == 'register-model':
+            from .catalog import ModelCatalog
+            from .catalog_storage import CatalogStorage
+            result = ModelCatalog(CatalogStorage(args.database), args.artifact_root).register_key(args.run_key)
+        elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm)

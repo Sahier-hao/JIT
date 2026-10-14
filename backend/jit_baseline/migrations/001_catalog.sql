@@ -1,0 +1,11 @@
+CREATE TABLE schema_migration(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+CREATE TABLE dataset_version(id TEXT PRIMARY KEY, artifact_version TEXT NOT NULL UNIQUE, source_json TEXT NOT NULL);
+CREATE TABLE experiment_run(id TEXT PRIMARY KEY, artifact_run_id TEXT NOT NULL UNIQUE, dataset_id TEXT NOT NULL REFERENCES dataset_version(id), config_json TEXT NOT NULL, schema_json TEXT NOT NULL);
+CREATE TABLE run_location(id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES experiment_run(id), relative_key TEXT NOT NULL UNIQUE, manifest_json TEXT NOT NULL, summary_json TEXT NOT NULL, verification_json TEXT NOT NULL, verified_at TEXT NOT NULL);
+CREATE TABLE model_version(id TEXT PRIMARY KEY, run_id TEXT NOT NULL UNIQUE REFERENCES experiment_run(id), preferred_location_id TEXT REFERENCES run_location(id), state TEXT NOT NULL CHECK(state IN ('ready','invalid')), error_code TEXT, payload_json TEXT NOT NULL);
+CREATE TABLE registration_event(id TEXT PRIMARY KEY, request_id TEXT NOT NULL, candidate_id TEXT NOT NULL, channel TEXT NOT NULL CHECK(channel IN ('http-admin','local-cli')), result TEXT NOT NULL CHECK(result IN ('created','reused','failed')), error_code TEXT, created_at TEXT NOT NULL, run_id TEXT REFERENCES experiment_run(id), model_id TEXT REFERENCES model_version(id));
+CREATE TABLE prediction_batch(id TEXT PRIMARY KEY, model_id TEXT NOT NULL REFERENCES model_version(id), payload_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE prediction(id TEXT PRIMARY KEY, batch_id TEXT NOT NULL UNIQUE REFERENCES prediction_batch(id), record_id TEXT NOT NULL, risk REAL NOT NULL CHECK(risk>=0 AND risk<=1), features_json TEXT NOT NULL);
+CREATE INDEX model_state ON model_version(state);
+CREATE INDEX registration_request ON registration_event(request_id);
+CREATE INDEX batch_model ON prediction_batch(model_id);

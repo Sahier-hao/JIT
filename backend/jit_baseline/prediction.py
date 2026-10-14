@@ -1,0 +1,63 @@
+"""Single feature-input predictions: compute first, atomically publish after commit."""
+import json
+from uuid import uuid4
+
+from .artifacts import identity
+from .catalog import encoded
+from .catalog_input import prediction_input, uuid_text
+from .catalog_storage import utc_now
+from .model import predict_risks
+from .team_access import RequestError
+
+
+class PredictionService:
+    def __init__(self, catalog):
+        self.catalog = catalog
+
+    def create(self, request):
+        data = prediction_input(request)
+        snapshot, model = self.catalog.load_model(data['modelId'])
+        if snapshot.schema.name != data['featureSchemaVersion'] or not model['jsonPredictionSupported']:
+            raise RequestError('INPUT_SCHEMA_MISMATCH', field='featureSchemaVersion')
+        record = data['record']
+        vector = [record['features'][field] for field in snapshot.schema.in_model_names()]
+        try:
+            risks = predict_risks(snapshot.model, [{'features': vector}], snapshot.schema)
+        except Exception as exc:
+            raise RequestError('INFERENCE_ERROR') from exc
+        batch_id, prediction_id = str(uuid4()), str(uuid4())
+        created_at = utc_now()
+        result = {'mode': 'feature-input', 'sourceKind': 'client-features', 'batchId': batch_id,
+                  'project': data['project'], 'runId': model['runId'], 'model': model,
+                  'featureSchemaVersion': data['featureSchemaVersion'],
+                  'inputSha256': identity({key: value for key, value in data.items() if key != 'modelId'}),
+                  'createdAt': created_at,
+                  'records': [{'predictionId': prediction_id, **record, 'risk': risks[0],
+                               'explanationStatus': 'not-supported',
+                               'explanationReason': '该模型的真实预测解释尚未接入'}],
+                  'limitations': ['原始特征由调用方提供，尚未核验源码提取或真实标签。',
+                                  '风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。',
+                                  '本轮未提供真实预测解释或代码定位。', *model['limitations']]}
+        with self.catalog.store.connection(write=True) as db:
+            db.execute('INSERT INTO prediction_batch VALUES (?,?,?,?)',
+                       (batch_id, model['modelId'], encoded(result), created_at))
+            db.execute('INSERT INTO prediction VALUES (?,?,?,?,?)',
+                       (prediction_id, batch_id, record['recordId'], risks[0], encoded(record['features'])))
+        return result
+
+    def get(self, batch_id):
+        batch_id = uuid_text(batch_id, 'batchId')
+        with self.catalog.store.connection() as db:
+            row = db.execute('SELECT payload_json FROM prediction_batch WHERE id=?', (batch_id,)).fetchone()
+            count = db.execute('SELECT count(*) FROM prediction WHERE batch_id=?', (batch_id,)).fetchone()[0]
+        if row is None:
+            raise RequestError('NOT_FOUND')
+        if count != 1:
+            raise RequestError('STORAGE_UNAVAILABLE')
+        try:
+            result = json.loads(row['payload_json'])
+            if result['batchId'] != batch_id or len(result['records']) != 1:
+                raise ValueError('batch')
+            return result
+        except (ValueError, KeyError, TypeError) as exc:
+            raise RequestError('STORAGE_UNAVAILABLE') from exc
