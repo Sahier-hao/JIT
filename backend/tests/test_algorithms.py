@@ -4,7 +4,8 @@ import pytest
 
 def test_registry_entries_declare_every_required_field():
     from jit_baseline.algorithms import ALGORITHMS, CLASSIC, DEEP
-    assert set(ALGORITHMS) == {"logistic-regression-l2-v1", "decision-tree-v1", "random-forest-v1"}
+    assert set(ALGORITHMS) == {"logistic-regression-l2-v1", "decision-tree-v1", "random-forest-v1",
+                               "gaussian-naive-bayes-v1", "gradient-boosting-v1"}
     for name, entry in ALGORITHMS.items():
         assert set(entry) >= {"label", "name", "category", "detail", "params", "estimator",
                               "kwargs", "preprocess", "requires", "reproducibility", "explanation"}, name

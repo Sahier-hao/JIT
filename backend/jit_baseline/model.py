@@ -4,8 +4,9 @@ import warnings
 
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -20,6 +21,8 @@ ESTIMATORS = {
     "logistic-regression": LogisticRegression,
     "decision-tree": DecisionTreeClassifier,
     "random-forest": RandomForestClassifier,
+    "gaussian-naive-bayes": GaussianNB,
+    "gradient-boosting": GradientBoostingClassifier,
 }
 
 
