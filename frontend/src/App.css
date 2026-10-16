@@ -233,3 +233,212 @@ th:nth-child(6) { width: 103px; }
 .baseline-limits ul { padding-left: 20px; margin-bottom: 8px; }
 @media (max-width: 1100px) { .baseline-columns { grid-template-columns: 1fr; gap: 20px; } }
 @media (max-width: 760px) { .mode-switch { flex-direction: column; margin-inline: 0; } .mode-switch button { font-size: 9px; } .run-context { flex-direction: column; gap: 4px; } }
+
+/* ---------- 模型中心 / 新建预测 / 预测结果（connect-model-prediction-workbench） ---------- */
+
+/* 无障碍：仅供屏幕阅读器，视觉上不可见但不移出可访问性树。 */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.section-caption > span > button { margin: -6px 0; }
+
+/* 侧栏凭据：掩码输入、显式确认、随时清除。 */
+.credential-panel { margin-top: 18px; padding: 0 4px; }
+.credential-panel .nav-label { margin: 0 8px 9px; }
+.credential-form { display: flex; flex-direction: column; gap: 8px; }
+.credential-form input {
+  height: 34px; width: 100%; min-width: 0; border-radius: 6px; border: 1px solid #3b4d68;
+  background: #111d2f; color: #dbe5f4; padding: 0 10px; font-size: 12px; font-family: var(--mono);
+}
+.credential-form input:focus { outline: 2px solid #7d9ff4; outline-offset: 1px; border-color: #6384da; }
+.credential-state { margin: 0; font-size: 12px; color: #9fd0a8; }
+.credential-hint { margin: 0; font-size: 11px; color: #8f9fb8; line-height: 1.6; }
+.credential-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.credential-actions button {
+  flex: 1; min-width: 0; border: 1px solid #3b4d68; background: #22314a; color: #cdd9ea;
+  border-radius: 6px; padding: 7px 8px; font-size: 12px;
+}
+.credential-actions button:hover:enabled { background: #2c4162; color: #fff; }
+.credential-actions button:disabled { opacity: .5; }
+.credential-actions button:focus-visible { outline: 2px solid #7d9ff4; outline-offset: 1px; }
+
+/* 通用状态块：加载中／需要凭据／失败都有文字标题，不只靠颜色。 */
+.notice {
+  display: flex; gap: 11px; align-items: flex-start; padding: 13px 16px; border-radius: 8px;
+  border: 1px solid var(--line); background: #fff; font-size: 13px; margin: 0 0 14px;
+}
+.notice > svg { flex-shrink: 0; margin-top: 1px; }
+.notice > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.notice strong { font-size: 13px; font-weight: 600; }
+.notice span { color: var(--muted); line-height: 1.75; }
+.notice code { font-size: 11px; overflow-wrap: anywhere; }
+.notice-loading { background: #f6f9fe; border-color: #dde6f4; color: #43608c; }
+.notice-credential { background: #fffbf2; border-color: #ebdfc7; color: #8a6524; }
+.notice-failure { background: #fdf5f4; border-color: #f0d6d2; color: #9c453a; }
+.notice-unknown { background: #fdf5f4; border-color: #f0d6d2; color: #9c453a; }
+.notice-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.notice-actions button, .notice button {
+  border: 1px solid #d9e1ed; background: #fff; border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; color: #46618c;
+}
+.notice button:hover { border-color: #b7c9ee; background: #f4f8ff; }
+.notice button:focus-visible { outline: 2px solid #7291dc; outline-offset: 1px; }
+.failure-details { margin: 2px 0; padding-left: 18px; font-size: 12px; color: #7c5a52; }
+.failure-details code { margin-right: 6px; }
+.failure-request { font-size: 11px; color: #8b9bb5; }
+
+.status-note {
+  margin: 0 0 14px; padding: 11px 15px; border-radius: 7px; font-size: 13px; line-height: 1.7;
+  border: 1px solid var(--line); background: #f8fafd; color: #4d5f7a;
+}
+.status-ok { background: #f2f9f3; border-color: #d5e9d8; color: #35663d; }
+.status-warn { background: #fff8ec; border-color: #eedfc3; color: #86581a; }
+.status-info { background: #f4f8fe; border-color: #dbe5f4; color: #46618c; }
+.status-note a, .notice a { color: #315eb7; }
+
+/* 结构化来源：等宽、可换行，长哈希不撑破容器。 */
+.meta-block { margin: 0 0 14px; }
+.meta-block h4, .model-limits h4 { font-size: 12px; margin: 0 0 7px; color: #354c6d; }
+.meta-block pre {
+  margin: 0; padding: 11px 13px; border: 1px solid #e6ecf5; border-radius: 6px; background: #f8faff;
+  font: 11px/1.7 var(--mono); color: #4a5c78; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+
+/* 模型卡片 */
+.model-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
+.model-card {
+  border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 16px 18px;
+  box-shadow: 0 2px 4px #17233703;
+}
+.model-card.highlighted { border-color: #8fb0f0; box-shadow: 0 0 0 3px #eaf0fd; }
+.model-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.model-card-head h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.model-method { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.model-method code { overflow-wrap: anywhere; }
+.state-badge {
+  flex-shrink: 0; font-size: 11px; padding: 4px 9px; border-radius: 5px;
+  border: 1px solid var(--line); background: #f4f7fc; color: #4d6285; white-space: nowrap;
+}
+.state-ready { background: #f1f8f2; border-color: #d5e9d8; color: #35663d; }
+.state-invalid { background: #fdf5f4; border-color: #f0d6d2; color: #9c453a; }
+.model-facts, .candidate-facts, .identity-list {
+  display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 6px 12px; margin: 13px 0 0;
+}
+.model-facts > div, .identity-list > div { display: contents; }
+.model-facts dt, .candidate-facts dt, .identity-list dt { font-size: 11px; color: #8490a2; padding-top: 2px; }
+.model-facts dd, .candidate-facts dd, .identity-list dd { margin: 0; font-size: 13px; color: #3d4f6b; min-width: 0; overflow-wrap: anywhere; }
+.identity-list code { font-size: 11px; overflow-wrap: anywhere; }
+.model-actions, .model-limits { font-size: 12px; color: var(--muted); line-height: 1.8; }
+.model-limits ul, .model-limits { margin-bottom: 0; }
+.model-limits ul { padding-left: 19px; margin: 0; }
+.model-details, .schema-details, .unavailable-models {
+  margin-top: 14px; border: 1px solid var(--line); border-radius: 7px; background: #fcfdff;
+}
+.model-details > summary, .schema-details > summary, .unavailable-models > summary {
+  padding: 10px 14px; font-size: 12px; color: #425b7d; cursor: pointer; list-style-position: inside;
+}
+.model-details-body, .schema-details-body { padding: 4px 16px 16px; border-top: 1px solid var(--line); }
+.model-details-body .identity-list { margin-top: 12px; }
+.unavailable-models ul { margin: 0; padding: 0 16px 14px 34px; font-size: 12px; color: #6b778b; line-height: 1.8; }
+
+/* 管理员登记 */
+.candidate-section { border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 15px 18px; }
+.candidate-list { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.candidate-row { border: 1px solid var(--line); border-radius: 7px; padding: 12px 14px; background: #fcfdff; }
+.candidate-row.invalid { background: #fbfbfc; border-color: #eceff4; }
+.candidate-row label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink); }
+.candidate-row input[type=radio] { width: 16px; height: 16px; flex-shrink: 0; }
+.candidate-name { font-weight: 600; }
+.candidate-row.invalid .candidate-name { color: #8b9bb5; }
+.candidate-facts { margin-top: 10px; }
+.candidate-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.candidate-gate {
+  border: 1px dashed #d9e1ed; border-radius: 9px; padding: 16px 18px; background: #fcfdff;
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+}
+.candidate-gate p { margin: 0 0 12px; }
+.candidate-gate code { font-size: 11px; overflow-wrap: anywhere; }
+.primary-button {
+  border: 1px solid #345ac5; background: #345ac5; color: #fff; border-radius: 6px;
+  padding: 9px 15px; font-size: 13px; min-height: 38px;
+}
+.primary-button:hover:enabled { background: #2c4dae; }
+.primary-button:disabled { background: #c3cddd; border-color: #c3cddd; cursor: not-allowed; }
+.primary-button:focus-visible, .model-card a:focus-visible, details > summary:focus-visible {
+  outline: 2px solid #7291dc; outline-offset: 2px;
+}
+.candidate-section button:not(.primary-button), .json-actions button, .submit-bar button:not(.primary-button) {
+  border: 1px solid #d9e1ed; background: #fff; color: #46618c; border-radius: 6px;
+  padding: 9px 14px; font-size: 13px; min-height: 38px;
+}
+.candidate-section button:not(.primary-button):hover:enabled, .json-actions button:hover:enabled, .submit-bar button:not(.primary-button):hover:enabled {
+  border-color: #b7c9ee; background: #f4f8ff;
+}
+.candidate-section button:focus-visible, .json-actions button:focus-visible { outline: 2px solid #7291dc; outline-offset: 2px; }
+
+/* 新建预测 */
+.predict-section { margin-bottom: 20px; }
+.predict-form { display: block; }
+.predict-form .predict-section {
+  border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 15px 18px;
+}
+.model-picker { border: 0; margin: 0 0 4px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.model-option {
+  display: flex; gap: 11px; align-items: flex-start; border: 1px solid var(--line); border-radius: 7px;
+  padding: 12px 14px; background: #fcfdff; cursor: pointer;
+}
+.model-option:has(input:checked) { border-color: #8fb0f0; background: #f5f8ff; box-shadow: 0 0 0 2px #eaf0fd; }
+.model-option input[type=radio] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; }
+.model-option > span { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.model-option code { font-size: 11px; overflow-wrap: anywhere; }
+.model-summary { margin-top: 14px; }
+.model-summary .model-facts { margin-top: 0; }
+.schema-list { margin: 10px 0 0; padding-left: 20px; font-size: 12px; color: #65748a; line-height: 1.8; overflow-wrap: anywhere; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 22px; }
+.field { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: #56647b; min-width: 0; }
+.field input, .field textarea {
+  border: 1px solid #d9e1ed; background: #fff; color: var(--ink); border-radius: 6px;
+  padding: 0 11px; height: 38px; font-size: 13px; min-width: 0; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field textarea { height: auto; padding: 10px 11px; font: 12px/1.7 var(--mono); resize: vertical; }
+.field input:hover, .field textarea:hover { border-color: #a9b9d6; }
+.field input:focus, .field textarea:focus { border-color: #7291dc; box-shadow: 0 0 0 3px #eaf0fd; outline: none; }
+.field input[aria-invalid=true], .field textarea[aria-invalid=true] { border-color: #d98b7f; background: #fffbfa; }
+.field input:disabled, .field textarea:disabled { background: #f5f7fa; color: #7b8798; }
+.field-error { margin: 0; font-size: 12px; color: #a0453a; line-height: 1.6; }
+.field-help { font-size: 11px; color: #94a0b3; line-height: 1.6; }
+.json-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.submit-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 15px 18px;
+  border: 1px solid var(--line); border-radius: 9px; background: #f8fafd;
+}
+.submit-bar .muted { font-size: 12px; }
+
+/* 预测结果 */
+.result-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+.result-card, .result-section {
+  border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 15px 18px; min-width: 0;
+}
+.result-section { margin-bottom: 16px; }
+.result-card .identity-list, .result-section .identity-list { margin-top: 12px; }
+.result-card .risk-display { margin: 6px 0 4px; }
+.batch-lookup { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.batch-lookup .field { flex: 1; min-width: 240px; }
+.batch-lookup .field input { font-family: var(--mono); font-size: 12px; }
+.batch-lookup .field-error { flex-basis: 100%; }
+.empty-state form { margin-top: 14px; text-align: left; }
+.result-section .schema-list { margin-bottom: 12px; }
+
+@media (max-width: 1350px) {
+  .result-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 1100px) {
+  .field-grid { grid-template-columns: minmax(0, 1fr); }
+  .model-facts, .candidate-facts, .identity-list { grid-template-columns: 92px minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .batch-lookup { flex-direction: column; align-items: stretch; }
+  .credential-panel .nav-label { display: none; }
+}
