@@ -62,17 +62,19 @@ async function selectModel(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('radio', { name: /逻辑回归 · 六字段/ }))
 }
 
-async function fillSix(user: ReturnType<typeof userEvent.setup>, values = ['4', '7', '12', '2.25', '120', '9']) {
+// 六项数值用 change 一次性写入：这些用例验证的是取值、校验与提交正文，
+// 不是逐键输入本身；userEvent 的逐键输入在并行 worker 下会把用例推到默认超时边缘。
+function fillSix(values = ['4', '7', '12', '2.25', '120', '9']) {
   const names = ['涉及子系统数', '涉及目录数', '修改文件数', '分散程度', '增加行数', '删除行数']
   for (const [index, label] of names.entries()) {
-    await user.type(screen.getByLabelText(new RegExp(label)), values[index] as string)
+    fireEvent.change(screen.getByLabelText(new RegExp(label)), { target: { value: values[index] as string } })
   }
 }
 
 async function fillRequired(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/项目/), 'openstack')
   await user.type(screen.getByLabelText(/记录编号/), 'demo-0001')
-  await fillSix(user)
+  fillSix()
 }
 
 describe('范围与凭据', () => {
@@ -172,8 +174,8 @@ describe('表单校验', () => {
     )
     await selectModel(user)
     await fillRequired(user)
-    await user.type(screen.getByLabelText(/提交 SHA/), 'A1B2C3D4E5F60718293A4B5C6D7E8F9012345678')
-    await user.type(screen.getByLabelText(/提交时间/), '2026-01-02T03:04:05+08:00')
+    fireEvent.change(screen.getByLabelText(/提交 SHA/), { target: { value: 'A1B2C3D4E5F60718293A4B5C6D7E8F9012345678' } })
+    fireEvent.change(screen.getByLabelText(/提交时间/), { target: { value: '2026-01-02T03:04:05+08:00' } })
 
     const button = screen.getByRole('button', { name: '提交并保存预测' })
     expect(button).toBeEnabled()
