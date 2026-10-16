@@ -1,25 +1,20 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { contextKey, displayTime, emptyQuery, applyQuery, queryCommits, type Commit, type Dataset, type Mode } from './domain'
 import { demoLoader, historicalLoader, useDataset, type Loader } from './useDataset'
+import { AppShell, UnknownRoute, type ShellProps } from './AppShell'
+import { CredentialProvider } from './credentials'
+import { useCredential } from './credentialContext'
+import { ModelsPage } from './ModelsPage'
+import { PredictPage } from './PredictPage'
+import { PredictionsPage } from './PredictionsPage'
+import type { PredictionResult } from './predictionContract'
+import { useRoute } from './navigation'
 import { BaselineRecord } from './BaselineRecord'
 import { CommitDetail } from './CommitDetail'
 import { Risk } from './Risk'
 import { Icon } from './Icon'
 import { restoreShortlist, saveShortlist } from './shortlist'
 import './App.css'
-
-function Sidebar({ view, count, onView, mode, onMode }: { view: string; count: number; onView?: (view: string) => void; mode: Mode; onMode: (mode: Mode) => void }) {
-  return <aside className="sidebar">
-    <div className="brand"><span className="brand-mark"><Icon name="logo" size={25} /></span><div>JIT Review<span>提交风险评审</span></div></div>
-    <div className="mode-switch" role="group" aria-label="数据模式"><button aria-label="选择真实历史回放" aria-pressed={mode === 'historical'} onClick={() => onMode('historical')}>历史数据</button><button aria-label="选择演示模式" aria-pressed={mode === 'demo'} onClick={() => onMode('demo')}>示例数据</button></div>
-    <div className="nav-label">工作空间</div>
-    <nav aria-label="工作台导航">
-      <button className={view === 'list' ? 'nav-item active' : 'nav-item'} aria-current={view === 'list' ? 'page' : undefined} disabled={!onView} onClick={() => onView?.('list')}><Icon name="list" />提交工作台</button>
-      <button className={view === 'shortlist' ? 'nav-item active' : 'nav-item'} aria-current={view === 'shortlist' ? 'page' : undefined} disabled={!onView} onClick={() => onView?.('shortlist')}><Icon name="shortlist" />优先审查清单 <b>{count}</b></button>
-    </nav>
-    <div className="sidebar-foot"><div className="workspace-avatar"><Icon name="logo" size={18} /></div><div>个人工作空间<small>清单保存在当前浏览器</small></div></div>
-  </aside>
-}
 
 function Empty({ title, description, children }: { title: string; description: string; children?: ReactNode }) {
   return <div className="empty-state"><div className="empty-mark"><Icon name="list" size={28} /></div><h2>{title}</h2><p>{description}</p>{children}</div>
@@ -44,16 +39,29 @@ function CommitTable({ records, selected, shortlist, listView, onOpen, onAdd, on
   </table></div>
 }
 
-function Workbench({ data, onMode }: { data: Dataset; onMode: (mode: Mode) => void }) {
+function Workbench({ data, view, onView, selection, onSelection }: {
+  data: Dataset
+  view: string
+  onView: (view: string) => void
+  selection: { ids: string[]; warning: string | null }
+  onSelection: (selection: { ids: string[]; warning: string | null }) => void
+}) {
   const historical = data.mode === 'historical'
-  const [view, setView] = useState('list')
   const [queryState, setQueryState] = useState({ draft: emptyQuery, applied: emptyQuery, error: '' })
-  const [selection, setSelection] = useState(() => restoreShortlist(data))
   const shortlist = selection.ids
   const [selected, setSelected] = useState<string | null>(null)
   const returnFocus = useRef<HTMLButtonElement | null>(null)
   const listView = view === 'list'
   const visible = listView ? queryCommits(data.records, queryState.applied) : shortlist.flatMap(id => data.records.filter(record => record.id === id))
+  // 清单按数据上下文恢复：状态由 Workspace 持有（侧栏计数要用），所以在这里同步而不是用 useState 初始化。
+  // 用 layout 效果是为了保持「首屏就是已恢复的清单」这一原有表现。
+  const restored = useRef<string | null>(null)
+  const context = contextKey(data)
+  useLayoutEffect(() => {
+    if (restored.current === context) return
+    restored.current = context
+    onSelection(restoreShortlist(data))
+  }, [context, data, onSelection])
   function updateQuery(patch: Partial<typeof emptyQuery>) {
     setQueryState(previous => {
       const draft = { ...previous.draft, ...patch }
@@ -63,12 +71,10 @@ function Workbench({ data, onMode }: { data: Dataset; onMode: (mode: Mode) => vo
   }
   function clearQuery() { setQueryState({ draft: emptyQuery, applied: emptyQuery, error: '' }) }
   function closeDetail() { setSelected(null); returnFocus.current?.focus() }
-  function changeView(next: string) { setView(next); setSelected(null) }
-  function changeShortlist(ids: string[]) { setSelection({ ids, warning: saveShortlist(data, ids) }) }
+  function changeView(next: string) { onView(next); setSelected(null) }
+  function changeShortlist(ids: string[]) { onSelection({ ids, warning: saveShortlist(data, ids) }) }
   function add(id: string) { if (!shortlist.includes(id) && data.records.some(record => record.id === id)) changeShortlist([...shortlist, id]) }
-  return <div className="app">
-    <Sidebar view={view} count={shortlist.length} onView={changeView} mode={data.mode} onMode={onMode} />
-    <main className="main">
+  return <>
       <header className="topbar"><div><span className="project-symbol"><Icon name="project" /></span><strong>{data.project}</strong><Icon name="chevron" size={14} /><span>{listView ? '提交工作台' : '审查清单'}</span></div><div className="source-meta"><span className={historical ? 'demo-badge historical-badge' : 'demo-badge'}><span />{historical ? '真实历史回放' : '演示模式'}</span><code title={data.version}>{data.version}</code></div></header>
       {historical ? <div className="run-context"><span>{data.model?.name}</span><span>运行 <code title={data.runId}>{data.runId}</code></span></div> : null}
       <div className="page-heading"><div><h1>{listView ? '提交评审' : '优先审查清单'}</h1><p className="page-intro">{listView ? '从提交风险出发，确定下一次审查的重点。' : '保留值得优先核对的改动，按加入顺序安排审查。'}</p></div><div className="record-count"><Icon name={listView ? 'list' : 'shortlist'} size={20} /><div><strong>{listView ? data.records.length.toLocaleString() : shortlist.length}</strong><span>{listView ? (historical ? '条测试提交' : '条演示提交') : '条审查选择'}</span></div></div></div>
@@ -92,23 +98,62 @@ function Workbench({ data, onMode }: { data: Dataset; onMode: (mode: Mode) => vo
         {selected ? <CommitDetail data={data} id={selected} added={shortlist.includes(selected)} onAdd={() => add(selected)} onClose={closeDetail} /> : null}
       </div>
       <footer className="page-foot"><span>JIT Review</span><span>{historical ? (data.summary?.featureSchema ? `历史测试批次 · ${data.summary.featureSchema.name} 基线` : '历史测试批次 · 六字段基线') : '示例数据'} · 个人审查选择</span></footer>
-    </main>
-  </div>
+  </>
 }
 
-function ModeResource({ loader, mode, onMode }: { loader: Loader; mode: Mode; onMode: (mode: Mode) => void }) {
+function ModeResource({ loader, mode, workbench }: { loader: Loader; mode: Mode; workbench: WorkbenchState }) {
   const { resource, retry } = useDataset(loader, mode)
-  if (resource.state === 'ready') return <Workbench key={contextKey(resource.data)} data={resource.data} onMode={onMode} />
-  return <div className="app"><Sidebar view="list" count={0} mode={mode} onMode={onMode} /><main className="main"><header className="topbar">JIT · 提交评审 · {mode === 'historical' ? '真实历史回放' : '演示模式'}</header>{resource.state === 'loading' ? <div role="status"><Empty title={mode === 'historical' ? '正在读取真实历史提交' : '正在读取演示提交'} description="请稍候，读取完成后显示项目与数据版本。" /></div> : <div role="alert"><Empty title="数据不可用" description={resource.error}><button className="primary-button" onClick={retry}>重新加载</button></Empty></div>}</main></div>
+  if (resource.state === 'ready') return <Workbench key={contextKey(resource.data)} data={resource.data} {...workbench} />
+  return <>
+    <header className="topbar">JIT · 提交评审 · {mode === 'historical' ? '真实历史回放' : '演示模式'}</header>
+    {resource.state === 'loading' ? <div role="status"><Empty title={mode === 'historical' ? '正在读取真实历史提交' : '正在读取演示提交'} description="请稍候，读取完成后显示项目与数据版本。" /></div> : <div role="alert"><Empty title="数据不可用" description={resource.error}><button className="primary-button" onClick={retry}>重新加载</button></Empty></div>}
+  </>
 }
-export default function App({ loader, initialMode, loaders }: { loader?: Loader; initialMode?: Mode; loaders?: Partial<Record<Mode, Loader>> }) {
+
+interface WorkbenchState {
+  view: string
+  onView: (view: string) => void
+  selection: { ids: string[]; warning: string | null }
+  onSelection: (selection: { ids: string[]; warning: string | null }) => void
+}
+
+function Workspace({ loader, initialMode, loaders }: { loader?: Loader; initialMode?: Mode; loaders?: Partial<Record<Mode, Loader>> }) {
+  const { route, navigate } = useRoute()
   const [mode, setMode] = useState<Mode>(() => initialMode ?? (new URLSearchParams(window.location.search).get('mode') === 'demo' ? 'demo' : 'historical'))
+  const [created, setCreated] = useState<{ generation: number; result: PredictionResult } | null>(null)
+  // 视图与清单由工作区持有：侧栏要显示清单数量，而侧栏在整个应用生命周期里只渲染一次。
+  const [view, setView] = useState('list')
+  const [selection, setSelection] = useState<{ ids: string[]; warning: string | null }>({ ids: [], warning: null })
+  const { generation } = useCredential()
+  // 更换或清除凭据后，上一份凭据下取得的受保护结果不再属于当前上下文（design D2）：在渲染时派生，
+  // 而不是用副作用清空。
+  const snapshot = created !== null && created.generation === generation ? created.result : null
+
   function changeMode(next: Mode) {
     const url = new URL(window.location.href)
     if (next === 'demo') url.searchParams.set('mode', 'demo'); else url.searchParams.delete('mode')
     window.history.replaceState({}, '', url)
     setMode(next)
   }
-  const selectedLoader = loaders?.[mode] ?? (mode === 'demo' ? (loader ?? demoLoader) : historicalLoader)
-  return <ModeResource key={mode} mode={mode} loader={selectedLoader} onMode={changeMode} />
+
+  const shell: ShellProps = { route, navigate, mode, onMode: changeMode, view, count: selection.ids.length, onView: setView }
+  const workbench: WorkbenchState = { view, onView: setView, selection, onSelection: setSelection }
+
+  let body: ReactNode
+  if (route.name === 'models') body = <ModelsPage />
+  else if (route.name === 'predict') body = <PredictPage onCreated={result => { setCreated({ generation, result }); navigate({ name: 'result', batchId: result.batchId }) }} />
+  else if (route.name === 'open') body = <PredictionsPage navigate={navigate} batchId={null} snapshot={null} />
+  else if (route.name === 'result') body = <PredictionsPage navigate={navigate} batchId={route.batchId} snapshot={snapshot} />
+  else if (route.name === 'unknown') body = <UnknownRoute hash={route.hash} navigate={navigate} />
+  else {
+    const selectedLoader = loaders?.[mode] ?? (mode === 'demo' ? (loader ?? demoLoader) : historicalLoader)
+    body = <ModeResource key={mode} mode={mode} loader={selectedLoader} workbench={workbench} />
+  }
+
+  // 应用壳只在这里渲染一次：路由切换与数据加载都不会重建侧栏，凭据输入与键盘焦点因此保持稳定。
+  return <AppShell {...shell}>{body}</AppShell>
+}
+
+export default function App({ loader, initialMode, loaders }: { loader?: Loader; initialMode?: Mode; loaders?: Partial<Record<Mode, Loader>> }) {
+  return <CredentialProvider><Workspace loader={loader} initialMode={initialMode} loaders={loaders} /></CredentialProvider>
 }

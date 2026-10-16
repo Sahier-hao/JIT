@@ -98,6 +98,32 @@ uv pip install --python .cache/contract-tools/Scripts/python.exe jsonschema==4.2
 系统脚本只启动独立临时本机服务和数据库，不触碰既有服务，运行两种现有模型各 200 次计时，并输出
 `docs/evidence/_run/catalog-system.json`、服务日志与 `catalog-contract.json`；不自动冻结归档。
 
+### 隔离浏览器验收环境（connect-model-prediction-workbench）
+
+前端隔离浏览器入口需要一个**可写的自有后端**：它把已验证模型复制到临时产物根、显式初始化独立
+SQLite、生成只存在于该次运行内存中的团队凭据，并只监听本机端口。这一步由
+`backend/scripts/acceptance_environment.py` 提供，前端夹具通过它启动和收尾：
+
+```powershell
+$base = '.cache/acceptance-workbench'
+& .venv/Scripts/python.exe scripts/acceptance_environment.py prepare --base $base
+$environment = Get-Content "$base/environment.json" | ConvertFrom-Json
+& .venv/Scripts/python.exe scripts/acceptance_environment.py serve `
+  --run $environment.run --database $environment.database --artifact-root $environment.artifactRoot --port 8123
+& .venv/Scripts/python.exe scripts/acceptance_environment.py inspect --base $base
+& .venv/Scripts/python.exe scripts/acceptance_environment.py cleanup --base $base
+```
+
+`prepare` 只做三件事且都可复核：复制 `artifacts/baseline`（及脚本声明的已校验运行）到
+`<base>/artifacts/`、在该临时根下初始化 `catalog.sqlite3`、把复制出来的运行写进
+`<base>/environment.json`（前端夹具约定的临时根是 `backend/.cache/acceptance-<label>/`）。
+它**不使用** `storage/catalog.sqlite3`，也**不修改** `artifacts/` 下的原文件；`inspect` 会核对临时库
+路径不等于默认库、原模型文件哈希未变，并输出各表行数；`cleanup` 只删除带 `environment.json` 的
+临时根。`serve` 用 `JIT_CATALOG_DATABASE`／`JIT_ARTIFACT_ROOT` 指向临时根，凭据由调用方以环境变量
+（`JIT_MEMBER_TOKEN`／`JIT_ADMIN_TOKEN`）传入，不写入磁盘、不出现在命令行参数或日志中。
+`invalidate --base <base> --key baseline` 把某个副本的 `model.joblib` 改名，用来验证「模型不可用」
+路径；`restore` 改回。默认开发服务仍用 `cli serve`（端口 8000），两者互不影响，可同时运行。
+
 在 backend 执行：
 
 ```powershell
