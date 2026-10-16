@@ -19,6 +19,15 @@ export const runScreenshotDir = `${runEvidenceDir}/screenshots`
 /** 运行期夹具目录：跨测试或跨语言交接用，冻结时排除。 */
 export const runFixtureDir = `${runEvidenceDir}/fixtures`
 
+/** 已归档的 change 证据根目录：测试与验收不得写入，只用于核对未被改动。 */
+export const archiveEvidenceDir = '../docs/evidence'
+
+/** 隔离验收环境的运行记录（脱敏后写入，见任务 1.3）。 */
+export const acceptanceEnvironmentEvidence = `${runEvidenceDir}/acceptance-environment.json`
+
+/** 隔离验收入口使用的浏览器运行结果（与默认入口分开保存）。 */
+export const acceptanceBrowserResults = `${runEvidenceDir}/browser-results-acceptance.json`
+
 /** 确保目录存在并返回其路径，供运行前准备工作区使用。 */
 export function ensureDir(dir: string): string {
   mkdirSync(dir, { recursive: true })
