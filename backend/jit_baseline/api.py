@@ -44,6 +44,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     app.state.datasets = registered
     from .prediction import PredictionService
     prediction_service = PredictionService(catalog)
+    from fastapi.exceptions import RequestValidationError
+
+    @app.exception_handler(RequestValidationError)
+    def invalid_request(request: Request, exc: RequestValidationError):
+        """查询参数类型或范围不合法时也保持 `{"error": {...}}` 结构（API-R-02）。"""
+        return JSONResponse({'error': {'code': 'INPUT_INVALID', 'message': '请求格式或字段值无效',
+                                       'requestId': getattr(request.state, 'request_id', None)}},
+                            status_code=422)
 
     @app.post('/api/v1/predictions')
     async def create_prediction(request: Request):
@@ -91,12 +99,21 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return view
 
     @app.get('/api/v1/commits')
-    def commit_list(version: str, module: str | None = None):
+    def commit_list(version: str, module: str | None = None, limit: int = 100, offset: int = 0):
         if storage.dataset(version) is None:
             raise RequestError('NOT_FOUND')
-        records = (storage.commits_by_entity('module', module) if module
-                   else storage.commits(version))
-        return {'datasetVersion': version, 'commits': records}
+        if not 1 <= limit <= 500:
+            raise RequestError('INPUT_INVALID', field='limit')
+        if offset < 0:
+            raise RequestError('INPUT_INVALID', field='offset')
+        if module:
+            total = storage.count_by_entity('module', module)
+            records = storage.commits_by_entity('module', module, limit, offset, summary=True)
+        else:
+            total = storage.count_commits(version)
+            records = storage.commits(version, limit, offset, summary=True)
+        return {'datasetVersion': version, 'total': total, 'limit': limit, 'offset': offset,
+                'commits': records}
 
     @app.get('/api/v1/commits/{commit_id}')
     def commit_detail(commit_id: str, version: str):

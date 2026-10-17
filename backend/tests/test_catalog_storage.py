@@ -94,3 +94,44 @@ def test_initialize_cli_uses_same_database_environment_as_http(tmp_path, monkeyp
     main()
     capsys.readouterr()
     assert database.exists()
+
+
+def _seed_commits(store, version='demo-v1', count=3):
+    with store.connection(write=True) as db:
+        db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?)',
+                   (version, 'demo', '{}', 'manifest-sha', 'source-sha', count, '2026-01-01T00:00:00Z'))
+        for index in range(count):
+            commit_id = f'{index:040x}'
+            db.execute('INSERT INTO commit_record VALUES (?,?,?,?,?)',
+                       (version, commit_id, f'2026-01-0{index + 1}T00:00:00Z', index % 2, 'bugcount > 0'))
+            db.execute('INSERT INTO feature_record VALUES (?,?,?,?)', (version, commit_id, 'nf', '1'))
+
+
+def test_commits_support_limit_offset_and_total(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    _seed_commits(store)
+    first = store.commits('demo-v1', limit=2, offset=0)
+    assert [row['commitId'] for row in first] == [f'{index:040x}' for index in range(2)]
+    assert store.count_commits('demo-v1') == 3
+    second = store.commits('demo-v1', limit=2, offset=2)
+    assert [row['commitId'] for row in second] == [f'{2:040x}']
+    assert len(store.commits('demo-v1')) == 3
+    assert store.commits('missing', limit=2) is None
+    assert store.count_commits('missing') is None
+
+
+def test_commits_by_entity_support_pagination(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    _seed_commits(store)
+    with store.connection(write=True) as db:
+        for index in range(3):
+            db.execute('INSERT INTO modified_entity (dataset_version, commit_id, entity_type, entity_value) '
+                       'VALUES (?,?,?,?)', ('demo-v1', f'{index:040x}', 'module', 'nova'))
+    assert len(store.commits_by_entity('module', 'nova', limit=1)) == 1
+    assert store.count_by_entity('module', 'nova') == 3
+    assert store.commits_by_entity('module', 'absent') == []
+    assert store.count_by_entity('module', 'absent') == 0

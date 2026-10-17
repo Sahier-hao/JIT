@@ -180,3 +180,81 @@ def test_unknown_model_metadata_normalization_and_storage_unavailable(settings):
             db.execute('UPDATE schema_migration SET version=99')
         response = client.get('/api/v1/prediction-batches/'+saved['batchId'], headers=MEMBER)
         assert response.status_code == 503 and response.json()['error']['code'] == 'STORAGE_UNAVAILABLE'
+
+
+DATASET_VERSION = 'openstack-six-v1-2011-11-29_2014-02-28'
+STORED_COMMIT = 'a' * 40
+PARTIAL_COMMIT = 'b' * 40
+STORED_FEATURES = {'la': 10, 'ld': 2, 'nf': 3, 'nd': 2, 'ns': 1, 'ent': 0.8}
+
+
+def seed_commit(settings):
+    from jit_baseline import datasets
+    from jit_baseline.catalog_storage import CatalogStorage
+    manifest = datasets.load_all()[DATASET_VERSION]
+    CatalogStorage(settings['database']).import_dataset(manifest, [
+        {'id': STORED_COMMIT, 'time': '2012-01-01T00:00:00Z', 'label': 1, 'metrics': dict(STORED_FEATURES)}])
+    return DATASET_VERSION
+
+
+def persisted_payload(model_id, version, commit_id=STORED_COMMIT):
+    return {'modelId': model_id, 'featureSchemaVersion': 'openstack-six-v1', 'project': 'fixture-project',
+            'datasetVersion': version, 'record': {'recordId': 'backend:' + commit_id, 'commitId': commit_id}}
+
+
+def test_persisted_commit_prediction_uses_stored_features_and_reopens(settings):
+    from jit_baseline.api import create_app
+    version = seed_commit(settings)
+    with TestClient(create_app(**settings)) as client:
+        model = register(client)
+        response = client.post('/api/v1/predictions', headers=MEMBER,
+                               json=persisted_payload(model['modelId'], version))
+        assert response.status_code == 201, response.text
+        saved = response.json()
+        assert saved['mode'] == 'persisted-commit' and saved['sourceKind'] == 'persisted-commit'
+        assert saved['datasetVersion'] == version
+        assert saved['records'][0]['features'] == STORED_FEATURES
+        assert saved['records'][0]['commitId'] == STORED_COMMIT
+        assert saved['limitations'][0] == '特征来自已导入的提交数据，尚未核验真实标签。'
+        assert client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=MEMBER).json() == saved
+        absent = persisted_payload(model['modelId'], version, '0' * 40)
+        assert client.post('/api/v1/predictions', headers=MEMBER, json=absent).status_code == 404
+        unknown = persisted_payload(model['modelId'], 'unknown-version')
+        assert client.post('/api/v1/predictions', headers=MEMBER, json=unknown).status_code == 404
+
+
+@pytest.mark.parametrize('change', ['both', 'neither', 'no-dataset', 'no-commit'])
+def test_prediction_source_must_be_exactly_one(settings, change):
+    from jit_baseline.api import create_app
+    version = seed_commit(settings)
+    with TestClient(create_app(**settings)) as client:
+        model = register(client)
+        body = {'modelId': model['modelId'], 'featureSchemaVersion': 'openstack-six-v1',
+                'project': 'fixture-project', 'record': {'recordId': 'input-1'}}
+        if change == 'both':
+            body['datasetVersion'] = version
+            body['record'] = {'recordId': 'input-1', 'commitId': STORED_COMMIT, 'features': dict(STORED_FEATURES)}
+        elif change == 'no-dataset':
+            body['record'] = {'recordId': 'input-1', 'commitId': STORED_COMMIT}
+        elif change == 'no-commit':
+            body['datasetVersion'] = version
+        response = client.post('/api/v1/predictions', headers=MEMBER, json=body)
+        assert response.status_code == 422, (change, response.text)
+        assert response.json()['error']['code'] == 'INPUT_INVALID'
+
+
+def test_persisted_commit_with_incomplete_features_is_rejected(settings):
+    from jit_baseline.api import create_app
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(settings['database'])
+    with store.connection(write=True) as db:
+        db.execute("INSERT INTO dataset_record VALUES ('broken-v1','demo','{}','m','s',1,'2026-01-01T00:00:00Z')")
+        db.execute('INSERT INTO commit_record VALUES (?,?,?,?,?)',
+                   ('broken-v1', PARTIAL_COMMIT, '2012-01-01T00:00:00Z', 0, 'r'))
+        db.execute('INSERT INTO feature_record VALUES (?,?,?,?)', ('broken-v1', PARTIAL_COMMIT, 'ns', '1'))
+    with TestClient(create_app(**settings)) as client:
+        model = register(client)
+        response = client.post('/api/v1/predictions', headers=MEMBER,
+                               json=persisted_payload(model['modelId'], 'broken-v1', PARTIAL_COMMIT))
+        assert response.status_code == 422, response.text
+        assert response.json()['error']['code'] == 'INPUT_SCHEMA_MISMATCH'
