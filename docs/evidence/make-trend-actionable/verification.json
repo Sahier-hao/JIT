@@ -1,0 +1,54 @@
+{
+  "trendUrl": "http://127.0.0.1:4173/#/trends",
+  "runId": null,
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720,
+      "horizontalOverflow": 0,
+      "partitionsInOrder": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "bandCount": 3,
+      "insightText": "估计与观测的差异（测试区间）差异最显著的是 2013-11：观测正标签比例 18.1%、估计风险 9.3%（差 +8.7 个百分点）。近似 运行只提供中位风险，估计正例数按中位风险折算，不代表期望值。2013-11观测正例（测试）63估计正例（测试）34.5率差 +8.7 pp2014-02观测正例（测试）88估计正例（测试）41.9率差 +8.4 pp2014-01观测正例（测试）73估计正例（测试）44.6率差 +5.6 pp2013-12观测正例（测试）62估计正例（测试）39.2率差 +5.3 pp",
+      "disclaimerPresent": true,
+      "drillButtonCount": 28,
+      "tableRows": 28,
+      "drilldown": {
+        "url": "/?start=2014-02-01&end=2014-02-28",
+        "start": "2014-02-01",
+        "end": "2014-02-28",
+        "rows": 548,
+        "minDate": "2014-02-01",
+        "maxDate": "2014-02-28",
+        "withinRange": true
+      }
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "horizontalOverflow": 0,
+      "partitionsInOrder": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "bandCount": 3,
+      "insightText": "估计与观测的差异（测试区间）差异最显著的是 2013-11：观测正标签比例 18.1%、估计风险 9.3%（差 +8.7 个百分点）。近似 运行只提供中位风险，估计正例数按中位风险折算，不代表期望值。2013-11观测正例（测试）63估计正例（测试）34.5率差 +8.7 pp2014-02观测正例（测试）88估计正例（测试）41.9率差 +8.4 pp2014-01观测正例（测试）73估计正例（测试）44.6率差 +5.6 pp2013-12观测正例（测试）62估计正例（测试）39.2率差 +5.3 pp",
+      "disclaimerPresent": true,
+      "drillButtonCount": 28,
+      "tableRows": 28,
+      "drilldown": {
+        "url": "/?start=2014-02-01&end=2014-02-28",
+        "start": "2014-02-01",
+        "end": "2014-02-28",
+        "rows": 548,
+        "minDate": "2014-02-01",
+        "maxDate": "2014-02-28",
+        "withinRange": true
+      }
+    }
+  ]
+}

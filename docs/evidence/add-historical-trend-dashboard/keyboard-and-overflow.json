@@ -1,0 +1,74 @@
+{
+  "url": "http://127.0.0.1:4173/#/trends",
+  "note": "趋势页由真实 HTTP 供给（后端经 JIT_RUN_DIR 指向带聚合的运行）；键盘滚动在每次按键后等待 250ms 再读数",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720,
+      "horizontalOverflow": 0,
+      "tableRows": 28,
+      "sparseRowText": "2011-112011-11-01T00:00:00+08:00 — 2011-12-01T00:00:00+08:005训练 5样本不足：桶内提交数 5 少于最小样本 20，观测比例不足以比较未提供：该桶没有测试分区记录",
+      "lastRowText": "2014-022014-02-01T00:00:00+08:00 — 2014-03-01T00:00:00+08:00548测试 54816.1%7.7%（测试记录 548 条）",
+      "chartLabel": "历史趋势图：28 个时间桶的提交数、观测正标签比例与模型风险中位数；完整数值见同数据的文本视图",
+      "textViewLabel": "历史趋势文本视图",
+      "keyboard": {
+        "focusOrderReachesTextView": true,
+        "scrollTopStart": 0,
+        "afterArrowDown1": 40,
+        "afterArrowDown2": 80,
+        "afterEnd": 1549,
+        "afterHome": 0,
+        "maxScrollable": 1549,
+        "reachedBottom": true
+      },
+      "focusOrder": [
+        "button:选择真实历史回放",
+        "button:选择演示模式",
+        "button:历史趋势",
+        "button:模型中心",
+        "button:新建预测",
+        "button:打开已有结果",
+        "input:",
+        "a:返回提交工作台",
+        "div:历史趋势文本视图",
+        "body:JIT Review提交风险评审历史数据"
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "horizontalOverflow": 0,
+      "tableRows": 28,
+      "sparseRowText": "2011-112011-11-01T00:00:00+08:00 — 2011-12-01T00:00:00+08:005训练 5样本不足：桶内提交数 5 少于最小样本 20，观测比例不足以比较未提供：该桶没有测试分区记录",
+      "lastRowText": "2014-022014-02-01T00:00:00+08:00 — 2014-03-01T00:00:00+08:00548测试 54816.1%7.7%（测试记录 548 条）",
+      "chartLabel": "历史趋势图：28 个时间桶的提交数、观测正标签比例与模型风险中位数；完整数值见同数据的文本视图",
+      "textViewLabel": "历史趋势文本视图",
+      "keyboard": {
+        "focusOrderReachesTextView": true,
+        "scrollTopStart": 0,
+        "afterArrowDown1": 40,
+        "afterArrowDown2": 80,
+        "afterEnd": 1369,
+        "afterHome": 0,
+        "maxScrollable": 1369,
+        "reachedBottom": true
+      },
+      "focusOrder": [
+        "button:选择真实历史回放",
+        "button:选择演示模式",
+        "button:历史趋势",
+        "button:模型中心",
+        "button:新建预测",
+        "button:打开已有结果",
+        "input:",
+        "a:返回提交工作台",
+        "div:历史趋势文本视图",
+        "body:JIT Review提交风险评审历史数据"
+      ]
+    }
+  ],
+  "absentState": {
+    "noticeText": "该运行未提供趋势聚合当前供给的运行产物里没有趋势聚合键，因此没有可核对的时间桶数据。其余视图（提交工作台、详情、优先审查清单与基线摘要）不受影响。前往提交工作台",
+    "noticeRole": "status"
+  }
+}

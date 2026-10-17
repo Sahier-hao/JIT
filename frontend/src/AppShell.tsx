@@ -32,7 +32,7 @@ function NavButton({
   active: boolean
   enabled: boolean
   label: string
-  icon: 'list' | 'shortlist' | 'project' | 'info' | 'plus' | 'search'
+  icon: 'list' | 'shortlist' | 'project' | 'info' | 'plus' | 'search' | 'trend'
   badge?: number
   onClick: () => void
 }) {
@@ -92,6 +92,13 @@ export function Sidebar({ route, navigate, mode, onMode, view, count = 0, onView
           icon="list"
           label="提交工作台"
           onClick={() => onView?.('list')}
+        />
+        <NavButton
+          active={route.name === 'trends'}
+          enabled
+          icon="trend"
+          label="历史趋势"
+          onClick={() => navigate({ name: 'trends' })}
         />
         <NavButton
           active={onWorkbench && view === 'shortlist'}
