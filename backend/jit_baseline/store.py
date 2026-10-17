@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import datasets
+from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .schemas import resolve
 
@@ -21,8 +22,10 @@ def registry(root=None):
     return datasets.load_all(root)
 
 
-def register(csv_path, schema=None, dataset=None, version=None, root=None):
-    return datasets.register(csv_path, schema=schema, dataset=dataset, version=version, root=root)
+def register(csv_path, schema=None, dataset=None, version=None, root=None, cohort=None, provenance=None,
+             extra=None):
+    return datasets.register(csv_path, schema=schema, dataset=dataset, version=version, root=root,
+                             cohort=cohort, provenance=provenance, extra=extra)
 
 
 def dataset_list(registered):
@@ -50,8 +53,14 @@ def version_view(registered, name):
 
 
 def import_dataset(csv_path, manifest_path, storage):
-    """读描述文件与原始 CSV，单事务导入提交级数据（CMP-01..CMP-06）。"""
+    """读描述文件与原始 CSV，单事务导入提交级数据（CMP-01..CMP-06）。
+
+    `csv_path` 省略时按描述文件的 `file.path` 定位（绝对路径直接使用，相对路径相对 `backend/`）。
+    """
     manifest = datasets.load_manifest(manifest_path)
+    if csv_path is None:
+        declared = Path(manifest["file"]["path"])
+        csv_path = declared if declared.is_absolute() else BACKEND / declared
     csv_path = Path(csv_path)
     started = _now()
     try:
@@ -62,7 +71,7 @@ def import_dataset(csv_path, manifest_path, storage):
         if sha256(blob) != manifest["file"]["sha256"]:
             raise BaselineError("DATASET_INVALID", f"原始 CSV 校验值与描述文件不一致：{csv_path.name}")
         schema = resolve(manifest["schemaName"])
-        records, quality = parse_source(blob, schema)
+        records, quality = parse_source(blob, schema, manifest["cohort"])
         if quality != manifest["quality"]:
             raise BaselineError("DATASET_INVALID", "按描述文件规则重算的质量统计与描述不一致")
         in_model = set(schema.in_model_names())

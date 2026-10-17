@@ -105,6 +105,42 @@ success；失败写 failed 与错误码，库内容不变）。重复导入同�
 `module` 查询参数只在来源提供模块引用时可用；OpenStack 数据没有文件路径列，因此不推导模块，
 按模块查不到记录属于数据事实，不是缺陷。
 
+### 从 Git 仓库采集提交（add-git-repository-collection）
+
+`collect-repository` 直接把一个 Git 仓库转换成 `kamei14-git-v1` 数据集：遍历提交、计算
+Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链路。
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli collect-repository --repo https://github.com/apache/activemq `
+  --since 2023-10-18 --until 2026-10-18 --dataset activemq-3y --output ..\.dsh-tmp\activemq.csv `
+  --register --limit 20000
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| `--repo` | 本地路径直接读；`http(s)` 地址会 `git clone --bare` 到临时目录，采集后删除 |
+| `--since` / `--until` | 提交作者时间窗口，`YYYY-MM-DD` 或 ISO；范围外提交只用于回溯，不进样本 |
+| `--branch` | 分支或提交；默认 `HEAD` |
+| `--limit` | 窗口内提交数上限；超过直接拒绝，避免一次拉爆内存 |
+| `--dataset` / `--output` | 数据集名与 CSV 输出位置；数据集名默认由仓库名派生 |
+| `--register` / `--root` | 采集后立即登记；默认写入 `data/datasets/<数据集>/` |
+
+产物是 CSV（`commit_id`、`author_date`、14 维特征）与描述文件；描述文件多一个 `collection`
+段，记录仓库路径、HEAD、分支、窗口、git 版本、合并/空提交/范围外/二进制计数、SZZ 规则版本
+与两条限制。同一范围重跑幂等，内容不同以 `DATASET_EXISTS` 拒绝覆盖。
+
+两条限制随产物记录，不被静默忽略：特征是**提交级聚合**（Kamei 论文的样本单位是文件级）；
+标签是**简化 SZZ**（只看修复提交消息里的关键词并回溯最近一次变更，不处理重命名、跨文件传播
+与 issue 关联）。采到的数据集可以直接训练，训练时用描述文件指定它：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli run --output ..\.dsh-tmp\run-activemq `
+  --schema kamei14-git-v1 --dataset-manifest ..\.dsh-tmp\registry\activemq-3y\activemq-3y-2023-10-18_2026-10-17.json
+```
+
+运行目录的 `source.json` 记录采集来源（`publisher` 为 `collected`、`revision` 为采集时的 HEAD、
+仓库地址与 git 版本），`datasetVersion` 等于数据集版本名，产物因此能追溯到具体仓库与时间窗口。
+
 ### 已有模型登记
 
 维护者运行 `cli register-model --run-key baseline`（完整命令为

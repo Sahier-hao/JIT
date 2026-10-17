@@ -24,6 +24,21 @@ python -m jit_baseline.cli register-dataset --csv data/openstack/openstack.csv -
 schema，不复制字段表）、质量统计（复用 `data.parse_source` 的纳入规则）、时间范围与样本摘录。
 同内容重复登记幂等；同一版本内容不同以 `DATASET_EXISTS` 拒绝覆盖，必须换版本名。
 
+## 从 Git 仓库采集
+
+`collect-repository` 直接把仓库转成 `kamei14-git-v1` 数据集，默认也登记到本目录：
+
+```powershell
+python -m jit_baseline.cli collect-repository --repo https://github.com/apache/activemq `
+  --since 2023-10-18 --until 2026-10-18 --dataset activemq-3y --output ..\.dsh-tmp\activemq.csv --register
+```
+
+采集出的描述文件比 OpenStack 多一个 `collection` 段：仓库路径、HEAD、分支、时间窗口、git 版本、
+合并/空提交/范围外/二进制计数、SZZ 规则版本与两条限制（提交级聚合、简化 SZZ）。采集出的 CSV
+是**原始数据**，按上面的规则不提交；描述文件要提交。
+
+`--root` 可以改登记目录（验收与冒烟时避免污染本目录）。
+
 ## 校验与使用
 
 - 服务启动时加载本目录；目录不存在、没有任何描述文件或校验失败即**拒绝启动**，不退回内置常量。
