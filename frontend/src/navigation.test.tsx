@@ -1,7 +1,7 @@
 /**
  * 共享应用壳的 hash 导航（任务 3.1、design D1、MPW-01、MPW-09）。
  *
- * 旧首页继续是无 hash 地址、演示模式继续是 `?mode=demo`；新页面只挂在四个 hash 上；
+ * 旧首页继续是无 hash 地址、演示模式继续是 `?mode=demo`；新页面只挂在五个 hash 上；
  * 结果链接只带批次身份，不能把演示查询串一起带过去。
  */
 
@@ -29,7 +29,8 @@ describe('parseHash', () => {
     expect(parseHash('#/')).toEqual({ name: 'workbench' })
   })
 
-  it('识别三个新入口与结果路由', () => {
+  it('识别四个新入口与结果路由', () => {
+    expect(parseHash('#/trends')).toEqual({ name: 'trends' })
     expect(parseHash('#/models')).toEqual({ name: 'models' })
     expect(parseHash('#/predict')).toEqual({ name: 'predict' })
     expect(parseHash('#/predictions')).toEqual({ name: 'open' })
@@ -48,7 +49,7 @@ describe('parseHash', () => {
   })
 
   it('hashFor 与 parseHash 互为反函数', () => {
-    for (const hash of [ROUTE_HASH.models, ROUTE_HASH.predict, ROUTE_HASH.open]) {
+    for (const hash of [ROUTE_HASH.trends, ROUTE_HASH.models, ROUTE_HASH.predict, ROUTE_HASH.open]) {
       expect(hashFor(parseHash(hash))).toBe(hash)
     }
     expect(hashFor({ name: 'workbench' })).toBe('')

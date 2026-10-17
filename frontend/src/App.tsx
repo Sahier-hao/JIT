@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { contextKey, displayTime, emptyQuery, applyQuery, queryCommits, type Commit, type Dataset, type Mode } from './domain'
+import { contextKey, displayTime, emptyQuery, applyQuery, queryCommits, readSeedQuery, type Commit, type Dataset, type Mode } from './domain'
 import { demoLoader, historicalLoader, useDataset, type Loader } from './useDataset'
 import { AppShell, UnknownRoute, type ShellProps } from './AppShell'
 import { CredentialProvider } from './credentials'
@@ -7,6 +7,7 @@ import { useCredential } from './credentialContext'
 import { ModelsPage } from './ModelsPage'
 import { PredictPage } from './PredictPage'
 import { PredictionsPage } from './PredictionsPage'
+import { TrendPage } from './TrendPage'
 import type { PredictionResult } from './predictionContract'
 import { useRoute } from './navigation'
 import { BaselineRecord } from './BaselineRecord'
@@ -47,7 +48,9 @@ function Workbench({ data, view, onView, selection, onSelection }: {
   onSelection: (selection: { ids: string[]; warning: string | null }) => void
 }) {
   const historical = data.mode === 'historical'
-  const [queryState, setQueryState] = useState({ draft: emptyQuery, applied: emptyQuery, error: '' })
+  // 地址上的日期是"查询种子"（CRR-05）：只在挂载时读一次，之后手动修改不写回地址。
+  const [seed] = useState(() => readSeedQuery(window.location.search))
+  const [queryState, setQueryState] = useState({ draft: seed.query, applied: seed.query, error: '' })
   const shortlist = selection.ids
   const [selected, setSelected] = useState<string | null>(null)
   const returnFocus = useRef<HTMLButtonElement | null>(null)
@@ -81,6 +84,7 @@ function Workbench({ data, view, onView, selection, onSelection }: {
       <div className={historical ? 'demo-notice historical-notice' : 'demo-notice'}><Icon name="info" size={17} /><div><strong>{historical ? '公开历史数据 · 模型估计' : '当前为演示数据'}</strong><span>{historical ? '回顾性评价；发布者历史观测标签，未验证当时标签可获得性。风险不等于已确认缺陷。' : '风险分数和解释均为人工示例，不表示真实预测或已确认缺陷。'}</span></div></div>
       <BaselineRecord data={data} />
       {selection.warning ? <p className="warning storage-warning" role="alert">{selection.warning}</p> : null}
+      {seed.ignored && listView ? <p className="status-note status-warn" role="status">地址中的日期范围无效，已忽略；当前按未设置日期显示。</p> : null}
       {listView ? <section className="toolbar" aria-label="提交查询">
         <label className="search-field">提交标识搜索<span className="input-wrap"><Icon name="search" size={17} /><input aria-label="提交标识搜索" placeholder={historical ? '搜索完整标识或片段' : '搜索提交标识，如 demo-0001'} value={queryState.draft.search} onChange={event => updateQuery({ search: event.target.value })} /></span></label>
         <label>起始日期<input aria-label="起始日期" inputMode="numeric" placeholder="YYYY-MM-DD" value={queryState.draft.start} aria-invalid={!!queryState.error} aria-describedby={queryState.error ? 'date-error' : undefined} onChange={event => updateQuery({ start: event.target.value })} /></label>
@@ -141,6 +145,7 @@ function Workspace({ loader, initialMode, loaders }: { loader?: Loader; initialM
 
   let body: ReactNode
   if (route.name === 'models') body = <ModelsPage />
+  else if (route.name === 'trends') body = <TrendPage />
   else if (route.name === 'predict') body = <PredictPage onCreated={result => { setCreated({ generation, result }); navigate({ name: 'result', batchId: result.batchId }) }} />
   else if (route.name === 'open') body = <PredictionsPage navigate={navigate} batchId={null} snapshot={null} />
   else if (route.name === 'result') body = <PredictionsPage navigate={navigate} batchId={route.batchId} snapshot={snapshot} />

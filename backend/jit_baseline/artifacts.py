@@ -11,6 +11,7 @@ import joblib
 import numpy as np
 from sklearn.pipeline import Pipeline
 
+from . import trends
 from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
 from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
 from .data import BaselineError, parse_source, sha256, verified_bytes
@@ -22,7 +23,7 @@ DEFAULT_RUN = BACKEND / "artifacts/baseline"
 CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json", "model.joblib", "reference-predictions.json", "metrics.json")
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
-                 "schemas.py", "algorithms.py", "errors.py")
+                 "schemas.py", "algorithms.py", "errors.py", "trends.py")
 # 每个运行都记录的基础依赖；方法可在其声明里追加自己需要的包（PDB-11）。
 BASE_PACKAGES = ("numpy", "scipy", "scikit-learn", "joblib", "threadpoolctl", "fastapi", "uvicorn")
 
@@ -154,6 +155,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
     training_seconds = round(time.perf_counter() - started, 6)
     risks = predict_risks(pipeline, split["test"], schema)
     metrics = evaluate(split["test"], risks, metric_set)
+    # 时间桶聚合在离线产生（design D1/D10）：产物里只有聚合值，服务不必读测试标签。
+    trend = trends.build_trend_buckets(split, risks)
     dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": fields,
                                                "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
     stats = {key: {"count": len(part), "positiveCount": sum(r["label"] for r in part),
@@ -189,6 +192,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
                "model": {"id": label["id"], "name": label["name"]},
                "trainingSeconds": training_seconds,
+               trends.TREND_KEY: trend,
                "limitations": limitations(schema)}
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
@@ -348,6 +352,12 @@ def verify_run(directory):
     metric_set = manifest["config"].get("metricSet")
     if identity(evaluate(evaluation_records, current, metric_set)) != identity(snapshot.summary["metrics"]):
         raise BaselineError("ARTIFACT_INVALID", "指标与完整测试风险不一致")
+    # 声明提供时间桶聚合的运行：重算测试分区的桶并核对守恒（PDB-21）。
+    # 未声明的既有运行不受影响：缺少该键时这里不做任何检查。
+    recorded_trend = snapshot.summary.get(trends.TREND_KEY)
+    if recorded_trend is not None:
+        trends.check_aggregate(recorded_trend, evaluation_records, current,
+                               snapshot.summary["split"], snapshot.summary["source"]["quality"])
     return manifest
 
 

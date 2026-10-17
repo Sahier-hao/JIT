@@ -1,0 +1,49 @@
+{
+  "copiedFromWorkspace": [
+    "keyboard-and-overflow.json",
+    "trends-1280x720-full.png",
+    "trends-1280x720.png",
+    "trends-1440x900-full.png",
+    "trends-1440x900.png",
+    "trends-absent-1280x720.png",
+    "verification.md"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 7,
+  "files": [
+    {
+      "path": "keyboard-and-overflow.json",
+      "sha256": "84d62a2a007f781d84f727e7be4c8137825fc20c55d9cf3eeb547f041ed5c074"
+    },
+    {
+      "path": "trends-1280x720-full.png",
+      "sha256": "dca6da9342f2ae7005d40cc2d08c687f0c056cf75b23b11cd3a63ce87bd42769"
+    },
+    {
+      "path": "trends-1280x720.png",
+      "sha256": "aee9cf851fea89e9ab619fadca1b650daa7b5955851927cb6e048c2e211af2d1"
+    },
+    {
+      "path": "trends-1440x900-full.png",
+      "sha256": "3f83b51b464cff40958c3d26607a47b5fc026cc89211b0ae1f3dd4aa016d0c85"
+    },
+    {
+      "path": "trends-1440x900.png",
+      "sha256": "e3543f6f629ff6b238d9981794426cbc6e7e30c222002154e45720119248b0f9"
+    },
+    {
+      "path": "trends-absent-1280x720.png",
+      "sha256": "378c640574352aaa14816e34d6f31e03bc4bec3be6e37be5eb9787207df0bdd0"
+    },
+    {
+      "path": "verification.md",
+      "sha256": "ff861382f6f7ec402e3e073424b7bbd442a14cd3d622aea11aa3650751d2e0d0"
+    }
+  ],
+  "frozenUtc": "2026-10-17T10:18:16.421878+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "853092a2a7ab95ac9fb7a486a8cbdb8ac8ccb1406e533e075fb24e2a1b2b2416",
+  "workspace": "docs/evidence/_run/trend"
+}

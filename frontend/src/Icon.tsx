@@ -12,6 +12,7 @@ const drawings = {
   plus: <path d="M12 5v14M5 12h14" />,
   close: <path d="m6 6 12 12M6 18 18 6" />,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7v.1" /></>,
+  trend: <><path d="M4 4v16h16" /><path d="m7 15 4-4 3 2 5-6" /></>,
 } satisfies Record<string, ReactNode>
 
 export function Icon({ name, size = 18, className }: { name: keyof typeof drawings; size?: number; className?: string }) {

@@ -1,8 +1,8 @@
 /**
  * 轻量 hash 导航（design D1）。
  *
- * 旧工作台继续使用无 hash 的地址与 `?mode=demo` 查询串，新页面挂在下面四个路由上：
- * `#/models`、`#/predict`、`#/predictions`、`#/predictions/{batchId}`。未知路由不静默
+ * 旧工作台继续使用无 hash 的地址与 `?mode=demo` 查询串，新页面挂在下面五个路由上：
+ * `#/trends`、`#/models`、`#/predict`、`#/predictions`、`#/predictions/{batchId}`。未知路由不静默
  * 回落到首页，而是给出可返回的提示。
  */
 
@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 export type Route =
   | { name: 'workbench' }
+  | { name: 'trends' }
   | { name: 'models' }
   | { name: 'predict' }
   | { name: 'open' }
@@ -18,6 +19,7 @@ export type Route =
 
 export const ROUTE_HASH = {
   workbench: '',
+  trends: '#/trends',
   models: '#/models',
   predict: '#/predict',
   open: '#/predictions',
@@ -27,6 +29,7 @@ export function parseHash(hash: string): Route {
   const raw = (hash.startsWith('#') ? hash.slice(1) : hash).trim()
   if (raw === '' || raw === '/') return { name: 'workbench' }
   const segments = raw.replace(/^\/+/, '').replace(/\/+$/, '').split('/')
+  if (segments.length === 1 && segments[0] === 'trends') return { name: 'trends' }
   if (segments.length === 1 && segments[0] === 'models') return { name: 'models' }
   if (segments.length === 1 && segments[0] === 'predict') return { name: 'predict' }
   if (segments.length === 1 && segments[0] === 'predictions') return { name: 'open' }
@@ -40,6 +43,8 @@ export function hashFor(route: Route): string {
   switch (route.name) {
     case 'workbench':
       return ROUTE_HASH.workbench
+    case 'trends':
+      return ROUTE_HASH.trends
     case 'models':
       return ROUTE_HASH.models
     case 'predict':

@@ -123,6 +123,16 @@ def _install_stand_in_model(run, positive_rate=0.5):
     write_json(run / "metrics.json", metrics)
     summary = read_json(run / "summary.json")
     summary["metrics"] = metrics
+    # 聚合里的风险分布由模型决定：换模型后按新风险重建这一列，计数与分区拆分不变。
+    # 计数本身与模型无关（标签没有变），只有风险列会陈旧——这正是 verify 会抓住的耦合。
+    from jit_baseline import trends
+    trend = summary.get(trends.TREND_KEY)
+    if trend:
+        with_labels = [dict(r, label=labels[r["id"]]) for r in records]
+        rebuilt = trends.build_trend_buckets({"test": with_labels}, risks, min_sample=trend["minSample"])
+        by_start = {bucket["start"]: bucket["risk"] for bucket in rebuilt["buckets"]}
+        for bucket in trend["buckets"]:
+            bucket["risk"] = by_start.get(bucket["start"])
     write_json(run / "summary.json", summary)
     _resync(run, ("model.joblib", "reference-predictions.json", "metrics.json"))
 
@@ -680,3 +690,74 @@ def test_local_frozen_runs_still_verify_and_reproduce():
                 pytest.skip(known)
             raise
     assert compare_runs(*paths)["passed"] is True
+
+
+def _drop_trend_key(run):
+    """移除摘要中的聚合键并同步清单哈希：模拟未声明聚合的既有运行。"""
+    from jit_baseline.artifacts import read_json, write_json
+    from jit_baseline.data import sha256
+    summary = read_json(run / "summary.json")
+    summary.pop("trendBuckets", None)
+    write_json(run / "summary.json", summary)
+    manifest = read_json(run / "manifest.json")
+    manifest["files"]["summary.json"] = sha256((run / "summary.json").read_bytes())
+    write_json(run / "manifest.json", manifest)
+
+
+def test_run_writes_trend_buckets_consistent_with_partitions(real_run):
+    """聚合只含计数与风险分布：合计等于纳入行数与观测正例数，且不含提交身份或标签。"""
+    from jit_baseline.artifacts import read_json
+    summary = read_json(real_run / "summary.json")
+    trend = summary["trendBuckets"]
+    assert trend["grain"] == "month" and trend["timezone"] == "UTC+08:00" and trend["minSample"] >= 1
+    buckets = trend["buckets"]
+    assert len(buckets) >= 27
+    assert sum(bucket["commits"] for bucket in buckets) == summary["source"]["quality"]["includedRows"]
+    assert sum(bucket["positives"] for bucket in buckets) == summary["source"]["quality"]["positiveLabels"]
+    for name, stat in summary["split"].items():
+        assert sum(b["byPartition"][name]["commits"] for b in buckets) == stat["count"]
+        assert sum(b["byPartition"][name]["positives"] for b in buckets) == stat["positiveCount"]
+    text = json.dumps(buckets, ensure_ascii=False)
+    assert '"label"' not in text and '"id"' not in text and '"features"' not in text
+    assert any(b["observedRate"]["value"] is None and b["observedRate"]["reason"] for b in buckets)
+    assert any(b["risk"] is not None for b in buckets)
+
+
+def test_verify_rejects_tampered_trend_bucket(copied_run):
+    """按声明重算测试分区的桶：被改动的桶必须判为不可用（PDB-21）。"""
+    from jit_baseline.artifacts import read_json, verify_run, write_json
+    from jit_baseline.data import BaselineError
+    summary = read_json(copied_run / "summary.json")
+    bucket = next(b for b in summary["trendBuckets"]["buckets"] if b["byPartition"]["test"]["positives"] > 0)
+    bucket["byPartition"]["test"]["positives"] -= 1
+    bucket["positives"] -= 1
+    write_json(copied_run / "summary.json", summary)
+    _resync(copied_run, ("summary.json",))
+    with pytest.raises(BaselineError) as info:
+        verify_run(copied_run)
+    assert info.value.code == "ARTIFACT_INVALID" and "重算" in str(info.value)
+
+
+def test_verify_rejects_trend_conservation_break(copied_run):
+    """守恒核对：各桶合计与纳入行数不一致时必须失败（PDB-21）。"""
+    from jit_baseline.artifacts import read_json, verify_run, write_json
+    from jit_baseline.data import BaselineError
+    summary = read_json(copied_run / "summary.json")
+    summary["trendBuckets"]["buckets"][0]["commits"] += 1
+    summary["trendBuckets"]["buckets"][0]["byPartition"]["train"]["commits"] += 1
+    write_json(copied_run / "summary.json", summary)
+    _resync(copied_run, ("summary.json",))
+    with pytest.raises(BaselineError) as info:
+        verify_run(copied_run)
+    assert info.value.code == "ARTIFACT_INVALID" and "合计" in str(info.value)
+
+
+def test_run_without_trend_key_still_verifies(copied_run):
+    """未声明聚合的既有运行仍按自身声明通过校验，且产物不被改写（PDB-21）。"""
+    from jit_baseline.artifacts import read_json, verify_run
+    from jit_baseline.data import sha256
+    _drop_trend_key(copied_run)
+    before = sha256((copied_run / "summary.json").read_bytes())
+    manifest = verify_run(copied_run)
+    assert manifest["runId"] and "trendBuckets" not in read_json(copied_run / "summary.json")
+    assert sha256((copied_run / "summary.json").read_bytes()) == before

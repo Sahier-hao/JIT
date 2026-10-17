@@ -22,7 +22,7 @@ $env:PYTHONIOENCODING='utf-8'
 
 已登记的方法见 [PROTOCOL.md](PROTOCOL.md)：`logistic-regression-l2-v1`（经典）、`decision-tree-v1`（经典）与 `random-forest-v1`（经典，首个声明所需依赖的方法）。方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按每个运行**自身声明**的方法、依赖与指标集进行，因此新增方法、新增依赖或新增指标都不会作废既有运行。未注册的方法名以 `ALGORITHM_UNKNOWN` 拒绝，不退回默认方法。
 
-`artifacts/baseline` 是服务的固定运行（六字段逻辑回归）；`artifacts/reproduction*` 是独立重跑；`artifacts/decision-tree-v1` 与 `artifacts/decision-tree-reproduction` 是第二个方法（决策树）的独立运行与其复现，**不替换服务所用的运行**；`artifacts/external/` 放**经仓库交付的外部运行**（见下一节）；`artifacts/development`、`.cache/` 和测试临时目录是技术与行为检查，不能作为正式效果。`data/openstack` 保存原始三文件。manifest 包含环境、训练代码哈希、核心文件、固定协议、方法声明、指标集、模型参数与运行身份，生成时间不影响身份。模型、数据或协议变化会形成其他上下文。
+`artifacts/baseline` 是服务的固定运行（六字段逻辑回归）；`artifacts/reproduction*` 是独立重跑；`artifacts/trend-baseline` 是带时间桶聚合的重跑（由 `JIT_RUN_DIR` 供给，见「本机 HTTP」）；`artifacts/decision-tree-v1` 与 `artifacts/decision-tree-reproduction` 是第二个方法（决策树）的独立运行与其复现，**不替换服务所用的运行**；`artifacts/external/` 放**经仓库交付的外部运行**（见下一节）；`artifacts/development`、`.cache/` 和测试临时目录是技术与行为检查，不能作为正式效果。`data/openstack` 保存原始三文件。manifest 包含环境、训练代码哈希、核心文件、固定协议、方法声明、指标集、模型参数与运行身份，生成时间不影响身份。模型、数据或协议变化会形成其他上下文。
 
 ## 跨机器交付的运行
 
@@ -33,6 +33,26 @@ $env:PYTHONIOENCODING='utf-8'
 跨机器时环境声明的含义见 [PROTOCOL.md](PROTOCOL.md) 的「环境声明与跨机器语义」一节：`trainingEnvironment` 是产方的产出环境（溯源），本机平台或 Python 与之不同**不是失败理由**；校验**实际加载**模型并用交付的无标签输入重算，输出中的 `origin` 标明该运行是外部产生、`verificationEnvironment` 记录本次校验时的本机环境。校验不重训、不覆盖产方声明，任一席位在任一台机器上得到一致判定。
 
 ## 本机 HTTP
+
+### 时间桶观测聚合（add-historical-trend-dashboard）
+
+`run` 在生成产物时按固定粒度（`month`，边界取固定 UTC+08:00）聚合**全部纳入记录**，写入
+`summary.json` 的可选键 `trendBuckets`：每桶给出总体与按分区拆分的样本数、观测正标签数，以及只
+覆盖该桶内测试记录的风险分布（中位数与 p90，最近秩定义）。聚合**只含计数与风险分布**，不含逐条
+标签、提交身份或特征，因此服务仍不读取 `test-labels.json`。桶内样本数少于声明的最小样本
+（默认 20）时，比例与风险分布以空值加原因呈现，不写成 0；首尾之间逐月连续，空月保留为 0 样本桶。
+
+`verify` 按该运行自身的声明重算**测试分区**的桶并做守恒核对（各桶样本数之和等于纳入行数、正标签
+数之和等于观测正例数、按分区归并后与分区统计一致）。训练与验证分区没有逐条标签，因此只受守恒关系
+约束，这一点如实记录、不宣称「完全可重算」。未声明该键的既有运行仍按自身声明通过校验，产物不被
+改写；改动训练代码会产生新的 `runId`，这是既有语义。
+
+```powershell
+# 生成带聚合的新运行（数据已在本机，不需要网络），并核验新旧两个运行
+& .venv/Scripts/python.exe -m jit_baseline.cli run --output artifacts/trend-baseline
+& .venv/Scripts/python.exe -m jit_baseline.cli verify --run artifacts/trend-baseline
+& .venv/Scripts/python.exe -m jit_baseline.cli verify
+```
 
 ### 模型目录存储（register-existing-models-and-predict-json）
 
@@ -130,7 +150,9 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 & .venv/Scripts/python.exe -m jit_baseline.cli serve
 ```
 
-仅监听 `127.0.0.1:8000`，单个工作进程。`GET /api/review-batch` 返回契约版本 1，mode=`historical`、项目、datasetVersion/version、runId、model 的 id/name/sha256、完整 records 和同运行 summary。records 包含 id/time/risk/lines/files/原始 metrics；没有逐条标签、标题或解释。summary 含固定发布者引用和三文件校验、六字段、纳入条件、分区统计、模型关联、两类指标与限制。指标对象为 `{value, reason}`，未定义时 value 为 null、reason 为原因。
+仅监听 `127.0.0.1:8000`，单个工作进程。默认供给 `artifacts/baseline`；环境变量 `JIT_RUN_DIR` 可指向另一个已通过校验的运行目录（例如重跑得到的 `artifacts/trend-baseline`），被指定的目录走**同一**准入校验，未通过时返回明确不可用原因，**不退回**原运行冒充成功。
+
+`GET /api/review-batch` 返回契约版本 1，mode=`historical`、项目、datasetVersion/version、runId、model 的 id/name/sha256、完整 records 和同运行 summary。summary 在运行声明提供时含时间桶聚合 `trendBuckets`（结构与最小样本规则见上文「时间桶观测聚合」），未声明的运行不含该键。records 包含 id/time/risk/lines/files/原始 metrics；没有逐条标签、标题或解释。summary 含固定发布者引用和三文件校验、六字段、纳入条件、分区统计、模型关联、两类指标与限制。指标对象为 `{value, reason}`，未定义时 value 为 null、reason 为原因。
 
 服务启动核验必要文件后只保留该运行快照；每次批次请求都调用已加载模型，服务不读取 test-labels.json 或 reference-predictions.json，不训练、不写文件。缺少必要文件返回 503 `ARTIFACT_UNAVAILABLE`，哈希错误为 503 `INTEGRITY_ERROR`，其他结构和环境错误为 503 `ARTIFACT_INVALID`，无法加载模型为 503 `MODEL_INVALID`。推理异常、非法风险或数量不符返回 500 `INFERENCE_ERROR`。错误响应仅含 `error: {code, message}`，不带部分或旧批次。
 

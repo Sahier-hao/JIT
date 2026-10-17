@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
@@ -59,3 +61,22 @@ def test_inference_failure_returns_500_without_old_or_partial_batch(real_run, mo
         assert response.status_code == 500
         assert response.json()["error"]["code"] == "INFERENCE_ERROR"
         assert "records" not in response.json() and "internal" not in response.text
+
+
+def test_supplied_run_directory_from_environment_without_fallback(real_run, tmp_path, monkeypatch):
+    """JIT_RUN_DIR 选择所供给的运行；未通过校验的目录被拒，不退回首行固定运行（PDB-08）。"""
+    from jit_baseline.api import create_app
+    monkeypatch.setenv("JIT_RUN_DIR", str(real_run))
+    with TestClient(create_app()) as client:
+        payload = client.get("/api/review-batch").json()
+    run_id = json.loads((real_run / "manifest.json").read_text(encoding="utf-8"))["runId"]
+    assert payload["runId"] == payload["summary"]["runId"] == run_id
+    assert "trendBuckets" in payload["summary"]
+    assert all("label" not in r and "title" not in r and "explanation" not in r for r in payload["records"])
+
+    monkeypatch.setenv("JIT_RUN_DIR", str(tmp_path / "missing-run"))
+    with TestClient(create_app()) as client:
+        response = client.get("/api/review-batch")
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "ARTIFACT_UNAVAILABLE"
+    assert "records" not in response.json()

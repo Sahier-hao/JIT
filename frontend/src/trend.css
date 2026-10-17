@@ -1,0 +1,164 @@
+/* 历史趋势的可交互部分（change make-trend-actionable）。
+ *
+ * 只新增类，不改 App.css 里的既有 .trend-* 样式：分区带、洞察面板与下钻按钮都是本轮新增的
+ * 元素，写在这里便于与既有趋势样式分开维护。
+ */
+
+/* ---------- 分区带（DTD-08） ---------- */
+
+.trend-band {
+  fill: #eef3fb;
+  stroke: none;
+}
+
+.trend-band-alt {
+  fill: #f6f8fc;
+}
+
+.trend-band-edge {
+  stroke: #c6d1e2;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.trend-band-label {
+  font: 11px var(--mono);
+  fill: #6b778b;
+}
+
+.trend-partitions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  list-style: none;
+  margin: 6px 0 10px;
+  padding: 0;
+  font-size: 12px;
+  color: #56647b;
+}
+
+.trend-partitions li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.trend-partitions code {
+  font-size: 11px;
+  color: #42506a;
+}
+
+/* ---------- 洞察面板（DTD-09） ---------- */
+
+.trend-insight-panel {
+  margin-bottom: 14px;
+  padding: 16px 18px 6px;
+}
+
+.trend-insight-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #354c6d;
+}
+
+.trend-insight-title span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8490a2;
+}
+
+.trend-insight-headline {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #2b3d58;
+}
+
+.trend-insight-meta {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.trend-insight-approx {
+  color: #8a6524;
+  background: #fff8ec;
+  border: 1px solid #eedfc3;
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
+.trend-insight-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trend-insight-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: baseline;
+  border-top: 1px solid #edf0f6;
+  padding-top: 6px;
+  font-size: 12px;
+  color: #4d5f7a;
+}
+
+.trend-insight-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.trend-insight-row strong {
+  font: 13px var(--mono);
+  color: #2b3d58;
+}
+
+.trend-insight-row .numeric {
+  font-family: var(--mono);
+}
+
+/* ---------- 下钻按钮（DTD-07） ---------- */
+
+.trend-drill {
+  border: 1px solid #dce5f8;
+  background: #f1f5ff;
+  border-radius: 5px;
+  min-height: 28px;
+  padding: 3px 9px;
+  color: #466cc6;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.trend-drill:hover {
+  background: #e4edff;
+  border-color: #b2c5ef;
+}
+
+.trend-drill:focus-visible {
+  outline: 2px solid #7291dc;
+  outline-offset: 2px;
+}
+
+/* 下钻列在窄视口不挤压其它列。 */
+.trend-table th.trend-drill-head,
+.trend-table td.trend-drill-cell {
+  width: 92px;
+  text-align: right;
+}
+
+@media (max-width: 1100px) {
+  .trend-insight-row {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "copiedFromWorkspace": [
+    "drilldown-1280x720.png",
+    "drilldown-1440x900.png",
+    "trends-1280x720.png",
+    "trends-1440x900.png",
+    "verification.json",
+    "verification.md"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 6,
+  "files": [
+    {
+      "path": "drilldown-1280x720.png",
+      "sha256": "3457a79d0029fb5fca1887041b70def49f13d71b79b9208aee4fa346a182a5ac"
+    },
+    {
+      "path": "drilldown-1440x900.png",
+      "sha256": "1ece9ac2ac8eb7b3d8112933c9d118a76b562882329411e41b9f734e65039a93"
+    },
+    {
+      "path": "trends-1280x720.png",
+      "sha256": "fb2e240523ece768d746dcfd7254f703b9d94f6d73b5ea1af35c5dfa8aa64c20"
+    },
+    {
+      "path": "trends-1440x900.png",
+      "sha256": "a9aa6f0470a0ba19bac3f91b52199888b75dc8feec5a5b618126b8c40f68c35c"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "27dac921ec957525252e5aa2cbe6109944d8d31a14e390e6c79f740bb034e8c9"
+    },
+    {
+      "path": "verification.md",
+      "sha256": "6c29d550694ffcfae66c958ef952ca1fefd7d320a61b0b913c397ddb3406e7ca"
+    }
+  ],
+  "frozenUtc": "2026-10-17T10:44:00.667795+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "96083befc195bb312270fb0b925cc33e0dd79b017662e91dba0fd29fab0f2d77",
+  "workspace": "docs/evidence/_run/trend-actionable"
+}

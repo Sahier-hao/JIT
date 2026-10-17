@@ -78,3 +78,17 @@ export function applyQuery(previous: Query, next: Query): { query: Query; error:
   if ((next.start && !validDate(next.start)) || (next.end && !validDate(next.end)) || (next.start && next.end && next.start > next.end)) return { query: previous, error: '请修正日期范围：起始日期不能晚于结束日期，日期须有效。' }
   return { query: next, error: '' }
 }
+
+/**
+ * 地址上的日期查询种子（CRR-05）：合法时作为工作台的初始筛选，非法时**整体忽略**并告知，
+ * 不交换起止、不截断其中一端。只认 `start`／`end` 两个键，其余查询参数一律忽略。
+ */
+export function readSeedQuery(search: string): { query: Query; ignored: boolean } {
+  const params = new URLSearchParams(search)
+  const start = (params.get('start') ?? '').trim()
+  const end = (params.get('end') ?? '').trim()
+  if (start === '' && end === '') return { query: emptyQuery, ignored: false }
+  const invalid = (start !== '' && !validDate(start)) || (end !== '' && !validDate(end)) || (start !== '' && end !== '' && start > end)
+  if (invalid) return { query: emptyQuery, ignored: true }
+  return { query: { ...emptyQuery, start, end }, ignored: false }
+}

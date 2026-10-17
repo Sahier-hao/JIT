@@ -9,8 +9,19 @@ from .artifacts import DEFAULT_RUN, Snapshot
 from .data import BaselineError
 
 
-def create_app(directory: Path = DEFAULT_RUN, *, database=None, artifact_root=None,
+def _supplied_directory():
+    """所供给的运行目录：默认既有固定运行，可用 `JIT_RUN_DIR` 指向另一个已校验的运行。
+
+    指定的目录与默认目录走**同一个**准入路径（`Snapshot.load`），因此未通过校验的
+    目录只会得到明确的不可用状态，不会退回原运行冒充成功（PDB-08）。
+    """
+    configured = os.environ.get("JIT_RUN_DIR")
+    return Path(configured) if configured else DEFAULT_RUN
+
+
+def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
                member_token=None, admin_token=None):
+    directory = Path(directory) if directory is not None else _supplied_directory()
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None)
     from .team_access import install_access
     from .catalog_schema import schema_info

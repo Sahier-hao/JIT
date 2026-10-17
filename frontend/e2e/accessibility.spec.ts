@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync } from 'node:fs'
 import { ensureDir, runEvidenceDir, runScreenshotDir } from '../evidence.ts'
+import { trendFixture } from '../src/trend-fixture.ts'
 
 // NFR 易用性/无障碍检查清单（docs/测试计划.md 第三节 A11-1～A11-5）。
 // 本 spec 由 desktop-1280／desktop-1440 两个 project 各跑一遍，逐项断言并写逐项结论。
@@ -92,4 +93,31 @@ test('A11-4 模式与错误状态有可读文字', async ({ page }, info) => {
   items.push({ id: 'A11-4c', check: '服务失败显示可读错误文字（状态不只靠颜色）', passed: alertText.trim().length > 0 })
   await photo(page, 'accessibility-error', viewport)
   await flush('status-text', items, page, viewport)
+})
+
+// 历史趋势视图：图表是图形，因此必须同时给出不依赖颜色的文字与可聚焦的等价文本视图（DTD-04/05/06）。
+test('A11-6 趋势视图无横向溢出、空值桶有文字说明且文本视图可聚焦', async ({ page }, info) => {
+  const viewport = info.project.name
+  const items: ItemResult[] = []
+  await page.route('**/api/review-batch', route => route.fulfill({ json: trendFixture() }))
+  await page.goto('/#/trends')
+  await expect(page.getByRole('heading', { name: '历史趋势' })).toBeVisible()
+  const overflowOk = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
+  await photo(page, 'accessibility-trends', viewport)
+  items.push({ id: 'A11-6a', check: '趋势视图在目标视口无页面级横向溢出', passed: overflowOk })
+  const sparse = await page
+    .getByRole('table', { name: /历史趋势文本视图/ })
+    .getByRole('row', { name: /^2012-02/ })
+    .innerText()
+  items.push({
+    id: 'A11-6b',
+    check: '空值桶以文字说明样本不足且不显示为 0%',
+    passed: sparse.includes('样本不足') && !sparse.includes('0%'),
+  })
+  const focusable = await page.locator('.trend-table-wrap').evaluate(el => {
+    ;(el as HTMLElement).focus()
+    return el === document.activeElement
+  })
+  items.push({ id: 'A11-6c', check: '图表数据的文本视图可由键盘取得焦点', passed: focusable })
+  await flush('trends', items, page, viewport)
 })
