@@ -99,8 +99,8 @@ success；失败写 failed 与错误码，库内容不变）。重复导入同�
 | --- | --- |
 | `GET /api/v1/datasets` | 已登记数据集与版本摘要（来自描述文件，不含逐条内容） |
 | `GET /api/v1/datasets/{name}/versions` | 某数据集的版本；未知数据集 404 |
-| `GET /api/v1/commits?version=<版本>` | 该版本的提交级记录（含变更规模与入模特征） |
-| `GET /api/v1/commits/{commitId}?version=<版本>` | 单条提交；未知版本或提交 404 |
+| `GET /api/v1/commits?version=<版本>&limit=<1-500>&offset=<0+>` | 该版本的提交摘要（`commitId`、`authorTime`、`label`、`module`），默认 `limit=100`，响应带 `total`/`limit`/`offset`；越界或非整数 422 `INPUT_INVALID` |
+| `GET /api/v1/commits/{commitId}?version=<版本>` | 单条提交的完整特征；未知版本或提交 404 |
 
 `module` 查询参数只在来源提供模块引用时可用；OpenStack 数据没有文件路径列，因此不推导模块，
 按模块查不到记录属于数据事实，不是缺陷。
@@ -124,10 +124,21 @@ CLI 与 HTTP 复用完整 verify 准入，失败不登记模型，正常失败�
 
 ### 单条 JSON 预测与结果重开
 
-成员或管理员向 `POST /api/v1/predictions` 提交 `modelId`、`featureSchemaVersion=openstack-six-v1`、
-`project` 和 `record:{recordId,features}`，可选真实 commitId／带时区 time。features 恰含原始
+预测输入有两种来源，一次请求必须恰好给出一种。
+
+**客户端特征**：提交 `modelId`、`featureSchemaVersion=openstack-six-v1`、`project` 和
+`record:{recordId,features}`，可选真实 commitId／带时区 time。features 恰含原始
 ns、nd、nf、ent、la、ld；不需要预先 log1p／标准化，也不接受标签、缺失／额外字段、布尔计数、
-小数计数、数值字符串或非有限值。实际请求体上限 64 KiB，任一输入错误不发布结果。
+小数计数、数值字符串或非有限值。
+
+**已导入提交**：提交 `modelId`、`featureSchemaVersion`、`project`、`datasetVersion` 和
+`record:{recordId,commitId}`，不给 features。服务按 `datasetVersion` 与 `commitId` 读取导入时
+保存的特征、按 schema 顺序重排后推理；版本或提交未登记返回 404，字段数与 schema 不一致返回 422
+`INPUT_SCHEMA_MISMATCH`。结果的 `sourceKind` 为 `persisted-commit` 并带 `datasetVersion`，
+`limitations` 首条说明特征来自已导入的提交数据、尚未核验真实标签。
+
+两层来源同时给出（features 加 datasetVersion）或缺任一半时返回 422 `INPUT_INVALID` 并定位字段。
+实际请求体上限 64 KiB，任一输入错误不发布结果。
 
 成功完成真实推理并原子保存后返回 201，含 batchId、predictionId、业务 UUID、原产物身份、模型 hash、
 schema、输入 hash、UTC 创建时刻及恰一条风险；`explanationStatus=not-supported` 并说明原因。

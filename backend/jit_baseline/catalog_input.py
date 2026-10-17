@@ -62,16 +62,44 @@ def uuid_text(value, field):
 
 def prediction_input(value):
     from .schemas import get_schema
-    exact_fields(value, ('modelId', 'featureSchemaVersion', 'project', 'record'))
+    exact_fields(value, ('modelId', 'featureSchemaVersion', 'project', 'record'), ('datasetVersion',))
     model_id = uuid_text(value['modelId'], 'modelId')
     if value['featureSchemaVersion'] != 'openstack-six-v1':
         raise RequestError('INPUT_SCHEMA_MISMATCH', field='featureSchemaVersion')
     record = value['record']
-    exact_fields(record, ('recordId', 'features'), ('commitId', 'time'), field='record')
+    exact_fields(record, ('recordId',), ('features', 'commitId', 'time'), field='record')
     for text, field in ((value['project'], 'project'), (record['recordId'], 'record.recordId')):
         if not isinstance(text, str) or not text.strip() or len(text) > 128:
             raise RequestError('INPUT_INVALID', field=field)
+    commit = record.get('commitId')
+    if commit is not None and (not isinstance(commit, str) or not re.fullmatch('[0-9a-fA-F]{40}', commit)):
+        raise RequestError('INPUT_INVALID', field='record.commitId')
+    dataset_version = value.get('datasetVersion')
+    if dataset_version is not None and (not isinstance(dataset_version, str)
+                                        or not dataset_version.strip() or len(dataset_version) > 128):
+        raise RequestError('INPUT_INVALID', field='datasetVersion')
+    time = record.get('time')
+    if time is not None:
+        try:
+            parsed = datetime.fromisoformat(time) if isinstance(time, str) else None
+            if parsed is None or parsed.tzinfo is None or parsed.utcoffset() is None:
+                raise ValueError('timezone')
+            time = parsed.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+        except (ValueError, OverflowError) as exc:
+            raise RequestError('INPUT_INVALID', field='record.time') from exc
     schema = get_schema('openstack-six-v1')
+    has_features = 'features' in record
+    if has_features and dataset_version is not None:
+        # 两种来源只能二选一：客户端特征与已持久化提交不能同时声明。
+        raise RequestError('INPUT_INVALID', field='datasetVersion')
+    if not has_features:
+        if commit is None or dataset_version is None:
+            missing = 'record.commitId' if commit is None else 'datasetVersion'
+            raise RequestError('INPUT_INVALID', field=missing)
+        return {'modelId': model_id, 'featureSchemaVersion': schema.name, 'project': value['project'].strip(),
+                'source': 'persisted-commit', 'datasetVersion': dataset_version.strip(),
+                'record': {'recordId': record['recordId'].strip(), 'features': None,
+                           'commitId': commit.lower(), 'time': time}}
     exact_fields(record['features'], schema.in_model_names(), field='record.features', code='INPUT_SCHEMA_MISMATCH')
     features = {}
     for field in schema.in_model_fields():
@@ -84,18 +112,7 @@ def prediction_input(value):
         if not valid:
             raise RequestError('INPUT_INVALID', field='record.features.' + field.name)
         features[field.name] = int(number) if field.integer else float(number)
-    commit = record.get('commitId')
-    if commit is not None and (not isinstance(commit, str) or not re.fullmatch('[0-9a-fA-F]{40}', commit)):
-        raise RequestError('INPUT_INVALID', field='record.commitId')
-    time = record.get('time')
-    if time is not None:
-        try:
-            parsed = datetime.fromisoformat(time) if isinstance(time, str) else None
-            if parsed is None or parsed.tzinfo is None or parsed.utcoffset() is None:
-                raise ValueError('timezone')
-            time = parsed.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
-        except (ValueError, OverflowError) as exc:
-            raise RequestError('INPUT_INVALID', field='record.time') from exc
     return {'modelId': model_id, 'featureSchemaVersion': schema.name, 'project': value['project'].strip(),
+            'source': 'client-features', 'datasetVersion': None,
             'record': {'recordId': record['recordId'].strip(), 'features': features,
                        'commitId': commit.lower() if commit else None, 'time': time}}

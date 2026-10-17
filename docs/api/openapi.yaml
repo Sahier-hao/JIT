@@ -27,6 +27,77 @@ paths:
         '503': {$ref: '#/components/responses/CurrentUnavailable'}
         '500': {$ref: '#/components/responses/CurrentInferenceFailure'}
       description: 仅本机、无鉴权、实际调用已加载模型，不读取逐条评价标签。当前服务关闭Swagger／OpenAPI地址，此文档不改变运行行为。
+  /api/v1/commits:
+    get:
+      operationId: listCommits
+      summary: 提交级数据分页列表
+      tags: [目标共享产品]
+      x-api-id: API-18
+      x-user-stories: [US-01, US-23]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: read
+      parameters:
+      - name: version
+        in: query
+        required: true
+        schema: {type: string, minLength: 1}
+      - name: module
+        in: query
+        required: false
+        schema: {type: string, minLength: 1}
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 500, default: 100}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 当前响应，列表项只含摘要
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommitPage'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/InputInvalid'}
+      description: 列表项为 commitId／authorTime／label／module，不返回特征。limit 越界（0、501、负数、非整数）返回 422 INPUT_INVALID，不静默截断；未知 version 返回 404。
+  /api/v1/commits/{commitId}:
+    get:
+      operationId: getCommit
+      summary: 单条提交的完整特征
+      tags: [目标共享产品]
+      x-api-id: API-19
+      x-user-stories: [US-01, US-23]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: read
+      parameters:
+      - name: commitId
+        in: path
+        required: true
+        schema: {type: string, minLength: 1}
+      - name: version
+        in: query
+        required: true
+        schema: {type: string, minLength: 1}
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommitDetail'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '404': {$ref: '#/components/responses/NotFound'}
+      description: 未知提交或未知版本返回 404，不返回空对象。
   /api/v1/datasets:
     get:
       operationId: listDatasets
@@ -1264,6 +1335,41 @@ components:
           minItems: 0
       required: [datasetId, name, sourceKey, sourceUrl, versions]
       additionalProperties: false
+    CommitSummary:
+      type: object
+      properties:
+        commitId: {type: string, minLength: 1}
+        authorTime: {type: string, format: date-time}
+        label: {type: integer, enum: [0, 1]}
+        module: {type: [string, 'null']}
+      required: [commitId, authorTime, label, module]
+      additionalProperties: false
+    CommitPage:
+      type: object
+      properties:
+        datasetVersion: {type: string, minLength: 1}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 500}
+        offset: {type: integer, minimum: 0}
+        commits:
+          type: array
+          items: {$ref: '#/components/schemas/CommitSummary'}
+          minItems: 0
+      required: [datasetVersion, total, limit, offset, commits]
+      additionalProperties: false
+    CommitDetail:
+      type: object
+      properties:
+        commitId: {type: string, minLength: 1}
+        datasetVersion: {type: string, minLength: 1}
+        authorTime: {type: string, format: date-time}
+        label: {type: integer, enum: [0, 1]}
+        labelRule: {type: string, minLength: 1}
+        features:
+          type: object
+          additionalProperties: {type: number}
+      required: [commitId, datasetVersion, authorTime, label, labelRule, features]
+      additionalProperties: false
     DatasetList:
       type: object
       properties:
@@ -1557,7 +1663,8 @@ components:
       type: object
       properties:
         mode:
-          const: feature-input
+          type: string
+          enum: [feature-input, persisted-commit]
         batchId:
           $ref: '#/components/schemas/Uuid'
         project:
@@ -1574,10 +1681,14 @@ components:
         featureSchemaVersion:
           type: string
           minLength: 1
+        datasetVersion:
+          type: string
+          minLength: 1
         inputSha256:
           $ref: '#/components/schemas/Hash'
         sourceKind:
-          const: client-features
+          type: string
+          enum: [client-features, persisted-commit]
         records:
           type: array
           items:

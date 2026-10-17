@@ -20,6 +20,15 @@ class PredictionService:
         if snapshot.schema.name != data['featureSchemaVersion'] or not model['jsonPredictionSupported']:
             raise RequestError('INPUT_SCHEMA_MISMATCH', field='featureSchemaVersion')
         record = data['record']
+        persisted = data['source'] == 'persisted-commit'
+        if persisted:
+            stored = self.catalog.store.commit(data['datasetVersion'], record['commitId'])
+            if stored is None:
+                raise RequestError('NOT_FOUND')
+            if set(stored['features']) != set(snapshot.schema.in_model_names()):
+                raise RequestError('INPUT_SCHEMA_MISMATCH', field='record.features')
+            record = {**record, 'features': {name: stored['features'][name]
+                                             for name in snapshot.schema.in_model_names()}}
         vector = [record['features'][field] for field in snapshot.schema.in_model_names()]
         try:
             risks = predict_risks(snapshot.model, [{'features': vector}], snapshot.schema)
@@ -27,7 +36,9 @@ class PredictionService:
             raise RequestError('INFERENCE_ERROR') from exc
         batch_id, prediction_id = str(uuid4()), str(uuid4())
         created_at = utc_now()
-        result = {'mode': 'feature-input', 'sourceKind': 'client-features', 'batchId': batch_id,
+        result = {'mode': 'persisted-commit' if persisted else 'feature-input',
+                  'sourceKind': 'persisted-commit' if persisted else 'client-features',
+                  'batchId': batch_id, 'datasetVersion': data['datasetVersion'],
                   'project': data['project'], 'runId': model['runId'], 'model': model,
                   'featureSchemaVersion': data['featureSchemaVersion'],
                   'inputSha256': identity({key: value for key, value in data.items() if key != 'modelId'}),
@@ -35,7 +46,8 @@ class PredictionService:
                   'records': [{'predictionId': prediction_id, **record, 'risk': risks[0],
                                'explanationStatus': 'not-supported',
                                'explanationReason': '该模型的真实预测解释尚未接入'}],
-                  'limitations': ['原始特征由调用方提供，尚未核验源码提取或真实标签。',
+                  'limitations': ['特征来自已导入的提交数据，尚未核验真实标签。' if persisted
+                                  else '原始特征由调用方提供，尚未核验源码提取或真实标签。',
                                   '风险为已登记模型估计，未验证在线仓库效果，不代表已确认缺陷。',
                                   '本轮未提供真实预测解释或代码定位。', *model['limitations']]}
         with self.catalog.store.connection(write=True) as db:

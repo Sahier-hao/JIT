@@ -160,6 +160,23 @@ class CatalogStorage:
                 'authorTime': row['author_time'], 'label': row['label'],
                 'labelRule': row['label_rule'], 'features': features}
 
+    @staticmethod
+    def _summary_row(row, module):
+        return {'commitId': row['commit_id'], 'authorTime': row['author_time'],
+                'label': row['label'], 'module': module}
+
+    def _modules(self, db, version, commit_ids):
+        collected = {}
+        if not commit_ids:
+            return collected
+        wanted = set(commit_ids)
+        for row in db.execute("SELECT commit_id, entity_value FROM modified_entity "
+                              "WHERE dataset_version=? AND entity_type='module' "
+                              "ORDER BY entity_value", (version,)).fetchall():
+            if row['commit_id'] in wanted:
+                collected.setdefault(row['commit_id'], row['entity_value'])
+        return collected
+
     def datasets(self):
         with self.connection() as db:
             rows = db.execute('SELECT * FROM dataset_record ORDER BY dataset_version').fetchall()
@@ -178,14 +195,29 @@ class CatalogStorage:
                 'sourceSha256': row['source_sha256'], 'rowCount': row['row_count'],
                 'importedAt': row['created_at']}
 
-    def commits(self, version):
+    def commits(self, version, limit=None, offset=0, summary=False):
         with self.connection() as db:
             if db.execute('SELECT 1 FROM dataset_record WHERE dataset_version=?', (version,)).fetchone() is None:
                 return None
-            rows = db.execute('SELECT * FROM commit_record WHERE dataset_version=? '
-                              'ORDER BY author_time, commit_id', (version,)).fetchall()
+            query = ('SELECT * FROM commit_record WHERE dataset_version=? '
+                     'ORDER BY author_time, commit_id')
+            params = [version]
+            if limit is not None:
+                query += ' LIMIT ? OFFSET ?'
+                params.extend((limit, offset))
+            rows = db.execute(query, params).fetchall()
+            if summary:
+                modules = self._modules(db, version, [row['commit_id'] for row in rows])
+                return [self._summary_row(row, modules.get(row['commit_id'])) for row in rows]
             features = self._features(db, version, [row['commit_id'] for row in rows])
         return [self._commit_row(row, features[row['commit_id']]) for row in rows]
+
+    def count_commits(self, version):
+        with self.connection() as db:
+            if db.execute('SELECT 1 FROM dataset_record WHERE dataset_version=?', (version,)).fetchone() is None:
+                return None
+            return db.execute('SELECT COUNT(*) FROM commit_record WHERE dataset_version=?',
+                              (version,)).fetchone()[0]
 
     def commit(self, version, commit_id):
         with self.connection() as db:
@@ -196,16 +228,30 @@ class CatalogStorage:
             features = self._features(db, version, [commit_id])
         return self._commit_row(row, features[commit_id])
 
-    def commits_by_entity(self, entity_type, entity_value):
+    def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False):
         """按已经持久化的文件或模块引用查提交（CMP-03）；测试用查询入口。"""
         with self.connection() as db:
-            rows = db.execute(
-                'SELECT c.* FROM commit_record c JOIN modified_entity e '
-                'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
-                'WHERE e.entity_type=? AND e.entity_value=? ORDER BY c.author_time, c.commit_id',
-                (entity_type, entity_value)).fetchall()
+            query = ('SELECT c.* FROM commit_record c JOIN modified_entity e '
+                     'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
+                     'WHERE e.entity_type=? AND e.entity_value=? ORDER BY c.author_time, c.commit_id')
+            params = [entity_type, entity_value]
+            if limit is not None:
+                query += ' LIMIT ? OFFSET ?'
+                params.extend((limit, offset))
+            rows = db.execute(query, params).fetchall()
+            if rows and summary:
+                modules = self._modules(db, rows[0]['dataset_version'], [row['commit_id'] for row in rows])
+                return [self._summary_row(row, modules.get(row['commit_id'])) for row in rows]
             features = self._features(db, rows[0]['dataset_version'], [row['commit_id'] for row in rows]) if rows else {}
         return [self._commit_row(row, features[row['commit_id']]) for row in rows]
+
+    def count_by_entity(self, entity_type, entity_value):
+        with self.connection() as db:
+            return db.execute(
+                'SELECT COUNT(*) FROM commit_record c JOIN modified_entity e '
+                'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
+                'WHERE e.entity_type=? AND e.entity_value=?',
+                (entity_type, entity_value)).fetchone()[0]
 
     def import_runs(self, version):
         with self.connection() as db:
