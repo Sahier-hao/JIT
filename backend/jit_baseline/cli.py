@@ -37,6 +37,16 @@ def main():
     register.add_argument('--run-key', required=True)
     register.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     register.add_argument('--artifact-root', type=Path, default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    dataset_register = commands.add_parser('register-dataset')
+    dataset_register.add_argument('--csv', type=Path, default=BACKEND / 'data/openstack/openstack.csv')
+    dataset_register.add_argument('--schema', default=None, help='具名特征 schema；默认 openstack-six-v1')
+    dataset_register.add_argument('--dataset', default=None, help='数据集名；默认取 schema 名')
+    dataset_register.add_argument('--version', default=None, help='版本名；默认 <数据集>-<起始日>_<结束日>')
+    dataset_register.add_argument('--output', type=Path, default=None, help='描述文件根目录；默认 backend/data/datasets')
+    dataset_import = commands.add_parser('import-dataset')
+    dataset_import.add_argument('--csv', type=Path, default=BACKEND / 'data/openstack/openstack.csv')
+    dataset_import.add_argument('--manifest', type=Path, required=True)
+    dataset_import.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
@@ -52,6 +62,16 @@ def main():
             from .catalog import ModelCatalog
             from .catalog_storage import CatalogStorage
             result = ModelCatalog(CatalogStorage(args.database), args.artifact_root).register_key(args.run_key)
+        elif args.command == 'register-dataset':
+            from . import store
+            result = dict(store.register(args.csv, schema=args.schema, dataset=args.dataset,
+                                         version=args.version, root=args.output), kind='dataset-registered')
+        elif args.command == 'import-dataset':
+            from . import store
+            from .catalog_storage import CatalogStorage
+            storage = CatalogStorage(args.database)
+            storage.initialize()
+            result = dict(store.import_dataset(args.csv, args.manifest, storage), kind='dataset-imported')
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":

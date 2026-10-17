@@ -76,6 +76,35 @@ $env:PYTHONIOENCODING='utf-8'
 每个新请求使用服务器生成的 `X-Request-Id`；错误含同一 requestId，日志只记角色、操作及状态。
 原 `GET /api/review-batch` 保留无鉴权和本机监听，且不因新凭据或数据库未初始化而改变行为。
 
+### 数据集描述与提交级数据（add-dataset-registry-and-commit-persistence）
+
+数据集描述文件是登记事实，放在 `data/datasets/<数据集>/<版本>.json`，随仓库提交（`.gitignore`
+只忽略原始 CSV 与运行目录）。登记时从真实 CSV 重算校验值、字段定义、质量统计与时间范围：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli register-dataset
+& .venv/Scripts/python.exe -m jit_baseline.cli import-dataset --manifest data/datasets/openstack-six-v1/openstack-six-v1-2011-11-29_2014-02-28.json
+```
+
+`register-dataset` 同内容重复登记幂等；同一版本内容不同以 `DATASET_EXISTS` 拒绝覆盖。
+`import-dataset` 在一个事务里写提交、变更规模与入模特征，并记录 `import_run`（先 pending 后
+success；失败写 failed 与错误码，库内容不变）。重复导入同一版本幂等，返回 `created: false`。
+
+目录库升到版本 2：`catalog-init` 把旧库按序升级；`dataset_record`、`commit_record`、
+`modified_entity`、`feature_record`、`import_run` 只增不改，旧表与既有模型接口不变。
+
+只读查询接口（需团队 Bearer 凭据，成员即可）：
+
+| 路径 | 说明 |
+| --- | --- |
+| `GET /api/v1/datasets` | 已登记数据集与版本摘要（来自描述文件，不含逐条内容） |
+| `GET /api/v1/datasets/{name}/versions` | 某数据集的版本；未知数据集 404 |
+| `GET /api/v1/commits?version=<版本>` | 该版本的提交级记录（含变更规模与入模特征） |
+| `GET /api/v1/commits/{commitId}?version=<版本>` | 单条提交；未知版本或提交 404 |
+
+`module` 查询参数只在来源提供模块引用时可用；OpenStack 数据没有文件路径列，因此不推导模块，
+按模块查不到记录属于数据事实，不是缺陷。
+
 ### 已有模型登记
 
 维护者运行 `cli register-model --run-key baseline`（完整命令为

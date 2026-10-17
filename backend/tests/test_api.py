@@ -80,3 +80,16 @@ def test_supplied_run_directory_from_environment_without_fallback(real_run, tmp_
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "ARTIFACT_UNAVAILABLE"
     assert "records" not in response.json()
+
+
+def test_startup_requires_dataset_registry(tmp_path, monkeypatch):
+    """描述文件是登记事实：目录缺失即拒绝启动，不退回空目录（DSR-06）。"""
+    import jit_baseline.api as api_module
+    import jit_baseline.datasets as datasets_module
+    from jit_baseline.errors import BaselineError
+
+    monkeypatch.setattr(datasets_module, "DATASETS", tmp_path / "empty")
+    with pytest.raises(BaselineError) as error:
+        api_module.create_app(database=tmp_path / "catalog.sqlite3",
+                              member_token="member-token", admin_token="admin-token")
+    assert error.value.code == "DATASET_REGISTRY_EMPTY"

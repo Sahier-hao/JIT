@@ -12,7 +12,7 @@ def test_initialize_is_versioned_idempotent_and_reopens(tmp_path):
     store.initialize()
     with store.connection() as db:
         assert db.execute('PRAGMA foreign_keys').fetchone()[0] == 1
-        assert db.execute('SELECT version FROM schema_migration').fetchone()[0] == 1
+        assert db.execute('SELECT version FROM schema_migration').fetchone()[0] == 2
         assert db.execute('SELECT count(*) FROM model_version').fetchone()[0] == 0
     with CatalogStorage(store.path).connection() as db:
         assert db.execute('SELECT count(*) FROM prediction').fetchone()[0] == 0
@@ -57,7 +57,7 @@ def test_migration_failure_is_atomic(tmp_path):
     bad = tmp_path / 'bad.sql'
     bad.write_text('CREATE TABLE partial(id INTEGER); INVALID SQL;', encoding='utf-8')
     with pytest.raises(BaselineError):
-        store.initialize(migration=bad)
+        store.initialize(migrations=((1, bad),), version=1)
     with sqlite3.connect(store.path) as db:
         assert db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall() == []
 
@@ -82,7 +82,7 @@ def test_initialize_cli_is_explicit(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr('sys.argv', ['jit', 'catalog-init', '--database', str(database)])
     main()
     result = json.loads(capsys.readouterr().out)
-    assert result == {'kind': 'catalog-initialized', 'version': 1}
+    assert result == {'kind': 'catalog-initialized', 'version': 2}
     assert database.exists()
 
 
