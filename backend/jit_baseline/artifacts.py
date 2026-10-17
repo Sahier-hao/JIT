@@ -23,7 +23,7 @@ DEFAULT_RUN = BACKEND / "artifacts/baseline"
 CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json", "model.joblib", "reference-predictions.json", "metrics.json")
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
-                 "schemas.py", "algorithms.py", "errors.py", "trends.py")
+                 "schemas.py", "algorithms.py", "errors.py", "deep.py", "trends.py")
 # 每个运行都记录的基础依赖；方法可在其声明里追加自己需要的包（PDB-11）。
 BASE_PACKAGES = ("numpy", "scipy", "scikit-learn", "joblib", "threadpoolctl", "fastapi", "uvicorn")
 

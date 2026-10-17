@@ -14,6 +14,7 @@ from threadpoolctl import threadpool_limits
 
 from .algorithms import DEFAULT_ALGORITHM, get_algorithm
 from .data import BaselineError
+from .deep import torch_ft_transformer, torch_mlp, torch_tabular_resnet, torch_wide_deep
 from .schemas import DEFAULT_SCHEMA, resolve
 
 # 估计器实现表：注册条目声明用哪一个，这里提供可 joblib 序列化的实现。
@@ -23,6 +24,10 @@ ESTIMATORS = {
     "random-forest": RandomForestClassifier,
     "gaussian-naive-bayes": GaussianNB,
     "gradient-boosting": GradientBoostingClassifier,
+    "torch-mlp": torch_mlp,
+    "torch-tabular-resnet": torch_tabular_resnet,
+    "torch-ft-transformer": torch_ft_transformer,
+    "torch-wide-deep": torch_wide_deep,
 }
 
 
