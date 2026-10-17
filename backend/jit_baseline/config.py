@@ -4,10 +4,16 @@ from pathlib import Path
 BACKEND = Path(__file__).resolve().parents[1]
 REVISION = "184403ad3734894c8417cbec72fdef3da5edc0b9"
 BASE_URL = f"https://raw.githubusercontent.com/software-rebels/JITMovingTarget/{REVISION}/"
+# 每个来源：相对 backend 的路径、锁定校验值，以及可选的数据集描述文件（相对 backend）。
+# 描述文件存在时，运行声明记录它并按其声明校验；缺失时保留旧运行的常量校验路径。
 SOURCES = {
-    "openstack.csv": ("data/openstack.csv", "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505"),
-    "load_data.r": ("scripts/load_data.r", "4be31b4663f2dfc677594ca278abfcd814d42d04f09b06be1a5b031c1aace475"),
-    "experimental_settings.r": ("scripts/experimental_settings.r", "2d62ff540dc26ef05864d20862b2966e637eba34b9e66a09a06cdaa2837d3209"),
+    "openstack.csv": {"path": "data/openstack.csv",
+                      "sha256": "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505",
+                      "datasetManifest": "data/datasets/openstack-six-v1/openstack-six-v1-2011-11-29_2014-02-28.json"},
+    "load_data.r": {"path": "scripts/load_data.r",
+                    "sha256": "4be31b4663f2dfc677594ca278abfcd814d42d04f09b06be1a5b031c1aace475"},
+    "experimental_settings.r": {"path": "scripts/experimental_settings.r",
+                                "sha256": "2d62ff540dc26ef05864d20862b2966e637eba34b9e66a09a06cdaa2837d3209"},
 }
 COHORT = {"startEpochInclusive": 1322599384, "endEpochExclusive": 1393590700,
           "addedLinesGreaterThan": 0, "maxChurnInclusive": 10000, "maxFilesInclusive": 100}

@@ -5,11 +5,15 @@ frontend/playwright-report/
 *.local
 backend/.venv/
 backend/.cache/
-backend/data/
+# 原始数据集可由 fetch 重新取得，不提交；数据集描述文件是登记事实，必须提交
+backend/data/*
+!backend/data/datasets/
+!backend/data/datasets/**
 # 本机运行目录整体忽略（可由命令重新取得）；仅放开交付的外部运行，见 artifacts/external/README.md
 backend/artifacts/*
 !backend/artifacts/external/
 backend/.pytest_cache/
+backend/tests/.tmp/
 **/__pycache__/
 docs/evidence/_run/
 backend/.tmp-verify/

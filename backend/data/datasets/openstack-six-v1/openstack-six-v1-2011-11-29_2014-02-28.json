@@ -1,0 +1,140 @@
+{
+  "citation": "McIntosh & Kamei (2018), Are Fix-Inducing Changes a Moving Target? TSE 44(5), 412-428.",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1393590700,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1322599384
+  },
+  "dataset": "openstack-six-v1",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "ent",
+      "reason": "",
+      "source": "ent",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 4448994,
+    "name": "openstack.csv",
+    "path": "data/openstack/openstack.csv",
+    "sha256": "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505"
+  },
+  "publisher": "software-rebels/JITMovingTarget",
+  "quality": {
+    "blankLabels": 9812,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 812,
+      "outsideWindow": 13646,
+      "tooManyFiles": 20,
+      "tooMuchChurn": 3
+    },
+    "featureMissing": {
+      "ent": 0,
+      "la": 0,
+      "ld": 0,
+      "nd": 0,
+      "nf": 0,
+      "ns": 0
+    },
+    "includedRows": 12374,
+    "positiveLabels": 1616,
+    "rawRows": 26855
+  },
+  "revision": "184403ad3734894c8417cbec72fdef3da5edc0b9",
+  "samples": [
+    {
+      "id": "adf912b98c527f5f92686543963c1665dee8c119",
+      "time": "2011-11-29T20:43:04Z"
+    },
+    {
+      "id": "0d54770ee109bc7d598539b9238affdd1880997b",
+      "time": "2011-11-29T21:24:05Z"
+    },
+    {
+      "id": "01afc61e6201ea22926f27e82280f0b3c6f2362f",
+      "time": "2011-11-30T08:27:33Z"
+    },
+    {
+      "id": "aaf5762be5d37cac022dc321b6400b9743a25303",
+      "time": "2014-02-28T12:08:20Z"
+    },
+    {
+      "id": "3824051b1e5618388a17c88867a3037397bc96b7",
+      "time": "2014-02-28T12:31:39Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "openstack-six-v1",
+  "timeRange": {
+    "end": "2014-02-28T12:31:39Z",
+    "endEpoch": 1393590699,
+    "start": "2011-11-29T20:43:04Z",
+    "startEpoch": 1322599384
+  },
+  "url": "https://raw.githubusercontent.com/software-rebels/JITMovingTarget/184403ad3734894c8417cbec72fdef3da5edc0b9/data/openstack.csv",
+  "version": "openstack-six-v1-2011-11-29_2014-02-28"
+}

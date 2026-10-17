@@ -32,7 +32,8 @@ def verified_bytes(path, expected):
 def fetch_sources(directory, opener=urllib.request.urlopen):
     directory = Path(directory)
     verified = {}
-    for filename, (relative, expected) in SOURCES.items():
+    for filename, entry in SOURCES.items():
+        relative, expected = entry["path"], entry["sha256"]
         path = directory / filename
         if path.exists():
             verified[filename] = verified_bytes(path, expected)
@@ -51,7 +52,7 @@ def fetch_sources(directory, opener=urllib.request.urlopen):
         path = directory / filename
         if not path.exists():
             path.write_bytes(blob)
-    return {name: {"url": BASE_URL + SOURCES[name][0], "sha256": sha256(blob), "bytes": len(blob)}
+    return {name: {"url": BASE_URL + SOURCES[name]["path"], "sha256": sha256(blob), "bytes": len(blob)}
             for name, blob in verified.items()}
 
 

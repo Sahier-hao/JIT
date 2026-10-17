@@ -71,3 +71,37 @@ def test_kamei_schema_reports_unavailable_fields(settings):
         info = client.get('/api/v1/feature-schemas/kamei14-v1', headers=MEMBER).json()
         assert len(info['inModel']) == 12 and info['jsonPredictionSupported'] is False
         assert {f['name'] for f in info['fields'] if not f['inModel']} == {'lt','rexp'}
+
+
+def test_dataset_and_commit_queries_share_one_registry(settings):
+    """数据集与提交查询是只读的：登记事实不存在时返回 404，不构造空响应。"""
+    from jit_baseline import datasets
+    from jit_baseline.api import create_app
+    from jit_baseline.catalog_storage import CatalogStorage
+
+    manifest = datasets.load_all()['openstack-six-v1-2011-11-29_2014-02-28']
+    records = [
+        {'id': 'c1', 'time': '2012-01-01T00:00:00Z', 'label': 1,
+         'metrics': {'la': 1, 'ld': 0, 'nf': 2, 'nd': 1, 'ns': 0, 'ent': 1.5}},
+        {'id': 'c2', 'time': '2012-01-02T00:00:00Z', 'label': 0,
+         'metrics': {'la': 0, 'ld': 3, 'nf': 1, 'nd': 0, 'ns': 2, 'ent': 0.5}},
+    ]
+    CatalogStorage(settings['database']).import_dataset(manifest, records)
+    with TestClient(create_app(**settings)) as client:
+        listing = client.get('/api/v1/datasets', headers=MEMBER)
+        assert listing.status_code == 200
+        assert [item['dataset'] for item in listing.json()['datasets']] == ['openstack-six-v1']
+        versions = client.get('/api/v1/datasets/openstack-six-v1/versions', headers=MEMBER)
+        assert [item['version'] for item in versions.json()['versions']] == [manifest['version']]
+        assert client.get('/api/v1/datasets/unknown/versions', headers=MEMBER).status_code == 404
+
+        commits = client.get('/api/v1/commits', params={'version': manifest['version']}, headers=MEMBER)
+        assert commits.status_code == 200
+        assert [item['commitId'] for item in commits.json()['commits']] == ['c1', 'c2']
+        assert commits.json()['commits'][0]['features']['nf'] == 2
+        detail = client.get('/api/v1/commits/c1', params={'version': manifest['version']}, headers=MEMBER)
+        assert detail.json()['label'] == 1 and detail.json()['features']['ent'] == 1.5
+        assert client.get('/api/v1/commits/missing', params={'version': manifest['version']},
+                          headers=MEMBER).status_code == 404
+        assert client.get('/api/v1/commits', params={'version': 'missing'}, headers=MEMBER).status_code == 404
+        assert client.get('/api/v1/datasets', headers={'Authorization': 'Bearer wrong'}).status_code == 401

@@ -23,6 +23,11 @@ def test_every_declared_estimator_has_an_implementation():
     from jit_baseline.model import ESTIMATORS, build_estimator
     assert {entry["estimator"] for entry in ALGORITHMS.values()} <= set(ESTIMATORS)
     for name, entry in ALGORITHMS.items():
+        if "torch" in entry.get("requires", ()):
+            try:
+                import torch  # noqa: F401
+            except ImportError:
+                continue  # 本机未安装 torch 时只验证可选框架之外的方法
         assert build_estimator(entry).__class__.__name__, name
 
 
@@ -65,8 +70,9 @@ def test_cross_schema_comparison_is_not_directly_rankable(six_runs, kamei_run):
     report = compare_methods([six_runs["decision-tree-v1"], kamei_run])
     assert report["directlyRankable"] is False
     assert report["reasons"]
-    # 跨 schema 会在测试成员、数据版本与特征 schema 上同时不同，逐项都要被列出。
-    for label in ("测试成员", "数据版本", "特征 schema"):
+    # 数据版本由描述文件唯一确定（同一来源与纳入规则），跨 schema 只在
+    # 测试成员与特征 schema 上不同；两者都要被列出。
+    for label in ("测试成员", "特征 schema"):
         assert any(label in reason for reason in report["reasons"]), label
 
 
