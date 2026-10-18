@@ -1,0 +1,97 @@
+/**
+ * 基础层：重置、字号阶梯、行高与全局可读性约束。
+ *
+ * 规则（design D3/D13，spec IP-02/IP-07）：
+ * - 字号阶梯只有 6 档：12 / 13 / 15 / 20 / 26 / 28；中文正文不小于 12px。
+ * - 等宽只用于标识、KPI 与刻度，日期与中文一律无衬线。
+ * - 全局 tabular-nums，数字列可对齐。
+ * - 尊重 prefers-reduced-motion（IP-07）。
+ */
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--canvas);
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; }
+
+/* 单选与复选仍用浏览器原生控件（不另造一套），但着色跟随强调色：
+ * 深色主题下默认的白底空心圆点几乎不可见（实测踩到）。 */
+input[type='radio'],
+input[type='checkbox'] { accent-color: var(--accent); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection { background: var(--accent-soft); }
+
+svg { flex-shrink: 0; }
+
+/* ---------- 字号阶梯 ---------- */
+h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+
+h2 { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 700; color: var(--fg); }
+h3 { margin: 0; font-size: 15px; line-height: 1.4; font-weight: 700; color: var(--fg); }
+
+/* 导语、元信息、微标三档，供组件复用 */
+.t-lede { font-size: 15px; line-height: 1.6; color: var(--fg-2); }
+.t-meta { font-size: 12px; line-height: 1.5; color: var(--fg-3); }
+.t-micro {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--fg-3);
+}
+
+/* 等宽的合法用途：标识、KPI、刻度、计数 */
+.t-mono { font-family: var(--mono); }
+
+code, kbd, samp {
+  font-family: var(--mono);
+  font-size: .92em;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 无障碍与动效 ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

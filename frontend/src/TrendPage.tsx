@@ -14,7 +14,7 @@
  */
 
 import { shanghaiDate, type BaselineSummary, type Dataset } from './domain'
-import { LoadingNotice } from './Feedback'
+import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
 import { parseSummaryTrend, type TrendAggregate, type TrendBucket, type TrendMeasure } from './trendContract'
 import { DEFAULT_INSIGHTS, INSIGHT_DISCLAIMER, type TrendInsight } from './trendInsights'
@@ -51,17 +51,19 @@ function measureText(measure: TrendMeasure, emptyLabel: string): string {
 }
 
 function riskText(bucket: TrendBucket): string {
-  if (bucket.risk === null) return '未提供：该桶没有测试分区记录'
+  if (bucket.risk === null) return '—'
   if (bucket.risk.median === null) return `样本不足：${bucket.risk.reason ?? '原因未记录'}`
   return `${percent(bucket.risk.median)}（测试记录 ${bucket.risk.count} 条）`
 }
 
 /** 该桶记录覆盖哪些分区：用于说明观测比例覆盖全部记录、风险只覆盖其中的测试记录。 */
 function partitionText(bucket: TrendBucket): string {
-  const parts = Object.entries(bucket.byPartition)
-    .filter(([, count]) => count.commits > 0)
-    .map(([name, count]) => `${partitionLabel(name)} ${count.commits}`)
-  return parts.length === 0 ? '无记录' : parts.join(' · ')
+  const parts = Object.entries(bucket.byPartition).filter(([, count]) => count.commits > 0)
+  if (parts.length === 0) return '无记录'
+  // 单分区桶只显示名称（与"提交数"列重复）；跨分区桶保留各自条数，
+  // 用来解释"D宽测比例覆盖全部记录、风险只覆盖其中的测试记录"（DTD-03）。
+  if (parts.length === 1) return partitionLabel(parts[0][0])
+  return parts.map(([name, count]) => `${partitionLabel(name)} ${count.commits}`).join(' · ')
 }
 
 /** 比例轴上限：至少 20%，取到 5% 的整数倍，最多 100%。 */
@@ -142,8 +144,14 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
     ...buckets.map((bucket) => bucket.observedRate.value ?? 0),
     ...buckets.map((bucket) => bucket.risk?.median ?? 0),
   ])
-  const yRate = (value: number) => CHART.top + plotHeight * (1 - value / rateMax)
-  const yCommits = (value: number) => CHART.top + plotHeight * (1 - value / commitsMax)
+  // 双序列分离（design D14）：上半区放提交数（有自己的纵轴），下半区放比例与风险，
+  // 两区共享 x 轴。这样柱状序列不再借用百分比刻度，读数不再悬空。
+  const commitsTop = CHART.top
+  const commitsBottom = CHART.top + plotHeight * 0.42
+  const rateTop = CHART.top + plotHeight * 0.56
+  const rateBottom = CHART.top + plotHeight
+  const yRate = (value: number) => rateBottom - (rateBottom - rateTop) * (value / rateMax)
+  const yCommits = (value: number) => commitsBottom - (commitsBottom - commitsTop) * (value / commitsMax)
   const labelStep = Math.max(1, Math.ceil(count / 8))
   const bands = partitionBands(split, domainStart, domainEnd, xTime)
 
@@ -180,10 +188,15 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
       role="img"
       aria-label={`历史趋势图：${count} 个时间桶的提交数、观测正标签比例与模型风险中位数，并按运行摘要标出 ${bands.length} 个分区的范围；完整数值见同数据的文本视图`}
     >
-      {bands.map((band, index) => (
+      <defs>
+        <pattern id="trend-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="8" stroke="var(--chart-hatch)" strokeWidth="1" />
+        </pattern>
+      </defs>
+      {bands.map((band) => (
         <g key={`band-${band.key}`} data-partition={band.key}>
           <rect
-            className={index % 2 === 0 ? 'trend-band' : 'trend-band trend-band-alt'}
+            className={band.key === 'test' ? 'trend-band trend-band-test' : 'trend-band trend-band-hatch'}
             x={band.x}
             y={CHART.top}
             width={band.width}
@@ -200,16 +213,23 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
         </g>
       ))}
       {[0, rateMax / 2, rateMax].map((tick) => (
-        <g key={tick}>
+        <g key={`rate-${tick}`}>
           <line className="trend-grid" x1={CHART.left} x2={CHART.left + plotWidth} y1={yRate(tick)} y2={yRate(tick)} />
-          <text className="trend-axis-text" x={CHART.left - 10} y={yRate(tick) + 4} textAnchor="end">
+          <line className="trend-tick" x1={CHART.left - 4} x2={CHART.left} y1={yRate(tick)} y2={yRate(tick)} />
+          <text className="trend-axis-text" x={CHART.left - 8} y={yRate(tick) + 3.5} textAnchor="end">
             {percent(tick)}
           </text>
         </g>
       ))}
-      <text className="trend-axis-text" x={CHART.width - 6} y={CHART.top - 6} textAnchor="end">
-        {commitsMax} 次提交
-      </text>
+      {[0, Math.round(commitsMax / 2), commitsMax].map((tick) => (
+        <g key={`commits-${tick}`}>
+          <line className="trend-grid" x1={CHART.left} x2={CHART.left + plotWidth} y1={yCommits(tick)} y2={yCommits(tick)} />
+          <line className="trend-tick" x1={CHART.left - 4} x2={CHART.left} y1={yCommits(tick)} y2={yCommits(tick)} />
+          <text className="trend-axis-text" x={CHART.left - 8} y={yCommits(tick) + 3.5} textAnchor="end">
+            {tick}
+          </text>
+        </g>
+      ))}
       {buckets.map((bucket) => {
         const bucketWidth = Math.max(0, xTime(Date.parse(bucket.end)) - xTime(Date.parse(bucket.start)))
         const barWidth = Math.max(3, Math.min(bucketWidth * 0.42, 26))
@@ -220,8 +240,7 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
             x={midOf(bucket) - barWidth / 2}
             y={yCommits(bucket.commits)}
             width={barWidth}
-            height={CHART.top + plotHeight - yCommits(bucket.commits)}
-            rx={2}
+            height={commitsBottom - yCommits(bucket.commits)}
           />
         )
       })}
@@ -232,7 +251,7 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
           x1={midOf(buckets[index])}
           x2={midOf(buckets[index])}
           y1={CHART.top}
-          y2={CHART.top + plotHeight}
+          y2={rateBottom}
         />
       ))}
       {observed.map((points) => (
@@ -241,7 +260,7 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
             <polyline className="trend-line trend-line-observed" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
           ) : null}
           {points.map((point) => (
-            <circle key={point.x} className="trend-dot trend-dot-observed" cx={point.x} cy={point.y} r={3} />
+            <rect key={point.x} className="trend-dot trend-dot-observed" x={point.x - 2.5} y={point.y - 2.5} width={5} height={5} />
           ))}
         </g>
       ))}
@@ -251,11 +270,12 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
             <polyline className="trend-line trend-line-estimated" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
           ) : null}
           {points.map((point) => (
-            <rect key={point.x} className="trend-dot trend-dot-estimated" x={point.x - 3} y={point.y - 3} width={6} height={6} />
+            <rect key={point.x} className="trend-dot trend-dot-estimated" x={point.x - 2.5} y={point.y - 2.5} width={5} height={5} />
           ))}
         </g>
       ))}
-      <line className="trend-axis" x1={CHART.left} x2={CHART.left + plotWidth} y1={CHART.top + plotHeight} y2={CHART.top + plotHeight} />
+      <line className="trend-axis trend-axis-split" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateTop - 6} y2={rateTop - 6} />
+      <line className="trend-axis" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateBottom} y2={rateBottom} />
       {buckets.map((bucket, index) =>
         index % labelStep === 0 ? (
           <text
@@ -321,7 +341,7 @@ function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (bucket:
                 <td className="time-cell">
                   <time dateTime={bucket.start}>{monthOf(bucket.start)}</time>
                   <span>
-                    {bucket.start} — {bucket.end}
+                    {bucket.start.slice(0, 10)} — {bucket.end.slice(0, 10)}
                   </span>
                 </td>
                 <td className="numeric">{bucket.commits}</td>
@@ -343,6 +363,7 @@ function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (bucket:
           })}
         </tbody>
       </table>
+      <p className="trend-table-note">「—」表示该桶没有测试分区记录，因此不提供模型风险中位数；样本不足的桶在单元格内给出原因。</p>
     </div>
   )
 }
@@ -510,24 +531,15 @@ export function TrendPage({
       <>
         <header className="topbar">JIT · 提交评审 · 历史趋势</header>
         {resource.state === 'loading' ? (
-          <div role="status">
-            <LoadingNotice label="正在读取真实历史运行的摘要与趋势聚合。" />
-          </div>
+          <LoadingNotice label="正在读取真实历史运行的摘要与趋势聚合。" />
         ) : (
           // useDataset 的失败是纯文本原因；FailureNotice 按错误类型分类会把它换成通用文案，
           // 因此这里沿用工作台的"数据不可用 + 原因 + 重新加载"呈现。
-          <div className="notice notice-failure" role="alert">
-            <Icon name="info" size={17} />
-            <div>
-              <strong>数据不可用</strong>
-              <span>{resource.error}</span>
-              <div className="notice-actions">
-                <button type="button" onClick={retry}>
-                  重新加载
-                </button>
-              </div>
-            </div>
-          </div>
+          <EmptyState tone="alert" title="数据不可用" description={resource.error}>
+            <button type="button" className="primary-button" onClick={retry}>
+              重新加载
+            </button>
+          </EmptyState>
         )}
       </>
     )

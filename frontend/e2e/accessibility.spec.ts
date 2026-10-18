@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { writeFileSync } from 'node:fs'
 import { ensureDir, runEvidenceDir, runScreenshotDir } from '../evidence.ts'
+import { historicalFixture } from '../src/historical-fixture.ts'
 import { trendFixture } from '../src/trend-fixture.ts'
 
 // NFR 易用性/无障碍检查清单（docs/测试计划.md 第三节 A11-1～A11-5）。
@@ -43,8 +44,13 @@ test('A11-1 列表、详情与清单无页面级横向溢出', async ({ page }, 
 test('A11-2/3/5 纯键盘链路、焦点返回与详情滚动', async ({ page }, info) => {
   const viewport = info.project.name
   const items: ItemResult[] = []
+  // 这一条检查的是"键盘能走到、能打开、能滚、能返回"，不是数据量：用行为夹具（2 条记录）即可。
+  // 真实 1853 行整表上的同一套链路由 historical.spec.ts 的「真实完整列表键盘详情与焦点返回」覆盖，
+  // 那里才需要真实体积（也就在那里单独给预算）。
+  const fixture = historicalFixture()
+  await page.route('**/api/review-batch', route => route.fulfill({ json: fixture }))
   await page.goto('/')
-  await expect(commits(page)).toHaveCount(1853)
+  await expect(commits(page)).toHaveCount(fixture.records.length)
   const first = commits(page).first()
   let found = false
   for (let i = 0; i < 24; i++) {
@@ -62,8 +68,14 @@ test('A11-2/3/5 纯键盘链路、焦点返回与详情滚动', async ({ page },
   await page.keyboard.press('End')
   await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
   items.push({ id: 'A11-5', check: '详情区可滚动（End 后 scrollTop>0）', passed: true })
-  await page.keyboard.press('Tab')
-  const addFocused = await page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true }).evaluate(el => el === document.activeElement)
+  // 详情内新增「来源与局限」折叠项，Tab 站数随之变化：按可达性判断，不锁定固定站数
+  const addButton = page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })
+  let addFocused = false
+  for (let i = 0; i < 3; i++) {
+    addFocused = await addButton.evaluate(el => el === document.activeElement)
+    if (addFocused) break
+    await page.keyboard.press('Tab')
+  }
   items.push({ id: 'A11-2d', check: 'Tab 到达加入按钮且有焦点', passed: addFocused })
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
@@ -78,7 +90,7 @@ test('A11-4 模式与错误状态有可读文字', async ({ page }, info) => {
   const items: ItemResult[] = []
   await page.goto('/')
   await expect(commits(page)).toHaveCount(1853)
-  const badgeText = await page.locator('.historical-badge').innerText()
+  const badgeText = await page.locator('.mode-tag').first().innerText()
   const historicalText = await page.getByText('真实历史回放', { exact: true }).isVisible()
   items.push({ id: 'A11-4a', check: '真实模式徽标含可读文字', passed: historicalText && badgeText.trim().length > 0 })
   await page.getByRole('button', { name: '选择演示模式' }).click()

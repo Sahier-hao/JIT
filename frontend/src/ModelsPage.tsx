@@ -1,58 +1,45 @@
 /**
- * 模型中心（MPW-03、MPW-04；任务 3.2／3.3）。
+ * 模型中心（MPW-03、MPW-04；任务 3.2／3.3，视觉改造任务 5.2）。
  *
  * 先展示已登记目录，再由用户主动打开管理员候选区。这里既不能把注册的方法条目当成已登记模型，
  * 也不能代替管理员自动登记本机 baseline。
+ *
+ * 呈现（design D14）：KPI 账本 + 表格 + 右侧抽屉。表格每行一条登记项，`.model-card` 仍是一条
+ * 登记项的容器、`.state-badge` 仍是可用性标签——两者都是 e2e 的选择目标，类名保留。
+ * 结论（可用性、是否支持单条预测）与告警常驻表格，完整来源与局限进抽屉，一层可达。
  */
 
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchCandidates, fetchModels, registerModel } from './apiClient'
 import { ApiError } from './apiContract'
 import { type ModelCandidate, type ModelEntry, predictionSelectable, schemaFieldsInModel, unavailableSchemaField } from './catalogContract'
 import { useCredential } from './credentialContext'
-import { CredentialNotice, FailureNotice, LoadingNotice, MetaBlock, StatusNote } from './Feedback'
+import { CredentialNotice, EmptyState, FailureNotice, LoadingNotice, MetaBlock, StatusNote } from './Feedback'
 import { Icon } from './Icon'
 import { useResource } from './requestState'
 
-function ModelCard({ model, highlighted }: { model: ModelEntry; highlighted: boolean }) {
-  const missing = unavailableSchemaField(model.featureSchema)
-  const inModel = schemaFieldsInModel(model.featureSchema)
-  const origin = model.origin === 'local' ? '本机产生' : '外部产生'
+/** 可用性标签：6px 色块 + 文字（不用描边徽章）。`.state-badge` 系列类名保留。 */
+function StateBadge({ model }: { model: ModelEntry }) {
+  const ready = model.state === 'ready'
   return (
-    <article className={highlighted ? 'model-card highlighted' : 'model-card'}>
-      <header className="model-card-head">
-        <div>
-          <h3>{model.name}</h3>
-          <p className="model-method">
-            方法 <code>{model.method}</code> · 来源 {origin}
-          </p>
-        </div>
-        <span className={model.state === 'ready' ? 'state-badge state-ready' : 'state-badge state-invalid'}>
-          {model.state === 'ready' ? '已登记 · 可用' : '已登记 · 不可用'}
-        </span>
-      </header>
-      <dl className="model-facts">
-        <div>
-          <dt>特征 schema</dt>
-          <dd>
-            <code>{model.featureSchemaVersion}</code> · {inModel.length} 个字段入模
-          </dd>
-        </div>
-        <div>
-          <dt>单条预测支持</dt>
-          <dd>
-            {model.jsonPredictionSupported
-              ? `支持 ${model.featureSchemaVersion} 的六字段单条预测`
-              : `不支持单条 JSON 预测（本模型为 ${model.featureSchemaVersion}）`}
-          </dd>
-        </div>
-        <div>
-          <dt>模型哈希</dt>
-          <dd>
-            <code>{model.sha256}</code>
-          </dd>
-        </div>
-      </dl>
+    <span className={ready ? 'state-badge state-ready' : 'state-badge state-invalid'}>
+      <i className="state-dot" aria-hidden="true" />
+      {ready ? '已登记 · 可用' : '已登记 · 不可用'}
+    </span>
+  )
+}
+
+function predictionSupport(model: ModelEntry): string {
+  return model.jsonPredictionSupported
+    ? `支持 ${model.featureSchemaVersion} 的六字段单条预测`
+    : `不支持单条 JSON 预测（本模型为 ${model.featureSchemaVersion}）`
+}
+
+/** 逐条登记项的告警：不可用原因与未提供的字段必须常驻表格，不能藏进抽屉。 */
+function ModelAlerts({ model }: { model: ModelEntry }) {
+  const missing = unavailableSchemaField(model.featureSchema)
+  return (
+    <>
       {model.error === null ? null : (
         <StatusNote tone="warn">
           不可用原因（<code>{model.error.code}</code>）：{model.error.message}
@@ -64,14 +51,49 @@ function ModelCard({ model, highlighted }: { model: ModelEntry; highlighted: boo
           {missing.map((field) => `${field.name}（${field.reason ?? '原因未记录'}）`).join('；')}
         </StatusNote>
       )}
-      {predictionSelectable(model) ? null : (
-        <p className="model-actions">
-          <a href="#/predict">前往新建预测</a> 只会列出当前可用且支持六字段单条预测的模型。
-        </p>
-      )}
-      <details className="model-details">
-        <summary>查看完整来源与局限</summary>
-        <div className="model-details-body">
+    </>
+  )
+}
+
+/**
+ * 来源与局限抽屉：Esc 关闭、点击背板关闭、关闭后焦点回到触发按钮（与设置面板同一套语义）。
+ */
+function ModelDrawer({ model, onClose }: { model: ModelEntry; onClose: () => void }) {
+  const closeButton = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    closeButton.current?.focus()
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      onClose()
+    }
+    document.addEventListener('keydown', escape)
+    // 抽屉是覆盖层：打开期间锁住页面滚动，否则背景会在模态层后面滚动，
+    // 而且滚动条本身会把固定定位的抽屉顶出可比对的可视宽度。
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', escape)
+      document.body.style.overflow = previous
+    }
+  }, [onClose])
+
+  return (
+    <>
+      <div className="scrim" onClick={onClose} aria-hidden="true" />
+      <aside className="drawer model-drawer" role="dialog" aria-modal="true" aria-label="模型来源与局限">
+        <div className="drawer-head">
+          <span>来源与局限</span>
+          <button className="icon-button" ref={closeButton} aria-label="关闭模型详情" onClick={onClose}>
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+        <div className="drawer-body">
+          <p className="drawer-model-name">{model.name}</p>
+          <p className="drawer-model-method">
+            方法 <code>{model.method}</code> · 来源 {model.origin === 'local' ? '本机产生' : '外部产生'}
+          </p>
           <dl className="identity-list">
             <div>
               <dt>模型身份</dt>
@@ -109,6 +131,12 @@ function ModelCard({ model, highlighted }: { model: ModelEntry; highlighted: boo
                 <code>{model.featureSchema.schemaSha256}</code>
               </dd>
             </div>
+            <div>
+              <dt>模型哈希</dt>
+              <dd>
+                <code>{model.sha256}</code>
+              </dd>
+            </div>
           </dl>
           <MetaBlock
             title="训练环境（产物声明）"
@@ -124,9 +152,15 @@ function ModelCard({ model, highlighted }: { model: ModelEntry; highlighted: boo
               ))}
             </ul>
           </section>
+          {predictionSelectable(model) ? null : (
+            <p className="model-actions">
+              本模型不可用于单条预测：<a href="#/predict">前往新建预测</a>{' '}
+              只会列出当前可用、且支持六字段单条预测的模型。
+            </p>
+          )}
         </div>
-      </details>
-    </article>
+      </aside>
+    </>
   )
 }
 
@@ -240,14 +274,12 @@ function CandidateSection({ onRegistered }: { onRegistered: (model: ModelEntry) 
         <span>只列出后端允许的相对展示名称；没有路径输入，也没有模型上传</span>
       </div>
       {candidates.status === 'credential-required' ? <CredentialNotice /> : null}
-      {candidates.status === 'loading' ? <LoadingNotice label="正在读取本机候选目录。" /> : null}
+      {candidates.status === 'loading' ? <LoadingNotice label="本机候选目录。" /> : null}
       {candidates.status === 'failed' ? (
         <FailureNotice error={candidates.error} onRetry={candidates.reload} />
       ) : null}
       {candidates.status === 'ready' && list.length === 0 ? (
-        <p className="status-note status-info" role="status">
-          本机没有可登记的候选产物。请先用后端命令产生并校验运行产物。
-        </p>
+        <StatusNote tone="info">本机没有可登记的候选产物。请先用后端命令产生并校验运行产物。</StatusNote>
       ) : null}
       {list.length > 0 ? (
         <ul className="candidate-list">
@@ -275,12 +307,81 @@ function CandidateSection({ onRegistered }: { onRegistered: (model: ModelEntry) 
   )
 }
 
+/** 一条登记项的两行：数据行（`.model-card`）+ 可选的告警行。 */
+function ModelRows({
+  model,
+  highlighted,
+  onOpen,
+}: {
+  model: ModelEntry
+  highlighted: boolean
+  onOpen: (model: ModelEntry, trigger: HTMLButtonElement) => void
+}) {
+  const inModel = schemaFieldsInModel(model.featureSchema)
+  const hasAlert = model.error !== null || unavailableSchemaField(model.featureSchema).length > 0
+  return (
+    <>
+      <tr className={highlighted ? 'model-card highlighted' : 'model-card'} data-state={model.state}>
+        <td className="model-name-cell">
+          <strong>{model.name}</strong>
+          <span className="model-method">
+            方法 <code>{model.method}</code> · 来源 {model.origin === 'local' ? '本机产生' : '外部产生'}
+          </span>
+        </td>
+        <td className="model-schema-cell">
+          <code>{model.featureSchemaVersion}</code>
+          <span className="model-schema-count">{inModel.length} 个字段入模</span>
+        </td>
+        <td className="model-predict-cell">{predictionSupport(model)}</td>
+        <td className="model-state-cell">
+          <StateBadge model={model} />
+        </td>
+        <td className="action-cell">
+          <button
+            type="button"
+            className="row-action"
+            aria-label={`查看 ${model.name} 的来源与局限`}
+            onClick={(event) => onOpen(model, event.currentTarget)}
+          >
+            查看完整来源与局限
+          </button>
+        </td>
+      </tr>
+      {hasAlert ? (
+        <tr className="model-alert-row">
+          <td colSpan={5}>
+            <div className="model-alert-body">
+              <ModelAlerts model={model} />
+            </div>
+          </td>
+        </tr>
+      ) : null}
+    </>
+  )
+}
+
 export function ModelsPage() {
   const catalog = useResource((context) => fetchModels(context.token, context.signal))
   const [adminOpen, setAdminOpen] = useState(false)
   const [highlight, setHighlight] = useState<string | null>(null)
   const [registration, setRegistration] = useState<string | null>(null)
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const detailTrigger = useRef<HTMLButtonElement | null>(null)
   const models = catalog.data ?? []
+
+  const ready = models.filter((model) => model.state === 'ready').length
+  const selectable = models.filter(predictionSelectable).length
+  const detail = models.find((model) => model.modelId === detailId) ?? null
+
+  const closeDetail = useCallback(() => {
+    setDetailId(null)
+    detailTrigger.current?.focus()
+  }, [])
+
+  function openDetail(model: ModelEntry, trigger: HTMLButtonElement) {
+    detailTrigger.current = trigger
+    setDetailId(model.modelId)
+  }
 
   function onRegistered(model: ModelEntry) {
     setHighlight(model.modelId)
@@ -289,7 +390,7 @@ export function ModelsPage() {
   }
 
   return (
-    <>
+    <div className="models-page">
       <header className="topbar">
         <div>
           <span className="project-symbol">
@@ -331,6 +432,25 @@ export function ModelsPage() {
         </div>
       </div>
 
+      <dl className="ledger models-ledger" aria-label="目录概况">
+        <div>
+          <dt>登记项</dt>
+          <dd>{models.length}</dd>
+        </div>
+        <div>
+          <dt>可用</dt>
+          <dd>{ready}</dd>
+        </div>
+        <div>
+          <dt>不可用</dt>
+          <dd>{models.length - ready}</dd>
+        </div>
+        <div>
+          <dt>支持单条预测</dt>
+          <dd>{selectable}</dd>
+        </div>
+      </dl>
+
       <div className="section-caption">
         <span>
           已登记模型 <b>{models.length}</b>
@@ -342,27 +462,49 @@ export function ModelsPage() {
         </span>
       </div>
       {catalog.status === 'credential-required' ? <CredentialNotice /> : null}
-      {catalog.status === 'loading' ? <LoadingNotice label="正在读取已登记模型目录。" /> : null}
+      {catalog.status === 'loading' ? <LoadingNotice label="已登记模型目录。" /> : null}
       {catalog.status === 'failed' ? <FailureNotice error={catalog.error} onRetry={catalog.reload} /> : null}
       {registration === null ? null : <StatusNote tone="ok">{registration}</StatusNote>}
       {catalog.status === 'ready' && models.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-mark">
-            <Icon name="project" size={28} />
-          </div>
-          <h2>尚无已登记模型</h2>
-          <p>
-            管理员可从下方「管理登记」校验本机已有候选产物并登记；成员可联系维护者完成登记。
-            系统不会自动登记本机 baseline。
-          </p>
-        </div>
+        <EmptyState
+          title="尚无已登记模型"
+          description="管理员可从下方「管理登记」校验本机已有候选产物并登记；成员可联系维护者完成登记。系统不会自动登记本机 baseline。"
+        />
       ) : null}
       {models.length > 0 ? (
-        <div className="model-list">
-          {models.map((model) => (
-            <ModelCard key={model.modelId} model={model} highlighted={model.modelId === highlight} />
-          ))}
-        </div>
+        <section className="list-panel models-panel" aria-label="已登记模型">
+          <div className="table-wrap models-table-wrap">
+            <table className="models-table">
+              <caption className="sr-only">已登记模型目录</caption>
+              <thead>
+                <tr>
+                  <th>模型 / 方法</th>
+                  <th>特征 schema</th>
+                  <th>单条预测支持</th>
+                  <th>状态</th>
+                  <th className="action-head">来源与局限</th>
+                </tr>
+              </thead>
+              <tbody>
+                {models.map((model) => (
+                  <ModelRows
+                    key={model.modelId}
+                    model={model}
+                    highlighted={model.modelId === highlight}
+                    onOpen={openDetail}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <footer className="list-footer">
+            <span>状态按登记时冻结的身份判断；不可用原因与未提供的字段直接列在行下</span>
+            <span>
+              <Icon name="list" size={14} />
+              {models.length} 条登记项
+            </span>
+          </footer>
+        </section>
       ) : null}
 
       <div className="section-caption">
@@ -385,6 +527,8 @@ export function ModelsPage() {
         <span>JIT Review</span>
         <span>模型目录只读展示；登记只提交所选候选的身份与 manifest 校验值</span>
       </footer>
-    </>
+
+      {detail === null ? null : <ModelDrawer model={detail} onClose={closeDetail} />}
+    </div>
   )
 }

@@ -110,6 +110,10 @@ test('真实基线摘要保持完整批次指标，演示清单与真实隔离',
 })
 
 test('真实完整列表键盘详情与焦点返回', async ({ page }, info) => {
+  // 这条用例刻意跑真实 1853 行整表：初次布局加上整表上的键盘走查单独就要 29–33s，
+  // 用默认 30s 会在并行时恰好越界。这里只在"确实需要真实体积"的用例上给预算，
+  // 而不是把全局默认值抬高（键盘可达性本身另由 accessibility.spec 用行为夹具覆盖）。
+  test.setTimeout(90_000)
   await page.goto('/')
   await expect(commits(page)).toHaveCount(1853)
   const first = commits(page).first()
@@ -127,8 +131,13 @@ test('真实完整列表键盘详情与焦点返回', async ({ page }, info) => 
   await expect(content).toBeFocused()
   await page.keyboard.press('End')
   await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
-  await page.keyboard.press('Tab')
-  await expect(page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })).toBeFocused()
+  // 详情内新增了「来源与局限」折叠项，Tab 站数会随之变化：按"可达"断言而不是固定站数
+  const addButton = page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })
+  for (let count = 0; count < 4; count++) {
+    if (await addButton.evaluate(element => element === document.activeElement)) break
+    await page.keyboard.press('Tab')
+  }
+  await expect(addButton).toBeFocused()
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
   await expect(first).toBeFocused()

@@ -3,9 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f5f4ee" />
+    <meta name="theme-color" content="#f7f7f4" />
     <meta name="description" content="JIT 提交风险评审工作台，明确标注演示数据的桌面交互原型。" />
     <title>JIT · 提交评审工作台</title>
+    <script>
+      // 首帧前应用外观偏好，避免浅色闪白（design D10）。
+      (function () {
+        try {
+          var theme = localStorage.getItem('jit.theme')
+          if (theme) document.documentElement.dataset.theme = theme
+          var density = localStorage.getItem('jit.density')
+          if (density) document.documentElement.dataset.density = density
+          var sidebar = localStorage.getItem('jit.sidebar')
+          if (sidebar) document.documentElement.dataset.sidebar = sidebar
+        } catch (error) {
+          // 存储不可用时以默认外观渲染（IP-05 场景）
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

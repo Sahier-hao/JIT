@@ -8,7 +8,7 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { createPrediction, fetchFeatureSchema, fetchModels } from './apiClient'
 import { type FeatureField, importFeatureJson } from './featureJson'
-import { CredentialNotice, FailureNotice, LoadingNotice, StatusNote } from './Feedback'
+import { CredentialNotice, EmptyState, FailureNotice, LoadingNotice, StatusNote } from './Feedback'
 import { Icon } from './Icon'
 import { type ModelEntry, predictionSelectable } from './catalogContract'
 import { type PredictionResult, type Submission } from './predictionContract'
@@ -113,6 +113,128 @@ function FieldError({ id, message }: { id: string; message?: string }) {
     <p className="field-error" id={id}>
       {message}
     </p>
+  )
+}
+
+const SIX: FeatureField[] = ['ns', 'nd', 'nf', 'ent', 'la', 'ld']
+
+/** 必填项清单的显示顺序：先列标识类字段，再列六项特征。 */
+const REQUIRED: DraftField[] = ['project', 'recordId', 'ns', 'nd', 'nf', 'ent', 'la', 'ld']
+
+/**
+ * 右侧实时摘要（任务 5.3、design D14）。
+ *
+ * 只汇总表单里已经存在的东西：所选模型的冻结身份、草稿的填写与校验进度、以及"能不能提交"。
+ * 摘要里不出现任何百分比——风险值还没产生，写一个看起来像置信度的数字反而会误导。
+ */
+function DraftSummary({
+  model,
+  draft,
+  errors,
+  complete,
+  busy,
+}: {
+  model: ModelEntry | null
+  draft: Draft
+  errors: DraftErrors
+  complete: boolean
+  busy: boolean
+}) {
+  const filled = SIX.filter((name) => draft[name].trim() !== '').length
+  const unfilled = REQUIRED.filter((name) => draft[name].trim() === '')
+  const invalid = REQUIRED.filter((name) => draft[name].trim() !== '' && errors[name] !== undefined)
+  const state = model === null ? '未选择模型' : busy ? '正在提交' : complete ? '可以提交' : '还不能提交'
+
+  return (
+    <aside className="predict-summary" aria-label="提交摘要">
+      <div className="summary-head">
+        <span>提交摘要</span>
+        <span>随输入实时更新</span>
+      </div>
+
+      <dl className="ledger summary-ledger">
+        <div>
+          <dt>已填特征</dt>
+          <dd>
+            {filled}/{SIX.length}
+          </dd>
+        </div>
+        <div>
+          <dt>可提交</dt>
+          <dd className={complete ? 'is-accent' : undefined}>{complete ? '是' : '否'}</dd>
+        </div>
+      </dl>
+
+      <section className="summary-block" aria-label="所选模型">
+        <h3>所选模型</h3>
+        {model === null ? (
+          <p className="summary-empty">尚未选择模型。左侧只有当前可用、且支持六字段单条预测的模型可选。</p>
+        ) : (
+          <dl className="summary-list">
+            <div>
+              <dt>名称</dt>
+              <dd>{model.name}</dd>
+            </div>
+            <div>
+              <dt>方法</dt>
+              <dd>
+                <code>{model.method}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>schema</dt>
+              <dd>
+                <code>{model.featureSchemaVersion}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>模型哈希</dt>
+              <dd>
+                <code title={model.sha256}>{model.sha256.slice(0, 16)}…</code>
+              </dd>
+            </div>
+          </dl>
+        )}
+      </section>
+
+      <section className="summary-block" aria-label="填写进度">
+        <h3>填写进度</h3>
+        {unfilled.length === 0 ? (
+          <p className="status-tag" data-tone="ok">
+            <i className="status-dot" aria-hidden="true" />
+            必填项已全部填写
+          </p>
+        ) : (
+          <p className="summary-missing">
+            还缺
+            {unfilled.map((name) => (
+              <span key={name} className="status-tag" data-tone="muted">
+                <i className="status-dot" aria-hidden="true" />
+                {FIELD_LABELS[name]}
+              </span>
+            ))}
+          </p>
+        )}
+        {invalid.length === 0 ? null : (
+          <p className="summary-missing">
+            待修正
+            {invalid.map((name) => (
+              <span key={name} className="status-tag" data-tone="warn">
+                <i className="status-dot" aria-hidden="true" />
+                {FIELD_LABELS[name]}
+              </span>
+            ))}
+          </p>
+        )}
+      </section>
+
+      <p className="summary-state" role="status">
+        {state}
+      </p>
+      <p className="summary-note">
+        提交只向所选模型发送一条预测请求，失败后不会自动重试；风险是模型估计，不代表已确认缺陷。
+      </p>
+    </aside>
   )
 }
 
@@ -234,7 +356,7 @@ export function PredictPage({
   )
 
   return (
-    <>
+    <div className="predict-page">
       <header className="topbar">
         <div>
           <span className="project-symbol">
@@ -255,268 +377,274 @@ export function PredictPage({
         </div>
       </div>
 
-      <section className="predict-section" aria-labelledby="model-heading">
-        <div className="section-caption">
-          <span id="model-heading">选择模型</span>
-          <span>只有当前可用且支持六字段单条预测的模型可选</span>
-        </div>
-        {catalog.status === 'credential-required' ? <CredentialNotice /> : null}
-        {catalog.status === 'loading' ? <LoadingNotice label="正在读取已登记模型目录。" /> : null}
-        {catalog.status === 'failed' ? <FailureNotice error={catalog.error} onRetry={catalog.reload} /> : null}
-        {catalog.status === 'ready' && selectable.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-mark">
-              <Icon name="info" size={28} />
-            </div>
-            <h2>当前没有可用于单条预测的模型</h2>
-            <p>
-              需要先由管理员在<a href="#/models">模型中心</a>登记一个已校验的本机产物；
-              登记完成后回到本页即可选择。
-            </p>
-          </div>
-        ) : null}
-        {selectable.length > 0 ? (
-          <fieldset className="model-picker" disabled={busy}>
-            <legend className="sr-only">选择用于单条预测的模型</legend>
-            {selectable.map((item) => (
-              <label key={item.modelId} className="model-option">
-                <input
-                  type="radio"
-                  name="prediction-model"
-                  value={item.modelId}
-                  checked={item.modelId === selectedId}
-                  onChange={() => setSelectedId(item.modelId)}
-                />
-                <span>
-                  <strong>{item.name}</strong>
-                  <span className="muted">
-                    方法 {item.method} · schema {item.featureSchemaVersion} · 模型哈希{' '}
-                    <code>{item.sha256}</code>
-                  </span>
-                </span>
-              </label>
-            ))}
-          </fieldset>
-        ) : null}
-        {changed ? (
-          <StatusNote tone="warn">
-            所选模型在当前目录中已不存在，系统不会自动改选其他模型，请重新选择。
-          </StatusNote>
-        ) : null}
-        {model !== null && !predictionSelectable(model) ? (
-          <StatusNote tone="warn">
-            所选模型当前不可用
-            {model.error === null ? '' : `（${model.error.code}：${model.error.message}）`}，请改选其他模型。
-          </StatusNote>
-        ) : null}
-        {unavailable.length === 0 ? null : (
-          <details className="unavailable-models">
-            <summary>另有 {unavailable.length} 个模型当前不可用于单条预测</summary>
-            <ul>
-              {unavailable.map((item) => (
-                <li key={item.modelId}>
-                  <strong>{item.name}</strong>：{item.featureSchemaVersion}，
-                  {item.jsonPredictionSupported ? '当前不可用' : '不支持单条 JSON 预测'}
-                  {item.error === null ? '' : `（${item.error.code}：${item.error.message}）`}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-        {model === null ? null : (
-          <div className="model-summary">
-            <dl className="model-facts">
-              <div>
-                <dt>运行身份</dt>
-                <dd>
-                  <code>{model.runId}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>原产物模型</dt>
-                <dd>
-                  <code>{model.artifactModelId}</code>
-                </dd>
-              </div>
-              <div>
-                <dt>数据集版本</dt>
-                <dd>
-                  <code>{model.artifactDatasetVersion}</code>
-                </dd>
-              </div>
-            </dl>
-            <SchemaDetails version={model.featureSchemaVersion} />
-          </div>
-        )}
-      </section>
-
-      <form className="predict-form" onSubmit={submit} noValidate>
-        <section className="predict-section" aria-labelledby="record-heading">
+      <div className="predict-layout">
+        <div className="predict-main">
+        <section className="predict-section" aria-labelledby="model-heading">
           <div className="section-caption">
-            <span id="record-heading">记录信息</span>
-            <span>项目与记录编号只用于标识本次输入</span>
+            <span id="model-heading">选择模型</span>
+            <span>只有当前可用且支持六字段单条预测的模型可选</span>
           </div>
-          <div className="field-grid">
-            {text('project')}
-            {text('recordId')}
-          </div>
+          {catalog.status === 'credential-required' ? <CredentialNotice /> : null}
+          {catalog.status === 'loading' ? <LoadingNotice label="已登记模型目录。" /> : null}
+          {catalog.status === 'failed' ? <FailureNotice error={catalog.error} onRetry={catalog.reload} /> : null}
+          {catalog.status === 'ready' && selectable.length === 0 ? (
+            <EmptyState
+              title="当前没有可用于单条预测的模型"
+              description={
+                <>
+                  需要先由管理员在<a href="#/models">模型中心</a>登记一个已校验的本机产物；
+                  登记完成后回到本页即可选择。
+                </>
+              }
+            />
+          ) : null}
+          {selectable.length > 0 ? (
+            <fieldset className="model-picker" disabled={busy}>
+              <legend className="sr-only">选择用于单条预测的模型</legend>
+              {selectable.map((item) => (
+                <label key={item.modelId} className="model-option">
+                  <input
+                    type="radio"
+                    name="prediction-model"
+                    value={item.modelId}
+                    checked={item.modelId === selectedId}
+                    onChange={() => setSelectedId(item.modelId)}
+                  />
+                  <span>
+                    <strong>{item.name}</strong>
+                    <span className="muted">
+                      方法 {item.method} · schema {item.featureSchemaVersion} · 模型哈希{' '}
+                      <code>{item.sha256}</code>
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+          {changed ? (
+            <StatusNote tone="warn">
+              所选模型在当前目录中已不存在，系统不会自动改选其他模型，请重新选择。
+            </StatusNote>
+          ) : null}
+          {model !== null && !predictionSelectable(model) ? (
+            <StatusNote tone="warn">
+              所选模型当前不可用
+              {model.error === null ? '' : `（${model.error.code}：${model.error.message}）`}，请改选其他模型。
+            </StatusNote>
+          ) : null}
+          {unavailable.length === 0 ? null : (
+            <details className="unavailable-models">
+              <summary>另有 {unavailable.length} 个模型当前不可用于单条预测</summary>
+              <ul>
+                {unavailable.map((item) => (
+                  <li key={item.modelId}>
+                    <strong>{item.name}</strong>：{item.featureSchemaVersion}，
+                    {item.jsonPredictionSupported ? '当前不可用' : '不支持单条 JSON 预测'}
+                    {item.error === null ? '' : `（${item.error.code}：${item.error.message}）`}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {model === null ? null : (
+            <div className="model-summary">
+              <dl className="model-facts">
+                <div>
+                  <dt>运行身份</dt>
+                  <dd>
+                    <code>{model.runId}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>原产物模型</dt>
+                  <dd>
+                    <code>{model.artifactModelId}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>数据集版本</dt>
+                  <dd>
+                    <code>{model.artifactDatasetVersion}</code>
+                  </dd>
+                </div>
+              </dl>
+              <SchemaDetails version={model.featureSchemaVersion} />
+            </div>
+          )}
         </section>
 
-        <section className="predict-section" aria-labelledby="features-heading">
-          <div className="section-caption">
-            <span id="features-heading">六个原始特征</span>
-            <span>按发布者原生数值填写，无需预先变换</span>
-          </div>
-          <div className="field-grid">
-            {(['ns', 'nd', 'nf', 'ent', 'la', 'ld'] as FeatureField[]).map((name) => (
-              <label className="field" htmlFor={`predict-field-${name}`} key={name}>
-                <span>{FIELD_LABELS[name]}</span>
+        <form className="predict-form" onSubmit={submit} noValidate>
+          <section className="predict-section" aria-labelledby="record-heading">
+            <div className="section-caption">
+              <span id="record-heading">记录信息</span>
+              <span>项目与记录编号只用于标识本次输入</span>
+            </div>
+            <div className="field-grid">
+              {text('project')}
+              {text('recordId')}
+            </div>
+          </section>
+
+          <section className="predict-section" aria-labelledby="features-heading">
+            <div className="section-caption">
+              <span id="features-heading">六个原始特征</span>
+              <span>按发布者原生数值填写，无需预先变换</span>
+            </div>
+            <div className="field-grid">
+              {(['ns', 'nd', 'nf', 'ent', 'la', 'ld'] as FeatureField[]).map((name) => (
+                <label className="field" htmlFor={`predict-field-${name}`} key={name}>
+                  <span>{FIELD_LABELS[name]}</span>
+                  <input
+                    id={`predict-field-${name}`}
+                    name={name}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    disabled={busy}
+                    value={draft[name]}
+                    aria-invalid={shown[name] === undefined ? undefined : true}
+                    aria-describedby={
+                      shown[name] === undefined ? `predict-help-${name}` : `predict-error-${name}`
+                    }
+                    onChange={(event) => update(name, event.target.value)}
+                  />
+                  <span className="field-help" id={`predict-help-${name}`}>
+                    {FEATURE_HELP[name]}
+                  </span>
+                  <FieldError id={`predict-error-${name}`} message={shown[name]} />
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section className="predict-section" aria-labelledby="meta-heading">
+            <div className="section-caption">
+              <span id="meta-heading">可选记录元数据</span>
+              <span>留空即表示未提供，不会被当成 0 或当前时间</span>
+            </div>
+            <div className="field-grid">
+              <label className="field" htmlFor="predict-field-commitId">
+                <span>{FIELD_LABELS.commitId}</span>
                 <input
-                  id={`predict-field-${name}`}
-                  name={name}
+                  id="predict-field-commitId"
+                  name="commitId"
                   type="text"
-                  inputMode="decimal"
                   autoComplete="off"
                   disabled={busy}
-                  value={draft[name]}
-                  aria-invalid={shown[name] === undefined ? undefined : true}
-                  aria-describedby={
-                    shown[name] === undefined ? `predict-help-${name}` : `predict-error-${name}`
-                  }
-                  onChange={(event) => update(name, event.target.value)}
+                  value={draft.commitId}
+                  aria-invalid={shown.commitId === undefined ? undefined : true}
+                  aria-describedby={shown.commitId === undefined ? undefined : 'predict-error-commitId'}
+                  onChange={(event) => update('commitId', event.target.value)}
                 />
-                <span className="field-help" id={`predict-help-${name}`}>
-                  {FEATURE_HELP[name]}
-                </span>
-                <FieldError id={`predict-error-${name}`} message={shown[name]} />
+                <FieldError id="predict-error-commitId" message={shown.commitId} />
               </label>
-            ))}
-          </div>
-        </section>
+              <label className="field" htmlFor="predict-field-time">
+                <span>{FIELD_LABELS.time}</span>
+                <input
+                  id="predict-field-time"
+                  name="time"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="2026-01-02T03:04:05+08:00"
+                  disabled={busy}
+                  value={draft.time}
+                  aria-invalid={shown.time === undefined ? undefined : true}
+                  aria-describedby={shown.time === undefined ? undefined : 'predict-error-time'}
+                  onChange={(event) => update('time', event.target.value)}
+                />
+                <FieldError id="predict-error-time" message={shown.time} />
+              </label>
+            </div>
+          </section>
 
-        <section className="predict-section" aria-labelledby="meta-heading">
-          <div className="section-caption">
-            <span id="meta-heading">可选记录元数据</span>
-            <span>留空即表示未提供，不会被当成 0 或当前时间</span>
-          </div>
-          <div className="field-grid">
-            <label className="field" htmlFor="predict-field-commitId">
-              <span>{FIELD_LABELS.commitId}</span>
-              <input
-                id="predict-field-commitId"
-                name="commitId"
-                type="text"
-                autoComplete="off"
+          <section className="predict-section" aria-labelledby="json-heading">
+            <div className="section-caption">
+              <span id="json-heading">粘贴特征 JSON</span>
+              <span>只接受恰好六项数值的对象；不触发预测</span>
+            </div>
+            <label className="field" htmlFor="predict-feature-json">
+              <span className="sr-only">特征 JSON</span>
+              <textarea
+                id="predict-feature-json"
+                name="featureJson"
+                rows={5}
+                spellCheck={false}
                 disabled={busy}
-                value={draft.commitId}
-                aria-invalid={shown.commitId === undefined ? undefined : true}
-                aria-describedby={shown.commitId === undefined ? undefined : 'predict-error-commitId'}
-                onChange={(event) => update('commitId', event.target.value)}
+                placeholder={'{\n  "ns": 1, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4\n}'}
+                value={jsonText}
+                onChange={(event) => setJsonText(event.target.value)}
               />
-              <FieldError id="predict-error-commitId" message={shown.commitId} />
             </label>
-            <label className="field" htmlFor="predict-field-time">
-              <span>{FIELD_LABELS.time}</span>
-              <input
-                id="predict-field-time"
-                name="time"
-                type="text"
-                autoComplete="off"
-                placeholder="2026-01-02T03:04:05+08:00"
+            <div className="json-actions">
+              <button type="button" disabled={busy} onClick={applyJson}>
+                导入到表单
+              </button>
+              <button
+                type="button"
                 disabled={busy}
-                value={draft.time}
-                aria-invalid={shown.time === undefined ? undefined : true}
-                aria-describedby={shown.time === undefined ? undefined : 'predict-error-time'}
-                onChange={(event) => update('time', event.target.value)}
-              />
-              <FieldError id="predict-error-time" message={shown.time} />
-            </label>
-          </div>
-        </section>
+                onClick={() => {
+                  setJsonText('')
+                  setJsonMessage(null)
+                }}
+              >
+                清空粘贴内容
+              </button>
+            </div>
+            {jsonMessage === null ? null : <StatusNote tone={jsonMessage.tone}>{jsonMessage.text}</StatusNote>}
+          </section>
 
-        <section className="predict-section" aria-labelledby="json-heading">
-          <div className="section-caption">
-            <span id="json-heading">粘贴特征 JSON</span>
-            <span>只接受恰好六项数值的对象；不触发预测</span>
-          </div>
-          <label className="field" htmlFor="predict-feature-json">
-            <span className="sr-only">特征 JSON</span>
-            <textarea
-              id="predict-feature-json"
-              name="featureJson"
-              rows={5}
-              spellCheck={false}
-              disabled={busy}
-              placeholder={'{\n  "ns": 1, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4\n}'}
-              value={jsonText}
-              onChange={(event) => setJsonText(event.target.value)}
-            />
-          </label>
-          <div className="json-actions">
-            <button type="button" disabled={busy} onClick={applyJson}>
-              导入到表单
+          <div className="submit-bar">
+            <button type="submit" className="primary-button" disabled={!canSubmit}>
+              {busy ? '正在提交并保存…' : '提交并保存预测'}
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                setJsonText('')
-                setJsonMessage(null)
-              }}
-            >
-              清空粘贴内容
-            </button>
-          </div>
-          {jsonMessage === null ? null : <StatusNote tone={jsonMessage.tone}>{jsonMessage.text}</StatusNote>}
-        </section>
-
-        <div className="submit-bar">
-          <button type="submit" className="primary-button" disabled={!canSubmit}>
-            {busy ? '正在提交并保存…' : '提交并保存预测'}
-          </button>
-          <span className="muted" role="status">
-            {busy
-              ? '请求已发出，正在等待服务端保存结果。'
-              : model === null
-                ? '请先选择模型。'
-                : result === null
-                  ? '请先补全必填字段，空白不会被当成 0。'
-                  : '提交只会向所选模型发送一条预测请求。'}
-          </span>
-        </div>
-      </form>
-
-      {failure === null ? null : saveUnknown ? (
-        <div className="notice notice-unknown" role="alert">
-          <Icon name="info" size={17} />
-          <div>
-            <strong>未能确认保存结果</strong>
-            <span>{failureView?.message}</span>
-            <span>
-              请求已经发出，但本页没有拿到可核对的保存结果。这不代表保存失败，也不代表成功：
-              请到<a href="#/predictions">打开已有结果</a>用批次编号确认，再决定是否重新提交。
+            <span className="muted" role="status">
+              {busy
+                ? '请求已发出，正在等待服务端保存结果。'
+                : model === null
+                  ? '请先选择模型。'
+                  : result === null
+                    ? '请先补全必填字段，空白不会被当成 0。'
+                    : '提交只会向所选模型发送一条预测请求。'}
             </span>
-            {failureView?.requestId === '' || failureView === null ? null : (
-              <span className="failure-request">
-                请求编号 <code>{failureView.requestId}</code>
-              </span>
-            )}
           </div>
+        </form>
+
+        {failure === null ? null : saveUnknown ? (
+          <div className="notice notice-unknown" role="alert">
+            <Icon name="info" size={17} />
+            <div>
+              <strong>未能确认保存结果</strong>
+              <span>{failureView?.message}</span>
+              <span>
+                请求已经发出，但本页没有拿到可核对的保存结果。这不代表保存失败，也不代表成功：
+                请到<a href="#/predictions">打开已有结果</a>用批次编号确认，再决定是否重新提交。
+              </span>
+              {failureView?.requestId === '' || failureView === null ? null : (
+                <span className="failure-request">
+                  请求编号 <code>{failureView.requestId}</code>
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <FailureNotice error={failure}>
+            {failureView?.kind === 'model' || failureView?.kind === 'storage' ? (
+              <p>
+                可以到<a href="#/models">模型中心</a>确认模型状态，或请管理员重新校验登记后再试。
+              </p>
+            ) : null}
+          </FailureNotice>
+        )}
         </div>
-      ) : (
-        <FailureNotice error={failure}>
-          {failureView?.kind === 'model' || failureView?.kind === 'storage' ? (
-            <p>
-              可以到<a href="#/models">模型中心</a>确认模型状态，或请管理员重新校验登记后再试。
-            </p>
-          ) : null}
-        </FailureNotice>
-      )}
+
+        <DraftSummary model={model} draft={draft} errors={shown} complete={canSubmit} busy={busy} />
+      </div>
+
       <footer className="page-foot">
         <span>JIT Review</span>
         <span>特征由用户提供；风险为已登记模型的估计，不代表已确认缺陷</span>
       </footer>
-    </>
+    </div>
   )
 }
 
