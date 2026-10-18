@@ -20,7 +20,7 @@ def _supplied_directory():
 
 
 def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
-               member_token=None, admin_token=None):
+               member_token=None, admin_token=None, sync_service=None, dataset_root=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None)
     from .team_access import install_access
@@ -44,6 +44,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     app.state.datasets = registered
     from .prediction import PredictionService
     prediction_service = PredictionService(catalog)
+    from .sync import SyncService
+    if sync_service is None:
+        # 本地仓库只用于验收与测试；默认只接受公开 HTTP(S) 地址。
+        allow_local = os.environ.get('JIT_SYNC_ALLOW_LOCAL') == '1'
+        dataset_root = dataset_root if dataset_root is not None else os.environ.get('JIT_DATASET_ROOT')
+        sync_service = SyncService(storage, catalog, artifact_root=catalog.root,
+                                   dataset_root=dataset_root, allow_local=allow_local)
+    sync_service.recover()
+    app.state.sync = sync_service
     from fastapi.exceptions import RequestValidationError
 
     @app.exception_handler(RequestValidationError)
@@ -121,6 +130,31 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         if record is None:
             raise RequestError('NOT_FOUND')
         return record
+
+    @app.post('/api/v1/repository-syncs')
+    async def create_sync(request: Request):
+        result, created = await run_in_threadpool(sync_service.create, await read_object(request),
+                                                  request.state.request_id)
+        request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/repository-syncs')
+    def sync_list(limit: int = 20, offset: int = 0):
+        return sync_service.pages(limit, offset)
+
+    @app.get('/api/v1/repository-syncs/{sync_id}')
+    def sync_detail(sync_id: str):
+        return sync_service.get(sync_id)
+
+    @app.get('/api/v1/repository-syncs/{sync_id}/commits')
+    def sync_commits(sync_id: str, limit: int = 100, offset: int = 0, search: str | None = None,
+                     start: str | None = None, end: str | None = None, sort: str = 'risk'):
+        return sync_service.commits(sync_id, limit, offset, search=search, start=start,
+                                    end=end, sort=sort)
+
+    @app.get('/api/v1/repository-syncs/{sync_id}/commits/{commit_id}')
+    def sync_commit(sync_id: str, commit_id: str):
+        return sync_service.commit(sync_id, commit_id)
     app.state.snapshot, app.state.error = None, None
     try:
         app.state.snapshot = Snapshot.load(directory)

@@ -18,7 +18,8 @@ from .schemas import DEFAULT_SCHEMA, resolve
 MANIFEST_SCHEMA = 1
 DATASETS = BACKEND / "data" / "datasets"
 VERSION_PATTERN = re.compile(
-    r"^(?P<dataset>[a-z0-9][a-z0-9._-]*)-(?P<start>\d{4}-\d{2}-\d{2})_(?P<end>\d{4}-\d{2}-\d{2})$")
+    r"^(?P<dataset>[a-z0-9][a-z0-9._-]*)-(?P<start>\d{4}-\d{2}-\d{2})_(?P<end>\d{4}-\d{2}-\d{2})"
+    r"(?:-(?P<stamp>[0-9a-f]{8}))?$")
 DATASET_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]*")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 QUALITY_KEYS = ("rawRows", "includedRows", "positiveLabels", "blankLabels", "featureMissing", "excluded")

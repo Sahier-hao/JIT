@@ -13,8 +13,7 @@ it('CRR-09 恢复相同成员与加入顺序，仅保存标识', () => {
   expect(restoreShortlist(data, access)).toEqual({ ids: ['b', 'a'], warning: '' })
   expect(JSON.parse(entries.get(storageKey(data))!)).toEqual({ schema: 1, ids: ['b', 'a'] })
 })
-it('CRR-09 不同项目和版本隔离，不删除其他记录', () => {
-  entries.clear(); entries.set('unrelated', 'keep')
+it('CRR-09 不同项目和版本隔离，不删除其他记录', () => {  entries.clear(); entries.set('unrelated', 'keep')
   saveShortlist(data, ['a'], access)
   expect(restoreShortlist({ ...data, version: 'demo-v2' }, access).ids).toEqual([])
   expect(restoreShortlist({ ...data, project: '另一个项目' }, access).ids).toEqual([])
@@ -41,4 +40,15 @@ it('CRR-10 无法取得或读取存储时恢复失败，返回可操作空清单
 it('CRR-10 保存被拒绝必须提示刷新后可能丢失', () => {
   const denied = () => ({ ...storage, setItem: () => { throw new Error('空间不足') } })
   expect(saveShortlist(data, ['a'], denied)).toBe('本次清单未能保存，刷新后可能丢失')
+})
+
+it('CRR-09 仓库模式不按当前页过滤清单，交给清单视图逐条确认', () => {
+  entries.clear()
+  const repository: Dataset = {
+    mode: 'repository', project: 'jit', version: 'kamei14-git-v1-jit-2026-10-12_2026-10-18-770c916c', records: [],
+    repository: { syncId: 'sync-1', repositoryUrl: 'https://github.com/x/y.git', branch: 'main', datasetVersion: null, requestedStrategy: 'auto', modelStrategy: null, degradeReason: null, trainRecords: null, trainPositives: null, labelNote: '标签由简化 SZZ 生成' },
+  }
+  saveShortlist(repository, ['a', 'zzz'], access)
+  expect(restoreShortlist(repository, access)).toEqual({ ids: ['a', 'zzz'], warning: '' })
+  expect(storageKey(repository)).toBe('jit-review:shortlist:v2:repository:sync-1')
 })

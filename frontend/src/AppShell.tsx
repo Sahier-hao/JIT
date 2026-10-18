@@ -83,6 +83,13 @@ export function Sidebar({ route, navigate, mode, onMode, view, count = 0, onView
         >
           示例数据
         </button>
+        <button
+          aria-label="选择仓库同步数据"
+          aria-pressed={mode === 'repository'}
+          onClick={() => onMode('repository')}
+        >
+          仓库同步
+        </button>
       </div>
       <div className="nav-label">工作空间</div>
       <nav aria-label="工作台导航">
@@ -107,6 +114,13 @@ export function Sidebar({ route, navigate, mode, onMode, view, count = 0, onView
           label="优先审查清单"
           badge={count}
           onClick={() => onView?.('shortlist')}
+        />
+        <NavButton
+          active={route.name === 'sources'}
+          enabled
+          icon="project"
+          label="数据来源"
+          onClick={() => navigate({ name: 'sources' })}
         />
       </nav>
       <div className="nav-label">模型与预测</div>

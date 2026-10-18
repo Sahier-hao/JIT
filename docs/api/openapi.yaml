@@ -1,6 +1,6 @@
 openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
-info: {title: JIT Review 产品接口文档, version: 1.1.0, description: 文档基线评审稿。API-01及模型候选／登记／列表／schema／JSON预测／结果重开已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。}
+info: {title: JIT Review 产品接口文档, version: 1.2.0, description: 文档基线评审稿。API-01及提交／数据版本查询／数据来源、模型候选／登记／列表／schema／JSON预测／结果重开、仓库同步与仓库提交查询已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。}
 tags:
 - {name: 现有历史回放}
 - {name: 目标共享产品}
@@ -101,23 +101,53 @@ paths:
   /api/v1/datasets:
     get:
       operationId: listDatasets
-      summary: 共享数据来源与版本列表
+      summary: 已登记数据来源与版本列表
       tags: [目标共享产品]
       x-api-id: API-02
       x-user-stories: [US-01, US-23]
-      x-implementation-status: planned
+      x-implementation-status: implemented
       security:
       - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
       responses:
         '200':
-          description: 候选成功响应，尚未实现
+          description: 当前响应；按数据集名分组，组内按版本名排序
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/DatasetList'}
+              schema: {$ref: '#/components/schemas/DatasetRegistry'}
         '401': {$ref: '#/components/responses/AuthenticationRequired'}
         '403': {$ref: '#/components/responses/AccessDenied'}
-      x-auth-status: proposed
-      x-access-policy: read
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: 当前后端操作；成员／管理员 Bearer 凭据。内容来自 backend/data/datasets 下描述文件的登记结果，只含版本与质量摘要，不含提交级数据。
+  /api/v1/datasets/{name}/versions:
+    get:
+      operationId: listDatasetVersions
+      summary: 单个数据来源的版本列表
+      tags: [目标共享产品]
+      x-api-id: API-24
+      x-user-stories: [US-01, US-23]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema: {type: string, minLength: 1}
+      responses:
+        '200':
+          description: 当前响应；未知数据集返回 404，不返回空列表
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DatasetVersions'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: 当前后端操作；成员／管理员 Bearer 凭据。数据集名取 `/api/v1/datasets` 返回的 `dataset` 字段。
   /api/v1/datasets/import:
     post:
       operationId: importDataset
@@ -771,6 +801,173 @@ paths:
             schema:
               $ref: '#/components/schemas/ModelRegistrationCreate'
       description: 201 新模型，200 复用原 runId；仅选择候选，不接受路径／URL／上传。
+  /api/v1/repository-syncs:
+    post:
+      operationId: createRepositorySync
+      summary: 从公开仓库采集提交并打分
+      tags: [目标共享产品]
+      x-api-id: API-20
+      x-user-stories: [US-01, US-09, US-23]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RepositorySyncCreate'}
+            example:
+              repositoryUrl: https://github.com/octo/example.git
+              branch: main
+              commitLimit: 500
+              strategy: auto
+      responses:
+        '202':
+          description: 新建作业；采集、登记、训练（或降级）与打分在后台串行执行
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RepositorySyncView'}
+        '200':
+          description: 同仓库同参数的进行中作业被复用，返回该作业
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RepositorySyncView'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '422': {$ref: '#/components/responses/InputInvalid'}
+        '502': {$ref: '#/components/responses/RepositoryUnavailable'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: 只接受公开 HTTP(S) 地址；file、ssh、git 等协议与内网主机返回 422 INPUT_INVALID。`strategy` 三选一，缺省 `auto`（按数据量给建议）。接口立即返回作业视图，进度靠轮询 `GET /api/v1/repository-syncs/{syncId}`。
+    get:
+      operationId: listRepositorySyncs
+      summary: 同步作业列表
+      tags: [目标共享产品]
+      x-api-id: API-21
+      x-user-stories: [US-23]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 当前响应；按发起时间倒序
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RepositorySyncPage'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '422': {$ref: '#/components/responses/InputInvalid'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: limit 越界返回 422，不静默截断。列表不含提交级数据。
+  /api/v1/repository-syncs/{syncId}:
+    get:
+      operationId: getRepositorySync
+      summary: 单个同步作业的状态与产物
+      tags: [目标共享产品]
+      x-api-id: API-22
+      x-user-stories: [US-23]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      parameters:
+      - name: syncId
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/Uuid'}
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RepositorySyncView'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: 状态为 queued／collecting／registering／training／scoring／completed／failed／interrupted；`modelStrategy` 与 `degradeReason` 说明这次实际用了哪个模型、为什么。
+  /api/v1/repository-syncs/{syncId}/commits:
+    get:
+      operationId: listRepositorySyncCommits
+      summary: 同步作业内提交的风险列表
+      tags: [目标共享产品]
+      x-api-id: API-23
+      x-user-stories: [US-10, US-11, US-12]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      parameters:
+      - name: syncId
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/Uuid'}
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 200, default: 100}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 当前响应；按风险降序、时间降序、提交标识升序
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RepositorySyncCommitPage'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '422': {$ref: '#/components/responses/InputInvalid'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: 每条带 14 字段原始值（`features`）、风险、行数、文件数与标签；`label` 由简化 SZZ 倒推，1 表示后来被修复提交指认，0 只表示未观测到，不等于已证实无缺陷。
+  /api/v1/repository-syncs/{syncId}/commits/{commitId}:
+    get:
+      operationId: getRepositorySyncCommit
+      summary: 单个仓库提交的特征与风险
+      tags: [目标共享产品]
+      x-api-id: API-25
+      x-user-stories: [US-11]
+      x-implementation-status: implemented
+      security:
+      - TeamToken: []
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      parameters:
+      - name: syncId
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/Uuid'}
+      - name: commitId
+        in: path
+        required: true
+        schema: {type: string, minLength: 1}
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RepositorySyncCommit'}
+        '401': {$ref: '#/components/responses/AuthenticationRequired'}
+        '403': {$ref: '#/components/responses/AccessDenied'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '503': {$ref: '#/components/responses/StorageUnavailable'}
+      description: 提交不属于该作业时返回 404，不跨作业查询。
 components:
   schemas:
     ModelRegistration:
@@ -1369,6 +1566,192 @@ components:
           type: object
           additionalProperties: {type: number}
       required: [commitId, datasetVersion, authorTime, label, labelRule, features]
+      additionalProperties: false
+    DatasetRegistry:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items: {$ref: '#/components/schemas/DatasetRegistryEntry'}
+          minItems: 0
+      required: [datasets]
+      additionalProperties: false
+      description: 已登记的公开数据来源，按名称分组；只含版本与质量摘要，不含提交级数据。
+    DatasetRegistryEntry:
+      type: object
+      properties:
+        dataset: {type: string, minLength: 1}
+        versions:
+          type: array
+          items: {$ref: '#/components/schemas/DatasetVersionEntry'}
+          minItems: 1
+      required: [dataset, versions]
+      additionalProperties: false
+    DatasetVersions:
+      type: object
+      properties:
+        dataset: {type: string, minLength: 1}
+        versions:
+          type: array
+          items: {$ref: '#/components/schemas/DatasetVersionEntry'}
+          minItems: 1
+      required: [dataset, versions]
+      additionalProperties: false
+    DatasetVersionEntry:
+      type: object
+      properties:
+        version: {type: string, minLength: 1}
+        schema: {type: string, minLength: 1}
+        timeRange:
+          type: object
+          properties:
+            start: {type: string, format: date-time}
+            end: {type: string, format: date-time}
+            startEpoch: {type: integer}
+            endEpoch: {type: integer}
+          required: [start, end, startEpoch, endEpoch]
+          additionalProperties: false
+        quality: {$ref: '#/components/schemas/DatasetQuality'}
+        file:
+          type: object
+          properties:
+            name: {type: string, minLength: 1}
+            path: {type: string, minLength: 1}
+            sha256: {$ref: '#/components/schemas/Hash'}
+            bytes: {type: integer, minimum: 0}
+          required: [name, path, sha256, bytes]
+          additionalProperties: false
+        manifestPath: {type: [string, 'null']}
+      required: [version, schema, timeRange, quality, file]
+      additionalProperties: false
+    DatasetQuality:
+      type: object
+      properties:
+        rawRows: {type: integer, minimum: 0}
+        includedRows: {type: integer, minimum: 0}
+        positiveLabels: {type: integer, minimum: 0}
+        blankLabels: {type: integer, minimum: 0}
+        featureMissing:
+          type: object
+          additionalProperties: {type: integer, minimum: 0}
+        excluded:
+          type: object
+          properties:
+            outsideWindow: {type: integer, minimum: 0}
+            noAddedLines: {type: integer, minimum: 0}
+            tooMuchChurn: {type: integer, minimum: 0}
+            tooManyFiles: {type: integer, minimum: 0}
+            missingRequiredField: {type: integer, minimum: 0}
+          required: [outsideWindow, noAddedLines, tooMuchChurn, tooManyFiles, missingRequiredField]
+          additionalProperties: false
+      required: [rawRows, includedRows, positiveLabels, blankLabels, featureMissing, excluded]
+      additionalProperties: false
+    RepositorySyncCreate:
+      type: object
+      properties:
+        repositoryUrl:
+          type: string
+          format: uri
+          description: 公开 HTTP(S) 仓库地址；file、ssh、git 协议、内联用户名密码与内网主机被拒绝。
+        branch: {type: string, minLength: 1, default: HEAD}
+        since: {type: string, minLength: 1, description: ISO 日期或日期时间；留空取最近 90 天。}
+        until: {type: string, minLength: 1, description: ISO 日期或日期时间；留空取当前时间。}
+        commitLimit: {type: integer, minimum: 1, maximum: 5000, default: 500}
+        strategy:
+          type: string
+          enum: [auto, generic-model, force-train]
+          default: auto
+      required: [repositoryUrl]
+      additionalProperties: false
+      description: 范围内提交数超过 `commitLimit` 时整次创建失败（不截断），需缩小日期或调大上限。
+    RepositorySyncView:
+      type: object
+      properties:
+        syncId: {$ref: '#/components/schemas/Uuid'}
+        repositoryUrl: {type: string, format: uri}
+        branch: {type: string, minLength: 1}
+        since: {type: string, minLength: 1}
+        until: {type: string, minLength: 1}
+        commitLimit: {type: integer, minimum: 1, maximum: 5000}
+        requestedStrategy:
+          type: string
+          enum: [auto, generic-model, force-train]
+        status:
+          type: string
+          enum: [queued, collecting, registering, training, scoring, completed, failed, interrupted]
+        stage:
+          type: string
+          enum: [queued, collecting, registering, training, scoring, completed, failed, interrupted]
+        datasetVersion: {type: [string, 'null']}
+        runId: {type: [string, 'null']}
+        modelId: {type: [string, 'null']}
+        modelStrategy:
+          type: [string, 'null']
+          enum: [repository-trained, generic-model, null]
+        degradeReason:
+          type: [string, 'null']
+          enum: [fewRecords, fewPositives, noTestPositive, noGenericModel, null]
+        trainRecords: {type: [integer, 'null'], minimum: 0}
+        trainPositives: {type: [integer, 'null'], minimum: 0}
+        createdAt: {type: string, minLength: 1}
+        updatedAt: {type: string, minLength: 1}
+        requestId: {type: [string, 'null']}
+        error:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              code: {type: string, minLength: 1}
+              message: {type: string, minLength: 1}
+            required: [code, message]
+            additionalProperties: false
+      required: [syncId, repositoryUrl, branch, since, until, commitLimit, requestedStrategy, status, stage,
+        datasetVersion, runId, modelId, modelStrategy, degradeReason, trainRecords, trainPositives, createdAt,
+        updatedAt, requestId, error]
+      additionalProperties: false
+      description: 一次同步作业的完整状态。`modelStrategy` 与 `degradeReason` 回答"这次用的是哪个模型、为什么"；`trainRecords`／`trainPositives` 是训练区样本数，只在走过训练判定时有值。
+    RepositorySyncPage:
+      type: object
+      properties:
+        syncs:
+          type: array
+          items: {$ref: '#/components/schemas/RepositorySyncView'}
+          minItems: 0
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0}
+      required: [syncs, total, limit, offset]
+      additionalProperties: false
+    RepositorySyncCommit:
+      type: object
+      properties:
+        commitId: {type: string, pattern: '^[a-f0-9]{40}$'}
+        epoch: {type: integer}
+        risk: {type: number, minimum: 0, maximum: 1}
+        addedLines: {type: integer, minimum: 0}
+        deletedLines: {type: integer, minimum: 0}
+        files: {type: integer, minimum: 0}
+        features: {$ref: '#/components/schemas/Kamei14Features'}
+        label: {type: integer, enum: [0, 1]}
+        labelNote: {type: [string, 'null']}
+      required: [commitId, epoch, risk, addedLines, deletedLines, files, features, label, labelNote]
+      additionalProperties: false
+      description: 仓库采集出的提交。`label` 由简化 SZZ 倒推：1 表示后来有修复提交指认它引入缺陷，0 只表示未观测到，不等于已证实无缺陷。
+    RepositorySyncCommitPage:
+      type: object
+      properties:
+        syncId: {$ref: '#/components/schemas/Uuid'}
+        status:
+          type: string
+          enum: [queued, collecting, registering, training, scoring, completed, failed, interrupted]
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 200}
+        offset: {type: integer, minimum: 0}
+        commits:
+          type: array
+          items: {$ref: '#/components/schemas/RepositorySyncCommit'}
+          minItems: 0
+      required: [syncId, status, total, limit, offset, commits]
       additionalProperties: false
     DatasetList:
       type: object
@@ -1989,6 +2372,16 @@ components:
           schema: {$ref: '#/components/schemas/SharedError'}
     InferenceFailure:
       description: 实际推理异常或输出非法；planned契约。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/SharedError'}
+    StorageUnavailable:
+      description: 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/SharedError'}
+    RepositoryUnavailable:
+      description: 仓库不可达、分支不存在或克隆失败；当前实现返回 502 REPOSITORY_UNAVAILABLE。
       content:
         application/json:
           schema: {$ref: '#/components/schemas/SharedError'}

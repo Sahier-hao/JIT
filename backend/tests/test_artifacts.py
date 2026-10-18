@@ -768,3 +768,28 @@ def test_run_without_trend_key_still_verifies(copied_run):
     manifest = verify_run(copied_run)
     assert manifest["runId"] and "trendBuckets" not in read_json(copied_run / "summary.json")
     assert sha256((copied_run / "summary.json").read_bytes()) == before
+
+
+def test_holdout_trains_only_on_the_prefix(tmp_path, real_run):
+    """传 holdout 时只用截止时间之前的记录切分与训练（任务 2.1 / 7.2）。"""
+    from jit_baseline.artifacts import build_run, read_json
+    full = read_json(real_run / "split.json")
+    total = sum(part["count"] for part in full["partitions"].values())
+    target = tmp_path / "holdout-run"
+    build_run(BACKEND / "data/openstack", target, holdout=1356998400)
+    held = read_json(target / "split.json")
+    kept = sum(part["count"] for part in held["partitions"].values())
+    assert kept < total
+    assert held["rule"].endswith("; only records with epoch < 1356998400")
+    assert full["rule"] == "UTC distinct timestamps, floor(0.70G), floor(0.85G)"
+    assert held["partitions"]["train"]["start"].startswith("2011")
+    assert all(part["count"] for part in held["partitions"].values())
+
+
+def test_holdout_earlier_than_every_record_fails(tmp_path):
+    from jit_baseline.artifacts import build_run
+    from jit_baseline.errors import BaselineError
+    with pytest.raises(BaselineError) as error:
+        build_run(BACKEND / "data/openstack", tmp_path / "too-early", holdout=1)
+    assert error.value.code == "SPLIT_INVALID"
+    assert "没有可训练记录" in str(error.value)

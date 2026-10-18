@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 export type Route =
   | { name: 'workbench' }
+  | { name: 'sources' }
   | { name: 'trends' }
   | { name: 'models' }
   | { name: 'predict' }
@@ -19,6 +20,7 @@ export type Route =
 
 export const ROUTE_HASH = {
   workbench: '',
+  sources: '#/sources',
   trends: '#/trends',
   models: '#/models',
   predict: '#/predict',
@@ -29,6 +31,7 @@ export function parseHash(hash: string): Route {
   const raw = (hash.startsWith('#') ? hash.slice(1) : hash).trim()
   if (raw === '' || raw === '/') return { name: 'workbench' }
   const segments = raw.replace(/^\/+/, '').replace(/\/+$/, '').split('/')
+  if (segments.length === 1 && segments[0] === 'sources') return { name: 'sources' }
   if (segments.length === 1 && segments[0] === 'trends') return { name: 'trends' }
   if (segments.length === 1 && segments[0] === 'models') return { name: 'models' }
   if (segments.length === 1 && segments[0] === 'predict') return { name: 'predict' }
@@ -43,6 +46,8 @@ export function hashFor(route: Route): string {
   switch (route.name) {
     case 'workbench':
       return ROUTE_HASH.workbench
+    case 'sources':
+      return ROUTE_HASH.sources
     case 'trends':
       return ROUTE_HASH.trends
     case 'models':

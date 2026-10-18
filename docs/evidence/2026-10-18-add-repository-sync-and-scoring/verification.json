@@ -1,0 +1,804 @@
+{
+  "startedUtc": "2026-10-18T09:49:31.0886878Z",
+  "finishedUtc": "2026-10-18T09:55:58.4653903Z",
+  "success": true,
+  "failure": null,
+  "node": "v24.13.0",
+  "npm": "11.6.2",
+  "datasetVersion": "demo-v1",
+  "realRunId": "e06a63323bcc0767bd838696f8251d8191b150c323e9012fe240774b66ad6c84",
+  "realEnvironment": null,
+  "dependencies": {
+    "@playwright/test": {
+      "version": "1.64.0",
+      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.64.0.tgz",
+      "overridden": false
+    },
+    "@testing-library/jest-dom": {
+      "version": "7.0.1",
+      "resolved": "https://registry.npmjs.org/@testing-library/jest-dom/-/jest-dom-7.0.1.tgz",
+      "overridden": false
+    },
+    "@testing-library/react": {
+      "version": "16.3.3",
+      "resolved": "https://registry.npmjs.org/@testing-library/react/-/react-16.3.3.tgz",
+      "overridden": false
+    },
+    "@testing-library/user-event": {
+      "version": "14.6.7",
+      "resolved": "https://registry.npmjs.org/@testing-library/user-event/-/user-event-14.6.7.tgz",
+      "overridden": false
+    },
+    "@types/node": {
+      "version": "24.19.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.19.2.tgz",
+      "overridden": false
+    },
+    "@types/react-dom": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.3.0.tgz",
+      "overridden": false
+    },
+    "@types/react": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz",
+      "overridden": false
+    },
+    "@vitejs/plugin-react": {
+      "version": "6.1.2",
+      "resolved": "https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.1.2.tgz",
+      "overridden": false
+    },
+    "jsdom": {
+      "version": "29.1.1",
+      "resolved": "https://registry.npmjs.org/jsdom/-/jsdom-29.1.1.tgz",
+      "overridden": false
+    },
+    "oxlint": {
+      "version": "1.87.0",
+      "resolved": "https://registry.npmjs.org/oxlint/-/oxlint-1.87.0.tgz",
+      "overridden": false
+    },
+    "react-dom": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.0.tgz",
+      "overridden": false
+    },
+    "react": {
+      "version": "19.3.0",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.3.0.tgz",
+      "overridden": false
+    },
+    "typescript": {
+      "version": "6.0.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz",
+      "overridden": false
+    },
+    "vite": {
+      "version": "8.3.4",
+      "resolved": "https://registry.npmjs.org/vite/-/vite-8.3.4.tgz",
+      "overridden": false
+    },
+    "vitest": {
+      "version": "5.0.3",
+      "resolved": "https://registry.npmjs.org/vitest/-/vitest-5.0.3.tgz",
+      "overridden": false
+    }
+  },
+  "gitStatus": "D .agents/skills/openspec-apply-change/SKILL.md\r\n D .agents/skills/openspec-archive-change/SKILL.md\r\n D .agents/skills/openspec-explore/SKILL.md\r\n D .agents/skills/openspec-propose/SKILL.md\r\n D .agents/skills/openspec-sync-specs/SKILL.md\r\n D .agents/skills/openspec-update-change/SKILL.md\r\n M .dsh/skills/openspec-apply-change/SKILL.md\r\n M .dsh/skills/openspec-archive-change/SKILL.md\r\n M .dsh/skills/openspec-explore/SKILL.md\r\n M .dsh/skills/openspec-propose/SKILL.md\r\n M .dsh/skills/openspec-sync-specs/SKILL.md\r\n M .dsh/skills/openspec-update-change/SKILL.md\r\n M README.md\r\n M backend/jit_baseline/api.py\r\n M backend/jit_baseline/artifacts.py\r\n M backend/jit_baseline/catalog_storage.py\r\n M backend/jit_baseline/cli.py\r\n M backend/jit_baseline/collect.py\r\n M backend/jit_baseline/datasets.py\r\n M backend/jit_baseline/team_access.py\r\n M backend/jit_baseline/trends.py\r\n M backend/tests/test_artifacts.py\r\n M backend/tests/test_catalog_storage.py\r\n M docs/api/openapi.yaml\r\n M \"docs/\\344\\272\\247\\345\\223\\201\\350\\256\\276\\350\\256\\241\\346\\226\\207\\346\\241\\243.md\"\r\n M \"docs/\\344\\272\\247\\345\\223\\201\\351\\234\\200\\346\\261\\202\\346\\226\\207\\346\\241\\243.md\"\r\n M frontend/playwright.config.ts\r\n M frontend/src/App.tsx\r\n M frontend/src/AppShell.tsx\r\n M frontend/src/CommitDetail.tsx\r\n M frontend/src/apiClient.ts\r\n M frontend/src/domain.ts\r\n M frontend/src/historicalContract.ts\r\n M frontend/src/navigation.test.tsx\r\n M frontend/src/navigation.ts\r\n M frontend/src/shortlist.test.ts\r\n M frontend/src/shortlist.ts\r\n M frontend/src/useDataset.ts\r\n?? .cache/\r\n?? .dsh-tmp/\r\n?? .memsearch/\r\n?? backend/.pytest-tmp/\r\n?? backend/jit_baseline/migrations/003_repository_sync.sql\r\n?? backend/jit_baseline/sync.py\r\n?? backend/tests/test_repository_sync.py\r\n?? backend/tests/test_sync_model_strategy.py\r\n?? frontend/e2e/repository-setup.ts\r\n?? frontend/e2e/repository-sync.spec.ts\r\n?? frontend/src/RepositorySourcesPage.test.tsx\r\n?? frontend/src/RepositorySourcesPage.tsx\r\n?? frontend/src/repositoryContract.test.ts\r\n?? frontend/src/repositoryContract.ts\r\n?? frontend/src/repositoryDataset.test.ts\r\n?? frontend/src/repositoryPage.test.ts\r\n?? frontend/src/repositoryPage.ts\r\n?? openspec/changes/add-repository-sync-and-scoring/",
+  "sourceHashes": [
+    {
+      "path": "backend/DATA.md",
+      "sha256": "42ce4cea3985e629e59e39eba773602ce60dc89a1f7e9ae8ff68fe48d4587b48"
+    },
+    {
+      "path": "backend/jit_baseline/__init__.py",
+      "sha256": "281cd6927babf83f277e5b538b73238813846ba574874df928096cc0c8da662f"
+    },
+    {
+      "path": "backend/jit_baseline/algorithms.py",
+      "sha256": "c032930710955d55c0e9afc135833dfd20e512504a2a1e97eab0e5596dc3cae1"
+    },
+    {
+      "path": "backend/jit_baseline/api.py",
+      "sha256": "9b2a3d33f00bccdfcc2b52976488d205512d3c8207188a0ae8db463af34ed93e"
+    },
+    {
+      "path": "backend/jit_baseline/artifacts.py",
+      "sha256": "dab6331d95faae795a1ee06c7732faf1b22433990dc5db602a55af0cf1a014ce"
+    },
+    {
+      "path": "backend/jit_baseline/attribution.py",
+      "sha256": "c3c529c2b502136e89784713cd84bdf70910106bdc9360a4c76df3278b4879d4"
+    },
+    {
+      "path": "backend/jit_baseline/catalog_input.py",
+      "sha256": "b80de42f845c40f16a647cf065a4092a6540604fff91d3e491b1b27dd099747c"
+    },
+    {
+      "path": "backend/jit_baseline/catalog_schema.py",
+      "sha256": "b86114b9ac57ca6a24e50c3319b6b8dc7f508df859a7bd64f7d4a59f2b34717e"
+    },
+    {
+      "path": "backend/jit_baseline/catalog_storage.py",
+      "sha256": "b28e683d3b2a704dac0b0e17597ef4a77a5868939cd807f47556c4b5cf78e4f2"
+    },
+    {
+      "path": "backend/jit_baseline/catalog.py",
+      "sha256": "8c2cb1e6aae090ef94b43843e85621a38ef515391bbdd1b00dab5d628079fdf9"
+    },
+    {
+      "path": "backend/jit_baseline/cli.py",
+      "sha256": "44e9ede57d3c8ffa454efcd2d4734da04fb6ccc1caa1c0f109fa23f22330de02"
+    },
+    {
+      "path": "backend/jit_baseline/collect.py",
+      "sha256": "bc868cdaba0cab03033e21fd4fe3f5c62c3859a7dc3f5fd1fb79d2b9f88e1993"
+    },
+    {
+      "path": "backend/jit_baseline/config.py",
+      "sha256": "739df104a0b6a5e9123fe38b1a2308ad075bd93599345fe99f1b62712ce0a85a"
+    },
+    {
+      "path": "backend/jit_baseline/data.py",
+      "sha256": "0d407615cc359bb91d972aa16bb28ad8f1608ee8386d572f934df9e12e233736"
+    },
+    {
+      "path": "backend/jit_baseline/datasets.py",
+      "sha256": "28bb6035cce83bc807c8f42392f51b0b679e500e67c56e3994ecbd77b8b04326"
+    },
+    {
+      "path": "backend/jit_baseline/deep.py",
+      "sha256": "a85f6e79ea8023afc2fb103a870b732924f61e0bbe4a628ada69d69fc11cf64b"
+    },
+    {
+      "path": "backend/jit_baseline/errors.py",
+      "sha256": "24636229e8bafe36d405aeb04e5fe44b9cec8898c64bc23224720efe0d97b364"
+    },
+    {
+      "path": "backend/jit_baseline/evidence.py",
+      "sha256": "88904f122c98664f3f17ef16be0727cfdd339f3493df5df21c9e167240ab8f6b"
+    },
+    {
+      "path": "backend/jit_baseline/metrics.py",
+      "sha256": "5749cbd9b2c7c57cdc0357ef66e15219b7a21a3984419f7fe4b79361966fbb5f"
+    },
+    {
+      "path": "backend/jit_baseline/migrations/001_catalog.sql",
+      "sha256": "9c0a01d3afcc6928fb56b1d53bdd1737cf67c98ca388a86e776fae0d843a9eeb"
+    },
+    {
+      "path": "backend/jit_baseline/migrations/002_commit_data.sql",
+      "sha256": "83f72b273bc538ef19234012ed6d236f61b7a728cfd3986ed4317c8c505c89f0"
+    },
+    {
+      "path": "backend/jit_baseline/migrations/003_repository_sync.sql",
+      "sha256": "7b37ebcc0439f32b305aca89fb7254dd7eb3d1893db7f858d76a0d4f6ec9a8ce"
+    },
+    {
+      "path": "backend/jit_baseline/model.py",
+      "sha256": "00c57794bdc2372816f7af2e5b47fad982baa13c8349cff2017eb4d7df03db36"
+    },
+    {
+      "path": "backend/jit_baseline/prediction.py",
+      "sha256": "3d5529dda6e2c0b49bcc79039ca2db8965977d36bd975f7617c45e747a4269cf"
+    },
+    {
+      "path": "backend/jit_baseline/schemas.py",
+      "sha256": "b9de562bf95e4896ba9cad861d322f974796d9415e24708897355342d2aeef95"
+    },
+    {
+      "path": "backend/jit_baseline/store.py",
+      "sha256": "4b5046af1d34988aa1c68ed6e138749ffe618a67ae9ee8230949cfaa81439ec9"
+    },
+    {
+      "path": "backend/jit_baseline/sync.py",
+      "sha256": "2afa51c7fd4e4f1c7d8f139ef7301066f988c5424221184cb5d355dbc6b86365"
+    },
+    {
+      "path": "backend/jit_baseline/team_access.py",
+      "sha256": "698958957780287dfb8293caafb5e187b8f32ce736e16318615533ff64791646"
+    },
+    {
+      "path": "backend/jit_baseline/trends.py",
+      "sha256": "93b9f7950e38728bafed0e852c5b65c29e2d6188abe6eb0d909674609d1c66e1"
+    },
+    {
+      "path": "backend/PROTOCOL.md",
+      "sha256": "6fa9d789399c58e776aef42fb5c9f5026a185fc6d4d8efc413f26cccc097c476"
+    },
+    {
+      "path": "backend/pytest.ini",
+      "sha256": "37b7898dd0df68d7bacac4726b4836010200403a1abe9542fe229caebe39b8a3"
+    },
+    {
+      "path": "backend/README.md",
+      "sha256": "53d328fd63a97207f8439dff5728ebf0d9a7e0b2f3faddf1820dd93875df9121"
+    },
+    {
+      "path": "backend/requirements.txt",
+      "sha256": "21d0a8616767c8843ac75693f4417ee83d4cb2fac0ec1bf00fbd06a401517d23"
+    },
+    {
+      "path": "backend/scripts/acceptance_environment.py",
+      "sha256": "6b590a26cf00c0a0fe74a7d4b859c9e164ef4be4447a4e457e7ac2660a696020"
+    },
+    {
+      "path": "backend/scripts/catalog_system_evidence.py",
+      "sha256": "c7bf72ec686afca5b7004e03e8d5909923a7dd6e1e49426af03c4eff95951b02"
+    },
+    {
+      "path": "backend/scripts/check_catalog_contract.py",
+      "sha256": "29faec4758493504657a7bdcb56de5a2ce1f45621d7283e0e49ca77affe8feec"
+    },
+    {
+      "path": "backend/scripts/environment_smoke.py",
+      "sha256": "753bc6830650a76a0b76168b55343041d203177bc132f6901ef842ea864a1899"
+    },
+    {
+      "path": "backend/scripts/external_delivery_evidence.py",
+      "sha256": "02ef26c649aff24ef1e10b1a246444fc07813e2635d0409f8156ac66782ea8fd"
+    },
+    {
+      "path": "backend/scripts/perf_baseline.py",
+      "sha256": "70e8ae0b69fccb5911f8c313acc9d7aa018aed40c67b4dd3abecbbcf0e08ab13"
+    },
+    {
+      "path": "backend/scripts/prediction_latency.py",
+      "sha256": "4fe092793dbdad5a70aa05afb139f9d82cf486825c1137261479daed9afe0fa1"
+    },
+    {
+      "path": "backend/scripts/requirements-contract.txt",
+      "sha256": "18c6bda1fbce778f006391eb103345d8330a2e95c157ef992c04f4cfdcf0446b"
+    },
+    {
+      "path": "backend/tests/.tmp/test_feature_means_average_and0/catalog.sqlite3",
+      "sha256": "5ade7499a6591462b4632272d9c5c755e6d56bd32e8cfdff9ba2cc37003a4fa6"
+    },
+    {
+      "path": "backend/tests/test_algorithms.py",
+      "sha256": "2af20db6cfb5abb221b714b47c8318c12477805e48201543e56c522505ead7c2"
+    },
+    {
+      "path": "backend/tests/test_api.py",
+      "sha256": "e235c2345422b9df06e36f80600b0ca7d71166a84eca08dc750c87a799a47da8"
+    },
+    {
+      "path": "backend/tests/test_artifacts.py",
+      "sha256": "7ea5cc0464cb52b4c8e7a35d5006259069427a09119a84817c8ac19bda7cb399"
+    },
+    {
+      "path": "backend/tests/test_attribution.py",
+      "sha256": "6ae72be5523c305e0e5aaa63486c016ee64b7c797b64518170d94ef475e22682"
+    },
+    {
+      "path": "backend/tests/test_catalog_api.py",
+      "sha256": "9bafba6e98b70801aa9e7d1827fa2c19fc647a238e4f44c51b762e7e1da43d22"
+    },
+    {
+      "path": "backend/tests/test_catalog_storage.py",
+      "sha256": "40fd72d2354f3ca45a15f25b0873341690cd7e03915d24babf82377257eaf95c"
+    },
+    {
+      "path": "backend/tests/test_cli.py",
+      "sha256": "cb3a5710a292eaf9ac72f041dfc1fde1af7ce0bcdeec32de21b3e88511cdd5df"
+    },
+    {
+      "path": "backend/tests/test_collect.py",
+      "sha256": "238b6adc4b57a5123223bdbdb59895ec7342a97c8a540dc3ae176c6788fd781b"
+    },
+    {
+      "path": "backend/tests/test_data.py",
+      "sha256": "344da87c695d3a5c13522bdfac0beb7ef67892f7066869909018ab303df6ab3c"
+    },
+    {
+      "path": "backend/tests/test_datasets.py",
+      "sha256": "15a971ec99a1e95e2295ae6e4077938728148a82a0c661a11091121545b8c23b"
+    },
+    {
+      "path": "backend/tests/test_deep.py",
+      "sha256": "ab086b34ab768f22a2d8c949217040e9a9d53d5e7406a58ade067d79c0691ec5"
+    },
+    {
+      "path": "backend/tests/test_end_to_end.py",
+      "sha256": "f1f6e03e60e17bda66c38ddbf403213b7d098169faf554411ce165532c8cfabe"
+    },
+    {
+      "path": "backend/tests/test_evidence.py",
+      "sha256": "335ca6f94059829516ee518f232c5db1da39a1e883cdc3b84d0b560b5a5af39f"
+    },
+    {
+      "path": "backend/tests/test_http_lifecycle.py",
+      "sha256": "2e322b7e9509e76a7d8453828b2c5c5c7a612e9e3e1d6b4c0041ba5a2f59d5b0"
+    },
+    {
+      "path": "backend/tests/test_json_prediction.py",
+      "sha256": "f662df4dbe08baad615a423806547bb84b6c19657feb81e0766709d3201be513"
+    },
+    {
+      "path": "backend/tests/test_method_comparison.py",
+      "sha256": "d8923e460bc55d541d7d761b8eec1667bb83467420d1f447e3711622b10cfa52"
+    },
+    {
+      "path": "backend/tests/test_metrics.py",
+      "sha256": "0b1c68afac38ead508fc7224b430e8c7407b901f5c24e5ecc8cb986f341158cf"
+    },
+    {
+      "path": "backend/tests/test_model_catalog.py",
+      "sha256": "c1d5d1eacfa6de74d6ecf7dc47095a97d0f81b5c6f1ee879fafd2c52932006c4"
+    },
+    {
+      "path": "backend/tests/test_model.py",
+      "sha256": "4e4c4fc7b53a9a2b391c4b75d23204fa59f005b22e03a337c4638c7929820021"
+    },
+    {
+      "path": "backend/tests/test_openapi.py",
+      "sha256": "edbc3e17ebbef722529d8302ea0ef1dd511f9e14778aaf631d4969dde0fff0d8"
+    },
+    {
+      "path": "backend/tests/test_performance.py",
+      "sha256": "0abbeb172c393c8d95236960816d7be4b608184de2398f49ba30812af5ec8330"
+    },
+    {
+      "path": "backend/tests/test_repository_sync.py",
+      "sha256": "ee3209399286bbcd769eddb9b11932e92e620385cb31306b6f48d10108fa9776"
+    },
+    {
+      "path": "backend/tests/test_schemas.py",
+      "sha256": "5e96c171b6de7d3598c01cbe5c6666f75fa8b9b9c20c841678584cab3d8f9ad2"
+    },
+    {
+      "path": "backend/tests/test_sync_model_strategy.py",
+      "sha256": "8cab4f7e98efa037cfc584082c8266ff9da9dd0571c7e60f07ca0f0b2a4f1c9d"
+    },
+    {
+      "path": "backend/tests/test_team_access.py",
+      "sha256": "e1d168842a2eb63af55640f9df58555f55706556bc635af139558fad9d67dcac"
+    },
+    {
+      "path": "backend/tests/test_trends.py",
+      "sha256": "6b4ae0e602078094dff29420f0acc03d66b2a3d708f2fb20aa570fd88d572f24"
+    },
+    {
+      "path": "backend/tests/test_verification_guard.py",
+      "sha256": "a7ccbcf905fa6905d54be13d73718ac564b3a0f7d2513fd349b3dbd1db48d905"
+    },
+    {
+      "path": "frontend/.oxlintrc.json",
+      "sha256": "b4d344818a1e1bf43997e4744a9153c8eef770c98b58229cd86363dabb85ded4"
+    },
+    {
+      "path": "frontend/e2e/acceptance.spec.ts",
+      "sha256": "f5e9dbc8f4a99535cafadaea6f0e829ac6c822862fb2ac04799755530fb47967"
+    },
+    {
+      "path": "frontend/e2e/accessibility.spec.ts",
+      "sha256": "f7b5fad57d67f3b8bd432c00d84f011c0a6a58a7bd4f92d3937ed852eadc6a9c"
+    },
+    {
+      "path": "frontend/e2e/contract-shapes.spec.ts",
+      "sha256": "3353737055fd49f8df3c012e1a1f3e28f6cbd8d375fdab0b2c6f53ee311976b9"
+    },
+    {
+      "path": "frontend/e2e/historical.spec.ts",
+      "sha256": "a8c6ced916495c9640807ab62a62e93be58f1bbada1747a4fbb0f44bb12c5c9f"
+    },
+    {
+      "path": "frontend/e2e/repository-setup.ts",
+      "sha256": "08861eb26511357a7a273aa4187b7b71e0beb55d85987f1b37980228cdce57e9"
+    },
+    {
+      "path": "frontend/e2e/repository-sync.spec.ts",
+      "sha256": "47ffd8b0286daee80e909236c0c7937e1ee9b8731e921e50058ab828aae3b444"
+    },
+    {
+      "path": "frontend/e2e/storage.spec.ts",
+      "sha256": "72935455b411ab04ddcb5d868eaf55850c05239b958ff0e57eabc512ab237b05"
+    },
+    {
+      "path": "frontend/e2e/support/acceptance-environment.ts",
+      "sha256": "75628eeb0606674aa9a5db4d5f39adb1c00093daa39f56616c0767d6e3484d78"
+    },
+    {
+      "path": "frontend/e2e/support/acceptance-setup.ts",
+      "sha256": "e2b077e01611d8c354a6be6bbb47610ad04ef2a5541ecafc30b588d1dd85372c"
+    },
+    {
+      "path": "frontend/e2e/support/acceptance-teardown.ts",
+      "sha256": "5b45c08b2aafdd96cffe6745f9ed46f255c28bab12e1e64e68821f28d9dc9dd3"
+    },
+    {
+      "path": "frontend/e2e/support/ports.ts",
+      "sha256": "1b389194e1164551ab2e159d0dffcc3214fa32c211c130719dda447ed0808798"
+    },
+    {
+      "path": "frontend/e2e/trends.spec.ts",
+      "sha256": "1391836da0c6a7ff05b3292ad76517773026bbb4f725167c71ad8d7d49bb6842"
+    },
+    {
+      "path": "frontend/e2e/workbench-seed.spec.ts",
+      "sha256": "e3fb4abb728f19cde159df54d3169da7e84bcd8c064348f13c65f1fbc8143047"
+    },
+    {
+      "path": "frontend/e2e/workbench.spec.ts",
+      "sha256": "806d73b5eb2c19678d97d74e83049f1c67f84d778e1f291501cb47336cf3f19f"
+    },
+    {
+      "path": "frontend/evidence.ts",
+      "sha256": "ca7e4f252c64976eb5fdc58f6a82d68610803d96fbe5f1f99cc21b9d67e34520"
+    },
+    {
+      "path": "frontend/index.html",
+      "sha256": "f5fa4bb18bd6791289a80cee87e7259fbd68e8b73f956208af57eebe211d94c3"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256": "7cfde0103b2fce83c09c68407f74a00667c1bc2519a8952d6fa66b89068a62de"
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "7002de163f2c9078450b47b1709ede283c1f8f0ebaf4ad9e38f760cde996df3c"
+    },
+    {
+      "path": "frontend/playwright.acceptance.config.ts",
+      "sha256": "9df179f43e5fcd8b14e0a4701f805abac2ff5d5f97bd93ef77674ea79878d60e"
+    },
+    {
+      "path": "frontend/playwright.config.ts",
+      "sha256": "9fcc09b1ca509cffedde574a81bd0e95edf774ba242273f7d52adb6e0528e186"
+    },
+    {
+      "path": "frontend/public/DEMO-DATA.md",
+      "sha256": "a0601c19a5ade0b8fd495287ce307c8a638f463c3798673947ebd5b726cadc5b"
+    },
+    {
+      "path": "frontend/public/demo-dataset.json",
+      "sha256": "19c640a056173fb4a5b196d098e290fc5123b7d38ff824b865162ced71c1cda0"
+    },
+    {
+      "path": "frontend/README.md",
+      "sha256": "163aefe15ba9bf638d315d5dc9cffdffc575801017637cdd1ed985b2949b616d"
+    },
+    {
+      "path": "frontend/scripts/perf-first-screen.mjs",
+      "sha256": "6059d3abad75cabcb41e99b555a9fb14fa123d4932fa37cb36a0591a925036fe"
+    },
+    {
+      "path": "frontend/scripts/verify.ps1",
+      "sha256": "7622197462583cf64096ec53ee0136edbd9d2288c4fe5b288aa7ec028a91e165"
+    },
+    {
+      "path": "frontend/src/apiClient.test.ts",
+      "sha256": "6e97163e5ec1e5e996371c8f7de233b42dc89f2d1c986f74320a1a4beab7a391"
+    },
+    {
+      "path": "frontend/src/apiClient.ts",
+      "sha256": "28bf6579ed78cb2238ed99e782258c3bb7a2c4909077bfd6beedcc74f57e2077"
+    },
+    {
+      "path": "frontend/src/apiContract.ts",
+      "sha256": "2f7fef0e22917228c53b9e7c21b3b8aa121488f48016e49da4042329afea1781"
+    },
+    {
+      "path": "frontend/src/App.css",
+      "sha256": "6112c7ff2fc1d630e389eea952da6c582443e0447c8a360bc76d0124badadc7a"
+    },
+    {
+      "path": "frontend/src/App.test.tsx",
+      "sha256": "d31359e2add350a4f73069d01f1c7e4c963bad3a159fc2e41160e6a34ceb93c0"
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "sha256": "d8e0e8495c5e90b449175f7e595bb7d6b63af80bda622a1504291057de3c30f6"
+    },
+    {
+      "path": "frontend/src/AppShell.tsx",
+      "sha256": "c76bf399592a7c6f359648d3c98892d8c00405307050bd121809dfea303fcb52"
+    },
+    {
+      "path": "frontend/src/BaselineRecord.tsx",
+      "sha256": "78dccb3fade4aa140c5c01345a2a32605b4403c8c7eb0246b0a79fc6b6178edd"
+    },
+    {
+      "path": "frontend/src/catalogContract.test.ts",
+      "sha256": "64df87d40d2e70819376e59b32f8f280cbaceef4211245b1d420fa7100fe8cb4"
+    },
+    {
+      "path": "frontend/src/catalogContract.ts",
+      "sha256": "49bd93eea74494d4065e417deaccdeda42895e392b0ef34b123f3ed1f2787c2a"
+    },
+    {
+      "path": "frontend/src/CommitDetail.tsx",
+      "sha256": "a0594535059983ad8801829ab1d4cb1d49424f1bd171a4ec11a1d2f736f4cff0"
+    },
+    {
+      "path": "frontend/src/credentialContext.ts",
+      "sha256": "8f264e846b44af90269190a523ae16ad1ff7ee9c37818e26006952f03d7ae118"
+    },
+    {
+      "path": "frontend/src/credentials.test.tsx",
+      "sha256": "dba7b8714b638cdc09b1a5c5d6c4724ea6b426dddc7e07c0a3f90a6286e88609"
+    },
+    {
+      "path": "frontend/src/credentials.tsx",
+      "sha256": "50998d751cd3582587251f4b1a7e4a779f0afb2dea4edaf3c77a744194429d6b"
+    },
+    {
+      "path": "frontend/src/domain.test.ts",
+      "sha256": "4e4a807c9803d7c4f2eab224948f17b17ff6c92ff1abad83e9d0b251d40dd2f1"
+    },
+    {
+      "path": "frontend/src/domain.ts",
+      "sha256": "bc33038fc173d1c7c4e565807ae89d25983c8456b6d30422323bcec5ca492f38"
+    },
+    {
+      "path": "frontend/src/featureJson.ts",
+      "sha256": "d4b78c2ada29d684dda5ca90d6a2c399fd58aaef97cc0b911bfec2dd8c252114"
+    },
+    {
+      "path": "frontend/src/Feedback.tsx",
+      "sha256": "6df324ceddd32b88963142012aba689eec26db41b1a2e6e0ce7b33f8afe59691"
+    },
+    {
+      "path": "frontend/src/historical-fixture.ts",
+      "sha256": "0ceaa2211d5dee78f0e43c9564591eea45e814022106bcdf20c1a6a415baed4f"
+    },
+    {
+      "path": "frontend/src/historical.test.tsx",
+      "sha256": "814cdbec1014b70992d915e74285ca4c27bec9098363df0f840dd4239bfb1395"
+    },
+    {
+      "path": "frontend/src/historicalContract.ts",
+      "sha256": "58ddf2f8be2c50183ce98b8dbecfc5f969c1c66b0475ba87825610ca8d1b4983"
+    },
+    {
+      "path": "frontend/src/Icon.tsx",
+      "sha256": "60fc7b408afa88458f08a011ec7c21a3a0b9f42d4759e24b74b235afb9f191b7"
+    },
+    {
+      "path": "frontend/src/index.css",
+      "sha256": "eb46b59be98340488842357bd71e8e2d6ee83bc28b871477e57e6b61f98a3a32"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "sha256": "6e9e5807fcbd48b75a96db5cbef36c996262196be42e6d4760dc86babbe61ad2"
+    },
+    {
+      "path": "frontend/src/ModelsPage.test.tsx",
+      "sha256": "e8ac7e96368b1b798212922bc741aa67f900b43b00f56cf2e41eaf7fb7887773"
+    },
+    {
+      "path": "frontend/src/ModelsPage.tsx",
+      "sha256": "c88ca227a062f6ded5b1303245fc5d0cbfc841758ba1e6fb7b6a0f28765acea1"
+    },
+    {
+      "path": "frontend/src/named-fixture.ts",
+      "sha256": "7b3a40ce84a7250ec83fc43b81c1f3cd1993b1d611184c9475104e97e2e912a4"
+    },
+    {
+      "path": "frontend/src/named.test.tsx",
+      "sha256": "49fb6f42acc59358acc7dc967848b8e6118fa24cb637bbf9ca7d6945224cb246"
+    },
+    {
+      "path": "frontend/src/navigation.test.tsx",
+      "sha256": "b378b8ae1636283b50b9758975beecf48ba552740068d784a8ee1dacb55cc5a2"
+    },
+    {
+      "path": "frontend/src/navigation.ts",
+      "sha256": "41c868ea9edf834e0226b6229ceca379923655ce6d76102f6761d4bb7cfcf06b"
+    },
+    {
+      "path": "frontend/src/predictForm.test.ts",
+      "sha256": "6eb09e4e6b15b8fa81072d85c42caf84f6ee7808a369d21e33f787c5f4f6adc5"
+    },
+    {
+      "path": "frontend/src/predictionContract.test.ts",
+      "sha256": "fa107fbcf9868d6ec1d64c3fcdc552cafbe11fb15fef7840f635c50b8e4dbc10"
+    },
+    {
+      "path": "frontend/src/predictionContract.ts",
+      "sha256": "c8fb7818d18be5c3866574b73e335e495d794bcd163a6c845de9c85057e468a2"
+    },
+    {
+      "path": "frontend/src/predictionInput.ts",
+      "sha256": "7bb41633f47754b056f52226f0990aa20c3c23f012b781ff53f5ec1927a7f684"
+    },
+    {
+      "path": "frontend/src/PredictionsPage.test.tsx",
+      "sha256": "aa32f513fa8cf2173b3d25ae821a38f680e2e38b46d0ed79840a4a20070f89bc"
+    },
+    {
+      "path": "frontend/src/PredictionsPage.tsx",
+      "sha256": "abbb8a4d7ee896fb1c30644a63262c71d2ecbd311f9746fa9a92285514aebe48"
+    },
+    {
+      "path": "frontend/src/PredictPage.test.tsx",
+      "sha256": "d8f518b62ee1c75a73b3bc404a0d8b132096bfc048ed4be6793f2e2344e8c90d"
+    },
+    {
+      "path": "frontend/src/PredictPage.tsx",
+      "sha256": "e783c1c911aef1a1c610a6d0113b9a67a06427f947d35050c1f45bf187308ab7"
+    },
+    {
+      "path": "frontend/src/repositoryContract.test.ts",
+      "sha256": "9001dcb89729471c0a0842c657f38593d398758569eba8ecb91c195996cc44ce"
+    },
+    {
+      "path": "frontend/src/repositoryContract.ts",
+      "sha256": "18aee1ad804405ca6345f9e1541db6139c56dea0a95f771fb72ec36e05ff1b5b"
+    },
+    {
+      "path": "frontend/src/repositoryDataset.test.ts",
+      "sha256": "944379fc070b224416efc328fc9e8b5207ba97c1c29ec4cdc9d480761cbb19fb"
+    },
+    {
+      "path": "frontend/src/repositoryPage.test.ts",
+      "sha256": "a033225aec49a9a1b56f9fe037f257537d87b999f2f9e044f601806f0789f511"
+    },
+    {
+      "path": "frontend/src/repositoryPage.ts",
+      "sha256": "048c12f7b93e20a53080e3b7abe9c3a1e68a87ae3983b2737e8da6a3e244801e"
+    },
+    {
+      "path": "frontend/src/RepositorySourcesPage.test.tsx",
+      "sha256": "7eb48b31ea6307d9f12c1a4460388e47cdf05b5e662e59044ec427454f6bb225"
+    },
+    {
+      "path": "frontend/src/RepositorySourcesPage.tsx",
+      "sha256": "8187ec7f4cb9249306a433988212d59b5163c9a66c502ee13419ff6a7da95c2c"
+    },
+    {
+      "path": "frontend/src/requestState.ts",
+      "sha256": "b11b51b4c77b7e7122cd1c69a65ff573a7cb8566ef7b7fa7c100347a6e9b68ca"
+    },
+    {
+      "path": "frontend/src/Risk.tsx",
+      "sha256": "062cc67fe8164da73c2c9e517d2dcec29f3cac08c5bd0157f7e887fda40c53e6"
+    },
+    {
+      "path": "frontend/src/shortlist.test.ts",
+      "sha256": "9d9bd56887bcec9a5184c5ad810371bf4dd1e83fd01dd8f674cb9b2fe2a84c2b"
+    },
+    {
+      "path": "frontend/src/shortlist.ts",
+      "sha256": "c81dd6f7abdd5858143f327ff115b65250577e885dd50afa75b4bc8ee5a9db6c"
+    },
+    {
+      "path": "frontend/src/test-setup.ts",
+      "sha256": "e20f6c79ce7842f29f0dd93957e8230a5cbb3b5f6ee691fef96d4f393b964cb3"
+    },
+    {
+      "path": "frontend/src/testFixtures.ts",
+      "sha256": "e5fdae80b89939de94ccceef661950c6af45f6bbfc37e6e6e34b64b2b27162a8"
+    },
+    {
+      "path": "frontend/src/trend-fixture.ts",
+      "sha256": "dd316df080ae564a47f553bb47b9e4b7021c5dd8c9f6950eba852cb5ec030163"
+    },
+    {
+      "path": "frontend/src/trend.css",
+      "sha256": "dd8947e5717d7329341c85696a8c4c206e4dd45c5c95f9e34b3a73966b78186e"
+    },
+    {
+      "path": "frontend/src/trendContract.test.ts",
+      "sha256": "bdbaa49ee48d869653d6e38e197d4545a7341d1538df9ac51978b19aa5d9d2b4"
+    },
+    {
+      "path": "frontend/src/trendContract.ts",
+      "sha256": "166196fecdcd6cc8899827e20a8d9fad40e17ae371b605bbbb2fe2d6ad7d15c5"
+    },
+    {
+      "path": "frontend/src/trendInsights.test.ts",
+      "sha256": "462a8d0d94f211b56f9a3f6013d96953c07882c5945499df8de5fce09fb31144"
+    },
+    {
+      "path": "frontend/src/trendInsights.ts",
+      "sha256": "47a8df68b143435b58b45b0faf1d51213ce2e0b803a894161b5c9a2a9b206368"
+    },
+    {
+      "path": "frontend/src/TrendPage.test.tsx",
+      "sha256": "2369adf0db95cf53cdae25115d7ccf398f9ad985d043ee78396a83384a0e0061"
+    },
+    {
+      "path": "frontend/src/TrendPage.tsx",
+      "sha256": "ce75baa3a3c3d21efb923fc9af0a597224eef8f6db63e2560167e49d183b0e1a"
+    },
+    {
+      "path": "frontend/src/useDataset.test.tsx",
+      "sha256": "70cc26dd4e70298b995162a89c56ff92e3bc30e2564a30e55ef4533ec8d512c5"
+    },
+    {
+      "path": "frontend/src/useDataset.ts",
+      "sha256": "3418015bd58877f3e0dd33b092af82bc6f43ddc9f869e6859d6e032ec1d00798"
+    },
+    {
+      "path": "frontend/src/workbenchSeed.test.tsx",
+      "sha256": "9f98c9494f5564919d7327ec24b895642bffafeeb31e41603e6f74ecb3cc74f8"
+    },
+    {
+      "path": "frontend/tsconfig.app.json",
+      "sha256": "4ff2ca2516bd43bcf0e9641fac6ea427d80c52e0371467691f7a3eb4de54e877"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808"
+    },
+    {
+      "path": "frontend/tsconfig.node.json",
+      "sha256": "ba706cd59149c134a96d732d8b17c6a6a0d9830344eb95cdb407c8376a35412e"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "sha256": "b83247c4b1e2b871cac8bf57f55741196fecb9c01c96562ddf231b387590009b"
+    },
+    {
+      "path": "frontend/vitest.config.ts",
+      "sha256": "6a95f9d0be1ab1327a7caa49ca6d0f1e927cd090cce1375a060e103f80f594d8"
+    }
+  ],
+  "protectedFileCount": 697,
+  "protectedFilesUnchanged": true,
+  "protectedFilesDiff": [],
+  "checks": [
+    {
+      "name": "backend-tests",
+      "command": "./.venv/Scripts/python.exe -m pytest --basetemp=.cache/final-verification",
+      "exitCode": 0,
+      "elapsedSeconds": 149.4
+    },
+    {
+      "name": "real-artifact-verification",
+      "command": "./.venv/Scripts/python.exe -m jit_baseline.cli verify",
+      "exitCode": 0,
+      "elapsedSeconds": 2.68
+    },
+    {
+      "name": "independent-reproduction-comparison",
+      "command": "./.venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/_run/reproduction-comparison.json",
+      "exitCode": 0,
+      "elapsedSeconds": 2.39
+    },
+    {
+      "name": "clean-install",
+      "command": "npm ci --registry=https://registry.npmjs.org/ --fetch-retries=0 --fetch-timeout=30000",
+      "exitCode": 0,
+      "elapsedSeconds": 16.09
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "elapsedSeconds": 14.06
+    },
+    {
+      "name": "behavior-tests",
+      "command": "npm test",
+      "exitCode": 0,
+      "elapsedSeconds": 38.15
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "exitCode": 0,
+      "elapsedSeconds": 0.44
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "elapsedSeconds": 3.28
+    },
+    {
+      "name": "browser-tests",
+      "command": "npm run test:e2e",
+      "exitCode": 0,
+      "elapsedSeconds": 138.02
+    },
+    {
+      "name": "openspec-validation",
+      "command": "openspec validate --specs --strict --no-interactive",
+      "exitCode": 0,
+      "elapsedSeconds": 17.08
+    }
+  ]
+}

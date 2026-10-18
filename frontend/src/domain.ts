@@ -1,9 +1,23 @@
 import type { BaselineSummary, Mode } from './historicalContract'
+import { parseSync, parseSyncCommitPage, repositoryName, type SyncCommit } from './repositoryContract'
 export { parseHistorical } from './historicalContract'
 export type { BaselineSummary, Mode, Score } from './historicalContract'
 export interface Commit { id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string; metrics?: Record<string, number>; explanation?: string[] }
-export interface Dataset { mode: Mode; project: string; version: string; records: Commit[]; runId?: string; model?: { id: string; name: string; sha256: string }; summary?: BaselineSummary }
-export function contextKey(data: Dataset): string { return JSON.stringify([data.mode, data.project, data.version, data.runId ?? '']) }
+/** 仓库来源的上下文：同步作业身份与它实际采用的打分模型，供界面如实标注来源（RCL-08/09）。 */
+export interface RepositoryMeta {
+  syncId: string
+  repositoryUrl: string
+  branch: string
+  datasetVersion: string | null
+  requestedStrategy: string
+  modelStrategy: string | null
+  degradeReason: string | null
+  trainRecords: number | null
+  trainPositives: number | null
+  labelNote: string
+}
+export interface Dataset { mode: Mode; project: string; version: string; records: Commit[]; total?: number; repository?: RepositoryMeta; runId?: string; model?: { id: string; name: string; sha256: string }; summary?: BaselineSummary }
+export function contextKey(data: Dataset): string { return JSON.stringify([data.mode, data.project, data.version, data.runId ?? '', data.repository?.syncId ?? '']) }
 export interface Query { search: string; start: string; end: string; sort: string }
 export const emptyQuery: Query = { search: '', start: '', end: '', sort: 'risk' }
 function object(input: unknown): Record<string, unknown> {
@@ -91,4 +105,54 @@ export function readSeedQuery(search: string): { query: Query; ignored: boolean 
   const invalid = (start !== '' && !validDate(start)) || (end !== '' && !validDate(end)) || (start !== '' && end !== '' && start > end)
   if (invalid) return { query: emptyQuery, ignored: true }
   return { query: { ...emptyQuery, start, end }, ignored: false }
+}
+
+/**
+ * 同步提交 → 工作台记录：只做字段改名与单位换算，风险与度量原样带过来。
+ * 列表页、清单逐条读取与数据集解析共用这一个映射，避免三处各写一遍。
+ */
+export function toCommit(commit: SyncCommit): Commit {
+  return {
+    id: commit.commitId,
+    time: new Date(commit.epoch * 1000).toISOString(),
+    risk: commit.risk,
+    lines: commit.addedLines + commit.deletedLines,
+    files: commit.files,
+    metrics: commit.metrics,
+  }
+}
+
+/**
+ * 仓库来源的数据集（RCL-08）：只展示本次同步实际打分的提交。
+ *
+ * 与历史回放不同，这里没有发布者的标签质量与冻结指标——提交的 0/1 标签来自简化 SZZ，
+ * 只作为"观测到引入过缺陷"的线索展示，不当作评价结论。`records` 是首屏一页（按风险降序），
+ * `total` 是该作业的提交总数；工作台列表本身按服务端分页读取，不依赖这里的 records。
+ */
+export function parseRepository(input: unknown): Dataset {
+  const raw = object(input)
+  const sync = parseSync(raw.sync)
+  const page = parseSyncCommitPage(raw.page)
+  if (sync.syncId !== page.syncId) throw new Error('同步作业身份不一致')
+  const records = page.commits.map(toCommit)
+  return {
+    mode: 'repository',
+    project: repositoryName(sync.repositoryUrl),
+    version: sync.datasetVersion ?? '未登记数据集',
+    total: page.total,
+    records,
+    runId: sync.runId ?? undefined,
+    repository: {
+      syncId: sync.syncId,
+      repositoryUrl: sync.repositoryUrl,
+      branch: sync.branch,
+      datasetVersion: sync.datasetVersion,
+      requestedStrategy: sync.requestedStrategy,
+      modelStrategy: sync.modelStrategy,
+      degradeReason: sync.degradeReason,
+      trainRecords: sync.trainRecords,
+      trainPositives: sync.trainPositives,
+      labelNote: page.commits.find(commit => commit.labelNote)?.labelNote ?? '',
+    },
+  }
 }

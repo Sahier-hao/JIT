@@ -1,0 +1,95 @@
+{
+  "kind": "repository-sync-live",
+  "generatedAt": "2026-10-18T08:27:53.807335+00:00",
+  "request": {
+    "syncId": "0876455e-07e7-4a2c-855f-0b857e5a6f7e",
+    "repositoryUrl": "https://github.com/Sahier-hao/JIT.git",
+    "branch": "HEAD",
+    "since": "2026-07-20T00:00:00+00:00",
+    "until": "2026-10-19T00:00:00+00:00",
+    "commitLimit": 500,
+    "requestedStrategy": "auto",
+    "status": "completed",
+    "stage": "completed",
+    "datasetVersion": "kamei14-git-v1-jit-2026-10-12_2026-10-18-770c916c",
+    "runId": "eb690b90-3e78-4cca-976e-01a96ccd77dc",
+    "modelId": "39297fbd-57cf-4eea-8620-0127ddecc6c0",
+    "modelStrategy": "generic-model",
+    "degradeReason": "fewRecords",
+    "trainRecords": 0,
+    "trainPositives": 0,
+    "createdAt": "2026-10-18T08:27:14.082390Z",
+    "updatedAt": "2026-10-18T08:27:53.717901Z",
+    "requestId": "evidence-live-sync",
+    "error": null
+  },
+  "created": true,
+  "elapsedSeconds": 39.722,
+  "stages": [
+    {
+      "stage": "queued",
+      "status": "queued",
+      "from": 0.014
+    },
+    {
+      "stage": "collecting",
+      "status": "collecting",
+      "from": 0.517,
+      "until": 39.216
+    },
+    {
+      "stage": "completed",
+      "status": "completed",
+      "from": 39.722
+    }
+  ],
+  "commitsReturned": 26,
+  "commitsTotal": 26,
+  "labels": {
+    "positiveInFirstPage": 2,
+    "returned": 26
+  },
+  "datasetRoot": "..\\docs\\evidence\\_run\\datasets-live",
+  "topCommits": [
+    {
+      "commitId": "01ce66edeaa404d03bdc25ea7267bfca9f32dba8",
+      "risk": 0.8664490697740885,
+      "label": 0,
+      "addedLines": 5605,
+      "deletedLines": 30,
+      "files": 27
+    },
+    {
+      "commitId": "fefb74b71014442fce57079b697b68d098d32c87",
+      "risk": 0.716084691715082,
+      "label": 1,
+      "addedLines": 116907,
+      "deletedLines": 0,
+      "files": 203
+    },
+    {
+      "commitId": "c88da89a9ff4a78789f3b9c90355d548d6a77584",
+      "risk": 0.6275220991893142,
+      "label": 0,
+      "addedLines": 4025,
+      "deletedLines": 21,
+      "files": 61
+    },
+    {
+      "commitId": "d5a7677848eafb9df346c332caf4cedf75ac2bdd",
+      "risk": 0.5836432702691948,
+      "label": 0,
+      "addedLines": 1574,
+      "deletedLines": 44,
+      "files": 31
+    },
+    {
+      "commitId": "081f04655f7e27aa17a0b476ef457aaf2240efac",
+      "risk": 0.5739587657929267,
+      "label": 0,
+      "addedLines": 4225,
+      "deletedLines": 0,
+      "files": 48
+    }
+  ]
+}

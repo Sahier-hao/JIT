@@ -1,6 +1,6 @@
 import { parseDataset, validRisk, type Dataset } from './domain'
 
-export type Mode = 'demo' | 'historical'
+export type Mode = 'demo' | 'historical' | 'repository'
 export interface Score { value: number | null; reason: string | null }
 interface Classification { precision: Score; recall: Score; f1: Score; confusion: { tp: number; fp: number; tn: number; fn: number } }
 interface BaselineMetrics extends Classification {
