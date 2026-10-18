@@ -17,6 +17,8 @@ const servicePort = numberFromEnv('JIT_ACCEPTANCE_SERVICE_PORT', ACCEPTANCE_SERV
 
 export default defineConfig({
   testDir: './e2e',
+  // 隔离环境只跑验收用例：它自带服务生命周期夹具，跑别的 spec 既无意义也会污染自有数据库。
+  testMatch: '**/acceptance.spec.ts',
   fullyParallel: false,
   retries: 0,
   workers: 1,

@@ -1,0 +1,219 @@
+{
+  "copiedFromWorkspace": [
+    "acceptance-environment.json",
+    "acceptance-models-desktop-1280.png",
+    "acceptance-models-desktop-1440.png",
+    "acceptance-predict-desktop-1280.png",
+    "acceptance-predict-desktop-1440.png",
+    "acceptance-result-desktop-1280.png",
+    "acceptance-result-desktop-1440.png",
+    "browser-results-acceptance.json",
+    "browser-results.json",
+    "models-desktop-1280.png",
+    "models-desktop-1440.png",
+    "models-drawer-desktop-1280.png",
+    "models-drawer-desktop-1440.png",
+    "pages-desktop-1280.json",
+    "pages-desktop-1440.json",
+    "predict-desktop-1280.png",
+    "predict-desktop-1440.png",
+    "result-desktop-1280.png",
+    "result-desktop-1440.png",
+    "scan.json",
+    "theme-charcoal-models-drawer-desktop-1280.png",
+    "theme-charcoal-models-drawer-desktop-1440.png",
+    "theme-charcoal-predict-desktop-1280.png",
+    "theme-charcoal-predict-desktop-1440.png",
+    "theme-desktop-1280.json",
+    "theme-desktop-1440.json",
+    "trends-chart-desktop-1280.png",
+    "trends-chart-desktop-1440.png",
+    "trends-desktop-1280.json",
+    "trends-desktop-1280.png",
+    "trends-desktop-1440.json",
+    "trends-desktop-1440.png",
+    "unit-results.json",
+    "verification.json",
+    "verification.md",
+    "workbench-demo-desktop-1280.png",
+    "workbench-demo-desktop-1440.png",
+    "workbench-desktop-1280.json",
+    "workbench-desktop-1440.json",
+    "workbench-historical-desktop-1280.png",
+    "workbench-historical-desktop-1440.png"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 41,
+  "files": [
+    {
+      "path": "acceptance-environment.json",
+      "sha256": "74943fbe70023c8cff105daf677327df84ebed85e6c6c996665850bb2feeba02"
+    },
+    {
+      "path": "acceptance-models-desktop-1280.png",
+      "sha256": "325c323b47bd5db670a56da7c3fc6869a2275159ac98c6256cb9a4ae55f167a2"
+    },
+    {
+      "path": "acceptance-models-desktop-1440.png",
+      "sha256": "9ec8b687a60f5495cfd6327f7a6a59fdf469c88e30df9544de3ff6a9a8327231"
+    },
+    {
+      "path": "acceptance-predict-desktop-1280.png",
+      "sha256": "fbd2460e84d34451d63a20af96cf197cfca1eb734da486c001fe75d011da7ad8"
+    },
+    {
+      "path": "acceptance-predict-desktop-1440.png",
+      "sha256": "d6edcb260e38fa80644ec32d279d63e209e604e7f9356e0ce217c64df7c95536"
+    },
+    {
+      "path": "acceptance-result-desktop-1280.png",
+      "sha256": "d09bc558d36208de5bbf68e7091c51dff7de3d16ae7e4ead0b9737e9d21663fe"
+    },
+    {
+      "path": "acceptance-result-desktop-1440.png",
+      "sha256": "3f4baf0c0594c75458caabf1181490c03a167f51edd49be604c8c778f857ab88"
+    },
+    {
+      "path": "browser-results-acceptance.json",
+      "sha256": "1b3f2690f478cc9bd7efecbca8c55566e3433aa1c66d5ece0ea1c5102e8cf682"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "fdb0465a0adf0baa24c505cfb5d05f32129d9ab7aab1a8cb4a29b884c090389c"
+    },
+    {
+      "path": "models-desktop-1280.png",
+      "sha256": "b7d3563a8a0266381ea41bcde7bb4d383f6db49c8f45444f69c51a9480c44883"
+    },
+    {
+      "path": "models-desktop-1440.png",
+      "sha256": "a0481c62a9e1f97ace785bf683d2347f05d605376f689fe9cb47b1beaace6f94"
+    },
+    {
+      "path": "models-drawer-desktop-1280.png",
+      "sha256": "2ed137ad23f6b145e6c6f5e025870c2ec3fc0f619340d303d43f226be8328aec"
+    },
+    {
+      "path": "models-drawer-desktop-1440.png",
+      "sha256": "8d2620acc5fbfaadd2449ed087d875fb59805c43b5f9beacdbde6fbef6996ad9"
+    },
+    {
+      "path": "pages-desktop-1280.json",
+      "sha256": "6aa91bbf3f52e529c2cdc8f71306d48aecb50b6c4b8d1e0975a6c2322d1c2a79"
+    },
+    {
+      "path": "pages-desktop-1440.json",
+      "sha256": "06f1b740b52eef8a0ce46a609d97e66b547f3da6852f8c66bb0dd04ccb57534b"
+    },
+    {
+      "path": "predict-desktop-1280.png",
+      "sha256": "f9823655a0c928e0cdf4d9c9953481a26a0f41296024ba192539a5b9fe7c5973"
+    },
+    {
+      "path": "predict-desktop-1440.png",
+      "sha256": "229697605652ab84514336961cda118255e56f5c0c0ce7128ddf1c7f15ed5ead"
+    },
+    {
+      "path": "result-desktop-1280.png",
+      "sha256": "f44e4210db87754114cee66345e3b9436dfccb1d16a56b438b3268511b84e91c"
+    },
+    {
+      "path": "result-desktop-1440.png",
+      "sha256": "5a0c8feccf8ca5e31d70f3787b68bc5c6c306bfe0a0afd08de64b424b7a336aa"
+    },
+    {
+      "path": "scan.json",
+      "sha256": "0b7329a90fa5906275cb226bf1eb284946a365dde36b1f75cca1ab068e7813d7"
+    },
+    {
+      "path": "theme-charcoal-models-drawer-desktop-1280.png",
+      "sha256": "3ef28d6b8ff664dd9f4e325c68dea57e5c46ab39330c639bfd3a2f2dccb2aaa9"
+    },
+    {
+      "path": "theme-charcoal-models-drawer-desktop-1440.png",
+      "sha256": "40588254f920401603e670204e6acbdd2969c9cc136f4c2e065093b2a8905dfe"
+    },
+    {
+      "path": "theme-charcoal-predict-desktop-1280.png",
+      "sha256": "d99602c8531aa3503e81c690e46e0193d301870c95ce201175dcdebe96a840fa"
+    },
+    {
+      "path": "theme-charcoal-predict-desktop-1440.png",
+      "sha256": "2835653f38c6c8240cd7c0e5f3bec13ce30933486bbd4f07939c43871bf5cac5"
+    },
+    {
+      "path": "theme-desktop-1280.json",
+      "sha256": "d8475bc6bf1686b67eb5e594f805750d433da5e3c317bce7c87dd78383accc5b"
+    },
+    {
+      "path": "theme-desktop-1440.json",
+      "sha256": "b6faf361d13e6285e0d2d9e91da4a8c95f2068136e850b743ed191b04f02fdf3"
+    },
+    {
+      "path": "trends-chart-desktop-1280.png",
+      "sha256": "045c7066a0a428298431484be8fca6431baf3d1220d85790404748d169a86b9c"
+    },
+    {
+      "path": "trends-chart-desktop-1440.png",
+      "sha256": "96553787ff1382a68997b071ffed0524f328d1a969a5b446168b8d924c278479"
+    },
+    {
+      "path": "trends-desktop-1280.json",
+      "sha256": "265fbf5f8f5d2953680a5927664584d9942e9e0439cc3d0f213201e9cb4c60a7"
+    },
+    {
+      "path": "trends-desktop-1280.png",
+      "sha256": "7eb25ddec867337b6cc76edb20ef280beb3b5a9bd69d8f0638d041229451de2c"
+    },
+    {
+      "path": "trends-desktop-1440.json",
+      "sha256": "f4fccd3c3070e5a4bafa6979e7ae7bfff23645d4f5cd991e3cc752a9d033a1af"
+    },
+    {
+      "path": "trends-desktop-1440.png",
+      "sha256": "b09d88ff9d7a15f8c1aecf62de4acb9140b6a549a6bacf5c535d61c7522e2ca4"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "ef104cddb2b920454d035a7009b1abf6216015ad3aebd1d1a63a7101389add25"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "5b79213942b8981a6226c2b021f47466d3d36570f371352299996b87d2b6c7b2"
+    },
+    {
+      "path": "verification.md",
+      "sha256": "52a08038e1bde902183ae1f05b9fd1e8ea74a53d7a8d4ec04a5e04043ed6b589"
+    },
+    {
+      "path": "workbench-demo-desktop-1280.png",
+      "sha256": "d5bbdd407e10e4d8bf372ad715496942d28a657e6e327031087af7b7da637610"
+    },
+    {
+      "path": "workbench-demo-desktop-1440.png",
+      "sha256": "1eedb9e4894433e475df85de659a72692880016fb511c43b388daedc8b1e5101"
+    },
+    {
+      "path": "workbench-desktop-1280.json",
+      "sha256": "09b6a6cb5c49933eac08108324037a40372afd857c8c9c7bede5d17df8cee787"
+    },
+    {
+      "path": "workbench-desktop-1440.json",
+      "sha256": "553c55081a6a073fe2525a28bc7ba52201fc18ea97fe5f346e400a4b89b22c9f"
+    },
+    {
+      "path": "workbench-historical-desktop-1280.png",
+      "sha256": "8b5b887fbfb0aa1a3c24d3d3752036a9ab23087565aba0288c3876ea3f02ca8e"
+    },
+    {
+      "path": "workbench-historical-desktop-1440.png",
+      "sha256": "5db735677d040c4ee51b6e98296beca6f08385b3cd5019d46c0eac34feec64f7"
+    }
+  ],
+  "frozenUtc": "2026-10-18T06:58:30.365453+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "b0c0e3a1dcf8d55652ce050c206400747068075e0134dfe6ec63c76d1e253bd9",
+  "workspace": "docs/evidence/_run/restyle-frontend-visual-language"
+}

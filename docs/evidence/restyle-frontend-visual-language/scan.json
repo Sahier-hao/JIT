@@ -1,0 +1,77 @@
+{
+  "kind": "sensitive-info-scan",
+  "target": "docs\\evidence\\_run\\restyle-frontend-visual-language",
+  "patterns": [
+    "bearer_token_value",
+    "token_env_assignment",
+    "acceptance_temp_absolute_path",
+    "api_key_prefix",
+    "authorization_header_body"
+  ],
+  "files": [
+    {
+      "path": "acceptance-environment.json",
+      "bytes": 588,
+      "hits": {}
+    },
+    {
+      "path": "browser-results-acceptance.json",
+      "bytes": 37235,
+      "hits": {}
+    },
+    {
+      "path": "browser-results.json",
+      "bytes": 85232,
+      "hits": {}
+    },
+    {
+      "path": "pages-desktop-1280.json",
+      "bytes": 2384,
+      "hits": {}
+    },
+    {
+      "path": "pages-desktop-1440.json",
+      "bytes": 2393,
+      "hits": {}
+    },
+    {
+      "path": "theme-desktop-1280.json",
+      "bytes": 788,
+      "hits": {}
+    },
+    {
+      "path": "theme-desktop-1440.json",
+      "bytes": 788,
+      "hits": {}
+    },
+    {
+      "path": "unit-results.json",
+      "bytes": 91788,
+      "hits": {}
+    },
+    {
+      "path": "verification.json",
+      "bytes": 8837,
+      "hits": {}
+    },
+    {
+      "path": "verification.md",
+      "bytes": 11251,
+      "hits": {}
+    },
+    {
+      "path": "workbench-desktop-1280.json",
+      "bytes": 1314,
+      "hits": {}
+    },
+    {
+      "path": "workbench-desktop-1440.json",
+      "bytes": 1316,
+      "hits": {}
+    }
+  ],
+  "hits": [],
+  "scannedFiles": 12,
+  "hitCount": 0,
+  "passed": true
+}

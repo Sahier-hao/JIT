@@ -1,15 +1,18 @@
 /**
- * 结果展示与按编号重开（MPW-08、MPW-09；任务 5.1、5.2）。
+ * 结果展示与按编号重开（MPW-08、MPW-09；任务 5.1、5.2，视觉改造任务 5.4）。
  *
  * 结果页只呈现这一条记录：风险、用户提供的原始输入、以及不可变的模型与运行来源。重开是一次
  * 只读 GET，不触发新预测，也不要求该模型当前仍然可用，更不依赖模型目录能否读取。
+ *
+ * 版式（design D14）：顶部风险横幅（大号等宽数字 + 0–100% 量表 + 免责），下方左身份 / 右来源。
  */
 
 import { type FormEvent, useState } from 'react'
 import { fetchPredictionBatch } from './apiClient'
-import { CredentialNotice, FailureNotice, LoadingNotice, MetaBlock, StatusNote } from './Feedback'
-import { displayTime, riskLabel } from './domain'
+import { CredentialNotice, EmptyState, FailureNotice, LoadingNotice, MetaBlock, StatusNote } from './Feedback'
+import { displayTime } from './domain'
 import { Icon } from './Icon'
+import { Risk } from './Risk'
 import { type PredictionResult } from './predictionContract'
 import { normalizedBatchId } from './predictionContract'
 import { resultLink, type Route } from './navigation'
@@ -20,17 +23,33 @@ function showTime(value: string | null): string {
   return displayTime(value)
 }
 
-function RiskCard({ risk }: { risk: number }) {
-  // 复用既有风险格式化与轨道样式，但不套用历史数据集的指标解析器。
-  const percent = Math.min(100, Math.max(0, risk * 100))
+/**
+ * 风险横幅（任务 5.4、design D14）：大号等宽数字 + 0–100% 量表 + 一句免责。
+ *
+ * 量表把数值放回可核对的范围里：条的末端是这次估计，60% 处是分档界（D11），两端是
+ * 0 与 100 两个端点。这里不给出任何置信区间——运行产物不提供区间，写一个出来就是编造。
+ */
+function RiskBanner({ risk, recordId }: { risk: number; recordId: string }) {
   return (
-    <div className="risk-display">
-      <span className="risk-number">{riskLabel(risk)}</span>
-      <span className="risk-track" aria-hidden="true">
-        <span style={{ width: `${percent}%` }} />
-      </span>
-      <span className="muted">模型估计的缺陷风险，未验证在线仓库效果</span>
-    </div>
+    <section className="risk-banner" aria-label="风险估计">
+      <div className="risk-banner-main">
+        <span className="risk-banner-label">缺陷风险（模型估计）</span>
+        <Risk risk={risk} large />
+        <div className="risk-banner-scale" aria-hidden="true">
+          <span>0%</span>
+          <span>60% 分档界</span>
+          <span>100%</span>
+        </div>
+      </div>
+      <div className="risk-banner-side">
+        <p className="risk-banner-note">
+          模型估计的缺陷风险，未验证在线仓库效果；不代表已确认缺陷，也不构成缺陷结论。
+        </p>
+        <p className="risk-banner-meta">
+          单条预测 · 记录 <code>{recordId}</code>
+        </p>
+      </div>
+    </section>
   )
 }
 
@@ -66,127 +85,130 @@ function ResultBody({ result, snapshot }: { result: PredictionResult; snapshot: 
         </StatusNote>
       )}
 
-      <section className="result-grid">
-        <article className="result-card">
-          <div className="section-caption">
-            <span>风险</span>
-            <span>{record.recordId}</span>
-          </div>
-          <RiskCard risk={record.risk} />
-          <dl className="identity-list">
-            <div>
-              <dt>项目</dt>
-              <dd>{result.project}</dd>
-            </div>
-            <div>
-              <dt>记录编号</dt>
-              <dd>{record.recordId}</dd>
-            </div>
-            <div>
-              <dt>提交 SHA</dt>
-              <dd>{record.commitId === null ? '未提供' : <code>{record.commitId}</code>}</dd>
-            </div>
-            <div>
-              <dt>提交时间</dt>
-              <dd>{showTime(record.time)}</dd>
-            </div>
-            <div>
-              <dt>创建时刻</dt>
-              <dd>{showTime(result.createdAt)}</dd>
-            </div>
-          </dl>
-        </article>
+      <RiskBanner risk={record.risk} recordId={record.recordId} />
 
-        <article className="result-card">
-          <div className="section-caption">
-            <span>原始输入（六字段）</span>
-            <span>按提交时的数值原样保存</span>
-          </div>
-          <dl className="identity-list">
-            {Object.entries(record.features).map(([name, value]) => (
-              <div key={name}>
-                <dt>
-                  <code>{name}</code>
-                </dt>
-                <dd>{String(value)}</dd>
+      <div className="result-grid">
+        <div className="result-col">
+          <article className="result-card">
+            <div className="section-caption">
+              <span>身份</span>
+              <span>{record.recordId}</span>
+            </div>
+            <dl className="identity-list">
+              <div>
+                <dt>项目</dt>
+                <dd>{result.project}</dd>
               </div>
-            ))}
-          </dl>
-          <p className="muted">
-            六项均为用户提供的原始数值，未经本应用变换；模型内部按已登记 schema 自行处理。
-          </p>
-        </article>
-      </section>
+              <div>
+                <dt>记录编号</dt>
+                <dd>{record.recordId}</dd>
+              </div>
+              <div>
+                <dt>提交 SHA</dt>
+                <dd>{record.commitId === null ? '未提供' : <code>{record.commitId}</code>}</dd>
+              </div>
+              <div>
+                <dt>提交时间</dt>
+                <dd>{showTime(record.time)}</dd>
+              </div>
+              <div>
+                <dt>创建时刻</dt>
+                <dd>{showTime(result.createdAt)}</dd>
+              </div>
+            </dl>
+          </article>
 
-      <section className="result-section">
-        <div className="section-caption">
-          <span>来源与身份</span>
-          <span>来源在保存时冻结，重开时不会随模型状态改变</span>
+          <article className="result-card">
+            <div className="section-caption">
+              <span>原始输入（六字段）</span>
+              <span>按提交时的数值原样保存</span>
+            </div>
+            <dl className="identity-list">
+              {Object.entries(record.features).map(([name, value]) => (
+                <div key={name}>
+                  <dt>
+                    <code>{name}</code>
+                  </dt>
+                  <dd>{String(value)}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="muted">
+              六项均为用户提供的原始数值，未经本应用变换；模型内部按已登记 schema 自行处理。
+            </p>
+          </article>
         </div>
-        <dl className="identity-list">
-          <div>
-            <dt>批次身份</dt>
-            <dd>
-              <code>{result.batchId}</code>
-            </dd>
+
+        <section className="result-section">
+          <div className="section-caption">
+            <span>来源与身份</span>
+            <span>来源在保存时冻结，重开时不会随模型状态改变</span>
           </div>
-          <div>
-            <dt>预测身份</dt>
-            <dd>
-              <code>{record.predictionId}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>模式 / 来源类型</dt>
-            <dd>
-              <code>{result.mode}</code> · <code>{result.sourceKind}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>模型</dt>
-            <dd>
-              {result.model.name}（方法 <code>{result.model.method}</code>）
-            </dd>
-          </div>
-          <div>
-            <dt>模型身份</dt>
-            <dd>
-              <code>{result.model.modelId}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>运行身份</dt>
-            <dd>
-              <code>{result.runId}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>原产物模型</dt>
-            <dd>
-              <code>{result.model.artifactModelId}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>模型哈希</dt>
-            <dd>
-              <code>{result.model.sha256}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>特征 schema</dt>
-            <dd>
-              <code>{result.featureSchemaVersion}</code> · schema 哈希{' '}
-              <code>{result.model.featureSchema.schemaSha256}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>输入哈希</dt>
-            <dd>
-              <code>{result.inputSha256}</code>
-            </dd>
-          </div>
-        </dl>
-      </section>
+          <dl className="identity-list">
+            <div>
+              <dt>批次身份</dt>
+              <dd>
+                <code>{result.batchId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>预测身份</dt>
+              <dd>
+                <code>{record.predictionId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>模式 / 来源类型</dt>
+              <dd>
+                <code>{result.mode}</code> · <code>{result.sourceKind}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>模型</dt>
+              <dd>
+                {result.model.name}（方法 <code>{result.model.method}</code>）
+              </dd>
+            </div>
+            <div>
+              <dt>模型身份</dt>
+              <dd>
+                <code>{result.model.modelId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>运行身份</dt>
+              <dd>
+                <code>{result.runId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>原产物模型</dt>
+              <dd>
+                <code>{result.model.artifactModelId}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>模型哈希</dt>
+              <dd>
+                <code>{result.model.sha256}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>特征 schema</dt>
+              <dd>
+                <code>{result.featureSchemaVersion}</code> · schema 哈希{' '}
+                <code>{result.model.featureSchema.schemaSha256}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>输入哈希</dt>
+              <dd>
+                <code>{result.inputSha256}</code>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
 
       <section className="result-section">
         <div className="section-caption">
@@ -240,8 +262,7 @@ function ResultBody({ result, snapshot }: { result: PredictionResult; snapshot: 
   )
 }
 
-function BatchLookup({ onSubmit }: { onSubmit: (batchId: string) => void }) {
-  const [value, setValue] = useState('')
+function BatchLookup({ onSubmit }: { onSubmit: (batchId: string) => void }) {  const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   function submit(event: FormEvent) {
@@ -304,7 +325,7 @@ export function PredictionsPage({
   )
 
   return (
-    <>
+    <div className="result-page">
       <header className="topbar">
         <div>
           <span className="project-symbol">
@@ -325,31 +346,30 @@ export function PredictionsPage({
       </div>
 
       {batchId === null ? (
-        <div className="empty-state">
-          <div className="empty-mark">
-            <Icon name="search" size={28} />
-          </div>
-          <h2>打开已有结果</h2>
-          <p>输入创建预测时得到的批次编号。本应用不提供全量历史预测列表。</p>
+        <EmptyState
+          title="打开已有结果"
+          description="输入创建预测时得到的批次编号。本应用不提供全量历史预测列表。"
+        >
           <BatchLookup onSubmit={(value) => navigate({ name: 'result', batchId: value })} />
-        </div>
+        </EmptyState>
       ) : found === null ? (
-        <div className="empty-state" role="alert">
-          <div className="empty-mark">
-            <Icon name="info" size={28} />
-          </div>
-          <h2>批次编号无效</h2>
-          <p>
-            地址里的批次编号 <code>{batchId}</code> 不是标准 UUID，因此没有发出任何请求。
-          </p>
+        <EmptyState
+          tone="alert"
+          title="批次编号无效"
+          description={
+            <>
+              地址里的批次编号 <code>{batchId}</code> 不是标准 UUID，因此没有发出任何请求。
+            </>
+          }
+        >
           <BatchLookup onSubmit={(value) => navigate({ name: 'result', batchId: value })} />
-        </div>
+        </EmptyState>
       ) : saved !== null ? (
         <ResultBody result={saved} snapshot />
       ) : (
         <>
           {batch.status === 'credential-required' ? <CredentialNotice /> : null}
-          {batch.status === 'loading' ? <LoadingNotice label="正在按批次编号读取已保存的结果。" /> : null}
+          {batch.status === 'loading' ? <LoadingNotice label="按批次编号读取已保存的结果。" /> : null}
           {batch.status === 'failed' ? (
             <>
               <FailureNotice error={batch.error} onRetry={batch.reload} />
@@ -364,6 +384,6 @@ export function PredictionsPage({
         <span>JIT Review</span>
         <span>结果读取是只读请求；重开不会产生新的预测批次</span>
       </footer>
-    </>
+    </div>
   )
 }

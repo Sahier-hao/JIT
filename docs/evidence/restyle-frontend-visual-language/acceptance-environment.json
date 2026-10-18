@@ -1,0 +1,24 @@
+{
+  "kind": "acceptance-environment-evidence",
+  "isolatedResources": true,
+  "serviceStoppedByPid": 33328,
+  "temporaryDatabaseIsNotDefault": true,
+  "originalArtifactsUnchanged": {
+    "baseline": true,
+    "decision-tree-v1": true
+  },
+  "counts": {
+    "model_version": 1,
+    "run_location": 1,
+    "registration_event": 4,
+    "prediction_batch": 4,
+    "prediction": 4
+  },
+  "serviceLogCredentialFindings": [],
+  "scannedEvidenceFiles": 0,
+  "scannedEvidencePaths": [],
+  "credentialOrPathFindings": [],
+  "archiveUnchanged": true,
+  "archiveChangedPaths": [],
+  "cleaned": true
+}

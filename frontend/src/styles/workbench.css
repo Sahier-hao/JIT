@@ -1,0 +1,464 @@
+/**
+ * 提交工作台：页头、提示条、表格、风险编码、单视口布局。
+ *
+ * 与 shell.css 同一做法：App.css 里保留着旧版规则，这里用 `html` 前缀提高一级
+ * 特异性接管，避免为替换样式去逐条删改旧规则。
+ */
+
+/* ---------- 单视口：页面本身不滚，只有表格区滚 ---------- */
+/* 只有工作台是"单视口 + 内部滚动"布局；其它页面保持常规文档流，避免把内容压扁 */
+html .main:has(.workbench) {
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.workbench {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 10px;
+}
+
+/* ---------- 页头 ---------- */
+html .page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 0 8px;
+  border-bottom: 2px solid var(--fg);
+  margin-bottom: 0;
+}
+
+.page-head-main { min-width: 0; }
+
+html .page-head .meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--fg-3);
+  min-width: 0;
+}
+
+.meta-sep { color: var(--line-strong); }
+
+.meta-item {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-2);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mode-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+
+.mode-tag .status-dot { background: var(--risk); }
+.mode-tag[data-tone='info'] { color: var(--fg-2); }
+.mode-tag[data-tone='info'] .status-dot { background: var(--accent); }
+
+html .page-head h1 { font-size: 26px; }
+
+.lede {
+  margin: 5px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--fg-2);
+}
+
+/* 运行上下文：模型与方法 + 运行标识，与页头元信息分两行，避免长哈希挤占标题行 */
+html .run-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+html .run-context > strong { font-weight: 700; color: var(--fg-2); }
+html .run-context > span { display: inline-flex; gap: 5px; min-width: 0; }
+html .run-context code { font-size: 10.5px; overflow-wrap: anywhere; }
+
+html .page-head .stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 0 2px;
+  border: 0;
+}
+
+html .page-head .stat strong {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.02em;
+  color: var(--fg);
+}
+
+html .page-head .stat span { font-size: 12px; color: var(--fg-3); }
+
+/* ---------- 提示条（替代四套横幅） ---------- */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--sunken);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--fg-2);
+}
+
+.notice > svg { flex-shrink: 0; margin-top: 1px; color: var(--fg-3); }
+.notice > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.notice strong { font-size: 12px; font-weight: 700; color: var(--fg); }
+.notice span { color: var(--fg-2); }
+
+.notice[data-tone='warn'] { border-color: var(--line-strong); background: var(--risk-soft); }
+.notice[data-tone='warn'] > svg { color: var(--risk); }
+.notice[data-tone='warn'] strong { color: var(--risk-fg); }
+
+.notice[data-tone='info'] > svg { color: var(--accent); }
+
+/* ---------- 表格 ---------- */
+html .workbench .list-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+html .workbench .table-wrap {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+html table { border-collapse: separate; border-spacing: 0; }
+
+html thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 31px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--fg-3);
+  background: var(--sunken);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+html tbody td {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
+}
+
+html tbody tr:last-child td { border-bottom: 0; }
+html tbody tr:hover { background: var(--hover); }
+html tbody tr.selected-row { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+
+/* 密度：紧凑 32px（IP-05 的第二个档位） */
+html[data-density='compact'] tbody td { height: 32px; }
+html[data-density='compact'] thead th { height: 27px; }
+
+html .commit-link {
+  display: inline-flex;
+  line-height: 1.25;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+html .commit-link > svg { opacity: 0; color: var(--fg-3); transition: opacity .12s ease; }
+html .commit-link:hover > svg, html .commit-link:focus-visible > svg { opacity: 1; }
+
+html .commit-title {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--fg-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html .time-cell { font-size: 12px; color: var(--fg-2); }
+html .time-cell span { display: block; margin-top: 1px; font-family: var(--mono); font-size: 10.5px; color: var(--fg-3); }
+
+html .numeric { text-align: right; font-family: var(--mono); font-size: 11.5px; color: var(--fg-2); }
+
+/* ---------- 风险编码 ---------- */
+html .risk-display {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}
+
+html .risk-number {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--risk-fg);
+  letter-spacing: -.01em;
+}
+
+html .risk-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 56px;
+  height: 4px;
+  background: var(--risk-track);
+  border-radius: 0;
+  overflow: visible;
+}
+
+html .risk-fill {
+  display: block;
+  height: 100%;
+  background: var(--risk);
+  transition: width .2s ease;
+}
+
+html .risk-display[data-tier='high'] .risk-fill { background: var(--risk-strong); }
+
+/* 60% 处的可核对刻度 */
+html .risk-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 60%;
+  width: 1px;
+  background: var(--fg-3);
+  opacity: .5;
+}
+
+html .risk-unavailable { font-size: 11.5px; color: var(--fg-3); line-height: 1.5; }
+
+html .risk-display.large .risk-number { font-size: 30px; }
+html .risk-display.large .risk-track { height: 5px; }
+
+/* ---------- 行内操作：hover 或选中才出现 ---------- */
+html .row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  font-size: 11.5px;
+  color: var(--fg-2);
+  opacity: 0;
+  transition: opacity .14s ease, border-color .14s ease, color .14s ease;
+}
+
+html tbody tr:hover .row-action,
+html tbody tr.selected-row .row-action,
+html .row-action:focus-visible { opacity: 1; }
+
+html .row-action:hover:enabled { border-color: var(--accent); color: var(--accent); }
+html .row-action:disabled { opacity: 0; }
+
+html tbody tr:hover .row-action:disabled,
+html tbody tr.selected-row .row-action:disabled { opacity: .55; }
+
+/* ---------- 工具条与说明 ---------- */
+html .toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+html .toolbar label { font-size: 11.5px; color: var(--fg-3); }
+html .toolbar input, html .toolbar select {
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  font-size: 12.5px;
+  color: var(--fg);
+}
+html .toolbar input:focus, html .toolbar select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+html .input-wrap > svg { top: 8px; left: 9px; }
+html .toolbar .input-wrap input { padding-left: 30px; }
+
+html .clear-button {
+  height: 30px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+html .clear-button:hover { color: var(--accent); border-color: var(--accent); }
+
+html .section-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-2);
+}
+
+html .section-caption > span:last-child { font-size: 11px; font-weight: 400; color: var(--fg-3); }
+html .section-caption b { font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--fg-3); margin-left: 6px; }
+
+html .workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+html .workbench-grid.with-detail { grid-template-columns: minmax(0, 1fr) 320px; }
+
+html .list-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--fg-3);
+  background: var(--card);
+}
+
+html .list-footer > span:last-child { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---------- 详情抽屉 ---------- */
+html .workbench .detail-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: none;
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+html .detail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 31px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sunken);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--fg-3);
+}
+
+html .detail-heading > span { display: flex; align-items: center; gap: 6px; }
+html .detail-body { min-height: 0; overflow-y: auto; }
+
+html .detail-identity { padding: 12px; }
+html .detail-identity code { font-size: 11px; color: var(--fg-3); background: transparent; border: 0; padding: 0; }
+html .detail-identity h2 { margin: 6px 0 4px; font-size: 15px; line-height: 1.45; font-weight: 700; color: var(--fg); }
+html .detail-identity time { font-size: 11px; color: var(--fg-3); }
+
+html .detail-risk { padding: 11px 12px; background: var(--sunken); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+html .detail-label { display: block; margin-bottom: 7px; font-size: 11px; color: var(--fg-3); }
+html .detail-risk p { margin: 8px 0 0; font-size: 11px; line-height: 1.6; color: var(--fg-3); }
+
+html .detail-section { padding: 12px; border-bottom: 1px solid var(--line-soft); }
+html .detail-section h3 { margin: 0 0 9px; font-size: 12px; font-weight: 700; color: var(--fg); }
+html .detail-section h3 span { margin-left: 6px; font-size: 11px; font-weight: 400; color: var(--fg-3); }
+
+html .detail-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+html .detail-metrics > div { display: flex; flex-direction: column; gap: 3px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); }
+html .detail-metrics span { font-size: 11px; color: var(--fg-3); }
+html .detail-metrics strong { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--fg); }
+
+html .metric-list { margin: 8px 0 0; }
+html .metric-list > div { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-top: 1px solid var(--line-soft); font-size: 11px; color: var(--fg-3); }
+html .metric-list dd { margin: 0; font-family: var(--mono); font-size: 11px; color: var(--fg-2); }
+
+html .detail-source { padding: 10px 12px; background: var(--card); }
+html .detail-source > summary { font-size: 11px; font-weight: 700; letter-spacing: .03em; color: var(--fg-3); cursor: pointer; }
+html .detail-source p { margin: 0 0 3px; font-size: 11px; line-height: 1.6; color: var(--fg-3); }
+
+html .detail-action { padding: 10px 12px; border-top: 1px solid var(--line); }
+html .detail-action > button { width: 100%; }
+html .detail-action p { margin: 6px 0 0; text-align: center; font-size: 11px; color: var(--fg-3); }
+
+/* ---------- 空状态：由 Feedback 的单一 .state-block 承担（任务 5.5） ---------- */
+
+/* 出处脚注：保持 schema 身份可见（CRR-13 的可追溯线） */
+html .foot {
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--fg-3);
+  flex-shrink: 0;
+}
+
+
+/* 基线摘要展开后不挤压表格：内容在自己的高度上限内滚动（单视口保持成立） */
+html .baseline-record[open] .baseline-content {
+  max-height: 132px;
+  overflow-y: auto;
+}

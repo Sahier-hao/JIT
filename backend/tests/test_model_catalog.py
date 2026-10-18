@@ -151,6 +151,30 @@ def test_first_registration_race_and_same_model_distinct_runs(catalog):
     assert second['modelId'] != results[0]['model']['modelId']
 
 
+def test_legacy_summary_without_model_section_registers_under_declared_method(catalog):
+    """具名 schema 之前的运行 summary 没有 `model` 段：登记必须照样成功，用声明的方法作身份。
+
+    旧基线（artifacts/baseline，2026-10-13）就是这种形态；直接读 `summary['model']` 会抛 KeyError，
+    被 HTTP 中间件兜成 500 INFERENCE_ERROR，管理员点“登记”只会看到一句错位的原因。
+    """
+    catalog = service(catalog)
+    directory = catalog.root / 'baseline'
+    summary = json.loads((directory / 'summary.json').read_text(encoding='utf-8'))
+    summary.pop('model', None)
+    (directory / 'summary.json').write_text(json.dumps(summary), encoding='utf-8')
+    _resync(directory, ('summary.json',))
+    manifest = json.loads((directory / 'manifest.json').read_text(encoding='utf-8'))
+    method = manifest['config'].get('algorithmVersion') or 'logistic-regression-l2-v1'
+    model = register(catalog)['model']
+    assert model['artifactModelId'] == method
+    assert model['name'] == method
+    assert model['method'] == method
+    assert model['state'] == 'ready'
+    assert model['jsonPredictionSupported'] is True
+    # 登记之后目录读取与单条预测仍然可用（旧产物没有 model 段不影响加载）。
+    assert [m['modelId'] for m in catalog.models()] == [model['modelId']]
+
+
 def test_kamei_catalog_retains_twelve_fields_without_json_capability(catalog):
     catalog = service(catalog)
     from jit_baseline.artifacts import build_run

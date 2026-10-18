@@ -1,0 +1,315 @@
+/**
+ * 材料层：面板、抽屉、账本、状态标签、按钮三档、字标。
+ *
+ * 规则（design「材料规范」/ IP-09）：
+ * - 只用令牌；不写色值。
+ * - 圆角最大 --r-lg（6px），不使用胶囊。
+ * - 不使用装饰性渐变与投影；抽屉只保留一层 --sh-2。
+ */
+
+/* ---------- 字标：字标 + 细线，不用彩色方块 ---------- */
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+
+.wordmark::before {
+  content: '';
+  align-self: center;
+  width: 14px;
+  height: 1px;
+  background: var(--fg);
+}
+
+.wordmark small {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: .02em;
+  color: var(--fg-3);
+}
+
+/* ---------- 面板 ---------- */
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sunken);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--fg-2);
+}
+
+/* ---------- 抽屉 ---------- */
+.drawer {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+  border-left: 1px solid var(--line-strong);
+  box-shadow: var(--sh-2);
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sunken);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--fg-3);
+}
+
+.drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.drawer-foot {
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- 账本式指标条 ---------- */
+.ledger {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+}
+
+.ledger > div {
+  flex: 1 1 0;
+  min-width: 84px;
+  padding: 6px 10px;
+  border-right: 1px solid var(--line);
+}
+
+.ledger > div:last-child { border-right: 0; }
+
+.ledger dt {
+  font-size: 12px;
+  color: var(--fg-3);
+  letter-spacing: .02em;
+}
+
+.ledger dd {
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+
+.ledger dd.is-accent { color: var(--accent); }
+
+/* ---------- 状态标签：色块 + 文字，不用胶囊 ---------- */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  background: var(--fg-3);
+}
+
+.status-tag[data-tone='ok'] .status-dot { background: var(--accent); }
+.status-tag[data-tone='ok'] { color: var(--accent); }
+.status-tag[data-tone='warn'] .status-dot { background: var(--risk); }
+.status-tag[data-tone='warn'] { color: var(--risk-fg); }
+.status-tag[data-tone='danger'] .status-dot { background: var(--risk-strong); }
+.status-tag[data-tone='danger'] { color: var(--risk-fg); }
+.status-tag[data-tone='muted'] .status-dot { background: var(--line-strong); }
+
+/* ---------- 按钮三档 ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--fg-2);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.btn:hover:enabled {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.btn:active:enabled { transform: translateY(1px); }
+
+.btn:disabled {
+  color: var(--fg-3);
+  border-color: var(--line);
+  background: var(--sunken);
+}
+
+.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--fg-inv);
+  font-weight: 700;
+}
+
+.btn--primary:hover:enabled {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--fg-inv);
+}
+
+.btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fg-3);
+}
+
+.btn--ghost:hover:enabled {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+/* ---------- 三态：空态 / 不可用（任务 5.5） ----------
+ *
+ * 旧的居中「图标 + 标题 + 说明」空状态已删除：图标只做装饰，且居中的大字块在数据工具里
+ * 占掉半屏。这里改成左对齐的说明块，虚线边界表示"这里没有内容"，实线+风险色表示"读不到"。
+ */
+.state-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  text-align: left;
+}
+
+.state-block[data-state='alert'] {
+  border-style: solid;
+  border-color: var(--risk);
+  background: var(--risk-soft);
+}
+
+.state-block-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.state-block[data-state='alert'] .state-block-title { color: var(--risk-fg); }
+
+.state-block-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+.state-block[data-state='alert'] .state-block-note { color: var(--risk-fg); }
+
+.state-block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* 空态嵌在列表面板里时不再套一层边框与底色，避免出现"框中框"。 */
+.list-panel > .state-block,
+.detail-body > .state-block {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 22px 16px;
+}
+
+/* ---------- 加载骨架（任务 5.5） ----------
+ *
+ * 骨架只是"正在读取"的视觉补充：文字仍在，读屏用户读到的是那行说明，不会读到装饰性长条。
+ */
+.skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.skeleton-line {
+  display: block;
+  height: 7px;
+  border-radius: var(--r);
+  background: var(--sunken);
+}
+
+.skeleton-line[data-line='0'] { width: 58%; }
+.skeleton-line[data-line='1'] { width: 82%; }
+.skeleton-line[data-line='2'] { width: 43%; }
+
+.notice-note {
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+/* ---------- 图标按钮 ---------- */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--fg-3);
+  transition: background .16s ease, color .16s ease;
+}
+
+.icon-button:hover:enabled {
+  background: var(--hover);
+  color: var(--fg);
+}

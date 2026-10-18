@@ -46,8 +46,12 @@ function credentials() {
   return { member: required('JIT_ACCEPTANCE_MEMBER_TOKEN'), admin: required('JIT_ACCEPTANCE_ADMIN_TOKEN') }
 }
 
+/**
+ * 侧栏的导航按钮在 188px 上下文栏里（`aside[aria-label="工作空间"]`）；52px 图标轨上的同名按钮
+ * 只是指针快捷方式，被刻意移出可访问性树和 Tab 序列（design D7），因此这里必须定位上下文栏。
+ */
 function nav(page: Page, name: string) {
-  return page.getByRole('navigation', { name: '模型预测导航' }).getByRole('button', { name })
+  return page.getByRole('complementary', { name: '工作空间' }).getByRole('button', { name })
 }
 
 /** 结果页有多个 .identity-list（风险、原始输入、来源与身份），比对来源必须限定在「来源与身份」一节。 */
@@ -147,6 +151,8 @@ test('MPW-04 管理员显式校验登记本机候选，新增与复用反馈不�
   const candidates = page.locator('input[name="model-candidate"]')
   await expect(candidates).toHaveCount(2)
 
+  // 登记本机固定运行 baseline：它的 summary 是具名 schema 之前的形态（没有 model 段），
+  // 正是登记路径最容易踩到的旧产物形态（`catalog.register` 现已按声明的方法回落身份）。
   const row = page.locator('li.candidate-row').filter({ hasText: 'baseline' })
   await row.locator('input[name="model-candidate"]').check()
   await page.getByRole('button', { name: '校验并登记所选候选' }).click()
@@ -279,9 +285,12 @@ test('MPW-11 两种桌面尺寸下新页面可读可操作且不横向滚动', a
   await expect(page.locator('.model-card').first()).toBeVisible()
   await shot(page, info.project.name, 'models')
 
-  await page.locator('.model-card details').first().locator('summary').click()
-  await expect(page.locator('.model-card .meta-block').first()).toBeVisible()
+  // 任务 5.2：来源与局限从卡片内联 details 改为右侧抽屉，入口是每行行内按钮。
+  await page.getByRole('button', { name: /的来源与局限$/ }).first().click()
+  await expect(page.locator('.model-drawer .meta-block').first()).toBeVisible()
   await expectNoHorizontalScroll(page)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.model-drawer')).toHaveCount(0)
 
   await nav(page, '新建预测').click()
   await expect(page.getByRole('heading', { name: '新建预测' })).toBeVisible()
@@ -313,7 +322,7 @@ test('MPW-11 纯键盘可以走完凭据→导航→填表→提交的完整流�
   await expect(page.getByText('已输入凭据（仅本页内存）')).toBeVisible()
 
   const modelsNav = nav(page, '模型中心')
-  await expect(page.getByRole('navigation', { name: '模型预测导航' })).toBeVisible()
+  await expect(page.getByRole('complementary', { name: '工作空间' })).toBeVisible()
   await modelsNav.focus()
   await expect(modelsNav).toBeFocused()
   await page.keyboard.press('Enter')
