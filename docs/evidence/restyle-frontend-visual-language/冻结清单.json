@@ -185,7 +185,7 @@
     },
     {
       "path": "verification.md",
-      "sha256": "b9d63b80fca2677d95f4fe201eec819bebbbce2568d945b9786655d8c884a563"
+      "sha256": "1f427a31ee6882432862e869be71b9cad8e03bbc1c85b89a9c63cf3d99049206"
     },
     {
       "path": "workbench-demo-desktop-1280.png",
@@ -205,15 +205,15 @@
     },
     {
       "path": "workbench-historical-desktop-1280.png",
-      "sha256": "8b5b887fbfb0aa1a3c24d3d3752036a9ab23087565aba0288c3876ea3f02ca8e"
+      "sha256": "3d32fff2688374d21752d9236c7bc2afd91124d013388d73662e54075c475078"
     },
     {
       "path": "workbench-historical-desktop-1440.png",
-      "sha256": "5db735677d040c4ee51b6e98296beca6f08385b3cd5019d46c0eac34feec64f7"
+      "sha256": "e0a28dfb8c1dcc30d324e5cd1c191b3397d16c681c23eb46e900bea5bba35730"
     }
   ],
-  "frozenUtc": "2026-10-18T07:37:24.937376+00:00",
+  "frozenUtc": "2026-10-18T07:53:10.966390+00:00",
   "kind": "verification-evidence-freeze",
-  "sourceRunId": "83c44b665a32e7d049fa355e1f8cb2b877c82ac1d074b390d79eee9e045aff80",
+  "sourceRunId": "5cf0706806535b758a0524e67a8092c50ced0495916a0de92228bf8870879b51",
   "workspace": "docs/evidence/_run/restyle-frontend-visual-language"
 }
