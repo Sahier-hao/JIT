@@ -11,6 +11,9 @@ from .data import BaselineError
 METRIC_SETS = {
     "metric-set-v1": ("precision", "recall", "f1", "confusion", "rocAuc", "averagePrecision",
                       "recall20Loc", "counts", "effort", "reference", "threshold"),
+    "metric-set-v2": ("precision", "recall", "f1", "confusion", "rocAuc", "averagePrecision",
+                      "recall20Loc", "counts", "effort", "reference", "threshold",
+                      "popt", "ifa", "poptEffort"),
 }
 DEFAULT_METRIC_SET = "metric-set-v1"
 
@@ -43,6 +46,65 @@ def classification(labels, decisions):
         "f1": metric(2 * tp / (2 * tp + fp + fn)) if 2 * tp + fp + fn else metric(reason="没有真实或预测正类"),
         "confusion": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
     }
+
+
+def _trapezoid_area(points):
+    """从 (0,0) 起、x 单调不减的折线面积。"""
+    return sum((y0 + y1) / 2.0 * (x1 - x0)
+               for (x0, y0), (x1, y1) in zip(points, points[1:]))
+
+
+def _curve_area(order, costs, labels, total_cost, positives):
+    x = selected = 0.0
+    points = [(0.0, 0.0)]
+    for index in order:
+        x += costs[index] / total_cost
+        selected += labels[index]
+        points.append((x, selected / positives))
+    return _trapezoid_area(points)
+
+
+def effort_metrics(records, risks):
+    """Popt 与 IFA；定义见 PDB-23。
+
+    Popt：全成本范围、density-ranked（risk/(la+ld)）、梯形面积、按 oracle/worst 归一化。
+    IFA：既有风险序下首个正标签之前的负标签条数。
+    零成本、无正例或 oracle 与 worst 面积相等时返回 null 与原因。
+    """
+    labels = [r["label"] for r in records]
+    costs = [r["metrics"]["la"] + r["metrics"]["ld"] for r in records]
+    total = sum(costs)
+    positives = sum(labels)
+    risk_order = sorted(range(len(records)),
+                        key=lambda i: (-risks[i], -records[i]["epoch"], records[i]["id"]))
+    first_positive = next((position for position, i in enumerate(risk_order) if labels[i] == 1), None)
+    ifa = (metric(reason="没有正标签提交") if first_positive is None
+           else metric(first_positive))
+    detail = {"name": "Popt (density-ranked, full-range)",
+              "ordering": "density-desc,time-desc,id-asc", "totalLoc": total,
+              "areaModel": None, "areaOracle": None, "areaWorst": None,
+              "policy": "trapezoid-full-range"}
+    if total <= 0:
+        popt = metric(reason="总工作量为零")
+    elif any(cost <= 0 for cost in costs):
+        popt = metric(reason="存在零成本提交，density-ranked Popt 未定义")
+    elif positives == 0:
+        popt = metric(reason="没有正标签提交")
+    else:
+        model_order = sorted(range(len(records)),
+                             key=lambda i: (-risks[i] / costs[i], -records[i]["epoch"], records[i]["id"]))
+        oracle_order = sorted(range(len(records)),
+                              key=lambda i: (-labels[i] / costs[i], -records[i]["epoch"], records[i]["id"]))
+        worst_order = list(reversed(oracle_order))
+        detail["areaModel"] = _curve_area(model_order, costs, labels, total, positives)
+        detail["areaOracle"] = _curve_area(oracle_order, costs, labels, total, positives)
+        detail["areaWorst"] = _curve_area(worst_order, costs, labels, total, positives)
+        denominator = detail["areaOracle"] - detail["areaWorst"]
+        if abs(denominator) <= 1e-12:
+            popt = metric(reason="oracle 与 worst 面积相等，Popt 未定义")
+        else:
+            popt = metric((detail["areaModel"] - detail["areaWorst"]) / denominator)
+    return {"popt": popt, "ifa": ifa, "poptEffort": detail}
 
 
 def evaluate(records, risks, metric_set=None):
@@ -80,6 +142,7 @@ def evaluate(records, risks, metric_set=None):
     result["reference"] = {"apNoInformation": positives / len(records),
                            "allNegative": classification(labels, [False] * len(labels))}
     result["threshold"] = THRESHOLD
+    result.update(effort_metrics(records, risks))
     declared = declared_metric_set(metric_set)
     missing = [name for name in declared if name not in result]
     if missing:

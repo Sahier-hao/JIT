@@ -35,6 +35,20 @@ def test_run_help_lists_the_algorithm_option(monkeypatch, capsys):
     assert "--algorithm" in capsys.readouterr().out
 
 
+def test_run_passes_metric_set_and_defaults_to_none(monkeypatch):
+    from jit_baseline import cli
+    calls = []
+    monkeypatch.setattr(cli, "build_run",
+                        lambda *args, **kwargs: calls.append((args, kwargs)) or {"runId": "fixture"})
+    monkeypatch.setattr(sys, "argv", ["jit_baseline.cli", "run", "--output", "out"])
+    cli.main()
+    assert calls[0][1]["metric_set"] is None
+    monkeypatch.setattr(sys, "argv", ["jit_baseline.cli", "run", "--output", "out",
+                                      "--metric-set", "metric-set-v2"])
+    cli.main()
+    assert calls[1][1]["metric_set"] == "metric-set-v2"
+
+
 def test_verify_records_this_machines_verification_environment(monkeypatch, capsys):
     """校验记录本机验证环境与本次判定，与运行声明的产方训练环境分开（PDB-16、PDB-19）。"""
     import json

@@ -94,3 +94,20 @@ def test_training_seconds_do_not_change_run_identity(six_runs):
     from jit_baseline.artifacts import identity
     config = dict(manifest["config"])
     assert identity(config) == manifest["runId"]
+
+
+@pytest.fixture(scope="session")
+def v2_run(tmp_path_factory):
+    from jit_baseline.artifacts import build_run
+    from jit_baseline.config import BACKEND
+    target = tmp_path_factory.mktemp("comparison-v2") / "run"
+    build_run(BACKEND / "data/openstack", target, None, "decision-tree-v1", "metric-set-v2")
+    return target
+
+
+def test_cross_metric_set_comparison_is_not_directly_rankable(six_runs, v2_run):
+    from jit_baseline.artifacts import compare_methods
+    report = compare_methods([six_runs["decision-tree-v1"], v2_run])
+    assert report["directlyRankable"] is False
+    assert any("指标集" in reason for reason in report["reasons"])
+    assert report["methods"][1]["metrics"]["popt"]["value"] is not None
