@@ -96,3 +96,48 @@ def test_declared_metric_set_must_define_only_known_metrics(monkeypatch):
     with pytest.raises(BaselineError) as info:
         evaluate(examples(), [.9, .8, .2, .1], "metric-set-typo")
     assert info.value.code == "METRIC_SET_INVALID"
+
+
+def test_popt_and_ifa_are_hand_computable():
+    from jit_baseline.metrics import evaluate
+    result = evaluate(examples(), [.9, .8, .2, .1], "metric-set-v2")
+    # 最高风险条目本身就是正例。
+    assert result["ifa"] == {"value": 0, "reason": None}
+    detail = result["poptEffort"]
+    assert detail["areaModel"] == pytest.approx(.775)
+    assert detail["areaOracle"] == pytest.approx(.825)
+    assert detail["areaWorst"] == pytest.approx(.175)
+    assert result["popt"]["value"] == pytest.approx(12 / 13)
+    assert "density" in detail["ordering"]
+    assert detail["policy"] == "trapezoid-full-range"
+    assert detail["totalLoc"] == 10
+
+
+def test_ifa_counts_false_alarms_before_the_first_positive():
+    from jit_baseline.metrics import evaluate
+    result = evaluate(examples(labels=(0, 1, 1, 0)), [.9, .8, .2, .1], "metric-set-v2")
+    assert result["ifa"]["value"] == 1
+
+
+def test_effort_metrics_are_null_with_reasons_when_undefined():
+    from jit_baseline.metrics import evaluate
+    no_positive = evaluate(examples(labels=(0, 0, 0, 0)), [.9, .8, .2, .1], "metric-set-v2")
+    assert no_positive["ifa"]["value"] is None and no_positive["ifa"]["reason"]
+    assert no_positive["popt"]["value"] is None and no_positive["popt"]["reason"]
+    zero_total = evaluate(examples(costs=(0, 0, 0, 0)), [.9, .8, .2, .1], "metric-set-v2")
+    assert zero_total["popt"]["value"] is None and zero_total["popt"]["reason"]
+    zero_item = evaluate(examples(costs=(0, 1, 1, 1)), [.9, .8, .2, .1], "metric-set-v2")
+    assert zero_item["popt"]["value"] is None and "零成本" in zero_item["popt"]["reason"]
+    degenerate = evaluate(examples(costs=(1, 1, 1, 1), labels=(1, 1, 1, 1)), [.9, .8, .2, .1],
+                          "metric-set-v2")
+    assert degenerate["popt"]["value"] is None and degenerate["popt"]["reason"]
+
+
+def test_v1_is_unchanged_and_v2_adds_only_the_declared_keys():
+    from jit_baseline.metrics import METRIC_SETS, evaluate
+    v1 = evaluate(examples(), [.9, .8, .2, .1], "metric-set-v1")
+    assert "popt" not in v1 and "ifa" not in v1 and "poptEffort" not in v1
+    assert v1["recall20Loc"]["value"] == pytest.approx(.5)
+    v2 = evaluate(examples(), [.9, .8, .2, .1], "metric-set-v2")
+    assert set(v2) == set(METRIC_SETS["metric-set-v2"])
+    assert set(v1) == set(METRIC_SETS["metric-set-v1"])

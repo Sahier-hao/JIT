@@ -20,6 +20,7 @@ def main():
     run.add_argument("--output", type=Path, default=DEFAULT_RUN)
     run.add_argument("--schema", default=None, help="具名特征 schema；默认 openstack-six-v1")
     run.add_argument("--algorithm", default=None, help="具名方法；默认 logistic-regression-l2-v1")
+    run.add_argument("--metric-set", default=None, help="具名指标集；默认 metric-set-v1")
     run.add_argument("--dataset-manifest", type=Path, default=None,
                      help="数据集描述文件；给定后改读该数据集而不是 OpenStack 快照")
     run.add_argument("--holdout", type=int, default=None,
@@ -96,6 +97,7 @@ def main():
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
+                                 metric_set=args.metric_set,
                                  dataset_manifest=args.dataset_manifest, holdout=args.holdout)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":

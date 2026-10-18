@@ -1,0 +1,417 @@
+
+[./.venv/Scripts/python.exe -m pytest --basetemp=.cache/final-verification]
+============================= test session starts =============================
+platform win32 -- Python 3.12.4, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\fgdvf\Desktop\openspec\JIT\backend
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collected 308 items / 1 skipped
+
+tests\test_algorithms.py ........                                        [  2%]
+tests\test_api.py ...........                                            [  6%]
+tests\test_artifacts.py ................................................ [ 21%]
+...                                                                      [ 22%]
+tests\test_attribution.py ........                                       [ 25%]
+tests\test_catalog_api.py .......s                                       [ 27%]
+tests\test_catalog_storage.py .........                                  [ 30%]
+tests\test_cli.py .....                                                  [ 32%]
+tests\test_collect.py ......                                             [ 34%]
+tests\test_data.py ..........................                            [ 42%]
+tests\test_datasets.py ......                                            [ 44%]
+tests\test_deep.py ........                                              [ 47%]
+tests\test_end_to_end.py ..                                              [ 48%]
+tests\test_evidence.py .........                                         [ 50%]
+tests\test_http_lifecycle.py ....                                        [ 52%]
+tests\test_json_prediction.py ...............................            [ 62%]
+tests\test_method_comparison.py .......                                  [ 64%]
+tests\test_metrics.py ...................                                [ 70%]
+tests\test_model.py ..............                                       [ 75%]
+tests\test_model_catalog.py ...............                              [ 80%]
+tests\test_performance.py .                                              [ 80%]
+tests\test_repository_sync.py ................                           [ 85%]
+tests\test_schemas.py .............                                      [ 89%]
+tests\test_sync_model_strategy.py ........                               [ 92%]
+tests\test_team_access.py .........                                      [ 95%]
+tests\test_trends.py ............                                        [ 99%]
+tests\test_verification_guard.py ..                                      [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_deep.py::test_adapter_fits_predicts_and_round_trips[ft-transformer-kwargs2]
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\jit_baseline\deep.py:72: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=layers)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_openapi.py:11: could not import 'yaml': No module named 'yaml'
+SKIPPED [1] tests\test_catalog_api.py:128: 真实数据集尚未导入
+=========== 307 passed, 2 skipped, 2 warnings in 137.97s (0:02:17) ============
+
+exit=0
+
+[./.venv/Scripts/python.exe -m jit_baseline.cli verify]
+{
+  "runId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+  "records": 1853,
+  "origin": "local",
+  "trainingEnvironment": {
+    "packages": {
+      "fastapi": "0.143.0",
+      "joblib": "1.6.0",
+      "numpy": "2.5.3",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "threadpoolctl": "3.7.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.4"
+  },
+  "verificationEnvironment": {
+    "python": "3.12.4",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "packages": {
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "scikit-learn": "1.9.1",
+      "joblib": "1.6.0",
+      "threadpoolctl": "3.7.0",
+      "fastapi": "0.143.0",
+      "uvicorn": "0.54.0"
+    }
+  },
+  "reproducibility": {
+    "mode": "tolerance",
+    "atol": 1e-08,
+    "rtol": 0.0
+  },
+  "passed": true
+}
+
+exit=0
+
+[./.venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/_run/reproduction-comparison.json]
+{
+  "kind": "real-independent-reproduction",
+  "firstRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+  "secondRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+  "partitionMembershipExact": true,
+  "testCount": 1853,
+  "maxRiskAbsoluteDifference": 0.0,
+  "metricAbsoluteDifferences": {
+    "averagePrecision": 0.0,
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "recall20Loc": 0.0,
+    "rocAuc": 0.0
+  },
+  "method": "logistic-regression-l2-v1",
+  "metricSet": "metric-set-v1",
+  "reproducibility": {
+    "mode": "tolerance",
+    "atol": 1e-08,
+    "rtol": 0.0
+  },
+  "tolerance": 1e-08,
+  "passed": true
+}
+
+exit=0
+
+[npm ci --registry=https://registry.npmjs.org/ --fetch-retries=0 --fetch-timeout=30000]
+
+added 112 packages, and audited 113 packages in 7s
+
+22 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+exit=0
+
+[npm run typecheck]
+
+> jit-review-workbench@0.0.0 typecheck
+> tsc -b
+
+
+exit=0
+
+[npm test]
+
+> jit-review-workbench@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.3 C:/Users/fgdvf/Desktop/openspec/JIT/frontend
+
+ ✓ src/TrendPage.test.tsx (16 tests) 2291ms
+   ✓ 分区带与分区清单按时间排序，不跟随 JSON 的键序 322ms
+   ✓ DTD-01 作为独立导航入口，返回工作台后上下文不变 560ms
+ ✓ src/ModelsPage.test.tsx (14 tests) 1924ms
+ ✓ src/PredictionsPage.test.tsx (13 tests) 1850ms
+   ✓ 刚创建完成的结果快照 (5)
+     ✓ 展示风险、六项原始输入与完整来源，且不发起任何请求 387ms
+   ✓ 手动输入批次编号 (2)
+     ✓ 合法编号交给路由，由结果页发起读取 682ms
+ ✓ src/PredictPage.test.tsx (24 tests) 11497ms
+   ✓ 表单校验 (4)
+     ✓ 未选模型时不能提交，空值不会被当成 0 393ms
+     ✓ 提交 SHA 必须是 40 位十六进制，时间必须带时区 637ms
+     ✓ 全部合法后提交按钮可用，并按契约组织请求正文 768ms
+   ✓ 粘贴特征 JSON (10)
+     ✓ 合法六项一次性填入，项目与记录编号保持不变 643ms
+     ✓ 拒绝 {"ns": 1, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4, "label": 1} 328ms
+     ✓ 拒绝 {"ns": true, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4} 311ms
+     ✓ 拒绝 {"ns": 1, "ns": 2, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4} 329ms
+     ✓ 拒绝 [1, 2, 3] 302ms
+     ✓ 拒绝 {"ns": 1, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4 325ms
+   ✓ 显式提交与错误反馈 (6)
+     ✓ 201 且正文与提交快照一致时进入结果页 1779ms
+     ✓ 201 正文与提交内容不一致时不进入结果页 689ms
+     ✓ 在途时禁用提交，双击只发一次请求 820ms
+     ✓ 422 把服务端字段原因贴回对应输入框 719ms
+     ✓ 断线只提示未能确认保存结果，不展示任何风险 716ms
+     ✓ 503 模型不可用时只说明原因并可跳转模型中心 694ms
+ ✓ src/predictionContract.test.ts (17 tests) 23ms
+ ✓ src/predictForm.test.ts (18 tests) 23ms
+ ✓ src/apiClient.test.ts (13 tests) 25ms
+ ✓ src/catalogContract.test.ts (16 tests) 20ms
+ ✓ src/credentials.test.tsx (9 tests) 3624ms
+   ✓ CredentialPanel (6)
+     ✓ 输入框是掩码的，且只有显式提交后才进入内存状态 613ms
+     ✓ 凭据不写入 localStorage、sessionStorage 或 URL 341ms
+     ✓ 清除凭据后回到未输入状态，代次继续推进 405ms
+     ✓ 可以更换凭据，更换过程中不显示旧凭据的任何片段 665ms
+     ✓ 侧栏重新挂载后，尚未确认的输入不丢失 398ms
+   ✓ 凭据与受保护请求的关系 (3)
+     ✓ 输入凭据后发起请求，清除后立即回到需要凭据状态 427ms
+     ✓ 更换凭据会重新请求，且不会用旧凭据下的结果顶替 684ms
+ ✓ src/App.test.tsx (10 tests) 5036ms
+   ✓ CRR-01/02/03 明示来源与边界，缺失度量不填零 721ms
+   ✓ CRR-04/05 无结果可清除，无效日期保留有效结果 1250ms
+   ✓ CRR-07/08 列表、详情与清单共同维护身份和顺序，重复唯一与移除 1213ms
+   ✓ CRR-07/12 关闭详情保留查询并返回键盘触发位置 449ms
+   ✓ CRR-09 刷新相当的重新挂载恢复清单并同步列表 360ms
+   ✓ CRR-10 保存被拒绝仍可加入和移除，并明确刷新风险 388ms
+ ✓ src/trendContract.test.ts (8 tests) 20ms
+ ✓ src/historical.test.tsx (16 tests) 1941ms
+   ✓ 默认真实模式，基线记录与详情不冒用人工解释，过滤不重算指标 942ms
+   ✓ 同模式切换运行重新挂载清单和详情，返回原运行恢复 590ms
+ ✓ src/RepositorySourcesPage.test.tsx (7 tests) 1247ms
+   ✓ 数据来源页 (7)
+     ✓ 提交后把表单字段交给服务端，并重新读取列表 737ms
+ ✓ src/trendInsights.test.ts (6 tests) 12ms
+ ✓ src/repositoryContract.test.ts (17 tests) 19ms
+ ✓ src/repositoryPage.test.ts (8 tests) 425ms
+ ✓ src/navigation.test.tsx (7 tests) 396ms
+   ✓ useRoute (2)
+     ✓ 导航会改变地址、派发 hashchange 并同步到监听者 360ms
+ ✓ src/settings.test.tsx (6 tests) 1337ms
+   ✓ 设置面板 (6)
+     ✓ 从图标轨打开，Esc 关闭并把焦点还给触发按钮 422ms
+ ✓ src/workbenchSeed.test.tsx (5 tests) 1388ms
+   ✓ 带种子的地址按范围筛选，搜索为空、排序保持默认 435ms
+   ✓ 手动修改后重新挂载回到种子范围，清单不受筛选影响 585ms
+ ✓ src/domain.test.ts (29 tests) 19ms
+ ✓ src/contrast.test.ts (5 tests) 11ms
+ ✓ src/tokens.test.ts (6 tests) 10ms
+ ✓ src/repositoryDataset.test.ts (5 tests) 14ms
+ ✓ src/shortlist.test.ts (11 tests) 14ms
+ ✓ src/named.test.tsx (9 tests) 656ms
+   ✓ 具名形态基线摘要按声明展示，详情与页脚按 schema 生成文案 625ms
+ ✓ src/material.test.ts (6 tests) 42ms
+ ✓ src/chartTokens.test.ts (7 tests) 14ms
+ ✓ src/Icon.test.tsx (23 tests) 139ms
+ ✓ src/useDataset.test.tsx (4 tests) 334ms
+ ✓ src/typography.test.ts (1 test) 10ms
+ ✓ src/risk.test.tsx (3 tests) 210ms
+
+ Test Files  31 passed (31)
+      Tests  339 passed (339)
+   Start at  19:26:25
+   Duration  56.03s (environment 53%, tests 34%, setup 9%, import 2%, transform 2%)
+
+Environment  jsdom was created 31 times · 54.05s total, 53% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JSON report written to C:/Users/fgdvf/Desktop/openspec/JIT/docs/evidence/_run/unit-results.json
+
+exit=0
+
+[npm run lint]
+
+> jit-review-workbench@0.0.0 lint
+> oxlint
+
+src/Icon.tsx:54:14: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/repositoryPage.ts:51:5: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+src/repositoryPage.ts:84:5: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+src/RepositorySourcesPage.tsx:145:5: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+
+exit=0
+
+[npm run build]
+
+> jit-review-workbench@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 49 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.26 kB │ gzip:   0.71 kB
+dist/assets/index-BMYolWHN.css   65.73 kB │ gzip:  11.78 kB
+dist/assets/index-Do1Ox5y0.js   367.90 kB │ gzip: 111.46 kB
+
+✓ built in 335ms
+
+exit=0
+
+[npm run test:e2e]
+
+> jit-review-workbench@0.0.0 test:e2e
+> playwright test
+
+[WebServer] INFO:     Started server process [35408]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[WebServer] (node:51100) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 80 tests using 2 workers
+
+(node:36588) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [desktop-1280] › e2e\accessibility.spec.ts:44:1 › A11-2/3/5 纯键盘链路、焦点返回与详情滚动 (2.6s)
+  ok  2 [desktop-1280] › e2e\accessibility.spec.ts:26:1 › A11-1 列表、详情与清单无页面级横向溢出 (9.9s)
+  ok  4 [desktop-1280] › e2e\accessibility.spec.ts:111:1 › A11-6 趋势视图无横向溢出、空值桶有文字说明且文本视图可聚焦 (1.3s)
+  ok  3 [desktop-1280] › e2e\accessibility.spec.ts:88:1 › A11-4 模式与错误状态有可读文字 (8.7s)
+  ok  6 [desktop-1280] › e2e\contract-shapes.spec.ts:39:1 › 不含聚合键的既有运行：工作台照常可用，趋势页显示未提供 (1.2s)
+  ok  5 [desktop-1280] › e2e\contract-shapes.spec.ts:8:1 › 具名形态按声明解析与展示，未提供字段带原因，旧文案不出现 (1.4s)
+  ok  7 [desktop-1280] › e2e\contract-shapes.spec.ts:52:1 › 含聚合键的运行：趋势图与文本视图可读，空值桶给原因 (1.2s)
+  ok  9 [desktop-1280] › e2e\historical.spec.ts:84:1 › 真实基线摘要保持完整批次指标，演示清单与真实隔离 (13.5s)
+  ok  8 [desktop-1280] › e2e\historical.spec.ts:15:1 › 真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应） (14.7s)
+  ok 11 [desktop-1280] › e2e\historical.spec.ts:148:1 › 网络失败不回退演示，恢复重试实际 HTTP (4.3s)
+  ok 12 [desktop-1280] › e2e\historical.spec.ts:161:1 › 错误真实来源不能展示旧批次（行为夹具） (1.1s)
+  ok 13 [desktop-1280] › e2e\historical.spec.ts:172:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具） (13.7s)
+  ok 14 [desktop-1280] › e2e\repository-sync.spec.ts:23:1 › 没有凭据时数据来源页说明为什么不能同步 (829ms)
+[WebServer] INFO jit.catalog operation=GET role=member requestId=950b709c-f057-4486-b32a-d8e83e670b5c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=POST role=member requestId=41ea304b-b870-477c-b877-dd7bc7bd955a status=202 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=21dcaf50-c792-4c75-b9d7-ecdce43fca88 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=c40c628f-2787-440d-a5d2-33671256adeb status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=c95bc157-0e58-4a82-8189-533b5b680958 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=6ee2cdd7-8626-48b3-9439-18107bde4e18 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=c8e0d35e-155b-420a-9154-90e675812f3d status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=672fc64f-940d-42e5-b5f0-563ded8eaceb status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=12e21cc8-0abe-4679-bb06-8a0b18e11a50 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=d9df525e-55e0-4edf-9a51-a3d926f45add status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=e734561f-1098-45ee-b4f6-a166ba941ba2 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=730203b9-93a8-4a8f-a94f-e8b704e357d6 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=643b338f-2a73-4c0b-b5d8-832837700cf3 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=35aa1361-f7ea-4370-8a54-ba4a10b920e3 status=200 modelId=None runId=None batchId=None
+  ok 15 [desktop-1280] › e2e\repository-sync.spec.ts:31:1 › 从数据来源页发起同步，轮询到完成，工作台出现仓库数据与徽章 (5.0s)
+  ok 10 [desktop-1280] › e2e\historical.spec.ts:112:1 › 真实完整列表键盘详情与焦点返回 (26.3s)
+  ok 16 [desktop-1280] › e2e\storage.spec.ts:7:1 › CRR-09 刷新、同地址再次打开恢复成员与顺序 (2.3s)
+  ok 17 [desktop-1280] › e2e\storage.spec.ts:25:1 › CRR-09 数据版本隔离，切回原版本仍可恢复 (2.0s)
+  ok 18 [desktop-1280] › e2e\storage.spec.ts:44:3 › CRR-09 损坏内容恢复反馈并可重新选择 (1.2s)
+  ok 19 [desktop-1280] › e2e\storage.spec.ts:44:3 › CRR-09 格式不支持恢复反馈并可重新选择 (1.2s)
+  ok 20 [desktop-1280] › e2e\storage.spec.ts:44:3 › CRR-09 未知标识恢复反馈并可重新选择 (1.2s)
+  ok 22 [desktop-1280] › e2e\storage.spec.ts:77:1 › CRR-10 读取拒绝后列表、详情与内存清单仍可使用 (1.4s)
+  ok 21 [desktop-1280] › e2e\storage.spec.ts:59:1 › CRR-10 保存拒绝仍可加入与移除，显示刷新风险 (1.9s)
+  ok 23 [desktop-1280] › e2e\trends.spec.ts:43:1 › DTD-07 仅用键盘对时间桶下钻，工作台地址带上该桶范围 (1.6s)
+  ok 24 [desktop-1280] › e2e\trends.spec.ts:60:1 › DTD-07 下钻后的范围成为工作台的初始日期筛选 (1.8s)
+  ok 26 [desktop-1280] › e2e\visual-evidence.spec.ts:231:1 › 视觉证据：模型中心表格与抽屉、新建预测两栏、结果横幅 (6.2s)
+  ok 25 [desktop-1280] › e2e\visual-evidence.spec.ts:142:1 › 视觉证据：工作台两视口布局与对比度 (8.1s)
+  ok 27 [desktop-1280] › e2e\visual-evidence.spec.ts:335:1 › 视觉证据：遮罩跨主题压暗、紧凑密度作用于模型表 (1.8s)
+  ok 28 [desktop-1280] › e2e\visual-evidence.spec.ts:474:1 › 视觉证据：历史趋势图表（柱、双线、分区带、图例） (1.5s)
+  ok 29 [desktop-1280] › e2e\workbench-seed.spec.ts:17:1 › CRR-05 地址上的日期范围成为初始筛选（真实 HTTP） (2.8s)
+  ok 31 [desktop-1280] › e2e\workbench-seed.spec.ts:43:1 › CRR-05 范围与来源无关：演示模式下同样按种子筛选 (871ms)
+  ok 32 [desktop-1280] › e2e\workbench-seed.spec.ts:50:1 › CRR-05 范围内没有提交时显示既有空结果状态与清除入口 (838ms)
+  ok 30 [desktop-1280] › e2e\workbench-seed.spec.ts:34:1 › CRR-05 非法种子整体忽略并说明，列表不按日期筛选 (4.9s)
+  ok 33 [desktop-1280] › e2e\workbench.spec.ts:12:1 › CRR-01/02/03/07/08/12 桌面完整评审链路 (2.3s)
+  ok 34 [desktop-1280] › e2e\workbench.spec.ts:50:1 › CRR-04/05/06/07 查询、日期、排序与详情上下文 (1.8s)
+  ok 35 [desktop-1280] › e2e\workbench.spec.ts:84:1 › CRR-12 仅键盘完整操作及可见焦点 (2.0s)
+  ok 37 [desktop-1280] › e2e\workbench.spec.ts:147:3 › CRR-01/11 缺少来源不显示猜测记录 (826ms)
+  ok 36 [desktop-1280] › e2e\workbench.spec.ts:118:1 › CRR-11 加载可见、失败重试、空数据区分 (1.5s)
+  ok 39 [desktop-1280] › e2e\workbench.spec.ts:147:3 › CRR-01/11 无效时间不显示猜测记录 (864ms)
+  ok 38 [desktop-1280] › e2e\workbench.spec.ts:147:3 › CRR-01/11 重复标识不显示猜测记录 (923ms)
+  ok 40 [desktop-1280] › e2e\workbench.spec.ts:156:1 › CRR-03 无效风险有文字反馈且排在有效分数之后 (962ms)
+(node:52708) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:52684) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 42 [desktop-1440] › e2e\accessibility.spec.ts:44:1 › A11-2/3/5 纯键盘链路、焦点返回与详情滚动 (2.2s)
+  ok 41 [desktop-1440] › e2e\accessibility.spec.ts:26:1 › A11-1 列表、详情与清单无页面级横向溢出 (9.1s)
+  ok 44 [desktop-1440] › e2e\accessibility.spec.ts:111:1 › A11-6 趋势视图无横向溢出、空值桶有文字说明且文本视图可聚焦 (1.3s)
+  ok 45 [desktop-1440] › e2e\contract-shapes.spec.ts:8:1 › 具名形态按声明解析与展示，未提供字段带原因，旧文案不出现 (1.3s)
+  ok 43 [desktop-1440] › e2e\accessibility.spec.ts:88:1 › A11-4 模式与错误状态有可读文字 (8.6s)
+  ok 46 [desktop-1440] › e2e\contract-shapes.spec.ts:39:1 › 不含聚合键的既有运行：工作台照常可用，趋势页显示未提供 (1.0s)
+  ok 47 [desktop-1440] › e2e\contract-shapes.spec.ts:52:1 › 含聚合键的运行：趋势图与文本视图可读，空值桶给原因 (1.0s)
+  ok 49 [desktop-1440] › e2e\historical.spec.ts:84:1 › 真实基线摘要保持完整批次指标，演示清单与真实隔离 (13.0s)
+  ok 48 [desktop-1440] › e2e\historical.spec.ts:15:1 › 真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦截模型响应） (14.1s)
+  ok 51 [desktop-1440] › e2e\historical.spec.ts:148:1 › 网络失败不回退演示，恢复重试实际 HTTP (4.2s)
+  ok 52 [desktop-1440] › e2e\historical.spec.ts:161:1 › 错误真实来源不能展示旧批次（行为夹具） (924ms)
+  ok 53 [desktop-1440] › e2e\historical.spec.ts:172:1 › 实际模型另一序列化上下文隔离清单（TCP产物行为夹具） (13.8s)
+  ok 54 [desktop-1440] › e2e\repository-sync.spec.ts:23:1 › 没有凭据时数据来源页说明为什么不能同步 (843ms)
+  -  55 [desktop-1440] › e2e\repository-sync.spec.ts:31:1 › 从数据来源页发起同步，轮询到完成，工作台出现仓库数据与徽章
+  ok 56 [desktop-1440] › e2e\storage.spec.ts:7:1 › CRR-09 刷新、同地址再次打开恢复成员与顺序 (2.2s)
+  ok 57 [desktop-1440] › e2e\storage.spec.ts:25:1 › CRR-09 数据版本隔离，切回原版本仍可恢复 (1.9s)
+  ok 50 [desktop-1440] › e2e\historical.spec.ts:112:1 › 真实完整列表键盘详情与焦点返回 (25.9s)
+  ok 58 [desktop-1440] › e2e\storage.spec.ts:44:3 › CRR-09 损坏内容恢复反馈并可重新选择 (1.2s)
+  ok 59 [desktop-1440] › e2e\storage.spec.ts:44:3 › CRR-09 格式不支持恢复反馈并可重新选择 (1.2s)
+  ok 60 [desktop-1440] › e2e\storage.spec.ts:44:3 › CRR-09 未知标识恢复反馈并可重新选择 (1.2s)
+  ok 61 [desktop-1440] › e2e\storage.spec.ts:59:1 › CRR-10 保存拒绝仍可加入与移除，显示刷新风险 (1.9s)
+  ok 62 [desktop-1440] › e2e\storage.spec.ts:77:1 › CRR-10 读取拒绝后列表、详情与内存清单仍可使用 (1.5s)
+  ok 63 [desktop-1440] › e2e\trends.spec.ts:43:1 › DTD-07 仅用键盘对时间桶下钻，工作台地址带上该桶范围 (1.5s)
+  ok 64 [desktop-1440] › e2e\trends.spec.ts:60:1 › DTD-07 下钻后的范围成为工作台的初始日期筛选 (1.6s)
+  ok 66 [desktop-1440] › e2e\visual-evidence.spec.ts:231:1 › 视觉证据：模型中心表格与抽屉、新建预测两栏、结果横幅 (5.8s)
+  ok 65 [desktop-1440] › e2e\visual-evidence.spec.ts:142:1 › 视觉证据：工作台两视口布局与对比度 (8.0s)
+  ok 68 [desktop-1440] › e2e\visual-evidence.spec.ts:474:1 › 视觉证据：历史趋势图表（柱、双线、分区带、图例） (1.5s)
+  ok 67 [desktop-1440] › e2e\visual-evidence.spec.ts:335:1 › 视觉证据：遮罩跨主题压暗、紧凑密度作用于模型表 (5.2s)
+  ok 69 [desktop-1440] › e2e\workbench-seed.spec.ts:17:1 › CRR-05 地址上的日期范围成为初始筛选（真实 HTTP） (2.8s)
+  ok 71 [desktop-1440] › e2e\workbench-seed.spec.ts:43:1 › CRR-05 范围与来源无关：演示模式下同样按种子筛选 (862ms)
+  ok 72 [desktop-1440] › e2e\workbench-seed.spec.ts:50:1 › CRR-05 范围内没有提交时显示既有空结果状态与清除入口 (831ms)
+  ok 73 [desktop-1440] › e2e\workbench.spec.ts:12:1 › CRR-01/02/03/07/08/12 桌面完整评审链路 (2.2s)
+  ok 70 [desktop-1440] › e2e\workbench-seed.spec.ts:34:1 › CRR-05 非法种子整体忽略并说明，列表不按日期筛选 (4.9s)
+  ok 74 [desktop-1440] › e2e\workbench.spec.ts:50:1 › CRR-04/05/06/07 查询、日期、排序与详情上下文 (1.9s)
+  ok 75 [desktop-1440] › e2e\workbench.spec.ts:84:1 › CRR-12 仅键盘完整操作及可见焦点 (2.0s)
+  ok 77 [desktop-1440] › e2e\workbench.spec.ts:147:3 › CRR-01/11 缺少来源不显示猜测记录 (839ms)
+  ok 76 [desktop-1440] › e2e\workbench.spec.ts:118:1 › CRR-11 加载可见、失败重试、空数据区分 (1.6s)
+  ok 78 [desktop-1440] › e2e\workbench.spec.ts:147:3 › CRR-01/11 重复标识不显示猜测记录 (871ms)
+  ok 79 [desktop-1440] › e2e\workbench.spec.ts:147:3 › CRR-01/11 无效时间不显示猜测记录 (868ms)
+  ok 80 [desktop-1440] › e2e\workbench.spec.ts:156:1 › CRR-03 无效风险有文字反馈且排在有效分数之后 (1.1s)
+
+  1 skipped
+  79 passed (2.9m)
+
+exit=0
+
+[openspec validate --specs --strict --no-interactive]
+✓ spec/commit-persistence
+✓ spec/commit-risk-review
+✓ spec/dataset-registry
+✓ spec/defect-trend-dashboard
+✓ spec/feature-input-prediction
+✓ spec/feature-schema-versioning
+✓ spec/interface-presentation
+✓ spec/model-catalog
+✓ spec/model-prediction-workbench
+✓ spec/prediction-explanation
+✓ spec/public-data-baseline
+✓ spec/repository-collection
+✓ spec/team-api-access
+✓ spec/verification-evidence
+Totals: 14 passed, 0 failed (14 items)
+
+exit=0

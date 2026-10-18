@@ -1,0 +1,59 @@
+{
+  "viewport": "desktop-1280",
+  "fixture": "monthlyTrendFixture（6 个连续月份的行为夹具，数值为发明的画法样本，不是真实统计）",
+  "chart": {
+    "barCount": 6,
+    "barFills": [
+      "rgb(216, 208, 196)"
+    ],
+    "barHeights": [
+      116,
+      7,
+      78,
+      50,
+      72,
+      60
+    ],
+    "panelBackground": "rgb(255, 255, 255)",
+    "bands": [
+      "trend-band trend-band-hatch",
+      "trend-band trend-band-hatch",
+      "trend-band trend-band-test"
+    ],
+    "lines": [
+      {
+        "cls": "trend-line trend-line-observed",
+        "stroke": "rgb(20, 98, 76)"
+      },
+      {
+        "cls": "trend-line trend-line-observed",
+        "stroke": "rgb(20, 98, 76)"
+      },
+      {
+        "cls": "trend-line trend-line-estimated",
+        "stroke": "rgb(176, 74, 30)"
+      }
+    ],
+    "dots": 7,
+    "gaps": 1,
+    "legendSwatches": [
+      {
+        "cls": "trend-swatch trend-swatch-bar",
+        "background": "rgb(216, 208, 196)"
+      },
+      {
+        "cls": "trend-swatch trend-swatch-observed",
+        "background": "rgb(20, 98, 76)"
+      },
+      {
+        "cls": "trend-swatch trend-swatch-estimated",
+        "background": "rgba(0, 0, 0, 0)"
+      }
+    ]
+  },
+  "overflow": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "offenders": []
+  }
+}
