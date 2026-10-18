@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from test_artifacts import copied_run, real_run  # noqa: F401
+from test_catalog_api import settings  # noqa: F401
 
 
 def test_actual_readonly_request_full_batch_and_unknown_operations(real_run):
@@ -80,3 +81,68 @@ def test_supplied_run_directory_from_environment_without_fallback(real_run, tmp_
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "ARTIFACT_UNAVAILABLE"
     assert "records" not in response.json()
+
+
+def _error_only(response):
+    """错误响应只允许 code/message/requestId，不含任何资源内容。"""
+    body = response.json()
+    assert set(body) == {"error"}
+    error = body["error"]
+    assert set(error) == {"code", "message", "requestId"}
+    return error
+
+
+def test_api_rejects_missing_or_privileged_credentials(settings):  # noqa: F811
+    """6.2：无凭据 401、越权 403，且错误体不泄露资源（安全证据）。"""
+    from test_catalog_api import ADMIN, MEMBER
+    from jit_baseline.api import create_app
+
+    app = create_app(**settings)
+    with TestClient(app) as client:
+        for headers in ({}, {"Authorization": "Bearer not-a-team-token"},
+                        {"Authorization": "Basic Zm9v"}):
+            response = client.post("/api/v1/predictions", headers=headers, json={})
+            assert response.status_code == 401, headers
+            assert _error_only(response)["code"] == "AUTH_REQUIRED"
+        for response in (client.get("/api/v1/model-candidates", headers=MEMBER),
+                         client.post("/api/v1/models/register", headers=MEMBER, json={})):
+            assert response.status_code == 403
+            assert _error_only(response)["code"] == "ACCESS_DENIED"
+        assert client.get("/api/v1/model-candidates", headers=ADMIN).status_code == 200
+
+
+def test_missing_resources_share_one_404_shape(settings):  # noqa: F811
+    """6.2：不可见资源与非存在资源的 404 完全同形，不暴露存在性。"""
+    from test_catalog_api import MEMBER
+    from jit_baseline.api import create_app
+
+    app = create_app(**settings)
+    uuid_a = "00000000-0000-4000-8000-00000000000a"
+    uuid_b = "00000000-0000-4000-8000-00000000000b"
+    with TestClient(app) as client:
+        bodies = []
+        for batch_id in (uuid_a, uuid_b):
+            response = client.get("/api/v1/prediction-batches/" + batch_id, headers=MEMBER)
+            assert response.status_code == 404
+            error = _error_only(response)
+            assert error["code"] == "NOT_FOUND"
+            bodies.append({key: value for key, value in error.items() if key != "requestId"})
+        assert bodies[0] == bodies[1]
+        commit_404 = client.get("/api/v1/commits", headers=MEMBER,
+                                params={"version": "no-such-dataset"})
+        assert commit_404.status_code == 404
+        assert _error_only(commit_404)["code"] == "NOT_FOUND"
+        assert "records" not in commit_404.text and "risk" not in commit_404.text
+
+
+def test_startup_requires_dataset_registry(tmp_path, monkeypatch):
+    """描述文件是登记事实：目录缺失即拒绝启动，不退回空目录（DSR-06）。"""
+    import jit_baseline.api as api_module
+    import jit_baseline.datasets as datasets_module
+    from jit_baseline.errors import BaselineError
+
+    monkeypatch.setattr(datasets_module, "DATASETS", tmp_path / "empty")
+    with pytest.raises(BaselineError) as error:
+        api_module.create_app(database=tmp_path / "catalog.sqlite3",
+                              member_token="member-token", admin_token="admin-token")
+    assert error.value.code == "DATASET_REGISTRY_EMPTY"

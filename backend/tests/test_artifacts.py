@@ -647,7 +647,14 @@ def test_rebuilt_six_field_run_still_matches_the_archived_evidence(real_run):
         pytest.skip(f"缺少归档证据：{ARCHIVED_SUMMARY}")
     archived = json.loads(ARCHIVED_SUMMARY.read_text(encoding="utf-8"))
     rebuilt = json.loads((real_run / "summary.json").read_text(encoding="utf-8"))
-    assert rebuilt["datasetVersion"] == archived["datasetVersion"]
+    # 数据版本标识在 add-dataset-registry-and-commit-persistence 后由描述文件声明；
+    # 归档运行产生于该 change 之前，仍是内容哈希形式。同一性改由来源文件与纳入规则确认。
+    from jit_baseline import datasets
+    declared = datasets.load_all()["openstack-six-v1-2011-11-29_2014-02-28"]
+    assert rebuilt["datasetVersion"] == declared["version"]
+    assert archived["datasetVersion"].startswith("openstack-")
+    assert rebuilt["source"]["files"] == archived["source"]["files"]
+    assert rebuilt["cohort"] == archived["cohort"]
     assert rebuilt["features"] == archived["features"]
     assert rebuilt["split"]["test"]["count"] == archived["split"]["test"]["count"]
     for key, entry in archived["metrics"].items():

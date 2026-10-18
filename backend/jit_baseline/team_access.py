@@ -15,7 +15,7 @@ if not LOGGER.handlers:
     handler.setFormatter(logging.Formatter('%(levelname)s jit.catalog %(message)s'))
     LOGGER.addHandler(handler)
 ADMIN_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register'}
-MEMBER_PATHS = {'/api/v1/models', '/api/v1/predictions'}
+MEMBER_PATHS = {'/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits'}
 MESSAGES = {
     'ACCESS_CONFIG_INVALID': '团队访问凭据配置无效，请联系维护者',
     'AUTH_REQUIRED': '需要有效的团队 Bearer 凭据',
@@ -25,6 +25,10 @@ MESSAGES = {
     'INPUT_SCHEMA_MISMATCH': '输入与所选模型的 schema 不匹配或未支持',
     'INPUT_LIMIT_EXCEEDED': '单条 JSON 请求超过 64 KiB 上限',
     'CONTEXT_MISMATCH': '候选或运行上下文发生变化，请重新选择',
+    'DATASET_INVALID': '数据集描述或原始文件不符合约定',
+    'DATASET_UNAVAILABLE': '数据集文件不可用',
+    'DATASET_EXISTS': '数据集版本已存在且内容不同，不覆盖',
+    'DATASET_REGISTRY_EMPTY': '没有已登记的数据集描述文件',
     'STORAGE_UNAVAILABLE': '目录存储不可用，请检查初始化、版本或存储权限',
     'ARTIFACT_UNAVAILABLE': '运行必要文件不可用，请恢复并重新登记',
     'INTEGRITY_ERROR': '运行文件校验不匹配，请核验并重新登记',
@@ -46,7 +50,9 @@ class RequestError(BaselineError):
 
 def managed_path(path):
     return path in ADMIN_PATHS | MEMBER_PATHS or bool(re.fullmatch(
-        r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+', path))
+        r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
+        r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
+        r'|/api/v1/commits(?:/[^/]+)?', path))
 
 
 def authorize(header, member, admin, *, require_admin=False):

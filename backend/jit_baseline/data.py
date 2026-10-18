@@ -32,7 +32,8 @@ def verified_bytes(path, expected):
 def fetch_sources(directory, opener=urllib.request.urlopen):
     directory = Path(directory)
     verified = {}
-    for filename, (relative, expected) in SOURCES.items():
+    for filename, entry in SOURCES.items():
+        relative, expected = entry["path"], entry["sha256"]
         path = directory / filename
         if path.exists():
             verified[filename] = verified_bytes(path, expected)
@@ -51,7 +52,7 @@ def fetch_sources(directory, opener=urllib.request.urlopen):
         path = directory / filename
         if not path.exists():
             path.write_bytes(blob)
-    return {name: {"url": BASE_URL + SOURCES[name][0], "sha256": sha256(blob), "bytes": len(blob)}
+    return {name: {"url": BASE_URL + SOURCES[name]["path"], "sha256": sha256(blob), "bytes": len(blob)}
             for name, blob in verified.items()}
 
 
@@ -61,13 +62,15 @@ def integer(value, field, line):
     return int(value)
 
 
-def parse_source(blob, schema=None):
-    """按具名 schema 解析固定来源。
+def parse_source(blob, schema=None, cohort=None):
+    """按具名 schema 解析来源。
 
     缺失不填补：`BLANK_EXCLUDE` 字段缺失的行显式排除并计数，`BLANK_ERROR` 字段缺失即数据无效；
     只有发布者规则（如 `fix := fixcount > 0`）的 `BLANK_ZERO` 字段把空值取 0。
+    纳入窗口由 `cohort` 给出；省略时用 OpenStack 固定窗口，仓库采集传入自己的范围。
     """
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    cohort = COHORT if cohort is None else cohort
     in_model = schema.in_model_fields()
     try:
         reader = csv.DictReader(io.StringIO(blob.decode("utf-8-sig")), strict=True)
@@ -120,10 +123,10 @@ def parse_source(blob, schema=None):
                 return float(text) if text else None
 
             la, ld, nf = number("la"), number("ld"), number("nf")
-            reason = ("outsideWindow" if not COHORT["startEpochInclusive"] <= epoch < COHORT["endEpochExclusive"] else
+            reason = ("outsideWindow" if not cohort["startEpochInclusive"] <= epoch < cohort["endEpochExclusive"] else
                       "noAddedLines" if la is not None and la <= 0 else
-                      "tooMuchChurn" if la is not None and ld is not None and la + ld > COHORT["maxChurnInclusive"] else
-                      "tooManyFiles" if nf is not None and nf > COHORT["maxFilesInclusive"] else
+                      "tooMuchChurn" if la is not None and ld is not None and la + ld > cohort["maxChurnInclusive"] else
+                      "tooManyFiles" if nf is not None and nf > cohort["maxFilesInclusive"] else
                       "missingRequiredField" if missing else None)
             if reason:
                 quality["excluded"][reason] += 1

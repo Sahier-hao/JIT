@@ -212,13 +212,58 @@ function ResultBody({ result, snapshot }: { result: PredictionResult; snapshot: 
 
       <section className="result-section">
         <div className="section-caption">
-          <span>来源详情与局限</span>
-          <span>解释状态按服务端返回如实展示</span>
+          <span>预测解释</span>
+          <span>
+            {record.explanationStatus === 'supported'
+              ? `方法 ${record.explanationMethod ?? ''}，按影响绝对值取前五项`
+              : '未支持时只展示原因，不给任何归因数字'}
+          </span>
         </div>
-        <StatusNote tone={record.explanationStatus === 'not-supported' ? 'warn' : 'info'}>
-          预测解释：{record.explanationStatus === 'not-supported' ? '未支持' : record.explanationStatus} ·{' '}
-          {record.explanationReason}
-        </StatusNote>
+        {record.explanationStatus === 'supported' && record.explanation !== null ? (
+          <>
+            <p className="explanation-summary">{record.explanationSummary}</p>
+            {record.explanation.length === 0 ? (
+              <p className="muted">本次输入各字段与训练均值一致，没有可测的归因项。</p>
+            ) : (
+              <table className="explanation-table">
+                <thead>
+                  <tr>
+                    <th scope="col">特征</th>
+                    <th scope="col">输入值</th>
+                    <th scope="col">训练均值</th>
+                    <th scope="col">对风险的影响</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {record.explanation.map((item) => (
+                    <tr key={item.feature}>
+                      <th scope="row">
+                        <code>{item.feature}</code>
+                      </th>
+                      <td>{String(item.value)}</td>
+                      <td>{item.baseline.toFixed(3)}</td>
+                      <td className={item.direction === 'increases' ? 'delta-up' : 'delta-down'}>
+                        {item.direction === 'increases' ? '推高' : '拉低'} {Math.abs(item.delta).toFixed(3)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <p className="muted">
+              归因是把单个特征替换为训练集均值后风险的变化量，正值为推高、负值为拉低；它来自模型对单特征的敏感度，不是缺陷结论或代码定位。
+            </p>
+          </>
+        ) : (
+          <StatusNote tone="warn">预测解释未支持：{record.explanationReason ?? '服务端未给出原因'}</StatusNote>
+        )}
+      </section>
+
+      <section className="result-section">
+        <div className="section-caption">
+          <span>来源详情与局限</span>
+          <span>按服务端返回如实展示</span>
+        </div>
         <ul className="schema-list">
           {result.limitations.map((item) => (
             <li key={item}>{item}</li>

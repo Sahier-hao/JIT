@@ -14,8 +14,23 @@ from threadpoolctl import threadpool_limits
 
 from .algorithms import DEFAULT_ALGORITHM, get_algorithm
 from .data import BaselineError
-from .deep import torch_ft_transformer, torch_mlp, torch_tabular_resnet, torch_wide_deep
 from .schemas import DEFAULT_SCHEMA, resolve
+
+
+def _deep_estimator(name):
+    """深度方法的估计器工厂：torch 只在真正训练时导入。
+
+    `torch` 是可选依赖；缺失时其余方法与服务仍可用，选到深度方法才以可定位的
+    错误拒绝（PROTOCOL.md「深度方法的随机性与复现」）。
+    """
+    def factory(**kwargs):
+        try:
+            from . import deep
+        except ImportError as exc:
+            raise BaselineError("ALGORITHM_UNAVAILABLE", "深度方法需要可用的 torch 环境") from exc
+        return getattr(deep, name)(**kwargs)
+    return factory
+
 
 # 估计器实现表：注册条目声明用哪一个，这里提供可 joblib 序列化的实现。
 ESTIMATORS = {
@@ -24,10 +39,10 @@ ESTIMATORS = {
     "random-forest": RandomForestClassifier,
     "gaussian-naive-bayes": GaussianNB,
     "gradient-boosting": GradientBoostingClassifier,
-    "torch-mlp": torch_mlp,
-    "torch-tabular-resnet": torch_tabular_resnet,
-    "torch-ft-transformer": torch_ft_transformer,
-    "torch-wide-deep": torch_wide_deep,
+    "torch-mlp": _deep_estimator("torch_mlp"),
+    "torch-tabular-resnet": _deep_estimator("torch_tabular_resnet"),
+    "torch-ft-transformer": _deep_estimator("torch_ft_transformer"),
+    "torch-wide-deep": _deep_estimator("torch_wide_deep"),
 }
 
 

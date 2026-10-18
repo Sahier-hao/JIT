@@ -1,0 +1,281 @@
+{
+  "datasetVersion": "openstack-six-v1-2011-11-29_2014-02-28",
+  "directlyRankable": true,
+  "featureSchema": "openstack-six-v1",
+  "kind": "method-comparison",
+  "methods": [
+    {
+      "confusion": {
+        "fn": 286,
+        "fp": 0,
+        "tn": 1567,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 1567,
+        "positive": 286,
+        "records": 1853
+      },
+      "datasetVersion": "openstack-six-v1-2011-11-29_2014-02-28",
+      "effort": {
+        "budgetLoc": 42048.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 28,
+        "totalLoc": 210242,
+        "usedLoc": 41909
+      },
+      "featureSchema": "openstack-six-v1",
+      "method": "mlp-v1",
+      "metricSet": "metric-set-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.3812939371886064
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.05244755244755245
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7701099156108728
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "runId": "4a4c4e5d148ef1bd7148c6a3d2e9de5e497a585b8e4c5c404041444ea908453f",
+      "threshold": 0.5,
+      "trainingSeconds": 16.085862
+    },
+    {
+      "confusion": {
+        "fn": 286,
+        "fp": 0,
+        "tn": 1567,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 1567,
+        "positive": 286,
+        "records": 1853
+      },
+      "datasetVersion": "openstack-six-v1-2011-11-29_2014-02-28",
+      "effort": {
+        "budgetLoc": 42048.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 43,
+        "totalLoc": 210242,
+        "usedLoc": 41904
+      },
+      "featureSchema": "openstack-six-v1",
+      "method": "tabular-resnet-v1",
+      "metricSet": "metric-set-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.3790576007880928
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7658034371499591
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "blocks": 2,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": 64,
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "runId": "c5fd0117196617b85a345991990271a9f2277707886ba9ab2ab84c71fdd9aeb5",
+      "threshold": 0.5,
+      "trainingSeconds": 20.057499
+    },
+    {
+      "confusion": {
+        "fn": 286,
+        "fp": 0,
+        "tn": 1567,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 1567,
+        "positive": 286,
+        "records": 1853
+      },
+      "datasetVersion": "openstack-six-v1-2011-11-29_2014-02-28",
+      "effort": {
+        "budgetLoc": 42048.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 30,
+        "totalLoc": 210242,
+        "usedLoc": 40462
+      },
+      "featureSchema": "openstack-six-v1",
+      "method": "ft-transformer-v1",
+      "metricSet": "metric-set-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.3779654753462706
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.055944055944055944
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7638978762144045
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "d_token": 32,
+        "dropout": 0.1,
+        "epochs": 30,
+        "heads": 4,
+        "layers": 1,
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1
+      },
+      "runId": "67917758a07dcd9422b0b2708bce98cddaaa78bedcbfc57909479167cb412816",
+      "threshold": 0.5,
+      "trainingSeconds": 211.728327
+    },
+    {
+      "confusion": {
+        "fn": 285,
+        "fp": 0,
+        "tn": 1567,
+        "tp": 1
+      },
+      "counts": {
+        "negative": 1567,
+        "positive": 286,
+        "records": 1853
+      },
+      "datasetVersion": "openstack-six-v1-2011-11-29_2014-02-28",
+      "effort": {
+        "budgetLoc": 42048.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 33,
+        "totalLoc": 210242,
+        "usedLoc": 41778
+      },
+      "featureSchema": "openstack-six-v1",
+      "method": "wide-deep-v1",
+      "metricSet": "metric-set-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.3847734924108716
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.006968641114982578
+        },
+        "precision": {
+          "reason": null,
+          "value": 1.0
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0034965034965034965
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.06993006993006994
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7688715241363614
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "deep": [
+          64,
+          32
+        ],
+        "dropout": 0.2,
+        "epochs": 30,
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "runId": "14b92e9d620cbc3a9a93b7ae6bf4f2239f1a9baa22d8634610322a1a9de31b4a",
+      "threshold": 0.5,
+      "trainingSeconds": 14.435036
+    }
+  ],
+  "metricSet": "metric-set-v1",
+  "note": "同口径时可并列比较；口径不一致时不可直接排名，也不得据此择优。",
+  "reasons": [],
+  "testCount": 1853,
+  "threshold": 0.5
+}

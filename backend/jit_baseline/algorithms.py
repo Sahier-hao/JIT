@@ -25,7 +25,7 @@ ALGORITHMS = {
         "preprocess": ("scale",),
         "requires": (),
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；线性模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     "decision-tree-v1": {
         "label": "决策树",
@@ -38,7 +38,7 @@ ALGORITHMS = {
         "preprocess": (),
         "requires": (),
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；树模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     # 第一个 `requires` 非空的方法：用于实测"环境声明 → 子集校验 → 无 GPU 机器加载"这条路径
     # （此前两个方法的 requires 都是空的，该路径从未被走过）。它仍是表格型经典方法，
@@ -56,7 +56,7 @@ ALGORITHMS = {
         "preprocess": (),
         "requires": ("scipy",),
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；树集成模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     "gaussian-naive-bayes-v1": {
         "label": "高斯朴素贝叶斯",
@@ -70,7 +70,7 @@ ALGORITHMS = {
         "preprocess": (),
         "requires": (),
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；朴素贝叶斯的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     # 小树 + 叶下限的保守取值：控制训练时间，并与既有树方法的正则化取向一致。
     # 已冻结，不由验证或测试结果调整。
@@ -87,7 +87,7 @@ ALGORITHMS = {
         "preprocess": (),
         "requires": (),
         "reproducibility": {"mode": "tolerance", "atol": 1e-8, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；树集成模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     "mlp-v1": {
         "label": "深度 · MLP",
@@ -102,7 +102,7 @@ ALGORITHMS = {
         "preprocess": ("scale",),
         "requires": ("torch",),
         "reproducibility": {"mode": "tolerance", "atol": 1e-6, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；深度模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     "tabular-resnet-v1": {
         "label": "深度 · 表格 ResNet",
@@ -117,7 +117,7 @@ ALGORITHMS = {
         "preprocess": ("scale",),
         "requires": ("torch",),
         "reproducibility": {"mode": "tolerance", "atol": 1e-6, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；深度模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     "ft-transformer-v1": {
         "label": "深度 · FT-Transformer",
@@ -132,7 +132,7 @@ ALGORITHMS = {
         "preprocess": ("scale",),
         "requires": ("torch",),
         "reproducibility": {"mode": "tolerance", "atol": 1e-6, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；深度模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
     "wide-deep-v1": {
         "label": "深度 · Wide&Deep",
@@ -147,7 +147,7 @@ ALGORITHMS = {
         "preprocess": ("scale",),
         "requires": ("torch",),
         "reproducibility": {"mode": "tolerance", "atol": 1e-6, "rtol": 0.0},
-        "explanation": {"method": None, "reason": "本 change 未实现预测解释；深度模型的候选口径留待解释 change 登记"},
+        "explanation": {"method": "occlusion-mean-v1", "reason": None},
     },
 }
 

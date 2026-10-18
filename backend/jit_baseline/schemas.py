@@ -85,7 +85,25 @@ _KAMEI14 = Schema("kamei14-v1", (
     Field("sexp", "asexp", transform=LOG1P, integer=True),
 ))
 
-SCHEMAS = {schema.name: schema for schema in (_SIX, _KAMEI14)}
+_GIT14 = Schema("kamei14-git-v1", (
+    Field("ns", "ns", transform=LOG1P, integer=True),
+    Field("nd", "nd", transform=LOG1P, integer=True),
+    Field("nf", "nf", transform=LOG1P, integer=True),
+    Field("entropy", "entropy"),
+    Field("la", "la", transform=LOG1P, integer=True),
+    Field("ld", "ld", transform=LOG1P, integer=True),
+    Field("lt", "lt", transform=LOG1P, integer=True),
+    Field("fix", "fix", blank=BLANK_ZERO, integer=True, binary=True,
+          reason="采集规则 fix := 提交消息命中修复关键词"),
+    Field("ndev", "ndev", transform=LOG1P, integer=True),
+    Field("age", "age"),
+    Field("nuc", "nuc", transform=LOG1P, integer=True),
+    Field("exp", "exp", transform=LOG1P, integer=True),
+    Field("rexp", "rexp", transform=LOG1P, integer=True),
+    Field("sexp", "sexp", transform=LOG1P, integer=True),
+))
+
+SCHEMAS = {schema.name: schema for schema in (_SIX, _KAMEI14, _GIT14)}
 DEFAULT_SCHEMA = "openstack-six-v1"
 
 

@@ -32,12 +32,26 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from starlette.concurrency import run_in_threadpool
     install_access(app, os.environ.get('JIT_MEMBER_TOKEN', '') if member_token is None else member_token,
                    os.environ.get('JIT_ADMIN_TOKEN', '') if admin_token is None else admin_token)
-    catalog = ModelCatalog(CatalogStorage(database if database is not None else
-                           os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)),
-                           artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
+    database = database if database is not None else os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)
+    storage = CatalogStorage(database)
+    catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
     app.state.catalog = catalog
+    app.state.storage = storage
+    from . import store
+    from . import datasets as dataset_module
+    # 描述文件是登记事实：缺失或校验失败即拒绝启动（DSR-06），不退回空目录。
+    registered = dataset_module.load_all()
+    app.state.datasets = registered
     from .prediction import PredictionService
     prediction_service = PredictionService(catalog)
+    from fastapi.exceptions import RequestValidationError
+
+    @app.exception_handler(RequestValidationError)
+    def invalid_request(request: Request, exc: RequestValidationError):
+        """查询参数类型或范围不合法时也保持 `{"error": {...}}` 结构（API-R-02）。"""
+        return JSONResponse({'error': {'code': 'INPUT_INVALID', 'message': '请求格式或字段值无效',
+                                       'requestId': getattr(request.state, 'request_id', None)}},
+                            status_code=422)
 
     @app.post('/api/v1/predictions')
     async def create_prediction(request: Request):
@@ -72,6 +86,41 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/feature-schemas/{version}')
     def feature_schema(version: str):
         return schema_info(version)
+
+    @app.get('/api/v1/datasets')
+    def dataset_versions_all():
+        return {'datasets': store.dataset_list(registered)}
+
+    @app.get('/api/v1/datasets/{name}/versions')
+    def dataset_versions(name: str):
+        view = store.version_view(registered, name)
+        if view is None:
+            raise RequestError('NOT_FOUND')
+        return view
+
+    @app.get('/api/v1/commits')
+    def commit_list(version: str, module: str | None = None, limit: int = 100, offset: int = 0):
+        if storage.dataset(version) is None:
+            raise RequestError('NOT_FOUND')
+        if not 1 <= limit <= 500:
+            raise RequestError('INPUT_INVALID', field='limit')
+        if offset < 0:
+            raise RequestError('INPUT_INVALID', field='offset')
+        if module:
+            total = storage.count_by_entity('module', module)
+            records = storage.commits_by_entity('module', module, limit, offset, summary=True)
+        else:
+            total = storage.count_commits(version)
+            records = storage.commits(version, limit, offset, summary=True)
+        return {'datasetVersion': version, 'total': total, 'limit': limit, 'offset': offset,
+                'commits': records}
+
+    @app.get('/api/v1/commits/{commit_id}')
+    def commit_detail(commit_id: str, version: str):
+        record = store.commit_view(storage, version, commit_id)
+        if record is None:
+            raise RequestError('NOT_FOUND')
+        return record
     app.state.snapshot, app.state.error = None, None
     try:
         app.state.snapshot = Snapshot.load(directory)

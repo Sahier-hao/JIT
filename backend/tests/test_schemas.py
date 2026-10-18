@@ -7,7 +7,7 @@ import pytest
 
 def test_two_schemas_are_registered_with_declared_order():
     from jit_baseline.schemas import SCHEMAS, get_schema
-    assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1"}
+    assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1", "kamei14-git-v1"}
     assert get_schema("openstack-six-v1").in_model_names() == ("ns", "nd", "nf", "ent", "la", "ld")
     kamei = get_schema("kamei14-v1")
     assert [field.name for field in kamei.fields] == [
@@ -96,6 +96,17 @@ def test_six_schema_still_treats_blank_required_field_as_invalid():
                      "ns": "1", "nd": "2", "nf": "3", "ent": "0.5", "la": "", "ld": "5"})
     with pytest.raises(ValueError, match="行"):
         parse_source(stream.getvalue().encode())
+
+
+def test_git_schema_makes_all_fourteen_fields_available():
+    from jit_baseline.schemas import get_schema
+    git = get_schema("kamei14-git-v1")
+    assert [field.name for field in git.fields] == [
+        "ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix", "ndev", "age", "nuc", "exp", "rexp", "sexp"]
+    assert git.in_model_names() == tuple(field.name for field in git.fields)
+    assert git.unavailable() == ()
+    assert all(field.source == field.name for field in git.fields)
+    assert git.log1p_indices() == (0, 1, 2, 4, 5, 6, 8, 10, 11, 12, 13)
 
 
 def test_unknown_field_name_is_rejected_without_fallback():

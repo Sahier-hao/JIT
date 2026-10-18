@@ -15,6 +15,7 @@ from . import trends
 from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
 from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
 from .data import BaselineError, parse_source, sha256, verified_bytes
+from .datasets import load_manifest, manifest_relative
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
 from .model import feature_matrix, fit_model, predict_risks, temporal_split
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
@@ -130,25 +131,67 @@ def limitations(schema):
     if gaps:
         first = (f"特征为具名 schema {schema.name}，入模 {len(schema.in_model_names())} 项（{fields}）；"
                  + "未提供：" + "；".join(f"{field.name}（{field.reason}）" for field in gaps)
-                 + "。预测解释未提供。")
+                 + "。预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
     else:
-        first = f"特征为具名 schema {schema.name}（{fields}），尚非完整 Kamei14；预测解释未提供。"
+        first = (f"特征为具名 schema {schema.name}（{fields}），尚非完整 Kamei14；"
+                 + "预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
     return [first, *LIMITATIONS]
 
 
-def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
+def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None):
+    """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。"""
     output, source_dir = Path(output), Path(source_dir)
-    schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
     algorithm_version = algorithm if algorithm else DEFAULT_ALGORITHM
     entry = get_algorithm(algorithm_version)
     metric_set = metric_set if metric_set else DEFAULT_METRIC_SET
     declared_metric_set(metric_set)
-    fields = list(schema.in_model_names())
     if output.exists():
         raise BaselineError("OUTPUT_EXISTS", "运行目录已存在，请为独立复现指定新目录")
-    sources = {name: {"url": BASE_URL + relative, "sha256": expected, "bytes": len(verified_bytes(source_dir / name, expected))}
-               for name, (relative, expected) in SOURCES.items()}
-    records, quality = parse_source(verified_bytes(source_dir / "openstack.csv", SOURCES["openstack.csv"][1]), schema)
+    manifest_file, dataset, declared = None, None, False
+    if dataset_manifest is not None:
+        manifest_file = Path(dataset_manifest)
+        dataset = load_manifest(manifest_file)
+        schema = resolve(schema if schema is not None else dataset["schemaName"])
+        if dataset["schemaName"] != schema.name:
+            raise BaselineError("DATASET_INVALID", "数据集描述文件的 schema 与运行声明不一致")
+        csv_path = Path(dataset["file"]["path"])
+        csv_path = csv_path if csv_path.is_absolute() else BACKEND / csv_path
+        try:
+            blob = csv_path.read_bytes()
+        except OSError as exc:
+            raise BaselineError("DATASET_UNAVAILABLE", f"原始 CSV 不可用：{csv_path.name}") from exc
+        if sha256(blob) != dataset["file"]["sha256"]:
+            raise BaselineError("DATASET_INVALID", "原始 CSV 校验值与描述文件不一致")
+        records, quality = parse_source(blob, schema, dataset["cohort"])
+        if quality != dataset["quality"]:
+            raise BaselineError("DATASET_INVALID", "按描述文件规则重算的质量统计与描述不一致")
+        sources = {csv_path.name: {"url": dataset["url"], "sha256": dataset["file"]["sha256"],
+                                   "bytes": len(blob)}}
+        dataset_version, declared = dataset["version"], True
+    else:
+        schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+        source_entry = SOURCES["openstack.csv"]
+        sources = {name: {"url": BASE_URL + entry["path"], "sha256": entry["sha256"],
+                          "bytes": len(verified_bytes(source_dir / name, entry["sha256"]))}
+                   for name, entry in SOURCES.items()}
+        records, quality = parse_source(
+            verified_bytes(source_dir / "openstack.csv", source_entry["sha256"]), schema,
+            COHORT)
+        declared_manifest = source_entry.get("datasetManifest")
+        if declared_manifest:
+            manifest_file = Path(declared_manifest) if Path(declared_manifest).is_absolute() else BACKEND / declared_manifest
+            dataset = load_manifest(manifest_file)
+            if dataset["file"]["sha256"] != source_entry["sha256"]:
+                raise BaselineError("DATASET_INVALID", "数据集描述文件的来源校验值与锁定版本不一致")
+            if dataset["cohort"] != COHORT:
+                raise BaselineError("DATASET_INVALID", "数据集描述文件的纳入规则与当前协议不一致")
+            if dataset["schemaName"] == schema.name and quality != dataset["quality"]:
+                raise BaselineError("DATASET_INVALID", "按描述文件规则重算的质量统计与描述不一致")
+            dataset_version, declared = dataset["version"], True
+        else:
+            dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": list(schema.in_model_names()),
+                                                       "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
+    fields = list(schema.in_model_names())
     split, boundaries = temporal_split(records)
     started = time.perf_counter()
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version)
@@ -157,16 +200,21 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
     metrics = evaluate(split["test"], risks, metric_set)
     # 时间桶聚合在离线产生（design D1/D10）：产物里只有聚合值，服务不必读测试标签。
     trend = trends.build_trend_buckets(split, risks)
-    dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": fields,
-                                               "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
+    cohort = dict(dataset["cohort"]) if dataset else dict(COHORT)
     stats = {key: {"count": len(part), "positiveCount": sum(r["label"] for r in part),
                    "start": part[0]["time"], "end": part[-1]["time"], "ids": [r["id"] for r in part]}
              for key, part in split.items()}
-    source = {"publisher": "software-rebels/JITMovingTarget", "revision": REVISION,
-              "url": "https://github.com/software-rebels/JITMovingTarget/tree/" + REVISION,
-              "citation": "McIntosh & Kamei (2018), Are Fix-Inducing Changes a Moving Target? TSE 44(5), 412–428.",
-              "files": sources, "sha256": SOURCES["openstack.csv"][1], "quality": quality,
-              "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"}
+    if dataset_manifest is not None:
+        source = {"publisher": dataset["publisher"], "revision": dataset["revision"],
+                  "url": dataset["url"], "citation": dataset["citation"],
+                  "files": sources, "sha256": dataset["file"]["sha256"], "quality": quality,
+                  "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"}
+    else:
+        source = {"publisher": "software-rebels/JITMovingTarget", "revision": REVISION,
+                  "url": "https://github.com/software-rebels/JITMovingTarget/tree/" + REVISION,
+                  "citation": "McIntosh & Kamei (2018), Are Fix-Inducing Changes a Moving Target? TSE 44(5), 412–428.",
+                  "files": sources, "sha256": SOURCES["openstack.csv"]["sha256"], "quality": quality,
+                  "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"}
     # No usable manifest exists until every artifact is written and checked.
     output.mkdir(parents=True)
     write_json(output / "source.json", source)
@@ -180,13 +228,16 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
     files = {name: sha256((output / name).read_bytes()) for name in CORE_FILES}
     config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": algorithm_version,
               "metricSet": metric_set,
-              "datasetVersion": dataset_version, "features": fields, "cohort": COHORT,
+              "datasetVersion": dataset_version, "features": fields, "cohort": cohort,
               "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
+    if declared:
+        config["datasetManifest"] = {"path": manifest_relative(manifest_file),
+                                     "sha256": sha256(Path(manifest_file).read_bytes())}
     run_id = identity(config)
     label = model_descriptor(schema.name, algorithm_version)
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
-               "features": fields, "featureSchema": feature_schema(schema), "cohort": COHORT,
+               "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
                "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},
                "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": schema.name,
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
@@ -196,10 +247,13 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None):
                "limitations": limitations(schema)}
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
+    command = (f"python -m jit_baseline.cli run --output {output.as_posix()}"
+               f" --schema {schema.name} --algorithm {algorithm_version}")
+    if dataset_manifest is not None:
+        command += f" --dataset-manifest {Path(dataset_manifest).as_posix()}"
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
-                "command": (f"python -m jit_baseline.cli run --output {output.as_posix()}"
-                            f" --schema {schema.name} --algorithm {algorithm_version}")}
+                "command": command}
     write_json(output / "manifest.json", manifest)
     verify_run(output)
     return manifest
@@ -227,8 +281,30 @@ def check_files(directory, names):
         entry = get_algorithm(algorithm_version)
         if config["model"] != entry["params"]:
             raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
-        if config["cohort"] != COHORT or config["threshold"] != THRESHOLD:
-            raise BaselineError("ARTIFACT_INVALID", "纳入或阈值不匹配")
+        if config["threshold"] != THRESHOLD:
+            raise BaselineError("ARTIFACT_INVALID", "阈值不匹配")
+        # 声明了数据集描述文件的运行按其声明校验（DSR-06、PDB-01）；未声明的旧运行
+        # 继续按模块常量校验，行为不变（design D3 兼容路径）。
+        declared_manifest = config.get("datasetManifest")
+        if declared_manifest is None:
+            if config["cohort"] != COHORT:
+                raise BaselineError("ARTIFACT_INVALID", "纳入规则不匹配")
+        else:
+            if (not isinstance(declared_manifest, dict) or not isinstance(declared_manifest.get("path"), str)
+                    or not isinstance(declared_manifest.get("sha256"), str)):
+                raise BaselineError("ARTIFACT_INVALID", "数据集描述文件声明无效")
+            manifest_path = Path(declared_manifest["path"])
+            if not manifest_path.is_absolute():
+                manifest_path = BACKEND / manifest_path
+            try:
+                manifest_blob = manifest_path.read_bytes()
+            except OSError as exc:
+                raise BaselineError("DATASET_UNAVAILABLE", f"数据集描述文件不可用：{manifest_path.name}") from exc
+            if sha256(manifest_blob) != declared_manifest["sha256"]:
+                raise BaselineError("ARTIFACT_INVALID", "数据集描述文件校验不匹配")
+            dataset = load_manifest(manifest_path)
+            if dataset["cohort"] != config["cohort"] or dataset["version"] != config["datasetVersion"]:
+                raise BaselineError("ARTIFACT_INVALID", "运行声明与数据集描述文件不一致")
         # 未注册的指标集名称在这里以 METRIC_SET_UNKNOWN 被拒绝（PDB-12）。
         declared_metric_set(config.get("metricSet"))
         if config["modelSha256"] != manifest["files"]["model.joblib"]:
@@ -275,7 +351,10 @@ class Snapshot:
         try:
             if inputs["features"] != fields or summary["features"] != fields:
                 raise BaselineError("ARTIFACT_INVALID", "输入字段顺序不匹配")
-            if source != summary["source"] or source["revision"] != REVISION or source["sha256"] != SOURCES["openstack.csv"][1]:
+            if source != summary["source"]:
+                raise BaselineError("ARTIFACT_INVALID", "摘要来源不匹配")
+            if not config.get("datasetManifest") and (
+                    source["revision"] != REVISION or source["sha256"] != SOURCES["openstack.csv"]["sha256"]):
                 raise BaselineError("ARTIFACT_INVALID", "摘要来源不匹配")
             if metrics != summary["metrics"] or summary["runId"] != manifest["runId"] or summary["datasetVersion"] != manifest["config"]["datasetVersion"] or summary["modelSha256"] != manifest["config"]["modelSha256"]:
                 raise BaselineError("ARTIFACT_INVALID", "摘要与运行身份不匹配")

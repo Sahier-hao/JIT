@@ -20,6 +20,8 @@ def main():
     run.add_argument("--output", type=Path, default=DEFAULT_RUN)
     run.add_argument("--schema", default=None, help="具名特征 schema；默认 openstack-six-v1")
     run.add_argument("--algorithm", default=None, help="具名方法；默认 logistic-regression-l2-v1")
+    run.add_argument("--dataset-manifest", type=Path, default=None,
+                     help="数据集描述文件；给定后改读该数据集而不是 OpenStack 快照")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -37,6 +39,26 @@ def main():
     register.add_argument('--run-key', required=True)
     register.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     register.add_argument('--artifact-root', type=Path, default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    dataset_register = commands.add_parser('register-dataset')
+    dataset_register.add_argument('--csv', type=Path, default=BACKEND / 'data/openstack/openstack.csv')
+    dataset_register.add_argument('--schema', default=None, help='具名特征 schema；默认 openstack-six-v1')
+    dataset_register.add_argument('--dataset', default=None, help='数据集名；默认取 schema 名')
+    dataset_register.add_argument('--version', default=None, help='版本名；默认 <数据集>-<起始日>_<结束日>')
+    dataset_register.add_argument('--output', type=Path, default=None, help='描述文件根目录；默认 backend/data/datasets')
+    dataset_import = commands.add_parser('import-dataset')
+    dataset_import.add_argument('--csv', type=Path, default=None, help='原始 CSV；默认按描述文件的 file.path 定位')
+    dataset_import.add_argument('--manifest', type=Path, required=True)
+    dataset_import.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    collect = commands.add_parser('collect-repository')
+    collect.add_argument('--repo', required=True, help='本地仓库路径或远程仓库地址')
+    collect.add_argument('--since', default=None, help='起始时间（YYYY-MM-DD 或 ISO）')
+    collect.add_argument('--until', default=None, help='结束时间（YYYY-MM-DD 或 ISO）')
+    collect.add_argument('--branch', default='HEAD', help='采集的分支或提交；默认 HEAD')
+    collect.add_argument('--limit', type=int, default=None, help='提交数上限；超过即拒绝')
+    collect.add_argument('--dataset', default=None, help='数据集名；默认由仓库名派生')
+    collect.add_argument('--output', type=Path, default=None, help='采集 CSV 输出路径')
+    collect.add_argument('--register', action='store_true', help='采集后直接登记数据集')
+    collect.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
@@ -52,10 +74,27 @@ def main():
             from .catalog import ModelCatalog
             from .catalog_storage import CatalogStorage
             result = ModelCatalog(CatalogStorage(args.database), args.artifact_root).register_key(args.run_key)
+        elif args.command == 'register-dataset':
+            from . import store
+            result = dict(store.register(args.csv, schema=args.schema, dataset=args.dataset,
+                                         version=args.version, root=args.output), kind='dataset-registered')
+        elif args.command == 'import-dataset':
+            from . import store
+            from .catalog_storage import CatalogStorage
+            storage = CatalogStorage(args.database)
+            storage.initialize()
+            result = dict(store.import_dataset(args.csv, args.manifest, storage), kind='dataset-imported')
+        elif args.command == 'collect-repository':
+            from . import collect as collector
+            result = collector.collect_repository(args.repo, since=args.since, until=args.until,
+                                                  branch=args.branch, output=args.output,
+                                                  dataset=args.dataset, register=args.register,
+                                                  limit=args.limit, root=args.root)
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
-            manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm)
+            manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
+                                 dataset_manifest=args.dataset_manifest)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)

@@ -76,6 +76,71 @@ $env:PYTHONIOENCODING='utf-8'
 每个新请求使用服务器生成的 `X-Request-Id`；错误含同一 requestId，日志只记角色、操作及状态。
 原 `GET /api/review-batch` 保留无鉴权和本机监听，且不因新凭据或数据库未初始化而改变行为。
 
+### 数据集描述与提交级数据（add-dataset-registry-and-commit-persistence）
+
+数据集描述文件是登记事实，放在 `data/datasets/<数据集>/<版本>.json`，随仓库提交（`.gitignore`
+只忽略原始 CSV 与运行目录）。登记时从真实 CSV 重算校验值、字段定义、质量统计与时间范围：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli register-dataset
+& .venv/Scripts/python.exe -m jit_baseline.cli import-dataset --manifest data/datasets/openstack-six-v1/openstack-six-v1-2011-11-29_2014-02-28.json
+```
+
+`register-dataset` 同内容重复登记幂等；同一版本内容不同以 `DATASET_EXISTS` 拒绝覆盖。
+`import-dataset` 在一个事务里写提交、变更规模与入模特征，并记录 `import_run`（先 pending 后
+success；失败写 failed 与错误码，库内容不变）。重复导入同一版本幂等，返回 `created: false`。
+
+目录库升到版本 2：`catalog-init` 把旧库按序升级；`dataset_record`、`commit_record`、
+`modified_entity`、`feature_record`、`import_run` 只增不改，旧表与既有模型接口不变。
+
+只读查询接口（需团队 Bearer 凭据，成员即可）：
+
+| 路径 | 说明 |
+| --- | --- |
+| `GET /api/v1/datasets` | 已登记数据集与版本摘要（来自描述文件，不含逐条内容） |
+| `GET /api/v1/datasets/{name}/versions` | 某数据集的版本；未知数据集 404 |
+| `GET /api/v1/commits?version=<版本>&limit=<1-500>&offset=<0+>` | 该版本的提交摘要（`commitId`、`authorTime`、`label`、`module`），默认 `limit=100`，响应带 `total`/`limit`/`offset`；越界或非整数 422 `INPUT_INVALID` |
+| `GET /api/v1/commits/{commitId}?version=<版本>` | 单条提交的完整特征；未知版本或提交 404 |
+
+`module` 查询参数只在来源提供模块引用时可用；OpenStack 数据没有文件路径列，因此不推导模块，
+按模块查不到记录属于数据事实，不是缺陷。
+
+### 从 Git 仓库采集提交（add-git-repository-collection）
+
+`collect-repository` 直接把一个 Git 仓库转换成 `kamei14-git-v1` 数据集：遍历提交、计算
+Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链路。
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli collect-repository --repo https://github.com/apache/activemq `
+  --since 2023-10-18 --until 2026-10-18 --dataset activemq-3y --output ..\.dsh-tmp\activemq.csv `
+  --register --limit 20000
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| `--repo` | 本地路径直接读；`http(s)` 地址会 `git clone --bare` 到临时目录，采集后删除 |
+| `--since` / `--until` | 提交作者时间窗口，`YYYY-MM-DD` 或 ISO；范围外提交只用于回溯，不进样本 |
+| `--branch` | 分支或提交；默认 `HEAD` |
+| `--limit` | 窗口内提交数上限；超过直接拒绝，避免一次拉爆内存 |
+| `--dataset` / `--output` | 数据集名与 CSV 输出位置；数据集名默认由仓库名派生 |
+| `--register` / `--root` | 采集后立即登记；默认写入 `data/datasets/<数据集>/` |
+
+产物是 CSV（`commit_id`、`author_date`、14 维特征）与描述文件；描述文件多一个 `collection`
+段，记录仓库路径、HEAD、分支、窗口、git 版本、合并/空提交/范围外/二进制计数、SZZ 规则版本
+与两条限制。同一范围重跑幂等，内容不同以 `DATASET_EXISTS` 拒绝覆盖。
+
+两条限制随产物记录，不被静默忽略：特征是**提交级聚合**（Kamei 论文的样本单位是文件级）；
+标签是**简化 SZZ**（只看修复提交消息里的关键词并回溯最近一次变更，不处理重命名、跨文件传播
+与 issue 关联）。采到的数据集可以直接训练，训练时用描述文件指定它：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli run --output ..\.dsh-tmp\run-activemq `
+  --schema kamei14-git-v1 --dataset-manifest ..\.dsh-tmp\registry\activemq-3y\activemq-3y-2023-10-18_2026-10-17.json
+```
+
+运行目录的 `source.json` 记录采集来源（`publisher` 为 `collected`、`revision` 为采集时的 HEAD、
+仓库地址与 git 版本），`datasetVersion` 等于数据集版本名，产物因此能追溯到具体仓库与时间窗口。
+
 ### 已有模型登记
 
 维护者运行 `cli register-model --run-key baseline`（完整命令为
@@ -95,16 +160,57 @@ CLI 与 HTTP 复用完整 verify 准入，失败不登记模型，正常失败�
 
 ### 单条 JSON 预测与结果重开
 
-成员或管理员向 `POST /api/v1/predictions` 提交 `modelId`、`featureSchemaVersion=openstack-six-v1`、
-`project` 和 `record:{recordId,features}`，可选真实 commitId／带时区 time。features 恰含原始
+预测输入有两种来源，一次请求必须恰好给出一种。
+
+**客户端特征**：提交 `modelId`、`featureSchemaVersion=openstack-six-v1`、`project` 和
+`record:{recordId,features}`，可选真实 commitId／带时区 time。features 恰含原始
 ns、nd、nf、ent、la、ld；不需要预先 log1p／标准化，也不接受标签、缺失／额外字段、布尔计数、
-小数计数、数值字符串或非有限值。实际请求体上限 64 KiB，任一输入错误不发布结果。
+小数计数、数值字符串或非有限值。
+
+**已导入提交**：提交 `modelId`、`featureSchemaVersion`、`project`、`datasetVersion` 和
+`record:{recordId,commitId}`，不给 features。服务按 `datasetVersion` 与 `commitId` 读取导入时
+保存的特征、按 schema 顺序重排后推理；版本或提交未登记返回 404，字段数与 schema 不一致返回 422
+`INPUT_SCHEMA_MISMATCH`。结果的 `sourceKind` 为 `persisted-commit` 并带 `datasetVersion`，
+`limitations` 首条说明特征来自已导入的提交数据、尚未核验真实标签。
+
+两层来源同时给出（features 加 datasetVersion）或缺任一半时返回 422 `INPUT_INVALID` 并定位字段。
+实际请求体上限 64 KiB，任一输入错误不发布结果。
 
 成功完成真实推理并原子保存后返回 201，含 batchId、predictionId、业务 UUID、原产物身份、模型 hash、
-schema、输入 hash、UTC 创建时刻及恰一条风险；`explanationStatus=not-supported` 并说明原因。
+schema、输入 hash、UTC 创建时刻及恰一条风险；同一记录里给出该次预测的特征归因（见下节）。
 风险仍是模型估计，调用方特征尚未核验源码／标签，不代表在线仓库效果或已确认缺陷。
 `GET /api/v1/prediction-batches/{batchId}` 重开保存结果，不重新计算；模型删除或更新不改写过去来源快照。
 重复合法 POST 创建独立批次；存储失败 503 不返回已算风险，模型不存在 404、不可用 503、推理失败 500。
+
+### 预测解释（explain-predictions-and-verify-service）
+
+成功预测的记录带 `explanationStatus=supported`、`explanationMethod=occlusion-mean-v1`、
+至多 5 条 `explanation` 和一句 `explanationSummary`。口径是**遮挡法**：把单个入模特征替换成
+该数据集版本该字段的均值（一次 `AVG(CAST(value_json AS REAL)) ... GROUP BY field` 查询，不训练、
+不读标签），重新推理，用风险变化量 `delta` 衡量该特征当前取值对本次预测的推动——正值推高、
+负值拉低，按绝对值降序，零贡献不列出、不足 5 条不补位。它描述模型对单特征的敏感度，不是
+因果分解，也不是缺陷定位。
+
+宁可降级也不编造：归因函数异常时该条仍返回 201，但 `explanationStatus=not-supported` 并给出
+`explanationReason`，风险与保存不受影响；数据集版本未知或部分字段没有均值时仍给出解释，同时在
+`limitations` 说明缺失字段按零基线计算。历史批次没有解释字段，`GET` 重开时原样返回、不重算、
+不触发推理。单条请求（含 6 次遮挡推理）在本机实测 P95 约 147 ms，证据与复现脚本见
+`docs/evidence/explain-predictions-and-verify-service/prediction-latency.json` 与
+`scripts/prediction_latency.py`。
+
+一次真实调用（服务已启动、已登记模型；`JIT_MEMBER_TOKEN` 为当前服务的成员凭据）：
+
+```powershell
+$headers = @{ Authorization = "Bearer $env:JIT_MEMBER_TOKEN"; 'Content-Type' = 'application/json' }
+$model = (Invoke-RestMethod -Headers $headers -Uri http://127.0.0.1:8000/api/v1/models).models[0].modelId
+$body = @{
+  modelId = $model; featureSchemaVersion = 'openstack-six-v1'; project = 'demo'
+  record = @{ recordId = 'demo-1'; features = @{ ns = 1; nd = 2; nf = 3; ent = 0.8; la = 10; ld = 2 } }
+} | ConvertTo-Json -Depth 6
+$saved = Invoke-RestMethod -Method Post -Headers $headers -Uri http://127.0.0.1:8000/api/v1/predictions -Body $body
+$saved.records[0].explanationStatus, $saved.records[0].explanationSummary
+$saved.records[0].explanation | Format-Table feature, value, baseline, delta, direction
+```
 
 OpenAPI 与实际响应检查使用独立工具环境，不改变应用 requirements：
 
@@ -117,6 +223,28 @@ uv pip install --python .cache/contract-tools/Scripts/python.exe jsonschema==4.2
 
 系统脚本只启动独立临时本机服务和数据库，不触碰既有服务，运行两种现有模型各 200 次计时，并输出
 `docs/evidence/_run/catalog-system.json`、服务日志与 `catalog-contract.json`；不自动冻结归档。
+
+### 非功能证据：预测时延与访问控制（explain-predictions-and-verify-service）
+
+**性能**：`tests/test_performance.py` 用真实应用与已登记模型连续发出 100 次单条预测（含保存与
+归因），先预热 5 次，按最近秩取 P95，默认预算 250 ms，可用 `JIT_LATENCY_P95_MS` 临时放宽。
+本机实测（Windows 11、Python 3.14.2、2026-10-18）：P50 124.3 ms、P95 150.1 ms、最大 176.8 ms。
+更细的对比（含解释/不含解释分组、服务真实 HTTP）见
+`scripts/prediction_latency.py` 与 `docs/evidence/explain-predictions-and-verify-service/prediction-latency.json`。
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_performance.py -q -s --basetemp=.pytest-tmp
+```
+
+**安全**：`tests/test_api.py` 的两条用例固定了访问控制行为——无凭据或伪造凭据一律 401
+`AUTH_REQUIRED`，成员调用管理员端点（候选列表、模型登记）一律 403 `ACCESS_DENIED`，不存在的批次与
+数据集版本一律 404 `NOT_FOUND`；三者错误体都只有 `code`、`message`、`requestId`，不含批次号、
+项目名、风险或记录，且不同 404 之间逐字段相同，不泄露资源是否存在。凭据比较使用
+`hmac.compare_digest` 常量时间比较，日志只记录角色与资源标识、不记录凭据原文。
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_api.py tests/test_performance.py -q --basetemp=.pytest-tmp
+```
 
 ### 隔离浏览器验收环境（connect-model-prediction-workbench）
 

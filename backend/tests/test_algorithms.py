@@ -60,12 +60,13 @@ def test_reproducibility_discipline_is_declared_per_method():
             assert discipline["atol"] > 0 and discipline["rtol"] >= 0, name
 
 
-def test_explanation_policy_is_declared_as_not_implemented():
-    """本 change 未实现解释：注册条目必须如实说明，不能空着或暗示已提供。"""
+def test_explanation_policy_is_declared_per_method():
+    """归因口径必须在注册表里声明；未登记的方法才允许返回未支持。"""
     from jit_baseline.algorithms import ALGORITHMS
+    from jit_baseline.attribution import METHOD
     for name, entry in ALGORITHMS.items():
-        assert entry["explanation"]["method"] is None, name
-        assert entry["explanation"]["reason"], name
+        assert entry["explanation"]["method"] == METHOD, name
+        assert entry["explanation"]["reason"] is None, name
 
 
 def test_unknown_method_is_rejected_without_fallback():
