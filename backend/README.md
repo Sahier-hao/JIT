@@ -1,6 +1,6 @@
 # 固定公开数据基线
 
-本目录离线处理发布者 OpenStack 数据，按具名方法训练模型，并通过本机只读 HTTP 提供冻结测试批次。它是回顾性历史评价，六字段尚非完整 Kamei14，没有预测解释或逐条 SZZ 复核；完整课程要求仍需后续 change。来源与标签依据见 [DATA.md](DATA.md)，计算规则见 [PROTOCOL.md](PROTOCOL.md)，方法清单与按声明校验见 [PROTOCOL.md](PROTOCOL.md) 的「方法清单与按声明校验」一节。
+本目录离线处理发布者 OpenStack 数据，按具名方法训练模型，并通过本机只读 HTTP 提供冻结测试批次。它是回顾性历史评价，六字段尚非完整 Kamei14，历史回放没有逐条解释或逐条 SZZ 复核；手工预测按方法声明保留支持的真实归因；完整课程要求仍需后续 change。来源与标签依据见 [DATA.md](DATA.md)，计算规则见 [PROTOCOL.md](PROTOCOL.md)，方法清单与按声明校验见 [PROTOCOL.md](PROTOCOL.md) 的「方法清单与按声明校验」一节。
 
 ## 建立环境和真实运行
 
@@ -33,6 +33,8 @@ $env:PYTHONIOENCODING='utf-8'
 跨机器时环境声明的含义见 [PROTOCOL.md](PROTOCOL.md) 的「环境声明与跨机器语义」一节：`trainingEnvironment` 是产方的产出环境（溯源），本机平台或 Python 与之不同**不是失败理由**；校验**实际加载**模型并用交付的无标签输入重算，输出中的 `origin` 标明该运行是外部产生、`verificationEnvironment` 记录本次校验时的本机环境。校验不重训、不覆盖产方声明，任一席位在任一台机器上得到一致判定。
 
 ## 本机 HTTP
+
+仓库审查的新接口可用 `viewSyncId` 固定成功分析：仓库详情、提交列表、提交详情和分布四个 GET 均支持；省略仍取最新成功分析。`viewContext` 的成功分支、真实采集 HEAD、数据/模型身份独立于 `latestSync`，失败换分支不会改写成功来源。未知/不归属分析为 404，未成功为 409。migration 005 增加可空作者名、真实 HEAD、完成时间与解析引用；旧记录不猜完成时间。迁移仍由显式 `catalog-init` 执行，测试只升级开发库的副本。验证入口与服务端口隔离见 [开发验证](../docs/开发验证.md)。
 
 ### 时间桶观测聚合（add-historical-trend-dashboard）
 

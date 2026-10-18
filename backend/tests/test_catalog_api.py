@@ -128,7 +128,15 @@ REAL_VERSION = 'openstack-six-v1-2011-11-29_2014-02-28'
 @pytest.mark.skipif(not REAL_DATABASE.exists(), reason='真实数据集尚未导入')
 def test_real_dataset_commits_page_stays_bounded(real_run, tmp_path):
     from jit_baseline.api import create_app
-    options = {'directory': real_run, 'database': REAL_DATABASE, 'artifact_root': tmp_path,
+    import sqlite3
+    from jit_baseline.catalog_storage import CatalogStorage
+    # Upgrade a snapshot in this test's owned directory, never the developer's live catalog.
+    copied = tmp_path / 'real-dataset.sqlite3'
+    with sqlite3.connect(f'{REAL_DATABASE.as_uri()}?mode=ro', uri=True) as source:
+        with sqlite3.connect(copied) as target:
+            source.backup(target)
+    CatalogStorage(copied).initialize()
+    options = {'directory': real_run, 'database': copied, 'artifact_root': tmp_path,
                'member_token': 'fixture-member', 'admin_token': 'fixture-admin'}
     with TestClient(create_app(**options)) as client:
         response = client.get('/api/v1/commits', params={'version': REAL_VERSION}, headers=MEMBER)

@@ -16,7 +16,7 @@ if not LOGGER.handlers:
     LOGGER.addHandler(handler)
 ADMIN_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register'}
 MEMBER_PATHS = {'/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
-                '/api/v1/repository-syncs'}
+                '/api/v1/repository-syncs', '/api/v1/repositories'}
 MESSAGES = {
     'ACCESS_CONFIG_INVALID': '团队访问凭据配置无效，请联系维护者',
     'AUTH_REQUIRED': '需要有效的团队 Bearer 凭据',
@@ -42,9 +42,14 @@ MESSAGES = {
     'SYNC_INTERRUPTED': '服务重启时同步未完成，请重新同步',
     'SPLIT_INVALID': '数据无法完成时间切分，请调整时间范围或改用现成模型',
     'OUTPUT_EXISTS': '同步产物目录已存在，请稍后重试',
+    'REPOSITORY_UNKNOWN': '仓库不存在，请刷新仓库列表后重试',
+    'REPOSITORY_ANALYSIS_UNKNOWN': '指定分析不属于该仓库或不存在',
+    'REPOSITORY_ANALYSIS_UNAVAILABLE': '指定分析尚未成功完成',
 }
 STATUS = {'AUTH_REQUIRED': 401, 'ACCESS_DENIED': 403, 'NOT_FOUND': 404,
-          'SCHEMA_UNKNOWN': 404, 'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
+          'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
+          'REPOSITORY_ANALYSIS_UNKNOWN': 404, 'REPOSITORY_ANALYSIS_UNAVAILABLE': 409,
+          'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
           'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409}
@@ -61,6 +66,7 @@ def managed_path(path):
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+)?|summary))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

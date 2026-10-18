@@ -102,8 +102,9 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
         assert risks == sorted(risks, reverse=True)
         first = commits["commits"][0]
         assert set(first) == {"commitId", "epoch", "risk", "addedLines", "deletedLines",
-                              "files", "features", "label", "labelNote"}
+                                  "files", "features", "label", "labelNote", "subject", "authorName"}
         assert len(first["features"]) == 14
+        assert first["subject"]
         detail = client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits/"
                             f"{first['commitId']}", headers=MEMBER).json()
         assert set(detail["features"]) >= {"ns", "nd", "nf", "entropy", "la", "ld"}
@@ -273,3 +274,31 @@ def test_dataset_version_accepts_hash_suffix():
     assert match is not None
     assert (match["start"], match["end"]) == ("2026-10-12", "2026-10-18")
     assert VERSION_PATTERN.fullmatch("openstack-six-v1-2011-01-01_2014-12-31") is not None
+
+
+def test_import_conflict_retries_with_hash_suffix(harness):
+    """目录库里同一版本已导入不同内容时，换带哈希的版本名重试，不让整次同步失败。
+
+    旧数据里可能出现"描述文件内容一致、但目录库记录的 manifest 哈希不同"的版本
+    （早期实现先写描述文件再导入，中途失败）。导入层的 `DATASET_EXISTS` 也必须
+    触发换名，否则这一类历史数据会让每次同步都失败。
+    """
+    import sqlite3
+
+    repo = _small_repo(harness["root"].parent / "repo-conflict")
+    payload = {"repositoryUrl": str(repo), "branch": "HEAD", "since": SINCE, "until": UNTIL,
+               "commitLimit": 500, "strategy": "auto"}
+    first, _ = harness["service"].create(payload)
+    version = _wait(harness["service"], first["syncId"])["datasetVersion"]
+    assert version
+
+    with sqlite3.connect(harness["store"].path) as db:
+        db.execute("UPDATE dataset_record SET manifest_sha256='deadbeef' WHERE dataset_version=?",
+                   (version,))
+        db.commit()
+
+    second, _ = harness["service"].create(payload)
+    again = _wait(harness["service"], second["syncId"])
+    assert again["status"] == "completed", again.get("error")
+    assert again["datasetVersion"] != version
+    assert again["datasetVersion"].startswith(version + "-")

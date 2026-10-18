@@ -12,6 +12,16 @@ from .config import BACKEND
 from .data import BaselineError, fetch_sources
 
 
+def service_port(value):
+    try:
+        port = int(value)
+    except (ValueError, TypeError) as exc:
+        raise argparse.ArgumentTypeError('端口必须为 1–65535 的整数') from exc
+    if not 1 <= port <= 65535:
+        raise argparse.ArgumentTypeError('端口必须为 1–65535 的整数')
+    return port
+
+
 def main():
     parser = argparse.ArgumentParser(description="OpenStack 回顾性基线与具名方法")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -33,7 +43,8 @@ def main():
     methods = commands.add_parser("compare-methods")
     methods.add_argument("runs", type=Path, nargs="+")
     methods.add_argument("--report", type=Path, required=True)
-    commands.add_parser("serve")
+    serve = commands.add_parser("serve")
+    serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
     initialize = commands.add_parser('catalog-init')
     initialize.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
@@ -129,7 +140,7 @@ def main():
             return
         else:
             import uvicorn
-            uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=8000, workers=1)
+            uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=args.port, workers=1)
             return
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (BaselineError, OSError) as exc:

@@ -155,6 +155,29 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repository-syncs/{sync_id}/commits/{commit_id}')
     def sync_commit(sync_id: str, commit_id: str):
         return sync_service.commit(sync_id, commit_id)
+
+    @app.get('/api/v1/repositories')
+    def repository_list(limit: int = 50, offset: int = 0):
+        return sync_service.repositories(limit, offset)
+
+    @app.get('/api/v1/repositories/{repository_id}')
+    def repository_detail(repository_id: str, viewSyncId: str | None = None):
+        return sync_service.repository(repository_id, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits')
+    def repository_commits(repository_id: str, limit: int = 50, offset: int = 0,
+                           search: str | None = None, start: str | None = None,
+                           end: str | None = None, sort: str = 'risk', viewSyncId: str | None = None):
+        return sync_service.repository_commits(repository_id, limit, offset, search=search,
+                                               start=start, end=end, sort=sort, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}')
+    def repository_commit(repository_id: str, commit_id: str, viewSyncId: str | None = None):
+        return sync_service.repository_commit(repository_id, commit_id, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/summary')
+    def repository_summary(repository_id: str, viewSyncId: str | None = None):
+        return sync_service.repository_summary(repository_id, view_sync_id=viewSyncId)
     app.state.snapshot, app.state.error = None, None
     try:
         app.state.snapshot = Snapshot.load(directory)
