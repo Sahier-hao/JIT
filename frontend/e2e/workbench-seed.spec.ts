@@ -15,7 +15,7 @@ async function screenshot(page: Page, name: string, project: string) {
 const dataRows = (page: Page) => page.getByRole('table').getByRole('row').filter({ has: page.getByRole('button', { name: /^查看 / }) })
 
 test('CRR-05 地址上的日期范围成为初始筛选（真实 HTTP）', async ({ page }, info) => {
-  await page.goto('/?start=2013-12-01&end=2013-12-31')
+  await page.goto('/?start=2013-12-01&end=2013-12-31#/validation')
   await expect(page.getByLabel('起始日期')).toHaveValue('2013-12-01')
   await expect(page.getByLabel('结束日期')).toHaveValue('2013-12-31')
   await expect(dataRows(page).first()).toBeVisible()
@@ -32,7 +32,7 @@ test('CRR-05 地址上的日期范围成为初始筛选（真实 HTTP）', async
 })
 
 test('CRR-05 非法种子整体忽略并说明，列表不按日期筛选', async ({ page }) => {
-  await page.goto('/?start=2026-10-09&end=2026-10-02')
+  await page.goto('/?start=2026-10-09&end=2026-10-02#/validation')
   await expect(dataRows(page).first()).toBeVisible({ timeout: 30000 })
   await expect(page.getByLabel('起始日期')).toHaveValue('')
   await expect(page.getByRole('status').filter({ hasText: '地址中的日期范围无效' })).toBeVisible()
@@ -41,14 +41,14 @@ test('CRR-05 非法种子整体忽略并说明，列表不按日期筛选', asyn
 })
 
 test('CRR-05 范围与来源无关：演示模式下同样按种子筛选', async ({ page }) => {
-  await page.goto('/?mode=demo&start=2026-10-08&end=2026-10-09')
+  await page.goto('/?mode=demo&start=2026-10-08&end=2026-10-09#/validation')
   await expect(page.getByText('演示模式', { exact: true })).toBeVisible()
   await expect(dataRows(page)).toHaveCount(3)
   await expect(page.getByLabel('起始日期')).toHaveValue('2026-10-08')
 })
 
 test('CRR-05 范围内没有提交时显示既有空结果状态与清除入口', async ({ page }) => {
-  await page.goto('/?mode=demo&start=2013-01-01&end=2013-01-31')
+  await page.goto('/?mode=demo&start=2013-01-01&end=2013-01-31#/validation')
   await expect(page.getByText('没有符合条件的提交')).toBeVisible()
   await expect(page.getByRole('button', { name: '清除筛选' })).toBeVisible()
 })

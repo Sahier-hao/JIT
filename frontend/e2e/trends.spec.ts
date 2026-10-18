@@ -42,7 +42,7 @@ async function tabTo(page: Page, name: RegExp, limit = 40) {
 
 test('DTD-07 仅用键盘对时间桶下钻，工作台地址带上该桶范围', async ({ page }) => {
   await page.route('**/api/review-batch', (route) => route.fulfill({ json: payloadWithJanuaryBucket() }))
-  await page.goto('/#/trends')
+  await page.goto('/?mode=historical#/trends')
   await expect(page.getByRole('table', { name: /历史趋势文本视图/ })).toBeVisible()
   await page.locator('.trend-table-wrap').focus()
 
@@ -51,15 +51,15 @@ test('DTD-07 仅用键盘对时间桶下钻，工作台地址带上该桶范围'
   await page.keyboard.press('Enter')
 
   // 整页导航到工作台的查询种子地址；hash 随之清空，因此落在真实历史回放而不是趋势页。
-  await page.waitForURL(/\/\?start=2014-01-01&end=2014-01-31$/)
+  await page.waitForURL(/start=2014-01-01&end=2014-01-31#\/lab\/history\/[a-f0-9]{64}\/commits/)
   expect(page.url()).toContain('start=2014-01-01')
   expect(page.url()).toContain('end=2014-01-31')
-  expect(new URL(page.url()).hash).toBe('')
+  expect(new URL(page.url()).hash).toMatch(/#\/lab\/history\/[a-f0-9]{64}\/commits/)
 })
 
 test('DTD-07 下钻后的范围成为工作台的初始日期筛选', async ({ page }) => {
   await page.route('**/api/review-batch', (route) => route.fulfill({ json: payloadWithJanuaryBucket() }))
-  await page.goto('/#/trends')
+  await page.goto('/?mode=historical#/trends')
   await expect(page.getByRole('table', { name: /历史趋势文本视图/ })).toBeVisible()
   await page.locator('.trend-table-wrap').focus()
   const reached = await tabTo(page, /查看该桶提交：2014-01-01 至 2014-01-31/)
@@ -72,7 +72,7 @@ test('DTD-07 下钻后的范围成为工作台的初始日期筛选', async ({ p
   const endInput = page.getByLabel('结束日期')
   await expect(startInput).toBeVisible()
   const seeded = (await startInput.inputValue()) === '2014-01-01' && (await endInput.inputValue()) === '2014-01-31'
-  test.skip(!seeded, '工作台的地址日期种子尚未实现（另一并行改动，任务 1.x）；落地后本用例自动生效')
+  expect(seeded).toBe(true)
 
   await expect(page.locator('tbody tr')).toHaveCount(2)
   await expect(page.locator('tbody tr').first()).toContainText('2014-01')

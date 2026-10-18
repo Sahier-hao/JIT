@@ -1,3 +1,38 @@
+.trend-panel { padding: 16px 18px 8px; }
+.trend-chart { display: block; width: 100%; height: auto; }
+.trend-grid { stroke: var(--line-soft); stroke-width: 1; }
+.trend-axis { stroke: var(--line-strong); stroke-width: 1; }
+.trend-axis-text { font: 11px var(--mono); fill: var(--fg-3); }
+.trend-bar { fill: var(--chart-bar); }
+.trend-gap { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.trend-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.trend-line-observed { stroke: var(--chart-obs); }
+.trend-line-estimated { stroke: var(--chart-est); stroke-dasharray: 5 3; }
+.trend-dot-observed { fill: var(--chart-obs); }
+.trend-dot-estimated { fill: var(--chart-est); }
+.trend-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; margin: 4px 0 10px; padding: 0; font-size: 12px; color: var(--fg-3); }
+.trend-legend li { display: inline-flex; align-items: center; gap: 7px; }
+.trend-swatch { display: inline-block; width: 16px; height: 4px; border-radius: 2px; }
+.trend-swatch-bar { height: 9px; background: var(--chart-bar); }
+.trend-swatch-observed { background: var(--chart-obs); }
+.trend-swatch-estimated { background: none; border-top: 2px dashed var(--chart-est); height: 0; }
+.trend-note { font-size: 12px; line-height: 1.8; color: var(--muted); margin: 0 0 12px; }
+.trend-table-panel, .trend-source-panel { margin-top: 16px; padding: 14px 18px 12px; }
+.trend-table-title { font-size: 13px; font-weight: 700; margin: 0 0 10px; color: var(--accent); }
+.trend-table-wrap { max-height: max(240px, calc(100vh - 430px)); }
+.trend-table-wrap:focus-visible { outline: 3px solid var(--fg-3); outline-offset: -3px; }
+.trend-table { table-layout: auto; }
+.trend-table caption { padding: 0 0 10px; text-align: left; font-size: 12px; color: var(--muted); }
+.trend-table th { height: 38px; padding: 0 12px; white-space: nowrap; }
+.trend-table td { height: auto; padding: 9px 12px; font-size: 12px; vertical-align: top; }
+.trend-table th:nth-child(1) { width: 190px; }
+.trend-table th:nth-child(2), .trend-table th:nth-child(5) { width: 132px; }
+.trend-table th:nth-child(3) { width: 150px; }
+.trend-table .time-cell span { font: 10px var(--mono); overflow-wrap: anywhere; }
+.trend-limits { padding-left: 20px; margin: 12px 0 0; font-size: 12px; line-height: 1.8; color: var(--muted); }
+.trend-table th:nth-child(1) { width: 160px; }
+.trend-table th:nth-child(2), .trend-table th:nth-child(5) { width: 116px; }
+.trend-table th:nth-child(3) { width: 128px; }
 /* 历史趋势的可交互部分（change make-trend-actionable）。
  *
  * 只新增类，不改 App.css 里的既有 .trend-* 样式：分区带、洞察面板与下钻按钮都是本轮新增的

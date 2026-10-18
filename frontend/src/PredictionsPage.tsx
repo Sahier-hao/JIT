@@ -36,9 +36,9 @@ function RiskBanner({ risk, recordId }: { risk: number; recordId: string }) {
         <span className="risk-banner-label">缺陷风险（模型估计）</span>
         <Risk risk={risk} large />
         <div className="risk-banner-scale" aria-hidden="true">
-          <span>0%</span>
-          <span>60% 分档界</span>
-          <span>100%</span>
+          <span>0.00</span>
+          <span>0.60 分档界</span>
+          <span>1.00</span>
         </div>
       </div>
       <div className="risk-banner-side">

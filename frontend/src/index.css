@@ -1,11 +1,9 @@
-/**
- * 样式入口：只做聚合，具体规则在各层文件里。
- *
- * 分层（design D2）：tokens（变量）→ base（重置与排版）→ components（材料）→ pages（每页布局）。
- */
+/* Tokens, shared components, domain pages, then product composition. */
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/components.css';
-@import './styles/shell.css';
 @import './styles/workbench.css';
 @import './styles/pages.css';
+@import './styles/review.css';
+
+@import './styles/product.css';

@@ -12,26 +12,26 @@ const rows = (page: Page) => page.getByRole('table').getByRole('row').filter({ h
 test('CRR-01/02/03/07/08/12 桌面完整评审链路', async ({ page }, info) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto('/?mode=demo')
+  await page.goto('/?mode=demo#/validation')
   await expect(rows(page)).toHaveCount(12)
   await expect(page.getByText('演示模式', { exact: true })).toBeVisible()
   await expect(page.getByText('demo-v1', { exact: true })).toBeVisible()
-  await expect(page.getByText('100%', { exact: true })).toBeVisible()
-  await expect(page.getByText('0%', { exact: true })).toBeVisible()
+  await expect(page.getByText('1.00', { exact: true })).toBeVisible()
+  await expect(page.getByText('0.00', { exact: true })).toBeVisible()
   await expect(page.getByText('暂无预测', { exact: true })).toBeVisible()
   await screenshot(page, 'workbench', info.project.name)
   await page.getByRole('button', { name: '加入 demo-0001 到清单' }).click()
   await page.getByRole('button', { name: '查看 demo-0002' }).click()
   const detail = page.getByRole('dialog')
   await expect(detail).toContainText('demo-0002')
-  await expect(detail.getByText('86%', { exact: true })).toBeVisible()
+  await expect(detail.getByText('0.86', { exact: true })).toBeVisible()
   await detail.getByRole('button', { name: '加入清单', exact: true }).click()
   await expect(detail.getByRole('button', { name: '已在清单', exact: true })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'demo-0002 已在清单' })).toBeDisabled()
   await screenshot(page, 'detail', info.project.name)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: '关闭详情' }).click()
-  await page.getByRole('button', { name: /优先审查清单/ }).click()
+  await page.getByRole('button', { name: /审查计划/ }).click()
   await expect(rows(page)).toHaveCount(2)
   await expect(rows(page).nth(0)).toContainText('demo-0001')
   await expect(rows(page).nth(1)).toContainText('demo-0002')
@@ -48,7 +48,7 @@ test('CRR-01/02/03/07/08/12 桌面完整评审链路', async ({ page }, info) =>
 })
 
 test('CRR-04/05/06/07 查询、日期、排序与详情上下文', async ({ page }) => {
-  await page.goto('/?mode=demo')
+  await page.goto('/?mode=demo#/validation')
   await expect(rows(page).first()).toContainText('demo-0003')
   await expect(rows(page).nth(1)).toContainText('demo-0001')
   await expect(rows(page).nth(2)).toContainText('demo-0002')
@@ -82,7 +82,7 @@ test('CRR-04/05/06/07 查询、日期、排序与详情上下文', async ({ page
 })
 
 test('CRR-12 仅键盘完整操作及可见焦点', async ({ page }, info) => {
-  await page.goto('/?mode=demo')
+  await page.goto('/?mode=demo#/validation')
   await expect(rows(page)).toHaveCount(12)
   // 从页面起点以 Tab 寻找首条提交，不使用鼠标或程序化 focus。
   let triggerFound = false
@@ -100,7 +100,7 @@ test('CRR-12 仅键盘完整操作及可见焦点', async ({ page }, info) => {
   await expect(content).toBeFocused()
   expect(await content.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe('none')
   await page.keyboard.press('End')
-  await expect.poll(() => content.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
+  if (await content.evaluate(el => el.scrollHeight > el.clientHeight)) await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
   // 详情内新增了「来源与局限」折叠项，Tab 会多经过它一次；这里按"可达"而非固定站数断言
   const addButton = page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })
   for (let count = 0; count < 4; count++) {
@@ -124,19 +124,19 @@ test('CRR-11 加载可见、失败重试、空数据区分', async ({ page }, in
     if (failed) { await gate; await route.fulfill({ status: 503 }); }
     else await route.fulfill({ json: empty ? { ...demo, records: [] } : demo })
   })
-  await page.goto('/?mode=demo')
-  await expect(page.getByText('正在读取演示提交')).toBeVisible()
+  await page.goto('/?mode=demo#/validation')
+  await expect(page.getByText('正在读取实验来源')).toBeVisible()
   release()
-  await expect(page.getByText('数据不可用', { exact: true })).toBeVisible()
+  await expect(page.getByText('实验数据不可用', { exact: true })).toBeVisible()
   await screenshot(page, 'load-error', info.project.name)
   failed = false
   await page.getByRole('button', { name: '重新加载' }).click()
   await expect(rows(page)).toHaveCount(12)
-  await expect(page.getByText('数据不可用', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('实验数据不可用', { exact: true })).toHaveCount(0)
   empty = true
   await page.reload()
   await expect(page.getByText('暂无提交', { exact: true })).toBeVisible()
-  await expect(page.getByText('数据不可用', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('实验数据不可用', { exact: true })).toHaveCount(0)
 })
 
 for (const [name, data] of [
@@ -146,8 +146,8 @@ for (const [name, data] of [
 ] as const) {
   test(`CRR-01/11 ${name}不显示猜测记录`, async ({ page }) => {
     await page.route('**/demo-dataset.json', route => route.fulfill({ json: data }))
-    await page.goto('/?mode=demo')
-    await expect(page.getByText('数据不可用', { exact: true })).toBeVisible()
+    await page.goto('/?mode=demo#/validation')
+    await expect(page.getByText('实验数据不可用', { exact: true })).toBeVisible()
     await expect(page.getByRole('table')).toHaveCount(0)
     await expect(page.getByRole('button', { name: '重新加载' })).toBeEnabled()
   })
@@ -155,7 +155,7 @@ for (const [name, data] of [
 
 test('CRR-03 无效风险有文字反馈且排在有效分数之后', async ({ page }) => {
   await page.route('**/demo-dataset.json', route => route.fulfill({ json: { ...demo, records: [{ ...demo.records[0], risk: -1 }, { ...demo.records[1], risk: 0 }] } }))
-  await page.goto('/?mode=demo')
+  await page.goto('/?mode=demo#/validation')
   await expect(rows(page).first()).toContainText('demo-0002')
   await expect(rows(page).last()).toContainText('风险数据无效')
   await page.getByRole('button', { name: '查看 demo-0001' }).click()

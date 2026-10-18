@@ -10,6 +10,7 @@ const servicePort = numberFromEnv('JIT_SERVICE_PORT', DEFAULT_SERVICE_PORT)
 
 export default defineConfig({
   testDir: './e2e',
+  outputDir: './test-results/default',
   testIgnore: '**/acceptance.spec.ts',
   globalSetup: './e2e/repository-setup.ts',
   fullyParallel: true,
@@ -26,10 +27,10 @@ export default defineConfig({
   webServer: [
     // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。
     {
-      command: '.venv\\Scripts\\python.exe -m jit_baseline.cli serve',
+      command: `.venv\\Scripts\\python.exe -m jit_baseline.cli serve --port ${servicePort}`,
       cwd: '../backend',
       url: `${serviceUrl(servicePort)}/api/review-batch`,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       // 仓库同步 e2e 需要成员凭据与本地仓库放行；目录库用 globalSetup 建的一次性库。
       env: {
         JIT_MEMBER_TOKEN: 'e2e-member-token',

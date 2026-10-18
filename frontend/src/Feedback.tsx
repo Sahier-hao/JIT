@@ -87,8 +87,9 @@ export function CredentialNotice({ children }: { children?: ReactNode }) {
       <div>
         <strong>需要团队凭据</strong>
         <span>
-          {children ?? '请在左侧输入团队访问凭据。凭据只保存在本页内存中，刷新后需要重新输入。'}
+          {children ?? '请在设置的团队连接中输入访问凭据。凭据只保存在本页内存中，刷新后需要重新输入。'}
         </span>
+        <div className="notice-actions"><a href={`#/settings/connection?returnTo=${encodeURIComponent(window.location.hash || '#/projects')}`}>打开团队连接</a></div>
       </div>
     </div>
   )

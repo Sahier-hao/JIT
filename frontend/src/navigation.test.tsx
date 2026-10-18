@@ -35,7 +35,7 @@ describe('parseHash', () => {
     expect(parseHash('#/models')).toEqual({ name: 'models' })
     expect(parseHash('#/predict')).toEqual({ name: 'predict' })
     expect(parseHash('#/predictions')).toEqual({ name: 'open' })
-    expect(parseHash('#/predictions/2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d')).toEqual({
+    expect(parseHash('#/lab/results/2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d')).toEqual({
       name: 'result',
       batchId: '2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d',
     })
@@ -43,17 +43,17 @@ describe('parseHash', () => {
 
   it('未知地址不被静默当成首页', () => {
     expect(parseHash('#/nope')).toEqual({ name: 'unknown', hash: '#/nope' })
-    expect(parseHash('#/predictions/abc/def')).toEqual({ name: 'unknown', hash: '#/predictions/abc/def' })
+    expect(parseHash('#/lab/results/abc/def')).toEqual({ name: 'unknown', hash: '#/lab/results/abc/def' })
     expect(parseHash('#/models/1')).toEqual({ name: 'unknown', hash: '#/models/1' })
     // 末尾斜杠只是书写差异，仍指向同一个页面。
-    expect(parseHash('#/predictions/')).toEqual({ name: 'open' })
+    expect(parseHash('#/lab/results/')).toEqual({ name: 'open' })
   })
 
   it('hashFor 与 parseHash 互为反函数', () => {
     for (const hash of [ROUTE_HASH.sources, ROUTE_HASH.trends, ROUTE_HASH.models, ROUTE_HASH.predict, ROUTE_HASH.open]) {
       expect(hashFor(parseHash(hash))).toBe(hash)
     }
-    expect(hashFor({ name: 'workbench' })).toBe('')
+    expect(hashFor({ name: 'workbench' })).toBe('#/projects')
   })
 })
 
@@ -63,7 +63,7 @@ describe('resultLink', () => {
       origin: 'http://127.0.0.1:4173',
       pathname: '/',
     })
-    expect(link).toBe('http://127.0.0.1:4173/#/predictions/2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d')
+    expect(link).toBe('http://127.0.0.1:4173/#/lab/results/2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d')
     expect(link).not.toContain('mode=demo')
     expect(link).not.toContain('?')
   })
@@ -78,16 +78,16 @@ describe('useRoute', () => {
 
     await user.click(screen.getByRole('button', { name: '去模型中心' }))
     expect(screen.getByTestId('route')).toHaveTextContent('models')
-    expect(window.location.hash).toBe('#/models')
+    expect(window.location.hash).toBe('#/lab/models')
     // 演示模式查询串在新页面之间保留，只有结果链接会去掉它。
-    expect(window.location.search).toBe('?mode=demo')
+    expect(window.location.search).toBe('')
 
     await user.click(screen.getByRole('button', { name: '去结果页' }))
     expect(screen.getByTestId('route')).toHaveTextContent('result:2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d')
 
     await user.click(screen.getByRole('button', { name: '回工作台' }))
-    expect(screen.getByTestId('route')).toHaveTextContent('workbench')
-    expect(window.location.hash).toBe('')
+    expect(screen.getByTestId('route')).toHaveTextContent('repositories')
+    expect(window.location.hash).toBe('#/projects')
   })
 
   it('外部直接改 hash（模拟粘贴链接）也会同步', async () => {

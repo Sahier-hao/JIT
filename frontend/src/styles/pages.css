@@ -77,7 +77,7 @@ html .meta-block pre {
   border: 1px solid var(--line);
   border-radius: var(--r);
   background: var(--sunken);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--fg-2);
 }
 
@@ -90,7 +90,7 @@ html .field textarea {
   border: 1px solid var(--line-strong);
   border-radius: var(--r);
   background: var(--card);
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg);
 }
 
@@ -151,7 +151,7 @@ html .notice button {
   border-radius: var(--r);
   background: var(--card);
   color: var(--fg-2);
-  font-size: 12.5px;
+  font-size: 14px;
   min-height: 30px;
   padding: 0 12px;
 }
@@ -168,7 +168,7 @@ html .primary-button {
   border-radius: var(--r);
   background: var(--accent);
   color: var(--fg-inv);
-  font-size: 12.5px;
+  font-size: 14px;
   min-height: 30px;
   padding: 0 14px;
   font-weight: 700;
@@ -231,13 +231,13 @@ html .models-page tbody td {
 html[data-density='compact'] .models-page tbody td { padding-top: 3px; padding-bottom: 3px; }
 
 html .model-name-cell { min-width: 190px; }
-html .model-name-cell strong { display: block; font-size: 13px; font-weight: 700; color: var(--fg); }
-html .model-name-cell .model-method { display: block; margin-top: 2px; font-size: 11.5px; color: var(--fg-3); }
-html .model-name-cell .model-method code { font-size: 11px; color: var(--fg-2); }
+html .model-name-cell strong { display: block; font-size: 14px; font-weight: 700; color: var(--fg); }
+html .model-name-cell .model-method { display: block; margin-top: 2px; font-size: 12px; color: var(--fg-3); }
+html .model-name-cell .model-method code { font-size: 12px; color: var(--fg-2); }
 
 html .model-schema-cell { font-size: 12px; color: var(--fg-2); }
-html .model-schema-cell code { font-size: 11.5px; color: var(--fg); }
-html .model-schema-count { display: block; margin-top: 2px; font-size: 11.5px; color: var(--fg-3); }
+html .model-schema-cell code { font-size: 12px; color: var(--fg); }
+html .model-schema-count { display: block; margin-top: 2px; font-size: 12px; color: var(--fg-3); }
 
 html .model-predict-cell { font-size: 12px; color: var(--fg-2); min-width: 210px; }
 
@@ -281,7 +281,7 @@ html .model-drawer {
 html .model-drawer .drawer-body { padding: 12px 14px 18px; }
 html .drawer-model-name { margin: 0; font-size: 15px; font-weight: 700; color: var(--fg); }
 html .drawer-model-method { margin: 3px 0 0; font-size: 12px; color: var(--fg-3); }
-html .drawer-model-method code { font-size: 11px; color: var(--fg-2); }
+html .drawer-model-method code { font-size: 12px; color: var(--fg-2); }
 html .model-drawer .identity-list { margin-bottom: 14px; }
 html .model-drawer .model-actions { margin: 0; }
 
@@ -330,7 +330,7 @@ html .predict-summary .summary-head {
 }
 
 html .predict-summary .summary-head > span:last-child {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--fg-3);
 }
@@ -341,7 +341,7 @@ html .predict-summary .summary-ledger dd { font-size: 15px; }
 html .summary-block { display: flex; flex-direction: column; gap: 6px; }
 
 html .summary-block h3 {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .03em;
   color: var(--fg-3);
@@ -349,9 +349,9 @@ html .summary-block h3 {
 
 html .summary-list { margin: 0; display: grid; gap: 3px; }
 html .summary-list > div { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; }
-html .summary-list dt { font-size: 11.5px; color: var(--fg-3); }
-html .summary-list dd { margin: 0; font-size: 11.5px; color: var(--fg-2); overflow-wrap: anywhere; }
-html .summary-list dd code { font-size: 11px; color: var(--fg-2); }
+html .summary-list dt { font-size: 12px; color: var(--fg-3); }
+html .summary-list dd { margin: 0; font-size: 12px; color: var(--fg-2); overflow-wrap: anywhere; }
+html .summary-list dd code { font-size: 12px; color: var(--fg-2); }
 
 html .summary-empty,
 html .summary-missing {
@@ -360,7 +360,7 @@ html .summary-missing {
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--fg-3);
 }
@@ -369,12 +369,12 @@ html .summary-state {
   margin: 0;
   padding-top: 8px;
   border-top: 1px solid var(--line);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--fg);
 }
 
-html .summary-note { margin: 0; font-size: 11px; line-height: 1.6; color: var(--fg-3); }
+html .summary-note { margin: 0; font-size: 12px; line-height: 1.6; color: var(--fg-3); }
 
 /* =====================================================================
  * 结果页（任务 5.4）：顶部风险横幅 → 左身份 / 右来源
@@ -395,7 +395,7 @@ html .result-page .risk-banner {
 html .result-page .risk-banner-label {
   display: block;
   margin-bottom: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .03em;
   color: var(--fg-3);
@@ -417,14 +417,14 @@ html .result-page .risk-banner-scale {
   gap: 8px;
   margin-top: 5px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--fg-3);
 }
 
 html .result-page .risk-banner-side { display: flex; flex-direction: column; gap: 5px; }
 html .result-page .risk-banner-note { margin: 0; font-size: 12px; line-height: 1.65; color: var(--fg-2); }
-html .result-page .risk-banner-meta { margin: 0; font-size: 11px; color: var(--fg-3); }
-html .result-page .risk-banner-meta code { font-size: 11px; color: var(--fg-2); }
+html .result-page .risk-banner-meta { margin: 0; font-size: 12px; color: var(--fg-3); }
+html .result-page .risk-banner-meta code { font-size: 12px; color: var(--fg-2); }
 
 /* 左身份（含原始输入）/ 右来源：两个目标视口都保持两栏。 */
 html .result-page .result-grid {

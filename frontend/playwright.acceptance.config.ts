@@ -16,6 +16,7 @@ const frontendPort = numberFromEnv('JIT_ACCEPTANCE_FRONTEND_PORT', ACCEPTANCE_FR
 const servicePort = numberFromEnv('JIT_ACCEPTANCE_SERVICE_PORT', ACCEPTANCE_SERVICE_PORT)
 
 export default defineConfig({
+  outputDir: './test-results/acceptance',
   testDir: './e2e',
   // 隔离环境只跑验收用例：它自带服务生命周期夹具，跑别的 spec 既无意义也会污染自有数据库。
   testMatch: '**/acceptance.spec.ts',

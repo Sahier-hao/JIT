@@ -12,7 +12,7 @@
  */
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, sep } from 'node:path'
 
 const root = resolve(process.cwd(), '..')
 const fixtures = resolve(root, 'docs/evidence/_run/fixtures')
@@ -48,6 +48,9 @@ const LINES = Array.from({ length: 100 }, (_, index) => `line ${index}`).join('\
 const REST = LINES.split('\n').slice(1).join('\n')
 
 export default function globalSetup() {
+  for (const target of [REPOSITORY, DATASET, DATABASE]) {
+    if (!resolve(target).toLowerCase().startsWith(resolve(fixtures).toLowerCase() + sep)) throw new Error('拒绝清理隔离夹具目录之外的路径')
+  }
   rmSync(REPOSITORY, { recursive: true, force: true })
   rmSync(DATASET, { recursive: true, force: true })
   rmSync(DATABASE, { force: true })

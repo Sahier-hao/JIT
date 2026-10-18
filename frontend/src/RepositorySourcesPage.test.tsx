@@ -14,6 +14,7 @@ import { jsonResponse } from './testFixtures'
 
 const SYNC = {
   syncId: '5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f',
+  repositoryId: '2c3d4e5f-6071-4823-9445-566778899001',
   repositoryUrl: 'https://github.com/octo/example.git',
   branch: 'main',
   since: null,
@@ -93,7 +94,7 @@ describe('数据来源页', () => {
     const body = JSON.parse(String((createCall()![1] as RequestInit).body))
     expect(body).toEqual({ repositoryUrl: 'https://github.com/octo/example.git', commitLimit: 500, strategy: 'auto' })
     // 提交成功后地址被清空，避免误以为同一次点击提交了两遍。
-    await waitFor(() => expect(screen.getByRole('textbox', { name: '仓库地址' })).toHaveValue(''))
+    await waitFor(() => expect(screen.getByRole('textbox', { name: '仓库地址' })).toHaveValue('https://github.com/octo/example.git'))
     // 首次读取 + 提交成功后的重新读取。
     const listCalls = fetchMock.mock.calls.filter((call) => (call[1] as RequestInit | undefined)?.method === 'GET')
     await waitFor(() => expect(listCalls.length).toBeGreaterThanOrEqual(2))
@@ -136,6 +137,6 @@ describe('数据来源页', () => {
     const onOpen = renderPage()
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: '去工作台看这批提交的风险' }))
-    expect(onOpen).toHaveBeenCalledWith(SYNC.syncId)
+    expect(onOpen).toHaveBeenCalledWith(SYNC.repositoryId, SYNC.syncId)
   })
 })

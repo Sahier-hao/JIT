@@ -42,7 +42,7 @@ it('旧形态夹具仍按旧口径通过，且不产生具名声明字段', () =
 
 it('具名形态基线摘要按声明展示，详情与页脚按 schema 生成文案', async () => {
   const user = userEvent.setup()
-  render(<App loaders={{ historical: async () => namedFixture(), demo: async () => demo }} />)
+  render(<App initialMode="historical" loaders={{ historical: async () => namedFixture(), demo: async () => demo }} />)
   await screen.findByRole('button', { name: `查看 ${'1'.repeat(40)}` })
   await user.click(screen.getByText('基线记录', { exact: true }))
   const region = screen.getByRole('region', { name: '基线记录' })

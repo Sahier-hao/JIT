@@ -76,7 +76,7 @@ function twelveFieldModel() {
 describe('凭据与请求时机', () => {
   it('没有凭据时不发任何请求，也不自动读取候选目录', async () => {
     renderPage('')
-    expect(screen.getByText(/请在左侧输入团队访问凭据/)).toBeVisible()
+    expect(screen.getByText(/请在设置的团队连接中输入访问凭据/)).toBeVisible()
     expect(fetchMock).not.toHaveBeenCalled()
     expect(screen.queryByText(/本机候选/)).not.toBeInTheDocument()
   })

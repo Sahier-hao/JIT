@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CredentialProvider } from './credentials'
 import { PredictionsPage } from './PredictionsPage'
+import { StrictMode } from 'react'
 import { parseCreatedPrediction } from './predictionContract'
 import {
   BATCH_ID,
@@ -27,6 +28,13 @@ import {
 } from './testFixtures'
 
 const fetchMock = vi.fn()
+
+it('StrictMode effect replay opens a saved batch with one read and no prediction request', async () => {
+  fetchMock.mockResolvedValue(jsonResponse(200, predictionPayload()))
+  render(<StrictMode><CredentialProvider initialToken="member-token"><PredictionsPage navigate={() => {}} batchId={BATCH_ID} snapshot={null}/></CredentialProvider></StrictMode>)
+  await screen.findByText('0.12')
+  expect(paths()).toEqual([`/api/v1/prediction-batches/${BATCH_ID}`])
+})
 
 beforeEach(() => {
   fetchMock.mockReset()
@@ -77,7 +85,7 @@ describe('刚创建完成的结果快照', () => {
     renderPage({ batchId: BATCH_ID, snapshot: createdResult() })
 
     expect(screen.getByText('用户提供特征 · 模型估计')).toBeVisible()
-    expect(screen.getByText('11.6%')).toBeVisible()
+    expect(screen.getByText('0.12')).toBeVisible()
     expect(screen.getByText('openstack')).toBeVisible()
     expect(screen.getAllByText('demo-0001').length).toBeGreaterThan(0)
     expect(screen.getByText(COMMIT_ID)).toBeVisible()
@@ -120,7 +128,7 @@ describe('刚创建完成的结果快照', () => {
     const user = userEvent.setup()
     renderPage({ batchId: BATCH_ID, snapshot: createdResult() })
     const link = screen.getByLabelText('结果链接')
-    expect(link).toHaveValue(`${window.location.origin}${window.location.pathname}#/predictions/${BATCH_ID}`)
+    expect(link).toHaveValue(`${window.location.origin}${window.location.pathname}#/lab/results/${BATCH_ID}`)
     expect(link).toHaveAttribute('readonly')
 
     // 剪贴板不可用时如实提示手动复制；可用时提示已复制。两种都不能谎称成功。
@@ -139,7 +147,7 @@ describe('刚创建完成的结果快照', () => {
     expect(await screen.findByText(/当前浏览器不允许自动复制/)).toBeVisible()
     // 链接本身仍可手动选中复制。
     expect(screen.getByLabelText('结果链接')).toHaveValue(
-      `${window.location.origin}${window.location.pathname}#/predictions/${BATCH_ID}`,
+      `${window.location.origin}${window.location.pathname}#/lab/results/${BATCH_ID}`,
     )
   })
 
@@ -150,7 +158,7 @@ describe('刚创建完成的结果快照', () => {
     await user.click(screen.getByRole('button', { name: '复制结果链接' }))
     expect(await screen.findByText('结果链接已复制到剪贴板。')).toBeVisible()
     expect(writeText).toHaveBeenCalledWith(
-      `${window.location.origin}${window.location.pathname}#/predictions/${BATCH_ID}`,
+      `${window.location.origin}${window.location.pathname}#/lab/results/${BATCH_ID}`,
     )
   })
 })
@@ -160,7 +168,7 @@ describe('按编号重开', () => {
     fetchMock.mockImplementation(async () => jsonResponse(200, predictionPayload()))
     renderPage({ batchId: BATCH_ID })
 
-    expect(await screen.findByText('11.6%')).toBeVisible()
+    expect(await screen.findByText('0.12')).toBeVisible()
     expect(paths()).toEqual([`/api/v1/prediction-batches/${BATCH_ID}`])
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
     expect(init.method).toBe('GET')
@@ -181,14 +189,14 @@ describe('按编号重开', () => {
       ),
     )
     renderPage({ batchId: BATCH_ID })
-    expect(await screen.findByText('11.6%')).toBeVisible()
+    expect(await screen.findByText('0.12')).toBeVisible()
     // 结果正文里的模型来源被冻结保存，只读重开不因目录状态而失败。
     expect(paths().every((path) => path.startsWith('/api/v1/prediction-batches/'))).toBe(true)
   })
 
   it('没有凭据时不发请求', () => {
     renderPage({ batchId: BATCH_ID, token: '' })
-    expect(screen.getByText(/请在左侧输入团队访问凭据/)).toBeVisible()
+    expect(screen.getByText(/请在设置的团队连接中输入访问凭据/)).toBeVisible()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -221,7 +229,7 @@ describe('按编号重开', () => {
 
     failing = false
     await user.click(screen.getByRole('button', { name: '重新加载' }))
-    expect(await screen.findByText('11.6%')).toBeVisible()
+    expect(await screen.findByText('0.12')).toBeVisible()
   })
 })
 

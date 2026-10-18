@@ -15,7 +15,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const SOURCE_FILES = [
   'src/styles/tokens.css',
   'src/styles/base.css',
-  'src/styles/shell.css',
+  'src/styles/product.css',
   'src/styles/components.css',
   'src/styles/pages.css',
   'src/App.css',

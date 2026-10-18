@@ -9,7 +9,7 @@ test('具名形态按声明解析与展示，未提供字段带原因，旧文�
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.route('**/api/review-batch', route => route.fulfill({ json: namedFixture() }))
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(page.getByRole('button', { name: `查看 ${'1'.repeat(40)}` })).toBeVisible()
   await expect(page.getByText('真实历史回放', { exact: true })).toBeVisible()
   await expect(page.getByText('逻辑回归 · Kamei14（12 字段入模）', { exact: true })).toBeVisible()
@@ -40,9 +40,9 @@ test('不含聚合键的既有运行：工作台照常可用，趋势页显示�
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.route('**/api/review-batch', route => route.fulfill({ json: historicalFixture() }))
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(page.getByRole('button', { name: `查看 ${'0'.repeat(40)}` })).toBeVisible()
-  await page.goto('/#/trends')
+  await page.goto('/?mode=historical#/trends')
   await expect(page.getByText('该运行未提供趋势聚合')).toBeVisible()
   await expect(page.locator('.trend-chart')).toHaveCount(0)
   expect(errors).toEqual([])
@@ -53,13 +53,13 @@ test('含聚合键的运行：趋势图与文本视图可读，空值桶给原�
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.route('**/api/review-batch', route => route.fulfill({ json: trendFixture() }))
-  await page.goto('/#/trends')
+  await page.goto('/?mode=historical#/trends')
   await expect(page.getByRole('heading', { name: '历史趋势' })).toBeVisible()
   await expect(page.getByText(/观测正标签比例 · 历史观测 · 覆盖全部纳入记录/)).toBeVisible()
   await expect(page.getByText(/模型风险中位数 · 模型估计 · 仅测试区间/)).toBeVisible()
   const table = page.getByRole('table', { name: /历史趋势文本视图/ })
   // 行名以月份开头；不能用 /2012-02/，否则上一桶的结束时刻也会命中。
   await expect(table.getByRole('row', { name: /^2012-02/ })).toContainText('样本不足：该桶提交数 8 低于最小样本 20')
-  await expect(table.getByRole('row', { name: /^2013-12/ })).toContainText('9.3%（测试记录 56 条）')
+  await expect(table.getByRole('row', { name: /^2013-12/ })).toContainText('0.09（测试记录 56 条）')
   expect(errors).toEqual([])
 })

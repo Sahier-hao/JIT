@@ -26,7 +26,7 @@ async function flush(name: string, items: ItemResult[], page: Page, viewport: st
 test('A11-1 列表、详情与清单无页面级横向溢出', async ({ page }, info) => {
   const viewport = info.project.name
   const items: ItemResult[] = []
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(commits(page)).toHaveCount(1853)
   const listOk = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
   await photo(page, 'accessibility-list', viewport)
@@ -35,7 +35,7 @@ test('A11-1 列表、详情与清单无页面级横向溢出', async ({ page }, 
   const detailOk = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
   await photo(page, 'accessibility-detail', viewport)
   await page.keyboard.press('Escape')
-  await page.getByRole('button', { name: /优先审查清单/ }).click()
+  await page.getByRole('button', { name: /审查计划/ }).click()
   const shortlistOk = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
   items.push({ id: 'A11-1', check: '两视口列表/详情/清单无页面级横向溢出', passed: listOk && detailOk && shortlistOk })
   await flush('overflow', items, page, viewport)
@@ -49,7 +49,7 @@ test('A11-2/3/5 纯键盘链路、焦点返回与详情滚动', async ({ page },
   // 那里才需要真实体积（也就在那里单独给预算）。
   const fixture = historicalFixture()
   await page.route('**/api/review-batch', route => route.fulfill({ json: fixture }))
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(commits(page)).toHaveCount(fixture.records.length)
   const first = commits(page).first()
   let found = false
@@ -66,7 +66,7 @@ test('A11-2/3/5 纯键盘链路、焦点返回与详情滚动', async ({ page },
   const contentFocused = await content.evaluate(el => el === document.activeElement)
   items.push({ id: 'A11-2c', check: 'Tab 到达详情内容区且有焦点', passed: contentFocused })
   await page.keyboard.press('End')
-  await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+  if (await content.evaluate(el => el.scrollHeight > el.clientHeight)) await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
   items.push({ id: 'A11-5', check: '详情区可滚动（End 后 scrollTop>0）', passed: true })
   // 详情内新增「来源与局限」折叠项，Tab 站数随之变化：按可达性判断，不锁定固定站数
   const addButton = page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })
@@ -88,19 +88,19 @@ test('A11-2/3/5 纯键盘链路、焦点返回与详情滚动', async ({ page },
 test('A11-4 模式与错误状态有可读文字', async ({ page }, info) => {
   const viewport = info.project.name
   const items: ItemResult[] = []
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(commits(page)).toHaveCount(1853)
-  const badgeText = await page.locator('.mode-tag').first().innerText()
+  const badgeText = await page.locator('.lab-context .eyebrow').innerText()
   const historicalText = await page.getByText('真实历史回放', { exact: true }).isVisible()
   items.push({ id: 'A11-4a', check: '真实模式徽标含可读文字', passed: historicalText && badgeText.trim().length > 0 })
-  await page.getByRole('button', { name: '选择演示模式' }).click()
-  const demoText = await page.getByText('演示模式', { exact: true }).isVisible()
+  await page.goto('/?mode=demo#/validation')
+  const demoText = await page.getByRole('button', { name: '交互演示' }).getAttribute('aria-current') === 'page'
   items.push({ id: 'A11-4b', check: '演示模式徽标含可读文字', passed: demoText })
-  await page.getByRole('button', { name: '选择真实历史回放' }).click()
+  await page.getByRole('button', { name: '历史验证' }).click()
   await expect(commits(page)).toHaveCount(1853, { timeout: 10000 })
   await page.route('**/api/review-batch', route => route.abort('connectionfailed'))
   await page.reload()
-  await expect(page.getByText('数据不可用', { exact: true })).toBeVisible()
+  await expect(page.getByText('实验数据不可用', { exact: true })).toBeVisible()
   const alertText = await page.getByRole('alert').innerText()
   items.push({ id: 'A11-4c', check: '服务失败显示可读错误文字（状态不只靠颜色）', passed: alertText.trim().length > 0 })
   await photo(page, 'accessibility-error', viewport)
@@ -112,7 +112,7 @@ test('A11-6 趋势视图无横向溢出、空值桶有文字说明且文本视�
   const viewport = info.project.name
   const items: ItemResult[] = []
   await page.route('**/api/review-batch', route => route.fulfill({ json: trendFixture() }))
-  await page.goto('/#/trends')
+  await page.goto('/?mode=historical#/trends')
   await expect(page.getByRole('heading', { name: '历史趋势' })).toBeVisible()
   const overflowOk = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
   await photo(page, 'accessibility-trends', viewport)

@@ -5,7 +5,7 @@ interface Batch { mode: string; runId: string; summary: { runId: string }; recor
 
 const reference = JSON.parse(readFileSync('../backend/artifacts/baseline/reference-predictions.json', 'utf8')) as { id: string; risk: number }[]
 const commits = (page: Page) => page.getByRole('button', { name: /^查看 [a-f0-9]{40}$/ })
-const label = (risk: number) => `${Number((risk * 100).toFixed(1))}%`
+const label = (risk: number) => risk.toFixed(2)
 const day = (time: string) => new Date(Date.parse(time) + 8 * 3600000).toISOString().slice(0, 10)
 async function photo(page: Page, name: string, viewport: string) {
   ensureDir(runScreenshotDir)
@@ -17,7 +17,7 @@ test('真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦�
   page.on('pageerror', e => errors.push(e.message))
   const started = Date.now()
   const result = page.waitForResponse(r => r.url().endsWith('/api/review-batch'))
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   const response = await result
   expect(response.status()).toBe(200)
   const data = await response.json() as Batch
@@ -62,13 +62,14 @@ test('真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦�
   await page.keyboard.press('Escape')
   await expect(page.getByLabel('提交标识搜索')).toHaveValue(first.id)
   await expect(page.getByLabel('排序', { exact: true })).toHaveValue('time')
-  await page.getByRole('button', { name: /优先审查清单/ }).click()
+  await page.getByRole('button', { name: /审查计划/ }).click()
   await expect(commits(page)).toHaveCount(1)
   await photo(page, 'shortlist', info.project.name)
-  await page.reload()
-  await expect(commits(page)).toHaveCount(1853, { timeout: 10000 })
+  // 清单现在是路由（#/shortlist），刷新会停在清单；回列表验证清单仍在。
+  await page.goto('/?mode=historical#/validation')
+  await expect(commits(page)).toHaveCount(1853, { timeout: 30000 })
   await expect(page.getByRole('button', { name: `${first.id} 已在清单` })).toBeDisabled()
-  await page.getByRole('button', { name: /优先审查清单/ }).click()
+  await page.getByRole('button', { name: /审查计划/ }).click()
   await expect(commits(page)).toHaveCount(1)
   await page.getByRole('button', { name: `移除 ${first.id}` }).click()
   await expect(page.getByText('清单为空', { exact: true })).toBeVisible()
@@ -82,7 +83,7 @@ test('真实 HTTP 完整批次→查询→详情→清单→刷新（没有拦�
 })
 
 test('真实基线摘要保持完整批次指标，演示清单与真实隔离', async ({ page }, info) => {
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(commits(page)).toHaveCount(1853)
   const real = (await commits(page).first().getAttribute('aria-label'))!.slice(3)
   await page.getByRole('button', { name: `加入 ${real} 到清单` }).click()
@@ -97,15 +98,15 @@ test('真实基线摘要保持完整批次指标，演示清单与真实隔离',
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByLabel('提交标识搜索').fill(real)
   expect(await summary.locator('.baseline-scores').allTextContents()).toEqual(metrics)
-  await page.getByRole('button', { name: '选择演示模式' }).click()
+  await page.goto('/?mode=demo#/validation')
   await expect(page.getByRole('button', { name: '加入 demo-0001 到清单' })).toBeEnabled()
   await expect(summary).toHaveCount(0)
   await page.getByRole('button', { name: '加入 demo-0001 到清单' }).click()
-  await page.getByRole('button', { name: '选择真实历史回放' }).click()
-  await expect(commits(page)).toHaveCount(1853, { timeout: 10000 })
+  await page.getByRole('button', { name: '历史验证' }).click()
+  await expect(commits(page)).toHaveCount(1853, { timeout: 30000 })
   await expect(page.getByRole('button', { name: `${real} 已在清单` })).toBeDisabled()
   await expect(page.getByLabel('提交标识搜索')).toHaveValue('')
-  await page.getByRole('button', { name: '选择演示模式' }).click()
+  await page.goto('/?mode=demo#/validation')
   await expect(page.getByRole('button', { name: 'demo-0001 已在清单' })).toBeDisabled()
 })
 
@@ -114,7 +115,7 @@ test('真实完整列表键盘详情与焦点返回', async ({ page }, info) => 
   // 用默认 30s 会在并行时恰好越界。这里只在"确实需要真实体积"的用例上给预算，
   // 而不是把全局默认值抬高（键盘可达性本身另由 accessibility.spec 用行为夹具覆盖）。
   test.setTimeout(90_000)
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(commits(page)).toHaveCount(1853)
   const first = commits(page).first()
   const id = (await first.getAttribute('aria-label'))!.slice(3)
@@ -130,7 +131,7 @@ test('真实完整列表键盘详情与焦点返回', async ({ page }, info) => 
   const content = page.getByRole('region', { name: '提交详情内容' })
   await expect(content).toBeFocused()
   await page.keyboard.press('End')
-  await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+  if (await content.evaluate(el => el.scrollHeight > el.clientHeight)) await expect.poll(() => content.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
   // 详情内新增了「来源与局限」折叠项，Tab 站数会随之变化：按"可达"断言而不是固定站数
   const addButton = page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })
   for (let count = 0; count < 4; count++) {
@@ -147,15 +148,15 @@ test('真实完整列表键盘详情与焦点返回', async ({ page }, info) => 
 
 test('网络失败不回退演示，恢复重试实际 HTTP', async ({ page }, info) => {
   await page.route('**/api/review-batch', route => route.abort('connectionfailed'))
-  await page.goto('/')
-  await expect(page.getByText('数据不可用', { exact: true })).toBeVisible()
+  await page.goto('/?mode=historical#/validation')
+  await expect(page.getByText('实验数据不可用', { exact: true })).toBeVisible()
   await expect(page.getByRole('table')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '选择演示模式' })).toBeEnabled()
+  await expect(page.getByRole('navigation', { name: '当前空间' })).toBeVisible()
   await photo(page, 'service-error', info.project.name)
   await page.unroute('**/api/review-batch')
   await page.getByRole('button', { name: '重新加载' }).click()
   await expect(commits(page)).toHaveCount(1853)
-  await expect(page.getByText('数据不可用', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('实验数据不可用', { exact: true })).toHaveCount(0)
 })
 
 test('错误真实来源不能展示旧批次（行为夹具）', async ({ page }) => {
@@ -163,14 +164,14 @@ test('错误真实来源不能展示旧批次（行为夹具）', async ({ page 
   const actual = await response.json() as Batch
   actual.summary.runId = '0'.repeat(64)
   await page.route('**/api/review-batch', route => route.fulfill({ json: actual }))
-  await page.goto('/')
-  await expect(page.getByText('数据不可用', { exact: true })).toBeVisible()
+  await page.goto('/?mode=historical#/validation')
+  await expect(page.getByText('实验数据不可用', { exact: true })).toBeVisible()
   await expect(page.getByRole('table')).toHaveCount(0)
   await expect(page.getByRole('alert')).toContainText('不一致')
 })
 
 test('实际模型另一序列化上下文隔离清单（TCP产物行为夹具）', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?mode=historical#/validation')
   await expect(commits(page)).toHaveCount(1853)
   const original = await (await page.request.get('/api/review-batch')).json() as Batch
   const variant = JSON.parse(readFileSync(`${runFixtureDir}/runtime-context-fixture-batch.json`, 'utf8')) as Batch
@@ -184,11 +185,15 @@ test('实际模型另一序列化上下文隔离清单（TCP产物行为夹具�
   await page.reload()
   // Wait for the reloaded list before asserting a row's button state: the row is also the
   // readiness probe otherwise, and 1853 rows do not always render within the default timeout.
-  await expect(commits(page)).toHaveCount(1853, { timeout: 10000 })
+  await expect(page.getByText('该历史运行未供给')).toBeVisible()
+  await page.getByRole('button', { name: '查看当前供给运行' }).click()
+  await expect(commits(page)).toHaveCount(1853, { timeout: 30000 })
   await expect(page.getByRole('button', { name: `加入 ${id} 到清单` })).toBeEnabled()
   await page.getByRole('button', { name: `加入 ${id} 到清单` }).click()
   await page.unroute('**/api/review-batch')
   await page.reload()
-  await expect(commits(page)).toHaveCount(1853, { timeout: 10000 })
+  await expect(page.getByText('该历史运行未供给')).toBeVisible()
+  await page.getByRole('button', { name: '查看当前供给运行' }).click()
+  await expect(commits(page)).toHaveCount(1853, { timeout: 30000 })
   await expect(page.getByRole('button', { name: `${id} 已在清单` })).toBeDisabled()
 })

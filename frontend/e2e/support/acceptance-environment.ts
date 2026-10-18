@@ -54,6 +54,7 @@ function runPython(args: string[], env: NodeJS.ProcessEnv = {}): string {
 
 /** 复制已验证模型、显式初始化独立 SQLite，并记录原产物 hash。 */
 export function prepareEnvironment(base: string): PreparedEnvironment {
+  if (resolve(base) !== base || !base.toLowerCase().startsWith(join(backendDir, '.cache', 'acceptance-').toLowerCase()) || resolve(base, '..') !== join(backendDir, '.cache')) throw new Error('验收临时根必须是 backend/.cache/acceptance-* 目录')
   mkdirSync(join(backendDir, '.cache'), { recursive: true })
   if (existsSync(base)) rmSync(base, { recursive: true, force: true })
   const stdout = runPython(['prepare', '--base', base])

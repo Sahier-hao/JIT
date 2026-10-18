@@ -1,149 +1,169 @@
 /**
  * 设计令牌：全部主题差异只在这一个文件里。
  *
- * 规则（design D1/D4）：
+ * 规则（restyle-review-workbench design D1）：
  * - 组件样式只引用变量，不写具体色值；`IP-09` 的禁用清单里包含硬编码色值。
- * - 风险色阶（--risk*）跨主题保持暖橙红方向，深色主题只提亮不换色相（IP-06）。
- * - 字体只取系统已安装字族并带回退链（IP-04）。
- * - 默认主题（石灰）定义在 :root，未设置 data-theme 时即为它，避免首帧缺变量。
+ * - 风险色阶（--risk*）跨主题保持暖琥珀→橙→红方向，深色主题只提亮不换色相（IP-06）。
+ * - 字体随仓库打包：Latin 用 `Inter var`（`base.css` 里的 @font-face），中文落到系统字族；
+ *   运行时不请求任何外部地址（IP-04）。
+ * - 默认主题（冷灰）定义在 :root，未设置 data-theme 时即为它，避免首帧缺变量。
  * - 遮罩（--scrim）是唯一必须"跨主题都往暗走"的键：面板与抽屉背后的那一层不能把页面提亮。
+ * - 蓝色只用于选中态、链接与焦点环；主按钮走近黑的 --btn。
  */
 
 :root {
   /* ---------- 字体（3） ---------- */
-  --sans: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
-  --display: 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
+  --sans: 'Inter var', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI',
+    'Microsoft YaHei', sans-serif;
+  --display: 'Inter var', 'Inter', 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI',
+    'Microsoft YaHei', sans-serif;
   --mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
 
   /* ---------- 圆角（2）与阴影（2） ---------- */
-  --r: 3px;
-  --r-lg: 6px;
-  --sh-1: 0 1px 2px rgba(22, 23, 26, .05);
-  --sh-2: 0 2px 6px -1px rgba(22, 23, 26, .06), 0 10px 26px -12px rgba(22, 23, 26, .16);
+  --r: 4px;
+  --r-lg: 8px;
+  --sh-1: 0 1px 2px rgba(14, 21, 36, .05);
+  --sh-2: 0 2px 8px -2px rgba(14, 21, 36, .08), 0 12px 28px -14px rgba(14, 21, 36, .18);
 
   /* ---------- 表面（4） ---------- */
-  --canvas: #F7F7F4;
-  --rail: #EFEFEA;
-  --sunken: #F2F2ED;
+  --canvas: #F7F8FA;
+  --rail: #FFFFFF;
+  --sunken: #F1F4F8;
   --card: #FFFFFF;
 
   /* ---------- 文字（4） ---------- */
-  --fg: #16171A;
-  --fg-2: #3B3D3A;
-  --fg-3: #6C6F6B;
+  --fg: #0E1524;
+  --fg-2: #3A4554;
+  --fg-3: #5C6675;
   --fg-inv: #FFFFFF;
 
   /* ---------- 线（3） ---------- */
-  --line: #DFDFD8;
-  --line-strong: #C0C0B6;
-  --line-soft: #E8E8E1;
+  --line: #EDEFF3;
+  --line-strong: #DCE1E9;
+  --line-soft: #F3F5F8;
 
-  /* ---------- 语义（4） ---------- */
-  --accent: #14624C;
-  --accent-hover: #0F4E3D;
-  --accent-soft: #E1EBE6;
-  --accent-ring: rgba(20, 98, 76, .20);
+  /* ---------- 语义（4）：蓝色只做选中、链接与焦点环 ---------- */
+  --accent: #277452;
+  --accent-hover: #1D5A3F;
+  --accent-soft: #EAF3ED;
+  --accent-ring: rgba(39, 116, 82, .22);
 
-  /* ---------- 风险（5）：语义色，不随主题换色相 ---------- */
-  --risk: #B04A1E;
-  --risk-strong: #8F3512;
-  --risk-fg: #8E3611;
-  --risk-track: #E0DAD2;
-  --risk-soft: #F7EEE8;
+  /* ---------- 主行动（2）：近黑，与蓝色区分开 ---------- */
+  --btn: #0E1524;
+  --btn-hover: #1B2434;
+
+  /* ---------- 风险（7）：语义色，不随主题换色相 ---------- */
+  --risk: #B7791F;
+  --risk-mid: #B54708;
+  --risk-high: #B42318;
+  --risk-strong: #8A2A12;
+  --risk-fg: #8A2A12;
+  --risk-track: #E6E2DA;
+  --risk-soft: #FBF3E4;
 
   /* ---------- 图表（4） ---------- */
-  --chart-obs: #14624C;
-  --chart-est: #B04A1E;
-  --chart-bar: #D8D0C4;
-  --chart-hatch: #E0E0D7;
+  --chart-obs: #277452;
+  --chart-est: #B54708;
+  --chart-bar: #DDE3EC;
+  --chart-hatch: #E7EBF1;
 
   /* ---------- 交互底色 ---------- */
-  --hover: #E9E9E3;
+  --hover: #F1F4F8;
 
   /* ---------- 遮罩（面板/抽屉后面那一层） ----------
    * 必须是"压暗"的方向，且跨主题都成立：浅色主题用近黑的 --fg，深色主题必须单独给近黑，
    * 否则拿 --fg 当遮罩会把深色页面提亮（实测踩到）。
    */
-  --scrim: #16171A;
+  --scrim: #0E1524;
 
   color-scheme: light;
 }
 
-/* ---------- 钢青：冷中性 + 深青 ---------- */
+/* ---------- 钢青：冷灰偏蓝，与默认主题同结构 ---------- */
 html[data-theme="steel"] {
-  --sh-1: 0 1px 2px rgba(16, 23, 25, .05);
-  --sh-2: 0 2px 6px -1px rgba(16, 23, 25, .06), 0 10px 26px -12px rgba(16, 23, 25, .16);
+  --sh-1: 0 1px 2px rgba(15, 24, 33, .05);
+  --sh-2: 0 2px 8px -2px rgba(15, 24, 33, .08), 0 12px 28px -14px rgba(15, 24, 33, .18);
 
-  --canvas: #F5F7F8;
-  --rail: #ECF0F1;
-  --sunken: #EFF3F4;
+  --canvas: #F5F7FA;
+  --rail: #FFFFFF;
+  --sunken: #EEF3F9;
   --card: #FFFFFF;
 
-  --fg: #101719;
-  --fg-2: #37464A;
-  --fg-3: #5B6C6F;
+  --fg: #0F1821;
+  --fg-2: #394854;
+  --fg-3: #566470;
   --fg-inv: #FFFFFF;
 
-  --line: #D9E0E2;
-  --line-strong: #B9C3C6;
-  --line-soft: #E8EEF0;
+  --line: #E8EDF3;
+  --line-strong: #D3DCE5;
+  --line-soft: #F1F5F9;
 
-  --accent: #0F5C6B;
-  --accent-hover: #0A4854;
-  --accent-soft: #DCEAEC;
-  --accent-ring: rgba(15, 92, 107, .20);
+  --accent: #277452;
+  --accent-hover: #1E3FA8;
+  --accent-soft: #E6EDFB;
+  --accent-ring: rgba(39, 116, 82, .22);
 
-  --risk: #A8451C;
-  --risk-strong: #88340F;
-  --risk-fg: #8A340D;
-  --risk-track: #DDD7D1;
-  --risk-soft: #F7EFEA;
+  --btn: #0F1821;
+  --btn-hover: #1C2A36;
 
-  --chart-obs: #0F5C6B;
-  --chart-est: #A8451C;
-  --chart-bar: #D2DCE0;
-  --chart-hatch: #DCE4E6;
+  --risk: #B7791F;
+  --risk-mid: #B54708;
+  --risk-high: #B42318;
+  --risk-strong: #8A2A12;
+  --risk-fg: #8A2A12;
+  --risk-track: #E3E7EC;
+  --risk-soft: #FBF3E4;
 
-  --hover: #E6ECEE;
-  --scrim: #101719;
+  --chart-obs: #277452;
+  --chart-est: #B54708;
+  --chart-bar: #D9E2EC;
+  --chart-hatch: #E3EAF2;
+
+  --hover: #EEF3F9;
+  --scrim: #0F1821;
 }
 
-/* ---------- 炭黑：深色 ---------- */
+/* ---------- 炭黑：深色（只提亮色相，不换色相） ---------- */
 html[data-theme="charcoal"] {
   --sh-1: 0 1px 2px rgba(0, 0, 0, .40);
   --sh-2: 0 6px 16px -4px rgba(0, 0, 0, .60), 0 16px 40px -12px rgba(0, 0, 0, .70);
 
-  --canvas: #0F1011;
-  --rail: #141517;
-  --sunken: #1A1C1E;
-  --card: #17191B;
+  --canvas: #0B1120;
+  --rail: #070C16;
+  --sunken: #121A2A;
+  --card: #111827;
 
-  --fg: #EDEEEC;
-  --fg-2: #BFC3C1;
-  --fg-3: #8B8F91;
-  --fg-inv: #0D1214;
+  --fg: #E8EEF6;
+  --fg-2: #B7C2D4;
+  --fg-3: #7C8DA6;
+  --fg-inv: #0B1120;
 
-  --line: #292D30;
-  --line-strong: #3C4145;
-  --line-soft: #212427;
+  --line: #1B2436;
+  --line-strong: #2A3550;
+  --line-soft: #151D2C;
 
-  --accent: #8FAEB8;
-  --accent-hover: #A6C2CB;
-  --accent-soft: #1E2C31;
-  --accent-ring: rgba(143, 174, 184, .28);
+  --accent: #7BA3F7;
+  --accent-hover: #93B4FA;
+  --accent-soft: #16233C;
+  --accent-ring: rgba(123, 163, 247, .30);
 
-  --risk: #E0703F;
-  --risk-strong: #F08355;
-  --risk-fg: #EE8256;
-  --risk-track: #2C2A28;
-  --risk-soft: #241E1B;
+  --btn: #3B6FE0;
+  --btn-hover: #4479EE;
 
-  --chart-obs: #8FAEB8;
-  --chart-est: #E0703F;
-  --chart-bar: #33383B;
-  --chart-hatch: #1F2326;
+  --risk: #D9A23F;
+  --risk-mid: #E5743B;
+  --risk-high: #F0736A;
+  --risk-strong: #F58F86;
+  --risk-fg: #F58F86;
+  --risk-track: #232C3D;
+  --risk-soft: #2A2118;
 
-  --hover: #1F2225;
+  --chart-obs: #7BA3F7;
+  --chart-est: #E5743B;
+  --chart-bar: #24304A;
+  --chart-hatch: #1B2436;
+
+  --hover: #16203A;
 
   /* 深色主题的遮罩必须是真正的黑：拿 --fg（近白）当遮罩会把页面提亮。 */
   --scrim: #000000;
@@ -151,41 +171,46 @@ html[data-theme="charcoal"] {
   color-scheme: dark;
 }
 
-/* ---------- 纸墨：单色 ---------- */
+/* ---------- 纸墨：中性灰（单色观感，风险色仍保留暖色方向） ---------- */
 html[data-theme="paper"] {
-  --sh-1: 0 1px 2px rgba(25, 25, 21, .05);
-  --sh-2: 0 2px 6px -1px rgba(25, 25, 21, .06), 0 10px 26px -12px rgba(25, 25, 21, .16);
+  --sh-1: 0 1px 2px rgba(20, 20, 20, .05);
+  --sh-2: 0 2px 8px -2px rgba(20, 20, 20, .07), 0 12px 28px -14px rgba(20, 20, 20, .16);
 
-  --canvas: #FBFAF6;
-  --rail: #F3F2EC;
-  --sunken: #F6F5EF;
+  --canvas: #FAFAFA;
+  --rail: #FFFFFF;
+  --sunken: #F2F2F2;
   --card: #FFFFFF;
 
-  --fg: #191915;
-  --fg-2: #45453F;
-  --fg-3: #6C6C64;
-  --fg-inv: #FBFAF6;
+  --fg: #141414;
+  --fg-2: #3F3F3F;
+  --fg-3: #6B6B6B;
+  --fg-inv: #FFFFFF;
 
-  --line: #E1E0D7;
-  --line-strong: #C3C2B6;
-  --line-soft: #EFEEE7;
+  --line: #ECECEC;
+  --line-strong: #D6D6D6;
+  --line-soft: #F4F4F4;
 
-  --accent: #191915;
-  --accent-hover: #000000;
-  --accent-soft: #E8E7DE;
-  --accent-ring: rgba(25, 25, 21, .16);
+  --accent: #333333;
+  --accent-hover: #111111;
+  --accent-soft: #EDEDED;
+  --accent-ring: rgba(51, 51, 51, .20);
 
-  --risk: #A5501E;
-  --risk-strong: #85380D;
-  --risk-fg: #86400F;
-  --risk-track: #DED7CD;
-  --risk-soft: #F8F0E9;
+  --btn: #141414;
+  --btn-hover: #2B2B2B;
 
-  --chart-obs: #191915;
-  --chart-est: #A5501E;
-  --chart-bar: #DEDCD1;
-  --chart-hatch: #E2E1D8;
+  --risk: #B7791F;
+  --risk-mid: #B54708;
+  --risk-high: #B42318;
+  --risk-strong: #8A2A12;
+  --risk-fg: #8A2A12;
+  --risk-track: #E5E5E5;
+  --risk-soft: #FBF3E4;
 
-  --hover: #EFEEE7;
-  --scrim: #191915;
+  --chart-obs: #333333;
+  --chart-est: #B54708;
+  --chart-bar: #E2E2E2;
+  --chart-hatch: #EAEAEA;
+
+  --hover: #F2F2F2;
+  --scrim: #141414;
 }

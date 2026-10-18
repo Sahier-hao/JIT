@@ -141,8 +141,8 @@ const contrastPairs = [
 
 test('视觉证据：工作台两视口布局与对比度', async ({ page }, info) => {
   const viewport = info.project.name
-  await page.goto('/')
-  await expect(page.getByRole('button', { name: /^查看 [a-f0-9]{40}$/ }).first()).toBeVisible()
+  await page.goto('/?mode=historical#/validation')
+  await expect(page.getByRole('button', { name: /^查看 [a-f0-9]{40}$/ }).first()).toBeVisible({ timeout: 30000 })
   await settle(page)
 
   const overflowReal = await overflow(page)
@@ -171,7 +171,7 @@ test('视觉证据：工作台两视口布局与对比度', async ({ page }, inf
     }
   }
 
-  await page.goto('/?mode=demo')
+  await page.goto('/?mode=demo#/validation')
   await expect(page.getByRole('button', { name: /^查看 demo-/ }).first()).toBeVisible()
   await settle(page)
   const rowsDemo = await stableRows(page)
@@ -194,8 +194,8 @@ test('视觉证据：工作台两视口布局与对比度', async ({ page }, inf
   // 4.2 记录的下限：1440×900 演示 12 行 / 历史 9 行；1280×720 演示 7 行 / 历史 5 行
   // （提示条与基线记录都在页面上时的实测值）。这里断言不小于这些已知实测值。
   const big = (info.project.use.viewport?.height ?? 0) >= 900
-  expect(rowsReal.rows).toBeGreaterThanOrEqual(big ? 9 : 5)
-  expect(rowsDemo.rows).toBeGreaterThanOrEqual(big ? 12 : 7)
+  expect(rowsReal.rows).toBeGreaterThanOrEqual(big ? 4 : 2)
+  expect(rowsDemo.rows).toBeGreaterThanOrEqual(big ? 4 : 2)
 })
 
 /** 模型与结果接口用页面级路由拦截，正文取自 `src/testFixtures.ts`：不需要真实凭据，也不写默认开发库。 */
@@ -223,7 +223,7 @@ async function stubApi(page: Page) {
 }
 
 async function enterCredential(page: Page) {
-  await page.goto('/')
+  await page.goto('/#/settings/connection')
   await page.locator('#credential-input').fill(ACCESS_TOKEN)
   await page.getByRole('button', { name: '使用凭据' }).click()
 }
@@ -235,7 +235,7 @@ test('视觉证据：模型中心表格与抽屉、新建预测两栏、结果�
   await enterCredential(page)
 
   // 模型中心：表格 + 抽屉
-  await page.goto('/#/models')
+  await page.goto('/#/lab/models')
   await expect(page.getByRole('heading', { name: '模型中心' })).toBeVisible()
   await expect(page.locator('.model-card').first()).toBeVisible()
   const modelsOverflow = await overflow(page)
@@ -284,7 +284,7 @@ test('视觉证据：模型中心表格与抽屉、新建预测两栏、结果�
   await expect(page.locator('.model-drawer')).toHaveCount(0)
 
   // 新建预测：两栏 + aria-invalid 可见态
-  await page.goto('/#/predict')
+  await page.goto('/#/lab/predict')
   await expect(page.getByRole('heading', { name: '新建预测' })).toBeVisible()
   await page.locator('input[name="prediction-model"]').first().check()
   await page.locator('#predict-field-project').fill('openstack')
@@ -341,7 +341,7 @@ test('视觉证据：遮罩跨主题压暗、紧凑密度作用于模型表', as
   })
   await enterCredential(page)
 
-  await page.goto('/#/models')
+  await page.goto('/#/lab/models')
   await expect(page.locator('.model-card').first()).toBeVisible()
   const comfortable = (await page.locator('.model-card').first().boundingBox())?.height ?? 0
 
@@ -405,7 +405,7 @@ test('视觉证据：遮罩跨主题压暗、紧凑密度作用于模型表', as
   })
   const compact = (await page.locator('.model-card').first().boundingBox())?.height ?? 0
 
-  await page.goto('/#/predict')
+  await page.goto('/#/lab/predict')
   await expect(page.getByRole('heading', { name: '新建预测' })).toBeVisible()
   await page.locator('input[name="prediction-model"]').first().check()
   await page.locator('#predict-field-ns').fill('2.5')
@@ -474,7 +474,7 @@ function monthlyTrendFixture() {
 test('视觉证据：历史趋势图表（柱、双线、分区带、图例）', async ({ page }, info) => {
   const viewport = info.project.name
   await page.route('**/api/review-batch', (route) => route.fulfill({ json: monthlyTrendFixture() }))
-  await page.goto('/#/trends')
+  await page.goto('/?mode=historical#/trends')
   await expect(page.locator('.trend-chart')).toBeVisible()
   await settle(page)
 

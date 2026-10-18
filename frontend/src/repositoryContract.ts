@@ -50,6 +50,7 @@ export interface SyncError {
 
 export interface SyncView {
   syncId: string
+  repositoryId: string | null
   repositoryUrl: string
   branch: string
   since: string | null
@@ -87,6 +88,10 @@ export interface SyncCommit {
   files: number
   label: 0 | 1
   labelNote: string | null
+  /** 仓库接口会带提交标题；同步作业的旧接口没有，统一为 null。 */
+  subject: string | null
+  authorName?: string | null
+  originalCommitUrl?: string | null
   metrics: Record<string, number>
 }
 
@@ -140,6 +145,7 @@ export function parseSync(value: unknown): SyncView {
   if (branch === '') contractFailed()
   return {
     syncId: uuidText(raw.syncId),
+    repositoryId: textOrNull(raw.repositoryId),
     repositoryUrl: text(raw.repositoryUrl),
     branch,
     since: textOrNull(raw.since),
@@ -186,6 +192,9 @@ export function parseSyncCommit(value: unknown): SyncCommit {
     files: count(raw.files),
     label,
     labelNote: textOrNull(raw.labelNote),
+    subject: textOrNull(raw.subject),
+    authorName: textOrNull(raw.authorName),
+    originalCommitUrl: textOrNull(raw.originalCommitUrl),
     metrics: measures(raw.features),
   }
 }

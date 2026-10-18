@@ -9,15 +9,15 @@ import { storageKey } from './shortlist'
 
 const loader = async () => demo
 const row = (id: string) => screen.getByRole('row', { name: new RegExp(id) })
-beforeEach(() => { vi.restoreAllMocks(); window.localStorage.clear() })
+beforeEach(() => { vi.restoreAllMocks(); window.localStorage.clear(); window.history.replaceState({}, '', '/') })
 
 it('CRR-01/02/03 明示来源与边界，缺失度量不填零', async () => {
   render(<App initialMode="demo" loader={loader} />)
   await screen.findByRole('button', { name: '查看 demo-0003' })
   expect(screen.getByText('演示模式')).toBeVisible()
   expect(screen.getByText('demo-v1')).toBeVisible()
-  expect(within(row('demo-0003')).getByText('100%')).toBeVisible()
-  expect(within(row('demo-0009')).getByText('0%')).toBeVisible()
+  expect(within(row('demo-0003')).getByText('1.00')).toBeVisible()
+  expect(within(row('demo-0009')).getByText('0.00')).toBeVisible()
   expect(within(row('demo-0010')).getByText('暂无预测')).toBeVisible()
   expect(within(row('demo-0011')).getByText('未提供')).toBeVisible()
 })
@@ -49,7 +49,7 @@ it('CRR-07/08 列表、详情与清单共同维护身份和顺序，重复唯一
   expect(within(row('demo-0002')).getByRole('button', { name: 'demo-0002 已在清单' })).toBeDisabled()
   expect(within(detail).getByRole('button', { name: '已在清单' })).toBeDisabled()
   await user.click(screen.getByRole('button', { name: '关闭详情' }))
-  await user.click(screen.getByRole('button', { name: /优先审查清单/ }))
+  await user.click(screen.getByRole('button', { name: /审查计划/ }))
   const rows = screen.getAllByRole('row').slice(1)
   expect(rows[0]).toHaveTextContent('demo-0001')
   expect(rows[1]).toHaveTextContent('demo-0002')
@@ -61,7 +61,7 @@ it('CRR-07/08 列表、详情与清单共同维护身份和顺序，重复唯一
   expect(screen.getByText('清单为空')).toBeVisible()
   await user.click(screen.getByRole('button', { name: '返回列表选择提交' }))
   expect(screen.getByRole('button', { name: '加入 demo-0001 到清单' })).toBeEnabled()
-  expect(within(row('demo-0001')).getByText('86%')).toBeVisible()
+  expect(within(row('demo-0001')).getByText('0.86')).toBeVisible()
 })
 
 it('CRR-07/12 关闭详情保留查询并返回键盘触发位置', async () => {
@@ -90,12 +90,12 @@ it('CRR-11 加载、空与失败区分，失败可重试', async () => {
   let failed = true
   const failLoader = async () => { if (failed) throw new Error('读取失败'); return { ...demo, records: [] } }
   render(<App initialMode="demo" loader={failLoader} />)
-  expect(screen.getByText('正在读取演示提交')).toBeVisible()
-  await screen.findByText('数据不可用')
+  expect(screen.getByText('正在读取实验来源')).toBeVisible()
+  await screen.findByText('实验数据不可用')
   failed = false
   await user.click(screen.getByRole('button', { name: '重新加载' }))
   await screen.findByText('暂无提交')
-  expect(screen.queryByText('数据不可用')).not.toBeInTheDocument()
+  expect(screen.queryByText('实验数据不可用')).not.toBeInTheDocument()
 })
 
 it('CRR-09 刷新相当的重新挂载恢复清单并同步列表', async () => {
@@ -124,8 +124,8 @@ it('CRR-10 保存被拒绝仍可加入和移除，并明确刷新风险', async 
   render(<App initialMode="demo" loader={loader} />)
   await screen.findByRole('button', { name: '加入 demo-0001 到清单' })
   await user.click(screen.getByRole('button', { name: '加入 demo-0001 到清单' }))
-  expect(screen.getByRole('alert')).toHaveTextContent('本次清单未能保存，刷新后可能丢失')
-  await user.click(screen.getByRole('button', { name: /优先审查清单/ }))
+  expect(screen.getByRole('alert')).toHaveTextContent('本次审查计划未能保存，刷新后可能丢失')
+  await user.click(screen.getByRole('button', { name: /审查计划/ }))
   await user.click(screen.getByRole('button', { name: '移除 demo-0001' }))
   expect(screen.getByText('清单为空')).toBeVisible()
 })

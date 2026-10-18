@@ -11,7 +11,7 @@ it('CRR-09 恢复相同成员与加入顺序，仅保存标识', () => {
   entries.clear()
   expect(saveShortlist(data, ['b', 'a'], access)).toBe('')
   expect(restoreShortlist(data, access)).toEqual({ ids: ['b', 'a'], warning: '' })
-  expect(JSON.parse(entries.get(storageKey(data))!)).toEqual({ schema: 1, ids: ['b', 'a'] })
+  const saved = JSON.parse(entries.get(storageKey(data))!); expect(saved.schema).toBe(3); expect(saved.entries.map((item: { commitId: string }) => item.commitId)).toEqual(['b', 'a']); expect(JSON.stringify(saved)).not.toContain('risk')
 })
 it('CRR-09 不同项目和版本隔离，不删除其他记录', () => {  entries.clear(); entries.set('unrelated', 'keep')
   saveShortlist(data, ['a'], access)
@@ -27,10 +27,9 @@ it.each(['{', '{}', '{"schema":2,"ids":["a"]}', '{"schema":1,"ids":[1]}', 'null'
   expect(saveShortlist(data, ['b'], access)).toBe('')
   expect(restoreShortlist(data, access).ids).toEqual(['b'])
 })
-it('CRR-09 去重且排除未知标识，保留有效加入顺序', () => {
-  entries.clear(); entries.set(storageKey(data), JSON.stringify({ schema: 1, ids: ['b', 'ghost', 'a', 'b'] }))
-  const result = restoreShortlist(data, access)
-  expect(result.ids).toEqual(['b', 'a']); expect(result.warning).toMatch(/恢复失败/)
+it('CRR-09 保留无法读取的标识供用户明确移除，不按当前页删除', () => {
+  entries.clear(); saveShortlist(data, ['b', 'ghost', 'a', 'b'], access)
+  expect(restoreShortlist(data, access).ids).toEqual(['b', 'ghost', 'a'])
 })
 it('CRR-10 无法取得或读取存储时恢复失败，返回可操作空清单', () => {
   const denied = () => { throw new Error('拒绝访问') }
@@ -39,16 +38,16 @@ it('CRR-10 无法取得或读取存储时恢复失败，返回可操作空清单
 })
 it('CRR-10 保存被拒绝必须提示刷新后可能丢失', () => {
   const denied = () => ({ ...storage, setItem: () => { throw new Error('空间不足') } })
-  expect(saveShortlist(data, ['a'], denied)).toBe('本次清单未能保存，刷新后可能丢失')
+  expect(saveShortlist(data, ['a'], denied)).toBe('本次审查计划未能保存，刷新后可能丢失')
 })
 
 it('CRR-09 仓库模式不按当前页过滤清单，交给清单视图逐条确认', () => {
   entries.clear()
   const repository: Dataset = {
     mode: 'repository', project: 'jit', version: 'kamei14-git-v1-jit-2026-10-12_2026-10-18-770c916c', records: [],
-    repository: { syncId: 'sync-1', repositoryUrl: 'https://github.com/x/y.git', branch: 'main', datasetVersion: null, requestedStrategy: 'auto', modelStrategy: null, degradeReason: null, trainRecords: null, trainPositives: null, labelNote: '标签由简化 SZZ 生成' },
+    repository: { repositoryId: 'repo-1', syncId: 'sync-1', repositoryUrl: 'https://github.com/x/y.git', branch: 'main', datasetVersion: 'data-A', requestedStrategy: 'auto', modelStrategy: null, degradeReason: null, trainRecords: null, trainPositives: null, labelNote: '标签由简化 SZZ 生成' },
   }
   saveShortlist(repository, ['a', 'zzz'], access)
   expect(restoreShortlist(repository, access)).toEqual({ ids: ['a', 'zzz'], warning: '' })
-  expect(storageKey(repository)).toBe('jit-review:shortlist:v2:repository:sync-1')
+  expect(storageKey(repository)).toContain('jit-review:plan:v3:')
 })

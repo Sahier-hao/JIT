@@ -51,7 +51,7 @@ function credentials() {
  * 只是指针快捷方式，被刻意移出可访问性树和 Tab 序列（design D7），因此这里必须定位上下文栏。
  */
 function nav(page: Page, name: string) {
-  return page.getByRole('complementary', { name: '工作空间' }).getByRole('button', { name })
+  const names: Record<string, string> = { '模型中心': '模型目录', '新建预测': '手工预测', '打开已有结果': '重开已存结果' }; return page.getByRole('complementary', { name: '空间导航' }).getByRole('button', { name: names[name] ?? name, exact: true })
 }
 
 /** 结果页有多个 .identity-list（风险、原始输入、来源与身份），比对来源必须限定在「来源与身份」一节。 */
@@ -66,17 +66,16 @@ async function identityText(page: Page) {
 
 /** 每次进入页面都要重新输入凭据：它只活在内存里，刷新即失效（MPW-02）。 */
 async function enterCredential(page: Page, token: string) {
-  await page.goto('/')
-  await page.locator('#credential-input').fill(token)
-  await page.getByRole('button', { name: '使用凭据' }).click()
-  await expect(page.getByText('已输入凭据（仅本页内存）')).toBeVisible()
+  await page.goto('/#/settings/connection?returnTo=%23%2Flab%2Fmodels')
+  await reenterCredential(page, token)
 }
-
-/** 不重新导航，只在当前页面重新输入凭据（刷新与重启后的重开场景）。 */
 async function reenterCredential(page: Page, token: string) {
+  if (!page.url().includes('/settings/connection')) await page.getByRole('button', { name: '设置', exact: true }).click()
+  if (await page.getByRole('button', { name: '更换凭据', exact: true }).count()) await page.getByRole('button', { name: '更换凭据', exact: true }).click()
   await page.locator('#credential-input').fill(token)
   await page.getByRole('button', { name: '使用凭据' }).click()
   await expect(page.getByText('已输入凭据（仅本页内存）')).toBeVisible()
+  await page.getByRole('button', { name: '返回之前页面' }).click()
 }
 
 /** 布局证据截图。凭据输入是掩码控件，截图里不含凭据原文。 */
@@ -116,8 +115,8 @@ test('MPW-02 没有凭据时不自动发请求，成员凭据读不到管理员�
   const requests: string[] = []
   page.on('request', (request) => requests.push(request.url()))
 
-  await page.goto('/#/models')
-  await expect(page.getByText(/请在左侧输入团队访问凭据/).first()).toBeVisible()
+  await page.goto('/#/lab/models')
+  await expect(page.getByText(/请在设置的团队连接中输入访问凭据/).first()).toBeVisible()
   await expect
     .poll(() => requests.filter((url) => url.includes('/api/v1/models')).length)
     .toBe(0)
@@ -137,8 +136,10 @@ test('MPW-02 没有凭据时不自动发请求，成员凭据读不到管理员�
   expect(requests.some((url) => url.includes('/api/v1/models/register'))).toBe(false)
 
   // 清除凭据后受保护内容立刻停止展示。
+  await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('button', { name: '清除凭据' }).click()
-  await expect(page.getByText(/请在左侧输入团队访问凭据/).first()).toBeVisible()
+  await page.getByRole('button', { name: '返回之前页面' }).click()
+  await expect(page.getByText(/请在设置的团队连接中输入访问凭据/).first()).toBeVisible()
   await expect(page.locator('.model-card')).toHaveCount(0)
 })
 
@@ -208,13 +209,13 @@ test('MPW-05/06/07/08 六字段表单与粘贴导入提交真实预测并进入�
   // 只有拿到 201 且来源与提交快照一致才进入结果页。
   await expect(page.getByRole('heading', { name: '预测结果' })).toBeVisible()
   await expect(page.getByText('用户提供特征 · 模型估计')).toBeVisible()
-  await expect(page.locator('.risk-number')).toHaveText(/^\d+(?:\.\d+)?%$/)
+  await expect(page.locator('.risk-number')).toHaveText(/^(?:0\.\d{2}|1\.00)$/)
   await expect(page.locator('.result-grid').getByText('openstack', { exact: true }).first()).toBeVisible()
 
   const link = await page.locator('#result-link').inputValue()
-  expect(link).toContain('#/predictions/')
+  expect(link).toContain('#/lab/results/')
   expect(link).not.toContain('?')
-  createdBatchId = link.split('#/predictions/')[1] ?? null
+  createdBatchId = link.split('#/lab/results/')[1] ?? null
   expect(createdBatchId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
 
   // 六项原始输入与完整来源都在页面上。
@@ -258,21 +259,21 @@ test('MPW-09 结果链接与按批次编号重开是只读 GET', async ({ page }
 
   await expect(page.getByRole('heading', { name: '预测结果' })).toBeVisible()
   await expect(page.getByText(/本页直接按批次编号读取结果，没有重新预测/)).toBeVisible()
-  await expect(page.locator('.risk-number')).toHaveText(/^\d+(?:\.\d+)?%$/)
+  await expect(page.locator('.risk-number')).toHaveText(/^(?:0\.\d{2}|1\.00)$/)
   expect(posted).toEqual([])
   expect(readPaths).toEqual(['GET'])
 
   // 直接刷新同一地址：凭据只存内存，刷新后必须先重新输入，然后仍然是同一批次。
   await page.reload()
   await expect(page.getByRole('heading', { name: '预测结果' })).toBeVisible()
-  await expect(page.getByText(/请在左侧输入团队访问凭据/).first()).toBeVisible()
+  await expect(page.getByText(/请在设置的团队连接中输入访问凭据/).first()).toBeVisible()
   expect(readPaths).toEqual(['GET'])
   await reenterCredential(page, member)
   await expect(page.locator('#result-link')).toHaveValue(new RegExp(`${createdBatchId}$`))
   expect(posted).toEqual([])
 
   // 不存在的编号：明确说结果不存在，而不是展示一个空结果。
-  await page.goto('/#/predictions/2f1c9a54-0000-4000-8000-000000000000')
+  await page.goto('/#/lab/results/2f1c9a54-0000-4000-8000-000000000000')
   await expect(page.getByText('没有找到该资源')).toBeVisible()
   await expect(page.getByText('指定资源不存在')).toBeVisible()
 })
@@ -319,24 +320,26 @@ test('MPW-11 两种桌面尺寸下新页面可读可操作且不横向滚动', a
 test('MPW-11 纯键盘可以走完凭据→导航→填表→提交的完整流程', async ({ page }) => {
   const { member } = credentials()
 
-  await page.goto('/')
+  await page.goto('/#/settings/connection?returnTo=%23%2Flab%2Fmodels')
   await page.locator('#credential-input').focus()
   await page.keyboard.type(member)
   await page.keyboard.press('Enter')
   await expect(page.getByText('已输入凭据（仅本页内存）')).toBeVisible()
+  await page.getByRole('button', { name: '返回之前页面' }).focus()
+  await page.keyboard.press('Enter')
 
   const modelsNav = nav(page, '模型中心')
-  await expect(page.getByRole('complementary', { name: '工作空间' })).toBeVisible()
+  await expect(page.getByRole('complementary', { name: '空间导航' })).toBeVisible()
   await modelsNav.focus()
   await expect(modelsNav).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/#\/models/)
+  await expect(page).toHaveURL(/#\/lab\/models/)
   await expect(page.getByRole('heading', { name: '模型中心' })).toBeVisible()
 
   const predictNav = nav(page, '新建预测')
   await predictNav.focus()
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/#\/predict/)
+  await expect(page).toHaveURL(/#\/lab\/predict/)
 
   // 主要操作必须有可见焦点（MPW-11）。表单未填完时提交按钮按设计是禁用的，而禁用的控件无法获得焦点，
   // 所以先检查模型单选控件的焦点样式，提交按钮的焦点样式放到表单有效之后再检查。
@@ -416,20 +419,20 @@ test('MPW-09 真实服务重启后仍能按批次编号重开同一结果', asyn
 
 test('历史回放、演示模式与旧工作台在新导航下仍然可用', async ({ page }) => {
   // 无 hash 的首页仍是真实历史回放。
-  await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await page.goto('/?mode=historical#/validation')
+  await expect(page.getByRole('heading', { name: '提交评审', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /^查看 [a-f0-9]{40}$/ }).first()).toBeVisible()
 
   // 演示模式仍然可用，并且新预测不会混进历史或演示批次。
   const { member } = credentials()
   await enterCredential(page, member)
-  await page.getByRole('button', { name: '选择演示模式' }).click()
-  await expect(page).toHaveURL(/mode=demo/)
+  await page.goto('/?mode=demo#/validation')
+  await expect(page).toHaveURL(/#\/lab\/demo\/commits/)
   await expect(page.getByRole('button', { name: '查看 demo-0001' })).toBeVisible()
   await expect(page.getByText('用户提供特征 · 模型估计')).toHaveCount(0)
 
   // 回到历史回放后，模型预测页面依然可达。
-  await page.getByRole('button', { name: '选择真实历史回放' }).click()
+  await page.getByRole('button', { name: '历史验证' }).click()
   await expect(page).not.toHaveURL(/mode=demo/)
   await nav(page, '模型中心').click()
   await expect(page.getByRole('heading', { name: '模型中心' })).toBeVisible()

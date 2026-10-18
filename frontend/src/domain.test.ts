@@ -14,7 +14,7 @@ describe('CRR-01/02/03/11 数据与风险边界', () => {
   it.each(['', 'nonsense', '2026-10-02T09:00:00', '2026-02-30T09:00:00+08:00'])('拒绝无效或无时区时间 %s', (time) => { expect(() => parseDataset(data([record('a', time)]))).toThrow(/时间/) })
   it('拒绝空标识', () => { expect(() => parseDataset(data([record('')]))).toThrow(/标识/) })
   it('允许空集合', () => { expect(parseDataset(data([])).records).toEqual([]) })
-  it.each([[0, '0%'], [1, '100%'], [0.725, '72.5%'], [null, '暂无预测'], [undefined, '暂无预测'], [NaN, '风险数据无效'], [Infinity, '风险数据无效'], [-0.1, '风险数据无效'], [1.1, '风险数据无效'], ['0.7', '风险数据无效']])('风险 %s 显示 %s', (risk, label) => { expect(riskLabel(risk)).toBe(label) })
+  it.each([[0, '0.00'], [1, '1.00'], [0.725, '0.72'], [null, '暂无预测'], [undefined, '暂无预测'], [NaN, '风险数据无效'], [Infinity, '风险数据无效'], [-0.1, '风险数据无效'], [1.1, '风险数据无效'], ['0.7', '风险数据无效']])('风险 %s 显示 %s', (risk, label) => { expect(riskLabel(risk)).toBe(label) })
 })
 
 describe('CRR-04/05/06 查询与稳定排序', () => {

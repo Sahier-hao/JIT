@@ -29,30 +29,37 @@ export function useResource<T>(
 ): Resource<T> {
   const { token, generation } = useCredential()
   const [attempt, setAttempt] = useState(0)
-  const [state, setState] = useState<{ status: ResourceStatus; data: T | null; error: unknown }>({
+  type Settled = { status: ResourceStatus; data: T | null; error: unknown; generation: number; attempt: number; deps: readonly unknown[] }
+  const [state, setState] = useState<Settled>({
     status: token === '' ? 'credential-required' : 'loading',
     data: null,
     error: null,
+    generation, attempt, deps: [...deps],
   })
   const loaderRef = useRef(loader)
   loaderRef.current = loader
 
   useEffect(() => {
+    const settle = (result: Pick<Settled, 'status' | 'data' | 'error'>) => setState({ ...result, generation, attempt, deps: [...deps] })
     if (token === '') {
-      setState({ status: 'credential-required', data: null, error: null })
+      settle({ status: 'credential-required', data: null, error: null })
       return
     }
     const controller = new AbortController()
     let live = true
-    setState({ status: 'loading', data: null, error: null })
-    loaderRef.current({ token, signal: controller.signal }).then(
+    settle({ status: 'loading', data: null, error: null })
+    const load = loaderRef.current
+    Promise.resolve().then(() => {
+      if (!live || controller.signal.aborted) throw new CancelledError()
+      return load({ token, signal: controller.signal })
+    }).then(
       (data) => {
-        if (live) setState({ status: 'ready', data, error: null })
+        if (live) settle({ status: 'ready', data, error: null })
       },
       (error: unknown) => {
         // 取消或凭据已换代：这次响应不再属于当前上下文，直接丢弃。
         if (!live || error instanceof CancelledError) return
-        setState({ status: 'failed', data: null, error })
+        settle({ status: 'failed', data: null, error })
       },
     )
     return () => {
@@ -63,6 +70,8 @@ export function useResource<T>(
   }, [token, generation, attempt, ...deps])
 
   const reload = useCallback(() => setAttempt((value) => value + 1), [])
+  const current = state.generation === generation && state.attempt === attempt && state.deps.length === deps.length && state.deps.every((value, index) => Object.is(value, deps[index]))
+  if (!current) return { status: token ? 'loading' : 'credential-required', data: null, error: null, reload }
   return { status: state.status, data: state.data, error: state.error, reload }
 }
 

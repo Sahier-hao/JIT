@@ -80,7 +80,7 @@ async function fillRequired(user: ReturnType<typeof userEvent.setup>) {
 describe('范围与凭据', () => {
   it('没有凭据时不发请求', () => {
     renderPage(catalogOnly([modelPayload()]), '')
-    expect(screen.getByText(/请在左侧输入团队访问凭据/)).toBeVisible()
+    expect(screen.getByText(/请在设置的团队连接中输入访问凭据/)).toBeVisible()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

@@ -46,10 +46,10 @@ function modelText(sync: SyncView): string {
   return '未记录'
 }
 
-function SyncCard({ sync, onOpen }: { sync: SyncView; onOpen: (syncId: string) => void }) {
+function SyncCard({ sync, onOpen }: { sync: SyncView; onOpen: (repositoryId: string, syncId?: string) => void }) {
   const hint = failHint(sync.error)
   return (
-    <article className="model-card">
+    <article className="model-card" aria-label={`同步作业 ${sync.syncId}`}>
       <header className="model-card-head">
         <div>
           <h3>{repositoryName(sync.repositoryUrl)}</h3>
@@ -65,6 +65,7 @@ function SyncCard({ sync, onOpen }: { sync: SyncView; onOpen: (syncId: string) =
         <LoadingNotice label={`当前阶段：${STATUS_LABELS[sync.stage]}；完成后自动刷新，无需手动重试。`} />
       ) : null}
       <dl className="model-facts">
+        <div><dt>作业身份</dt><dd><code>{sync.syncId}</code> · 发起于 {displayTime(sync.createdAt)}</dd></div>
         <div>
           <dt>仓库地址</dt>
           <dd>
@@ -121,7 +122,7 @@ function SyncCard({ sync, onOpen }: { sync: SyncView; onOpen: (syncId: string) =
       )}
       {sync.status === 'completed' ? (
         <p className="model-actions">
-          <button type="button" className="primary-button" onClick={() => onOpen(sync.syncId)}>
+          <button type="button" className="primary-button" onClick={() => onOpen(sync.repositoryId ?? '', sync.syncId)}>
             去工作台看这批提交的风险
           </button>
           <span>工作台按风险从高到低列出这些提交；风险是模型估计，不等于已确认缺陷。</span>
@@ -131,7 +132,7 @@ function SyncCard({ sync, onOpen }: { sync: SyncView; onOpen: (syncId: string) =
   )
 }
 
-export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (syncId: string) => void }) {
+export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (repositoryId: string, syncId?: string) => void }) {
   const { token, generation } = useCredential()
   const [form, setForm] = useState(EMPTY_FORM)
   const [creating, setCreating] = useState(false)
@@ -178,7 +179,6 @@ export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (syncId: str
     setCreateError(null)
     try {
       await createRepositorySync(token, form)
-      setForm({ ...EMPTY_FORM, strategy: form.strategy, commitLimit: form.commitLimit })
       setReload((value) => value + 1)
     } catch (error) {
       setCreateError(error)
@@ -215,11 +215,11 @@ export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (syncId: str
           <strong>先知道两件事</strong>
           <span>
             第一，最近一段提交还没有被别人修过，所以没有标签，只能打分、不能立刻验证准不准；
-            第二，训练与打分用的是同一个仓库的历史提交，模型只对这一类项目有把握。
+            第二，模型可能使用本仓库训练或复用通用模型；具体来源和降级原因以成功分析记录为准。
           </span>
         </div>
       </div>
-      {token === '' ? <CredentialNotice>同步需要团队凭据；请在左侧输入后再填写仓库地址。</CredentialNotice> : null}
+      {token === '' ? <CredentialNotice>同步需要团队凭据；请在设置的团队连接中输入后再填写仓库地址。</CredentialNotice> : null}
       <form className="toolbar" aria-label="新建仓库同步" onSubmit={submit}>
         <label className="search-field">
           仓库地址
@@ -234,7 +234,7 @@ export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (syncId: str
             />
           </span>
         </label>
-        <label>
+        <details className="connect-advanced"><summary>高级参数：分支、时间范围与模型策略</summary><div className="advanced-fields"><label>
           分支
           <input
             aria-label="分支"
@@ -291,6 +291,7 @@ export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (syncId: str
             ))}
           </select>
         </label>
+        </div></details>
         <button className="primary-button" type="submit" disabled={busy || token === ''}>
           {busy ? '正在提交…' : '开始同步'}
         </button>
