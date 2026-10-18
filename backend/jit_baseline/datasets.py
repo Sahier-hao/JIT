@@ -54,20 +54,26 @@ def _source_file(csv_path):
     return resolved, relative, blob
 
 
-def build_manifest(csv_path, schema=None, dataset=None, version=None):
-    """从原始 CSV 生成描述文件内容；不写盘。"""
+def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=None, provenance=None,
+                   extra=None):
+    """从原始 CSV 生成描述文件内容；不写盘。
+
+    `cohort` 省略时用 OpenStack 固定窗口；仓库采集传入自己的范围与阈值。
+    `provenance` 可覆盖发布者、revision、URL 与引用，默认保持原公开数据集元信息。
+    `extra` 附加来源证据（如采集记录），不得覆盖必需字段。
+    """
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
     resolved, relative, blob = _source_file(csv_path)
-    records, quality = parse_source(blob, schema)
+    records, quality = parse_source(blob, schema, cohort)
     if not records:
         raise BaselineError("DATASET_INVALID", "没有纳入记录，无法登记数据集")
     name = dataset or schema.name
     if not isinstance(name, str) or not DATASET_PATTERN.fullmatch(name):
         raise BaselineError("DATASET_INVALID", f"数据集名无效：{name}")
     start, end = records[0]["time"][:10], records[-1]["time"][:10]
-    declared = f"{name}-{start}_{end}"
+    computed = f"{name}-{start}_{end}"
     if version is None:
-        version = declared
+        version = computed
     match = VERSION_PATTERN.fullmatch(version or "")
     if not match or match["dataset"] != name:
         raise BaselineError("DATASET_INVALID", f"版本名须为 <数据集>-<起始日>_<结束日>：{version}")
@@ -75,25 +81,32 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None):
         raise BaselineError("DATASET_INVALID",
                             f"版本名时间范围与数据不符（数据为 {start}_{end}）：{version}")
     source = SOURCES.get("openstack.csv", {})
-    return {
+    published = dict(provenance or {})
+    published_url = (BASE_URL + source.get("path", "data/openstack.csv")
+                     if resolved.name == "openstack.csv" else resolved.as_uri())
+    manifest = {
         "schema": MANIFEST_SCHEMA,
         "dataset": name,
         "version": version,
-        "publisher": "software-rebels/JITMovingTarget",
-        "revision": REVISION,
-        "url": BASE_URL + source.get("path", "data/openstack.csv") if resolved.name == "openstack.csv"
-               else resolved.as_uri(),
-        "citation": CITATION,
+        "publisher": published.get("publisher", "software-rebels/JITMovingTarget"),
+        "revision": published.get("revision", REVISION),
+        "url": published.get("url", published_url),
+        "citation": published.get("citation", CITATION),
         "schemaName": schema.name,
         "file": {"name": resolved.name, "path": relative, "sha256": sha256(blob), "bytes": len(blob)},
         "fields": field_definitions(schema),
-        "cohort": dict(COHORT),
+        "cohort": dict(COHORT if cohort is None else cohort),
         "quality": quality,
         "timeRange": {"start": records[0]["time"], "end": records[-1]["time"],
                       "startEpoch": records[0]["epoch"], "endEpoch": records[-1]["epoch"]},
         "samples": [{"id": record["id"], "time": record["time"]}
                     for record in records[:3] + records[-2:]],
     }
+    for key, value in (extra or {}).items():
+        if key in REQUIRED:
+            raise BaselineError("DATASET_INVALID", f"附加证据不能覆盖必需字段：{key}")
+        manifest[key] = value
+    return manifest
 
 
 def validate_manifest(manifest):
@@ -161,9 +174,11 @@ def manifest_relative(path):
         return path.as_posix()
 
 
-def register(csv_path, schema=None, dataset=None, version=None, root=None):
+def register(csv_path, schema=None, dataset=None, version=None, root=None, cohort=None, provenance=None,
+             extra=None):
     """登记数据集：写 `<root>/<dataset>/<version>.json`；同内容重复登记幂等。"""
-    manifest = build_manifest(csv_path, schema=schema, dataset=dataset, version=version)
+    manifest = build_manifest(csv_path, schema=schema, dataset=dataset, version=version,
+                              cohort=cohort, provenance=provenance, extra=extra)
     text = _dump(manifest)
     root = Path(root) if root is not None else DATASETS
     target = root / manifest["dataset"] / (manifest["version"] + ".json")
