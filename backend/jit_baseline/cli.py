@@ -22,6 +22,8 @@ def main():
     run.add_argument("--algorithm", default=None, help="具名方法；默认 logistic-regression-l2-v1")
     run.add_argument("--dataset-manifest", type=Path, default=None,
                      help="数据集描述文件；给定后改读该数据集而不是 OpenStack 快照")
+    run.add_argument("--holdout", type=int, default=None,
+                     help="epoch 截止时间；只把早于它的记录用于切分与训练")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -94,7 +96,7 @@ def main():
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
-                                 dataset_manifest=args.dataset_manifest)
+                                 dataset_manifest=args.dataset_manifest, holdout=args.holdout)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)

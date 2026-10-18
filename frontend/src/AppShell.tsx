@@ -115,6 +115,13 @@ export function Sidebar({
       badge: count,
       onClick: () => onView?.('shortlist'),
     },
+    {
+      active: route.name === 'sources',
+      enabled: true,
+      label: '数据来源',
+      icon: 'external',
+      onClick: () => navigate({ name: 'sources' }),
+    },
   ]
 
   const models: NavSpec[] = [
@@ -192,6 +199,13 @@ export function Sidebar({
             }}
           >
             示例数据
+          </button>
+          <button
+            aria-label="选择仓库同步数据"
+            aria-pressed={mode === 'repository'}
+            onClick={() => onMode('repository')}
+          >
+            仓库同步
           </button>
         </div>
 

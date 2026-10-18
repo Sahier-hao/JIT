@@ -232,20 +232,22 @@ def _rebuild_test_buckets(records, risks, min_sample):
             for start, entry in collected.items()}
 
 
-def check_aggregate(recorded, records, risks, partition_stats, quality):
+def check_aggregate(recorded, records, risks, partition_stats, quality, expected=None):
     """按声明重算测试分区的桶，并核对全量与分区的守恒关系。
 
     `records` 为测试分区记录（含 `label`），`risks` 与之一一对应；训练与验证分区
     的逐条标签不进入产物，因此只能做守恒核对，这一点在规格与设计里如实记录。
+    `expected` 为各桶应覆盖的（提交数, 正例数）；使用 holdout 时聚合只覆盖可训练
+    前缀，调用方传入切分后的合计，缺省仍按全量质量统计核对。
     """
     validate_structure(recorded)
     min_sample = recorded["minSample"]
-    expected = _rebuild_test_buckets(records, risks, min_sample)
+    rebuilt = _rebuild_test_buckets(records, risks, min_sample)
     totals = {"commits": 0, "positives": 0}
     by_partition = {name: {"commits": 0, "positives": 0} for name in PARTITIONS}
     for index, bucket in enumerate(recorded["buckets"]):
         start = datetime.fromisoformat(bucket["start"])
-        want = expected.get(start, (0, 0, None))
+        want = rebuilt.get(start, (0, 0, None))
         part = bucket["byPartition"]["test"]
         if (part["commits"], part["positives"]) != (want[0], want[1]):
             _invalid(f"第 {index} 个桶的测试分区计数与重算结果不一致")
@@ -256,7 +258,9 @@ def check_aggregate(recorded, records, risks, partition_stats, quality):
         for name in PARTITIONS:
             by_partition[name]["commits"] += bucket["byPartition"][name]["commits"]
             by_partition[name]["positives"] += bucket["byPartition"][name]["positives"]
-    if totals["commits"] != quality["includedRows"] or totals["positives"] != quality["positiveLabels"]:
+    if expected is None:
+        expected = (quality["includedRows"], quality["positiveLabels"])
+    if totals["commits"] != expected[0] or totals["positives"] != expected[1]:
         _invalid("各桶合计与纳入行数或观测正例数不一致")
     for name in PARTITIONS:
         stat = partition_stats.get(name) or {}

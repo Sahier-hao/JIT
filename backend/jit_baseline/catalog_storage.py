@@ -12,7 +12,8 @@ from .errors import BaselineError
 
 DEFAULT_DATABASE = BACKEND / 'storage/catalog.sqlite3'
 MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
-              (2, Path(__file__).parent / 'migrations/002_commit_data.sql'))
+              (2, Path(__file__).parent / 'migrations/002_commit_data.sql'),
+              (3, Path(__file__).parent / 'migrations/003_repository_sync.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

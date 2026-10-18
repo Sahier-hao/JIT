@@ -1,0 +1,109 @@
+{
+  "copiedFromWorkspace": [
+    "accessibility-desktop-1280-keyboard.json",
+    "accessibility-desktop-1280-overflow.json",
+    "accessibility-desktop-1280-status-text.json",
+    "accessibility-desktop-1280-trends.json",
+    "accessibility-desktop-1440-keyboard.json",
+    "accessibility-desktop-1440-overflow.json",
+    "accessibility-desktop-1440-status-text.json",
+    "accessibility-desktop-1440-trends.json",
+    "browser-results.json",
+    "desktop-1280-real-chain.json",
+    "desktop-1440-real-chain.json",
+    "http-lifecycle.json",
+    "live_repository_sync.py",
+    "repository-sync-failures.json",
+    "repository-sync-live.json",
+    "repository_sync_failures.py",
+    "unit-results.json",
+    "verification.json",
+    "verification.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 19,
+  "files": [
+    {
+      "path": "accessibility-desktop-1280-keyboard.json",
+      "sha256": "d812dd1b0b121c6fad51d5765ae6e14bac31d21501eb9d57fdb3aa1415f6f171"
+    },
+    {
+      "path": "accessibility-desktop-1280-overflow.json",
+      "sha256": "29984ab30b17354e89648aa43b2aa44c6a68bdfc7caf0fd3210fc9321a8e2c09"
+    },
+    {
+      "path": "accessibility-desktop-1280-status-text.json",
+      "sha256": "2b6b150945ba16ef4a5ac20a1c1cff6e29a29ebdf23cb032097682464bf28b1e"
+    },
+    {
+      "path": "accessibility-desktop-1280-trends.json",
+      "sha256": "79f25c9c16cf5125db4f92a0a1b2276d29ee6ab08bdfade44ff8de1073b51df4"
+    },
+    {
+      "path": "accessibility-desktop-1440-keyboard.json",
+      "sha256": "983c6fc0b13595d55f8007d5b38623bf0f8125540fef0ce2e3441c3e56ecf723"
+    },
+    {
+      "path": "accessibility-desktop-1440-overflow.json",
+      "sha256": "ca7e9f98d1f6637782daa7db0bab06a9f0d91e6486078b67307fe173dc0973de"
+    },
+    {
+      "path": "accessibility-desktop-1440-status-text.json",
+      "sha256": "23bf6daaac568c614a472578009f125f773e92a7550abca32340482124cc5901"
+    },
+    {
+      "path": "accessibility-desktop-1440-trends.json",
+      "sha256": "d619bd10884a1a2d76fe8e0cdbbff6f0531b4d576a539365f6fe89439600e4bf"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "64dc54e549cd2bbb7f3256d2d6fe92c4d4b394d8e94fb9b2a597af223e6fdad8"
+    },
+    {
+      "path": "desktop-1280-real-chain.json",
+      "sha256": "14b62102915835cad598d7c941d79e6d760cd8fa27de471a03c9cfec27b8224b"
+    },
+    {
+      "path": "desktop-1440-real-chain.json",
+      "sha256": "3434197c77bf3df1b7ce147cc419307fcdc28cbee02c58e918e58232cb06729a"
+    },
+    {
+      "path": "http-lifecycle.json",
+      "sha256": "ef11000b08fc36a44ce9be9b128d13bbcc453668beed56d567158cf0a3ab955b"
+    },
+    {
+      "path": "live_repository_sync.py",
+      "sha256": "750268f34861a6719dd3cc16b0f0fd1fe024eaf21af23d239a5c4c91d7a1ffc6"
+    },
+    {
+      "path": "repository-sync-failures.json",
+      "sha256": "4bdc948c81d633f24ca1077ba16e070bfc763776de5a112ed7e0eab396c324da"
+    },
+    {
+      "path": "repository-sync-live.json",
+      "sha256": "a0f52c793a3ecc8ca327329908a31b790345eb131e44e4d7058c90762b4c7b0c"
+    },
+    {
+      "path": "repository_sync_failures.py",
+      "sha256": "d0cdf7569e67b40403e3e5b9b0e3ec19209e2954b46bfde1b432dd38d557fcbc"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "2b4371f45e4fc85174c7c450b538adf54bc0a0c24e12efad048a3e5b44b3b2f7"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "5b19036ec2cf795037909e76cba0ec4790e2137806abce0866a552438507acf4"
+    },
+    {
+      "path": "verification.log",
+      "sha256": "cdd4196df0a7674e8c0f779b0ec34fc531b4aa9712c69c4982433bcab06c02bd"
+    }
+  ],
+  "frozenUtc": "2026-10-18T09:56:10.422848+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "cab7424e8fe4799f807d433fbb54c9aa0d3fc2e3e5b4b5b4f6b33479fe00bb4c",
+  "workspace": "docs/evidence/_run/add-repository-sync-and-scoring"
+}

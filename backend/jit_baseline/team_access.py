@@ -15,7 +15,8 @@ if not LOGGER.handlers:
     handler.setFormatter(logging.Formatter('%(levelname)s jit.catalog %(message)s'))
     LOGGER.addHandler(handler)
 ADMIN_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register'}
-MEMBER_PATHS = {'/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits'}
+MEMBER_PATHS = {'/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
+                '/api/v1/repository-syncs'}
 MESSAGES = {
     'ACCESS_CONFIG_INVALID': '团队访问凭据配置无效，请联系维护者',
     'AUTH_REQUIRED': '需要有效的团队 Bearer 凭据',
@@ -36,10 +37,17 @@ MESSAGES = {
     'MODEL_INVALID': '模型不可加载或结构无效',
     'MODEL_NOT_READY': '模型不可用，请由管理员重新校验登记',
     'INFERENCE_ERROR': '所选模型推理失败，未保存预测',
+    'REPOSITORY_UNAVAILABLE': '仓库不可用：请检查地址、分支或网络后重试',
+    'SYNC_TIMEOUT': '同步超时，请缩小时间范围或提交上限后重试',
+    'SYNC_INTERRUPTED': '服务重启时同步未完成，请重新同步',
+    'SPLIT_INVALID': '数据无法完成时间切分，请调整时间范围或改用现成模型',
+    'OUTPUT_EXISTS': '同步产物目录已存在，请稍后重试',
 }
 STATUS = {'AUTH_REQUIRED': 401, 'ACCESS_DENIED': 403, 'NOT_FOUND': 404,
           'SCHEMA_UNKNOWN': 404, 'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
-          'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500}
+          'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
+          'REPOSITORY_UNAVAILABLE': 502, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
+          'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409}
 
 
 class RequestError(BaselineError):
@@ -52,6 +60,7 @@ def managed_path(path):
     return path in ADMIN_PATHS | MEMBER_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
+        r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

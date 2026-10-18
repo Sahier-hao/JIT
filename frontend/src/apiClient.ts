@@ -35,6 +35,16 @@ import {
   parseCreatedPrediction,
   SIX_FIELD_SCHEMA,
 } from './predictionContract'
+import {
+  type SyncCommitPage,
+  type SyncPage,
+  type SyncView,
+  parseSync,
+  parseSyncCommitPage,
+  parseSyncPage,
+  syncBody,
+  type SyncStrategy,
+} from './repositoryContract'
 
 export interface ApiRequest {
   path: string
@@ -185,4 +195,61 @@ export function fetchPredictionBatch(
     token,
     signal,
   }).then((payload) => parseBatchPrediction(payload, batchId))
+}
+
+export interface SyncForm {
+  repositoryUrl: string
+  branch: string
+  since: string
+  until: string
+  commitLimit: string
+  strategy: SyncStrategy
+}
+
+export function createRepositorySync(
+  token: string,
+  form: SyncForm,
+  signal?: AbortSignal,
+): Promise<SyncView> {
+  return apiRequest({ path: '/api/v1/repository-syncs', method: 'POST', token, signal, body: syncBody(form) })
+    .then(parseSync)
+}
+
+export function fetchRepositorySyncs(
+  token: string,
+  limit = 20,
+  offset = 0,
+  signal?: AbortSignal,
+): Promise<SyncPage> {
+  return apiRequest({
+    path: `/api/v1/repository-syncs?limit=${limit}&offset=${offset}`,
+    method: 'GET',
+    token,
+    signal,
+  }).then(parseSyncPage)
+}
+
+export function fetchRepositorySync(token: string, syncId: string, signal?: AbortSignal): Promise<SyncView> {
+  return apiRequest({
+    path: `/api/v1/repository-syncs/${encodeURIComponent(syncId)}`,
+    method: 'GET',
+    token,
+    signal,
+  }).then(parseSync)
+}
+
+/** 一页最多 200 条；工作台首屏只取一页，并在界面上如实给出"已显示/共多少"。 */
+export function fetchRepositorySyncCommits(
+  token: string,
+  syncId: string,
+  limit = 200,
+  offset = 0,
+  signal?: AbortSignal,
+): Promise<SyncCommitPage> {
+  return apiRequest({
+    path: `/api/v1/repository-syncs/${encodeURIComponent(syncId)}/commits?limit=${limit}&offset=${offset}`,
+    method: 'GET',
+    token,
+    signal,
+  }).then(parseSyncCommitPage)
 }

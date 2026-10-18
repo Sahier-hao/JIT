@@ -12,7 +12,9 @@ import shutil
 import subprocess
 import tempfile
 from datetime import datetime, timezone
+from ipaddress import ip_address
 from pathlib import Path
+from urllib.parse import urlparse
 
 from .errors import BaselineError
 from .schemas import resolve
@@ -228,6 +230,9 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None):
                 "empty": 0, "outsideWindow": 0, "unparsed": unparsed}
     window = [commit for commit in entries if _inside(commit["epoch"], start, end)]
     excluded["outsideWindow"] = len(entries) - len(window)
+    if not window:
+        raise BaselineError("DATASET_INVALID",
+                            "采集范围内没有提交，请调整起始日期、结束日期或分支")
     if limit is not None and len(window) > limit:
         raise BaselineError("DATASET_INVALID",
                             f"范围内提交数 {len(window)} 超过上限 {limit}，请缩小范围")
@@ -322,9 +327,55 @@ def _is_remote(repo):
     return text.startswith(("http://", "https://", "git@", "ssh://", "git://"))
 
 
+def _private_host(host):
+    """判断主机名是否指向本机或内网，避免把非公开地址当作仓库来源。"""
+    try:
+        address = ip_address(host)
+    except ValueError:
+        name = host.lower().rstrip(".")
+        return name == "localhost" or name.endswith((".localhost", ".local", ".internal"))
+    return (address.is_private or address.is_loopback or address.is_link_local
+            or address.is_reserved or address.is_multicast or address.is_unspecified)
+
+
+def validate_source(repo, allow_local=True):
+    """校验同步来源；返回可用于采集的地址或路径（RCL-07、D6）。
+
+    只接受公开的 HTTP(S) 地址；`file://`、`ssh://`、`git@host:path` 等协议一律拒绝。
+    允许本地路径时供 CLI 与测试使用，同步接口调用方应传 `allow_local=False`。
+    """
+    text = str(repo).strip()
+    if not text:
+        raise BaselineError("INPUT_INVALID", "仓库地址不能为空")
+    lowered = text.lower()
+    if lowered.startswith(("http://", "https://")):
+        parsed = urlparse(text)
+        host = parsed.hostname or ""
+        if not host:
+            raise BaselineError("INPUT_INVALID", f"仓库地址缺少主机名：{text}")
+        if _private_host(host):
+            raise BaselineError("REPOSITORY_UNAVAILABLE",
+                                "仓库地址必须是公开地址，不能指向本机或内网")
+        if not parsed.path.strip("/"):
+            raise BaselineError("INPUT_INVALID", f"仓库地址缺少仓库路径：{text}")
+        return text
+    if "://" in text or re.match(r"^[^/\\@]+@[^/\\@]+:", text):
+        raise BaselineError("REPOSITORY_UNAVAILABLE",
+                            "只支持公开的 HTTP(S) 仓库地址；不支持 file、ssh、git 等协议")
+    if not allow_local:
+        raise BaselineError("INPUT_INVALID", "请填写公开的 HTTP(S) 仓库地址")
+    return text
+
+
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
-                       dataset=None, register=False, limit=None, root=None):
-    """采集 → 写 CSV → 可选登记；远程来源克隆到临时目录并在结束时清理。"""
+                       dataset=None, register=False, limit=None, root=None,
+                       allow_local=True, return_blob=False):
+    """采集 → 写 CSV → 可选登记；远程来源克隆到临时目录并在结束时清理。
+
+    `allow_local=False` 时只接受公开 HTTP(S) 地址（同步接口使用）；
+    `return_blob=True` 时把 CSV 字节与逐条记录一并返回，供同步编排直接落库。
+    """
+    repo = validate_source(repo, allow_local=allow_local)
     temporary = None
     try:
         target = repo
@@ -353,6 +404,9 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                   "records": len(collected["records"]), "fixCommits": collected["fixCommits"],
                   "labeled": collected["labeled"], "skipped": collected["skipped"],
                   "excluded": collected["excluded"], "collection": collected["collection"]}
+        if return_blob:
+            result["blob"] = blob
+            result["rawRecords"] = collected["records"]
         if path is not None:
             result["csv"] = {"path": str(path.resolve()), "bytes": len(blob)}
         if register:

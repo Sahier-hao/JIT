@@ -1,0 +1,25 @@
+{
+  "kind": "accessibility-checklist",
+  "name": "status-text",
+  "viewport": "desktop-1440",
+  "channel": "msedge",
+  "items": [
+    {
+      "id": "A11-4a",
+      "check": "真实模式徽标含可读文字",
+      "passed": true
+    },
+    {
+      "id": "A11-4b",
+      "check": "演示模式徽标含可读文字",
+      "passed": true
+    },
+    {
+      "id": "A11-4c",
+      "check": "服务失败显示可读错误文字（状态不只靠颜色）",
+      "passed": true
+    }
+  ],
+  "consoleErrors": [],
+  "passed": true
+}

@@ -29,7 +29,8 @@ describe('parseHash', () => {
     expect(parseHash('#/')).toEqual({ name: 'workbench' })
   })
 
-  it('识别四个新入口与结果路由', () => {
+  it('识别五个新入口与结果路由', () => {
+    expect(parseHash('#/sources')).toEqual({ name: 'sources' })
     expect(parseHash('#/trends')).toEqual({ name: 'trends' })
     expect(parseHash('#/models')).toEqual({ name: 'models' })
     expect(parseHash('#/predict')).toEqual({ name: 'predict' })
@@ -49,7 +50,7 @@ describe('parseHash', () => {
   })
 
   it('hashFor 与 parseHash 互为反函数', () => {
-    for (const hash of [ROUTE_HASH.trends, ROUTE_HASH.models, ROUTE_HASH.predict, ROUTE_HASH.open]) {
+    for (const hash of [ROUTE_HASH.sources, ROUTE_HASH.trends, ROUTE_HASH.models, ROUTE_HASH.predict, ROUTE_HASH.open]) {
       expect(hashFor(parseHash(hash))).toBe(hash)
     }
     expect(hashFor({ name: 'workbench' })).toBe('')

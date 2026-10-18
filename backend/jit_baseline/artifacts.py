@@ -138,8 +138,13 @@ def limitations(schema):
     return [first, *LIMITATIONS]
 
 
-def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None):
-    """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。"""
+def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
+              holdout=None):
+    """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
+
+    `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
+    评估，质量统计与文件校验仍按全量；默认 `None` 保持既有行为。
+    """
     output, source_dir = Path(output), Path(source_dir)
     algorithm_version = algorithm if algorithm else DEFAULT_ALGORITHM
     entry = get_algorithm(algorithm_version)
@@ -192,7 +197,13 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
             dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": list(schema.in_model_names()),
                                                        "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
     fields = list(schema.in_model_names())
-    split, boundaries = temporal_split(records)
+    trainable = records
+    if holdout is not None:
+        cutoff = int(holdout)
+        trainable = [record for record in records if record["epoch"] < cutoff]
+        if not trainable:
+            raise BaselineError("SPLIT_INVALID", "holdout 之前没有可训练记录，无法完成时间切分")
+    split, boundaries = temporal_split(trainable)
     started = time.perf_counter()
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version)
     training_seconds = round(time.perf_counter() - started, 6)
@@ -218,7 +229,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     # No usable manifest exists until every artifact is written and checked.
     output.mkdir(parents=True)
     write_json(output / "source.json", source)
-    write_json(output / "split.json", {"boundaries": boundaries, "rule": "UTC distinct timestamps, floor(0.70G), floor(0.85G)", "partitions": stats})
+    split_rule = "UTC distinct timestamps, floor(0.70G), floor(0.85G)"
+    if holdout is not None:
+        split_rule += f"; only records with epoch < {int(holdout)}"
+    write_json(output / "split.json", {"boundaries": boundaries, "rule": split_rule, "partitions": stats})
     inputs = [{k: r[k] for k in ("id", "time", "epoch", "sourceRow", "metrics", "features")} for r in split["test"]]
     write_json(output / "test-input.json", {"features": fields, "records": inputs})
     write_json(output / "test-labels.json", [{"id": r["id"], "label": r["label"]} for r in split["test"]])
@@ -234,6 +248,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     if declared:
         config["datasetManifest"] = {"path": manifest_relative(manifest_file),
                                      "sha256": sha256(Path(manifest_file).read_bytes())}
+    if holdout is not None:
+        config["holdout"] = {"epoch": int(holdout), "trainableRecords": len(trainable)}
     run_id = identity(config)
     label = model_descriptor(schema.name, algorithm_version)
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
@@ -245,12 +261,16 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
                "trainingSeconds": training_seconds,
                trends.TREND_KEY: trend,
                "limitations": limitations(schema)}
+    if holdout is not None:
+        summary["holdout"] = {"epoch": int(holdout), "trainableRecords": len(trainable)}
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     command = (f"python -m jit_baseline.cli run --output {output.as_posix()}"
                f" --schema {schema.name} --algorithm {algorithm_version}")
     if dataset_manifest is not None:
         command += f" --dataset-manifest {Path(dataset_manifest).as_posix()}"
+    if holdout is not None:
+        command += f" --holdout {int(holdout)}"
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
                 "command": command}
@@ -435,8 +455,14 @@ def verify_run(directory):
     # 未声明的既有运行不受影响：缺少该键时这里不做任何检查。
     recorded_trend = snapshot.summary.get(trends.TREND_KEY)
     if recorded_trend is not None:
+        partitions = snapshot.summary["split"]
+        expected = None
+        if snapshot.summary.get("holdout"):
+            # 使用 holdout 的运行只聚合可训练前缀，守恒基准随之收窄（quality 仍按全量）。
+            expected = (sum(part["count"] for part in partitions.values()),
+                        sum(part["positiveCount"] for part in partitions.values()))
         trends.check_aggregate(recorded_trend, evaluation_records, current,
-                               snapshot.summary["split"], snapshot.summary["source"]["quality"])
+                               partitions, snapshot.summary["source"]["quality"], expected)
     return manifest
 
 

@@ -1,0 +1,56 @@
+{
+  "kind": "repository-sync-failures",
+  "scenarios": [
+    {
+      "scenario": "non-http-protocol",
+      "stage": "create",
+      "error": {
+        "code": "REPOSITORY_UNAVAILABLE",
+        "message": "只支持公开的 HTTP(S) 仓库地址；不支持 file、ssh、git 等协议"
+      }
+    },
+    {
+      "scenario": "private-host",
+      "stage": "create",
+      "error": {
+        "code": "REPOSITORY_UNAVAILABLE",
+        "message": "仓库地址必须是公开地址，不能指向本机或内网"
+      }
+    },
+    {
+      "scenario": "empty-window",
+      "stage": "failed",
+      "error": {
+        "code": "DATASET_INVALID",
+        "message": "采集范围内没有提交，请调整起始日期、结束日期或分支"
+      }
+    },
+    {
+      "scenario": "over-limit",
+      "stage": "failed",
+      "error": {
+        "code": "DATASET_INVALID",
+        "message": "范围内提交数 3 超过上限 1，请缩小范围"
+      }
+    },
+    {
+      "scenario": "no-generic-model",
+      "stage": "failed",
+      "degradeReason": "noGenericModel",
+      "error": {
+        "code": "MODEL_NOT_READY",
+        "message": "模型目录里没有可用于该仓库数据的现成模型，请改用自动或训练"
+      },
+      "modelStrategy": "generic-model"
+    },
+    {
+      "scenario": "force-train-unavailable",
+      "stage": "failed",
+      "error": {
+        "code": "SPLIT_INVALID",
+        "message": "数据无法完成时间切分，请改用现成模型：分区为空或提交身份重复"
+      }
+    }
+  ],
+  "generatedAt": "2026-10-18T08:28:19Z"
+}
