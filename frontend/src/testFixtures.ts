@@ -124,6 +124,24 @@ export function predictionPayload(overrides: Record<string, unknown> = {}) {
   }
 }
 
+/** 一次支持归因的响应记录片段，供结果页与契约测试复用。 */
+export const EXPLANATION_ITEMS = [
+  { feature: 'ns', value: 1, baseline: 2.4, delta: -0.052, direction: 'decreases' },
+  { feature: 'la', value: 10, baseline: 4.1, delta: 0.031, direction: 'increases' },
+]
+
+export function explainedRecord(overrides: Record<string, unknown> = {}) {
+  return {
+    ...predictionPayload().records[0],
+    explanationStatus: 'supported',
+    explanationMethod: 'occlusion-mean-v1',
+    explanation: EXPLANATION_ITEMS,
+    explanationSummary: '本次预测风险为 11.6%，影响最大的是 ns（拉低 0.052）。',
+    explanationReason: null,
+    ...overrides,
+  }
+}
+
 /** 一次成功的 `fetch` 响应；`body` 为 null 表示成功状态但正文不可解析。 */
 export function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}) {
   return {

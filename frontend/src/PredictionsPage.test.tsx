@@ -21,6 +21,7 @@ import {
   RUN_ID,
   SIX_VALUES,
   errorResponse,
+  explainedRecord,
   jsonResponse,
   predictionPayload,
 } from './testFixtures'
@@ -90,11 +91,29 @@ describe('刚创建完成的结果快照', () => {
     expect(screen.getByText(RUN_ID)).toBeVisible()
     expect(screen.getByText(MODEL_SHA)).toBeVisible()
     expect(screen.getByText(INPUT_SHA)).toBeVisible()
-    expect(screen.getByText(/预测解释：未支持/)).toBeVisible()
-    expect(screen.getByText(/该模型的真实预测解释尚未接入/)).toBeVisible()
+    expect(screen.getByText(/预测解释未支持：该模型的真实预测解释尚未接入/)).toBeVisible()
     expect(screen.getByText('原始特征由调用方提供，尚未核验源码提取或真实标签。')).toBeVisible()
     // 快照来自创建响应，不需要再读一次。
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('已支持的归因逐项展示特征、输入值、训练均值与方向', () => {
+    renderPage({
+      batchId: BATCH_ID,
+      snapshot: parseCreatedPrediction(predictionPayload({ records: [explainedRecord()] }), submission),
+    })
+
+    expect(screen.getByText('occlusion-mean-v1', { exact: false })).toBeVisible()
+    expect(screen.getByText('本次预测风险为 11.6%，影响最大的是 ns（拉低 0.052）。')).toBeVisible()
+    const table = screen.getByRole('table')
+    expect(within(table).getByText('ns')).toBeVisible()
+    expect(within(table).getByText('2.400')).toBeVisible()
+    expect(within(table).getByText('0.052', { exact: false })).toBeVisible()
+    expect(within(table).getByText('0.031', { exact: false })).toBeVisible()
+    expect(within(table).getByText('推高', { exact: false })).toBeVisible()
+    expect(within(table).getByText('拉低', { exact: false })).toBeVisible()
+    // 支持时不再出现未支持原因。
+    expect(screen.queryByText(/预测解释未支持/)).toBeNull()
   })
 
   it('结果链接只含批次身份，可手动复制', async () => {

@@ -1645,7 +1645,19 @@ components:
         features:
           $ref: '#/components/schemas/SixFeatures'
         explanationStatus:
-          const: not-supported
+          type: string
+          enum: [supported, not-supported]
+        explanationMethod:
+          type: string
+          minLength: 1
+        explanation:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/PredictionExplanation'
+        explanationSummary:
+          type: string
+          minLength: 1
         explanationReason:
           type: string
           minLength: 1
@@ -1657,7 +1669,31 @@ components:
       - risk
       - features
       - explanationStatus
-      - explanationReason
+      additionalProperties: false
+    PredictionExplanation:
+      type: object
+      description: 单特征归因项；`delta` 是当前取值相对基线的风险变化，正值表示把风险推高。
+      properties:
+        feature:
+          type: string
+          minLength: 1
+        value:
+          type: number
+        baseline:
+          type: number
+        delta:
+          type: number
+          minimum: -1
+          maximum: 1
+        direction:
+          type: string
+          enum: [increases, decreases]
+      required:
+      - feature
+      - value
+      - baseline
+      - delta
+      - direction
       additionalProperties: false
     PredictionBatch:
       type: object

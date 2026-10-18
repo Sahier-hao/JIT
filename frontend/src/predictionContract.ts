@@ -34,6 +34,18 @@ export interface Submission {
   time: string | null
 }
 
+export type ExplanationStatus = 'supported' | 'not-supported'
+export type ExplanationDirection = 'increases' | 'decreases'
+
+/** 单条归因：把特征替换为训练集均值后风险的变化量，正值表示该特征推高本次风险。 */
+export interface PredictionExplanationItem {
+  feature: string
+  value: number
+  baseline: number
+  delta: number
+  direction: ExplanationDirection
+}
+
 export interface PredictionRecord {
   predictionId: string
   recordId: string
@@ -41,8 +53,11 @@ export interface PredictionRecord {
   commitId: string | null
   time: string | null
   risk: number
-  explanationStatus: string
-  explanationReason: string
+  explanationStatus: ExplanationStatus
+  explanationMethod: string | null
+  explanation: PredictionExplanationItem[] | null
+  explanationSummary: string | null
+  explanationReason: string | null
 }
 
 export interface PredictionResult {
@@ -71,10 +86,57 @@ function featuresOf(value: unknown, names: string[], message: string): Record<st
   return result
 }
 
+const EXPLANATION_STATUS: ExplanationStatus[] = ['supported', 'not-supported']
+const EXPLANATION_DIRECTION: ExplanationDirection[] = ['increases', 'decreases']
+const EXPLANATION_LIMIT = 5
+
+function explanationItem(value: unknown, message: string): PredictionExplanationItem {
+  const raw = record(value, message)
+  const direction = text(raw.direction, message)
+  if (!EXPLANATION_DIRECTION.includes(direction as ExplanationDirection)) contractFailed(message)
+  const delta = finiteNumber(raw.delta, message)
+  if (delta < -1 || delta > 1) contractFailed(message)
+  return {
+    feature: text(raw.feature, message),
+    value: finiteNumber(raw.value, message),
+    baseline: finiteNumber(raw.baseline, message),
+    delta,
+    direction: direction as ExplanationDirection,
+  }
+}
+
+/**
+ * 两种解释状态的契约：支持时任一项缺失都判为不可用，未支持时必须给出原因。
+ * 历史批次按保存时的响应原样重开，缺少归因字段的旧记录本身就是 `not-supported`。
+ */
+function explanationOf(
+  raw: Record<string, unknown>,
+  message: string,
+): Pick<PredictionRecord, 'explanationStatus' | 'explanationMethod' | 'explanation' | 'explanationSummary' | 'explanationReason'> {
+  const status = text(raw.explanationStatus, message)
+  if (!EXPLANATION_STATUS.includes(status as ExplanationStatus)) contractFailed(message)
+  if (status === 'not-supported') {
+    return {
+      explanationStatus: 'not-supported',
+      explanationMethod: null,
+      explanation: null,
+      explanationSummary: null,
+      explanationReason: text(raw.explanationReason, message),
+    }
+  }
+  const items = recordList(raw.explanation, message).map((item) => explanationItem(item, message))
+  if (items.length > EXPLANATION_LIMIT) contractFailed(message)
+  return {
+    explanationStatus: 'supported',
+    explanationMethod: text(raw.explanationMethod, message),
+    explanation: items,
+    explanationSummary: text(raw.explanationSummary, message),
+    explanationReason: null,
+  }
+}
+
 function parsePredictionRecord(value: unknown, names: string[], message: string): PredictionRecord {
   const raw = record(value, message)
-  const explanationStatus = text(raw.explanationStatus, message)
-  const explanationReason = text(raw.explanationReason, message)
   return {
     predictionId: uuidText(raw.predictionId, message),
     recordId: text(raw.recordId, message),
@@ -82,8 +144,7 @@ function parsePredictionRecord(value: unknown, names: string[], message: string)
     commitId: textOrNull(raw.commitId, message),
     time: textOrNull(raw.time, message),
     risk: riskNumber(raw.risk, message),
-    explanationStatus,
-    explanationReason,
+    ...explanationOf(raw, message),
   }
 }
 

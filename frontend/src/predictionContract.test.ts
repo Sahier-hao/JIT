@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 import { ContractError } from './apiContract'
 import type { Submission } from './predictionContract'
 import { normalizedBatchId, parseBatchPrediction, parseCreatedPrediction } from './predictionContract'
-import { BATCH_ID, COMMIT_ID, MODEL_ID, SIX_VALUES, modelPayload, predictionPayload } from './testFixtures'
+import { BATCH_ID, COMMIT_ID, EXPLANATION_ITEMS, MODEL_ID, SIX_VALUES, explainedRecord, modelPayload, predictionPayload } from './testFixtures'
 
 const CREATE_MESSAGE = '预测结果不符合约定，未确认保存结果'
 const BATCH_MESSAGE = '预测结果不符合约定，未展示该批次'
@@ -152,6 +152,48 @@ describe('parseCreatedPrediction', () => {
     expectContractError(() => parseCreatedPrediction(predictionPayload({ batchId: 'not-a-uuid' }), submission), CREATE_MESSAGE)
     expectContractError(() => parseCreatedPrediction(predictionPayload({ inputSha256: 'abc' }), submission), CREATE_MESSAGE)
     expectContractError(() => parseCreatedPrediction(predictionPayload({ createdAt: '2026-10-16 03:20:11' }), submission), CREATE_MESSAGE)
+  })
+
+  it('支持时解析归因条目与方法，未支持时只解析原因', () => {
+    const supported = parseCreatedPrediction(predictionPayload({ records: [explainedRecord()] }), submission)
+    expect(supported.records[0]?.explanationStatus).toBe('supported')
+    expect(supported.records[0]?.explanationMethod).toBe('occlusion-mean-v1')
+    expect(supported.records[0]?.explanation).toEqual(EXPLANATION_ITEMS)
+    expect(supported.records[0]?.explanationSummary).toContain('影响最大的是 ns')
+    expect(supported.records[0]?.explanationReason).toBeNull()
+
+    const unsupported = parseCreatedPrediction(predictionPayload(), submission)
+    expect(unsupported.records[0]?.explanationStatus).toBe('not-supported')
+    expect(unsupported.records[0]?.explanation).toBeNull()
+    expect(unsupported.records[0]?.explanationMethod).toBeNull()
+    expect(unsupported.records[0]?.explanationReason).toBe('该模型的真实预测解释尚未接入')
+  })
+
+  it('归因条目形状不符约定时整体失败，不展示半份归因', () => {
+    const bad = [
+      { ...EXPLANATION_ITEMS[0], direction: 'raises' },
+      { ...EXPLANATION_ITEMS[0], delta: 2 },
+      { ...EXPLANATION_ITEMS[0], baseline: null },
+      { ...EXPLANATION_ITEMS[0], feature: '' },
+    ]
+    for (const item of bad) {
+      expectContractError(
+        () => parseCreatedPrediction(predictionPayload({ records: [explainedRecord({ explanation: [item] })] }), submission),
+        CREATE_MESSAGE,
+      )
+    }
+    expectContractError(
+      () =>
+        parseCreatedPrediction(
+          predictionPayload({ records: [explainedRecord({ explanation: Array(6).fill(EXPLANATION_ITEMS[0]) })] }),
+          submission,
+        ),
+      CREATE_MESSAGE,
+    )
+    expectContractError(
+      () => parseCreatedPrediction(predictionPayload({ records: [explainedRecord({ explanationMethod: null })] }), submission),
+      CREATE_MESSAGE,
+    )
   })
 
   it('正文完全不是对象时失败而不是抛出 TypeError', () => {

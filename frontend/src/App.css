@@ -132,6 +132,14 @@ th:nth-child(6) { width: 103px; }
 .explanation-list { list-style: none; padding: 0; margin: 0; }
 .explanation-list li { display: flex; gap: 10px; font-size: 13px; color: #64758f; line-height: 1.9; margin-top: 10px; }
 .explanation-list li > span { font: 10px var(--mono); color: #5979bd; background: #eff4fd; border-radius: 4px; padding: 4px; height: 20px; margin-top: 2px; }
+.explanation-summary { font-size: 13px; color: #4a5d7a; margin: 0 0 12px; }
+.explanation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.explanation-table th, .explanation-table td { text-align: left; padding: 9px 6px; border-bottom: 1px solid #e8edf5; }
+.explanation-table thead th { font-size: 11px; font-weight: 500; color: #7c8ba1; }
+.explanation-table tbody th { font-weight: 500; color: #556c8f; }
+.explanation-table td { font-family: var(--mono); color: #556c8f; }
+.explanation-table .delta-up { color: #b4453c; }
+.explanation-table .delta-down { color: #2f7a5b; }
 .muted { font-size: 12px; color: var(--muted); }
 .detail-source { padding: 17px 20px; background: #fbfcfe; }
 .detail-source p { font-size: 11px; color: var(--muted); line-height: 1.8; margin: 0; }

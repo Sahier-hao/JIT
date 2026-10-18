@@ -33,9 +33,13 @@ def test_real_single_prediction_persists_and_reopens_after_model_removed(setting
         saved = response.json()
         assert saved['mode'] == 'feature-input' and saved['sourceKind'] == 'client-features'
         assert saved['model']['artifactRunId'] == model['artifactRunId']
-        assert saved['records'][0]['explanationStatus'] == 'not-supported'
-        assert saved['records'][0]['explanationReason']
-        assert saved['records'][0]['time'] is None and saved['records'][0]['commitId'] is None
+        record_saved = saved['records'][0]
+        assert record_saved['explanationStatus'] == 'supported'
+        assert record_saved['explanationMethod'] == 'occlusion-mean-v1'
+        assert record_saved['explanation'] and len(record_saved['explanation']) <= 5
+        assert record_saved['explanationSummary']
+        assert any('基线' in note for note in saved['limitations'])
+        assert record_saved['time'] is None and record_saved['commitId'] is None
         repeated = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
         assert repeated['batchId'] != saved['batchId']
         assert repeated['inputSha256'] == saved['inputSha256']
@@ -44,6 +48,34 @@ def test_real_single_prediction_persists_and_reopens_after_model_removed(setting
     with TestClient(create_app(**settings)) as client:
         assert client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=MEMBER).json() == saved
         assert client.get('/api/v1/prediction-batches/' + str(uuid4()), headers=MEMBER).status_code == 404
+
+
+def test_explanation_survives_reload_and_failure_degrades(settings, monkeypatch):
+    """PEX-04/05：解释随批次保存并可重开；归因失败只降级解释，不改变风险。"""
+    from jit_baseline import attribution
+    from jit_baseline.api import create_app
+    app = create_app(**settings)
+    with TestClient(app) as client:
+        model = register(client)
+        body = payload(model['modelId'])
+        saved = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+        record = saved['records'][0]
+        assert record['explanationStatus'] == 'supported'
+        assert record['explanationMethod'] == attribution.METHOD
+        assert record['explanation'] and isinstance(record['explanation'], list)
+        reopened = client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=MEMBER).json()
+        assert reopened == saved and reopened['records'][0]['explanation'] == record['explanation']
+
+        def boom(*_args, **_kwargs):
+            raise RuntimeError('fixture attribution failure')
+        monkeypatch.setattr(attribution, 'explain', boom)
+        degraded = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+        fallback = degraded['records'][0]
+        assert fallback['explanationStatus'] == 'not-supported'
+        assert fallback['explanationReason']
+        assert 'explanation' not in fallback and 'explanationMethod' not in fallback
+        assert 0 <= fallback['risk'] <= 1
+        assert any('预测解释' in note for note in degraded['limitations'])
 
 
 @pytest.mark.parametrize('bad', ['missing', 'extra', 'label', 'bool', 'fraction', 'string',
@@ -258,3 +290,36 @@ def test_persisted_commit_with_incomplete_features_is_rejected(settings):
                                json=persisted_payload(model['modelId'], 'broken-v1', PARTIAL_COMMIT))
         assert response.status_code == 422, response.text
         assert response.json()['error']['code'] == 'INPUT_SCHEMA_MISMATCH'
+
+LEGACY_BATCH = '00000000-0000-4000-8000-000000000001'
+
+
+def test_legacy_batch_without_explanation_reopens_unchanged(settings, monkeypatch):
+    """PEX-04：历史批次没有解释字段，重开时原样返回且不触发推理。"""
+    from jit_baseline.api import create_app
+    from jit_baseline.catalog import encoded
+    app = create_app(**settings)
+    with TestClient(app) as client:
+        model = register(client)
+        legacy = {'mode': 'feature-input', 'sourceKind': 'client-features', 'batchId': LEGACY_BATCH,
+                  'datasetVersion': DATASET_VERSION, 'project': 'fixture-project', 'runId': model['runId'],
+                  'model': model, 'featureSchemaVersion': 'openstack-six-v1', 'inputSha256': '0' * 64,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                  'records': [{'predictionId': '00000000-0000-4000-8000-000000000002', 'recordId': 'legacy',
+                               'features': STORED_FEATURES, 'risk': 0.5,
+                               'explanationStatus': 'not-supported',
+                               'explanationReason': '该模型的真实预测解释尚未接入'}],
+                  'limitations': ['本轮未提供真实预测解释或代码定位。']}
+        with app.state.catalog.store.connection(write=True) as db:
+            db.execute('INSERT INTO prediction_batch VALUES (?,?,?,?)',
+                       (LEGACY_BATCH, model['modelId'], encoded(legacy), '2026-01-01T00:00:00Z'))
+            db.execute('INSERT INTO prediction VALUES (?,?,?,?,?)',
+                       ('00000000-0000-4000-8000-000000000002', LEGACY_BATCH, 'legacy', 0.5,
+                        encoded(STORED_FEATURES)))
+        import jit_baseline.prediction as module
+        monkeypatch.setattr(module, 'predict_risks', pytest.fail)
+        response = client.get('/api/v1/prediction-batches/' + LEGACY_BATCH, headers=MEMBER)
+        assert response.status_code == 200, response.text
+        assert response.json() == legacy
+        assert 'explanation' not in response.json()['records'][0]
+        assert response.json()['records'][0]['explanationStatus'] == 'not-supported'

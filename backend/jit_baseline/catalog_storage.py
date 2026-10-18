@@ -258,3 +258,19 @@ class CatalogStorage:
             rows = db.execute('SELECT * FROM import_run WHERE dataset_version=? ORDER BY started_at',
                               (version,)).fetchall()
         return [dict(row) for row in rows]
+
+    def feature_means(self, version, fields):
+        """按数据集版本取字段均值，作为特征归因的基线（PEX-02）。
+
+        只返回真实存在的字段；缺字段不补零，由调用方降级并披露。
+        """
+        fields = tuple(fields)
+        if not fields:
+            return {}
+        placeholders = ','.join('?' for _ in fields)
+        with self.connection() as db:
+            rows = db.execute(
+                f'SELECT field, AVG(CAST(value_json AS REAL)) AS mean FROM feature_record '
+                f'WHERE dataset_version=? AND field IN ({placeholders}) GROUP BY field',
+                (version, *fields)).fetchall()
+        return {row['field']: row['mean'] for row in rows if row['mean'] is not None}
