@@ -177,10 +177,40 @@ ns、nd、nf、ent、la、ld；不需要预先 log1p／标准化，也不接受�
 实际请求体上限 64 KiB，任一输入错误不发布结果。
 
 成功完成真实推理并原子保存后返回 201，含 batchId、predictionId、业务 UUID、原产物身份、模型 hash、
-schema、输入 hash、UTC 创建时刻及恰一条风险；`explanationStatus=not-supported` 并说明原因。
+schema、输入 hash、UTC 创建时刻及恰一条风险；同一记录里给出该次预测的特征归因（见下节）。
 风险仍是模型估计，调用方特征尚未核验源码／标签，不代表在线仓库效果或已确认缺陷。
 `GET /api/v1/prediction-batches/{batchId}` 重开保存结果，不重新计算；模型删除或更新不改写过去来源快照。
 重复合法 POST 创建独立批次；存储失败 503 不返回已算风险，模型不存在 404、不可用 503、推理失败 500。
+
+### 预测解释（explain-predictions-and-verify-service）
+
+成功预测的记录带 `explanationStatus=supported`、`explanationMethod=occlusion-mean-v1`、
+至多 5 条 `explanation` 和一句 `explanationSummary`。口径是**遮挡法**：把单个入模特征替换成
+该数据集版本该字段的均值（一次 `AVG(CAST(value_json AS REAL)) ... GROUP BY field` 查询，不训练、
+不读标签），重新推理，用风险变化量 `delta` 衡量该特征当前取值对本次预测的推动——正值推高、
+负值拉低，按绝对值降序，零贡献不列出、不足 5 条不补位。它描述模型对单特征的敏感度，不是
+因果分解，也不是缺陷定位。
+
+宁可降级也不编造：归因函数异常时该条仍返回 201，但 `explanationStatus=not-supported` 并给出
+`explanationReason`，风险与保存不受影响；数据集版本未知或部分字段没有均值时仍给出解释，同时在
+`limitations` 说明缺失字段按零基线计算。历史批次没有解释字段，`GET` 重开时原样返回、不重算、
+不触发推理。单条请求（含 6 次遮挡推理）在本机实测 P95 约 147 ms，证据与复现脚本见
+`docs/evidence/explain-predictions-and-verify-service/prediction-latency.json` 与
+`scripts/prediction_latency.py`。
+
+一次真实调用（服务已启动、已登记模型；`JIT_MEMBER_TOKEN` 为当前服务的成员凭据）：
+
+```powershell
+$headers = @{ Authorization = "Bearer $env:JIT_MEMBER_TOKEN"; 'Content-Type' = 'application/json' }
+$model = (Invoke-RestMethod -Headers $headers -Uri http://127.0.0.1:8000/api/v1/models).models[0].modelId
+$body = @{
+  modelId = $model; featureSchemaVersion = 'openstack-six-v1'; project = 'demo'
+  record = @{ recordId = 'demo-1'; features = @{ ns = 1; nd = 2; nf = 3; ent = 0.8; la = 10; ld = 2 } }
+} | ConvertTo-Json -Depth 6
+$saved = Invoke-RestMethod -Method Post -Headers $headers -Uri http://127.0.0.1:8000/api/v1/predictions -Body $body
+$saved.records[0].explanationStatus, $saved.records[0].explanationSummary
+$saved.records[0].explanation | Format-Table feature, value, baseline, delta, direction
+```
 
 OpenAPI 与实际响应检查使用独立工具环境，不改变应用 requirements：
 
@@ -193,6 +223,28 @@ uv pip install --python .cache/contract-tools/Scripts/python.exe jsonschema==4.2
 
 系统脚本只启动独立临时本机服务和数据库，不触碰既有服务，运行两种现有模型各 200 次计时，并输出
 `docs/evidence/_run/catalog-system.json`、服务日志与 `catalog-contract.json`；不自动冻结归档。
+
+### 非功能证据：预测时延与访问控制（explain-predictions-and-verify-service）
+
+**性能**：`tests/test_performance.py` 用真实应用与已登记模型连续发出 100 次单条预测（含保存与
+归因），先预热 5 次，按最近秩取 P95，默认预算 250 ms，可用 `JIT_LATENCY_P95_MS` 临时放宽。
+本机实测（Windows 11、Python 3.14.2、2026-10-18）：P50 124.3 ms、P95 150.1 ms、最大 176.8 ms。
+更细的对比（含解释/不含解释分组、服务真实 HTTP）见
+`scripts/prediction_latency.py` 与 `docs/evidence/explain-predictions-and-verify-service/prediction-latency.json`。
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_performance.py -q -s --basetemp=.pytest-tmp
+```
+
+**安全**：`tests/test_api.py` 的两条用例固定了访问控制行为——无凭据或伪造凭据一律 401
+`AUTH_REQUIRED`，成员调用管理员端点（候选列表、模型登记）一律 403 `ACCESS_DENIED`，不存在的批次与
+数据集版本一律 404 `NOT_FOUND`；三者错误体都只有 `code`、`message`、`requestId`，不含批次号、
+项目名、风险或记录，且不同 404 之间逐字段相同，不泄露资源是否存在。凭据比较使用
+`hmac.compare_digest` 常量时间比较，日志只记录角色与资源标识、不记录凭据原文。
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_api.py tests/test_performance.py -q --basetemp=.pytest-tmp
+```
 
 ### 隔离浏览器验收环境（connect-model-prediction-workbench）
 

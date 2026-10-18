@@ -85,6 +85,11 @@ def import_dataset(csv_path, manifest_path, storage):
         raise
 
 
+def feature_means(storage, version, fields):
+    """特征归因基线（PEX-02）：按数据集版本取字段均值，缺失字段不补零。"""
+    return storage.feature_means(version, fields)
+
+
 def commit_view(storage, version, commit_id):
     """按数据集版本与提交标识查询；版本或提交未知返回 None（CMP-05）。"""
     record = storage.commit(version, commit_id)

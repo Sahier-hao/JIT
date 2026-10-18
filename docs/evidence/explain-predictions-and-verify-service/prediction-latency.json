@@ -1,0 +1,42 @@
+{
+  "kind": "prediction-latency-backend",
+  "measuredAt": "2026-10-17T17:58:28.678624+00:00",
+  "method": "进程内 ASGI 客户端（TestClient）对真实 create_app + 真实模型发 POST /api/v1/predictions，含数据库写入与日志，nearest-rank P95；without-explanation 仅替换归因函数，其余链路相同",
+  "model": {
+    "schema": "openstack-six-v1",
+    "method": "logistic-regression-l2-v1",
+    "features": {
+      "ent": 0.9129986686368237,
+      "la": 25,
+      "ld": 1,
+      "nd": 5,
+      "nf": 5,
+      "ns": 1
+    }
+  },
+  "withExplanation": {
+    "label": "with-explanation",
+    "samples": 50,
+    "medianMs": 125.4,
+    "p95Ms": 147.1,
+    "maxMs": 156.7
+  },
+  "withoutExplanation": {
+    "label": "without-explanation",
+    "samples": 50,
+    "medianMs": 90.9,
+    "p95Ms": 109.3,
+    "maxMs": 116.7
+  },
+  "explanationOverheadP95Ms": 37.8,
+  "threshold": {
+    "p95Ms": 250
+  },
+  "meetsThreshold": true,
+  "environment": {
+    "python": "3.14.2",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel"
+  },
+  "statement": "本机链路实测，用于说明解释开销；不是跨机器容量承诺。"
+}

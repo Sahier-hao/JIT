@@ -131,9 +131,10 @@ def limitations(schema):
     if gaps:
         first = (f"特征为具名 schema {schema.name}，入模 {len(schema.in_model_names())} 项（{fields}）；"
                  + "未提供：" + "；".join(f"{field.name}（{field.reason}）" for field in gaps)
-                 + "。预测解释未提供。")
+                 + "。预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
     else:
-        first = f"特征为具名 schema {schema.name}（{fields}），尚非完整 Kamei14；预测解释未提供。"
+        first = (f"特征为具名 schema {schema.name}（{fields}），尚非完整 Kamei14；"
+                 + "预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
     return [first, *LIMITATIONS]
 
 
