@@ -117,11 +117,11 @@
     },
     {
       "path": "result-desktop-1280.png",
-      "sha256": "f44e4210db87754114cee66345e3b9436dfccb1d16a56b438b3268511b84e91c"
+      "sha256": "1df2838cfafa51bfbe08b925d401398fa0d4afc91cd3d5730ff28e35299ab35e"
     },
     {
       "path": "result-desktop-1440.png",
-      "sha256": "5a0c8feccf8ca5e31d70f3787b68bc5c6c306bfe0a0afd08de64b424b7a336aa"
+      "sha256": "db66a8e0b03d9d1e78beb3da0ae058d61c98c162d8c52162f752ca185f04e2bc"
     },
     {
       "path": "scan.json",
@@ -185,7 +185,7 @@
     },
     {
       "path": "verification.md",
-      "sha256": "52a08038e1bde902183ae1f05b9fd1e8ea74a53d7a8d4ec04a5e04043ed6b589"
+      "sha256": "b9d63b80fca2677d95f4fe201eec819bebbbce2568d945b9786655d8c884a563"
     },
     {
       "path": "workbench-demo-desktop-1280.png",
@@ -212,8 +212,8 @@
       "sha256": "5db735677d040c4ee51b6e98296beca6f08385b3cd5019d46c0eac34feec64f7"
     }
   ],
-  "frozenUtc": "2026-10-18T06:58:30.365453+00:00",
+  "frozenUtc": "2026-10-18T07:37:24.937376+00:00",
   "kind": "verification-evidence-freeze",
-  "sourceRunId": "b0c0e3a1dcf8d55652ce050c206400747068075e0134dfe6ec63c76d1e253bd9",
+  "sourceRunId": "83c44b665a32e7d049fa355e1f8cb2b877c82ac1d074b390d79eee9e045aff80",
   "workspace": "docs/evidence/_run/restyle-frontend-visual-language"
 }

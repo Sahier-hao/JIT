@@ -17,6 +17,62 @@
 
 `browser-results.json` / `browser-results-acceptance.json` / `unit-results.json` 是这三批运行的原始报告。
 
+## 合入 origin/main（dc98cd8）后的复核
+
+本分支（`restyle-frontend-visual-language`）随后与远端 `origin/main` 合入的 8 个提交
+（PR #14 提交分页与持久化、#15 从 Git 仓库采集、#16 数据集描述文件、#17 预测解释与验收链）合并，
+合并后按同一套命令重跑：
+
+| 命令 | 合并后结果 |
+|---|---|
+| `npm run typecheck` | 通过（`tsc -b` 无输出） |
+| `npm run lint` | Found 1 warning and 0 errors（81 files / 116 rules，warning 仍是既有的 `Icon.tsx`） |
+| `npm test` | **301 passed**（27 个文件）——比合并前多 3 条，来自上游新增的归因/数据集用例 |
+| `npm run build` | 通过（CSS 65.73 kB、JS 346.55 kB） |
+| `npm run test:e2e` | **76 passed**（2.5m，默认 30s） |
+| `npm run test:e2e:acceptance` | **18 passed**（1.2m） |
+
+合并带来的两处必要改动：
+
+1. `frontend/src/App.css` 是唯一冲突文件：上游新增的 `.explanation-*` 规则用硬编码色（`#4a5d7a` 等），
+   在这套令牌体系下会让炭黑主题失去对比度，因此把这几条改写成 `--fg-2`/`--fg-3`/`--line-soft`/`--risk-strong`/`--accent`。
+2. 验收 MPW-05 里两条断言写的是旧行为（结果页显示「预测解释：未支持」「该模型的真实预测解释尚未接入」）。
+   #17 之后服务端按遮挡法实时算归因，这一轮实测返回
+   `explanationStatus=supported`、`method=occlusion-mean-v1`、5 个归因项，因此断言改为：解释分区必须出现
+   `occlusion-mean-v1`、摘要必须说明「归因来自模型」、并明确「不是缺陷结论或代码定位」。归因失败的分支
+   （只有原因、不给数字）仍由单元测试覆盖。
+
+需要注意的行为变化：旧 baseline 的 `summary.limitations` 里仍留着一句「预测解释未提供」，那是产物里冻结的
+历史文字，页面不再用它当解释结论；实际解释由服务端实时计算，并附加「部分入模特征缺少训练数据均值，
+本次归因对缺失字段按零基线计算」这一条限制。
+
+### 后端与项目验证链（同一轮）
+
+| 命令 | 结果 |
+|---|---|
+| `pytest --basetemp=.cache/final-verification`（backend） | **274 passed / 2 failed / 1 skipped**（127s） |
+| `python -m jit_baseline.cli verify` | **passed: true**（真实产物重算与复现口径一致） |
+| `python -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction` | **passed: true**（tolerance, atol 1e-8） |
+| `openspec validate --specs --strict --no-interactive` | **13 passed, 0 failed** |
+
+两条失败与一条跳过都是本机环境限制，不是代码问题：`tests/test_verification_guard.py` 两条需要 PowerShell 7
+（本机只有 Windows PowerShell 5.1，`shutil.which('pwsh')` 为 `None`，`verify.ps1` 也因此在最后一步起不来）；
+`tests/test_openapi.py` 因未装 PyYAML 跳过。
+
+`--basetemp` 必须落在仓库内（如 `.cache/final-verification`，与 `frontend/scripts/verify.ps1:63`、
+`backend/README.md:236/246/292` 一致）：`evidence.freeze` 会用 `Path.relative_to(PROJECT)` 记录工作区的
+相对路径，临时目录在系统 TMP 下时 9 条证据用例会以 `ValueError: … is not in the subpath of …` 失败。
+
+链中唯一没重跑的是 `npm ci`：合并没有改动 `frontend/package.json` 与 `package-lock.json`
+（`git diff 4f5fc66..HEAD -- frontend/package*.json` 为空），现有 `node_modules` 就是同一份依赖解析结果。
+
+合并后出现过的两条环境性失败及处置：① `test_real_dataset_commits_page_stays_bounded` 因本机目录库从未
+导入提交记录而返回 503，按 `backend/README.md:85-91` 跑 `register-dataset` 与
+`import-dataset --manifest data/datasets/openstack-six-v1/openstack-six-v1-2011-11-29_2014-02-28.json`
+（导入 **12374** 条提交）后通过；② `test_prediction_latency_p95_stays_under_budget` 在同时跑 dev server 与
+Playwright 时实测 P95 **262.6 ms** 超 250 ms 预算，机器空闲后复测通过——是并发噪声，不是归因计算
+（单条 6 次遮挡推理）引入的回归。
+
 ## 可见行数实测（工作台，提示条与基线记录都在页面上）
 
 | 视口 | 历史回放 | 演示模式 | 单视口 |

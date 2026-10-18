@@ -230,8 +230,12 @@ test('MPW-05/06/07/08 六字段表单与粘贴导入提交真实预测并进入�
     await expect(page.locator('.result-grid')).toContainText(value)
   }
   await expect(page.locator('.result-section').first()).toContainText(createdBatchId as string)
-  await expect(page.getByText(/预测解释：未支持/).first()).toBeVisible()
-  await expect(page.getByText(/该模型的真实预测解释尚未接入/).first()).toBeVisible()
+  // 预测解释自 origin/main #17 起由服务端按遮挡法实时计算：这一轮要求真的给出归因，
+  // 并且同一段文字必须交代它是模型敏感度、不是缺陷结论（旧的「未支持」分支只在归因失败时出现）。
+  const explanation = page.locator('.result-section').filter({ has: page.getByText('预测解释', { exact: true }) })
+  await expect(explanation).toContainText('occlusion-mean-v1')
+  await expect(explanation.locator('.explanation-summary')).toContainText(/归因来自模型/)
+  await expect(explanation).toContainText(/不是缺陷结论或代码定位/)
   await expect(page.getByText(/未验证在线仓库效果/).first()).toBeVisible()
 })
 
