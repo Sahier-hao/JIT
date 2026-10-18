@@ -1,0 +1,14 @@
+
+> jit-review-workbench@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 51 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.26 kB │ gzip:   0.71 kB
+dist/assets/index-BF2P0OzI.css   76.00 kB │ gzip:  13.74 kB
+dist/assets/index-BXdFylee.js   387.78 kB │ gzip: 116.44 kB
+
+✓ built in 1.69s

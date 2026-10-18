@@ -1,0 +1,89 @@
+{
+  "copiedFromWorkspace": [
+    "audit-summary.json",
+    "browser-audit.log",
+    "browser-rerun.log",
+    "browser-results.json",
+    "build.log",
+    "checks.json",
+    "closeout-report.md",
+    "initial-spec-validation.log",
+    "lint.log",
+    "source-after.json",
+    "source-before.json",
+    "test.log",
+    "typecheck.log",
+    "unit-rerun.log",
+    "unit-results.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 15,
+  "files": [
+    {
+      "path": "audit-summary.json",
+      "sha256": "80c8b4d3015d7e133749e5ec10306bf037d350a82c7206c636b1d0b0c7037e2c"
+    },
+    {
+      "path": "browser-audit.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser-rerun.log",
+      "sha256": "b3a22f8403fa7a41b86d6facdbcf7d0ff1a1e01d586ef1c4a20c105c8fa6039e"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "fce9d590abad67318a800c72a7adde23b38930afd65f69269777da01ab503519"
+    },
+    {
+      "path": "build.log",
+      "sha256": "5d3827c23df35276e3b4d04ce1ead5e2b19f28a852063da52109b2dbe9287dac"
+    },
+    {
+      "path": "checks.json",
+      "sha256": "34e915c289f972bb27fdb20df26a6e1df25c6cf57afaab2ba75a07e819698d6f"
+    },
+    {
+      "path": "closeout-report.md",
+      "sha256": "03a8b685d07116604e37235c5351c63c83ca82b6cd4440256833039b7b5ee75b"
+    },
+    {
+      "path": "initial-spec-validation.log",
+      "sha256": "d28870fb210101ca84b9f7db81acfc946c0bfcd2e144bb0fd664b87eced2deaa"
+    },
+    {
+      "path": "lint.log",
+      "sha256": "8c652bb67085e707d918a971a7c7eb288e0b2aac8045790cc346230a83ee84a6"
+    },
+    {
+      "path": "source-after.json",
+      "sha256": "fa701ebebf19786838b64f93d5ef90d9fbaeca0f268e77613a686168b3b63735"
+    },
+    {
+      "path": "source-before.json",
+      "sha256": "0d51527c64c918fa564d66a80a1985176bf75b913bd4f2900d4fe5df880ff33e"
+    },
+    {
+      "path": "test.log",
+      "sha256": "c38e5f785748bdcf97d8c4b9b4da7183b79ded6ce64fe99da8d5ad747e1dc658"
+    },
+    {
+      "path": "typecheck.log",
+      "sha256": "3f51a9dda6b72d52a9f098dd063385a0da4e87c8a435dd0bc08bdf1e0d3bee50"
+    },
+    {
+      "path": "unit-rerun.log",
+      "sha256": "877f001b327a4a009246f319b13bf56868d6c7257f04af735b4c2e4995c473b6"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "8913b2ebc75bd3d68619ec7231247f45090f402e47d1243546cf5f50714dbdd5"
+    }
+  ],
+  "frozenUtc": "2026-10-18T16:47:26.657521+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "b7f13dba18bce837bc9b76d6bac7c995fed80ef888cb9463b4f693135c95121b",
+  "workspace": "docs/evidence/_run/closeout-20261019/frontend"
+}

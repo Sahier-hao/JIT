@@ -1,0 +1,64 @@
+[WebServer] INFO:     Started server process [35544]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[WebServer] (node:1148) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 28 tests using 2 workers
+
+(node:35652) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28096) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [desktop-1280] › e2e\accessibility.spec.ts:44:1 › A11-2/3/5 纯键盘链路、焦点返回与详情滚动 (2.3s)
+  ok  2 [desktop-1280] › e2e\accessibility.spec.ts:26:1 › A11-1 列表、详情与清单无页面级横向溢出 (6.9s)
+  ok  4 [desktop-1280] › e2e\accessibility.spec.ts:111:1 › A11-6 趋势视图无横向溢出、空值桶有文字说明且文本视图可聚焦 (908ms)
+  ok  3 [desktop-1280] › e2e\accessibility.spec.ts:88:1 › A11-4 模式与错误状态有可读文字 (5.7s)
+  ok  5 [desktop-1280] › e2e\repository-sync.spec.ts:23:1 › 没有凭据时数据来源页说明为什么不能同步 (734ms)
+[WebServer] INFO jit.catalog operation=GET role=member requestId=7f0ce433-90a9-4aa2-a2a0-b9ce6554f197 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=29c39552-fe7b-4c49-812c-8849459c68d9 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=POST role=member requestId=5f5c6036-b3a9-43e9-ab27-ce1082df26af status=202 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=7af6c28b-0693-4b8c-9443-57d3071574bf status=200 modelId=None runId=None batchId=None
+  ok  7 [desktop-1280] › e2e\workbench.spec.ts:12:1 › CRR-01/02/03/07/08/12 桌面完整评审链路 (2.1s)
+[WebServer] INFO jit.catalog operation=GET role=member requestId=d8c55b5e-cb03-44d2-89ec-5113d5f51d37 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=0292a553-d153-4acb-a68c-c09a273b966a status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=ff78b531-765d-4e1d-86ba-a8e95e224c0b status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=01193e2c-6f60-43d3-a509-942ea1accd62 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=0032d6ea-8e70-4189-9c99-70fc222dbd04 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=2ffbfea1-7728-4209-ac01-239fc2279e80 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=05a0bee0-dc13-412d-9a9a-dd6faf6ba5f0 status=200 modelId=None runId=None batchId=None
+  ok  8 [desktop-1280] › e2e\workbench.spec.ts:50:1 › CRR-04/05/06/07 查询、日期、排序与详情上下文 (1.6s)
+[WebServer] INFO jit.catalog operation=GET role=member requestId=a261c5c4-f79a-4ad5-aa7d-0ffd3a94fa1c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=02f1fb86-cb23-4071-8526-9693d4e83b5a status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=ed0874fd-d335-47a8-b222-95dfde3aab28 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=20355d54-a2d1-4bcc-bb1c-1bf1315b5f8e status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET role=member requestId=03f77bbc-aaca-462d-b0c6-bfb690022072 status=200 modelId=None runId=None batchId=None
+  ok  6 [desktop-1280] › e2e\repository-sync.spec.ts:31:1 › 从数据来源页发起同步，轮询到完成，工作台出现仓库数据与徽章 (4.8s)
+  ok  9 [desktop-1280] › e2e\workbench.spec.ts:84:1 › CRR-12 仅键盘完整操作及可见焦点 (1.8s)
+  ok 10 [desktop-1280] › e2e\workbench.spec.ts:118:1 › CRR-11 加载可见、失败重试、空数据区分 (1.3s)
+  ok 11 [desktop-1280] › e2e\workbench.spec.ts:147:3 › CRR-01/11 缺少来源不显示猜测记录 (805ms)
+  ok 12 [desktop-1280] › e2e\workbench.spec.ts:147:3 › CRR-01/11 重复标识不显示猜测记录 (771ms)
+  ok 13 [desktop-1280] › e2e\workbench.spec.ts:147:3 › CRR-01/11 无效时间不显示猜测记录 (872ms)
+  ok 14 [desktop-1280] › e2e\workbench.spec.ts:156:1 › CRR-03 无效风险有文字反馈且排在有效分数之后 (970ms)
+(node:704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7924) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 16 [desktop-1440] › e2e\accessibility.spec.ts:44:1 › A11-2/3/5 纯键盘链路、焦点返回与详情滚动 (2.2s)
+  ok 15 [desktop-1440] › e2e\accessibility.spec.ts:26:1 › A11-1 列表、详情与清单无页面级横向溢出 (5.8s)
+  ok 18 [desktop-1440] › e2e\accessibility.spec.ts:111:1 › A11-6 趋势视图无横向溢出、空值桶有文字说明且文本视图可聚焦 (805ms)
+  ok 17 [desktop-1440] › e2e\accessibility.spec.ts:88:1 › A11-4 模式与错误状态有可读文字 (4.9s)
+  ok 19 [desktop-1440] › e2e\repository-sync.spec.ts:23:1 › 没有凭据时数据来源页说明为什么不能同步 (727ms)
+  -  20 [desktop-1440] › e2e\repository-sync.spec.ts:31:1 › 从数据来源页发起同步，轮询到完成，工作台出现仓库数据与徽章
+  ok 22 [desktop-1440] › e2e\workbench.spec.ts:50:1 › CRR-04/05/06/07 查询、日期、排序与详情上下文 (1.7s)
+  ok 21 [desktop-1440] › e2e\workbench.spec.ts:12:1 › CRR-01/02/03/07/08/12 桌面完整评审链路 (2.2s)
+  ok 23 [desktop-1440] › e2e\workbench.spec.ts:84:1 › CRR-12 仅键盘完整操作及可见焦点 (1.7s)
+  ok 24 [desktop-1440] › e2e\workbench.spec.ts:118:1 › CRR-11 加载可见、失败重试、空数据区分 (1.3s)
+  ok 25 [desktop-1440] › e2e\workbench.spec.ts:147:3 › CRR-01/11 缺少来源不显示猜测记录 (787ms)
+  ok 26 [desktop-1440] › e2e\workbench.spec.ts:147:3 › CRR-01/11 重复标识不显示猜测记录 (816ms)
+  ok 27 [desktop-1440] › e2e\workbench.spec.ts:147:3 › CRR-01/11 无效时间不显示猜测记录 (711ms)
+  ok 28 [desktop-1440] › e2e\workbench.spec.ts:156:1 › CRR-03 无效风险有文字反馈且排在有效分数之后 (815ms)
+
+  1 skipped
+  27 passed (43.1s)

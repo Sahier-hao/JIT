@@ -1,0 +1,22 @@
+{
+  "kind": "isolated-contract-probes",
+  "fixtureOnly": true,
+  "timeTieOrder": {
+    "specExpected": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+    ],
+    "actual": [
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "matchesDelta": false
+  },
+  "failedBranchSwitch": {
+    "successfulViewBranch": "main",
+    "repositoryDefaultBranch": "release",
+    "explicitViewBranchFieldPresent": false,
+    "successfulViewPreserved": true
+  },
+  "limitations": "No network, repository collection, training or model-effect measurement was performed."
+}
