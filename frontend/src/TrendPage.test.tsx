@@ -288,3 +288,29 @@ it('DTD-07 下钻范围由桶自身端点派生：跨月、跨年与非月粒度
   await user.click(screen.getByRole('button', { name: '查看该桶提交：2012-01-15 至 2012-01-28' }))
   expect(navigate).toHaveBeenLastCalledWith('?start=2012-01-15&end=2012-01-28')
 })
+
+it('DTD-06 图表为双序列分离：柱有独立纵轴、刻度画在轴外、标记为方块', async () => {
+  // 默认夹具的 test 分区落在桶域之外，分区带会被裁成 0 宽并过滤掉，这里用范围对齐的夹具
+  stubBatch(trendFixtureWithAlignedSplit())
+  render(<TrendPage />)
+  await screen.findByRole('table', { name: /历史趋势文本视图/ })
+
+  const chart = document.querySelector('.trend-chart') as SVGSVGElement
+  expect(chart).not.toBeNull()
+
+  // 上区放提交数（柱），下区放比例/风险（折线）：同一张图里两套纵轴刻度
+  expect(chart.querySelectorAll('.trend-bar').length).toBeGreaterThan(0)
+  expect(chart.querySelectorAll('rect.trend-dot-observed').length).toBeGreaterThan(0)
+
+  // 刻度画在轴外：短刻度线的数量应覆盖两套纵轴（3 + 3）与横轴标签
+  expect(chart.querySelectorAll('.trend-tick').length).toBeGreaterThanOrEqual(6)
+
+  // 标记为方块而非圆点：观测用实心 rect，估计用空心 rect
+  expect(chart.querySelectorAll('rect.trend-dot-observed').length).toBeGreaterThan(0)
+  expect(chart.querySelectorAll('rect.trend-dot-estimated').length).toBeGreaterThan(0)
+  expect(chart.querySelectorAll('circle.trend-dot').length).toBe(0)
+
+  // 分区带：测试分区实底、其余斜线纹理（纹理承载"不参与估计"的语义）
+  expect(chart.querySelector('.trend-band-test')).not.toBeNull()
+  expect(chart.querySelector('.trend-band-hatch')).not.toBeNull()
+})

@@ -101,8 +101,13 @@ test('CRR-12 仅键盘完整操作及可见焦点', async ({ page }, info) => {
   expect(await content.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe('none')
   await page.keyboard.press('End')
   await expect.poll(() => content.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
-  await page.keyboard.press('Tab')
-  await expect(page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })).toBeFocused()
+  // 详情内新增了「来源与局限」折叠项，Tab 会多经过它一次；这里按"可达"而非固定站数断言
+  const addButton = page.getByRole('dialog').getByRole('button', { name: '加入清单', exact: true })
+  for (let count = 0; count < 4; count++) {
+    if (await addButton.evaluate(element => element === document.activeElement)) break
+    await page.keyboard.press('Tab')
+  }
+  await expect(addButton).toBeFocused()
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
   await expect(trigger).toBeFocused()

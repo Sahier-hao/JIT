@@ -22,14 +22,60 @@ const KIND_TITLES: Record<FailureKind, string> = {
   unknown: '请求失败',
 }
 
-export function LoadingNotice({ label }: { label: string }) {
+/**
+ * 加载态：骨架 + 一句可读说明（任务 5.5）。
+ *
+ * `prefix` 为真时补一枚"正在读取"的标签；页面级的提示自己就写全了整句时
+ * （例如「正在读取真实历史提交」）关掉它，避免同一句话读两遍。
+ */
+export function LoadingNotice({
+  label,
+  note,
+  prefix = true,
+}: {
+  label: string
+  note?: string
+  prefix?: boolean
+}) {
   return (
     <div className="notice notice-loading" role="status">
-      <Icon name="info" size={17} />
+      <Icon name="info" size={16} />
       <div>
-        <strong>正在读取</strong>
+        {prefix ? <strong>正在读取</strong> : null}
         <span>{label}</span>
+        {note === undefined ? null : <span className="notice-note">{note}</span>}
+        <div className="skeleton-lines" aria-hidden="true">
+          {[0, 1, 2].map((index) => (
+            <span key={index} className="skeleton-line" data-line={index} />
+          ))}
+        </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * 空态与"不可用"态的唯一实现（任务 5.5）：左对齐的说明块，取代旧的居中图标空状态。
+ *
+ * 两种语气：`empty` 表示"这里确实没有内容"，`alert` 表示"内容读不到/不可用"并进入可读的
+ * alert 区域。标题始终是真实文字，状态不只靠颜色区分。
+ */
+export function EmptyState({
+  title,
+  description,
+  tone = 'empty',
+  children,
+}: {
+  title: string
+  description: ReactNode
+  tone?: 'empty' | 'alert'
+  children?: ReactNode
+}) {
+  return (
+    <div className="state-block" data-state={tone} role={tone === 'alert' ? 'alert' : undefined}>
+      <h2 className="state-block-title">{title}</h2>
+      <p className="state-block-note">{description}</p>
+      {children === undefined ? null : <div className="state-block-actions">{children}</div>}
     </div>
   )
 }

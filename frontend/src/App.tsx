@@ -6,6 +6,7 @@ import { AppShell, UnknownRoute, type ShellProps } from './AppShell'
 import { RepositorySourcesPage } from './RepositorySourcesPage'
 import { CredentialProvider } from './credentials'
 import { useCredential } from './credentialContext'
+import { EmptyState, LoadingNotice } from './Feedback'
 import { ModelsPage } from './ModelsPage'
 import { PredictPage } from './PredictPage'
 import { PredictionsPage } from './PredictionsPage'
@@ -20,7 +21,7 @@ import { restoreShortlist, saveShortlist } from './shortlist'
 import './App.css'
 
 function Empty({ title, description, children }: { title: string; description: string; children?: ReactNode }) {
-  return <div className="empty-state"><div className="empty-mark"><Icon name="list" size={28} /></div><h2>{title}</h2><p>{description}</p>{children}</div>
+  return <EmptyState title={title} description={description}>{children}</EmptyState>
 }
 
 function CommitTable({ records, selected, shortlist, listView, onOpen, onAdd, onRemove, modelRisk, truncate }: {
@@ -29,7 +30,7 @@ function CommitTable({ records, selected, shortlist, listView, onOpen, onAdd, on
 }) {
   return <div className="table-wrap"><table>
     <caption className="sr-only">{listView ? '提交风险列表' : '优先审查清单提交'}</caption>
-    <thead><tr><th>提交 / 改动</th><th>{modelRisk ? '模型风险' : '示例风险'}</th><th>提交时间</th><th className="numeric">变更行</th><th className="numeric">文件</th><th className="action-head">审查选择</th></tr></thead>
+    <thead><tr><th>提交 / 改动</th><th className="th-risk">{modelRisk ? '模型风险' : '示例风险'}</th><th>提交时间</th><th className="numeric">变更行</th><th className="numeric">文件</th><th className="action-head">审查选择</th></tr></thead>
     <tbody>{records.map(record => {
       const time = displayTime(record.time)
       return <tr key={record.id} className={selected === record.id ? 'selected-row' : ''}>
@@ -40,6 +41,45 @@ function CommitTable({ records, selected, shortlist, listView, onOpen, onAdd, on
       <td className="action-cell">{listView ? <button className="row-action" aria-label={shortlist.includes(record.id) ? `${record.id} 已在清单` : `加入 ${record.id} 到清单`} disabled={shortlist.includes(record.id)} onClick={() => onAdd(record.id)}><Icon name={shortlist.includes(record.id) ? 'check' : 'plus'} size={14} />{shortlist.includes(record.id) ? '已加入' : '加入'}</button> : <button className="row-action remove" aria-label={`移除 ${record.id}`} onClick={() => onRemove(record.id)}>移除</button>}</td>
     </tr>})}</tbody>
   </table></div>
+}
+
+/** 页面头部：元信息行 + 标题 + 导语 + 右侧计数，与内容之间用 2px 粗线分隔。 */
+function PageHead({ data, listView, count, total }: { data: Dataset; listView: boolean; count: number; total: number }) {
+  const historical = data.mode === 'historical'
+  const repository = data.mode === 'repository'
+  const real = data.mode !== 'demo'
+  const label = repository ? '仓库同步数据' : historical ? '真实历史回放' : '演示模式'
+  const strategy = data.repository?.modelStrategy === 'repository-trained' ? '本仓库数据训练' : data.repository?.modelStrategy === 'generic-model' ? '现成通用模型' : '模型来源未记录'
+  return <header className="page-head">
+    <div className="page-head-main">
+      <p className="meta">
+        <span className="meta-item">{data.project}</span>
+        <span className="meta-sep" aria-hidden="true">/</span>
+        <span className="mode-tag" data-tone={real ? 'info' : 'warn'}><i className="status-dot" />{label}</span>
+        <span className="meta-sep" aria-hidden="true">/</span>
+        <code className="meta-item">{data.version}</code>
+      </p>
+      <h1>{listView ? '提交评审' : '优先审查清单'}</h1>
+      <p className="lede">{listView ? (repository ? '本次同步的提交按模型风险排序；最近一段提交还没有标签，只能打分、不能立刻验准。' : '从提交风险出发，确定下一次审查的重点。') : '保留值得优先核对的改动，按加入顺序安排审查。'}</p>
+      {repository
+        ? <p className="run-context"><strong>{strategy}</strong><span>{data.repository?.degradeReason ? ' · 已降级' : ''}同步 <code>{data.repository?.syncId}</code></span></p>
+        : historical ? <p className="run-context"><strong>{data.model?.name}</strong><span>运行 <code>{data.runId}</code></span></p> : null}
+    </div>
+    <p className="stat"><strong>{listView ? total.toLocaleString() : count.toLocaleString()}</strong><span>{listView ? (repository ? '条同步提交' : historical ? '条测试提交' : '条演示提交') : '条审查选择'}</span></p>
+  </header>
+}
+
+/** 数据来源说明：真实数据（历史回放或仓库同步）与演示数据的二分决定语气与图标。 */
+function SourceNotice({ data }: { data: Dataset }) {
+  const historical = data.mode === 'historical'
+  const repository = data.mode === 'repository'
+  return <div className="notice" data-tone={historical || repository ? 'info' : 'warn'}>
+    <Icon name={historical || repository ? 'info' : 'warning'} size={16} />
+    <div>
+      <strong>{repository ? '仓库同步数据 · 模型估计' : historical ? '公开历史数据 · 模型估计' : '当前为演示数据'}</strong>
+      <span>{repository ? '标签由简化 SZZ 从后续修复提交倒推；最近一段提交没有被修复过，因此没有标签。风险不等于已确认缺陷。' : historical ? '回顾性评价；发布者历史观测标签，未验证当时标签可获得性。风险不等于已确认缺陷。' : '风险分数和解释均为人工示例，不表示真实预测或已确认缺陷。'}</span>
+    </div>
+  </div>
 }
 
 function Workbench({ data, view, onView, selection, onSelection, syncId, token }: {
@@ -97,23 +137,24 @@ function Workbench({ data, view, onView, selection, onSelection, syncId, token }
   function closeDetail() { setSelected(null); returnFocus.current?.focus() }
   function changeView(next: string) { onView(next); setSelected(null) }
   function changeShortlist(ids: string[]) { onSelection({ ids, warning: saveShortlist(data, ids) }) }
+  // 仓库模式的列表只装着一页，加入清单不能拿当前页判断存在；服务端能取到就说明这条还在。
   function add(id: string) { if (!shortlist.includes(id) && (repository || data.records.some(record => record.id === id))) changeShortlist([...shortlist, id]) }
-  return <>
-      <header className="topbar"><div><span className="project-symbol"><Icon name="project" /></span><strong>{data.project}</strong><Icon name="chevron" size={14} /><span>{listView ? '提交工作台' : '审查清单'}</span></div><div className="source-meta"><span className={real ? 'demo-badge historical-badge' : 'demo-badge'}><span />{repository ? '仓库同步数据' : historical ? '真实历史回放' : '演示模式'}</span><code title={data.version}>{data.version}</code></div></header>
-      {repository ? <div className="run-context"><span>{data.repository?.modelStrategy === 'repository-trained' ? '本仓库数据训练' : data.repository?.modelStrategy === 'generic-model' ? '现成通用模型' : '模型来源未记录'}{data.repository?.degradeReason ? ' · 已降级' : ''}</span><span>同步 <code title={data.repository?.syncId}>{data.repository?.syncId}</code></span></div> : historical ? <div className="run-context"><span>{data.model?.name}</span><span>运行 <code title={data.runId}>{data.runId}</code></span></div> : null}
-      <div className="page-heading"><div><h1>{listView ? '提交评审' : '优先审查清单'}</h1><p className="page-intro">{listView ? (repository ? '本次同步的提交按模型风险排序；最近一段提交还没有标签，只能打分、不能立刻验准。' : '从提交风险出发，确定下一次审查的重点。') : '保留值得优先核对的改动，按加入顺序安排审查。'}</p></div><div className="record-count"><Icon name={listView ? 'list' : 'shortlist'} size={20} /><div><strong>{total.toLocaleString()}</strong><span>{listView ? (repository ? '条同步提交' : historical ? '条测试提交' : '条演示提交') : '条审查选择'}</span></div></div></div>
-      <div className={real ? 'demo-notice historical-notice' : 'demo-notice'}><Icon name="info" size={17} /><div><strong>{repository ? '仓库同步数据 · 模型估计' : historical ? '公开历史数据 · 模型估计' : '当前为演示数据'}</strong><span>{repository ? '标签由简化 SZZ 从后续修复提交倒推；最近一段提交没有被修复过，因此没有标签。风险不等于已确认缺陷。' : historical ? '回顾性评价；发布者历史观测标签，未验证当时标签可获得性。风险不等于已确认缺陷。' : '风险分数和解释均为人工示例，不表示真实预测或已确认缺陷。'}</span></div></div>
+  return <div className="workbench">
+      <PageHead data={data} listView={listView} count={shortlist.length} total={total} />
+
+      <SourceNotice data={data} />
+
       <BaselineRecord data={data} />
-      {listView && repository && page.total > 0 ? <nav className="pager" aria-label="提交分页">
+      {listView && repository && total > 0 ? <nav className="pager" aria-label="提交分页">
         <button className="clear-button" disabled={offset === 0 || page.state === 'loading'} onClick={() => setOffset(Math.max(0, offset - pageSize))}>上一页</button>
-        <span role="status">第 {(offset + 1).toLocaleString()}–{Math.min(offset + pageSize, page.total).toLocaleString()} 条，共 {page.total.toLocaleString()} 条</span>
-        <button className="clear-button" disabled={offset + pageSize >= page.total || page.state === 'loading'} onClick={() => setOffset(offset + pageSize)}>下一页</button>
+        <span role="status">第 {(offset + 1).toLocaleString()}–{Math.min(offset + pageSize, total).toLocaleString()} 条，共 {total.toLocaleString()} 条</span>
+        <button className="clear-button" disabled={offset + pageSize >= total || page.state === 'loading'} onClick={() => setOffset(offset + pageSize)}>下一页</button>
       </nav> : null}
       {!listView && repository && shortlistRecords.failed.length > 0 ? <p className="warning" role="alert">清单中有 {shortlistRecords.failed.length.toLocaleString()} 条记录不在这次同步里（可能来自其他作业），已跳过显示；可在清单中移除。</p> : null}
       {selection.warning ? <p className="warning storage-warning" role="alert">{selection.warning}</p> : null}
       {seed.ignored && listView ? <p className="status-note status-warn" role="status">地址中的日期范围无效，已忽略；当前按未设置日期显示。</p> : null}
       {listView ? <section className="toolbar" aria-label="提交查询">
-        <label className="search-field">提交标识搜索<span className="input-wrap"><Icon name="search" size={17} /><input aria-label="提交标识搜索" placeholder={real ? '搜索完整标识或片段' : '搜索提交标识，如 demo-0001'} value={queryState.draft.search} onChange={event => updateQuery({ search: event.target.value })} /></span></label>
+        <label className="search-field">提交标识搜索<span className="input-wrap"><Icon name="search" size={16} /><input aria-label="提交标识搜索" placeholder={real ? '搜索完整标识或片段' : '搜索提交标识，如 demo-0001'} value={queryState.draft.search} onChange={event => updateQuery({ search: event.target.value })} /></span></label>
         <label>起始日期<input aria-label="起始日期" inputMode="numeric" placeholder="YYYY-MM-DD" value={queryState.draft.start} aria-invalid={!!queryState.error} aria-describedby={queryState.error ? 'date-error' : undefined} onChange={event => updateQuery({ start: event.target.value })} /></label>
         <label>结束日期<input aria-label="结束日期" inputMode="numeric" placeholder="YYYY-MM-DD" value={queryState.draft.end} aria-invalid={!!queryState.error} aria-describedby={queryState.error ? 'date-error' : undefined} onChange={event => updateQuery({ end: event.target.value })} /></label>
         <label>排序<select aria-label="排序" value={queryState.draft.sort} onChange={event => updateQuery({ sort: event.target.value })}><option value="risk">风险从高到低</option><option value="time">时间从新到旧</option></select></label>
@@ -134,8 +175,8 @@ function Workbench({ data, view, onView, selection, onSelection, syncId, token }
         </section>
         {selected ? <CommitDetail data={data} id={selected} record={visible.find(record => record.id === selected)} added={shortlist.includes(selected)} onAdd={() => add(selected)} onClose={closeDetail} /> : null}
       </div>
-      <footer className="page-foot"><span>JIT Review</span><span>{repository ? '仓库同步批次 · 模型估计' : historical ? (data.summary?.featureSchema ? `历史测试批次 · ${data.summary.featureSchema.name} 基线` : '历史测试批次 · 六字段基线') : '示例数据'} · 个人审查选择</span></footer>
-  </>
+      <p className="page-foot foot">{repository ? `仓库同步批次 · 模型估计` : historical ? (data.summary?.featureSchema ? `历史测试批次 · ${data.summary.featureSchema.name} 基线` : '历史测试批次 · 六字段基线') : '示例数据'} · 个人审查选择</p>
+  </div>
 }
 
 function ModeResource({ loader, mode, workbench, syncId, token }: { loader: Loader; mode: Mode; workbench: WorkbenchState; syncId: string | null; token: string }) {
@@ -143,8 +184,10 @@ function ModeResource({ loader, mode, workbench, syncId, token }: { loader: Load
   const label = mode === 'repository' ? '仓库同步数据' : mode === 'historical' ? '真实历史回放' : '演示模式'
   if (resource.state === 'ready') return <Workbench key={contextKey(resource.data)} data={resource.data} {...workbench} syncId={syncId} token={token} />
   return <>
-    <header className="topbar">JIT · 提交评审 · {label}</header>
-    {resource.state === 'loading' ? <div role="status"><Empty title={mode === 'repository' ? '正在读取同步作业与风险列表' : mode === 'historical' ? '正在读取真实历史提交' : '正在读取演示提交'} description="请稍候，读取完成后显示项目与数据版本。" /></div> : <div role="alert"><Empty title="数据不可用" description={resource.error}><button className="primary-button" onClick={retry}>重新加载</button></Empty></div>}
+    <header className="page-head"><div className="page-head-main"><p className="meta"><span className="meta-item">JIT · 提交评审</span></p><h1>{label}</h1></div></header>
+    {resource.state === 'loading'
+      ? <LoadingNotice prefix={false} label={mode === 'repository' ? '正在读取同步作业与风险列表' : mode === 'historical' ? '正在读取真实历史提交' : '正在读取演示提交'} note="请稍候，读取完成后显示项目与数据版本。" />
+      : <EmptyState tone="alert" title="数据不可用" description={resource.error}><button className="primary-button" onClick={retry}>重新加载</button></EmptyState>}
   </>
 }
 
@@ -154,13 +197,13 @@ function ModeResource({ loader, mode, workbench, syncId, token }: { loader: Load
  */
 function RepositoryGate({ reason, navigate }: { reason: 'credential' | 'sync'; navigate: (route: Route) => void }) {
   return <>
-    <header className="topbar">JIT · 提交评审 · 仓库同步数据</header>
-    <div className="empty-state" role="status">
-      <div className="empty-mark"><Icon name="project" size={28} /></div>
-      <h2>{reason === 'credential' ? '需要团队凭据' : '还没有选择同步作业'}</h2>
-      <p>{reason === 'credential' ? '仓库同步的提交与风险受成员凭据保护；在左侧输入凭据后再回到这里。' : '先同步一个公开仓库，或在数据来源页选择一个已完成的同步。'}</p>
+    <header className="page-head"><div className="page-head-main"><p className="meta"><span className="meta-item">JIT · 提交评审</span></p><h1>仓库同步数据</h1></div></header>
+    <EmptyState
+      title={reason === 'credential' ? '需要团队凭据' : '还没有选择同步作业'}
+      description={reason === 'credential' ? '仓库同步的提交与风险受成员凭据保护；在左侧输入凭据后再回到这里。' : '先同步一个公开仓库，或在数据来源页选择一个已完成的同步。'}
+    >
       <button className="primary-button" onClick={() => navigate({ name: 'sources' })}>去数据来源</button>
-    </div>
+    </EmptyState>
   </>
 }
 

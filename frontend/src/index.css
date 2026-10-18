@@ -1,4 +1,11 @@
-:root { font-family: 'Bahnschrift', 'Microsoft YaHei UI', 'PingFang SC', sans-serif; font-size: 14px; line-height: 1.5; color: #223046; background: #f4f6fa; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; --paper: #f4f6fa; --ink: #223046; --muted: #6b778b; --line: #e4e9f1; --accent: #345ac5; --mono: 'Cascadia Code', 'Consolas', monospace; }
-* { box-sizing: border-box; }body { margin: 0; min-width: 320px; }button, input, select { font: inherit; }button { cursor: pointer; }button:disabled { cursor: default; }:focus-visible { outline: 3px solid #4775e6; outline-offset: 3px; }code, .numeric, .time-cell, .risk-number { font-family: var(--mono); }::selection { background: #dbe6fc; }svg { flex-shrink: 0; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+/**
+ * 样式入口：只做聚合，具体规则在各层文件里。
+ *
+ * 分层（design D2）：tokens（变量）→ base（重置与排版）→ components（材料）→ pages（每页布局）。
+ */
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/components.css';
+@import './styles/shell.css';
+@import './styles/workbench.css';
+@import './styles/pages.css';

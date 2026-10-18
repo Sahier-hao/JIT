@@ -6,24 +6,16 @@
 
 /* ---------- 分区带（DTD-08） ---------- */
 
-.trend-band {
-  fill: #eef3fb;
-  stroke: none;
-}
+.trend-band { fill: none; }
 
-.trend-band-alt {
-  fill: #f6f8fc;
-}
+.trend-band-test { fill: var(--accent-soft); }
+.trend-band-hatch { fill: url(#trend-hatch); }
 
-.trend-band-edge {
-  stroke: #c6d1e2;
-  stroke-width: 1;
-  stroke-dasharray: 4 3;
-}
+.trend-band-edge { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 3; }
 
 .trend-band-label {
   font: 11px var(--mono);
-  fill: #6b778b;
+  fill: var(--fg-3);
 }
 
 .trend-partitions {
@@ -34,7 +26,7 @@
   margin: 6px 0 10px;
   padding: 0;
   font-size: 12px;
-  color: #56647b;
+  color: var(--fg-3);
 }
 
 .trend-partitions li {
@@ -45,7 +37,7 @@
 
 .trend-partitions code {
   font-size: 11px;
-  color: #42506a;
+  color: var(--fg-2);
 }
 
 /* ---------- 洞察面板（DTD-09） ---------- */
@@ -62,19 +54,19 @@
   margin: 0 0 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #354c6d;
+  color: var(--accent);
 }
 
 .trend-insight-title span {
   font-size: 11px;
   font-weight: 400;
-  color: #8490a2;
+  color: var(--fg-3);
 }
 
 .trend-insight-headline {
   margin: 0 0 6px;
   font-size: 14px;
-  color: #2b3d58;
+  color: var(--fg-2);
 }
 
 .trend-insight-meta {
@@ -85,9 +77,9 @@
 }
 
 .trend-insight-approx {
-  color: #8a6524;
-  background: #fff8ec;
-  border: 1px solid #eedfc3;
+  color: var(--risk-fg);
+  background: var(--canvas);
+  border: 1px solid var(--line);
   border-radius: 5px;
   padding: 1px 6px;
   font-size: 11px;
@@ -107,10 +99,10 @@
   flex-wrap: wrap;
   gap: 4px 16px;
   align-items: baseline;
-  border-top: 1px solid #edf0f6;
+  border-top: 1px solid var(--line-soft);
   padding-top: 6px;
   font-size: 12px;
-  color: #4d5f7a;
+  color: var(--fg-3);
 }
 
 .trend-insight-row:first-child {
@@ -120,7 +112,7 @@
 
 .trend-insight-row strong {
   font: 13px var(--mono);
-  color: #2b3d58;
+  color: var(--fg-2);
 }
 
 .trend-insight-row .numeric {
@@ -130,23 +122,23 @@
 /* ---------- 下钻按钮（DTD-07） ---------- */
 
 .trend-drill {
-  border: 1px solid #dce5f8;
-  background: #f1f5ff;
+  border: 1px solid var(--line-soft);
+  background: var(--canvas);
   border-radius: 5px;
   min-height: 28px;
   padding: 3px 9px;
-  color: #466cc6;
+  color: var(--fg-3);
   font-size: 12px;
   white-space: nowrap;
 }
 
 .trend-drill:hover {
-  background: #e4edff;
-  border-color: #b2c5ef;
+  background: var(--sunken);
+  border-color: var(--line);
 }
 
 .trend-drill:focus-visible {
-  outline: 2px solid #7291dc;
+  outline: 2px solid var(--line-strong);
   outline-offset: 2px;
 }
 
@@ -161,4 +153,15 @@
   .trend-insight-row {
     font-size: 11px;
   }
+}.trend-tick { stroke: var(--fg-3); stroke-width: 1; }
+.trend-axis-split { stroke: var(--line); stroke-dasharray: 2 3; }
+
+
+/* 表下统一脚注：把逐行重复的原因收敛成一句 */
+.trend-table-note {
+  margin: 6px 0 0;
+  padding: 0 2px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--fg-3);
 }

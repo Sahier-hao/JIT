@@ -1,0 +1,38 @@
+{
+  "viewport": "desktop-1280",
+  "veil": [
+    {
+      "theme": "concrete",
+      "opacity": 0.22,
+      "scrimLuminance": 0.0086,
+      "canvasLuminance": 0.9283,
+      "blendLuminance": 0.5619
+    },
+    {
+      "theme": "steel",
+      "opacity": 0.22,
+      "scrimLuminance": 0.0079,
+      "canvasLuminance": 0.9271,
+      "blendLuminance": 0.5593
+    },
+    {
+      "theme": "charcoal",
+      "opacity": 0.22,
+      "scrimLuminance": 0,
+      "canvasLuminance": 0.0051,
+      "blendLuminance": 0.0038
+    },
+    {
+      "theme": "paper",
+      "opacity": 0.22,
+      "scrimLuminance": 0.0096,
+      "canvasLuminance": 0.9553,
+      "blendLuminance": 0.5801
+    }
+  ],
+  "scrimColorWhenDrawerOpen": "rgb(0, 0, 0)",
+  "modelRowHeight": {
+    "comfortable": 55,
+    "compact": 47
+  }
+}

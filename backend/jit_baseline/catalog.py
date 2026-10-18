@@ -116,6 +116,11 @@ class ModelCatalog:
             self._check_location(directory, {'manifest': manifest, 'sha256': expected_hash}, full=True)
             config, summary = manifest['config'], snapshot.summary
             schema = schema_info(snapshot.schema.name)
+            # 方法标识：具名方法运行自己有声明，旧六字段运行没有——按协议默认值回落，不编造版本号。
+            method = config.get('algorithmVersion') or 'logistic-regression-l2-v1'
+            # 产物的模型身份：具名 schema 之前的运行 summary 里没有 model 段（见 add-classic-methods
+            # 之前的基线）。旧产物没有可展示的模型名，就用声明的方法标识，不去造一个中文名。
+            artifact_model = summary.get('model') or {'id': method, 'name': method}
             verification = {'origin': run_origin(manifest), 'verificationEnvironment': environment(),
                             'reproducibility': declared_reproducibility(manifest)[1]}
             with self.store.connection(write=True) as db:
@@ -148,8 +153,8 @@ class ModelCatalog:
                                (location_id, run_id, candidate['displayName'], *values))
                 payload = {'modelId': model_id, 'runId': run_id, 'datasetVersion': dataset_id,
                            'artifactRunId': manifest['runId'], 'artifactDatasetVersion': config['datasetVersion'],
-                           'artifactModelId': summary['model']['id'], 'name': summary['model']['name'],
-                           'method': config.get('algorithmVersion') or 'logistic-regression-l2-v1',
+                           'artifactModelId': artifact_model['id'], 'name': artifact_model['name'],
+                           'method': method,
                            'sha256': config['modelSha256'], 'featureSchemaVersion': snapshot.schema.name,
                            'featureSchema': schema, 'jsonPredictionSupported': schema['jsonPredictionSupported'],
                            'trainingEnvironment': config.get('trainingEnvironment') or config.get('environment'),

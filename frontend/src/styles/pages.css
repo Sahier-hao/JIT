@@ -1,0 +1,446 @@
+/**
+ * 其余页面（模型中心 / 新建预测 / 结果页）的版式与材料（任务 5.2–5.5）。
+ *
+ * 关键约束：`.list-panel` / `.table-wrap` / `thead` / `tbody td` 是跨页共用类，
+ * 因此这里的每一页都先挂一个页级容器类（`.models-page` / `.predict-page` / `.result-page`），
+ * 页面级规则一律限定在这个容器下；单视口布局只在 `html .main:has(.workbench)` 生效，
+ * 这三页保持常规文档流。
+ */
+
+/* ---------- 面板类容器：扁平 + hairline ---------- */
+html .model-card,
+html .candidate-section,
+html .result-card,
+html .result-section,
+html .candidate-gate,
+html .model-details,
+html .schema-details,
+html .unavailable-models {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: none;
+}
+
+/* `.model-card` 现在是表格行：边框由表格单元格提供，行本身不再画框。 */
+html tr.model-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html tr.model-card.highlighted { background: var(--accent-soft); }
+html tr.model-card.highlighted > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+/* ---------- 状态：6px 色块 + 文字（不用描边徽章） ---------- */
+html .state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+html .state-badge .state-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  background: var(--fg-3);
+}
+
+html .state-badge.state-ready { color: var(--accent); }
+html .state-badge.state-ready .state-dot { background: var(--accent); }
+html .state-badge.state-invalid { color: var(--risk-fg); }
+html .state-badge.state-invalid .state-dot { background: var(--risk); }
+
+/* ---------- 描述性列表 ---------- */
+html .model-facts,
+html .candidate-facts,
+html .identity-list { grid-template-columns: 96px minmax(0, 1fr); gap: 4px 10px; }
+
+html .model-facts dt,
+html .candidate-facts dt,
+html .identity-list dt { font-size: 12px; color: var(--fg-3); }
+
+html .model-facts dd,
+html .candidate-facts dd,
+html .identity-list dd { font-size: 12px; color: var(--fg-2); }
+
+html .model-actions,
+html .model-limits { font-size: 12px; color: var(--fg-3); }
+
+html .meta-block pre {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--sunken);
+  font-size: 11px;
+  color: var(--fg-2);
+}
+
+/* ---------- 表单 ---------- */
+html .field { font-size: 12px; color: var(--fg-3); gap: 5px; }
+
+html .field input,
+html .field textarea {
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  font-size: 12.5px;
+  color: var(--fg);
+}
+
+html .field textarea { height: auto; padding: 8px 10px; font-size: 12px; }
+
+html .field input:focus,
+html .field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+
+/* 无效输入必须看得见：风险色边框 + 左侧 3px 锚点条 + 浅风险底；
+ * 同时旁边仍有字段级文字，所以状态不只靠颜色（IP-01 / IP-06）。 */
+html .field input[aria-invalid='true'],
+html .field textarea[aria-invalid='true'] {
+  border-color: var(--risk);
+  background: var(--risk-soft);
+  box-shadow: inset 3px 0 0 var(--risk);
+}
+
+html .field input[aria-invalid='true']:focus,
+html .field textarea[aria-invalid='true']:focus {
+  box-shadow: inset 3px 0 0 var(--risk), 0 0 0 3px var(--accent-ring);
+}
+
+html .field-error { font-size: 12px; color: var(--risk-fg); }
+html .field-help { font-size: 12px; color: var(--fg-3); }
+html .field-grid { gap: 12px 18px; }
+html .json-actions { margin-top: 10px; }
+
+html .model-option {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  padding: 10px 12px;
+}
+
+html .model-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+
+html .submit-bar {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--sunken);
+  padding: 10px 12px;
+}
+
+/* ---------- 按钮与次级操作 ---------- */
+html .candidate-section button:not(.primary-button),
+html .json-actions button,
+html .submit-bar button:not(.primary-button),
+html .notice button {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--fg-2);
+  font-size: 12.5px;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+html .candidate-section button:not(.primary-button):hover:enabled,
+html .json-actions button:hover:enabled,
+html .submit-bar button:not(.primary-button):hover:enabled {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+html .primary-button {
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  background: var(--accent);
+  color: var(--fg-inv);
+  font-size: 12.5px;
+  min-height: 30px;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+html .primary-button:hover:enabled { background: var(--accent-hover); border-color: var(--accent-hover); }
+html .primary-button:disabled { background: var(--sunken); border-color: var(--line); color: var(--fg-3); }
+
+/* ---------- 页内说明块 ---------- */
+html .status-note,
+html .warning {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--sunken);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  padding: 8px 11px;
+}
+
+html .warning { border-color: var(--risk); background: var(--risk-soft); color: var(--risk-fg); }
+
+/* =====================================================================
+ * 模型中心（任务 5.2）：KPI 账本 + 表格 + 来源抽屉
+ * ===================================================================== */
+
+html .models-page .models-ledger { margin: 12px 0 10px; }
+html .models-page .models-ledger > div { padding: 5px 10px; }
+
+html .models-page .list-panel { margin: 8px 0 14px; }
+
+/* 这一页不是单视口布局：表格随内容自然增高，页面滚动，避免再叠一层内滚。 */
+html .models-page .models-table-wrap {
+  overflow: visible;
+  max-height: none;
+}
+
+/* 列宽固定：来源按钮比一行文字宽，靠自动布局会把这份宽度摊薄到溢出视口。
+ * 固定布局后每列按下面的比例/像素分配，内容自行换行，页面不会被撑宽。 */
+html .models-page .models-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+html .models-page .models-table th:nth-child(1) { width: 29%; }
+html .models-page .models-table th:nth-child(2) { width: 16%; }
+html .models-page .models-table th:nth-child(3) { width: 26%; }
+html .models-page .models-table th:nth-child(4) { width: 13%; }
+html .models-page .models-table th:nth-child(5) { width: 140px; }
+
+html .models-page tbody td {
+  height: auto;
+  padding: 7px 12px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* 密度档位也要作用到模型表：它同样是表格，不跟着切换就是"两套密度"。
+ * 行高由内容决定，所以这里只收紧纵向内边距（舒适 7px / 紧凑 3px）。 */
+html[data-density='compact'] .models-page tbody td { padding-top: 3px; padding-bottom: 3px; }
+
+html .model-name-cell { min-width: 190px; }
+html .model-name-cell strong { display: block; font-size: 13px; font-weight: 700; color: var(--fg); }
+html .model-name-cell .model-method { display: block; margin-top: 2px; font-size: 11.5px; color: var(--fg-3); }
+html .model-name-cell .model-method code { font-size: 11px; color: var(--fg-2); }
+
+html .model-schema-cell { font-size: 12px; color: var(--fg-2); }
+html .model-schema-cell code { font-size: 11.5px; color: var(--fg); }
+html .model-schema-count { display: block; margin-top: 2px; font-size: 11.5px; color: var(--fg-3); }
+
+html .model-predict-cell { font-size: 12px; color: var(--fg-2); min-width: 210px; }
+
+html .model-state-cell { white-space: nowrap; }
+
+/* 行内操作在模型表里始终可见：这不是需要 hover 才能发现操作的密集列表。 */
+html .models-page .row-action {
+  opacity: 1;
+  border-color: var(--line);
+  color: var(--fg-3);
+}
+
+html .models-page .row-action:hover:enabled { border-color: var(--accent); color: var(--accent); }
+
+html .models-page .model-alert-row td {
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+html .model-alert-body { display: flex; flex-direction: column; gap: 5px; }
+
+/* ---------- 来源与局限抽屉 ---------- */
+html .model-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 21;
+  width: 384px;
+  max-width: 100vw;
+  animation: drawer-in .22s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+/* 入场用「擦出」而不是位移：右缘抽屉若从视口外侧平移进来，动画期间几何边界会真的越出可视宽度，
+ * 成为无横向滚动断言里的假阳性。擦出只改裁剪与不透明度，边界始终在视口内。 */
+@keyframes drawer-in {
+  from { opacity: 0; clip-path: inset(0 0 0 12%); }
+  to { opacity: 1; clip-path: inset(0); }
+}
+
+html .model-drawer .drawer-body { padding: 12px 14px 18px; }
+html .drawer-model-name { margin: 0; font-size: 15px; font-weight: 700; color: var(--fg); }
+html .drawer-model-method { margin: 3px 0 0; font-size: 12px; color: var(--fg-3); }
+html .drawer-model-method code { font-size: 11px; color: var(--fg-2); }
+html .model-drawer .identity-list { margin-bottom: 14px; }
+html .model-drawer .model-actions { margin: 0; }
+
+/* =====================================================================
+ * 新建预测（任务 5.3）：左表单 / 右实时摘要
+ * ===================================================================== */
+
+html .predict-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  gap: 14px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+html .predict-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+html .predict-main .predict-section { margin: 0; }
+html .predict-main .predict-form { display: flex; flex-direction: column; gap: 12px; }
+
+/* 提交条固定在视口底部，所以左栏末尾要留出它的高度：否则滚到底时它仍压在最后一节内容上。 */
+html .predict-main { padding-bottom: 56px; }
+html .predict-main .submit-bar { position: sticky; bottom: 10px; z-index: 2; }
+
+html .predict-summary {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 11px 12px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+
+html .predict-summary .summary-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+html .predict-summary .summary-head > span:last-child {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--fg-3);
+}
+
+html .predict-summary .summary-ledger > div { padding: 5px 9px; }
+html .predict-summary .summary-ledger dd { font-size: 15px; }
+
+html .summary-block { display: flex; flex-direction: column; gap: 6px; }
+
+html .summary-block h3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--fg-3);
+}
+
+html .summary-list { margin: 0; display: grid; gap: 3px; }
+html .summary-list > div { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; }
+html .summary-list dt { font-size: 11.5px; color: var(--fg-3); }
+html .summary-list dd { margin: 0; font-size: 11.5px; color: var(--fg-2); overflow-wrap: anywhere; }
+html .summary-list dd code { font-size: 11px; color: var(--fg-2); }
+
+html .summary-empty,
+html .summary-missing {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+html .summary-state {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+html .summary-note { margin: 0; font-size: 11px; line-height: 1.6; color: var(--fg-3); }
+
+/* =====================================================================
+ * 结果页（任务 5.4）：顶部风险横幅 → 左身份 / 右来源
+ * ===================================================================== */
+
+html .result-page .risk-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 8px 20px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+
+html .result-page .risk-banner-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--fg-3);
+}
+
+html .result-page .risk-display.large .risk-number {
+  display: block;
+  font-size: 42px;
+  line-height: 1;
+  letter-spacing: -.02em;
+  color: var(--risk-fg);
+}
+
+html .result-page .risk-display.large .risk-track { height: 6px; margin-top: 9px; }
+
+html .result-page .risk-banner-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+html .result-page .risk-banner-side { display: flex; flex-direction: column; gap: 5px; }
+html .result-page .risk-banner-note { margin: 0; font-size: 12px; line-height: 1.65; color: var(--fg-2); }
+html .result-page .risk-banner-meta { margin: 0; font-size: 11px; color: var(--fg-3); }
+html .result-page .risk-banner-meta code { font-size: 11px; color: var(--fg-2); }
+
+/* 左身份（含原始输入）/ 右来源：两个目标视口都保持两栏。 */
+html .result-page .result-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+html .result-page .result-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+html .result-page .result-grid .result-section { margin-bottom: 0; }
+html .result-page .result-card,
+html .result-page .result-section { padding: 11px 13px; }
+html .result-page > .result-section { margin-bottom: 12px; }
+html .result-page .section-caption { margin-bottom: 7px; }
+
+html .result-page .batch-lookup .field input { font-size: 12px; }
+html .result-page .state-block .batch-lookup { margin-top: 4px; }

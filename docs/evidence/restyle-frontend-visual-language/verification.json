@@ -1,0 +1,317 @@
+{
+  "kind": "visual-verification-summary",
+  "change": "restyle-frontend-visual-language",
+  "batch": "second batch: tasks 5.2-5.5, 6.1, 6.3 (+ post-review fixes)",
+  "commands": {
+    "npm run typecheck": {
+      "exitCode": 0
+    },
+    "npm run lint": {
+      "errors": 0,
+      "warnings": 1,
+      "files": 80,
+      "note": "pre-existing Icon.tsx fast-refresh hint only"
+    },
+    "npm test": {
+      "testFiles": 68,
+      "tests": 291,
+      "passed": 291,
+      "failed": 0
+    },
+    "npm run build": {
+      "exitCode": 0,
+      "css": "65.10 kB",
+      "js": "344.32 kB"
+    },
+    "npm run test:e2e": {
+      "tests": 74,
+      "passed": 74,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "durationSeconds": 220.5
+    },
+    "npm run test:e2e:acceptance": {
+      "tests": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "durationSeconds": 162.3
+    },
+    "pytest (backend, full)": {
+      "passed": 235,
+      "failed": 2,
+      "note": "both failures are tests/test_verification_guard.py: PowerShell 7 (pwsh) is not installed on this machine"
+    }
+  },
+  "viewports": {
+    "desktop-1280": {
+      "visibleRows": {
+        "historical": {
+          "rows": 5,
+          "wrapHeight": 243
+        },
+        "demo": {
+          "rows": 7,
+          "wrapHeight": 332
+        },
+        "fit": {
+          "scrollHeight": 720,
+          "innerHeight": 720,
+          "tableScrolls": true
+        },
+        "demoFit": {
+          "scrollHeight": 720,
+          "innerHeight": 720,
+          "tableScrolls": true
+        }
+      },
+      "contrast": {
+        "页脚": 4.74,
+        "表尾": 5.09,
+        "元信息": 4.74,
+        "风险值": 7.82
+      },
+      "noHorizontalScroll": {
+        "workbenchHistorical": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "offenders": []
+        },
+        "workbenchDemo": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "offenders": []
+        },
+        "models": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "offenders": []
+        },
+        "modelsDrawer": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "offenders": []
+        },
+        "predict": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "offenders": []
+        },
+        "result": {
+          "scrollWidth": 1280,
+          "clientWidth": 1280,
+          "offenders": []
+        }
+      },
+      "structure": {
+        "modelCards": 2,
+        "modelColumnWidths": [
+          288,
+          159,
+          258,
+          129,
+          159
+        ],
+        "modelRowActionRight": [
+          1245,
+          1245
+        ],
+        "fieldInputs": 10,
+        "ariaInvalidVisible": true,
+        "resultGridColumns": "512.5px 471.5px",
+        "riskBanner": {
+          "width": 996,
+          "height": 139
+        }
+      },
+      "themes": {
+        "veil": [
+          {
+            "theme": "concrete",
+            "opacity": 0.22,
+            "scrimLuminance": 0.0086,
+            "canvasLuminance": 0.9283,
+            "blendLuminance": 0.5619
+          },
+          {
+            "theme": "steel",
+            "opacity": 0.22,
+            "scrimLuminance": 0.0079,
+            "canvasLuminance": 0.9271,
+            "blendLuminance": 0.5593
+          },
+          {
+            "theme": "charcoal",
+            "opacity": 0.22,
+            "scrimLuminance": 0,
+            "canvasLuminance": 0.0051,
+            "blendLuminance": 0.0038
+          },
+          {
+            "theme": "paper",
+            "opacity": 0.22,
+            "scrimLuminance": 0.0096,
+            "canvasLuminance": 0.9553,
+            "blendLuminance": 0.5801
+          }
+        ],
+        "scrimColorWhenDrawerOpen": "rgb(0, 0, 0)",
+        "modelRowHeight": {
+          "comfortable": 55,
+          "compact": 47
+        }
+      }
+    },
+    "desktop-1440": {
+      "visibleRows": {
+        "historical": {
+          "rows": 9,
+          "wrapHeight": 423
+        },
+        "demo": {
+          "rows": 12,
+          "wrapHeight": 512
+        },
+        "fit": {
+          "scrollHeight": 900,
+          "innerHeight": 900,
+          "tableScrolls": true
+        },
+        "demoFit": {
+          "scrollHeight": 900,
+          "innerHeight": 900,
+          "tableScrolls": false
+        }
+      },
+      "contrast": {
+        "页脚": 4.74,
+        "表尾": 5.09,
+        "元信息": 4.74,
+        "风险值": 7.82
+      },
+      "noHorizontalScroll": {
+        "workbenchHistorical": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "offenders": []
+        },
+        "workbenchDemo": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "offenders": []
+        },
+        "models": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "offenders": []
+        },
+        "modelsDrawer": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "offenders": []
+        },
+        "predict": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "offenders": []
+        },
+        "result": {
+          "scrollWidth": 1440,
+          "clientWidth": 1440,
+          "offenders": []
+        }
+      },
+      "structure": {
+        "modelCards": 2,
+        "modelColumnWidths": [
+          335,
+          185,
+          300,
+          150,
+          185
+        ],
+        "modelRowActionRight": [
+          1405,
+          1405
+        ],
+        "fieldInputs": 10,
+        "ariaInvalidVisible": true,
+        "resultGridColumns": "595.828px 548.172px",
+        "riskBanner": {
+          "width": 1156,
+          "height": 139
+        }
+      },
+      "themes": {
+        "veil": [
+          {
+            "theme": "concrete",
+            "opacity": 0.22,
+            "scrimLuminance": 0.0086,
+            "canvasLuminance": 0.9283,
+            "blendLuminance": 0.5619
+          },
+          {
+            "theme": "steel",
+            "opacity": 0.22,
+            "scrimLuminance": 0.0079,
+            "canvasLuminance": 0.9271,
+            "blendLuminance": 0.5593
+          },
+          {
+            "theme": "charcoal",
+            "opacity": 0.22,
+            "scrimLuminance": 0,
+            "canvasLuminance": 0.0051,
+            "blendLuminance": 0.0038
+          },
+          {
+            "theme": "paper",
+            "opacity": 0.22,
+            "scrimLuminance": 0.0096,
+            "canvasLuminance": 0.9553,
+            "blendLuminance": 0.5801
+          }
+        ],
+        "scrimColorWhenDrawerOpen": "rgb(0, 0, 0)",
+        "modelRowHeight": {
+          "comfortable": 55,
+          "compact": 47
+        }
+      }
+    }
+  },
+  "fixes": [
+    "dark-theme scrim uses the new --scrim token (charcoal = pure black); per-theme blend luminance stays below canvas luminance",
+    "predict column reserves 56px bottom room for the sticky submit bar",
+    "radio/checkbox use accent-color so they stay visible in dark themes",
+    "compact density now also compacts the models table (row height 55 -> 47)",
+    "catalog.register tolerates legacy summaries without a model section (identity falls back to the declared method); acceptance now registers the legacy baseline again",
+    "A11-2/3/5 now runs on a 2-record fixture (2.4/2.7s instead of 35-38s); global playwright timeout back to 30s, per-test budget only on the real-full-list test"
+  ],
+  "remaining": [
+    "verify.ps1 chain cannot run on this machine: PowerShell 7 is missing (shutil.which(pwsh) is None; the session tool is Windows PowerShell 5.1), which also fails 2 backend guard tests; needs PS7 + chcp 65001 + an ASCII junction, and it runs npm ci",
+    "no true pre-change baseline capture on this machine",
+    "risk banner 0-100% scale is not a confidence interval; a real interval would need backend support"
+  ],
+  "sensitiveScan": {
+    "kind": "sensitive-info-scan",
+    "scannedFiles": 12,
+    "passed": true
+  },
+  "baselineNote": "pre-change baseline could not run (evidence dir write denied, backend missing torch); measured values are post-change, consistent with the recorded 4.2 row counts and proposal contrast figures",
+  "e2eTimeouts": {
+    "global": "30s (restored)",
+    "A11-2/3/5 seconds": [
+      2.4,
+      2.7
+    ],
+    "historical real-full-list keyboard seconds": [
+      19.4,
+      19.8
+    ],
+    "historical real-full-list per-test budget": "90s (deliberate: walks the real 1853 rows)"
+  }
+}
