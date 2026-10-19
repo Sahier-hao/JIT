@@ -8,7 +8,7 @@ from .catalog import encoded
 from .catalog_input import prediction_input, uuid_text
 from .catalog_storage import utc_now
 from .model import predict_risks
-from .team_access import RequestError
+from .api_errors import RequestError
 
 
 class PredictionService:

@@ -92,28 +92,9 @@ def _error_only(response):
     return error
 
 
-def test_api_rejects_missing_or_privileged_credentials(settings):  # noqa: F811
-    """6.2：无凭据 401、越权 403，且错误体不泄露资源（安全证据）。"""
-    from test_catalog_api import ADMIN, MEMBER
-    from jit_baseline.api import create_app
-
-    app = create_app(**settings)
-    with TestClient(app) as client:
-        for headers in ({}, {"Authorization": "Bearer not-a-team-token"},
-                        {"Authorization": "Basic Zm9v"}):
-            response = client.post("/api/v1/predictions", headers=headers, json={})
-            assert response.status_code == 401, headers
-            assert _error_only(response)["code"] == "AUTH_REQUIRED"
-        for response in (client.get("/api/v1/model-candidates", headers=MEMBER),
-                         client.post("/api/v1/models/register", headers=MEMBER, json={})):
-            assert response.status_code == 403
-            assert _error_only(response)["code"] == "ACCESS_DENIED"
-        assert client.get("/api/v1/model-candidates", headers=ADMIN).status_code == 200
-
-
 def test_missing_resources_share_one_404_shape(settings):  # noqa: F811
     """6.2：不可见资源与非存在资源的 404 完全同形，不暴露存在性。"""
-    from test_catalog_api import MEMBER
+    from test_catalog_api import HEADERS
     from jit_baseline.api import create_app
 
     app = create_app(**settings)
@@ -122,13 +103,13 @@ def test_missing_resources_share_one_404_shape(settings):  # noqa: F811
     with TestClient(app) as client:
         bodies = []
         for batch_id in (uuid_a, uuid_b):
-            response = client.get("/api/v1/prediction-batches/" + batch_id, headers=MEMBER)
+            response = client.get("/api/v1/prediction-batches/" + batch_id, headers=HEADERS)
             assert response.status_code == 404
             error = _error_only(response)
             assert error["code"] == "NOT_FOUND"
             bodies.append({key: value for key, value in error.items() if key != "requestId"})
         assert bodies[0] == bodies[1]
-        commit_404 = client.get("/api/v1/commits", headers=MEMBER,
+        commit_404 = client.get("/api/v1/commits", headers=HEADERS,
                                 params={"version": "no-such-dataset"})
         assert commit_404.status_code == 404
         assert _error_only(commit_404)["code"] == "NOT_FOUND"
@@ -143,6 +124,5 @@ def test_startup_requires_dataset_registry(tmp_path, monkeypatch):
 
     monkeypatch.setattr(datasets_module, "DATASETS", tmp_path / "empty")
     with pytest.raises(BaselineError) as error:
-        api_module.create_app(database=tmp_path / "catalog.sqlite3",
-                              member_token="member-token", admin_token="admin-token")
+        api_module.create_app(database=tmp_path / "catalog.sqlite3")
     assert error.value.code == "DATASET_REGISTRY_EMPTY"

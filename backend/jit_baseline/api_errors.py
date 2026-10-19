@@ -1,5 +1,4 @@
-"""Team roles for the new API only. Never log authorization material."""
-import hmac
+"""Local API error envelopes and request diagnostics."""
 import logging
 import re
 from uuid import uuid4
@@ -14,13 +13,10 @@ if not LOGGER.handlers:
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('%(levelname)s jit.catalog %(message)s'))
     LOGGER.addHandler(handler)
-ADMIN_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register'}
-MEMBER_PATHS = {'/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
+API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register',
+                '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories'}
 MESSAGES = {
-    'ACCESS_CONFIG_INVALID': '团队访问凭据配置无效，请联系维护者',
-    'AUTH_REQUIRED': '需要有效的团队 Bearer 凭据',
-    'ACCESS_DENIED': '此操作需要管理员权限',
     'NOT_FOUND': '指定资源不存在',
     'INPUT_INVALID': '请求格式或字段值无效',
     'INPUT_SCHEMA_MISMATCH': '输入与所选模型的 schema 不匹配或未支持',
@@ -35,7 +31,7 @@ MESSAGES = {
     'INTEGRITY_ERROR': '运行文件校验不匹配，请核验并重新登记',
     'ARTIFACT_INVALID': '运行声明或环境无效，请核验产物',
     'MODEL_INVALID': '模型不可加载或结构无效',
-    'MODEL_NOT_READY': '模型不可用，请由管理员重新校验登记',
+    'MODEL_NOT_READY': '模型不可用，请重新校验登记',
     'INFERENCE_ERROR': '所选模型推理失败，未保存预测',
     'REPOSITORY_UNAVAILABLE': '仓库不可用：请检查地址、分支或网络后重试',
     'SYNC_TIMEOUT': '同步超时，请缩小时间范围或提交上限后重试',
@@ -46,7 +42,7 @@ MESSAGES = {
     'REPOSITORY_ANALYSIS_UNKNOWN': '指定分析不属于该仓库或不存在',
     'REPOSITORY_ANALYSIS_UNAVAILABLE': '指定分析尚未成功完成',
 }
-STATUS = {'AUTH_REQUIRED': 401, 'ACCESS_DENIED': 403, 'NOT_FOUND': 404,
+STATUS = {'NOT_FOUND': 404,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
           'REPOSITORY_ANALYSIS_UNKNOWN': 404, 'REPOSITORY_ANALYSIS_UNAVAILABLE': 409,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
@@ -62,7 +58,7 @@ class RequestError(BaselineError):
 
 
 def managed_path(path):
-    return path in ADMIN_PATHS | MEMBER_PATHS or bool(re.fullmatch(
+    return path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
@@ -70,33 +66,13 @@ def managed_path(path):
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 
-def authorize(header, member, admin, *, require_admin=False):
-    if not member or not admin or member == admin:
-        raise RequestError('ACCESS_CONFIG_INVALID')
-    parts = (header or '').split()
-    if len(parts) != 2 or parts[0].lower() != 'bearer':
-        raise RequestError('AUTH_REQUIRED')
-    token = parts[1].encode('utf-8')
-    is_admin = hmac.compare_digest(token, admin.encode('utf-8'))
-    is_member = hmac.compare_digest(token, member.encode('utf-8'))
-    if not is_admin and not is_member:
-        raise RequestError('AUTH_REQUIRED')
-    if require_admin and not is_admin:
-        raise RequestError('ACCESS_DENIED')
-    return 'admin' if is_admin else 'member'
-
-
-def install_access(app, member, admin):
+def install_errors(app):
     @app.middleware('http')
-    async def team_access(request, call_next):
+    async def local_api(request, call_next):
         if not managed_path(request.url.path):
             return await call_next(request)
         request.state.request_id = str(uuid4())
-        request.state.role = 'anonymous'
         try:
-            request.state.role = authorize(request.headers.get('Authorization'), member, admin)
-            if request.url.path in ADMIN_PATHS and request.state.role != 'admin':
-                raise RequestError('ACCESS_DENIED')
             response = await call_next(request)
         except BaselineError as exc:
             code = 'NOT_FOUND' if exc.code == 'SCHEMA_UNKNOWN' else exc.code
@@ -111,7 +87,7 @@ def install_access(app, member, admin):
         response.headers['X-Request-Id'] = request.state.request_id
         response.headers['Cache-Control'] = 'no-store'
         model_id, run_id, batch_id = getattr(request.state, 'business_ids', (None, None, None))
-        LOGGER.info('operation=%s role=%s requestId=%s status=%s modelId=%s runId=%s batchId=%s',
-                    request.method, request.state.role, request.state.request_id, response.status_code,
+        LOGGER.info('operation=%s requestId=%s status=%s modelId=%s runId=%s batchId=%s',
+                    request.method, request.state.request_id, response.status_code,
                     model_id, run_id, batch_id)
         return response

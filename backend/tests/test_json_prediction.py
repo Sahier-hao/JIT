@@ -7,13 +7,13 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
-from test_catalog_api import settings, ADMIN, MEMBER  # noqa: F401
+from test_catalog_api import settings, HEADERS  # noqa: F401
 from test_artifacts import real_run  # noqa: F401
 
 
 def register(client):
-    candidate = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates'][0]
-    return client.post('/api/v1/models/register', headers=ADMIN, json={
+    candidate = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates'][0]
+    return client.post('/api/v1/models/register', headers=HEADERS, json={
         'candidateId': candidate['candidateId'], 'expectedManifestSha256': candidate['manifestSha256']}).json()['model']
 
 
@@ -28,7 +28,7 @@ def test_real_single_prediction_persists_and_reopens_after_model_removed(setting
     with TestClient(app) as client:
         model = register(client)
         body = payload(model['modelId'])
-        response = client.post('/api/v1/predictions', headers=MEMBER, json=body)
+        response = client.post('/api/v1/predictions', headers=HEADERS, json=body)
         assert response.status_code == 201
         saved = response.json()
         assert saved['mode'] == 'feature-input' and saved['sourceKind'] == 'client-features'
@@ -40,14 +40,14 @@ def test_real_single_prediction_persists_and_reopens_after_model_removed(setting
         assert record_saved['explanationSummary']
         assert any('基线' in note for note in saved['limitations'])
         assert record_saved['time'] is None and record_saved['commitId'] is None
-        repeated = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+        repeated = client.post('/api/v1/predictions', headers=HEADERS, json=body).json()
         assert repeated['batchId'] != saved['batchId']
         assert repeated['inputSha256'] == saved['inputSha256']
         (settings['artifact_root'] / 'baseline/model.joblib').unlink()
-        assert client.post('/api/v1/predictions', headers=MEMBER, json=body).status_code == 503
+        assert client.post('/api/v1/predictions', headers=HEADERS, json=body).status_code == 503
     with TestClient(create_app(**settings)) as client:
-        assert client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=MEMBER).json() == saved
-        assert client.get('/api/v1/prediction-batches/' + str(uuid4()), headers=MEMBER).status_code == 404
+        assert client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=HEADERS).json() == saved
+        assert client.get('/api/v1/prediction-batches/' + str(uuid4()), headers=HEADERS).status_code == 404
 
 
 def test_explanation_survives_reload_and_failure_degrades(settings, monkeypatch):
@@ -58,18 +58,18 @@ def test_explanation_survives_reload_and_failure_degrades(settings, monkeypatch)
     with TestClient(app) as client:
         model = register(client)
         body = payload(model['modelId'])
-        saved = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+        saved = client.post('/api/v1/predictions', headers=HEADERS, json=body).json()
         record = saved['records'][0]
         assert record['explanationStatus'] == 'supported'
         assert record['explanationMethod'] == attribution.METHOD
         assert record['explanation'] and isinstance(record['explanation'], list)
-        reopened = client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=MEMBER).json()
+        reopened = client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=HEADERS).json()
         assert reopened == saved and reopened['records'][0]['explanation'] == record['explanation']
 
         def boom(*_args, **_kwargs):
             raise RuntimeError('fixture attribution failure')
         monkeypatch.setattr(attribution, 'explain', boom)
-        degraded = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+        degraded = client.post('/api/v1/predictions', headers=HEADERS, json=body).json()
         fallback = degraded['records'][0]
         assert fallback['explanationStatus'] == 'not-supported'
         assert fallback['explanationReason']
@@ -108,7 +108,7 @@ def test_strict_input_rejected_without_rows(settings, bad):
             raw = '{'
         elif bad == 'duplicate':
             raw = raw.replace('"ns": 1', '"ns": 1, "ns": 2')
-        response = client.post('/api/v1/predictions', headers=MEMBER, content=raw)
+        response = client.post('/api/v1/predictions', headers=HEADERS, content=raw)
         assert response.status_code == 422
         assert response.json()['error']['code'] in ('INPUT_INVALID','INPUT_SCHEMA_MISMATCH')
         with app.state.catalog.store.connection() as db:
@@ -118,7 +118,7 @@ def test_strict_input_rejected_without_rows(settings, bad):
 def test_size_limit_counts_actual_bytes_not_content_length(settings):
     from jit_baseline.api import create_app
     with TestClient(create_app(**settings)) as client:
-        response = client.post('/api/v1/predictions', headers=dict(MEMBER, **{'Content-Length':'1'}),
+        response = client.post('/api/v1/predictions', headers=dict(HEADERS, **{'Content-Length':'1'}),
                                content=b' ' * (64 * 1024 + 1))
         assert response.status_code == 413
 
@@ -136,7 +136,7 @@ def test_inference_errors_are_500_without_saved_risk(settings, monkeypatch, bad)
             return np.array([[.5, float('nan') if bad == 'nan' else 2 if bad == 'range' else .5]])[:0 if bad == 'count' else 1]
         monkeypatch.setattr(snapshot.model, 'predict_proba', fail)
         monkeypatch.setattr(app.state.catalog, 'load_model', lambda _: (snapshot, descriptor))
-        response = client.post('/api/v1/predictions', headers=MEMBER, json=payload(model['modelId']))
+        response = client.post('/api/v1/predictions', headers=HEADERS, json=payload(model['modelId']))
         assert response.status_code == 500
         assert response.json()['error']['code'] == 'INFERENCE_ERROR'
         assert 'private' not in response.text and 'risk' not in response.text
@@ -151,8 +151,8 @@ def test_two_methods_use_raw_features_without_labels_or_refitting(settings, monk
     build_run(BACKEND / 'data/openstack', root / 'decision-tree', algorithm='decision-tree-v1')
     app = create_app(**settings)
     with TestClient(app) as client:
-        candidates = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates']
-        models = [client.post('/api/v1/models/register', headers=ADMIN, json={
+        candidates = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates']
+        models = [client.post('/api/v1/models/register', headers=HEADERS, json={
             'candidateId': c['candidateId'], 'expectedManifestSha256': c['manifestSha256']}).json()['model'] for c in candidates]
         expected = {}
         inputs = {}
@@ -174,10 +174,10 @@ def test_two_methods_use_raw_features_without_labels_or_refitting(settings, monk
         for model in models:
             body = payload(model['modelId'])
             body['record']['features'] = inputs[model['modelId']]
-            saved = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+            saved = client.post('/api/v1/predictions', headers=HEADERS, json=body).json()
             assert saved['records'][0]['risk'] == pytest.approx(expected[model['modelId']], abs=model['reproducibility']['atol'])
             body['record']['features'] = dict(reversed(list(body['record']['features'].items())))
-            reordered = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+            reordered = client.post('/api/v1/predictions', headers=HEADERS, json=body).json()
             assert reordered['inputSha256'] == saved['inputSha256']
             assert reordered['records'][0]['risk'] == saved['records'][0]['risk']
 
@@ -189,7 +189,7 @@ def test_second_insert_failure_rolls_back_and_no_risk_returned(settings):
         model = register(client)
         with app.state.catalog.store.connection(write=True) as db:
             db.execute("CREATE TRIGGER reject_prediction BEFORE INSERT ON prediction BEGIN SELECT RAISE(ABORT,'fixture storage failure'); END")
-        response = client.post('/api/v1/predictions', headers=MEMBER, json=payload(model['modelId']))
+        response = client.post('/api/v1/predictions', headers=HEADERS, json=payload(model['modelId']))
         assert response.status_code == 503 and 'risk' not in response.text
         assert response.json()['error']['code'] == 'STORAGE_UNAVAILABLE'
         with app.state.catalog.store.connection() as db:
@@ -200,17 +200,17 @@ def test_unknown_model_metadata_normalization_and_storage_unavailable(settings):
     from jit_baseline.api import create_app
     app = create_app(**settings)
     with TestClient(app) as client:
-        missing = client.post('/api/v1/predictions', headers=MEMBER, json=payload(str(uuid4())))
+        missing = client.post('/api/v1/predictions', headers=HEADERS, json=payload(str(uuid4())))
         assert missing.status_code == 404 and missing.json()['error']['code'] == 'NOT_FOUND'
         model = register(client)
         body = payload(model['modelId'])
         body['record'].update(time='2026-10-14T18:00:00+08:00', commitId='A' * 40)
-        saved = client.post('/api/v1/predictions', headers=MEMBER, json=body).json()
+        saved = client.post('/api/v1/predictions', headers=HEADERS, json=body).json()
         assert saved['records'][0]['time'] == '2026-10-14T10:00:00Z'
         assert saved['records'][0]['commitId'] == 'a' * 40
         with app.state.catalog.store.connection(write=True) as db:
             db.execute('UPDATE schema_migration SET version=99')
-        response = client.get('/api/v1/prediction-batches/'+saved['batchId'], headers=MEMBER)
+        response = client.get('/api/v1/prediction-batches/'+saved['batchId'], headers=HEADERS)
         assert response.status_code == 503 and response.json()['error']['code'] == 'STORAGE_UNAVAILABLE'
 
 
@@ -239,7 +239,7 @@ def test_persisted_commit_prediction_uses_stored_features_and_reopens(settings):
     version = seed_commit(settings)
     with TestClient(create_app(**settings)) as client:
         model = register(client)
-        response = client.post('/api/v1/predictions', headers=MEMBER,
+        response = client.post('/api/v1/predictions', headers=HEADERS,
                                json=persisted_payload(model['modelId'], version))
         assert response.status_code == 201, response.text
         saved = response.json()
@@ -248,11 +248,11 @@ def test_persisted_commit_prediction_uses_stored_features_and_reopens(settings):
         assert saved['records'][0]['features'] == STORED_FEATURES
         assert saved['records'][0]['commitId'] == STORED_COMMIT
         assert saved['limitations'][0] == '特征来自已导入的提交数据，尚未核验真实标签。'
-        assert client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=MEMBER).json() == saved
+        assert client.get('/api/v1/prediction-batches/' + saved['batchId'], headers=HEADERS).json() == saved
         absent = persisted_payload(model['modelId'], version, '0' * 40)
-        assert client.post('/api/v1/predictions', headers=MEMBER, json=absent).status_code == 404
+        assert client.post('/api/v1/predictions', headers=HEADERS, json=absent).status_code == 404
         unknown = persisted_payload(model['modelId'], 'unknown-version')
-        assert client.post('/api/v1/predictions', headers=MEMBER, json=unknown).status_code == 404
+        assert client.post('/api/v1/predictions', headers=HEADERS, json=unknown).status_code == 404
 
 
 @pytest.mark.parametrize('change', ['both', 'neither', 'no-dataset', 'no-commit'])
@@ -270,7 +270,7 @@ def test_prediction_source_must_be_exactly_one(settings, change):
             body['record'] = {'recordId': 'input-1', 'commitId': STORED_COMMIT}
         elif change == 'no-commit':
             body['datasetVersion'] = version
-        response = client.post('/api/v1/predictions', headers=MEMBER, json=body)
+        response = client.post('/api/v1/predictions', headers=HEADERS, json=body)
         assert response.status_code == 422, (change, response.text)
         assert response.json()['error']['code'] == 'INPUT_INVALID'
 
@@ -286,7 +286,7 @@ def test_persisted_commit_with_incomplete_features_is_rejected(settings):
         db.execute('INSERT INTO feature_record VALUES (?,?,?,?)', ('broken-v1', PARTIAL_COMMIT, 'ns', '1'))
     with TestClient(create_app(**settings)) as client:
         model = register(client)
-        response = client.post('/api/v1/predictions', headers=MEMBER,
+        response = client.post('/api/v1/predictions', headers=HEADERS,
                                json=persisted_payload(model['modelId'], 'broken-v1', PARTIAL_COMMIT))
         assert response.status_code == 422, response.text
         assert response.json()['error']['code'] == 'INPUT_SCHEMA_MISMATCH'
@@ -318,7 +318,7 @@ def test_legacy_batch_without_explanation_reopens_unchanged(settings, monkeypatc
                         encoded(STORED_FEATURES)))
         import jit_baseline.prediction as module
         monkeypatch.setattr(module, 'predict_risks', pytest.fail)
-        response = client.get('/api/v1/prediction-batches/' + LEGACY_BATCH, headers=MEMBER)
+        response = client.get('/api/v1/prediction-batches/' + LEGACY_BATCH, headers=HEADERS)
         assert response.status_code == 200, response.text
         assert response.json() == legacy
         assert 'explanation' not in response.json()['records'][0]

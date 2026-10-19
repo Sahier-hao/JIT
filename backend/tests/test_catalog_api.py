@@ -8,8 +8,7 @@ from fastapi.testclient import TestClient
 
 from test_artifacts import real_run  # noqa: F401
 
-ADMIN = {'Authorization': 'Bearer fixture-admin'}
-MEMBER = {'Authorization': 'Bearer fixture-member'}
+HEADERS = {}
 
 
 @pytest.fixture
@@ -19,8 +18,7 @@ def settings(tmp_path, real_run):
     shutil.copytree(real_run, root / 'baseline')
     store = CatalogStorage(tmp_path / 'catalog.sqlite3')
     store.initialize()
-    return {'directory': real_run, 'database': store.path, 'artifact_root': root,
-            'member_token': 'fixture-member', 'admin_token': 'fixture-admin'}
+    return {'directory': real_run, 'database': store.path, 'artifact_root': root,}
 
 
 def test_admin_register_member_list_and_cli_share_identity(settings, monkeypatch, capsys, caplog):
@@ -28,14 +26,14 @@ def test_admin_register_member_list_and_cli_share_identity(settings, monkeypatch
     from jit_baseline.cli import main
     caplog.set_level(logging.INFO, logger='jit.catalog')
     with TestClient(create_app(**settings)) as client:
-        assert client.get('/api/v1/models', headers=MEMBER).json() == {'models': []}
-        candidate = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates'][0]
+        assert client.get('/api/v1/models', headers=HEADERS).json() == {'models': []}
+        candidate = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates'][0]
         data = {'candidateId': candidate['candidateId'], 'expectedManifestSha256': candidate['manifestSha256']}
-        first = client.post('/api/v1/models/register', headers=ADMIN, json=data)
+        first = client.post('/api/v1/models/register', headers=HEADERS, json=data)
         assert first.status_code == 201
         assert first.json()['model']['modelId'] in caplog.text
-        assert client.post('/api/v1/models/register', headers=ADMIN, json=data).status_code == 200
-        models = client.get('/api/v1/models', headers=MEMBER).json()['models']
+        assert client.post('/api/v1/models/register', headers=HEADERS, json=data).status_code == 200
+        models = client.get('/api/v1/models', headers=HEADERS).json()['models']
         assert len(models) == 1 and models[0]['modelId'] == first.json()['model']['modelId']
         assert str(settings['artifact_root']) not in json.dumps(models)
         monkeypatch.setattr('sys.argv', ['jit', 'register-model', '--run-key', 'baseline',
@@ -50,7 +48,7 @@ def test_admin_register_member_list_and_cli_share_identity(settings, monkeypatch
 def test_register_errors_never_publish_models(settings, change, code):
     from jit_baseline.api import create_app
     with TestClient(create_app(**settings)) as client:
-        candidate = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates'][0]
+        candidate = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates'][0]
         data = {'candidateId': candidate['candidateId'], 'expectedManifestSha256': candidate['manifestSha256']}
         if change == 'unknown':
             data['candidateId'] = '0' * 64
@@ -60,16 +58,16 @@ def test_register_errors_never_publish_models(settings, change, code):
             data['path'] = str(settings['artifact_root'])
         else:
             (settings['artifact_root'] / 'baseline/model.joblib').write_bytes(b'broken')
-        response = client.post('/api/v1/models/register', headers=ADMIN, json=data)
+        response = client.post('/api/v1/models/register', headers=HEADERS, json=data)
         assert response.json()['error']['code'] == code
         assert response.status_code == {'NOT_FOUND':404,'CONTEXT_MISMATCH':409,'INPUT_INVALID':422,'INTEGRITY_ERROR':503}[code]
-        assert client.get('/api/v1/models', headers=MEMBER).json() == {'models': []}
+        assert client.get('/api/v1/models', headers=HEADERS).json() == {'models': []}
 
 
 def test_kamei_schema_reports_unavailable_fields(settings):
     from jit_baseline.api import create_app
     with TestClient(create_app(**settings)) as client:
-        info = client.get('/api/v1/feature-schemas/kamei14-v1', headers=MEMBER).json()
+        info = client.get('/api/v1/feature-schemas/kamei14-v1', headers=HEADERS).json()
         assert len(info['inModel']) == 12 and info['jsonPredictionSupported'] is False
         assert {f['name'] for f in info['fields'] if not f['inModel']} == {'lt','rexp'}
 
@@ -89,14 +87,14 @@ def test_dataset_and_commit_queries_share_one_registry(settings):
     ]
     CatalogStorage(settings['database']).import_dataset(manifest, records)
     with TestClient(create_app(**settings)) as client:
-        listing = client.get('/api/v1/datasets', headers=MEMBER)
+        listing = client.get('/api/v1/datasets', headers=HEADERS)
         assert listing.status_code == 200
         assert [item['dataset'] for item in listing.json()['datasets']] == ['openstack-six-v1']
-        versions = client.get('/api/v1/datasets/openstack-six-v1/versions', headers=MEMBER)
+        versions = client.get('/api/v1/datasets/openstack-six-v1/versions', headers=HEADERS)
         assert [item['version'] for item in versions.json()['versions']] == [manifest['version']]
-        assert client.get('/api/v1/datasets/unknown/versions', headers=MEMBER).status_code == 404
+        assert client.get('/api/v1/datasets/unknown/versions', headers=HEADERS).status_code == 404
 
-        commits = client.get('/api/v1/commits', params={'version': manifest['version']}, headers=MEMBER)
+        commits = client.get('/api/v1/commits', params={'version': manifest['version']}, headers=HEADERS)
         assert commits.status_code == 200
         body = commits.json()
         assert [item['commitId'] for item in body['commits']] == ['c1', 'c2']
@@ -104,21 +102,21 @@ def test_dataset_and_commit_queries_share_one_registry(settings):
         assert body['commits'][0] == {'commitId': 'c1', 'authorTime': '2012-01-01T00:00:00Z',
                                       'label': 1, 'module': None}
         page = client.get('/api/v1/commits', params={'version': manifest['version'], 'limit': 1, 'offset': 1},
-                          headers=MEMBER).json()
+                          headers=HEADERS).json()
         assert [item['commitId'] for item in page['commits']] == ['c2'] and page['total'] == 2
         filtered = client.get('/api/v1/commits', params={'version': manifest['version'], 'module': 'absent'},
-                              headers=MEMBER).json()
+                              headers=HEADERS).json()
         assert (filtered['total'], filtered['commits']) == (0, [])
         for bad in ({'limit': 0}, {'limit': 501}, {'offset': -1}, {'limit': 'abc'}):
-            response = client.get('/api/v1/commits', params={'version': manifest['version'], **bad}, headers=MEMBER)
+            response = client.get('/api/v1/commits', params={'version': manifest['version'], **bad}, headers=HEADERS)
             assert response.status_code == 422, bad
             assert response.json()['error']['code'] == 'INPUT_INVALID', bad
-        detail = client.get('/api/v1/commits/c1', params={'version': manifest['version']}, headers=MEMBER)
+        detail = client.get('/api/v1/commits/c1', params={'version': manifest['version']}, headers=HEADERS)
         assert detail.json()['label'] == 1 and detail.json()['features']['ent'] == 1.5
         assert client.get('/api/v1/commits/missing', params={'version': manifest['version']},
-                          headers=MEMBER).status_code == 404
-        assert client.get('/api/v1/commits', params={'version': 'missing'}, headers=MEMBER).status_code == 404
-        assert client.get('/api/v1/datasets', headers={'Authorization': 'Bearer wrong'}).status_code == 401
+                          headers=HEADERS).status_code == 404
+        assert client.get('/api/v1/commits', params={'version': 'missing'}, headers=HEADERS).status_code == 404
+        assert client.get('/api/v1/datasets', headers={'Authorization': 'Bearer wrong'}).status_code == 200
 
 
 REAL_DATABASE = Path(__file__).resolve().parents[1] / 'storage' / 'catalog.sqlite3'
@@ -136,10 +134,9 @@ def test_real_dataset_commits_page_stays_bounded(real_run, tmp_path):
         with sqlite3.connect(copied) as target:
             source.backup(target)
     CatalogStorage(copied).initialize()
-    options = {'directory': real_run, 'database': copied, 'artifact_root': tmp_path,
-               'member_token': 'fixture-member', 'admin_token': 'fixture-admin'}
+    options = {'directory': real_run, 'database': copied, 'artifact_root': tmp_path,}
     with TestClient(create_app(**options)) as client:
-        response = client.get('/api/v1/commits', params={'version': REAL_VERSION}, headers=MEMBER)
+        response = client.get('/api/v1/commits', params={'version': REAL_VERSION}, headers=HEADERS)
         assert response.status_code == 200
         body = response.json()
         assert (body['total'], body['limit'], body['offset']) == (12374, 100, 0)

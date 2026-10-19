@@ -5,7 +5,7 @@ import math
 from datetime import datetime, timezone
 from uuid import UUID
 
-from .team_access import RequestError
+from .api_errors import RequestError
 
 MAX_JSON_BYTES = 64 * 1024
 

@@ -1,113 +1,149 @@
 openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
-info: {title: JIT Review 产品接口文档, version: 1.3.0, description: 文档基线评审稿。API-01及提交／数据版本查询／数据来源、模型候选／登记／列表／schema／JSON预测／结果重开、仓库同步与仓库提交查询、仓库工作区视图已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。}
+info:
+  title: JIT Review 产品接口文档
+  version: 1.3.0
+  description: 文档基线评审稿。API-01及提交／数据版本查询／数据来源、模型候选／登记／列表／schema／JSON预测／结果重开、仓库同步与仓库提交查询、仓库工作区视图已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。
 tags:
-- {name: 现有历史回放}
-- {name: 目标共享产品}
+- name: 现有历史回放
+- name: 目标共享产品
 paths:
   /api/review-batch:
     get:
       operationId: getHistoricalReviewBatch
       summary: 当前固定六字段真实历史批次
-      tags: [现有历史回放]
+      tags:
+      - 现有历史回放
       x-api-id: API-01
-      x-user-stories: [US-10, US-11, US-12, US-13, US-14, US-15, US-17, US-18, US-19]
+      x-user-stories:
+      - US-10
+      - US-11
+      - US-12
+      - US-13
+      - US-14
+      - US-15
+      - US-17
+      - US-18
+      - US-19
       x-implementation-status: implemented
-      security: []
       responses:
         '200':
           description: 当前成功响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/HistoricalBatch'}
+              schema:
+                $ref: '#/components/schemas/HistoricalBatch'
           headers:
             Cache-Control:
               description: 当前服务成功响应不缓存
-              schema: {const: no-store}
-        '503': {$ref: '#/components/responses/CurrentUnavailable'}
-        '500': {$ref: '#/components/responses/CurrentInferenceFailure'}
+              schema:
+                const: no-store
+        '503':
+          $ref: '#/components/responses/CurrentUnavailable'
+        '500':
+          $ref: '#/components/responses/CurrentInferenceFailure'
       description: 仅本机、无鉴权、实际调用已加载模型，不读取逐条评价标签。当前服务关闭Swagger／OpenAPI地址，此文档不改变运行行为。
   /api/v1/commits:
     get:
       operationId: listCommits
       summary: 提交级数据分页列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-18
-      x-user-stories: [US-01, US-23]
+      x-user-stories:
+      - US-01
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: read
       parameters:
       - name: version
         in: query
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       - name: module
         in: query
         required: false
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       - name: limit
         in: query
         required: false
-        schema: {type: integer, minimum: 1, maximum: 500, default: 100}
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
       - name: offset
         in: query
         required: false
-        schema: {type: integer, minimum: 0, default: 0}
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: 当前响应，列表项只含摘要
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CommitPage'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-      description: 列表项为 commitId／authorTime／label／module，不返回特征。limit 越界（0、501、负数、非整数）返回 422 INPUT_INVALID，不静默截断；未知 version 返回 404。
+              schema:
+                $ref: '#/components/schemas/CommitPage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+      description: 列表项为 commitId／authorTime／label／module，不返回特征。limit 越界（0、501、负数、非整数）返回 422 INPUT_INVALID，不静默截断；未知
+        version 返回 404。
   /api/v1/commits/{commitId}:
     get:
       operationId: getCommit
       summary: 单条提交的完整特征
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-19
-      x-user-stories: [US-01, US-23]
+      x-user-stories:
+      - US-01
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: read
       parameters:
       - name: commitId
         in: path
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       - name: version
         in: query
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       responses:
         '200':
           description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CommitDetail'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
+              schema:
+                $ref: '#/components/schemas/CommitDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
       description: 未知提交或未知版本返回 404，不返回空对象。
   /api/v1/datasets:
     get:
       operationId: listDatasets
       summary: 已登记数据来源与版本列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-02
-      x-user-stories: [US-01, US-23]
+      x-user-stories:
+      - US-01
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       responses:
@@ -115,97 +151,112 @@ paths:
           description: 当前响应；按数据集名分组，组内按版本名排序
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/DatasetRegistry'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
-      description: 当前后端操作；成员／管理员 Bearer 凭据。内容来自 backend/data/datasets 下描述文件的登记结果，只含版本与质量摘要，不含提交级数据。
+              schema:
+                $ref: '#/components/schemas/DatasetRegistry'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+      description: 当前后端操作；本机使用，无需凭据。内容来自 backend/data/datasets 下描述文件的登记结果，只含版本与质量摘要，不含提交级数据。
   /api/v1/datasets/{name}/versions:
     get:
       operationId: listDatasetVersions
       summary: 单个数据来源的版本列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-24
-      x-user-stories: [US-01, US-23]
+      x-user-stories:
+      - US-01
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: name
         in: path
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       responses:
         '200':
           description: 当前响应；未知数据集返回 404，不返回空列表
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/DatasetVersions'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
-      description: 当前后端操作；成员／管理员 Bearer 凭据。数据集名取 `/api/v1/datasets` 返回的 `dataset` 字段。
+              schema:
+                $ref: '#/components/schemas/DatasetVersions'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+      description: 当前后端操作；本机使用，无需凭据。数据集名取 `/api/v1/datasets` 返回的 `dataset` 字段。
   /api/v1/datasets/import:
     post:
       operationId: importDataset
       summary: 注册并校验公开CSV数据
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-03
-      x-user-stories: [US-01, US-02, US-03, US-23]
+      x-user-stories:
+      - US-01
+      - US-02
+      - US-03
+      - US-23
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '201':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/DatasetImportResult'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '413': {$ref: '#/components/responses/InputLimitExceeded'}
+              schema:
+                $ref: '#/components/schemas/DatasetImportResult'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '413':
+          $ref: '#/components/responses/InputLimitExceeded'
       x-auth-status: proposed
       x-access-policy: write
       requestBody:
         required: true
         content:
           multipart/form-data:
-            schema: {$ref: '#/components/schemas/DatasetImportForm'}
+            schema:
+              $ref: '#/components/schemas/DatasetImportForm'
             encoding:
-              file: {contentType: text/csv}
-              descriptor: {contentType: application/json}
-      x-proposed-limits: {maxBytes: 52428800, maxRows: 100000}
+              file:
+                contentType: text/csv
+              descriptor:
+                contentType: application/json
+      x-proposed-limits:
+        maxBytes: 52428800
+        maxRows: 100000
       description: 候选50MiB／100000条。全部原始行先校验，来源hash不匹配不能ready；相同版本复用，不任意抓取descriptor URL。
   /api/v1/datasets/versions/{datasetVersion}/quality:
     get:
       operationId: getDatasetQuality
       summary: 数据版本质量报告
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-04
-      x-user-stories: [US-02, US-03]
+      x-user-stories:
+      - US-02
+      - US-03
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/QualityReport'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
+              schema:
+                $ref: '#/components/schemas/QualityReport'
+        '404':
+          $ref: '#/components/responses/NotFound'
       x-auth-status: proposed
       x-access-policy: read
       parameters:
       - name: datasetVersion
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
   /api/v1/feature-schemas/{featureSchemaVersion}:
     get:
       operationId: getFeatureSchema
@@ -217,8 +268,6 @@ paths:
       - US-04
       - US-24
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 当前响应
@@ -226,18 +275,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FeatureSchema'
-        '401':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
-        '403':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
         '404':
           description: 当前响应
           content:
@@ -265,60 +302,68 @@ paths:
         schema:
           type: string
           minLength: 1
-      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/experiments:
     post:
       operationId: createExperiment
       summary: 创建冻结协议实验
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-06
-      x-user-stories: [US-05, US-06, US-07]
+      x-user-stories:
+      - US-05
+      - US-06
+      - US-07
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '202':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RunAccepted'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/ModelUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RunAccepted'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/ModelUnavailable'
       x-auth-status: proposed
       x-access-policy: write
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/ExperimentCreate'}
+            schema:
+              $ref: '#/components/schemas/ExperimentCreate'
   /api/v1/experiments/{runId}:
     get:
       operationId: getExperiment
       summary: 查询实验状态与结果
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-07
-      x-user-stories: [US-05, US-06, US-07, US-23]
+      x-user-stories:
+      - US-05
+      - US-06
+      - US-07
+      - US-23
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ExperimentRun'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '404':
+          $ref: '#/components/responses/NotFound'
       x-auth-status: proposed
       x-access-policy: read
       parameters:
       - name: runId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
   /api/v1/models:
     get:
       operationId: listModels
@@ -329,8 +374,6 @@ paths:
       x-user-stories:
       - US-08
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 当前响应
@@ -338,18 +381,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelList'
-        '401':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
-        '403':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
         '404':
           description: 当前响应
           content:
@@ -380,7 +411,7 @@ paths:
           - ready
           - invalid
           default: ready
-      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/predictions:
     post:
       operationId: createPrediction
@@ -393,8 +424,6 @@ paths:
       - US-16
       - US-24
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       responses:
         '201':
           description: 当前响应
@@ -402,18 +431,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PredictionBatch'
-        '401':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
-        '403':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
         '404':
           description: 当前响应
           content:
@@ -465,34 +482,36 @@ paths:
                   ent: 0.8
                   la: 10
                   ld: 2
-      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/predictions/{predictionId}/explanation:
     get:
       operationId: getExplanation
       summary: 查询同预测的解释状态
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-10
-      x-user-stories: [US-16]
+      x-user-stories:
+      - US-16
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Explanation'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/ContextMismatch'}
+              schema:
+                $ref: '#/components/schemas/Explanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ContextMismatch'
       x-auth-status: proposed
       x-access-policy: read
       parameters:
       - name: predictionId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
   /api/v1/prediction-batches/{batchId}:
     get:
       operationId: getPredictionBatch
@@ -505,8 +524,6 @@ paths:
       - US-11
       - US-15
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 当前响应
@@ -514,18 +531,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PredictionBatch'
-        '401':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
-        '403':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
         '404':
           description: 当前响应
           content:
@@ -552,61 +557,71 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Uuid'
-      description: 当前后端操作；成员／管理员 Bearer 凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
   /api/v1/prediction-batches:
     post:
       operationId: createPredictionBatch
       summary: CSV特征整批预测
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-12
-      x-user-stories: [US-09, US-24]
+      x-user-stories:
+      - US-09
+      - US-24
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '201':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/PredictionBatch'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '413': {$ref: '#/components/responses/InputLimitExceeded'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/ModelUnavailable'}
-        '500': {$ref: '#/components/responses/InferenceFailure'}
+              schema:
+                $ref: '#/components/schemas/PredictionBatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/InputLimitExceeded'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/ModelUnavailable'
+        '500':
+          $ref: '#/components/responses/InferenceFailure'
       x-auth-status: proposed
       x-access-policy: write
       requestBody:
         required: true
         content:
           multipart/form-data:
-            schema: {$ref: '#/components/schemas/PredictionCsvForm'}
+            schema:
+              $ref: '#/components/schemas/PredictionCsvForm'
             encoding:
-              file: {contentType: text/csv}
-      x-proposed-limits: {maxBytes: 10485760, maxRows: 1000}
+              file:
+                contentType: text/csv
+      x-proposed-limits:
+        maxBytes: 10485760
+        maxRows: 1000
       description: 候选10MiB／1000条，UTF-8，可选BOM。表头recordId＋schema字段，commitId／time可选，无label。全批校验／推理成功后才ready，不部分成功。
   /api/v1/comparisons:
     get:
       operationId: compareRuns
       summary: 同口径成功实验比较
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-13
-      x-user-stories: [US-20]
+      x-user-stories:
+      - US-20
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Comparison'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/ContextMismatch'}
+              schema:
+                $ref: '#/components/schemas/Comparison'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ContextMismatch'
       x-auth-status: proposed
       x-access-policy: read
       parameters:
@@ -615,7 +630,8 @@ paths:
         required: true
         schema:
           type: array
-          items: {$ref: '#/components/schemas/Uuid'}
+          items:
+            $ref: '#/components/schemas/Uuid'
           minItems: 2
         style: form
         explode: false
@@ -623,67 +639,75 @@ paths:
     get:
       operationId: getTrend
       summary: 冻结历史观测与风险趋势
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-14
-      x-user-stories: [US-21]
+      x-user-stories:
+      - US-21
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Trend'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/RunNotReady'}
+              schema:
+                $ref: '#/components/schemas/Trend'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RunNotReady'
       x-auth-status: proposed
       x-access-policy: read
       parameters:
       - name: runId
         in: query
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       - name: bucket
         in: query
         required: false
         schema:
           type: string
-          enum: [day, week, month]
+          enum:
+          - day
+          - week
+          - month
           default: week
   /api/v1/experiments/{runId}/report:
     get:
       operationId: getExperimentReport
       summary: 导出完整成功实验报告
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-15
-      x-user-stories: [US-22]
+      x-user-stories:
+      - US-22
       x-implementation-status: planned
-      security:
-      - TeamToken: []
       responses:
         '200':
           description: 候选成功响应，尚未实现
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ExperimentReport'}
+              schema:
+                $ref: '#/components/schemas/ExperimentReport'
           headers:
             Content-Disposition:
               description: 受控报告文件名；无客户端指定路径
-              schema: {type: string}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/RunNotReady'}
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RunNotReady'
       x-auth-status: proposed
       x-access-policy: read
       parameters:
       - name: runId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
   /api/v1/model-candidates:
     get:
       operationId: listModelCandidates
@@ -695,8 +719,6 @@ paths:
       - US-08
       - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: admin
       responses:
@@ -706,18 +728,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelCandidateList'
-        '401':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
-        '403':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
         '503':
           description: 当前响应
           content:
@@ -735,8 +745,6 @@ paths:
       - US-08
       - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: admin
       responses:
@@ -746,18 +754,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelRegistration'
-        '401':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
-        '403':
-          description: 当前响应
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SharedError'
         '503':
           description: 当前响应
           content:
@@ -805,19 +801,22 @@ paths:
     post:
       operationId: createRepositorySync
       summary: 从公开仓库采集提交并打分
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-20
-      x-user-stories: [US-01, US-09, US-23]
+      x-user-stories:
+      - US-01
+      - US-09
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/RepositorySyncCreate'}
+            schema:
+              $ref: '#/components/schemas/RepositorySyncCreate'
             example:
               repositoryUrl: https://github.com/octo/example.git
               branch: main
@@ -828,360 +827,441 @@ paths:
           description: 新建作业；采集、登记、训练（或降级）与打分在后台串行执行
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySyncView'}
+              schema:
+                $ref: '#/components/schemas/RepositorySyncView'
         '200':
           description: 同仓库同参数的进行中作业被复用，返回该作业
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySyncView'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '502': {$ref: '#/components/responses/RepositoryUnavailable'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
-      description: 只接受公开 HTTP(S) 地址；file、ssh、git 等协议与内网主机返回 422 INPUT_INVALID。`strategy` 三选一，缺省 `auto`（按数据量给建议）。接口立即返回作业视图，进度靠轮询 `GET /api/v1/repository-syncs/{syncId}`。
+              schema:
+                $ref: '#/components/schemas/RepositorySyncView'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '502':
+          $ref: '#/components/responses/RepositoryUnavailable'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+      description: 只接受公开 HTTP(S) 地址；file、ssh、git 等协议与内网主机返回 422 INPUT_INVALID。`strategy` 三选一，缺省 `auto`（按数据量给建议）。接口立即返回作业视图，进度靠轮询
+        `GET /api/v1/repository-syncs/{syncId}`。
     get:
       operationId: listRepositorySyncs
       summary: 同步作业列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-21
-      x-user-stories: [US-23]
+      x-user-stories:
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: limit
         in: query
         required: false
-        schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       - name: offset
         in: query
         required: false
-        schema: {type: integer, minimum: 0, default: 0}
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: 当前响应；按发起时间倒序
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySyncPage'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositorySyncPage'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: limit 越界返回 422，不静默截断。列表不含提交级数据。
   /api/v1/repository-syncs/{syncId}:
     get:
       operationId: getRepositorySync
       summary: 单个同步作业的状态与产物
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-22
-      x-user-stories: [US-23]
+      x-user-stories:
+      - US-23
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: syncId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       responses:
         '200':
           description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySyncView'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
-      description: 状态为 queued／collecting／registering／training／scoring／completed／failed／interrupted；`modelStrategy` 与 `degradeReason` 说明这次实际用了哪个模型、为什么。
+              schema:
+                $ref: '#/components/schemas/RepositorySyncView'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+      description: 状态为 queued／collecting／registering／training／scoring／completed／failed／interrupted；`modelStrategy`
+        与 `degradeReason` 说明这次实际用了哪个模型、为什么。
   /api/v1/repository-syncs/{syncId}/commits:
     get:
       operationId: listRepositorySyncCommits
       summary: 同步作业内提交的风险列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-23
-      x-user-stories: [US-10, US-11, US-12]
+      x-user-stories:
+      - US-10
+      - US-11
+      - US-12
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: syncId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       - name: limit
         in: query
         required: false
-        schema: {type: integer, minimum: 1, maximum: 200, default: 100}
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 100
       - name: offset
         in: query
         required: false
-        schema: {type: integer, minimum: 0, default: 0}
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: 当前响应；按风险降序、时间降序、提交标识升序
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySyncCommitPage'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositorySyncCommitPage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 每条带 14 字段原始值（`features`）、风险、行数、文件数与标签；`label` 由简化 SZZ 倒推，1 表示后来被修复提交指认，0 只表示未观测到，不等于已证实无缺陷。
   /api/v1/repository-syncs/{syncId}/commits/{commitId}:
     get:
       operationId: getRepositorySyncCommit
       summary: 单个仓库提交的特征与风险
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-25
-      x-user-stories: [US-11]
+      x-user-stories:
+      - US-11
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: syncId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       - name: commitId
         in: path
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       responses:
         '200':
           description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySyncCommit'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositorySyncCommit'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 提交不属于该作业时返回 404，不跨作业查询。
   /api/v1/repositories:
     get:
       operationId: listRepositories
       summary: 已同步过的仓库列表
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-26
-      x-user-stories: [US-10]
+      x-user-stories:
+      - US-10
       x-implementation-status: implemented
       x-relation: 仓库视图读 `/api/v1/repositories`；每次同步的作业历史仍查 `/api/v1/repository-syncs`。
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: limit
         in: query
         required: false
-        schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
       - name: offset
         in: query
         required: false
-        schema: {type: integer, minimum: 0, default: 0}
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: 按最近更新时间降序
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositoryList'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositoryList'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 一条仓库代表一个规范化地址；同一地址的多次同步归到这里，`viewSyncId` 指向当前视图来自哪一次成功作业。
   /api/v1/repositories/{repositoryId}:
     get:
       operationId: getRepository
       summary: 仓库详情
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-27
-      x-user-stories: [US-10]
+      x-user-stories:
+      - US-10
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: viewSyncId
         in: query
         required: false
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
         description: 固定的成功分析；不存在或不归本仓库为 404，未成功为 409。省略取最新成功分析。
       - name: repositoryId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       responses:
         '409':
           description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功完成
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/SharedError'}
+              schema:
+                $ref: '#/components/schemas/SharedError'
         '200':
           description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/Repository'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/RepositoryUnknown'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/Repository'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 未知仓库返回 404 `REPOSITORY_UNKNOWN`；`modelStrategy`／`degradeReason` 取自当前视图对应的成功作业。
   /api/v1/repositories/{repositoryId}/commits:
     get:
       operationId: listRepositoryCommits
       summary: 仓库当前视图的提交分页
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-28
-      x-user-stories: [US-10, US-11]
+      x-user-stories:
+      - US-10
+      - US-11
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: viewSyncId
         in: query
         required: false
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
         description: 固定的成功分析；不存在或不归本仓库为 404，未成功为 409。省略取最新成功分析。
       - name: repositoryId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       - name: limit
         in: query
         required: false
-        schema: {type: integer, minimum: 1, maximum: 200, default: 50}
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
       - name: offset
         in: query
         required: false
-        schema: {type: integer, minimum: 0, default: 0}
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       - name: search
         in: query
         required: false
-        schema: {type: string, maxLength: 64}
+        schema:
+          type: string
+          maxLength: 64
         description: 匹配提交标识或标题片段；`%`、`_` 与 `\` 按字面匹配。
       - name: start
         in: query
         required: false
-        schema: {type: string, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'}
+        schema:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
       - name: end
         in: query
         required: false
-        schema: {type: string, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'}
+        schema:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
       - name: sort
         in: query
         required: false
-        schema: {type: string, enum: [risk, time], default: risk}
+        schema:
+          type: string
+          enum:
+          - risk
+          - time
+          default: risk
       responses:
         '409':
           description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功完成
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/SharedError'}
+              schema:
+                $ref: '#/components/schemas/SharedError'
         '200':
           description: 当前视图的提交页；没有成功作业时返回空页
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositoryCommitPage'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/RepositoryUnknown'}
-        '422': {$ref: '#/components/responses/InputInvalid'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositoryCommitPage'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 时间按 UTC+08:00 的自然日解释；`sort=risk` 时按风险降序、时间降序、标识升序。
   /api/v1/repositories/{repositoryId}/commits/{commitId}:
     get:
       operationId: getRepositoryCommit
       summary: 仓库单条提交的特征、风险与标签说明
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-29
-      x-user-stories: [US-11]
+      x-user-stories:
+      - US-11
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: viewSyncId
         in: query
         required: false
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
         description: 固定的成功分析；不存在或不归本仓库为 404，未成功为 409。省略取最新成功分析。
       - name: repositoryId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       - name: commitId
         in: path
         required: true
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
       responses:
         '409':
           description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功完成
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/SharedError'}
+              schema:
+                $ref: '#/components/schemas/SharedError'
         '200':
           description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositoryCommit'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositoryCommit'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 提交不在当前视图里返回 404，不跨仓库查询。
   /api/v1/repositories/{repositoryId}/summary:
     get:
       operationId: getRepositorySummary
       summary: 仓库当前视图的风险分布
-      tags: [目标共享产品]
+      tags:
+      - 目标共享产品
       x-api-id: API-30
-      x-user-stories: [US-10]
+      x-user-stories:
+      - US-10
       x-implementation-status: implemented
-      security:
-      - TeamToken: []
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
       - name: viewSyncId
         in: query
         required: false
-        schema: {type: string, minLength: 1}
+        schema:
+          type: string
+          minLength: 1
         description: 固定的成功分析；不存在或不归本仓库为 404，未成功为 409。省略取最新成功分析。
       - name: repositoryId
         in: path
         required: true
-        schema: {$ref: '#/components/schemas/Uuid'}
+        schema:
+          $ref: '#/components/schemas/Uuid'
       responses:
         '409':
           description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功完成
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/SharedError'}
+              schema:
+                $ref: '#/components/schemas/SharedError'
         '200':
           description: 当前响应
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/RepositorySummary'}
-        '401': {$ref: '#/components/responses/AuthenticationRequired'}
-        '403': {$ref: '#/components/responses/AccessDenied'}
-        '404': {$ref: '#/components/responses/RepositoryUnknown'}
-        '503': {$ref: '#/components/responses/StorageUnavailable'}
+              schema:
+                $ref: '#/components/schemas/RepositorySummary'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       description: 分档口径 `repo-distribution-v1`：高风险 ≥0.25、中风险 ≥0.10 且 <0.25、低风险 <0.10；没有视图时各项为 0。
 components:
   schemas:
@@ -1261,260 +1341,618 @@ components:
       - state
       - manifestSha256
       additionalProperties: false
-    Hash: {type: string, pattern: '^[a-f0-9]{64}$'}
-    Uuid: {type: string, format: uuid}
+    Hash:
+      type: string
+      pattern: ^[a-f0-9]{64}$
+    Uuid:
+      type: string
+      format: uuid
     MetricScore:
       oneOf:
       - type: object
         properties:
-          value: {type: number, minimum: 0, maximum: 1}
-          reason: {type: 'null'}
-        required: [value, reason]
+          value:
+            type: number
+            minimum: 0
+            maximum: 1
+          reason:
+            type: 'null'
+        required:
+        - value
+        - reason
         additionalProperties: false
       - type: object
         properties:
-          value: {type: 'null'}
-          reason: {type: string, minLength: 1}
-        required: [value, reason]
+          value:
+            type: 'null'
+          reason:
+            type: string
+            minLength: 1
+        required:
+        - value
+        - reason
         additionalProperties: false
     SixFeatures:
       type: object
       properties:
-        ns: {type: integer, minimum: 0}
-        nd: {type: integer, minimum: 0}
-        nf: {type: integer, minimum: 0}
-        ent: {type: number, minimum: 0}
-        la: {type: integer, minimum: 0}
-        ld: {type: integer, minimum: 0}
-      required: [ns, nd, nf, ent, la, ld]
+        ns:
+          type: integer
+          minimum: 0
+        nd:
+          type: integer
+          minimum: 0
+        nf:
+          type: integer
+          minimum: 0
+        ent:
+          type: number
+          minimum: 0
+        la:
+          type: integer
+          minimum: 0
+        ld:
+          type: integer
+          minimum: 0
+      required:
+      - ns
+      - nd
+      - nf
+      - ent
+      - la
+      - ld
       additionalProperties: false
     Kamei14Features:
       type: object
       properties:
-        ns: {type: integer, minimum: 0}
-        nd: {type: integer, minimum: 0}
-        nf: {type: integer, minimum: 0}
-        entropy: {type: number, minimum: 0}
-        la: {type: integer, minimum: 0}
-        ld: {type: integer, minimum: 0}
-        lt: {type: integer, minimum: 0}
-        fix: {type: boolean}
-        ndev: {type: integer, minimum: 0}
-        age: {type: number, minimum: 0}
-        nuc: {type: integer, minimum: 0}
-        exp: {type: integer, minimum: 0}
-        rexp: {type: number, minimum: 0}
-        sexp: {type: integer, minimum: 0}
-      required: [ns, nd, nf, entropy, la, ld, lt, fix, ndev, age, nuc, exp, rexp, sexp]
+        ns:
+          type: integer
+          minimum: 0
+        nd:
+          type: integer
+          minimum: 0
+        nf:
+          type: integer
+          minimum: 0
+        entropy:
+          type: number
+          minimum: 0
+        la:
+          type: integer
+          minimum: 0
+        ld:
+          type: integer
+          minimum: 0
+        lt:
+          type: integer
+          minimum: 0
+        fix:
+          type: boolean
+        ndev:
+          type: integer
+          minimum: 0
+        age:
+          type: number
+          minimum: 0
+        nuc:
+          type: integer
+          minimum: 0
+        exp:
+          type: integer
+          minimum: 0
+        rexp:
+          type: number
+          minimum: 0
+        sexp:
+          type: integer
+          minimum: 0
+      required:
+      - ns
+      - nd
+      - nf
+      - entropy
+      - la
+      - ld
+      - lt
+      - fix
+      - ndev
+      - age
+      - nuc
+      - exp
+      - rexp
+      - sexp
       additionalProperties: false
       description: 候选完整14维结构，来源和语义尚待核验；不是现有快照已支持。
     ModelProvenance:
       type: object
       properties:
-        id: {type: string, minLength: 1}
-        name: {type: string, minLength: 1}
-        sha256: {$ref: '#/components/schemas/Hash'}
-      required: [id, name, sha256]
+        id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        sha256:
+          $ref: '#/components/schemas/Hash'
+      required:
+      - id
+      - name
+      - sha256
       additionalProperties: false
     CurrentRecord:
       type: object
       properties:
-        id: {type: string, pattern: '^[a-f0-9]{40}$'}
-        time: {type: string, format: date-time}
-        risk: {type: number, minimum: 0, maximum: 1}
-        lines: {type: integer, minimum: 0}
-        files: {type: integer, minimum: 0}
-        metrics: {$ref: '#/components/schemas/SixFeatures'}
-      required: [id, time, risk, lines, files, metrics]
+        id:
+          type: string
+          pattern: ^[a-f0-9]{40}$
+        time:
+          type: string
+          format: date-time
+        risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        lines:
+          type: integer
+          minimum: 0
+        files:
+          type: integer
+          minimum: 0
+        metrics:
+          $ref: '#/components/schemas/SixFeatures'
+      required:
+      - id
+      - time
+      - risk
+      - lines
+      - files
+      - metrics
       additionalProperties: false
     Confusion:
       type: object
       properties:
-        tp: {type: integer, minimum: 0}
-        fp: {type: integer, minimum: 0}
-        tn: {type: integer, minimum: 0}
-        fn: {type: integer, minimum: 0}
-      required: [tp, fp, tn, fn]
+        tp:
+          type: integer
+          minimum: 0
+        fp:
+          type: integer
+          minimum: 0
+        tn:
+          type: integer
+          minimum: 0
+        fn:
+          type: integer
+          minimum: 0
+      required:
+      - tp
+      - fp
+      - tn
+      - fn
       additionalProperties: false
     Classification:
       type: object
       properties:
-        precision: {$ref: '#/components/schemas/MetricScore'}
-        recall: {$ref: '#/components/schemas/MetricScore'}
-        f1: {$ref: '#/components/schemas/MetricScore'}
-        confusion: {$ref: '#/components/schemas/Confusion'}
-      required: [precision, recall, f1, confusion]
+        precision:
+          $ref: '#/components/schemas/MetricScore'
+        recall:
+          $ref: '#/components/schemas/MetricScore'
+        f1:
+          $ref: '#/components/schemas/MetricScore'
+        confusion:
+          $ref: '#/components/schemas/Confusion'
+      required:
+      - precision
+      - recall
+      - f1
+      - confusion
       additionalProperties: false
     BaselineMetrics:
       type: object
       properties:
-        precision: {$ref: '#/components/schemas/MetricScore'}
-        recall: {$ref: '#/components/schemas/MetricScore'}
-        f1: {$ref: '#/components/schemas/MetricScore'}
-        confusion: {$ref: '#/components/schemas/Confusion'}
-        rocAuc: {$ref: '#/components/schemas/MetricScore'}
-        averagePrecision: {$ref: '#/components/schemas/MetricScore'}
-        recall20Loc: {$ref: '#/components/schemas/MetricScore'}
-        threshold: {const: 0.5}
+        precision:
+          $ref: '#/components/schemas/MetricScore'
+        recall:
+          $ref: '#/components/schemas/MetricScore'
+        f1:
+          $ref: '#/components/schemas/MetricScore'
+        confusion:
+          $ref: '#/components/schemas/Confusion'
+        rocAuc:
+          $ref: '#/components/schemas/MetricScore'
+        averagePrecision:
+          $ref: '#/components/schemas/MetricScore'
+        recall20Loc:
+          $ref: '#/components/schemas/MetricScore'
+        threshold:
+          const: 0.5
         counts:
           type: object
           properties:
-            records: {type: integer, minimum: 0}
-            positive: {type: integer, minimum: 0}
-            negative: {type: integer, minimum: 0}
-          required: [records, positive, negative]
+            records:
+              type: integer
+              minimum: 0
+            positive:
+              type: integer
+              minimum: 0
+            negative:
+              type: integer
+              minimum: 0
+          required:
+          - records
+          - positive
+          - negative
           additionalProperties: false
         effort:
           type: object
           properties:
-            name: {const: Recall@20%LOC (risk-ranked)}
-            totalLoc: {type: number, minimum: 0}
-            budgetLoc: {type: number, minimum: 0}
-            usedLoc: {type: number, minimum: 0}
-            selectedCount: {type: integer, minimum: 0}
-            ordering: {const: 'risk-desc,time-desc,id-asc'}
-            policy: {const: whole-commit-prefix-stop}
-          required: [name, totalLoc, budgetLoc, usedLoc, selectedCount, ordering, policy]
+            name:
+              const: Recall@20%LOC (risk-ranked)
+            totalLoc:
+              type: number
+              minimum: 0
+            budgetLoc:
+              type: number
+              minimum: 0
+            usedLoc:
+              type: number
+              minimum: 0
+            selectedCount:
+              type: integer
+              minimum: 0
+            ordering:
+              const: risk-desc,time-desc,id-asc
+            policy:
+              const: whole-commit-prefix-stop
+          required:
+          - name
+          - totalLoc
+          - budgetLoc
+          - usedLoc
+          - selectedCount
+          - ordering
+          - policy
           additionalProperties: false
         reference:
           type: object
           properties:
-            apNoInformation: {type: number, minimum: 0, maximum: 1}
-            allNegative: {$ref: '#/components/schemas/Classification'}
-          required: [apNoInformation, allNegative]
+            apNoInformation:
+              type: number
+              minimum: 0
+              maximum: 1
+            allNegative:
+              $ref: '#/components/schemas/Classification'
+          required:
+          - apNoInformation
+          - allNegative
           additionalProperties: false
-      required: [precision, recall, f1, confusion, rocAuc, averagePrecision, recall20Loc, threshold, counts, effort,
-        reference]
+      required:
+      - precision
+      - recall
+      - f1
+      - confusion
+      - rocAuc
+      - averagePrecision
+      - recall20Loc
+      - threshold
+      - counts
+      - effort
+      - reference
       additionalProperties: false
     SourceFile:
       type: object
       properties:
-        url: {type: string, format: uri, pattern: '^https://'}
-        sha256: {$ref: '#/components/schemas/Hash'}
-        bytes: {type: integer, minimum: 0}
-      required: [url, sha256, bytes]
+        url:
+          type: string
+          format: uri
+          pattern: ^https://
+        sha256:
+          $ref: '#/components/schemas/Hash'
+        bytes:
+          type: integer
+          minimum: 0
+      required:
+      - url
+      - sha256
+      - bytes
       additionalProperties: false
     CurrentQuality:
       type: object
       properties:
-        rawRows: {type: integer, minimum: 0}
-        includedRows: {type: integer, minimum: 0}
-        positiveLabels: {type: integer, minimum: 0}
-        blankLabels: {type: integer, minimum: 0}
+        rawRows:
+          type: integer
+          minimum: 0
+        includedRows:
+          type: integer
+          minimum: 0
+        positiveLabels:
+          type: integer
+          minimum: 0
+        blankLabels:
+          type: integer
+          minimum: 0
         excluded:
           type: object
           properties:
-            outsideWindow: {type: integer, minimum: 0}
-            noAddedLines: {type: integer, minimum: 0}
-            tooMuchChurn: {type: integer, minimum: 0}
-            tooManyFiles: {type: integer, minimum: 0}
-          required: [outsideWindow, noAddedLines, tooMuchChurn, tooManyFiles]
+            outsideWindow:
+              type: integer
+              minimum: 0
+            noAddedLines:
+              type: integer
+              minimum: 0
+            tooMuchChurn:
+              type: integer
+              minimum: 0
+            tooManyFiles:
+              type: integer
+              minimum: 0
+          required:
+          - outsideWindow
+          - noAddedLines
+          - tooMuchChurn
+          - tooManyFiles
           additionalProperties: false
         featureMissing:
           type: object
           properties:
-            ns: {type: integer, minimum: 0}
-            nd: {type: integer, minimum: 0}
-            nf: {type: integer, minimum: 0}
-            ent: {type: integer, minimum: 0}
-            la: {type: integer, minimum: 0}
-            ld: {type: integer, minimum: 0}
-          required: [ns, nd, nf, ent, la, ld]
+            ns:
+              type: integer
+              minimum: 0
+            nd:
+              type: integer
+              minimum: 0
+            nf:
+              type: integer
+              minimum: 0
+            ent:
+              type: integer
+              minimum: 0
+            la:
+              type: integer
+              minimum: 0
+            ld:
+              type: integer
+              minimum: 0
+          required:
+          - ns
+          - nd
+          - nf
+          - ent
+          - la
+          - ld
           additionalProperties: false
-      required: [rawRows, includedRows, positiveLabels, blankLabels, excluded, featureMissing]
+      required:
+      - rawRows
+      - includedRows
+      - positiveLabels
+      - blankLabels
+      - excluded
+      - featureMissing
       additionalProperties: false
     CurrentSource:
       type: object
       properties:
-        publisher: {type: string, minLength: 1}
-        revision: {type: string, minLength: 1}
-        url: {type: string, format: uri, pattern: '^https://'}
-        sha256: {$ref: '#/components/schemas/Hash'}
-        citation: {type: string, minLength: 1}
-        labelRule: {type: string, minLength: 1}
+        publisher:
+          type: string
+          minLength: 1
+        revision:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          format: uri
+          pattern: ^https://
+        sha256:
+          $ref: '#/components/schemas/Hash'
+        citation:
+          type: string
+          minLength: 1
+        labelRule:
+          type: string
+          minLength: 1
         files:
           type: object
           properties:
-            openstack.csv: {$ref: '#/components/schemas/SourceFile'}
-            load_data.r: {$ref: '#/components/schemas/SourceFile'}
-            experimental_settings.r: {$ref: '#/components/schemas/SourceFile'}
-          required: [openstack.csv, load_data.r, experimental_settings.r]
+            openstack.csv:
+              $ref: '#/components/schemas/SourceFile'
+            load_data.r:
+              $ref: '#/components/schemas/SourceFile'
+            experimental_settings.r:
+              $ref: '#/components/schemas/SourceFile'
+          required:
+          - openstack.csv
+          - load_data.r
+          - experimental_settings.r
           additionalProperties: false
-        quality: {$ref: '#/components/schemas/CurrentQuality'}
-      required: [publisher, revision, url, sha256, citation, labelRule, files, quality]
+        quality:
+          $ref: '#/components/schemas/CurrentQuality'
+      required:
+      - publisher
+      - revision
+      - url
+      - sha256
+      - citation
+      - labelRule
+      - files
+      - quality
       additionalProperties: false
     Cohort:
       type: object
       properties:
-        startEpochInclusive: {type: integer, minimum: 0}
-        endEpochExclusive: {type: integer, minimum: 0}
-        addedLinesGreaterThan: {type: integer, minimum: 0}
-        maxChurnInclusive: {type: integer, minimum: 0}
-        maxFilesInclusive: {type: integer, minimum: 0}
-      required: [startEpochInclusive, endEpochExclusive, addedLinesGreaterThan, maxChurnInclusive, maxFilesInclusive]
+        startEpochInclusive:
+          type: integer
+          minimum: 0
+        endEpochExclusive:
+          type: integer
+          minimum: 0
+        addedLinesGreaterThan:
+          type: integer
+          minimum: 0
+        maxChurnInclusive:
+          type: integer
+          minimum: 0
+        maxFilesInclusive:
+          type: integer
+          minimum: 0
+      required:
+      - startEpochInclusive
+      - endEpochExclusive
+      - addedLinesGreaterThan
+      - maxChurnInclusive
+      - maxFilesInclusive
       additionalProperties: false
     SplitPart:
       type: object
       properties:
-        count: {type: integer, minimum: 0}
-        positiveCount: {type: integer, minimum: 0}
-        start: {type: string, format: date-time}
-        end: {type: string, format: date-time}
-      required: [count, positiveCount, start, end]
+        count:
+          type: integer
+          minimum: 0
+        positiveCount:
+          type: integer
+          minimum: 0
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+      required:
+      - count
+      - positiveCount
+      - start
+      - end
       additionalProperties: false
     BaselineSummary:
       type: object
       properties:
-        runId: {$ref: '#/components/schemas/Hash'}
-        datasetVersion: {type: string, minLength: 1}
-        modelSha256: {$ref: '#/components/schemas/Hash'}
+        runId:
+          $ref: '#/components/schemas/Hash'
+        datasetVersion:
+          type: string
+          minLength: 1
+        modelSha256:
+          $ref: '#/components/schemas/Hash'
         features:
-          const: [ns, nd, nf, ent, la, ld]
-        threshold: {const: 0.5}
-        protocolVersion: {type: string, minLength: 1}
+          const:
+          - ns
+          - nd
+          - nf
+          - ent
+          - la
+          - ld
+        threshold:
+          const: 0.5
+        protocolVersion:
+          type: string
+          minLength: 1
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 1
-        source: {$ref: '#/components/schemas/CurrentSource'}
-        cohort: {$ref: '#/components/schemas/Cohort'}
+        source:
+          $ref: '#/components/schemas/CurrentSource'
+        cohort:
+          $ref: '#/components/schemas/Cohort'
         split:
           type: object
           properties:
-            train: {$ref: '#/components/schemas/SplitPart'}
-            validation: {$ref: '#/components/schemas/SplitPart'}
-            test: {$ref: '#/components/schemas/SplitPart'}
-          required: [train, validation, test]
+            train:
+              $ref: '#/components/schemas/SplitPart'
+            validation:
+              $ref: '#/components/schemas/SplitPart'
+            test:
+              $ref: '#/components/schemas/SplitPart'
+          required:
+          - train
+          - validation
+          - test
           additionalProperties: false
-        metrics: {$ref: '#/components/schemas/BaselineMetrics'}
-      required: [runId, datasetVersion, modelSha256, features, threshold, protocolVersion, limitations, source,
-        cohort, split, metrics]
+        metrics:
+          $ref: '#/components/schemas/BaselineMetrics'
+      required:
+      - runId
+      - datasetVersion
+      - modelSha256
+      - features
+      - threshold
+      - protocolVersion
+      - limitations
+      - source
+      - cohort
+      - split
+      - metrics
       additionalProperties: false
     HistoricalBatch:
       type: object
       properties:
-        contractVersion: {const: 1}
-        mode: {const: historical}
-        project: {type: string, minLength: 1}
-        version: {type: string, minLength: 1}
-        datasetVersion: {type: string, minLength: 1}
-        runId: {$ref: '#/components/schemas/Hash'}
-        model: {$ref: '#/components/schemas/ModelProvenance'}
-        summary: {$ref: '#/components/schemas/BaselineSummary'}
+        contractVersion:
+          const: 1
+        mode:
+          const: historical
+        project:
+          type: string
+          minLength: 1
+        version:
+          type: string
+          minLength: 1
+        datasetVersion:
+          type: string
+          minLength: 1
+        runId:
+          $ref: '#/components/schemas/Hash'
+        model:
+          $ref: '#/components/schemas/ModelProvenance'
+        summary:
+          $ref: '#/components/schemas/BaselineSummary'
         records:
           type: array
-          items: {$ref: '#/components/schemas/CurrentRecord'}
+          items:
+            $ref: '#/components/schemas/CurrentRecord'
           minItems: 1
-      required: [contractVersion, mode, project, version, datasetVersion, runId, model, summary, records]
+      required:
+      - contractVersion
+      - mode
+      - project
+      - version
+      - datasetVersion
+      - runId
+      - model
+      - summary
+      - records
       additionalProperties: false
       description: 当前实现结构。运行／模型／数据身份、分区、记录数量须跨字段一致，由当前服务和客户端校验；来源只是回顾性历史数据。
     GlobalErrorCode:
       type: string
-      enum: [ARTIFACT_UNAVAILABLE, INTEGRITY_ERROR, ARTIFACT_INVALID, MODEL_INVALID, INFERENCE_ERROR, SOURCE_UNAVAILABLE,
-        DATA_INVALID, OUTPUT_EXISTS, SPLIT_INVALID, FEATURES_INVALID, MODEL_NOT_CONVERGED, EVALUATION_INVALID, REPRODUCTION_FAILED,
-        SCHEMA_UNKNOWN, SCHEMA_FIELD_UNAVAILABLE, ALGORITHM_UNKNOWN,
-        AUTH_REQUIRED, ACCESS_DENIED, NOT_FOUND, SOURCE_HASH_MISMATCH, INPUT_SCHEMA_MISMATCH, INPUT_INVALID, INPUT_LIMIT_EXCEEDED,
-        CONTEXT_MISMATCH, MODEL_NOT_READY, RUN_NOT_READY, EXPLANATION_FAILED, ACCESS_CONFIG_INVALID, STORAGE_UNAVAILABLE, REPOSITORY_UNKNOWN, REPOSITORY_ANALYSIS_UNKNOWN, REPOSITORY_ANALYSIS_UNAVAILABLE]
+      enum:
+      - ARTIFACT_UNAVAILABLE
+      - INTEGRITY_ERROR
+      - ARTIFACT_INVALID
+      - MODEL_INVALID
+      - INFERENCE_ERROR
+      - SOURCE_UNAVAILABLE
+      - DATA_INVALID
+      - OUTPUT_EXISTS
+      - SPLIT_INVALID
+      - FEATURES_INVALID
+      - MODEL_NOT_CONVERGED
+      - EVALUATION_INVALID
+      - REPRODUCTION_FAILED
+      - SCHEMA_UNKNOWN
+      - SCHEMA_FIELD_UNAVAILABLE
+      - ALGORITHM_UNKNOWN
+      - NOT_FOUND
+      - SOURCE_HASH_MISMATCH
+      - INPUT_SCHEMA_MISMATCH
+      - INPUT_INVALID
+      - INPUT_LIMIT_EXCEEDED
+      - CONTEXT_MISMATCH
+      - MODEL_NOT_READY
+      - RUN_NOT_READY
+      - EXPLANATION_FAILED
+      - STORAGE_UNAVAILABLE
+      - REPOSITORY_UNKNOWN
+      - REPOSITORY_ANALYSIS_UNKNOWN
+      - REPOSITORY_ANALYSIS_UNAVAILABLE
       description: 码名与HTTP／任务语义的唯一文字定义见../全局错误码表.md；枚举含当前HTTP、相关CLI及候选新接口。
     CurrentError:
       type: object
@@ -1524,25 +1962,44 @@ components:
           properties:
             code:
               allOf:
-              - {$ref: '#/components/schemas/GlobalErrorCode'}
-              - enum: [ARTIFACT_UNAVAILABLE, INTEGRITY_ERROR, ARTIFACT_INVALID, MODEL_INVALID, INFERENCE_ERROR]
-            message: {type: string, minLength: 1}
-          required: [code, message]
+              - $ref: '#/components/schemas/GlobalErrorCode'
+              - enum:
+                - ARTIFACT_UNAVAILABLE
+                - INTEGRITY_ERROR
+                - ARTIFACT_INVALID
+                - MODEL_INVALID
+                - INFERENCE_ERROR
+            message:
+              type: string
+              minLength: 1
+          required:
+          - code
+          - message
           additionalProperties: false
-      required: [error]
+      required:
+      - error
       additionalProperties: false
     ErrorDetail:
       type: object
       properties:
         recordId:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
         row:
-          type: [integer, 'null']
+          type:
+          - integer
+          - 'null'
           minimum: 1
         field:
-          type: [string, 'null']
-        reason: {type: string, minLength: 1}
-      required: [reason]
+          type:
+          - string
+          - 'null'
+        reason:
+          type: string
+          minLength: 1
+      required:
+      - reason
       additionalProperties: false
     SharedError:
       type: object
@@ -1550,16 +2007,25 @@ components:
         error:
           type: object
           properties:
-            code: {$ref: '#/components/schemas/GlobalErrorCode'}
-            message: {type: string, minLength: 1}
+            code:
+              $ref: '#/components/schemas/GlobalErrorCode'
+            message:
+              type: string
+              minLength: 1
             details:
               type: array
-              items: {$ref: '#/components/schemas/ErrorDetail'}
+              items:
+                $ref: '#/components/schemas/ErrorDetail'
               minItems: 0
-            requestId: {type: string, minLength: 1}
-          required: [code, message]
+            requestId:
+              type: string
+              minLength: 1
+          required:
+          - code
+          - message
           additionalProperties: false
-      required: [error]
+      required:
+      - error
       additionalProperties: false
     FeatureField:
       type: object
@@ -1663,203 +2129,434 @@ components:
     LabelRule:
       type: object
       properties:
-        field: {type: string, minLength: 1}
+        field:
+          type: string
+          minLength: 1
         positiveRule:
           type: string
-          enum: [count-gt-zero, binary-one]
+          enum:
+          - count-gt-zero
+          - binary-one
         blankPolicy:
           type: string
-          enum: [unobserved-zero, unknown, reject]
-        negativeMeaning: {const: not-observed}
-      required: [field, positiveRule, blankPolicy, negativeMeaning]
+          enum:
+          - unobserved-zero
+          - unknown
+          - reject
+        negativeMeaning:
+          const: not-observed
+      required:
+      - field
+      - positiveRule
+      - blankPolicy
+      - negativeMeaning
       additionalProperties: false
     DatasetDescriptor:
       type: object
       properties:
-        name: {type: string, minLength: 1}
-        sourceKey: {type: string, minLength: 1}
-        sourceUrl: {type: string, format: uri, pattern: '^https://'}
-        revision: {type: string, minLength: 1}
-        sourceSha256: {$ref: '#/components/schemas/Hash'}
-        citation: {type: string, minLength: 1}
-        featureSchemaVersion: {type: string, minLength: 1}
-        idField: {type: string, minLength: 1}
-        timeField: {type: string, minLength: 1}
+        name:
+          type: string
+          minLength: 1
+        sourceKey:
+          type: string
+          minLength: 1
+        sourceUrl:
+          type: string
+          format: uri
+          pattern: ^https://
+        revision:
+          type: string
+          minLength: 1
+        sourceSha256:
+          $ref: '#/components/schemas/Hash'
+        citation:
+          type: string
+          minLength: 1
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        idField:
+          type: string
+          minLength: 1
+        timeField:
+          type: string
+          minLength: 1
         timeFormat:
           type: string
-          enum: [unix-seconds-utc, iso8601]
-        labelRule: {$ref: '#/components/schemas/LabelRule'}
-      required: [name, sourceKey, sourceUrl, revision, sourceSha256, citation, featureSchemaVersion, idField, timeField,
-        timeFormat, labelRule]
+          enum:
+          - unix-seconds-utc
+          - iso8601
+        labelRule:
+          $ref: '#/components/schemas/LabelRule'
+      required:
+      - name
+      - sourceKey
+      - sourceUrl
+      - revision
+      - sourceSha256
+      - citation
+      - featureSchemaVersion
+      - idField
+      - timeField
+      - timeFormat
+      - labelRule
       additionalProperties: false
     QualityReport:
       type: object
       properties:
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
-        sourceSha256: {$ref: '#/components/schemas/Hash'}
-        featureSchemaVersion: {type: string, minLength: 1}
-        rawRows: {type: integer, minimum: 0}
-        includedRows: {type: integer, minimum: 0}
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        sourceSha256:
+          $ref: '#/components/schemas/Hash'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        rawRows:
+          type: integer
+          minimum: 0
+        includedRows:
+          type: integer
+          minimum: 0
         excluded:
           type: object
-          additionalProperties: {type: integer, minimum: 0}
-        duplicateIds: {type: integer, minimum: 0}
+          additionalProperties:
+            type: integer
+            minimum: 0
+        duplicateIds:
+          type: integer
+          minimum: 0
         featureMissing:
           type: object
-          additionalProperties: {type: integer, minimum: 0}
+          additionalProperties:
+            type: integer
+            minimum: 0
         labels:
           type: object
           properties:
-            positive: {type: integer, minimum: 0}
-            notObserved: {type: integer, minimum: 0}
-            unknown: {type: integer, minimum: 0}
-          required: [positive, notObserved, unknown]
+            positive:
+              type: integer
+              minimum: 0
+            notObserved:
+              type: integer
+              minimum: 0
+            unknown:
+              type: integer
+              minimum: 0
+          required:
+          - positive
+          - notObserved
+          - unknown
           additionalProperties: false
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
-      required: [datasetVersion, sourceSha256, featureSchemaVersion, rawRows, includedRows, excluded, duplicateIds,
-        featureMissing, labels, limitations]
+      required:
+      - datasetVersion
+      - sourceSha256
+      - featureSchemaVersion
+      - rawRows
+      - includedRows
+      - excluded
+      - duplicateIds
+      - featureMissing
+      - labels
+      - limitations
       additionalProperties: false
     DatasetVersionInfo:
       type: object
       properties:
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
-        versionKey: {type: string, minLength: 1}
-        featureSchemaVersion: {type: string, minLength: 1}
-        sourceSha256: {$ref: '#/components/schemas/Hash'}
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        versionKey:
+          type: string
+          minLength: 1
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        sourceSha256:
+          $ref: '#/components/schemas/Hash'
         state:
           type: string
-          enum: [registered, validating, ready, invalid]
-      required: [datasetVersion, versionKey, featureSchemaVersion, sourceSha256, state]
+          enum:
+          - registered
+          - validating
+          - ready
+          - invalid
+      required:
+      - datasetVersion
+      - versionKey
+      - featureSchemaVersion
+      - sourceSha256
+      - state
       additionalProperties: false
     DatasetInfo:
       type: object
       properties:
-        datasetId: {$ref: '#/components/schemas/Uuid'}
-        name: {type: string, minLength: 1}
-        sourceKey: {type: string, minLength: 1}
-        sourceUrl: {type: string, format: uri}
+        datasetId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        sourceKey:
+          type: string
+          minLength: 1
+        sourceUrl:
+          type: string
+          format: uri
         versions:
           type: array
-          items: {$ref: '#/components/schemas/DatasetVersionInfo'}
+          items:
+            $ref: '#/components/schemas/DatasetVersionInfo'
           minItems: 0
-      required: [datasetId, name, sourceKey, sourceUrl, versions]
+      required:
+      - datasetId
+      - name
+      - sourceKey
+      - sourceUrl
+      - versions
       additionalProperties: false
     CommitSummary:
       type: object
       properties:
-        commitId: {type: string, minLength: 1}
-        authorTime: {type: string, format: date-time}
-        label: {type: integer, enum: [0, 1]}
-        module: {type: [string, 'null']}
-      required: [commitId, authorTime, label, module]
+        commitId:
+          type: string
+          minLength: 1
+        authorTime:
+          type: string
+          format: date-time
+        label:
+          type: integer
+          enum:
+          - 0
+          - 1
+        module:
+          type:
+          - string
+          - 'null'
+      required:
+      - commitId
+      - authorTime
+      - label
+      - module
       additionalProperties: false
     CommitPage:
       type: object
       properties:
-        datasetVersion: {type: string, minLength: 1}
-        total: {type: integer, minimum: 0}
-        limit: {type: integer, minimum: 1, maximum: 500}
-        offset: {type: integer, minimum: 0}
+        datasetVersion:
+          type: string
+          minLength: 1
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+        offset:
+          type: integer
+          minimum: 0
         commits:
           type: array
-          items: {$ref: '#/components/schemas/CommitSummary'}
+          items:
+            $ref: '#/components/schemas/CommitSummary'
           minItems: 0
-      required: [datasetVersion, total, limit, offset, commits]
+      required:
+      - datasetVersion
+      - total
+      - limit
+      - offset
+      - commits
       additionalProperties: false
     CommitDetail:
       type: object
       properties:
-        commitId: {type: string, minLength: 1}
-        datasetVersion: {type: string, minLength: 1}
-        authorTime: {type: string, format: date-time}
-        label: {type: integer, enum: [0, 1]}
-        labelRule: {type: string, minLength: 1}
+        commitId:
+          type: string
+          minLength: 1
+        datasetVersion:
+          type: string
+          minLength: 1
+        authorTime:
+          type: string
+          format: date-time
+        label:
+          type: integer
+          enum:
+          - 0
+          - 1
+        labelRule:
+          type: string
+          minLength: 1
         features:
           type: object
-          additionalProperties: {type: number}
-      required: [commitId, datasetVersion, authorTime, label, labelRule, features]
+          additionalProperties:
+            type: number
+      required:
+      - commitId
+      - datasetVersion
+      - authorTime
+      - label
+      - labelRule
+      - features
       additionalProperties: false
     DatasetRegistry:
       type: object
       properties:
         datasets:
           type: array
-          items: {$ref: '#/components/schemas/DatasetRegistryEntry'}
+          items:
+            $ref: '#/components/schemas/DatasetRegistryEntry'
           minItems: 0
-      required: [datasets]
+      required:
+      - datasets
       additionalProperties: false
       description: 已登记的公开数据来源，按名称分组；只含版本与质量摘要，不含提交级数据。
     DatasetRegistryEntry:
       type: object
       properties:
-        dataset: {type: string, minLength: 1}
+        dataset:
+          type: string
+          minLength: 1
         versions:
           type: array
-          items: {$ref: '#/components/schemas/DatasetVersionEntry'}
+          items:
+            $ref: '#/components/schemas/DatasetVersionEntry'
           minItems: 1
-      required: [dataset, versions]
+      required:
+      - dataset
+      - versions
       additionalProperties: false
     DatasetVersions:
       type: object
       properties:
-        dataset: {type: string, minLength: 1}
+        dataset:
+          type: string
+          minLength: 1
         versions:
           type: array
-          items: {$ref: '#/components/schemas/DatasetVersionEntry'}
+          items:
+            $ref: '#/components/schemas/DatasetVersionEntry'
           minItems: 1
-      required: [dataset, versions]
+      required:
+      - dataset
+      - versions
       additionalProperties: false
     DatasetVersionEntry:
       type: object
       properties:
-        version: {type: string, minLength: 1}
-        schema: {type: string, minLength: 1}
+        version:
+          type: string
+          minLength: 1
+        schema:
+          type: string
+          minLength: 1
         timeRange:
           type: object
           properties:
-            start: {type: string, format: date-time}
-            end: {type: string, format: date-time}
-            startEpoch: {type: integer}
-            endEpoch: {type: integer}
-          required: [start, end, startEpoch, endEpoch]
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+            startEpoch:
+              type: integer
+            endEpoch:
+              type: integer
+          required:
+          - start
+          - end
+          - startEpoch
+          - endEpoch
           additionalProperties: false
-        quality: {$ref: '#/components/schemas/DatasetQuality'}
+        quality:
+          $ref: '#/components/schemas/DatasetQuality'
         file:
           type: object
           properties:
-            name: {type: string, minLength: 1}
-            path: {type: string, minLength: 1}
-            sha256: {$ref: '#/components/schemas/Hash'}
-            bytes: {type: integer, minimum: 0}
-          required: [name, path, sha256, bytes]
+            name:
+              type: string
+              minLength: 1
+            path:
+              type: string
+              minLength: 1
+            sha256:
+              $ref: '#/components/schemas/Hash'
+            bytes:
+              type: integer
+              minimum: 0
+          required:
+          - name
+          - path
+          - sha256
+          - bytes
           additionalProperties: false
-        manifestPath: {type: [string, 'null']}
-      required: [version, schema, timeRange, quality, file]
+        manifestPath:
+          type:
+          - string
+          - 'null'
+      required:
+      - version
+      - schema
+      - timeRange
+      - quality
+      - file
       additionalProperties: false
     DatasetQuality:
       type: object
       properties:
-        rawRows: {type: integer, minimum: 0}
-        includedRows: {type: integer, minimum: 0}
-        positiveLabels: {type: integer, minimum: 0}
-        blankLabels: {type: integer, minimum: 0}
+        rawRows:
+          type: integer
+          minimum: 0
+        includedRows:
+          type: integer
+          minimum: 0
+        positiveLabels:
+          type: integer
+          minimum: 0
+        blankLabels:
+          type: integer
+          minimum: 0
         featureMissing:
           type: object
-          additionalProperties: {type: integer, minimum: 0}
+          additionalProperties:
+            type: integer
+            minimum: 0
         excluded:
           type: object
           properties:
-            outsideWindow: {type: integer, minimum: 0}
-            noAddedLines: {type: integer, minimum: 0}
-            tooMuchChurn: {type: integer, minimum: 0}
-            tooManyFiles: {type: integer, minimum: 0}
-            missingRequiredField: {type: integer, minimum: 0}
-          required: [outsideWindow, noAddedLines, tooMuchChurn, tooManyFiles, missingRequiredField]
+            outsideWindow:
+              type: integer
+              minimum: 0
+            noAddedLines:
+              type: integer
+              minimum: 0
+            tooMuchChurn:
+              type: integer
+              minimum: 0
+            tooManyFiles:
+              type: integer
+              minimum: 0
+            missingRequiredField:
+              type: integer
+              minimum: 0
+          required:
+          - outsideWindow
+          - noAddedLines
+          - tooMuchChurn
+          - tooManyFiles
+          - missingRequiredField
           additionalProperties: false
-      required: [rawRows, includedRows, positiveLabels, blankLabels, featureMissing, excluded]
+      required:
+      - rawRows
+      - includedRows
+      - positiveLabels
+      - blankLabels
+      - featureMissing
+      - excluded
       additionalProperties: false
     RepositorySyncCreate:
       type: object
@@ -1868,190 +2565,523 @@ components:
           type: string
           format: uri
           description: 公开 HTTP(S) 仓库地址；file、ssh、git 协议、内联用户名密码与内网主机被拒绝。
-        branch: {type: string, minLength: 1, default: HEAD}
-        since: {type: string, minLength: 1, description: ISO 日期或日期时间；留空取最近 90 天。}
-        until: {type: string, minLength: 1, description: ISO 日期或日期时间；留空取当前时间。}
-        commitLimit: {type: integer, minimum: 1, maximum: 5000, default: 500}
+        branch:
+          type: string
+          minLength: 1
+          default: HEAD
+        since:
+          type: string
+          minLength: 1
+          description: ISO 日期或日期时间；留空取最近 90 天。
+        until:
+          type: string
+          minLength: 1
+          description: ISO 日期或日期时间；留空取当前时间。
+        commitLimit:
+          type: integer
+          minimum: 1
+          maximum: 5000
+          default: 500
         strategy:
           type: string
-          enum: [auto, generic-model, force-train]
+          enum:
+          - auto
+          - generic-model
+          - force-train
           default: auto
-      required: [repositoryUrl]
+      required:
+      - repositoryUrl
       additionalProperties: false
       description: 范围内提交数超过 `commitLimit` 时整次创建失败（不截断），需缩小日期或调大上限。
     RepositorySyncView:
       type: object
       properties:
-        repositoryId: {type: [string, 'null']}
-        analysisBranch: {type: [string, 'null']}
-        completedAt: {type: [string, 'null']}
-        headCommit: {type: [string, 'null']}
-        syncId: {$ref: '#/components/schemas/Uuid'}
-        repositoryUrl: {type: string, format: uri}
-        branch: {type: string, minLength: 1}
-        since: {type: string, minLength: 1}
-        until: {type: string, minLength: 1}
-        commitLimit: {type: integer, minimum: 1, maximum: 5000}
+        repositoryId:
+          type:
+          - string
+          - 'null'
+        analysisBranch:
+          type:
+          - string
+          - 'null'
+        completedAt:
+          type:
+          - string
+          - 'null'
+        headCommit:
+          type:
+          - string
+          - 'null'
+        syncId:
+          $ref: '#/components/schemas/Uuid'
+        repositoryUrl:
+          type: string
+          format: uri
+        branch:
+          type: string
+          minLength: 1
+        since:
+          type: string
+          minLength: 1
+        until:
+          type: string
+          minLength: 1
+        commitLimit:
+          type: integer
+          minimum: 1
+          maximum: 5000
         requestedStrategy:
           type: string
-          enum: [auto, generic-model, force-train]
+          enum:
+          - auto
+          - generic-model
+          - force-train
         status:
           type: string
-          enum: [queued, collecting, registering, training, scoring, completed, failed, interrupted]
+          enum:
+          - queued
+          - collecting
+          - registering
+          - training
+          - scoring
+          - completed
+          - failed
+          - interrupted
         stage:
           type: string
-          enum: [queued, collecting, registering, training, scoring, completed, failed, interrupted]
-        datasetVersion: {type: [string, 'null']}
-        runId: {type: [string, 'null']}
-        modelId: {type: [string, 'null']}
+          enum:
+          - queued
+          - collecting
+          - registering
+          - training
+          - scoring
+          - completed
+          - failed
+          - interrupted
+        datasetVersion:
+          type:
+          - string
+          - 'null'
+        runId:
+          type:
+          - string
+          - 'null'
+        modelId:
+          type:
+          - string
+          - 'null'
         modelStrategy:
-          type: [string, 'null']
-          enum: [repository-trained, generic-model, null]
+          type:
+          - string
+          - 'null'
+          enum:
+          - repository-trained
+          - generic-model
+          - null
         degradeReason:
-          type: [string, 'null']
-          enum: [fewRecords, fewPositives, noTestPositive, noGenericModel, null]
-        trainRecords: {type: [integer, 'null'], minimum: 0}
-        trainPositives: {type: [integer, 'null'], minimum: 0}
-        createdAt: {type: string, minLength: 1}
-        updatedAt: {type: string, minLength: 1}
-        requestId: {type: [string, 'null']}
+          type:
+          - string
+          - 'null'
+          enum:
+          - fewRecords
+          - fewPositives
+          - noTestPositive
+          - noGenericModel
+          - null
+        trainRecords:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+        trainPositives:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+        createdAt:
+          type: string
+          minLength: 1
+        updatedAt:
+          type: string
+          minLength: 1
+        requestId:
+          type:
+          - string
+          - 'null'
         error:
           oneOf:
           - type: 'null'
           - type: object
             properties:
-              code: {type: string, minLength: 1}
-              message: {type: string, minLength: 1}
-            required: [code, message]
+              code:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+            required:
+            - code
+            - message
             additionalProperties: false
-      required: [syncId, repositoryUrl, branch, since, until, commitLimit, requestedStrategy, status, stage,
-        datasetVersion, runId, modelId, modelStrategy, degradeReason, trainRecords, trainPositives, createdAt,
-        updatedAt, requestId, error]
+      required:
+      - syncId
+      - repositoryUrl
+      - branch
+      - since
+      - until
+      - commitLimit
+      - requestedStrategy
+      - status
+      - stage
+      - datasetVersion
+      - runId
+      - modelId
+      - modelStrategy
+      - degradeReason
+      - trainRecords
+      - trainPositives
+      - createdAt
+      - updatedAt
+      - requestId
+      - error
       additionalProperties: false
-      description: 一次同步作业的完整状态。`modelStrategy` 与 `degradeReason` 回答"这次用的是哪个模型、为什么"；`trainRecords`／`trainPositives` 是训练区样本数，只在走过训练判定时有值。
+      description: 一次同步作业的完整状态。`modelStrategy` 与 `degradeReason` 回答"这次用的是哪个模型、为什么"；`trainRecords`／`trainPositives`
+        是训练区样本数，只在走过训练判定时有值。
     RepositorySyncPage:
       type: object
       properties:
         syncs:
           type: array
-          items: {$ref: '#/components/schemas/RepositorySyncView'}
+          items:
+            $ref: '#/components/schemas/RepositorySyncView'
           minItems: 0
-        total: {type: integer, minimum: 0}
-        limit: {type: integer, minimum: 1, maximum: 100}
-        offset: {type: integer, minimum: 0}
-      required: [syncs, total, limit, offset]
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+      required:
+      - syncs
+      - total
+      - limit
+      - offset
       additionalProperties: false
     RepositorySyncCommit:
       type: object
       properties:
-        authorName: {type: [string, 'null']}
-        commitId: {type: string, pattern: '^[a-f0-9]{40}$'}
-        epoch: {type: integer}
-        risk: {type: number, minimum: 0, maximum: 1}
-        addedLines: {type: integer, minimum: 0}
-        deletedLines: {type: integer, minimum: 0}
-        files: {type: integer, minimum: 0}
-        features: {$ref: '#/components/schemas/CollectedFeatures'}
-        label: {type: integer, enum: [0, 1]}
-        labelNote: {type: [string, 'null']}
-        subject: {type: [string, 'null']}
-      required: [commitId, epoch, risk, addedLines, deletedLines, files, features, label, labelNote,
-                 subject]
+        authorName:
+          type:
+          - string
+          - 'null'
+        commitId:
+          type: string
+          pattern: ^[a-f0-9]{40}$
+        epoch:
+          type: integer
+        risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        addedLines:
+          type: integer
+          minimum: 0
+        deletedLines:
+          type: integer
+          minimum: 0
+        files:
+          type: integer
+          minimum: 0
+        features:
+          $ref: '#/components/schemas/CollectedFeatures'
+        label:
+          type: integer
+          enum:
+          - 0
+          - 1
+        labelNote:
+          type:
+          - string
+          - 'null'
+        subject:
+          type:
+          - string
+          - 'null'
+      required:
+      - commitId
+      - epoch
+      - risk
+      - addedLines
+      - deletedLines
+      - files
+      - features
+      - label
+      - labelNote
+      - subject
       additionalProperties: false
       description: 仓库采集出的提交。`label` 由简化 SZZ 倒推：1 表示后来有修复提交指认它引入缺陷，0 只表示未观测到，不等于已证实无缺陷。`subject` 是提交标题的首行，旧数据为空。
     RepositorySyncCommitPage:
       type: object
       properties:
-        syncId: {$ref: '#/components/schemas/Uuid'}
+        syncId:
+          $ref: '#/components/schemas/Uuid'
         status:
           type: string
-          enum: [queued, collecting, registering, training, scoring, completed, failed, interrupted]
-        total: {type: integer, minimum: 0}
-        limit: {type: integer, minimum: 1, maximum: 200}
-        offset: {type: integer, minimum: 0}
+          enum:
+          - queued
+          - collecting
+          - registering
+          - training
+          - scoring
+          - completed
+          - failed
+          - interrupted
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+        offset:
+          type: integer
+          minimum: 0
         commits:
           type: array
-          items: {$ref: '#/components/schemas/RepositorySyncCommit'}
+          items:
+            $ref: '#/components/schemas/RepositorySyncCommit'
           minItems: 0
-      required: [syncId, status, total, limit, offset, commits]
+      required:
+      - syncId
+      - status
+      - total
+      - limit
+      - offset
+      - commits
       additionalProperties: false
     RepositoryDistribution:
       type: object
       properties:
-        high: {type: integer, minimum: 0}
-        medium: {type: integer, minimum: 0}
-        low: {type: integer, minimum: 0}
-        unknown: {type: integer, minimum: 0}
-      required: [high, medium, low, unknown]
+        high:
+          type: integer
+          minimum: 0
+        medium:
+          type: integer
+          minimum: 0
+        low:
+          type: integer
+          minimum: 0
+        unknown:
+          type: integer
+          minimum: 0
+      required:
+      - high
+      - medium
+      - low
+      - unknown
       additionalProperties: false
       description: 分档口径 `repo-distribution-v1`：高风险 ≥0.25、中风险 ≥0.10 且 <0.25、低风险 <0.10。
     RepositoryEntry:
       type: object
       properties:
-        repositoryId: {$ref: '#/components/schemas/Uuid'}
-        url: {type: string, minLength: 1}
-        displayName: {type: string, minLength: 1}
-        defaultBranch: {type: [string, 'null']}
-        latestSyncId: {type: [string, 'null']}
-        latestSyncAt: {type: [string, 'null']}
-        viewSyncId: {type: [string, 'null']}
-        headCommit: {type: [string, 'null']}
-        commitCount: {type: integer, minimum: 0}
-        distribution: {$ref: '#/components/schemas/RepositoryDistribution'}
-        distributionRule: {type: [string, 'null']}
-        createdAt: {type: string}
-        updatedAt: {type: string}
-      required: [repositoryId, url, displayName, defaultBranch, latestSyncId, latestSyncAt, viewSyncId,
-                 headCommit, commitCount, distribution, distributionRule, createdAt, updatedAt]
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        url:
+          type: string
+          minLength: 1
+        displayName:
+          type: string
+          minLength: 1
+        defaultBranch:
+          type:
+          - string
+          - 'null'
+        latestSyncId:
+          type:
+          - string
+          - 'null'
+        latestSyncAt:
+          type:
+          - string
+          - 'null'
+        viewSyncId:
+          type:
+          - string
+          - 'null'
+        headCommit:
+          type:
+          - string
+          - 'null'
+        commitCount:
+          type: integer
+          minimum: 0
+        distribution:
+          $ref: '#/components/schemas/RepositoryDistribution'
+        distributionRule:
+          type:
+          - string
+          - 'null'
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+      - repositoryId
+      - url
+      - displayName
+      - defaultBranch
+      - latestSyncId
+      - latestSyncAt
+      - viewSyncId
+      - headCommit
+      - commitCount
+      - distribution
+      - distributionRule
+      - createdAt
+      - updatedAt
       additionalProperties: false
     RepositoryList:
       type: object
       properties:
         repositories:
           type: array
-          items: {$ref: '#/components/schemas/RepositoryEntry'}
+          items:
+            $ref: '#/components/schemas/RepositoryEntry'
           minItems: 0
-        total: {type: integer, minimum: 0}
-        limit: {type: integer, minimum: 1, maximum: 100}
-        offset: {type: integer, minimum: 0}
-      required: [repositories, total, limit, offset]
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+      required:
+      - repositories
+      - total
+      - limit
+      - offset
       additionalProperties: false
     CollectedFeatures:
       type: object
       properties:
-        ns: {type: number}
-        nd: {type: number}
-        nf: {type: number}
-        entropy: {type: number}
-        la: {type: number}
-        ld: {type: number}
-        lt: {type: number}
-        fix: {type: integer, enum: [0, 1]}
-        ndev: {type: number}
-        age: {type: number}
-        nuc: {type: number}
-        exp: {type: number}
-        rexp: {type: number}
-        sexp: {type: number}
-      required: [ns, nd, nf, entropy, la, ld, lt, fix, ndev, age, nuc, exp, rexp, sexp]
+        ns:
+          type: number
+        nd:
+          type: number
+        nf:
+          type: number
+        entropy:
+          type: number
+        la:
+          type: number
+        ld:
+          type: number
+        lt:
+          type: number
+        fix:
+          type: integer
+          enum:
+          - 0
+          - 1
+        ndev:
+          type: number
+        age:
+          type: number
+        nuc:
+          type: number
+        exp:
+          type: number
+        rexp:
+          type: number
+        sexp:
+          type: number
+      required:
+      - ns
+      - nd
+      - nf
+      - entropy
+      - la
+      - ld
+      - lt
+      - fix
+      - ndev
+      - age
+      - nuc
+      - exp
+      - rexp
+      - sexp
       additionalProperties: false
     AnalysisContext:
       type: object
       properties:
-        repositoryId: {type: string}
-        syncId: {type: string}
-        branch: {type: string}
-        completedAt: {type: [string, 'null']}
-        headCommit: {type: [string, 'null']}
-        datasetVersion: {type: [string, 'null']}
-        modelId: {type: [string, 'null']}
-        runId: {type: [string, 'null']}
-        modelStrategy: {type: [string, 'null']}
-        degradeReason: {type: [string, 'null']}
-        distributionRule: {type: string}
-        limitations: {type: array, items: {type: string}}
-        missingMetadata: {type: array, items: {type: string, enum: [completedAt, headCommit]}}
-      required: [repositoryId, syncId, branch, completedAt, headCommit, datasetVersion, modelId, runId, modelStrategy, degradeReason, distributionRule, limitations, missingMetadata]
+        repositoryId:
+          type: string
+        syncId:
+          type: string
+        branch:
+          type: string
+        completedAt:
+          type:
+          - string
+          - 'null'
+        headCommit:
+          type:
+          - string
+          - 'null'
+        datasetVersion:
+          type:
+          - string
+          - 'null'
+        modelId:
+          type:
+          - string
+          - 'null'
+        runId:
+          type:
+          - string
+          - 'null'
+        modelStrategy:
+          type:
+          - string
+          - 'null'
+        degradeReason:
+          type:
+          - string
+          - 'null'
+        distributionRule:
+          type: string
+        limitations:
+          type: array
+          items:
+            type: string
+        missingMetadata:
+          type: array
+          items:
+            type: string
+            enum:
+            - completedAt
+            - headCommit
+      required:
+      - repositoryId
+      - syncId
+      - branch
+      - completedAt
+      - headCommit
+      - datasetVersion
+      - modelId
+      - runId
+      - modelStrategy
+      - degradeReason
+      - distributionRule
+      - limitations
+      - missingMetadata
       additionalProperties: false
     Repository:
       type: object
@@ -2059,207 +3089,489 @@ components:
         viewContext:
           oneOf:
           - type: 'null'
-          - {$ref: '#/components/schemas/AnalysisContext'}
+          - $ref: '#/components/schemas/AnalysisContext'
         latestSync:
           oneOf:
           - type: 'null'
-          - {$ref: '#/components/schemas/RepositorySyncView'}
-        repositoryId: {$ref: '#/components/schemas/Uuid'}
-        url: {type: string, minLength: 1}
-        displayName: {type: string, minLength: 1}
-        defaultBranch: {type: [string, 'null']}
-        latestSyncId: {type: [string, 'null']}
-        latestSyncAt: {type: [string, 'null']}
-        viewSyncId: {type: [string, 'null']}
-        headCommit: {type: [string, 'null']}
-        commitCount: {type: integer, minimum: 0}
-        distribution: {$ref: '#/components/schemas/RepositoryDistribution'}
-        distributionRule: {type: [string, 'null']}
+          - $ref: '#/components/schemas/RepositorySyncView'
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        url:
+          type: string
+          minLength: 1
+        displayName:
+          type: string
+          minLength: 1
+        defaultBranch:
+          type:
+          - string
+          - 'null'
+        latestSyncId:
+          type:
+          - string
+          - 'null'
+        latestSyncAt:
+          type:
+          - string
+          - 'null'
+        viewSyncId:
+          type:
+          - string
+          - 'null'
+        headCommit:
+          type:
+          - string
+          - 'null'
+        commitCount:
+          type: integer
+          minimum: 0
+        distribution:
+          $ref: '#/components/schemas/RepositoryDistribution'
+        distributionRule:
+          type:
+          - string
+          - 'null'
         modelStrategy:
-          type: [string, 'null']
-          enum: [repository-trained, generic-model, null]
+          type:
+          - string
+          - 'null'
+          enum:
+          - repository-trained
+          - generic-model
+          - null
         degradeReason:
-          type: [string, 'null']
-          enum: [fewRecords, fewPositives, noTestPositive, noGenericModel, null]
-        runId: {type: [string, 'null']}
-        modelId: {type: [string, 'null']}
-        datasetVersion: {type: [string, 'null']}
+          type:
+          - string
+          - 'null'
+          enum:
+          - fewRecords
+          - fewPositives
+          - noTestPositive
+          - noGenericModel
+          - null
+        runId:
+          type:
+          - string
+          - 'null'
+        modelId:
+          type:
+          - string
+          - 'null'
+        datasetVersion:
+          type:
+          - string
+          - 'null'
         limitations:
           type: array
-          items: {type: string}
+          items:
+            type: string
           minItems: 0
-        createdAt: {type: string}
-        updatedAt: {type: string}
-      required: [repositoryId, url, displayName, defaultBranch, latestSyncId, latestSyncAt, viewSyncId,
-                 headCommit, commitCount, distribution, distributionRule, modelStrategy, degradeReason,
-                 runId, modelId, datasetVersion, limitations, createdAt, updatedAt]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+      - repositoryId
+      - url
+      - displayName
+      - defaultBranch
+      - latestSyncId
+      - latestSyncAt
+      - viewSyncId
+      - headCommit
+      - commitCount
+      - distribution
+      - distributionRule
+      - modelStrategy
+      - degradeReason
+      - runId
+      - modelId
+      - datasetVersion
+      - limitations
+      - createdAt
+      - updatedAt
       additionalProperties: false
       description: 仓库详情。`modelStrategy`／`degradeReason`／`runId`／`modelId`／`datasetVersion` 取自当前视图对应的成功作业；没有成功作业时为空。
     RepositoryCommit:
       type: object
       properties:
-        authorName: {type: [string, 'null']}
-        repositoryId: {$ref: '#/components/schemas/Uuid'}
-        viewSyncId: {type: string}
-        originalCommitUrl: {type: [string, 'null']}
-        explanationStatus: {type: string, enum: [not-supported]}
-        explanationReason: {type: string}
-        commitId: {type: string, pattern: '^[a-f0-9]{40}$'}
-        subject: {type: [string, 'null']}
-        epoch: {type: integer}
-        risk: {type: number, minimum: 0, maximum: 1}
-        addedLines: {type: integer, minimum: 0}
-        deletedLines: {type: integer, minimum: 0}
-        files: {type: integer, minimum: 0}
-        features: {$ref: '#/components/schemas/CollectedFeatures'}
-        label: {type: integer, enum: [0, 1]}
-        labelNote: {type: [string, 'null']}
-      required: [commitId, subject, epoch, risk, addedLines, deletedLines, files, features, label,
-                 labelNote]
+        authorName:
+          type:
+          - string
+          - 'null'
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          type: string
+        originalCommitUrl:
+          type:
+          - string
+          - 'null'
+        explanationStatus:
+          type: string
+          enum:
+          - not-supported
+        explanationReason:
+          type: string
+        commitId:
+          type: string
+          pattern: ^[a-f0-9]{40}$
+        subject:
+          type:
+          - string
+          - 'null'
+        epoch:
+          type: integer
+        risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        addedLines:
+          type: integer
+          minimum: 0
+        deletedLines:
+          type: integer
+          minimum: 0
+        files:
+          type: integer
+          minimum: 0
+        features:
+          $ref: '#/components/schemas/CollectedFeatures'
+        label:
+          type: integer
+          enum:
+          - 0
+          - 1
+        labelNote:
+          type:
+          - string
+          - 'null'
+      required:
+      - commitId
+      - subject
+      - epoch
+      - risk
+      - addedLines
+      - deletedLines
+      - files
+      - features
+      - label
+      - labelNote
       additionalProperties: false
     RepositoryCommitPage:
       type: object
       properties:
-        repositoryId: {$ref: '#/components/schemas/Uuid'}
-        viewSyncId: {type: [string, 'null']}
-        total: {type: integer, minimum: 0}
-        limit: {type: integer, minimum: 1, maximum: 200}
-        offset: {type: integer, minimum: 0}
-        search: {type: [string, 'null']}
-        start: {type: [string, 'null']}
-        end: {type: [string, 'null']}
-        sort: {type: string, enum: [risk, time]}
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          type:
+          - string
+          - 'null'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+        offset:
+          type: integer
+          minimum: 0
+        search:
+          type:
+          - string
+          - 'null'
+        start:
+          type:
+          - string
+          - 'null'
+        end:
+          type:
+          - string
+          - 'null'
+        sort:
+          type: string
+          enum:
+          - risk
+          - time
         commits:
           type: array
-          items: {$ref: '#/components/schemas/RepositoryCommit'}
+          items:
+            $ref: '#/components/schemas/RepositoryCommit'
           minItems: 0
-      required: [repositoryId, viewSyncId, total, limit, offset, search, start, end, sort, commits]
+      required:
+      - repositoryId
+      - viewSyncId
+      - total
+      - limit
+      - offset
+      - search
+      - start
+      - end
+      - sort
+      - commits
       additionalProperties: false
     RepositorySummary:
       type: object
       properties:
-        repositoryId: {$ref: '#/components/schemas/Uuid'}
-        viewSyncId: {type: [string, 'null']}
-        total: {type: integer, minimum: 0}
-        high: {type: integer, minimum: 0}
-        medium: {type: integer, minimum: 0}
-        low: {type: integer, minimum: 0}
-        unknown: {type: integer, minimum: 0}
-        distributionRule: {type: string, minLength: 1}
-      required: [repositoryId, viewSyncId, total, high, medium, low, unknown, distributionRule]
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          type:
+          - string
+          - 'null'
+        total:
+          type: integer
+          minimum: 0
+        high:
+          type: integer
+          minimum: 0
+        medium:
+          type: integer
+          minimum: 0
+        low:
+          type: integer
+          minimum: 0
+        unknown:
+          type: integer
+          minimum: 0
+        distributionRule:
+          type: string
+          minLength: 1
+      required:
+      - repositoryId
+      - viewSyncId
+      - total
+      - high
+      - medium
+      - low
+      - unknown
+      - distributionRule
       additionalProperties: false
     DatasetList:
       type: object
       properties:
         datasets:
           type: array
-          items: {$ref: '#/components/schemas/DatasetInfo'}
+          items:
+            $ref: '#/components/schemas/DatasetInfo'
           minItems: 0
-      required: [datasets]
+      required:
+      - datasets
       additionalProperties: false
     DatasetImportResult:
       type: object
       properties:
-        dataset: {$ref: '#/components/schemas/DatasetInfo'}
+        dataset:
+          $ref: '#/components/schemas/DatasetInfo'
         version:
           allOf:
-          - {$ref: '#/components/schemas/DatasetVersionInfo'}
+          - $ref: '#/components/schemas/DatasetVersionInfo'
           - properties:
-              state: {const: ready}
-        quality: {$ref: '#/components/schemas/QualityReport'}
-      required: [dataset, version, quality]
+              state:
+                const: ready
+        quality:
+          $ref: '#/components/schemas/QualityReport'
+      required:
+      - dataset
+      - version
+      - quality
       additionalProperties: false
     ExperimentCreate:
       type: object
       properties:
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
-        featureSchemaVersion: {type: string, minLength: 1}
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
         method:
           type: string
-          enum: [logistic-regression, gaussian-naive-bayes, decision-tree, random-forest, gradient-boosting, mlp,
-            tabular-resnet, ft-transformer]
-        protocolVersion: {type: string, minLength: 1}
+          enum:
+          - logistic-regression
+          - gaussian-naive-bayes
+          - decision-tree
+          - random-forest
+          - gradient-boosting
+          - mlp
+          - tabular-resnet
+          - ft-transformer
+        protocolVersion:
+          type: string
+          minLength: 1
         parameters:
           type: object
           additionalProperties:
-            type: [number, string, boolean, 'null']
-        seed: {type: integer}
-      required: [datasetVersion, featureSchemaVersion, method, protocolVersion]
+            type:
+            - number
+            - string
+            - boolean
+            - 'null'
+        seed:
+          type: integer
+      required:
+      - datasetVersion
+      - featureSchemaVersion
+      - method
+      - protocolVersion
       additionalProperties: false
       description: 候选方法列表不代表已实现。parameters须由方法白名单校验，protocolVersion指向测试前已冻结协议；不允许任意代码／路径或按最终测试效果改成员。
     RunAccepted:
       type: object
       properties:
-        runId: {$ref: '#/components/schemas/Uuid'}
-        state: {const: queued}
-        attemptId: {$ref: '#/components/schemas/Uuid'}
-      required: [runId, state, attemptId]
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        state:
+          const: queued
+        attemptId:
+          $ref: '#/components/schemas/Uuid'
+      required:
+      - runId
+      - state
+      - attemptId
       additionalProperties: false
     RunMetrics:
       type: object
       properties:
-        rocAuc: {$ref: '#/components/schemas/MetricScore'}
-        averagePrecision: {$ref: '#/components/schemas/MetricScore'}
-        precision: {$ref: '#/components/schemas/MetricScore'}
-        recall: {$ref: '#/components/schemas/MetricScore'}
-        f1: {$ref: '#/components/schemas/MetricScore'}
-        recall20Loc: {$ref: '#/components/schemas/MetricScore'}
-        popt: {$ref: '#/components/schemas/MetricScore'}
-        threshold: {type: number, minimum: 0, maximum: 1}
-        confusion: {$ref: '#/components/schemas/Confusion'}
-        testCount: {type: integer, minimum: 0}
-        positiveCount: {type: integer, minimum: 0}
-        costPolicy: {type: string, minLength: 1}
-        ordering: {type: string, minLength: 1}
-      required: [rocAuc, averagePrecision, precision, recall, f1, recall20Loc, popt, threshold, confusion, testCount,
-        positiveCount, costPolicy, ordering]
+        rocAuc:
+          $ref: '#/components/schemas/MetricScore'
+        averagePrecision:
+          $ref: '#/components/schemas/MetricScore'
+        precision:
+          $ref: '#/components/schemas/MetricScore'
+        recall:
+          $ref: '#/components/schemas/MetricScore'
+        f1:
+          $ref: '#/components/schemas/MetricScore'
+        recall20Loc:
+          $ref: '#/components/schemas/MetricScore'
+        popt:
+          $ref: '#/components/schemas/MetricScore'
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        confusion:
+          $ref: '#/components/schemas/Confusion'
+        testCount:
+          type: integer
+          minimum: 0
+        positiveCount:
+          type: integer
+          minimum: 0
+        costPolicy:
+          type: string
+          minLength: 1
+        ordering:
+          type: string
+          minLength: 1
+      required:
+      - rocAuc
+      - averagePrecision
+      - precision
+      - recall
+      - f1
+      - recall20Loc
+      - popt
+      - threshold
+      - confusion
+      - testCount
+      - positiveCount
+      - costPolicy
+      - ordering
       additionalProperties: false
     ArtifactReference:
       type: object
       properties:
-        key: {type: string, minLength: 1}
-        sha256: {$ref: '#/components/schemas/Hash'}
-        bytes: {type: integer, minimum: 0}
-        purpose: {type: string, minLength: 1}
-      required: [key, sha256, bytes, purpose]
+        key:
+          type: string
+          minLength: 1
+        sha256:
+          $ref: '#/components/schemas/Hash'
+        bytes:
+          type: integer
+          minimum: 0
+        purpose:
+          type: string
+          minLength: 1
+      required:
+      - key
+      - sha256
+      - bytes
+      - purpose
       additionalProperties: false
     ExperimentRun:
       type: object
       properties:
-        runId: {$ref: '#/components/schemas/Uuid'}
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
-        featureSchemaVersion: {type: string, minLength: 1}
-        method: {type: string, minLength: 1}
-        protocolVersion: {type: string, minLength: 1}
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        method:
+          type: string
+          minLength: 1
+        protocolVersion:
+          type: string
+          minLength: 1
         state:
           type: string
-          enum: [queued, running, succeeded, failed]
-        comparisonKey: {$ref: '#/components/schemas/Hash'}
-        config: {type: object}
-        split: {type: object}
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+        comparisonKey:
+          $ref: '#/components/schemas/Hash'
+        config:
+          type: object
+        split:
+          type: object
         metrics:
           oneOf:
-          - {$ref: '#/components/schemas/RunMetrics'}
-          - {type: 'null'}
+          - $ref: '#/components/schemas/RunMetrics'
+          - type: 'null'
         error:
           oneOf:
           - type: object
             properties:
-              code: {$ref: '#/components/schemas/GlobalErrorCode'}
-              message: {type: string, minLength: 1}
-            required: [code, message]
+              code:
+                $ref: '#/components/schemas/GlobalErrorCode'
+              message:
+                type: string
+                minLength: 1
+            required:
+            - code
+            - message
             additionalProperties: false
-          - {type: 'null'}
+          - type: 'null'
         artifacts:
           type: array
-          items: {$ref: '#/components/schemas/ArtifactReference'}
+          items:
+            $ref: '#/components/schemas/ArtifactReference'
           minItems: 0
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
-      required: [runId, datasetVersion, featureSchemaVersion, method, protocolVersion, state, comparisonKey, config,
-        split, metrics, error, artifacts, limitations]
+      required:
+      - runId
+      - datasetVersion
+      - featureSchemaVersion
+      - method
+      - protocolVersion
+      - state
+      - comparisonKey
+      - config
+      - split
+      - metrics
+      - error
+      - artifacts
+      - limitations
       additionalProperties: false
     ModelInfo:
       type: object
@@ -2351,9 +3663,11 @@ components:
       properties:
         models:
           type: array
-          items: {$ref: '#/components/schemas/ModelInfo'}
+          items:
+            $ref: '#/components/schemas/ModelInfo'
           minItems: 0
-      required: [models]
+      required:
+      - models
       additionalProperties: false
     FeatureInputRecord:
       type: object
@@ -2424,7 +3738,9 @@ components:
           $ref: '#/components/schemas/SixFeatures'
         explanationStatus:
           type: string
-          enum: [supported, not-supported]
+          enum:
+          - supported
+          - not-supported
         explanationMethod:
           type: string
           minLength: 1
@@ -2465,7 +3781,9 @@ components:
           maximum: 1
         direction:
           type: string
-          enum: [increases, decreases]
+          enum:
+          - increases
+          - decreases
       required:
       - feature
       - value
@@ -2478,7 +3796,9 @@ components:
       properties:
         mode:
           type: string
-          enum: [feature-input, persisted-commit]
+          enum:
+          - feature-input
+          - persisted-commit
         batchId:
           $ref: '#/components/schemas/Uuid'
         project:
@@ -2502,7 +3822,9 @@ components:
           $ref: '#/components/schemas/Hash'
         sourceKind:
           type: string
-          enum: [client-features, persisted-commit]
+          enum:
+          - client-features
+          - persisted-commit
         records:
           type: array
           items:
@@ -2534,259 +3856,414 @@ components:
     Contribution:
       type: object
       properties:
-        feature: {type: string, minLength: 1}
+        feature:
+          type: string
+          minLength: 1
         rawValue:
-          type: [number, boolean]
-        contribution: {type: number}
+          type:
+          - number
+          - boolean
+        contribution:
+          type: number
         direction:
           type: string
-          enum: [increase, decrease, neutral]
-      required: [feature, rawValue, contribution, direction]
+          enum:
+          - increase
+          - decrease
+          - neutral
+      required:
+      - feature
+      - rawValue
+      - contribution
+      - direction
       additionalProperties: false
     Explanation:
       type: object
       properties:
-        predictionId: {$ref: '#/components/schemas/Uuid'}
-        modelId: {$ref: '#/components/schemas/Uuid'}
-        runId: {$ref: '#/components/schemas/Uuid'}
-        featureSchemaVersion: {type: string, minLength: 1}
+        predictionId:
+          $ref: '#/components/schemas/Uuid'
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
         state:
           type: string
-          enum: [pending, ready, failed]
+          enum:
+          - pending
+          - ready
+          - failed
         method:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
         backgroundHash:
           oneOf:
-          - {$ref: '#/components/schemas/Hash'}
-          - {type: 'null'}
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
         baseValue:
-          type: [number, 'null']
+          type:
+          - number
+          - 'null'
         unit:
-          type: [string, 'null']
+          type:
+          - string
+          - 'null'
         contributions:
           type: array
-          items: {$ref: '#/components/schemas/Contribution'}
+          items:
+            $ref: '#/components/schemas/Contribution'
           minItems: 0
         error:
           oneOf:
           - type: object
             properties:
-              code: {$ref: '#/components/schemas/GlobalErrorCode'}
-              message: {type: string, minLength: 1}
-            required: [code, message]
+              code:
+                $ref: '#/components/schemas/GlobalErrorCode'
+              message:
+                type: string
+                minLength: 1
+            required:
+            - code
+            - message
             additionalProperties: false
-          - {type: 'null'}
-      required: [predictionId, modelId, runId, featureSchemaVersion, state, method, backgroundHash, baseValue, unit,
-        contributions, error]
+          - type: 'null'
+      required:
+      - predictionId
+      - modelId
+      - runId
+      - featureSchemaVersion
+      - state
+      - method
+      - backgroundHash
+      - baseValue
+      - unit
+      - contributions
+      - error
       additionalProperties: false
       allOf:
       - if:
           properties:
-            state: {const: ready}
+            state:
+              const: ready
         then:
           properties:
-            method: {type: string, minLength: 1}
-            backgroundHash: {$ref: '#/components/schemas/Hash'}
-            baseValue: {type: number}
-            unit: {type: string, minLength: 1}
+            method:
+              type: string
+              minLength: 1
+            backgroundHash:
+              $ref: '#/components/schemas/Hash'
+            baseValue:
+              type: number
+            unit:
+              type: string
+              minLength: 1
             contributions:
               type: array
-              items: {$ref: '#/components/schemas/Contribution'}
+              items:
+                $ref: '#/components/schemas/Contribution'
               minItems: 1
-            error: {type: 'null'}
+            error:
+              type: 'null'
       - if:
           properties:
-            state: {const: failed}
+            state:
+              const: failed
         then:
           properties:
             error:
               type: object
               properties:
-                code: {$ref: '#/components/schemas/GlobalErrorCode'}
-                message: {type: string, minLength: 1}
-              required: [code, message]
+                code:
+                  $ref: '#/components/schemas/GlobalErrorCode'
+                message:
+                  type: string
+                  minLength: 1
+              required:
+              - code
+              - message
               additionalProperties: false
     ComparisonEntry:
       type: object
       properties:
-        runId: {$ref: '#/components/schemas/Uuid'}
-        method: {type: string, minLength: 1}
-        metrics: {$ref: '#/components/schemas/RunMetrics'}
-      required: [runId, method, metrics]
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        method:
+          type: string
+          minLength: 1
+        metrics:
+          $ref: '#/components/schemas/RunMetrics'
+      required:
+      - runId
+      - method
+      - metrics
       additionalProperties: false
     Comparison:
       type: object
       properties:
-        comparisonKey: {$ref: '#/components/schemas/Hash'}
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
-        featureSchemaVersion: {type: string, minLength: 1}
-        protocolVersion: {type: string, minLength: 1}
+        comparisonKey:
+          $ref: '#/components/schemas/Hash'
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        protocolVersion:
+          type: string
+          minLength: 1
         runs:
           type: array
-          items: {$ref: '#/components/schemas/ComparisonEntry'}
+          items:
+            $ref: '#/components/schemas/ComparisonEntry'
           minItems: 2
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
-      required: [comparisonKey, datasetVersion, featureSchemaVersion, protocolVersion, runs, limitations]
+      required:
+      - comparisonKey
+      - datasetVersion
+      - featureSchemaVersion
+      - protocolVersion
+      - runs
+      - limitations
       additionalProperties: false
     TrendPoint:
       type: object
       properties:
-        periodStart: {type: string, format: date}
-        records: {type: integer, minimum: 0}
-        observedLabels: {type: integer, minimum: 0}
-        positiveLabels: {type: integer, minimum: 0}
-        unknownLabels: {type: integer, minimum: 0}
-        observedPositiveRate: {$ref: '#/components/schemas/MetricScore'}
-        meanRisk: {$ref: '#/components/schemas/MetricScore'}
-      required: [periodStart, records, observedLabels, positiveLabels, unknownLabels, observedPositiveRate, meanRisk]
+        periodStart:
+          type: string
+          format: date
+        records:
+          type: integer
+          minimum: 0
+        observedLabels:
+          type: integer
+          minimum: 0
+        positiveLabels:
+          type: integer
+          minimum: 0
+        unknownLabels:
+          type: integer
+          minimum: 0
+        observedPositiveRate:
+          $ref: '#/components/schemas/MetricScore'
+        meanRisk:
+          $ref: '#/components/schemas/MetricScore'
+      required:
+      - periodStart
+      - records
+      - observedLabels
+      - positiveLabels
+      - unknownLabels
+      - observedPositiveRate
+      - meanRisk
       additionalProperties: false
     Trend:
       type: object
       properties:
-        runId: {$ref: '#/components/schemas/Uuid'}
-        datasetVersion: {$ref: '#/components/schemas/Uuid'}
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
         bucket:
           type: string
-          enum: [day, week, month]
-        timezone: {const: Asia/Shanghai}
+          enum:
+          - day
+          - week
+          - month
+        timezone:
+          const: Asia/Shanghai
         points:
           type: array
-          items: {$ref: '#/components/schemas/TrendPoint'}
+          items:
+            $ref: '#/components/schemas/TrendPoint'
           minItems: 0
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 1
-      required: [runId, datasetVersion, bucket, timezone, points, limitations]
+      required:
+      - runId
+      - datasetVersion
+      - bucket
+      - timezone
+      - points
+      - limitations
       additionalProperties: false
     ExperimentReport:
       type: object
       properties:
-        run: {$ref: '#/components/schemas/ExperimentRun'}
-        source: {type: object}
-        manifestSha256: {$ref: '#/components/schemas/Hash'}
-        generatedAt: {type: string, format: date-time}
+        run:
+          $ref: '#/components/schemas/ExperimentRun'
+        source:
+          type: object
+        manifestSha256:
+          $ref: '#/components/schemas/Hash'
+        generatedAt:
+          type: string
+          format: date-time
         attempts:
           type: array
           items:
             type: object
             properties:
-              attemptId: {$ref: '#/components/schemas/Uuid'}
+              attemptId:
+                $ref: '#/components/schemas/Uuid'
               state:
                 type: string
-                enum: [queued, running, succeeded, failed]
+                enum:
+                - queued
+                - running
+                - succeeded
+                - failed
               error:
                 oneOf:
                 - type: object
                   properties:
-                    code: {$ref: '#/components/schemas/GlobalErrorCode'}
-                    message: {type: string, minLength: 1}
-                  required: [code, message]
+                    code:
+                      $ref: '#/components/schemas/GlobalErrorCode'
+                    message:
+                      type: string
+                      minLength: 1
+                  required:
+                  - code
+                  - message
                   additionalProperties: false
-                - {type: 'null'}
-            required: [attemptId, state, error]
+                - type: 'null'
+            required:
+            - attemptId
+            - state
+            - error
             additionalProperties: false
           minItems: 0
         limitations:
           type: array
-          items: {type: string, minLength: 1}
+          items:
+            type: string
+            minLength: 1
           minItems: 0
-      required: [run, source, manifestSha256, generatedAt, attempts, limitations]
+      required:
+      - run
+      - source
+      - manifestSha256
+      - generatedAt
+      - attempts
+      - limitations
       additionalProperties: false
     DatasetImportForm:
       type: object
       properties:
-        descriptor: {$ref: '#/components/schemas/DatasetDescriptor'}
-        file: {type: string, format: binary}
-      required: [descriptor, file]
+        descriptor:
+          $ref: '#/components/schemas/DatasetDescriptor'
+        file:
+          type: string
+          format: binary
+      required:
+      - descriptor
+      - file
       additionalProperties: false
     PredictionCsvForm:
       type: object
       properties:
-        modelId: {$ref: '#/components/schemas/Uuid'}
+        modelId:
+          $ref: '#/components/schemas/Uuid'
         featureSchemaVersion:
           type: string
-          enum: [openstack-six-v1, kamei14-v1]
-        project: {type: string, minLength: 1}
-        file: {type: string, format: binary}
-      required: [modelId, featureSchemaVersion, project, file]
+          enum:
+          - openstack-six-v1
+          - kamei14-v1
+        project:
+          type: string
+          minLength: 1
+        file:
+          type: string
+          format: binary
+      required:
+      - modelId
+      - featureSchemaVersion
+      - project
+      - file
       additionalProperties: false
   responses:
     CurrentUnavailable:
       description: 当前Snapshot加载失败，无旧或部分批次。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/CurrentError'}
+          schema:
+            $ref: '#/components/schemas/CurrentError'
     CurrentInferenceFailure:
       description: 当前实际模型推理失败，无批次。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/CurrentError'}
-    AuthenticationRequired:
-      description: 建议凭据缺失或无效；planned契约。
-      content:
-        application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
-    AccessDenied:
-      description: 建议无此操作权限；planned契约。
-      content:
-        application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/CurrentError'
     NotFound:
       description: 资源标识不存在；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     RepositoryUnknown:
       description: 仓库标识不存在（`REPOSITORY_UNKNOWN`）。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     InputInvalid:
       description: 输入、hash、schema或数值不合法；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     InputLimitExceeded:
       description: 超过候选大小／行数上限；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     ContextMismatch:
       description: 运行比较／版本上下文不一致；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     ModelUnavailable:
       description: 模型不ready或产物不可用；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     RunNotReady:
       description: 完整成功运行不可用；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     InferenceFailure:
       description: 实际推理异常或输出非法；planned契约。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     StorageUnavailable:
       description: 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
+          schema:
+            $ref: '#/components/schemas/SharedError'
     RepositoryUnavailable:
       description: 仓库不可达、分支不存在或克隆失败；当前实现返回 502 REPOSITORY_UNAVAILABLE。
       content:
         application/json:
-          schema: {$ref: '#/components/schemas/SharedError'}
-  securitySchemes:
-    TeamToken: {type: http, scheme: bearer, description: 已实现接口使用独立成员／管理员 Bearer 部署凭据；管理员可登记，成员可查询与预测。不提供账户／登录／个人隔离。planned接口仍未实施。}
+          schema:
+            $ref: '#/components/schemas/SharedError'
 x-source-date: '2026-10-12'
 x-contract-status: product-design-draft
 x-errors-document: ../全局错误码表.md

@@ -71,12 +71,9 @@ $env:PYTHONIOENCODING='utf-8'
 备份时停止服务，保存数据库及所有被引用的运行目录；恢复后先核对版本，并重新校验登记的产物。
 回滚停用新接口并保留数据库与产物，禁止以删除成功结果代替回滚。
 
-新 `/api/v1` 接口从服务器环境变量 `JIT_MEMBER_TOKEN` 与 `JIT_ADMIN_TOKEN` 读取独立 Bearer 凭据。
-两者须非空且不同；缺配置返回 503 `ACCESS_CONFIG_INVALID`，无效认证返回 401，成员请求管理员操作返回 403。
-凭据由维护者通过主机环境设置，不能提交到仓库、打印或写进命令行参数／日志。
-成员可查询模型、schema 和预测／结果；管理员还可发现与登记候选。共享角色不提供个人账户、个人隔离或个人审计。
-每个新请求使用服务器生成的 `X-Request-Id`；错误含同一 requestId，日志只记角色、操作及状态。
-原 `GET /api/review-batch` 保留无鉴权和本机监听，且不因新凭据或数据库未初始化而改变行为。
+2026-10-19 精简重构后，所有本机业务接口直接访问，不需要团队凭证、成员/管理员角色或认证头。服务仅监听 `127.0.0.1`；模型、输入、来源和持久化校验照常执行，错误带 requestId。HTTP 登记与 CLI 使用同一模型准入规则。历史登记事件中的 `http-admin` 是保留的旧记录，新 HTTP 事件记录为 `http-local`，不表示角色。
+
+迁移 006 在保留旧登记事件的基础上支持本机 HTTP 通道。升级前用 SQLite backup 保存目录库；显式运行 `catalog-init`，服务启动不会偷偷清库或迁移。已保存预测和原模型不删除，独立手工预测页面已撤下，相关业务 API/CLI 继续用于维护与验证。
 
 ### 数据集描述与提交级数据（add-dataset-registry-and-commit-persistence）
 
@@ -200,10 +197,10 @@ schema、输入 hash、UTC 创建时刻及恰一条风险；同一记录里给�
 `docs/evidence/explain-predictions-and-verify-service/prediction-latency.json` 与
 `scripts/prediction_latency.py`。
 
-一次真实调用（服务已启动、已登记模型；`JIT_MEMBER_TOKEN` 为当前服务的成员凭据）：
+一次真实调用（服务已启动、已登记模型，无需凭证）：
 
 ```powershell
-$headers = @{ Authorization = "Bearer $env:JIT_MEMBER_TOKEN"; 'Content-Type' = 'application/json' }
+$headers = @{ 'Content-Type' = 'application/json' }
 $model = (Invoke-RestMethod -Headers $headers -Uri http://127.0.0.1:8000/api/v1/models).models[0].modelId
 $body = @{
   modelId = $model; featureSchemaVersion = 'openstack-six-v1'; project = 'demo'
@@ -226,7 +223,7 @@ uv pip install --python .cache/contract-tools/Scripts/python.exe jsonschema==4.2
 系统脚本只启动独立临时本机服务和数据库，不触碰既有服务，运行两种现有模型各 200 次计时，并输出
 `docs/evidence/_run/catalog-system.json`、服务日志与 `catalog-contract.json`；不自动冻结归档。
 
-### 非功能证据：预测时延与访问控制（explain-predictions-and-verify-service）
+### 预测时延与本机 API 错误
 
 **性能**：`tests/test_performance.py` 用真实应用与已登记模型连续发出 100 次单条预测（含保存与
 归因），先预热 5 次，按最近秩取 P95，默认预算 250 ms，可用 `JIT_LATENCY_P95_MS` 临时放宽。
@@ -238,21 +235,20 @@ uv pip install --python .cache/contract-tools/Scripts/python.exe jsonschema==4.2
 .\.venv\Scripts\python.exe -m pytest tests/test_performance.py -q -s --basetemp=.pytest-tmp
 ```
 
-**安全**：`tests/test_api.py` 的两条用例固定了访问控制行为——无凭据或伪造凭据一律 401
-`AUTH_REQUIRED`，成员调用管理员端点（候选列表、模型登记）一律 403 `ACCESS_DENIED`，不存在的批次与
-数据集版本一律 404 `NOT_FOUND`；三者错误体都只有 `code`、`message`、`requestId`，不含批次号、
-项目名、风险或记录，且不同 404 之间逐字段相同，不泄露资源是否存在。凭据比较使用
-`hmac.compare_digest` 常量时间比较，日志只记录角色与资源标识、不记录凭据原文。
+**本机访问与错误**：`tests/test_local_api.py` 验证未配置凭证、没有认证头时即可读取和提交业务请求，
+旧认证头也不会参与授权。`tests/test_api.py` 验证不存在的批次与数据集版本返回 404 `NOT_FOUND`，
+错误信封保留 `code`、`message`、`requestId`，不返回部分业务数据。角色鉴权及其旧用例已经退役。
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_api.py tests/test_performance.py -q --basetemp=.pytest-tmp
+.\.venv\Scripts\python.exe -m pytest tests/test_local_api.py tests/test_api.py tests/test_performance.py -q --basetemp=.pytest-tmp
 ```
 
-### 隔离浏览器验收环境（connect-model-prediction-workbench）
+### 隔离验证环境
 
 前端隔离浏览器入口需要一个**可写的自有后端**：它把已验证模型复制到临时产物根、显式初始化独立
-SQLite、生成只存在于该次运行内存中的团队凭据，并只监听本机端口。这一步由
-`backend/scripts/acceptance_environment.py` 提供，前端夹具通过它启动和收尾：
+SQLite，并只监听本机端口。当前浏览器主线由 `frontend/e2e/repository-setup.ts` 准备独立目录和固定
+日期的本地 Git 仓库，再由 Playwright 启动真实 API。维护脚本
+`backend/scripts/acceptance_environment.py` 也可单独准备/核验/清理隔离模型环境：
 
 ```powershell
 $base = '.cache/acceptance-workbench'
@@ -266,11 +262,10 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 
 `prepare` 只做三件事且都可复核：复制 `artifacts/baseline`（及脚本声明的已校验运行）到
 `<base>/artifacts/`、在该临时根下初始化 `catalog.sqlite3`、把复制出来的运行写进
-`<base>/environment.json`（前端夹具约定的临时根是 `backend/.cache/acceptance-<label>/`）。
+`<base>/environment.json`。
 它**不使用** `storage/catalog.sqlite3`，也**不修改** `artifacts/` 下的原文件；`inspect` 会核对临时库
 路径不等于默认库、原模型文件哈希未变，并输出各表行数；`cleanup` 只删除带 `environment.json` 的
-临时根。`serve` 用 `JIT_CATALOG_DATABASE`／`JIT_ARTIFACT_ROOT` 指向临时根，凭据由调用方以环境变量
-（`JIT_MEMBER_TOKEN`／`JIT_ADMIN_TOKEN`）传入，不写入磁盘、不出现在命令行参数或日志中。
+临时根。`serve` 用 `JIT_CATALOG_DATABASE`／`JIT_ARTIFACT_ROOT` 指向临时根，无需配置凭证。
 `invalidate --base <base> --key baseline` 把某个副本的 `model.joblib` 改名，用来验证「模型不可用」
 路径；`restore` 改回。默认开发服务仍用 `cli serve`（端口 8000），两者互不影响，可同时运行。
 

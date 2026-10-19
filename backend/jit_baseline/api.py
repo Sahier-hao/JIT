@@ -1,4 +1,4 @@
-"""Local historical replay plus authorized catalog and feature-input API."""
+"""Local project analysis, model catalog and historical verification API."""
 from pathlib import Path
 import os
 
@@ -20,18 +20,17 @@ def _supplied_directory():
 
 
 def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
-               member_token=None, admin_token=None, sync_service=None, dataset_root=None):
+               sync_service=None, dataset_root=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None)
-    from .team_access import install_access
+    from .api_errors import install_errors
     from .catalog_schema import schema_info
     from .catalog import ModelCatalog
     from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
     from .catalog_input import read_object, registration_input
-    from .team_access import RequestError
+    from .api_errors import RequestError
     from starlette.concurrency import run_in_threadpool
-    install_access(app, os.environ.get('JIT_MEMBER_TOKEN', '') if member_token is None else member_token,
-                   os.environ.get('JIT_ADMIN_TOKEN', '') if admin_token is None else admin_token)
+    install_errors(app)
     database = database if database is not None else os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)
     storage = CatalogStorage(database)
     catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
@@ -82,7 +81,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def register_model(request: Request):
         data = registration_input(await read_object(request))
         result = await run_in_threadpool(catalog.register, data['candidateId'], data['expectedManifestSha256'],
-                                        channel='http-admin', request_id=request.state.request_id)
+                                        channel='http-local', request_id=request.state.request_id)
         request.state.business_ids = (result['model']['modelId'], result['model']['runId'], None)
         return JSONResponse(result, status_code=201 if result['created'] else 200)
 

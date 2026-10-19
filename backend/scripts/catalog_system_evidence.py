@@ -1,4 +1,4 @@
-"""Real localhost catalog lifecycle and two-model timing; never logs credentials."""
+"""Real localhost catalog lifecycle and two-model timing; with request diagnostics."""
 import ctypes
 import json
 import math
@@ -14,7 +14,6 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from jit_baseline.artifacts import environment, identity
@@ -58,18 +57,15 @@ def main():
         with socket.socket() as probe:
             probe.bind(('127.0.0.1', 0))
             port = probe.getsockname()[1]
-        member, admin = str(uuid4()) + str(uuid4()), str(uuid4()) + str(uuid4())
-        env = dict(os.environ, JIT_MEMBER_TOKEN=member, JIT_ADMIN_TOKEN=admin,
+        env = dict(os.environ,
                    JIT_CATALOG_DATABASE=str(database), JIT_ARTIFACT_ROOT=str(root), PYTHONIOENCODING='utf-8')
         with (OUTPUT / 'catalog-system-service.log').open('w', encoding='utf-8') as log:
             process = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'jit_baseline.api:app',
                                         '--host', '127.0.0.1', '--port', str(port), '--workers', '1'],
                                        cwd=BACKEND, env=env, stdout=log, stderr=log,
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-            def call(method, path, body=None, role='member', *, record=True):
+            def call(method, path, body=None, *, record=True):
                 headers = {'Content-Type':'application/json'}
-                if role != 'anonymous':
-                    headers['Authorization'] = 'Bearer ' + (admin if role == 'admin' else member)
                 request = urllib.request.Request('http://127.0.0.1:' + str(port) + path,
                           data=json.dumps(body).encode('utf-8') if body is not None else None,
                           headers=headers, method=method)
@@ -83,7 +79,7 @@ def main():
                     status, request_id = response.status, response.headers.get('X-Request-Id')
                 elapsed = time.perf_counter() - started
                 if record:
-                    http.append({'method':method,'path':path,'role':role,'status':status,
+                    http.append({'method':method,'path':path,'status':status,
                                  'requestId':request_id,'request':body,'response':value})
                 return status, value, elapsed
             try:
@@ -98,18 +94,18 @@ def main():
                     if process.poll() is not None or time.monotonic() >= deadline:
                         raise RuntimeError('Local catalog service did not become ready')
                     time.sleep(.1)
-                assert call('GET','/api/v1/models',role='anonymous')[0] == 401
-                assert call('GET','/api/v1/model-candidates')[0] == 403
+                assert call('GET','/api/v1/models')[0] == 200
+                assert call('GET','/api/v1/model-candidates')[0] == 200
                 assert call('GET','/api/v1/feature-schemas/openstack-six-v1')[0] == 200
                 assert call('GET','/api/v1/feature-schemas/kamei14-v1')[0] == 200
-                candidates = call('GET','/api/v1/model-candidates',role='admin')[1]['candidates']
+                candidates = call('GET','/api/v1/model-candidates')[1]['candidates']
                 assert len(candidates) == 2
                 models = []
                 registrations = []
                 for candidate in candidates:
                     request = {'candidateId':candidate['candidateId'],'expectedManifestSha256':candidate['manifestSha256']}
                     with ThreadPoolExecutor(max_workers=2) as pool:
-                        pair = list(pool.map(lambda _: call('POST','/api/v1/models/register',request,'admin'), range(2)))
+                        pair = list(pool.map(lambda _: call('POST','/api/v1/models/register',request), range(2)))
                     assert sorted(r[0] for r in pair) == [200,201]
                     assert pair[0][1]['model']['modelId'] == pair[1][1]['model']['modelId']
                     model = pair[0][1]['model']
@@ -150,7 +146,7 @@ def main():
                 model_path.write_bytes(model_bytes)
                 candidate = candidates[0]
                 assert call('POST','/api/v1/models/register',{'candidateId':candidate['candidateId'],
-                            'expectedManifestSha256':candidate['manifestSha256']},'admin')[0] == 200
+                            'expectedManifestSha256':candidate['manifestSha256']})[0] == 200
                 counts = {}
                 with CatalogStorage(database).connection() as db:
                     for table in ('experiment_run','model_version','run_location','registration_event','prediction_batch','prediction'):
@@ -182,8 +178,6 @@ def main():
                 process.wait(timeout=15)
     unchanged = before == {name:hashes(directory) for name,directory in sources.items()}
     assert unchanged and all(not t['errors'] for t in timings)
-    serialized=json.dumps(http,ensure_ascii=False)
-    assert member not in serialized and admin not in serialized
     report={'kind':'development-system-evidence','passed':True,'http':http,'counts':counts,
             'originalArtifactsUnchanged':unchanged,'sourceHashes':before,'restartRecovered':True,
             'environment':environment(),'cpu':platform.processor(),'logicalCpus':os.cpu_count(),

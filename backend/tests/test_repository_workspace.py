@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from test_artifacts import real_run  # noqa: F401
 from test_end_to_end import _commit, _make_repo  # noqa: F401
 from test_repository_sync import (  # noqa: F401
-    MEMBER, _create, _small_repo, _wait, harness)
+    HEADERS, _create, _small_repo, _wait, harness)
 
 from jit_baseline.sync import (DISTRIBUTION_RULE, distribution_of, normalize_repository_url,
                                repository_id_for)
@@ -41,12 +41,12 @@ def test_repository_view_tracks_the_completed_job(harness):
     assert repository_id
 
     with TestClient(harness["app"]) as client:
-        listed = client.get("/api/v1/repositories", headers=MEMBER).json()
+        listed = client.get("/api/v1/repositories", headers=HEADERS).json()
         assert listed["total"] == 1
         assert listed["repositories"][0]["repositoryId"] == repository_id
         assert listed["repositories"][0]["displayName"] == "repo"
 
-        detail = client.get(f"/api/v1/repositories/{repository_id}", headers=MEMBER).json()
+        detail = client.get(f"/api/v1/repositories/{repository_id}", headers=HEADERS).json()
         assert detail["viewSyncId"] == done["syncId"]
         assert detail["commitCount"] == 7
         assert detail["distributionRule"] == DISTRIBUTION_RULE
@@ -57,7 +57,7 @@ def test_repository_view_tracks_the_completed_job(harness):
         assert detail['viewContext']['headCommit'] == done['headCommit']
         assert done['completedAt'] and done['headCommit']
         assert detail['viewContext']['branch'] == 'main'
-        pinned = client.get(f'/api/v1/repositories/{repository_id}', headers=MEMBER,
+        pinned = client.get(f'/api/v1/repositories/{repository_id}', headers=HEADERS,
                             params={'viewSyncId': done['syncId']})
         assert pinned.status_code == 200
         import jsonschema
@@ -67,21 +67,21 @@ def test_repository_view_tracks_the_completed_job(harness):
             jsonschema.Draft202012Validator({'$ref': f'#/components/schemas/{schema}',
                 'components': doc['components']}).validate(value)
         validate(detail, 'Repository')
-        page = client.get(f'/api/v1/repositories/{repository_id}/commits', headers=MEMBER,
+        page = client.get(f'/api/v1/repositories/{repository_id}/commits', headers=HEADERS,
                           params={'viewSyncId': done['syncId']}).json()
         validate(page, 'RepositoryCommitPage')
         assert all(row['authorName'] for row in page['commits'])
         sha = page['commits'][0]['commitId']
         validate(client.get(f'/api/v1/repositories/{repository_id}/commits/{sha}',
-                 headers=MEMBER, params={'viewSyncId': done['syncId']}).json(), 'RepositoryCommit')
+                 headers=HEADERS, params={'viewSyncId': done['syncId']}).json(), 'RepositoryCommit')
         validate(client.get(f'/api/v1/repositories/{repository_id}/summary',
-                 headers=MEMBER, params={'viewSyncId': done['syncId']}).json(), 'RepositorySummary')
-        assert client.get(f'/api/v1/repositories/{repository_id}', headers=MEMBER,
+                 headers=HEADERS, params={'viewSyncId': done['syncId']}).json(), 'RepositorySummary')
+        assert client.get(f'/api/v1/repositories/{repository_id}', headers=HEADERS,
                           params={'viewSyncId': 'unknown'}).status_code == 404
-        assert client.get(f'/api/v1/repositories/{repository_id}').status_code == 401
+        assert client.get(f'/api/v1/repositories/{repository_id}').status_code == 200
 
         summary = client.get(f"/api/v1/repositories/{repository_id}/summary",
-                             headers=MEMBER).json()
+                             headers=HEADERS).json()
         assert summary["total"] == 7
         assert summary["high"] + summary["medium"] + summary["low"] == 7
         assert summary["distributionRule"] == DISTRIBUTION_RULE
@@ -93,20 +93,20 @@ def test_search_finds_a_commit_beyond_the_first_page(harness):
     repository_id = done["repositoryId"]
 
     with TestClient(harness["app"]) as client:
-        first_page = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=MEMBER,
+        first_page = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=HEADERS,
                                 params={"limit": 2, "sort": "time"}).json()
         assert first_page["total"] == 7 and len(first_page["commits"]) == 2
 
-        everything = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=MEMBER,
+        everything = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=HEADERS,
                                 params={"limit": 200, "sort": "time"}).json()
         target = everything["commits"][-1]
         assert target["subject"]
 
-        by_id = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=MEMBER,
+        by_id = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=HEADERS,
                            params={"search": target["commitId"][:8]}).json()
         assert by_id["total"] == 1 and by_id["commits"][0]["commitId"] == target["commitId"]
 
-        by_title = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=MEMBER,
+        by_title = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=HEADERS,
                               params={"search": target["subject"][:6]}).json()
         assert any(item["commitId"] == target["commitId"] for item in by_title["commits"])
 
@@ -120,12 +120,12 @@ def test_repository_without_completed_job_returns_empty_page(harness):
     assert repository_id
 
     with TestClient(harness["app"]) as client:
-        detail = client.get(f"/api/v1/repositories/{repository_id}", headers=MEMBER).json()
+        detail = client.get(f"/api/v1/repositories/{repository_id}", headers=HEADERS).json()
         assert detail["viewSyncId"] is None and detail["commitCount"] == 0
-        page = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=MEMBER).json()
+        page = client.get(f"/api/v1/repositories/{repository_id}/commits", headers=HEADERS).json()
         assert page["total"] == 0 and page["commits"] == []
         summary = client.get(f"/api/v1/repositories/{repository_id}/summary",
-                             headers=MEMBER).json()
+                             headers=HEADERS).json()
         assert summary["total"] == 0 and summary["unknown"] == 0
 
 

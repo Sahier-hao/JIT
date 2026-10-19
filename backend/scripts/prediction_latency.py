@@ -43,11 +43,11 @@ def p95(values):
 
 
 def measure(client, body, label, samples):
-    client.post('/api/v1/predictions', headers=MEMBER, json=body)  # 预热，排除首次加载
+    client.post('/api/v1/predictions', json=body)  # 预热，排除首次加载
     elapsed = []
     for _ in range(samples):
         begin = time.perf_counter()
-        response = client.post('/api/v1/predictions', headers=MEMBER, json=body)
+        response = client.post('/api/v1/predictions', json=body)
         elapsed.append((time.perf_counter() - begin) * 1000)
         assert response.status_code == 201, response.text
     return {'label': label, 'samples': samples, 'medianMs': round(statistics.median(elapsed), 1),
@@ -66,14 +66,10 @@ def main():
         build_run(BACKEND / 'data/openstack', workdir / 'baseline')
         store = CatalogStorage(workdir / 'catalog.sqlite3')
         store.initialize()
-        global MEMBER, ADMIN
-        ADMIN = {'Authorization': 'Bearer latency-admin'}
-        MEMBER = {'Authorization': 'Bearer latency-member'}
-        settings = {'directory': workdir / 'baseline', 'database': store.path, 'artifact_root': workdir,
-                    'member_token': 'latency-member', 'admin_token': 'latency-admin'}
+        settings = {'directory': workdir / 'baseline', 'database': store.path, 'artifact_root': workdir,}
         with TestClient(create_app(**settings)) as client:
-            candidate = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates'][0]
-            model = client.post('/api/v1/models/register', headers=ADMIN, json={
+            candidate = client.get('/api/v1/model-candidates', ).json()['candidates'][0]
+            model = client.post('/api/v1/models/register', json={
                 'candidateId': candidate['candidateId'],
                 'expectedManifestSha256': candidate['manifestSha256']}).json()['model']
             input_file = workdir / 'baseline' / 'test-input.json'

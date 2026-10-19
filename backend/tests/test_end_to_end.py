@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from test_artifacts import real_run  # noqa: F401
-from test_catalog_api import ADMIN, MEMBER, settings  # noqa: F401
+from test_catalog_api import HEADERS, settings  # noqa: F401
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="系统缺少 git 命令")
 
@@ -102,9 +102,9 @@ def chain(tmp_path, settings):  # noqa: F811
     app = create_app(**settings)
     store.import_dataset(None, manifest_path, app.state.catalog.store)
     with TestClient(app) as client:
-        candidates = client.get("/api/v1/model-candidates", headers=ADMIN).json()["candidates"]
+        candidates = client.get("/api/v1/model-candidates", headers=HEADERS).json()["candidates"]
         candidate = next(item for item in candidates if item["displayName"] == "e2e")
-        model = client.post("/api/v1/models/register", headers=ADMIN, json={
+        model = client.post("/api/v1/models/register", headers=HEADERS, json={
             "candidateId": candidate["candidateId"],
             "expectedManifestSha256": candidate["manifestSha256"]}).json()["model"]
 
@@ -127,7 +127,7 @@ def test_repository_collection_reaches_prediction_with_explanation(chain):
     body = {"modelId": model["modelId"], "featureSchemaVersion": "openstack-six-v1",
             "project": "e2e-project", "record": {"recordId": "e2e-input", "features": features}}
     with TestClient(app) as client:
-        response = client.post("/api/v1/predictions", headers=MEMBER, json=body)
+        response = client.post("/api/v1/predictions", headers=HEADERS, json=body)
         assert response.status_code == 201, response.text
         saved = response.json()
         record = saved["records"][0]
@@ -153,7 +153,7 @@ def test_repository_collection_reaches_prediction_with_explanation(chain):
         assert saved["model"]["artifactRunId"] == run["runId"]
         assert saved["runId"] == model["runId"]
         assert len(saved["inputSha256"]) == 64
-        assert client.get("/api/v1/prediction-batches/" + saved["batchId"], headers=MEMBER).json() == saved
+        assert client.get("/api/v1/prediction-batches/" + saved["batchId"], headers=HEADERS).json() == saved
 
 
 def test_unknown_dataset_version_is_404_without_fallback(chain):
@@ -166,7 +166,7 @@ def test_unknown_dataset_version_is_404_without_fallback(chain):
             body = {"modelId": model["modelId"], "featureSchemaVersion": "openstack-six-v1",
                     "project": "e2e-project", "datasetVersion": dataset_version,
                     "record": {"recordId": "probe", "commitId": commit_id}}
-            response = client.post("/api/v1/predictions", headers=MEMBER, json=body)
+            response = client.post("/api/v1/predictions", headers=HEADERS, json=body)
             assert response.status_code == 404, (dataset_version, response.text)
             assert response.json()["error"]["code"] == "NOT_FOUND"
             assert "risk" not in response.text
