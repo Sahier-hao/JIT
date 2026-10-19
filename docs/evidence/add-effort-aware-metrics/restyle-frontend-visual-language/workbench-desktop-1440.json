@@ -1,0 +1,65 @@
+{
+  "viewport": "desktop-1440",
+  "url": {
+    "historical": "/",
+    "demo": "/?mode=demo"
+  },
+  "historical": {
+    "overflow": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "offenders": []
+    },
+    "visibleRows": {
+      "rows": 9,
+      "wrapHeight": 423
+    },
+    "fit": {
+      "scrollHeight": 900,
+      "innerHeight": 900,
+      "tableScrolls": true
+    }
+  },
+  "demo": {
+    "overflow": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "offenders": []
+    },
+    "visibleRows": {
+      "rows": 12,
+      "wrapHeight": 512
+    },
+    "fit": {
+      "scrollHeight": 900,
+      "innerHeight": 900,
+      "tableScrolls": false
+    }
+  },
+  "contrast": {
+    "页脚": {
+      "selector": ".page-foot",
+      "fg": "rgba(108, 111, 107, 1)",
+      "bg": "rgba(247, 247, 244, 1)",
+      "ratio": 4.74
+    },
+    "表尾": {
+      "selector": ".list-footer",
+      "fg": "rgba(108, 111, 107, 1)",
+      "bg": "rgba(255, 255, 255, 1)",
+      "ratio": 5.09
+    },
+    "元信息": {
+      "selector": ".page-head .meta",
+      "fg": "rgba(108, 111, 107, 1)",
+      "bg": "rgba(247, 247, 244, 1)",
+      "ratio": 4.74
+    },
+    "风险值": {
+      "selector": ".risk-number",
+      "fg": "rgba(142, 54, 17, 1)",
+      "bg": "rgba(255, 255, 255, 1)",
+      "ratio": 7.82
+    }
+  }
+}

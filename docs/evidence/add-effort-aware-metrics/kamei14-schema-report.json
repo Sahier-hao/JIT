@@ -1,0 +1,84 @@
+{
+  "frozenSixReferenceCheck": {
+    "count": 1853,
+    "idsEqual": true,
+    "maxRiskAbsoluteDifference": 3.3306690738754696e-16,
+    "tolerance": 1e-08
+  },
+  "generatedUtc": "2026-10-13T15:28:13.569618+00:00",
+  "kind": "schema-membership-and-metrics-report",
+  "note": "两个 schema 的纳入范围与测试成员不同，指标不可直接排名、不可合并报告；此处只如实并列。",
+  "sameIncludedRows": false,
+  "sameTestMembership": false,
+  "schemas": {
+    "kamei14-v1": {
+      "boundaries": [
+        1375987768,
+        1383897917
+      ],
+      "datasetVersion": "openstack-9979fad51f7c8a419326e933ed3f8c3e3aab70ee9308914ead432d77ceccf50d",
+      "featureSchema": "kamei14-v1",
+      "inModel": [
+        "ns",
+        "nd",
+        "nf",
+        "entropy",
+        "la",
+        "ld",
+        "fix",
+        "ndev",
+        "age",
+        "nuc",
+        "exp",
+        "sexp"
+      ],
+      "metrics": {
+        "averagePrecision": 0.41085343185175627,
+        "f1": 0.053691275167785234,
+        "precision": 0.7272727272727273,
+        "recall": 0.027874564459930314,
+        "recall20Loc": 0.05226480836236934,
+        "rocAuc": 0.771470512324171
+      },
+      "runId": "cca87ec55b2fd54e6cb39123704f562c0c11b406c3b9c043ece9dd38d0fdaa40",
+      "testCount": 1799,
+      "testFirstId": "cf6bf1c88687da5c18487ddfa2434a3943129847",
+      "testLastId": "3824051b1e5618388a17c88867a3037397bc96b7",
+      "testPositive": 287,
+      "unavailable": [
+        "lt",
+        "rexp"
+      ]
+    },
+    "openstack-six-v1": {
+      "boundaries": [
+        1376165579,
+        1384158588
+      ],
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "featureSchema": "openstack-six-v1",
+      "inModel": [
+        "ns",
+        "nd",
+        "nf",
+        "ent",
+        "la",
+        "ld"
+      ],
+      "metrics": {
+        "averagePrecision": 0.38293951606100585,
+        "f1": 0.066006600660066,
+        "precision": 0.5882352941176471,
+        "recall": 0.03496503496503497,
+        "recall20Loc": 0.04195804195804196,
+        "rocAuc": 0.7709845993189962
+      },
+      "runId": "07101f0fe1a85279b74ae2216bd8425c04666b7147cbb2fa7e32ebd95c822f3d",
+      "testCount": 1853,
+      "testFirstId": "8a5dd60e6281a579afaba0d0708d37cc4b2f4b7b",
+      "testLastId": "3824051b1e5618388a17c88867a3037397bc96b7",
+      "testPositive": 286,
+      "unavailable": []
+    }
+  }
+}
