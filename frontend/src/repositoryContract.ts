@@ -33,7 +33,7 @@ export const STATUS_LABELS: Record<SyncStatus, string> = {
   training: '正在训练',
   scoring: '正在打分',
   completed: '已完成',
-  failed: '未完成',
+  failed: '分析失败',
   interrupted: '已中断',
 }
 export const DEGRADE_LABELS: Record<string, string> = {

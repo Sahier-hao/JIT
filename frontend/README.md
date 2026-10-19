@@ -1,104 +1,71 @@
-# JIT 提交评审工作台 · 公开数据基线
+# JIT Review
 
-本项目提供提交列表、详情和个人优先审查清单。默认进入项目工作区；公开历史验证和人工演示位于实验室。真实模式当前服务旧六字段固定逻辑回归运行，并已支持按声明解析具名 schema／方法运行（如 `kamei14-v1`，12 字段入模）。仓库按实际采集结果展示标题与作者；历史回放不提供逐条归因，手工预测保留已支持的真实归因，模型分数不表示已确认缺陷。当前是回顾性评价，不宣称真实在线效果或完整课程交付。
+围绕项目完成仓库接入、真实分析、提交阅读和个人审查安排。打开即可使用，不需要团队凭证、角色或连接设置。主导航只有项目及次级验证报告；模型目录管理、手工预测、按编号重开、演示和设置空间已撤下。
 
 ## 本地运行
 
-先按 [后端说明](../backend/README.md) 下载、生成并核验固定运行，在 backend 启动本机服务。然后在 `D:/code/jit-defect-prediction/frontend` 执行：
+首次准备模型/数据按 [后端说明](../backend/README.md) 执行。已有本机资源时，在项目根目录分别启动：
 
 ```powershell
-npm ci --registry=https://registry.npmjs.org/
+cd backend
+./.venv/Scripts/python.exe -m jit_baseline.cli catalog-init
+./.venv/Scripts/python.exe -m jit_baseline.cli serve --port 8000
+```
+
+```powershell
+cd frontend
+npm ci
 npm run dev
 ```
 
-打开 http://127.0.0.1:4173 。使用 Node.js 24.13.0 与 npm 11.6.2 验证；依赖的实际版本锁定在 `package-lock.json`。开发服务器仅监听本机，端口被占用时会明确失败。
+打开 `http://127.0.0.1:4173/#/projects`。升级已有目录库前先用 SQLite backup 备份；006 迁移保留旧登记事件和结果。服务仅监听本机；启动不会自动迁移。前端代理 `/api` 到 8000，端口被占用时明确失败。
 
-## 检查与构建
+## 使用流程
+
+1. 项目页点击“新建分析”，填写仓库地址。分支、日期、上限与模型策略在分析选项内。
+2. 最近分析显示真实作业状态；失败保留输入，完成后打开对应结果。
+3. 在固定分析内搜索/排序/筛选提交，打开详情并加入审查计划。
+4. 计划在同一结果内切换，按加入顺序保存；离开查看报告后可从侧栏返回原分析。
+
+模型分数用于审查排序，未经概率校准。没有确认缺陷/审查状态；总数称已分析提交。原始度量与模型归因分开；完整技术身份按需展开，不使用原型 diff。计划缺少完整成本分母时不计算预算占比。
+
+## 页面与来源
+
+| 页面 | 地址 | 行为 |
+|---|---|---|
+| 项目 | `#/projects` | 真实项目与空态，不默认选第一项目 |
+| 新建分析 | `#/connect` | 地址优先、真实异步状态及可修正输入 |
+| 项目定位 | `#/repositories/{id}` | 定位最新成功分析，无成功时说明实际状态 |
+| 提交与详情 | `#/repositories/{id}/analyses/{syncId}/commits[/{commitId}]` | 所有查询固定仓库/分析，不随新任务混源 |
+| 审查计划 | 同一分析的 `/plan` | 本地 v3 来源隔离、加入顺序、失效项/规模与保存失败反馈 |
+| 验证报告 | `#/reports[/{runId}/{overview|trends|commits}]` | 真实公开历史运行、分区/指标/局限；同运行下钻 |
+
+原项目和指定分析链接继续可用。旧模型、手工预测、编号结果、演示和连接设置地址明确提示入口已移除；不创建新预测或删除保存数据。原历史链接可映射到同运行报告，服务更换运行后不静默替换地址身份。
+
+原模型、数据、严格推理和不可变结果仍由后端业务 API/CLI 维护。它们不再对应一组独立浏览器工具页。验证报告的历史效果不能用于宣称当前仓库效果。
+
+## 外观与交互
+
+页面只有一个主标题，主要中文/操作至少 14px，辅助说明至少 12px。顶部小控件切换明暗与密度；密度只改变间距。宽屏列表/详情协作，窄屏进入详情并返回焦点。空计划不预留侧栏。
+
+Inter Latin 字体及许可保存在 `public/fonts/`，中文回退系统字体；图标是同一自绘集合，无外站资源请求。尊重 reduced-motion，风险色不表示已确认安全。
+
+## 验证
 
 ```powershell
 npm run typecheck
 npm test
-npx playwright install chromium
-npm run test:e2e
+npm run lint
 npm run build
+$env:JIT_FRONTEND_PORT='14273'
+$env:JIT_SERVICE_PORT='18223'
+npm run test:e2e
 ```
 
-`npm run preview` 可在构建后预览静态产物。运行 preview 前先结束占用相同端口的 dev。测试报告写入**运行工作区** `../docs/evidence/_run/`；该目录可被后续运行覆盖、不进入版本控制，归档证据由显式冻结从运行工作区产生，测试不写任何已归档目录，冻结与校验命令见 [后端说明](../backend/README.md#验证证据的冻结)。浏览器失败轨迹在 `test-results/`；测试代码不进入产品构建。
+浏览器使用本机 Edge、1280×720 和 1440×900，真实主线另外检查 390px 窄屏。默认端口仍为 4173/8000；验收时显式指定独立端口，不停止默认开发服务。`test:e2e:acceptance` 现为同一聚焦验收入口的别名，没有第二套凭证夹具。
 
-安装需要 npm registry 与 Playwright 下载站点可访问。若机器配置的镜像无法访问，以上安装命令仅对本次执行指定官方 registry，不修改全局配置。
+`focused-review.spec.ts` 复制模型到隔离工作区、初始化独立库和本地 Git 仓库，实际采集/打分/API/浏览器联调；错误重试使用明确标识的行为夹具。旧页面/权限相关套件随功能退役，测试数量不能与上一版直接比较。命令、范围与当前结果见 [开发验证](../docs/开发验证.md)。
 
-## 隔离浏览器验收
+## 运行输出与证据
 
-需要真实登记模型、真实创建预测并重启服务验证结果重开的浏览器检查，跑在**独立环境**里，绝不使用正在运行的默认预览、默认后端或既有开发库：
-
-```powershell
-npm run test:e2e:acceptance
-```
-
-该入口（`playwright.acceptance.config.ts`）用前端 4273、自有后端 8123，代理目标通过 `JIT_FRONTEND_PORT`／`JIT_API_PROXY_TARGET` 注入 Vite，因此与默认 4173／8000 可以并排运行。启动夹具 `e2e/support/acceptance-setup.ts` 调用 `backend/scripts/acceptance_environment.py`：复制已验证模型到 `backend/.cache/acceptance-<label>/`、显式初始化临时 SQLite、生成只存于该次运行内存的团队凭据、启动自有本机服务；收尾夹具 `e2e/support/acceptance-teardown.ts` 只按 pid 结束自己的进程、核对原开发库与 `artifacts/` 原文件未变、扫描本轮写入 `docs/evidence/_run/` 的文本产物确认没有测试凭据、完整 `Authorization` 头或服务端临时绝对路径，然后删除临时根。受保护请求场景关闭 trace 与视频，不产生请求正文转储。
-
-端口冲突时端口立即失败而不是静默换端口，可用环境变量覆盖：
-
-```powershell
-$env:JIT_ACCEPTANCE_FRONTEND_PORT='4373'; $env:JIT_ACCEPTANCE_SERVICE_PORT='8223'; npm run test:e2e:acceptance
-```
-
-**资源清理方式**：夹具正常结束即自动清理；若运行被强制中止，临时根可能残留，手工执行
-`& backend/.venv/Scripts/python.exe backend/scripts/acceptance_environment.py cleanup --base backend/.cache/acceptance-workbench`
-即可删除，然后再确认 `Get-NetTCPConnection -LocalPort 8123 -State Listen` 没有残留进程。默认入口 `npm run test:e2e` 仍使用 4173／8000，并且不会运行只属于隔离环境的 `e2e/acceptance.spec.ts`。
-
-`npm run dev` 与 `npm run preview` 读取 `JIT_FRONTEND_PORT`（默认 4173）与 `JIT_API_PROXY_TARGET`（默认 `http://127.0.0.1:8000`），仅监听本机，端口被占用时明确失败。
-
-## 验证环境说明（Windows + 中文路径）
-
-完整验证链 `frontend/scripts/verify.ps1` 需要 PowerShell 7（`pwsh`），并且本机若处于中文系统区域（ANSI 代码页 936），直接运行会遇到编码与路径问题。按以下准备：
-
-1. **PowerShell 7**：首选 `winget install Microsoft.PowerShell`；网络受限时可下载官方便携 zip（GitHub releases 的 `PowerShell-<版本>-win-x64.zip`），解压后把目录加入 PATH。Windows PowerShell 5.1 不满足要求（验证链与 guard 测试硬依赖 `pwsh`）。
-2. **UTF-8 控制台**：运行验证前先执行 `chcp.com 65001`。否则 pwsh 的管道错误输出按 ANSI 代码页（GBK）编码（如错误格式化里的行首省略号“…”），按 UTF-8 解码的测试会失败。
-3. **ASCII 路径**：仓库若位于含中文的路径（如 `D:\Documents\课程相关\...`），guard 测试生成的临时脚本路径含中文，会触发同样问题。用目录联接绕开（无需管理员）：`powershell -NoProfile -Command "New-Item -ItemType Junction -Path 'C:\JIT' -Target '<仓库路径>'"`，之后从 `C:\JIT` 运行验证。
-
-另外，Playwright 官方 chromium 下载在部分网络不可用（CDN 网关返回 400）。当前 `playwright.config.ts` 已声明 `channel: 'msedge'`，使用本机 Edge（chromium 内核）运行浏览器检查，证据记录中如实标注 channel；网络恢复后执行 `npx playwright install chromium` 并移除该 channel 即可回到下载版 chromium。
-
-## 产品空间与来源
-
-默认 `#/projects` 是项目入口；先在设置连接团队，再接入仓库。工作区只组织仓库的成功分析、提交列表/详情和个人审查计划。实验室提供真实已有的历史验证、历史趋势、模型目录、六字段手工预测和保存结果重开；交互演示单独标记人工数据。设置提供运行期凭据与外观偏好。没有训练平台、账户或跨设备计划同步。
-
-| 空间 | 规范地址 | 来源与行为 |
-|---|---|---|
-| 项目入口 | `#/projects` | 遍历全部仓库页；首次打开不猜第一仓库 |
-| 仓库接入 | `#/connect` | 地址优先，高级参数可展开；异步作业真实轮询，失败保留草稿 |
-| 仓库定位 | `#/repositories/{repositoryId}` | 核对最新成功分析后 replace 到规范分析地址；没有成功分析则说明状态 |
-| 已分析提交 | `#/repositories/{repositoryId}/analyses/{viewSyncId}/commits` | 服务端搜索/日期/排序/分页，所有请求固定 viewSyncId |
-| 提交详情 | 上述地址加 `/{commitId}` | 宽屏列表与详情协作，窄屏显示详情并可返回；完整 ID、真实作者、受支持 GitHub 外链 |
-| 审查计划 | `#/repositories/{repositoryId}/analyses/{viewSyncId}/plan` | 按分析隔离、去重、加入顺序；未知规模单独计数，失效项保留供移除 |
-| 历史验证 | `#/lab/history/{runId}/commits`、`/trends` | 当前服务配置的具名运行；不匹配时拒绝替换，趋势下钻保留 runId 与桶日期 |
-| 模型与预测 | `#/lab/models`、`#/lab/predict` | 成员/管理员边界保留；六字段按 schema 校验，支持时显示真实归因 |
-| 保存结果 | `#/lab/results`、`#/lab/results/{batchId}` | 只读重开已保存快照，不重新推理，不依赖当前模型可用性 |
-| 演示 | `#/lab/demo/commits` | 人工示例，独立数据版本 |
-| 设置 | `#/settings/connection`、`#/settings/appearance` | returnTo 保留原目标；凭据不落盘、不入 URL；主题/密度单独持久化 |
-
-旧 `#/models`、`#/predict`、`#/predictions/{batchId}` 继续定位同一能力/批次。`#/sources` 映射接入，`#/repositories` 映射项目入口；`#/validation` 与 `#/trends` 先读真实历史身份，旧 `?mode=demo#/validation` 映射演示；旧 `?mode=repository&sync=...` 先核对作业归属与成功状态。冲突参数明确报错。旧 `#/shortlist` 在有已核对最近分析时定位该计划，否则提供来源选择，不猜第一仓库。日期只作为进入相应列表时的种子，非法范围整体忽略并说明。
-
-## 团队连接、模型与保存结果
-
-凭据在设置的团队连接中输入并显式确认，仅在当前页面内存保留；更换或清除即隔离旧请求和受保护展示。返回按钮继续原目标。成员可读目录与预测，管理员另可检查候选并受控登记；401、403、网络、配置、存储与模型不可用分别反馈。公开历史验证独立可达。
-
-手工预测只支持声明可用的六字段模型。填写项目/记录编号和 ns、nd、nf、ent、la、ld，可粘贴严格特征 JSON；重复点击不重复提交。返回结果按保存的模型、输入、分数和解释状态展示，真实归因包含方法与基准；旧 batchId 重开不重新推理。目录中的历史摘要仅描述模型训练的原运行，不能作为当前仓库效果。
-
-所有提交列表与结果的模型分数用 0–1 小数显示；观测正标签比例、准确率等有定义的比例仍保留百分比。历史趋势的观测比例与模型分数有各自刻度和文字说明；缺聚合、稀疏桶与近似估计原因保留。运行只由 `/api/review-batch` 配置供给，不造多运行列表或模型排名。
-
-## 审查计划与恢复
-
-v3 键名 `jit-review:plan:v3:<编码来源上下文>`。仓库来源至少为 repositoryId/viewSyncId/datasetVersion；历史为项目/版本/runId；演示为项目/版本。每项只保存 commitId、sourceContext、addedAt，按加入顺序去重，不保存模型分数。跨页恢复逐条核对详情，失效项保留可移除；同 SHA 在不同仓库/分析不继承。
-
-旧 v1/v2 键保留，只读取与已确认当前来源相符的那个键并提供预览，点击明确迁入后只带入核对成功的标识。损坏/无归属不自动迁移，不枚举或清理其他存储。写入失败保留当前操作并提示刷新风险；没有成本分母时不展示预算百分比，没有审查状态时总数称“已分析提交”。
-
-## 视觉与验证入口
-
-统一壳使用 220px 空间导航，主列表无需空计划占位，详情宽屏并列、窄屏单独展示。主要中文/操作 14px 起，次要文字 12px 起；11px 限标识/图表刻度。主题不改变风险语义，绿色用于品牌与选择，低分使用中性灰而非安全绿色。Inter Latin 子集与图标随仓库打包，许可保留，中文系统字体回退，不依赖外部 CDN，尊重 reduced-motion。密度只调整间距。
-
-`product-workspaces.spec.ts` 使用隔离本地 Git、真实采集/打分/API 与浏览器，分别验证仓库审查、历史验证下钻、手工预测/旧结果重开；视口为 1280×720、1440×900，另检查 390px 窄屏。其他测试中 route.fulfill 的响应是明确的行为夹具，不算真实模型效果。最新运行记录见 [开发验证](../docs/开发验证.md)，冻结前报告仍在 `_run`，不是归档证据。
-
-## 一次复验
-
-本次 apply 的逐项复验与独立端口设置见 [开发验证](../docs/开发验证.md)，无需停止默认开发服务。另可在独立验证工作区执行 `pwsh -File ./scripts/verify.ps1`：脚本还包含干净安装、实际 TCP 恢复检查及独立 reproduction 比较；本次没有执行该完整入口，不把逐项通过写成整个脚本通过。后端产物需事先按固定命令生成；浏览器检查自行启动和结束自有服务，端口被占用时应失败，不复用或终止默认服务。运行输出在 `docs/evidence/_run/`，冻结前不作为归档证据。
+JSON/截图在忽略的 `docs/evidence/_run/`，日志在本机 `.cache/simplify-validation/`，未冻结输出不称为归档证据。旧冻结清单和模型字节不改写，开发库升级有独立备份。较完整的 `scripts/verify.ps1` 还包含干净安装与独立复现比较，本轮逐项运行不等于该整段脚本已执行。

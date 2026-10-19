@@ -1,65 +1,29 @@
-import { useEffect, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Icon } from './Icon'
-import { EmptyState } from './Feedback'
-import { hashFor, type Route } from './navigation'
+import type { Route } from './navigation'
 import type { RepositoryView } from './repositoryWorkspace'
-import { initialTheme, initialDensity, applyTheme, applyDensity } from './preferences'
-export { ROUTE_HASH } from './navigation'
+import { initialTheme, initialDensity, applyTheme, applyDensity, writeStored, THEME_KEY, DENSITY_KEY } from './preferences'
 
-export interface ShellProps {
-  route: Route; navigate: (route: Route) => void
-  repositories: RepositoryView[]; repositoriesState: 'idle' | 'loading' | 'ready' | 'error'
-  selectedRepositoryId: string | null; shortlistCount: number
-  repositoryTarget?: Route | null
-}
-export function AppShell({ children, ...shell }: ShellProps & { children: ReactNode }) {
-  const { route, navigate, repositoryTarget } = shell
-  const lab = ['history','demo','validation','trends','models','predict','open','result'].includes(route.name)
-  const settings = route.name === 'settings'
-  useEffect(() => { applyTheme(initialTheme()); applyDensity(initialDensity()) }, [])
-  const target = route.name === 'analysis' ? route : repositoryTarget
-  const link = (label: string, destination: Route, active = false) => <button className="space-link" aria-current={active ? 'page' : undefined} onClick={() => navigate(destination)}>{label}</button>
-  return <div className="product-shell">
+export function AppShell({ route, navigate, repositories, children, recentAnalysis }: { route: Route; navigate: (route: Route) => void; repositories: RepositoryView[]; children: ReactNode; recentAnalysis: Extract<Route, { name: 'analysis' }> | null }) {
+  const [appearance, setAppearance] = useState(false)
+  const [theme, setTheme] = useState(initialTheme)
+  const [density, setDensity] = useState(initialDensity)
+  const report = route.name === 'report'
+  return <div className="app-frame">
     <a className="skip-link" href="#product-main">跳到主要内容</a>
-    <aside className="product-rail" aria-label="空间导航">
-      <button className="product-brand" onClick={() => navigate({ name: 'repositories' })}><span className="brand-symbol">J</span><span>JIT Review<small>看清改动，安排审查</small></span></button>
-      <div className="space-switch" aria-label="产品空间">
-        {link('项目工作区', repositoryTarget ?? { name: 'repositories' }, !lab && !settings)}
-        {link('实验室', { name: 'validation' }, lab)}
-        {link('设置', { name: 'settings', page: 'connection', returnTo: hashFor(route) }, settings)}
-      </div>
-      <nav className="product-nav" aria-label="当前空间">
-        {settings ? <>
-          <p className="side-label">设置</p>
-          {link('团队连接', { name: 'settings', page: 'connection', ...(route.name === 'settings' ? { returnTo: route.returnTo } : {}) }, route.name === 'settings' && route.page === 'connection')}
-          {link('外观与阅读', { name: 'settings', page: 'appearance', ...(route.name === 'settings' ? { returnTo: route.returnTo } : {}) }, route.name === 'settings' && route.page === 'appearance')}
-        </> : lab ? <>
-          <p className="side-label">实验与验证</p>
-          {link('历史验证', { name: 'validation' }, ['history','validation','trends'].includes(route.name))}
-          {link('模型目录', { name: 'models' }, route.name === 'models')}
-          {link('手工预测', { name: 'predict' }, route.name === 'predict')}
-          {link('重开已存结果', { name: 'open' }, route.name === 'open' || route.name === 'result')}
-          {link('交互演示', { name: 'demo' }, route.name === 'demo')}
-          <p className="rail-note">历史验证、手工输入与演示各自保留来源；模型分数用于排序。</p>
-        </> : <>
-          <p className="side-label">项目</p>
-          {link('全部项目', { name: 'repositories' }, route.name === 'repositories' || route.name === 'workbench')}
-          {link('接入仓库', { name: 'sources' }, route.name === 'sources')}
-          {target?.name === 'analysis' ? <>
-            <p className="side-label">当前分析</p>
-            {link('已分析提交', { ...target, view: 'commits', commitId: undefined }, route.name === 'analysis' && route.view === 'commits')}
-            {link('审查计划', { ...target, view: 'plan', commitId: undefined }, route.name === 'analysis' && route.view === 'plan')}
-          </> : null}
-          <p className="side-label">切换仓库</p>
-          <div className="repository-switcher">{shell.repositories.map(item => <button className="space-link repo-switch" key={item.repositoryId} aria-current={item.repositoryId === shell.selectedRepositoryId ? 'true' : undefined} onClick={() => navigate({ name: 'repository', repositoryId: item.repositoryId })}><Icon name="project" size={16}/><span>{item.displayName}</span></button>)}</div>
-          {shell.repositoriesState === 'error' ? <p className="rail-note">仓库列表读取失败，请在全部项目页重试。</p> : null}
-        </>}
+    <aside className="workspace-sidebar">
+      <button className="workspace-brand" onClick={() => navigate({ name: 'repositories' })}><span className="brand-glyph"><Icon name="logo" size={23}/></span><span>JIT<span className="brand-caption">REVIEW</span></span></button>
+      <p className="sidebar-caption">工作空间</p>
+      <nav className="main-navigation" aria-label="主导航">
+        <button aria-current={!report ? 'page' : undefined} onClick={() => navigate({ name: 'repositories' })}><Icon name="project" size={18}/>项目</button>
+        <button aria-current={report ? 'page' : undefined} onClick={() => navigate({ name: 'report', view: 'overview' })}><Icon name="trend" size={18}/>验证报告</button>
       </nav>
-      <footer className="product-rail-foot"><span className="connection-dot"/>本机工作空间<span>UTC+08:00</span></footer>
+      {repositories.length ? <div className="sidebar-projects"><p className="sidebar-caption">最近项目</p>{repositories.map(repo => <button key={repo.repositoryId} className="sidebar-project" aria-current={('repositoryId' in route && route.repositoryId === repo.repositoryId) ? 'page' : undefined} onClick={() => navigate(recentAnalysis?.repositoryId === repo.repositoryId ? recentAnalysis : { name: 'repository', repositoryId: repo.repositoryId })}><span className="project-dot"/>{repo.displayName}</button>)}</div> : null}
+      <div className="sidebar-bottom"><span className="local-indicator"/>本机工作空间<span>v0.2</span></div>
     </aside>
-    <div className="product-content"><header className="product-topbar"><span>{settings ? '设置' : lab ? '实验室' : '项目工作区'}</span><span>{lab ? '验证 · 理解 · 复用' : settings ? '连接与阅读偏好' : '提交审查与个人计划'}</span></header><main id="product-main" className="product-main" tabIndex={-1}>{children}</main></div>
+    <div className="workspace-content">
+      <header className="workspace-topbar"><span className="breadcrumb">工作空间 <span>/</span> <b>{report ? '验证报告' : route.name === 'sources' ? '新建分析' : route.name === 'analysis' ? '提交审查' : '项目'}</b></span><div className="appearance-anchor"><button className="icon-button" aria-label="外观偏好" aria-expanded={appearance} onClick={() => setAppearance(!appearance)}><Icon name="sliders" size={18}/></button>{appearance ? <div className="appearance-popover"><strong>外观偏好</strong><div role="group" aria-label="主题"><button aria-pressed={theme !== 'charcoal'} onClick={() => { setTheme('concrete'); applyTheme('concrete'); writeStored(THEME_KEY, 'concrete') }}>浅色</button><button aria-pressed={theme === 'charcoal'} onClick={() => { setTheme('charcoal'); applyTheme('charcoal'); writeStored(THEME_KEY, 'charcoal') }}>深色</button></div><div role="group" aria-label="阅读密度"><button aria-pressed={density === 'comfortable'} onClick={() => { setDensity('comfortable'); applyDensity('comfortable'); writeStored(DENSITY_KEY, 'comfortable') }}>舒适</button><button aria-pressed={density === 'compact'} onClick={() => { setDensity('compact'); applyDensity('compact'); writeStored(DENSITY_KEY, 'compact') }}>紧凑</button></div></div> : null}</div></header>
+      <main id="product-main" className="workspace-main" tabIndex={-1}>{children}</main>
+    </div>
   </div>
-}
-export function UnknownRoute({ hash, navigate }: { hash: string; navigate: (route: Route) => void }) {
-  return <EmptyState title="未识别的页面地址" description={<>地址 <code>{hash}</code> 无法定位对象。</>}><button className="primary-button" onClick={() => navigate({ name: 'repositories' })}>返回全部项目</button></EmptyState>
 }

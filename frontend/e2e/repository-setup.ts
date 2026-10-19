@@ -23,6 +23,7 @@ export const REPOSITORY = resolve(fixtures, 'e2e-repo')
 export const DATABASE = resolve(fixtures, 'e2e-catalog.sqlite3')
 /** 同步采集的数据集版本写到这个隔离目录，避免污染 `backend/data/datasets`。 */
 export const DATASET_ROOT = resolve(fixtures, 'e2e-datasets')
+export const ARTIFACT_ROOT = resolve(fixtures, 'e2e-artifacts')
 const DATASET = resolve(DATASET_ROOT, 'kamei14-git-v1-e2e-repo')
 const PYTHON = resolve(root, 'backend/.venv/Scripts/python.exe')
 const BACKEND = resolve(root, 'backend')
@@ -48,9 +49,10 @@ const LINES = Array.from({ length: 100 }, (_, index) => `line ${index}`).join('\
 const REST = LINES.split('\n').slice(1).join('\n')
 
 export default function globalSetup() {
-  for (const target of [REPOSITORY, DATASET, DATABASE]) {
+  for (const target of [REPOSITORY, DATASET, DATABASE, ARTIFACT_ROOT]) {
     if (!resolve(target).toLowerCase().startsWith(resolve(fixtures).toLowerCase() + sep)) throw new Error('拒绝清理隔离夹具目录之外的路径')
   }
+  rmSync(ARTIFACT_ROOT, { recursive: true, force: true })
   rmSync(REPOSITORY, { recursive: true, force: true })
   rmSync(DATASET, { recursive: true, force: true })
   rmSync(DATABASE, { force: true })
@@ -66,11 +68,13 @@ export default function globalSetup() {
   commit('add util', { 'pkg/c.py': 'util\n'.repeat(20) }, '2024-01-06T00:00:00+0000')
   commit('fix: repair util', { 'pkg/c.py': 'util\n'.repeat(19) + 'fixed\n' }, '2024-01-07T10:00:00+0000')
   execFileSync(PYTHON, ['-c', [
-    'import sys',
+    'import sys, shutil',
+    'from pathlib import Path',
+    'shutil.copytree(Path("artifacts/baseline"), Path(sys.argv[2]) / "baseline")',
     'from jit_baseline.catalog_storage import CatalogStorage',
     'from jit_baseline.catalog import ModelCatalog',
     'storage = CatalogStorage(sys.argv[1])',
     'storage.initialize()',
-    'ModelCatalog(storage).register_key("baseline")',
-  ].join('; '), DATABASE], { cwd: BACKEND, stdio: 'pipe' })
+    'ModelCatalog(storage, sys.argv[2]).register_key("baseline")',
+  ].join('; '), DATABASE, ARTIFACT_ROOT], { cwd: BACKEND, stdio: 'pipe' })
 }

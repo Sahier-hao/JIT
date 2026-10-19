@@ -8,7 +8,7 @@ it('CRR-11 等待数据时加载，完成后提供验证后的提交', async () 
   let resolve!: (value: unknown) => void
   const pending = new Promise<unknown>(done => { resolve = done })
   const loader = () => pending
-  const { result } = renderHook(() => useDataset(loader))
+  const { result } = renderHook(() => useDataset(loader, 'demo'))
   expect(result.current.resource.state).toBe('loading')
   await act(async () => resolve(good))
   expect(result.current.resource).toMatchObject({ state: 'ready', data: { records: [{ id: 'demo-a' }] } })
@@ -16,14 +16,14 @@ it('CRR-11 等待数据时加载，完成后提供验证后的提交', async () 
 
 it('CRR-11 空集合成功，不误报错误', async () => {
   const loader = async () => ({ ...good, records: [] })
-  const { result } = renderHook(() => useDataset(loader))
+  const { result } = renderHook(() => useDataset(loader, 'demo'))
   await waitFor(() => expect(result.current.resource).toMatchObject({ state: 'ready', data: { records: [] } }))
 })
 
 it('CRR-11 异常后重试成功，清除旧错误', async () => {
   let failed = true
   const loader = async () => { if (failed) throw new Error('读取被拒绝'); return good }
-  const { result } = renderHook(() => useDataset(loader))
+  const { result } = renderHook(() => useDataset(loader, 'demo'))
   await waitFor(() => expect(result.current.resource).toMatchObject({ state: 'error', error: '读取被拒绝' }))
   failed = false
   act(() => result.current.retry())
@@ -33,6 +33,6 @@ it('CRR-11 异常后重试成功，清除旧错误', async () => {
 
 it('CRR-01/11 必需来源缺失进入不可用状态', async () => {
   const loader = async () => ({ ...good, project: '' })
-  const { result } = renderHook(() => useDataset(loader))
+  const { result } = renderHook(() => useDataset(loader, 'demo'))
   await waitFor(() => expect(result.current.resource).toMatchObject({ state: 'error', error: expect.stringContaining('来源') }))
 })

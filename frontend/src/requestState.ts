@@ -1,86 +1,8 @@
-/**
- * 受保护查询的请求状态（MPW-10、design D2/D3）。
- *
- * 统一处理三件事：没有凭据时不发请求、迟到响应不得覆盖当前状态、失败按可公开原因分类。
- * 写请求（登记、创建预测）不走这里——它们只由用户显式触发一次，状态由页面自己持有。
- */
-
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ApiError, CancelledError, ContractError, NetworkError } from './apiContract'
-import { useCredential } from './credentialContext'
-
-export type ResourceStatus = 'credential-required' | 'loading' | 'ready' | 'failed'
-
-export interface Resource<T> {
-  status: ResourceStatus
-  data: T | null
-  error: unknown
-  reload: () => void
-}
-
-export interface ResourceContext {
-  token: string
-  signal: AbortSignal
-}
-
-export function useResource<T>(
-  loader: (context: ResourceContext) => Promise<T>,
-  deps: readonly unknown[] = [],
-): Resource<T> {
-  const { token, generation } = useCredential()
-  const [attempt, setAttempt] = useState(0)
-  type Settled = { status: ResourceStatus; data: T | null; error: unknown; generation: number; attempt: number; deps: readonly unknown[] }
-  const [state, setState] = useState<Settled>({
-    status: token === '' ? 'credential-required' : 'loading',
-    data: null,
-    error: null,
-    generation, attempt, deps: [...deps],
-  })
-  const loaderRef = useRef(loader)
-  loaderRef.current = loader
-
-  useEffect(() => {
-    const settle = (result: Pick<Settled, 'status' | 'data' | 'error'>) => setState({ ...result, generation, attempt, deps: [...deps] })
-    if (token === '') {
-      settle({ status: 'credential-required', data: null, error: null })
-      return
-    }
-    const controller = new AbortController()
-    let live = true
-    settle({ status: 'loading', data: null, error: null })
-    const load = loaderRef.current
-    Promise.resolve().then(() => {
-      if (!live || controller.signal.aborted) throw new CancelledError()
-      return load({ token, signal: controller.signal })
-    }).then(
-      (data) => {
-        if (live) settle({ status: 'ready', data, error: null })
-      },
-      (error: unknown) => {
-        // 取消或凭据已换代：这次响应不再属于当前上下文，直接丢弃。
-        if (!live || error instanceof CancelledError) return
-        settle({ status: 'failed', data: null, error })
-      },
-    )
-    return () => {
-      live = false
-      controller.abort()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, generation, attempt, ...deps])
-
-  const reload = useCallback(() => setAttempt((value) => value + 1), [])
-  const current = state.generation === generation && state.attempt === attempt && state.deps.length === deps.length && state.deps.every((value, index) => Object.is(value, deps[index]))
-  if (!current) return { status: token ? 'loading' : 'credential-required', data: null, error: null, reload }
-  return { status: state.status, data: state.data, error: state.error, reload }
-}
+import { ApiError, ContractError, NetworkError } from './apiContract'
 
 export type FailureKind =
   | 'network'
   | 'contract'
-  | 'auth'
-  | 'permission'
-  | 'config'
   | 'missing'
   | 'field'
   | 'model'
@@ -95,9 +17,6 @@ export interface FailureView {
 }
 
 const KIND_BY_CODE: Record<string, FailureKind> = {
-  AUTH_REQUIRED: 'auth',
-  ACCESS_DENIED: 'permission',
-  ACCESS_CONFIG_INVALID: 'config',
   NOT_FOUND: 'missing',
   SCHEMA_UNKNOWN: 'field',
   INPUT_INVALID: 'field',

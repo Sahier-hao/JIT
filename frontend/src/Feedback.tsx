@@ -12,9 +12,6 @@ import { describeFailure, type FailureKind } from './requestState'
 const KIND_TITLES: Record<FailureKind, string> = {
   network: '无法连接服务',
   contract: '返回内容不符合约定',
-  auth: '需要有效的团队凭据',
-  permission: '权限不足',
-  config: '访问凭据配置无效',
   missing: '没有找到该资源',
   field: '需要修正输入或重新选择',
   model: '模型当前不可用',
@@ -76,21 +73,6 @@ export function EmptyState({
       <h2 className="state-block-title">{title}</h2>
       <p className="state-block-note">{description}</p>
       {children === undefined ? null : <div className="state-block-actions">{children}</div>}
-    </div>
-  )
-}
-
-export function CredentialNotice({ children }: { children?: ReactNode }) {
-  return (
-    <div className="notice notice-credential" role="status">
-      <Icon name="info" size={17} />
-      <div>
-        <strong>需要团队凭据</strong>
-        <span>
-          {children ?? '请在设置的团队连接中输入访问凭据。凭据只保存在本页内存中，刷新后需要重新输入。'}
-        </span>
-        <div className="notice-actions"><a href={`#/settings/connection?returnTo=${encodeURIComponent(window.location.hash || '#/projects')}`}>打开团队连接</a></div>
-      </div>
     </div>
   )
 }

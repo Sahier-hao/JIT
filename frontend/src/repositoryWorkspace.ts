@@ -164,32 +164,27 @@ export interface RepositoryListLoad {
   retry: () => void
 }
 
-export function useRepositories(token: string): RepositoryListLoad {
+export function useRepositories(): RepositoryListLoad {
   const [attempt, setAttempt] = useState(0)
-  const [state, setState] = useState<Omit<RepositoryListLoad, 'retry'> & { owner: string }>({ state: 'idle', items: [], total: 0, error: '', owner: '' })
+  const [state, setState] = useState<Omit<RepositoryListLoad, 'retry'>>({ state: 'loading', items: [], total: 0, error: '' })
   useEffect(() => {
-    if (token === '') return
     const controller = new AbortController()
-    let active = true
-    setState(previous => ({ ...previous, state: 'loading', error: '', owner: token, items: previous.owner === token ? previous.items : [] }))
-    const loadAll = async () => {
+    const load = async () => {
       const items: RepositoryView[] = []
       let total = 0
       do {
-        const page = parseRepositoryListPage(await apiRequest({ path: `/api/v1/repositories?limit=100&offset=${items.length}`, method: 'GET', token, signal: controller.signal }))
-        if (page.offset !== items.length || (page.repositories.length === 0 && page.total > items.length)) contractFailed('仓库分页不一致，请刷新')
-        total = page.total
-        items.push(...page.repositories)
+        const page = parseRepositoryListPage(await apiRequest({ path: `/api/v1/repositories?limit=100&offset=${items.length}`, method: 'GET', signal: controller.signal }))
+        if (page.offset !== items.length || (!page.repositories.length && page.total > items.length)) contractFailed('项目分页不一致，请刷新')
+        total = page.total; items.push(...page.repositories)
       } while (items.length < total)
-      if (new Set(items.map(item => item.repositoryId)).size !== items.length) contractFailed('仓库列表重复，请刷新')
-      return { repositories: items, total }
+      if (new Set(items.map(item => item.repositoryId)).size !== items.length) contractFailed('项目列表重复，请刷新')
+      return { items, total }
     }
-    loadAll()
-      .then(page => { if (active) setState({ state: 'ready', items: page.repositories, total: page.total, error: '', owner: token }) })
-      .catch(error => { if (active) setState({ state: 'error', items: [], total: 0, error: describe(error), owner: token }) })
-    return () => { active = false; controller.abort() }
-  }, [token, attempt])
-  return { ...(state.owner === token ? state : { state: token ? 'loading' as const : 'idle' as const, items: [], total: 0, error: '' }), retry: () => setAttempt(value => value + 1) }
+    setState({ state: 'loading', items: [], total: 0, error: '' })
+    load().then(result => { if (!controller.signal.aborted) setState({ state: 'ready', ...result, error: '' }) }).catch(error => { if (!controller.signal.aborted) setState({ state: 'error', items: [], total: 0, error: describe(error) }) })
+    return () => controller.abort()
+  }, [attempt])
+  return { ...state, retry: () => setAttempt(value => value + 1) }
 }
 
 export interface RepositoryLoad {
@@ -199,26 +194,26 @@ export interface RepositoryLoad {
   retry: () => void
 }
 
-export function useRepository(repositoryId: string, token: string, viewSyncId?: string): RepositoryLoad {
+export function useRepository(repositoryId: string, viewSyncId?: string): RepositoryLoad {
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<Omit<RepositoryLoad, 'retry'>>({ state: 'idle', repository: null, error: '' })
   useEffect(() => {
-    if (repositoryId === '' || token === '') return
+    if (repositoryId === '') return
     const controller = new AbortController()
     let active = true
     setState(previous => ({ ...previous, state: 'loading', error: '' }))
-    apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}${viewSyncId ? `?viewSyncId=${encodeURIComponent(viewSyncId)}` : ''}`, method: 'GET', token, signal: controller.signal })
+    apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}${viewSyncId ? `?viewSyncId=${encodeURIComponent(viewSyncId)}` : ''}`, method: 'GET', signal: controller.signal })
       .then(parseRepositoryDetail)
       .then(repo => { if (repo.repositoryId !== repositoryId || (viewSyncId && (repo.viewSyncId !== viewSyncId || !repo.viewContext))) contractFailed('仓库分析来源不一致'); return repo })
       .then(repository => { if (active) setState({ state: 'ready', repository, error: '' }) })
       .catch(error => { if (active) setState({ state: 'error', repository: null, error: describe(error) }) })
     return () => { active = false; controller.abort() }
-  }, [repositoryId, token, viewSyncId, attempt])
+  }, [repositoryId, viewSyncId, attempt])
   useEffect(() => {
-    if (!repositoryId || !token || !viewSyncId) return
+    if (!repositoryId || !viewSyncId) return
     const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, 15000)
     return () => clearInterval(timer)
-  }, [repositoryId, token, viewSyncId])
+  }, [repositoryId, viewSyncId])
   return { ...state, retry: () => setAttempt(value => value + 1) }
 }
 
@@ -234,7 +229,6 @@ export interface RepositoryCommitPage {
 /** 仓库提交分页：`viewSyncId` 为 null 表示这个仓库还没有可看的成功作业。 */
 export function useRepositoryCommits(
   repositoryId: string,
-  token: string,
   query: Query,
   offset: number,
   limit = 20,
@@ -246,12 +240,12 @@ export function useRepositoryCommits(
   })
   const { search, start, end, sort } = query
   useEffect(() => {
-    if (repositoryId === '' || token === '') return
+    if (repositoryId === '') return
     const controller = new AbortController()
     let active = true
     setState({ state: 'loading', commits: [], total: 0, viewSyncId: null, error: '' })
     const path = repositoryCommitsPath(repositoryId, { search, start, end, sort }, offset, limit, pinnedSyncId)
-    apiRequest({ path, method: 'GET', token, signal: controller.signal })
+    apiRequest({ path, method: 'GET', signal: controller.signal })
       .then(raw => {
         const body = record(raw)
         const viewSyncId = body.viewSyncId == null ? null : uuidText(body.viewSyncId, '展示同步标识')
@@ -265,7 +259,7 @@ export function useRepositoryCommits(
       .then(page => { if (active) setState({ state: 'ready', ...page, error: '' }) })
       .catch(error => { if (active) setState({ state: 'error', commits: [], total: 0, viewSyncId: null, error: describe(error) }) })
     return () => { active = false; controller.abort() }
-  }, [repositoryId, token, search, start, end, sort, offset, limit, pinnedSyncId, attempt])
+  }, [repositoryId, search, start, end, sort, offset, limit, pinnedSyncId, attempt])
   return { ...state, retry: () => setAttempt(value => value + 1) }
 }
 
@@ -283,11 +277,11 @@ export interface RepositoryShortlist {
 
 const EMPTY_SHORTLIST: RepositoryShortlist = { state: 'ready', records: new Map(), failed: [] }
 
-export function useRepositoryShortlist(repositoryId: string, token: string, ids: string[], viewSyncId?: string): RepositoryShortlist {
+export function useRepositoryShortlist(repositoryId: string, ids: string[], viewSyncId?: string): RepositoryShortlist {
   const [state, setState] = useState<RepositoryShortlist>({ state: 'idle', records: new Map(), failed: [] })
   const key = ids.join(',')
   useEffect(() => {
-    if (repositoryId === '' || token === '' || key === '') return
+    if (repositoryId === '' || key === '') return
     const wanted = key.split(',')
     const controller = new AbortController()
     let active = true
@@ -295,7 +289,6 @@ export function useRepositoryShortlist(repositoryId: string, token: string, ids:
     Promise.allSettled(wanted.map(id => apiRequest({
       path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}/commits/${encodeURIComponent(id)}${viewSyncId ? `?viewSyncId=${encodeURIComponent(viewSyncId)}` : ''}`,
       method: 'GET',
-      token,
       signal: controller.signal,
     }).then(raw => { const body = record(raw); if (viewSyncId && (body.repositoryId !== repositoryId || body.viewSyncId !== viewSyncId)) contractFailed('提交详情来源不一致'); return parseSyncCommit(raw) }).then(toCommit)))
       .then(results => {
@@ -310,7 +303,7 @@ export function useRepositoryShortlist(repositoryId: string, token: string, ids:
       })
       .catch(() => { if (active) setState({ state: 'error', records: new Map(), failed: wanted }) })
     return () => { active = false; controller.abort() }
-  }, [repositoryId, token, key, viewSyncId])
-  if (repositoryId === '' || token === '' || key === '') return EMPTY_SHORTLIST
+  }, [repositoryId, key, viewSyncId])
+  if (repositoryId === '' || key === '') return EMPTY_SHORTLIST
   return state
 }

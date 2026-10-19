@@ -2,7 +2,6 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from './App'
-import { StrictMode } from 'react'
 import { hashFor } from './navigation'
 
 const REPO_A = '11111111-1111-4111-8111-111111111111'
@@ -25,35 +24,10 @@ function mockApi() {
     return response(repo(id))
   })
 }
-async function connect() {
-  const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: '设置团队连接' }))
-  await user.type(screen.getByLabelText('团队访问凭据'), 'member-fixture')
-  await user.click(screen.getByRole('button', { name: '使用凭据' }))
-  await user.click(screen.getByRole('button', { name: '返回之前页面' }))
-  return user
-}
+async function connect() { return userEvent.setup() }
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/') })
 afterEach(() => vi.restoreAllMocks())
-it('StrictMode preserves an old sync identity across the connection gate and back', async () => {
-  window.history.replaceState({}, '', `/?mode=repository&sync=${ANALYSIS}`)
-  render(<StrictMode><App/></StrictMode>)
-  await waitFor(() => expect(window.location.hash).toContain(`/legacy/sync/${ANALYSIS}/commits`))
-  const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: '设置团队连接' }))
-  await user.click(screen.getByRole('button', { name: '返回之前页面' }))
-  expect(window.location.hash).toContain(`/legacy/sync/${ANALYSIS}/commits`)
-})
-it('root has no protected requests before credentials and does not choose the first repository', async () => {
-  const fetch = mockApi(); render(<App/>)
-  expect(await screen.findByRole('heading', { name: '连接团队后查看项目' })).toBeVisible()
-  expect(fetch).not.toHaveBeenCalled()
-  await connect()
-  await screen.findByRole('heading', { name: '项目工作区' })
-  expect(window.location.hash).toBe('#/projects')
-  expect(screen.queryByRole('button', { name: `查看 ${SHA}` })).not.toBeInTheDocument()
-})
-it('keeps repository B and its analysis when going to settings and returning, with decimal scores and isolated plan', async () => {
+it('keeps repository B and its plan when visiting a report and returning', async () => {
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByRole('button', { name: `查看 ${SHA}` })
@@ -61,8 +35,8 @@ it('keeps repository B and its analysis when going to settings and returning, wi
   expect(screen.getByText('0.81')).toBeVisible()
   expect(screen.getByText('main 分支', { exact: false })).toBeVisible()
   await user.click(screen.getByRole('button', { name: `加入 ${SHA} 到清单` }))
-  await user.click(screen.getByRole('button', { name: '设置' }))
-  await user.click(screen.getByRole('button', { name: '返回之前页面' }))
+  await user.click(screen.getByRole('button', { name: '验证报告' }))
+  await user.click(screen.getByRole('button', { name: '项目 B' }))
   await screen.findByRole('button', { name: `${SHA} 已在清单` })
   expect(window.location.hash).toContain(REPO_B)
   const calls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/commits'))
@@ -80,16 +54,6 @@ it('rejects a late page from a different analysis instead of showing its scores'
   await screen.findByText('提交读取失败')
   expect(screen.queryByText('0.81')).not.toBeInTheDocument()
 })
-it('clears protected content immediately when credentials are removed', async () => {
-  mockApi(); window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
-  render(<App/>); const user = await connect(); await screen.findByText('0.81')
-  await user.click(screen.getByRole('button', { name: '设置' }))
-  await user.click(screen.getByRole('button', { name: '清除凭据' }))
-  await user.click(screen.getByRole('button', { name: '返回之前页面' }))
-  expect(screen.queryByText('0.81')).not.toBeInTheDocument()
-  await waitFor(() => expect(screen.getByRole('heading', { name: '连接团队后查看项目' })).toBeVisible())
-})
-
 it('traverses all repository pages and can select an item beyond the first 100', async () => {
   const fetch = mockApi(); const original = fetch.getMockImplementation()!
   const items = Array.from({ length: 101 }, (_, i) => ({ ...repo(`${i.toString(16).padStart(8, '0')}-1111-4111-8111-111111111111`), displayName: `项目 ${i}` }))
@@ -131,5 +95,15 @@ it('returns from an empty plan to the same fixed analysis', async () => {
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await user.click(await screen.findByRole('button', { name: '返回评审台' }))
   expect(window.location.hash).toBe(hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
+  expect(fetch.mock.calls.some(call => new URL(String(call[0]), 'http://localhost').pathname === `/api/v1/repositories/${REPO_B}` && !String(call[0]).includes('viewSyncId='))).toBe(false)
+})
+
+it('returns from a report directly to the pinned analysis without resolving a newer result', async () => {
+  window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
+  const fetch = mockApi(); render(<App/>); const user = await connect()
+  await screen.findByText('0.81')
+  await user.click(screen.getByRole('button', { name: '验证报告' }))
+  await user.click(screen.getByRole('button', { name: '项目 B' }))
+  await screen.findByText('0.81')
   expect(fetch.mock.calls.some(call => new URL(String(call[0]), 'http://localhost').pathname === `/api/v1/repositories/${REPO_B}` && !String(call[0]).includes('viewSyncId='))).toBe(false)
 })

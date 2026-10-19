@@ -1,7 +1,7 @@
 /**
  * 历史趋势视图（DTD-01～DTD-09、change make-trend-actionable 的 design D2～D7）。
  *
- * 数据取自与工作台同一次运行摘要响应（`/api/review-batch`），因此不需要团队凭据，也不要求先
+ * 数据取自与工作台同一次运行摘要响应（`/api/review-batch`），可以独立读取，也不要求先
  * 打开工作台。聚合的解析走独立路径 `trendContract.ts`：缺少该键即"未提供"，不合法即"不可用"，
  * 两种情况都不影响工作台、详情、清单与基线摘要。
  *
@@ -524,17 +524,19 @@ export function TrendPage({
   insights = DEFAULT_INSIGHTS,
   navigate,
   expectedRunId,
+  embedded = false,
 }: {
   insights?: readonly TrendInsight[]
   navigate?: (search: string) => void
   expectedRunId?: string
+  embedded?: boolean
 } = {}) {
   const { resource, retry } = useDataset(historicalLoader, 'historical')
 
   if (resource.state !== 'ready') {
     return (
       <>
-        <header className="topbar">JIT · 提交评审 · 历史趋势</header>
+        {!embedded ? <header className="topbar">JIT · 提交评审 · 历史趋势</header> : null}
         {resource.state === 'loading' ? (
           <LoadingNotice label="正在读取真实历史运行的摘要与趋势聚合。" />
         ) : (
@@ -551,11 +553,12 @@ export function TrendPage({
   }
 
   const trend = parseSummaryTrend(resource.data.summary)
-  if (expectedRunId && resource.data.runId !== expectedRunId) return <EmptyState title="该历史运行未供给" description="服务已切换运行；请返回实验室核对来源。"/>
+  if (expectedRunId && resource.data.runId !== expectedRunId) return <EmptyState title="该历史运行未供给" description="服务已切换运行；请返回验证报告核对来源。"/>
   const go = navigate ?? ((search: string) => window.location.assign(search))
 
   return (
     <>
+      {!embedded ? <>
       <header className="topbar">
         <div>
           <span className="project-symbol">
@@ -599,6 +602,7 @@ export function TrendPage({
           </div>
         ) : null}
       </div>
+      </> : null}
       <div className="demo-notice historical-notice">
         <Icon name="info" size={17} />
         <div>
@@ -609,7 +613,7 @@ export function TrendPage({
         </div>
       </div>
       {trend.state === 'absent' ? (
-        <div className="notice notice-credential" role="status">
+        <div className="notice notice-info" role="status">
           <Icon name="info" size={17} />
           <div>
             <strong>该运行未提供趋势聚合</strong>
