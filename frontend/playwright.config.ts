@@ -1,16 +1,16 @@
 import { defineConfig } from '@playwright/test'
 import { ensureDir, runEvidenceDir } from './evidence.ts'
-import { DATABASE, DATASET_ROOT } from './e2e/repository-setup.ts'
+import { DATABASE, DATASET_ROOT, ARTIFACT_ROOT } from './e2e/repository-setup.ts'
 import { apiTarget, frontendUrl, numberFromEnv, serviceUrl, DEFAULT_FRONTEND_PORT, DEFAULT_SERVICE_PORT } from './e2e/support/ports.ts'
 
 // 默认浏览器入口：保持历史端口 4173 / 8000，并继续由本配置托管后端与前端进程。
-// 隔离验收使用 playwright.acceptance.config.ts（4273 / 8123 + 自有服务生命周期夹具）。
+// 当前仅验证聚焦的项目/报告流程；测试服务、模型副本和目录库与开发环境隔离。
 const frontendPort = numberFromEnv('JIT_FRONTEND_PORT', DEFAULT_FRONTEND_PORT)
 const servicePort = numberFromEnv('JIT_SERVICE_PORT', DEFAULT_SERVICE_PORT)
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: '**/acceptance.spec.ts',
+  outputDir: './test-results/default',
   globalSetup: './e2e/repository-setup.ts',
   fullyParallel: true,
   retries: 0,
@@ -26,16 +26,15 @@ export default defineConfig({
   webServer: [
     // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。
     {
-      command: '.venv\\Scripts\\python.exe -m jit_baseline.cli serve',
+      command: `.venv\\Scripts\\python.exe -m jit_baseline.cli serve --port ${servicePort}`,
       cwd: '../backend',
       url: `${serviceUrl(servicePort)}/api/review-batch`,
-      reuseExistingServer: !process.env.CI,
-      // 仓库同步 e2e 需要成员凭据与本地仓库放行；目录库用 globalSetup 建的一次性库。
+      reuseExistingServer: false,
+      // 无凭据访问，只有隔离测试允许本地 Git 路径。
       env: {
-        JIT_MEMBER_TOKEN: 'e2e-member-token',
-        JIT_ADMIN_TOKEN: 'e2e-admin-token',
         JIT_SYNC_ALLOW_LOCAL: '1',
         JIT_CATALOG_DATABASE: DATABASE,
+        JIT_ARTIFACT_ROOT: ARTIFACT_ROOT,
         JIT_DATASET_ROOT: DATASET_ROOT,
       },
     },

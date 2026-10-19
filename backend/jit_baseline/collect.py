@@ -266,7 +266,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None):
                 labels.add(identity)
         records.append({"id": commit["id"], "epoch": commit["epoch"],
                         "time": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z"),
-                        "subject": commit["subject"], "metrics": metrics})
+                        "subject": commit["subject"], "authorName": commit["author"], "metrics": metrics})
         history.advance(commit)
 
     names = resolve(SCHEMA_NAME).in_model_names()
@@ -280,7 +280,8 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None):
     blob = _csv_bytes(records, names)
     collection = {
         "kind": "git-repository",
-        "repository": {"path": str(repo), "head": head(repo, branch), "branch": branch},
+        "repository": {"path": str(repo), "head": head(repo, branch), "branch": branch,
+                       "resolvedBranch": _run(repo, ['rev-parse', '--abbrev-ref', branch]).stdout.strip()},
         "window": {"since": since, "until": until, "startEpoch": start, "endEpoch": end},
         "gitVersion": git_version(),
         "szz": {"rule": SZZ_RULE, "pattern": SZZ_PATTERN, "fixCommits": fix_commits,

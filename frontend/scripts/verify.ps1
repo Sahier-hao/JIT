@@ -54,7 +54,6 @@ try {
   $summary.protectedFileCount = $protectedBefore.Count
   $summary.node = (& node --version).Trim()
   $summary.npm = (& npm --version).Trim()
-  $summary.datasetVersion = (Get-Content -LiteralPath 'public/demo-dataset.json' -Raw | ConvertFrom-Json).version
   $manifest = Get-Content -LiteralPath (Join-Path $backendRoot 'artifacts/baseline/manifest.json') -Raw | ConvertFrom-Json
   $summary.realRunId = $manifest.runId
   $summary.realEnvironment = $manifest.config.environment

@@ -1,0 +1,110 @@
+
+> jit-review-workbench@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.3 D:/code/jit-defect-prediction/frontend
+
+ ❯ src/PredictPage.test.tsx (0 test)
+ ❯ src/App.test.tsx (0 test)
+ ❯ src/credentials.test.tsx (0 test)
+ ❯ src/TrendPage.test.tsx (0 test)
+ ❯ src/ModelsPage.test.tsx (0 test)
+ ❯ src/PredictionsPage.test.tsx (0 test)
+ ❯ src/historical.test.tsx (0 test)
+ ❯ src/workbenchSeed.test.tsx (0 test)
+ ❯ src/settings.test.tsx (0 test)
+ ❯ src/RepositorySourcesPage.test.tsx (0 test)
+ ❯ src/named.test.tsx (0 test)
+ ❯ src/repositoryPage.test.ts (0 test)
+ ❯ src/useDataset.test.tsx (0 test)
+ ❯ src/navigation.test.tsx (0 test)
+ ❯ src/risk.test.tsx (0 test)
+ ❯ src/Icon.test.tsx (0 test)
+ ❯ src/material.test.ts (0 test)
+ ❯ src/apiClient.test.ts (0 test)
+ ❯ src/predictionContract.test.ts (0 test)
+ ❯ src/predictForm.test.ts (0 test)
+ ❯ src/repositoryContract.test.ts (0 test)
+ ❯ src/trendContract.test.ts (0 test)
+ ❯ src/domain.test.ts (0 test)
+ ❯ src/catalogContract.test.ts (0 test)
+ ❯ src/chartTokens.test.ts (0 test)
+ ❯ src/repositoryDataset.test.ts (0 test)
+ ❯ src/shortlist.test.ts (0 test)
+ ❯ src/typography.test.ts (0 test)
+ ❯ src/trendInsights.test.ts (0 test)
+ ❯ src/contrast.test.ts (0 test)
+ ❯ src/tokens.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 31 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/apiClient.test.ts [ src/apiClient.test.ts ]
+ FAIL  src/catalogContract.test.ts [ src/catalogContract.test.ts ]
+ FAIL  src/chartTokens.test.ts [ src/chartTokens.test.ts ]
+ FAIL  src/contrast.test.ts [ src/contrast.test.ts ]
+ FAIL  src/credentials.test.tsx [ src/credentials.test.tsx ]
+ FAIL  src/domain.test.ts [ src/domain.test.ts ]
+ FAIL  src/historical.test.tsx [ src/historical.test.tsx ]
+ FAIL  src/Icon.test.tsx [ src/Icon.test.tsx ]
+ FAIL  src/material.test.ts [ src/material.test.ts ]
+ FAIL  src/ModelsPage.test.tsx [ src/ModelsPage.test.tsx ]
+ FAIL  src/named.test.tsx [ src/named.test.tsx ]
+ FAIL  src/navigation.test.tsx [ src/navigation.test.tsx ]
+ FAIL  src/predictForm.test.ts [ src/predictForm.test.ts ]
+ FAIL  src/predictionContract.test.ts [ src/predictionContract.test.ts ]
+ FAIL  src/PredictionsPage.test.tsx [ src/PredictionsPage.test.tsx ]
+ FAIL  src/repositoryContract.test.ts [ src/repositoryContract.test.ts ]
+ FAIL  src/repositoryDataset.test.ts [ src/repositoryDataset.test.ts ]
+ FAIL  src/repositoryPage.test.ts [ src/repositoryPage.test.ts ]
+ FAIL  src/RepositorySourcesPage.test.tsx [ src/RepositorySourcesPage.test.tsx ]
+ FAIL  src/risk.test.tsx [ src/risk.test.tsx ]
+ FAIL  src/settings.test.tsx [ src/settings.test.tsx ]
+ FAIL  src/shortlist.test.ts [ src/shortlist.test.ts ]
+ FAIL  src/tokens.test.ts [ src/tokens.test.ts ]
+ FAIL  src/trendContract.test.ts [ src/trendContract.test.ts ]
+ FAIL  src/trendInsights.test.ts [ src/trendInsights.test.ts ]
+ FAIL  src/TrendPage.test.tsx [ src/TrendPage.test.tsx ]
+ FAIL  src/typography.test.ts [ src/typography.test.ts ]
+ FAIL  src/useDataset.test.tsx [ src/useDataset.test.tsx ]
+ FAIL  src/workbenchSeed.test.tsx [ src/workbenchSeed.test.tsx ]
+Error: ENOENT: no such file or directory, open 'C:\Users\荀浩\AppData\Local\Packages\sandbox.{e0adf4a8-5cb0-4e01-b85e-2e3f4f94c219}\AC\Temp\BH-SVMy3zuTyIWkIYoJN0\client\0fb6445cb30f416fb8354bb67e534ce1b224dce1'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/31]⎯
+
+ FAIL  src/App.test.tsx [ src/App.test.tsx ]
+Error: ENOENT: no such file or directory, open 'C:\Users\荀浩\AppData\Local\Packages\sandbox.{e0adf4a8-5cb0-4e01-b85e-2e3f4f94c219}\AC\Temp\BH-SVMy3zuTyIWkIYoJN0\client\11f53c362fe99c54f049892e5f981d6a43f2307b'
+ ❯ src/useDataset.ts:4:1
+      2| import { parseDataset, parseHistorical, parseRepository, type Dataset,…
+      3| import { parseSync } from './repositoryContract'
+      4| import { apiRequest } from './apiClient'
+       | ^
+      5| export type Loader = () => Promise<unknown>
+      6| export type Resource = { state: 'loading' } | { state: 'ready'; data: …
+ ❯ src/App.tsx:3:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/31]⎯
+
+ FAIL  src/PredictPage.test.tsx [ src/PredictPage.test.tsx ]
+Error: ENOENT: no such file or directory, open 'C:\Users\荀浩\AppData\Local\Packages\sandbox.{e0adf4a8-5cb0-4e01-b85e-2e3f4f94c219}\AC\Temp\BH-SVMy3zuTyIWkIYoJN0\client\c7e4e59131c426fa2894e0fd4551d6b529901a5e'
+ ❯ src/apiClient.ts:11:1
+      9|  */
+     10|
+     11| import {
+       | ^
+     12|   ApiError,
+     13|   type ApiErrorDetail,
+ ❯ src/PredictPage.tsx:9:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/31]⎯
+
+
+ Test Files  31 failed (31)
+      Tests  no tests
+   Start at  00:37:18
+   Duration  35.75s (environment 96%, setup 3%)
+
+Environment  jsdom was created 31 times · 60.02s total, 96% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JSON report written to D:/code/jit-defect-prediction/docs/evidence/_run/unit-results.json

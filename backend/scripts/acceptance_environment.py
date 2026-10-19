@@ -5,8 +5,7 @@
 * ``prepare``  把已存在的模型产物复制到独立临时根，显式初始化独立 SQLite，并记录
   原产物在复制前后的文件 hash，供事后核对「原开发库与原产物未被改动」。
 * ``serve``    用 ``create_app(run, database=..., artifact_root=...)`` 启动自有本机
-  服务。团队凭据只从环境变量读取（``JIT_MEMBER_TOKEN`` / ``JIT_ADMIN_TOKEN``），
-  既不进 argv，也不写文件、不进日志。
+  服务，不需要团队凭证配置。
 * ``invalidate`` / ``restore``  让副本模型临时失效再恢复，用于验证「模型不可用时
   仍能按批次编号重开结果」。
 * ``inspect``  读取临时库的批次数与表计数，并核对原产物 hash 是否不变。

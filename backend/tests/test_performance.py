@@ -11,7 +11,7 @@ import time
 from fastapi.testclient import TestClient
 
 from test_artifacts import real_run  # noqa: F401
-from test_catalog_api import ADMIN, MEMBER, settings  # noqa: F401
+from test_catalog_api import HEADERS, settings  # noqa: F401
 
 SAMPLE_SIZE = 100
 WARMUP = 5
@@ -32,17 +32,17 @@ def test_prediction_latency_p95_stays_under_budget(settings):  # noqa: F811
 
     app = create_app(**settings)
     with TestClient(app) as client:
-        candidate = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates'][0]
-        model = client.post('/api/v1/models/register', headers=ADMIN, json={
+        candidate = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates'][0]
+        model = client.post('/api/v1/models/register', headers=HEADERS, json={
             'candidateId': candidate['candidateId'],
             'expectedManifestSha256': candidate['manifestSha256']}).json()['model']
         body = dict(BODY, modelId=model['modelId'])
         for _ in range(WARMUP):
-            assert client.post('/api/v1/predictions', headers=MEMBER, json=body).status_code == 201
+            assert client.post('/api/v1/predictions', headers=HEADERS, json=body).status_code == 201
         elapsed = []
         for _ in range(SAMPLE_SIZE):
             started = time.perf_counter()
-            response = client.post('/api/v1/predictions', headers=MEMBER, json=body)
+            response = client.post('/api/v1/predictions', headers=HEADERS, json=body)
             elapsed.append((time.perf_counter() - started) * 1000.0)
             assert response.status_code == 201
             assert response.json()['records'][0]['explanationStatus'] == 'supported'

@@ -11,7 +11,7 @@ import pytest
 yaml = pytest.importorskip('yaml')
 jsonschema = pytest.importorskip('jsonschema')
 
-from test_catalog_api import ADMIN, MEMBER, settings  # noqa: F401,E402
+from test_catalog_api import HEADERS, settings  # noqa: F401,E402
 from test_artifacts import real_run  # noqa: F401,E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,8 +23,8 @@ def document():
 
 
 def register(client):
-    candidate = client.get('/api/v1/model-candidates', headers=ADMIN).json()['candidates'][0]
-    return client.post('/api/v1/models/register', headers=ADMIN, json={
+    candidate = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates'][0]
+    return client.post('/api/v1/models/register', headers=HEADERS, json={
         'candidateId': candidate['candidateId'], 'expectedManifestSha256': candidate['manifestSha256']}).json()['model']
 
 
@@ -53,7 +53,7 @@ def test_supported_explanation_matches_documented_schema(settings):
     validator = jsonschema.Draft202012Validator(schema)
     with TestClient(create_app(**settings)) as client:
         model = register(client)
-        response = client.post('/api/v1/predictions', headers=MEMBER, json=payload(model['modelId']))
+        response = client.post('/api/v1/predictions', headers=HEADERS, json=payload(model['modelId']))
         assert response.status_code == 201, response.text
         record = response.json()['records'][0]
         assert record['explanationStatus'] == 'supported'
@@ -73,7 +73,7 @@ def test_degraded_explanation_keeps_documented_reason(settings, monkeypatch):
     monkeypatch.setattr(attribution, 'explain', boom)
     with TestClient(create_app(**settings)) as client:
         model = register(client)
-        record = client.post('/api/v1/predictions', headers=MEMBER, json=payload(model['modelId'])).json()['records'][0]
+        record = client.post('/api/v1/predictions', headers=HEADERS, json=payload(model['modelId'])).json()['records'][0]
         assert record['explanationStatus'] == 'not-supported'
         assert record['explanationReason']
         assert 'explanation' not in record

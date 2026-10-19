@@ -6,10 +6,10 @@
  * - 存储不可用时静默回落默认值，不阻塞任何功能。
  */
 export const THEMES = [
-  { id: 'concrete', name: '石灰', preview: { bg: '#F7F7F4', rail: '#EFEFEA', accent: '#14624C' } },
-  { id: 'steel', name: '钢青', preview: { bg: '#F5F7F8', rail: '#ECF0F1', accent: '#0F5C6B' } },
-  { id: 'charcoal', name: '炭黑', preview: { bg: '#17191B', rail: '#141517', accent: '#8FAEB8' } },
-  { id: 'paper', name: '纸墨', preview: { bg: '#FBFAF6', rail: '#F3F2EC', accent: '#191915' } },
+  { id: 'concrete', name: '冷灰', preview: { bg: '#F7F8FA', rail: '#FFFFFF', accent: '#1D4ED8' } },
+  { id: 'steel', name: '钢青', preview: { bg: '#F5F7FA', rail: '#FFFFFF', accent: '#1D4ED8' } },
+  { id: 'charcoal', name: '炭黑', preview: { bg: '#0B1120', rail: '#070C16', accent: '#7BA3F7' } },
+  { id: 'paper', name: '纸墨', preview: { bg: '#FAFAFA', rail: '#FFFFFF', accent: '#333333' } },
 ] as const
 
 export type ThemeId = (typeof THEMES)[number]['id']

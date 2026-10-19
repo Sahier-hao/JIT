@@ -10,7 +10,7 @@ from .catalog_storage import CatalogStorage, utc_now
 from .config import BACKEND
 from .data import sha256
 from .errors import BaselineError
-from .team_access import MESSAGES, RequestError
+from .api_errors import MESSAGES, RequestError
 
 
 def encoded(value):

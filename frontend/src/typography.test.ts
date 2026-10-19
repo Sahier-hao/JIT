@@ -11,7 +11,6 @@ import { describe, expect, it } from 'vitest'
 const styleDir = resolve(process.cwd(), 'src/styles')
 const files = [
   ...readdirSync(styleDir).filter((f) => f.endsWith('.css')).map((f) => resolve(styleDir, f)),
-  resolve(process.cwd(), 'src/App.css'),
   resolve(process.cwd(), 'src/trend.css'),
 ]
 

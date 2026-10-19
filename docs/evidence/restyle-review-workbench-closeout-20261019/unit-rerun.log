@@ -1,0 +1,85 @@
+
+> jit-review-workbench@0.0.0 test
+> vitest run
+
+
+ RUN  v5.0.3 D:/code/jit-defect-prediction/frontend
+
+ ✓ src/apiClient.test.ts (13 tests) 9ms
+ ✓ src/catalogContract.test.ts (16 tests) 8ms
+ ✓ src/chartTokens.test.ts (7 tests) 7ms
+ ✓ src/App.test.tsx (10 tests) 3496ms
+   ✓ CRR-01/02/03 明示来源与边界，缺失度量不填零 406ms
+   ✓ CRR-04/05 无结果可清除，无效日期保留有效结果 1016ms
+   ✓ CRR-07/08 列表、详情与清单共同维护身份和顺序，重复唯一与移除 826ms
+   ✓ CRR-07/12 关闭详情保留查询并返回键盘触发位置 357ms
+ ✓ src/contrast.test.ts (5 tests) 5ms
+ ✓ src/domain.test.ts (29 tests) 8ms
+ ✓ src/credentials.test.tsx (9 tests) 3432ms
+   ✓ CredentialPanel (6)
+     ✓ 输入框是掩码的，且只有显式提交后才进入内存状态 493ms
+     ✓ 凭据不写入 localStorage、sessionStorage 或 URL 359ms
+     ✓ 清除凭据后回到未输入状态，代次继续推进 374ms
+     ✓ 可以更换凭据，更换过程中不显示旧凭据的任何片段 636ms
+     ✓ 侧栏重新挂载后，尚未确认的输入不丢失 401ms
+   ✓ 凭据与受保护请求的关系 (3)
+     ✓ 输入凭据后发起请求，清除后立即回到需要凭据状态 411ms
+     ✓ 更换凭据会重新请求，且不会用旧凭据下的结果顶替 655ms
+ ✓ src/historical.test.tsx (16 tests | 1 skipped) 1256ms
+   ✓ 默认真实模式，基线记录与详情不冒用人工解释，过滤不重算指标 657ms
+   ✓ 加载中可切换，晚到的真实结果不会覆盖演示 305ms
+ ✓ src/Icon.test.tsx (23 tests) 65ms
+ ✓ src/material.test.ts (6 tests) 18ms
+ ✓ src/ModelsPage.test.tsx (14 tests) 1522ms
+ ✓ src/named.test.tsx (9 tests) 332ms
+   ✓ 具名形态基线摘要按声明展示，详情与页脚按 schema 生成文案 319ms
+ ✓ src/navigation.test.tsx (7 tests) 290ms
+ ✓ src/predictForm.test.ts (18 tests) 10ms
+ ✓ src/predictionContract.test.ts (17 tests) 16ms
+ ✓ src/PredictionsPage.test.tsx (13 tests) 1477ms
+   ✓ 手动输入批次编号 (2)
+     ✓ 合法编号交给路由，由结果页发起读取 638ms
+ ✓ src/repositoryContract.test.ts (17 tests) 12ms
+ ✓ src/repositoryDataset.test.ts (5 tests) 6ms
+ ✓ src/repositoryPage.test.ts (8 tests) 404ms
+ ✓ src/PredictPage.test.tsx (24 tests) 10760ms
+   ✓ 表单校验 (4)
+     ✓ 提交 SHA 必须是 40 位十六进制，时间必须带时区 563ms
+     ✓ 全部合法后提交按钮可用，并按契约组织请求正文 780ms
+   ✓ 粘贴特征 JSON (10)
+     ✓ 合法六项一次性填入，项目与记录编号保持不变 575ms
+     ✓ 拒绝 {"ns": true, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4} 361ms
+     ✓ 拒绝 {"ns": 1, "ns": 2, "nd": 2, "nf": 3, "ent": 1.5, "la": 10, "ld": 4} 418ms
+   ✓ 显式提交与错误反馈 (6)
+     ✓ 201 且正文与提交快照一致时进入结果页 1799ms
+     ✓ 201 正文与提交内容不一致时不进入结果页 577ms
+     ✓ 在途时禁用提交，双击只发一次请求 980ms
+     ✓ 422 把服务端字段原因贴回对应输入框 735ms
+     ✓ 断线只提示未能确认保存结果，不展示任何风险 718ms
+     ✓ 503 模型不可用时只说明原因并可跳转模型中心 622ms
+ ✓ src/RepositorySourcesPage.test.tsx (7 tests) 996ms
+   ✓ 数据来源页 (7)
+     ✓ 提交后把表单字段交给服务端，并重新读取列表 685ms
+ ✓ src/risk.test.tsx (3 tests) 97ms
+ ✓ src/settings.test.tsx (6 tests) 860ms
+ ✓ src/shortlist.test.ts (11 tests) 5ms
+ ✓ src/tokens.test.ts (6 tests) 4ms
+ ✓ src/trendContract.test.ts (8 tests) 8ms
+ ✓ src/trendInsights.test.ts (6 tests) 5ms
+ ✓ src/typography.test.ts (1 test) 5ms
+ ✓ src/TrendPage.test.tsx (16 tests) 1324ms
+   ✓ DTD-01 作为独立导航入口，返回工作台后上下文不变 364ms
+ ✓ src/useDataset.test.tsx (4 tests) 269ms
+ ✓ src/workbenchSeed.test.tsx (5 tests) 790ms
+   ✓ 手动修改后重新挂载回到种子范围，清单不受筛选影响 411ms
+
+ Test Files  31 passed (31)
+      Tests  338 passed | 1 skipped (339)
+   Start at  00:39:41
+   Duration  52.44s (environment 57%, tests 28%, setup 10%, import 4%, transform 1%)
+
+Environment  jsdom was created 31 times · 56.05s total, 57% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JSON report written to D:/code/jit-defect-prediction/docs/evidence/_run/unit-results.json

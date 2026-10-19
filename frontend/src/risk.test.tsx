@@ -28,11 +28,11 @@ describe('风险编码', () => {
     expect(missing.container.querySelector('.risk-display')?.getAttribute('data-tier')).toBe('none')
   })
 
-  it('百分比保留一位小数，边界保持整数（CRR-03）', () => {
+  it('模型分数保留两位小数（CRR-03）', () => {
     const text = (risk: unknown) => render(<Risk risk={risk} />).container.querySelector('.risk-number, .risk-unavailable')?.textContent
-    expect(text(1)).toBe('100%')
-    expect(text(0)).toBe('0%')
-    expect(text(0.618)).toBe('61.8%')
+    expect(text(1)).toBe('1.00')
+    expect(text(0)).toBe('0.00')
+    expect(text(0.618)).toBe('0.62')
     expect(text(undefined)).toBe('暂无预测')
     expect(text(1.4)).toBe('风险数据无效')
   })

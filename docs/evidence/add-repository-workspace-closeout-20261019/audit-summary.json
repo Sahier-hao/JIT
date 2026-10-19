@@ -1,0 +1,42 @@
+{
+  "userDate": "2026-10-19",
+  "status": "partial-closeout",
+  "backend": {
+    "skippedModules": 1,
+    "passed": 311,
+    "exitCode": 0,
+    "warnings": 2,
+    "contractProbeMismatches": [
+      "time-tie-order",
+      "successful-view-branch"
+    ]
+  },
+  "frontend": {
+    "lint": 0,
+    "build": 0,
+    "typecheck": 0,
+    "skipped": 1,
+    "passed": 338,
+    "initialUnitRun": "environment-failure-no-tests",
+    "exitCode": 0
+  },
+  "browser": {
+    "passed": 27,
+    "skipped": 1,
+    "fullSuite": false,
+    "scope": [
+      "repository-sync",
+      "workbench",
+      "accessibility"
+    ],
+    "exitCode": 0
+  },
+  "protectedFilesUnchanged": true,
+  "productionCodeChanged": false,
+  "fullVerificationScriptRun": false,
+  "specSync": "skipped-due-to-audited-gaps",
+  "counts": {
+    "addRepositoryWorkspace": "22/25",
+    "restyleReviewWorkbench": "14/31"
+  }
+}

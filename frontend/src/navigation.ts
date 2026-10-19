@@ -1,97 +1,57 @@
-/**
- * 轻量 hash 导航（design D1）。
- *
- * 旧工作台继续使用无 hash 的地址与 `?mode=demo` 查询串，新页面挂在下面五个路由上：
- * `#/trends`、`#/models`、`#/predict`、`#/predictions`、`#/predictions/{batchId}`。未知路由不静默
- * 回落到首页，而是给出可返回的提示。
- */
-
 import { useCallback, useEffect, useState } from 'react'
 
 export type Route =
-  | { name: 'workbench' }
+  | { name: 'repositories' }
   | { name: 'sources' }
-  | { name: 'trends' }
-  | { name: 'models' }
-  | { name: 'predict' }
-  | { name: 'open' }
-  | { name: 'result'; batchId: string }
+  | { name: 'repository'; repositoryId: string }
+  | { name: 'analysis'; repositoryId: string; viewSyncId: string; view: 'commits' | 'plan'; commitId?: string }
+  | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
+  | { name: 'legacy-sync'; syncId: string; view: 'commits' | 'plan' }
+  | { name: 'retired'; hash: string }
   | { name: 'unknown'; hash: string }
 
-export const ROUTE_HASH = {
-  workbench: '',
-  sources: '#/sources',
-  trends: '#/trends',
-  models: '#/models',
-  predict: '#/predict',
-  open: '#/predictions',
-} as const
-
 export function parseHash(hash: string): Route {
-  const raw = (hash.startsWith('#') ? hash.slice(1) : hash).trim()
-  if (raw === '' || raw === '/') return { name: 'workbench' }
-  const segments = raw.replace(/^\/+/, '').replace(/\/+$/, '').split('/')
-  if (segments.length === 1 && segments[0] === 'sources') return { name: 'sources' }
-  if (segments.length === 1 && segments[0] === 'trends') return { name: 'trends' }
-  if (segments.length === 1 && segments[0] === 'models') return { name: 'models' }
-  if (segments.length === 1 && segments[0] === 'predict') return { name: 'predict' }
-  if (segments.length === 1 && segments[0] === 'predictions') return { name: 'open' }
-  if (segments.length === 2 && segments[0] === 'predictions' && segments[1] !== '') {
-    return { name: 'result', batchId: decodeURIComponent(segments[1]) }
-  }
-  return { name: 'unknown', hash }
+  try {
+    const path = hash.replace(/^#/, '').split('?')[0].replace(/\/+$/, '')
+    const parts = path.replace(/^\//, '').split('/').map(decodeURIComponent)
+    if (parts.some(part => part.includes('/') || part.includes('\\'))) return { name: 'unknown', hash }
+    if (!path || path === '/' || ['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
+    if (['/connect', '/sources'].includes(path)) return { name: 'sources' }
+    if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
+    if (parts[0] === 'repositories' && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
+    if (parts[0] === 'repositories' && parts[2] === 'analyses' && (parts[4] === 'commits' || parts[4] === 'plan') && [5, 6].includes(parts.length)) return { name: 'analysis', repositoryId: parts[1], viewSyncId: parts[3], view: parts[4], ...(parts[5] ? { commitId: parts[5] } : {}) }
+    if (parts[0] === 'legacy' && parts[1] === 'sync' && parts.length === 4 && ['commits', 'plan'].includes(parts[3])) return { name: 'legacy-sync', syncId: parts[2], view: parts[3] as 'commits' | 'plan' }
+    if ((parts[0] === 'reports' && parts.length === 3) || (parts[0] === 'lab' && parts[1] === 'history' && parts.length === 4)) {
+      const [runId, view] = parts[0] === 'reports' ? parts.slice(1) : parts.slice(2)
+      if (['overview', 'commits', 'trends'].includes(view)) return { name: 'report', runId, view: view as 'overview' | 'commits' | 'trends' }
+    }
+    if (/^\/(?:lab\/(?:models|predict|results|demo)|models|predict|predictions|settings|shortlist)(?:\/|$)/.test(path)) return { name: 'retired', hash }
+    return { name: 'unknown', hash }
+  } catch { return { name: 'unknown', hash } }
 }
-
 export function hashFor(route: Route): string {
   switch (route.name) {
-    case 'workbench':
-      return ROUTE_HASH.workbench
-    case 'sources':
-      return ROUTE_HASH.sources
-    case 'trends':
-      return ROUTE_HASH.trends
-    case 'models':
-      return ROUTE_HASH.models
-    case 'predict':
-      return ROUTE_HASH.predict
-    case 'open':
-      return ROUTE_HASH.open
-    case 'result':
-      return `#/predictions/${encodeURIComponent(route.batchId)}`
-    default:
-      return route.hash
+    case 'repositories': return '#/projects'
+    case 'sources': return '#/connect'
+    case 'repository': return `#/repositories/${encodeURIComponent(route.repositoryId)}`
+    case 'analysis': return `#/repositories/${encodeURIComponent(route.repositoryId)}/analyses/${encodeURIComponent(route.viewSyncId)}/${route.view}${route.commitId ? '/'+encodeURIComponent(route.commitId) : ''}`
+    case 'report': return route.runId ? `#/reports/${encodeURIComponent(route.runId)}/${route.view}` : '#/reports'
+    case 'legacy-sync': return `#/legacy/sync/${encodeURIComponent(route.syncId)}/${route.view}`
+    default: return route.hash
   }
 }
-
-/** 结果链接：保留 origin 与路径，去掉演示查询串，只带批次身份（MPW-09）。 */
-export function resultLink(batchId: string, location: { origin: string; pathname: string }): string {
-  return `${location.origin}${location.pathname}#/predictions/${encodeURIComponent(batchId)}`
-}
-
-function applyHash(hash: string): void {
-  const url = new URL(window.location.href)
-  url.hash = hash
-  window.history.pushState({}, '', url)
-  window.dispatchEvent(new Event('hashchange'))
-}
-
-export function useRoute(initialHash?: string): { route: Route; navigate: (route: Route) => void } {
-  const [route, setRoute] = useState<Route>(() => parseHash(initialHash ?? window.location.hash))
-
+export function useRoute() {
+  const [route, setRoute] = useState(() => parseHash(window.location.hash))
   useEffect(() => {
     const sync = () => setRoute(parseHash(window.location.hash))
-    window.addEventListener('hashchange', sync)
-    window.addEventListener('popstate', sync)
-    return () => {
-      window.removeEventListener('hashchange', sync)
-      window.removeEventListener('popstate', sync)
-    }
+    window.addEventListener('hashchange', sync); window.addEventListener('popstate', sync)
+    return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync) }
   }, [])
-
-  const navigate = useCallback((next: Route) => {
-    applyHash(hashFor(next))
-    setRoute(next)
+  const navigate = useCallback((next: Route, replace = false) => {
+    const url = new URL(window.location.href); url.hash = hashFor(next)
+    url.searchParams.delete('mode'); url.searchParams.delete('sync')
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', url)
+    setRoute(parseHash(url.hash))
   }, [])
-
   return { route, navigate }
 }

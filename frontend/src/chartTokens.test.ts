@@ -15,10 +15,8 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const SOURCE_FILES = [
   'src/styles/tokens.css',
   'src/styles/base.css',
-  'src/styles/shell.css',
+  'src/styles/product.css',
   'src/styles/components.css',
-  'src/styles/pages.css',
-  'src/App.css',
   'src/trend.css',
   // SVG 的纹理线写在 JSX 属性里（pattern 的 stroke），不是 CSS 规则。
   'src/TrendPage.tsx',
@@ -26,8 +24,8 @@ const SOURCE_FILES = [
 
 const CHART_TOKENS = ['chart-obs', 'chart-est', 'chart-bar', 'chart-hatch']
 
-/** 图表规则所在的样式（趋势图目前仍在 App.css，新增部分在 trend.css）。 */
-const chartCss = ['src/App.css', 'src/trend.css'].map(read).join('\n')
+/** 图表规则所在的样式（趋势图已统一在 trend.css）。 */
+const chartCss = ['src/trend.css'].map(read).join('\n')
 
 describe('图表色', () => {
   it.each(CHART_TOKENS)('--%s 至少被一处样式引用', (token) => {

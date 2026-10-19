@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 import { parseRepository } from './domain'
 import { restoreShortlist, saveShortlist, storageKey } from './shortlist'
 
-const SYNC = {
+const SYNC = { repositoryId: '11111111-1111-4111-8111-111111111111',
   syncId: '5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f',
   repositoryUrl: 'https://github.com/octo/example.git',
   branch: 'main',

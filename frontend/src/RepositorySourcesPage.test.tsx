@@ -1,141 +1,47 @@
-/**
- * 数据来源页（任务 6.1/6.2/6.6/6.7；RCL-07/09）。
- *
- * 覆盖：无凭据不发请求、空列表给入口、提交后清空地址并重新读取、失败给"下一步"而不是只给错误码、
- * 降级说明原因、进行中显示阶段、完成后带着同步身份去工作台。
- */
-
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CredentialProvider } from './credentials'
+import { afterEach, expect, it, vi } from 'vitest'
 import { RepositorySourcesPage } from './RepositorySourcesPage'
-import { jsonResponse } from './testFixtures'
-
-const SYNC = {
-  syncId: '5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f',
-  repositoryUrl: 'https://github.com/octo/example.git',
-  branch: 'main',
-  since: null,
-  until: null,
-  commitLimit: 500,
-  requestedStrategy: 'auto',
-  status: 'completed',
-  stage: 'completed',
-  datasetVersion: 'kamei14-git-v1-example-100_200',
-  runId: null,
-  modelId: null,
-  modelStrategy: 'repository-trained',
-  degradeReason: null,
-  trainRecords: 120,
-  trainPositives: 24,
-  createdAt: '2026-10-18T06:00:00Z',
-  updatedAt: '2026-10-18T06:01:00Z',
-  requestId: null,
-  error: null,
-}
-
-const fetchMock = vi.fn()
-
-beforeEach(() => {
-  fetchMock.mockReset()
-  vi.stubGlobal('fetch', fetchMock)
+const ID = '11111111-1111-4111-8111-111111111111'
+const JOB = { syncId: ID, repositoryId: ID, repositoryUrl: 'https://github.com/example/repo', branch: 'main', since: null, until: null, commitLimit: 500, requestedStrategy: 'auto', status: 'completed', stage: 'completed', datasetVersion: 'data-1', runId: null, modelId: null, modelStrategy: 'generic-model', degradeReason: 'fewRecords', trainRecords: 0, trainPositives: 0, createdAt: '2026-10-19T00:00:00Z', updatedAt: '2026-10-19T00:01:00Z', requestId: null, error: null }
+function response(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status }) }
+afterEach(() => vi.restoreAllMocks())
+it('reads analysis jobs without a connection step', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => response({ syncs: [], total: 0, limit: 20, offset: 0 }))
+  render(<RepositorySourcesPage onOpenSync={vi.fn()}/>)
+  expect(await screen.findByText(/还没有分析任务/)).toBeVisible()
+  expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled()
+})
+it('submits one real job and retains the address', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) => options?.method === 'POST' ? response({ ...JOB, status: 'queued', stage: 'queued' }, 202) : response({ syncs: [], total: 0, limit: 20, offset: 0 }))
+  render(<RepositorySourcesPage onOpenSync={vi.fn()}/>); const user = userEvent.setup()
+  await user.type(screen.getByRole('textbox', { name: '仓库地址' }), JOB.repositoryUrl)
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(fetch.mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(1))
+  const write = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!
+  expect(JSON.parse(String(write[1]?.body))).toEqual({ repositoryUrl: JOB.repositoryUrl, commitLimit: 500, strategy: 'auto' })
+  expect(screen.getByRole('textbox', { name: '仓库地址' })).toHaveValue(JOB.repositoryUrl)
+})
+it('opens the exact successful analysis and keeps its identity collapsed by default', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => response({ syncs: [JOB], total: 1, limit: 20, offset: 0 }))
+  const open = vi.fn(); render(<RepositorySourcesPage onOpenSync={open}/>); const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '查看结果' }))
+  expect(open).toHaveBeenCalledWith(ID, ID)
+  expect(screen.getByText(ID)).not.toBeVisible()
+})
+it('retains input and exposes a field failure with its request ID', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) => options?.method === 'POST' ? response({ error: { code: 'INPUT_INVALID', message: '仓库地址无效', requestId: 'request-7', details: [{ field: 'repositoryUrl', reason: '无效' }] } }, 422) : response({ syncs: [], total: 0, limit: 20, offset: 0 }))
+  render(<RepositorySourcesPage onOpenSync={vi.fn()}/>); const user = userEvent.setup()
+  await user.type(screen.getByRole('textbox', { name: '仓库地址' }), 'invalid')
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  expect(await screen.findByText('仓库地址无效')).toBeVisible()
+  expect(screen.getByRole('textbox', { name: '仓库地址' })).toHaveValue('invalid')
+  expect(screen.getByText('request-7')).toBeVisible()
 })
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
-function listResponse(syncs: unknown[]) {
-  return jsonResponse(200, { syncs, total: syncs.length, limit: 20, offset: 0 })
-}
-
-function renderPage(token = 'member-token', onOpenSync = vi.fn()) {
-  render(
-    <CredentialProvider initialToken={token}>
-      <RepositorySourcesPage onOpenSync={onOpenSync} />
-    </CredentialProvider>,
-  )
-  return onOpenSync
-}
-
-function createCall() {
-  return fetchMock.mock.calls.find((call) => String(call[0]).includes('/api/v1/repository-syncs') && (call[1] as RequestInit | undefined)?.method === 'POST')
-}
-
-describe('数据来源页', () => {
-  it('没有凭据时不发请求，并说明为什么不能同步', () => {
-    renderPage('')
-    expect(screen.getByText(/同步需要团队凭据/)).toBeVisible()
-    expect(screen.getByRole('button', { name: '开始同步' })).toBeDisabled()
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  it('没有同步记录时给空态与下一步', async () => {
-    fetchMock.mockResolvedValue(listResponse([]))
-    renderPage()
-    expect(await screen.findByText('还没有同步过仓库')).toBeVisible()
-    expect(screen.getByText(/公开仓库地址即可开始/)).toBeVisible()
-  })
-
-  it('提交后把表单字段交给服务端，并重新读取列表', async () => {
-    fetchMock.mockImplementation((_url: string, init?: RequestInit) => {
-      if (init?.method === 'POST') return Promise.resolve(jsonResponse(202, { ...SYNC, status: 'queued', stage: 'queued' }))
-      return Promise.resolve(listResponse([]))
-    })
-    const user = userEvent.setup()
-    renderPage()
-
-    await user.type(screen.getByRole('textbox', { name: '仓库地址' }), 'https://github.com/octo/example.git')
-    await user.click(screen.getByRole('button', { name: '开始同步' }))
-
-    await waitFor(() => expect(createCall()).toBeDefined())
-    const body = JSON.parse(String((createCall()![1] as RequestInit).body))
-    expect(body).toEqual({ repositoryUrl: 'https://github.com/octo/example.git', commitLimit: 500, strategy: 'auto' })
-    // 提交成功后地址被清空，避免误以为同一次点击提交了两遍。
-    await waitFor(() => expect(screen.getByRole('textbox', { name: '仓库地址' })).toHaveValue(''))
-    // 首次读取 + 提交成功后的重新读取。
-    const listCalls = fetchMock.mock.calls.filter((call) => (call[1] as RequestInit | undefined)?.method === 'GET')
-    await waitFor(() => expect(listCalls.length).toBeGreaterThanOrEqual(2))
-  })
-
-  it('失败的同步同时显示服务端原因与"下一步"', async () => {
-    fetchMock.mockResolvedValue(
-      listResponse([
-        {
-          ...SYNC,
-          status: 'failed',
-          stage: 'failed',
-          error: { code: 'REPOSITORY_UNAVAILABLE', message: '仓库不可访问：https://example.invalid/repo.git' },
-        },
-      ]),
-    )
-    renderPage()
-    expect(await screen.findByText('仓库打不开或分支不存在')).toBeVisible()
-    expect(screen.getByText(/确认地址是公开的 HTTP\(S\) 仓库/)).toBeVisible()
-    expect(screen.getByText('仓库不可访问：https://example.invalid/repo.git')).toBeVisible()
-  })
-
-  it('降级到现成模型时说明原因，不把通用模型说成本仓库训练', async () => {
-    fetchMock.mockResolvedValue(listResponse([{ ...SYNC, modelStrategy: 'generic-model', degradeReason: 'fewPositives' }]))
-    renderPage()
-    expect(await screen.findByText('现成通用模型')).toBeVisible()
-    expect(screen.getByText(/能确认的缺陷引入太少/)).toBeVisible()
-    expect(screen.queryByText('本仓库数据训练')).toBeNull()
-  })
-
-  it('进行中的作业显示当前阶段', async () => {
-    fetchMock.mockResolvedValue(listResponse([{ ...SYNC, status: 'collecting', stage: 'collecting', modelStrategy: null }]))
-    renderPage()
-    expect(await screen.findByText('正在采集')).toBeVisible()
-    expect(screen.getByText(/完成后自动刷新/)).toBeVisible()
-  })
-
-  it('完成后带着同步身份进入工作台', async () => {
-    fetchMock.mockResolvedValue(listResponse([SYNC]))
-    const onOpen = renderPage()
-    const user = userEvent.setup()
-    await user.click(await screen.findByRole('button', { name: '去工作台看这批提交的风险' }))
-    expect(onOpen).toHaveBeenCalledWith(SYNC.syncId)
-  })
+it('shows a failed terminal status instead of the last active stage', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => response({ syncs: [{ ...JOB, status: 'failed', stage: 'collecting', error: { code: 'REPOSITORY_UNAVAILABLE', message: '仓库不可用' } }], total: 1, limit: 20, offset: 0 }))
+  render(<RepositorySourcesPage onOpenSync={vi.fn()}/>)
+  expect(await screen.findByText('分析失败')).toBeVisible()
+  expect(screen.queryByText('正在采集')).not.toBeInTheDocument()
 })

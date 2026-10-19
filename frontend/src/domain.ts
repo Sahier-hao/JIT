@@ -2,9 +2,10 @@ import type { BaselineSummary, Mode } from './historicalContract'
 import { parseSync, parseSyncCommitPage, repositoryName, type SyncCommit } from './repositoryContract'
 export { parseHistorical } from './historicalContract'
 export type { BaselineSummary, Mode, Score } from './historicalContract'
-export interface Commit { id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string; metrics?: Record<string, number>; explanation?: string[] }
+export interface Commit { id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string; authorName?: string | null; originalCommitUrl?: string | null; metrics?: Record<string, number>; explanation?: string[] }
 /** 仓库来源的上下文：同步作业身份与它实际采用的打分模型，供界面如实标注来源（RCL-08/09）。 */
 export interface RepositoryMeta {
+  repositoryId?: string
   syncId: string
   repositoryUrl: string
   branch: string
@@ -64,7 +65,7 @@ export function validRisk(risk: unknown): risk is number {
 
 export function riskLabel(risk: unknown): string {
   if (risk == null) return '暂无预测'
-  return validRisk(risk) ? `${Number((risk * 100).toFixed(1))}%` : '风险数据无效'
+  return validRisk(risk) ? risk.toFixed(2) : '风险数据无效'
 }
 
 const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -118,6 +119,9 @@ export function toCommit(commit: SyncCommit): Commit {
     risk: commit.risk,
     lines: commit.addedLines + commit.deletedLines,
     files: commit.files,
+    title: commit.subject ?? '',
+    authorName: commit.authorName,
+    originalCommitUrl: commit.originalCommitUrl,
     metrics: commit.metrics,
   }
 }
@@ -143,6 +147,7 @@ export function parseRepository(input: unknown): Dataset {
     records,
     runId: sync.runId ?? undefined,
     repository: {
+      repositoryId: sync.repositoryId ?? undefined,
       syncId: sync.syncId,
       repositoryUrl: sync.repositoryUrl,
       branch: sync.branch,

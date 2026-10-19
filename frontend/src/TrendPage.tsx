@@ -1,7 +1,7 @@
 /**
  * 历史趋势视图（DTD-01～DTD-09、change make-trend-actionable 的 design D2～D7）。
  *
- * 数据取自与工作台同一次运行摘要响应（`/api/review-batch`），因此不需要团队凭据，也不要求先
+ * 数据取自与工作台同一次运行摘要响应（`/api/review-batch`），可以独立读取，也不要求先
  * 打开工作台。聚合的解析走独立路径 `trendContract.ts`：缺少该键即"未提供"，不合法即"不可用"，
  * 两种情况都不影响工作台、详情、清单与基线摘要。
  *
@@ -53,7 +53,7 @@ function measureText(measure: TrendMeasure, emptyLabel: string): string {
 function riskText(bucket: TrendBucket): string {
   if (bucket.risk === null) return '—'
   if (bucket.risk.median === null) return `样本不足：${bucket.risk.reason ?? '原因未记录'}`
-  return `${percent(bucket.risk.median)}（测试记录 ${bucket.risk.count} 条）`
+  return `${bucket.risk.median.toFixed(2)}（测试记录 ${bucket.risk.count} 条）`
 }
 
 /** 该桶记录覆盖哪些分区：用于说明观测比例覆盖全部记录、风险只覆盖其中的测试记录。 */
@@ -124,7 +124,7 @@ function drillRange(bucket: TrendBucket): { start: string; end: string } {
 
 function drillSearch(bucket: TrendBucket): string {
   const range = drillRange(bucket)
-  return `?start=${range.start}&end=${range.end}`
+  return `/?mode=historical&start=${range.start}&end=${range.end}#/validation`
 }
 
 function TrendChart({ data, split }: { data: TrendAggregate; split: Split | undefined }) {
@@ -219,6 +219,7 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
           <text className="trend-axis-text" x={CHART.left - 8} y={yRate(tick) + 3.5} textAnchor="end">
             {percent(tick)}
           </text>
+          <text className="trend-axis-text" x={CHART.left + plotWidth + 8} y={yRate(tick) + 3.5} textAnchor="start">{tick.toFixed(2)}</text>
         </g>
       ))}
       {[0, Math.round(commitsMax / 2), commitsMax].map((tick) => (
@@ -275,6 +276,8 @@ function TrendChart({ data, split }: { data: TrendAggregate; split: Split | unde
         </g>
       ))}
       <line className="trend-axis trend-axis-split" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateTop - 6} y2={rateTop - 6} />
+      <text className="trend-axis-unit" x={CHART.left} y={rateTop - 10}>观测比例</text>
+      <text className="trend-axis-unit" x={CHART.left + plotWidth} y={rateTop - 10} textAnchor="end">模型分数</text>
       <line className="trend-axis" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateBottom} y2={rateBottom} />
       {buckets.map((bucket, index) =>
         index % labelStep === 0 ? (
@@ -520,16 +523,20 @@ function TrendBody({
 export function TrendPage({
   insights = DEFAULT_INSIGHTS,
   navigate,
+  expectedRunId,
+  embedded = false,
 }: {
   insights?: readonly TrendInsight[]
   navigate?: (search: string) => void
+  expectedRunId?: string
+  embedded?: boolean
 } = {}) {
   const { resource, retry } = useDataset(historicalLoader, 'historical')
 
   if (resource.state !== 'ready') {
     return (
       <>
-        <header className="topbar">JIT · 提交评审 · 历史趋势</header>
+        {!embedded ? <header className="topbar">JIT · 提交评审 · 历史趋势</header> : null}
         {resource.state === 'loading' ? (
           <LoadingNotice label="正在读取真实历史运行的摘要与趋势聚合。" />
         ) : (
@@ -546,10 +553,12 @@ export function TrendPage({
   }
 
   const trend = parseSummaryTrend(resource.data.summary)
+  if (expectedRunId && resource.data.runId !== expectedRunId) return <EmptyState title="该历史运行未供给" description="服务已切换运行；请返回验证报告核对来源。"/>
   const go = navigate ?? ((search: string) => window.location.assign(search))
 
   return (
     <>
+      {!embedded ? <>
       <header className="topbar">
         <div>
           <span className="project-symbol">
@@ -580,7 +589,7 @@ export function TrendPage({
           <h1>历史趋势</h1>
           <p className="page-intro">
             按时间观察发布者历史观测与模型对冻结测试批次的估计。两者语义不同、范围不同，分别标注。{' '}
-            <a href="#/">返回提交工作台</a>
+            <a href="#/validation">返回验证数据列表</a>
           </p>
         </div>
         {trend.state === 'ready' ? (
@@ -593,6 +602,7 @@ export function TrendPage({
           </div>
         ) : null}
       </div>
+      </> : null}
       <div className="demo-notice historical-notice">
         <Icon name="info" size={17} />
         <div>
@@ -603,7 +613,7 @@ export function TrendPage({
         </div>
       </div>
       {trend.state === 'absent' ? (
-        <div className="notice notice-credential" role="status">
+        <div className="notice notice-info" role="status">
           <Icon name="info" size={17} />
           <div>
             <strong>该运行未提供趋势聚合</strong>
@@ -611,7 +621,7 @@ export function TrendPage({
               当前供给的运行产物里没有趋势聚合键，因此没有可核对的时间桶数据。其余视图（提交工作台、详情、优先审查清单与基线摘要）不受影响。
             </span>
             <div className="notice-actions">
-              <a href="#/">前往提交工作台</a>
+              <a href="#/validation">前往验证数据列表</a>
             </div>
           </div>
         </div>

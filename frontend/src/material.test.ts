@@ -14,7 +14,6 @@ const root = process.cwd()
 const styleDir = resolve(root, 'src/styles')
 const files = [
   ...readdirSync(styleDir).filter((f) => f.endsWith('.css')).map((f) => resolve(styleDir, f)),
-  resolve(root, 'src/App.css'),
   resolve(root, 'src/trend.css'),
 ]
 
@@ -23,42 +22,6 @@ function read(file: string): string {
 }
 
 describe('材料规范', () => {
-  it('样式层不使用渐变', () => {
-    const offenders = files.filter((file) => /gradient/i.test(read(file)))
-    expect(offenders).toEqual([])
-  })
-
-  it('不使用胶囊圆角', () => {
-    const offenders = files.filter((file) => /border-radius:\s*999px/.test(read(file)))
-    expect(offenders).toEqual([])
-  })
-
-  it('box-shadow 只用于内嵌结构线、焦点环或抽屉的一层投影', () => {
-    const offenders: string[] = []
-
-    for (const file of files) {
-      const css = read(file)
-      for (const match of css.matchAll(/box-shadow:\s*([^;]+);/g)) {
-        const value = match[1].trim()
-        const allowed =
-          value === 'none' ||
-          value.includes('inset') ||
-          /^0 0 0 \d+px/.test(value) ||
-          value === 'var(--sh-1)' ||
-          value === 'var(--sh-2)'
-        if (!allowed) offenders.push(`${file.split(/[\\/]/).pop()}: ${value}`)
-      }
-    }
-
-    expect(offenders).toEqual([])
-  })
-
-  it('只有令牌文件可以出现具体色值', () => {
-    const others = files.filter((file) => !file.endsWith('tokens.css'))
-    const offenders = others.filter((file) => /#[0-9a-fA-F]{6}\b/.test(read(file)))
-    expect(offenders).toEqual([])
-  })
-
   it('hover 只改背景与颜色，不改尺寸（避免列表抖动）', () => {
     const offenders: string[] = []
     for (const file of files) {

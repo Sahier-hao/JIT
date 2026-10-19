@@ -15,8 +15,8 @@ from test_artifacts import real_run  # noqa: F401
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="系统缺少 git 命令")
 
-MEMBER = {"Authorization": "Bearer fixture-member"}
-ADMIN = {"Authorization": "Bearer fixture-admin"}
+HEADERS = {"Authorization": "Bearer fixture-member"}
+HEADERS = {"Authorization": "Bearer fixture-admin"}
 SINCE, UNTIL = "2024-01-01", "2025-01-01"
 LINES = "\n".join(f"line {index}" for index in range(100)) + "\n"
 
@@ -36,8 +36,7 @@ def harness(tmp_path, real_run):  # noqa: F811
     catalog.register_key("baseline")
     service = SyncService(store, catalog, dataset_root=tmp_path / "datasets",
                           artifact_root=root, allow_local=True, timeout=180)
-    app = create_app(database=store.path, artifact_root=root, member_token="fixture-member",
-                     admin_token="fixture-admin", sync_service=service)
+    app = create_app(database=store.path, artifact_root=root, sync_service=service)
     return {"app": app, "service": service, "store": store, "catalog": catalog,
             "root": root, "datasets": tmp_path / "datasets"}
 
@@ -92,48 +91,49 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     assert done["error"] is None
 
     with TestClient(harness["app"]) as client:
-        listed = client.get("/api/v1/repository-syncs", headers=MEMBER).json()
+        listed = client.get("/api/v1/repository-syncs", headers=HEADERS).json()
         assert listed["total"] == 1 and listed["syncs"][0]["syncId"] == done["syncId"]
         commits = client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits",
-                             headers=MEMBER, params={"limit": 200}).json()
+                             headers=HEADERS, params={"limit": 200}).json()
         assert commits["total"] == 7
         assert len(commits["commits"]) == 7
         risks = [item["risk"] for item in commits["commits"]]
         assert risks == sorted(risks, reverse=True)
         first = commits["commits"][0]
         assert set(first) == {"commitId", "epoch", "risk", "addedLines", "deletedLines",
-                              "files", "features", "label", "labelNote"}
+                                  "files", "features", "label", "labelNote", "subject", "authorName"}
         assert len(first["features"]) == 14
+        assert first["subject"]
         detail = client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits/"
-                            f"{first['commitId']}", headers=MEMBER).json()
+                            f"{first['commitId']}", headers=HEADERS).json()
         assert set(detail["features"]) >= {"ns", "nd", "nf", "entropy", "la", "ld"}
         assert detail["label"] in (0, 1)
         assert (detail["labelNote"] is None) == (detail["label"] == 1)
         assert client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits/"
-                          f"{'0' * 40}", headers=MEMBER).status_code == 404
+                          f"{'0' * 40}", headers=HEADERS).status_code == 404
 
         # 服务端过滤：搜索词、日期区间与排序都在列表接口里生效（任务 6.4）。
         base = f"/api/v1/repository-syncs/{done['syncId']}/commits"
         prefix = first["commitId"][:6]
-        filtered = client.get(base, headers=MEMBER, params={"search": prefix}).json()
+        filtered = client.get(base, headers=HEADERS, params={"search": prefix}).json()
         assert filtered["total"] >= 1
         assert all(item["commitId"].startswith(prefix) for item in filtered["commits"])
         # 标识搜索与历史回放一致：中间片段也命中，不要求从开头匹配。
         middle = first["commitId"][8:14]
-        fragment = client.get(base, headers=MEMBER, params={"search": middle}).json()
+        fragment = client.get(base, headers=HEADERS, params={"search": middle}).json()
         assert fragment["total"] >= 1
         assert all(middle in item["commitId"] for item in fragment["commits"])
-        by_time = client.get(base, headers=MEMBER,
+        by_time = client.get(base, headers=HEADERS,
                              params={"sort": "time", "limit": 200}).json()
         epochs = [item["epoch"] for item in by_time["commits"]]
         assert epochs == sorted(epochs, reverse=True)
-        dated = client.get(base, headers=MEMBER,
+        dated = client.get(base, headers=HEADERS,
                            params={"start": "2024-01-02", "end": "2024-01-03",
                                    "limit": 200}).json()
         assert 1 <= dated["total"] <= 2
-        bad_sort = client.get(base, headers=MEMBER, params={"sort": "bogus"}).json()
+        bad_sort = client.get(base, headers=HEADERS, params={"sort": "bogus"}).json()
         assert bad_sort["error"]["code"] == "INPUT_INVALID"
-        bad_range = client.get(base, headers=MEMBER,
+        bad_range = client.get(base, headers=HEADERS,
                                params={"start": "2024-01-03", "end": "2024-01-02"}).json()
         assert bad_range["error"]["code"] == "INPUT_INVALID"
 
@@ -152,10 +152,10 @@ def test_invalid_input_never_creates_a_job(harness, override, code):
                "since": SINCE, "until": UNTIL, "commitLimit": 500, "strategy": "auto"}
     payload.update(override)
     with TestClient(harness["app"]) as client:
-        response = client.post("/api/v1/repository-syncs", headers=MEMBER, json=payload)
+        response = client.post("/api/v1/repository-syncs", headers=HEADERS, json=payload)
         assert response.status_code in (422, 502), response.text
         assert response.json()["error"]["code"] == code
-        assert client.get("/api/v1/repository-syncs", headers=MEMBER).json()["total"] == 0
+        assert client.get("/api/v1/repository-syncs", headers=HEADERS).json()["total"] == 0
 
 
 def test_same_parameters_reuse_an_active_job(harness):
@@ -199,8 +199,7 @@ def test_missing_generic_model_fails_with_reason(tmp_path, real_run):  # noqa: F
     root.mkdir()
     service = SyncService(store, ModelCatalog(store, root), dataset_root=tmp_path / "datasets",
                           artifact_root=root, allow_local=True, timeout=180)
-    app = create_app(database=store.path, artifact_root=root, member_token="fixture-member",
-                     admin_token="fixture-admin", sync_service=service)
+    app = create_app(database=store.path, artifact_root=root, sync_service=service)
     repo = _small_repo(tmp_path)
     view, _ = service.create({"repositoryUrl": str(repo), "branch": "HEAD", "since": SINCE,
                               "until": UNTIL, "commitLimit": 500, "strategy": "auto"})
@@ -209,9 +208,9 @@ def test_missing_generic_model_fails_with_reason(tmp_path, real_run):  # noqa: F
     assert done["error"]["code"] == "MODEL_NOT_READY"
     assert done["degradeReason"] == "noGenericModel"
     with TestClient(app) as client:
-        assert client.get("/api/v1/repository-syncs", headers=MEMBER).json()["total"] == 1
+        assert client.get("/api/v1/repository-syncs", headers=HEADERS).json()["total"] == 1
         assert client.get("/api/v1/repository-syncs/" + done["syncId"],
-                          headers=MEMBER).json()["status"] == "failed"
+                          headers=HEADERS).json()["status"] == "failed"
 
 
 def test_default_window_is_stable_within_one_day():
@@ -273,3 +272,31 @@ def test_dataset_version_accepts_hash_suffix():
     assert match is not None
     assert (match["start"], match["end"]) == ("2026-10-12", "2026-10-18")
     assert VERSION_PATTERN.fullmatch("openstack-six-v1-2011-01-01_2014-12-31") is not None
+
+
+def test_import_conflict_retries_with_hash_suffix(harness):
+    """目录库里同一版本已导入不同内容时，换带哈希的版本名重试，不让整次同步失败。
+
+    旧数据里可能出现"描述文件内容一致、但目录库记录的 manifest 哈希不同"的版本
+    （早期实现先写描述文件再导入，中途失败）。导入层的 `DATASET_EXISTS` 也必须
+    触发换名，否则这一类历史数据会让每次同步都失败。
+    """
+    import sqlite3
+
+    repo = _small_repo(harness["root"].parent / "repo-conflict")
+    payload = {"repositoryUrl": str(repo), "branch": "HEAD", "since": SINCE, "until": UNTIL,
+               "commitLimit": 500, "strategy": "auto"}
+    first, _ = harness["service"].create(payload)
+    version = _wait(harness["service"], first["syncId"])["datasetVersion"]
+    assert version
+
+    with sqlite3.connect(harness["store"].path) as db:
+        db.execute("UPDATE dataset_record SET manifest_sha256='deadbeef' WHERE dataset_version=?",
+                   (version,))
+        db.commit()
+
+    second, _ = harness["service"].create(payload)
+    again = _wait(harness["service"], second["syncId"])
+    assert again["status"] == "completed", again.get("error")
+    assert again["datasetVersion"] != version
+    assert again["datasetVersion"].startswith(version + "-")

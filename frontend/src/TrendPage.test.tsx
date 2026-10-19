@@ -1,10 +1,9 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import App from './App'
 import { TrendPage } from './TrendPage'
+import { VerificationReport } from './VerificationReport'
 import { DEFAULT_INSIGHTS, type TrendInsight } from './trendInsights'
-import demo from '../public/demo-dataset.json'
 import { jsonResponse } from './testFixtures'
 import {
   sparseBucket,
@@ -42,7 +41,7 @@ it('分区带与分区清单按时间排序，不跟随 JSON 的键序', async (
   const split = payload.summary.split
   payload.summary.split = { test: split['test'], train: split['train'], validation: split['validation'] }
   stubBatch(payload)
-  render(<App />)
+  render(<TrendPage />)
   const list = await screen.findByRole('list', { name: '分区范围' })
   const labels = within(list).getAllByRole('listitem').map((item) => (item.textContent ?? '').slice(0, 2))
   expect(labels).toEqual(['训练', '验证', '测试'])
@@ -50,7 +49,7 @@ it('分区带与分区清单按时间排序，不跟随 JSON 的键序', async (
 
 it('DTD-03/05 两类序列分别标注，文本视图逐桶可读', async () => {
   stubBatch(trendFixture())
-  render(<App />)
+  render(<TrendPage />)
   await screen.findByRole('heading', { name: '历史趋势' })
 
   expect(screen.getByText(/提交数 · 历史观测/)).toBeVisible()
@@ -65,13 +64,13 @@ it('DTD-03/05 两类序列分别标注，文本视图逐桶可读', async () => 
   expect(rowFor('2012-01')).toHaveTextContent('14.7%')
   expect(rowFor('2013-12')).toHaveTextContent('验证 40 · 测试 56')
   expect(rowFor('2013-12')).toHaveTextContent('15.6%')
-  expect(rowFor('2013-12')).toHaveTextContent('9.3%（测试记录 56 条）')
+  expect(rowFor('2013-12')).toHaveTextContent('0.09（测试记录 56 条）')
   expect(within(table()).getByText(/每月|时区 UTC\+08:00/)).toBeVisible()
 })
 
 it('DTD-04 空值桶显示样本不足与原因，不渲染为 0%', async () => {
   stubBatch(trendFixture())
-  const view = render(<App />)
+  const view = render(<TrendPage />)
   await screen.findByRole('heading', { name: '历史趋势' })
 
   const sparse = rowFor('2012-02')
@@ -86,7 +85,7 @@ it('DTD-04 空值桶显示样本不足与原因，不渲染为 0%', async () => 
 
 it('DTD-02 缺少聚合键时如实说明，且工作台照常可用', async () => {
   stubBatch(trendFixtureWithoutAggregate())
-  const view = render(<App />)
+  const view = render(<TrendPage />)
   await screen.findByText('该运行未提供趋势聚合')
   expect(screen.getByText(/没有可核对的时间桶数据/)).toBeVisible()
   expect(screen.getByText(/其余视图（提交工作台、详情、优先审查清单与基线摘要）不受影响/)).toBeVisible()
@@ -94,7 +93,7 @@ it('DTD-02 缺少聚合键时如实说明，且工作台照常可用', async () 
   view.unmount()
 
   window.history.replaceState({}, '', '/')
-  render(<App loaders={{ historical: async () => trendFixtureWithoutAggregate(), demo: async () => demo }} />)
+  render(<VerificationReport route={{ name: 'report', view: 'commits' }} navigate={vi.fn()} />)
   expect(await screen.findByRole('button', { name: `查看 ${'0'.repeat(40)}` })).toBeVisible()
 })
 
@@ -103,7 +102,7 @@ it('DTD-02 聚合不合法时只让趋势视图不可用，不扩大失败范围
   const summary = broken.summary as unknown as { trendBuckets: Record<string, unknown> }
   summary.trendBuckets = { ...summary.trendBuckets, minSample: 0 }
   stubBatch(broken)
-  const view = render(<App />)
+  const view = render(<TrendPage />)
   await screen.findByText('趋势聚合不可用')
   expect(screen.getByText(/minSample/)).toBeVisible()
   expect(screen.getByText(/工作台、详情、清单与基线摘要不受影响/)).toBeVisible()
@@ -111,7 +110,7 @@ it('DTD-02 聚合不合法时只让趋势视图不可用，不扩大失败范围
   view.unmount()
 
   window.history.replaceState({}, '', '/')
-  render(<App loaders={{ historical: async () => broken, demo: async () => demo }} />)
+  render(<VerificationReport route={{ name: 'report', view: 'commits' }} navigate={vi.fn()} />)
   expect(await screen.findByRole('button', { name: `查看 ${'0'.repeat(40)}` })).toBeVisible()
 })
 
@@ -124,7 +123,7 @@ it('DTD-01 加载中先给文字状态，随后显示趋势', async () => {
       return jsonResponse(200, trendFixture())
     }),
   )
-  render(<App />)
+  render(<TrendPage />)
   expect(screen.getByText('正在读取')).toBeVisible()
   expect(screen.getByText(/正在读取真实历史运行的摘要与趋势聚合/)).toBeVisible()
   await screen.findByRole('heading', { name: '历史趋势' })
@@ -132,27 +131,10 @@ it('DTD-01 加载中先给文字状态，随后显示趋势', async () => {
 
 it('DTD-01/06 服务失败时给出可读原因与重试入口', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
-  render(<App />)
+  render(<TrendPage />)
   await screen.findByText('数据不可用')
   expect(screen.getByRole('alert')).toHaveTextContent(/真实服务不可达/)
   expect(screen.getByRole('button', { name: '重新加载' })).toBeVisible()
-})
-
-it('DTD-01 作为独立导航入口，返回工作台后上下文不变', async () => {
-  const user = userEvent.setup()
-  stubBatch(trendFixture())
-  window.history.replaceState({}, '', '/')
-  render(<App initialMode="demo" loader={async () => demo} />)
-  await screen.findByRole('button', { name: '加入 demo-0001 到清单' })
-  await user.click(screen.getByRole('button', { name: '加入 demo-0001 到清单' }))
-
-  await user.click(screen.getByRole('button', { name: '历史趋势' }))
-  await screen.findByRole('heading', { name: '历史趋势' })
-  // 趋势页自带返回入口；侧栏的工作台导航项在非工作台路由下不可用属既有行为，模式切换同样能回去。
-  expect(screen.getByRole('link', { name: '返回提交工作台' })).toBeVisible()
-
-  await user.click(screen.getByRole('button', { name: '选择演示模式' }))
-  expect(await screen.findByRole('button', { name: 'demo-0001 已在清单' })).toBeDisabled()
 })
 
 /** 直接在趋势页上测：分区带、洞察与下钻都在页面内部，不经 App 的路由。 */
@@ -271,7 +253,7 @@ it('DTD-07 下钻范围由桶自身端点派生：跨月、跨年与非月粒度
 
   const month = await renderTrend(trendFixture(), { navigate })
   await user.click(screen.getByRole('button', { name: '查看该桶提交：2013-12-01 至 2013-12-31' }))
-  expect(navigate).toHaveBeenCalledWith('?start=2013-12-01&end=2013-12-31')
+  expect(navigate).toHaveBeenCalledWith('/?mode=historical&start=2013-12-01&end=2013-12-31#/validation')
   month.unmount()
 
   // 跨年、且桶跨过元旦：结束端取"次日零点减一秒"，不把 2014-01-08 那一天纳进来。
@@ -280,13 +262,13 @@ it('DTD-07 下钻范围由桶自身端点派生：跨月、跨年与非月粒度
     { navigate },
   )
   await user.click(screen.getByRole('button', { name: '查看该桶提交：2013-12-25 至 2014-01-07' }))
-  expect(navigate).toHaveBeenLastCalledWith('?start=2013-12-25&end=2014-01-07')
+  expect(navigate).toHaveBeenLastCalledWith('/?mode=historical&start=2013-12-25&end=2014-01-07#/validation')
   crossYear.unmount()
 
   // 非月粒度（两周的桶）同样只看桶自己的端点。
   await renderTrend(trendFixtureWithBuckets([sparseBucket('2012-01-15T00:00:00+08:00', '2012-01-29T00:00:00+08:00')]), { navigate })
   await user.click(screen.getByRole('button', { name: '查看该桶提交：2012-01-15 至 2012-01-28' }))
-  expect(navigate).toHaveBeenLastCalledWith('?start=2012-01-15&end=2012-01-28')
+  expect(navigate).toHaveBeenLastCalledWith('/?mode=historical&start=2012-01-15&end=2012-01-28#/validation')
 })
 
 it('DTD-06 图表为双序列分离：柱有独立纵轴、刻度画在轴外、标记为方块', async () => {
