@@ -40,6 +40,14 @@
 
 全项目严格校验 16 项通过。受保护文件 795 项哈希全部未变，七份主规格变更与声明一致，OpenAPI 280 处引用和当前文档 54 处链接检查通过。旧的已完成但未归档 change 相对当前主规格存在归档提示；本轮没有重放其旧 delta，也没有自动归档或冻结。最终哈希/文档引用/源码清单和数据库共列比较记录在 `.cache/simplify-validation/`。
 
-需要回退时，在独立分支检查本轮提交或从基线恢复源码；开发库有单独备份。不要 reset 当前共享工作区、删除数据库、模型、旧计划键或冻结证据。没有推送或部署。
+需要回退时，在独立分支检查本轮提交或从基线恢复源码；开发库有单独备份。不要 reset 当前共享工作区、删除数据库、模型、旧计划键或冻结证据。实施收尾时尚未推送或部署；后续归档交付见下文。
 
 命令与当前范围见 [开发验证](../开发验证.md)；界面使用说明见 [前端说明](../../frontend/README.md)。
+
+## 用户授权归档与 PR 交付（2026-10-19）
+
+用户随后明确要求归档、提交并创建 PR。当前 change 的 17/17 任务、四份规划产物状态及 27 条 delta 要求均已核对；team-api-access 与 model-prediction-workbench 已按声明退役。通过 `openspec archive simplify-project-review --yes --skip-specs --json` 归档至 `openspec/changes/archive/2026-10-19-simplify-project-review/`，11 个文件移动前后哈希一致。主规格已同步，因此跳过重复写入；不重放旧 delta。
+
+PR 分支为 `codex/simplify-project-review`，目标为 `main`。已干净合并远端主干 `0ad594d`，保留工作量感知指标实现及其冻结证据；没有强推或改写原提交。PR 包含之前尚未发布的固定分析上下文实现，以及本轮精简产品的最终状态。`redesign-product-workspaces` 作为上一轮完成记录仍留在活动目录，本次仅归档当前 change。
+
+同步主干后的复验：后端全量 **335 passed、2 warnings**，隔离浏览器 **16 passed**，既有模型产物 **passed=true、1853 records**，归档后严格规格校验 **15 passed、0 failed**。前端源码与上一轮 212 项验证时一致。795 个原受保护文件未变，七份受控主规格、280 处 OpenAPI 引用及 54 处当前文档链接复核通过。浏览器复验首次误用了未被配置读取的端口变量，检测到已有开发服务后退出；改用配置实际读取的 `JIT_FRONTEND_PORT`/`JIT_SERVICE_PORT` 后在隔离端口通过，未停止或借用开发服务。
