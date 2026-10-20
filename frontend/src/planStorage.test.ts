@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { previewLegacyPlan, migrateLegacyPlan, restoreShortlist, saveShortlist, storageKey } from './shortlist'
+import { previewLegacyPlan, migrateLegacyPlan, restoreShortlist, saveShortlist, storageKey } from './state/planStorage'
 import type { Dataset } from './domain'
 
 const base: Dataset = { mode: 'repository', project: 'repo', version: 'data-A', records: [], repository: { repositoryId: 'repo-A', syncId: 'analysis-A', repositoryUrl: 'local', branch: 'main', datasetVersion: 'data-A', requestedStrategy: 'auto', modelStrategy: null, degradeReason: null, trainRecords: null, trainPositives: null, labelNote: '' } }

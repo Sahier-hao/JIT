@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { apiRequest } from './apiClient'
-import { ApiError, CancelledError, ContractError, NetworkError } from './apiContract'
+import { apiRequest } from './api/client'
+import { ApiError, CancelledError, ContractError, NetworkError } from './api/primitives'
 afterEach(() => vi.restoreAllMocks())
 it('never adds an authorization header', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'))

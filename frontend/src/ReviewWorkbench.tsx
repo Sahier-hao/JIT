@@ -1,145 +1,22 @@
 /** Fixed-analysis review: title-first list, inline plan and one detail panel. */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { applyQuery, displayTime, emptyQuery, readSeedQuery, validRisk, type Commit, type Dataset, type Query } from './domain'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { toCommit, type Commit, type Dataset, type Query } from './domain'
+import { patchQuery, resetQuery, type ReviewDraft } from './state/reviewDraft'
 import { CommitDetail } from './CommitDetail'
+import { RepositoryHead } from './components/review/RepositoryHead'
+import { ReviewTable } from './components/review/ReviewTable'
 import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
 import type { Route } from './navigation'
-import { restoreShortlist, saveShortlist, previewLegacyPlan, migrateLegacyPlan } from './shortlist'
+import { restoreShortlist, saveShortlist, previewLegacyPlan, migrateLegacyPlan } from './state/planStorage'
 import {
   useRepository,
   useRepositoryCommits,
   useRepositoryShortlist,
-  type RepositoryDetail,
 } from './repositoryWorkspace'
-import { toCommit } from './domain'
-import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
+import { DEGRADE_LABELS, STATUS_LABELS } from './api/repositories'
 
 const PAGE_SIZE = 20
-
-/** 风险分档与三色一一对应：高 ≥25%、中 10–25%、低 <10%（repo-distribution-v1）。 */
-function riskTone(risk: number | null | undefined): 'high' | 'medium' | 'low' | 'unknown' {
-  if (risk === null || risk === undefined || !Number.isFinite(risk)) return 'unknown'
-  if (risk >= 0.25) return 'high'
-  if (risk >= 0.1) return 'medium'
-  return 'low'
-}
-
-/** 旧数据里 risk 是 unknown，界面只接受 0–1 的有限数；其余按"未知"处理。 */
-function safeRisk(value: unknown): number | null {
-  return validRisk(value) ? value : null
-}
-
-function scoreText(risk: number | null | undefined): string {
-  return risk === null || risk === undefined || !Number.isFinite(risk) ? '—' : risk.toFixed(2)
-}
-
-function RepositoryHead({ repository, total }: { repository: RepositoryDetail; total: number }) {
-  const { high, medium, low, unknown } = repository.distribution
-  const segments = [
-    { key: 'high', value: high, label: '高' },
-    { key: 'medium', value: medium, label: '中' },
-    { key: 'low', value: low, label: '低' },
-  ].filter(segment => segment.value > 0)
-  return (
-    <header className="review-head">
-      <div className="review-head-main">
-        <h1>{repository.displayName}</h1>
-        <p className="t-meta">
-          {repository.viewContext?.completedAt ? `分析完成 ${displayTime(repository.viewContext.completedAt)}` : '旧分析未记录完成时间'}
-          <span className="meta-sep" aria-hidden="true">·</span>
-          {repository.viewContext?.branch ?? '未提供'} 分支
-          <span className="meta-sep" aria-hidden="true">·</span>
-          {total.toLocaleString()} 个已分析提交
-        </p>
-      </div>
-      <div className="dist-wrap">
-        <div
-          className="dist"
-          role="img"
-          aria-label={`风险分布：高 ${high}，中 ${medium}，低 ${low}${unknown ? `，未知 ${unknown}` : ''}`}
-        >
-          {segments.length === 0
-            ? <i className="dist-empty" />
-            : segments.map(segment => (
-              <i key={segment.key} className={`dist-${segment.key}`} style={{ flex: segment.value }} />
-            ))}
-        </div>
-        <p className="dist-legend">
-          <span className="dist-high-fg">高 {high}</span>
-          <span className="dist-medium-fg">中 {medium}</span>
-          <span className="dist-low-fg">低 {low}</span>
-        </p>
-      </div>
-    </header>
-  )
-}
-
-function ReviewTable({ commits, shortlist, onOpen, onAdd, onRemove }: {
-  commits: Commit[]
-  shortlist: string[]
-  onOpen: (id: string, trigger: HTMLButtonElement) => void
-  onAdd: (id: string) => void
-  onRemove?: (id: string) => void
-}) {
-  return (
-    <div className="review-table-wrap">
-      <div className="table-scroll"><table className="review-table">
-        <caption className="sr-only">仓库提交风险列表，按模型分数从高到低</caption>
-        <thead>
-          <tr>
-            <th>提交 / 改动</th>
-            <th className="th-risk">模型分数</th>
-            <th className="numeric">变更行</th>
-            <th className="numeric">文件</th>
-            <th className="action-head"><span className="sr-only">审查选择</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {commits.map(commit => {
-            return (
-              <tr key={commit.id} data-tone={riskTone(safeRisk(commit.risk))}>
-                <td className="commit-cell">
-                  <i className="row-mark" aria-hidden="true" />
-                  <button
-                    className="commit-link"
-                    title={commit.id}
-                    aria-label={`查看 ${commit.id}`}
-                    onClick={event => onOpen(commit.id, event.currentTarget)}
-                  >
-                    <span className="commit-title">{commit.title || '未提供标题'}</span><code>{commit.id.slice(0, 8)}</code>
-                  </button>
-                  <span className="commit-meta">
-                    <span>{commit.authorName || '作者未提供'} · </span>
-                    <time dateTime={commit.time}>{displayTime(commit.time).slice(0, 16)}</time>
-                  </span>
-                </td>
-                <td className="risk-cell">
-                  <b className="risk-value">{scoreText(safeRisk(commit.risk))}</b>
-                  <span className="risk-track" aria-hidden="true">
-                    <i style={{ width: `${Math.round((safeRisk(commit.risk) ?? 0) * 100)}%` }} className="risk-fill" />
-                  </span>
-                </td>
-                <td className="numeric">{commit.lines === undefined ? '—' : commit.lines.toLocaleString()}</td>
-                <td className="numeric">{commit.files === undefined ? '—' : commit.files.toLocaleString()}</td>
-                <td className="action-cell">
-                  <button
-                    className="row-action"
-                    aria-label={onRemove ? `从计划移除 ${commit.id}` : shortlist.includes(commit.id) ? `${commit.id} 已在清单` : `加入 ${commit.id} 到清单`}
-                    disabled={!onRemove && shortlist.includes(commit.id)}
-                    onClick={() => onRemove ? onRemove(commit.id) : onAdd(commit.id)}
-                  >
-                    <Icon name={onRemove ? 'close' : shortlist.includes(commit.id) ? 'check' : 'plus'} size={14} />
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table></div>
-    </div>
-  )
-}
 
 export interface ReviewWorkbenchProps {
   repositoryId: string
@@ -147,32 +24,29 @@ export interface ReviewWorkbenchProps {
   commitId?: string
   stateKey: string
   onConfirmed: (route: Route) => void
-  drafts: Map<string, ReviewDraft>
+  /** 界面状态由 App 持有：筛选、分页、详情返回位置都只有这一份。 */
+  value: ReviewDraft
+  onChange: (next: ReviewDraft) => void
   view: 'list' | 'shortlist'
   selection: { ids: string[]; warning: string | null }
   onSelection: (selection: { ids: string[]; warning: string | null }) => void
   navigate: (route: Route) => void
 }
 
-export type ReviewDraft = { draft: Query; applied: Query; error: string; offset: number; detailReturn?: 'commits' | 'plan' }
-export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, onConfirmed, drafts: reviewDrafts, view, selection, onSelection, navigate }: ReviewWorkbenchProps) {
+export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, onConfirmed, value, onChange, view, selection, onSelection, navigate }: ReviewWorkbenchProps) {
   const repository = useRepository(repositoryId, viewSyncId)
-  const [seed] = useState(() => readSeedQuery(window.location.search))
-  const [queryState, setQueryState] = useState(() => reviewDrafts.get(stateKey) ?? { draft: seed.query, applied: seed.query, error: '' })
-  const [offset, setOffset] = useState(() => reviewDrafts.get(stateKey)?.offset ?? 0)
   const selected = commitId ?? null
-  const detailReturn = useRef<'commits' | 'plan'>(reviewDrafts.get(stateKey)?.detailReturn ?? (view === 'shortlist' ? 'plan' : 'commits'))
   const setSelected = useCallback((id: string | null) => {
-    if (id && !selected) detailReturn.current = view === 'shortlist' ? 'plan' : 'commits'
-    navigate({ name: 'analysis', repositoryId, viewSyncId, view: id ? 'commits' : detailReturn.current, ...(id ? { commitId: id } : {}) })
-  }, [navigate, repositoryId, viewSyncId, selected, view])
+    if (id && !selected) onChange({ ...value, detailReturn: view === 'shortlist' ? 'plan' : 'commits' })
+    navigate({ name: 'analysis', repositoryId, viewSyncId, view: id ? 'commits' : value.detailReturn, ...(id ? { commitId: id } : {}) })
+  }, [navigate, repositoryId, viewSyncId, selected, view, value, onChange])
   const returnFocus = useRef<HTMLButtonElement | null>(null)
   const shortlist = selection.ids
   const listView = view === 'list'
-  const page = useRepositoryCommits(repository.repository ? repositoryId : '', queryState.applied, offset, PAGE_SIZE, viewSyncId)
+  const page = useRepositoryCommits(repository.repository ? repositoryId : '', value.applied, value.offset, PAGE_SIZE, viewSyncId)
   const shortlistRecords = useRepositoryShortlist(repositoryId, listView ? [] : shortlist, viewSyncId)
   const detailRecords = useRepositoryShortlist(repositoryId, selected ? [selected] : [], viewSyncId)
-  const totalMismatch = page.state === 'ready' && !queryState.applied.search.trim() && !queryState.applied.start && !queryState.applied.end && repository.repository !== null && page.total !== repository.repository.commitCount
+  const totalMismatch = page.state === 'ready' && !value.applied.search.trim() && !value.applied.start && !value.applied.end && repository.repository !== null && page.total !== repository.repository.commitCount
   const visible: Commit[] = listView ? (totalMismatch ? [] : page.commits.map(toCommit)) : shortlist.flatMap(id => {
     const record = shortlistRecords.records.get(id)
     return record ? [record] : []
@@ -196,23 +70,16 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       labelNote: '标签由简化 SZZ 从后续修复提交倒推',
     } : undefined,
   }), [repository.repository, repositoryId, viewSyncId])
-  useEffect(() => { reviewDrafts.set(stateKey, { ...queryState, offset, detailReturn: detailReturn.current }) }, [stateKey, queryState, offset, commitId, reviewDrafts])
   useEffect(() => { if (repository.state === 'ready') onConfirmed({ name: 'analysis', repositoryId, viewSyncId, view: view === 'shortlist' ? 'plan' : 'commits', ...(commitId ? { commitId } : {}) }) }, [repository.state, repositoryId, viewSyncId, commitId, view, onConfirmed])
   const legacy = repository.repository ? previewLegacyPlan(dataset) : { ids: [], warning: '' }
   const legacyRecords = useRepositoryShortlist(repositoryId, legacy.ids, viewSyncId)
 
   function updateQuery(patch: Partial<Query>) {
-    setOffset(0)
-    setQueryState(previous => {
-      const draft = { ...previous.draft, ...patch }
-      const result = applyQuery(previous.applied, draft)
-      return { draft, applied: result.query, error: result.error }
-    })
+    onChange(patchQuery(value, patch))
   }
 
   function clearQuery() {
-    setOffset(0)
-    setQueryState({ draft: emptyQuery, applied: emptyQuery, error: '' })
+    onChange(resetQuery(value))
   }
 
   function changeShortlist(ids: string[]) {
@@ -247,7 +114,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   if (repository.state === 'loading' && repository.repository === null) {
     return <LoadingNotice prefix={false} label="正在读取仓库" note="读取仓库详情、风险分布与提交列表。" />
   }
-  if (repository.state === 'error') {
+  if (repository.state === 'error' && repository.repository === null) {
     return (
       <EmptyState tone="alert" title="仓库读取失败" description={repository.error}>
         <button className="primary-button" onClick={repository.retry}>重新加载</button>
@@ -264,8 +131,8 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
 
   const repo = repository.repository
   const total = listView ? page.total : shortlist.length
-  const first = page.total === 0 ? 0 : offset + 1
-  const last = Math.min(offset + PAGE_SIZE, page.total)
+  const first = page.total === 0 ? 0 : value.offset + 1
+  const last = Math.min(value.offset + PAGE_SIZE, page.total)
 
   return (
     <div className={listView ? 'review' : 'review review--shortlist'}>
@@ -274,6 +141,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
 </details>
       {repo.latestSync?.syncId !== viewSyncId ? <p className="status-note">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。<button onClick={() => navigate({ name: 'repository', repositoryId })}>检查最新成功分析</button></p> : null}
       <p className="muted">模型分数用于安排审查，未经当前仓库概率校准；不代表已确认缺陷。仓库分析未提供逐条模型归因。</p>
+      {repository.state === 'error' ? <p className="warning" role="status">刷新仓库详情失败：{repository.error} 当前仍显示最近一次成功读取的结果。<button className="text-button" onClick={repository.retry}>重试</button></p> : null}
       {selection.warning ? <p className="warning" role="alert">{selection.warning}</p> : null}
       {legacy.warning ? <p role="status" className="warning">{legacy.warning}</p> : null}
       {legacy.ids.length ? <details className="legacy-preview"><summary>发现本分析的旧清单（{legacy.ids.length} 条），预览迁入</summary><p>只迁入经当前仓库分析核对的提交；保留旧存储。{legacyRecords.failed.length} 条无法核对。</p><ol>{legacy.ids.map(id => <li key={id}><code>{id}</code> · {legacyRecords.records.has(id) ? '来源已核对' : '未核对'}</li>)}</ol><button disabled={legacyRecords.state !== 'ready'} onClick={() => { const warning = migrateLegacyPlan(dataset, legacy.ids.filter(id => legacyRecords.records.has(id))); const restored = restoreShortlist(dataset); onSelection({ ids: warning ? shortlist : restored.ids, warning: warning || restored.warning }) }}>明确迁入已核对提交</button></details> : null}
@@ -290,7 +158,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                   <input
                     aria-label="搜索提交标题或 SHA"
                     placeholder="搜索提交标题或 SHA"
-                    value={queryState.draft.search}
+                    value={value.draft.search}
                     onChange={event => updateQuery({ search: event.target.value })}
                   />
                 </label>
@@ -299,8 +167,8 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                     aria-label="起始日期"
                     inputMode="numeric"
                     placeholder="YYYY-MM-DD"
-                    value={queryState.draft.start}
-                    aria-invalid={!!queryState.error}
+                    value={value.draft.start}
+                    aria-invalid={!!value.error}
                     onChange={event => updateQuery({ start: event.target.value })}
                   />
                 </label>
@@ -309,31 +177,32 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                     aria-label="结束日期"
                     inputMode="numeric"
                     placeholder="YYYY-MM-DD"
-                    value={queryState.draft.end}
-                    aria-invalid={!!queryState.error}
+                    value={value.draft.end}
+                    aria-invalid={!!value.error}
                     onChange={event => updateQuery({ end: event.target.value })}
                   />
                 </label>
                 <label className="sort-field">排序
-                  <select aria-label="排序" value={queryState.draft.sort} onChange={event => updateQuery({ sort: event.target.value })}>
+                  <select aria-label="排序" value={value.draft.sort} onChange={event => updateQuery({ sort: event.target.value })}>
                     <option value="risk">风险从高到低</option>
                     <option value="time">时间从新到旧</option>
                   </select>
                 </label>
                 <button className="clear-button" onClick={clearQuery}>清除筛选</button>
               </div>
-              {queryState.error ? <p className="warning" role="alert">{queryState.error} 当前保留最近一次有效结果。</p> : null}
+              {value.error ? <p className="warning" role="alert">{value.error} 当前保留最近一次有效结果。</p> : null}
               <p className="review-caption">
                 <span>提交 / 改动<b>{page.total.toLocaleString()}</b></span>
-                <span>时间口径 Asia/Shanghai (UTC+08:00) · 按{queryState.applied.sort === 'risk' ? '模型分数' : '时间'}排序</span>
+                <span>时间口径 Asia/Shanghai (UTC+08:00) · 按{value.applied.sort === 'risk' ? '模型分数' : '时间'}排序</span>
               </p>
               {page.state === 'loading' && visible.length === 0
                 ? <LoadingNotice prefix={false} label="正在读取提交" note="按当前筛选条件从服务端读取这一页。" />
-                : page.state === 'error' || totalMismatch
+                : (page.state === 'error' && visible.length === 0) || totalMismatch
                   ? <EmptyState tone="alert" title="提交读取失败" description={totalMismatch ? '提交总数与固定分析不一致，请重新加载核对。' : page.error}><button className="primary-button" onClick={page.retry}>重新加载</button></EmptyState>
                   : visible.length === 0
                     ? <EmptyState title="没有符合条件的提交" description="使用「清除筛选」恢复列表，或换一个查询条件。" />
                     : <>
+                      {page.state === 'error' ? <p className="warning" role="status">这一页读取失败：{page.error} 当前仍显示上一次成功读取的结果。<button className="text-button" onClick={page.retry}>重试</button></p> : null}
                       <ReviewTable
                         commits={visible}
                         shortlist={shortlist}
@@ -342,8 +211,8 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                       />
                       <nav className="pager" aria-label="提交分页">
                         <span role="status">第 {first}–{last} 条，共 {page.total.toLocaleString()} 条</span>
-                        <button className="clear-button" disabled={offset === 0 || page.state === 'loading'} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>上一页</button>
-                        <button className="clear-button" disabled={offset + PAGE_SIZE >= page.total || page.state === 'loading'} onClick={() => setOffset(offset + PAGE_SIZE)}>下一页</button>
+                        <button className="clear-button" disabled={value.offset === 0 || page.state === 'loading'} onClick={() => onChange({ ...value, offset: Math.max(0, value.offset - PAGE_SIZE) })}>上一页</button>
+                        <button className="clear-button" disabled={value.offset + PAGE_SIZE >= page.total || page.state === 'loading'} onClick={() => onChange({ ...value, offset: value.offset + PAGE_SIZE })}>下一页</button>
                       </nav>
                     </>}
             </>

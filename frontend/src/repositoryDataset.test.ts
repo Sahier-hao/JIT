@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { parseRepository } from './domain'
-import { restoreShortlist, saveShortlist, storageKey } from './shortlist'
+import { restoreShortlist, saveShortlist, storageKey } from './state/planStorage'
 
 const SYNC = { repositoryId: '11111111-1111-4111-8111-111111111111',
   syncId: '5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f',

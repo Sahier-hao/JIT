@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { createRepositorySync, fetchRepositorySyncs } from './apiClient'
+import { createRepositorySync, fetchRepositorySyncs } from './api/client'
 import { FailureNotice, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
 import { displayTime } from './domain'
-import { ACTIVE_STATUSES, STATUS_LABELS, STRATEGY_LABELS, DEGRADE_LABELS, repositoryName, type SyncPage, type SyncStrategy, type SyncView } from './repositoryContract'
+import { ACTIVE_STATUSES, STATUS_LABELS, STRATEGY_LABELS, DEGRADE_LABELS, repositoryName, type SyncPage, type SyncStrategy, type SyncView } from './api/repositories'
 
 const EMPTY = { repositoryUrl: '', branch: '', since: '', until: '', commitLimit: '500', strategy: 'auto' as SyncStrategy }
 export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (repositoryId: string, syncId?: string) => void }) {
@@ -18,11 +18,13 @@ export function RepositorySourcesPage({ onOpenSync }: { onOpenSync: (repositoryI
   useEffect(() => {
     const controller = new AbortController(); let timer: ReturnType<typeof setTimeout>
     async function read() {
+      if (document.visibilityState === 'hidden') { timer = setTimeout(read, 4000); return }
+      let active = false
       try {
         const result = await fetchRepositorySyncs(20, 0, controller.signal)
-        if (!controller.signal.aborted) { setPage(result); setReadError(null) }
+        if (!controller.signal.aborted) { setPage(result); setReadError(null); active = result.syncs.some(job => (ACTIVE_STATUSES as readonly string[]).includes(job.status)) }
       } catch (error) { if (!controller.signal.aborted) setReadError(error) }
-      if (!controller.signal.aborted) timer = setTimeout(read, 4000)
+      if (!controller.signal.aborted && active) timer = setTimeout(read, 4000)
     }
     void read()
     return () => { controller.abort(); clearTimeout(timer) }

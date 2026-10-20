@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import * as domain from './domain'
 import { historicalFixture } from './historical-fixture'
-import { restoreShortlist, saveShortlist, storageKey } from './shortlist'
+import { restoreShortlist, saveShortlist, storageKey } from './state/planStorage'
 import demo from './fixtures/demo-dataset.json'
 
 beforeEach(() => { window.localStorage.clear(); vi.restoreAllMocks(); window.history.replaceState({}, '', '/') })

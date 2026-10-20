@@ -1,5 +1,5 @@
-import { ApiError, type ApiErrorDetail, CancelledError, CONTRACT_MESSAGE, ContractError, NetworkError, record, text } from './apiContract'
-import { parseSync, parseSyncPage, parseSyncCommitPage, syncBody, type SyncCommitPage, type SyncPage, type SyncView, type SyncStrategy } from './repositoryContract'
+import { ApiError, type ApiErrorDetail, CancelledError, CONTRACT_MESSAGE, ContractError, NetworkError, record, text } from './primitives'
+import { parseSync, parseSyncPage, parseSyncCommitPage, syncBody, type SyncCommitPage, type SyncPage, type SyncView, type SyncStrategy } from './repositories'
 
 export interface ApiRequest {
   path: string

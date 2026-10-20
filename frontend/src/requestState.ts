@@ -1,4 +1,4 @@
-import { ApiError, ContractError, NetworkError } from './apiContract'
+import { ApiError, ContractError, NetworkError } from './api/primitives'
 
 export type FailureKind =
   | 'network'
@@ -50,9 +50,3 @@ export function describeFailure(error: unknown): FailureView {
   return { kind: 'unknown', message: '发生未预期的错误，请重试', requestId: '', details: [] }
 }
 
-/** 服务端把字段错误放在 details 里（field 形如 `record.features.ns`）；表单据此定位。 */
-export function fieldReasons(details: readonly { field: string; reason: string }[]): Map<string, string> {
-  const result = new Map<string, string>()
-  for (const detail of details) result.set(detail.field, detail.reason)
-  return result
-}

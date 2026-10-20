@@ -1,7 +1,8 @@
-import { parseDataset, validRisk, type Dataset } from './domain'
+import { parseDataset, type Dataset } from '../domain/dataset'
+import { validRisk } from '../domain/risk'
+import type { Mode, Score } from '../domain/types'
 
-export type Mode = 'demo' | 'historical' | 'repository'
-export interface Score { value: number | null; reason: string | null }
+export type { Mode, Score }
 interface Classification { precision: Score; recall: Score; f1: Score; confusion: { tp: number; fp: number; tn: number; fn: number } }
 interface BaselineMetrics extends Classification {
   rocAuc: Score; averagePrecision: Score; recall20Loc: Score; threshold: number;

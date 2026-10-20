@@ -15,7 +15,7 @@ import {
   textOrNull,
   utcTimestamp,
   uuidText,
-} from './apiContract'
+} from './primitives'
 
 export const ACTIVE_STATUSES = ['queued', 'collecting', 'registering', 'training', 'scoring'] as const
 export type SyncStatus = (typeof ACTIVE_STATUSES)[number] | 'completed' | 'failed' | 'interrupted'

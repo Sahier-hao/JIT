@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { restoreShortlist, saveShortlist, storageKey } from './shortlist'
+import { restoreShortlist, saveShortlist, storageKey } from './state/planStorage'
 import type { Dataset } from './domain'
 
 const data: Dataset = { mode: 'demo', project: '演示项目', version: 'demo-v1', records: [{ id: 'a', time: '2026-10-01T00:00:00Z' }, { id: 'b', time: '2026-10-02T00:00:00Z' }] }

@@ -13,7 +13,7 @@ import {
   parseSyncPage,
   repositoryName,
   syncBody,
-} from './repositoryContract'
+} from './api/repositories'
 
 const SYNC = {
   syncId: '5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f',

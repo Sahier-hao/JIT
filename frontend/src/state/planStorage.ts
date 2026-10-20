@@ -1,6 +1,12 @@
-import type { Dataset } from './domain'
+import type { Dataset } from '../domain'
+
 export type StorageAccess = () => Pick<Storage, 'getItem' | 'setItem'>
 const browserStorage: StorageAccess = () => window.localStorage
+
+/**
+ * 审查计划的存储身份：同一 SHA 在不同仓库、不同分析里必须互不越界。
+ * 仓库来源必须三要素齐全（仓库、作业、数据集版本）；缺任一即视为身份未确认，宁可不存。
+ */
 export function sourceContext(data: Dataset): string {
   if (data.mode === 'repository') {
     if (!data.repository?.repositoryId || !data.repository.syncId || !data.repository.datasetVersion) throw new Error('分析身份尚未确认')
@@ -8,10 +14,13 @@ export function sourceContext(data: Dataset): string {
   }
   return JSON.stringify([data.mode, data.project, data.version, data.runId ?? ''])
 }
+
 export function storageKey(data: Dataset): string {
   return `jit-review:plan:v3:${encodeURIComponent(sourceContext(data))}`
 }
+
 interface Entry { commitId: string; sourceContext: string; addedAt: string }
+
 function entries(data: Dataset, access: StorageAccess): Entry[] {
   const raw = access().getItem(storageKey(data))
   if (raw === null) return []
@@ -21,6 +30,7 @@ function entries(data: Dataset, access: StorageAccess): Entry[] {
   if (!saved.entries.every((item: Entry) => item && typeof item.commitId === 'string' && item.commitId && item.sourceContext === context && typeof item.addedAt === 'string' && Number.isFinite(Date.parse(item.addedAt)))) throw new Error('存储格式损坏')
   return saved.entries
 }
+
 export function restoreShortlist(data: Dataset, access: StorageAccess = browserStorage): { ids: string[]; warning: string } {
   try {
     return { ids: [...new Set(entries(data, access).map(item => item.commitId))], warning: '' }
@@ -28,6 +38,7 @@ export function restoreShortlist(data: Dataset, access: StorageAccess = browserS
     return { ids: [], warning: '审查计划恢复失败；原存储保留，可以重新选择。' }
   }
 }
+
 export function saveShortlist(data: Dataset, ids: string[], access: StorageAccess = browserStorage): string {
   try {
     const context = sourceContext(data)
@@ -41,6 +52,7 @@ export function saveShortlist(data: Dataset, ids: string[], access: StorageAcces
     return '本次审查计划未能保存，刷新后可能丢失'
   }
 }
+
 export function previewLegacyPlan(data: Dataset, access: StorageAccess = browserStorage): { ids: string[]; warning: string } {
   try {
     sourceContext(data) // A repository must already have a verified analysis identity.
@@ -56,6 +68,7 @@ export function previewLegacyPlan(data: Dataset, access: StorageAccess = browser
     return { ids: [], warning: '旧清单无法核对来源或格式；保留原数据，不自动迁入。' }
   }
 }
+
 export function migrateLegacyPlan(data: Dataset, verifiedIds: string[], access: StorageAccess = browserStorage): string {
   const preview = previewLegacyPlan(data, access)
   if (preview.warning) return preview.warning
