@@ -3,9 +3,11 @@ import { parseSync, parseSyncPage, parseSyncCommitPage, syncBody, type SyncCommi
 
 export interface ApiRequest {
   path: string
-  method: 'GET' | 'POST'
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   body?: unknown
   signal?: AbortSignal
+  /** 成功响应没有正文（例如 DELETE 的 204）：不要按 JSON 解析。 */
+  expectEmpty?: boolean
 }
 
 function detailsOf(value: unknown): ApiErrorDetail[] {
@@ -48,7 +50,7 @@ async function failure(response: Response): Promise<ApiError> {
   }
 }
 
-export async function apiRequest(request: ApiRequest): Promise<unknown> {
+async function send(request: ApiRequest): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   let init: RequestInit = { method: request.method, headers, signal: request.signal ?? null }
   if (request.body !== undefined) {
@@ -64,12 +66,29 @@ export async function apiRequest(request: ApiRequest): Promise<unknown> {
     throw new NetworkError()
   }
   if (!response.ok) throw await failure(response)
+  return response
+}
+
+async function bodyOf(response: Response): Promise<unknown> {
+  if (response.status === 204) return undefined
   try {
     return await response.json()
   } catch {
     // 成功状态但正文不可解析：创建预测时必须按「未能确认保存结果」处理，而不是猜一个结果。
     throw new ContractError(CONTRACT_MESSAGE)
   }
+}
+
+export async function apiRequest(request: ApiRequest): Promise<unknown> {
+  const response = await send(request)
+  if (request.expectEmpty) return undefined
+  return bodyOf(response)
+}
+
+/** 需要区分 201（新建）与 200（复用）时使用；成功语义仍由调用方按契约判断。 */
+export async function apiRequestWithStatus(request: ApiRequest): Promise<{ body: unknown; status: number }> {
+  const response = await send(request)
+  return { body: await bodyOf(response), status: response.status }
 }
 
 export interface SyncForm {

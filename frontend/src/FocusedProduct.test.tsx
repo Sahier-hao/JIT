@@ -12,7 +12,7 @@ it('opens projects immediately without a credential or role step', async () => {
   const fetch = emptyApi(); render(<App />)
   await waitFor(() => expect(fetch).toHaveBeenCalled())
   expect(await screen.findByRole('heading', { name: '项目' })).toBeVisible()
-  expect(screen.getByRole('button', { name: '新建分析' })).toBeVisible()
+  expect(screen.getAllByRole('button', { name: '新建项目' })[0]).toBeVisible()
   expect(screen.queryByText('设置团队连接')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '实验室' })).not.toBeInTheDocument()
   for (const [, options] of fetch.mock.calls) expect(new Headers(options?.headers).has('Authorization')).toBe(false)
@@ -24,7 +24,8 @@ it.each(['#/models', '#/predict', '#/predictions/11111111-1111-4111-8111-1111111
 })
 it('starts a repository analysis without a connection detour', async () => {
   emptyApi(); render(<App />); const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '新建分析' }))
+  await user.click(await screen.findAllByRole('button', { name: '新建项目' }).then(items => items[0]))
   expect(await screen.findByRole('textbox', { name: '仓库地址' })).toBeVisible()
   expect(screen.queryByRole('textbox', { name: '团队访问凭据' })).not.toBeInTheDocument()
 })
+

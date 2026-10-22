@@ -18,7 +18,9 @@ function mockApi() {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const url = new URL(String(input), 'http://localhost')
     if (url.pathname === '/api/v1/repositories') return response({ repositories: [repo(REPO_A), repo(REPO_B)], total: 2, offset: 0, limit: 100 })
+    if (url.pathname === '/api/v1/repository-syncs') return response({ syncs: [], total: 0, offset: 0, limit: 50 })
     const id = url.pathname.split('/')[4] ?? REPO_B
+    if (url.pathname.endsWith('/syncs')) return response({ repositoryId: id, syncs: [], total: 0, limit: 10, offset: 0 })
     if (url.pathname.endsWith('/commits')) return response({ repositoryId: id, viewSyncId: ANALYSIS, total: 1, commits: [commit(id)] })
     if (url.pathname.includes('/commits/')) return response(commit(id))
     return response(repo(id))
@@ -37,6 +39,7 @@ it('keeps repository B and its plan when visiting a report and returning', async
   await user.click(screen.getByRole('button', { name: `加入 ${SHA} 到清单` }))
   await user.click(screen.getByRole('button', { name: '验证报告' }))
   await user.click(screen.getByRole('button', { name: '项目 B' }))
+  await user.click(await screen.findByRole('button', { name: '打开审查' }))
   await screen.findByRole('button', { name: `${SHA} 已在清单` })
   expect(window.location.hash).toContain(REPO_B)
   const calls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/commits'))
@@ -76,6 +79,7 @@ it('ignores an earlier repository response after navigating to another repositor
   fetch.mockImplementation(async (...args) => String(args[0]).includes(`${REPO_A}/commits?`) ? pending : original(...args))
   render(<App/>); const user = await connect()
   await user.click(await screen.findByRole('button', { name: '项目 B' }))
+  await user.click(await screen.findByRole('button', { name: '打开审查' }))
   await screen.findByText('0.81')
   await act(async () => release(response({ repositoryId: REPO_A, viewSyncId: ANALYSIS, total: 1, commits: [{ ...commit(REPO_A), risk: .99 }] })))
   expect(screen.queryByText('0.99')).not.toBeInTheDocument()
@@ -98,12 +102,16 @@ it('returns from an empty plan to the same fixed analysis', async () => {
   expect(fetch.mock.calls.some(call => new URL(String(call[0]), 'http://localhost').pathname === `/api/v1/repositories/${REPO_B}` && !String(call[0]).includes('viewSyncId='))).toBe(false)
 })
 
-it('returns from a report directly to the pinned analysis without resolving a newer result', async () => {
+it('returns from a report to the same pinned analysis instead of a newer result', async () => {
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByText('0.81')
   await user.click(screen.getByRole('button', { name: '验证报告' }))
   await user.click(screen.getByRole('button', { name: '项目 B' }))
+  await user.click(await screen.findByRole('button', { name: '打开审查' }))
   await screen.findByText('0.81')
-  expect(fetch.mock.calls.some(call => new URL(String(call[0]), 'http://localhost').pathname === `/api/v1/repositories/${REPO_B}` && !String(call[0]).includes('viewSyncId='))).toBe(false)
+  expect(window.location.hash).toBe(hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
+  const commitCalls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/commits?'))
+  expect(commitCalls.length).toBeGreaterThan(0)
+  expect(commitCalls.every(path => path.includes(`viewSyncId=${ANALYSIS}`))).toBe(true)
 })

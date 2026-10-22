@@ -10,16 +10,22 @@ export type Route =
   | { name: 'retired'; hash: string }
   | { name: 'unknown'; hash: string }
 
+/**
+ * 外层地址是 `#/projects`、`#/projects/new`、`#/projects/:id`，审查页沿用分析身份
+ * `#/projects/:id/analyses/:syncId/(commits|plan)`。旧的 `#/repositories/...` 与
+ * `#/connect` 继续可解析，已有书签不会断。
+ */
 export function parseHash(hash: string): Route {
   try {
     const path = hash.replace(/^#/, '').split('?')[0].replace(/\/+$/, '')
     const parts = path.replace(/^\//, '').split('/').map(decodeURIComponent)
     if (parts.some(part => part.includes('/') || part.includes('\\'))) return { name: 'unknown', hash }
     if (!path || path === '/' || ['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
-    if (['/connect', '/sources'].includes(path)) return { name: 'sources' }
+    if (['/projects/new', '/connect', '/sources'].includes(path)) return { name: 'sources' }
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
-    if (parts[0] === 'repositories' && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
-    if (parts[0] === 'repositories' && parts[2] === 'analyses' && (parts[4] === 'commits' || parts[4] === 'plan') && [5, 6].includes(parts.length)) return { name: 'analysis', repositoryId: parts[1], viewSyncId: parts[3], view: parts[4], ...(parts[5] ? { commitId: parts[5] } : {}) }
+    const projectRoot = parts[0] === 'projects' || parts[0] === 'repositories'
+    if (projectRoot && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
+    if (projectRoot && parts[2] === 'analyses' && (parts[4] === 'commits' || parts[4] === 'plan') && [5, 6].includes(parts.length)) return { name: 'analysis', repositoryId: parts[1], viewSyncId: parts[3], view: parts[4], ...(parts[5] ? { commitId: parts[5] } : {}) }
     if (parts[0] === 'legacy' && parts[1] === 'sync' && parts.length === 4 && ['commits', 'plan'].includes(parts[3])) return { name: 'legacy-sync', syncId: parts[2], view: parts[3] as 'commits' | 'plan' }
     if ((parts[0] === 'reports' && parts.length === 3) || (parts[0] === 'lab' && parts[1] === 'history' && parts.length === 4)) {
       const [runId, view] = parts[0] === 'reports' ? parts.slice(1) : parts.slice(2)
@@ -32,9 +38,9 @@ export function parseHash(hash: string): Route {
 export function hashFor(route: Route): string {
   switch (route.name) {
     case 'repositories': return '#/projects'
-    case 'sources': return '#/connect'
-    case 'repository': return `#/repositories/${encodeURIComponent(route.repositoryId)}`
-    case 'analysis': return `#/repositories/${encodeURIComponent(route.repositoryId)}/analyses/${encodeURIComponent(route.viewSyncId)}/${route.view}${route.commitId ? '/'+encodeURIComponent(route.commitId) : ''}`
+    case 'sources': return '#/projects/new'
+    case 'repository': return `#/projects/${encodeURIComponent(route.repositoryId)}`
+    case 'analysis': return `#/projects/${encodeURIComponent(route.repositoryId)}/analyses/${encodeURIComponent(route.viewSyncId)}/${route.view}${route.commitId ? '/'+encodeURIComponent(route.commitId) : ''}`
     case 'report': return route.runId ? `#/reports/${encodeURIComponent(route.runId)}/${route.view}` : '#/reports'
     case 'legacy-sync': return `#/legacy/sync/${encodeURIComponent(route.syncId)}/${route.view}`
     default: return route.hash
