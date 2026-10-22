@@ -2,7 +2,7 @@
 from pathlib import Path
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
 from .artifacts import DEFAULT_RUN, Snapshot
@@ -145,6 +145,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def sync_detail(sync_id: str):
         return sync_service.get(sync_id)
 
+    @app.delete('/api/v1/repository-syncs/{sync_id}')
+    def sync_delete(sync_id: str):
+        sync_service.delete_sync(sync_id)
+        return Response(status_code=204)
+
     @app.get('/api/v1/repository-syncs/{sync_id}/commits')
     def sync_commits(sync_id: str, limit: int = 100, offset: int = 0, search: str | None = None,
                      start: str | None = None, end: str | None = None, sort: str = 'risk'):
@@ -158,6 +163,26 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repositories')
     def repository_list(limit: int = 50, offset: int = 0):
         return sync_service.repositories(limit, offset)
+
+    @app.post('/api/v1/repositories')
+    async def repository_create(request: Request):
+        result, created = await run_in_threadpool(sync_service.create_repository,
+                                                  await read_object(request))
+        return JSONResponse(result, status_code=201 if created else 200)
+
+    @app.patch('/api/v1/repositories/{repository_id}')
+    async def repository_rename(repository_id: str, request: Request):
+        return await run_in_threadpool(sync_service.rename_repository, repository_id,
+                                       await read_object(request))
+
+    @app.delete('/api/v1/repositories/{repository_id}')
+    def repository_delete(repository_id: str):
+        sync_service.delete_repository(repository_id)
+        return Response(status_code=204)
+
+    @app.get('/api/v1/repositories/{repository_id}/syncs')
+    def repository_syncs(repository_id: str, limit: int = 20, offset: int = 0):
+        return sync_service.repository_syncs(repository_id, limit, offset)
 
     @app.get('/api/v1/repositories/{repository_id}')
     def repository_detail(repository_id: str, viewSyncId: str | None = None):

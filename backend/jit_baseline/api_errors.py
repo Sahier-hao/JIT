@@ -41,6 +41,7 @@ MESSAGES = {
     'REPOSITORY_UNKNOWN': '仓库不存在，请刷新仓库列表后重试',
     'REPOSITORY_ANALYSIS_UNKNOWN': '指定分析不属于该仓库或不存在',
     'REPOSITORY_ANALYSIS_UNAVAILABLE': '指定分析尚未成功完成',
+    'CONFLICT_ACTIVE_SYNC': '还有进行中的分析，请等待结束后再操作',
 }
 STATUS = {'NOT_FOUND': 404,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
@@ -48,7 +49,7 @@ STATUS = {'NOT_FOUND': 404,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
-          'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409}
+          'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409}
 
 
 class RequestError(BaselineError):
@@ -62,7 +63,7 @@ def managed_path(path):
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+)?|summary))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+)?|summary|syncs))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

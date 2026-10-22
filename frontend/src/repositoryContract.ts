@@ -104,6 +104,15 @@ export interface SyncCommitPage {
   commits: SyncCommit[]
 }
 
+/** 一个项目名下的分析记录分页（change `add-project-management`）。 */
+export interface RepositorySyncPage {
+  repositoryId: string
+  syncs: SyncView[]
+  total: number
+  limit: number
+  offset: number
+}
+
 function count(value: unknown): number {
   const raw = finiteNumber(value)
   if (!Number.isSafeInteger(raw) || raw < 0) contractFailed()
@@ -172,6 +181,23 @@ export function parseSyncPage(value: unknown): SyncPage {
   const raw = record(value)
   return {
     syncs: recordList(raw.syncs).map(parseSync),
+    total: count(raw.total),
+    limit: count(raw.limit),
+    offset: count(raw.offset),
+  }
+}
+
+/** 项目分析记录：页内每条记录的归属必须与请求的项目一致，否则整页判为不可用。 */
+export function parseRepositorySyncPage(value: unknown, repositoryId: string): RepositorySyncPage {
+  const raw = record(value)
+  if (uuidText(raw.repositoryId, '项目标识') !== repositoryId) contractFailed('分析记录归属不一致，请刷新')
+  const syncs = recordList(raw.syncs).map(parseSync)
+  for (const sync of syncs) {
+    if (sync.repositoryId !== null && sync.repositoryId !== repositoryId) contractFailed('分析记录归属不一致，请刷新')
+  }
+  return {
+    repositoryId,
+    syncs,
     total: count(raw.total),
     limit: count(raw.limit),
     offset: count(raw.offset),

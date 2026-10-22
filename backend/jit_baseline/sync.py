@@ -335,6 +335,53 @@ class SyncStorage:
                                unknown_count=counts["unknown"],
                                distribution_rule=DISTRIBUTION_RULE)
 
+    def repository_syncs(self, repository_id, limit=20, offset=0):
+        with self.storage.connection() as db:
+            rows = db.execute(
+                "SELECT * FROM repository_sync WHERE repository_id=? "
+                "ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+                (repository_id, limit, offset)).fetchall()
+            total = db.execute("SELECT COUNT(*) FROM repository_sync WHERE repository_id=?",
+                               (repository_id,)).fetchone()[0]
+        return [_view(row) for row in rows], total
+
+    def repository_latest_sync(self, repository_id):
+        with self.storage.connection() as db:
+            row = db.execute(
+                "SELECT * FROM repository_sync WHERE repository_id=? "
+                "ORDER BY created_at DESC, id DESC LIMIT 1",
+                (repository_id,)).fetchone()
+        return _view(row) if row is not None else None
+
+    def repository_active(self, repository_id):
+        placeholders = ", ".join("?" for _ in PROGRESS)
+        with self.storage.connection() as db:
+            return db.execute(
+                f"SELECT COUNT(*) FROM repository_sync WHERE repository_id=? AND status IN ({placeholders})",
+                (repository_id, *PROGRESS)).fetchone()[0]
+
+    def repository_delete(self, repository_id):
+        """硬删仓库及其全部作业与提交；调用方负责确认没有在途作业。"""
+        with self.storage.connection(write=True) as db:
+            sync_ids = [row[0] for row in db.execute(
+                "SELECT id FROM repository_sync WHERE repository_id=?", (repository_id,))]
+            commits = 0
+            if sync_ids:
+                marks = ", ".join("?" for _ in sync_ids)
+                commits = db.execute(f"DELETE FROM repository_commit WHERE sync_id IN ({marks})",
+                                     sync_ids).rowcount
+            syncs = db.execute("DELETE FROM repository_sync WHERE repository_id=?",
+                               (repository_id,)).rowcount
+            db.execute("DELETE FROM repository WHERE id=?", (repository_id,))
+        return {"syncs": syncs, "commits": commits}
+
+    def sync_delete(self, sync_id):
+        with self.storage.connection(write=True) as db:
+            commits = db.execute("DELETE FROM repository_commit WHERE sync_id=?",
+                                 (sync_id,)).rowcount
+            db.execute("DELETE FROM repository_sync WHERE id=?", (sync_id,))
+        return commits
+
     def backfill_repositories(self):
         """把迁移前已有的作业补上仓库归属；幂等，重复执行不产生新仓库（D2）。"""
         with self.storage.connection() as db:
@@ -636,6 +683,86 @@ class SyncService:
             raise BaselineError("INPUT_INVALID", "offset 不能为负")
         items, total = self.sync.repositories(limit, offset)
         return {"repositories": items, "total": total, "limit": limit, "offset": offset}
+
+    def create_repository(self, payload):
+        """只登记项目：校验地址并建仓库，不产生分析作业（重复地址返回已有项目）。"""
+        if not isinstance(payload, dict):
+            raise BaselineError("INPUT_INVALID", "请求体必须是 JSON 对象")
+        url = payload.get("repositoryUrl")
+        if not isinstance(url, str) or not url.strip():
+            raise BaselineError("INPUT_INVALID", "缺少仓库地址")
+        url = collect.validate_source(url.strip(), allow_local=self.allow_local)
+        normalized = normalize_repository_url(url)
+        now = utc_now()
+        with self._lock:
+            existing = self.sync.repository_by_url(normalized)
+            if existing is not None:
+                return existing, False
+            repository_id = repository_id_for(normalized)
+            self.sync.repository_create({
+                "id": repository_id, "url": normalized,
+                "display_name": display_name_for(normalized), "default_branch": None,
+                "latest_sync_id": None, "latest_sync_at": None, "view_sync_id": None,
+                "head_commit": None, "commit_count": 0, "high_count": 0, "medium_count": 0,
+                "low_count": 0, "unknown_count": 0, "distribution_rule": None,
+                "created_at": now, "updated_at": now})
+        return self.sync.repository_get(repository_id), True
+
+    def rename_repository(self, repository_id, payload):
+        """只改显示名；地址与标识保持不变，历史分析仍指向同一项目。"""
+        if self.sync.repository_get(repository_id) is None:
+            raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
+        name = payload.get("displayName") if isinstance(payload, dict) else None
+        if not isinstance(name, str) or not name.strip():
+            raise BaselineError("INPUT_INVALID", "显示名不能为空")
+        name = name.strip()
+        if len(name) > 80:
+            raise BaselineError("INPUT_INVALID", "显示名不能超过 80 个字符")
+        self.sync.repository_update(repository_id, display_name=name)
+        return self.sync.repository_get(repository_id)
+
+    def delete_repository(self, repository_id):
+        """硬删项目及其全部分析记录与提交；有在途作业时拒绝，避免删掉正在写的行。"""
+        if self.sync.repository_get(repository_id) is None:
+            raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
+        if self.sync.repository_active(repository_id):
+            raise BaselineError("CONFLICT_ACTIVE_SYNC", "该项目还有进行中的分析，请等待结束后再删除")
+        return self.sync.repository_delete(repository_id)
+
+    def repository_syncs(self, repository_id, limit=20, offset=0):
+        """项目的分析记录：按创建时间倒序分页，包含失败与中断的历史。"""
+        if self.sync.repository_get(repository_id) is None:
+            raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
+        if not 1 <= limit <= 100:
+            raise BaselineError("INPUT_INVALID", "limit 必须在 1 到 100 之间")
+        if offset < 0:
+            raise BaselineError("INPUT_INVALID", "offset 不能为负")
+        items, total = self.sync.repository_syncs(repository_id, limit, offset)
+        return {"repositoryId": repository_id, "syncs": items, "total": total,
+                "limit": limit, "offset": offset}
+
+    def delete_sync(self, sync_id):
+        """删除一条已结束的分析记录；删的若是当前结果，项目回到「无结果」而不自动回退。"""
+        item = self.sync.get(sync_id)
+        if item is None:
+            raise BaselineError("NOT_FOUND", "同步作业不存在")
+        if item["status"] in PROGRESS:
+            raise BaselineError("CONFLICT_ACTIVE_SYNC", "该分析仍在进行中，结束后才能删除")
+        repository_id = item.get("repositoryId")
+        commits = self.sync.sync_delete(sync_id)
+        if repository_id:
+            repo = self.sync.repository_get(repository_id)
+            if repo is not None:
+                if repo["viewSyncId"] == sync_id:
+                    self.sync.repository_update(
+                        repository_id, view_sync_id=None, head_commit=None, commit_count=0,
+                        high_count=0, medium_count=0, low_count=0, unknown_count=0,
+                        distribution_rule=None)
+                latest = self.sync.repository_latest_sync(repository_id)
+                self.sync.repository_update(
+                    repository_id, latest_sync_id=(latest or {}).get("syncId"),
+                    latest_sync_at=(latest or {}).get("createdAt"))
+        return {"syncId": sync_id, "commits": commits}
 
     def repository(self, repository_id, *, view_sync_id=None):
         repo = self.sync.repository_get(repository_id)
