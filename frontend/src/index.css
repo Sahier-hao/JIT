@@ -1,6 +1,7 @@
-/* Tokens, shared components, domain pages, then product composition. */
+/* Tokens, shared components, domain pages, product composition, then the modern shell. */
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/components.css';
 
 @import './styles/product.css';
+@import './styles/modern.css';

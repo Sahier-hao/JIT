@@ -12,6 +12,7 @@ import {
   deleteRepositorySync,
   fetchRepositorySyncsPage,
   renameRepository,
+  selectRepositoryView,
   useRepositorySyncs,
 } from './projectClient'
 
@@ -150,5 +151,17 @@ describe('useRepositorySyncs', () => {
     await waitFor(() => expect(result.current.state).toBe('error'))
     expect(result.current.syncs).toEqual([])
     expect(result.current.error).toContain('分析记录归属不一致')
+  })
+})
+
+describe('selectRepositoryView', () => {
+  it('只提交 viewSyncId，并解析返回的项目视图', async () => {
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(json({ ...REPOSITORY, viewSyncId: SYNC_ID }))
+    await expect(selectRepositoryView(REPO_ID, SYNC_ID)).resolves.toMatchObject({ viewSyncId: SYNC_ID })
+    expect(fetch.mock.calls[0][0]).toBe(`/api/v1/repositories/${REPO_ID}`)
+    expect(fetch.mock.calls[0][1]?.method).toBe('PATCH')
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ viewSyncId: SYNC_ID })
   })
 })

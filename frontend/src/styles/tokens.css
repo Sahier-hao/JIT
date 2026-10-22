@@ -22,8 +22,12 @@
   /* ---------- 圆角（2）与阴影（2） ---------- */
   --r: 4px;
   --r-lg: 8px;
+  --r-xs: 6px;
+  --r-md: 12px;
+  --r-xl: 18px;
   --sh-1: 0 1px 2px rgba(14, 21, 36, .05);
   --sh-2: 0 2px 8px -2px rgba(14, 21, 36, .08), 0 12px 28px -14px rgba(14, 21, 36, .18);
+  --sh-3: 0 1px 2px rgba(14, 21, 36, .04), 0 10px 30px -12px rgba(14, 21, 36, .16);
 
   /* ---------- 表面（4） ---------- */
   --canvas: #F7F8FA;
@@ -127,6 +131,7 @@ html[data-theme="steel"] {
 html[data-theme="charcoal"] {
   --sh-1: 0 1px 2px rgba(0, 0, 0, .40);
   --sh-2: 0 6px 16px -4px rgba(0, 0, 0, .60), 0 16px 40px -12px rgba(0, 0, 0, .70);
+  --sh-3: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 30px -12px rgba(0, 0, 0, .60);
 
   --canvas: #0B1120;
   --rail: #070C16;

@@ -171,9 +171,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return JSONResponse(result, status_code=201 if created else 200)
 
     @app.patch('/api/v1/repositories/{repository_id}')
-    async def repository_rename(repository_id: str, request: Request):
-        return await run_in_threadpool(sync_service.rename_repository, repository_id,
-                                       await read_object(request))
+    async def repository_update(repository_id: str, request: Request):
+        payload = await read_object(request)
+        if isinstance(payload, dict) and "viewSyncId" in payload:
+            return await run_in_threadpool(sync_service.select_view, repository_id, payload)
+        return await run_in_threadpool(sync_service.rename_repository, repository_id, payload)
 
     @app.delete('/api/v1/repositories/{repository_id}')
     def repository_delete(repository_id: str):
