@@ -53,6 +53,20 @@ export function deleteRepository(repositoryId: string, signal?: AbortSignal): Pr
   }).then(() => undefined)
 }
 
+/** 把一条已完成的分析设为当前结果；只改视图指向，历史记录不变。 */
+export function selectRepositoryView(
+  repositoryId: string,
+  syncId: string,
+  signal?: AbortSignal,
+): Promise<RepositoryView> {
+  return apiRequest({
+    path: projectPath(repositoryId),
+    method: 'PATCH',
+    body: { viewSyncId: syncId },
+    signal,
+  }).then(parseRepositoryView)
+}
+
 /** 项目的分析记录分页（按创建时间倒序）。 */
 export function fetchRepositorySyncsPage(
   repositoryId: string,

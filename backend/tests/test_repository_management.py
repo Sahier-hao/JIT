@@ -28,7 +28,8 @@ def make_repository(client, url=REPO_URL):
     return response.json()
 
 
-def seed_sync(client, repository, sync_id, *, status='completed', created_at=None, with_commits=True):
+def seed_sync(client, repository, sync_id, *, status='completed', created_at=None, with_commits=True,
+              risks=(.2, .21, .22)):
     service = client.app.state.sync
     now = created_at or utc_now()
     service.sync.create({
@@ -38,9 +39,9 @@ def seed_sync(client, repository, sync_id, *, status='completed', created_at=Non
         'dataset_version': f'data-{sync_id}'})
     if status == 'completed' and with_commits:
         service.sync.write_commits(sync_id, [
-            {'id': f'{i:040x}', 'epoch': 1700000000 + i, 'risk': .2 + i / 100,
+            {'id': f'{i:040x}', 'epoch': 1700000000 + i, 'risk': risk,
              'addedLines': 1, 'deletedLines': 2, 'files': 1, 'features': {'la': 1},
-             'label': 0, 'subject': f'commit {i}'} for i in range(3)])
+             'label': 0, 'subject': f'commit {i}'} for i, risk in enumerate(risks)])
         service.sync.repository_refresh(repository['repositoryId'], sync_id)
     service.sync.repository_update(repository['repositoryId'], latest_sync_id=sync_id,
                                    latest_sync_at=now)
@@ -163,3 +164,44 @@ def test_delete_missing_repository_is_not_found(client):
     assert response.status_code == 404
     assert response.json()['error']['code'] == 'REPOSITORY_UNKNOWN'
     assert response.headers['X-Request-Id']
+
+
+def test_select_view_switches_current_result_without_touching_history(client):
+    repository = make_repository(client)
+    repository_id = repository['repositoryId']
+    seed_sync(client, repository, 'older', created_at='2026-01-01T00:00:00+00:00', risks=(.9,))
+    seed_sync(client, repository, 'newer', created_at='2026-01-02T00:00:00+00:00', risks=(.05, .06))
+    current = client.get(f'/api/v1/repositories/{repository_id}').json()
+    assert current['viewSyncId'] == 'newer' and current['commitCount'] == 2
+
+    response = client.patch(f'/api/v1/repositories/{repository_id}', json={'viewSyncId': 'older'})
+    assert response.status_code == 200
+    selected = response.json()
+    assert selected['viewSyncId'] == 'older'
+    assert selected['commitCount'] == 1
+    assert selected['distribution'] == {'high': 1, 'medium': 0, 'low': 0, 'unknown': 0}
+    assert selected['latestSyncId'] == 'newer'
+    assert client.get(f'/api/v1/repositories/{repository_id}').json()['viewSyncId'] == 'older'
+    assert client.get(f'/api/v1/repositories/{repository_id}/syncs').json()['total'] == 2
+
+
+def test_select_view_validates_ownership_and_status(client):
+    repository = make_repository(client)
+    other = make_repository(client, url='https://github.com/example/other')
+    seed_sync(client, repository, 'failed-one', status='failed')
+    seed_sync(client, other, 'foreign')
+    base = f"/api/v1/repositories/{repository['repositoryId']}"
+
+    running = client.patch(base, json={'viewSyncId': 'failed-one'})
+    assert running.status_code == 409
+    assert running.json()['error']['code'] == 'CONFLICT_ACTIVE_SYNC'
+    foreign = client.patch(base, json={'viewSyncId': 'foreign'})
+    assert foreign.status_code == 404
+    missing = client.patch(base, json={'viewSyncId': 'no-such-sync'})
+    assert missing.status_code == 404
+    empty = client.patch(base, json={'viewSyncId': '  '})
+    assert empty.status_code == 422
+    assert empty.json()['error']['code'] == 'INPUT_INVALID'
+    unknown = client.patch('/api/v1/repositories/does-not-exist', json={'viewSyncId': 'foreign'})
+    assert unknown.status_code == 404
+    assert unknown.json()['error']['code'] == 'REPOSITORY_UNKNOWN'

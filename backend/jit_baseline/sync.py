@@ -721,6 +721,22 @@ class SyncService:
         self.sync.repository_update(repository_id, display_name=name)
         return self.sync.repository_get(repository_id)
 
+    def select_view(self, repository_id, payload):
+        """把项目里一条已完成的分析设为当前结果；只改视图指向，不删不改历史记录。"""
+        if self.sync.repository_get(repository_id) is None:
+            raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
+        sync_id = payload.get("viewSyncId") if isinstance(payload, dict) else None
+        if not isinstance(sync_id, str) or not sync_id.strip():
+            raise BaselineError("INPUT_INVALID", "请选择一条已完成的分析")
+        sync_id = sync_id.strip()
+        item = self.sync.get(sync_id)
+        if item is None or item.get("repositoryId") != repository_id:
+            raise BaselineError("NOT_FOUND", "该分析不属于当前项目")
+        if item["status"] != "completed":
+            raise BaselineError("CONFLICT_ACTIVE_SYNC", "只有已完成的分析才能设为当前结果")
+        self.sync.repository_refresh(repository_id, sync_id)
+        return self.sync.repository_get(repository_id)
+
     def delete_repository(self, repository_id):
         """硬删项目及其全部分析记录与提交；有在途作业时拒绝，避免删掉正在写的行。"""
         if self.sync.repository_get(repository_id) is None:

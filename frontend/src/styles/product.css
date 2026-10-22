@@ -62,16 +62,36 @@ code { font-family: var(--mono); overflow-wrap: anywhere; }
 .section-label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--fg-3); margin-bottom: 15px; }
 .section-label h2 { margin: 0; font-size: 15px; color: var(--fg); }
 .project-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(285px,1fr)); gap: 19px; }
-.project-card { padding: 23px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); text-align: left; color: var(--fg); min-width: 0; max-width: 550px; }
+.project-card { position: relative; padding: 23px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); text-align: left; color: var(--fg); min-width: 0; max-width: 550px; }
 .project-card:hover { border-color: var(--accent); box-shadow: 0 5px 24px #122c2009; }
-.project-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.project-card.is-editing:hover { border-color: var(--line-strong); box-shadow: none; }
+.project-card-open { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.project-card-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 8px; }
+.project-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-right: 40px; }
 .project-card-icon { display: inline-grid; place-items: center; height: 43px; width: 43px; border: 1px solid var(--line); border-radius: 11px; background: var(--sunken); color: var(--fg-2); }
 .project-card-status { font-size: 12px; color: var(--fg-3); }
 .project-card h2 { margin: 0 0 5px; }
-.project-card > p { color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.project-card-open > p { color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
 .project-card-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 17px; border-top: 1px solid var(--line); margin-top: 25px; color: var(--fg-2); font-size: 12px; }
 .project-card-bottom b { font-size: 17px; margin-right: 3px; }
 .project-card small { display: block; color: var(--fg-3); font-size: 12px; margin-top: 15px; }
+.project-card-tools { position: absolute; top: 13px; right: 13px; }
+.card-menu-button { display: grid; place-items: center; height: 32px; width: 32px; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--fg-3); cursor: pointer; }
+.card-menu-button:hover, .card-menu-button[aria-expanded='true'] { border-color: var(--line-strong); background: var(--sunken); color: var(--fg); }
+.card-menu { position: absolute; right: 0; top: 38px; z-index: 5; display: grid; min-width: 132px; padding: 6px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); box-shadow: 0 12px 32px #122c2014; }
+.card-menu button { padding: 9px 10px; border: 0; border-radius: 7px; background: none; color: var(--fg); font-size: 13px; text-align: left; cursor: pointer; }
+.card-menu button:hover { background: var(--sunken); }
+.card-menu button.danger { color: var(--risk-high); }
+.card-editor { display: grid; gap: 10px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.card-editor label { font-size: 13px; font-weight: 600; }
+.card-editor-note { margin: 0; color: var(--fg-3); font-size: 13px; }
+.card-editor h3 { margin: 0; font-size: 16px; }
+.card-editor-danger h3 { color: var(--risk-high); }
+.back-link { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 14px; padding: 6px 8px 6px 0; border: 0; background: none; color: var(--fg-2); font-size: 13px; cursor: pointer; }
+.back-link:hover { color: var(--accent); }
+.analysis-options { margin: 0; padding: 0; border: 0; }
+.analysis-options legend { margin-bottom: 6px; padding: 0; color: var(--fg); font-size: 14px; font-weight: 600; }
+.analysis-options-hint { margin: 0 0 16px; color: var(--fg-3); font-size: 13px; }
 .project-onboarding { display: flex; align-items: center; flex-direction: column; text-align: center; min-height: 470px; border: 1px solid var(--line); border-radius: 15px; padding: 52px 25px 0; overflow: hidden; background: radial-gradient(ellipse at 50% 0%,var(--accent-soft),transparent 60%),var(--card); }
 .onboarding-graphic { display: flex; align-items: center; gap: 22px; color: var(--accent); margin: 0 0 31px; }
 .onboarding-graphic > svg { width: 82px; height: 82px; padding: 23px; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--card); box-shadow: 0 8px 20px #163a2509; }
@@ -244,3 +264,5 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 .project-records .job-status-icon { width: 28px; height: 28px; }
 @media(max-width:640px) { .project-heading { flex-direction: column; align-items: flex-start; }.project-heading .page-actions { width: 100%; justify-content: flex-start; margin-top: 12px; }.project-heading .page-actions .primary-button, .project-heading .page-actions .clear-button { flex: 0 0 auto; } }
 .analysis-form .advanced-options { margin-top: 0; padding-top: 0; border-top: 0; }
+.card-editor label { display: grid; gap: 6px; }
+.card-editor input { width: 100%; }

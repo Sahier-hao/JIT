@@ -269,6 +269,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
 
   return (
     <div className={listView ? 'review' : 'review review--shortlist'}>
+      <button className="back-link" onClick={() => navigate({ name: 'repository', repositoryId })} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`}><Icon name="collapse" size={16}/>返回项目</button>
       <RepositoryHead repository={repo} total={repo.commitCount} />
       <details className="analysis-source"><summary><span className="source-chip">仓库分析 · {repo.viewContext?.branch ?? '分支未提供'}</span><span>分析来源 <Icon name="chevron" size={13}/></span></summary>      <div className="analysis-context"><span>分析 <code>{viewSyncId}</code></span><span>HEAD <code>{repo.viewContext?.headCommit ?? '旧记录未提供'}</code></span><span>数据 <code>{repo.datasetVersion ?? '未提供'}</code></span><span>模型 <code>{repo.modelId ?? '未提供'}</code></span><span>运行 <code>{repo.runId ?? '未提供'}</code></span><span>{repo.modelStrategy === 'generic-model' ? '通用模型' : repo.modelStrategy === 'repository-trained' ? '仓库模型' : '模型来源未提供'}{repo.degradeReason ? ` · ${DEGRADE_LABELS[repo.degradeReason] ?? repo.degradeReason}` : ''}</span></div>
 </details>
