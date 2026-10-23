@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
 import type { Route } from '../navigation'
-import { deleteRepository, renameRepository, useRecentSyncs } from '../projectClient'
+import { deleteRepository, renameRepository } from '../projectClient'
 import { projectStatus } from '../projectStatus'
 import { useRepositories } from '../repositoryWorkspace'
 import { displayTime } from '../domain'
@@ -17,7 +17,6 @@ import type { RepositoryView } from '../repositoryWorkspace'
 
 export function ProjectsPage({ navigate }: { navigate: (route: Route) => void }) {
   const repositories = useRepositories()
-  const recent = useRecentSyncs(50)
   const [menuFor, setMenuFor] = useState('')
   const [renamingId, setRenamingId] = useState('')
   const [draft, setDraft] = useState('')
@@ -25,18 +24,16 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
   const [busy, setBusy] = useState(false)
   const [editorError, setEditorError] = useState('')
 
-  const items = repositories.state === 'ready' ? repositories.items : []
-  const latestBySyncId = new Map(recent.syncs.map(job => [job.syncId, job]))
+  const items = repositories.items
   const commits = items.reduce((sum, item) => sum + item.commitCount, 0)
   const high = items.reduce((sum, item) => sum + item.distribution.high, 0)
   const running = items.filter(item => {
-    const job = item.latestSyncId ? latestBySyncId.get(item.latestSyncId) : undefined
-    return job !== undefined && (ACTIVE_STATUSES as readonly string[]).includes(job.status)
+    const job = item.latestSync
+    return job != null && (ACTIVE_STATUSES as readonly string[]).includes(job.status)
   }).length
 
   function reload() {
     repositories.retry()
-    recent.retry()
   }
 
   function startRename(repo: RepositoryView) {
@@ -92,10 +89,10 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
       </div>
       <button className="primary-button" onClick={() => navigate({ name: 'sources' })}><Icon name="plus"/>新建项目</button>
     </header>
-    {repositories.state === 'loading' ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><button onClick={repositories.retry}>重新加载</button></EmptyState> : items.length ? <>
+    {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><button onClick={repositories.retry}>重新加载</button></EmptyState> : items.length ? <>
       <div className="section-label"><span>全部项目</span><span>{items.length} 个项目 · {commits.toLocaleString()} 个已分析提交{high ? ` · ${high.toLocaleString()} 个高风险` : ''}{running ? ` · ${running} 个正在分析` : ''}</span></div>
       <div className="project-grid">{items.map(repo => {
-        const job = repo.latestSyncId ? latestBySyncId.get(repo.latestSyncId) : undefined
+        const job = repo.latestSync
         const status = projectStatus(repo, job)
         const editing = renamingId === repo.repositoryId
         const confirming = confirmingId === repo.repositoryId

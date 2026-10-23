@@ -1,5 +1,7 @@
 # 固定公开数据基线
 
+> 当前产品操作与管理员权限以 [当前产品](../docs/当前产品.md) 为准；下文保留离线实验协议与交付说明。
+
 本目录离线处理发布者 OpenStack 数据，按具名方法训练模型，并通过本机只读 HTTP 提供冻结测试批次。它是回顾性历史评价，六字段尚非完整 Kamei14，历史回放没有逐条解释或逐条 SZZ 复核；手工预测按方法声明保留支持的真实归因；完整课程要求仍需后续 change。来源与标签依据见 [DATA.md](DATA.md)，计算规则见 [PROTOCOL.md](PROTOCOL.md)，方法清单与按声明校验见 [PROTOCOL.md](PROTOCOL.md) 的「方法清单与按声明校验」一节。
 
 ## 建立环境和真实运行
@@ -20,7 +22,7 @@ $env:PYTHONIOENCODING='utf-8'
 
 `fetch` 只访问三份固定发布者文件，全部通过 SHA-256 后才保存；已有文件必须重新核验。`run` 按选定方案处理、训练和评价，接受 `--schema`（具名特征 schema，默认 `openstack-six-v1`）与 `--algorithm`（具名方法，默认 `logistic-regression-l2-v1`）两个参数；不带参数时仍产出六字段逻辑回归运行。已存在的运行目录会拒绝覆盖；再次独立复现可指定新的输出目录，例如 `artifacts/reproduction-2`。正式模型和源文件不入 Git，使用命令重新取得。`verify` 检查所有文件哈希、关联、真实模型风险与指标。验证集不参与重拟合；测试不用于选阈值、参数或字段。
 
-已登记的方法见 [PROTOCOL.md](PROTOCOL.md)：`logistic-regression-l2-v1`（经典）、`decision-tree-v1`（经典）与 `random-forest-v1`（经典，首个声明所需依赖的方法）。方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按每个运行**自身声明**的方法、依赖与指标集进行，因此新增方法、新增依赖或新增指标都不会作废既有运行。未注册的方法名以 `ALGORITHM_UNKNOWN` 拒绝，不退回默认方法。
+已登记的方法见 [PROTOCOL.md](PROTOCOL.md)：`logistic-regression-l2-v1`、`decision-tree-v1`、`random-forest-v1`、`gaussian-naive-bayes-v1`、`gradient-boosting-v1` 五种经典方法，以及 `mlp-v1`、`tabular-resnet-v1`、`ft-transformer-v1`、`wide-deep-v1` 四种深度方法。方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按每个运行**自身声明**的方法、依赖与指标集进行，因此新增方法、新增依赖或新增指标都不会作废既有运行。未注册的方法名以 `ALGORITHM_UNKNOWN` 拒绝，不退回默认方法。
 
 `artifacts/baseline` 是服务的固定运行（六字段逻辑回归）；`artifacts/reproduction*` 是独立重跑；`artifacts/trend-baseline` 是带时间桶聚合的重跑（由 `JIT_RUN_DIR` 供给，见「本机 HTTP」）；`artifacts/decision-tree-v1` 与 `artifacts/decision-tree-reproduction` 是第二个方法（决策树）的独立运行与其复现，**不替换服务所用的运行**；`artifacts/external/` 放**经仓库交付的外部运行**（见下一节）；`artifacts/development`、`.cache/` 和测试临时目录是技术与行为检查，不能作为正式效果。`data/openstack` 保存原始三文件。manifest 包含环境、训练代码哈希、核心文件、固定协议、方法声明、指标集、模型参数与运行身份，生成时间不影响身份。模型、数据或协议变化会形成其他上下文。
 

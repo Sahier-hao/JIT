@@ -42,7 +42,11 @@ paths:
           $ref: '#/components/responses/CurrentUnavailable'
         '500':
           $ref: '#/components/responses/CurrentInferenceFailure'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       description: 仅本机、无鉴权、实际调用已加载模型，不读取逐条评价标签。当前服务关闭Swagger／OpenAPI地址，此文档不改变运行行为。
+      security:
+      - AdminSession: []
   /api/v1/commits:
     get:
       operationId: listCommits
@@ -95,8 +99,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           $ref: '#/components/responses/InputInvalid'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       description: 列表项为 commitId／authorTime／label／module，不返回特征。limit 越界（0、501、负数、非整数）返回 422 INPUT_INVALID，不静默截断；未知
         version 返回 404。
+      security:
+      - AdminSession: []
   /api/v1/commits/{commitId}:
     get:
       operationId: getCommit
@@ -132,7 +140,11 @@ paths:
                 $ref: '#/components/schemas/CommitDetail'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       description: 未知提交或未知版本返回 404，不返回空对象。
+      security:
+      - AdminSession: []
   /api/v1/datasets:
     get:
       operationId: listDatasets
@@ -155,7 +167,11 @@ paths:
                 $ref: '#/components/schemas/DatasetRegistry'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       description: 当前后端操作；本机使用，无需凭据。内容来自 backend/data/datasets 下描述文件的登记结果，只含版本与质量摘要，不含提交级数据。
+      security:
+      - AdminSession: []
   /api/v1/datasets/{name}/versions:
     get:
       operationId: listDatasetVersions
@@ -187,7 +203,11 @@ paths:
           $ref: '#/components/responses/NotFound'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       description: 当前后端操作；本机使用，无需凭据。数据集名取 `/api/v1/datasets` 返回的 `dataset` 字段。
+      security:
+      - AdminSession: []
   /api/v1/datasets/import:
     post:
       operationId: importDataset
@@ -212,6 +232,8 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '413':
           $ref: '#/components/responses/InputLimitExceeded'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: proposed
       x-access-policy: write
       requestBody:
@@ -229,6 +251,8 @@ paths:
         maxBytes: 52428800
         maxRows: 100000
       description: 候选50MiB／100000条。全部原始行先校验，来源hash不匹配不能ready；相同版本复用，不任意抓取descriptor URL。
+      security:
+      - AdminSession: []
   /api/v1/datasets/versions/{datasetVersion}/quality:
     get:
       operationId: getDatasetQuality
@@ -249,6 +273,8 @@ paths:
                 $ref: '#/components/schemas/QualityReport'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: proposed
       x-access-policy: read
       parameters:
@@ -257,6 +283,8 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Uuid'
+      security:
+      - AdminSession: []
   /api/v1/feature-schemas/{featureSchemaVersion}:
     get:
       operationId: getFeatureSchema
@@ -293,6 +321,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedError'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
@@ -303,6 +333,8 @@ paths:
           type: string
           minLength: 1
       description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      security:
+      - AdminSession: []
   /api/v1/experiments:
     post:
       operationId: createExperiment
@@ -334,6 +366,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExperimentCreate'
+      security: []
   /api/v1/experiments/{runId}:
     get:
       operationId: getExperiment
@@ -364,6 +397,7 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Uuid'
+      security: []
   /api/v1/models:
     get:
       operationId: listModels
@@ -399,6 +433,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedError'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
@@ -412,6 +448,8 @@ paths:
           - invalid
           default: ready
       description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      security:
+      - AdminSession: []
   /api/v1/predictions:
     post:
       operationId: createPrediction
@@ -461,6 +499,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedError'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: implemented
       x-access-policy: member-or-admin
       requestBody:
@@ -483,6 +523,8 @@ paths:
                   la: 10
                   ld: 2
       description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      security:
+      - AdminSession: []
   /api/v1/predictions/{predictionId}/explanation:
     get:
       operationId: getExplanation
@@ -504,6 +546,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/ContextMismatch'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: proposed
       x-access-policy: read
       parameters:
@@ -512,6 +556,8 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Uuid'
+      security:
+      - AdminSession: []
   /api/v1/prediction-batches/{batchId}:
     get:
       operationId: getPredictionBatch
@@ -549,6 +595,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedError'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: implemented
       x-access-policy: member-or-admin
       parameters:
@@ -558,6 +606,8 @@ paths:
         schema:
           $ref: '#/components/schemas/Uuid'
       description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      security:
+      - AdminSession: []
   /api/v1/prediction-batches:
     post:
       operationId: createPredictionBatch
@@ -586,6 +636,8 @@ paths:
           $ref: '#/components/responses/ModelUnavailable'
         '500':
           $ref: '#/components/responses/InferenceFailure'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       x-auth-status: proposed
       x-access-policy: write
       requestBody:
@@ -601,6 +653,8 @@ paths:
         maxBytes: 10485760
         maxRows: 1000
       description: 候选10MiB／1000条，UTF-8，可选BOM。表头recordId＋schema字段，commitId／time可选，无label。全批校验／推理成功后才ready，不部分成功。
+      security:
+      - AdminSession: []
   /api/v1/comparisons:
     get:
       operationId: compareRuns
@@ -635,6 +689,7 @@ paths:
           minItems: 2
         style: form
         explode: false
+      security: []
   /api/v1/trends:
     get:
       operationId: getTrend
@@ -674,6 +729,7 @@ paths:
           - week
           - month
           default: week
+      security: []
   /api/v1/experiments/{runId}/report:
     get:
       operationId: getExperimentReport
@@ -708,6 +764,7 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Uuid'
+      security: []
   /api/v1/model-candidates:
     get:
       operationId: listModelCandidates
@@ -734,6 +791,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedError'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
+      security:
+      - AdminSession: []
   /api/v1/models/register:
     post:
       operationId: registerExistingModel
@@ -790,6 +851,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SharedError'
+        '401':
+          description: Administrator session required; no maintenance data is returned.
       requestBody:
         required: true
         content:
@@ -797,6 +860,8 @@ paths:
             schema:
               $ref: '#/components/schemas/ModelRegistrationCreate'
       description: 201 新模型，200 复用原 runId；仅选择候选，不接受路径／URL／上传。
+      security:
+      - AdminSession: []
   /api/v1/repository-syncs:
     post:
       operationId: createRepositorySync
@@ -843,6 +908,7 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 只接受公开 HTTP(S) 地址；file、ssh、git 等协议与内网主机返回 422 INPUT_INVALID。`strategy` 三选一，缺省 `auto`（按数据量给建议）。接口立即返回作业视图，进度靠轮询
         `GET /api/v1/repository-syncs/{syncId}`。
+      security: []
     get:
       operationId: listRepositorySyncs
       summary: 同步作业列表
@@ -882,6 +948,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: limit 越界返回 422，不静默截断。列表不含提交级数据。
+      security: []
   /api/v1/repository-syncs/{syncId}:
     get:
       operationId: getRepositorySync
@@ -913,6 +980,7 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 状态为 queued／collecting／registering／training／scoring／completed／failed／interrupted；`modelStrategy`
         与 `degradeReason` 说明这次实际用了哪个模型、为什么。
+      security: []
   /api/v1/repository-syncs/{syncId}/commits:
     get:
       operationId: listRepositorySyncCommits
@@ -962,6 +1030,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 每条带 14 字段原始值（`features`）、风险、行数、文件数与标签；`label` 由简化 SZZ 倒推，1 表示后来被修复提交指认，0 只表示未观测到，不等于已证实无缺陷。
+      security: []
   /api/v1/repository-syncs/{syncId}/commits/{commitId}:
     get:
       operationId: getRepositorySyncCommit
@@ -998,6 +1067,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 提交不属于该作业时返回 404，不跨作业查询。
+      security: []
   /api/v1/repositories:
     get:
       operationId: listRepositories
@@ -1039,6 +1109,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 一条仓库代表一个规范化地址；同一地址的多次同步归到这里，`viewSyncId` 指向当前视图来自哪一次成功作业。
+      security: []
   /api/v1/repositories/{repositoryId}:
     get:
       operationId: getRepository
@@ -1082,6 +1153,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 未知仓库返回 404 `REPOSITORY_UNKNOWN`；`modelStrategy`／`degradeReason` 取自当前视图对应的成功作业。
+      security: []
   /api/v1/repositories/{repositoryId}/commits:
     get:
       operationId: listRepositoryCommits
@@ -1171,6 +1243,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 时间按 UTC+08:00 的自然日解释；`sort=risk` 时按风险降序、时间降序、标识升序。
+      security: []
   /api/v1/repositories/{repositoryId}/commits/{commitId}:
     get:
       operationId: getRepositoryCommit
@@ -1220,6 +1293,7 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 提交不在当前视图里返回 404，不跨仓库查询。
+      security: []
   /api/v1/repositories/{repositoryId}/summary:
     get:
       operationId: getRepositorySummary
@@ -1263,6 +1337,87 @@ paths:
         '503':
           $ref: '#/components/responses/StorageUnavailable'
       description: 分档口径 `repo-distribution-v1`：高风险 ≥0.25、中风险 ≥0.10 且 <0.25、低风险 <0.10；没有视图时各项为 0。
+      security: []
+  /api/admin/session:
+    get:
+      operationId: adminSession
+      security: []
+      summary: Administrator session
+      responses:
+        '200':
+          description: Session operation completed
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Cross-origin request rejected
+        '409':
+          description: Administrator already initialized
+        '422':
+          description: Invalid account or password
+        '429':
+          description: Too many login attempts
+  /api/admin/setup:
+    post:
+      operationId: adminSetup
+      security: []
+      summary: Administrator setup
+      responses:
+        '201':
+          description: Session operation completed
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Cross-origin request rejected
+        '409':
+          description: Administrator already initialized
+        '422':
+          description: Invalid account or password
+        '429':
+          description: Too many login attempts
+  /api/admin/login:
+    post:
+      operationId: adminLogin
+      security: []
+      summary: Administrator login
+      responses:
+        '200':
+          description: Session operation completed
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Cross-origin request rejected
+        '409':
+          description: Administrator already initialized
+        '422':
+          description: Invalid account or password
+        '429':
+          description: Too many login attempts
+  /api/admin/logout:
+    post:
+      operationId: adminLogout
+      security: []
+      summary: Administrator logout
+      responses:
+        '204':
+          description: Session operation completed
+        '401':
+          description: Invalid credentials
+        '403':
+          description: Cross-origin request rejected
+        '409':
+          description: Administrator already initialized
+        '422':
+          description: Invalid account or password
+        '429':
+          description: Too many login attempts
+  /api/v1/repository-models:
+    get:
+      operationId: repositoryModelChoices
+      security: []
+      summary: Public registered model choice metadata without maintenance evidence
+      responses:
+        '200':
+          description: Registered model choices and compatibility
 components:
   schemas:
     ModelRegistration:
@@ -2589,6 +2744,10 @@ components:
           - generic-model
           - force-train
           default: auto
+        modelId:
+          type: string
+          format: uuid
+          description: Explicit registered compatible model; requires generic-model strategy.
       required:
       - repositoryUrl
       additionalProperties: false
@@ -2723,6 +2882,11 @@ components:
             - code
             - message
             additionalProperties: false
+        requestedModelId:
+          type:
+          - string
+          - 'null'
+          format: uuid
       required:
       - syncId
       - repositoryUrl
@@ -2888,6 +3052,10 @@ components:
     RepositoryEntry:
       type: object
       properties:
+        latestSync:
+          oneOf:
+          - $ref: '#/components/schemas/RepositorySyncView'
+          - type: 'null'
         repositoryId:
           $ref: '#/components/schemas/Uuid'
         url:
@@ -3666,8 +3834,36 @@ components:
           items:
             $ref: '#/components/schemas/ModelInfo'
           minItems: 0
+        methods:
+          type: array
+          items:
+            type: object
+            properties:
+              method:
+                type: string
+              name:
+                type: string
+              category:
+                type: string
+                enum:
+                - classic
+                - deep
+              registeredModels:
+                type: integer
+                minimum: 0
+              deliveredArtifacts:
+                type: integer
+                minimum: 0
+            required:
+            - method
+            - name
+            - category
+            - registeredModels
+            - deliveredArtifacts
+            additionalProperties: false
       required:
       - models
+      - methods
       additionalProperties: false
     FeatureInputRecord:
       type: object
@@ -4264,6 +4460,11 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SharedError'
+  securitySchemes:
+    AdminSession:
+      type: apiKey
+      in: cookie
+      name: jit_admin_session
 x-source-date: '2026-10-12'
 x-contract-status: product-design-draft
 x-errors-document: ../全局错误码表.md

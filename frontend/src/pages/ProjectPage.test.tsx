@@ -149,7 +149,44 @@ it('deletes an ended analysis record from the list', async () => {
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click((await screen.findAllByRole('button', { name: '删除记录' }))[0])
+  expect(deleted).not.toHaveBeenCalled()
+  await user.click(screen.getByRole('button', { name: '确认删除记录' }))
   await waitFor(() => expect(deleted).toHaveBeenCalled())
+})
+
+it('keeps following a queued job until the result is available', async () => {
+  let reads = 0
+  let started = false
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === '/api/v1/repository-syncs' && init?.method === 'POST') { started = true; return response(job({ status: 'queued', stage: 'queued' }), 202) }
+    if (url.pathname.endsWith('/syncs')) {
+      const complete = started && ++reads > 1
+      return response({ repositoryId: REPO, syncs: [job({ status: complete ? 'completed' : 'queued', stage: complete ? 'completed' : 'queued' })], total: 1, limit: 10, offset: 0 })
+    }
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  await screen.findByRole('heading', { name: 'demo-project' })
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(screen.getByRole('radio', { name: /当前结果/ })).toBeVisible(), { timeout: 7000 })
+})
+
+it('lets users reach an older analysis beyond the first ten', async () => {
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname.endsWith('/syncs')) {
+      const offset = Number(url.searchParams.get('offset'))
+      return response({ repositoryId: REPO, syncs: offset ? [job({ syncId: OTHER })] : Array.from({ length: 10 }, (_, i) => job({ syncId: `${i.toString(16).padStart(8, '0')}-1111-4111-8111-111111111111` })), total: 11, limit: 10, offset })
+    }
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  await screen.findByRole('heading', { name: 'demo-project' })
+  await user.click(screen.getByRole('button', { name: '下一页' }))
+  expect(await screen.findByRole('article', { name: `分析记录 ${OTHER}` })).toBeVisible()
 })
 
 

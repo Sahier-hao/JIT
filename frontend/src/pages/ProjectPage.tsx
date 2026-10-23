@@ -5,8 +5,10 @@
  * 「当前结果」严格指项目可用于审查的那次成功分析；最近一次尝试可能还在跑或已失败，
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
-import { useState } from 'react'
-import { createRepositorySync } from '../apiClient'
+import { useEffect, useRef, useState } from 'react'
+import type { SyncForm } from '../apiClient'
+import { projectsChanged } from '../projectEvents'
+import { useModelName } from '../modelClient'
 import { AnalysisForm } from '../components/AnalysisForm'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
@@ -19,9 +21,25 @@ import { displayTime } from '../domain'
 
 export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; navigate: (route: Route, replace?: boolean) => void }) {
   const detail = useRepository(repositoryId)
-  const records = useRepositorySyncs(repositoryId, 10, 0)
+  const modelName = useModelName(detail.repository?.modelId)
+  const [page, setPage] = useState(0)
+  const records = useRepositorySyncs(repositoryId, 10, page * 10)
+  const refreshRecords = records.retry
   const [recordError, setRecordError] = useState('')
   const [selectingId, setSelectingId] = useState('')
+  const [deleting, setDeleting] = useState<SyncView | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const deleteLock = useRef(false)
+  const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
+  const latestStatus = detail.repository?.latestSync?.status
+  const previousJob = useRef('')
+  useEffect(() => {
+    if (!latestStatus || previousJob.current === latestStatus) return
+    previousJob.current = latestStatus
+    refreshRecords()
+    if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
+  }, [latestStatus, refreshRecords])
+  useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
   if (detail.state === 'error' || !detail.repository) {
@@ -48,24 +66,31 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     }
   }
   async function removeRecord(job: SyncView) {
+    if (deleteLock.current) return
+    deleteLock.current = true; setDeleteBusy(true)
     if (recordError !== '') setRecordError('')
     try {
       await deleteRepositorySync(job.syncId)
       records.retry()
       detail.retry()
+      setDeleting(null)
     } catch (failure) {
       setRecordError(failure instanceof Error ? failure.message : '删除分析记录失败')
+    } finally {
+      deleteLock.current = false; setDeleteBusy(false)
     }
   }
   function retryRecord(job: SyncView) {
-    createRepositorySync({
+    setRetryDraft(previous => ({ key: (previous?.key ?? 0) + 1, form: {
       repositoryUrl: repository.url,
       branch: job.branch,
       since: job.since ?? '',
       until: job.until ?? '',
       commitLimit: String(job.commitLimit),
       strategy: job.requestedStrategy,
-    }).then(() => { records.retry(); detail.retry() }).catch((failure: unknown) => setRecordError(failure instanceof Error ? failure.message : '重新发起失败'))
+      modelId: job.requestedModelId ?? '',
+    } }))
+    document.getElementById('analysis-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return <section className="project-page">
@@ -82,9 +107,10 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       </div>
     </header>
 
-    <section className="project-start" aria-label="发起分析">
+    <section className="project-start" id="analysis-form-section" aria-label="发起分析">
       <div className="section-label"><h2>发起分析</h2><span>不会覆盖当前结果</span></div>
-      <AnalysisForm repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { records.retry(); detail.retry() }}/>
+      {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
+      <AnalysisForm key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
     </section>
 
     <section className="project-result" aria-label="当前分析结果">
@@ -97,6 +123,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           <div><b>{repository.distribution.low.toLocaleString()}</b><span>低风险</span></div>
         </div>
         <dl className="result-facts">
+          <div><dt>分析模型</dt><dd>{modelName ?? (repository.modelId ? '已保存模型（名称暂不可用）' : '未记录')}</dd></div>
           <div><dt>数据版本</dt><dd>{context.datasetVersion ?? '未登记'}</dd></div>
           <div><dt>分支</dt><dd>{context.branch}</dd></div>
           <div><dt>模型策略</dt><dd>{repository.modelStrategy === 'generic-model' ? '现成模型' : repository.modelStrategy === 'repository-trained' ? '本仓库数据训练' : '未记录'}</dd></div>
@@ -113,7 +140,9 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     <section className="project-records" aria-label="分析记录">
       <div className="section-label"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 条` : ''}</span></div>
       {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-      {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。设置范围后开始第一次分析。</p> : <div className="job-list">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId === job.syncId} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onSelect={() => void makeCurrent(job)} onDelete={() => void removeRecord(job)} onRetry={() => retryRecord(job)}/>) }</div>}
+      {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。设置范围后开始第一次分析。</p> : <div className="job-list">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleting(job)} onRetry={() => retryRecord(job)}/>) }</div>}
+      {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页 · 共 {records.total} 条</span><button className="clear-button" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</button><button className="clear-button" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</button></nav> : null}
+      {deleting ? <div role="alertdialog" aria-label="确认删除分析记录" className="record-confirm"><h3>删除这条分析记录？</h3><p>{deleting.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。' : '这次分析与对应的提交结果将被删除。'} 此操作无法撤销。</p><button className="danger-button" disabled={deleteBusy} onClick={() => void removeRecord(deleting)}>{deleteBusy ? '正在删除…' : '确认删除记录'}</button><button className="text-button" disabled={deleteBusy} onClick={() => setDeleting(null)}>取消</button></div> : null}
     </section>
   </section>
 }

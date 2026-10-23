@@ -4,10 +4,11 @@
  * 与「发起分析」分开：先登记项目（不发作业），再在项目页发起分析、查看与清理分析记录。
  * 契约立场与其它请求层一致：形状不符不猜测，删除只接受服务端的成功语义（204）。
  */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiRequest, apiRequestWithStatus, fetchRepositorySyncs } from './apiClient'
 import { parseRepositorySyncPage, parseSyncPage, type RepositorySyncPage, type SyncView } from './repositoryContract'
 import { parseRepositoryView, type RepositoryView } from './repositoryWorkspace'
+import { projectsChanged } from './projectEvents'
 
 export interface CreatedRepository {
   repository: RepositoryView
@@ -26,7 +27,7 @@ export function createRepository(url: string, signal?: AbortSignal): Promise<Cre
     method: 'POST',
     body: { repositoryUrl: url.trim() },
     signal,
-  }).then(({ body, status }) => ({ repository: parseRepositoryView(body), created: status === 201 }))
+  }).then(({ body, status }) => { const repository = parseRepositoryView(body); projectsChanged(); return { repository, created: status === 201 } })
 }
 
 /** 只改显示名；地址、标识与历史分析不变。 */
@@ -40,7 +41,7 @@ export function renameRepository(
     method: 'PATCH',
     body: { displayName: displayName.trim() },
     signal,
-  }).then(parseRepositoryView)
+  }).then(body => { const repository = parseRepositoryView(body); projectsChanged(); return repository })
 }
 
 /** 硬删项目及其分析记录与提交；服务端在存在进行中分析时返回 409。 */
@@ -50,7 +51,7 @@ export function deleteRepository(repositoryId: string, signal?: AbortSignal): Pr
     method: 'DELETE',
     signal,
     expectEmpty: true,
-  }).then(() => undefined)
+  }).then(() => { projectsChanged() })
 }
 
 /** 把一条已完成的分析设为当前结果；只改视图指向，历史记录不变。 */
@@ -64,7 +65,7 @@ export function selectRepositoryView(
     method: 'PATCH',
     body: { viewSyncId: syncId },
     signal,
-  }).then(parseRepositoryView)
+  }).then(body => { const repository = parseRepositoryView(body); projectsChanged(); return repository })
 }
 
 /** 项目的分析记录分页（按创建时间倒序）。 */
@@ -88,7 +89,7 @@ export function deleteRepositorySync(syncId: string, signal?: AbortSignal): Prom
     method: 'DELETE',
     signal,
     expectEmpty: true,
-  }).then(() => undefined)
+  }).then(() => { projectsChanged() })
 }
 
 function describe(error: unknown): string {
@@ -144,6 +145,7 @@ export interface RepositorySyncsLoad {
 /** 项目页的「分析记录」：加载一页记录，失败保留错误原因，重试只重发本页。 */
 export function useRepositorySyncs(repositoryId: string, limit = 20, offset = 0): RepositorySyncsLoad {
   const [attempt, setAttempt] = useState(0)
+  const retry = useCallback(() => setAttempt(value => value + 1), [])
   const [state, setState] = useState<Omit<RepositorySyncsLoad, 'retry'>>({
     state: 'idle',
     syncs: [],
@@ -167,5 +169,11 @@ export function useRepositorySyncs(repositoryId: string, limit = 20, offset = 0)
       controller.abort()
     }
   }, [repositoryId, limit, offset, attempt])
-  return { ...state, retry: () => setAttempt((value) => value + 1) }
+  const running = state.syncs.some(job => ['queued', 'collecting', 'registering', 'training', 'scoring'].includes(job.status))
+  useEffect(() => {
+    if (!running) return
+    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, 1500)
+    return () => clearInterval(timer)
+  }, [running])
+  return { ...state, retry }
 }

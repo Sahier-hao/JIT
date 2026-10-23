@@ -14,6 +14,7 @@ import {
 } from './repositoryWorkspace'
 import { toCommit } from './domain'
 import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
+import { useModelName } from './modelClient'
 
 const PAGE_SIZE = 20
 
@@ -157,6 +158,7 @@ export interface ReviewWorkbenchProps {
 export type ReviewDraft = { draft: Query; applied: Query; error: string; offset: number; detailReturn?: 'commits' | 'plan' }
 export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, onConfirmed, drafts: reviewDrafts, view, selection, onSelection, navigate }: ReviewWorkbenchProps) {
   const repository = useRepository(repositoryId, viewSyncId)
+  const modelName = useModelName(repository.repository?.modelId)
   const [seed] = useState(() => readSeedQuery(window.location.search))
   const [queryState, setQueryState] = useState(() => reviewDrafts.get(stateKey) ?? { draft: seed.query, applied: seed.query, error: '' })
   const [offset, setOffset] = useState(() => reviewDrafts.get(stateKey)?.offset ?? 0)
@@ -274,7 +276,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       <details className="analysis-source"><summary><span className="source-chip">仓库分析 · {repo.viewContext?.branch ?? '分支未提供'}</span><span>分析来源 <Icon name="chevron" size={13}/></span></summary>      <div className="analysis-context"><span>分析 <code>{viewSyncId}</code></span><span>HEAD <code>{repo.viewContext?.headCommit ?? '旧记录未提供'}</code></span><span>数据 <code>{repo.datasetVersion ?? '未提供'}</code></span><span>模型 <code>{repo.modelId ?? '未提供'}</code></span><span>运行 <code>{repo.runId ?? '未提供'}</code></span><span>{repo.modelStrategy === 'generic-model' ? '通用模型' : repo.modelStrategy === 'repository-trained' ? '仓库模型' : '模型来源未提供'}{repo.degradeReason ? ` · ${DEGRADE_LABELS[repo.degradeReason] ?? repo.degradeReason}` : ''}</span></div>
 </details>
       {repo.latestSync?.syncId !== viewSyncId ? <p className="status-note">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。<button onClick={() => navigate({ name: 'repository', repositoryId })}>检查最新成功分析</button></p> : null}
-      <p className="muted">模型分数用于安排审查，未经当前仓库概率校准；不代表已确认缺陷。仓库分析未提供逐条模型归因。</p>
+      <p className="muted">{modelName ? `分析模型：${modelName}。` : ''}模型分数用于安排审查，未经当前仓库概率校准；不代表已确认缺陷。仓库分析未提供逐条模型归因。</p>
       {selection.warning ? <p className="warning" role="alert">{selection.warning}</p> : null}
       {legacy.warning ? <p role="status" className="warning">{legacy.warning}</p> : null}
       {legacy.ids.length ? <details className="legacy-preview"><summary>发现本分析的旧清单（{legacy.ids.length} 条），预览迁入</summary><p>只迁入经当前仓库分析核对的提交；保留旧存储。{legacyRecords.failed.length} 条无法核对。</p><ol>{legacy.ids.map(id => <li key={id}><code>{id}</code> · {legacyRecords.records.has(id) ? '来源已核对' : '未核对'}</li>)}</ol><button disabled={legacyRecords.state !== 'ready'} onClick={() => { const warning = migrateLegacyPlan(dataset, legacy.ids.filter(id => legacyRecords.records.has(id))); const restored = restoreShortlist(dataset); onSelection({ ids: warning ? shortlist : restored.ids, warning: warning || restored.warning }) }}>明确迁入已核对提交</button></details> : null}

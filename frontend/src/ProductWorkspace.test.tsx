@@ -17,6 +17,7 @@ function response(body: unknown) { return new Response(JSON.stringify(body), { s
 function mockApi() {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === '/api/admin/session') return response({ authenticated: true, setupRequired: false, username: 'maintainer' })
     if (url.pathname === '/api/v1/repositories') return response({ repositories: [repo(REPO_A), repo(REPO_B)], total: 2, offset: 0, limit: 100 })
     if (url.pathname === '/api/v1/repository-syncs') return response({ syncs: [], total: 0, offset: 0, limit: 50 })
     const id = url.pathname.split('/')[4] ?? REPO_B
@@ -37,7 +38,8 @@ it('keeps repository B and its plan when visiting a report and returning', async
   expect(screen.getByText('0.81')).toBeVisible()
   expect(screen.getByText('main 分支', { exact: false })).toBeVisible()
   await user.click(screen.getByRole('button', { name: `加入 ${SHA} 到清单` }))
-  await user.click(screen.getByRole('button', { name: '验证报告' }))
+  await user.click(screen.getByRole('button', { name: '管理工作区' }))
+  await user.click(await screen.findByRole('button', { name: '验证报告' }))
   await user.click(screen.getByRole('button', { name: '项目 B' }))
   await user.click(await screen.findByRole('button', { name: '打开审查' }))
   await screen.findByRole('button', { name: `${SHA} 已在清单` })
@@ -106,7 +108,8 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByText('0.81')
-  await user.click(screen.getByRole('button', { name: '验证报告' }))
+  await user.click(screen.getByRole('button', { name: '管理工作区' }))
+  await user.click(await screen.findByRole('button', { name: '验证报告' }))
   await user.click(screen.getByRole('button', { name: '项目 B' }))
   await user.click(await screen.findByRole('button', { name: '打开审查' }))
   await screen.findByText('0.81')

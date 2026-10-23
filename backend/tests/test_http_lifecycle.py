@@ -8,6 +8,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import http.cookiejar
 from pathlib import Path
 
 import joblib
@@ -24,6 +25,21 @@ def request(port):
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/review-batch", timeout=2) as response:
             return response.status, json.load(response)
     except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+            data = json.dumps({'username': 'tcp-admin', 'password': 'isolated-tcp-test-password'}).encode()
+            for action in ('setup', 'login'):
+                try:
+                    opener.open(urllib.request.Request(f'http://127.0.0.1:{port}/api/admin/{action}', data=data, headers={'Content-Type': 'application/json'}), timeout=3).close()
+                    break
+                except urllib.error.HTTPError as failure:
+                    if failure.code != 409:
+                        raise
+            try:
+                with opener.open(f'http://127.0.0.1:{port}/api/review-batch', timeout=3) as response:
+                    return response.status, json.load(response)
+            except urllib.error.HTTPError as failure:
+                return failure.code, json.load(failure)
         return exc.code, json.load(exc)
 
 
@@ -47,7 +63,7 @@ def test_actual_tcp_unavailable_restart_and_new_model_context(copied_run, tmp_pa
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
     package_path = Path(sys.prefix) / ("Lib/site-packages" if os.name == "nt" else f"lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages")
-    code = "import sys; sys.path.insert(0,sys.argv[3]); from pathlib import Path; import uvicorn; from jit_baseline.api import create_app; uvicorn.run(create_app(Path(sys.argv[1])),host='127.0.0.1',port=int(sys.argv[2]))"
+    code = "import sys; sys.path.insert(0,sys.argv[3]); from pathlib import Path; import uvicorn; from jit_baseline.api import create_app; from jit_baseline.catalog_storage import CatalogStorage; storage=CatalogStorage(Path(sys.argv[1]).parent/'tcp-catalog.sqlite3'); storage.initialize(); uvicorn.run(create_app(Path(sys.argv[1]),database=storage.path),host='127.0.0.1',port=int(sys.argv[2]))"
     model_path = copied_run / "model.joblib"
     saved = model_path.read_bytes()
     model_path.unlink()

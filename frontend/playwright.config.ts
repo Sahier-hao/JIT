@@ -28,11 +28,12 @@ export default defineConfig({
     {
       command: `.venv\\Scripts\\python.exe -m jit_baseline.cli serve --port ${servicePort}`,
       cwd: '../backend',
-      url: `${serviceUrl(servicePort)}/api/review-batch`,
+      url: `${serviceUrl(servicePort)}/api/health`,
       reuseExistingServer: false,
       // 无凭据访问，只有隔离测试允许本地 Git 路径。
       env: {
         JIT_SYNC_ALLOW_LOCAL: '1',
+        JIT_FRONTEND_PORT: String(frontendPort),
         JIT_CATALOG_DATABASE: DATABASE,
         JIT_ARTIFACT_ROOT: ARTIFACT_ROOT,
         JIT_DATASET_ROOT: DATASET_ROOT,

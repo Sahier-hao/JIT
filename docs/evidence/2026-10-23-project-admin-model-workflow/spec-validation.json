@@ -1,0 +1,32 @@
+{
+  "proposal": {
+    "valid": true,
+    "issues": [],
+    "summary": {
+      "errors": 0,
+      "warnings": 0,
+      "info": 0
+    }
+  },
+  "deltas": {
+    "valid": true,
+    "issues": [],
+    "summary": {
+      "errors": 0,
+      "warnings": 0,
+      "info": 0
+    }
+  },
+  "mainSpecs": {
+    "valid": true,
+    "passed": 15,
+    "failed": 0,
+    "syncedCapabilities": [
+      "admin-workspace",
+      "focused-project-review",
+      "model-catalog",
+      "repository-collection",
+      "workspace-navigation"
+    ]
+  }
+}

@@ -2,10 +2,18 @@ import json
 
 import numpy as np
 import pytest
-from fastapi.testclient import TestClient
+from admin_support import AdminTestClient as TestClient
 
 from test_artifacts import copied_run, real_run  # noqa: F401
 from test_catalog_api import settings  # noqa: F401
+
+
+@pytest.fixture(autouse=True)
+def isolated_catalog(tmp_path, monkeypatch):
+    from jit_baseline.catalog_storage import CatalogStorage
+    path = tmp_path / 'api-catalog.sqlite3'
+    CatalogStorage(path).initialize()
+    monkeypatch.setenv('JIT_CATALOG_DATABASE', str(path))
 
 
 def test_actual_readonly_request_full_batch_and_unknown_operations(real_run):
