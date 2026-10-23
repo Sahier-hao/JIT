@@ -189,4 +189,27 @@ it('lets users reach an older analysis beyond the first ten', async () => {
   expect(await screen.findByRole('article', { name: `分析记录 ${OTHER}` })).toBeVisible()
 })
 
+it('restores the bound fallback model on retry even if the administrator default changed', async () => {
+  sessionStorage.clear()
+  let posted: unknown = null
+  const fetch = mockApi({ onPost: value => { posted = value } }); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'failed', stage: 'training', requestedStrategy: 'auto', requestedModelId: null, resolvedModelId: 'old-model', modelStrategy: 'generic-model', error: { code: 'MODEL_DISABLED', message: '停用' } })], total: 1, limit: 10, offset: 0 })
+    if (url.pathname.endsWith('/repository-models')) return response({ models: [
+      { modelId: 'old-model', name: '原模型', method: 'lr', state: 'ready', repositoryPredictionSupported: true, enabled: true, isDefault: false },
+      { modelId: 'new-default', name: '新默认', method: 'dt', state: 'ready', repositoryPredictionSupported: true, enabled: true, isDefault: true },
+    ] })
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  const retry = await screen.findByRole('button', { name: '用这些参数重试' })
+  document.getElementById('analysis-form-section')!.scrollIntoView = vi.fn()
+  await user.click(retry)
+  await waitFor(() => expect(screen.getByLabelText('分析模型')).toHaveValue('old-model'))
+  await waitFor(() => expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled())
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(posted).toMatchObject({ modelId: 'old-model', strategy: 'generic-model' }))
+})
+
 

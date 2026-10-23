@@ -34,6 +34,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
   const [strategy, setStrategy] = useState<SyncStrategy>(saved.strategy ?? 'auto')
   const [modelId, setModelId] = useState(saved.modelId ?? '')
   const [models, setModels] = useState<ModelChoice[]>([])
+  const [modelsLoaded, setModelsLoaded] = useState(false)
   const [modelError, setModelError] = useState('')
   const [modelRevision, setModelRevision] = useState(0)
   const [open, setOpen] = useState(Boolean(initial))
@@ -42,14 +43,14 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
   const [error, setError] = useState<unknown>(null)
   useEffect(() => {
     const controller = new AbortController()
-    repositoryModels(controller.signal).then(items => { if (!controller.signal.aborted) { setModels(items); setModelError('') } }).catch(failure => { if (!controller.signal.aborted) setModelError(failure instanceof Error ? failure.message : '模型读取失败') })
+    repositoryModels(controller.signal).then(items => { if (!controller.signal.aborted) { setModels(items); setModelsLoaded(true); setModelError('') } }).catch(failure => { if (!controller.signal.aborted) setModelError(failure instanceof Error ? failure.message : '模型读取失败') })
     return () => controller.abort()
   }, [modelRevision])
   useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, since, until, commitLimit, strategy, modelId })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, since, until, commitLimit, strategy, modelId])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    if (locked.current) return
+    if (locked.current || selectionUnavailable) return
     locked.current = true
     setBusy(true)
     setError(null)
@@ -73,6 +74,9 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
     }
   }
 
+  const selected = models.find(model => model.modelId === modelId)
+  const defaultModel = models.find(model => model.isDefault)
+  const selectionUnavailable = !!modelId && (!modelsLoaded || !!modelError || !selected?.repositoryPredictionSupported)
   const summary = [
     branch ? `分支 ${branch}` : defaultBranch ? `分支默认 ${defaultBranch}` : '默认分支',
     since || until ? `${since || '不限'} 至 ${until || '不限'}` : '最近 90 天',
@@ -101,8 +105,10 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
             <label>提交上限<input aria-label="提交上限" type="number" min="1" max="5000" value={commitLimit} onChange={event => setCommitLimit(event.target.value)}/></label>
             <label>起始日期<input aria-label="起始日期" type="date" value={since} onChange={event => setSince(event.target.value)}/></label>
             <label>结束日期<input aria-label="结束日期" type="date" value={until} onChange={event => setUntil(event.target.value)}/></label>
-            <label className="wide-field">分析模型<select aria-label="分析模型" value={modelId} onChange={event => { setModelId(event.target.value); if (event.target.value) setStrategy('generic-model') }}><option value="">按策略自动选择</option>{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!model.repositoryPredictionSupported}>{model.name}{!model.repositoryPredictionSupported ? '（当前不可用于仓库分析）' : ''}</option>)}</select></label>
-            {modelError ? <p className="field-error" role="alert">模型列表暂时不可用。<button type="button" className="text-button" onClick={() => setModelRevision(value => value + 1)}>重新读取模型</button></p> : <p className="form-hint">{models.length ? `${models.filter(model => model.repositoryPredictionSupported).length} 个模型可用于仓库分析。` : '尚无已登记模型，可按策略训练；现成模型需要管理员先校验登记。'}<button type="button" className="text-button" onClick={() => setModelRevision(value => value + 1)}>刷新模型</button></p>}
+            <label className="wide-field">分析模型<select aria-label="分析模型" value={modelId} onChange={event => { setModelId(event.target.value); if (event.target.value) setStrategy('generic-model') }}><option value="">按策略使用默认模型</option>{modelId && modelsLoaded && !selected ? <option value={modelId} disabled>原选模型（已不存在）</option> : null}{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!model.repositoryPredictionSupported}>{model.name}{!model.enabled ? '（已停用）' : !model.repositoryPredictionSupported ? '（当前不可用于仓库分析）' : model.isDefault ? '（默认）' : ''}</option>)}</select></label>
+            <p className="form-hint wide-field">{modelError ? '默认模型设置暂时无法读取，请重试。' : !modelsLoaded ? '正在读取模型设置…' : defaultModel ? `管理员默认模型：${defaultModel.name}${!defaultModel.repositoryPredictionSupported ? '（当前不可用，请明确选择其他模型或联系管理员）' : ''}。` : '尚未设置默认模型，请管理员登记兼容模型。'}明确选择优先；自动策略数据不足时使用提交任务时的默认模型。</p>
+            {modelId && !modelsLoaded && !modelError ? <p role="status" className="form-hint wide-field">正在核对原选模型…</p> : selectionUnavailable ? <p role="alert" className="field-error wide-field">原选模型已停用或不可用，请刷新后重新选择。不会自动替换。</p> : null}
+            {modelError ? <p className="field-error" role="alert">模型列表暂时不可用。<button type="button" className="text-button" onClick={() => setModelRevision(value => value + 1)}>重新读取模型</button></p> : <p className="form-hint">{!modelsLoaded ? '正在读取模型列表…' : models.length ? `${models.filter(model => model.repositoryPredictionSupported).length} 个模型可用于仓库分析。` : '尚无已登记模型，可按策略训练；现成模型需要管理员先校验登记。'}<button type="button" className="text-button" onClick={() => setModelRevision(value => value + 1)}>刷新模型</button></p>}
             {!modelId ? <label className="wide-field">模型策略<select aria-label="模型策略" value={strategy} onChange={event => setStrategy(event.target.value as SyncStrategy)}>{STRATEGIES.map(value => <option key={value} value={value}>{STRATEGY_LABELS[value]}</option>)}</select></label> : null}
           </div>
         </fieldset>
@@ -110,7 +116,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
       {error ? <div className="analysis-form-error"><FailureNotice error={error}/></div> : null}
       <div className="form-submit">
         <p>{since || until ? '按所选日期范围分析' : '默认分析最近 90 天'}，最多 {commitLimit || '500'} 个提交。发起后会新增一条记录，当前结果不会被覆盖。</p>
-        <button className="primary-button" type="submit" disabled={busy}>{busy ? '正在发起…' : '开始分析'}<Icon name="arrow"/></button>
+        <button className="primary-button" type="submit" disabled={busy || selectionUnavailable}>{busy ? '正在发起…' : '开始分析'}<Icon name="arrow"/></button>
       </div>
     </div>
   </form>

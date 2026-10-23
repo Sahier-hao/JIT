@@ -4,6 +4,7 @@ import { ApiError, record, recordList } from '../apiContract'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
 import { VerificationReport } from '../VerificationReport'
+import { ModelPolicyCards } from './ModelPolicyCards'
 
 interface Session { authenticated: boolean; setupRequired: boolean; username: string | null }
 type Row = Record<string, unknown>
@@ -95,8 +96,24 @@ function AdminResources({ view, expired }: { view: 'models' | 'datasets'; expire
     } catch (failure) { if (failure instanceof ApiError && failure.status === 401) expired(); else setError(failure instanceof Error ? failure.message : '登记失败') }
     finally { lock.current = false; setBusy('') }
   }
+  async function updatePolicy(modelId: string, changes: { enabled?: boolean; isDefault?: boolean }) {
+    if (lock.current) return
+    lock.current = true; setBusy(modelId); setError(''); setNotice('')
+    try {
+      const saved = record(await apiRequest({ path: `/api/v1/models/${encodeURIComponent(modelId)}/policy`, method: 'PATCH', body: changes }))
+      setModels(previous => previous.map(model => ({ ...model,
+        ...(saved.isDefault === true ? { isDefault: model.modelId === modelId } : {}),
+        ...(model.modelId === modelId ? saved : {}),
+      })))
+      setNotice(changes.isDefault ? '默认模型已更新。新任务使用新设置；已排队任务保持原模型。' : changes.enabled ? '模型已启用，可在分析选项中选择。' : '模型已停用，已完成结果保留。')
+      setRevision(value => value + 1)
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) expired()
+      else setError(failure instanceof Error ? failure.message : '模型设置保存失败')
+    } finally { lock.current = false; setBusy('') }
+  }
   return <section><header className="page-heading"><div><h1>{view === 'models' ? '模型管理' : '数据记录'}</h1><p className="page-intro">{view === 'models' ? '登记实际交付的模型，并核对它们是否适用于仓库分析。' : '集中核对已登记的数据来源与版本。'}</p></div><button className="clear-button" onClick={() => setRevision(value => value + 1)}>刷新</button></header>{error ? <p className="field-error" role="alert">{error}</p> : null}{notice ? <p role="status" className="admin-notice">{notice}</p> : null}
-    {loading ? <LoadingNotice label="正在读取管理记录"/> : view === 'models' ? <><h2>已登记模型 <small>{models.length}</small></h2><div className="admin-model-grid">{models.map(model => <article className="admin-model-card" key={label(model.modelId)}><span className="source-chip">{model.state === 'ready' ? '已校验' : '不可用'}</span><h3>{label(model.name)}</h3><p>{label(model.method)}</p><p>{label(model.featureSchemaVersion)}</p><p className="form-hint">{model.state === 'ready' && ['openstack-six-v1', 'kamei14-git-v1'].includes(label(model.featureSchemaVersion)) ? '可用于项目分析' : '不适用于当前仓库输入或需要重新校验'}</p><details><summary>模型身份</summary><code>{label(model.modelId)}</code></details></article>)}</div>{!models.length ? <p className="quiet-empty">尚无已登记模型，请从下方实际产物校验登记。</p> : null}<MethodAvailability methods={methods}/><h2>本机模型产物</h2><p className="form-hint">产物存在不代表已通过准入。登记会检查文件完整性、输入契约和运行环境，不会重训。</p><div className="admin-candidates">{candidates.map(candidate => <article className="admin-candidate" key={label(candidate.candidateId)}><div><strong>{label(candidate.displayName)}</strong><p>{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div><button className="clear-button" disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '校验并登记'}</button></article>)}</div>{!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型。请先由维护者交付完整产物。</p> : null}</> : <DatasetRecords datasets={datasets}/>}
+    {loading ? <LoadingNotice label="正在读取管理记录"/> : view === 'models' ? <><h2>已登记模型 <small>{models.length}</small></h2><ModelPolicyCards models={models} busy={!!busy} update={updatePolicy}/>{!models.length ? <p className="quiet-empty">尚无已登记模型，请从下方实际产物校验登记。</p> : null}<MethodAvailability methods={methods}/><h2>本机模型产物</h2><p className="form-hint">产物存在不代表已通过准入。登记会检查文件完整性、输入契约和运行环境，不会重训。</p><div className="admin-candidates">{candidates.map(candidate => <article className="admin-candidate" key={label(candidate.candidateId)}><div><strong>{label(candidate.displayName)}</strong><p>{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div><button className="clear-button" disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '校验并登记'}</button></article>)}</div>{!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型。请先由维护者交付完整产物。</p> : null}</> : <DatasetRecords datasets={datasets}/>}
   </section>
 }
 
@@ -118,5 +135,5 @@ function DatasetRecords({ datasets }: { datasets: Row[] }) {
 
 function MethodAvailability({ methods }: { methods: Row[] }) {
   if (!methods.length) return null
-  return <section className="method-availability" aria-label="方法支持情况"><h2>方法支持情况 <small>{methods.length}</small></h2><p className="form-hint">支持的方法与可用模型分别统计；已交付产物校验登记后，才能用于项目分析。</p><ul>{methods.map(method => <li key={label(method.method)}><div><strong>{label(method.name)}</strong><span className="form-hint">{method.category === 'deep' ? '深度学习' : '经典机器学习'}</span></div><span>{Number(method.registeredModels) > 0 ? `可用模型 ${method.registeredModels}` : Number(method.deliveredArtifacts) > 0 ? '待校验登记' : '无已交付产物'}</span></li>)}</ul></section>
+  return <section className="method-availability" aria-label="方法支持情况"><h2>方法支持情况 <small>{methods.length}</small></h2><p className="form-hint">支持方法与已校验模型分别统计；项目能否选择模型还取决于上方卡片的启停与兼容状态。</p><ul>{methods.map(method => <li key={label(method.method)}><div><strong>{label(method.name)}</strong><span className="form-hint">{method.category === 'deep' ? '深度学习' : '经典机器学习'}</span></div><span>{Number(method.registeredModels) > 0 ? `已校验模型 ${method.registeredModels}` : Number(method.deliveredArtifacts) > 0 ? '待校验登记' : '无已交付产物'}</span></li>)}</ul></section>
 }

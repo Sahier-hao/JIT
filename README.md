@@ -16,4 +16,4 @@
 - [真实基线结果与复现](docs/evidence/connect-public-data-baseline-review/baseline-report.md)
 - [已归档 change](openspec/changes/archive/2026-10-11-connect-public-data-baseline-review/proposal.md)
 
-前端：127.0.0.1:4173；API：127.0.0.1:8000。用户入口 `#/projects`，管理员入口 `#/admin`。首次进入管理工作区建立账户，后续凭密码登录；没有默认密码。升级前备份目录库，再执行 `catalog-init` 应用迁移 007。历史需求、规格与证据保留各自的版本和日期。
+前端：127.0.0.1:4173；API：127.0.0.1:8000。用户入口 `#/projects`，管理员入口 `#/admin`。首次进入管理工作区建立账户，后续凭密码登录；没有默认密码。管理员可设置仓库分析默认模型、启用或停用模型；用户明确选择优先，历史结果保留。升级前备份目录库，再执行 `catalog-init` 应用迁移 008。历史需求、规格与证据保留各自的版本和日期。

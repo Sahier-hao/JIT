@@ -106,6 +106,8 @@ def test_explicit_model_is_selected_and_incompatible_models_rejected(tmp_path):
     storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
     storage.initialize()
     class Catalog:
+        def policy(self, model_id):
+            return {'enabled': True, 'isDefault': False}
         def models(self, state=None):
             return [{'modelId': key, 'featureSchemaVersion': schema} for key, schema in
                     [('first', 'openstack-six-v1'), ('second', 'openstack-six-v1'), ('wrong', 'kamei14-v1')]]

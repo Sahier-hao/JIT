@@ -55,7 +55,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "requested_strategy", "status", "stage", "error_code", "error_message",
            "dataset_version", "run_id", "model_id", "model_strategy", "degrade_reason",
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
-           "completed_at", "head_commit", "analysis_branch", "requested_model_id")
+           "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id")
 
 REPOSITORY_COLUMNS = ("id", "url", "display_name", "default_branch", "latest_sync_id",
                       "latest_sync_at", "view_sync_id", "head_commit", "commit_count",
@@ -144,6 +144,7 @@ def _view(row):
             "since": item["since"], "until": item["until"], "commitLimit": item["commit_limit"],
             "requestedStrategy": item["requested_strategy"], "status": item["status"],
             "requestedModelId": item.get('requested_model_id'),
+            "resolvedModelId": item.get('resolved_model_id'),
             "stage": item["stage"], "datasetVersion": item["dataset_version"],
             "runId": item["run_id"], "modelId": item["model_id"],
             "modelStrategy": item["model_strategy"], "degradeReason": item["degrade_reason"],
@@ -184,14 +185,14 @@ class SyncStorage:
             row = db.execute("SELECT * FROM repository_sync WHERE id=?", (sync_id,)).fetchone()
         return _view(row) if row is not None else None
 
-    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None):
+    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM repository_sync WHERE repository_url=? AND branch=? AND since IS ? "
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
-                f"AND requested_model_id IS ? AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
-                (repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id, *PROGRESS)).fetchone()
+                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
+                (repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id, resolved_model_id, *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
     def pages(self, limit=20, offset=0):
@@ -617,12 +618,20 @@ class SyncService:
             if not isinstance(model_id, str) or not model_id.strip() or data['requestedStrategy'] != 'generic-model':
                 raise BaselineError('INPUT_INVALID', '指定模型时请选择现成模型策略')
             self._generic_model(model_id)
+        resolved_model_id = model_id
+        if not model_id and data['requestedStrategy'] != 'force-train':
+            resolved_model_id = self.catalog.default_model_id()
+            if data['requestedStrategy'] == 'generic-model':
+                if not resolved_model_id:
+                    raise BaselineError('DEFAULT_MODEL_REQUIRED', '请管理员先设置默认模型或明确选择模型')
+                self._generic_model(resolved_model_id)
         now = utc_now()
         with self._lock:
             existing = self.sync.find_active(repository_url=data["repositoryUrl"], branch=data["branch"],
                                              since=data["since"], until=data["until"],
                                              commit_limit=data["commitLimit"],
-                                             requested_strategy=data["requestedStrategy"], requested_model_id=model_id)
+                                             requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
+                                             resolved_model_id=resolved_model_id)
             if existing is not None:
                 return existing, False
             repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
@@ -633,6 +642,7 @@ class SyncService:
                               "commit_limit": data["commitLimit"],
                               "requested_strategy": data["requestedStrategy"], "status": "queued",
                                "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
+                              "resolved_model_id": resolved_model_id,
                               "created_at": now, "updated_at": now})
             self.sync.repository_update(repository_id, latest_sync_id=sync_id,
                                         latest_sync_at=now, default_branch=data["branch"])
@@ -874,20 +884,15 @@ class SyncService:
         self.sync.update(sync_id, status=stage, stage=stage)
 
     def _generic_model(self, model_id=None):
-        if model_id:
-            snapshot, payload = self.catalog.load_model(model_id)
-            if payload.get('featureSchemaVersion') not in (GENERIC_SCHEMA, SCHEMA_NAME):
-                raise BaselineError('INPUT_SCHEMA_MISMATCH', '所选模型无法读取仓库采集特征，请选择兼容模型')
-            return snapshot, payload
-        for payload in self.catalog.models("ready"):
-            if payload.get("featureSchemaVersion") != GENERIC_SCHEMA:
-                continue
-            try:
-                return self.catalog.load_model(payload["modelId"])
-            except BaselineError:
-                continue
-        raise BaselineError("MODEL_NOT_READY",
-                            "模型目录里没有可用于该仓库数据的现成模型，请改用自动或训练")
+        model_id = model_id or self.catalog.default_model_id()
+        if not model_id:
+            raise BaselineError('DEFAULT_MODEL_REQUIRED', '请管理员设置默认模型或明确选择模型')
+        if not self.catalog.policy(model_id)['enabled']:
+            raise BaselineError('MODEL_DISABLED', '所选模型已停用，请重新选择')
+        snapshot, payload = self.catalog.load_model(model_id)
+        if payload.get('featureSchemaVersion') not in (GENERIC_SCHEMA, SCHEMA_NAME):
+            raise BaselineError('INPUT_SCHEMA_MISMATCH', '所选模型无法读取仓库采集特征，请选择兼容模型')
+        return snapshot, payload
 
     def _persist(self, sync_id, item, collected):
         """写 CSV、登记数据集并入库；返回描述文件绝对路径与版本名（RCL-08）。"""
@@ -951,7 +956,10 @@ class SyncService:
                 inputs = [{"features": record["features"]} for record in records]
                 run_id = built["runId"]
             else:
-                snapshot, payload = self._generic_model(item['requestedModelId']) if item.get('requestedModelId') else self._generic_model()
+                model_choice = item.get('resolvedModelId') or item.get('requestedModelId')
+                if not model_choice:
+                    raise BaselineError('DEFAULT_MODEL_REQUIRED', '提交任务时没有默认模型，请重新发起分析')
+                snapshot, payload = self._generic_model(model_choice)
                 model_id = payload["modelId"]
                 schema = resolve(payload.get('featureSchemaVersion', GENERIC_SCHEMA))
                 fields = schema.in_model_names()
@@ -974,7 +982,7 @@ class SyncService:
         except BaselineError as exc:
             current = self.sync.get(sync_id) or {}
             degrade = (decision or {}).get("degradeReason")
-            if exc.code == "MODEL_NOT_READY":
+            if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):
                 degrade = "noGenericModel"
             self.sync.update(sync_id, status="failed", stage=current.get("stage") or "unknown",
                              error_code=exc.code, error_message=str(exc),

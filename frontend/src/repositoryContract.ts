@@ -49,6 +49,7 @@ export interface SyncError {
 }
 
 export interface SyncView {
+  resolvedModelId?: string | null
   requestedModelId?: string | null
   syncId: string
   repositoryId: string | null
@@ -158,6 +159,7 @@ export function parseSync(value: unknown): SyncView {
     repositoryId: textOrNull(raw.repositoryId),
     repositoryUrl: text(raw.repositoryUrl),
     requestedModelId: raw.requestedModelId == null ? null : text(raw.requestedModelId),
+    resolvedModelId: raw.resolvedModelId == null ? null : text(raw.resolvedModelId),
     branch,
     since: textOrNull(raw.since),
     until: textOrNull(raw.until),
@@ -267,6 +269,10 @@ export interface FailureHint {
 export function failHint(error: SyncError | null): FailureHint | null {
   if (error === null) return null
   switch (error.code) {
+    case 'MODEL_DISABLED':
+      return { title: '原选模型已停用', next: '刷新分析选项中的模型列表并重新选择，再发起新分析。已有结果仍可查看。' }
+    case 'DEFAULT_MODEL_REQUIRED':
+      return { title: '尚无可用默认模型', next: '明确选择一个已启用的兼容模型，或请管理员设置默认模型后重新发起。' }
     case 'REPOSITORY_UNAVAILABLE':
       return { title: '仓库打不开或分支不存在', next: '确认地址是公开的 HTTP(S) 仓库、分支名拼写正确，或换一个仓库再试。' }
     case 'DATASET_INVALID':

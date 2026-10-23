@@ -165,6 +165,7 @@ def test_same_parameters_reuse_an_active_job(harness):
     rows = [{"id": "sync-in-flight", "repository_url": "https://example.com/x.git",
              "branch": "HEAD", "since": since, "until": until, "commit_limit": 500,
              "requested_strategy": "auto", "status": "collecting", "stage": "collecting",
+             "resolved_model_id": harness['catalog'].default_model_id(),
              "created_at": "2026-01-01T00:00:00+00:00", "updated_at": "2026-01-01T00:00:00+00:00"}]
     harness["service"].sync.create(rows[0])
     again, created = harness["service"].create(
@@ -205,7 +206,7 @@ def test_missing_generic_model_fails_with_reason(tmp_path, real_run):  # noqa: F
                               "until": UNTIL, "commitLimit": 500, "strategy": "auto"})
     done = _wait(service, view["syncId"])
     assert done["status"] == "failed"
-    assert done["error"]["code"] == "MODEL_NOT_READY"
+    assert done["error"]["code"] == "DEFAULT_MODEL_REQUIRED"
     assert done["degradeReason"] == "noGenericModel"
     with TestClient(app) as client:
         assert client.get("/api/v1/repository-syncs", headers=HEADERS).json()["total"] == 1
