@@ -126,6 +126,10 @@ describe('syncBody', () => {
 })
 
 describe('failHint', () => {
+  it('模型策略错误说明重新选择或联系管理员', () => {
+    expect(failHint({ code: 'MODEL_DISABLED', message: '停用' })?.next).toContain('重新选择')
+    expect(failHint({ code: 'DEFAULT_MODEL_REQUIRED', message: '缺少默认' })?.next).toContain('管理员')
+  })
   it('未登记错误码保留通用说明，不猜测具体原因', () => {
     expect(failHint({ code: 'SOMETHING_NEW', message: '未知' })).toEqual({
       title: '同步未完成',

@@ -88,7 +88,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       until: job.until ?? '',
       commitLimit: String(job.commitLimit),
       strategy: job.requestedStrategy,
-      modelId: job.requestedModelId ?? '',
+      modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
     document.getElementById('analysis-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }

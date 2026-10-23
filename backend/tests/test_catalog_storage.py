@@ -12,7 +12,7 @@ def test_initialize_is_versioned_idempotent_and_reopens(tmp_path):
     store.initialize()
     with store.connection() as db:
         assert db.execute('PRAGMA foreign_keys').fetchone()[0] == 1
-        assert db.execute('SELECT version FROM schema_migration').fetchone()[0] == 7
+        assert db.execute('SELECT version FROM schema_migration').fetchone()[0] == 8
         assert db.execute('SELECT count(*) FROM model_version').fetchone()[0] == 0
     with CatalogStorage(store.path).connection() as db:
         assert db.execute('SELECT count(*) FROM prediction').fetchone()[0] == 0
@@ -82,7 +82,7 @@ def test_initialize_cli_is_explicit(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr('sys.argv', ['jit', 'catalog-init', '--database', str(database)])
     main()
     result = json.loads(capsys.readouterr().out)
-    assert result == {'kind': 'catalog-initialized', 'version': 7}
+    assert result == {'kind': 'catalog-initialized', 'version': 8}
     assert database.exists()
 
 

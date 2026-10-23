@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-23",
+  "branch": "codex/model-policy",
+  "baseCommit": "ef872190c00e0556d3bf2f4ead832619e055080d",
+  "backend": {
+    "command": "python -m pytest backend/tests -q --tb=short",
+    "passed": 373,
+    "warnings": 2
+  },
+  "frontend": {
+    "full": {
+      "command": "npm test -- --maxWorkers=1 --no-file-parallelism",
+      "passed": 237,
+      "files": 29
+    },
+    "afterLoadingStateChange": {
+      "passed": 31,
+      "files": 4
+    }
+  },
+  "browser": {
+    "full": {
+      "startTime": "2026-10-23T03:36:53.780Z",
+      "duration": 256394.599,
+      "expected": 14,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "fullCases": [
+      {
+        "name": "普通工作区只显示项目，管理接口拒绝未登录访问",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "建立项目只登记地址，不产生分析",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "真实本地 Git：选择决策树、等待完成、审查计划和刷新",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "九种模型都实际用于仓库分析",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "管理员登录、模型产物登记、验证报告和退出权限",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "旧工具链接明确退役，旧报告链接进入管理员登录",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "普通工作区只显示项目，管理接口拒绝未登录访问",
+        "project": "desktop-1440",
+        "status": "passed"
+      },
+      {
+        "name": "建立项目只登记地址，不产生分析",
+        "project": "desktop-1440",
+        "status": "passed"
+      },
+      {
+        "name": "真实本地 Git：选择决策树、等待完成、审查计划和刷新",
+        "project": "desktop-1440",
+        "status": "passed"
+      },
+      {
+        "name": "九种模型都实际用于仓库分析",
+        "project": "desktop-1440",
+        "status": "passed"
+      },
+      {
+        "name": "管理员登录、模型产物登记、验证报告和退出权限",
+        "project": "desktop-1440",
+        "status": "passed"
+      },
+      {
+        "name": "旧工具链接明确退役，旧报告链接进入管理员登录",
+        "project": "desktop-1440",
+        "status": "passed"
+      },
+      {
+        "name": "管理员设置默认、用户指定优先、停用拦截及历史保留",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "管理员设置默认、用户指定优先、停用拦截及历史保留",
+        "project": "desktop-1440",
+        "status": "passed"
+      }
+    ],
+    "afterMetadataReadyChecks": {
+      "startTime": "2026-10-23T03:49:55.122Z",
+      "duration": 101332.614,
+      "expected": 2,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "recheckCases": [
+      {
+        "name": "管理员设置默认、用户指定优先、停用拦截及历史保留",
+        "project": "desktop-1280",
+        "status": "passed"
+      },
+      {
+        "name": "管理员设置默认、用户指定优先、停用拦截及历史保留",
+        "project": "desktop-1440",
+        "status": "passed"
+      }
+    ],
+    "screenshotsCheckedAtTop": true
+  },
+  "quality": {
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 9,
+    "mainSpecsStrict": 15,
+    "deltaCapabilities": 3,
+    "allDeltaRequirementsSynced": true
+  },
+  "performance": {
+    "samples": 100,
+    "p95Ms": 231.2,
+    "budgetMs": 250,
+    "integrityCheckedBeforeAndAfterCache": true,
+    "cacheEntriesPerCatalog": 16
+  },
+  "localUpgrade": {
+    "backup": ".cache/db-backups/catalog-before-model-policy-20261023-111356.sqlite3",
+    "schema": 8,
+    "allExistingRowsPreserved": true,
+    "models": 9,
+    "admins": 1,
+    "analyses": 7,
+    "defaultModelId": "39297fbd-57cf-4eea-8620-0127ddecc6c0"
+  },
+  "screenshots": [
+    {
+      "path": "model-policy-admin-desktop-1440.png",
+      "width": 390,
+      "height": 6149
+    },
+    {
+      "path": "model-policy-project-desktop-1440.png",
+      "width": 390,
+      "height": 2851
+    }
+  ],
+  "sourceSha256": {
+    "backend/jit_baseline/catalog.py": "44739aab45b3b9fe88da9a108c4f404aae1352b562a56dfb7b0fabefe42e4ee5",
+    "backend/jit_baseline/catalog_storage.py": "dabe57b42e20a537a9f08964124821825a5efbd0d734229e18c7030df1ab79d4",
+    "backend/jit_baseline/api.py": "ae817a76496afae80760bc4f89a7c379c175b4b2993cba6b213b8fcb7978bb46",
+    "backend/jit_baseline/api_errors.py": "18a74fea79e82292ce3cce40baa78b6c64c98c87632ea23820552de3de76bd2b",
+    "backend/jit_baseline/sync.py": "a9dca71f0ded5959f4a6fdc02ba37ac7b7dfdbaec3035310da9099b02bf1685c",
+    "backend/jit_baseline/migrations/008_model_policy.sql": "00ca02fb5918f69fd1dfc67ce345091343de328072f76bf1ea8583171a7e3971",
+    "backend/tests/test_model_policy.py": "a799389c499fb1cfbb713df6b5e875f6fe9ddd41a96f8bb482afc027631f6404",
+    "frontend/src/pages/ModelPolicyCards.tsx": "d28548f2cd86cb3e3bcf11b68f5ebe92c9d10b4249ed1b712f63f9445e6839e1",
+    "frontend/src/pages/AdminWorkspace.tsx": "f6c7e06c8e0e7af5f332eaa9fcb77937f26140e72beecdf0fd5e8081e3e7a26a",
+    "frontend/src/pages/ProjectPage.tsx": "777125024f4e15f0411fa9bcf352d395406f1433d640df748b9573555a0d3e87",
+    "frontend/src/modelClient.ts": "0dd2ac30c62e12c8ee7eef17843e3843afb1eba0e749561aaa75bb877d994c86",
+    "frontend/src/components/AnalysisForm.tsx": "a3433cd2e184c7597020c7d00dae9ef176c86ede694f2f43dfd94638478532c7",
+    "frontend/src/repositoryContract.ts": "d9d1e3cbaf9cc7d273510900ad4660ce3127edc31602527088fda9b04e9abf08",
+    "frontend/e2e/model-policy.spec.ts": "74b1561d7ee93d77d2945c88218574733882cba85631e073646ebdd4a1eda3bc"
+  }
+}

@@ -9,12 +9,20 @@
 .admin-model-card h3 { font-size: 18px; margin: 18px 0 12px; }
 .admin-model-card p { overflow-wrap: anywhere; }
 .admin-model-card code { overflow-wrap: anywhere; font-size: 12px; }
+.admin-model-card[data-default="true"] { border-color: var(--accent); }
+.admin-model-card[data-disabled="true"] { border-style: dashed; }
+.model-state-row, .model-policy-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.model-default-badge { font-size: 12px; font-weight: 600; }
+.model-policy-actions { margin: 20px 0 16px; }
+.model-policy-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .admin-candidates { display: grid; gap: 12px; margin-top: 20px; }
 .admin-candidate { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line-strong); border-radius: 10px; padding: 18px 22px; min-width: 0; }
 .admin-candidate p { margin: 6px 0 0; overflow-wrap: anywhere; font-size: 13px; }
 .admin-notice { padding: 16px; border-left: 3px solid currentColor; }
 .record-confirm { margin-top: 20px; padding: 20px; border: 1px solid var(--line-strong); border-radius: 10px; }
 .record-confirm .danger-button { margin-right: 16px; }
+.model-disable-confirm { margin: 12px 0 20px; padding: 14px; }
+.model-disable-confirm button { margin-top: 8px; }
 .admin-workspace h2 small { font-weight: 400; margin-left: 8px; }
 .method-availability { margin: 28px 0 36px; }
 .method-availability ul { list-style: none; padding: 0; }

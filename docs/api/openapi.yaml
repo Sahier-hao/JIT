@@ -1410,6 +1410,44 @@ paths:
           description: Invalid account or password
         '429':
           description: Too many login attempts
+  /api/v1/models/{modelId}/policy:
+    patch:
+      operationId: updateModelPolicy
+      summary: 设置仓库分析默认模型及启停状态
+      description: 仅管理员可修改。停用当前默认模型返回 409，须先设置另一已启用兼容模型。历史结果不变。
+      security:
+      - AdminSession: []
+      parameters:
+      - name: modelId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelPolicyUpdate'
+      responses:
+        '200':
+          description: 已持久保存的模型策略
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelPolicy'
+        '401':
+          description: 管理员会话缺失或过期
+        '403':
+          description: 跨来源写入被拒绝
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: MODEL_DISABLED 或 DEFAULT_MODEL_REQUIRED，未更改策略
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          description: 产物或存储不可用，未更改策略
   /api/v1/repository-models:
     get:
       operationId: repositoryModelChoices
@@ -1417,9 +1455,66 @@ paths:
       summary: Public registered model choice metadata without maintenance evidence
       responses:
         '200':
-          description: Registered model choices and compatibility
+          description: Registered model choices and compatibility, including disabled historical identities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelChoiceList'
 components:
   schemas:
+    ModelPolicyUpdate:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        isDefault:
+          const: true
+      minProperties: 1
+      additionalProperties: false
+      not:
+        required: [enabled, isDefault]
+        properties:
+          enabled:
+            const: false
+    ModelPolicy:
+      type: object
+      properties:
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        enabled:
+          type: boolean
+        isDefault:
+          type: boolean
+      required: [modelId, enabled, isDefault]
+      additionalProperties: false
+    ModelChoiceList:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            type: object
+            properties:
+              modelId:
+                $ref: '#/components/schemas/Uuid'
+              name:
+                type: string
+              method:
+                type: string
+              state:
+                enum: [ready, invalid]
+              featureSchemaVersion:
+                type: string
+              enabled:
+                type: boolean
+              isDefault:
+                type: boolean
+              repositoryPredictionSupported:
+                type: boolean
+            required: [modelId, name, method, state, featureSchemaVersion, enabled, isDefault, repositoryPredictionSupported]
+            additionalProperties: false
+      required: [models]
+      additionalProperties: false
     ModelRegistration:
       type: object
       properties:
@@ -2102,6 +2197,8 @@ components:
       - INPUT_LIMIT_EXCEEDED
       - CONTEXT_MISMATCH
       - MODEL_NOT_READY
+      - MODEL_DISABLED
+      - DEFAULT_MODEL_REQUIRED
       - RUN_NOT_READY
       - EXPLANATION_FAILED
       - STORAGE_UNAVAILABLE
@@ -2882,6 +2979,9 @@ components:
             - code
             - message
             additionalProperties: false
+        resolvedModelId:
+          type: [string, 'null']
+          description: 入队时绑定的现成模型身份；默认切换不改变此值，自动策略实际训练时不使用它。
         requestedModelId:
           type:
           - string
@@ -3744,6 +3844,10 @@ components:
     ModelInfo:
       type: object
       properties:
+        enabled:
+          type: boolean
+        isDefault:
+          type: boolean
         modelId:
           $ref: '#/components/schemas/Uuid'
         name:
@@ -3807,6 +3911,8 @@ components:
           - message
           additionalProperties: false
       required:
+      - enabled
+      - isDefault
       - modelId
       - name
       - runId

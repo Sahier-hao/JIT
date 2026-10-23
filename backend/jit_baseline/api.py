@@ -110,8 +110,13 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         # Public selection metadata only: no training evidence, paths or verification reports.
         return {'models': [dict(modelId=item['modelId'], name=item['name'], method=item['method'],
                                 featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
-                                repositoryPredictionSupported=item['state'] == 'ready' and item['featureSchemaVersion'] in
+                                enabled=item['enabled'], isDefault=item['isDefault'],
+                                repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
                                 ('openstack-six-v1', 'kamei14-git-v1')) for item in catalog.models()]}
+
+    @app.patch('/api/v1/models/{model_id}/policy')
+    async def model_policy(model_id: str, request: Request):
+        return await run_in_threadpool(catalog.update_policy, model_id, await read_object(request))
 
     @app.get('/api/v1/feature-schemas/{version}')
     def feature_schema(version: str):

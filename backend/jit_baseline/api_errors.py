@@ -32,6 +32,8 @@ MESSAGES = {
     'ARTIFACT_INVALID': '运行声明或环境无效，请核验产物',
     'MODEL_INVALID': '模型不可加载或结构无效',
     'MODEL_NOT_READY': '模型不可用，请重新校验登记',
+    'MODEL_DISABLED': '所选模型已停用，请刷新模型列表并重新选择；历史结果仍可查看',
+    'DEFAULT_MODEL_REQUIRED': '请管理员先设置另一个可用的默认模型；也可明确选择已启用模型',
     'INFERENCE_ERROR': '所选模型推理失败，未保存预测',
     'REPOSITORY_UNAVAILABLE': '仓库不可用：请检查地址、分支或网络后重试',
     'SYNC_TIMEOUT': '同步超时，请缩小时间范围或提交上限后重试',
@@ -44,6 +46,7 @@ MESSAGES = {
     'CONFLICT_ACTIVE_SYNC': '还有进行中的分析，请等待结束后再操作',
 }
 STATUS = {'NOT_FOUND': 404,
+          'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
           'REPOSITORY_ANALYSIS_UNKNOWN': 404, 'REPOSITORY_ANALYSIS_UNAVAILABLE': 409,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
@@ -59,7 +62,7 @@ class RequestError(BaselineError):
 
 
 def managed_path(path):
-    return path.startswith('/api/admin/') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
