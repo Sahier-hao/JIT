@@ -15,7 +15,7 @@ if not LOGGER.handlers:
     LOGGER.addHandler(handler)
 API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
-                '/api/v1/repository-syncs', '/api/v1/repositories'}
+                '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models'}
 MESSAGES = {
     'NOT_FOUND': '指定资源不存在',
     'INPUT_INVALID': '请求格式或字段值无效',
@@ -59,7 +59,7 @@ class RequestError(BaselineError):
 
 
 def managed_path(path):
-    return path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
@@ -85,6 +85,7 @@ def install_errors(app):
         except Exception:
             response = JSONResponse({'error': {'code': 'INFERENCE_ERROR',
                 'message': MESSAGES['INFERENCE_ERROR'], 'requestId': request.state.request_id}}, status_code=500)
+        request.state.request_id = response.headers.get('X-Request-Id', request.state.request_id)
         response.headers['X-Request-Id'] = request.state.request_id
         response.headers['Cache-Control'] = 'no-store'
         model_id, run_id, batch_id = getattr(request.state, 'business_ids', (None, None, None))

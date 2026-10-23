@@ -47,7 +47,7 @@ def test_prediction_explanation_is_documented():
 
 
 def test_supported_explanation_matches_documented_schema(settings):
-    from fastapi.testclient import TestClient
+    from admin_support import AdminTestClient as TestClient
     from jit_baseline.api import create_app
     schema = document()['components']['schemas']['PredictionExplanation']
     validator = jsonschema.Draft202012Validator(schema)
@@ -64,7 +64,7 @@ def test_supported_explanation_matches_documented_schema(settings):
 
 
 def test_degraded_explanation_keeps_documented_reason(settings, monkeypatch):
-    from fastapi.testclient import TestClient
+    from admin_support import AdminTestClient as TestClient
     from jit_baseline import attribution
     from jit_baseline.api import create_app
 

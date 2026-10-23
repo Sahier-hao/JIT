@@ -1,0 +1,29 @@
+.admin-signin { max-width: 560px; margin: 48px auto; }
+.admin-signin .repository-form { display: grid; gap: 20px; margin-top: 28px; }
+.admin-signin label { display: grid; gap: 8px; }
+.admin-toolbar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.admin-badge { margin-right: auto; font-size: 13px; font-weight: 600; }
+.admin-workspace > .view-tabs { margin-bottom: 32px; }
+.admin-model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 18px 0 36px; }
+.admin-model-card { border: 1px solid var(--line-strong); border-radius: 12px; padding: 22px; min-width: 0; }
+.admin-model-card h3 { font-size: 18px; margin: 18px 0 12px; }
+.admin-model-card p { overflow-wrap: anywhere; }
+.admin-model-card code { overflow-wrap: anywhere; font-size: 12px; }
+.admin-candidates { display: grid; gap: 12px; margin-top: 20px; }
+.admin-candidate { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line-strong); border-radius: 10px; padding: 18px 22px; min-width: 0; }
+.admin-candidate p { margin: 6px 0 0; overflow-wrap: anywhere; font-size: 13px; }
+.admin-notice { padding: 16px; border-left: 3px solid currentColor; }
+.record-confirm { margin-top: 20px; padding: 20px; border: 1px solid var(--line-strong); border-radius: 10px; }
+.record-confirm .danger-button { margin-right: 16px; }
+.admin-workspace h2 small { font-weight: 400; margin-left: 8px; }
+.method-availability { margin: 28px 0 36px; }
+.method-availability ul { list-style: none; padding: 0; }
+.method-availability li { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.method-availability li > div { display: grid; gap: 4px; }
+.method-availability li > span { flex-shrink: 0; font-size: 12px; }
+@media (max-width: 600px) { .admin-signin { margin: 20px auto; } .admin-candidate { align-items: flex-start; flex-direction: column; padding: 16px; } .admin-toolbar { gap: 12px; } }
+@media (max-width: 640px) {
+  .workspace-sidebar { position: relative; }
+  .sidebar-bottom { display: flex; position: absolute; top: 16px; right: 19px; margin: 0; padding: 0; }
+  .sidebar-bottom .text-button { display: flex; align-items: center; gap: 6px; min-height: 32px; }
+}

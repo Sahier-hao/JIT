@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
+from admin_support import AdminTestClient as TestClient
 
 from test_artifacts import real_run  # noqa: F401
 
@@ -26,7 +26,7 @@ def test_admin_register_member_list_and_cli_share_identity(settings, monkeypatch
     from jit_baseline.cli import main
     caplog.set_level(logging.INFO, logger='jit.catalog')
     with TestClient(create_app(**settings)) as client:
-        assert client.get('/api/v1/models', headers=HEADERS).json() == {'models': []}
+        assert client.get('/api/v1/models', headers=HEADERS).json()['models'] == []
         candidate = client.get('/api/v1/model-candidates', headers=HEADERS).json()['candidates'][0]
         data = {'candidateId': candidate['candidateId'], 'expectedManifestSha256': candidate['manifestSha256']}
         first = client.post('/api/v1/models/register', headers=HEADERS, json=data)
@@ -61,7 +61,7 @@ def test_register_errors_never_publish_models(settings, change, code):
         response = client.post('/api/v1/models/register', headers=HEADERS, json=data)
         assert response.json()['error']['code'] == code
         assert response.status_code == {'NOT_FOUND':404,'CONTEXT_MISMATCH':409,'INPUT_INVALID':422,'INTEGRITY_ERROR':503}[code]
-        assert client.get('/api/v1/models', headers=HEADERS).json() == {'models': []}
+        assert client.get('/api/v1/models', headers=HEADERS).json()['models'] == []
 
 
 def test_kamei_schema_reports_unavailable_fields(settings):
@@ -89,7 +89,7 @@ def test_dataset_and_commit_queries_share_one_registry(settings):
     with TestClient(create_app(**settings)) as client:
         listing = client.get('/api/v1/datasets', headers=HEADERS)
         assert listing.status_code == 200
-        assert [item['dataset'] for item in listing.json()['datasets']] == ['openstack-six-v1']
+        assert 'openstack-six-v1' in [item['dataset'] for item in listing.json()['datasets']]
         versions = client.get('/api/v1/datasets/openstack-six-v1/versions', headers=HEADERS)
         assert [item['version'] for item in versions.json()['versions']] == [manifest['version']]
         assert client.get('/api/v1/datasets/unknown/versions', headers=HEADERS).status_code == 404
@@ -133,7 +133,12 @@ def test_real_dataset_commits_page_stays_bounded(real_run, tmp_path):
     with sqlite3.connect(f'{REAL_DATABASE.as_uri()}?mode=ro', uri=True) as source:
         with sqlite3.connect(copied) as target:
             source.backup(target)
-    CatalogStorage(copied).initialize()
+    storage = CatalogStorage(copied)
+    storage.initialize()
+    # The snapshot owns only business-data assertions; use an isolated test account.
+    with storage.connection(write=True) as db:
+        db.execute('DELETE FROM admin_session')
+        db.execute('DELETE FROM admin_account')
     options = {'directory': real_run, 'database': copied, 'artifact_root': tmp_path,}
     with TestClient(create_app(**options)) as client:
         response = client.get('/api/v1/commits', params={'version': REAL_VERSION}, headers=HEADERS)

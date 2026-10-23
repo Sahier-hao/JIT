@@ -5,7 +5,7 @@ import { NewProjectPage } from './NewProjectPage'
 
 const NOW = '2026-10-22T12:00:00Z'
 function created() {
-  return { repositoryId: '11111111-1111-4111-8111-111111111111', url: 'https://github.com/example/app', displayName: 'app', defaultBranch: 'main', latestSyncId: null, latestSyncAt: null, viewSyncId: null, headCommit: null, commitCount: 0, distribution: { high: 0, medium: 0, low: 0, unknown: 0 }, distributionRule: 'repo-distribution-v1', createdAt: NOW, updatedAt: NOW, modelStrategy: null, degradeReason: null, runId: null, modelId: null, datasetVersion: null, limitations: [], latestSync: null, viewContext: null }
+  return { repositoryId: '11111111-1111-4111-8111-111111111111', url: 'https://github.com/example/app', displayName: 'app', defaultBranch: null, latestSyncId: null, latestSyncAt: null, viewSyncId: null, headCommit: null, commitCount: 0, distribution: { high: 0, medium: 0, low: 0, unknown: 0 }, distributionRule: 'repo-distribution-v1', createdAt: NOW, updatedAt: NOW, modelStrategy: null, degradeReason: null, runId: null, modelId: null, datasetVersion: null, limitations: [], latestSync: null, viewContext: null }
 }
 function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })

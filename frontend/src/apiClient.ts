@@ -92,6 +92,7 @@ export async function apiRequestWithStatus(request: ApiRequest): Promise<{ body:
 }
 
 export interface SyncForm {
+  modelId?: string
   repositoryUrl: string
   branch: string
   since: string

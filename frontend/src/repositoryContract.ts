@@ -49,6 +49,7 @@ export interface SyncError {
 }
 
 export interface SyncView {
+  requestedModelId?: string | null
   syncId: string
   repositoryId: string | null
   repositoryUrl: string
@@ -156,6 +157,7 @@ export function parseSync(value: unknown): SyncView {
     syncId: uuidText(raw.syncId),
     repositoryId: textOrNull(raw.repositoryId),
     repositoryUrl: text(raw.repositoryUrl),
+    requestedModelId: raw.requestedModelId == null ? null : text(raw.requestedModelId),
     branch,
     since: textOrNull(raw.since),
     until: textOrNull(raw.until),
@@ -239,6 +241,7 @@ export function parseSyncCommitPage(value: unknown): SyncCommitPage {
 
 /** 请求体：留空的字段不提交，由服务端取默认值（D5）。 */
 export function syncBody(form: {
+  modelId?: string
   repositoryUrl: string
   branch: string
   since: string
@@ -247,6 +250,7 @@ export function syncBody(form: {
   strategy: SyncStrategy
 }): Record<string, unknown> {
   const body: Record<string, unknown> = { repositoryUrl: form.repositoryUrl.trim(), strategy: form.strategy }
+  if (form.modelId) body.modelId = form.modelId
   if (form.branch.trim() !== '') body.branch = form.branch.trim()
   if (form.since.trim() !== '') body.since = form.since.trim()
   if (form.until.trim() !== '') body.until = form.until.trim()

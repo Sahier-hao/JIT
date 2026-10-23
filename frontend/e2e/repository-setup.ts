@@ -1,5 +1,5 @@
 /**
- * 仓库同步 e2e 的隔离环境：固定日期的小仓库、独立目录库、一个现成的六字段模型。
+ * 仓库同步 e2e 的隔离环境：固定日期的小仓库、独立目录库、九个现成的六字段模型（含四种深度方法）。
  *
  * 为什么需要它：默认 e2e 用真实服务与真实目录库，但本机目录库里可能没有可用于
  * 降级的 `openstack-six-v1` 模型；直接跑会让同步停在"没有现成模型"。这里在运行
@@ -71,10 +71,14 @@ export default function globalSetup() {
     'import sys, shutil',
     'from pathlib import Path',
     'shutil.copytree(Path("artifacts/baseline"), Path(sys.argv[2]) / "baseline")',
+    'shutil.copytree(Path("artifacts/decision-tree-v1"), Path(sys.argv[2]) / "decision-tree-v1")',
+    '[shutil.copytree(Path("artifacts") / key, Path(sys.argv[2]) / key) for key in ("mlp-v1", "tabular-resnet-v1", "ft-transformer-v1", "wide-deep-v1", "random-forest-v1", "gaussian-naive-bayes-v1", "gradient-boosting-v1")]',
     'from jit_baseline.catalog_storage import CatalogStorage',
     'from jit_baseline.catalog import ModelCatalog',
     'storage = CatalogStorage(sys.argv[1])',
     'storage.initialize()',
     'ModelCatalog(storage, sys.argv[2]).register_key("baseline")',
+    'ModelCatalog(storage, sys.argv[2]).register_key("decision-tree-v1")',
+    '[ModelCatalog(storage, sys.argv[2]).register_key(key) for key in ("mlp-v1", "tabular-resnet-v1", "ft-transformer-v1", "wide-deep-v1", "random-forest-v1", "gaussian-naive-bayes-v1", "gradient-boosting-v1")]',
   ].join('; '), DATABASE, ARTIFACT_ROOT], { cwd: BACKEND, stdio: 'pipe' })
 }

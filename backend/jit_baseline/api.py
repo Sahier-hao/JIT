@@ -23,6 +23,9 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                sync_service=None, dataset_root=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None)
+    @app.get('/api/health')
+    def health():
+        return {'status': 'ok'}
     from .api_errors import install_errors
     from .catalog_schema import schema_info
     from .catalog import ModelCatalog
@@ -33,6 +36,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     install_errors(app)
     database = database if database is not None else os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)
     storage = CatalogStorage(database)
+    from .admin import install_admin
+    install_admin(app, storage)
     catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
     app.state.catalog = catalog
     app.state.storage = storage
@@ -89,7 +94,24 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def models(state: str | None = None):
         if state not in (None, 'ready', 'invalid'):
             raise RequestError('INPUT_INVALID', field='state')
-        return {'models': catalog.models(state)}
+        from .algorithms import ALGORITHMS
+        registered_models = catalog.models()
+        candidates = catalog.candidates()
+        methods = [dict(method=key, name=value['name'], category=value['category'],
+                        registeredModels=sum(model['method'] == key and model['state'] == 'ready'
+                                             for model in registered_models),
+                        deliveredArtifacts=sum(candidate.get('method') == key for candidate in candidates))
+                   for key, value in ALGORITHMS.items()]
+        return {'models': [model for model in registered_models if state is None or model['state'] == state],
+                'methods': methods}
+
+    @app.get('/api/v1/repository-models')
+    def repository_models():
+        # Public selection metadata only: no training evidence, paths or verification reports.
+        return {'models': [dict(modelId=item['modelId'], name=item['name'], method=item['method'],
+                                featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
+                                repositoryPredictionSupported=item['state'] == 'ready' and item['featureSchemaVersion'] in
+                                ('openstack-six-v1', 'kamei14-git-v1')) for item in catalog.models()]}
 
     @app.get('/api/v1/feature-schemas/{version}')
     def feature_schema(version: str):
@@ -97,11 +119,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/datasets')
     def dataset_versions_all():
-        return {'datasets': store.dataset_list(registered)}
+        return {'datasets': store.dataset_list(dataset_module.load_all())}
 
     @app.get('/api/v1/datasets/{name}/versions')
     def dataset_versions(name: str):
-        view = store.version_view(registered, name)
+        view = store.version_view(dataset_module.load_all(), name)
         if view is None:
             raise RequestError('NOT_FOUND')
         return view

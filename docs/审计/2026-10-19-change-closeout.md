@@ -94,6 +94,6 @@
 - [仓库工作区归档](../../openspec/changes/archive/2026-10-19-add-repository-workspace/tasks.md)：22/25，带 3 项未完成任务，`specsUpdated: false`。
 - [旧前端归档](../../openspec/changes/archive/2026-10-19-restyle-review-workbench/tasks.md)：14/31，带 17 项未完成任务，`specsUpdated: false`。
 - 两份审计证据已显式冻结，分别登记 9 和 15 个文件，`check-evidence` 均为 `passed: true`。
-- [新产品提案](../../openspec/changes/redesign-product-workspaces/proposal.md)及总体设计、6 份 delta、36 项未实施任务已建立；规划状态 4/4 完成，不代表实现完成。
+- 当时已建立 `redesign-product-workspaces` 提案、总体设计、6 份 delta 和 36 项未实施任务；规划状态 4/4 完成，不代表当时已实现。该遗留活动目录已于 2026-10-23 按用户要求删除，当前实现及清理记录见 [最新归档](2026-10-23-project-admin-model-workflow.md)。
 - 新 delta 共 29 项要求、74 个场景；修改既有要求时保留了全部既有场景标题。全项目 OpenSpec 严格校验 15/15 通过，文档相对链接检查和 git diff --check 通过。
 - 与验证前源码哈希比较，本轮没有改变 backend/frontend 的生产代码；未创建提交或推送。后续实施的第一项任务负责保存可恢复的独立源码基线。

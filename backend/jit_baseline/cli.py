@@ -49,6 +49,9 @@ def main():
     from .catalog_storage import DEFAULT_DATABASE
     initialize = commands.add_parser('catalog-init')
     initialize.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    reset_admin = commands.add_parser('admin-reset-password', help='在本机重置管理员密码并撤销其全部会话')
+    reset_admin.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    reset_admin.add_argument('--username', required=True)
     register = commands.add_parser('register-model')
     register.add_argument('--run-key', required=True)
     register.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
@@ -84,6 +87,15 @@ def main():
             from .catalog_storage import CatalogStorage, VERSION
             CatalogStorage(args.database).initialize()
             result = {'kind': 'catalog-initialized', 'version': VERSION}
+        elif args.command == 'admin-reset-password':
+            from getpass import getpass
+            from .catalog_storage import CatalogStorage
+            from .admin import reset_password
+            password = getpass('新管理员密码（至少 12 位）：')
+            if getpass('再次输入密码：') != password:
+                raise BaselineError('INPUT_INVALID', '两次密码不一致')
+            reset_password(CatalogStorage(args.database), args.username, password)
+            result = {'kind': 'admin-password-reset', 'sessionsRevoked': True}
         elif args.command == 'register-model':
             from .catalog import ModelCatalog
             from .catalog_storage import CatalogStorage

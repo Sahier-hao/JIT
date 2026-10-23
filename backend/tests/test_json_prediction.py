@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import numpy as np
 import pytest
-from fastapi.testclient import TestClient
+from admin_support import AdminTestClient as TestClient
 
 from test_catalog_api import settings, HEADERS  # noqa: F401
 from test_artifacts import real_run  # noqa: F401

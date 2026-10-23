@@ -11,7 +11,7 @@ import shutil
 import subprocess
 
 import pytest
-from fastapi.testclient import TestClient
+from admin_support import AdminTestClient as TestClient
 
 from test_artifacts import real_run  # noqa: F401
 from test_catalog_api import HEADERS, settings  # noqa: F401

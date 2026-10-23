@@ -15,6 +15,7 @@ import { toCommit } from './domain'
 import { useEffect, useState } from 'react'
 import { apiRequest } from './apiClient'
 import { parseSync, parseSyncCommit, type SyncCommit, type SyncView } from './repositoryContract'
+import { PROJECTS_CHANGED } from './projectEvents'
 
 export interface RepositoryDistribution {
   high: number
@@ -24,10 +25,11 @@ export interface RepositoryDistribution {
 }
 
 export interface RepositoryView {
+  latestSync?: SyncView | null
   repositoryId: string
   url: string
   displayName: string
-  defaultBranch: string
+  defaultBranch: string | null
   latestSyncId: string | null
   latestSyncAt: string | null
   viewSyncId: string | null
@@ -83,9 +85,10 @@ export function parseRepositoryView(value: unknown): RepositoryView {
     repositoryId: uuidText(raw.repositoryId, '仓库标识'),
     url: text(raw.url, '仓库地址'),
     displayName: text(raw.displayName, '仓库名称'),
-    defaultBranch: text(raw.defaultBranch, '默认分支'),
+    defaultBranch: textOrNull(raw.defaultBranch, '默认分支'),
     latestSyncId: raw.latestSyncId == null ? null : uuidText(raw.latestSyncId, '最近同步标识'),
     latestSyncAt: raw.latestSyncAt == null ? null : text(raw.latestSyncAt, '最近同步时间'),
+    latestSync: raw.latestSync == null ? null : parseSync(raw.latestSync),
     viewSyncId: raw.viewSyncId == null ? null : uuidText(raw.viewSyncId, '展示同步标识'),
     headCommit: textOrNull(raw.headCommit),
     commitCount: count(raw.commitCount),
@@ -166,6 +169,7 @@ export interface RepositoryListLoad {
 
 export function useRepositories(): RepositoryListLoad {
   const [attempt, setAttempt] = useState(0)
+  useEffect(() => { const refresh = () => setAttempt(value => value + 1); window.addEventListener(PROJECTS_CHANGED, refresh); return () => window.removeEventListener(PROJECTS_CHANGED, refresh) }, [])
   const [state, setState] = useState<Omit<RepositoryListLoad, 'retry'>>({ state: 'loading', items: [], total: 0, error: '' })
   useEffect(() => {
     const controller = new AbortController()
@@ -180,7 +184,7 @@ export function useRepositories(): RepositoryListLoad {
       if (new Set(items.map(item => item.repositoryId)).size !== items.length) contractFailed('项目列表重复，请刷新')
       return { items, total }
     }
-    setState({ state: 'loading', items: [], total: 0, error: '' })
+    setState(previous => ({ ...previous, state: 'loading', error: '' }))
     load().then(result => { if (!controller.signal.aborted) setState({ state: 'ready', ...result, error: '' }) }).catch(error => { if (!controller.signal.aborted) setState({ state: 'error', items: [], total: 0, error: describe(error) }) })
     return () => controller.abort()
   }, [attempt])
@@ -196,6 +200,7 @@ export interface RepositoryLoad {
 
 export function useRepository(repositoryId: string, viewSyncId?: string): RepositoryLoad {
   const [attempt, setAttempt] = useState(0)
+  useEffect(() => { const refresh = () => setAttempt(value => value + 1); window.addEventListener(PROJECTS_CHANGED, refresh); return () => window.removeEventListener(PROJECTS_CHANGED, refresh) }, [])
   const [state, setState] = useState<Omit<RepositoryLoad, 'retry'>>({ state: 'idle', repository: null, error: '' })
   useEffect(() => {
     if (repositoryId === '') return
@@ -210,10 +215,10 @@ export function useRepository(repositoryId: string, viewSyncId?: string): Reposi
     return () => { active = false; controller.abort() }
   }, [repositoryId, viewSyncId, attempt])
   useEffect(() => {
-    if (!repositoryId || !viewSyncId) return
-    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, 15000)
+    if (!repositoryId || (!viewSyncId && !['queued', 'collecting', 'registering', 'training', 'scoring'].includes(state.repository?.latestSync?.status ?? ''))) return
+    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, viewSyncId ? 15000 : 1500)
     return () => clearInterval(timer)
-  }, [repositoryId, viewSyncId])
+  }, [repositoryId, viewSyncId, state.repository?.latestSync?.status])
   return { ...state, retry: () => setAttempt(value => value + 1) }
 }
 

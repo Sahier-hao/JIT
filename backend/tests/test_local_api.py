@@ -16,8 +16,7 @@ def client(tmp_path, monkeypatch):
         yield value
 
 
-@pytest.mark.parametrize('path', ['/api/v1/models', '/api/v1/model-candidates',
-                                 '/api/v1/repositories', '/api/v1/repository-syncs'])
+@pytest.mark.parametrize('path', ['/api/v1/repositories', '/api/v1/repository-syncs'])
 def test_business_reads_need_no_configuration_or_authentication(client, path):
     response = client.get(path)
     assert response.status_code == 200
@@ -25,16 +24,16 @@ def test_business_reads_need_no_configuration_or_authentication(client, path):
     assert response.headers['Cache-Control'] == 'no-store'
 
 
-def test_anonymous_write_reaches_business_validation(client):
+def test_anonymous_maintenance_write_requires_login(client):
     response = client.post('/api/v1/models/register', content='invalid json')
-    assert response.status_code == 422
-    assert response.json()['error']['code'] == 'INPUT_INVALID'
+    assert response.status_code == 401
+    assert response.json()['error']['code'] == 'AUTH_REQUIRED'
     assert response.json()['error']['requestId'] == response.headers['X-Request-Id']
 
 
 def test_obsolete_authorization_headers_do_not_change_access(client):
     for header in ['Bearer old-value', 'Basic old-value']:
-        assert client.get('/api/v1/models', headers={'Authorization': header}).status_code == 200
+        assert client.get('/api/v1/models', headers={'Authorization': header}).status_code == 401
 
 
 def test_local_registration_migration_retains_historical_events(tmp_path):

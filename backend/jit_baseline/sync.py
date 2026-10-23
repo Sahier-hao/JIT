@@ -55,7 +55,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "requested_strategy", "status", "stage", "error_code", "error_message",
            "dataset_version", "run_id", "model_id", "model_strategy", "degrade_reason",
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
-           "completed_at", "head_commit", "analysis_branch")
+           "completed_at", "head_commit", "analysis_branch", "requested_model_id")
 
 REPOSITORY_COLUMNS = ("id", "url", "display_name", "default_branch", "latest_sync_id",
                       "latest_sync_at", "view_sync_id", "head_commit", "commit_count",
@@ -143,6 +143,7 @@ def _view(row):
             "repositoryId": item["repository_id"], "branch": item["branch"],
             "since": item["since"], "until": item["until"], "commitLimit": item["commit_limit"],
             "requestedStrategy": item["requested_strategy"], "status": item["status"],
+            "requestedModelId": item.get('requested_model_id'),
             "stage": item["stage"], "datasetVersion": item["dataset_version"],
             "runId": item["run_id"], "modelId": item["model_id"],
             "modelStrategy": item["model_strategy"], "degradeReason": item["degrade_reason"],
@@ -183,14 +184,14 @@ class SyncStorage:
             row = db.execute("SELECT * FROM repository_sync WHERE id=?", (sync_id,)).fetchone()
         return _view(row) if row is not None else None
 
-    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy):
+    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM repository_sync WHERE repository_url=? AND branch=? AND since IS ? "
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
-                f"AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
-                (repository_url, branch, since, until, commit_limit, requested_strategy, *PROGRESS)).fetchone()
+                f"AND requested_model_id IS ? AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
+                (repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id, *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
     def pages(self, limit=20, offset=0):
@@ -611,12 +612,17 @@ class SyncService:
 
     def create(self, payload, request_id=None):
         data = sync_input(payload, allow_local=self.allow_local)
+        model_id = payload.get('modelId')
+        if model_id is not None:
+            if not isinstance(model_id, str) or not model_id.strip() or data['requestedStrategy'] != 'generic-model':
+                raise BaselineError('INPUT_INVALID', '指定模型时请选择现成模型策略')
+            self._generic_model(model_id)
         now = utc_now()
         with self._lock:
             existing = self.sync.find_active(repository_url=data["repositoryUrl"], branch=data["branch"],
                                              since=data["since"], until=data["until"],
                                              commit_limit=data["commitLimit"],
-                                             requested_strategy=data["requestedStrategy"])
+                                             requested_strategy=data["requestedStrategy"], requested_model_id=model_id)
             if existing is not None:
                 return existing, False
             repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
@@ -626,7 +632,7 @@ class SyncService:
                               "branch": data["branch"], "since": data["since"], "until": data["until"],
                               "commit_limit": data["commitLimit"],
                               "requested_strategy": data["requestedStrategy"], "status": "queued",
-                              "stage": "queued", "request_id": request_id,
+                               "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
                               "created_at": now, "updated_at": now})
             self.sync.repository_update(repository_id, latest_sync_id=sync_id,
                                         latest_sync_at=now, default_branch=data["branch"])
@@ -682,6 +688,8 @@ class SyncService:
         if offset < 0:
             raise BaselineError("INPUT_INVALID", "offset 不能为负")
         items, total = self.sync.repositories(limit, offset)
+        for item in items:
+            item['latestSync'] = self.sync.get(item['latestSyncId']) if item.get('latestSyncId') else None
         return {"repositories": items, "total": total, "limit": limit, "offset": offset}
 
     def create_repository(self, payload):
@@ -865,7 +873,12 @@ class SyncService:
                                 f"同步超过 {self.timeout} 秒未完成，请缩小时间范围或提交上限后重试")
         self.sync.update(sync_id, status=stage, stage=stage)
 
-    def _generic_model(self):
+    def _generic_model(self, model_id=None):
+        if model_id:
+            snapshot, payload = self.catalog.load_model(model_id)
+            if payload.get('featureSchemaVersion') not in (GENERIC_SCHEMA, SCHEMA_NAME):
+                raise BaselineError('INPUT_SCHEMA_MISMATCH', '所选模型无法读取仓库采集特征，请选择兼容模型')
+            return snapshot, payload
         for payload in self.catalog.models("ready"):
             if payload.get("featureSchemaVersion") != GENERIC_SCHEMA:
                 continue
@@ -938,11 +951,11 @@ class SyncService:
                 inputs = [{"features": record["features"]} for record in records]
                 run_id = built["runId"]
             else:
-                snapshot, payload = self._generic_model()
+                snapshot, payload = self._generic_model(item['requestedModelId']) if item.get('requestedModelId') else self._generic_model()
                 model_id = payload["modelId"]
-                schema = resolve(GENERIC_SCHEMA)
+                schema = resolve(payload.get('featureSchemaVersion', GENERIC_SCHEMA))
                 fields = schema.in_model_names()
-                inputs = generic_inputs(records, fields)
+                inputs = generic_inputs(records, fields) if schema.name == GENERIC_SCHEMA else [{"features": record["features"]} for record in records]
                 run_id = payload.get("runId")
             self.sync.update(sync_id, model_id=model_id, run_id=run_id)
 
