@@ -1329,6 +1329,67 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 提交不在当前视图里返回 404，不跨仓库查询。
       security: []
+  /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation:
+    parameters:
+    - name: repositoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    - name: commitId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    - name: viewSyncId
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      description: 必须明确指定本项目的成功分析，不自动取当前结果。
+    get:
+      operationId: getRepositoryExplanation
+      summary: 读取固定分析提交的保存解释，不触发推理
+      x-implementation-status: implemented
+      security: []
+      responses:
+        '200':
+          description: 保存的解释，或尚未生成；保留原分析模型、运行和分数。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryExplanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+    post:
+      operationId: generateRepositoryExplanation
+      summary: 主动生成并保存原模型对固定提交的解释
+      description: 仅使用原模型与运行身份，复核原分数；成功解释重复返回，不重新推理。生成失败返回未支持原因，可恢复原产物后重试；不会修改风险和计划，不使用当前默认模型替代。
+      x-implementation-status: implemented
+      security: []
+      responses:
+        '200':
+          description: 已保存的成功解释，或可重试的生成失败状态。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryExplanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/summary:
     get:
       operationId: getRepositorySummary
@@ -4125,6 +4186,63 @@ components:
       - features
       - explanationStatus
       additionalProperties: false
+    RepositoryExplanation:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, viewSyncId, commitId, modelId, runId, datasetVersion, risk, explanationStatus, explanation, explanationMethod, explanationSummary, explanationReason, reasonCode, baselineSource, baselineDatasetVersion, missingBaselineFeatures, featureSchemaVersion, modelSha256, generatedAt, limitations]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          $ref: '#/components/schemas/Uuid'
+        commitId:
+          type: string
+          minLength: 1
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        explanationStatus:
+          enum: [not-generated, supported, not-supported]
+        explanation:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/PredictionExplanation'
+        explanationMethod:
+          type: [string, 'null']
+        explanationSummary:
+          type: [string, 'null']
+        explanationReason:
+          type: [string, 'null']
+        reasonCode:
+          type: [string, 'null']
+          description: 生成失败的领域原因；不包含内部路径和异常详情。
+        baselineSource:
+          enum: [zero, mixed, model-dataset-mean, null]
+        baselineDatasetVersion:
+          type: [string, 'null']
+        missingBaselineFeatures:
+          type: array
+          items:
+            type: string
+        featureSchemaVersion:
+          type: [string, 'null']
+        modelSha256:
+          type: [string, 'null']
+        generatedAt:
+          type: [string, 'null']
+          format: date-time
+        limitations:
+          type: array
+          items:
+            type: string
     PredictionExplanation:
       type: object
       description: 单特征归因项；`delta` 是当前取值相对基线的风险变化，正值表示把风险推高。
