@@ -6,6 +6,7 @@
 """
 import hashlib
 import json
+import os
 import re
 import threading
 import time
@@ -493,10 +494,18 @@ def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
         path = Path(room) / f"{name}.csv"
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(blob)
-        except OSError as exc:
-            raise BaselineError("DATASET_UNAVAILABLE", "采集结果写入失败，请检查存储权限") from exc
-        try:
+            if not path.exists():
+                temporary = path.with_name(f'{path.name}.{uuid.uuid4().hex}.tmp')
+                try:
+                    temporary.write_bytes(blob)
+                    try:
+                        os.link(temporary, path)
+                    except FileExistsError:
+                        pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            if path.read_bytes() != blob:
+                raise BaselineError('DATASET_EXISTS', f'已有 CSV 内容不同，不覆盖：{name}')
             registered = store.register(path, dataset=dataset, version=name, **kwargs)
             if after is not None:
                 after(registered, path)
@@ -505,6 +514,8 @@ def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
             if exc.code != "DATASET_EXISTS":
                 raise
             last = exc
+        except OSError as exc:
+            raise BaselineError('DATASET_UNAVAILABLE', '采集结果写入失败，请检查存储权限') from exc
     raise last
 
 
