@@ -53,6 +53,4 @@
 4. 启动自有本机预览并让用户首次设置管理员密码；不停止其他会话服务。
 5. 回退源码时保留升级后的数据库及备份，不在共享工作区 reset 或删除新数据；需恢复库时先停止自有写服务并另存现状，使用已验证的备份。
 
-## Verification
-
-2026-10-23 验证记录：后端 354 passed（2 warnings），前端 28 文件/232 passed，浏览器 12 passed，含两个桌面尺寸下的九模型逐一分析及窄屏、管理登录/退出和来源核对。typecheck/build/lint 通过（lint 9 warnings）。具体命令、结果和日志见 [实施验证](../../../../docs/审计/2026-10-23-project-admin-model-workflow.md)。
+实施命令、验证结果与日志见 [实施验证](../../../../docs/审计/2026-10-23-project-admin-model-workflow.md)。

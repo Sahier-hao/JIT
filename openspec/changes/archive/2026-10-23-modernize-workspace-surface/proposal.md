@@ -15,6 +15,10 @@
 
 ## Capabilities
 
+### New Capabilities
+
+无。
+
 ### Modified Capabilities
 
 - `focused-project-review`：FPR-02 增加「发起区默认收起」与「切换当前结果保持位置」。
@@ -24,5 +28,5 @@
 ## Impact
 
 - 前端：`frontend/src/styles/{tokens,modern,product}.css`、`frontend/src/index.css`、`frontend/src/components/AnalysisForm.tsx`、`frontend/src/pages/{ProjectPage,ProjectsPage}.tsx`、`frontend/src/ReviewWorkbench.tsx`、相关测试。
-- 后端与 API：无新增接口；本 PR 同时提交此前已归档的 `select-current-analysis`（PATCH 切换当前结果）。
+- 后端与 API：无新增接口；切换当前结果复用 `select-current-analysis` 提供的 PATCH 接口。
 - 无数据库迁移，无新增依赖。

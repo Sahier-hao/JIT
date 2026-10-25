@@ -14,6 +14,10 @@
 
 ## Capabilities
 
+### New Capabilities
+
+无。
+
 ### Modified Capabilities
 
 - `focused-project-review`: FPR-02 的当前结果定义从「最新一次成功分析」改为「默认为最新一次成功分析，并可在分析记录中选择任一已完成分析」。

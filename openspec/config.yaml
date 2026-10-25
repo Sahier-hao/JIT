@@ -1,5 +1,19 @@
 schema: spec-driven
 
+rules:
+  proposal:
+    - 使用原版模板的 Why、What Changes、Capabilities 和 Impact 章节；Capabilities 保留 New Capabilities 与 Modified Capabilities 子节。
+    - 能力名称与现有主规格及 delta 目录一致；描述产品问题、行为和影响范围，不记录助手操作过程。
+  specs:
+    - 按能力维护 specs/<capability>/spec.md；使用标准 delta 操作标题、Requirement、四级 Scenario 以及 WHEN/THEN。
+    - MODIFIED 保留被修改要求的完整内容及既有场景；只写可观察行为，不写内部类名或实施步骤。
+  design:
+    - 使用原版模板的 Context、Goals / Non-Goals、Decisions 和 Risks / Trade-offs 章节；涉及部署或数据升级时写 Migration Plan。
+    - 说明技术选择、理由和取舍；实施审计、验证日志与计数放在 docs/ 中并引用，不混入设计正文。
+  tasks:
+    - 使用编号分组及 - [ ] X.Y 格式，每项写明可核验的完成标准；各功能组包含自身需要的测试和文档。
+    - 完成标记与实际实现和验证一致；归档等流程后续事项使用 Workflow follow-up 下的普通列表，不计入实施任务。
+
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.
