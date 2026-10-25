@@ -1390,6 +1390,47 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/review-plan/validate:
+    post:
+      operationId: validatePortableReviewPlan
+      summary: 核对固定分析的个人计划备份，不保存共享计划
+      description: 整份核对项目、分析、数据版本、模型、运行和提交归属，保留条目顺序；拒绝未知或重复条目，不加载模型、不运行推理、不修改分析。请求流最多 1 MiB，计划最多 5000 条。
+      x-implementation-status: implemented
+      security: []
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: viewSyncId
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortableReviewPlan'
+      responses:
+        '200':
+          description: 完整核对的同一计划。仅返回引用，分数从原分析读取。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortableReviewPlan'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REVIEW_PLAN_CONTEXT_MISMATCH 或指定分析尚未成功，原计划不变。
+        '413':
+          description: REVIEW_PLAN_LIMIT_EXCEEDED，请求超过 1 MiB 或条目超过 5000。
+        '422':
+          description: INPUT_INVALID 或 REVIEW_PLAN_COMMIT_UNKNOWN，整份拒绝。
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/summary:
     get:
       operationId: getRepositorySummary
@@ -2303,6 +2344,9 @@ components:
       - REPOSITORY_ANALYSIS_UNAVAILABLE
       - SYNC_NOT_ACTIVE
       - SYNC_SERVICE_STOPPING
+      - REVIEW_PLAN_CONTEXT_MISMATCH
+      - REVIEW_PLAN_COMMIT_UNKNOWN
+      - REVIEW_PLAN_LIMIT_EXCEEDED
       - SYNC_CANCELLED
       - SYNC_TIMEOUT
       - SYNC_INTERRUPTED
@@ -4186,6 +4230,36 @@ components:
       - features
       - explanationStatus
       additionalProperties: false
+    PortableReviewPlan:
+      type: object
+      additionalProperties: false
+      required: [format, source, commitIds]
+      properties:
+        format:
+          const: jit-review-plan-v1
+        source:
+          type: object
+          additionalProperties: false
+          required: [repositoryId, viewSyncId, datasetVersion, modelId, runId]
+          properties:
+            repositoryId:
+              $ref: '#/components/schemas/Uuid'
+            viewSyncId:
+              $ref: '#/components/schemas/Uuid'
+            datasetVersion:
+              type: [string, 'null']
+            modelId:
+              type: [string, 'null']
+            runId:
+              type: [string, 'null']
+        commitIds:
+          type: array
+          maxItems: 5000
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
     RepositoryExplanation:
       type: object
       additionalProperties: false
