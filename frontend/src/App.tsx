@@ -10,6 +10,7 @@ import { parseSync } from './repositoryContract'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { NewProjectPage } from './pages/NewProjectPage'
 import { ProjectPage } from './pages/ProjectPage'
+import { AnalysisComparison } from './pages/AnalysisComparison'
 
 export default function App() {
   const { route, navigate } = useRoute()
@@ -21,6 +22,7 @@ export default function App() {
   let content
   if (route.name === 'sources') content = <NewProjectPage navigate={navigate}/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} navigate={navigate}/>
+  else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
   else if (route.name === 'analysis') content = <ReviewWorkbench key={stateKey} repositoryId={route.repositoryId} viewSyncId={route.viewSyncId} commitId={route.commitId} stateKey={stateKey} drafts={drafts} view={route.view === 'plan' ? 'shortlist' : 'list'} navigate={navigate} selection={selections[stateKey] ?? { ids: [], warning: null }} onSelection={onSelection} onConfirmed={() => {}}/>
   else if (route.name === 'report' || route.name === 'admin') content = <AdminWorkspace route={route} navigate={navigate}/>
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>

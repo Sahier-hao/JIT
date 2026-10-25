@@ -71,6 +71,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     explanation_service = RepositoryExplanationService(sync_service, catalog)
     from .review_plan import ReviewPlanService, read_plan
     review_plan_service = ReviewPlanService(sync_service)
+    from .analysis_comparison import AnalysisComparisonService
+    comparison_service = AnalysisComparisonService(sync_service)
     from fastapi.exceptions import RequestValidationError
 
     @app.exception_handler(RequestValidationError)
@@ -258,6 +260,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/repositories/{repository_id}/review-plan/validate')
     async def validate_review_plan(repository_id: str, request: Request, viewSyncId: str):
         return await run_in_threadpool(review_plan_service.validate, repository_id, viewSyncId, await read_plan(request))
+
+    @app.get('/api/v1/repositories/{repository_id}/comparison')
+    def compare_repository_analyses(repository_id: str, baseSyncId: str, targetSyncId: str,
+                                   limit: int = 20, offset: int = 0, change: str = 'all'):
+        return comparison_service.get(repository_id, baseSyncId, targetSyncId, limit=limit, offset=offset, change=change)
 
     @app.get('/api/v1/repositories/{repository_id}/summary')
     def repository_summary(repository_id: str, viewSyncId: str | None = None):

@@ -1,0 +1,15 @@
+.comparison-sources { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-block: 20px; }
+.comparison-source { border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.comparison-source h2 { font-size: 15px; margin: 0 0 12px; }
+.comparison-source p,.comparison-source dl { font-size: 12px; line-height: 1.6; }
+.comparison-source dd { margin: 4px 0 12px; overflow-wrap: anywhere; }
+.comparison-source summary { cursor: pointer; font-size: 12px; }
+.comparison-counts { display: flex; gap: 20px; flex-wrap: wrap; padding-block: 14px; font-size: 12px; }
+.comparison-counts b { margin-left: 6px; }
+.comparison-filter { display: inline-flex; align-items: center; gap: 12px; margin-block: 14px; font-size: 12px; }
+.comparison-scroll { position: relative; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.comparison-scroll table { min-width: 680px; width: 100%; border-collapse: collapse; font-size: 12px; }
+.comparison-scroll th,.comparison-scroll td { padding: 14px; border-bottom: 1px solid var(--line); text-align: left; }
+.comparison-scroll td p { font-size: 11px; color: var(--fg-3); }
+.comparison-scroll td:not(:first-child) { font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media(max-width:640px) { .comparison-sources { grid-template-columns: 1fr; } }
