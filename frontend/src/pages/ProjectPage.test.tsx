@@ -92,7 +92,74 @@ function mockApi(options: { onDeleteRecord?: () => void; onPost?: (body: unknown
   })
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear() })
+
+it('restores normalized dates without widening the cancelled analysis window', async () => {
+  sessionStorage.clear()
+  let posted: unknown = null
+  const fetch = mockApi({ onPost: value => { posted = value } }); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    if (String(input).includes('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'cancelled', stage: 'collecting', since: '2024-01-01T00:00:00+00:00', until: '2024-01-09T00:00:00+00:00' })], total: 1, limit: 10, offset: 0 })
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  const retry = await screen.findByRole('button', { name: '用这些参数重试' })
+  document.getElementById('analysis-form-section')!.scrollIntoView = vi.fn()
+  await user.click(retry)
+  expect(screen.getByLabelText('起始日期')).toHaveValue('2024-01-01')
+  expect(screen.getByLabelText('结束日期')).toHaveValue('2024-01-08')
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(posted).toMatchObject({ since: '2024-01-01', until: '2024-01-08' }))
+})
+
+it('shows queue position and confirms cancellation while preserving the current result', async () => {
+  let cancelled = false
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    const queued = job({ syncId: OTHER, status: cancelled ? 'cancelled' : 'queued', stage: 'queued',
+      queuePosition: cancelled ? null : 2, cancelRequestedAt: cancelled ? NOW : null })
+    if (url.pathname === `/api/v1/repository-syncs/${OTHER}/cancel`) { cancelled = true; return response({ ...queued, status: 'cancelled', cancelRequestedAt: NOW }) }
+    if (url.pathname.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [queued, job()], total: 2, limit: 10, offset: 0 })
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  expect(await screen.findByText('排队第 2 位')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '取消分析' }))
+  expect(cancelled).toBe(false)
+  await user.click(screen.getByRole('button', { name: '确认取消分析' }))
+  expect(await screen.findByText('已取消')).toBeVisible()
+  expect(screen.getByRole('button', { name: '用这些参数重试' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '打开审查' })).toBeVisible()
+})
+
+it('keeps a cancellation error actionable and prevents repeated submissions', async () => {
+  let requests = 0
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname.endsWith('/cancel')) { requests++; return response({ error: { code: 'SYNC_NOT_ACTIVE', message: '分析已结束，请刷新', requestId: 'fixture' } }, 409) }
+    if (url.pathname.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'scoring', stage: 'scoring' })], total: 1, limit: 10, offset: 0 })
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '取消分析' }))
+  await user.click(screen.getByRole('button', { name: '确认取消分析' }))
+  expect(await screen.findByText('分析已结束，请刷新')).toBeVisible()
+  expect(requests).toBe(1)
+})
+
+it('shows pending cancellation and does not offer deletion before the worker exits', async () => {
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    if (String(input).includes('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'collecting', stage: 'collecting', cancelRequestedAt: NOW })], total: 1, limit: 10, offset: 0 })
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
+  expect(await screen.findByText('正在取消')).toBeVisible()
+  expect(screen.queryByRole('button', { name: '删除记录' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '正在取消…' })).toBeDisabled()
+})
 
 it('shows the current result and opens the pinned review', async () => {
   mockApi()

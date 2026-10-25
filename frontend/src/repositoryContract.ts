@@ -18,7 +18,7 @@ import {
 } from './apiContract'
 
 export const ACTIVE_STATUSES = ['queued', 'collecting', 'registering', 'training', 'scoring'] as const
-export type SyncStatus = (typeof ACTIVE_STATUSES)[number] | 'completed' | 'failed' | 'interrupted'
+export type SyncStatus = (typeof ACTIVE_STATUSES)[number] | 'completed' | 'failed' | 'interrupted' | 'cancelled'
 export const STRATEGIES = ['auto', 'generic-model', 'force-train'] as const
 export type SyncStrategy = (typeof STRATEGIES)[number]
 export const STRATEGY_LABELS: Record<SyncStrategy, string> = {
@@ -35,6 +35,7 @@ export const STATUS_LABELS: Record<SyncStatus, string> = {
   completed: '已完成',
   failed: '分析失败',
   interrupted: '已中断',
+  cancelled: '已取消',
 }
 export const DEGRADE_LABELS: Record<string, string> = {
   fewRecords: '提交数量太少，不足以训练',
@@ -49,6 +50,10 @@ export interface SyncError {
 }
 
 export interface SyncView {
+  queuePosition?: number | null
+  startedAt?: string | null
+  deadlineAt?: string | null
+  cancelRequestedAt?: string | null
   resolvedModelId?: string | null
   requestedModelId?: string | null
   syncId: string
@@ -154,7 +159,14 @@ export function parseSync(value: unknown): SyncView {
   if (modelStrategy !== null && modelStrategy !== 'repository-trained' && modelStrategy !== 'generic-model') contractFailed()
   const branch = text(raw.branch)
   if (branch === '') contractFailed()
+  const queuePosition = countOrNull(raw.queuePosition)
+  if (queuePosition === 0) contractFailed()
+  const timestampOrNull = (value: unknown) => value == null ? null : utcTimestamp(value)
   return {
+    queuePosition,
+    startedAt: timestampOrNull(raw.startedAt),
+    deadlineAt: timestampOrNull(raw.deadlineAt),
+    cancelRequestedAt: timestampOrNull(raw.cancelRequestedAt),
     syncId: uuidText(raw.syncId),
     repositoryId: textOrNull(raw.repositoryId),
     repositoryUrl: text(raw.repositoryUrl),
@@ -165,8 +177,8 @@ export function parseSync(value: unknown): SyncView {
     until: textOrNull(raw.until),
     commitLimit: count(raw.commitLimit),
     requestedStrategy: oneOf(raw.requestedStrategy, STRATEGIES),
-    status: oneOf(raw.status, [...ACTIVE_STATUSES, 'completed', 'failed', 'interrupted'] as const),
-    stage: oneOf(raw.stage, [...ACTIVE_STATUSES, 'completed', 'failed', 'interrupted'] as const),
+    status: oneOf(raw.status, [...ACTIVE_STATUSES, 'completed', 'failed', 'interrupted', 'cancelled'] as const),
+    stage: oneOf(raw.stage, [...ACTIVE_STATUSES, 'completed', 'failed', 'interrupted', 'cancelled'] as const),
     datasetVersion: textOrNull(raw.datasetVersion),
     runId: textOrNull(raw.runId),
     modelId: textOrNull(raw.modelId),
@@ -233,7 +245,7 @@ export function parseSyncCommitPage(value: unknown): SyncCommitPage {
   const raw = record(value)
   return {
     syncId: uuidText(raw.syncId),
-    status: oneOf(raw.status, [...ACTIVE_STATUSES, 'completed', 'failed', 'interrupted'] as const),
+    status: oneOf(raw.status, [...ACTIVE_STATUSES, 'completed', 'failed', 'interrupted', 'cancelled'] as const),
     total: count(raw.total),
     limit: count(raw.limit),
     offset: count(raw.offset),
@@ -269,6 +281,10 @@ export interface FailureHint {
 export function failHint(error: SyncError | null): FailureHint | null {
   if (error === null) return null
   switch (error.code) {
+    case 'SYNC_CANCELLED':
+      return { title: '分析已取消', next: '已有成功结果保持不变，可恢复原参数后重新分析。' }
+    case 'SYNC_WORKER_EXITED':
+      return { title: '分析进程已退出', next: '恢复原参数重新分析；若持续发生，请将请求编号反馈给维护者。' }
     case 'MODEL_DISABLED':
       return { title: '原选模型已停用', next: '刷新分析选项中的模型列表并重新选择，再发起新分析。已有结果仍可查看。' }
     case 'DEFAULT_MODEL_REQUIRED':

@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import {
   createRepository,
+  cancelRepositorySync,
   deleteRepository,
   deleteRepositorySync,
   fetchRepositorySyncsPage,
@@ -64,6 +65,15 @@ function json(body: unknown, status = 200): Response {
 }
 
 afterEach(() => vi.restoreAllMocks())
+
+it('取消请求返回实际作业身份并拒绝错配响应', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(json({ ...SYNC, status: 'cancelled' }))
+  await expect(cancelRepositorySync(SYNC_ID)).resolves.toMatchObject({ syncId: SYNC_ID, status: 'cancelled' })
+  expect(fetch.mock.calls[0][0]).toBe(`/api/v1/repository-syncs/${SYNC_ID}/cancel`)
+  expect(fetch.mock.calls[0][1]?.method).toBe('POST')
+  fetch.mockResolvedValue(json({ ...SYNC, syncId: REPO_ID, status: 'cancelled' }))
+  await expect(cancelRepositorySync(SYNC_ID)).rejects.toThrow()
+})
 
 describe('createRepository', () => {
   it('只登记项目并区分新建与复用', async () => {

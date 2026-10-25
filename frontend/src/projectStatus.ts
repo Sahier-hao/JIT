@@ -18,9 +18,10 @@ export interface ProjectStatus {
 
 export function projectStatus(repository: RepositoryView, latest: SyncView | null | undefined): ProjectStatus {
   const active = latest !== null && latest !== undefined && (ACTIVE_STATUSES as readonly string[]).includes(latest.status)
-  if (active && latest) return { state: 'running', label: STATUS_LABELS[latest.stage], tone: 'active' }
+  if (active && latest) return { state: 'running', label: latest.cancelRequestedAt ? '正在取消分析' : STATUS_LABELS[latest.stage], tone: 'active' }
   if (repository.viewSyncId) return { state: 'analyzed', label: '已有分析结果', tone: 'ok' }
   if (latest?.status === 'failed') return { state: 'failed', label: '上次分析失败', tone: 'alert' }
   if (latest?.status === 'interrupted') return { state: 'failed', label: '上次分析中断', tone: 'alert' }
+  if (latest?.status === 'cancelled') return { state: 'waiting', label: '上次分析已取消', tone: 'muted' }
   return { state: 'waiting', label: '等待分析', tone: 'muted' }
 }

@@ -44,6 +44,8 @@ MESSAGES = {
     'REPOSITORY_ANALYSIS_UNKNOWN': '指定分析不属于该仓库或不存在',
     'REPOSITORY_ANALYSIS_UNAVAILABLE': '指定分析尚未成功完成',
     'CONFLICT_ACTIVE_SYNC': '还有进行中的分析，请等待结束后再操作',
+    'SYNC_NOT_ACTIVE': '该分析已经结束，请刷新记录；已有结果保持不变',
+    'SYNC_SERVICE_STOPPING': '分析服务正在停止，请稍后重试',
 }
 STATUS = {'NOT_FOUND': 404,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
@@ -52,7 +54,8 @@ STATUS = {'NOT_FOUND': 404,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
-          'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409}
+          'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
+          'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503}
 
 
 class RequestError(BaselineError):
@@ -65,7 +68,7 @@ def managed_path(path):
     return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
-        r'|/api/v1/repository-syncs(?:/[^/]+(?:/commits(?:/[^/]+)?)?)?'
+        r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
         r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+)?|summary|syncs))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 

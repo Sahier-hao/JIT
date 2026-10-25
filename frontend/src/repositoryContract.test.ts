@@ -51,6 +51,15 @@ const COMMIT = {
 }
 
 describe('parseSync', () => {
+  it('保留取消状态、排队位置和执行时限，并拒绝无效排队位置', () => {
+    expect(parseSync({ ...SYNC, status: 'cancelled', stage: 'scoring', queuePosition: null,
+      startedAt: '2026-10-18T06:00:00Z', deadlineAt: '2026-10-18T06:10:00Z',
+      cancelRequestedAt: '2026-10-18T06:01:00Z' })).toMatchObject({
+      status: 'cancelled', cancelRequestedAt: '2026-10-18T06:01:00Z',
+    })
+    expect(parseSync({ ...SYNC, status: 'queued', queuePosition: 2 })).toMatchObject({ queuePosition: 2 })
+    expect(() => parseSync({ ...SYNC, status: 'queued', queuePosition: 0 })).toThrow()
+  })
   it('接受完整作业视图并保留降级原因与训练计数', () => {
     expect(parseSync(SYNC)).toMatchObject({
       syncId: SYNC.syncId,

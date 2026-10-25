@@ -1,5 +1,6 @@
 """Local project analysis, model catalog and historical verification API."""
 from pathlib import Path
+from contextlib import asynccontextmanager
 import os
 
 from fastapi import FastAPI, Request, Response
@@ -22,7 +23,16 @@ def _supplied_directory():
 def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
                sync_service=None, dataset_root=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
-    app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None)
+    owns_sync = sync_service is None
+
+    @asynccontextmanager
+    async def lifespan(app):
+        yield
+        if owns_sync:
+            from starlette.concurrency import run_in_threadpool
+            await run_in_threadpool(app.state.sync.close)
+
+    app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     @app.get('/api/health')
     def health():
         return {'status': 'ok'}
@@ -176,6 +186,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def sync_delete(sync_id: str):
         sync_service.delete_sync(sync_id)
         return Response(status_code=204)
+
+    @app.post('/api/v1/repository-syncs/{sync_id}/cancel')
+    def sync_cancel(sync_id: str):
+        result = sync_service.cancel(sync_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
 
     @app.get('/api/v1/repository-syncs/{sync_id}/commits')
     def sync_commits(sync_id: str, limit: int = 100, offset: int = 0, search: str | None = None,
