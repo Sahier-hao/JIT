@@ -187,6 +187,7 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         db.execute('DROP TABLE model_default')
         db.execute('ALTER TABLE repository_sync DROP COLUMN resolved_model_id')
         # Reconstruct a real v7 schema, including removal of later task-control columns.
+        db.execute('DROP TABLE repository_explanation')
         for column in ('started_at', 'deadline_at', 'cancel_requested_at'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
         db.execute('UPDATE schema_migration SET version=7')
