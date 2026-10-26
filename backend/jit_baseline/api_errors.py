@@ -17,6 +17,11 @@ API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models'}
 MESSAGES = {
+    'PR_SOURCE_UNAVAILABLE': '无法读取公开 GitHub PR 或原版本，请检查来源和网络后重试；已有草稿仍可保留',
+    'PR_RATE_LIMITED': 'GitHub 请求受限，请稍后重试；旧版本和草稿保持不变',
+    'PR_VERSION_CHANGED': '读取期间 PR 版本发生变化，请重新检查；旧版本保持不变',
+    'PR_SOURCE_TOO_LARGE': 'PR 响应或文件列表过大，未取得完整来源，请重试或在 GitHub 核对',
+    'PR_CONTENT_UNAVAILABLE': '该文件是二进制、过大或非 UTF-8 文本，无法完整显示；不能计入已阅读范围',
     'NOT_FOUND': '指定资源不存在',
     'INPUT_INVALID': '请求格式或字段值无效',
     'INPUT_SCHEMA_MISMATCH': '输入与所选模型的 schema 不匹配或未支持',
@@ -36,6 +41,7 @@ MESSAGES = {
     'DEFAULT_MODEL_REQUIRED': '请管理员先设置另一个可用的默认模型；也可明确选择已启用模型',
     'INFERENCE_ERROR': '所选模型推理失败，未保存预测',
     'REPOSITORY_UNAVAILABLE': '仓库不可用：请检查地址、分支或网络后重试',
+    'REPOSITORY_CHECK_TIMEOUT': '检查远端仓库超时，请重试；已有分析结果仍可查看',
     'SYNC_TIMEOUT': '同步超时，请缩小时间范围或提交上限后重试',
     'SYNC_INTERRUPTED': '服务重启时同步未完成，请重新同步',
     'SPLIT_INVALID': '数据无法完成时间切分，请调整时间范围或改用现成模型',
@@ -51,12 +57,14 @@ MESSAGES = {
     'REVIEW_PLAN_LIMIT_EXCEEDED': '计划备份不能超过 1 MiB 或 5000 个提交',
 }
 STATUS = {'NOT_FOUND': 404,
+          'PR_SOURCE_UNAVAILABLE': 502, 'PR_RATE_LIMITED': 429, 'PR_VERSION_CHANGED': 409,
+          'PR_SOURCE_TOO_LARGE': 413, 'PR_CONTENT_UNAVAILABLE': 422,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
           'REPOSITORY_ANALYSIS_UNKNOWN': 404, 'REPOSITORY_ANALYSIS_UNAVAILABLE': 409,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
-          'REPOSITORY_UNAVAILABLE': 502, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
+          'REPOSITORY_UNAVAILABLE': 502, 'REPOSITORY_CHECK_TIMEOUT': 504, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
           'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
           'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503,
           'REVIEW_PLAN_CONTEXT_MISMATCH': 409, 'REVIEW_PLAN_COMMIT_UNKNOWN': 422,
@@ -70,11 +78,13 @@ class RequestError(BaselineError):
 
 
 def managed_path(path):
+    if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
+        return True
     return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|review-plan/validate|comparison))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|review-plan/validate|comparison))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

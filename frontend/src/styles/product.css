@@ -248,6 +248,25 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 .result-facts dd { margin: 0; font: 13px var(--mono); text-align: right; overflow-wrap: anywhere; }
 .result-empty { padding: 22px; border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--sunken); color: var(--fg-3); font-size: 14px; }
 .project-result, .project-start, .project-records { margin-bottom: 36px; }
+.repository-updates { margin: 0 0 36px; padding: 22px 26px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--card); }
+.update-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.update-heading h2 { margin: 3px 0 0; font-size: 20px; }
+.update-kicker { font-size: 11px; letter-spacing: .1em; color: var(--fg-3); }
+.update-status { margin: 20px 0 14px; font-weight: 600; }
+.update-status.is-error { color: var(--risk-high); }
+.update-facts { display: flex; flex-wrap: wrap; gap: 14px 35px; margin: 0 0 20px; }
+.update-facts dt { font-size: 11px; color: var(--fg-3); margin-bottom: 5px; }
+.update-facts dd { margin: 0; font-size: 13px; }
+.update-toggle { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 14px; }
+.update-toggle input { margin-top: 4px; accent-color: var(--accent); }
+.update-toggle small, .update-settings small { display: block; color: var(--fg-3); font-size: 12px; margin-top: 5px; }
+.update-settings { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; }
+.update-settings summary { cursor: pointer; width: fit-content; }
+.update-settings form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+.update-settings label { display: flex; flex-direction: column; gap: 6px; }
+.update-settings input, .update-settings select { padding: 9px 10px; min-width: 0; border: 1px solid var(--line); border-radius: 5px; color: inherit; background: var(--card); font: inherit; }
+.update-settings .field-error, .update-settings button { grid-column: 1 / -1; justify-self: start; }
+@media(max-width:700px) { .repository-updates { padding: 18px; } .update-settings form { grid-template-columns: 1fr; } .update-facts { gap: 14px 20px; } }
 .project-records .job-main { flex-wrap: wrap; }
 .project-records .job-main .panel-actions { margin-left: auto; }
 .analysis-form { padding: 0; border: 0; background: none; }

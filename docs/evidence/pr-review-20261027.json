@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-27",
+  "scope": "public GitHub personal PR review UX-01..UX-08 and repository updates",
+  "backend": {
+    "fullPassed": 452,
+    "latestContractPassed": 30,
+    "existingWarnings": 2
+  },
+  "frontend": {
+    "passed": 282,
+    "files": 36,
+    "build": "passed",
+    "lintExistingWarnings": 9
+  },
+  "specs": {
+    "strictPassed": 19,
+    "changesArchived": 4,
+    "completedTasks": 27,
+    "deltaRequirementsVerified": 21
+  },
+  "liveSource": {
+    "url": "https://github.com/Sahier-hao/JIT/pull/30",
+    "base": "6a0cc4efce17f6992cfe756c10b20ee37686c3b4",
+    "head": "062322e836942466621caadf529f256031538a5f",
+    "files": 38,
+    "commits": 3,
+    "state": "merged"
+  },
+  "twoRoundAcceptance": {
+    "source": "explicit temporary Git acceptance fixture, not a remote GitHub author",
+    "initialHead": "f3794ebb92d8393f9b3caa9b20db55df9a11c0e7",
+    "updatedHead": "851060a4a4b2aa88cb9c5dc45d01171a314df48b",
+    "updatedModelJob": "316da770-6ebf-4d1b-89dc-3abdb91a4034",
+    "modelId": "f3dc826c-9d43-40e4-bd92-72a4c10dd665",
+    "status": "completed",
+    "exactHeadValidated": true,
+    "scoredPRCommits": 3
+  },
+  "databaseUpgrade": {
+    "sourceVersion": 8,
+    "verifiedCopyVersion": 12,
+    "originalTables": 19,
+    "preservedOriginalRows": 88788,
+    "integrityCheck": "ok",
+    "foreignKeyViolations": 0,
+    "productionModified": false
+  },
+  "nativeDownloads": {
+    "native-backup.json": {
+      "bytes": 4303,
+      "sha256": "6fc2ad406e6c36fd9c3aa4c9446c42dd7aa46c76742c8af7135d08a0d60d1861"
+    },
+    "native-round1.md": {
+      "bytes": 998,
+      "sha256": "fadb980c79154609a539805a8e95be8c12c728b8cfffc02c814b842ae13d59dc"
+    },
+    "native-feedback.json": {
+      "bytes": 451,
+      "sha256": "83692cc4b1324d5f198f9e1e7d7d4ecaf03bd520d931afdbe864517e152e665f"
+    },
+    "feedbackExcludesPrivateScratchAndJudgment": true
+  },
+  "notValidated": [
+    "real user interviews",
+    "review efficiency",
+    "defect detection effectiveness",
+    "private repositories",
+    "multiuser collaboration"
+  ]
+}

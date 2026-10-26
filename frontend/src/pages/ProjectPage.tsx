@@ -10,6 +10,7 @@ import type { SyncForm } from '../apiClient'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
 import { AnalysisForm } from '../components/AnalysisForm'
+import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
 import type { Route } from '../navigation'
@@ -43,13 +44,15 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   const deleteLock = useRef(false)
   const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
   const latestStatus = detail.repository?.latestSync?.status
+  const latestId = detail.repository?.latestSync?.syncId
   const previousJob = useRef('')
   useEffect(() => {
-    if (!latestStatus || previousJob.current === latestStatus) return
-    previousJob.current = latestStatus
+    const signature = `${latestId ?? ''}:${latestStatus ?? ''}`
+    if (!latestStatus || previousJob.current === signature) return
+    previousJob.current = signature
     refreshRecords()
     if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
-  }, [latestStatus, refreshRecords])
+  }, [latestStatus, latestId, refreshRecords])
   useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
@@ -130,6 +133,8 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         {context ? <button className="primary-button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>打开审查<Icon name="arrow"/></button> : null}
       </div>
     </header>
+
+    <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
 
     <section className="project-start" id="analysis-form-section" aria-label="发起分析">
       <div className="section-label"><h2>发起分析</h2><span>不会覆盖当前结果</span></div>

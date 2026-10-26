@@ -138,9 +138,9 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
     </> : <div className="project-onboarding">
       <div className="onboarding-graphic" aria-hidden="true"><span/><Icon name="project" size={38}/><span/></div>
       <h2>从一个仓库开始</h2>
-      <p>先建立项目，再在项目页决定分析范围；分析完成后，项目会一直保留结果与记录。</p>
+      <p>接入仓库后自动准备首次分析，并持续跟进新提交；结果与审查记录会一直保留。</p>
       <button className="clear-button" onClick={() => navigate({ name: 'sources' })}>新建项目 <Icon name="arrow"/></button>
-      <div className="onboarding-steps"><span><b>01</b> 建立项目</span><span><b>02</b> 发起分析</span><span><b>03</b> 安排审查</span></div>
+      <div className="onboarding-steps"><span><b>01</b> 接入仓库</span><span><b>02</b> 自动分析</span><span><b>03</b> 安排审查</span></div>
     </div>}
   </section>
 }

@@ -215,8 +215,9 @@ export function useRepository(repositoryId: string, viewSyncId?: string): Reposi
     return () => { active = false; controller.abort() }
   }, [repositoryId, viewSyncId, attempt])
   useEffect(() => {
-    if (!repositoryId || (!viewSyncId && !['queued', 'collecting', 'registering', 'training', 'scoring'].includes(state.repository?.latestSync?.status ?? ''))) return
-    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, viewSyncId ? 15000 : 1500)
+    if (!repositoryId) return
+    const running = ['queued', 'collecting', 'registering', 'training', 'scoring'].includes(state.repository?.latestSync?.status ?? '')
+    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, viewSyncId || !running ? 15000 : 1500)
     return () => clearInterval(timer)
   }, [repositoryId, viewSyncId, state.repository?.latestSync?.status])
   return { ...state, retry: () => setAttempt(value => value + 1) }

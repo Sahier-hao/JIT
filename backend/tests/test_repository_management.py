@@ -23,7 +23,7 @@ def client(tmp_path):
 
 
 def make_repository(client, url=REPO_URL):
-    response = client.post('/api/v1/repositories', json={'repositoryUrl': url})
+    response = client.post('/api/v1/repositories', json={'repositoryUrl': url, 'autoUpdate': False})
     assert response.status_code in (200, 201)
     return response.json()
 
@@ -48,8 +48,8 @@ def seed_sync(client, repository, sync_id, *, status='completed', created_at=Non
     return service
 
 
-def test_create_repository_is_idempotent_and_creates_no_analysis(client):
-    first = client.post('/api/v1/repositories', json={'repositoryUrl': f'{REPO_URL}.git'})
+def test_explicit_registration_only_is_idempotent_and_creates_no_analysis(client):
+    first = client.post('/api/v1/repositories', json={'repositoryUrl': f'{REPO_URL}.git', 'autoUpdate': False})
     assert first.status_code == 201
     repository = first.json()
     assert repository['displayName'] == 'management'

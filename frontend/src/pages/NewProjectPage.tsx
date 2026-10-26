@@ -1,5 +1,5 @@
 /**
- * 新建项目：只登记仓库地址，不设分析选项。
+ * 新建项目：登记仓库并自动准备首次分析，模型和更新策略可在项目页调整。
  *
  * 分析范围、模型策略属于「一次分析」，放在项目页；这里建完就直接进入项目页，
  * 让人看到下一步该做什么。
@@ -44,16 +44,16 @@ export function NewProjectPage({ navigate }: { navigate: (route: Route, replace?
     <header className="page-heading">
       <div>
         <h1>新建项目</h1>
-        <p className="page-intro">只需要一个仓库地址。分析范围与模型策略在项目页设置。</p>
+        <p className="page-intro">接入仓库后自动准备首次分析，并持续跟进新提交。</p>
       </div>
     </header>
     <form className="repository-form" onSubmit={submit}>
       <div className="form-intro"><span className="project-card-icon"><Icon name="project" size={22}/></span><div><h2>从仓库开始</h2><p>支持公开 HTTP(S) Git 仓库地址，同一地址只会建立一个项目。</p></div></div>
       <label className="repository-url-label">仓库地址<input aria-label="仓库地址" autoComplete="off" required placeholder="https://github.com/owner/repository" value={url} onChange={event => setUrl(event.target.value)}/></label>
-      <p className="form-hint">私有仓库与本地路径不会被读取；建立项目不会立即开始分析。</p>
+      <p className="form-hint">支持公开仓库。首次使用管理员默认模型分析最近 90 天内最多 500 个提交，每 5 分钟检查更新。</p>
       {hint ? <p className="field-error" role="alert">{hint}</p> : null}
       {error ? <FailureNotice error={error}/> : null}
-      <div className="form-submit"><p>建立后进入项目页，在那里选择分支、日期范围与模型策略。</p><button className="primary-button" type="submit" disabled={busy}>{busy ? '正在建立…' : '建立项目'}<Icon name="arrow"/></button></div>
+      <div className="form-submit"><p>可在项目页暂停自动更新，或调整跟踪分支与更新模型。</p><button className="primary-button" type="submit" disabled={busy}>{busy ? '正在建立…' : '建立项目'}<Icon name="arrow"/></button></div>
     </form>
     <p className="form-back"><button className="text-button" type="button" onClick={() => navigate({ name: 'repositories' })}>返回项目列表</button></p>
   </section>

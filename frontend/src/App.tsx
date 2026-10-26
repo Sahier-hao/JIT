@@ -11,6 +11,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { NewProjectPage } from './pages/NewProjectPage'
 import { ProjectPage } from './pages/ProjectPage'
 import { AnalysisComparison } from './pages/AnalysisComparison'
+import { MyReviews, PullRequestWork } from './pages/PullRequestJourney'
 
 export default function App() {
   const { route, navigate } = useRoute()
@@ -20,7 +21,9 @@ export default function App() {
   const stateKey = route.name === 'analysis' ? `${route.repositoryId}:${route.viewSyncId}` : ''
   const onSelection = useCallback((selection: { ids: string[]; warning: string | null }) => setSelections(previous => ({ ...previous, [stateKey]: selection })), [stateKey])
   let content
-  if (route.name === 'sources') content = <NewProjectPage navigate={navigate}/>
+  if (route.name === 'my-reviews') content = <MyReviews navigate={navigate}/>
+  else if (route.name === 'pr-work') content = <PullRequestWork key={`${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} navigate={navigate}/>
+  else if (route.name === 'sources') content = <NewProjectPage navigate={navigate}/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
   else if (route.name === 'analysis') content = <ReviewWorkbench key={stateKey} repositoryId={route.repositoryId} viewSyncId={route.viewSyncId} commitId={route.commitId} stateKey={stateKey} drafts={drafts} view={route.view === 'plan' ? 'shortlist' : 'list'} navigate={navigate} selection={selections[stateKey] ?? { ids: [], warning: null }} onSelection={onSelection} onConfirmed={() => {}}/>
