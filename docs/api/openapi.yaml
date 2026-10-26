@@ -1390,6 +1390,94 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/review-plan/validate:
+    post:
+      operationId: validatePortableReviewPlan
+      summary: 核对固定分析的个人计划备份，不保存共享计划
+      description: 整份核对项目、分析、数据版本、模型、运行和提交归属，保留条目顺序；拒绝未知或重复条目，不加载模型、不运行推理、不修改分析。请求流最多 1 MiB，计划最多 5000 条。
+      x-implementation-status: implemented
+      security: []
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: viewSyncId
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortableReviewPlan'
+      responses:
+        '200':
+          description: 完整核对的同一计划。仅返回引用，分数从原分析读取。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortableReviewPlan'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REVIEW_PLAN_CONTEXT_MISMATCH 或指定分析尚未成功，原计划不变。
+        '413':
+          description: REVIEW_PLAN_LIMIT_EXCEEDED，请求超过 1 MiB 或条目超过 5000。
+        '422':
+          description: INPUT_INVALID 或 REVIEW_PLAN_COMMIT_UNKNOWN，整份拒绝。
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/comparison:
+    get:
+      operationId: compareSavedRepositoryAnalyses
+      summary: 对照同一项目两次固定成功分析的保存分数与度量
+      description: 不加载模型或读取标签、不重新推理。两次分析必须明确、不同且属于本项目；结果为共同提交和各侧覆盖的并集。不同模型分数差异不表示质量提升，单侧覆盖不表示代码新增或删除。
+      x-implementation-status: implemented
+      security: []
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: baseSyncId
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: targetSyncId
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: limit
+        in: query
+        schema: {type: integer, minimum: 1, maximum: 200, default: 20}
+      - name: offset
+        in: query
+        schema: {type: integer, minimum: 0, default: 0}
+      - name: change
+        in: query
+        schema: {enum: [all, added, removed, changed, unchanged], default: all}
+      responses:
+        '200':
+          description: 两侧来源、全局覆盖计数和确定排序的筛选分页。changed 优先，其后按分数差绝对值和提交标识排序。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisComparison'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，某侧尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/summary:
     get:
       operationId: getRepositorySummary
@@ -2303,6 +2391,9 @@ components:
       - REPOSITORY_ANALYSIS_UNAVAILABLE
       - SYNC_NOT_ACTIVE
       - SYNC_SERVICE_STOPPING
+      - REVIEW_PLAN_CONTEXT_MISMATCH
+      - REVIEW_PLAN_COMMIT_UNKNOWN
+      - REVIEW_PLAN_LIMIT_EXCEEDED
       - SYNC_CANCELLED
       - SYNC_TIMEOUT
       - SYNC_INTERRUPTED
@@ -4186,6 +4277,99 @@ components:
       - features
       - explanationStatus
       additionalProperties: false
+    ComparedAnalysis:
+      type: object
+      additionalProperties: false
+      required: [syncId, branch, since, until, commitLimit, completedAt, headCommit, datasetVersion, modelId, runId, modelName]
+      properties:
+        syncId:
+          $ref: '#/components/schemas/Uuid'
+        branch: {type: string}
+        since: {type: [string, 'null']}
+        until: {type: [string, 'null']}
+        commitLimit: {type: [integer, 'null']}
+        completedAt: {type: [string, 'null']}
+        headCommit: {type: [string, 'null']}
+        datasetVersion: {type: [string, 'null']}
+        modelId: {type: [string, 'null']}
+        runId: {type: [string, 'null']}
+        modelName: {type: [string, 'null'], description: 原模型登记的名称元数据，不加载或校验产物。}
+    ComparedCommit:
+      type: object
+      additionalProperties: false
+      required: [commitId, status, subject, authorName, epoch, baseRisk, targetRisk, riskDelta, featuresChanged]
+      properties:
+        commitId: {type: string}
+        status: {enum: [added, removed, changed, unchanged]}
+        subject: {type: [string, 'null']}
+        authorName: {type: [string, 'null']}
+        epoch: {type: integer}
+        baseRisk: {type: [number, 'null'], minimum: 0, maximum: 1}
+        targetRisk: {type: [number, 'null'], minimum: 0, maximum: 1}
+        riskDelta: {type: [number, 'null'], minimum: -1, maximum: 1}
+        featuresChanged: {type: boolean}
+    AnalysisComparison:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, base, target, sameModel, counts, total, limit, offset, change, commits, limitations]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        base:
+          $ref: '#/components/schemas/ComparedAnalysis'
+        target:
+          $ref: '#/components/schemas/ComparedAnalysis'
+        sameModel: {type: boolean}
+        counts:
+          type: object
+          additionalProperties: false
+          required: [added, removed, changed, unchanged]
+          properties:
+            added: {type: integer, minimum: 0}
+            removed: {type: integer, minimum: 0}
+            changed: {type: integer, minimum: 0}
+            unchanged: {type: integer, minimum: 0}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 200}
+        offset: {type: integer, minimum: 0}
+        change: {enum: [all, added, removed, changed, unchanged]}
+        commits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparedCommit'
+        limitations:
+          type: array
+          items: {type: string}
+    PortableReviewPlan:
+      type: object
+      additionalProperties: false
+      required: [format, source, commitIds]
+      properties:
+        format:
+          const: jit-review-plan-v1
+        source:
+          type: object
+          additionalProperties: false
+          required: [repositoryId, viewSyncId, datasetVersion, modelId, runId]
+          properties:
+            repositoryId:
+              $ref: '#/components/schemas/Uuid'
+            viewSyncId:
+              $ref: '#/components/schemas/Uuid'
+            datasetVersion:
+              type: [string, 'null']
+            modelId:
+              type: [string, 'null']
+            runId:
+              type: [string, 'null']
+        commitIds:
+          type: array
+          maxItems: 5000
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
     RepositoryExplanation:
       type: object
       additionalProperties: false

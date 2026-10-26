@@ -5,6 +5,7 @@ export type Route =
   | { name: 'sources' }
   | { name: 'repository'; repositoryId: string }
   | { name: 'analysis'; repositoryId: string; viewSyncId: string; view: 'commits' | 'plan'; commitId?: string }
+  | { name: 'comparison'; repositoryId: string; baseSyncId: string; targetSyncId: string }
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
   | { name: 'admin'; view: 'models' | 'datasets' }
   | { name: 'legacy-sync'; syncId: string; view: 'commits' | 'plan' }
@@ -30,6 +31,7 @@ export function parseHash(hash: string): Route {
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
     const projectRoot = parts[0] === 'projects' || parts[0] === 'repositories'
     if (projectRoot && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
+    if (projectRoot && parts[2] === 'compare' && parts.length === 5) return { name: 'comparison', repositoryId: parts[1], baseSyncId: parts[3], targetSyncId: parts[4] }
     if (projectRoot && parts[2] === 'analyses' && (parts[4] === 'commits' || parts[4] === 'plan') && [5, 6].includes(parts.length)) return { name: 'analysis', repositoryId: parts[1], viewSyncId: parts[3], view: parts[4], ...(parts[5] ? { commitId: parts[5] } : {}) }
     if (parts[0] === 'legacy' && parts[1] === 'sync' && parts.length === 4 && ['commits', 'plan'].includes(parts[3])) return { name: 'legacy-sync', syncId: parts[2], view: parts[3] as 'commits' | 'plan' }
     if ((parts[0] === 'reports' && parts.length === 3) || (parts[0] === 'lab' && parts[1] === 'history' && parts.length === 4)) {
@@ -45,6 +47,7 @@ export function hashFor(route: Route): string {
     case 'repositories': return '#/projects'
     case 'sources': return '#/projects/new'
     case 'repository': return `#/projects/${encodeURIComponent(route.repositoryId)}`
+    case 'comparison': return `#/projects/${encodeURIComponent(route.repositoryId)}/compare/${encodeURIComponent(route.baseSyncId)}/${encodeURIComponent(route.targetSyncId)}`
     case 'analysis': return `#/projects/${encodeURIComponent(route.repositoryId)}/analyses/${encodeURIComponent(route.viewSyncId)}/${route.view}${route.commitId ? '/'+encodeURIComponent(route.commitId) : ''}`
     case 'report': return route.runId ? `#/admin/reports/${encodeURIComponent(route.runId)}/${route.view}` : '#/admin/reports'
     case 'admin': return `#/admin/${route.view}`

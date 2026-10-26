@@ -46,6 +46,9 @@ MESSAGES = {
     'CONFLICT_ACTIVE_SYNC': '还有进行中的分析，请等待结束后再操作',
     'SYNC_NOT_ACTIVE': '该分析已经结束，请刷新记录；已有结果保持不变',
     'SYNC_SERVICE_STOPPING': '分析服务正在停止，请稍后重试',
+    'REVIEW_PLAN_CONTEXT_MISMATCH': '计划备份不属于当前固定分析，项目、分析、数据或模型来源不一致；原计划保持不变',
+    'REVIEW_PLAN_COMMIT_UNKNOWN': '计划包含不在该分析中的提交，未接受任何条目；原计划保持不变',
+    'REVIEW_PLAN_LIMIT_EXCEEDED': '计划备份不能超过 1 MiB 或 5000 个提交',
 }
 STATUS = {'NOT_FOUND': 404,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
@@ -55,7 +58,9 @@ STATUS = {'NOT_FOUND': 404,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
           'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
-          'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503}
+          'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503,
+          'REVIEW_PLAN_CONTEXT_MISMATCH': 409, 'REVIEW_PLAN_COMMIT_UNKNOWN': 422,
+          'REVIEW_PLAN_LIMIT_EXCEEDED': 413}
 
 
 class RequestError(BaselineError):
@@ -69,7 +74,7 @@ def managed_path(path):
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|review-plan/validate|comparison))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

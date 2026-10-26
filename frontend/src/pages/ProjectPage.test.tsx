@@ -92,6 +92,14 @@ function mockApi(options: { onDeleteRecord?: () => void; onPost?: (body: unknown
   })
 }
 
+it('opens a comparison of a historical success against the pinned current result without changing it', async () => {
+  const fetch = mockApi(), navigate = vi.fn()
+  render(<ProjectPage repositoryId={REPO} navigate={navigate}/> )
+  await userEvent.click(await screen.findByRole('button', { name: '与当前结果对比' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'comparison', repositoryId: REPO, baseSyncId: OTHER, targetSyncId: SYNC })
+  expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(false)
+})
+
 afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear() })
 
 it('restores normalized dates without widening the cancelled analysis window', async () => {

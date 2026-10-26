@@ -15,6 +15,7 @@ import {
 import { toCommit } from './domain'
 import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
 import { useModelName } from './modelClient'
+import { PlanTransfer } from './components/PlanTransfer'
 
 const PAGE_SIZE = 20
 
@@ -227,6 +228,16 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
     if (!shortlist.includes(id)) changeShortlist([...shortlist, id])
   }
 
+  function mergePlan(ids: string[]): string {
+    const stored = restoreShortlist(dataset)
+    if (stored.warning) return '原计划存储无法读取，未覆盖；请先保留原数据并恢复浏览器存储后重试。'
+    const merged = [...new Set([...shortlist, ...stored.ids, ...ids])]
+    const warning = saveShortlist(dataset, merged)
+    if (warning) return '浏览器未能保存合并计划，原计划保持不变；请释放存储空间或恢复写入权限后重试。'
+    onSelection({ ids: merged, warning: '' })
+    return ''
+  }
+
   function closeDetail() {
     const id = selected
     setSelected(null)
@@ -284,6 +295,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       {legacy.ids.length ? <details className="legacy-preview"><summary>发现本分析的旧清单（{legacy.ids.length} 条），预览迁入</summary><p>只迁入经当前仓库分析核对的提交；保留旧存储。{legacyRecords.failed.length} 条无法核对。</p><ol>{legacy.ids.map(id => <li key={id}><code>{id}</code> · {legacyRecords.records.has(id) ? '来源已核对' : '未核对'}</li>)}</ol><button disabled={legacyRecords.state !== 'ready'} onClick={() => { const warning = migrateLegacyPlan(dataset, legacy.ids.filter(id => legacyRecords.records.has(id))); const restored = restoreShortlist(dataset); onSelection({ ids: warning ? shortlist : restored.ids, warning: warning || restored.warning }) }}>明确迁入已核对提交</button></details> : null}
 
       <nav className="view-tabs" aria-label="分析结果视图"><button aria-current={listView ? 'page' : undefined} onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits' })}>全部提交 <span>{repo.commitCount}</span></button><button aria-current={!listView ? 'page' : undefined} onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'plan' })}>审查计划 <span>{shortlist.length}</span></button></nav>
+      {!listView ? <PlanTransfer key={`${repositoryId}:${viewSyncId}`} source={{ repositoryId, viewSyncId, datasetVersion: repo.datasetVersion, modelId: repo.modelId, runId: repo.runId }} ids={shortlist} onMerge={mergePlan}/> : null}
       {!listView && shortlist.length ? <div className="plan-summary"><span>已选 {shortlist.length} 条 · 已知规模 {Array.from(shortlistRecords.records.values()).reduce((sum, record) => sum + (record.lines ?? 0), 0).toLocaleString()} 行{shortlist.filter(id => shortlistRecords.records.get(id)?.lines === undefined).length ? ' · 部分规模未提供' : ''}</span><button className="text-button" onClick={() => changeShortlist([])}>清空计划</button></div> : null}
       <div className={selected ? 'review-body has-detail' : 'review-body'}>
         <section className="review-main" aria-label={listView ? '已分析提交' : '审查清单'}>
@@ -365,7 +377,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
             </>
           )}
           <p className="review-foot">
-            {listView ? '点击标识查看这条提交的原始度量；预测解释未提供' : '加入清单仅代表你的审查计划'}
+            {listView ? '点击提交查看原始度量，并可主动生成原模型解释' : '加入清单仅代表你的审查计划'}
           </p>
         </section>
 
