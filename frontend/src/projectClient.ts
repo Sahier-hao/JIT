@@ -6,7 +6,8 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest, apiRequestWithStatus, fetchRepositorySyncs } from './apiClient'
-import { parseRepositorySyncPage, parseSyncPage, type RepositorySyncPage, type SyncView } from './repositoryContract'
+import { parseRepositorySyncPage, parseSync, parseSyncPage, type RepositorySyncPage, type SyncView } from './repositoryContract'
+import { contractFailed } from './apiContract'
 import { parseRepositoryView, type RepositoryView } from './repositoryWorkspace'
 import { projectsChanged } from './projectEvents'
 
@@ -90,6 +91,16 @@ export function deleteRepositorySync(syncId: string, signal?: AbortSignal): Prom
     signal,
     expectEmpty: true,
   }).then(() => { projectsChanged() })
+}
+
+export function cancelRepositorySync(syncId: string, signal?: AbortSignal): Promise<SyncView> {
+  return apiRequest({ path: `/api/v1/repository-syncs/${encodeURIComponent(syncId)}/cancel`, method: 'POST', signal })
+    .then(body => {
+      const job = parseSync(body)
+      if (job.syncId !== syncId) contractFailed('取消响应的分析身份不一致，请刷新记录')
+      projectsChanged()
+      return job
+    })
 }
 
 function describe(error: unknown): string {

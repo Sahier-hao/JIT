@@ -1,5 +1,6 @@
 """Local project analysis, model catalog and historical verification API."""
 from pathlib import Path
+from contextlib import asynccontextmanager
 import os
 
 from fastapi import FastAPI, Request, Response
@@ -22,7 +23,16 @@ def _supplied_directory():
 def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
                sync_service=None, dataset_root=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
-    app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None)
+    owns_sync = sync_service is None
+
+    @asynccontextmanager
+    async def lifespan(app):
+        yield
+        if owns_sync:
+            from starlette.concurrency import run_in_threadpool
+            await run_in_threadpool(app.state.sync.close)
+
+    app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     @app.get('/api/health')
     def health():
         return {'status': 'ok'}
@@ -57,6 +67,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                    dataset_root=dataset_root, allow_local=allow_local)
     sync_service.recover()
     app.state.sync = sync_service
+    from .repository_explanation import RepositoryExplanationService
+    explanation_service = RepositoryExplanationService(sync_service, catalog)
     from fastapi.exceptions import RequestValidationError
 
     @app.exception_handler(RequestValidationError)
@@ -177,6 +189,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         sync_service.delete_sync(sync_id)
         return Response(status_code=204)
 
+    @app.post('/api/v1/repository-syncs/{sync_id}/cancel')
+    def sync_cancel(sync_id: str):
+        result = sync_service.cancel(sync_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
+
     @app.get('/api/v1/repository-syncs/{sync_id}/commits')
     def sync_commits(sync_id: str, limit: int = 100, offset: int = 0, search: str | None = None,
                      start: str | None = None, end: str | None = None, sort: str = 'risk'):
@@ -227,6 +244,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}')
     def repository_commit(repository_id: str, commit_id: str, viewSyncId: str | None = None):
         return sync_service.repository_commit(repository_id, commit_id, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
+    def repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
+        return explanation_service.get(repository_id, commit_id, viewSyncId)
+
+    @app.post('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
+    def generate_repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
+        return explanation_service.generate(repository_id, commit_id, viewSyncId)
 
     @app.get('/api/v1/repositories/{repository_id}/summary')
     def repository_summary(repository_id: str, viewSyncId: str | None = None):

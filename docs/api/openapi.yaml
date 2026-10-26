@@ -978,9 +978,44 @@ paths:
           $ref: '#/components/responses/NotFound'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
-      description: 状态为 queued／collecting／registering／training／scoring／completed／failed／interrupted；`modelStrategy`
+      description: 状态为 queued／collecting／registering／training／scoring／completed／failed／interrupted／cancelled；`modelStrategy`
         与 `degradeReason` 说明这次实际用了哪个模型、为什么。
       security: []
+  /api/v1/repository-syncs/{syncId}/cancel:
+    post:
+      operationId: cancelRepositorySync
+      summary: 取消排队或执行中的项目分析
+      description: 排队分析立即取消；运行中返回取消请求，终止本次进程树后进入 cancelled。重复取消幂等；已完成、失败或中断的分析返回 409。已有成功结果和模型身份不变。
+      security: []
+      parameters:
+      - name: syncId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 已取消
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositorySyncView'
+        '202':
+          description: 取消请求已保存，继续读取作业状态直至结束
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositorySyncView'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 分析已结束，错误码 SYNC_NOT_ACTIVE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repository-syncs/{syncId}/commits:
     get:
       operationId: listRepositorySyncCommits
@@ -1294,6 +1329,67 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 提交不在当前视图里返回 404，不跨仓库查询。
       security: []
+  /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation:
+    parameters:
+    - name: repositoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    - name: commitId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    - name: viewSyncId
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      description: 必须明确指定本项目的成功分析，不自动取当前结果。
+    get:
+      operationId: getRepositoryExplanation
+      summary: 读取固定分析提交的保存解释，不触发推理
+      x-implementation-status: implemented
+      security: []
+      responses:
+        '200':
+          description: 保存的解释，或尚未生成；保留原分析模型、运行和分数。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryExplanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+    post:
+      operationId: generateRepositoryExplanation
+      summary: 主动生成并保存原模型对固定提交的解释
+      description: 仅使用原模型与运行身份，复核原分数；成功解释重复返回，不重新推理。生成失败返回未支持原因，可恢复原产物后重试；不会修改风险和计划，不使用当前默认模型替代。
+      x-implementation-status: implemented
+      security: []
+      responses:
+        '200':
+          description: 已保存的成功解释，或可重试的生成失败状态。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryExplanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/summary:
     get:
       operationId: getRepositorySummary
@@ -2205,6 +2301,12 @@ components:
       - REPOSITORY_UNKNOWN
       - REPOSITORY_ANALYSIS_UNKNOWN
       - REPOSITORY_ANALYSIS_UNAVAILABLE
+      - SYNC_NOT_ACTIVE
+      - SYNC_SERVICE_STOPPING
+      - SYNC_CANCELLED
+      - SYNC_TIMEOUT
+      - SYNC_INTERRUPTED
+      - SYNC_WORKER_EXITED
       description: 码名与HTTP／任务语义的唯一文字定义见../全局错误码表.md；枚举含当前HTTP、相关CLI及候选新接口。
     CurrentError:
       type: object
@@ -2852,6 +2954,21 @@ components:
     RepositorySyncView:
       type: object
       properties:
+        queuePosition:
+          type: [integer, 'null']
+          minimum: 1
+          description: 全局单 worker 队列中待执行的顺序，从 1 开始；执行中及终态为 null，不代表预计等待时间。
+        startedAt:
+          type: [string, 'null']
+          format: date-time
+        deadlineAt:
+          type: [string, 'null']
+          format: date-time
+          description: 从开始执行起计算的截止时间，排队时间不计入执行时限。
+        cancelRequestedAt:
+          type: [string, 'null']
+          format: date-time
+          description: 非空且作业仍在进行中时表示正在取消，不允许删除记录。
         repositoryId:
           type:
           - string
@@ -2903,6 +3020,7 @@ components:
           - completed
           - failed
           - interrupted
+          - cancelled
         stage:
           type: string
           enum:
@@ -2914,6 +3032,7 @@ components:
           - completed
           - failed
           - interrupted
+          - cancelled
         datasetVersion:
           type:
           - string
@@ -3104,6 +3223,7 @@ components:
           - completed
           - failed
           - interrupted
+          - cancelled
         total:
           type: integer
           minimum: 0
@@ -4066,6 +4186,63 @@ components:
       - features
       - explanationStatus
       additionalProperties: false
+    RepositoryExplanation:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, viewSyncId, commitId, modelId, runId, datasetVersion, risk, explanationStatus, explanation, explanationMethod, explanationSummary, explanationReason, reasonCode, baselineSource, baselineDatasetVersion, missingBaselineFeatures, featureSchemaVersion, modelSha256, generatedAt, limitations]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          $ref: '#/components/schemas/Uuid'
+        commitId:
+          type: string
+          minLength: 1
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        explanationStatus:
+          enum: [not-generated, supported, not-supported]
+        explanation:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/PredictionExplanation'
+        explanationMethod:
+          type: [string, 'null']
+        explanationSummary:
+          type: [string, 'null']
+        explanationReason:
+          type: [string, 'null']
+        reasonCode:
+          type: [string, 'null']
+          description: 生成失败的领域原因；不包含内部路径和异常详情。
+        baselineSource:
+          enum: [zero, mixed, model-dataset-mean, null]
+        baselineDatasetVersion:
+          type: [string, 'null']
+        missingBaselineFeatures:
+          type: array
+          items:
+            type: string
+        featureSchemaVersion:
+          type: [string, 'null']
+        modelSha256:
+          type: [string, 'null']
+        generatedAt:
+          type: [string, 'null']
+          format: date-time
+        limitations:
+          type: array
+          items:
+            type: string
     PredictionExplanation:
       type: object
       description: 单特征归因项；`delta` 是当前取值相对基线的风险变化，正值表示把风险推高。

@@ -18,7 +18,9 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (5, Path(__file__).parent / 'migrations/005_analysis_context.sql'),
               (6, Path(__file__).parent / 'migrations/006_local_registration.sql'),
               (7, Path(__file__).parent / 'migrations/007_admin_and_model_selection.sql'),
-              (8, Path(__file__).parent / 'migrations/008_model_policy.sql'))
+              (8, Path(__file__).parent / 'migrations/008_model_policy.sql'),
+              (9, Path(__file__).parent / 'migrations/009_sync_control.sql'),
+              (10, Path(__file__).parent / 'migrations/010_repository_explanation.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

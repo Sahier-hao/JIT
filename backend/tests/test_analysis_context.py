@@ -99,7 +99,7 @@ def test_migration_preserves_old_data_and_optional_metadata(tmp_path):
 
 def test_completion_uses_captured_head_even_when_commit_times_disagree(context):
     service, repo = context
-    seed(service, repo, 'first')
+    seed(service, repo, 'first', status='scoring')
     rows = [dict(id='a'*40, epoch=200, risk=.8, addedLines=1, deletedLines=1,
                  files=1, features={}, label=0, authorName='真实作者')]
     service.sync.complete('first', repo, rows, head_commit='b'*40,

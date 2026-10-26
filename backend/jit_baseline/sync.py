@@ -6,12 +6,15 @@
 """
 import hashlib
 import json
+import os
 import re
+import sys
+import tempfile
 import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -25,6 +28,7 @@ from .datasets import DATASETS
 from .errors import BaselineError
 from .model import predict_risks, temporal_split
 from .schemas import resolve
+from .task_process import OwnedProcess
 
 SCHEMA_NAME = collect.SCHEMA_NAME
 GENERIC_SCHEMA = "openstack-six-v1"
@@ -55,7 +59,21 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "requested_strategy", "status", "stage", "error_code", "error_message",
            "dataset_version", "run_id", "model_id", "model_strategy", "degrade_reason",
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
-           "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id")
+           "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
+           "started_at", "deadline_at", "cancel_requested_at")
+
+
+def worker_command():
+    return [sys.executable, '-m', 'jit_baseline.sync_worker']
+
+
+def check_control(row):
+    if row is None or row['status'] not in PROGRESS:
+        raise BaselineError('SYNC_CANCELLED', '该分析已结束，不再执行')
+    if row['cancel_requested_at']:
+        raise BaselineError('SYNC_CANCELLED', '分析已取消；可用原参数重新分析')
+    if row['deadline_at'] and datetime.now(timezone.utc) >= datetime.fromisoformat(row['deadline_at']):
+        raise BaselineError('SYNC_TIMEOUT', '分析超过执行时限，已停止；请缩小范围后重试')
 
 REPOSITORY_COLUMNS = ("id", "url", "display_name", "default_branch", "latest_sync_id",
                       "latest_sync_at", "view_sync_id", "head_commit", "commit_count",
@@ -152,6 +170,8 @@ def _view(row):
             "createdAt": item["created_at"], "updatedAt": item["updated_at"],
             "completedAt": item.get("completed_at"), "headCommit": item.get("head_commit"),
             "analysisBranch": item.get('analysis_branch'),
+            "startedAt": item.get('started_at'), "deadlineAt": item.get('deadline_at'),
+            "cancelRequestedAt": item.get('cancel_requested_at'), "queuePosition": None,
             "requestId": item["request_id"], "error": error}
 
 
@@ -185,6 +205,60 @@ class SyncStorage:
             row = db.execute("SELECT * FROM repository_sync WHERE id=?", (sync_id,)).fetchone()
         return _view(row) if row is not None else None
 
+    def queue_positions(self):
+        with self.storage.connection() as db:
+            return {row[0]: index for index, row in enumerate(db.execute(
+                "SELECT id FROM repository_sync WHERE status='queued' ORDER BY rowid"), 1)}
+
+    def start(self, sync_id, timeout):
+        now = datetime.now(timezone.utc)
+        with self.storage.connection(write=True) as db:
+            return db.execute(
+                "UPDATE repository_sync SET status='collecting',stage='collecting',started_at=?,"
+                "deadline_at=?,updated_at=? WHERE id=? AND status='queued' AND cancel_requested_at IS NULL",
+                (now.isoformat(), (now + timedelta(seconds=timeout)).isoformat(), utc_now(), sync_id)).rowcount == 1
+
+    def cancel(self, sync_id):
+        with self.storage.connection(write=True) as db:
+            row = db.execute('SELECT * FROM repository_sync WHERE id=?', (sync_id,)).fetchone()
+            if row is None:
+                raise BaselineError('NOT_FOUND', '分析记录不存在')
+            if row['status'] == 'cancelled':
+                return
+            if row['status'] not in PROGRESS:
+                raise BaselineError('SYNC_NOT_ACTIVE', '分析已经结束，请刷新记录')
+            if row['cancel_requested_at']:
+                return
+            now = utc_now()
+            db.execute('UPDATE repository_sync SET cancel_requested_at=?,updated_at=? WHERE id=?',
+                       (now, now, sync_id))
+            if row['status'] == 'queued':
+                db.execute("UPDATE repository_sync SET status='cancelled',completed_at=?,"
+                           "error_code='SYNC_CANCELLED',error_message='已取消排队，可用原参数重新分析' WHERE id=?",
+                           (now, sync_id))
+
+    def finish(self, sync_id, status, code, message, **fields):
+        """Late worker responses cannot revive a terminal job."""
+        with self.storage.connection(write=True) as db:
+            row = db.execute('SELECT * FROM repository_sync WHERE id=?', (sync_id,)).fetchone()
+            if row is None or row['status'] not in PROGRESS:
+                return
+            if row['cancel_requested_at']:
+                status, code, message = 'cancelled', 'SYNC_CANCELLED', '分析已取消；可用原参数重新分析'
+            now = utc_now()
+            fields.update(status=status, error_code=code, error_message=message, completed_at=now, updated_at=now)
+            if set(fields) - set(COLUMNS):
+                raise ValueError('未知作业字段')
+            assignments = ','.join(f'{name}=?' for name in fields)
+            db.execute(f'UPDATE repository_sync SET {assignments} WHERE id=?', (*fields.values(), sync_id))
+
+    def advance(self, sync_id, stage):
+        with self.storage.connection(write=True) as db:
+            row = db.execute('SELECT * FROM repository_sync WHERE id=?', (sync_id,)).fetchone()
+            check_control(row)
+            db.execute('UPDATE repository_sync SET status=?,stage=?,updated_at=? WHERE id=?',
+                       (stage, stage, utc_now(), sync_id))
+
     def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
@@ -207,9 +281,10 @@ class SyncStorage:
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection(write=True) as db:
             return db.execute(
-                "UPDATE repository_sync SET status='interrupted', error_code='SYNC_INTERRUPTED', "
-                "error_message='服务重启时同步尚未完成，请重新同步', updated_at=? "
-                f"WHERE status IN ({placeholders})", (utc_now(), *PROGRESS)).rowcount
+                "UPDATE repository_sync SET status=CASE WHEN cancel_requested_at IS NOT NULL THEN 'cancelled' ELSE 'interrupted' END, "
+                "error_code=CASE WHEN cancel_requested_at IS NOT NULL THEN 'SYNC_CANCELLED' ELSE 'SYNC_INTERRUPTED' END, "
+                "error_message=CASE WHEN cancel_requested_at IS NOT NULL THEN '分析已取消，可重新分析' ELSE '服务重启时同步尚未完成，请重新同步' END, updated_at=?,completed_at=? "
+                f"WHERE status IN ({placeholders})", (utc_now(), utc_now(), *PROGRESS)).rowcount
 
     def write_commits(self, sync_id, rows, *, connection=None):
         if connection is None:
@@ -231,6 +306,7 @@ class SyncStorage:
         """Publish commits, completion metadata and latest successful pointer atomically."""
         counts, now = distribution_of([row['risk'] for row in rows]), utc_now()
         with self.storage.connection(write=True) as db:
+            check_control(db.execute('SELECT * FROM repository_sync WHERE id=?', (sync_id,)).fetchone())
             self.write_commits(sync_id, rows, connection=db)
             db.execute("UPDATE repository_sync SET status='completed',stage='completed',completed_at=?,"
                        "updated_at=?,head_commit=?,dataset_version=?,run_id=?,model_id=?,analysis_branch=? WHERE id=?",
@@ -493,10 +569,18 @@ def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
         path = Path(room) / f"{name}.csv"
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(blob)
-        except OSError as exc:
-            raise BaselineError("DATASET_UNAVAILABLE", "采集结果写入失败，请检查存储权限") from exc
-        try:
+            if not path.exists():
+                temporary = path.with_name(f'{path.name}.{uuid.uuid4().hex}.tmp')
+                try:
+                    temporary.write_bytes(blob)
+                    try:
+                        os.link(temporary, path)
+                    except FileExistsError:
+                        pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            if path.read_bytes() != blob:
+                raise BaselineError('DATASET_EXISTS', f'已有 CSV 内容不同，不覆盖：{name}')
             registered = store.register(path, dataset=dataset, version=name, **kwargs)
             if after is not None:
                 after(registered, path)
@@ -505,6 +589,8 @@ def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
             if exc.code != "DATASET_EXISTS":
                 raise
             last = exc
+        except OSError as exc:
+            raise BaselineError('DATASET_UNAVAILABLE', '采集结果写入失败，请检查存储权限') from exc
     raise last
 
 
@@ -582,8 +668,69 @@ class SyncService:
         self.allow_local = allow_local
         self.timeout = timeout
         self.collect = collect_fn or collect.collect_repository
+        self._isolated = collect_fn is None
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._lock = threading.Lock()
+        self._closing = threading.Event()
+
+    def close(self):
+        with self._lock:
+            self._closing.set()
+        self._executor.shutdown(wait=True)
+
+    def cancel(self, sync_id):
+        self.sync.cancel(sync_id)
+        return self.get(sync_id)
+
+    def _positions(self, items):
+        positions = self.sync.queue_positions()
+        for item in items:
+            item['queuePosition'] = positions.get(item['syncId']) if item['status'] == 'queued' else None
+        return items
+
+    def _execute(self, sync_id):
+        process = None
+        try:
+            if self._closing.is_set():
+                self.sync.finish(sync_id, 'interrupted', 'SYNC_INTERRUPTED', '服务已停止，请重新分析')
+                return
+            timeout = self.timeout
+            if not self.sync.start(sync_id, timeout):
+                return
+            if not self._isolated:
+                self._run(sync_id)
+                return
+            with tempfile.TemporaryDirectory(prefix='jit-sync-') as work:
+                try:
+                    process = OwnedProcess(worker_command(), dict(
+                        database=str(self.sync.storage.path), artifactRoot=str(self.artifact_root.resolve()),
+                        datasetRoot=str(self.dataset_root.resolve()), allowLocal=self.allow_local,
+                        timeout=timeout, syncId=sync_id, workRoot=work), cwd=BACKEND)
+                    while True:
+                        item = self.sync.get(sync_id)
+                        if self._closing.is_set():
+                            process.close()
+                            self.sync.finish(sync_id, 'interrupted', 'SYNC_INTERRUPTED', '服务已停止，请重新分析')
+                            return
+                        if item['cancelRequestedAt']:
+                            process.close()
+                            self.sync.finish(sync_id, 'cancelled', 'SYNC_CANCELLED', '分析已取消')
+                            return
+                        if item['status'] not in PROGRESS:
+                            return
+                        if datetime.now(timezone.utc) >= datetime.fromisoformat(item['deadlineAt']):
+                            process.close()
+                            self.sync.finish(sync_id, 'failed', 'SYNC_TIMEOUT', '分析超过执行时限，已停止；请缩小范围后重试')
+                            return
+                        if process.poll() is not None:
+                            self.sync.finish(sync_id, 'failed', 'SYNC_WORKER_EXITED', '分析进程意外退出，请重新分析')
+                            return
+                        self._closing.wait(.1)
+                finally:
+                    if process is not None:
+                        process.close()
+        except Exception:
+            self.sync.finish(sync_id, 'failed', 'SYNC_WORKER_EXITED', '分析进程无法继续，请重新分析')
 
     def recover(self):
         """启动时处理遗留作业；数据库尚未初始化时视为没有遗留作业（D4）。"""
@@ -627,13 +774,15 @@ class SyncService:
                 self._generic_model(resolved_model_id)
         now = utc_now()
         with self._lock:
+            if self._closing.is_set():
+                raise BaselineError('SYNC_SERVICE_STOPPING', '服务正在停止，请稍后重试')
             existing = self.sync.find_active(repository_url=data["repositoryUrl"], branch=data["branch"],
                                              since=data["since"], until=data["until"],
                                              commit_limit=data["commitLimit"],
                                              requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
                                              resolved_model_id=resolved_model_id)
             if existing is not None:
-                return existing, False
+                return self.get(existing['syncId']), False
             repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
             sync_id = str(uuid.uuid4())
             self.sync.create({"id": sync_id, "repository_url": data["repositoryUrl"],
@@ -646,14 +795,14 @@ class SyncService:
                               "created_at": now, "updated_at": now})
             self.sync.repository_update(repository_id, latest_sync_id=sync_id,
                                         latest_sync_at=now, default_branch=data["branch"])
-        self._executor.submit(self._run, sync_id)
-        return self.sync.get(sync_id), True
+            self._executor.submit(self._execute, sync_id)
+        return self.get(sync_id), True
 
     def get(self, sync_id):
         item = self.sync.get(sync_id)
         if item is None:
             raise BaselineError("NOT_FOUND", "同步作业不存在")
-        return item
+        return self._positions([item])[0]
 
     def pages(self, limit=20, offset=0):
         if not 1 <= limit <= 100:
@@ -661,7 +810,7 @@ class SyncService:
         if offset < 0:
             raise BaselineError("INPUT_INVALID", "offset 不能为负")
         items, total = self.sync.pages(limit, offset)
-        return {"syncs": items, "total": total, "limit": limit, "offset": offset}
+        return {"syncs": self._positions(items), "total": total, "limit": limit, "offset": offset}
 
     def commits(self, sync_id, limit=100, offset=0, *, search=None, start=None, end=None,
                 sort="risk"):
@@ -699,7 +848,7 @@ class SyncService:
             raise BaselineError("INPUT_INVALID", "offset 不能为负")
         items, total = self.sync.repositories(limit, offset)
         for item in items:
-            item['latestSync'] = self.sync.get(item['latestSyncId']) if item.get('latestSyncId') else None
+            item['latestSync'] = self.get(item['latestSyncId']) if item.get('latestSyncId') else None
         return {"repositories": items, "total": total, "limit": limit, "offset": offset}
 
     def create_repository(self, payload):
@@ -772,7 +921,7 @@ class SyncService:
         if offset < 0:
             raise BaselineError("INPUT_INVALID", "offset 不能为负")
         items, total = self.sync.repository_syncs(repository_id, limit, offset)
-        return {"repositoryId": repository_id, "syncs": items, "total": total,
+        return {"repositoryId": repository_id, "syncs": self._positions(items), "total": total,
                 "limit": limit, "offset": offset}
 
     def delete_sync(self, sync_id):
@@ -826,7 +975,7 @@ class SyncService:
                     runId=(source or {}).get("runId"), modelId=(source or {}).get("modelId"),
                     datasetVersion=(source or {}).get("datasetVersion"),
                     limitations=list(REPOSITORY_LIMITATIONS), viewContext=context,
-                    latestSync=self.sync.get(repo['latestSyncId']) if repo['latestSyncId'] else None)
+                    latestSync=self.get(repo['latestSyncId']) if repo['latestSyncId'] else None)
 
     def repository_commits(self, repository_id, limit=50, offset=0, *, search=None,
                            start=None, end=None, sort="risk", view_sync_id=None):
@@ -881,7 +1030,7 @@ class SyncService:
         if time.monotonic() - started > self.timeout:
             raise BaselineError("SYNC_TIMEOUT",
                                 f"同步超过 {self.timeout} 秒未完成，请缩小时间范围或提交上限后重试")
-        self.sync.update(sync_id, status=stage, stage=stage)
+        self.sync.advance(sync_id, stage)
 
     def _generic_model(self, model_id=None):
         model_id = model_id or self.catalog.default_model_id()
@@ -926,6 +1075,8 @@ class SyncService:
     def _run(self, sync_id):
         started = time.monotonic()
         item = self.sync.get(sync_id)
+        if item is None or item['status'] not in PROGRESS:
+            return
         decision, version, run_id = None, None, None
         try:
             self._step(sync_id, "collecting", started)
@@ -980,16 +1131,12 @@ class SyncService:
                 analysis_branch=collected['collection']['repository'].get('resolvedBranch'),
                 dataset_version=version, run_id=run_id, model_id=model_id)
         except BaselineError as exc:
-            current = self.sync.get(sync_id) or {}
             degrade = (decision or {}).get("degradeReason")
             if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):
                 degrade = "noGenericModel"
-            self.sync.update(sync_id, status="failed", stage=current.get("stage") or "unknown",
-                             error_code=exc.code, error_message=str(exc),
+            self.sync.finish(sync_id, 'cancelled' if exc.code == 'SYNC_CANCELLED' else 'failed', exc.code, str(exc),
                              **({"degrade_reason": degrade} if degrade else {}),
                              **({"dataset_version": version} if version else {}))
         except Exception:
-            current = self.sync.get(sync_id) or {}
-            self.sync.update(sync_id, status="failed", stage=current.get("stage") or "unknown",
-                             error_code="INTERNAL_ERROR",
-                             error_message="同步过程中出现未预期错误，请重试；如果反复失败请联系维护者")
+            self.sync.finish(sync_id, 'failed', 'INTERNAL_ERROR',
+                             '同步过程中出现未预期错误，请重试；如果反复失败请联系维护者')

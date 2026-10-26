@@ -1,0 +1,8 @@
+.repository-explanation { margin-block: 18px; padding-block: 14px; border-block: 1px solid var(--line); }
+.repository-explanation h3 { font-size: 13px; margin: 0 0 10px; }
+.repository-explanation p { line-height: 1.6; font-size: 12px; }
+.explanation-table-scroll { overflow-x: auto; max-width: 100%; }
+.explanation-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.explanation-table th, .explanation-table td { padding: 9px 4px; text-align: left; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.explanation-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.explanation-table td span { display: block; color: var(--fg-3); margin-top: 3px; }
