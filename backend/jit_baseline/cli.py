@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .artifacts import (DEFAULT_RUN, Snapshot, build_run, compare_methods, compare_runs,
                         declared_reproducibility, environment, run_origin, verify_run, write_json)
+from .suite import compare_projects, run_suite
 from . import evidence
 from .config import BACKEND
 from .data import BaselineError, fetch_sources
@@ -44,6 +45,15 @@ def main():
     methods = commands.add_parser("compare-methods")
     methods.add_argument("runs", type=Path, nargs="+")
     methods.add_argument("--report", type=Path, required=True)
+    suite = commands.add_parser("run-suite")
+    suite.add_argument("--dataset-manifest", type=Path, required=True)
+    suite.add_argument("--output", type=Path, required=True)
+    suite.add_argument("--methods", nargs="*", default=None,
+                       help="方法子集；省略表示全部已注册方法")
+    suite.add_argument("--metric-set", default=None, help="默认 metric-set-v2")
+    projects = commands.add_parser("compare-projects")
+    projects.add_argument("suites", type=Path, nargs="+")
+    projects.add_argument("--report", type=Path, required=True)
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -138,6 +148,12 @@ def main():
             write_json(args.report, result)
         elif args.command == "compare-methods":
             result = compare_methods(args.runs)
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+            write_json(args.report, result)
+        elif args.command == "run-suite":
+            result = run_suite(args.dataset_manifest, args.output, args.methods, args.metric_set)
+        elif args.command == "compare-projects":
+            result = compare_projects(args.suites)
             args.report.parent.mkdir(parents=True, exist_ok=True)
             write_json(args.report, result)
         elif args.command == "freeze-evidence":

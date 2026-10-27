@@ -142,6 +142,32 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 运行目录的 `source.json` 记录采集来源（`publisher` 为 `collected`、`revision` 为采集时的 HEAD、
 仓库地址与 git 版本），`datasetVersion` 等于数据集版本名，产物因此能追溯到具体仓库与时间窗口。
 
+### 多数据集套件与跨项目比较（add-multi-dataset-model-evaluation）
+
+`run-suite` 对一个已登记数据集批量训练方法套件（默认全部已注册方法、指标集 `metric-set-v2`）：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli run-suite `
+  --dataset-manifest data/datasets/openstack-six-v1/openstack-six-v1-2011-11-29_2014-02-28.json `
+  --output artifacts/suites/openstack-six-v1
+
+& .venv/Scripts/python.exe -m jit_baseline.cli run-suite `
+  --dataset-manifest data/datasets/flask-3y/flask-3y-2022-01-11_2024-11-27.json `
+  --output artifacts/suites/flask-3y
+```
+
+套件目录里的 `suite.json` 记录数据集版本、schema、指标集、每个方法的运行标识或失败原因；
+单方法失败不阻塞其余方法，整体状态为 `complete` 或 `partial`。跨项目报告只并列、不排名：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli compare-projects `
+  artifacts/suites/openstack-six-v1 artifacts/suites/flask-3y `
+  --report ../docs/evidence/_run/cross-project-report.json
+```
+
+报告按项目分组；跨项目固定 `directlyRankable: false`，并列出数据集版本、特征 schema、
+标签语义（发布者 `bugcount` vs 简化 SZZ）与测试成员的差异。项目内比较沿用既有并列规则。
+
 ### 已有模型登记
 
 维护者运行 `cli register-model --run-key baseline`（完整命令为

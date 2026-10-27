@@ -1,0 +1,509 @@
+{
+  "copiedFromWorkspace": [
+    "accessibility-desktop-1280-keyboard.json",
+    "accessibility-desktop-1280-overflow.json",
+    "accessibility-desktop-1280-status-text.json",
+    "accessibility-desktop-1280-trends.json",
+    "accessibility-desktop-1440-keyboard.json",
+    "accessibility-desktop-1440-overflow.json",
+    "accessibility-desktop-1440-status-text.json",
+    "accessibility-desktop-1440-trends.json",
+    "browser-results.json",
+    "cross-project-report.json",
+    "deep-reproducibility.json",
+    "desktop-1280-real-chain.json",
+    "desktop-1440-real-chain.json",
+    "http-lifecycle.json",
+    "kamei14-column-stats.json",
+    "kamei14-reproduction-comparison.json",
+    "kamei14-schema-report.json",
+    "method-comparison-v2.json",
+    "method-comparison.json",
+    "reproduction-comparison.json",
+    "restyle-frontend-visual-language/models-desktop-1280.png",
+    "restyle-frontend-visual-language/models-desktop-1440.png",
+    "restyle-frontend-visual-language/models-drawer-desktop-1280.png",
+    "restyle-frontend-visual-language/models-drawer-desktop-1440.png",
+    "restyle-frontend-visual-language/pages-desktop-1280.json",
+    "restyle-frontend-visual-language/pages-desktop-1440.json",
+    "restyle-frontend-visual-language/predict-desktop-1280.png",
+    "restyle-frontend-visual-language/predict-desktop-1440.png",
+    "restyle-frontend-visual-language/result-desktop-1280.png",
+    "restyle-frontend-visual-language/result-desktop-1440.png",
+    "restyle-frontend-visual-language/theme-charcoal-models-drawer-desktop-1280.png",
+    "restyle-frontend-visual-language/theme-charcoal-models-drawer-desktop-1440.png",
+    "restyle-frontend-visual-language/theme-charcoal-predict-desktop-1280.png",
+    "restyle-frontend-visual-language/theme-charcoal-predict-desktop-1440.png",
+    "restyle-frontend-visual-language/theme-desktop-1280.json",
+    "restyle-frontend-visual-language/theme-desktop-1440.json",
+    "restyle-frontend-visual-language/trends-chart-desktop-1280.png",
+    "restyle-frontend-visual-language/trends-chart-desktop-1440.png",
+    "restyle-frontend-visual-language/trends-desktop-1280.json",
+    "restyle-frontend-visual-language/trends-desktop-1280.png",
+    "restyle-frontend-visual-language/trends-desktop-1440.json",
+    "restyle-frontend-visual-language/trends-desktop-1440.png",
+    "restyle-frontend-visual-language/workbench-demo-desktop-1280.png",
+    "restyle-frontend-visual-language/workbench-demo-desktop-1440.png",
+    "restyle-frontend-visual-language/workbench-desktop-1280.json",
+    "restyle-frontend-visual-language/workbench-desktop-1440.json",
+    "restyle-frontend-visual-language/workbench-historical-desktop-1280.png",
+    "restyle-frontend-visual-language/workbench-historical-desktop-1440.png",
+    "screenshots/admin-models-desktop-1280.png",
+    "screenshots/admin-models-desktop-1440.png",
+    "screenshots/desktop-1280-detail.png",
+    "screenshots/desktop-1280-keyboard-focus.png",
+    "screenshots/desktop-1280-load-error.png",
+    "screenshots/desktop-1280-real-accessibility-detail.png",
+    "screenshots/desktop-1280-real-accessibility-error.png",
+    "screenshots/desktop-1280-real-accessibility-keyboard.png",
+    "screenshots/desktop-1280-real-accessibility-list.png",
+    "screenshots/desktop-1280-real-accessibility-trends.png",
+    "screenshots/desktop-1280-real-baseline.png",
+    "screenshots/desktop-1280-real-detail.png",
+    "screenshots/desktop-1280-real-keyboard.png",
+    "screenshots/desktop-1280-real-list.png",
+    "screenshots/desktop-1280-real-service-error.png",
+    "screenshots/desktop-1280-real-shortlist.png",
+    "screenshots/desktop-1280-save-error.png",
+    "screenshots/desktop-1280-seed-range.png",
+    "screenshots/desktop-1280-shortlist.png",
+    "screenshots/desktop-1280-workbench.png",
+    "screenshots/desktop-1440-detail.png",
+    "screenshots/desktop-1440-keyboard-focus.png",
+    "screenshots/desktop-1440-load-error.png",
+    "screenshots/desktop-1440-real-accessibility-detail.png",
+    "screenshots/desktop-1440-real-accessibility-error.png",
+    "screenshots/desktop-1440-real-accessibility-keyboard.png",
+    "screenshots/desktop-1440-real-accessibility-list.png",
+    "screenshots/desktop-1440-real-accessibility-trends.png",
+    "screenshots/desktop-1440-real-baseline.png",
+    "screenshots/desktop-1440-real-detail.png",
+    "screenshots/desktop-1440-real-keyboard.png",
+    "screenshots/desktop-1440-real-list.png",
+    "screenshots/desktop-1440-real-service-error.png",
+    "screenshots/desktop-1440-real-shortlist.png",
+    "screenshots/desktop-1440-save-error.png",
+    "screenshots/desktop-1440-seed-range.png",
+    "screenshots/desktop-1440-shortlist.png",
+    "screenshots/desktop-1440-workbench.png",
+    "screenshots/model-policy-admin-desktop-1280.png",
+    "screenshots/model-policy-admin-desktop-1440.png",
+    "screenshots/model-policy-project-desktop-1280.png",
+    "screenshots/model-policy-project-desktop-1440.png",
+    "screenshots/project-narrow-desktop-1280.png",
+    "screenshots/project-narrow-desktop-1440.png",
+    "screenshots/review-desktop-1280.png",
+    "screenshots/review-desktop-1440.png",
+    "screenshots/user-projects-desktop-1280.png",
+    "screenshots/user-projects-desktop-1440.png",
+    "unit-results.json",
+    "verification.json",
+    "verification.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 99,
+  "files": [
+    {
+      "path": "accessibility-desktop-1280-keyboard.json",
+      "sha256": "d812dd1b0b121c6fad51d5765ae6e14bac31d21501eb9d57fdb3aa1415f6f171"
+    },
+    {
+      "path": "accessibility-desktop-1280-overflow.json",
+      "sha256": "29984ab30b17354e89648aa43b2aa44c6a68bdfc7caf0fd3210fc9321a8e2c09"
+    },
+    {
+      "path": "accessibility-desktop-1280-status-text.json",
+      "sha256": "2b6b150945ba16ef4a5ac20a1c1cff6e29a29ebdf23cb032097682464bf28b1e"
+    },
+    {
+      "path": "accessibility-desktop-1280-trends.json",
+      "sha256": "79f25c9c16cf5125db4f92a0a1b2276d29ee6ab08bdfade44ff8de1073b51df4"
+    },
+    {
+      "path": "accessibility-desktop-1440-keyboard.json",
+      "sha256": "983c6fc0b13595d55f8007d5b38623bf0f8125540fef0ce2e3441c3e56ecf723"
+    },
+    {
+      "path": "accessibility-desktop-1440-overflow.json",
+      "sha256": "ca7e9f98d1f6637782daa7db0bab06a9f0d91e6486078b67307fe173dc0973de"
+    },
+    {
+      "path": "accessibility-desktop-1440-status-text.json",
+      "sha256": "23bf6daaac568c614a472578009f125f773e92a7550abca32340482124cc5901"
+    },
+    {
+      "path": "accessibility-desktop-1440-trends.json",
+      "sha256": "d619bd10884a1a2d76fe8e0cdbbff6f0531b4d576a539365f6fe89439600e4bf"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "b8ab3ba740bc866d8f68e7cfa09ef20a9233535312f9184ccc20eabef18d474c"
+    },
+    {
+      "path": "cross-project-report.json",
+      "sha256": "d0f1e7b9ebfe84a3ad3b661f4fa59121d3a5946d2fa9b14526e0a272d83f85e3"
+    },
+    {
+      "path": "deep-reproducibility.json",
+      "sha256": "ffb77e8bec64e488b9b8ab85a08f07e44b27506c32a7089971d1092090ad1632"
+    },
+    {
+      "path": "desktop-1280-real-chain.json",
+      "sha256": "2094b81d569deca6466d73b2405b1f376cafbd24de0051157d0ca73789810b75"
+    },
+    {
+      "path": "desktop-1440-real-chain.json",
+      "sha256": "d81c27e0c5e58b1718c43ea637f382c2c0a56bc53ad8fc99f8b5869a4ff4daa2"
+    },
+    {
+      "path": "http-lifecycle.json",
+      "sha256": "1e628d45b646e57f04bb806c31dc07376ae35e3b936f78666af538538f3871ef"
+    },
+    {
+      "path": "kamei14-column-stats.json",
+      "sha256": "bbd773d890349768b6cf7797a50700b27ca838b84727d6b1f3bb9f62c15186fd"
+    },
+    {
+      "path": "kamei14-reproduction-comparison.json",
+      "sha256": "ac908c6f6d6b149c5a04a4a517e3cff31ebfc95ed734e5acc84461508f7770cb"
+    },
+    {
+      "path": "kamei14-schema-report.json",
+      "sha256": "8dec0b016ad0fb849117803ccbca8db3d9044406aaeab2567716dcec6a079039"
+    },
+    {
+      "path": "method-comparison-v2.json",
+      "sha256": "d8ec8b8904bfc10c20c7d96d9f0dbd779aedb6123834149eb856e7df4ac57f82"
+    },
+    {
+      "path": "method-comparison.json",
+      "sha256": "53d32d11ad255c95b813786747b3120ffc55c136dc507677a111cd4c68f1be2f"
+    },
+    {
+      "path": "reproduction-comparison.json",
+      "sha256": "e1fcbbc2cc9ec8771c2cb087c95e0a98807ed5804e5e17c9622ccb72add71180"
+    },
+    {
+      "path": "restyle-frontend-visual-language/models-desktop-1280.png",
+      "sha256": "2a9dc91d7a721132f4705810b95641910fdbb5437786defe91bf15397301e2ed"
+    },
+    {
+      "path": "restyle-frontend-visual-language/models-desktop-1440.png",
+      "sha256": "15f1ddc5ae40f11d6137401f7b27bfe3bd65110aae3e0996b6163668d9f21eca"
+    },
+    {
+      "path": "restyle-frontend-visual-language/models-drawer-desktop-1280.png",
+      "sha256": "da30d11afd0efe1b7dd6460bee07f0a20229b4f818623ccbc2287e21849ad9ec"
+    },
+    {
+      "path": "restyle-frontend-visual-language/models-drawer-desktop-1440.png",
+      "sha256": "bb71de046329a62889b5bf56f7cf9ed5090e67f349cc1ab01a4071d25e6e914d"
+    },
+    {
+      "path": "restyle-frontend-visual-language/pages-desktop-1280.json",
+      "sha256": "0df650263ed92fb08d9bbe78d7264e7f4486f5364fa576017c34696973230216"
+    },
+    {
+      "path": "restyle-frontend-visual-language/pages-desktop-1440.json",
+      "sha256": "28d06e20785932754ae56a5509cad74f58021188dd3fb70c13580aedd91c21b6"
+    },
+    {
+      "path": "restyle-frontend-visual-language/predict-desktop-1280.png",
+      "sha256": "76f88a1b0bf36eb4b8d7e5d28851a46a2125ea99365437b5bf191ad7f1eee712"
+    },
+    {
+      "path": "restyle-frontend-visual-language/predict-desktop-1440.png",
+      "sha256": "14e32ba6a235da59755fe8515f59b59768f98b555963a3cbec9b2d6f0c549508"
+    },
+    {
+      "path": "restyle-frontend-visual-language/result-desktop-1280.png",
+      "sha256": "381095f6b9bb7b1e4fcb579176221bcd66751423941a5f5cec81ce058083ed6c"
+    },
+    {
+      "path": "restyle-frontend-visual-language/result-desktop-1440.png",
+      "sha256": "3f5eadf7d12d0bc4e1d402b6c6ffd51f9c423f8abf6251fe6a50e2db77253d56"
+    },
+    {
+      "path": "restyle-frontend-visual-language/theme-charcoal-models-drawer-desktop-1280.png",
+      "sha256": "c5403d1001ee712d1ec57bbdb573491eba858803840cdab27f6d07a9c5136a8d"
+    },
+    {
+      "path": "restyle-frontend-visual-language/theme-charcoal-models-drawer-desktop-1440.png",
+      "sha256": "c673b6607d80ee8e46ba380716757c579ff0353956b47e04c3b1ad01ffc958bb"
+    },
+    {
+      "path": "restyle-frontend-visual-language/theme-charcoal-predict-desktop-1280.png",
+      "sha256": "87ee55f4cdb9d60935b4a2ce3c4c3a7a89a0d578dce50d166775911e275f768e"
+    },
+    {
+      "path": "restyle-frontend-visual-language/theme-charcoal-predict-desktop-1440.png",
+      "sha256": "9f5d477eb860bd7825ab223e3c5d7971a20a4c0a24560b71b8d8203286ffe779"
+    },
+    {
+      "path": "restyle-frontend-visual-language/theme-desktop-1280.json",
+      "sha256": "0442df3c782a2d4160e3ccbd373cbdaffdf870f26e6bb7c9e8112307b6240742"
+    },
+    {
+      "path": "restyle-frontend-visual-language/theme-desktop-1440.json",
+      "sha256": "b6faf361d13e6285e0d2d9e91da4a8c95f2068136e850b743ed191b04f02fdf3"
+    },
+    {
+      "path": "restyle-frontend-visual-language/trends-chart-desktop-1280.png",
+      "sha256": "a28c695b998a7b4f3826a5a519abf55715e19264f83aa0f73aeb5b0bbc01ce50"
+    },
+    {
+      "path": "restyle-frontend-visual-language/trends-chart-desktop-1440.png",
+      "sha256": "98bd8504ff7f6e4c1a5c4c674eac6e62b69940c0d7be2e9cbd95ff4c5976a69e"
+    },
+    {
+      "path": "restyle-frontend-visual-language/trends-desktop-1280.json",
+      "sha256": "265fbf5f8f5d2953680a5927664584d9942e9e0439cc3d0f213201e9cb4c60a7"
+    },
+    {
+      "path": "restyle-frontend-visual-language/trends-desktop-1280.png",
+      "sha256": "3b934ec9a50b10d4f548cb9a7553edc1e45a04b9e1b1d80c1bbf76d672cef593"
+    },
+    {
+      "path": "restyle-frontend-visual-language/trends-desktop-1440.json",
+      "sha256": "f4fccd3c3070e5a4bafa6979e7ae7bfff23645d4f5cd991e3cc752a9d033a1af"
+    },
+    {
+      "path": "restyle-frontend-visual-language/trends-desktop-1440.png",
+      "sha256": "d674d9e741575a01bf776ad120f8ba6419f49858303d7fc9bc79f3a99a7bdf91"
+    },
+    {
+      "path": "restyle-frontend-visual-language/workbench-demo-desktop-1280.png",
+      "sha256": "60a4378c9054c53e6237dd68e81eb04af63715b968795896d003cba76c94a6ed"
+    },
+    {
+      "path": "restyle-frontend-visual-language/workbench-demo-desktop-1440.png",
+      "sha256": "7e57c080a3028ba085e3d63a3361a60431a83c05cb90c5d1a241556c3fecddf3"
+    },
+    {
+      "path": "restyle-frontend-visual-language/workbench-desktop-1280.json",
+      "sha256": "09b6a6cb5c49933eac08108324037a40372afd857c8c9c7bede5d17df8cee787"
+    },
+    {
+      "path": "restyle-frontend-visual-language/workbench-desktop-1440.json",
+      "sha256": "553c55081a6a073fe2525a28bc7ba52201fc18ea97fe5f346e400a4b89b22c9f"
+    },
+    {
+      "path": "restyle-frontend-visual-language/workbench-historical-desktop-1280.png",
+      "sha256": "60aa13ad3995d96f7a0430b16f3214278b25780cc767980ecfcecd1727b2a6ef"
+    },
+    {
+      "path": "restyle-frontend-visual-language/workbench-historical-desktop-1440.png",
+      "sha256": "56357e345a1013136a2af493d2c22aa436fad8696bf8b87f073d296cff58910b"
+    },
+    {
+      "path": "screenshots/admin-models-desktop-1280.png",
+      "sha256": "7ce59108f87b8161b63bcafc16314b6b84aadbd48b65e072ca14e979083eeb01"
+    },
+    {
+      "path": "screenshots/admin-models-desktop-1440.png",
+      "sha256": "9db14b946d2f6b3a83db9fedd36c51e6e2dd9c4102aa86ce48991cd15cdf6ad6"
+    },
+    {
+      "path": "screenshots/desktop-1280-detail.png",
+      "sha256": "3e3ab1523dfe82592cafe63e9891ffa004d7ba72cb0bb48076ce1fde2c04994f"
+    },
+    {
+      "path": "screenshots/desktop-1280-keyboard-focus.png",
+      "sha256": "8c9fa6b01a04a0a1a0a977039f8a57d59248fa46d6c135bb0c92e18913d1efde"
+    },
+    {
+      "path": "screenshots/desktop-1280-load-error.png",
+      "sha256": "3f7b10a3c2cd4d1ce2b9b7ae0edd1edfbd58e770cfd7e7c0c4a3ac8766b1028c"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-accessibility-detail.png",
+      "sha256": "d270ee03093808f32fd8bcc38d86d9b7b3993d898766792487771ebda656757f"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-accessibility-error.png",
+      "sha256": "c0bf55dfce6a418c613f65c9bf35c80c624a4dc9f6980d29ad05d94b1407fb4b"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-accessibility-keyboard.png",
+      "sha256": "d540db6f713ea02a6051728af711ba0286f439ff2f7ef6527b446a7f40b840b3"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-accessibility-list.png",
+      "sha256": "60aa13ad3995d96f7a0430b16f3214278b25780cc767980ecfcecd1727b2a6ef"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-accessibility-trends.png",
+      "sha256": "2e30987ca1ce0291a253503199b88a28df2fe7ab06bae448f836193f3aca4fcf"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-baseline.png",
+      "sha256": "7715a3ded7979be73d4b996ba99ce2bea3bf48c6221db101f0526644943e0071"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-detail.png",
+      "sha256": "ef9bbdb97a0bd64266996dbcb9c6416807d24667a0313e68810cc80933f4262b"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-keyboard.png",
+      "sha256": "a724ed85c8c98510ca787a8f4040d241b44989de48b8d96a6dffd63e14a49dcf"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-list.png",
+      "sha256": "60aa13ad3995d96f7a0430b16f3214278b25780cc767980ecfcecd1727b2a6ef"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-service-error.png",
+      "sha256": "c0bf55dfce6a418c613f65c9bf35c80c624a4dc9f6980d29ad05d94b1407fb4b"
+    },
+    {
+      "path": "screenshots/desktop-1280-real-shortlist.png",
+      "sha256": "06a306581d6245de8e5d9ce8c64eee9fe8cc312d9db2c4f22d8c925d193634e7"
+    },
+    {
+      "path": "screenshots/desktop-1280-save-error.png",
+      "sha256": "ab6bb10c9356bc7c48e7a01c0da975bf38c8d867b4976eb4d7ab5bd614468aaa"
+    },
+    {
+      "path": "screenshots/desktop-1280-seed-range.png",
+      "sha256": "897f5f2734aa56088701fcbf457bf9dd650d7a3213dde00ea5ce41deaa06dd8e"
+    },
+    {
+      "path": "screenshots/desktop-1280-shortlist.png",
+      "sha256": "8c62a51e4f70d3181ddb771aa65e23873c3ee53571d181b4ae2c1933f38ed585"
+    },
+    {
+      "path": "screenshots/desktop-1280-workbench.png",
+      "sha256": "60a4378c9054c53e6237dd68e81eb04af63715b968795896d003cba76c94a6ed"
+    },
+    {
+      "path": "screenshots/desktop-1440-detail.png",
+      "sha256": "137bb1e042e65c90285910f8d67f3c5d82dcfe0d1d80de9a5ceda98d3fd30237"
+    },
+    {
+      "path": "screenshots/desktop-1440-keyboard-focus.png",
+      "sha256": "80928b5233783ed5b151240eaedbb9c5d1fd8a3cce824cd20f48748c0990c73a"
+    },
+    {
+      "path": "screenshots/desktop-1440-load-error.png",
+      "sha256": "b5aa97ef158031225a0d200a68119e5352f22f148d02ff5bc42a771b7e304b6c"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-accessibility-detail.png",
+      "sha256": "d2282d4791d79db912144be633f7beaeb57ee5774f36f4895b7e59a6f6186017"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-accessibility-error.png",
+      "sha256": "e63ae26b6af32d54b546f619594f70db144b5f96b3c67b12f8183a34b519a38d"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-accessibility-keyboard.png",
+      "sha256": "09e9a2c3435bb65a4d7a1544fdfeb1a181fcf36db38011df5e83282f562caa73"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-accessibility-list.png",
+      "sha256": "56357e345a1013136a2af493d2c22aa436fad8696bf8b87f073d296cff58910b"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-accessibility-trends.png",
+      "sha256": "c9ef61e33fe968b7a5fae0984b39ef6925e9fa9856bb790e69069f725c71f621"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-baseline.png",
+      "sha256": "bb3f7971e73593f96230109f55d202713c9578714ab0ef3819ac87e166872e44"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-detail.png",
+      "sha256": "1fbbc3f37470adbc2c1901bd446782957e88717d2c30bdec80bff7856d31ded4"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-keyboard.png",
+      "sha256": "ceceb0b192cbb93165cf9a681f6a8c910f588c18026c52a6b9ba6fdd8f4daacd"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-list.png",
+      "sha256": "56357e345a1013136a2af493d2c22aa436fad8696bf8b87f073d296cff58910b"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-service-error.png",
+      "sha256": "e63ae26b6af32d54b546f619594f70db144b5f96b3c67b12f8183a34b519a38d"
+    },
+    {
+      "path": "screenshots/desktop-1440-real-shortlist.png",
+      "sha256": "59fc5d3333da4f2ab3f08929617d344b48d33e4052d9410e9b2285d1a99b789a"
+    },
+    {
+      "path": "screenshots/desktop-1440-save-error.png",
+      "sha256": "decad9aec04ed0706789f148e239cf7eea944d7617f71698501cb9930c11c5f6"
+    },
+    {
+      "path": "screenshots/desktop-1440-seed-range.png",
+      "sha256": "0fe2a236fbcdaf7955d5f8ed408c9e0a5a40807588f89c80c43251fc7b9ac52a"
+    },
+    {
+      "path": "screenshots/desktop-1440-shortlist.png",
+      "sha256": "5c730d660e53baffc882a46665816af614db3d2dc2b20a0abcf137c672f87149"
+    },
+    {
+      "path": "screenshots/desktop-1440-workbench.png",
+      "sha256": "7e57c080a3028ba085e3d63a3361a60431a83c05cb90c5d1a241556c3fecddf3"
+    },
+    {
+      "path": "screenshots/model-policy-admin-desktop-1280.png",
+      "sha256": "5b931c829fc28f6c36fe5b94fb21fb126bd9b875691efef2d9992ed1f581f3b4"
+    },
+    {
+      "path": "screenshots/model-policy-admin-desktop-1440.png",
+      "sha256": "98f68a6ed8ecb59e9c3b2531572a2ce04e7e4d69e8575cef170b55fcbbdc8f6a"
+    },
+    {
+      "path": "screenshots/model-policy-project-desktop-1280.png",
+      "sha256": "1c2a34a8a15414b900889be6d40ea6ca32151255860fc4979f95f4af27adb640"
+    },
+    {
+      "path": "screenshots/model-policy-project-desktop-1440.png",
+      "sha256": "2c969ac4bb106109856f527d6b34b333ed3ad166908acd8c42f49c36a73b843c"
+    },
+    {
+      "path": "screenshots/project-narrow-desktop-1280.png",
+      "sha256": "21147347ef042612c452d01b68cfe7b895b679ed7960cbb5742f82b996fee1a2"
+    },
+    {
+      "path": "screenshots/project-narrow-desktop-1440.png",
+      "sha256": "84e4d50803160a4155152c99927e4699fd09e2e1b59c2b2825e185e2a66d7552"
+    },
+    {
+      "path": "screenshots/review-desktop-1280.png",
+      "sha256": "dea9f1427dd1dba2efa009df554f8ab8205253eb5fed0d79e17e0b46b19f5676"
+    },
+    {
+      "path": "screenshots/review-desktop-1440.png",
+      "sha256": "03090724544f71025de2ee8f126d9006d44e1d469c2b7bf41b023ffbb4bb39de"
+    },
+    {
+      "path": "screenshots/user-projects-desktop-1280.png",
+      "sha256": "19749d158241dfe775d1ff233f8da10092e047797e8c9ce5088e99fc56dabe57"
+    },
+    {
+      "path": "screenshots/user-projects-desktop-1440.png",
+      "sha256": "fccd0dee7a77dff6780f0610f4f68e63b8e42f133e2c08a398dcc1173e8f761e"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "d83e5f55fad770203990b960c901db03772e8b31db21b48385c893154de6271f"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "66228d3d063bda434e026f78e1c1d442748dfe79416a603ff868665fa3c0c14f"
+    },
+    {
+      "path": "verification.log",
+      "sha256": "26a7805e5ee976d72e152f1721c2a63fe560a35508d4e12217fea5fdbc64236c"
+    }
+  ],
+  "frozenUtc": "2026-10-27T14:16:36.048664+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "662f6c545e3e26db10007d2310e945b3ba95b8d5f363ab4040a1415021730d8f",
+  "workspace": "docs/evidence/_run"
+}

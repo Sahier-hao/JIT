@@ -1,0 +1,123 @@
+{
+  "generatedUtc": "2026-10-17T11:11:17.113902+00:00",
+  "kind": "deep-method-reproducibility-measurement",
+  "methods": [
+    {
+      "declaredReproducibility": {
+        "atol": 1e-06,
+        "mode": "tolerance",
+        "rtol": 0.0
+      },
+      "maxRiskAbsoluteDifference": 0.0,
+      "method": "mlp-v1",
+      "metricAbsoluteDifferences": {
+        "averagePrecision": 0.0,
+        "f1": 0.0,
+        "precision": null,
+        "recall": 0.0,
+        "recall20Loc": 0.0,
+        "rocAuc": 0.0
+      },
+      "modelBytesEqual": false,
+      "predictionsBitIdentical": true,
+      "runIds": [
+        "6c38afdc3d1a95a05653c013558b00af26932de84eb021b1db86edd3a4eeeb6c",
+        "d5307f717be528bb4d8ec2643b0c5b78aa9cf847ae207caf801f1af0e863db1a"
+      ],
+      "runIdsEqual": false,
+      "trainingSeconds": [
+        6.432721,
+        6.462443
+      ],
+      "withinDeclaredTolerance": true
+    },
+    {
+      "declaredReproducibility": {
+        "atol": 1e-06,
+        "mode": "tolerance",
+        "rtol": 0.0
+      },
+      "maxRiskAbsoluteDifference": 0.0,
+      "method": "tabular-resnet-v1",
+      "metricAbsoluteDifferences": {
+        "averagePrecision": 0.0,
+        "f1": 0.0,
+        "precision": null,
+        "recall": 0.0,
+        "recall20Loc": 0.0,
+        "rocAuc": 0.0
+      },
+      "modelBytesEqual": false,
+      "predictionsBitIdentical": true,
+      "runIds": [
+        "da3fecdd475479ac624613c0159d136f6d7a4b51d853690982a5b050642afe34",
+        "3983acd9d49b7e3c49327bf5f88d916ef16af739fd856d8d8c8259029476e2b3"
+      ],
+      "runIdsEqual": false,
+      "trainingSeconds": [
+        8.78271,
+        8.653865
+      ],
+      "withinDeclaredTolerance": true
+    },
+    {
+      "declaredReproducibility": {
+        "atol": 1e-06,
+        "mode": "tolerance",
+        "rtol": 0.0
+      },
+      "maxRiskAbsoluteDifference": 0.0,
+      "method": "ft-transformer-v1",
+      "metricAbsoluteDifferences": {
+        "averagePrecision": 0.0,
+        "f1": 0.0,
+        "precision": null,
+        "recall": 0.0,
+        "recall20Loc": 0.0,
+        "rocAuc": 0.0
+      },
+      "modelBytesEqual": false,
+      "predictionsBitIdentical": true,
+      "runIds": [
+        "52f3b3849d54c69ae46b5e323e0fb6a21b41476f480e21e2b20b444b1f2c94cf",
+        "02e5ad98ecfc1d134b079e5d6fee00fb4586252918f438dd43eb9c4d84989d26"
+      ],
+      "runIdsEqual": false,
+      "trainingSeconds": [
+        170.158517,
+        168.124906
+      ],
+      "withinDeclaredTolerance": true
+    },
+    {
+      "declaredReproducibility": {
+        "atol": 1e-06,
+        "mode": "tolerance",
+        "rtol": 0.0
+      },
+      "maxRiskAbsoluteDifference": 0.0,
+      "method": "wide-deep-v1",
+      "metricAbsoluteDifferences": {
+        "averagePrecision": 0.0,
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "recall20Loc": 0.0,
+        "rocAuc": 0.0
+      },
+      "modelBytesEqual": false,
+      "predictionsBitIdentical": true,
+      "runIds": [
+        "4623bd3a22f29212ef5de7a3c7ba99dbf7a9e972cbd42619f95c0be708af577b",
+        "714f164a1eeb1d650d113f5636c990e4fd33c0e8707c97ed34d816f1dc7089a0"
+      ],
+      "runIdsEqual": false,
+      "trainingSeconds": [
+        6.830616,
+        6.69401
+      ],
+      "withinDeclaredTolerance": true
+    }
+  ],
+  "note": "两次独立训练按冻结声明执行。权重与预测在本机逐位相同；序列化字节与运行标识不同，因此不声称逐字节可复现，容差判定以预测与指标的观测差为准。"
+}
