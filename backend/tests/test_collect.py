@@ -148,3 +148,184 @@ def test_collect_registers_manifest_with_evidence(tmp_path):
     assert len(manifest["fields"]) == 14
     assert manifest["quality"]["includedRows"] == 2
     assert result["dataset"]["created"] is True
+
+
+def _clear_proxy_env(monkeypatch):
+    from jit_baseline import collect as module
+    for name in module.PROXY_ENV:
+        monkeypatch.delenv(name, raising=False)
+    return module
+
+
+def test_proxy_prefers_explicit_environment(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.example:8080")
+    monkeypatch.setenv("JIT_GIT_PROXY", "127.0.0.1:7890")
+    monkeypatch.setattr(module, "windows_proxy", lambda: "http://system.example:9000")
+
+    assert module.proxy_url() == "http://127.0.0.1:7890"
+
+
+def test_proxy_falls_back_to_environment_then_system(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("https_proxy", "proxy.example:8080")
+    monkeypatch.setattr(module, "windows_proxy", lambda: "http://system.example:9000")
+
+    assert module.proxy_url() == "http://proxy.example:8080"
+
+    monkeypatch.delenv("https_proxy")
+    assert module.proxy_url() == "http://system.example:9000"
+
+
+def test_proxy_server_variants():
+    from jit_baseline import collect as module
+
+    assert module._proxy_from_server("http=10.0.0.1:80;https=10.0.0.2:443") == "http://10.0.0.2:443"
+    assert module._proxy_from_server("10.0.0.1:7890") == "http://10.0.0.1:7890"
+    assert module._proxy_from_server("") is None
+    assert module.normalize_proxy("   ") is None
+
+
+def test_command_carries_proxy_and_stall_limits(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("JIT_GIT_PROXY", "127.0.0.1:7890")
+
+    command = module._command("C:/repo", ["clone", "url", "target"])
+
+    assert "http.proxy=http://127.0.0.1:7890" in command
+    assert "http.lowSpeedLimit=1024" in command and "http.lowSpeedTime=60" in command
+    assert command[-3:] == ["clone", "url", "target"]
+
+
+def test_command_without_proxy_keeps_options(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    command = module._command("C:/repo", ["version"])
+
+    assert not any(part.startswith("http.proxy=") for part in command)
+    assert command[:4] == ["git", "--no-pager", "-c", "core.quotepath=false"]
+
+
+def test_stall_seconds_defaults_and_overrides(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.delenv(module.STALL_ENV, raising=False)
+    assert module.stall_seconds() == 60
+
+    monkeypatch.setenv(module.STALL_ENV, "120")
+    assert module.stall_seconds() == 120
+
+    monkeypatch.setenv(module.STALL_ENV, "0")
+    assert module.stall_seconds() == 0
+
+    monkeypatch.setenv(module.STALL_ENV, "   ")
+    assert module.stall_seconds() == 60
+
+    monkeypatch.setenv(module.STALL_ENV, "early")
+    assert module.stall_seconds() == 60
+
+    monkeypatch.setenv(module.STALL_ENV, "-5")
+    assert module.stall_seconds() == 60
+
+
+def test_command_drops_stall_limits_when_disabled(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+    monkeypatch.setenv(module.STALL_ENV, "0")
+
+    command = module._command("C:/repo", ["clone", "url", "target"])
+
+    assert not any(part.startswith("http.lowSpeed") for part in command)
+
+
+class _Result:
+    def __init__(self, returncode, stderr=""):
+        self.returncode = returncode
+        self.stderr = stderr
+
+
+def test_clone_falls_back_to_direct_when_proxy_fails(monkeypatch, tmp_path):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("JIT_GIT_PROXY", "127.0.0.1:7890")
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    calls = []
+
+    def fake_run(cwd, args, check=True, use_proxy=True):
+        calls.append(use_proxy)
+        if len(calls) == 1:
+            return _Result(128, "fatal: unable to access 'url': Failed to connect")
+        return _Result(0)
+
+    monkeypatch.setattr(module, "_run", fake_run)
+
+    assert module._clone_bare("https://example.com/repo.git", tmp_path / "repository.git") == "direct"
+    assert calls == [True, False]
+
+
+def test_clone_skips_proxy_attempt_without_proxy(monkeypatch, tmp_path):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    calls = []
+
+    def fake_run(cwd, args, check=True, use_proxy=True):
+        calls.append(use_proxy)
+        return _Result(0)
+
+    monkeypatch.setattr(module, "_run", fake_run)
+
+    assert module._clone_bare("https://example.com/repo.git", tmp_path / "repository.git") == "direct"
+    assert calls == [False]
+
+
+def test_clone_reports_both_channels(monkeypatch, tmp_path):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("JIT_GIT_PROXY", "127.0.0.1:7890")
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    def fake_run(cwd, args, check=True, use_proxy=True):
+        if use_proxy:
+            return _Result(128, "fatal: unable to access 'url': Failed to connect")
+        return _Result(128, "fatal: repository 'https://example.com/repo.git/' not found")
+
+    monkeypatch.setattr(module, "_run", fake_run)
+
+    with pytest.raises(errors.BaselineError) as caught:
+        module._clone_bare("https://example.com/repo.git", tmp_path / "repository.git")
+
+    message = str(caught.value)
+    assert caught.value.code == "REPOSITORY_UNAVAILABLE"
+    assert "代理：fatal: unable to access 'url': Failed to connect" in message
+    assert "直连：fatal: repository 'https://example.com/repo.git/' not found" in message
+    assert "JIT_GIT_PROXY" not in message
+
+
+def test_retryable_classifies_clone_failures(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+
+    assert module._retryable(_Result(128, "fatal: unable to access 'url': Failed to connect")) is True
+    assert module._retryable(_Result(128, "The requested URL returned error: 404")) is False
+    assert module._retryable(_Result(128, "fatal: Authentication failed for 'url'")) is False
+
+
+def test_clone_stops_without_fallback_when_repository_missing(monkeypatch, tmp_path):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setenv("JIT_GIT_PROXY", "127.0.0.1:7890")
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    calls = []
+
+    def fake_run(cwd, args, check=True, use_proxy=True):
+        calls.append(use_proxy)
+        return _Result(128, "fatal: repository 'https://example.com/missing.git/' not found")
+
+    monkeypatch.setattr(module, "_run", fake_run)
+
+    with pytest.raises(errors.BaselineError) as caught:
+        module._clone_bare("https://example.com/missing.git", tmp_path / "repository.git")
+
+    assert calls == [True]
+    assert caught.value.code == "REPOSITORY_UNAVAILABLE"
+    assert "代理：fatal: repository" in str(caught.value)
+    assert "直连：" not in str(caught.value)
