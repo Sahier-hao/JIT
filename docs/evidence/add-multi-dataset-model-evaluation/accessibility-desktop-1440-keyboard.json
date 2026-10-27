@@ -1,0 +1,40 @@
+{
+  "kind": "accessibility-checklist",
+  "name": "keyboard",
+  "viewport": "desktop-1440",
+  "channel": "msedge",
+  "items": [
+    {
+      "id": "A11-2",
+      "check": "Tab 定位提交且焦点落在提交按钮",
+      "passed": true
+    },
+    {
+      "id": "A11-2b",
+      "check": "Enter 打开详情后焦点在关闭按钮",
+      "passed": true
+    },
+    {
+      "id": "A11-2c",
+      "check": "Tab 到达详情内容区且有焦点",
+      "passed": true
+    },
+    {
+      "id": "A11-5",
+      "check": "详情区可滚动（End 后 scrollTop>0）",
+      "passed": true
+    },
+    {
+      "id": "A11-2d",
+      "check": "Tab 到达加入按钮且有焦点",
+      "passed": true
+    },
+    {
+      "id": "A11-3",
+      "check": "Escape 关闭后焦点返回原触发位置",
+      "passed": true
+    }
+  ],
+  "consoleErrors": [],
+  "passed": true
+}

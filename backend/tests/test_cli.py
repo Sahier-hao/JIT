@@ -49,6 +49,24 @@ def test_run_passes_metric_set_and_defaults_to_none(monkeypatch):
     assert calls[1][1]["metric_set"] == "metric-set-v2"
 
 
+def test_run_suite_and_compare_projects_are_wired(monkeypatch):
+    from jit_baseline import cli
+    suite_calls = []
+    monkeypatch.setattr(cli, "run_suite",
+                        lambda *args, **kwargs: suite_calls.append((args, kwargs)) or {"kind": "suite"})
+    monkeypatch.setattr(sys, "argv", ["jit_baseline.cli", "run-suite",
+                                      "--dataset-manifest", "m.json", "--output", "out"])
+    cli.main()
+    assert suite_calls[0][0][:2] == (Path("m.json"), Path("out"))
+    reports = []
+    monkeypatch.setattr(cli, "compare_projects", lambda suites: {"kind": "report"})
+    monkeypatch.setattr(cli, "write_json", lambda path, obj: reports.append((path, obj)))
+    monkeypatch.setattr(sys, "argv", ["jit_baseline.cli", "compare-projects", "a", "b",
+                                      "--report", "r.json"])
+    cli.main()
+    assert reports[0][0] == Path("r.json")
+
+
 def test_verify_records_this_machines_verification_environment(monkeypatch, capsys):
     """校验记录本机验证环境与本次判定，与运行声明的产方训练环境分开（PDB-16、PDB-19）。"""
     import json

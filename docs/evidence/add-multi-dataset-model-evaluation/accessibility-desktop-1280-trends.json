@@ -1,0 +1,25 @@
+{
+  "kind": "accessibility-checklist",
+  "name": "trends",
+  "viewport": "desktop-1280",
+  "channel": "msedge",
+  "items": [
+    {
+      "id": "A11-6a",
+      "check": "趋势视图在目标视口无页面级横向溢出",
+      "passed": true
+    },
+    {
+      "id": "A11-6b",
+      "check": "空值桶以文字说明样本不足且不显示为 0%",
+      "passed": true
+    },
+    {
+      "id": "A11-6c",
+      "check": "图表数据的文本视图可由键盘取得焦点",
+      "passed": true
+    }
+  ],
+  "consoleErrors": [],
+  "passed": true
+}
