@@ -33,7 +33,7 @@
   justify-content: space-between;
 }
 
-.wb-head-text { min-width: 0; }
+.wb-head-text { min-width: 0; flex: 1 1 auto; }
 
 .wb-crumb {
   display: flex;
@@ -48,6 +48,8 @@
 
 .wb-back {
   display: inline-flex;
+  white-space: nowrap;
+  flex: none;
   align-items: center;
   gap: 4px;
   padding: 0;
@@ -824,7 +826,7 @@ html[data-theme='charcoal'] .wb-code .token.variable { color: #ffab70; }
   .wb-code { border-right: 0; }
 }
 /* ---------- 读取中 / 读取失败 ---------- */
-.wb-state-page {
+.wb-read-page {
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -832,7 +834,7 @@ html[data-theme='charcoal'] .wb-code .token.variable { color: #ffab70; }
   margin: -42px -40px -72px;
   padding: 96px 40px 72px;
 }
-.wb-state {
+.wb-read {
   width: min(520px, 100%);
   display: flex;
   flex-direction: column;
@@ -842,20 +844,20 @@ html[data-theme='charcoal'] .wb-code .token.variable { color: #ffab70; }
   border: 1px solid var(--line);
   border-radius: 8px;
 }
-.wb-state-head { display: flex; align-items: center; gap: 9px; }
-.wb-state-dot {
+.wb-read-head { display: flex; align-items: center; gap: 9px; }
+.wb-read-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
-  animation: wb-state-pulse 1.6s ease-in-out infinite;
+  animation: wb-read-pulse 1.6s ease-in-out infinite;
 }
-.wb-state-dot.is-failed { background: var(--risk-high); box-shadow: 0 0 0 3px color-mix(in srgb, var(--risk-high) 16%, transparent); animation: none; }
-@keyframes wb-state-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
-.wb-state-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
-.wb-state-text { margin: 0; font-size: 13px; line-height: 1.7; color: var(--fg-2); }
-.wb-state-actions { display: flex; gap: 8px; margin-top: 4px; }
+.wb-read-dot.is-failed { background: var(--risk-high); box-shadow: 0 0 0 3px color-mix(in srgb, var(--risk-high) 16%, transparent); animation: none; }
+@keyframes wb-read-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
+.wb-read-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+.wb-read-text { margin: 0; font-size: 13px; line-height: 1.7; color: var(--fg-2); }
+.wb-read-actions { display: flex; gap: 8px; margin-top: 4px; }
 @media (max-width: 720px) {
-  .wb-state-page { margin: -24px -18px -56px; padding: 48px 18px 56px; }
+  .wb-read-page { margin: -24px -18px -56px; padding: 48px 18px 56px; }
 }

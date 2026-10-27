@@ -25,8 +25,10 @@ const fileLabel: Record<FileState, string> = { unread: '未阅读', read: '已�
 /** 侧栏窄，只留尾部两段路径：文件名和它所在的目录比仓库顶层目录更有用。 */
 function shortPath(path: string) {
   const parts = path.split('/')
-  if (path.length <= 30 || parts.length < 3) return path
-  return `…/${parts.slice(-2).join('/')}`
+  if (path.length <= 34 || parts.length < 3) return path
+  const tail = parts.slice(-2).join('/')
+  const head = parts[0]
+  return head.length + tail.length + 3 <= 34 ? `${head}/…/${tail}` : `…/${tail}`
 }
 function loadPersonal() { try { return { works: readWorks(), error: '' } } catch (error) { return { works: [], error: message(error) } } }
 function backup(work: PRWork) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, JSON.stringify({ format: 'jit-pr-review-v1', work }, null, 2), 'application/json') }
@@ -197,14 +199,14 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
     const failed = Boolean(readError || initial.error)
     const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 的文件与固定代码版本。首次接入要逐个取文件，通常需要 20 到 30 秒。'
     return (
-      <section className="wb-state-page">
-        <div className="wb-state" role={failed ? 'alert' : 'status'} aria-live="polite">
-          <div className="wb-state-head">
-            <span className={failed ? 'wb-state-dot is-failed' : 'wb-state-dot'} aria-hidden="true"/>
-            <h1 className="wb-state-title">{failed ? '这个工作单暂时读不出来' : '正在读取 PR'}</h1>
+      <section className="wb-read-page">
+        <div className="wb-read" role={failed ? 'alert' : 'status'} aria-live="polite">
+          <div className="wb-read-head">
+            <span className={failed ? 'wb-read-dot is-failed' : 'wb-read-dot'} aria-hidden="true"/>
+            <h1 className="wb-read-title">{failed ? '这个工作单暂时读不出来' : '正在读取 PR'}</h1>
           </div>
-          <p className="wb-state-text">{detail}</p>
-          <div className="wb-state-actions">
+          <p className="wb-read-text">{detail}</p>
+          <div className="wb-read-actions">
             {failed
               ? <Button type="primary" onClick={() => { setReadError(null); setAttempt(v => v + 1) }}>重试读取</Button>
               : null}
