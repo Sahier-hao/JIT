@@ -32,11 +32,13 @@
 
 | 文件 | 内容 |
 | --- | --- |
-| `.dsh-tmp/final-1440d.png` | 工作单，1440×900，三栏、语法高亮、旧/新行号分栏 |
-| `.dsh-tmp/final-1280c.png` | 工作单，1280×720 |
-| `.dsh-tmp/final-390wb2.png` | 工作单，390×844，文件栏改为横向条 |
-| `.dsh-tmp/my-reviews2.png` | 审查队列，1440×900，工作行 + 分组 |
-| `.dsh-tmp/final-390.png` | 审查队列，390×844 |
+| `docs/evidence/screenshots/workbench-1440.png` | 工作单，1440×900，三栏、语法高亮、旧/新行号分栏 |
+| `docs/evidence/screenshots/workbench-1280.png` | 工作单，1280×720 |
+| `docs/evidence/screenshots/workbench-390.png` | 工作单，390×844，文件栏改为横向条 |
+| `docs/evidence/screenshots/workbench-split.png` | 工作单并排视图 |
+| `docs/evidence/screenshots/queue-1440.png` | 审查队列，1440×900（空队列与工作行两种状态） |
+| `docs/evidence/screenshots/state-loading.png` | 读取中面板 |
+| `docs/evidence/screenshots/state-error.png` | 读取失败面板 |
 
 ## 人工走查
 
@@ -56,7 +58,7 @@
 | 禁用态 | 未选结论时「确认输出」保持禁用 | 单元测试覆盖（`keeps writing and reports unsaved text when browser storage fails`） |
 | 保存失败 | 拦截 localStorage 写入抛错 | 顶部提示未保存，编辑内容保留 |
 
-截图：`.dsh-tmp/state-loading.png`、`.dsh-tmp/state-error.png`、`.dsh-tmp/state-empty.png`。
+截图：`docs/evidence/screenshots/state-loading.png`、`state-error.png`；空队列见 `queue-1440.png`。
 
 ## 交互走查（`frontend/.dsh-tmp/walk.mjs`，Edge 1440×900）
 
