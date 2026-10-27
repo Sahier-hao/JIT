@@ -7,6 +7,7 @@
 import csv
 import io
 import math
+import os
 import re
 import shutil
 import subprocess
@@ -29,10 +30,97 @@ LIMITATIONS = (
     "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。",
 )
 MAX_EPOCH = 2_147_483_647
+# git 自身不读 Windows 系统代理：浏览器能打开 GitHub 时克隆仍会直连并长时间卡住。
+# 显式环境变量优先，其次系统代理设置；两者都没有时保持直连。
+PROXY_ENV = ("JIT_GIT_PROXY", "HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy")
+# 传输速度持续低于该阈值即判定网络停滞，避免干等到 900 秒命令超时。
+STALL_LIMIT = 1024
+STALL_SECONDS = 60
+# 秒数可覆盖：慢速但存活的链路把阈值放宽，设 0 关闭停滞判定。
+STALL_ENV = "JIT_GIT_STALL_SECONDS"
 
 
-def _run(cwd, args, check=True):
-    command = ["git", "--no-pager", "-c", "core.quotepath=false", "-C", str(cwd)] + [str(arg) for arg in args]
+def normalize_proxy(value):
+    """把代理设置规范成 git 可用的 URL；空值返回 None。"""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if "://" not in text:
+        text = "http://" + text
+    return text
+
+
+def _proxy_from_server(server):
+    """解析 WinINET 的 ProxyServer：可能是 host:port，也可能是 http=h:p;https=h:p。"""
+    text = str(server or "").strip()
+    if "=" in text:
+        entries = {}
+        for item in text.split(";"):
+            name, _, value = item.partition("=")
+            if value.strip():
+                entries[name.strip().lower()] = value.strip()
+        text = entries.get("https") or entries.get("http") or ""
+    return normalize_proxy(text)
+
+
+def windows_proxy():
+    """读取当前用户 Windows 系统代理；未启用或非 Windows 返回 None。"""
+    if os.name != "nt":
+        return None
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                            r"Software\Microsoft\Windows\CurrentVersion\Internet Settings") as key:
+            enabled = winreg.QueryValueEx(key, "ProxyEnable")[0]
+            server = winreg.QueryValueEx(key, "ProxyServer")[0]
+    except (OSError, TypeError):
+        return None
+    return _proxy_from_server(server) if enabled else None
+
+
+def proxy_url():
+    """采集使用的代理地址：环境变量优先，其次 Windows 系统代理。"""
+    for name in PROXY_ENV:
+        value = normalize_proxy(os.environ.get(name))
+        if value:
+            return value
+    return windows_proxy()
+
+
+def stall_seconds():
+    """停滞判定秒数：默认 `STALL_SECONDS`，可由环境变量覆盖，`0` 表示关闭判定。
+
+    慢速但存活的链路（大仓库、限速出口）需要放宽或关掉，否则 60 秒就会被判停滞；
+    取值非法时退回默认，不因为一个坏配置把采集变成无保护。
+    """
+    raw = os.environ.get(STALL_ENV)
+    if raw is None or not str(raw).strip():
+        return STALL_SECONDS
+    try:
+        value = int(str(raw).strip())
+    except ValueError:
+        return STALL_SECONDS
+    return value if value >= 0 else STALL_SECONDS
+
+
+def _command(cwd, args, use_proxy=True):
+    """git 命令：附带代理与停滞阈值，确保克隆既走代理也不会无限等待。
+
+    `use_proxy=False` 生成显式直连命令（不带 `http.proxy`），供代理失败后回退使用。
+    """
+    command = ["git", "--no-pager", "-c", "core.quotepath=false"]
+    seconds = stall_seconds()
+    if seconds:
+        command += ["-c", f"http.lowSpeedLimit={STALL_LIMIT}",
+                    "-c", f"http.lowSpeedTime={seconds}"]
+    proxy = proxy_url() if use_proxy else None
+    if proxy:
+        command += ["-c", f"http.proxy={proxy}"]
+    return command + ["-C", str(cwd)] + [str(arg) for arg in args]
+
+
+def _run(cwd, args, check=True, use_proxy=True):
+    command = _command(cwd, args, use_proxy=use_proxy)
     try:
         completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8",
                                    errors="replace", timeout=900, check=False)
@@ -368,6 +456,52 @@ def validate_source(repo, allow_local=True):
     return text
 
 
+def _clone_detail(result):
+    """克隆失败时取 git 的最后一行输出，没有输出就用返回码。"""
+    lines = [line for line in (result.stderr or "").splitlines() if line.strip()]
+    return lines[-1] if lines else result.returncode
+
+
+NO_RETRY_MARKERS = ("not found", "404", "authentication failed", "could not read username")
+
+
+def _retryable(result):
+    """代理失败是否值得回退直连：仓库不存在、地址写错或需要凭证时换通道也没用。
+
+    直连被墙的机器上，这类失败再试一次要等上几分钟的连接超时，只会把「地址不对」
+    拖成「等了半天才报错」。
+    """
+    text = (result.stderr or "").lower()
+    return not any(marker in text for marker in NO_RETRY_MARKERS)
+
+
+def _clone_bare(repo, clone):
+    """克隆裸仓库，返回实际走通的通道（`"proxy"` 或 `"direct"`）。
+
+    当前没有配置代理时只尝试直连；配了代理则先走代理，失败后回退直连再试一次——
+    系统代理可能残留失效（`ProxyEnable=1` 但端口已无人监听），此时直连往往仍然可用。
+    仓库不存在或需要凭证时不回退（换通道不会成功，只会多等一次连接超时）。两次都
+    失败才抛错，并分别带上每条通道的最后一行输出，便于区分「代理不通」与「仓库不可
+    达」。每次尝试前清掉上一次的半成品目录，否则 git 会拒绝写非空目录。
+    """
+    attempts = [("proxy", True)] if proxy_url() else []
+    attempts.append(("direct", False))
+    failures = []
+    for name, use_proxy in attempts:
+        shutil.rmtree(clone, ignore_errors=True)
+        args = ["clone", "--bare", "--quiet", "--no-tags", str(repo), str(clone)]
+        result = _run(Path(tempfile.gettempdir()), args, check=False, use_proxy=use_proxy)
+        if result.returncode == 0:
+            return name
+        failures.append((name, _clone_detail(result)))
+        if not _retryable(result):
+            break
+    detail = "；".join(f"{'代理' if name == 'proxy' else '直连'}：{last}"
+                      for name, last in failures)
+    hint = "" if proxy_url() else "；如网络需要代理请设置 JIT_GIT_PROXY"
+    raise BaselineError("REPOSITORY_UNAVAILABLE", f"仓库克隆失败，可重试（{detail}）{hint}")
+
+
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
                        allow_local=True, return_blob=False):
@@ -383,13 +517,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
         if _is_remote(repo):
             temporary = tempfile.mkdtemp(prefix="jit-collect-")
             clone = Path(temporary) / "repository.git"
-            result = _run(Path(tempfile.gettempdir()),
-                          ["clone", "--bare", "--quiet", "--no-tags", str(repo), str(clone)],
-                          check=False)
-            if result.returncode != 0:
-                lines = [line for line in (result.stderr or "").splitlines() if line.strip()]
-                raise BaselineError("REPOSITORY_UNAVAILABLE",
-                                    f"仓库克隆失败，可重试：{lines[-1] if lines else result.returncode}")
+            _clone_bare(repo, clone)
             target = clone
         collected = collect(target, since, until, branch, limit)
         if not collected["records"]:
