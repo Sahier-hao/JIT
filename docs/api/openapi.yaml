@@ -8,6 +8,356 @@ tags:
 - name: 现有历史回放
 - name: 目标共享产品
 paths:
+  /api/v1/review-sources:
+    post:
+      operationId: preparePublicPRSource
+      summary: 从公开 GitHub 仓库或 PR 接入真实工作
+      description: 仅接收公开来源及列表参数。返回真实 PR 列表或固定快照；不接收个人意见、笔记或反馈。私有来源即使配置服务端令牌也拒绝。
+      security: []
+      tags:
+      - 目标共享产品
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/PRPrepared'
+                - $ref: '#/components/schemas/PRDiscovery'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+        '404':
+          description: 公开来源或保存版本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 版本变化、原模型不可用或任务状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '429':
+          description: GitHub 请求受限，保留旧来源并允许重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '502':
+          description: GitHub 来源不可读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                url:
+                  type: string
+                  format: uri
+                state:
+                  type: string
+                  enum:
+                  - open
+                  - closed
+                  - all
+                  default: open
+                page:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 1
+              required:
+              - url
+  /api/v1/pr-sources/{owner}/{name}/{number}/refresh:
+    post:
+      operationId: refreshPublicPR
+      summary: 检查 PR 基准、目标和远端状态
+      description: 相同代码身份复用保存快照；新版本独立保存。继承关系不可读取时明确 unknown，失败不修改旧来源。
+      security: []
+      tags:
+      - 目标共享产品
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRPrepared'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+        '404':
+          description: 公开来源或保存版本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 版本变化、原模型不可用或任务状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '429':
+          description: GitHub 请求受限，保留旧来源并允许重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '502':
+          description: GitHub 来源不可读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      parameters:
+      - name: owner
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /api/v1/pr-snapshots/{snapshotId}:
+    get:
+      operationId: getPRSnapshot
+      summary: 读取不可变 PR 来源快照
+      description: ''
+      security: []
+      tags:
+      - 目标共享产品
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRSourceSnapshot'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+        '404':
+          description: 公开来源或保存版本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 版本变化、原模型不可用或任务状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '429':
+          description: GitHub 请求受限，保留旧来源并允许重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '502':
+          description: GitHub 来源不可读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      parameters:
+      - name: snapshotId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+  /api/v1/pr-snapshots/{snapshotId}/context:
+    get:
+      operationId: getPRFileContext
+      summary: 读取固定 SHA 的文件上下文
+      description: 文件必须属于此快照；按对应仓库、原路径和固定 SHA 读取。不存在侧单独标明，二进制、过大或不可解码内容返回明确错误；超长文本声明未完整覆盖。
+      security: []
+      tags:
+      - 目标共享产品
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRFileContext'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+        '404':
+          description: 公开来源或保存版本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 版本变化、原模型不可用或任务状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '429':
+          description: GitHub 请求受限，保留旧来源并允许重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '502':
+          description: GitHub 来源不可读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      parameters:
+      - name: snapshotId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: side
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - base
+          - head
+          default: head
+  /api/v1/pr-snapshots/{snapshotId}/analyses:
+    get:
+      operationId: getPRModelClues
+      summary: 读取该固定版本的模型任务与已覆盖提交分数
+      description: 只读保存结果；不加载模型。只有成功任务的实际 HEAD 等于快照目标才返回分数，缺失条目不计为低风险。
+      security: []
+      tags:
+      - 目标共享产品
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRAnalyses'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+        '404':
+          description: 公开来源或保存版本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 版本变化、原模型不可用或任务状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '429':
+          description: GitHub 请求受限，保留旧来源并允许重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '502':
+          description: GitHub 来源不可读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      parameters:
+      - name: snapshotId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+    post:
+      operationId: createPRModelClues
+      summary: 主动创建绑定 PR HEAD 的现成模型分析
+      description: 指定真实兼容模型或在任务创建时绑定管理员默认模型。原任务复用、失败恢复及模型准入沿用分析服务；不生成 PR 整体缺陷概率，不接收个人记录。
+      security: []
+      tags:
+      - 目标共享产品
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRAnalyses'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+        '404':
+          description: 公开来源或保存版本不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '409':
+          description: 版本变化、原模型不可用或任务状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '429':
+          description: GitHub 请求受限，保留旧来源并允许重试
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '502':
+          description: GitHub 来源不可读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+      parameters:
+      - name: snapshotId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                modelId:
+                  $ref: '#/components/schemas/Uuid'
+              required: []
   /api/review-batch:
     get:
       operationId: getHistoricalReviewBatch
@@ -1104,6 +1454,39 @@ paths:
       description: 提交不属于该作业时返回 404，不跨作业查询。
       security: []
   /api/v1/repositories:
+    post:
+      operationId: createRepository
+      summary: 接入仓库并准备首次分析
+      security: []
+      tags: [目标共享产品]
+      description: 新项目默认开启每五分钟检查并准备首次分析；没有可用默认模型时保存项目并在更新状态中显示原因。重复地址返回既有项目且不重置设置。autoUpdate=false 可显式仅登记。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [repositoryUrl]
+              properties:
+                repositoryUrl:
+                  type: string
+                  format: uri
+                autoUpdate:
+                  type: boolean
+                  default: true
+      responses:
+        '201':
+          description: 已建立项目；异步更新状态由 updates 读取
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Repository'
+        '200':
+          description: 同址项目已存在
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
     get:
       operationId: listRepositories
       summary: 已同步过的仓库列表
@@ -1145,6 +1528,108 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 一条仓库代表一个规范化地址；同一地址的多次同步归到这里，`viewSyncId` 指向当前视图来自哪一次成功作业。
       security: []
+  /api/v1/repositories/{repositoryId}/updates:
+    parameters:
+    - name: repositoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    get:
+      operationId: getRepositoryUpdates
+      summary: 仓库自动更新设置及实际检查状态
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 设置、上次成功远端检查时间、观察到的 HEAD、关联分析及失败代码
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryUpdateState'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+    patch:
+      operationId: configureRepositoryUpdates
+      summary: 保存检查开关、分支、固定模型或频率
+      security: []
+      tags: [目标共享产品]
+      description: 设置保存在服务端。新旧结果、原任务和计划均保留；开启后到期检查，关闭不取消已开始的分析。进行中不能切换分支或模型。首次检查绑定默认模型，之后不随默认模型改变。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                enabled:
+                  type: boolean
+                branch:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  description: HEAD 跟随远端默认分支；其他值为分支名
+                modelId:
+                  type: string
+                  minLength: 1
+                  description: 真实、兼容且已启用的登记模型
+                intervalSeconds:
+                  type: integer
+                  minimum: 300
+                  maximum: 86400
+                windowDays:
+                  type: integer
+                  minimum: 1
+                  maximum: 3650
+                commitLimit:
+                  type: integer
+                  minimum: 1
+                  maximum: 5000
+      responses:
+        '200':
+          description: 已保存设置
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryUpdateState'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '409':
+          description: 模型已停用或更新进行中，不接受来源更换
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/refresh:
+    post:
+      operationId: refreshRepository
+      summary: 立即检查仓库并在新 HEAD 时创建分析
+      security: []
+      tags: [目标共享产品]
+      description: 请求立即返回，由服务端执行检查。重复点击复用检查或分析；无新 HEAD 且原更新分析成功时不新建记录；失败可重新检查同一 HEAD。分析采用固定模型、滚动最近90天及最多500个提交，不自动训练。
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '202':
+          description: 已接受检查或已有更新正在执行
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryUpdateState'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '409':
+          description: 项目已有其他进行中的分析
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}:
     get:
       operationId: getRepository
@@ -1646,6 +2131,322 @@ paths:
                 $ref: '#/components/schemas/ModelChoiceList'
 components:
   schemas:
+    PRSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        number:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        author:
+          type: string
+        url:
+          type: string
+          format: uri
+        updatedAt:
+          type: string
+          format: date-time
+        remoteState:
+          type: string
+          enum:
+          - open
+          - closed
+          - merged
+      required:
+      - number
+      - title
+      - author
+      - url
+      - updatedAt
+      - remoteState
+    PRFile:
+      type: object
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+        previousPath:
+          type:
+          - string
+          - 'null'
+        blobSha:
+          type: string
+        status:
+          type: string
+        additions:
+          type: integer
+          minimum: 0
+        deletions:
+          type: integer
+          minimum: 0
+        patch:
+          type:
+          - string
+          - 'null'
+        patchComplete:
+          type: boolean
+      required:
+      - path
+      - previousPath
+      - blobSha
+      - status
+      - additions
+      - deletions
+      - patch
+      - patchComplete
+    PRSourceSnapshot:
+      type: object
+      additionalProperties: false
+      properties:
+        number:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        author:
+          type: string
+        url:
+          type: string
+          format: uri
+        updatedAt:
+          type: string
+          format: date-time
+        remoteState:
+          type: string
+          enum:
+          - open
+          - closed
+          - merged
+        snapshotId:
+          $ref: '#/components/schemas/Uuid'
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        owner:
+          type: string
+        name:
+          type: string
+        body:
+          type: string
+        baseSha:
+          type: string
+        headSha:
+          type: string
+        baseBranch:
+          type: string
+        headBranch:
+          type: string
+        baseRepository:
+          type: string
+        headRepository:
+          type:
+          - string
+          - 'null'
+        capturedAt:
+          type: string
+          format: date-time
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/PRFile'
+        totalFiles:
+          type: integer
+          minimum: 0
+        filesComplete:
+          type: boolean
+        commits:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              sha:
+                type: string
+              message:
+                type: string
+              time:
+                type:
+                - string
+                - 'null'
+                format: date-time
+            required:
+            - sha
+            - message
+        totalCommits:
+          type: integer
+          minimum: 0
+        commitsComplete:
+          type: boolean
+        previousSnapshotId:
+          type:
+          - string
+          - 'null'
+        historyRelation:
+          type: string
+          enum:
+          - first
+          - unknown
+          - ahead
+          - behind
+          - diverged
+          - identical
+      required:
+      - number
+      - title
+      - author
+      - url
+      - updatedAt
+      - remoteState
+      - snapshotId
+      - repositoryId
+      - owner
+      - name
+      - body
+      - baseSha
+      - headSha
+      - baseBranch
+      - headBranch
+      - baseRepository
+      - headRepository
+      - capturedAt
+      - files
+      - totalFiles
+      - filesComplete
+      - commits
+      - totalCommits
+      - commitsComplete
+    PRPrepared:
+      type: object
+      additionalProperties: false
+      properties:
+        snapshot:
+          $ref: '#/components/schemas/PRSourceSnapshot'
+        remoteState:
+          type: string
+          enum:
+          - open
+          - closed
+          - merged
+        checkedAt:
+          type: string
+          format: date-time
+      required:
+      - snapshot
+      - remoteState
+      - checkedAt
+    PRDiscovery:
+      type: object
+      additionalProperties: false
+      properties:
+        owner:
+          type: string
+        name:
+          type: string
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        repositoryUrl:
+          type: string
+          format: uri
+        pullRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PRSummary'
+        page:
+          type: integer
+          minimum: 1
+        hasMore:
+          type: boolean
+        checkedAt:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum:
+          - open
+          - closed
+          - all
+      required:
+      - owner
+      - name
+      - repositoryId
+      - repositoryUrl
+      - pullRequests
+      - page
+      - hasMore
+      - checkedAt
+      - state
+    PRFileContext:
+      type: object
+      additionalProperties: false
+      properties:
+        snapshotId:
+          $ref: '#/components/schemas/Uuid'
+        path:
+          type: string
+        side:
+          type: string
+          enum:
+          - base
+          - head
+        ref:
+          type: string
+        content:
+          type: string
+        complete:
+          type: boolean
+        absent:
+          type: boolean
+        totalLines:
+          type: integer
+          minimum: 0
+      required:
+      - snapshotId
+      - path
+      - side
+      - ref
+      - content
+      - complete
+      - absent
+      - totalLines
+    PRAnalyses:
+      type: object
+      additionalProperties: false
+      properties:
+        snapshotId:
+          $ref: '#/components/schemas/Uuid'
+        analyses:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              sync:
+                $ref: '#/components/schemas/RepositorySyncView'
+              contextValid:
+                type: boolean
+              scores:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    commitId:
+                      type: string
+                    risk:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                  required:
+                  - commitId
+                  - risk
+            required:
+            - sync
+            - contextValid
+            - scores
+      required:
+      - snapshotId
+      - analyses
     ModelPolicyUpdate:
       type: object
       properties:
@@ -3562,6 +4363,52 @@ components:
       - limitations
       - missingMetadata
       additionalProperties: false
+    RepositoryUpdateState:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, enabled, branch, modelId, intervalSeconds, windowDays, commitLimit, status, lastAttemptAt, lastCheckedAt, nextCheckAt, remoteHead, resolvedBranch, syncId, errorCode]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        enabled:
+          type: boolean
+        branch:
+          type: string
+        modelId:
+          type: [string, 'null']
+        intervalSeconds:
+          type: integer
+          minimum: 300
+          maximum: 86400
+        status:
+          type: string
+          enum: [idle, checking, analyzing, updated, up-to-date, error]
+        windowDays:
+          type: integer
+          minimum: 1
+          maximum: 3650
+        commitLimit:
+          type: integer
+          minimum: 1
+          maximum: 5000
+        lastAttemptAt:
+          type: [string, 'null']
+          format: date-time
+        lastCheckedAt:
+          type: [string, 'null']
+          format: date-time
+          description: 上次成功读取远端 HEAD 的时间，不代表分析成功
+        nextCheckAt:
+          type: [string, 'null']
+          format: date-time
+        remoteHead:
+          type: [string, 'null']
+        resolvedBranch:
+          type: [string, 'null']
+        syncId:
+          type: [string, 'null']
+        errorCode:
+          type: [string, 'null']
     Repository:
       type: object
       properties:

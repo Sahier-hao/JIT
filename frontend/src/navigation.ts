@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 
 export type Route =
+  | { name: 'my-reviews' }
+  | { name: 'pr-work'; owner: string; repositoryName: string; number: number }
   | { name: 'repositories' }
   | { name: 'sources' }
   | { name: 'repository'; repositoryId: string }
@@ -22,7 +24,9 @@ export function parseHash(hash: string): Route {
     const path = hash.replace(/^#/, '').split('?')[0].replace(/\/+$/, '')
     const parts = path.replace(/^\//, '').split('/').map(decodeURIComponent)
     if (parts.some(part => part.includes('/') || part.includes('\\'))) return { name: 'unknown', hash }
-    if (!path || path === '/' || ['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
+    if (!path || path === '/' || path === '/reviews') return { name: 'my-reviews' }
+    if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]) }
+    if (['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
     if (['/projects/new', '/connect', '/sources'].includes(path)) return { name: 'sources' }
     if (path === '/admin' || path === '/admin/models') return { name: 'admin', view: 'models' }
     if (path === '/admin/datasets') return { name: 'admin', view: 'datasets' }
@@ -44,6 +48,8 @@ export function parseHash(hash: string): Route {
 }
 export function hashFor(route: Route): string {
   switch (route.name) {
+    case 'my-reviews': return '#/reviews'
+    case 'pr-work': return `#/reviews/${encodeURIComponent(route.owner)}/${encodeURIComponent(route.repositoryName)}/${route.number}`
     case 'repositories': return '#/projects'
     case 'sources': return '#/projects/new'
     case 'repository': return `#/projects/${encodeURIComponent(route.repositoryId)}`

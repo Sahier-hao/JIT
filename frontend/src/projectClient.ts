@@ -1,7 +1,7 @@
 /**
  * 项目管理接口（change `add-project-management`）。
  *
- * 与「发起分析」分开：先登记项目（不发作业），再在项目页发起分析、查看与清理分析记录。
+ * 新项目由服务端准备首次分析；项目页管理自动更新、专项分析与历史记录。
  * 契约立场与其它请求层一致：形状不符不猜测，删除只接受服务端的成功语义（204）。
  */
 import { useCallback, useEffect, useState } from 'react'
@@ -21,7 +21,7 @@ function projectPath(repositoryId: string): string {
   return `/api/v1/repositories/${encodeURIComponent(repositoryId)}`
 }
 
-/** 只登记项目：不产生分析记录，重复地址返回既有项目。 */
+/** 接入项目并准备首次分析；重复地址保留既有项目与自动更新设置。 */
 export function createRepository(url: string, signal?: AbortSignal): Promise<CreatedRepository> {
   return apiRequestWithStatus({
     path: '/api/v1/repositories',

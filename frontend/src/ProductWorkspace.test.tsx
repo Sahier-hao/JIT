@@ -30,6 +30,26 @@ function mockApi() {
 async function connect() { return userEvent.setup() }
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/') })
 afterEach(() => vi.restoreAllMocks())
+it('offers the new successful result and comparison while preserving the open analysis', async () => {
+  const newer = '44444444-4444-4444-8444-444444444444'
+  const job = { syncId: newer, repositoryId: REPO_B, repositoryUrl: repo(REPO_B).url, branch: 'main', since: null, until: null,
+    commitLimit: 500, requestedStrategy: 'generic-model', status: 'completed', stage: 'completed', datasetVersion: 'data-B',
+    runId: null, modelId: null, modelStrategy: 'generic-model', degradeReason: null, trainRecords: null, trainPositives: null,
+    createdAt: now, updatedAt: now, requestId: null, error: null }
+  window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (...args) => {
+    const url = new URL(String(args[0]), 'http://localhost')
+    if (url.pathname === `/api/v1/repositories/${REPO_B}`) return response({ ...repo(REPO_B), latestSyncId: newer, latestSync: job })
+    return original(...args)
+  })
+  render(<App/>); const user = await connect()
+  await screen.findByRole('button', { name: '对比新结果' })
+  expect(window.location.hash).toContain(ANALYSIS)
+  expect(await screen.findByText('0.81')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '对比新结果' }))
+  expect(window.location.hash).toBe(hashFor({ name: 'comparison', repositoryId: REPO_B, baseSyncId: ANALYSIS, targetSyncId: newer }))
+})
 it('keeps repository B and its plan when visiting a report and returning', async () => {
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()

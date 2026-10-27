@@ -27,10 +27,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @asynccontextmanager
     async def lifespan(app):
-        yield
-        if owns_sync:
+        app.state.updates.start()
+        try:
+            yield
+        finally:
             from starlette.concurrency import run_in_threadpool
-            await run_in_threadpool(app.state.sync.close)
+            await run_in_threadpool(app.state.updates.close)
+            if owns_sync:
+                await run_in_threadpool(app.state.sync.close)
 
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     @app.get('/api/health')
@@ -67,6 +71,36 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                    dataset_root=dataset_root, allow_local=allow_local)
     sync_service.recover()
     app.state.sync = sync_service
+    from .repository_updates import RepositoryUpdates
+    updates = RepositoryUpdates(sync_service)
+    app.state.updates = updates
+    from .pr_review import PullRequestReview
+    pr_review = PullRequestReview(sync_service)
+    app.state.pr_review = pr_review
+
+    @app.post('/api/v1/review-sources')
+    async def review_source(request: Request):
+        return await run_in_threadpool(pr_review.intake, await read_object(request))
+
+    @app.post('/api/v1/pr-sources/{owner}/{name}/{number}/refresh')
+    def refresh_pull_request(owner: str, name: str, number: int):
+        return pr_review.refresh(owner, name, number)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}')
+    def pull_request_snapshot(snapshot_id: str):
+        return pr_review.get(snapshot_id)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/context')
+    def pull_request_context(snapshot_id: str, path: str, side: str = 'head'):
+        return pr_review.context(snapshot_id, path, side)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/analyses')
+    def pull_request_analyses(snapshot_id: str):
+        return pr_review.analyses(snapshot_id)
+
+    @app.post('/api/v1/pr-snapshots/{snapshot_id}/analyses')
+    async def analyze_pull_request(snapshot_id: str, request: Request):
+        return await run_in_threadpool(pr_review.analyze, snapshot_id, await read_object(request))
     from .repository_explanation import RepositoryExplanationService
     explanation_service = RepositoryExplanationService(sync_service, catalog)
     from .review_plan import ReviewPlanService, read_plan
@@ -214,9 +248,26 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.post('/api/v1/repositories')
     async def repository_create(request: Request):
+        payload = await read_object(request)
+        if 'autoUpdate' in payload and not isinstance(payload['autoUpdate'], bool):
+            raise RequestError('INPUT_INVALID', field='autoUpdate')
         result, created = await run_in_threadpool(sync_service.create_repository,
-                                                  await read_object(request))
+                                                  payload)
+        if created and payload.get('autoUpdate', True):
+            await run_in_threadpool(updates.enroll, result['repositoryId'])
         return JSONResponse(result, status_code=201 if created else 200)
+
+    @app.get('/api/v1/repositories/{repository_id}/updates')
+    def repository_updates(repository_id: str):
+        return updates.get(repository_id)
+
+    @app.patch('/api/v1/repositories/{repository_id}/updates')
+    async def configure_repository_updates(repository_id: str, request: Request):
+        return await run_in_threadpool(updates.configure, repository_id, await read_object(request))
+
+    @app.post('/api/v1/repositories/{repository_id}/refresh')
+    def refresh_repository(repository_id: str):
+        return JSONResponse(updates.request(repository_id), status_code=202)
 
     @app.patch('/api/v1/repositories/{repository_id}')
     async def repository_update(repository_id: str, request: Request):

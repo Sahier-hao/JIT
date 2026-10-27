@@ -670,7 +670,7 @@ class SyncService:
         self.collect = collect_fn or collect.collect_repository
         self._isolated = collect_fn is None
         self._executor = ThreadPoolExecutor(max_workers=1)
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._closing = threading.Event()
 
     def close(self):
@@ -751,7 +751,7 @@ class SyncService:
         repository_id = repository_id_for(normalized)
         self.sync.repository_create({
             "id": repository_id, "url": normalized,
-            "display_name": display_name_for(normalized), "default_branch": branch,
+            "display_name": display_name_for(normalized), "default_branch": None if re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', branch) else branch,
             "latest_sync_id": None, "latest_sync_at": None, "view_sync_id": None,
             "head_commit": None, "commit_count": 0, "high_count": 0, "medium_count": 0,
             "low_count": 0, "unknown_count": 0, "distribution_rule": None,
@@ -794,7 +794,7 @@ class SyncService:
                               "resolved_model_id": resolved_model_id,
                               "created_at": now, "updated_at": now})
             self.sync.repository_update(repository_id, latest_sync_id=sync_id,
-                                        latest_sync_at=now, default_branch=data["branch"])
+                                        latest_sync_at=now, **({} if re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', data['branch']) else {'default_branch': data['branch']}))
             self._executor.submit(self._execute, sync_id)
         return self.get(sync_id), True
 
@@ -908,7 +908,9 @@ class SyncService:
         """硬删项目及其全部分析记录与提交；有在途作业时拒绝，避免删掉正在写的行。"""
         if self.sync.repository_get(repository_id) is None:
             raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
-        if self.sync.repository_active(repository_id):
+        with self.sync.storage.connection() as db:
+            checking = db.execute("SELECT 1 FROM repository_watch WHERE repository_id=? AND status='checking'", (repository_id,)).fetchone()
+        if self.sync.repository_active(repository_id) or checking:
             raise BaselineError("CONFLICT_ACTIVE_SYNC", "该项目还有进行中的分析，请等待结束后再删除")
         return self.sync.repository_delete(repository_id)
 
