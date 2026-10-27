@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Alert, Button, Drawer, Input, Segmented, Select, Space, Tag, Tooltip } from 'antd'
-import { ArrowLeftOutlined, ExportOutlined, FileTextOutlined, GithubOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons'
+import { Alert, Button, Checkbox, Collapse, Drawer, Input, Segmented, Select, Space, Tag, Tooltip } from 'antd'
+import { ArrowLeftOutlined, ExportOutlined, FileTextOutlined, GithubOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, SearchOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice } from '../Feedback'
@@ -140,7 +140,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
       <h2>还没有审查工作</h2>
       <p>粘贴一个公开 PR 地址开始。接入后，工作会按「作者更新待复核 / 继续审查 / 新关注的工作 / 等待作者处理 / 历史与暂停」分组；模型暂时不可用时也能阅读代码并留下判断。</p>
     </div> : null}
-    <details className="mr-backup"><summary>从完整草稿备份恢复工作</summary><input type="file" accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/></details>
+    <label className="mr-restore"><UploadOutlined/><span>从完整草稿备份恢复工作</span><input type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/></label>
   </section>
 }
 
@@ -471,19 +471,86 @@ function QuestionEditor({ value: q, source, onChange, onJump, work }: { value: R
 
 function DeliveryForm({ onPrepare, busy, draft, onDraft }: { onPrepare: (kind: Conclusion, note: string) => Promise<void>; busy: boolean; draft?: { kind: Conclusion; note: string }; onDraft: (value: { kind: Conclusion; note: string }) => void }) {
   const kind = draft?.kind ?? 'changes', note = draft?.note ?? ''
-  return <form className="pr-delivery-form" onSubmit={e => { e.preventDefault(); void onPrepare(kind, note) }}><label>本轮结论<select aria-label="本轮结论" value={kind} onChange={e => onDraft({ kind: e.target.value as Conclusion, note })}><option value="changes">建议修改</option><option value="complete">本轮审查完成</option><option value="defer">暂缓并说明原因</option></select></label><label>说明与未完成事项<textarea aria-label="本轮结论说明" required value={note} onChange={e => onDraft({ kind, note: e.target.value })}/></label><button className="primary-button" disabled={busy}>检查版本并预览意见</button></form>
+  return <form className="pr-delivery-form" onSubmit={event => { event.preventDefault(); void onPrepare(kind, note) }}>
+    <div className="pr-field">
+      <span className="pr-field-label">本轮结论</span>
+      <Select
+        aria-label="本轮结论"
+        value={kind}
+        onChange={value => onDraft({ kind: value as Conclusion, note })}
+        style={{ width: '100%' }}
+        options={[{ value: 'changes', label: '建议修改' }, { value: 'complete', label: '本轮审查完成' }, { value: 'defer', label: '暂缓并说明原因' }]}
+      />
+    </div>
+    <div className="pr-field">
+      <span className="pr-field-label">说明与未完成事项</span>
+      <Input.TextArea aria-label="本轮结论说明" autoSize={{ minRows: 4, maxRows: 10 }} value={note} onChange={event => onDraft({ kind, note: event.target.value })}/>
+    </div>
+    <Button type="primary" htmlType="submit" disabled={busy}>检查版本并预览意见</Button>
+  </form>
 }
-
 function WorkBackup({ work, onMerge }: { work: PRWork; onMerge: (work: PRWork) => unknown }) {
   const [incoming, setIncoming] = useState<PRWork | null>(null), [choices, setChoices] = useState<Record<string, boolean>>({}), [error, setError] = useState('')
+  const file = useRef<HTMLInputElement | null>(null)
   const preview = incoming ? mergeBackup(work, incoming, choices) : null
-  return <section className="pr-backups"><h2>个人草稿备份</h2><p>包含此 PR 各版本的个人笔记、问题、反馈和结论。仅在你选择导出时生成本地文件，不上传。</p><button className="clear-button" onClick={() => backup(work)}>导出完整草稿</button><label>选择备份以预览合并<input type="file" accept=".json,application/json" aria-label="导入完整草稿" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过 1 MiB'); const next = parseBackup(await file.text(), work.key); await verifyBackupSources(next); mergeBackup(work, next, {}); setIncoming(next); setChoices({}); setError('') } catch (failure) { setError(message(failure)) } }}/></label>{error ? <p className="field-error">{error}</p> : null}
-    {preview ? <div className="pr-merge-preview"><h3>备份合并预览 · {preview.conflicts.length} 处差异</h3><p>默认保留当前判断；备份缺少的笔记和问题不会清空当前记录。新增条目会追加。</p>{preview.conflicts.map(c => <details key={c.key}><summary>{c.label}</summary><p>当前内容</p><pre>{c.current}</pre><p>备份内容</p><pre>{c.incoming}</pre><label><input type="checkbox" checked={choices[c.key] ?? false} onChange={e => setChoices({ ...choices, [c.key]: e.target.checked })}/>对此项采用备份内容</label></details>)}<button className="primary-button" onClick={() => { onMerge(mergeBackup(work, incoming!, choices).work); setIncoming(null) }}>确认合并草稿</button><button className="text-button" onClick={() => setIncoming(null)}>取消恢复</button></div> : null}
+  async function pick(picked: File) {
+    try {
+      if (picked.size > 1024 * 1024) throw new Error('备份超过 1 MiB')
+      const next = parseBackup(await picked.text(), work.key)
+      await verifyBackupSources(next)
+      mergeBackup(work, next, {})
+      setIncoming(next); setChoices({}); setError('')
+    } catch (failure) { setError(message(failure)) }
+  }
+  return <section className="pr-backups">
+    <div className="pr-backups-head">
+      <div>
+        <h3>个人草稿备份</h3>
+        <p>包含此 PR 各版本的个人笔记、问题、反馈和结论。仅在你选择导出时生成本地文件，不上传。</p>
+      </div>
+      <Space>
+        <Button icon={<DownloadOutlined/>} aria-label="导出完整草稿" onClick={() => backup(work)}>导出完整草稿</Button>
+        <Button icon={<UploadOutlined/>} aria-label="选择备份以预览合并" onClick={() => file.current?.click()}>选择备份以预览合并</Button>
+      </Space>
+      <input ref={file} type="file" hidden accept=".json,application/json" aria-label="导入完整草稿" onChange={event => { const picked = event.target.files?.[0]; event.target.value = ''; if (picked) void pick(picked) }}/>
+    </div>
+    {error ? <Alert type="warning" showIcon title={error}/> : null}
+    {preview ? <div className="pr-merge-preview">
+      <h4>备份合并预览 · {preview.conflicts.length} 处差异</h4>
+      <p>默认保留当前判断；备份缺少的笔记和问题不会清空当前记录。新增条目会追加。</p>
+      <Collapse
+        size="small"
+        items={preview.conflicts.map(c => ({
+          key: c.key,
+          label: c.label,
+          children: <div className="pr-merge-diff">
+            <p>当前内容</p><pre>{c.current}</pre>
+            <p>备份内容</p><pre>{c.incoming}</pre>
+            <Checkbox checked={choices[c.key] ?? false} onChange={e => setChoices({ ...choices, [c.key]: e.target.checked })}>对此项采用备份内容</Checkbox>
+          </div>,
+        }))}
+      />
+      <Space>
+        <Button type="primary" onClick={() => { onMerge(mergeBackup(work, incoming!, choices).work); setIncoming(null) }}>确认合并草稿</Button>
+        <Button onClick={() => setIncoming(null)}>取消恢复</Button>
+      </Space>
+    </div> : null}
   </section>
 }
 
 function FeedbackCases({ work, version }: { work: PRWork; version: string }) {
   const [selected, setSelected] = useState<string[]>([]), [preview, setPreview] = useState('')
   const questions = work.rounds[version].questions.filter(q => q.feedback)
-  return <details className="pr-feedback"><summary>预览并导出所选反馈案例</summary><p>反馈不会自动上传、公开给管理员、成为训练标签或修改模型。仅导出你选择的问题、位置、反馈与理由；不会附带个人笔记和其他问题。</p>{questions.map(q => <label key={q.id}><input type="checkbox" checked={selected.includes(q.id)} onChange={e => { setPreview(''); setSelected(e.target.checked ? [...selected, q.id] : selected.filter(id => id !== q.id)) }}/>{q.body.slice(0, 80)}</label>)}<button className="clear-button" disabled={!selected.length} onClick={() => setPreview(JSON.stringify({ format: 'jit-review-feedback-v1', pr: work.rounds[version].source.url, headSha: work.rounds[version].source.headSha, cases: questions.filter(q => selected.includes(q.id)).map(q => ({ question: q.body, source: q.source, evidence: q.evidence, feedback: q.feedback, reason: q.feedbackReason })) }, null, 2))}>预览将导出的字段</button>{preview ? <><textarea aria-label="反馈导出预览" value={preview} readOnly/><button className="primary-button" onClick={() => downloadText('selected-review-feedback.json', preview, 'application/json')}>确认导出所选案例</button></> : null}</details>
+  return <section className="pr-feedback">
+    <h3>反馈案例导出</h3>
+    <p>反馈不会自动上传、公开给管理员、成为训练标签或修改模型。仅导出你选择的问题、位置、反馈与理由；不会附带个人笔记和其他问题。</p>
+    <div className="pr-feedback-list">
+      {questions.map(q => <Checkbox key={q.id} checked={selected.includes(q.id)} onChange={event => { setPreview(''); setSelected(event.target.checked ? [...selected, q.id] : selected.filter(id => id !== q.id)) }}>{q.body.slice(0, 80)}</Checkbox>)}
+    </div>
+    <Space wrap>
+      <Button disabled={!selected.length} onClick={() => setPreview(JSON.stringify({ format: 'jit-review-feedback-v1', pr: work.rounds[version].source.url, headSha: work.rounds[version].source.headSha, cases: questions.filter(q => selected.includes(q.id)).map(q => ({ question: q.body, source: q.source, evidence: q.evidence, feedback: q.feedback, reason: q.feedbackReason })) }, null, 2))}>预览将导出的字段</Button>
+      {preview ? <Button type="primary" onClick={() => downloadText('selected-review-feedback.json', preview, 'application/json')}>确认导出所选案例</Button> : null}
+    </Space>
+    {preview ? <Input.TextArea aria-label="反馈导出预览" value={preview} readOnly autoSize={{ minRows: 6, maxRows: 16 }}/> : null}
+  </section>
 }

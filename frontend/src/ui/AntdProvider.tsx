@@ -38,10 +38,11 @@ export function AntdProvider({ children }: { children: ReactNode }) {
   return (
     <ConfigProvider
       locale={zhCN}
+      button={{ autoInsertSpace: false }}
       theme={{
         algorithm: tokens.dark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: tokens.accent,
+          colorPrimary: tokens.btn,
           colorInfo: tokens.accent,
           colorLink: tokens.accent,
           colorSuccess: tokens.accent,

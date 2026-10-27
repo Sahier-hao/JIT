@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { Button, Collapse, Input } from 'antd'
 import { apiRequest } from '../apiClient'
 import { ApiError, record, recordList } from '../apiContract'
 import { EmptyState, LoadingNotice } from '../Feedback'
@@ -30,7 +31,7 @@ export function AdminWorkspace({ route, navigate }: { route: Extract<Route, { na
   if (!session.authenticated) return <AdminSignIn setup={session.setupRequired} onSignedIn={setSession}/>
   async function logout() { try { await apiRequest({ path: '/api/admin/logout', method: 'POST' }); expired() } catch (error) { setSessionError(error instanceof Error ? error.message : '退出失败') } }
   return <div className="admin-workspace">
-    <div className="admin-toolbar"><span className="admin-badge">管理员 · {session.username}</span><button className="text-button" onClick={() => void logout()}>退出管理</button><button className="text-button" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</button></div>
+    <div className="admin-toolbar"><span className="admin-badge">管理员 · {session.username}</span><Button type="text" onClick={() => void logout()}>退出管理</Button><Button type="text" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</Button></div>
     <nav className="view-tabs" aria-label="管理导航"><button aria-current={route.name === 'admin' && route.view === 'models' ? 'page' : undefined} onClick={() => navigate({ name: 'admin', view: 'models' })}>模型管理</button><button aria-current={route.name === 'admin' && route.view === 'datasets' ? 'page' : undefined} onClick={() => navigate({ name: 'admin', view: 'datasets' })}>数据记录</button><button aria-current={route.name === 'report' ? 'page' : undefined} onClick={() => navigate({ name: 'report', view: 'overview' })}>验证报告</button></nav>
     {sessionError ? <p role="alert" className="field-error">{sessionError}</p> : null}
     {route.name === 'report' ? <VerificationReport route={route} navigate={navigate}/> : <AdminResources key={route.view} view={route.view} expired={expired}/>}
@@ -56,8 +57,30 @@ function AdminSignIn({ setup, onSignedIn }: { setup: boolean; onSignedIn: (sessi
     } catch (failure) { setError(failure instanceof Error ? failure.message : '登录失败') }
     finally { locked.current = false; setBusy(false); setPassword(''); setConfirmation('') }
   }
-  return <section className="admin-signin"><p className="eyebrow">MAINTENANCE WORKSPACE</p><h1>{setup ? '建立管理员账户' : '管理员登录'}</h1><p className="page-intro">在独立工作区维护模型、数据和验证记录。项目审查无需管理员登录。</p>
-    <form className="repository-form" onSubmit={submit}><label>账户名<input aria-label="管理员账户名" autoComplete="username" required maxLength={80} value={username} onChange={event => setUsername(event.target.value)}/></label><label>密码<input aria-label="管理员密码" type="password" autoComplete={setup ? 'new-password' : 'current-password'} required minLength={setup ? 12 : undefined} maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/></label>{setup ? <><label>确认密码<input aria-label="确认管理员密码" type="password" autoComplete="new-password" required value={confirmation} onChange={event => setConfirmation(event.target.value)}/></label><p className="form-hint">首次使用请建立本机管理员，密码至少 12 位。已有账户后将关闭初始化入口。</p></> : null}{error ? <p className="field-error" role="alert">{error}</p> : null}<button className="primary-button" disabled={busy}>{busy ? '正在验证…' : setup ? '建立账户并进入' : '登录管理工作区'}</button></form>
+  return <section className="admin-signin">
+    <div className="admin-signin-intro">
+      <h1>{setup ? '建立管理员账户' : '管理员登录'}</h1>
+      <p>在独立工作区维护模型、数据和验证记录。项目审查无需管理员登录。</p>
+    </div>
+    <form className="admin-signin-form" onSubmit={submit}>
+      <div className="pr-field">
+        <span className="pr-field-label">账户名</span>
+        <Input aria-label="管理员账户名" autoComplete="username" maxLength={80} value={username} onChange={event => setUsername(event.target.value)}/>
+      </div>
+      <div className="pr-field">
+        <span className="pr-field-label">密码</span>
+        <Input.Password aria-label="管理员密码" autoComplete={setup ? 'new-password' : 'current-password'} maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/>
+      </div>
+      {setup ? <>
+        <div className="pr-field">
+          <span className="pr-field-label">确认密码</span>
+          <Input.Password aria-label="确认管理员密码" autoComplete="new-password" value={confirmation} onChange={event => setConfirmation(event.target.value)}/>
+        </div>
+        <p className="admin-signin-hint">首次使用请建立本机管理员，密码至少 12 位。已有账户后将关闭初始化入口。</p>
+      </> : null}
+      {error ? <p className="field-error" role="alert">{error}</p> : null}
+      <Button type="primary" htmlType="submit" loading={busy} block>{setup ? '建立账户并进入' : '登录管理工作区'}</Button>
+    </form>
   </section>
 }
 
@@ -112,7 +135,7 @@ function AdminResources({ view, expired }: { view: 'models' | 'datasets'; expire
       else setError(failure instanceof Error ? failure.message : '模型设置保存失败')
     } finally { lock.current = false; setBusy('') }
   }
-  return <section><header className="page-heading"><div><h1>{view === 'models' ? '模型管理' : '数据记录'}</h1><p className="page-intro">{view === 'models' ? '登记实际交付的模型，并核对它们是否适用于仓库分析。' : '集中核对已登记的数据来源与版本。'}</p></div><button className="clear-button" onClick={() => setRevision(value => value + 1)}>刷新</button></header>{error ? <p className="field-error" role="alert">{error}</p> : null}{notice ? <p role="status" className="admin-notice">{notice}</p> : null}
+  return <section><header className="page-heading"><div><h1>{view === 'models' ? '模型管理' : '数据记录'}</h1><p className="page-intro">{view === 'models' ? '登记实际交付的模型，并核对它们是否适用于仓库分析。' : '集中核对已登记的数据来源与版本。'}</p></div><Button autoInsertSpace={false} onClick={() => setRevision(value => value + 1)}>刷新</Button></header>{error ? <p className="field-error" role="alert">{error}</p> : null}{notice ? <p role="status" className="admin-notice">{notice}</p> : null}
     {loading ? <LoadingNotice label="正在读取管理记录"/> : view === 'models' ? <><h2>已登记模型 <small>{models.length}</small></h2><ModelPolicyCards models={models} busy={!!busy} update={updatePolicy}/>{!models.length ? <p className="quiet-empty">尚无已登记模型，请从下方实际产物校验登记。</p> : null}<MethodAvailability methods={methods}/><h2>本机模型产物</h2><p className="form-hint">产物存在不代表已通过准入。登记会检查文件完整性、输入契约和运行环境，不会重训。</p><div className="admin-candidates">{candidates.map(candidate => <article className="admin-candidate" key={label(candidate.candidateId)}><div><strong>{label(candidate.displayName)}</strong><p>{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div><button className="clear-button" disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '校验并登记'}</button></article>)}</div>{!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型。请先由维护者交付完整产物。</p> : null}</> : <DatasetRecords datasets={datasets}/>}
   </section>
 }
@@ -123,11 +146,18 @@ function DatasetRecords({ datasets }: { datasets: Row[] }) {
     const versions = Array.isArray(dataset.versions) ? recordList(dataset.versions) : []
     return <article className="admin-candidate" key={label(dataset.dataset)}>
       <div><h2>{label(dataset.dataset)}</h2><p>{versions.length} 个登记版本</p>
-        {versions.map(version => <details key={label(version.version)}>
-          <summary>{label(version.version)}</summary>
-          <p>输入方案：{label(version.schema)}</p>
-          {version.quality && typeof version.quality === 'object' ? <p>纳入 {label(record(version.quality).includedRows)} 条记录</p> : null}
-        </details>)}
+        <Collapse
+          size="small"
+          ghost
+          items={versions.map(version => ({
+            key: label(version.version),
+            label: label(version.version),
+            children: <div className="admin-version-body">
+              <p>输入方案：{label(version.schema)}</p>
+              {version.quality && typeof version.quality === 'object' ? <p>纳入 {label(record(version.quality).includedRows)} 条记录</p> : null}
+            </div>,
+          }))}
+        />
       </div>
     </article>
   })}</div>

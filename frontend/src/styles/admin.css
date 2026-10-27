@@ -35,3 +35,11 @@
   .sidebar-bottom { display: flex; position: absolute; top: 16px; right: 19px; margin: 0; padding: 0; }
   .sidebar-bottom .text-button { display: flex; align-items: center; gap: 6px; min-height: 32px; }
 }
+
+.admin-signin { max-width: 460px; margin: 8px 0 40px; }
+.admin-signin-intro h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: -.01em; }
+.admin-signin-intro p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--fg-2); }
+.admin-signin-form { display: grid; gap: 14px; margin-top: 22px; }
+.admin-signin-hint { margin: 0; font-size: 12px; line-height: 1.65; color: var(--fg-3); }
+.admin-version-body { display: grid; gap: 4px; padding: 2px 0 6px; }
+.admin-version-body p { margin: 0; font-size: 12.5px; color: var(--fg-2); }
