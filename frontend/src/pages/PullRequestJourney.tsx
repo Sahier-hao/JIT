@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Alert, Button, Drawer, Input, Segmented, Select, Space, Tag, Tooltip } from 'antd'
+import { ArrowLeftOutlined, ExportOutlined, FileTextOutlined, GithubOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, SearchOutlined } from '@ant-design/icons'
 import type { Route } from '../navigation'
-import { FailureNotice, LoadingNotice } from '../Feedback'
+import { CodeDiff } from '../ui/CodeDiff'
+import { FailureNotice } from '../Feedback'
 import { PRModelClues } from '../components/PRModelClues'
 import { displayTime } from '../domain'
-import { getPRContext, getPRSnapshot, intakePR, refreshPR, type PRContext, type PRFile, samePRSource, verifyBackupSources, type PRList, type PRSnapshot } from '../prReviewClient'
-import { reviewStatusLabels, parsePatchLines, adoptVersion, conclusionLabels, createWork, downloadText, evidenceURL, exportReview, mergeBackup, parseBackup, question, readWorks, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { getPRContext, getPRSnapshot, intakePR, refreshPR, type PRContext, samePRSource, verifyBackupSources, type PRList, type PRSnapshot } from '../prReviewClient'
+import { reviewStatusLabels, adoptVersion, conclusionLabels, createWork, downloadText, evidenceURL, exportReview, mergeBackup, parseBackup, question, readWorks, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+
+const shortTime = (value: string) => {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
 
 type Navigate = (route: Route) => void
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
@@ -12,6 +22,12 @@ const routeFor = (work: PRWork): Route => ({ name: 'pr-work', owner: work.owner,
 const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const changeLabels: Record<string, string> = { added: '新增', removed: '删除', modified: '修改', renamed: '重命名', copied: '复制', changed: '内容变化', unchanged: '未变化' }
 const fileLabel: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
+/** 侧栏窄，只留尾部两段路径：文件名和它所在的目录比仓库顶层目录更有用。 */
+function shortPath(path: string) {
+  const parts = path.split('/')
+  if (path.length <= 30 || parts.length < 3) return path
+  return `…/${parts.slice(-2).join('/')}`
+}
 function loadPersonal() { try { return { works: readWorks(), error: '' } } catch (error) { return { works: [], error: message(error) } } }
 function backup(work: PRWork) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, JSON.stringify({ format: 'jit-pr-review-v1', work }, null, 2), 'application/json') }
 
@@ -70,9 +86,22 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
     if (round.conclusion) return '等待作者处理'
     return Object.values(round.progress).some(p => p.state === 'read') || round.scratch || round.questions.some(q => q.judgment || q.evidence.length) ? '继续审查' : '新关注的工作'
   }
-  return <section className="pr-home">
-    <header className="page-heading"><div><p className="pr-eyebrow">PERSONAL REVIEW</p><h1>我的审查</h1><p className="page-intro">从一个真实 PR 开始，把问题、证据和下一轮复核放在同一张工作单里。</p></div><button className="clear-button" disabled={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '检查关注工作更新'}</button></header>
-    <form className="pr-intake" onSubmit={event => void connect(event)}><label>仓库或 PR 地址<input aria-label="仓库或 PR 地址" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repo/pull/42"/></label><button className="primary-button" disabled={busy}>接入审查</button><p>支持公开 GitHub 来源。个人关注不代表正式评审人分配；草稿、问题和反馈只保存在当前浏览器。页面停留期间每 5 分钟检查关注工作。</p></form>
+  return <section className="mr">
+    <header className="mr-head">
+      <div className="mr-head-text">
+        <h1>我的审查</h1>
+        <p>把问题、证据和下一轮复核放在同一张工作单里。</p>
+      </div>
+      <button className="clear-button" disabled={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '检查关注工作更新'}</button>
+    </header>
+    <form className="mr-intake" onSubmit={event => void connect(event)}>
+      <label htmlFor="mr-url">仓库或 PR 地址</label>
+      <div className="mr-intake-row">
+        <input id="mr-url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repo/pull/42"/>
+        <button className="primary-button" disabled={busy}>接入审查</button>
+      </div>
+      <p className="mr-intake-note">支持公开 GitHub 来源；个人关注不代表正式评审人分配。草稿、问题和反馈只保存在当前浏览器，页面停留期间每 5 分钟检查关注工作。</p>
+    </form>
     {error ? <FailureNotice error={error}/> : null}
     {personal.error ? <p role="alert" className="field-error">{personal.error}。现有存储未被清空。</p> : null}
     {list ? <section className="pr-discovery"><div className="section-label"><h2>{list.owner}/{list.name} · {list.state === 'open' ? '开放的 PR' : '历史 PR'}</h2><span>检查于 {displayTime(list.checkedAt)}</span></div>
@@ -82,13 +111,34 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
     {['作者更新待复核', '继续审查', '新关注的工作', '等待作者处理', '历史与暂停'].map(group => {
       const items = personal.works.filter(work => status(work) === group)
       if (!items.length) return null
-      return <section key={group} className="pr-queue"><h2>{group}<span>{items.length}</span></h2>{items.map(work => {
-        const round = work.rounds[work.latestSnapshotId]
-        return <article key={work.key} className="pr-task"><div><small>{work.owner}/{work.name} · {remoteLabel[work.remoteState]} · {work.interest === 'paused' ? '已暂停关注' : work.interest === 'ended' ? '已结束关注' : '个人关注'}</small><h3>#{work.number} {round.source.title}</h3><p>{round.source.author} · 已读 {Object.values(round.progress).filter(p => p.state === 'read').length}/{round.source.totalFiles} · 最近检查 {displayTime(work.checkedAt)}</p>{work.checkError ? <p role="alert" className="field-error">检查失败：{work.checkError}；保留此前版本。</p> : null}</div><button className="primary-button" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : '继续工作'}</button></article>
-      })}</section>
+      return <section key={group} className="mr-group">
+        <h2 className="mr-group-head">{group}<span>{items.length}</span></h2>
+        <div className="mr-list">{items.map(work => {
+          const round = work.rounds[work.latestSnapshotId]
+          const read = Object.values(round.progress).filter(p => p.state === 'read').length
+          const total = round.source.totalFiles
+          const percent = total ? Math.round(read / total * 100) : 0
+          const pending = round.questions.filter(q => q.status !== 'resolved').length
+          return <article key={work.key} className="mr-row">
+            <div className="mr-row-main">
+              <h3><span className="mr-row-number">#{work.number}</span> {round.source.title}</h3>
+              <p className="mr-row-meta">{work.owner}/{work.name} · {round.source.author} · {remoteLabel[work.remoteState]} · {work.interest === 'paused' ? '已暂停关注' : work.interest === 'ended' ? '已结束关注' : '个人关注'}{work.checkError ? ' · 检查失败，保留此前版本' : ''}</p>
+            </div>
+            <div className="mr-row-progress">
+              <span>{read}/{total} 文件 · {pending} 个未关闭问题</span>
+              <div className="mr-bar" role="img" aria-label={`已阅读 ${percent}%`}><i style={{ width: `${percent}%` }}/></div>
+            </div>
+            <span className="mr-row-time">检查于 {shortTime(work.checkedAt)}</span>
+            <button className="mr-row-action" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</button>
+          </article>
+        })}</div>
+      </section>
     })}
-    {!personal.works.length && !personal.error ? <div className="quiet-empty"><h2>接手一项真实改动</h2><p>粘贴 PR 地址直接开始，或从仓库挑选一项工作。模型暂时不可用时，也能阅读代码并留下判断。</p></div> : null}
-    <details className="pr-backup-start"><summary>从完整草稿备份恢复工作</summary><input type="file" accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/></details>
+    {!personal.works.length && !personal.error ? <div className="mr-empty">
+      <h2>还没有审查工作</h2>
+      <p>粘贴一个公开 PR 地址开始。接入后，工作会按「作者更新待复核 / 继续审查 / 新关注的工作 / 等待作者处理 / 历史与暂停」分组；模型暂时不可用时也能阅读代码并留下判断。</p>
+    </div> : null}
+    <details className="mr-backup"><summary>从完整草稿备份恢复工作</summary><input type="file" accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/></details>
   </section>
 }
 
@@ -107,6 +157,9 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
   const [contextError, setContextError] = useState('')
   const [contextBusy, setContextBusy] = useState(false)
   const [delivery, setDelivery] = useState<{ kind: Conclusion; note: string; preview: string; checked: boolean; oldConfirmed: boolean } | null>(null)
+  const [drawer, setDrawer] = useState<'source' | 'delivery' | 'backup' | null>(null)
+  const [filter, setFilter] = useState('')
+  const [diffView, setDiffView] = useState<'unified' | 'split'>('unified')
   const version = work?.viewedSnapshotId ?? ''
   function commit(next: PRWork) {
     let saved = next
@@ -129,7 +182,7 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
   const savedSide = savedLocation?.side, savedLine = savedLocation?.line
   useEffect(() => {
     if (!savedSide || !savedLine || !savedPath) return
-    const node = document.querySelector<HTMLElement>(`.pr-code [data-code-line="${savedSide}:${savedLine}"]`)
+    const node = document.querySelector<HTMLElement>(`.pr-code [data-code-line="${savedSide}:${savedLine}"], .pr-code #line-${savedSide}-${savedLine}`)
     if (node) { node.scrollIntoView?.({ block: 'center', behavior: 'smooth' }); return }
     if (!source || source.snapshotId !== version) return
     const key = `${version}:${savedPath}:`
@@ -140,7 +193,27 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
       .catch(error => { if (active) setContextError('原位置暂时不可读取：' + message(error)) })
     return () => { active = false }
   }, [version, savedLine, savedSide, savedPath, source, contexts])
-  if (!work) return <section><button className="back-link" onClick={() => navigate({ name: 'my-reviews' })}>我的审查</button>{readError || initial.error ? <><FailureNotice error={readError ?? new Error(initial.error)}/><button onClick={() => { setReadError(null); setAttempt(v => v + 1) }}>重试读取 PR</button></> : <LoadingNotice label="正在读取 PR、文件和固定代码版本"/>}</section>
+  if (!work) {
+    const failed = Boolean(readError || initial.error)
+    const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 的文件与固定代码版本。首次接入要逐个取文件，通常需要 20 到 30 秒。'
+    return (
+      <section className="wb-state-page">
+        <div className="wb-state" role={failed ? 'alert' : 'status'} aria-live="polite">
+          <div className="wb-state-head">
+            <span className={failed ? 'wb-state-dot is-failed' : 'wb-state-dot'} aria-hidden="true"/>
+            <h1 className="wb-state-title">{failed ? '这个工作单暂时读不出来' : '正在读取 PR'}</h1>
+          </div>
+          <p className="wb-state-text">{detail}</p>
+          <div className="wb-state-actions">
+            {failed
+              ? <Button type="primary" onClick={() => { setReadError(null); setAttempt(v => v + 1) }}>重试读取</Button>
+              : null}
+            <Button onClick={() => navigate({ name: 'my-reviews' })}>返回我的审查</Button>
+          </div>
+        </div>
+      </section>
+    )
+  }
   const round = work.rounds[version], live = source?.snapshotId === version ? source : round.source
   const path = round.currentFile, file = live.files.find(f => f.path === path)
   const cacheKey = `${version}:${path}:`
@@ -204,50 +277,177 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
     changeRound(r => ({ ...r, conclusion: { kind: delivery.kind, note: delivery.note, markdown: exportReview(active, version, delivery.kind, delivery.note), createdAt: new Date().toISOString() } }))
     setDelivery(null)
   }
-  return <section className="pr-work">
-    <button className="back-link" onClick={() => navigate({ name: 'my-reviews' })}>返回我的审查</button>
-    <header className="page-heading"><div><p className="pr-eyebrow">{owner}/{repositoryName} · PR #{number} · {remoteLabel[work.remoteState]}</p><h1>{round.source.title}</h1><p className="page-intro">{round.source.author} · 已阅读 {readCount}/{live.totalFiles} · 待复核文件 {recheckCount} · 待处理问题 {pendingCount}</p></div><button className="clear-button" disabled={busy} onClick={() => void check()}>{busy ? '正在检查…' : '检查 PR 更新'}</button></header>
-    <div className="pr-objective"><small>作者说明节选</small><p>{live.body.trim().slice(0, 180) || "作者未填写改动目标，可在问题中记录需要作者说明的内容。"}</p></div>
-    <div className="pr-work-toolbar"><span>个人草稿保存在当前浏览器 · {saveError ? '尚未保存' : work.savedAt ? `已保存 ${displayTime(work.savedAt)}` : '尚未保存'}</span><select aria-label="个人关注状态" value={work.interest} onChange={e => commit({ ...current.current!, interest: e.target.value as PRWork['interest'] })}><option value="active">关注这项工作</option><option value="paused">暂停关注</option><option value="ended">结束关注</option></select><a href={live.url} target="_blank" rel="noreferrer">在 GitHub 核对 PR</a><button className="text-button" onClick={() => navigate({ name: 'repository', repositoryId: live.repositoryId })}>项目分析与模型线索</button></div>
-    {saveError ? <div className="pr-save-error" role="alert"><p>{saveError}</p><button onClick={() => commit(current.current!)}>重试保存</button><button onClick={() => backup(work)}>导出完整草稿</button></div> : null}
-    {readError ? <><FailureNotice error={readError}/><button className="text-button" onClick={() => setAttempt(v => v + 1)}>重新读取当前版本</button></> : null}
-    {work.checkError ? <p className="field-error">上次检查失败：{work.checkError}。仍保留此前版本，最近成功检查 {displayTime(work.checkedAt)}。</p> : null}
-    {work.remoteState !== 'open' ? <p className="status-note">远端 PR {remoteLabel[work.remoteState]}，当前为历史审查。个人草稿和原结论保留；可主动继续复盘。</p> : null}
-    {work.latestSnapshotId !== version ? <div className="pr-update-note"><strong>代码基准或目标版本已有变化，当前仍阅读原版本。</strong><button className="primary-button" onClick={() => switchVersion(work.latestSnapshotId)}>开始复核新版本</button><p>旧意见和结论属于旧代码，不会自动解决；新一轮将提示变动文件与过期证据。</p></div> : null}
-    <details className="pr-source"><summary>代码版本与作者原始说明</summary><label>正在阅读的版本<select aria-label="审查代码版本" value={version} onChange={e => switchVersion(e.target.value)}>{Object.values(work.rounds).map(r => <option key={r.source.snapshotId} value={r.source.snapshotId}>{r.source.headSha.slice(0, 12)} · {displayTime(r.source.capturedAt)}</option>)}</select></label><dl><div><dt>基准</dt><dd>{live.baseBranch} · {live.baseSha}</dd></div><div><dt>目标</dt><dd>{live.headBranch} · {live.headSha}</dd></div><div><dt>代码读取于</dt><dd>{displayTime(live.capturedAt)}</dd></div><div><dt>最近检查</dt><dd>{displayTime(work.checkedAt)}</dd></div></dl><h2>作者原始说明</h2><pre className="pr-author-body">{live.body || '作者没有填写说明'}</pre><details><summary>涉及提交（已加载 {live.commits.length}/{live.totalCommits}）</summary><ul>{live.commits.map(c => <li key={c.sha}><a href={`https://github.com/${live.baseRepository}/commit/${c.sha}`} target="_blank" rel="noreferrer">{c.sha.slice(0, 12)}</a> {c.message}</li>)}</ul>{!live.commitsComplete ? <p>提交列表未完整加载，请在 GitHub 核对其余提交；文件阅读不依赖模型。</p> : null}</details></details>
-    {round.historyNotice ? <p className="status-note">{round.historyNotice}</p> : null}
-    <PRModelClues key={`model:${version}`} source={live} navigate={navigate} modelId={round.modelId} onModelId={id => changeRound(r => ({ ...r, modelId: id }))}/>
-    <div className="pr-review-grid">
-      <aside className="pr-files"><h2>文件与进度</h2><p>加载 {live.files.length}/{live.totalFiles} 个文件；已阅读不等于确认没有缺陷。</p>{live.files.map(f => <button key={f.path} aria-current={path === f.path ? 'true' : undefined} onClick={() => chooseFile(f.path)}><span>{f.path}</span><small>{changeLabels[f.status] ?? f.status} · +{f.additions} −{f.deletions} · {fileLabel[round.progress[f.path]?.state ?? 'unread']}</small>{round.progress[f.path]?.originSnapshotId !== version ? <small>沿用上轮阅读记录</small> : null}</button>)}{!live.filesComplete ? <p className="field-error">还有 {live.totalFiles - live.files.length} 个文件未覆盖，不能计入已阅读。请在 GitHub 核对超出接口上限的范围。</p> : null}</aside>
-      <section className="pr-code" aria-label="PR 代码阅读">
-        {file ? <><header><h2>{file.path}</h2>{file.previousPath ? <p>重命名自 {file.previousPath}</p> : null}<div className="panel-actions"><button className="clear-button" disabled={!readable} onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))}>标记已阅读</button><button className="text-button" onClick={() => commit(setFileState(current.current!, version, path, 'recheck', readable))}>需要复查</button><button className="text-button" onClick={() => commit(setFileState(current.current!, version, path, 'uncovered', readable))}>暂未覆盖</button></div></header>
-          <p className="form-hint">{file.patchComplete ? '真实 GitHub Diff · 已核对增删行数。' : 'Diff 未完整提供，可能是二进制或过大文件；请读取完整上下文，失败时不能标记已阅读。'} 点击代码行，将该位置关联到右侧当前问题。</p>
-          {file.patch ? <Patch file={file} onAnchor={anchor} location={round.location}/> : <p className="quiet-empty">没有可展示的 Diff，未当作空文件处理。</p>}
-          <button className="clear-button" disabled={contextBusy} onClick={() => void loadContext()}>{contextBusy ? '正在读取固定版本…' : '加载完整上下文'}</button>{contextError ? <p className="field-error" role="alert">{contextError}</p> : null}
-          {[baseContext, headContext].filter((c): c is PRContext => Boolean(c)).map(c => <details key={c.side} open><summary>{c.side === 'base' ? '基准' : '目标'}上下文 · {c.absent ? '该侧不存在此文件' : c.complete ? `${c.totalLines} 行完整文本` : `仅前10000/${c.totalLines}行，未完整覆盖`}</summary><div className="pr-context-lines">{c.content.split('\n').map((line, i) => <button key={i} data-code-line={`${c.side}:${i + 1}`} data-focused={round.location?.side === c.side && round.location.line === i + 1 ? 'true' : undefined} onClick={() => anchor(c.side, i + 1)} aria-label={`关联 ${file.path}:${c.side}:${i + 1}`}><span>{i + 1}</span><code>{line || ' '}</code></button>)}</div></details>)}
-        </> : <p>此版本没有可展示的文件，请核对 GitHub 来源。</p>}
+  const readPercent = live.totalFiles ? Math.round((readCount / live.totalFiles) * 100) : 0
+  const needle = filter.trim().toLowerCase()
+  const visibleFiles = needle ? live.files.filter(f => f.path.toLowerCase().includes(needle)) : live.files
+  const stale = work.latestSnapshotId !== version
+  return <section className="wb">
+    <header className="wb-head">
+      <div className="wb-head-main">
+        <div className="wb-head-text">
+          <div className="wb-crumb">
+            <button className="wb-back" onClick={() => navigate({ name: 'my-reviews' })}><ArrowLeftOutlined/>我的审查</button>
+            <span className="wb-sep">/</span>
+            <span>{owner}/{repositoryName}</span>
+            <span className="wb-sep">·</span>
+            <span>#{number}</span>
+            <Tag className="wb-state">{remoteLabel[work.remoteState]}</Tag>
+          </div>
+          <h1 className="wb-title" title={round.source.title}>{round.source.title}</h1>
+          <div className="wb-facts">
+            <span>{round.source.author}</span>
+            <span className="wb-sep">·</span>
+            <span>已读 <b>{readCount}</b>/{live.totalFiles}</span>
+            <span className="wb-sep">·</span>
+            <span>待复核 <b>{recheckCount}</b></span>
+            <span className="wb-sep">·</span>
+            <span>待处理问题 <b>{pendingCount}</b></span>
+            <span className="wb-sep">·</span>
+            <span className={saveError ? 'wb-save is-error' : 'wb-save'}>{saveError ? '草稿尚未保存' : work.savedAt ? `草稿已保存 ${displayTime(work.savedAt)}` : '草稿尚未保存'}</span>
+          </div>
+        </div>
+        <div className="wb-head-actions">
+          <Button icon={<ReloadOutlined/>} loading={busy} onClick={() => void check()} aria-label="检查 PR 更新">检查 PR 更新</Button>
+          <Select
+            className="wb-interest"
+            value={work.interest}
+            onChange={value => commit({ ...current.current!, interest: value as PRWork['interest'] })}
+            options={[{ value: 'active', label: '关注中' }, { value: 'paused', label: '已暂停' }, { value: 'ended', label: '已结束' }]}
+          />
+          <Button icon={<FileTextOutlined/>} onClick={() => setDrawer('source')} aria-label="版本与说明">版本与说明</Button>
+          <Button type="primary" icon={<ExportOutlined/>} onClick={() => setDrawer('delivery')} aria-label="输出意见">输出意见</Button>
+        </div>
+      </div>
+      <div className="wb-meter" aria-hidden="true"><span style={{ width: `${readPercent}%` }}/></div>
+    </header>
+    {(saveError || readError || work.checkError || work.remoteState !== 'open' || stale) ? <div className="wb-alerts">
+      {saveError ? <Alert type="warning" showIcon title={saveError} action={<Space size={4}><Button size="small" onClick={() => commit(current.current!)}>重试保存</Button><Button size="small" onClick={() => backup(work)}>导出草稿</Button></Space>}/> : null}
+      {readError ? <Alert type="error" showIcon title={message(readError)} action={<Button size="small" onClick={() => setAttempt(v => v + 1)}>重新读取</Button>}/> : null}
+      {work.checkError ? <Alert type="warning" showIcon title={`上次检查失败：${work.checkError}。仍保留此前版本，最近成功检查 ${displayTime(work.checkedAt)}。`}/> : null}
+      {work.remoteState !== 'open' ? <Alert type="info" showIcon title={`远端 PR ${remoteLabel[work.remoteState]}，当前为历史审查；个人草稿和原结论保留。`}/> : null}
+      {stale ? <Alert type="warning" showIcon title="代码基准或目标版本已有变化，当前仍阅读原版本；旧意见不会自动解决。" action={<Button size="small" type="primary" onClick={() => switchVersion(work.latestSnapshotId)}>开始复核新版本</Button>}/> : null}
+      {round.historyNotice ? <Alert type="info" showIcon title={round.historyNotice}/> : null}
+    </div> : null}
+    <div className="wb-body">
+      <aside className="wb-files" aria-label="文件与进度">
+        <div className="wb-pane-head"><h2>文件</h2><span className="wb-count">{live.files.length}/{live.totalFiles}</span></div>
+        <Input size="small" allowClear prefix={<SearchOutlined/>} placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径"/>
+        <div className="wb-file-list" role="listbox" aria-label="改动文件">
+          {visibleFiles.map(f => {
+            const state = round.progress[f.path]?.state ?? 'unread'
+            return <button key={f.path} role="option" aria-selected={path === f.path} className={`wb-file${path === f.path ? ' is-active' : ''}`} onClick={() => chooseFile(f.path)}>
+              <span className={`wb-file-flag is-${f.status}`} aria-hidden="true"/>
+              <span className="wb-file-path" title={f.path}>{shortPath(f.path)}</span>
+              <span className="wb-file-meta"><em className="wb-add">+{f.additions}</em><em className="wb-del">−{f.deletions}</em><span className={`wb-file-state is-${state}`}>{fileLabel[state]}</span></span>
+            </button>
+          })}
+          {!visibleFiles.length ? <p className="wb-pane-empty">没有匹配的文件。</p> : null}
+        </div>
+        {!live.filesComplete ? <p className="wb-pane-note">还有 {live.totalFiles - live.files.length} 个文件未覆盖，请在 GitHub 核对超出接口上限的范围。</p> : null}
+      </aside>
+      <section className="wb-code pr-code" aria-label="PR 代码阅读">
+        {file ? <>
+          <div className="wb-code-head">
+            <div className="wb-code-title">
+              <code>{file.path}</code>
+              <span className="wb-code-meta">{changeLabels[file.status] ?? file.status} · <em className="wb-add">+{file.additions}</em> <em className="wb-del">−{file.deletions}</em>{file.previousPath ? ` · 重命名自 ${file.previousPath}` : ''}</span>
+            </div>
+            <div className="wb-code-actions">
+              <Segmented size="small" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
+              <Tooltip title="读取基准与目标的完整文件内容"><Button size="small" loading={contextBusy} onClick={() => void loadContext()}>完整上下文</Button></Tooltip>
+              <Button size="small" type={round.progress[path]?.state === 'read' ? 'default' : 'primary'} disabled={!readable} onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))}>标记已阅读</Button>
+              <Select size="small" className="wb-mark" value={round.progress[path]?.state ?? 'unread'} onChange={value => commit(setFileState(current.current!, version, path, value as FileState, readable))} options={[{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]} aria-label="文件阅读状态"/>
+            </div>
+          </div>
+          <p className="wb-code-hint">{file.patchComplete ? '真实 GitHub Diff，已核对增删行数。点击行号把该位置关联到右侧当前问题。' : 'Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。'}</p>
+          <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
+          <details className="wb-author">
+            <summary>作者原始说明与模型线索</summary>
+            <div className="wb-author-inner">
+              <h3>作者原始说明</h3>
+              <pre className="wb-author-body">{live.body || '作者没有填写说明'}</pre>
+            </div>
+          </details>
+          <div className="wb-clues">
+            <PRModelClues key={`model:${version}`} source={live} navigate={navigate} modelId={round.modelId} onModelId={id => changeRound(r => ({ ...r, modelId: id }))}/>
+          </div>
+          {contextError ? <Alert type="error" showIcon title={contextError}/> : null}
+          {[baseContext, headContext].filter((c): c is PRContext => Boolean(c)).map(c => <details key={c.side} className="wb-context" open>
+            <summary>{c.side === 'base' ? '基准' : '目标'}上下文 · {c.absent ? '该侧不存在此文件' : c.complete ? `${c.totalLines} 行完整文本` : `仅前 10000/${c.totalLines} 行，未完整覆盖`}</summary>
+            <div className="wb-context-lines">{c.content.split('\n').map((line, i) => <button key={i} data-code-line={`${c.side}:${i + 1}`} data-focused={round.location?.side === c.side && round.location.line === i + 1 ? 'true' : undefined} onClick={() => anchor(c.side, i + 1)} aria-label={`关联 ${file.path}:${c.side}:${i + 1}`}><span>{i + 1}</span><code>{line || ' '}</code></button>)}</div>
+          </details>)}
+        </> : <div className="wb-code-empty"><p>这个版本没有可展示的文件，请核对 GitHub 来源。</p></div>}
       </section>
-      <aside className="pr-questions"><div className="section-label"><h2>问题与人工记录</h2><button className="text-button" onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建问题</button></div><p className="form-hint">作者说明与文件事实生成的核对问题是待验证线索，不是模型定位或已确认缺陷。</p>
-        <div className="pr-question-list">{round.questions.map(q => <button key={q.id} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>{q.body.slice(0, 65) || '未填写的问题'}<small>{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化，待复核' : ''}</small></button>)}</div>
-        {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setContextError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined) }} work={work}/> : null}
-        <label className="pr-note">个人笔记{round.scratchOriginSnapshotId ? <small>沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}<textarea aria-label="个人笔记" value={round.scratch} onChange={e => changeRound(r => ({ ...r, scratch: e.target.value, scratchOriginSnapshotId: undefined }))} placeholder="留下读到哪里、尚待核对什么；不会自动附到对外意见里。"/></label>
+      <aside className="wb-notes" aria-label="问题与人工记录">
+        <div className="wb-pane-head"><h2>问题</h2><Button size="small" type="text" icon={<PlusOutlined/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
+        <div className="wb-question-list">
+          {round.questions.map(q => <button key={q.id} className={`wb-question${selected?.id === q.id ? ' is-active' : ''}`} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
+            <span className="wb-question-body">{q.body.slice(0, 60) || '未填写的问题'}</span>
+            <span className="wb-question-meta">{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化待复核' : ''}{q.evidence.length ? ` · ${q.evidence.length} 条证据` : ''}</span>
+          </button>)}
+          {!round.questions.length ? <p className="wb-pane-empty">还没有问题记录。新建一条，或点击代码行把位置关联进来。</p> : null}
+        </div>
+        <div className="wb-question-detail">
+          {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setContextError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined) }} work={work}/> : null}
+        </div>
+        <label className="wb-note">
+          <span>个人笔记{round.scratchOriginSnapshotId ? <small>沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}</span>
+          <textarea aria-label="个人笔记" value={round.scratch} onChange={e => changeRound(r => ({ ...r, scratch: e.target.value, scratchOriginSnapshotId: undefined }))} placeholder="读到哪里、还待核对什么；不会附到对外意见里。"/>
+        </label>
       </aside>
     </div>
-    <section className="pr-delivery"><h2>输出本轮审查意见</h2><p>尚需处理：{live.totalFiles - readCount} 个未完整阅读文件、{pendingCount} 个未关闭或待复核问题。可继续阅读，或在结论中明确保留。</p>
-      <DeliveryForm busy={busy} draft={round.deliveryDraft} onDraft={deliveryDraft => changeRound(r => ({ ...r, deliveryDraft }))} onPrepare={prepareDelivery}/>
-      {delivery ? <div className="pr-delivery-preview"><h3>审查意见预览</h3>{!delivery.checked || work.latestSnapshotId !== version ? <label><input type="checkbox" checked={delivery.oldConfirmed} onChange={e => setDelivery({ ...delivery, oldConfirmed: e.target.checked })}/>确认按当前旧版本交付，并保留版本和未覆盖事项说明</label> : null}<textarea readOnly aria-label="审查意见预览" value={delivery.preview}/><button className="primary-button" disabled={busy || ((!delivery.checked || work.latestSnapshotId !== version) && !delivery.oldConfirmed)} onClick={() => void confirmDelivery()}>确认保存本轮结论</button><button className="text-button" onClick={() => setDelivery(null)}>继续审查</button></div> : null}
-      {round.conclusion ? <div className="pr-receipt"><h3>{conclusionLabels[round.conclusion.kind]} · {displayTime(round.conclusion.createdAt)}</h3><p>意见属于 {live.headSha.slice(0, 12)}，尚未发送到 GitHub。</p><button className="clear-button" onClick={() => downloadText(`review-${number}-${live.headSha.slice(0, 8)}.md`, round.conclusion!.markdown, 'text/markdown')}>下载 Markdown 意见</button><button className="text-button" onClick={() => navigator.clipboard.writeText(round.conclusion!.markdown).catch(error => setReadError(error))}>复制审查意见</button><details><summary>查看已保存意见</summary><pre>{round.conclusion.markdown}</pre></details></div> : null}
-    </section>
-    <WorkBackup work={work} onMerge={commit}/>
-    <FeedbackCases key={`feedback:${version}`} work={work} version={version}/>
+    <Drawer open={drawer === 'source'} onClose={() => setDrawer(null)} title="代码版本与作者说明" size={600}>
+      <div className="wb-drawer">
+        <label className="wb-field">正在阅读的版本
+          <Select value={version} onChange={value => switchVersion(value)} options={Object.values(work.rounds).map(r => ({ value: r.source.snapshotId, label: `${r.source.headSha.slice(0, 12)} · ${displayTime(r.source.capturedAt)}` }))} aria-label="审查代码版本"/>
+        </label>
+        <dl className="wb-defs">
+          <div><dt>基准</dt><dd>{live.baseBranch} · {live.baseSha.slice(0, 12)}</dd></div>
+          <div><dt>目标</dt><dd>{live.headBranch} · {live.headSha.slice(0, 12)}</dd></div>
+          <div><dt>代码读取于</dt><dd>{displayTime(live.capturedAt)}</dd></div>
+          <div><dt>最近检查</dt><dd>{displayTime(work.checkedAt)}</dd></div>
+        </dl>
+        <details className="wb-commits" open>
+          <summary>涉及提交（已加载 {live.commits.length}/{live.totalCommits}）</summary>
+          <ul>{live.commits.map(c => <li key={c.sha}><a href={`https://github.com/${live.baseRepository}/commit/${c.sha}`} target="_blank" rel="noreferrer">{c.sha.slice(0, 12)}</a> <span>{c.message.split('\n')[0]}</span></li>)}</ul>
+          {!live.commitsComplete ? <p>提交列表未完整加载，请在 GitHub 核对其余提交；文件阅读不依赖模型。</p> : null}
+        </details>
+        <div className="wb-drawer-links">
+          <Button size="small" icon={<GithubOutlined/>} href={live.url} target="_blank">在 GitHub 核对 PR</Button>
+          <Button size="small" onClick={() => navigate({ name: 'repository', repositoryId: live.repositoryId })}>项目分析与模型线索</Button>
+          <Button size="small" icon={<SaveOutlined/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
+        </div>
+      </div>
+    </Drawer>
+    <Drawer open={drawer === 'delivery'} onClose={() => setDrawer(null)} title="输出本轮审查意见" size={680}>
+      <div className="wb-drawer">
+        <p className="wb-drawer-note">尚需处理：{live.totalFiles - readCount} 个未完整阅读文件、{pendingCount} 个未关闭或待复核问题。可继续阅读，或在结论中明确保留。</p>
+        <DeliveryForm busy={busy} draft={round.deliveryDraft} onDraft={deliveryDraft => changeRound(r => ({ ...r, deliveryDraft }))} onPrepare={prepareDelivery}/>
+        {delivery ? <div className="wb-delivery-preview">
+          <h3>审查意见预览</h3>
+          {!delivery.checked || work.latestSnapshotId !== version ? <label className="wb-check"><input type="checkbox" checked={delivery.oldConfirmed} onChange={e => setDelivery({ ...delivery, oldConfirmed: e.target.checked })}/>确认按当前旧版本交付，并保留版本和未覆盖事项说明</label> : null}
+          <textarea readOnly aria-label="审查意见预览" value={delivery.preview}/>
+          <Space>
+            <Button type="primary" disabled={busy || ((!delivery.checked || work.latestSnapshotId !== version) && !delivery.oldConfirmed)} onClick={() => void confirmDelivery()}>确认保存本轮结论</Button>
+            <Button onClick={() => setDelivery(null)}>继续审查</Button>
+          </Space>
+        </div> : null}
+        {round.conclusion ? <div className="wb-receipt">
+          <h3>{conclusionLabels[round.conclusion.kind]} · {displayTime(round.conclusion.createdAt)}</h3>
+          <p>意见属于 {live.headSha.slice(0, 12)}，尚未发送到 GitHub。</p>
+          <Space>
+            <Button size="small" onClick={() => downloadText(`review-${number}-${live.headSha.slice(0, 8)}.md`, round.conclusion!.markdown, 'text/markdown')}>下载 Markdown 意见</Button>
+            <Button size="small" onClick={() => navigator.clipboard.writeText(round.conclusion!.markdown).catch(error => setReadError(error))}>复制审查意见</Button>
+          </Space>
+          <details><summary>查看已保存意见</summary><pre>{round.conclusion.markdown}</pre></details>
+        </div> : null}
+      </div>
+    </Drawer>
+    <Drawer open={drawer === 'backup'} onClose={() => setDrawer(null)} title="个人草稿备份" size={620}>
+      <WorkBackup work={work} onMerge={commit}/>
+      <FeedbackCases key={`feedback:${version}`} work={work} version={version}/>
+    </Drawer>
   </section>
-}
-
-function Patch({ file, onAnchor, location }: { file: PRFile; onAnchor: (side: 'base' | 'head', line: number) => void; location?: { side: 'base' | 'head'; line: number } }) {
-  const lines = parsePatchLines(file.patch!).map((entry, index) => entry.kind === 'hunk' || entry.line === null
-    ? <div className="pr-hunk" key={index}>{entry.text}</div>
-    : <button className={entry.kind === 'delete' ? 'is-deletion' : entry.kind === 'add' ? 'is-addition' : ''} key={index} data-code-line={`${entry.side}:${entry.line}`} data-focused={location?.side === entry.side && location.line === entry.line ? 'true' : undefined} aria-label={`关联 ${file.path}:${entry.side}:${entry.line}`} onClick={() => onAnchor(entry.side, entry.line!)}><span>{entry.side === 'base' ? entry.line : ''}</span><span>{entry.side === 'head' ? entry.line : ''}</span><code>{entry.text || ' '}</code></button>)
-  return <div className="pr-diff" aria-label={`${file.path} Diff`}>{lines}</div>
 }
 
 function QuestionEditor({ value: q, source, onChange, onJump, work }: { value: ReviewQuestion; source: PRSnapshot; onChange: (value: ReviewQuestion) => void; onJump: (e: Evidence) => void; work: PRWork }) {

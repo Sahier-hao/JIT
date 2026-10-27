@@ -14,8 +14,12 @@
     "test:e2e:acceptance": "playwright test"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.4",
+    "antd": "^6.6.8",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-diff-view": "^3.3.3",
+    "react-dom": "^19.2.8",
+    "refractor": "^5.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
