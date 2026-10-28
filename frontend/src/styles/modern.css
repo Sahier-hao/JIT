@@ -658,3 +658,11 @@ tbody tr:hover { background: var(--hover); }
 
 .report-boundary { margin: -8px 0 10px; }
 
+
+/* ---------- 侧栏与顶栏：保持改版前的原始表面 ---------- */
+/* 全局对比度调整把 --fg-2/--fg-3/--line 加深了，这里把这几个变量在侧栏与顶栏范围内锁回原值，
+   让导航区域与改版前逐像素一致；工作区主体与顶栏仍使用加深后的层级。 */
+.workspace-sidebar { --fg-2: #3A4554; --fg-3: #5C6675; --line: #EDEFF3; --line-strong: #DCE1E9; --line-soft: #F3F5F8; --sunken: #F1F4F8; }
+html[data-theme="steel"] .workspace-sidebar { --fg-2: #394854; --fg-3: #566470; --line: #E8EDF3; --line-strong: #D3DCE5; --line-soft: #F1F5F9; --sunken: #EEF3F9; }
+html[data-theme="charcoal"] .workspace-sidebar { --fg-2: #B7C2D4; --fg-3: #7C8DA6; --line: #1B2436; --line-strong: #2A3550; --line-soft: #151D2C; --sunken: #121A2A; }
+html[data-theme="paper"] .workspace-sidebar { --fg-2: #3F3F3F; --fg-3: #6B6B6B; --line: #ECECEC; --line-strong: #D6D6D6; --line-soft: #F4F4F4; --sunken: #F2F2F2; }
