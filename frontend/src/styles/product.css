@@ -367,3 +367,35 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 
 .project-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .project-title-row .status-line { margin-top: 0; }
+
+/* 项目详情页：宽屏双栏工作台（主栏放结果与记录，窄栏放状态与发起分析） */
+.project-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.project-rail, .project-main { min-width: 0; }
+.project-rail .project-updates { margin-bottom: 30px; }
+.project-rail .project-start { margin-bottom: 36px; }
+.project-rail .section-label { margin-bottom: 10px; }
+.project-main .project-records { margin-bottom: 0; }
+
+@media (min-width: 1400px) {
+  .project-layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 0 40px; align-items: start; }
+  .project-rail { grid-column: 2; grid-row: 1; }
+  .project-main { grid-column: 1; grid-row: 1; }
+  .project-rail { position: sticky; top: 18px; }
+  .project-rail .project-start { margin-bottom: 0; }
+}
+
+/* 窄栏内的仓库更新与发起分析：在 360px 宽度下改成纵向堆叠 */
+@media (min-width: 1400px) {
+  .project-rail .update-band { grid-template-columns: auto minmax(0, 1fr); }
+  .project-rail .update-stats { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  .project-rail .update-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .project-rail .update-stat b { font-size: 12.5px; }
+  .project-rail .analysis-disclosure-toggle { flex-wrap: wrap; row-gap: 2px; padding: 14px 16px; }
+  .project-rail .analysis-disclosure-title { white-space: nowrap; }
+  .project-rail .analysis-disclosure-chevron { margin-left: auto; }
+  .project-rail .analysis-disclosure-summary { flex-basis: 100%; margin-left: 0; white-space: normal; text-align: left; font-size: 12px; }
+  .project-rail .analysis-card { padding: 0; }
+  .project-rail .analysis-card .form-submit { flex-direction: column; align-items: stretch; gap: 10px; }
+  .project-rail .analysis-card .form-submit .ant-btn { width: 100%; justify-content: center; }
+  .project-rail .analysis-body .form-grid { grid-template-columns: minmax(0, 1fr); }
+}

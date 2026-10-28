@@ -138,14 +138,18 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       </div>
     </header>
 
-    <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+    <div className="project-layout">
+      <aside className="project-rail">
+        <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
 
-    <section className="project-start" id="analysis-form-section" aria-label="发起分析">
-      <div className="section-label"><h2>发起分析</h2></div>
-      {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
-      <AnalysisForm key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
-    </section>
+        <section className="project-start" id="analysis-form-section" aria-label="发起分析">
+          <div className="section-label"><h2>发起分析</h2></div>
+          {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
+          <AnalysisForm key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
+        </section>
+      </aside>
 
+      <div className="project-main">
     <section className="project-result" aria-label="当前分析结果">
       <div className="section-label"><h2>当前分析结果</h2>{context ? <span>完成于 {context.completedAt ? displayTime(context.completedAt) : '未记录'}</span> : null}</div>
       {context ? <div className="result-panel">
@@ -178,6 +182,8 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       {deleting ? <div role="alertdialog" aria-label="确认删除分析记录" className="record-confirm"><h3>删除这条分析记录？</h3><p>{deleting.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。' : '这次分析与对应的提交结果将被删除。'} 此操作无法撤销。</p><Button danger loading={deleteBusy} onClick={() => void removeRecord(deleting)}>{deleteBusy ? '正在删除…' : '确认删除记录'}</Button><Button disabled={deleteBusy} onClick={() => setDeleting(null)}>取消</Button></div> : null}
       {cancelling ? <div role="alertdialog" aria-label="确认取消分析" className="record-confirm"><h3>取消这次分析？</h3><p>停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析；已经登记的数据和模型会保留。</p><Button danger loading={cancelBusy} onClick={() => void cancelRecord(cancelling)}>{cancelBusy ? '正在提交取消…' : '确认取消分析'}</Button><Button disabled={cancelBusy} onClick={() => setCancelling(null)}>继续分析</Button></div> : null}
     </section>
+      </div>
+    </div>
   </section>
 }
 
