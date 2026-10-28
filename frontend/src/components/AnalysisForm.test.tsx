@@ -37,7 +37,6 @@ it('offers real registered models and sends the explicitly selected model', asyn
     ] }), { status: 200 })
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/repo" onStarted={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: /分析选项/ }))
   await user.selectOptions(await screen.findByLabelText('分析模型'), 'dt')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))

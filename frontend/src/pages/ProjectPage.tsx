@@ -11,7 +11,7 @@ import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import type { SyncForm } from '../apiClient'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
-import { AnalysisForm } from '../components/AnalysisForm'
+import { AnalysisLauncher } from '../components/AnalysisLauncher'
 import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
@@ -119,7 +119,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       strategy: job.requestedStrategy,
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
-    document.getElementById('analysis-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return <section className="project-page">
@@ -145,7 +144,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         <section className="project-start" id="analysis-form-section" aria-label="发起分析">
           <div className="section-label"><h2>发起分析</h2></div>
           {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
-          <AnalysisForm key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
+          <AnalysisLauncher key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
         </section>
       </aside>
 
