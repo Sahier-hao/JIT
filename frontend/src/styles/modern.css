@@ -63,10 +63,9 @@ body {
 
 .main-navigation [aria-current],
 .sidebar-project[aria-current] {
-  background: var(--sunken);
-  color: var(--fg);
-  box-shadow: none;
-  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .sidebar-projects { margin-top: 30px; }
