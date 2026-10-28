@@ -6,7 +6,7 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import { Button } from 'antd'
+import { Button, Popconfirm } from 'antd'
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import type { SyncForm } from '../apiClient'
 import { projectsChanged } from '../projectEvents'
@@ -38,8 +38,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   const refreshRecords = records.retry
   const [recordError, setRecordError] = useState('')
   const [selectingId, setSelectingId] = useState('')
-  const [deleting, setDeleting] = useState<SyncView | null>(null)
-  const [cancelling, setCancelling] = useState<SyncView | null>(null)
   const [cancelBusy, setCancelBusy] = useState(false)
   const cancelLock = useRef(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
@@ -89,7 +87,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       await deleteRepositorySync(job.syncId)
       records.retry()
       detail.retry()
-      setDeleting(null)
     } catch (failure) {
       setRecordError(failure instanceof Error ? failure.message : '删除分析记录失败')
     } finally {
@@ -101,7 +98,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     cancelLock.current = true; setCancelBusy(true); setRecordError('')
     try {
       await cancelRepositorySync(job.syncId)
-      setCancelling(null)
     } catch (failure) {
       setRecordError(failure instanceof Error ? failure.message : '取消分析失败，请刷新后重试')
     } finally {
@@ -176,17 +172,15 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     <section className="project-records" aria-label="分析记录">
       <div className="section-label"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 条` : ''}</span></div>
       {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-      {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。设置范围后开始第一次分析。</p> : <div className="job-list">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleting(job)} onRetry={() => retryRecord(job)} onCancel={() => setCancelling(job)}/>) }</div>}
+      {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。设置范围后开始第一次分析。</p> : <div className="job-list">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => void removeRecord(job)} onRetry={() => retryRecord(job)} onCancel={() => void cancelRecord(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}
       {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页 · 共 {records.total} 条</span><Button size="small" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="small" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
-      {deleting ? <div role="alertdialog" aria-label="确认删除分析记录" className="record-confirm"><h3>删除这条分析记录？</h3><p>{deleting.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。' : '这次分析与对应的提交结果将被删除。'} 此操作无法撤销。</p><Button danger loading={deleteBusy} onClick={() => void removeRecord(deleting)}>{deleteBusy ? '正在删除…' : '确认删除记录'}</Button><Button disabled={deleteBusy} onClick={() => setDeleting(null)}>取消</Button></div> : null}
-      {cancelling ? <div role="alertdialog" aria-label="确认取消分析" className="record-confirm"><h3>取消这次分析？</h3><p>停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析；已经登记的数据和模型会保留。</p><Button danger loading={cancelBusy} onClick={() => void cancelRecord(cancelling)}>{cancelBusy ? '正在提交取消…' : '确认取消分析'}</Button><Button disabled={cancelBusy} onClick={() => setCancelling(null)}>继续分析</Button></div> : null}
     </section>
       </div>
     </div>
   </section>
 }
 
-function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDelete, onRetry, onCancel }: { job: SyncView; current: boolean; selecting: boolean; onOpen: () => void; onCompare?: () => void; onSelect: () => void; onDelete: () => void; onRetry: () => void; onCancel: () => void }) {
+function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDelete, onRetry, onCancel, deleteBusy, cancelBusy }: { job: SyncView; current: boolean; selecting: boolean; onOpen: () => void; onCompare?: () => void; onSelect: () => void; onDelete: () => void; onRetry: () => void; onCancel: () => void; deleteBusy: boolean; cancelBusy: boolean }) {
   const active = (ACTIVE_STATUSES as readonly string[]).includes(job.status)
   const completed = job.status === 'completed'
   const pendingCancel = active && Boolean(job.cancelRequestedAt)
@@ -217,11 +211,11 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
         </span>
       </div>}
       <div className="panel-actions">
-        {active ? <Button type="link" size="small" danger disabled={pendingCancel} onClick={onCancel}>{pendingCancel ? '正在取消…' : '取消分析'}</Button> : null}
+        {active ? <Popconfirm title="取消这次分析？" description="停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析。" okText="确认取消分析" cancelText="继续分析" okButtonProps={{ danger: true, loading: cancelBusy }} onConfirm={onCancel} disabled={pendingCancel}><Button type="link" size="small" danger disabled={pendingCancel}>{pendingCancel ? '正在取消…' : '取消分析'}</Button></Popconfirm> : null}
         {completed ? <Button type="link" size="small" onClick={onOpen}>打开结果</Button> : null}
         {onCompare ? <Button type="link" size="small" onClick={onCompare}>与当前结果对比</Button> : null}
         {!active && !completed ? <Button type="link" size="small" onClick={onRetry}>用这些参数重试</Button> : null}
-        {!active ? <Button type="link" size="small" danger onClick={onDelete}>删除记录</Button> : null}
+        {!active ? <Popconfirm title="删除这条分析记录？" description={current ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'} okText="确认删除记录" cancelText="取消" okButtonProps={{ danger: true, loading: deleteBusy }} onConfirm={onDelete}><Button type="link" size="small" danger>删除记录</Button></Popconfirm> : null}
       </div>
     </div>
     {job.status === 'cancelled' ? <p className="form-hint">本次分析已取消，已有成功结果保持不变，可用原参数重新分析。</p> : job.error ? <p className="job-error" role="alert">{job.error.message} 请修正后重新分析。</p> : null}
