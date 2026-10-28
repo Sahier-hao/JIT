@@ -141,7 +141,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
 
     <section className="project-start" id="analysis-form-section" aria-label="发起分析">
-      <div className="section-label"><h2>发起分析</h2><span>不会覆盖当前结果</span></div>
+      <div className="section-label"><h2>发起分析</h2></div>
       {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
       <AnalysisForm key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
     </section>
@@ -163,7 +163,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           {repository.degradeReason ? <div><dt>说明</dt><dd>{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</dd></div> : null}
         </dl>
         <div className="panel-actions">
-          <Button aria-label="查看提交与审查计划" type="primary" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<ArrowRightOutlined/></Button>
+          <Button aria-label="查看提交与审查计划" type="link" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<ArrowRightOutlined/></Button>
         </div>
       </div> : <div className="result-empty">
         <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>

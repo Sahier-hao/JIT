@@ -96,7 +96,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
         onClick={() => setOpen(value => !value)}
       >
         <span className="analysis-disclosure-title"><Icon name="sliders"/>分析选项</span>
-        <span className="analysis-disclosure-chips">{summary.map(item => <span key={item}>{item}</span>)}</span>
+        <span className="analysis-disclosure-summary">{summary.join(' · ')}</span>
         <span className="analysis-disclosure-chevron" aria-hidden><Icon name="chevron"/></span>
       </button>
       <div className="analysis-disclosure-body" id="analysis-fields" hidden={!open}>
@@ -117,7 +117,8 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, initial 
       </div>
       {error ? <div className="analysis-form-error"><FailureNotice error={error}/></div> : null}
       <div className="form-submit">
-        <p>{since || until ? '按所选日期范围分析' : '默认分析最近 90 天'}，最多 {commitLimit || '500'} 个提交。发起后会新增一条记录，当前结果不会被覆盖。</p>
+        <p>发起后会新增一条分析记录，原结果保留。</p>
+        
         <Button type="primary" htmlType="submit" aria-label="开始分析" loading={busy} disabled={selectionUnavailable}>{busy ? '正在发起…' : '开始分析'}<ArrowRightOutlined/></Button>
       </div>
     </div>

@@ -91,21 +91,19 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
     'up-to-date': `远端 ${branchLabel}${head ? ` 停在 ${head}` : ''}。`,
     error: '这次检查没有完成，可以重试；已有分析记录仍可查看。',
   }[state.status] : ''
-  return <section className="repository-updates" aria-label="仓库更新">
-    <div className="update-head">
+  return <section className="project-updates" aria-label="仓库更新">
+    <div className="section-label">
       <h2>仓库更新</h2>
-      {state ? <Button disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button> : null}
+      {state ? <Button size="small" type={state.status === 'error' ? 'primary' : 'default'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button> : null}
     </div>
     {error ? <FailureNotice error={error}/> : null}
-    {!state || error ? <Button type="text" disabled={busy} onClick={() => { setAttempt(value => value + 1); setModelAttempt(value => value + 1) }}>重新读取更新状态</Button> : null}
-    {state ? <>
+    {!state || error ? <Button type="text" size="small" disabled={busy} onClick={() => { setAttempt(value => value + 1); setModelAttempt(value => value + 1) }}>重新读取更新状态</Button> : null}
+    {state ? <div className="update-card">
       <div className="update-band" data-tone={tone}>
-        <div className="update-band-main">
-          <span className="update-band-icon" aria-hidden="true"><Icon name={tone === 'alert' ? 'warning' : tone === 'ok' ? 'check' : 'info'} size={17}/></span>
-          <div className="update-band-text">
-            <p role="status" className={`update-status ${state.status === 'error' ? 'is-error' : ''}`}>{LABELS[state.status]}</p>
-            <p className="update-status-detail">{detail}</p>
-          </div>
+        <span className="update-band-icon" aria-hidden="true"><Icon name={tone === 'alert' ? 'warning' : tone === 'ok' ? 'check' : 'info'} size={16}/></span>
+        <div className="update-band-text">
+          <p role="status" className={`update-status ${state.status === 'error' ? 'is-error' : ''}`}>{LABELS[state.status]}</p>
+          <p className="update-status-detail">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `更新未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
         </div>
         <dl className="update-stats">
           <div className="update-stat"><dt>上次成功检查</dt><dd>{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚无成功检查'}</dd></div>
@@ -113,7 +111,6 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
           <div className="update-stat"><dt>检查频率</dt><dd>每 {state.intervalSeconds / 60} 分钟</dd></div>
         </dl>
       </div>
-      {state.status === 'error' ? <p className="field-error">{ERRORS[state.errorCode ?? ''] ?? `更新未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`}</p> : null}
       <div className="update-foot">
         <Checkbox aria-label="自动检查仓库更新" className="update-toggle" checked={state.enabled} disabled={busy} onChange={event => void act('configure', { enabled: event.target.checked })}>
           自动检查仓库更新<small>服务运行期间每 {state.intervalSeconds / 60} 分钟检查一次，关闭页面后仍会继续。</small>
@@ -150,6 +147,6 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
           <div className="update-submit"><Button htmlType="submit" disabled={busy || running}>保存并检查</Button></div>
         </form></details>
       </div>
-    </> : null}
+    </div> : null}
   </section>
 }
