@@ -5,6 +5,8 @@
  * 卡片整卡可点进入项目页；右上角的管理菜单负责改名与删除。
  */
 import { useState } from 'react'
+import { Button, Dropdown, Input } from 'antd'
+import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
 import type { Route } from '../navigation'
@@ -87,9 +89,9 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
         <h1>项目</h1>
         <p className="page-intro">接入一个仓库，从一次分析开始安排下一次审查。</p>
       </div>
-      <button className="primary-button" onClick={() => navigate({ name: 'sources' })}><Icon name="plus"/>新建项目</button>
+      <Button aria-label="新建项目" type="primary" icon={<PlusOutlined/>} onClick={() => navigate({ name: 'sources' })}>新建项目</Button>
     </header>
-    {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><button onClick={repositories.retry}>重新加载</button></EmptyState> : items.length ? <>
+    {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry}>重新加载</Button></EmptyState> : items.length ? <>
       <div className="section-label"><span>全部项目</span><span>{items.length} 个项目 · {commits.toLocaleString()} 个已分析提交{high ? ` · ${high.toLocaleString()} 个高风险` : ''}{running ? ` · ${running} 个正在分析` : ''}</span></div>
       <div className="project-grid">{items.map(repo => {
         const job = repo.latestSync
@@ -109,19 +111,17 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
             <small>最近请求 · {repo.latestSyncAt ? displayTime(repo.latestSyncAt) : '尚未分析'}</small>
           </button>
           <div className="project-card-tools">
-            <button className="card-menu-button" aria-label={`管理项目 ${repo.displayName}`} aria-haspopup="menu" aria-expanded={menuFor === repo.repositoryId} onClick={() => setMenuFor(menuFor === repo.repositoryId ? '' : repo.repositoryId)}><Icon name="sliders" size={16}/></button>
-            {menuFor === repo.repositoryId ? <div className="card-menu" role="menu">
-              <button role="menuitem" onClick={() => startRename(repo)}>重命名</button>
-              <button role="menuitem" className="danger" onClick={() => startDelete(repo)}>删除项目</button>
-            </div> : null}
+            <Dropdown trigger={['click']} placement="bottomRight" open={menuFor === repo.repositoryId} onOpenChange={open => setMenuFor(open ? repo.repositoryId : '')} menu={{ items: [{ key: 'rename', label: '重命名' }, { key: 'delete', label: '删除项目', danger: true }], onClick: ({ key }) => { if (key === 'rename') startRename(repo); else startDelete(repo) } }}>
+              <Button type="text" size="small" icon={<SettingOutlined/>} aria-label={`管理项目 ${repo.displayName}`} aria-haspopup="menu"/>
+            </Dropdown>
           </div>
           {editing ? <form className="card-editor" onSubmit={event => { event.preventDefault(); void saveName(repo.repositoryId) }}>
-            <label>项目显示名<input aria-label="项目显示名" value={draft} maxLength={80} autoFocus onChange={event => setDraft(event.target.value)}/></label>
+            <label>项目显示名<Input aria-label="项目显示名" value={draft} maxLength={80} autoFocus onChange={event => setDraft(event.target.value)}/></label>
             <p className="card-editor-note">只改显示名；仓库地址与分析历史不变。</p>
             {editorError ? <p className="field-error" role="alert">{editorError}</p> : null}
             <div className="panel-actions">
-              <button className="primary-button" type="submit" disabled={busy}>{busy ? '正在保存…' : '保存名称'}</button>
-              <button type="button" className="text-button" onClick={() => setRenamingId('')}>取消</button>
+              <Button type="primary" htmlType="submit" loading={busy}>{busy ? '正在保存…' : '保存名称'}</Button>
+              <Button onClick={() => setRenamingId('')}>取消</Button>
             </div>
           </form> : null}
           {confirming ? <div className="card-editor card-editor-danger" role="alertdialog" aria-label="确认删除项目">
@@ -129,8 +129,8 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
             <p className="card-editor-note">项目、全部分析记录与提交数据会被删除，无法恢复。仓库本身不受影响。</p>
             {editorError ? <p className="field-error" role="alert">{editorError}</p> : null}
             <div className="panel-actions">
-              <button className="danger-button" disabled={busy} onClick={() => void removeProject(repo.repositoryId)}>{busy ? '正在删除…' : '确认删除'}</button>
-              <button className="text-button" onClick={() => setConfirmingId('')}>取消</button>
+              <Button danger loading={busy} onClick={() => void removeProject(repo.repositoryId)}>{busy ? '正在删除…' : '确认删除'}</Button>
+              <Button onClick={() => setConfirmingId('')}>取消</Button>
             </div>
           </div> : null}
         </article>
@@ -139,7 +139,7 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
       <div className="onboarding-graphic" aria-hidden="true"><span/><Icon name="project" size={38}/><span/></div>
       <h2>从一个仓库开始</h2>
       <p>接入仓库后自动准备首次分析，并持续跟进新提交；结果与审查记录会一直保留。</p>
-      <button className="clear-button" onClick={() => navigate({ name: 'sources' })}>新建项目 <Icon name="arrow"/></button>
+      <Button aria-label="新建项目" type="primary" size="large" icon={<PlusOutlined/>} onClick={() => navigate({ name: 'sources' })}>新建项目</Button>
       <div className="onboarding-steps"><span><b>01</b> 接入仓库</span><span><b>02</b> 自动分析</span><span><b>03</b> 安排审查</span></div>
     </div>}
   </section>

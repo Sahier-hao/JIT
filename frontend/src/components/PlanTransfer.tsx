@@ -54,8 +54,8 @@ export function PlanTransfer({ source, ids, onMerge }: { source: PlanSource; ids
         <p>计划保存在此浏览器。导出 JSON 备份；恢复只接受同一项目、分析和模型来源，确认后合并，保留已有条目。</p>
       </div>
       <div className="plan-transfer-actions">
-        <Button icon={<DownloadOutlined/>} disabled={Boolean(current?.busy)} onClick={() => void perform(async signal => { const plan = await validatePlan(makePlan(source, ids), signal); if (!signal.aborted && active.current === key) downloadPlan(plan); return { notice: `已生成 ${plan.commitIds.length} 条计划的备份下载。` } })}>导出备份</Button>
-        <Button icon={<UploadOutlined/>} disabled={Boolean(current?.busy)} onClick={() => file.current?.click()}>选择备份</Button>
+        <Button aria-label="导出备份" icon={<DownloadOutlined/>} disabled={Boolean(current?.busy)} onClick={() => void perform(async signal => { const plan = await validatePlan(makePlan(source, ids), signal); if (!signal.aborted && active.current === key) downloadPlan(plan); return { notice: `已生成 ${plan.commitIds.length} 条计划的备份下载。` } })}>导出备份</Button>
+        <Button icon={<UploadOutlined/>} disabled={Boolean(current?.busy)} onClick={() => file.current?.click()} aria-label="选择备份">选择备份</Button>
         <input
           ref={file}
           type="file"

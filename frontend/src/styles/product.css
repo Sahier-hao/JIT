@@ -359,3 +359,31 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
   .update-band .update-stat dd { margin: 0; }
 }
 .update-foot .update-settings .update-submit { grid-column: auto; justify-self: end; align-self: end; padding-bottom: 2px; }
+
+/* 分析页工具条：原生日期/搜索框与 antd Select 统一到 32px */
+.review-toolbar input:not([class*='ant-']),
+.review-toolbar .ant-select-selector { min-height: 32px; height: 32px; }
+.review-toolbar input[type='date']:not([class*='ant-']) { padding-block: 0; }
+.review-toolbar .ant-select { display: flex; align-items: center; }
+
+.review-toolbar .search-field input { padding-left: 32px; }
+
+/* 空态与失败态：紧凑、无阴影，避免大圆角空卡 */
+.state-block {
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  padding: 18px 20px;
+}
+.state-block-title { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.state-block-note { font-size: 13px; line-height: 1.65; margin-top: 4px; max-width: 72ch; }
+.state-block-actions { margin-top: 12px; }
+.state-block[data-state='alert'] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--risk-high) 32%, var(--line));
+  background: color-mix(in srgb, var(--risk-high) 4%, var(--card));
+}
+
+.project-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.project-title-row .status-line { margin-top: 0; }

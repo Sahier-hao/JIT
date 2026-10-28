@@ -40,6 +40,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const lock = useRef(false)
+  const restoreInput = useRef<HTMLInputElement>(null)
   const refreshPersonal = () => setPersonal(loadPersonal())
   useEffect(() => { window.addEventListener('jit:pr-work-changed', refreshPersonal); window.addEventListener('storage', refreshPersonal); return () => { window.removeEventListener('jit:pr-work-changed', refreshPersonal); window.removeEventListener('storage', refreshPersonal) } }, [])
   async function connect(event?: FormEvent, value = url, state = 'open', page = 1) {
@@ -94,21 +95,21 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
         <h1>我的审查</h1>
         <p>把问题、证据和下一轮复核放在同一张工作单里。</p>
       </div>
-      <button className="clear-button" disabled={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '检查关注工作更新'}</button>
+      <Button icon={<ReloadOutlined/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '检查关注工作更新'}</Button>
     </header>
     <form className="mr-intake" onSubmit={event => void connect(event)}>
       <label htmlFor="mr-url">仓库或 PR 地址</label>
       <div className="mr-intake-row">
-        <input id="mr-url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repo/pull/42"/>
-        <button className="primary-button" disabled={busy}>接入审查</button>
+        <Input id="mr-url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repo/pull/42"/>
+        <Button type="primary" htmlType="submit" loading={busy}>接入审查</Button>
       </div>
       <p className="mr-intake-note">支持公开 GitHub 来源；个人关注不代表正式评审人分配。草稿、问题和反馈只保存在当前浏览器，页面停留期间每 5 分钟检查关注工作。</p>
     </form>
     {error ? <FailureNotice error={error}/> : null}
     {personal.error ? <p role="alert" className="field-error">{personal.error}。现有存储未被清空。</p> : null}
     {list ? <section className="pr-discovery"><div className="section-label"><h2>{list.owner}/{list.name} · {list.state === 'open' ? '开放的 PR' : '历史 PR'}</h2><span>检查于 {displayTime(list.checkedAt)}</span></div>
-      {!list.pullRequests.length ? <p>没有{list.state === 'open' ? '开放的' : '本页'} PR。可以选择历史 PR 复盘。</p> : list.pullRequests.map(pr => <article key={pr.number} className="pr-task"><div><b>#{pr.number} {pr.title}</b><p>{pr.author} · {remoteLabel[pr.remoteState]} · 更新于 {displayTime(pr.updatedAt)}</p></div><button className="clear-button" disabled={busy} onClick={() => void connect(undefined, pr.url)}>开始{pr.remoteState === 'open' ? '审查' : '历史复盘'}</button></article>)}
-      <div className="panel-actions"><button className="text-button" disabled={busy} onClick={() => void connect(undefined, list.repositoryUrl, list.state === 'open' ? 'closed' : 'open')}>{list.state === 'open' ? '查看历史 PR' : '查看开放 PR'}</button><button className="text-button" disabled={busy || list.page <= 1} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page - 1)}>上一页</button><span>第 {list.page} 页</span><button className="text-button" disabled={busy || !list.hasMore} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page + 1)}>下一页</button></div>
+      {!list.pullRequests.length ? <p>没有{list.state === 'open' ? '开放的' : '本页'} PR。可以选择历史 PR 复盘。</p> : list.pullRequests.map(pr => <article key={pr.number} className="pr-task"><div><b>#{pr.number} {pr.title}</b><p>{pr.author} · {remoteLabel[pr.remoteState]} · 更新于 {displayTime(pr.updatedAt)}</p></div><Button size="small" disabled={busy} onClick={() => void connect(undefined, pr.url)}>开始{pr.remoteState === 'open' ? '审查' : '历史复盘'}</Button></article>)}
+      <div className="panel-actions"><Button type="link" size="small" disabled={busy} onClick={() => void connect(undefined, list.repositoryUrl, list.state === 'open' ? 'closed' : 'open')}>{list.state === 'open' ? '查看历史 PR' : '查看开放 PR'}</Button><Button type="link" size="small" disabled={busy || list.page <= 1} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page - 1)}>上一页</Button><span>第 {list.page} 页</span><Button type="link" size="small" disabled={busy || !list.hasMore} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page + 1)}>下一页</Button></div>
     </section> : null}
     {['作者更新待复核', '继续审查', '新关注的工作', '等待作者处理', '历史与暂停'].map(group => {
       const items = personal.works.filter(work => status(work) === group)
@@ -131,7 +132,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
               <div className="mr-bar" role="img" aria-label={`已阅读 ${percent}%`}><i style={{ width: `${percent}%` }}/></div>
             </div>
             <span className="mr-row-time">检查于 {shortTime(work.checkedAt)}</span>
-            <button className="mr-row-action" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</button>
+            <Button className="mr-row-action" size="small" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</Button>
           </article>
         })}</div>
       </section>
@@ -140,7 +141,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
       <h2>还没有审查工作</h2>
       <p>粘贴一个公开 PR 地址开始。接入后，工作会按「作者更新待复核 / 继续审查 / 新关注的工作 / 等待作者处理 / 历史与暂停」分组；模型暂时不可用时也能阅读代码并留下判断。</p>
     </div> : null}
-    <label className="mr-restore"><UploadOutlined/><span>从完整草稿备份恢复工作</span><input type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/></label>
+    <Button className="mr-restore" type="text" size="small" icon={<UploadOutlined/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button><input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
   </section>
 }
 
@@ -288,7 +289,7 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
       <div className="wb-head-main">
         <div className="wb-head-text">
           <div className="wb-crumb">
-            <button className="wb-back" onClick={() => navigate({ name: 'my-reviews' })}><ArrowLeftOutlined/>我的审查</button>
+            <Button aria-label="我的审查" type="text" size="small" className="wb-back" icon={<ArrowLeftOutlined/>} onClick={() => navigate({ name: 'my-reviews' })}>我的审查</Button>
             <span className="wb-sep">/</span>
             <span>{owner}/{repositoryName}</span>
             <span className="wb-sep">·</span>
@@ -381,7 +382,7 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
         </> : <div className="wb-code-empty"><p>这个版本没有可展示的文件，请核对 GitHub 来源。</p></div>}
       </section>
       <aside className="wb-notes" aria-label="问题与人工记录">
-        <div className="wb-pane-head"><h2>问题</h2><Button size="small" type="text" icon={<PlusOutlined/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
+        <div className="wb-pane-head"><h2>问题</h2><Button aria-label="新建" size="small" type="text" icon={<PlusOutlined/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
         <div className="wb-question-list">
           {round.questions.map(q => <button key={q.id} className={`wb-question${selected?.id === q.id ? ' is-active' : ''}`} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
             <span className="wb-question-body">{q.body.slice(0, 60) || '未填写的问题'}</span>
@@ -415,7 +416,7 @@ export function PullRequestWork({ owner, repositoryName, number, navigate }: { o
           {!live.commitsComplete ? <p>提交列表未完整加载，请在 GitHub 核对其余提交；文件阅读不依赖模型。</p> : null}
         </details>
         <div className="wb-drawer-links">
-          <Button size="small" icon={<GithubOutlined/>} href={live.url} target="_blank">在 GitHub 核对 PR</Button>
+          <Button size="small" icon={<GithubOutlined/>} href={live.url} target="_blank" aria-label="在 GitHub 核对 PR">在 GitHub 核对 PR</Button>
           <Button size="small" onClick={() => navigate({ name: 'repository', repositoryId: live.repositoryId })}>项目分析与模型线索</Button>
           <Button size="small" icon={<SaveOutlined/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
         </div>
@@ -463,8 +464,8 @@ function QuestionEditor({ value: q, source, onChange, onJump, work }: { value: R
     <label>处理理由<textarea aria-label="问题处理理由" value={q.reason} onChange={e => onChange({ ...q, reason: e.target.value })}/></label>
     <label>处理状态<select aria-label="问题处理状态" value={q.status} onChange={e => { const status = e.target.value as ReviewQuestion['status']; if (status !== 'open' && !q.reason.trim()) { setError('先填写处理理由，原内容会保留'); return } setError(''); onChange({ ...q, status }) }}><option value="open">待核对 / 重新打开</option><option value="resolved">人工标记已解决</option><option value="deferred">暂不处理</option><option value="withdrawn">撤回记录（保留原文）</option></select></label>
     {error ? <p className="field-error">{error}</p> : null}
-    {q.requiresRecheck ? <button className="clear-button" disabled={!q.reason.trim()} onClick={() => onChange({ ...q, requiresRecheck: false })}>已人工复核当前版本</button> : null}
-    <h3>位置与证据（{q.evidence.length}）</h3>{q.evidence.map((e, index) => <article key={index} className="pr-evidence"><button className="text-button" onClick={() => onJump(e)}>{e.path}:{e.line ?? '整体'} · {e.side === 'head' ? '目标' : '基准'} · 原版本</button><a href={evidenceURL(work.rounds[e.snapshotId]?.source ?? source, e)} target="_blank" rel="noreferrer">核对原代码</a><input aria-label={`证据说明 ${index + 1}`} value={e.note} placeholder="已核对什么，还缺什么证据" onChange={event => onChange({ ...q, evidence: q.evidence.map((a, i) => i === index ? { ...a, note: event.target.value } : a) })}/><button className="text-button" onClick={() => onChange({ ...q, evidence: q.evidence.filter((_, i) => i !== index) })}>移除此证据</button></article>)}
+    {q.requiresRecheck ? <Button size="small" disabled={!q.reason.trim()} onClick={() => onChange({ ...q, requiresRecheck: false })}>已人工复核当前版本</Button> : null}
+    <h3>位置与证据（{q.evidence.length}）</h3>{q.evidence.map((e, index) => <article key={index} className="pr-evidence"><Button type="link" size="small" onClick={() => onJump(e)}>{e.path}:{e.line ?? '整体'} · {e.side === 'head' ? '目标' : '基准'} · 原版本</Button><a href={evidenceURL(work.rounds[e.snapshotId]?.source ?? source, e)} target="_blank" rel="noreferrer">核对原代码</a><input aria-label={`证据说明 ${index + 1}`} value={e.note} placeholder="已核对什么，还缺什么证据" onChange={event => onChange({ ...q, evidence: q.evidence.map((a, i) => i === index ? { ...a, note: event.target.value } : a) })}/><button className="text-button" onClick={() => onChange({ ...q, evidence: q.evidence.filter((_, i) => i !== index) })}>移除此证据</button></article>)}
     <label>对线索的反馈<select aria-label="线索反馈" value={q.feedback} onChange={e => onChange({ ...q, feedback: e.target.value as ReviewQuestion['feedback'] })}><option value="">尚未反馈</option><option value="helpful">有帮助</option><option value="irrelevant">无关</option><option value="more-evidence">需要更多证据</option></select></label><input aria-label="线索反馈理由" value={q.feedbackReason} onChange={e => onChange({ ...q, feedbackReason: e.target.value })} placeholder="反馈理由（仅保存在当前浏览器）"/>
   </div>
 }
