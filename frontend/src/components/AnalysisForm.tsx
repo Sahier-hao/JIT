@@ -7,8 +7,8 @@
  * 表单本身不带展开与收起，由调用方放进对话框里呈现——分析选项字段多，
  * 放在窄栏里展开会把页面拉得很长。
  */
-import { Button } from 'antd'
-import { ArrowRightOutlined } from '@ant-design/icons'
+import { ArrowRight } from 'lucide-react'
+import { Button } from '../ui/controls'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRepositorySync, type SyncForm } from '../apiClient'
 import { repositoryModels, type ModelChoice } from '../modelClient'
@@ -92,7 +92,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
         <label className="wide-field">分析模型<select aria-label="分析模型" value={modelId} onChange={event => { setModelId(event.target.value); if (event.target.value) setStrategy('generic-model') }}><option value="">按策略使用默认模型</option>{modelId && modelsLoaded && !selected ? <option value={modelId} disabled>原选模型（已不存在）</option> : null}{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!model.repositoryPredictionSupported}>{model.name}{!model.enabled ? '（已停用）' : !model.repositoryPredictionSupported ? '（当前不可用于仓库分析）' : model.isDefault ? '（默认）' : ''}</option>)}</select></label>
         <p className="form-hint wide-field">{modelError ? '默认模型设置暂时无法读取，请重试。' : !modelsLoaded ? '正在读取模型设置…' : defaultModel ? `管理员默认模型：${defaultModel.name}${!defaultModel.repositoryPredictionSupported ? '（当前不可用，请明确选择其他模型或联系管理员）' : ''}。` : '尚未设置默认模型，请管理员登记兼容模型。'}明确选择优先；自动策略数据不足时使用提交任务时的默认模型。</p>
         {modelId && !modelsLoaded && !modelError ? <p role="status" className="form-hint wide-field">正在核对原选模型…</p> : selectionUnavailable ? <p role="alert" className="field-error wide-field">原选模型已停用或不可用，请刷新后重新选择。不会自动替换。</p> : null}
-        {modelError ? <p className="field-error wide-field" role="alert">模型列表暂时不可用。<Button type="link" size="small" onClick={() => setModelRevision(value => value + 1)}>重新读取模型</Button></p> : <p className="form-hint wide-field">{!modelsLoaded ? '正在读取模型列表…' : models.length ? `${models.filter(model => model.repositoryPredictionSupported).length} 个模型可用于仓库分析。` : '尚无已登记模型，可按策略训练；现成模型需要管理员先校验登记。'}<Button type="link" size="small" onClick={() => setModelRevision(value => value + 1)}>刷新模型</Button></p>}
+        {modelError ? <p className="field-error wide-field" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>重新读取模型</Button></p> : <p className="form-hint wide-field">{!modelsLoaded ? '正在读取模型列表…' : models.length ? `${models.filter(model => model.repositoryPredictionSupported).length} 个模型可用于仓库分析。` : '尚无已登记模型，可按策略训练；现成模型需要管理员先校验登记。'}<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>刷新模型</Button></p>}
         {!modelId ? <label className="wide-field">模型策略<select aria-label="模型策略" value={strategy} onChange={event => setStrategy(event.target.value as SyncStrategy)}>{STRATEGIES.map(value => <option key={value} value={value}>{STRATEGY_LABELS[value]}</option>)}</select></label> : null}
       </div>
     </fieldset>
@@ -101,7 +101,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
       <p>发起后会新增一条分析记录，原结果保留。</p>
       <div className="form-submit-actions">
         {onCancel ? <Button onClick={onCancel} disabled={busy}>取消</Button> : null}
-        <Button type="primary" htmlType="submit" aria-label="开始分析" loading={busy} disabled={selectionUnavailable}>{busy ? '正在发起…' : '开始分析'}<ArrowRightOutlined/></Button>
+        <Button type="submit" variant="primary" aria-label="开始分析" loading={busy} disabled={selectionUnavailable}>{busy ? '正在发起…' : '开始分析'}<ArrowRight size={14}/></Button>
       </div>
     </div>
   </form>

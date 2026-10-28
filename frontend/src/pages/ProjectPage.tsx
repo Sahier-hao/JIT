@@ -6,8 +6,9 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import { Button, Popconfirm } from 'antd'
-import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { Button, Disclosure } from '../ui/controls'
+import { Popconfirm } from '../ui/dialog'
 import type { SyncForm } from '../apiClient'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
@@ -118,7 +119,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   }
 
   return <section className="project-page">
-    <Button aria-label="全部项目" type="text" size="small" icon={<ArrowLeftOutlined/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
+    <Button aria-label="全部项目" variant="ghost" size="sm" icon={<ArrowLeft size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
     <header className="page-heading project-heading">
       <div>
         <div className="project-title-row">
@@ -129,7 +130,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         <p className="page-intro">{repository.defaultBranch || '默认分支'} · {repository.commitCount.toLocaleString()} 个已分析提交 · 建立于 {displayTime(repository.createdAt)}</p>
       </div>
       <div className="page-actions">
-        {context ? <Button aria-label="打开审查" type="primary" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>打开审查<ArrowRightOutlined/></Button> : null}
+        {context ? <Button aria-label="打开审查" variant="primary" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>打开审查<ArrowRight size={14}/></Button> : null}
       </div>
     </header>
 
@@ -154,15 +155,17 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           <div><b>{repository.distribution.medium.toLocaleString()}</b><span>中风险</span></div>
           <div><b>{repository.distribution.low.toLocaleString()}</b><span>低风险</span></div>
         </div>
-        <dl className="result-facts">
-          <div><dt>分析模型</dt><dd>{modelName ?? (repository.modelId ? '已保存模型（名称暂不可用）' : '未记录')}</dd></div>
-          <div><dt>数据版本</dt><dd>{context.datasetVersion ?? '未登记'}</dd></div>
-          <div><dt>分支</dt><dd>{context.branch}</dd></div>
-          <div><dt>模型策略</dt><dd>{repository.modelStrategy === 'generic-model' ? '现成模型' : repository.modelStrategy === 'repository-trained' ? '本仓库数据训练' : '未记录'}</dd></div>
-          {repository.degradeReason ? <div><dt>说明</dt><dd>{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</dd></div> : null}
-        </dl>
-        <div className="panel-actions">
-          <Button aria-label="查看提交与审查计划" type="link" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<ArrowRightOutlined/></Button>
+        {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
+        <div className="result-foot">
+          <div className="result-info">
+            <p className="result-meta">
+              <span>{modelName ?? (repository.modelId ? '已保存模型（名称暂不可用）' : '未记录')}</span>
+              <span>{context.branch}</span>
+              <span>{repository.modelStrategy === 'generic-model' ? '现成模型' : repository.modelStrategy === 'repository-trained' ? '本仓库数据训练' : '未记录'}</span>
+            </p>
+            <p className="result-version" title={context.datasetVersion ?? ''}><span>数据版本</span> <code>{context.datasetVersion ?? '未登记'}</code></p>
+          </div>
+          <Button aria-label="查看提交与审查计划" variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<ArrowRight size={14}/></Button>
         </div>
       </div> : <div className="result-empty">
         <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
@@ -173,7 +176,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       <div className="section-label"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 条` : ''}</span></div>
       {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
       {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。设置范围后开始第一次分析。</p> : <div className="job-list">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => void removeRecord(job)} onRetry={() => retryRecord(job)} onCancel={() => void cancelRecord(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}
-      {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页 · 共 {records.total} 条</span><Button size="small" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="small" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
+      {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页 · 共 {records.total} 条</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
     </section>
       </div>
     </div>
@@ -211,15 +214,15 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
         </span>
       </div>}
       <div className="panel-actions">
-        {active ? <Popconfirm title="取消这次分析？" description="停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析。" okText="确认取消分析" cancelText="继续分析" okButtonProps={{ danger: true, loading: cancelBusy }} onConfirm={onCancel} disabled={pendingCancel}><Button type="link" size="small" danger disabled={pendingCancel}>{pendingCancel ? '正在取消…' : '取消分析'}</Button></Popconfirm> : null}
-        {completed ? <Button type="link" size="small" onClick={onOpen}>打开结果</Button> : null}
-        {onCompare ? <Button type="link" size="small" onClick={onCompare}>与当前结果对比</Button> : null}
-        {!active && !completed ? <Button type="link" size="small" onClick={onRetry}>用这些参数重试</Button> : null}
-        {!active ? <Popconfirm title="删除这条分析记录？" description={current ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'} okText="确认删除记录" cancelText="取消" okButtonProps={{ danger: true, loading: deleteBusy }} onConfirm={onDelete}><Button type="link" size="small" danger>删除记录</Button></Popconfirm> : null}
+        {active ? pendingCancel ? <Button variant="link" size="sm" disabled>正在取消…</Button> : <Popconfirm label={cancelBusy ? '正在取消…' : '取消分析'} title="取消这次分析？" description="停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析。" confirmText="确认取消分析" danger onConfirm={onCancel}/> : null}
+        {completed ? <Button variant="link" size="sm" onClick={onOpen}>打开结果</Button> : null}
+        {onCompare ? <Button variant="link" size="sm" onClick={onCompare}>与当前结果对比</Button> : null}
+        {!active && !completed ? <Button variant="link" size="sm" onClick={onRetry}>用这些参数重试</Button> : null}
+        {!active ? <Popconfirm label={deleteBusy ? '正在删除…' : '删除记录'} title="删除这条分析记录？" description={current ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'} confirmText="确认删除记录" danger onConfirm={onDelete}/> : null}
       </div>
     </div>
     {job.status === 'cancelled' ? <p className="form-hint">本次分析已取消，已有成功结果保持不变，可用原参数重新分析。</p> : job.error ? <p className="job-error" role="alert">{job.error.message} 请修正后重新分析。</p> : null}
-    <details className="job-details"><summary>分析详情</summary><dl>
+    <Disclosure className="job-details" summary="分析详情"><dl>
       <div><dt>范围</dt><dd>{job.since ?? '不限'} — {job.until ?? '不限'}，最多 {job.commitLimit} 条</dd></div>
       <div><dt>分支</dt><dd>{job.branch}</dd></div>
       {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
@@ -227,6 +230,6 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
       <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>
       {job.degradeReason ? <div><dt>模型说明</dt><dd>{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
       {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
-    </dl></details>
+    </dl></Disclosure>
   </article>
 }

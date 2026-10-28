@@ -1,4 +1,4 @@
-import { Button, Checkbox, Input, InputNumber, Select } from 'antd'
+import { Button, Checkbox, Disclosure, Input, NumberInput, Select } from '../ui/controls'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { updateRepository, type UpdateState } from '../repositoryUpdatesClient'
 import { repositoryModels, type ModelChoice } from '../modelClient'
@@ -94,28 +94,28 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
   return <section className="project-updates" aria-label="仓库更新">
     <div className="section-label">
       <h2>仓库更新</h2>
-      {state ? <Button size="small" type={state.status === 'error' ? 'primary' : 'default'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button> : null}
+      {state ? <Button size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button> : null}
     </div>
     {error ? <FailureNotice error={error}/> : null}
-    {!state || error ? <Button type="text" size="small" disabled={busy} onClick={() => { setAttempt(value => value + 1); setModelAttempt(value => value + 1) }}>重新读取更新状态</Button> : null}
+    {!state || error ? <Button variant="ghost" size="sm" disabled={busy} onClick={() => { setAttempt(value => value + 1); setModelAttempt(value => value + 1) }}>重新读取更新状态</Button> : null}
     {state ? <div className="update-card">
       <div className="update-band" data-tone={tone}>
         <span className="update-band-icon" aria-hidden="true"><Icon name={tone === 'alert' ? 'warning' : tone === 'ok' ? 'check' : 'info'} size={16}/></span>
         <div className="update-band-text">
           <p role="status" className={`update-status ${state.status === 'error' ? 'is-error' : ''}`}>{LABELS[state.status]}</p>
           <p className="update-status-detail">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `更新未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
+          <p className="update-meta">
+            <span>上次成功 {state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚无'}</span>
+            {state.enabled ? <span>{state.nextCheckAt ? `下次 ${displayTime(state.nextCheckAt)}` : '等待调度'}</span> : <span>自动检查已关闭</span>}
+            {state.enabled ? <span>每 {state.intervalSeconds / 60} 分钟</span> : null}
+          </p>
         </div>
-        <dl className="update-stats">
-          <div className="update-stat"><dt>上次成功检查</dt><dd>{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚无成功检查'}</dd></div>
-          <div className="update-stat"><dt>下次检查</dt><dd>{state.enabled ? state.nextCheckAt ? displayTime(state.nextCheckAt) : '等待调度' : '自动检查已关闭'}</dd></div>
-          <div className="update-stat"><dt>检查频率</dt><dd>每 {state.intervalSeconds / 60} 分钟</dd></div>
-        </dl>
       </div>
       <div className="update-foot">
-        <Checkbox aria-label="自动检查仓库更新" className="update-toggle" checked={state.enabled} disabled={busy} onChange={event => void act('configure', { enabled: event.target.checked })}>
+        <div className="update-toggle"><Checkbox ariaLabel="自动检查仓库更新" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}>
           自动检查仓库更新<small>服务运行期间每 {state.intervalSeconds / 60} 分钟检查一次，关闭页面后仍会继续。</small>
-        </Checkbox>
-        <details className="update-settings"><summary><span>更新设置</span></summary><form onSubmit={save}>
+        </Checkbox></div>
+        <Disclosure className="update-settings" summary="更新设置"><form onSubmit={save}>
           <p className="update-settings-note">发现新提交后，用固定模型分析最近 {state.windowDays} 天、最多 {state.commitLimit} 条；每次生成独立结果，原分析和审查计划保留。</p>
           <div className="update-field">
             <span className="pr-field-label">跟踪分支</span>
@@ -124,7 +124,7 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
           </div>
           <div className="update-field">
             <span className="pr-field-label">更新模型</span>
-            <Select aria-label="更新模型" value={selectedModel} onChange={setModelId} disabled={busy || running} options={[
+            <Select ariaLabel="更新模型" value={selectedModel} onChange={setModelId} disabled={busy || running} options={[
               { value: '', label: '首次检查使用管理员默认模型', disabled: true },
               ...(selectedModel && !models.some(model => model.modelId === selectedModel) ? [{ value: selectedModel, label: '已保存模型（当前不可用）', disabled: true }] : []),
               ...models.map(model => ({ value: model.modelId, label: model.repositoryPredictionSupported ? model.name : `${model.name}（不可用）`, disabled: !model.repositoryPredictionSupported })),
@@ -133,19 +133,19 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
           </div>
           <div className="update-field">
             <span className="pr-field-label">检查频率</span>
-            <Select aria-label="仓库检查频率" value={interval ?? state.intervalSeconds} onChange={value => setIntervalValue(Number(value))} disabled={busy || running} options={[...new Set([300, 900, 3600, state.intervalSeconds])].sort((a, b) => a - b).map(value => ({ value, label: `每 ${value / 60} 分钟` }))}/>
+            <Select ariaLabel="仓库检查频率" value={interval ?? state.intervalSeconds} onChange={value => setIntervalValue(Number(value))} disabled={busy || running} options={[...new Set([300, 900, 3600, state.intervalSeconds])].sort((a, b) => a - b).map(value => ({ value, label: `每 ${value / 60} 分钟` }))}/>
           </div>
-          {modelError ? <p className="field-error">{modelError}<Button type="text" size="small" onClick={() => setModelAttempt(value => value + 1)}>重试模型选项</Button></p> : null}
+          {modelError ? <p className="field-error">{modelError}<Button variant="ghost" size="sm" onClick={() => setModelAttempt(value => value + 1)}>重试模型选项</Button></p> : null}
           <div className="update-field">
               <span className="pr-field-label">时间窗口（天）</span>
-              <InputNumber min={1} max={3650} aria-label="更新时间窗口" value={windowDays ?? state.windowDays} onChange={value => setWindowDays(Number(value))} disabled={busy || running}/>
+              <NumberInput min={1} max={3650} aria-label="更新时间窗口" value={windowDays ?? state.windowDays} onChange={event => setWindowDays(Number(event.target.value))} disabled={busy || running}/>
             </div>
           <div className="update-field">
               <span className="pr-field-label">提交上限</span>
-              <InputNumber min={1} max={5000} aria-label="更新提交上限" value={commitLimit ?? state.commitLimit} onChange={value => setCommitLimit(Number(value))} disabled={busy || running}/>
+              <NumberInput min={1} max={5000} aria-label="更新提交上限" value={commitLimit ?? state.commitLimit} onChange={event => setCommitLimit(Number(event.target.value))} disabled={busy || running}/>
             </div>
-          <div className="update-submit"><Button htmlType="submit" disabled={busy || running}>保存并检查</Button></div>
-        </form></details>
+          <div className="update-submit"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
+        </form></Disclosure>
       </div>
     </div> : null}
   </section>

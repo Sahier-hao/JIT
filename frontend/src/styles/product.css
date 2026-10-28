@@ -264,7 +264,6 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 /* 分析表单放在对话框里，卡片外框由对话框提供 */
 .analysis-form { padding: 0; border: 0; border-radius: 0; background: none; }
 .analysis-setup .repository-form { max-width: 820px; }
-.project-records .analysis-job { padding: 16px 18px 8px; }
 .project-records .job-main { gap: 12px; }
 .project-records .job-status-icon { width: 28px; height: 28px; }
 @media(max-width:640px) { .project-heading { flex-direction: column; align-items: flex-start; }.project-heading .page-actions { width: 100%; justify-content: flex-start; margin-top: 12px; }.project-heading .page-actions .primary-button, .project-heading .page-actions .clear-button { flex: 0 0 auto; } }
@@ -421,3 +420,33 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
   .analysis-dialog .form-submit { position: sticky; bottom: 0; margin-top: 16px; padding: 12px 0 0; background: var(--card); }
 }
 }
+
+/* 项目页结果卡：数字带 + 一行元信息，去掉逐行网格 */
+.result-panel { padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.result-stats { gap: 24px; padding-bottom: 0; border-bottom: 0; }
+.result-stats > div { gap: 2px; }
+.result-stats b { font: 600 24px var(--mono); letter-spacing: -.03em; }
+.result-note { margin: 14px 0 0; font-size: 12.5px; color: var(--fg-3); }
+.result-foot { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.result-meta { display: flex; align-items: baseline; gap: 10px; flex: 1; min-width: 0; margin: 0; font-size: 12.5px; color: var(--fg-2); }
+.result-meta > span { white-space: nowrap; }
+.result-meta > span + span::before { content: '\00b7'; margin-right: 10px; color: var(--fg-3); }
+.result-meta .is-version { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); font-size: 11.5px; color: var(--fg-3); }
+
+/* 仓库更新的时间信息压成一行次要文字 */
+.update-meta { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 8px 0 0; font-size: 12px; color: var(--fg-3); }
+.update-meta > span + span::before { content: '\00b7'; margin-right: 12px; }
+.update-band { grid-template-columns: auto minmax(0, 1fr); }
+
+/* 发起分析摘要压成一行 */
+.analysis-launcher .analysis-facts { display: block; margin: 0 0 12px; font-size: 12.5px; line-height: 1.6; color: var(--fg-2); }
+
+.result-info { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.result-version { margin: 0; font: 11.5px var(--mono); color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 项目页表面收敛：主卡保留唯一表面，侧栏与记录改为平面排布 */
+.project-rail .update-card { padding: 0; border: 0; border-radius: 0; background: none; }
+.project-rail .update-band { padding: 0; background: none; }
+.project-rail .analysis-launcher { padding: 0; border: 0; border-radius: 0; background: none; }
+.project-rail .analysis-launcher .analysis-note { display: none; }
+.project-rail .analysis-launcher .analysis-facts { margin: 0 0 10px; }
