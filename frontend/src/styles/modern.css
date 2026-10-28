@@ -404,7 +404,7 @@ h1 {
 .form-submit p { max-width: 64ch; font-size: 12.5px; line-height: 1.65; }
 
 /* ---------- 输入控件 ---------- */
-input, select, textarea {
+input:not([class*="ant-"]), select:not([class*="ant-"]), textarea:not([class*="ant-"]) {
   min-height: 42px;
   padding: 9px 11px;
   border-color: var(--line-strong);
