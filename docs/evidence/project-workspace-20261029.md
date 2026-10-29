@@ -50,3 +50,11 @@
 - 数据集区间显示为 `2026-10-13 → 10-27`，完整版本号在 title 中。
 - 截图：`docs/evidence/screenshots/project-workspace-1440.png`。
 
+
+## 追加：两卡等高与配色（2026-10-29）
+
+- .project-workspace 改为同一行拉伸，.pw-detail/.pw-rail 实测高度均为 430px。
+- 记录卡上限 430px、卡内滚动；结果卡多余高度在 hero 区上下均分。
+- 风险色改为项目页局部变量：高 `#C9352A`、中 `#DF8B10`、低 `#93A3B6`；深色主题 `#F0736A` / `#F2A93E` / `#94A5BA`。
+- 数字与百分比分列右对齐、`tabular-nums`。
+

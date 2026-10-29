@@ -180,3 +180,5 @@
 .pw-rail { height: auto; max-height: 430px; min-height: 0; overflow: hidden; }
 .pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .pw-detail .pw-updates { margin-top: 18px; }
+/* 结果卡多余高度上下均分，避免底部出现一整块空白 */
+.pw-detail .result-hero { flex: 1; align-content: center; }
