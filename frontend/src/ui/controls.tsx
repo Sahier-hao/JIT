@@ -123,3 +123,15 @@ export function Switch({ checked, onCheckedChange, ariaLabel, disabled }: {
     <SwitchPrimitive.Thumb className="ui-switch-thumb"/>
   </SwitchPrimitive.Root>
 }
+
+/** 图标按钮：用于记录行的紧凑动作，必须带可访问名称。 */
+export function IconButton({ label, icon, onClick, disabled, danger, className }: { label: string; icon: ReactNode; onClick?: () => void; disabled?: boolean; danger?: boolean; className?: string }) {
+  return <button
+    type="button"
+    className={clsx('ui-iconbtn', danger && 'ui-iconbtn--danger', className)}
+    aria-label={label}
+    title={label}
+    disabled={disabled}
+    onClick={onClick}
+  >{icon}</button>
+}

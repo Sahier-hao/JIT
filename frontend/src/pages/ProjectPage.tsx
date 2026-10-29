@@ -6,9 +6,10 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { Button, Disclosure } from '../ui/controls'
+import { ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, RotateCcw, Trash2, XCircle } from 'lucide-react'
+import { Button, Disclosure, IconButton } from '../ui/controls'
 import { Popconfirm } from '../ui/dialog'
+import { Popover } from '../ui/popover'
 import type { SyncForm } from '../apiClient'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
@@ -44,6 +45,8 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   const [deleteBusy, setDeleteBusy] = useState(false)
   const deleteLock = useRef(false)
   const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
+  const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
+  const share = (count: number) => Math.round((count / riskTotal) * 100)
   const latestStatus = detail.repository?.latestSync?.status
   const latestId = detail.repository?.latestSync?.syncId
   const previousJob = useRef('')
@@ -129,7 +132,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       </div>
       <div className="page-actions">
         <AnalysisLauncher key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
-        {context ? <Button aria-label="打开审查" variant="primary" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>打开审查<ArrowRight size={14}/></Button> : null}
       </div>
     </header>
 
@@ -153,6 +155,18 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
             <div className="high"><b>{repository.distribution.high.toLocaleString()}</b><span>高风险</span></div>
             <div><b>{repository.distribution.medium.toLocaleString()}</b><span>中风险</span></div>
             <div><b>{repository.distribution.low.toLocaleString()}</b><span>低风险</span></div>
+          </div>
+          <div className="result-chart">
+            <div className="result-chart-bar" role="img" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
+              <span className="is-high" style={{ flexGrow: repository.distribution.high || 0 }}/>
+              <span className="is-mid" style={{ flexGrow: repository.distribution.medium || 0 }}/>
+              <span className="is-low" style={{ flexGrow: repository.distribution.low || 0 }}/>
+            </div>
+            <ul className="result-chart-legend">
+              <li><i className="is-high"/>高 {share(repository.distribution.high)}%</li>
+              <li><i className="is-mid"/>中 {share(repository.distribution.medium)}%</li>
+              <li><i className="is-low"/>低 {share(repository.distribution.low)}%</li>
+            </ul>
           </div>
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
@@ -209,22 +223,27 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
         </span>
       </div>}
       <div className="panel-actions">
-        {active ? pendingCancel ? <Button variant="link" size="sm" disabled>正在取消…</Button> : <Popconfirm label={cancelBusy ? '正在取消…' : '取消分析'} title="取消这次分析？" description="停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析。" confirmText="确认取消分析" danger onConfirm={onCancel}/> : null}
-        {completed ? <Button variant="link" size="sm" onClick={onOpen}>打开结果</Button> : null}
-        {onCompare ? <Button variant="link" size="sm" onClick={onCompare}>与当前结果对比</Button> : null}
-        {!active && !completed ? <Button variant="link" size="sm" onClick={onRetry}>用这些参数重试</Button> : null}
-        {!active ? <Popconfirm label={deleteBusy ? '正在删除…' : '删除记录'} title="删除这条分析记录？" description={current ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'} confirmText="确认删除记录" danger onConfirm={onDelete}/> : null}
+        {active ? pendingCancel ? <span className="record-note">正在取消…</span> : <Popconfirm icon={<XCircle size={15}/>} ariaLabel="取消分析" disabled={cancelBusy} title="取消这次分析？" description="停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析。" confirmText="确认取消分析" danger onConfirm={onCancel}/> : null}
+        {completed ? <IconButton label="打开结果" icon={<ArrowUpRight size={15}/>} onClick={onOpen}/> : null}
+        {onCompare ? <IconButton label="与当前结果对比" icon={<GitCompare size={15}/>} onClick={onCompare}/> : null}
+        {!active && !completed ? <IconButton label="用这些参数重试" icon={<RotateCcw size={15}/>} onClick={onRetry}/> : null}
+        {!active ? <Popconfirm icon={<Trash2 size={15}/>} ariaLabel="删除记录" disabled={deleteBusy} title="删除这条分析记录？" description={current ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'} confirmText="确认删除记录" danger onConfirm={onDelete}/> : null}
+        <Popover label="分析详情" trigger={<IconButton label="分析详情" icon={<Info size={15}/>}/>}><RecordDetails job={job} active={active}/></Popover>
       </div>
     </div>
     {job.status === 'cancelled' ? <p className="form-hint">本次分析已取消，已有成功结果保持不变，可用原参数重新分析。</p> : job.error ? <p className="job-error" role="alert">{job.error.message} 请修正后重新分析。</p> : null}
-    <Disclosure className="job-details" summary="分析详情"><dl>
-      <div><dt>范围</dt><dd>{job.since ?? '不限'} — {job.until ?? '不限'}，最多 {job.commitLimit} 条</dd></div>
-      <div><dt>分支</dt><dd>{job.branch}</dd></div>
-      {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
-      {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
-      <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>
-      {job.degradeReason ? <div><dt>模型说明</dt><dd>{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
-      {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
-    </dl></Disclosure>
   </article>
+}
+
+/** 记录详情：放进浮层，避免在列表里向下展开把卡片撑长。 */
+function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
+  return <dl className="record-details">
+    <div><dt>范围</dt><dd>{job.since ?? '不限'} — {job.until ?? '不限'}，最多 {job.commitLimit} 条</dd></div>
+    <div><dt>分支</dt><dd>{job.branch}</dd></div>
+    {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
+    {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
+    <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>
+    {job.degradeReason ? <div><dt>模型说明</dt><dd>{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
+    {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
+  </dl>
 }

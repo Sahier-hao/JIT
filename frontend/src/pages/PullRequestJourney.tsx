@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Alert, Button, Checkbox, Collapse, Drawer, Input, Segmented, Select, Space, Tag, Tooltip } from 'antd'
+import * as ui from '../ui/controls'
+import { RefreshCw, Upload } from 'lucide-react'
 import { ArrowLeftOutlined, ExportOutlined, FileTextOutlined, GithubOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, SearchOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import type { Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
@@ -95,13 +97,13 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
         <h1>我的审查</h1>
         <p>把问题、证据和下一轮复核放在同一张工作单里。</p>
       </div>
-      <Button icon={<ReloadOutlined/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '检查关注工作更新'}</Button>
+      <ui.Button variant="secondary" icon={<RefreshCw size={14}/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '检查关注工作更新'}</ui.Button>
     </header>
     <form className="mr-intake" onSubmit={event => void connect(event)}>
       <label htmlFor="mr-url">仓库或 PR 地址</label>
       <div className="mr-intake-row">
-        <Input id="mr-url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repo/pull/42"/>
-        <Button type="primary" htmlType="submit" loading={busy}>接入审查</Button>
+        <ui.Input id="mr-url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repo/pull/42"/>
+        <ui.Button type="submit" variant="primary" loading={busy}>接入审查</ui.Button>
       </div>
       <p className="mr-intake-note">支持公开 GitHub 来源；个人关注不代表正式评审人分配。草稿、问题和反馈只保存在当前浏览器，页面停留期间每 5 分钟检查关注工作。</p>
     </form>
@@ -109,7 +111,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
     {personal.error ? <p role="alert" className="field-error">{personal.error}。现有存储未被清空。</p> : null}
     {list ? <section className="pr-discovery"><div className="section-label"><h2>{list.owner}/{list.name} · {list.state === 'open' ? '开放的 PR' : '历史 PR'}</h2><span>检查于 {displayTime(list.checkedAt)}</span></div>
       {!list.pullRequests.length ? <p>没有{list.state === 'open' ? '开放的' : '本页'} PR。可以选择历史 PR 复盘。</p> : list.pullRequests.map(pr => <article key={pr.number} className="pr-task"><div><b>#{pr.number} {pr.title}</b><p>{pr.author} · {remoteLabel[pr.remoteState]} · 更新于 {displayTime(pr.updatedAt)}</p></div><Button size="small" disabled={busy} onClick={() => void connect(undefined, pr.url)}>开始{pr.remoteState === 'open' ? '审查' : '历史复盘'}</Button></article>)}
-      <div className="panel-actions"><Button type="link" size="small" disabled={busy} onClick={() => void connect(undefined, list.repositoryUrl, list.state === 'open' ? 'closed' : 'open')}>{list.state === 'open' ? '查看历史 PR' : '查看开放 PR'}</Button><Button type="link" size="small" disabled={busy || list.page <= 1} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page - 1)}>上一页</Button><span>第 {list.page} 页</span><Button type="link" size="small" disabled={busy || !list.hasMore} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page + 1)}>下一页</Button></div>
+      <div className="panel-actions"><ui.Button variant="link" size="sm" disabled={busy} onClick={() => void connect(undefined, list.repositoryUrl, list.state === 'open' ? 'closed' : 'open')}>{list.state === 'open' ? '查看历史 PR' : '查看开放 PR'}</ui.Button><ui.Button variant="link" size="sm" disabled={busy || list.page <= 1} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page - 1)}>上一页</ui.Button><span>第 {list.page} 页</span><ui.Button variant="link" size="sm" disabled={busy || !list.hasMore} onClick={() => void connect(undefined, list.repositoryUrl, list.state, list.page + 1)}>下一页</ui.Button></div>
     </section> : null}
     {['作者更新待复核', '继续审查', '新关注的工作', '等待作者处理', '历史与暂停'].map(group => {
       const items = personal.works.filter(work => status(work) === group)
@@ -132,7 +134,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
               <div className="mr-bar" role="img" aria-label={`已阅读 ${percent}%`}><i style={{ width: `${percent}%` }}/></div>
             </div>
             <span className="mr-row-time">检查于 {shortTime(work.checkedAt)}</span>
-            <Button className="mr-row-action" size="small" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</Button>
+            <ui.Button className="mr-row-action" variant="secondary" size="sm" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</ui.Button>
           </article>
         })}</div>
       </section>
@@ -141,7 +143,7 @@ export function MyReviews({ navigate, repositoryUrl }: { navigate: Navigate; rep
       <h2>还没有审查工作</h2>
       <p>粘贴一个公开 PR 地址开始。接入后，工作会按「作者更新待复核 / 继续审查 / 新关注的工作 / 等待作者处理 / 历史与暂停」分组；模型暂时不可用时也能阅读代码并留下判断。</p>
     </div> : null}
-    <Button className="mr-restore" type="text" size="small" icon={<UploadOutlined/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button><input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
+    <ui.Button className="mr-restore" variant="ghost" size="sm" icon={<Upload size={14}/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</ui.Button><input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
   </section>
 }
 

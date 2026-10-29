@@ -21,8 +21,8 @@
 .ui-btn:disabled { opacity: .55; cursor: not-allowed; }
 .ui-btn--sm { height: 28px; padding: 0 10px; font-size: 12.5px; border-radius: 7px; }
 .ui-btn--block { width: 100%; }
-.ui-btn--primary { background: var(--btn); border-color: var(--btn); color: #fff; }
-.ui-btn--primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); }
+.ui-btn--primary { background: var(--btn); border-color: var(--btn); color: var(--btn-fg); }
+.ui-btn--primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); color: var(--btn-fg); }
 .ui-btn--ghost { border-color: transparent; background: transparent; color: var(--fg-2); }
 .ui-btn--ghost:hover { background: var(--sunken); color: var(--fg); }
 .ui-btn--link { border-color: transparent; background: transparent; color: var(--accent); padding: 0 2px; }
@@ -259,3 +259,30 @@
   transition: transform .16s ease;
 }
 .ui-switch[data-state='checked'] .ui-switch-thumb { transform: translateX(16px); }
+
+.ui-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.ui-iconbtn:hover { background: var(--sunken); color: var(--fg); border-color: var(--line); }
+.ui-iconbtn:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 1px; }
+.ui-iconbtn:disabled { opacity: .45; cursor: not-allowed; }
+.ui-iconbtn--danger:hover { background: color-mix(in srgb, var(--risk-high) 10%, transparent); color: var(--risk-high); border-color: color-mix(in srgb, var(--risk-high) 30%, var(--line)); }
+.ui-popover {
+  z-index: 72;
+  width: 268px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--sh-3);
+}
+.ui-popover-arrow { fill: var(--card); }

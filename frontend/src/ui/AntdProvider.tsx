@@ -22,6 +22,7 @@ function readTokens() {
     accent: read('--accent', '#277452'),
     accentSoft: read('--accent-soft', '#eaf3ed'),
     btn: read('--btn', '#0e1524'),
+    btnFg: read('--btn-fg', '#ffffff'),
     risk: read('--risk', '#b7791f'),
     riskHigh: read('--risk-high', '#b42318'),
     sans: read('--sans', 'system-ui, sans-serif'),
@@ -43,6 +44,7 @@ export function AntdProvider({ children }: { children: ReactNode }) {
         algorithm: tokens.dark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: tokens.btn,
+        colorTextLightSolid: tokens.btnFg,
           colorInfo: tokens.accent,
           colorLink: tokens.accent,
           colorSuccess: tokens.accent,

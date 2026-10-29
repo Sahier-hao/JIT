@@ -137,7 +137,7 @@ it('shows queue position and confirms cancellation while preserving the current 
   await user.click(screen.getByRole('button', { name: '确认取消分析' }))
   expect(await screen.findByText('已取消')).toBeVisible()
   expect(screen.getByRole('button', { name: '用这些参数重试' })).toBeVisible()
-  expect(screen.getByRole('button', { name: '打开审查' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '查看提交与审查计划' })).toBeVisible()
 })
 
 it('keeps a cancellation error actionable and prevents repeated submissions', async () => {
@@ -165,7 +165,8 @@ it('shows pending cancellation and does not offer deletion before the worker exi
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
   expect(await screen.findByText('正在取消')).toBeVisible()
   expect(screen.queryByRole('button', { name: '删除记录' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '正在取消…' })).toBeDisabled()
+  expect(screen.queryByRole('button', { name: '取消分析' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '删除记录' })).not.toBeInTheDocument()
 })
 
 it('shows the current result and opens the pinned review', async () => {
@@ -175,7 +176,7 @@ it('shows the current result and opens the pinned review', async () => {
   expect(await screen.findByRole('heading', { name: 'demo-project' })).toBeVisible()
   expect(screen.getByRole('heading', { name: '当前分析结果' })).toBeVisible()
   expect(screen.getAllByText('data-1')[0]).toBeVisible()
-  await userEvent.setup().click(screen.getAllByRole('button', { name: '打开审查' })[0])
+  await userEvent.setup().click(screen.getByRole('button', { name: '查看提交与审查计划' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'analysis', repositoryId: REPO, viewSyncId: SYNC, view: 'commits' })
 })
 

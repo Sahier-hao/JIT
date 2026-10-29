@@ -55,6 +55,8 @@
   /* ---------- 主行动（2）：近黑，与蓝色区分开 ---------- */
   --btn: #0E1524;
   --btn-hover: #1B2434;
+  --btn-fg: #FFFFFF;
+  --shadow-ink: #0E1524;
 
   /* ---------- 风险（7）：语义色，不随主题换色相 ---------- */
   --risk: #B7791F;
@@ -109,6 +111,8 @@ html[data-theme="steel"] {
 
   --btn: #0F1821;
   --btn-hover: #1C2A36;
+  --btn-fg: #FFFFFF;
+  --shadow-ink: #0F1821;
 
   --risk: #B7791F;
   --risk-mid: #B54708;
@@ -152,8 +156,10 @@ html[data-theme="charcoal"] {
   --accent-soft: #16233C;
   --accent-ring: rgba(123, 163, 247, .30);
 
-  --btn: #3B6FE0;
-  --btn-hover: #4479EE;
+  --btn: #E4EAF5;
+  --btn-hover: #F2F6FF;
+  --btn-fg: #10182B;
+  --shadow-ink: #000000;
 
   --risk: #D9A23F;
   --risk-mid: #E5743B;
@@ -202,6 +208,8 @@ html[data-theme="paper"] {
 
   --btn: #141414;
   --btn-hover: #2B2B2B;
+  --btn-fg: #FFFFFF;
+  --shadow-ink: #141414;
 
   --risk: #B7791F;
   --risk-mid: #B54708;

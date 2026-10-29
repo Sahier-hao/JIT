@@ -6,7 +6,7 @@ import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { Button } from './controls'
+import { Button, IconButton } from './controls'
 
 export function Dialog({ open, onOpenChange, title, description, footer, children, width = 600 }: {
   open: boolean
@@ -34,20 +34,23 @@ export function Dialog({ open, onOpenChange, title, description, footer, childre
 }
 
 /** 贴在触发按钮旁的确认气泡：替代把确认面板放到列表末尾的做法。 */
-export function Popconfirm({ label, title, description, confirmText, cancelText = '取消', onConfirm, danger }: {
-  label: ReactNode
+export function Popconfirm({ label, icon, ariaLabel, title, description, confirmText, cancelText = '取消', onConfirm, danger, disabled }: {
+  label?: ReactNode
+  icon?: ReactNode
+  ariaLabel?: string
   title: ReactNode
   description?: ReactNode
   confirmText: string
   cancelText?: string
   onConfirm: () => void
   danger?: boolean
+  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   return <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
     <PopoverPrimitive.Anchor asChild>
       <span className="ui-popconfirm-anchor">
-        <Button variant="link" size="sm" danger={danger} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(value => !value)}>{label}</Button>
+        {icon ? <IconButton label={ariaLabel ?? confirmText} icon={icon} danger={danger} disabled={disabled} onClick={() => setOpen(value => !value)}/> : <Button variant="link" size="sm" danger={danger} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(value => !value)}>{label}</Button>}
       </span>
     </PopoverPrimitive.Anchor>
     <PopoverPrimitive.Portal>
