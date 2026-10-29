@@ -17,7 +17,9 @@ function detailsOf(value: unknown): ApiErrorDetail[] {
     if (typeof item !== 'object' || item === null) continue
     const raw = item as Record<string, unknown>
     if (typeof raw.field === 'string' && typeof raw.reason === 'string') {
-      details.push({ field: raw.field, reason: raw.reason })
+      const conflict = typeof raw.commitId === 'string' && Array.isArray(raw.sourceSyncIds) && raw.sourceSyncIds.every(v => typeof v === 'string') && Array.isArray(raw.conflictingFields) && raw.conflictingFields.every(v => typeof v === 'string')
+        ? { commitId: raw.commitId, sourceSyncIds: raw.sourceSyncIds as string[], conflictingFields: raw.conflictingFields as string[] } : {}
+      details.push({ field: raw.field, reason: raw.reason, ...conflict })
     }
   }
   return details

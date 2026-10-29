@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsPage } from './ProjectsPage'
+import { createWork, saveWork } from '../prReview'
+import { snapshot } from '../prReview.fixture'
 
 const REPO = '11111111-1111-4111-8111-111111111111'
 const NOW = '2026-10-22T12:00:00Z'
@@ -26,7 +28,7 @@ function repository(name = 'demo-project') {
 function response(body: unknown, status = 200) {
   return new Response(body === null ? null : JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
-function mockApi(options: { onPatch?: (body: unknown) => void; onDelete?: () => void } = {}) {
+function mockApi(options: { onPatch?: (body: unknown) => void; onDelete?: () => void; onCreate?: (body: unknown) => void } = {}) {
   let name = 'demo-project'
   let removed = false
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
@@ -37,6 +39,10 @@ function mockApi(options: { onPatch?: (body: unknown) => void; onDelete?: () => 
     }
     if (url.pathname === '/api/v1/repository-syncs' && method === 'GET') {
       return response({ syncs: [], total: 0, limit: 50, offset: 0 })
+    }
+    if (url.pathname === '/api/v1/repositories' && method === 'POST') {
+      options.onCreate?.(JSON.parse(String(init?.body)))
+      return response(repository('app'), 201)
     }
     if (url.pathname === `/api/v1/repositories/${REPO}` && method === 'PATCH') {
       const body = JSON.parse(String(init?.body)) as { displayName: string }
@@ -53,7 +59,7 @@ function mockApi(options: { onPatch?: (body: unknown) => void; onDelete?: () => 
   })
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
 
 it('renames a project from the management menu without leaving the list', async () => {
   let patched: unknown = null
@@ -94,4 +100,47 @@ it('opens the project from the card body', async () => {
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '打开项目 demo-project' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO })
+})
+
+it('shows the cross-project personal works view without the project list', async () => {
+  mockApi()
+  const work = createWork(snapshot())
+  work.rounds.v1.progress['src/token.py'].state = 'read'
+  saveWork(work)
+  render(<ProjectsPage navigate={vi.fn()} view="reviews"/>)
+  expect(await screen.findByRole('heading', { name: '我的审查' })).toBeVisible()
+  expect(await screen.findByRole('heading', { name: /继续审查/ })).toBeVisible()
+  expect(screen.queryByRole('button', { name: '新建项目' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('textbox', { name: '仓库或 PR 地址' })).not.toBeInTheDocument()
+})
+
+it('navigates between projects and personal works through the page tabs', async () => {
+  mockApi()
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<ProjectsPage navigate={navigate}/>)
+  await screen.findByRole('heading', { name: 'demo-project' })
+  await user.click(screen.getByRole('button', { name: '我的审查' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'my-reviews' })
+  await user.click(screen.getByRole('button', { name: '项目' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'repositories' })
+})
+
+it('explains the empty personal works view without an intake form', async () => {
+  mockApi()
+  render(<ProjectsPage navigate={vi.fn()} view="reviews"/>)
+  expect(await screen.findByText('还没有审查工作')).toBeVisible()
+  expect(screen.queryByRole('textbox', { name: '仓库或 PR 地址' })).not.toBeInTheDocument()
+})
+
+it('creates a project from a dialog and keeps the list in place', async () => {
+  let posted: unknown = null
+  mockApi({ onCreate: body => { posted = body } })
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<ProjectsPage navigate={navigate}/>)
+  await user.click((await screen.findAllByRole('button', { name: '新建项目' }))[0])
+  const input = await screen.findByRole('textbox', { name: '仓库地址' })
+  await user.type(input, '  https://github.com/example/app  ')
+  await user.click(screen.getByRole('button', { name: '建立项目' }))
+  await waitFor(() => expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/app', autoUpdate: false }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO }, true)
 })

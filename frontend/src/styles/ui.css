@@ -70,9 +70,10 @@
 .ui-select:hover { background: var(--sunken); }
 .ui-select:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 0; }
 .ui-select-placeholder { color: var(--fg-3); }
+.ui-select > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-select-caret { display: inline-flex; color: var(--fg-3); }
 .ui-select-content {
-  z-index: 60;
+  z-index: 75;
   min-width: var(--radix-select-trigger-width);
   max-height: 280px;
   padding: 4px;

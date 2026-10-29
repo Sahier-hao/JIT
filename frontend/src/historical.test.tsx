@@ -1,8 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import * as domain from './domain'
 import { historicalFixture } from './historical-fixture'
-import { restoreShortlist, saveShortlist, storageKey } from './shortlist'
-import demo from './fixtures/demo-dataset.json'
 
 beforeEach(() => { window.localStorage.clear(); vi.restoreAllMocks(); window.history.replaceState({}, '', '/') })
 
@@ -26,17 +24,4 @@ it.each(['run', 'model', 'count', 'features', 'risk', 'raw', 'label', 'summary',
   if (name === 'metric') input.summary.metrics.precision = { value: null, reason: null }
   if (name === 'time') input.records[0].time = '2012-01-01T00:00:00Z'
   expect(() => domain.parseHistorical(input)).toThrow()
-})
-
-it('演示清单兼容v1，真实同标识两个运行隔离并保留恢复', () => {
-  const a = domain.parseHistorical(historicalFixture())
-  const b = domain.parseHistorical(historicalFixture('d'.repeat(64)))
-  const d = domain.parseDataset({ ...demo, records: a.records })
-  expect(storageKey(d)).toContain('jit-review:plan:v3:')
-  saveShortlist(a, [a.records[0].id])
-  saveShortlist(d, [a.records[1].id])
-  expect(restoreShortlist(b).ids).toEqual([])
-  expect(restoreShortlist(d).ids).toEqual([a.records[1].id])
-  expect(restoreShortlist(a).ids).toEqual([a.records[0].id])
-  expect(storageKey(a)).not.toBe(storageKey(b))
 })

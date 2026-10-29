@@ -183,6 +183,14 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         'model_id': first, 'created_at': '2024-01-01', 'updated_at': '2024-01-01'})
     before_models = catalog.models()
     with sqlite3.connect(catalog.store.path) as db:
+        # 先移除当前版本新增结构，再重建真实 v7 结构。
+        for table in ('pr_auto_attempt', 'pr_auto_intent', 'project_event', 'pr_list_page', 'pr_cache',
+                      'pr_watch', 'project_trend_view', 'pr_analysis_intent', 'pr_legacy_analysis_binding', 'repository_overview'):
+            db.execute(f'DROP TABLE {table}')
+        db.execute('DROP INDEX repository_sync_source')
+        db.execute('DROP INDEX repository_sync_pr_source')
+        for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version', 'distribution_rule'):
+            db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
         db.execute('DROP TABLE model_policy')
         db.execute('DROP TABLE model_default')
         db.execute('ALTER TABLE repository_sync DROP COLUMN resolved_model_id')
@@ -195,6 +203,7 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         db.execute('DROP TABLE pr_snapshot')
         for column in ('started_at', 'deadline_at', 'cancel_requested_at'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
+        db.execute('ALTER TABLE repository_commit DROP COLUMN file_paths_json')
         db.execute('UPDATE schema_migration SET version=7')
         before_rows = db.execute('SELECT * FROM model_version ORDER BY id').fetchall()
         before_events = db.execute('SELECT * FROM registration_event ORDER BY id').fetchall()

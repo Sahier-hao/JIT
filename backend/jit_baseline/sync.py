@@ -60,7 +60,8 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "dataset_version", "run_id", "model_id", "model_strategy", "degrade_reason",
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
-           "started_at", "deadline_at", "cancel_requested_at")
+           "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
+           "origin", "feature_schema_version", "distribution_rule")
 
 
 def worker_command():
@@ -172,7 +173,10 @@ def _view(row):
             "analysisBranch": item.get('analysis_branch'),
             "startedAt": item.get('started_at'), "deadlineAt": item.get('deadline_at'),
             "cancelRequestedAt": item.get('cancel_requested_at'), "queuePosition": None,
-            "requestId": item["request_id"], "error": error}
+            "requestId": item["request_id"], "error": error,
+            "sourceKind": item.get('source_kind', 'unknown'), "sourceSnapshotId": item.get('source_snapshot_id'),
+            "origin": item.get('origin', 'manual'), "featureSchemaVersion": item.get('feature_schema_version'),
+            "distributionRule": item.get('distribution_rule')}
 
 
 class SyncStorage:
@@ -181,12 +185,24 @@ class SyncStorage:
     def __init__(self, storage=None):
         self.storage = storage if storage is not None else CatalogStorage()
 
-    def create(self, row):
+    def create(self, row, *, publish=False):
+        row = {'source_kind': 'branch', 'origin': 'manual', **row}
         columns = ", ".join(COLUMNS)
         placeholders = ", ".join("?" for _ in COLUMNS)
         with self.storage.connection(write=True) as db:
             db.execute(f"INSERT INTO repository_sync ({columns}) VALUES ({placeholders})",
                        tuple(row.get(name) for name in COLUMNS))
+            if row.get('source_snapshot_id'):
+                db.execute('INSERT INTO pr_analysis VALUES (?,?,?)',
+                           (row['source_snapshot_id'], row['id'], row['created_at']))
+                db.execute('INSERT INTO pr_analysis_intent VALUES (?,?,?) ON CONFLICT(snapshot_id,model_id) '
+                           'DO UPDATE SET sync_id=excluded.sync_id',
+                           (row['source_snapshot_id'], row['resolved_model_id'], row['id']))
+            elif publish and row.get('repository_id'):
+                db.execute('UPDATE repository SET latest_sync_id=?,latest_sync_at=?,updated_at=? WHERE id=?',
+                           (row['id'], row['created_at'], row['created_at'], row['repository_id']))
+                if not re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', row['branch']):
+                    db.execute('UPDATE repository SET default_branch=? WHERE id=?', (row['branch'], row['repository_id']))
 
     def update(self, sync_id, **fields):
         if not fields:
@@ -265,7 +281,7 @@ class SyncStorage:
             row = db.execute(
                 "SELECT * FROM repository_sync WHERE repository_url=? AND branch=? AND since IS ? "
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
-                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
+                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
                 (repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id, resolved_model_id, *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
@@ -295,23 +311,28 @@ class SyncStorage:
             db.execute("DELETE FROM repository_commit WHERE sync_id=?", (sync_id,))
             db.executemany(
                 "INSERT INTO repository_commit (sync_id, commit_id, epoch, risk, added_lines, "
-                "deleted_lines, files, features_json, label, label_note, subject, author_name) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "deleted_lines, files, features_json, file_paths_json, label, label_note, subject, author_name) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 [(sync_id, row["id"], int(row["epoch"]), float(row["risk"]), int(row["addedLines"]),
                   int(row["deletedLines"]), int(row["files"]),
                   json.dumps(row["features"], ensure_ascii=False, sort_keys=True),
+                  json.dumps(row.get("filePaths") or [], ensure_ascii=False),
                   int(row["label"]), row.get("labelNote"), row.get("subject"), row.get("authorName")) for row in rows])
 
-    def complete(self, sync_id, repository_id, rows, *, head_commit, dataset_version, run_id, model_id, analysis_branch=None):
-        """Publish commits, completion metadata and latest successful pointer atomically."""
+    def complete(self, sync_id, repository_id, rows, *, head_commit, dataset_version, run_id, model_id,
+                 analysis_branch=None, feature_schema_version=None):
+        """原子发布结果，只有分支分析能推进项目当前结果。"""
         counts, now = distribution_of([row['risk'] for row in rows]), utc_now()
         with self.storage.connection(write=True) as db:
-            check_control(db.execute('SELECT * FROM repository_sync WHERE id=?', (sync_id,)).fetchone())
+            source = db.execute('SELECT * FROM repository_sync WHERE id=?', (sync_id,)).fetchone()
+            check_control(source)
             self.write_commits(sync_id, rows, connection=db)
             db.execute("UPDATE repository_sync SET status='completed',stage='completed',completed_at=?,"
-                       "updated_at=?,head_commit=?,dataset_version=?,run_id=?,model_id=?,analysis_branch=? WHERE id=?",
-                       (now, now, head_commit, dataset_version, run_id, model_id, analysis_branch, sync_id))
-            if repository_id:
+                       "updated_at=?,head_commit=?,dataset_version=?,run_id=?,model_id=?,analysis_branch=?,"
+                       "feature_schema_version=COALESCE(?,feature_schema_version),distribution_rule=? WHERE id=?",
+                       (now, now, head_commit, dataset_version, run_id, model_id, analysis_branch,
+                        feature_schema_version, DISTRIBUTION_RULE, sync_id))
+            if repository_id and source['repository_id'] == repository_id and source['source_kind'] == 'branch':
                 db.execute("UPDATE repository SET view_sync_id=?,head_commit=?,commit_count=?,high_count=?,"
                            "medium_count=?,low_count=?,unknown_count=?,distribution_rule=?,updated_at=? WHERE id=?",
                            (sync_id, head_commit, len(rows), counts['high'], counts['medium'], counts['low'],
@@ -373,6 +394,12 @@ class SyncStorage:
     def repository_by_url(self, url):
         with self.storage.connection() as db:
             row = db.execute("SELECT * FROM repository WHERE url=?", (url,)).fetchone()
+            parsed = urlparse(url)
+            if row is None and parsed.scheme == 'https' and parsed.netloc == 'github.com' and not parsed.query:
+                aliases = db.execute('SELECT * FROM repository WHERE lower(url)=lower(?)', (url,)).fetchall()
+                if len(aliases) > 1:
+                    raise BaselineError('CONTEXT_MISMATCH', '同一 GitHub 来源对应多个已有项目，请从具体项目进入')
+                row = aliases[0] if aliases else None
         return _repository_view(row) if row is not None else None
 
     def repository_get(self, repository_id):
@@ -426,7 +453,7 @@ class SyncStorage:
     def repository_latest_sync(self, repository_id):
         with self.storage.connection() as db:
             row = db.execute(
-                "SELECT * FROM repository_sync WHERE repository_id=? "
+                "SELECT * FROM repository_sync WHERE repository_id=? AND source_kind!='pr' "
                 "ORDER BY created_at DESC, id DESC LIMIT 1",
                 (repository_id,)).fetchone()
         return _view(row) if row is not None else None
@@ -636,8 +663,8 @@ def _window(payload, now=None):
 
 def sync_input(payload, *, allow_local=False):
     """校验创建作业的输入；返回可直接落库的请求快照。"""
-    if not isinstance(payload, dict):
-        raise BaselineError("INPUT_INVALID", "请求体必须是 JSON 对象")
+    if not isinstance(payload, dict) or set(payload) - {'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy', 'modelId'}:
+        raise BaselineError("INPUT_INVALID", "请求体必须只包含公开分析参数")
     url = payload.get("repositoryUrl")
     if not isinstance(url, str) or not url.strip():
         raise BaselineError("INPUT_INVALID", "缺少仓库地址")
@@ -758,43 +785,64 @@ class SyncService:
             "created_at": now, "updated_at": now})
         return repository_id
 
-    def create(self, payload, request_id=None):
+    def create(self, payload, request_id=None, *, _pr_source=None, _retry=False, _automatic=False):
         data = sync_input(payload, allow_local=self.allow_local)
         model_id = payload.get('modelId')
+        schema_version = None
         if model_id is not None:
             if not isinstance(model_id, str) or not model_id.strip() or data['requestedStrategy'] != 'generic-model':
                 raise BaselineError('INPUT_INVALID', '指定模型时请选择现成模型策略')
-            self._generic_model(model_id)
+            _, model = self._generic_model(model_id)
+            schema_version = model.get('featureSchemaVersion')
         resolved_model_id = model_id
         if not model_id and data['requestedStrategy'] != 'force-train':
             resolved_model_id = self.catalog.default_model_id()
             if data['requestedStrategy'] == 'generic-model':
                 if not resolved_model_id:
                     raise BaselineError('DEFAULT_MODEL_REQUIRED', '请管理员先设置默认模型或明确选择模型')
-                self._generic_model(resolved_model_id)
+                _, model = self._generic_model(resolved_model_id)
+                schema_version = model.get('featureSchemaVersion')
         now = utc_now()
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError('SYNC_SERVICE_STOPPING', '服务正在停止，请稍后重试')
-            existing = self.sync.find_active(repository_url=data["repositoryUrl"], branch=data["branch"],
-                                             since=data["since"], until=data["until"],
-                                             commit_limit=data["commitLimit"],
-                                             requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
-                                             resolved_model_id=resolved_model_id)
-            if existing is not None:
-                return self.get(existing['syncId']), False
-            repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
+            if _pr_source is not None:
+                with self.sync.storage.connection() as db:
+                    source = db.execute('SELECT * FROM pr_snapshot WHERE id=?', (_pr_source['snapshotId'],)).fetchone()
+                    if (source is None or source['repository_id'] != _pr_source['repositoryId']
+                            or source['head_sha'] != data['branch']):
+                        raise BaselineError('CONTEXT_MISMATCH', 'PR 分析来源不一致')
+                    previous = db.execute('SELECT s.* FROM pr_analysis a JOIN repository_sync s ON s.id=a.sync_id '
+                                          'WHERE a.snapshot_id=? AND COALESCE(s.resolved_model_id,s.model_id,s.requested_model_id)=? '
+                                          'ORDER BY a.created_at DESC,s.rowid DESC LIMIT 1',
+                                          (_pr_source['snapshotId'], resolved_model_id)).fetchone()
+                if previous is not None and (previous['status'] in (*PROGRESS, 'completed') or not _retry):
+                    return self.get(previous['id']), False
+                repository_id = source['repository_id']
+                if self.sync.repository_get(repository_id) is None:
+                    raise BaselineError('REPOSITORY_UNKNOWN', '项目已删除')
+            else:
+                existing = self.sync.find_active(repository_url=data["repositoryUrl"], branch=data["branch"],
+                                                 since=data["since"], until=data["until"],
+                                                 commit_limit=data["commitLimit"],
+                                                 requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
+                                                 resolved_model_id=resolved_model_id)
+                if existing is not None:
+                    return self.get(existing['syncId']), False
+                repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
             sync_id = str(uuid.uuid4())
             self.sync.create({"id": sync_id, "repository_url": data["repositoryUrl"],
                               "repository_id": repository_id,
                               "branch": data["branch"], "since": data["since"], "until": data["until"],
                               "commit_limit": data["commitLimit"],
                               "requested_strategy": data["requestedStrategy"], "status": "queued",
-                               "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
+                              "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
                               "resolved_model_id": resolved_model_id,
-                              "created_at": now, "updated_at": now})
-            self.sync.repository_update(repository_id, latest_sync_id=sync_id,
-                                        latest_sync_at=now, **({} if re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', data['branch']) else {'default_branch': data['branch']}))
+                              "source_kind": 'pr' if _pr_source is not None else 'branch',
+                              "source_snapshot_id": _pr_source['snapshotId'] if _pr_source is not None else None,
+                              "origin": 'automatic' if _automatic else 'manual',
+                              "feature_schema_version": schema_version,
+                              "created_at": now, "updated_at": now}, publish=True)
             self._executor.submit(self._execute, sync_id)
         return self.get(sync_id), True
 
@@ -899,18 +947,26 @@ class SyncService:
         item = self.sync.get(sync_id)
         if item is None or item.get("repositoryId") != repository_id:
             raise BaselineError("NOT_FOUND", "该分析不属于当前项目")
+        if item['sourceKind'] == 'pr':
+            raise BaselineError('CONTEXT_MISMATCH', 'PR 分析不能设为项目分支当前结果')
         if item["status"] != "completed":
             raise BaselineError("CONFLICT_ACTIVE_SYNC", "只有已完成的分析才能设为当前结果")
         self.sync.repository_refresh(repository_id, sync_id)
         return self.sync.repository_get(repository_id)
 
     def delete_repository(self, repository_id):
-        """硬删项目及其全部分析记录与提交；有在途作业时拒绝，避免删掉正在写的行。"""
+        """删除与任务创建共用锁，检查期间不允许新的任务进入。"""
+        with self._lock:
+            return self._delete_repository(repository_id)
+
+    def _delete_repository(self, repository_id):
+        """硬删项目及其全部分析记录与提交；有在途作业时拒绝。"""
         if self.sync.repository_get(repository_id) is None:
             raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
         with self.sync.storage.connection() as db:
             checking = db.execute("SELECT 1 FROM repository_watch WHERE repository_id=? AND status='checking'", (repository_id,)).fetchone()
-        if self.sync.repository_active(repository_id) or checking:
+            pr_checking = db.execute("SELECT 1 FROM pr_watch WHERE repository_id=? AND status='checking'", (repository_id,)).fetchone()
+        if self.sync.repository_active(repository_id) or checking or pr_checking:
             raise BaselineError("CONFLICT_ACTIVE_SYNC", "该项目还有进行中的分析，请等待结束后再删除")
         return self.sync.repository_delete(repository_id)
 
@@ -966,7 +1022,8 @@ class SyncService:
                 risks = [row[0] for row in db.execute('SELECT risk FROM repository_commit WHERE sync_id=?', (selected,))]
             counts = distribution_of(risks)
             context = {key: source.get(key) for key in ('repositoryId', 'syncId', 'branch', 'completedAt',
-                       'headCommit', 'datasetVersion', 'modelId', 'runId', 'modelStrategy', 'degradeReason')}
+                       'headCommit', 'datasetVersion', 'modelId', 'runId', 'modelStrategy', 'degradeReason',
+                       'sourceKind', 'sourceSnapshotId', 'featureSchemaVersion')}
             context.update(distributionRule=DISTRIBUTION_RULE, limitations=list(REPOSITORY_LIMITATIONS),
                            missingMetadata=[key for key in ('completedAt', 'headCommit') if not source.get(key)])
             context['branch'] = source.get('analysisBranch') or source['branch']
@@ -1126,12 +1183,13 @@ class SyncService:
                 {"id": record["id"], "epoch": record["epoch"], "risk": risk,
                  "addedLines": record["metrics"]["la"], "deletedLines": record["metrics"]["ld"],
                  "files": record["metrics"]["nf"], "features": record["metrics"],
+                 "filePaths": record.get("filePaths") or [],
                  "label": record["label"], "labelNote": record.get("labelNote"),
                  "subject": record.get("subject"), "authorName": record.get('authorName')}
                 for record, risk in zip(records, risks, strict=True)],
                 head_commit=collected['collection']['repository']['head'],
                 analysis_branch=collected['collection']['repository'].get('resolvedBranch'),
-                dataset_version=version, run_id=run_id, model_id=model_id)
+                dataset_version=version, run_id=run_id, model_id=model_id, feature_schema_version=schema.name)
         except BaselineError as exc:
             degrade = (decision or {}).get("degradeReason")
             if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):

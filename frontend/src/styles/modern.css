@@ -544,14 +544,7 @@ tbody tr:hover { background: var(--hover); }
   font-size: 11px;
 }
 
-/* ---------- 详情抽屉 ---------- */
-.detail-panel {
-  border-color: var(--line);
-  border-radius: 16px;
-  box-shadow: var(--sh-2);
-}
-
-.detail-heading { padding: 14px 18px; font-size: 12.5px; }
+/* ---------- 详情对话框 ---------- */
 .detail-risk { border-radius: 12px; margin: 22px 0 18px; }
 
 /* ---------- 其他面板 ---------- */

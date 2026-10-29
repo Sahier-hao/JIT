@@ -100,7 +100,7 @@ class RepositoryExplanationService:
             except BaselineError as exc:
                 result.update(explanationStatus='not-supported', explanationReason=self._reason(exc), reasonCode=exc.code)
             except Exception:
-                result.update(explanationStatus='not-supported', explanationReason='本次归因计算失败，原分数和审查计划保持不变，可稍后重试。',
+                result.update(explanationStatus='not-supported', explanationReason='本次归因计算失败，原分数和已保存的分析保持不变，可稍后重试。',
                               reasonCode='EXPLANATION_FAILED')
             result['generatedAt'] = utc_now()
             with self.storage.connection(write=True) as db:

@@ -22,7 +22,12 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (9, Path(__file__).parent / 'migrations/009_sync_control.sql'),
               (10, Path(__file__).parent / 'migrations/010_repository_explanation.sql'),
               (11, Path(__file__).parent / 'migrations/011_repository_watch.sql'),
-              (12, Path(__file__).parent / 'migrations/012_pr_review_sources.sql'))
+              (12, Path(__file__).parent / 'migrations/012_pr_review_sources.sql'),
+              (13, Path(__file__).parent / 'migrations/013_analysis_sources.sql'),
+              (14, Path(__file__).parent / 'migrations/014_project_trends.sql'),
+              (15, Path(__file__).parent / 'migrations/015_pr_updates.sql'),
+              (16, Path(__file__).parent / 'migrations/016_repository_overview.sql'),
+              (17, Path(__file__).parent / 'migrations/017_commit_file_paths.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -62,10 +67,34 @@ class CatalogStorage:
         if len(versions) != 1 or versions[0][0] != VERSION:
             raise storage_error()
 
+    def _backup_before_upgrade(self, version):
+        """升级前留存一致的独立副本；只在显式初始化旧库时执行。"""
+        if not self.path.exists():
+            return
+        source = self._connect()
+        try:
+            tables = source.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+            if not tables:
+                return
+            rows = source.execute('SELECT version FROM schema_migration').fetchall()
+            if len(rows) != 1 or not 0 < rows[0][0] < version:
+                return
+            backup = self.path.with_name(f'{self.path.name}.before-v{rows[0][0]}-{uuid.uuid4().hex}.sqlite3')
+            with backup.open('xb'):
+                pass
+            target = sqlite3.connect(backup)
+            try:
+                source.backup(target)
+            finally:
+                target.close()
+        finally:
+            source.close()
+
     def initialize(self, *, migrations=MIGRATIONS, version=VERSION):
         """建库或把旧版本库按序升级到当前版本；已是最新版本时幂等。"""
         db = None
         try:
+            self._backup_before_upgrade(version)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             db = self._connect(create=True)
             db.execute('BEGIN IMMEDIATE')

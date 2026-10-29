@@ -46,9 +46,15 @@ def test_verification_reports_protected_changes_even_when_a_check_fails(tmp_path
         assert line in source
         source = source.replace(line, replacement)
     script = project / "frontend/scripts/verify.ps1"
-    script.write_text(source, encoding="utf-8")
-    result = subprocess.run([shutil.which("pwsh"), "-NoProfile", "-File", str(script)],
-                            capture_output=True, text=True, encoding="utf-8", timeout=30)
+    # 显式约定子进程编码，避免 Windows 区域代码页污染 PowerShell 错误流。
+    bootstrap = ("[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n"
+                 "$OutputEncoding = [Console]::OutputEncoding\n")
+    script.write_text(bootstrap + source, encoding="utf-8")
+    result = subprocess.run([shutil.which("pwsh"), "-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(script)],
+                            capture_output=True, timeout=30)
+    # 捕获原始字节后严格解码，编码错误必须直接失败，不能在线程中变成 stderr=None。
+    stderr = result.stderr.decode("utf-8")
+    result.stdout.decode("utf-8")
     assert result.returncode != 0
     summary = json.loads((project / "docs/evidence/_run/verification.json").read_text(encoding="utf-8"))
     assert summary["success"] is False
@@ -57,6 +63,6 @@ def test_verification_reports_protected_changes_even_when_a_check_fails(tmp_path
         "modified: openspec/config.yaml", "missing: docs/evidence/frozen-fixture/removed.txt",
         "added: frontend/public/added.txt",
     }
-    assert "Protected files changed during verification" in result.stderr
+    assert "Protected files changed during verification" in stderr
     if check_fails:
         assert summary["failure"] == "fixture-check-failed"

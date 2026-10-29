@@ -56,6 +56,9 @@ export interface AnalysisContext {
   repositoryId: string; syncId: string; branch: string; completedAt: string | null
   headCommit: string | null; datasetVersion: string | null; modelId: string | null; runId: string | null
   missingMetadata: string[]
+  sourceKind?: string | null
+  sourceSnapshotId?: string | null
+  featureSchemaVersion?: string | null
 }
 
 export interface RepositoryListPage {
@@ -114,6 +117,7 @@ export function parseRepositoryDetail(value: unknown): RepositoryDetail {
       branch: text(context.branch), completedAt: textOrNull(context.completedAt), headCommit: textOrNull(context.headCommit),
       datasetVersion: textOrNull(context.datasetVersion), modelId: textOrNull(context.modelId), runId: textOrNull(context.runId),
       missingMetadata: textList(context.missingMetadata),
+      sourceKind: textOrNull(context.sourceKind), sourceSnapshotId: textOrNull(context.sourceSnapshotId), featureSchemaVersion: textOrNull(context.featureSchemaVersion),
     } : null,
     modelStrategy: strategy !== null && (STRATEGY_VALUES as readonly string[]).includes(strategy)
       ? (strategy as RepositoryDetail['modelStrategy'])
@@ -270,21 +274,21 @@ export function useRepositoryCommits(
 }
 
 /**
- * 清单里的提交逐条取详情（仓库维度）。
+ * 按提交标识逐条取详情（仓库维度）。
  *
- * 清单是本地保存的标识集合，不属于任何一页查询；逐条请求可以确认"这条还在当前视图里"，
- * 取不到的单独列出来让用户移除，而不是悄悄从清单消失（CRR-10）。
+ * 详情可能来自深链接而不在当前分页里；逐条请求可以确认来源仍属于这次固定分析，
+ * 取不到的单独列出，而不是悄悄回退到别的分析。
  */
-export interface RepositoryShortlist {
+export interface RepositoryCommitRecords {
   state: 'idle' | 'loading' | 'ready' | 'error'
   records: Map<string, Commit>
   failed: string[]
 }
 
-const EMPTY_SHORTLIST: RepositoryShortlist = { state: 'ready', records: new Map(), failed: [] }
+const EMPTY_COMMIT_RECORDS: RepositoryCommitRecords = { state: 'ready', records: new Map(), failed: [] }
 
-export function useRepositoryShortlist(repositoryId: string, ids: string[], viewSyncId?: string): RepositoryShortlist {
-  const [state, setState] = useState<RepositoryShortlist>({ state: 'idle', records: new Map(), failed: [] })
+export function useRepositoryCommitRecords(repositoryId: string, ids: string[], viewSyncId?: string): RepositoryCommitRecords {
+  const [state, setState] = useState<RepositoryCommitRecords>({ state: 'idle', records: new Map(), failed: [] })
   const key = ids.join(',')
   useEffect(() => {
     if (repositoryId === '' || key === '') return
@@ -310,6 +314,6 @@ export function useRepositoryShortlist(repositoryId: string, ids: string[], view
       .catch(() => { if (active) setState({ state: 'error', records: new Map(), failed: wanted }) })
     return () => { active = false; controller.abort() }
   }, [repositoryId, key, viewSyncId])
-  if (repositoryId === '' || key === '') return EMPTY_SHORTLIST
+  if (repositoryId === '' || key === '') return EMPTY_COMMIT_RECORDS
   return state
 }

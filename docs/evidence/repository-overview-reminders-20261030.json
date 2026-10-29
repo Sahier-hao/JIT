@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-30",
+  "scope": "repository overview, no auto analysis on create, notify-only branch reminders",
+  "backend": {
+    "fullPassed": 600,
+    "existingWarnings": 2,
+    "durationSeconds": 216.86,
+    "branchEventApiAssertion": "passed"
+  },
+  "frontend": {
+    "files": 42,
+    "passed": 329,
+    "durationSeconds": 122.66,
+    "typecheck": "passed",
+    "lintWarnings": 22,
+    "build": "passed"
+  },
+  "browserAcceptance": {
+    "projects": ["desktop-1440", "mobile-390"],
+    "passed": 2,
+    "failed": 0,
+    "durationSeconds": 16.1,
+    "overviewChartsVerified": true,
+    "screenshots": [
+      "docs/evidence/_run/project-workspace-browser/desktop-1440-repo-overview.png",
+      "docs/evidence/_run/project-workspace-browser/mobile-390-repo-overview.png"
+    ]
+  },
+  "databaseUpgrade": {
+    "fromVersion": 15,
+    "toVersion": 16,
+    "backup": "catalog.sqlite3.before-v15-b547aaf455af4c2ab015b7d809a59a68.sqlite3",
+    "backupBytes": 25960448,
+    "tablesBefore": 36,
+    "tablesAfter": 37,
+    "addedTables": ["repository_overview"],
+    "removedTables": [],
+    "rowDiffs": 0,
+    "integrityCheck": "ok",
+    "foreignKeyViolations": 0
+  },
+  "overview": {
+    "cacheSeconds": 600,
+    "source": "public GitHub metadata, languages and last 100 commits",
+    "realGithubStatus": "authenticated-success",
+    "realGithub": {"stars": 3, "forks": 0, "openIssues": 1, "watchers": 0, "languages": 6, "activityWeeks": 12, "recentCommits": 10},
+    "fixtureChartsVerified": true
+  },
+  "prPreview": {
+    "readOnlyFirst": true,
+    "createsWorkOnOpen": false,
+    "explicitStartCreatesWork": true,
+    "screenshots": [
+      "docs/evidence/_run/project-workspace-browser/desktop-1440-pr-preview.png",
+      "docs/evidence/_run/project-workspace-browser/mobile-390-pr-preview.png",
+      "docs/evidence/_run/project-workspace-browser/desktop-1440-workbench.png"
+    ]
+  },
+  "reminders": {
+    "autoAnalysisOnCreate": false,
+    "branchWatch": "notify-only",
+    "eventKind": "branch-updated",
+    "deduplicatedByHead": true,
+    "analysisClearsReminder": true
+  },
+  "notValidated": [
+    "real user interviews",
+    "review efficiency",
+    "defect detection effectiveness",
+    "private repositories",
+    "GitHub writes"
+  ]
+}

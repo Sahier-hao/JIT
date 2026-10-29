@@ -32,7 +32,7 @@ test('建立项目只登记地址，不产生分析', async ({ page }, info) => 
   await expect(page.getByRole('button', { name: '开始分析', exact: true })).toBeVisible()
 })
 
-test('真实本地 Git：选择决策树、等待完成、审查计划和刷新', async ({ page }, info) => {
+test('真实本地 Git：选择决策树、等待完成、打开提交详情和刷新', async ({ page }, info) => {
   test.setTimeout(180000)
   // The disposable local Git source is registered through the API; public forms remain HTTP(S)-only.
   const created = await page.request.post('/api/v1/repositories', { data: { repositoryUrl: REPOSITORY.replaceAll('\\', '/') } })
@@ -62,14 +62,14 @@ test('真实本地 Git：选择决策树、等待完成、审查计划和刷新'
   await first.click()
   const detail = page.getByRole('dialog', { name: '提交详情' })
   await expect(detail).toBeVisible()
-  await detail.getByRole('button', { name: '加入审查计划' }).click()
+  await expect(detail.getByText('模型分数', { exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
-  await page.getByRole('button', { name: /^审查计划/ }).click()
-  await expect(page.getByRole('button', { name: `从计划移除 ${sha}` })).toBeVisible()
+  await expect(detail).not.toBeVisible()
+  await expect(page.getByRole('button', { name: `查看 ${sha}` })).toBeVisible()
   const pinned = page.url()
   await page.reload()
   await expect(page).toHaveURL(pinned)
-  await expect(page.getByRole('button', { name: `从计划移除 ${sha}` })).toBeVisible()
+  await expect(page.getByRole('button', { name: `查看 ${sha}` })).toBeVisible()
   await noOverflow(page)
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/review-${info.project.name}.png`, fullPage: true })
   await page.getByRole('button', { name: /^返回项目 / }).click()

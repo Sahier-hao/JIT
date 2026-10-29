@@ -1,4 +1,5 @@
-"""Persistent per-repository monitoring; each changed HEAD creates a separate analysis."""
+"""Persistent per-repository monitoring; a changed HEAD creates a reminder, never an analysis."""
+import json
 import logging
 import re
 import threading
@@ -12,8 +13,7 @@ from .repository_probe import probe_repository
 from .sync import PROGRESS
 
 LOGGER = logging.getLogger('jit.catalog')
-FIELDS = {'enabled': 'enabled', 'branch': 'branch', 'modelId': 'model_id', 'intervalSeconds': 'interval_seconds',
-          'windowDays': 'window_days', 'commitLimit': 'commit_limit'}
+FIELDS = {'enabled': 'enabled', 'branch': 'branch', 'intervalSeconds': 'interval_seconds'}
 
 
 def after(seconds):
@@ -69,10 +69,9 @@ class RepositoryUpdates:
             branch = repository.get('defaultBranch') or 'HEAD'
             if re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', branch):
                 branch = 'HEAD'
-        model_id = (source or {}).get('modelId')
         with self.storage.connection(write=True) as db:
-            db.execute('INSERT OR IGNORE INTO repository_watch(repository_id,branch,model_id) VALUES (?,?,?)',
-                       (repository_id, branch, model_id))
+            db.execute('INSERT OR IGNORE INTO repository_watch(repository_id,branch) VALUES (?,?)',
+                       (repository_id, branch))
             return dict(db.execute('SELECT * FROM repository_watch WHERE repository_id=?', (repository_id,)).fetchone())
 
     def _write(self, repository_id, **fields):
@@ -92,29 +91,23 @@ class RepositoryUpdates:
                             error_code=None if job and job['status'] == 'completed' else ((job or {}).get('error') or {}).get('code') or 'SYNC_INTERRUPTED')
                 row = self._row(repository_id)
             return dict(repositoryId=repository_id, enabled=bool(row['enabled']), branch=row['branch'],
-                        modelId=row['model_id'], intervalSeconds=row['interval_seconds'], status=row['status'],
-                        windowDays=row['window_days'], commitLimit=row['commit_limit'],
+                        intervalSeconds=row['interval_seconds'], status=row['status'],
                         lastAttemptAt=row['last_attempt_at'], lastCheckedAt=row['last_checked_at'],
                         nextCheckAt=row['next_check_at'] if row['enabled'] else None, remoteHead=row['remote_head'],
-                        resolvedBranch=row['resolved_branch'], syncId=row['sync_id'], errorCode=row['error_code'])
+                        resolvedBranch=row['resolved_branch'], errorCode=row['error_code'])
 
     def configure(self, repository_id, payload):
         if not isinstance(payload, dict) or not payload or set(payload) - set(FIELDS):
             raise BaselineError('INPUT_INVALID', '更新设置无效')
         if ('enabled' in payload and not isinstance(payload['enabled'], bool)
                 or 'branch' in payload and not valid_branch(payload['branch'])
-                or 'intervalSeconds' in payload and (type(payload['intervalSeconds']) is not int or not 300 <= payload['intervalSeconds'] <= 86400)
-                or 'windowDays' in payload and (type(payload['windowDays']) is not int or not 1 <= payload['windowDays'] <= 3650)
-                or 'commitLimit' in payload and (type(payload['commitLimit']) is not int or not 1 <= payload['commitLimit'] <= 5000)
-                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())):
+                or 'intervalSeconds' in payload and (type(payload['intervalSeconds']) is not int or not 300 <= payload['intervalSeconds'] <= 86400)):
             raise BaselineError('INPUT_INVALID', '更新设置无效')
         with self.lock:
             row = self._row(repository_id)
-            changing_source = any(key in payload and payload[key] != row[FIELDS[key]] for key in ('branch', 'modelId', 'windowDays', 'commitLimit'))
+            changing_source = 'branch' in payload and payload['branch'] != row['branch']
             if changing_source and (self.get(repository_id)['status'] in ('checking', 'analyzing')):
                 raise BaselineError('CONFLICT_ACTIVE_SYNC', '更新进行中，请稍后修改分支或模型')
-            if 'modelId' in payload:
-                self.service._generic_model(payload['modelId'])
             fields = {FIELDS[key]: value for key, value in payload.items()}
             if changing_source:
                 fields.update(status='idle', sync_id=None, remote_head=None, resolved_branch=None,
@@ -125,7 +118,7 @@ class RepositoryUpdates:
             return self.get(repository_id)
 
     def enroll(self, repository_id):
-        """New UI projects prepare an initial result; old projects remain opt-in."""
+        """Enable reminders for a repository; this never starts an analysis."""
         self.configure(repository_id, {'enabled': True})
         return self.request(repository_id)
 
@@ -163,37 +156,35 @@ class RepositoryUpdates:
                     raise
         return count
 
+    def _branch_event(self, db, repository_id, event):
+        head, branch, previous = event['head'], event['branch'], event['previousHead']
+        key = f'branch:{repository_id}:{branch}:{head}'
+        message = (f'检测到 {branch} 的新 HEAD {head[:12]}；上次分析停在 {previous[:12]}。'
+                   if previous else f'检测到 {branch} 的 HEAD {head[:12]}，项目还没有分析结果。')
+        db.execute('INSERT OR IGNORE INTO project_event'
+                   '(id,repository_id,kind,dedupe_key,number,snapshot_id,sync_id,model_id,title,message,payload_json,created_at) '
+                   'VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                   (str(uuid.uuid5(uuid.NAMESPACE_URL, key)), repository_id, 'branch-updated', key,
+                    None, None, None, None, f'{branch} 有新提交', message,
+                    json.dumps(event, ensure_ascii=False), utc_now()))
+
     def _check(self, repository_id, token):
-        error, fields = None, {}
+        error, fields, event = None, {}, None
         try:
             row = self._row(repository_id)
             if row['check_token'] != token:
                 return
             self._write(repository_id, lease_until=after(120))
             repo = self.service.sync.repository_get(repository_id)
-            model_id = row['model_id'] or self.service.catalog.default_model_id()
-            if not model_id:
-                raise BaselineError('DEFAULT_MODEL_REQUIRED', '请设置或选择仓库更新模型')
-            self._write(repository_id, model_id=model_id)
-            self.service._generic_model(model_id)
             result = self.probe(repo['url'], row['branch'], self.stop)
             if self.stop.is_set():
                 raise BaselineError('SYNC_INTERRUPTED', '检查已停止')
-            fields.update(last_checked_at=utc_now(), remote_head=result['head'], resolved_branch=result['branch'])
-            previous = self.service.sync.get(row['sync_id']) if row['sync_id'] else None
-            if (previous and previous['status'] == 'completed' and previous.get('headCommit') == result['head']
-                    and previous.get('modelId') == model_id):
-                fields['status'] = 'up-to-date'
-            else:
-                with self.service._lock:
-                    if self._row(repository_id)['check_token'] != token:
-                        return
-                    if self.service.sync.repository_active(repository_id):
-                        raise BaselineError('CONFLICT_ACTIVE_SYNC', '项目已有进行中的分析')
-                    job, _ = self.service.create(dict(repositoryUrl=repo['url'], branch=result['branch'],
-                                                      strategy='generic-model', modelId=model_id, commitLimit=row['commit_limit'],
-                                                      since=(datetime.now(timezone.utc) - timedelta(days=row['window_days'])).date().isoformat()))
-                fields.update(status='analyzing', sync_id=job['syncId'])
+            analyzed_head = repo.get('headCommit')
+            changed = result['head'] != analyzed_head
+            fields.update(last_checked_at=utc_now(), remote_head=result['head'], resolved_branch=result['branch'],
+                          status='updated' if changed else 'up-to-date', sync_id=None, error_code=None)
+            if changed:
+                event = dict(branch=result['branch'], head=result['head'], previousHead=analyzed_head)
         except BaselineError as exc:
             error = exc.code
         except Exception:
@@ -205,6 +196,8 @@ class RepositoryUpdates:
                     current = db.execute('SELECT * FROM repository_watch WHERE repository_id=? AND check_token=?',
                                          (repository_id, token)).fetchone()
                     if current:
+                        if event is not None:
+                            self._branch_event(db, repository_id, event)
                         fields.update(error_code=error, check_token=None, lease_until=None,
                                       next_check_at=after(current['interval_seconds']) if current['enabled'] else None)
                         if error:

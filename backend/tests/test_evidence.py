@@ -4,6 +4,13 @@ import json
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def isolated_evidence_project(tmp_path, monkeypatch):
+    """把证据相对路径限定在一次性项目内，不放宽生产路径保护。"""
+    from jit_baseline import evidence
+    monkeypatch.setattr(evidence, "PROJECT", tmp_path)
+
+
 def workspace(tmp_path):
     """A run workspace shaped like the real one: evidence plus a fixtures subtree."""
     run = tmp_path / "run"

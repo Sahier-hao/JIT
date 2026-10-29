@@ -40,8 +40,9 @@ export async function intakePR(url: string, state = 'open', page = 1): Promise<P
   if (raw.snapshot) return prepared(raw)
   return { owner: text(raw.owner), name: text(raw.name), repositoryId: text(raw.repositoryId), repositoryUrl: text(raw.repositoryUrl), pullRequests: recordList(raw.pullRequests).map(parseItem), page: integer(raw.page), hasMore: flag(raw.hasMore), checkedAt: text(raw.checkedAt), state: text(raw.state) }
 }
-export async function refreshPR(owner: string, name: string, number: number): Promise<PRPrepared> {
-  const result = prepared(await apiRequest({ path: `/api/v1/pr-sources/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/${number}/refresh`, method: 'POST' }))
+export async function refreshPR(owner: string, name: string, number: number, repositoryId?: string): Promise<PRPrepared> {
+  const result = prepared(await apiRequest({ path: `/api/v1/pr-sources/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/${number}/refresh`, method: 'POST', ...(repositoryId ? { body: { repositoryId } } : {}) }))
+  if (repositoryId && result.snapshot.repositoryId !== repositoryId) contractFailed('PR 基项目与当前项目不一致')
   if (result.snapshot.owner.toLowerCase() !== owner.toLowerCase() || result.snapshot.name.toLowerCase() !== name.toLowerCase() || result.snapshot.number !== number) contractFailed('PR 来源不一致')
   return result
 }

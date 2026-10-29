@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
-import { NewProjectPage } from './NewProjectPage'
+import { NewProjectForm } from './NewProjectForm'
 
 const NOW = '2026-10-22T12:00:00Z'
 function created() {
@@ -16,7 +16,7 @@ afterEach(() => vi.restoreAllMocks())
 it('creates a project from the trimmed url and opens the project page', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(response(created(), 201))
   const navigate = vi.fn()
-  render(<NewProjectPage navigate={navigate}/>)
+  render(<NewProjectForm navigate={navigate}/>)
   const user = userEvent.setup()
   await user.type(screen.getByRole('textbox', { name: '仓库地址' }), '  https://github.com/example/app  ')
   await user.click(screen.getByRole('button', { name: '建立项目' }))
@@ -24,13 +24,13 @@ it('creates a project from the trimmed url and opens the project page', async ()
   const [path, options] = fetch.mock.calls[0]
   expect(String(path)).toBe('/api/v1/repositories')
   expect(options?.method).toBe('POST')
-  expect(JSON.parse(String(options?.body))).toEqual({ repositoryUrl: 'https://github.com/example/app' })
+  expect(JSON.parse(String(options?.body))).toEqual({ repositoryUrl: 'https://github.com/example/app', autoUpdate: false })
 })
 
 it('keeps the input and explains a server rejection', async () => {
   vi.spyOn(globalThis, 'fetch').mockResolvedValue(response({ error: { code: 'INPUT_INVALID', message: '仓库地址需要是公开的 HTTP(S) 地址', requestId: 'request-1', details: [] } }, 422))
   const navigate = vi.fn()
-  render(<NewProjectPage navigate={navigate}/>)
+  render(<NewProjectForm navigate={navigate}/>)
   const user = userEvent.setup()
   const input = screen.getByRole('textbox', { name: '仓库地址' })
   await user.type(input, 'https://github.com/example/app')
@@ -43,7 +43,7 @@ it('keeps the input and explains a server rejection', async () => {
 
 it('rejects a non-http address before calling the api', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch')
-  render(<NewProjectPage navigate={vi.fn()}/>)
+  render(<NewProjectForm navigate={vi.fn()}/>)
   const user = userEvent.setup()
   await user.type(screen.getByRole('textbox', { name: '仓库地址' }), 'github.com/example/app')
   await user.click(screen.getByRole('button', { name: '建立项目' }))

@@ -1,0 +1,277 @@
+{
+  "citation": "由仓库同步采集生成（简化 SZZ）",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1792713600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1784851200
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 19,
+      "commitsInWindow": 8,
+      "excluded": {
+        "empty": 0,
+        "merges": 5,
+        "outsideWindow": 0,
+        "unparsed": 0
+      },
+      "records": 8
+    },
+    "gitVersion": "git version 2.53.0.windows.1",
+    "kind": "git-repository",
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。"
+    ],
+    "repository": {
+      "branch": "HEAD",
+      "head": "5cba295ce74026cb8750eb5ba19094a52c5dff09",
+      "path": "C:\\Users\\荀浩\\AppData\\Local\\Temp\\jit-collect-aw2ih16l\\repository.git",
+      "resolvedBranch": "main"
+    },
+    "szz": {
+      "fixCommits": 0,
+      "labeledCommits": 0,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 0,
+        "outsideWindow": 0
+      }
+    },
+    "window": {
+      "endEpoch": 1792713600,
+      "since": "2026-07-24T00:00:00+00:00",
+      "startEpoch": 1784851200,
+      "until": "2026-10-23T00:00:00+00:00"
+    }
+  },
+  "dataset": "kamei14-git-v1-jit-defect-prediction",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 941,
+    "name": "kamei14-git-v1-jit-defect-prediction-2026-09-17_2026-10-08.csv",
+    "path": "data/datasets/kamei14-git-v1-jit-defect-prediction/kamei14-git-v1-jit-defect-prediction-2026-09-17_2026-10-08.csv",
+    "sha256": "86f5b2526fdfc2e371003137955e6603bab857c852cefa51d13ba4b6afcfc6e4"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 0,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 1
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 7,
+    "positiveLabels": 0,
+    "rawRows": 8
+  },
+  "revision": "5cba295ce74026cb8750eb5ba19094a52c5dff09",
+  "samples": [
+    {
+      "id": "9698f4ab599eac0e8f3da23bf41a01f4f9482484",
+      "time": "2026-09-17T14:18:35Z"
+    },
+    {
+      "id": "0bd2802431c99ba46360087312825596bb799dc9",
+      "time": "2026-09-17T14:57:18Z"
+    },
+    {
+      "id": "487723d67a00277fe04eddcb1216d171788d5c1c",
+      "time": "2026-09-18T04:51:11Z"
+    },
+    {
+      "id": "bb3325c33df658cdbf131e89e2611ef7f49bf68f",
+      "time": "2026-09-18T09:12:28Z"
+    },
+    {
+      "id": "37868b8a396e473eb7c06246e7f18a399ca9605a",
+      "time": "2026-10-08T12:43:19Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v1",
+  "timeRange": {
+    "end": "2026-10-08T12:43:19Z",
+    "endEpoch": 1791463399,
+    "start": "2026-09-17T14:18:35Z",
+    "startEpoch": 1789654715
+  },
+  "url": "https://github.com/Sahier-hao/jit-defect-prediction",
+  "version": "kamei14-git-v1-jit-defect-prediction-2026-09-17_2026-10-08"
+}

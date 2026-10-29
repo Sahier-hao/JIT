@@ -9,7 +9,6 @@ import type { ReactNode } from 'react'
 const drawings = {
   logo: <><path d="m7.5 4.5-4 5.5 4 5.5M12.5 4.5l4 5.5-4 5.5" /></>,
   list: <><rect x="3" y="4.5" width="14" height="11" rx="2" /><path d="M3 9h14M8.5 9v6.5" /></>,
-  shortlist: <><rect x="5" y="3.5" width="10" height="13" rx="2" /><path d="m7.5 8 1 1 1.5-1.5M7.5 12.5l1 1 1.5-1.5" /></>,
   project: <><path d="M3.5 6.5h5l1.5 2h6.5v8h-13z" /><path d="M3.5 6.5v-2h5.5l1.5 2" /></>,
   search: <><circle cx="9" cy="9" r="5" /><path d="m13 13 3.5 3.5" /></>,
   arrow: <><path d="M4 10h12M12 6l4 4-4 4" /></>,

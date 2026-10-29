@@ -50,6 +50,11 @@ export interface SyncError {
 }
 
 export interface SyncView {
+  sourceKind?: string | null
+  featureSchemaVersion?: string | null
+  distributionRule?: string | null
+  sourceSnapshotId?: string | null
+  origin?: string | null
   queuePosition?: number | null
   startedAt?: string | null
   deadlineAt?: string | null
@@ -163,6 +168,11 @@ export function parseSync(value: unknown): SyncView {
   if (queuePosition === 0) contractFailed()
   const timestampOrNull = (value: unknown) => value == null ? null : utcTimestamp(value)
   return {
+    sourceKind: textOrNull(raw.sourceKind),
+    featureSchemaVersion: textOrNull(raw.featureSchemaVersion),
+    distributionRule: textOrNull(raw.distributionRule),
+    sourceSnapshotId: textOrNull(raw.sourceSnapshotId),
+    origin: textOrNull(raw.origin),
     queuePosition,
     startedAt: timestampOrNull(raw.startedAt),
     deadlineAt: timestampOrNull(raw.deadlineAt),

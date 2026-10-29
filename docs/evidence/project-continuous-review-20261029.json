@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-29",
+  "scope": "project workspace, project trends, background PR analysis and in-app notifications",
+  "backend": {
+    "fullPassed": 596,
+    "existingWarnings": 2,
+    "durationSeconds": 235.63
+  },
+  "frontend": {
+    "passed": 326,
+    "files": 42,
+    "durationSeconds": 511.62,
+    "typecheck": "passed",
+    "lintWarnings": 20,
+    "build": "passed",
+    "buildModules": 5236,
+    "buildJsKb": 1323.35,
+    "chunkSizeWarning": true
+  },
+  "browserAcceptance": {
+    "spec": "frontend/e2e/project-workspace.spec.ts",
+    "projects": ["desktop-1440", "mobile-390"],
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "integrationBase": "origin/main fe5588f",
+    "durationSeconds": 19.6
+  },
+  "fixture": {
+    "source": "isolated temporary Git and copied baseline model; GitHub HTTP responses controlled",
+    "repositoryId": "672ebdd5-51ab-51a0-af51-ed3abfafeacd",
+    "modelId": "4a040250-5f52-4097-8a7f-343947576142",
+    "initialBranchSyncId": "81d99a64-9480-4058-aadf-5232263daea5",
+    "initialHead": "cdb7d81f82e39e625af58d4e4f5b0ba8da47f477",
+    "updatedHead": "66b2a21481fb7e7076c9b73b06ce4d60c7e4b889",
+    "commitCount": 27,
+    "pr": "preview/project#1",
+    "forkSource": "preview/fork"
+  },
+  "trends": {
+    "mode": "group",
+    "commitCount": 27,
+    "deduplicatedBySha": true,
+    "unknownBucketsReturnNull": true,
+    "lightFill": "rgb(42, 120, 214)",
+    "darkFill": "rgb(57, 135, 229)",
+    "paletteValidation": "ALL CHECKS PASS (light and dark)",
+    "explicitRefreshKeepsGroupMode": true
+  },
+  "prBackground": {
+    "trackingEnabledWithConfirm": true,
+    "fixedModelAndSnapshot": true,
+    "readyEventBoundToSnapshotAndModel": true,
+    "readStateLocalOnly": true,
+    "privateRoundPreserved": true
+  },
+  "databaseUpgrade": {
+    "localDatabaseVersionAtAcceptance": 12,
+    "localDatabaseUpgradedLater": true,
+    "localDatabaseVersion": 15,
+    "backup": "catalog.sqlite3.before-v12-a160bfc829a9429ea87e3e974290e5ff.sqlite3",
+    "backupBytes": 24584192,
+    "originalTables": 27,
+    "addedTables": 9,
+    "removedTables": 0,
+    "rowDiffs": 0,
+    "integrityCheck": "ok",
+    "foreignKeyViolations": 0,
+    "verifiedMigrations": [13, 14, 15],
+    "backupBeforeUpgrade": "consistent SQLite copy; failure blocks upgrade"
+  },
+  "notValidated": [
+    "real user interviews",
+    "review efficiency",
+    "defect detection effectiveness",
+    "private repositories",
+    "multiuser collaboration",
+    "GitHub writes"
+  ]
+}

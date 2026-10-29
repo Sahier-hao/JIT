@@ -8,7 +8,7 @@ import { ICON_NAMES, Icon } from './Icon'
 describe('图标材料', () => {
   it('图标集覆盖既有 12 个键与新增 8 个键', () => {
     const required = [
-      'logo', 'list', 'shortlist', 'project', 'search', 'arrow',
+      'logo', 'list', 'project', 'search', 'arrow',
       'chevron', 'check', 'plus', 'close', 'info', 'trend',
       'sliders', 'copy', 'external', 'warning', 'collapse', 'filter', 'sort', 'download',
     ]

@@ -4,7 +4,7 @@
  * 项目本身的管理（重命名、删除）放在这一层：进入项目页只做分析相关的事。
  * 卡片整卡可点进入项目页；右上角的管理菜单负责改名与删除。
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Dropdown, Input } from 'antd'
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { EmptyState, LoadingNotice } from '../Feedback'
@@ -15,9 +15,11 @@ import { projectStatus } from '../projectStatus'
 import { useRepositories } from '../repositoryWorkspace'
 import { displayTime } from '../domain'
 import { ACTIVE_STATUSES } from '../repositoryContract'
+import { PersonalWorks } from '../components/PersonalWorks'
+import { NewProjectDialog } from '../components/NewProjectDialog'
 import type { RepositoryView } from '../repositoryWorkspace'
 
-export function ProjectsPage({ navigate }: { navigate: (route: Route) => void }) {
+export function ProjectsPage({ navigate, view = 'projects', createOpen = false }: { navigate: (route: Route, replace?: boolean) => void; view?: 'projects' | 'reviews'; createOpen?: boolean }) {
   const repositories = useRepositories()
   const [menuFor, setMenuFor] = useState('')
   const [renamingId, setRenamingId] = useState('')
@@ -25,6 +27,8 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
   const [confirmingId, setConfirmingId] = useState('')
   const [busy, setBusy] = useState(false)
   const [editorError, setEditorError] = useState('')
+  const [creating, setCreating] = useState(Boolean(createOpen))
+  useEffect(() => { setCreating(Boolean(createOpen)) }, [createOpen])
 
   const items = repositories.items
   const commits = items.reduce((sum, item) => sum + item.commitCount, 0)
@@ -86,11 +90,16 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
   return <section className="projects-page">
     <header className="page-heading">
       <div>
-        <h1>项目</h1>
-        <p className="page-intro">接入一个仓库，从一次分析开始安排下一次审查。</p>
+        <h1>{view === 'reviews' ? '我的审查' : '项目'}</h1>
+        <p className="page-intro">{view === 'reviews' ? '跨项目查看你的个人审查；草稿、问题和进度只保存在当前浏览器。' : '接入一个仓库，从一次分析开始安排下一次审查。'}</p>
       </div>
-      <Button aria-label="新建项目" type="primary" icon={<PlusOutlined/>} onClick={() => navigate({ name: 'sources' })}>新建项目</Button>
+      {view === 'projects' ? <Button aria-label="新建项目" type="primary" icon={<PlusOutlined/>} onClick={() => setCreating(true)}>新建项目</Button> : null}
     </header>
+    <nav className="project-tabs" aria-label="项目与个人工作">
+      <Button type="text" aria-current={view === 'projects' ? 'page' : undefined} onClick={() => navigate({ name: 'repositories' })}>项目</Button>
+      <Button type="text" aria-current={view === 'reviews' ? 'page' : undefined} onClick={() => navigate({ name: 'my-reviews' })}>我的审查</Button>
+    </nav>
+    {view === 'reviews' ? <PersonalWorks navigate={navigate}/> : <>
     {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry}>重新加载</Button></EmptyState> : items.length ? <>
       <div className="section-label"><span>全部项目</span><span>{items.length} 个项目 · {commits.toLocaleString()} 个已分析提交{high ? ` · ${high.toLocaleString()} 个高风险` : ''}{running ? ` · ${running} 个正在分析` : ''}</span></div>
       <div className="project-grid">{items.map(repo => {
@@ -139,8 +148,10 @@ export function ProjectsPage({ navigate }: { navigate: (route: Route) => void })
       <div className="onboarding-graphic" aria-hidden="true"><span/><Icon name="project" size={38}/><span/></div>
       <h2>从一个仓库开始</h2>
       <p>接入仓库后自动准备首次分析，并持续跟进新提交；结果与审查记录会一直保留。</p>
-      <Button aria-label="新建项目" type="primary" size="large" icon={<PlusOutlined/>} onClick={() => navigate({ name: 'sources' })}>新建项目</Button>
+      <Button aria-label="新建项目" type="primary" size="large" icon={<PlusOutlined/>} onClick={() => setCreating(true)}>新建项目</Button>
       <div className="onboarding-steps"><span><b>01</b> 接入仓库</span><span><b>02</b> 自动分析</span><span><b>03</b> 安排审查</span></div>
     </div>}
+    </>}
+    <NewProjectDialog open={creating} onOpenChange={next => { setCreating(next); if (!next && createOpen) navigate({ name: 'repositories' }, true) }} navigate={navigate}/>
   </section>
 }

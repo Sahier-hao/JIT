@@ -19,6 +19,9 @@ export class ContractError extends Error {
 export interface ApiErrorDetail {
   field: string
   reason: string
+  commitId?: string
+  sourceSyncIds?: string[]
+  conflictingFields?: string[]
 }
 
 /** 服务端按统一错误体返回的失败：code/message/requestId 可直接展示，details 可定位字段。 */

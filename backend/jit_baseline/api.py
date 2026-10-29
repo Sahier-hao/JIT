@@ -28,10 +28,12 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @asynccontextmanager
     async def lifespan(app):
         app.state.updates.start()
+        app.state.pr_updates.start()
         try:
             yield
         finally:
             from starlette.concurrency import run_in_threadpool
+            await run_in_threadpool(app.state.pr_updates.close)
             await run_in_threadpool(app.state.updates.close)
             if owns_sync:
                 await run_in_threadpool(app.state.sync.close)
@@ -77,14 +79,76 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from .pr_review import PullRequestReview
     pr_review = PullRequestReview(sync_service)
     app.state.pr_review = pr_review
+    from .pr_updates import PullRequestUpdates
+    from .project_trends import ProjectTrendService
+    from .repository_overview import RepositoryOverview
+    pr_updates = PullRequestUpdates(sync_service, pr_review)
+    app.state.pr_updates = pr_updates
+    project_trends = ProjectTrendService(sync_service)
+    app.state.project_trends = project_trends
+    repository_overview = RepositoryOverview(sync_service)
+    app.state.repository_overview = repository_overview
+
+    @app.get('/api/v1/project-events')
+    def project_events(limit: int = 20, offset: int = 0):
+        return pr_updates.events(limit=limit, offset=offset)
+
+    @app.get('/api/v1/repositories/{repository_id}/overview')
+    async def repository_overview_route(repository_id: str, refresh: bool = False):
+        return await run_in_threadpool(repository_overview.get, repository_id, refresh=refresh)
+
+    @app.get('/api/v1/repositories/{repository_id}/events')
+    def repository_events(repository_id: str, limit: int = 20, offset: int = 0):
+        return pr_updates.events(repository_id, limit=limit, offset=offset)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-requests')
+    def repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
+        return pr_updates.list_prs(repository_id, state=state, page=page)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-requests/refresh')
+    def refresh_repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
+        return pr_updates.refresh_list(repository_id, state=state, page=page)
+
+    @app.get('/api/v1/repositories/{repository_id}/pr-tracking')
+    def pr_tracking(repository_id: str):
+        return pr_updates.get(repository_id)
+
+    @app.patch('/api/v1/repositories/{repository_id}/pr-tracking')
+    async def configure_pr_tracking(repository_id: str, request: Request):
+        return await run_in_threadpool(pr_updates.configure, repository_id, await read_object(request))
+
+    @app.post('/api/v1/repositories/{repository_id}/pr-tracking/check')
+    def check_project_pull_requests(repository_id: str):
+        return JSONResponse(pr_updates.request(repository_id), status_code=202)
+
+    @app.get('/api/v1/repositories/{repository_id}/trend-groups')
+    def project_trend_groups(repository_id: str):
+        return project_trends.groups(repository_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/trend-views')
+    async def create_project_trend_view(repository_id: str, request: Request):
+        return await run_in_threadpool(project_trends.create, repository_id, await read_object(request))
+
+    @app.get('/api/v1/repositories/{repository_id}/trend-views/{view_id}')
+    def project_trend_view(repository_id: str, view_id: str):
+        return project_trends.get(repository_id, view_id)
+
+    @app.get('/api/v1/repositories/{repository_id}/trend-views/{view_id}/commits')
+    def project_trend_commits(repository_id: str, view_id: str, limit: int = 50, offset: int = 0,
+                             start: str | None = None, end: str | None = None):
+        return project_trends.commits(repository_id, view_id, limit=limit, offset=offset, start=start, end=end)
 
     @app.post('/api/v1/review-sources')
     async def review_source(request: Request):
         return await run_in_threadpool(pr_review.intake, await read_object(request))
 
     @app.post('/api/v1/pr-sources/{owner}/{name}/{number}/refresh')
-    def refresh_pull_request(owner: str, name: str, number: int):
-        return pr_review.refresh(owner, name, number)
+    async def refresh_pull_request(owner: str, name: str, number: int, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'repositoryId'} or 'repositoryId' in payload and not isinstance(payload['repositoryId'], str):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_review.refresh, owner, name, number, payload.get('repositoryId'))
 
     @app.get('/api/v1/pr-snapshots/{snapshot_id}')
     def pull_request_snapshot(snapshot_id: str):
@@ -103,8 +167,6 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return await run_in_threadpool(pr_review.analyze, snapshot_id, await read_object(request))
     from .repository_explanation import RepositoryExplanationService
     explanation_service = RepositoryExplanationService(sync_service, catalog)
-    from .review_plan import ReviewPlanService, read_plan
-    review_plan_service = ReviewPlanService(sync_service)
     from .analysis_comparison import AnalysisComparisonService
     comparison_service = AnalysisComparisonService(sync_service)
     from fastapi.exceptions import RequestValidationError
@@ -307,10 +369,6 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
     def generate_repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
         return explanation_service.generate(repository_id, commit_id, viewSyncId)
-
-    @app.post('/api/v1/repositories/{repository_id}/review-plan/validate')
-    async def validate_review_plan(repository_id: str, request: Request, viewSyncId: str):
-        return await run_in_threadpool(review_plan_service.validate, repository_id, viewSyncId, await read_plan(request))
 
     @app.get('/api/v1/repositories/{repository_id}/comparison')
     def compare_repository_analyses(repository_id: str, baseSyncId: str, targetSyncId: str,

@@ -17,6 +17,8 @@ API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models'}
 MESSAGES = {
+    'TREND_SOURCE_CONFLICT': '同一提交的保存观测存在冲突，不能直接拼接；请选择单次固定分析',
+    'TREND_SOURCE_UNAVAILABLE': '固定趋势来源已删除或内容发生变化，原视图不可用；请明确重新生成',
     'PR_SOURCE_UNAVAILABLE': '无法读取公开 GitHub PR 或原版本，请检查来源和网络后重试；已有草稿仍可保留',
     'PR_RATE_LIMITED': 'GitHub 请求受限，请稍后重试；旧版本和草稿保持不变',
     'PR_VERSION_CHANGED': '读取期间 PR 版本发生变化，请重新检查；旧版本保持不变',
@@ -52,11 +54,8 @@ MESSAGES = {
     'CONFLICT_ACTIVE_SYNC': '还有进行中的分析，请等待结束后再操作',
     'SYNC_NOT_ACTIVE': '该分析已经结束，请刷新记录；已有结果保持不变',
     'SYNC_SERVICE_STOPPING': '分析服务正在停止，请稍后重试',
-    'REVIEW_PLAN_CONTEXT_MISMATCH': '计划备份不属于当前固定分析，项目、分析、数据或模型来源不一致；原计划保持不变',
-    'REVIEW_PLAN_COMMIT_UNKNOWN': '计划包含不在该分析中的提交，未接受任何条目；原计划保持不变',
-    'REVIEW_PLAN_LIMIT_EXCEEDED': '计划备份不能超过 1 MiB 或 5000 个提交',
 }
-STATUS = {'NOT_FOUND': 404,
+STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,
           'PR_SOURCE_UNAVAILABLE': 502, 'PR_RATE_LIMITED': 429, 'PR_VERSION_CHANGED': 409,
           'PR_SOURCE_TOO_LARGE': 413, 'PR_CONTENT_UNAVAILABLE': 422,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
@@ -66,9 +65,7 @@ STATUS = {'NOT_FOUND': 404,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'REPOSITORY_CHECK_TIMEOUT': 504, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
           'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
-          'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503,
-          'REVIEW_PLAN_CONTEXT_MISMATCH': 409, 'REVIEW_PLAN_COMMIT_UNKNOWN': 422,
-          'REVIEW_PLAN_LIMIT_EXCEEDED': 413}
+          'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503}
 
 
 class RequestError(BaselineError):
@@ -78,13 +75,16 @@ class RequestError(BaselineError):
 
 
 def managed_path(path):
+    if path == '/api/v1/project-events' or re.fullmatch(
+            r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/refresh)?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?)', path):
+        return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
     return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|review-plan/validate|comparison))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|comparison))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

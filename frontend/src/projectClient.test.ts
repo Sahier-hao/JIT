@@ -84,7 +84,7 @@ describe('createRepository', () => {
     })
     expect(fetch.mock.calls[0][0]).toBe('/api/v1/repositories')
     expect(fetch.mock.calls[0][1]?.method).toBe('POST')
-    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ repositoryUrl: 'https://github.com/octo/example' })
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ repositoryUrl: 'https://github.com/octo/example', autoUpdate: false })
 
     fetch.mockResolvedValue(json(REPOSITORY, 200))
     await expect(createRepository('https://github.com/octo/example')).resolves.toMatchObject({ created: false })

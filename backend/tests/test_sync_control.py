@@ -219,7 +219,7 @@ def test_migration_preserves_v8_rows_children_model_identity_and_foreign_keys(tm
     storage.initialize()
     with storage.connection() as db:
         assert tuple(db.execute('SELECT * FROM repository_sync').fetchone())[:len(before)] == before
-        assert [tuple(row) for row in db.execute('SELECT * FROM repository_commit')] == children
+        assert [tuple(row)[:len(children[0])] for row in db.execute('SELECT * FROM repository_commit')] == children
         assert db.execute('PRAGMA foreign_key_check').fetchall() == []
-        assert db.execute('SELECT version FROM schema_migration').fetchone()[0] == 12
+        assert db.execute('SELECT version FROM schema_migration').fetchone()[0] == MIGRATIONS[-1][0]
         assert db.execute('SELECT count(*) FROM repository_watch').fetchone()[0] == 0

@@ -8,6 +8,256 @@ tags:
 - name: 现有历史回放
 - name: 目标共享产品
 paths:
+  /api/v1/project-events:
+    get:
+      operationId: listProjectEvents
+      summary: 跨项目的持久站内事件
+      description: 只返回公开来源与任务事实；已读、笔记和个人结论仍由当前浏览器保存。
+      security: []
+      tags: [目标共享产品]
+      parameters:
+      - $ref: '#/components/parameters/EventLimit'
+      - $ref: '#/components/parameters/ProjectOffset'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectEvents'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/events:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    get:
+      operationId: listRepositoryEvents
+      summary: 当前项目的持久站内事件
+      security: []
+      tags: [目标共享产品]
+      parameters:
+      - $ref: '#/components/parameters/EventLimit'
+      - $ref: '#/components/parameters/ProjectOffset'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectEvents'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-requests:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - $ref: '#/components/parameters/ProjectPRState'
+    - $ref: '#/components/parameters/ProjectPRPage'
+    get:
+      operationId: listRepositoryPullRequests
+      summary: 读取项目已缓存的公开 PR 清单
+      description: GET 不访问远端、不补建设置。checkedAt 是该页成功缓存时间；未缓存或不支持的项目诚实返回空页，不将缺页解释为 PR 已关闭。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectPullRequests'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-requests/refresh:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - $ref: '#/components/parameters/ProjectPRState'
+    - $ref: '#/components/parameters/ProjectPRPage'
+    post:
+      operationId: refreshRepositoryPullRequests
+      summary: 显式刷新项目公开 PR 清单的一页
+      description: 服务端校验基项目与公开 GitHub 身份。远端失败返回保留的缓存及 errorCode，不将缓存失败伪装成新鲜完整清单；非 GitHub 返回 supported=false。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectPullRequests'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pr-tracking:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    get:
+      operationId: getProjectPRTracking
+      summary: 项目 PR 自动跟踪设置与实际检查状态
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          $ref: '#/components/responses/PRTracking'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+    patch:
+      operationId: configureProjectPRTracking
+      summary: 显式启停项目 PR 自动分析并固定模型
+      description: 首次开启须 confirmExisting=true，确认分析当前开放非草稿 PR；旧项目默认关闭。暂停不取消已提交分析。模型身份固定，不随管理员默认切换；检查中不能切换模型。
+      security: []
+      tags: [目标共享产品]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PRTrackingUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/PRTracking'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '413':
+          $ref: '#/components/responses/InputLimitExceeded'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '502':
+          $ref: '#/components/responses/RepositoryUnavailable'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pr-tracking/check:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    post:
+      operationId: checkProjectPullRequests
+      summary: 请求立即检查公开 PR，复用在途检查及限流等待
+      description: 返回202与当前设置。未开启自动分析时仅刷新来源，不隐式开启；不支持的项目仍返回 supported=false，不提交分析。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '202':
+          $ref: '#/components/responses/PRTracking'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/trend-groups:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    get:
+      operationId: listProjectTrendGroups
+      summary: 项目成功分支分析的可比口径
+      description: 按项目、分支、模型及运行、特征 schema 和分档规则分组，不按 datasetVersion 切组。PR、用途未知和元数据不足的来源不参与跨分析拼接；创建时另行校验重叠观测冲突。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 可比口径与固定来源候选
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/ProjectRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTrendGroups'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/trend-views:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    post:
+      operationId: createProjectTrendView
+      summary: 准备可重开的固定项目趋势视图
+      description: 同来源指纹与查询复用viewId，不复制分数。冲突拒绝整组；可显式 sourceSyncId 查看单次成功分支或旧unknown来源。默认UTC+08:00最近90天、周粒度，end右开，最多3660桶；仅一个可比组时可省略选择器。
+      security: []
+      tags: [目标共享产品]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectTrendCreate'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectTrend'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '413':
+          $ref: '#/components/responses/InputLimitExceeded'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/trend-views/{viewId}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - $ref: '#/components/parameters/ProjectTrendViewId'
+    get:
+      operationId: getProjectTrendView
+      summary: 读取已冻结来源的项目趋势
+      description: 验证来源归属、存在性与内容指纹；删除或篡改报409 TREND_SOURCE_UNAVAILABLE，不替换来源。新分析只提示hasNewSources，不让正在阅读的视图漂移。数量仅表示保存分析覆盖，不代表完整仓库；未证明覆盖的空桶为null。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          $ref: '#/components/responses/ProjectTrend'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/trend-views/{viewId}/commits:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - $ref: '#/components/parameters/ProjectTrendViewId'
+    get:
+      operationId: listProjectTrendCommits
+      summary: 固定来源和日期桶内的去重提交下钻
+      description: risk降序、epoch降序、SHA升序，未评分排最后。日期只能缩小固定视图范围，start左闭、end右开；分页不引入后来分析或视图范围外的提交。
+      security: []
+      tags: [目标共享产品]
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      - $ref: '#/components/parameters/ProjectOffset'
+      - name: start
+        in: query
+        schema:
+          $ref: '#/components/schemas/ProjectTrendDate'
+      - name: end
+        in: query
+        schema:
+          $ref: '#/components/schemas/ProjectTrendDate'
+      responses:
+        '200':
+          description: 固定来源的风险排序分页
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/ProjectRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTrendCommitPage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/review-sources:
     post:
       operationId: preparePublicPRSource
@@ -82,7 +332,17 @@ paths:
     post:
       operationId: refreshPublicPR
       summary: 检查 PR 基准、目标和远端状态
-      description: 相同代码身份复用保存快照；新版本独立保存。继承关系不可读取时明确 unknown，失败不修改旧来源。
+      description: 相同代码身份复用保存快照；新版本独立保存。继承关系不可读取时明确 unknown，失败不修改旧来源。可指定已登记基项目，服务端校验其与 PR 目标仓库身份一致，不为 fork 新建项目。
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                repositoryId:
+                  $ref: '#/components/schemas/Uuid'
       security: []
       tags:
       - 目标共享产品
@@ -357,6 +617,10 @@ paths:
               properties:
                 modelId:
                   $ref: '#/components/schemas/Uuid'
+                retry:
+                  type: boolean
+                  default: false
+                  description: 显式重试同一固定来源与模型的失败、中断或取消意图；不自动换模型。
               required: []
   /api/review-batch:
     get:
@@ -1528,6 +1792,36 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 一条仓库代表一个规范化地址；同一地址的多次同步归到这里，`viewSyncId` 指向当前视图来自哪一次成功作业。
       security: []
+  /api/v1/repositories/{repositoryId}/overview:
+    get:
+      operationId: repositoryOverview
+      summary: 读取公开 GitHub 仓库概览
+      security: []
+      tags: [目标共享产品]
+      description: 只读公开 GitHub 元数据、语言、最近 100 条提交与最近 12 周活跃度；服务端缓存约 10 分钟。限流或失败时返回缓存或原因；不读标签、不跑模型。
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: refresh
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: 仓库概览或可读的失败/缓存状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryOverview'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/updates:
     parameters:
     - name: repositoryId
@@ -1553,10 +1847,10 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
     patch:
       operationId: configureRepositoryUpdates
-      summary: 保存检查开关、分支、固定模型或频率
+      summary: 保存提醒开关、分支或频率
       security: []
       tags: [目标共享产品]
-      description: 设置保存在服务端。新旧结果、原任务和计划均保留；开启后到期检查，关闭不取消已开始的分析。进行中不能切换分支或模型。首次检查绑定默认模型，之后不随默认模型改变。
+      description: 设置保存在服务端。开启后只检查新提交并写站内提醒，不会自动创建分析；关闭不取消已开始的分析。检查只依赖分支和频率，分析模型与范围由用户发起分析时选择。
       requestBody:
         required: true
         content:
@@ -1573,22 +1867,10 @@ paths:
                   minLength: 1
                   maxLength: 200
                   description: HEAD 跟随远端默认分支；其他值为分支名
-                modelId:
-                  type: string
-                  minLength: 1
-                  description: 真实、兼容且已启用的登记模型
                 intervalSeconds:
                   type: integer
                   minimum: 300
                   maximum: 86400
-                windowDays:
-                  type: integer
-                  minimum: 1
-                  maximum: 3650
-                commitLimit:
-                  type: integer
-                  minimum: 1
-                  maximum: 5000
       responses:
         '200':
           description: 已保存设置
@@ -1607,10 +1889,10 @@ paths:
   /api/v1/repositories/{repositoryId}/refresh:
     post:
       operationId: refreshRepository
-      summary: 立即检查仓库并在新 HEAD 时创建分析
+      summary: 立即检查仓库并在新 HEAD 时提醒
       security: []
       tags: [目标共享产品]
-      description: 请求立即返回，由服务端执行检查。重复点击复用检查或分析；无新 HEAD 且原更新分析成功时不新建记录；失败可重新检查同一 HEAD。分析采用固定模型、滚动最近90天及最多500个提交，不自动训练。
+      description: 请求立即返回，由服务端执行检查。重复点击复用检查；发现新 HEAD 时只写站内提醒，不创建分析。分析由用户主动发起并选择模型、范围。
       parameters:
       - name: repositoryId
         in: path
@@ -1875,47 +2157,6 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
-  /api/v1/repositories/{repositoryId}/review-plan/validate:
-    post:
-      operationId: validatePortableReviewPlan
-      summary: 核对固定分析的个人计划备份，不保存共享计划
-      description: 整份核对项目、分析、数据版本、模型、运行和提交归属，保留条目顺序；拒绝未知或重复条目，不加载模型、不运行推理、不修改分析。请求流最多 1 MiB，计划最多 5000 条。
-      x-implementation-status: implemented
-      security: []
-      parameters:
-      - name: repositoryId
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/Uuid'
-      - name: viewSyncId
-        in: query
-        required: true
-        schema:
-          $ref: '#/components/schemas/Uuid'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PortableReviewPlan'
-      responses:
-        '200':
-          description: 完整核对的同一计划。仅返回引用，分数从原分析读取。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PortableReviewPlan'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: REVIEW_PLAN_CONTEXT_MISMATCH 或指定分析尚未成功，原计划不变。
-        '413':
-          description: REVIEW_PLAN_LIMIT_EXCEEDED，请求超过 1 MiB 或条目超过 5000。
-        '422':
-          description: INPUT_INVALID 或 REVIEW_PLAN_COMMIT_UNKNOWN，整份拒绝。
-        '503':
-          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/comparison:
     get:
       operationId: compareSavedRepositoryAnalyses
@@ -2131,7 +2372,111 @@ paths:
                 $ref: '#/components/schemas/ModelChoiceList'
 components:
   schemas:
-    PRSummary:
+    ProjectEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        eventId:
+          $ref: '#/components/schemas/Uuid'
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        kind:
+          type: string
+          enum: [pr-discovered, pr-initial-summary, pr-updated, pr-closed, pr-merged, pr-analysis-ready, pr-analysis-failed]
+        createdAt:
+          type: string
+          format: date-time
+        title:
+          type: string
+        message:
+          type: string
+        owner:
+          type: string
+        name:
+          type: string
+        number:
+          type: integer
+          minimum: 1
+        snapshotId:
+          type: string
+        syncId:
+          type: string
+        modelId:
+          type: string
+        isCurrent:
+          type: boolean
+          description: 读取时快照与自动跟踪模型仍匹配当前缓存，不冒充个人复核状态。
+        discoveredCount:
+          type: integer
+          minimum: 0
+        eligibleCount:
+          type: integer
+          minimum: 0
+        maxDeepChecks:
+          const: 20
+        highScoreCount:
+          type: integer
+          minimum: 0
+        scoredCount:
+          type: integer
+          minimum: 0
+        totalCommits:
+          type: integer
+          minimum: 0
+        coverageComplete:
+          type: boolean
+        filesComplete:
+          type: boolean
+        distributionRule:
+          const: repo-distribution-v1
+        errorCode:
+          type: string
+      required: [eventId, repositoryId, kind, createdAt, title, message]
+      allOf:
+      - if:
+          properties:
+            kind:
+              const: pr-initial-summary
+        then:
+          required: [discoveredCount, eligibleCount, maxDeepChecks]
+      - if:
+          properties:
+            kind:
+              const: pr-analysis-ready
+        then:
+          required: [number, snapshotId, syncId, modelId, isCurrent, highScoreCount, scoredCount, totalCommits, coverageComplete, filesComplete, distributionRule]
+      - if:
+          properties:
+            kind:
+              const: pr-analysis-failed
+        then:
+          required: [number, snapshotId, modelId, errorCode]
+      - if:
+          properties:
+            kind:
+              enum: [pr-discovered, pr-updated, pr-closed, pr-merged]
+        then:
+          required: [number]
+    ProjectEventPage:
+      type: object
+      additionalProperties: false
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectEvent'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+      required: [events, total, limit, offset]
+    ProjectPullRequest:
       type: object
       additionalProperties: false
       properties:
@@ -2150,6 +2495,478 @@ components:
           format: date-time
         remoteState:
           type: string
+          enum: [open, closed, merged]
+        draft:
+          type: boolean
+        snapshotId:
+          type: string
+        analysisStatus:
+          type: string
+          enum: [pending, queued, running, backoff, completed, failed, cancelled, interrupted, superseded]
+        modelId:
+          type: string
+        syncId:
+          type: [string, 'null']
+        maxRisk:
+          type: number
+          minimum: 0
+          maximum: 1
+        scoredCommits:
+          type: integer
+          minimum: 0
+      required: [number, title, author, url, updatedAt, remoteState, draft]
+    ProjectPullRequestPage:
+      type: object
+      additionalProperties: false
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        supported:
+          type: boolean
+        owner:
+          type: string
+        name:
+          type: string
+        pullRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectPullRequest'
+        page:
+          type: integer
+          minimum: 1
+          maximum: 100
+        hasMore:
+          type: boolean
+        checkedAt:
+          type: [string, 'null']
+          format: date-time
+        publicOnly:
+          const: true
+        discoveryComplete:
+          type: boolean
+        errorCode:
+          type: [string, 'null']
+      required: [repositoryId, supported, pullRequests, page, hasMore, checkedAt, publicOnly, discoveryComplete]
+      allOf:
+      - if:
+          properties:
+            supported:
+              const: true
+        then:
+          required: [owner, name]
+    PRTrackingUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        enabled:
+          type: boolean
+        modelId:
+          type: string
+          minLength: 1
+        intervalSeconds:
+          type: integer
+          minimum: 300
+          maximum: 86400
+        confirmExisting:
+          type: boolean
+          description: 首次开启必须显式为true；此前手动检查不替代此确认。
+    PRTrackingState:
+      type: object
+      additionalProperties: false
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        supported:
+          type: boolean
+        enabled:
+          type: boolean
+        modelId:
+          type: [string, 'null']
+        intervalSeconds:
+          type: integer
+          minimum: 300
+          maximum: 86400
+        status:
+          type: string
+          enum: [idle, checking, unchanged, paused, error]
+        lastCheckedAt:
+          type: [string, 'null']
+          format: date-time
+        nextCheckAt:
+          type: [string, 'null']
+          format: date-time
+        errorCode:
+          type: [string, 'null']
+        retryNotBefore:
+          type: [string, 'null']
+          format: date-time
+        discoveryComplete:
+          type: boolean
+        initialScanComplete:
+          type: boolean
+        publicOnly:
+          const: true
+        maxDeepChecks:
+          const: 20
+        maxAutomaticQueued:
+          const: 2
+        openCachedCount:
+          type: integer
+          minimum: 0
+        eligibleCachedCount:
+          type: integer
+          minimum: 0
+        pendingCount:
+          type: integer
+          minimum: 0
+        discoveryPage:
+          type: integer
+          minimum: 1
+          maximum: 100
+      required: [repositoryId, supported, enabled, modelId, intervalSeconds, status, lastCheckedAt, nextCheckAt, errorCode, retryNotBefore, discoveryComplete, initialScanComplete, publicOnly, maxDeepChecks, maxAutomaticQueued, openCachedCount, eligibleCachedCount, pendingCount, discoveryPage]
+    ProjectTrendDate:
+      type: string
+      format: date
+      pattern: '^\d{4}-\d{2}-\d{2}$'
+    ProjectTrendCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        groupId:
+          type: string
+          minLength: 1
+        sourceSyncId:
+          type: string
+          minLength: 1
+        start:
+          $ref: '#/components/schemas/ProjectTrendDate'
+        end:
+          $ref: '#/components/schemas/ProjectTrendDate'
+        grain:
+          type: string
+          enum: [day, week, month]
+          default: week
+      not:
+        required: [groupId, sourceSyncId]
+    ProjectTrendGroup:
+      type: object
+      additionalProperties: false
+      properties:
+        groupId:
+          type: [string, 'null']
+          description: 旧用途未知的显式单来源没有跨分析组标识。
+        branch:
+          type: string
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        featureSchemaVersion:
+          type: [string, 'null']
+        distributionRule:
+          type: [string, 'null']
+        sourceSyncIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+      required: [groupId, branch, modelId, runId, featureSchemaVersion, distributionRule, sourceSyncIds]
+    ProjectTrendGroups:
+      type: object
+      additionalProperties: false
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        groups:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ProjectTrendGroup'
+            - properties:
+                groupId:
+                  type: string
+                modelId:
+                  type: string
+                runId:
+                  type: string
+                featureSchemaVersion:
+                  type: string
+                distributionRule:
+                  type: string
+        limitations:
+          type: array
+          items:
+            type: string
+      required: [repositoryId, groups, limitations]
+    ProjectTrendSource:
+      type: object
+      additionalProperties: false
+      properties:
+        syncId:
+          type: string
+        sourceKind:
+          type: string
+          enum: [branch, unknown]
+        branch:
+          type: string
+        since:
+          type: [string, 'null']
+        until:
+          type: [string, 'null']
+        commitLimit:
+          type: [integer, 'null']
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: [string, 'null']
+          format: date-time
+        headCommit:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        featureSchemaVersion:
+          type: [string, 'null']
+        distributionRule:
+          type: [string, 'null']
+      required: [syncId, sourceKind, branch, since, until, commitLimit, createdAt, completedAt, headCommit, datasetVersion, modelId, runId, featureSchemaVersion, distributionRule]
+    ProjectTrendSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        commitCount:
+          type: integer
+          minimum: 0
+        scoredCount:
+          type: integer
+          minimum: 0
+        unknownCount:
+          type: integer
+          minimum: 0
+        highCount:
+          type: [integer, 'null']
+          minimum: 0
+        highRate:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        riskMean:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        rateReason:
+          type: [string, 'null']
+      required: [commitCount, scoredCount, unknownCount, highCount, highRate, riskMean, rateReason]
+      allOf:
+      - if:
+          properties:
+            scoredCount:
+              maximum: 19
+        then:
+          properties:
+            highRate:
+              type: 'null'
+            rateReason:
+              type: string
+              minLength: 1
+    ProjectTrendBucket:
+      type: object
+      additionalProperties: false
+      properties:
+        start:
+          $ref: '#/components/schemas/ProjectTrendDate'
+        end:
+          $ref: '#/components/schemas/ProjectTrendDate'
+        commitCount:
+          type: [integer, 'null']
+          minimum: 0
+        scoredCount:
+          type: [integer, 'null']
+          minimum: 0
+        unknownCount:
+          type: [integer, 'null']
+          minimum: 0
+        highCount:
+          type: [integer, 'null']
+          minimum: 0
+        highRate:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        riskMean:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 1
+        rateReason:
+          type: [string, 'null']
+        coverage:
+          type: string
+          enum: [observed, unknown]
+      required: [start, end, commitCount, scoredCount, unknownCount, highCount, highRate, riskMean, rateReason, coverage]
+      allOf:
+      - if:
+          properties:
+            coverage:
+              const: unknown
+        then:
+          properties:
+            commitCount:
+              type: 'null'
+            scoredCount:
+              type: 'null'
+            unknownCount:
+              type: 'null'
+            highCount:
+              type: 'null'
+            highRate:
+              type: 'null'
+            riskMean:
+              type: 'null'
+            rateReason:
+              type: string
+              minLength: 1
+        else:
+          properties:
+            commitCount:
+              type: integer
+              minimum: 1
+            scoredCount:
+              type: integer
+            unknownCount:
+              type: integer
+      - if:
+          properties:
+            scoredCount:
+              type: integer
+              maximum: 19
+        then:
+          properties:
+            highRate:
+              type: 'null'
+            rateReason:
+              type: string
+              minLength: 1
+    ProjectTrendView:
+      type: object
+      additionalProperties: false
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewId:
+          $ref: '#/components/schemas/Uuid'
+        mode:
+          type: string
+          enum: [group, single]
+          description: 固定清单保存的来源选择模式；单个来源的可比组仍为 group，不自动改成显式单次分析。
+        group:
+          $ref: '#/components/schemas/ProjectTrendGroup'
+        sourceSyncIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        start:
+          $ref: '#/components/schemas/ProjectTrendDate'
+        end:
+          $ref: '#/components/schemas/ProjectTrendDate'
+        grain:
+          type: string
+          enum: [day, week, month]
+        timezone:
+          const: UTC+08:00
+        minSample:
+          const: 20
+        hasNewSources:
+          type: boolean
+        summary:
+          $ref: '#/components/schemas/ProjectTrendSummary'
+        buckets:
+          type: array
+          minItems: 1
+          maxItems: 3660
+          items:
+            $ref: '#/components/schemas/ProjectTrendBucket'
+        sources:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ProjectTrendSource'
+        limitations:
+          type: array
+          items:
+            type: string
+      required: [repositoryId, viewId, mode, group, sourceSyncIds, createdAt, start, end, grain, timezone, minSample, hasNewSources, summary, buckets, sources, limitations]
+    ProjectTrendCommitPage:
+      type: object
+      additionalProperties: false
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewId:
+          $ref: '#/components/schemas/Uuid'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+        offset:
+          type: integer
+          minimum: 0
+        commits:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              commitId:
+                type: string
+              epoch:
+                type: integer
+              risk:
+                type: [number, 'null']
+                minimum: 0
+                maximum: 1
+              subject:
+                type: [string, 'null']
+              sourceSyncId:
+                type: string
+            required: [commitId, epoch, risk, subject, sourceSyncId]
+      required: [repositoryId, viewId, total, limit, offset, commits]
+    PRSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        number:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        author:
+          type: string
+        url:
+          type: string
+          format: uri
+        updatedAt:
+          type: string
+          format: date-time
+        draft:
+          type: boolean
+          description: 当前公开摘要或快照采集时的草稿状态；旧保存快照可能缺失。
+        remoteState:
+          type: string
           enum:
           - open
           - closed
@@ -2160,6 +2977,7 @@ components:
       - author
       - url
       - updatedAt
+      - draft
       - remoteState
     PRFile:
       type: object
@@ -2213,6 +3031,9 @@ components:
         updatedAt:
           type: string
           format: date-time
+        draft:
+          type: boolean
+          description: 当前公开摘要或快照采集时的草稿状态；旧保存快照可能缺失。
         remoteState:
           type: string
           enum:
@@ -2322,6 +3143,11 @@ components:
       properties:
         snapshot:
           $ref: '#/components/schemas/PRSourceSnapshot'
+        pullRequest:
+          $ref: '#/components/schemas/PRSummary'
+        draft:
+          type: boolean
+          description: 当前公开摘要或快照采集时的草稿状态；旧保存快照可能缺失。
         remoteState:
           type: string
           enum:
@@ -2339,6 +3165,8 @@ components:
       type: object
       additionalProperties: false
       properties:
+        supported:
+          const: true
         owner:
           type: string
         name:
@@ -2376,6 +3204,7 @@ components:
       - hasMore
       - checkedAt
       - state
+      - supported
     PRFileContext:
       type: object
       additionalProperties: false
@@ -2425,6 +3254,25 @@ components:
                 $ref: '#/components/schemas/RepositorySyncView'
               contextValid:
                 type: boolean
+                description: 按 bindingKind 对应口径核对保存任务；历史口径为true不表示已证明新任务的完整快照及模型绑定，须同时阅读bindingLimitations。
+              bindingKind:
+                type: string
+                enum: [snapshot-model-v1, legacy-head-v1]
+                description: 新任务按固定快照、模型及实际HEAD严格绑定；legacy-head-v1仅表示迁移冻结的历史关联与保存HEAD可核对，不补分或重算。
+              bindingLimitations:
+                type: array
+                items:
+                  type: string
+                description: 历史关联尚未冻结的来源或模型上下文限制；不能把旧HEAD结果宣称为具备新任务的完整绑定证明。
+              coverageComplete:
+                type: boolean
+                description: 固定 PR 提交列表完整、按声明的bindingKind核对上下文有效且全部提交已有保存评分；不消除bindingLimitations中的历史证明限制。
+              scoredCommits:
+                type: integer
+                minimum: 0
+              totalCommits:
+                type: integer
+                minimum: 0
               scores:
                 type: array
                 items:
@@ -2437,13 +3285,52 @@ components:
                       type: number
                       minimum: 0
                       maximum: 1
+                    files:
+                      type: array
+                      items:
+                        type: string
+                    addedLines:
+                      type: integer
+                      minimum: 0
+                    deletedLines:
+                      type: integer
+                      minimum: 0
+                    fileCount:
+                      type: integer
+                      minimum: 0
                   required:
                   - commitId
+                  - risk
+                  - files
+                  - addedLines
+                  - deletedLines
+                  - fileCount
+              fileRisks:
+                type: array
+                description: 该分析中 PR 提交触达的文件及其最高提交分数；仅用于排序参考，不是文件级缺陷概率。
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    path:
+                      type: string
+                    risk:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+                  required:
+                  - path
                   - risk
             required:
             - sync
             - contextValid
+            - bindingKind
+            - bindingLimitations
+            - coverageComplete
+            - scoredCommits
+            - totalCommits
             - scores
+            - fileRisks
       required:
       - snapshotId
       - analyses
@@ -3192,13 +4079,20 @@ components:
       - REPOSITORY_ANALYSIS_UNAVAILABLE
       - SYNC_NOT_ACTIVE
       - SYNC_SERVICE_STOPPING
-      - REVIEW_PLAN_CONTEXT_MISMATCH
-      - REVIEW_PLAN_COMMIT_UNKNOWN
-      - REVIEW_PLAN_LIMIT_EXCEEDED
       - SYNC_CANCELLED
       - SYNC_TIMEOUT
       - SYNC_INTERRUPTED
       - SYNC_WORKER_EXITED
+      - TREND_SOURCE_CONFLICT
+      - TREND_SOURCE_UNAVAILABLE
+      - PR_SOURCE_UNAVAILABLE
+      - PR_RATE_LIMITED
+      - PR_VERSION_CHANGED
+      - PR_SOURCE_TOO_LARGE
+      - PR_CONTENT_UNAVAILABLE
+      - REPOSITORY_UNAVAILABLE
+      - REPOSITORY_CHECK_TIMEOUT
+      - CONFLICT_ACTIVE_SYNC
       description: 码名与HTTP／任务语义的唯一文字定义见../全局错误码表.md；枚举含当前HTTP、相关CLI及候选新接口。
     CurrentError:
       type: object
@@ -3228,6 +4122,19 @@ components:
     ErrorDetail:
       type: object
       properties:
+        sourceSyncId:
+          type: [string, 'null']
+        sourceSyncIds:
+          type: array
+          items:
+            type: string
+        commitId:
+          type: string
+        conflictingFields:
+          type: array
+          items:
+            type: string
+            enum: [epoch, features, added_lines, deleted_lines, files, risk]
         recordId:
           type:
           - string
@@ -3846,6 +4753,22 @@ components:
     RepositorySyncView:
       type: object
       properties:
+        sourceKind:
+          type: string
+          enum: [branch, pr, unknown]
+          description: 新普通分析为 branch，PR 专用任务为 pr，无法证明用途的历史记录为 unknown。
+        sourceSnapshotId:
+          type: [string, 'null']
+          format: uuid
+        origin:
+          type: string
+          enum: [manual, automatic]
+        featureSchemaVersion:
+          type: [string, 'null']
+          description: 创建或成功完成时冻结的真实模型特征口径。
+        distributionRule:
+          type: [string, 'null']
+          description: 成功分析冻结的风险分档规则；旧记录可能缺失。
         queuePosition:
           type: [integer, 'null']
           minimum: 1
@@ -3886,13 +4809,13 @@ components:
           type: string
           minLength: 1
         since:
-          type: string
+          type: [string, 'null']
           minLength: 1
         until:
-          type: string
+          type: [string, 'null']
           minLength: 1
         commitLimit:
-          type: integer
+          type: [integer, 'null']
           minimum: 1
           maximum: 5000
         requestedStrategy:
@@ -4000,6 +4923,11 @@ components:
           format: uuid
       required:
       - syncId
+      - sourceKind
+      - sourceSnapshotId
+      - origin
+      - featureSchemaVersion
+      - distributionRule
       - repositoryUrl
       - branch
       - since
@@ -4301,6 +5229,14 @@ components:
     AnalysisContext:
       type: object
       properties:
+        sourceKind:
+          type: string
+          enum: [branch, pr, unknown]
+        sourceSnapshotId:
+          type: [string, 'null']
+          format: uuid
+        featureSchemaVersion:
+          type: [string, 'null']
         repositoryId:
           type: string
         syncId:
@@ -4351,6 +5287,9 @@ components:
       required:
       - repositoryId
       - syncId
+      - sourceKind
+      - sourceSnapshotId
+      - featureSchemaVersion
       - branch
       - completedAt
       - headCommit
@@ -4363,10 +5302,118 @@ components:
       - limitations
       - missingMetadata
       additionalProperties: false
+    RepositoryOverview:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, supported, url, displayName, metadata, languages, activity, activityCoverage, recentCommits, fetchedAt, errorCode, stale, retryAfter]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        supported:
+          type: boolean
+        url:
+          type: string
+        displayName:
+          type: string
+        metadata:
+          type: [object, 'null']
+          additionalProperties: false
+          required: [fullName, description, defaultBranch, private, stars, forks, openIssues, watchers, pushedAt, createdAt, topics, license, homepage, htmlUrl]
+          properties:
+            fullName:
+              type: string
+            description:
+              type: [string, 'null']
+            defaultBranch:
+              type: [string, 'null']
+            private:
+              type: boolean
+            stars:
+              type: integer
+              minimum: 0
+            forks:
+              type: integer
+              minimum: 0
+            openIssues:
+              type: integer
+              minimum: 0
+            watchers:
+              type: integer
+              minimum: 0
+            pushedAt:
+              type: [string, 'null']
+            createdAt:
+              type: [string, 'null']
+            topics:
+              type: array
+              items:
+                type: string
+            license:
+              type: [string, 'null']
+            homepage:
+              type: [string, 'null']
+            htmlUrl:
+              type: string
+        languages:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [name, bytes, percent]
+            properties:
+              name:
+                type: string
+              bytes:
+                type: integer
+                minimum: 0
+              percent:
+                type: number
+                minimum: 0
+                maximum: 100
+        activity:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [weekStart, commits]
+            properties:
+              weekStart:
+                type: string
+              commits:
+                type: integer
+                minimum: 0
+        activityCoverage:
+          type: [string, 'null']
+        recentCommits:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [sha, message, author, date, url]
+            properties:
+              sha:
+                type: string
+              message:
+                type: string
+              author:
+                type: string
+              date:
+                type: string
+              url:
+                type: string
+        fetchedAt:
+          type: [string, 'null']
+        errorCode:
+          type: [string, 'null']
+        stale:
+          type: boolean
+        retryAfter:
+          type: [integer, 'null']
+          minimum: 0
     RepositoryUpdateState:
       type: object
       additionalProperties: false
-      required: [repositoryId, enabled, branch, modelId, intervalSeconds, windowDays, commitLimit, status, lastAttemptAt, lastCheckedAt, nextCheckAt, remoteHead, resolvedBranch, syncId, errorCode]
+      required: [repositoryId, enabled, branch, intervalSeconds, status, lastAttemptAt, lastCheckedAt, nextCheckAt, remoteHead, resolvedBranch, errorCode]
       properties:
         repositoryId:
           $ref: '#/components/schemas/Uuid'
@@ -4374,8 +5421,6 @@ components:
           type: boolean
         branch:
           type: string
-        modelId:
-          type: [string, 'null']
         intervalSeconds:
           type: integer
           minimum: 300
@@ -4383,14 +5428,6 @@ components:
         status:
           type: string
           enum: [idle, checking, analyzing, updated, up-to-date, error]
-        windowDays:
-          type: integer
-          minimum: 1
-          maximum: 3650
-        commitLimit:
-          type: integer
-          minimum: 1
-          maximum: 5000
         lastAttemptAt:
           type: [string, 'null']
           format: date-time
@@ -4404,8 +5441,6 @@ components:
         remoteHead:
           type: [string, 'null']
         resolvedBranch:
-          type: [string, 'null']
-        syncId:
           type: [string, 'null']
         errorCode:
           type: [string, 'null']
@@ -5187,36 +6222,6 @@ components:
         limitations:
           type: array
           items: {type: string}
-    PortableReviewPlan:
-      type: object
-      additionalProperties: false
-      required: [format, source, commitIds]
-      properties:
-        format:
-          const: jit-review-plan-v1
-        source:
-          type: object
-          additionalProperties: false
-          required: [repositoryId, viewSyncId, datasetVersion, modelId, runId]
-          properties:
-            repositoryId:
-              $ref: '#/components/schemas/Uuid'
-            viewSyncId:
-              $ref: '#/components/schemas/Uuid'
-            datasetVersion:
-              type: [string, 'null']
-            modelId:
-              type: [string, 'null']
-            runId:
-              type: [string, 'null']
-        commitIds:
-          type: array
-          maxItems: 5000
-          uniqueItems: true
-          items:
-            type: string
-            minLength: 1
-            maxLength: 200
     RepositoryExplanation:
       type: object
       additionalProperties: false
@@ -5701,7 +6706,101 @@ components:
       - project
       - file
       additionalProperties: false
+  headers:
+    ProjectRequestId:
+      description: 服务端为本次请求分配的诊断标识；标准错误中的 requestId 与其一致。
+      schema:
+        type: string
+        minLength: 1
+  parameters:
+    ProjectRepositoryId:
+      name: repositoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    ProjectTrendViewId:
+      name: viewId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    EventLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    ProjectOffset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    ProjectPRState:
+      name: state
+      in: query
+      schema:
+        type: string
+        enum: [open, closed, all]
+        default: open
+    ProjectPRPage:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 1
   responses:
+    ProjectEvents:
+      description: 公开项目与PR事件的固定引用，不包含个人记录；当前性在读取时重新核对。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProjectEventPage'
+    ProjectPullRequests:
+      description: 当前项目已缓存的PR页与成功检查时间，远端刷新失败时保留旧缓存并附errorCode。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProjectPullRequestPage'
+    PRTracking:
+      description: PR自动跟踪的持久设置、检查状态与覆盖范围；不代表分析已成功。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PRTrackingState'
+    ProjectTrend:
+      description: 固定manifest下的项目已分析提交趋势与可追溯来源，不代表仓库真实缺陷率。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProjectTrendView'
+    ProjectConflict:
+      description: TREND_SOURCE_CONFLICT、TREND_SOURCE_UNAVAILABLE、MODEL_DISABLED、DEFAULT_MODEL_REQUIRED 或 CONFLICT_ACTIVE_SYNC；原有固定结果不被替换。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharedError'
     CurrentUnavailable:
       description: 当前Snapshot加载失败，无旧或部分批次。
       content:
@@ -5715,25 +6814,37 @@ components:
           schema:
             $ref: '#/components/schemas/CurrentError'
     NotFound:
-      description: 资源标识不存在；planned契约。
+      description: 资源标识不存在。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/SharedError'
     RepositoryUnknown:
       description: 仓库标识不存在（`REPOSITORY_UNKNOWN`）。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/SharedError'
     InputInvalid:
-      description: 输入、hash、schema或数值不合法；planned契约。
+      description: 输入、hash、schema或数值不合法。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/SharedError'
     InputLimitExceeded:
-      description: 超过候选大小／行数上限；planned契约。
+      description: 请求大小、行数或趋势分桶数量超过上限。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
       content:
         application/json:
           schema:
@@ -5764,12 +6875,18 @@ components:
             $ref: '#/components/schemas/SharedError'
     StorageUnavailable:
       description: 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/SharedError'
     RepositoryUnavailable:
       description: 仓库不可达、分支不存在或克隆失败；当前实现返回 502 REPOSITORY_UNAVAILABLE。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
       content:
         application/json:
           schema:
