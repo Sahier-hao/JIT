@@ -10,7 +10,8 @@ import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, L
 import { Button, IconButton } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
-import type { SyncForm } from '../apiClient'
+import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
+import type { SyncCommit } from '../repositoryContract'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
 import { AnalysisLauncher } from '../components/AnalysisLauncher'
@@ -60,6 +61,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
   }, [latestStatus, latestId, refreshRecords])
   useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
+  const priority = usePriorityCommits(detail.repository?.viewContext?.syncId)
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
   if (detail.state === 'error' || !detail.repository) {
@@ -164,6 +166,16 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
               <li className="is-low"><span className="bar-label">低风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.low)}%` }}/></span><span className="bar-value"><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></span></li>
             </ul>
           </div>
+          {priority.length ? <div className="result-priority">
+            <p className="result-priority-title">最该先看的提交</p>
+            <ul>
+              {priority.map(commit => <li key={commit.commitId}>
+                <code>{commit.commitId.slice(0, 7)}</code>
+                <span title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                <b>{commit.risk.toFixed(2)}</b>
+              </li>)}
+            </ul>
+          </div> : null}
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
             <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
@@ -323,4 +335,18 @@ function shortTime(value?: string | null) {
   if (!Number.isFinite(date.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** 本次分析里分数最高的三条提交：告诉用户下一步先看什么。 */
+function usePriorityCommits(syncId?: string) {
+  const [items, setItems] = useState<SyncCommit[]>([])
+  useEffect(() => {
+    if (!syncId) { setItems([]); return }
+    const controller = new AbortController()
+    fetchRepositorySyncCommits(syncId, 60, 0, controller.signal)
+      .then(page => setItems([...page.commits].sort((a, b) => b.risk - a.risk).slice(0, 3)))
+      .catch(() => setItems([]))
+    return () => controller.abort()
+  }, [syncId])
+  return items
 }

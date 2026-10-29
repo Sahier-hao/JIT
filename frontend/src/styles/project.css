@@ -9,7 +9,7 @@
   gap: 20px;
   align-items: start;
   margin-top: 22px;
-  min-height: min(660px, calc(100vh - 210px));
+  min-height: min(420px, calc(100vh - 250px));
 }
 
 .pw-detail, .pw-rail {
@@ -56,7 +56,7 @@
 .bar-value em { font-style: normal; color: var(--fg-3); }
 
 .result-note { margin: 14px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--fg-3); }
-.pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
+.pw-detail .result-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
 .result-info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .result-chip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 4px 9px; border-radius: 6px; background: var(--sunken); font-size: 11px; color: var(--fg-3); }
@@ -146,19 +146,19 @@
   .result-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .result-stats > div:nth-child(2n) { border-right: 0; }
   .result-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--line-soft); }
-  .pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
+  .pw-detail .result-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
   .pw-updates-meta { display: none; }
 }
 /* 两栏对齐：结果卡与记录卡同一行等高，仓库更新独占下一行 */
 .project-workspace { align-items: stretch; }
-.pw-detail { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; }
+.pw-detail { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: space-between; }
 .pw-rail { grid-column: 2; grid-row: 1; }
 .pw-updates { grid-column: 1 / -1; grid-row: 2; margin-top: 20px; }
-.pw-result { flex: 1; display: flex; flex-direction: column; }
+.pw-result { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
 .result-hero { flex: 1; align-content: center; padding: 6px 0; }
 .result-note { margin-top: 0; }
-.pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
+.pw-detail .result-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { margin-top: 18px; }
 
 /* 风险色阶在图上拉开：红 / 琥珀 / 蓝灰，深色主题提亮不换色相 */
@@ -178,15 +178,15 @@
 .pw-detail .pw-updates { margin-top: auto; padding: 0; border: 0; border-top: 1px solid var(--line-soft); border-radius: 0; background: none; box-shadow: none; }
 .pw-detail .pw-updates .ui-disclosure-trigger { padding: 12px 0; }
 .pw-detail .pw-updates .ui-disclosure-content { padding: 0 0 12px; }
-.pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
+.pw-detail .result-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { margin-top: 16px; padding-top: 14px; }
 .result-hero { align-content: start; padding: 2px 0 0; }
 /* 记录卡高度贴合内容：上限 430px，超出在卡内滚动 */
-.pw-rail { height: auto; max-height: min(660px, calc(100vh - 210px)); min-height: 0; overflow: hidden; }
+.pw-rail { height: auto; max-height: min(600px, calc(100vh - 190px)); min-height: 0; overflow: hidden; }
 .pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .pw-detail .pw-updates { margin-top: 18px; }
 /* 结果卡多余高度上下均分，避免底部出现一整块空白 */
-.pw-detail .result-hero { flex: 1; align-content: center; grid-template-columns: max-content minmax(0, 1fr); justify-content: start; column-gap: 30px; }
+.pw-detail .result-hero { flex: none; align-content: center; grid-template-columns: max-content minmax(0, 1fr); justify-content: start; column-gap: 30px; margin-top: 18px; }
 
 .update-foot-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 .update-cadence { font: 11.5px var(--sans); color: var(--fg-3); }
@@ -266,3 +266,13 @@
 .project-title-row .update-entry-text span { max-width: 240px; overflow: hidden; font: 12px var(--sans); color: var(--fg-3); text-overflow: ellipsis; white-space: nowrap; }
 .project-title-row .update-entry-chevron { display: none; }
 
+
+/* 最该先看的提交：结果卡里的下一步入口 */
+.result-priority { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.result-priority-title { margin: 0 0 4px; font: 600 12.5px var(--sans); color: var(--fg-2); }
+.result-priority ul { margin: 0; padding: 0; list-style: none; }
+.result-priority li { display: grid; grid-template-columns: 64px minmax(0, 1fr) 44px; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.result-priority li:last-child { border-bottom: 0; }
+.result-priority code { font: 11.5px var(--mono); color: var(--fg-3); }
+.result-priority span { font: 13px var(--sans); color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-priority b { font: 600 13px var(--mono); color: var(--risk-high); text-align: right; }

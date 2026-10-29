@@ -64,7 +64,7 @@ it('keeps repository B and its plan when visiting a report and returning', async
   await user.click(await screen.findByRole('button', { name: '查看提交与审查计划' }))
   await screen.findByRole('button', { name: `${SHA} 已在清单` })
   expect(window.location.hash).toContain(REPO_B)
-  const calls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/commits'))
+  const calls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/repositories/') && path.includes('/commits'))
   expect(calls.every(path => path.includes(`viewSyncId=${ANALYSIS}`))).toBe(true)
 })
 it('rejects a late page from a different analysis instead of showing its scores', async () => {
@@ -134,7 +134,7 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   await user.click(await screen.findByRole('button', { name: '查看提交与审查计划' }))
   await screen.findByText('0.81')
   expect(window.location.hash).toBe(hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
-  const commitCalls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/commits?'))
+  const commitCalls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/repositories/') && path.includes('/commits?'))
   expect(commitCalls.length).toBeGreaterThan(0)
   expect(commitCalls.every(path => path.includes(`viewSyncId=${ANALYSIS}`))).toBe(true)
 })

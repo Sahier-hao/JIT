@@ -65,3 +65,11 @@
 - 按钮字体统一为 `500 13.5px/20px var(--display)`，图标与文字基线对齐。
 - 截图：`docs/evidence/screenshots/project-update-entry-1440.png`、`project-update-dialog.png`。
 
+
+## 追加：结果卡补上最该先看的提交（2026-10-29）
+
+- 结果卡在风险构成下方列出本次分析分数最高的三条提交（短号 + 标题 + 分数）。
+- 卡片高度改为由右栏记录列表撑开，左卡跟随拉伸，余量用 `space-between` 均分。
+- 新增一次 `GET /api/v1/repository-syncs/{id}/commits?limit=60`，失败时区块整体隐藏。
+- 截图：`docs/evidence/screenshots/project-workspace-1440.png`。
+
