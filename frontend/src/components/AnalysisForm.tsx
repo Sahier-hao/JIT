@@ -83,7 +83,6 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
 
   return <form className="analysis-form" onSubmit={submit}>
     <fieldset className="analysis-options" aria-label="分析选项">
-      <p className="analysis-options-hint">不填就按默认：默认分支、最近 90 天、最多 500 个提交、自动选择模型策略。</p>
       <div className="form-grid">
         <label>分支<input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/></label>
         <label>提交上限<input aria-label="提交上限" type="number" min="1" max="5000" value={commitLimit} onChange={event => setCommitLimit(event.target.value)}/></label>
@@ -98,7 +97,6 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     </fieldset>
     {error ? <div className="analysis-form-error"><FailureNotice error={error}/></div> : null}
     <div className="form-submit">
-      <p>发起后会新增一条分析记录，原结果保留。</p>
       <div className="form-submit-actions">
         {onCancel ? <Button onClick={onCancel} disabled={busy}>取消</Button> : null}
         <Button type="submit" variant="primary" aria-label="开始分析" loading={busy} disabled={selectionUnavailable}>{busy ? '正在发起…' : '开始分析'}<ArrowRight size={14}/></Button>

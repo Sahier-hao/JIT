@@ -22,7 +22,7 @@ export function AnalysisLauncher({ repositoryUrl, defaultBranch, onStarted, init
   const [open, setOpen] = useState(Boolean(initial))
   const close = () => setOpen(false)
   return <div className="analysis-launcher">
-    <Button variant="primary" size="lg" block icon={<Plus size={16} strokeWidth={2.4}/>} onClick={() => setOpen(true)}>发起分析</Button>
+    <Button variant="secondary" icon={<Plus size={15} strokeWidth={2.4}/>} onClick={() => setOpen(true)}>发起分析</Button>
     <Dialog
       open={open}
       onOpenChange={next => { if (!next) close() }}
