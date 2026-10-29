@@ -4,6 +4,8 @@
  * 分析范围、模型策略属于「一次分析」，放在项目页；这里建完就直接进入项目页，
  * 让人看到下一步该做什么。
  */
+import { Button } from 'antd'
+import { ArrowRightOutlined } from '@ant-design/icons'
 import { useRef, useState, type FormEvent } from 'react'
 import { FailureNotice } from '../Feedback'
 import { Icon } from '../Icon'
@@ -53,8 +55,8 @@ export function NewProjectPage({ navigate }: { navigate: (route: Route, replace?
       <p className="form-hint">支持公开仓库。首次使用管理员默认模型分析最近 90 天内最多 500 个提交，每 5 分钟检查更新。</p>
       {hint ? <p className="field-error" role="alert">{hint}</p> : null}
       {error ? <FailureNotice error={error}/> : null}
-      <div className="form-submit"><p>可在项目页暂停自动更新，或调整跟踪分支与更新模型。</p><button className="primary-button" type="submit" disabled={busy}>{busy ? '正在建立…' : '建立项目'}<Icon name="arrow"/></button></div>
+      <div className="form-submit"><p>可在项目页暂停自动更新，或调整跟踪分支与更新模型。</p><Button type="primary" htmlType="submit" aria-label="建立项目" loading={busy}>{busy ? '正在建立…' : '建立项目'}<ArrowRightOutlined/></Button></div>
     </form>
-    <p className="form-back"><button className="text-button" type="button" onClick={() => navigate({ name: 'repositories' })}>返回项目列表</button></p>
+    <p className="form-back"><Button type="link" size="small" onClick={() => navigate({ name: 'repositories' })}>返回项目列表</Button></p>
   </section>
 }

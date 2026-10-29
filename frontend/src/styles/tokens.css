@@ -32,19 +32,19 @@
   /* ---------- 表面（4） ---------- */
   --canvas: #F7F8FA;
   --rail: #FFFFFF;
-  --sunken: #F1F4F8;
+  --sunken: #EDF1F6;
   --card: #FFFFFF;
 
   /* ---------- 文字（4） ---------- */
   --fg: #0E1524;
-  --fg-2: #3A4554;
-  --fg-3: #5C6675;
+  --fg-2: #2C3644;
+  --fg-3: #4A5464;
   --fg-inv: #FFFFFF;
 
   /* ---------- 线（3） ---------- */
-  --line: #EDEFF3;
-  --line-strong: #DCE1E9;
-  --line-soft: #F3F5F8;
+  --line: #E3E7EE;
+  --line-strong: #CDD4DF;
+  --line-soft: #EFF2F6;
 
   /* ---------- 语义（4）：蓝色只做选中、链接与焦点环 ---------- */
   --accent: #277452;
@@ -55,6 +55,8 @@
   /* ---------- 主行动（2）：近黑，与蓝色区分开 ---------- */
   --btn: #0E1524;
   --btn-hover: #1B2434;
+  --btn-fg: #FFFFFF;
+  --shadow-ink: #0E1524;
 
   /* ---------- 风险（7）：语义色，不随主题换色相 ---------- */
   --risk: #B7791F;
@@ -94,12 +96,12 @@ html[data-theme="steel"] {
   --card: #FFFFFF;
 
   --fg: #0F1821;
-  --fg-2: #394854;
-  --fg-3: #566470;
+  --fg-2: #2F3D4A;
+  --fg-3: #46535F;
   --fg-inv: #FFFFFF;
 
-  --line: #E8EDF3;
-  --line-strong: #D3DCE5;
+  --line: #DDE5EE;
+  --line-strong: #C3CFDB;
   --line-soft: #F1F5F9;
 
   --accent: #277452;
@@ -109,6 +111,8 @@ html[data-theme="steel"] {
 
   --btn: #0F1821;
   --btn-hover: #1C2A36;
+  --btn-fg: #FFFFFF;
+  --shadow-ink: #0F1821;
 
   --risk: #B7791F;
   --risk-mid: #B54708;
@@ -139,12 +143,12 @@ html[data-theme="charcoal"] {
   --card: #111827;
 
   --fg: #E8EEF6;
-  --fg-2: #B7C2D4;
-  --fg-3: #7C8DA6;
+  --fg-2: #C6D0DF;
+  --fg-3: #95A5BC;
   --fg-inv: #0B1120;
 
-  --line: #1B2436;
-  --line-strong: #2A3550;
+  --line: #263149;
+  --line-strong: #36425D;
   --line-soft: #151D2C;
 
   --accent: #7BA3F7;
@@ -152,8 +156,10 @@ html[data-theme="charcoal"] {
   --accent-soft: #16233C;
   --accent-ring: rgba(123, 163, 247, .30);
 
-  --btn: #3B6FE0;
-  --btn-hover: #4479EE;
+  --btn: #E4EAF5;
+  --btn-hover: #F2F6FF;
+  --btn-fg: #10182B;
+  --shadow-ink: #000000;
 
   --risk: #D9A23F;
   --risk-mid: #E5743B;
@@ -188,10 +194,10 @@ html[data-theme="paper"] {
 
   --fg: #141414;
   --fg-2: #3F3F3F;
-  --fg-3: #6B6B6B;
+  --fg-3: #565656;
   --fg-inv: #FFFFFF;
 
-  --line: #ECECEC;
+  --line: #E2E2E2;
   --line-strong: #D6D6D6;
   --line-soft: #F4F4F4;
 
@@ -202,6 +208,8 @@ html[data-theme="paper"] {
 
   --btn: #141414;
   --btn-hover: #2B2B2B;
+  --btn-fg: #FFFFFF;
+  --shadow-ink: #141414;
 
   --risk: #B7791F;
   --risk-mid: #B54708;

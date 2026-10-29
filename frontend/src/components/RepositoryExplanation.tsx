@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Button } from 'antd'
 import { requestRepositoryExplanation, type ExplanationContext, type RepositoryExplanation as Explanation } from '../repositoryExplanation'
 import './repository-explanation.css'
 
@@ -44,10 +45,10 @@ export function RepositoryExplanation({ context }: { context: ExplanationContext
     <h3>模型解释</h3>
     <p className="muted">单特征敏感度，不是缺陷结论、因果解释或代码定位；保存的模型分数不会改变。</p>
     {!current ? <p role="status">正在读取模型解释…</p> : null}
-    {current?.error ? <div role="alert"><p>{current.error}</p><button className="text-button" onClick={() => { setState({ key: '' }); setAttempt(value => value + 1) }}>重新读取解释</button></div> : null}
+    {current?.error ? <div role="alert"><p>{current.error}</p><Button type="link" size="small" onClick={() => { setState({ key: '' }); setAttempt(value => value + 1) }}>重新读取解释</Button></div> : null}
     {result?.explanationStatus === 'not-generated' ? <p>尚未生成该提交的模型解释，生成后会随此分析保存。</p> : null}
     {result?.explanationStatus === 'not-supported' ? <p role="status">{result.explanationReason ?? '本次暂不能提供解释，原分数保持不变。'}</p> : null}
-    {result && !supported ? <button className="text-button" disabled={Boolean(current?.busy)} onClick={() => void generate()}>{current?.busy ? '正在生成模型解释…' : result.explanationStatus === 'not-generated' ? '生成模型解释' : '重新尝试生成'}</button> : null}
+    {result && !supported ? <Button type="link" size="small" onClick={() => void generate()}>{current?.busy ? '正在生成模型解释…' : result.explanationStatus === 'not-generated' ? '生成模型解释' : '重新尝试生成'}</Button> : null}
     {supported ? <>
       <p>{result.explanationSummary}</p>
       {result.explanation.length ? <div className="explanation-table-scroll"><table className="explanation-table"><caption className="sr-only">主要特征对模型分数的影响</caption><thead><tr><th>特征</th><th>本次值 / 基线</th><th>分数变化</th></tr></thead><tbody>{result.explanation.map(item => <tr key={item.feature}><th>{LABELS[item.feature] ?? item.feature}（{item.feature}）</th><td>{item.value.toLocaleString(undefined, { maximumFractionDigits: 6 })} / {item.baseline.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td><td><b>{item.delta > 0 ? '+' : ''}{item.delta.toFixed(6)}</b><span>{item.direction === 'increases' ? '推高分数' : '拉低分数'}</span></td></tr>)}</tbody></table></div> : null}

@@ -9,7 +9,7 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
   const [theme, setTheme] = useState(initialTheme)
   const [density, setDensity] = useState(initialDensity)
   const report = route.name === 'report' || route.name === 'admin'
-  return <div className="app-frame">
+  return <div className="app-frame" data-route={route.name}>
     <a className="skip-link" href="#product-main">跳到主要内容</a>
     <aside className="workspace-sidebar">
       <button className="workspace-brand" onClick={() => navigate({ name: 'repositories' })}><span className="brand-glyph"><Icon name="logo" size={23}/></span><span>JIT<span className="brand-caption">REVIEW</span></span></button>

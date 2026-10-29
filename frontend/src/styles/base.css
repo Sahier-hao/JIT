@@ -107,3 +107,5 @@ code, kbd, samp {
     scroll-behavior: auto !important;
   }
 }
+
+[hidden] { display: none !important; }

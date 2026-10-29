@@ -4,6 +4,7 @@ import { applyQuery, displayTime, emptyQuery, readSeedQuery, validRisk, type Com
 import { CommitDetail } from './CommitDetail'
 import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
+import { Button } from 'antd'
 import type { Route } from './navigation'
 import { restoreShortlist, saveShortlist, previewLegacyPlan, migrateLegacyPlan } from './shortlist'
 import {
@@ -125,14 +126,15 @@ function ReviewTable({ commits, shortlist, onOpen, onAdd, onRemove }: {
                 <td className="numeric">{commit.lines === undefined ? '—' : commit.lines.toLocaleString()}</td>
                 <td className="numeric">{commit.files === undefined ? '—' : commit.files.toLocaleString()}</td>
                 <td className="action-cell">
-                  <button
+                  <Button
+                    type="text"
+                    size="small"
                     className="row-action"
                     aria-label={onRemove ? `从计划移除 ${commit.id}` : shortlist.includes(commit.id) ? `${commit.id} 已在清单` : `加入 ${commit.id} 到清单`}
                     disabled={!onRemove && shortlist.includes(commit.id)}
                     onClick={() => onRemove ? onRemove(commit.id) : onAdd(commit.id)}
-                  >
-                    <Icon name={onRemove ? 'close' : shortlist.includes(commit.id) ? 'check' : 'plus'} size={14} />
-                  </button>
+                    icon={<Icon name={onRemove ? 'close' : shortlist.includes(commit.id) ? 'check' : 'plus'} size={14} />}
+                  />
                 </td>
               </tr>
             )
@@ -265,14 +267,14 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   if (repository.state === 'error') {
     return (
       <EmptyState tone="alert" title="仓库读取失败" description={repository.error}>
-        <button className="primary-button" onClick={repository.retry}>重新加载</button>
+        <Button type="primary" onClick={repository.retry}>重新加载</Button>
       </EmptyState>
     )
   }
   if (repository.repository === null) {
     return (
       <EmptyState title="仓库不存在" description="这个地址对应的仓库已经不在目录里。">
-        <button className="primary-button" onClick={() => navigate({ name: 'repositories' })}>查看全部仓库</button>
+        <Button type="primary" onClick={() => navigate({ name: 'repositories' })}>查看全部仓库</Button>
       </EmptyState>
     )
   }
@@ -284,21 +286,21 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
 
   return (
     <div className={listView ? 'review' : 'review review--shortlist'}>
-      <button className="back-link" onClick={() => navigate({ name: 'repository', repositoryId })} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`}><Icon name="collapse" size={16}/>返回项目</button>
+      <Button type="text" size="small" className="back-link" onClick={() => navigate({ name: 'repository', repositoryId })} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} icon={<Icon name="collapse" size={16}/>}>返回项目</Button>
       <RepositoryHead repository={repo} total={repo.commitCount} />
       <details className="analysis-source"><summary><span className="source-chip">仓库分析 · {repo.viewContext?.branch ?? '分支未提供'}</span><span>分析来源 <Icon name="chevron" size={13}/></span></summary>      <div className="analysis-context"><span>分析 <code>{viewSyncId}</code></span><span>HEAD <code>{repo.viewContext?.headCommit ?? '旧记录未提供'}</code></span><span>数据 <code>{repo.datasetVersion ?? '未提供'}</code></span><span>模型 <code>{repo.modelId ?? '未提供'}</code></span><span>运行 <code>{repo.runId ?? '未提供'}</code></span><span>{repo.modelStrategy === 'generic-model' ? '通用模型' : repo.modelStrategy === 'repository-trained' ? '仓库模型' : '模型来源未提供'}{repo.degradeReason ? ` · ${DEGRADE_LABELS[repo.degradeReason] ?? repo.degradeReason}` : ''}</span></div>
 </details>
       {repo.latestSync?.syncId !== viewSyncId ? <p className="status-note">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。
-        {repo.latestSync?.status === 'completed' ? <><button onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</button><button onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</button></> : <button onClick={() => navigate({ name: 'repository', repositoryId })}>检查最新成功分析</button>}
+        {repo.latestSync?.status === 'completed' ? <><Button type="link" size="small" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button type="link" size="small" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button type="link" size="small" onClick={() => navigate({ name: 'repository', repositoryId })}>检查最新成功分析</Button>}
       </p> : null}
-      <p className="muted">{modelName ? `分析模型：${modelName}。` : ''}模型分数用于安排审查，未经当前仓库概率校准；不代表已确认缺陷。可在提交详情主动生成原模型解释。</p>
+      <p className="muted">{modelName ? `分析模型 ${modelName}。` : ''}分数只用于安排审查顺序，未经仓库概率校准，不代表已确认缺陷。</p>
       {selection.warning ? <p className="warning" role="alert">{selection.warning}</p> : null}
       {legacy.warning ? <p role="status" className="warning">{legacy.warning}</p> : null}
-      {legacy.ids.length ? <details className="legacy-preview"><summary>发现本分析的旧清单（{legacy.ids.length} 条），预览迁入</summary><p>只迁入经当前仓库分析核对的提交；保留旧存储。{legacyRecords.failed.length} 条无法核对。</p><ol>{legacy.ids.map(id => <li key={id}><code>{id}</code> · {legacyRecords.records.has(id) ? '来源已核对' : '未核对'}</li>)}</ol><button disabled={legacyRecords.state !== 'ready'} onClick={() => { const warning = migrateLegacyPlan(dataset, legacy.ids.filter(id => legacyRecords.records.has(id))); const restored = restoreShortlist(dataset); onSelection({ ids: warning ? shortlist : restored.ids, warning: warning || restored.warning }) }}>明确迁入已核对提交</button></details> : null}
+      {legacy.ids.length ? <details className="legacy-preview"><summary>发现本分析的旧清单（{legacy.ids.length} 条），预览迁入</summary><p>只迁入经当前仓库分析核对的提交；保留旧存储。{legacyRecords.failed.length} 条无法核对。</p><ol>{legacy.ids.map(id => <li key={id}><code>{id}</code> · {legacyRecords.records.has(id) ? '来源已核对' : '未核对'}</li>)}</ol><Button size="small" disabled={legacyRecords.state !== 'ready'} onClick={() => { const warning = migrateLegacyPlan(dataset, legacy.ids.filter(id => legacyRecords.records.has(id))); const restored = restoreShortlist(dataset); onSelection({ ids: warning ? shortlist : restored.ids, warning: warning || restored.warning }) }}>明确迁入已核对提交</Button></details> : null}
 
-      <nav className="view-tabs" aria-label="分析结果视图"><button aria-current={listView ? 'page' : undefined} onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits' })}>全部提交 <span>{repo.commitCount}</span></button><button aria-current={!listView ? 'page' : undefined} onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'plan' })}>审查计划 <span>{shortlist.length}</span></button></nav>
+      <nav className="view-tabs" aria-label="分析结果视图"><Button type='text' size='small' aria-current={listView ? 'page' : undefined} onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits' })}>全部提交 <span>{repo.commitCount}</span></Button><Button type='text' size='small' aria-current={!listView ? 'page' : undefined} onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'plan' })}>审查计划 <span>{shortlist.length}</span></Button></nav>
       {!listView ? <PlanTransfer key={`${repositoryId}:${viewSyncId}`} source={{ repositoryId, viewSyncId, datasetVersion: repo.datasetVersion, modelId: repo.modelId, runId: repo.runId }} ids={shortlist} onMerge={mergePlan}/> : null}
-      {!listView && shortlist.length ? <div className="plan-summary"><span>已选 {shortlist.length} 条 · 已知规模 {Array.from(shortlistRecords.records.values()).reduce((sum, record) => sum + (record.lines ?? 0), 0).toLocaleString()} 行{shortlist.filter(id => shortlistRecords.records.get(id)?.lines === undefined).length ? ' · 部分规模未提供' : ''}</span><button className="text-button" onClick={() => changeShortlist([])}>清空计划</button></div> : null}
+      {!listView && shortlist.length ? <div className="plan-summary"><span>已选 {shortlist.length} 条 · 已知规模 {Array.from(shortlistRecords.records.values()).reduce((sum, record) => sum + (record.lines ?? 0), 0).toLocaleString()} 行{shortlist.filter(id => shortlistRecords.records.get(id)?.lines === undefined).length ? ' · 部分规模未提供' : ''}</span><Button type="link" size="small" onClick={() => changeShortlist([])}>清空计划</Button></div> : null}
       <div className={selected ? 'review-body has-detail' : 'review-body'}>
         <section className="review-main" aria-label={listView ? '已分析提交' : '审查清单'}>
           {listView ? (
@@ -339,7 +341,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                     <option value="time">时间从新到旧</option>
                   </select>
                 </label>
-                <button className="clear-button" onClick={clearQuery}>清除筛选</button>
+                <Button onClick={clearQuery}>清除筛选</Button>
               </div>
               {queryState.error ? <p className="warning" role="alert">{queryState.error} 当前保留最近一次有效结果。</p> : null}
               <p className="review-caption">
@@ -349,7 +351,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
               {page.state === 'loading' && visible.length === 0
                 ? <LoadingNotice prefix={false} label="正在读取提交" note="按当前筛选条件从服务端读取这一页。" />
                 : page.state === 'error' || totalMismatch
-                  ? <EmptyState tone="alert" title="提交读取失败" description={totalMismatch ? '提交总数与固定分析不一致，请重新加载核对。' : page.error}><button className="primary-button" onClick={page.retry}>重新加载</button></EmptyState>
+                  ? <EmptyState tone="alert" title="提交读取失败" description={totalMismatch ? '提交总数与固定分析不一致，请重新加载核对。' : page.error}><Button type="primary" onClick={page.retry}>重新加载</Button></EmptyState>
                   : visible.length === 0
                     ? <EmptyState title="没有符合条件的提交" description="使用「清除筛选」恢复列表，或换一个查询条件。" />
                     : <>
@@ -361,8 +363,8 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                       />
                       <nav className="pager" aria-label="提交分页">
                         <span role="status">第 {first}–{last} 条，共 {page.total.toLocaleString()} 条</span>
-                        <button className="clear-button" disabled={offset === 0 || page.state === 'loading'} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>上一页</button>
-                        <button className="clear-button" disabled={offset + PAGE_SIZE >= page.total || page.state === 'loading'} onClick={() => setOffset(offset + PAGE_SIZE)}>下一页</button>
+                        <Button disabled={offset === 0 || page.state === 'loading'} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>上一页</Button>
+                        <Button disabled={offset + PAGE_SIZE >= page.total || page.state === 'loading'} onClick={() => setOffset(offset + PAGE_SIZE)}>下一页</Button>
                       </nav>
                     </>}
             </>
@@ -374,7 +376,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                 : null}
               <p className="review-caption"><span>审查计划<b>{total}</b></span><span>按加入顺序 · 缺少成本分母，不显示预算占比</span></p>
               {visible.length === 0
-                ? <EmptyState title="清单为空" description="从评审台把要优先核对的提交加进来。"><button className="primary-button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits' })}>返回评审台</button></EmptyState>
+                ? <EmptyState title="清单为空" description="从评审台把要优先核对的提交加进来。"><Button type="primary" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits' })}>返回评审台</Button></EmptyState>
                 : <ReviewTable commits={visible} shortlist={shortlist} onOpen={(id, trigger) => { returnFocus.current = trigger; setSelected(id) }} onAdd={add} onRemove={id => changeShortlist(shortlist.filter(value => value !== id))} />}
             </>
           )}

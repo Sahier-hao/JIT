@@ -6,17 +6,21 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import type { SyncForm } from '../apiClient'
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
+import { Button, IconButton } from '../ui/controls'
+import { Dialog } from '../ui/dialog'
+import { Popover } from '../ui/popover'
+import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
+import type { SyncCommit } from '../repositoryContract'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
-import { AnalysisForm } from '../components/AnalysisForm'
+import { AnalysisLauncher } from '../components/AnalysisLauncher'
 import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
-import { Icon } from '../Icon'
 import type { Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
 import { projectStatus } from '../projectStatus'
-import { ACTIVE_STATUSES, DEGRADE_LABELS, STATUS_LABELS, STRATEGY_LABELS, type SyncView } from '../repositoryContract'
+import { ACTIVE_STATUSES, DEGRADE_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
 import { useRepository } from '../repositoryWorkspace'
 import { displayTime } from '../domain'
 
@@ -36,13 +40,16 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   const refreshRecords = records.retry
   const [recordError, setRecordError] = useState('')
   const [selectingId, setSelectingId] = useState('')
-  const [deleting, setDeleting] = useState<SyncView | null>(null)
-  const [cancelling, setCancelling] = useState<SyncView | null>(null)
   const [cancelBusy, setCancelBusy] = useState(false)
   const cancelLock = useRef(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const deleteLock = useRef(false)
+  const [detailJob, setDetailJob] = useState<SyncView | null>(null)
+  const [deleteJob, setDeleteJob] = useState<SyncView | null>(null)
+  const [cancelJob, setCancelJob] = useState<SyncView | null>(null)
   const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
+  const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
+  const share = (count: number) => Math.round((count / riskTotal) * 100)
   const latestStatus = detail.repository?.latestSync?.status
   const latestId = detail.repository?.latestSync?.syncId
   const previousJob = useRef('')
@@ -54,10 +61,11 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
   }, [latestStatus, latestId, refreshRecords])
   useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
+  const priority = usePriorityCommits(detail.repository?.viewContext?.syncId)
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
   if (detail.state === 'error' || !detail.repository) {
-    return <EmptyState title="项目读取失败" description={detail.error} tone="alert"><button onClick={detail.retry}>重新加载</button><button onClick={() => navigate({ name: 'repositories' })}>返回项目列表</button></EmptyState>
+    return <EmptyState title="项目读取失败" description={detail.error} tone="alert"><Button onClick={detail.retry}>重新加载</Button><Button onClick={() => navigate({ name: 'repositories' })}>返回项目列表</Button></EmptyState>
   }
 
   const repository = detail.repository
@@ -87,7 +95,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       await deleteRepositorySync(job.syncId)
       records.retry()
       detail.retry()
-      setDeleting(null)
     } catch (failure) {
       setRecordError(failure instanceof Error ? failure.message : '删除分析记录失败')
     } finally {
@@ -99,7 +106,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
     cancelLock.current = true; setCancelBusy(true); setRecordError('')
     try {
       await cancelRepositorySync(job.syncId)
-      setCancelling(null)
     } catch (failure) {
       setRecordError(failure instanceof Error ? failure.message : '取消分析失败，请刷新后重试')
     } finally {
@@ -117,113 +123,235 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       strategy: job.requestedStrategy,
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
-    document.getElementById('analysis-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return <section className="project-page">
-    <button className="back-link" onClick={() => navigate({ name: 'repositories' })}><Icon name="collapse" size={16}/>全部项目</button>
+    <Button aria-label="全部项目" variant="ghost" size="sm" icon={<ArrowLeft size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
     <header className="page-heading project-heading">
       <div>
-        <h1>{repository.displayName}</h1>
-        <p className="project-url">{repository.url}</p>
-        <p className="page-intro">{repository.defaultBranch || '默认分支'} · {repository.commitCount.toLocaleString()} 个已分析提交 · 建立于 {displayTime(repository.createdAt)}</p>
-        <p className={`status-line tone-${status.tone}`} role="status">{status.label}</p>
+        <div className="project-title-row">
+          <h1 title={repository.url}>{repository.displayName}</h1>
+          <p className={`status-line tone-${status.tone}`} role="status">{status.label}</p>
+          <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+        </div>
       </div>
       <div className="page-actions">
-        {context ? <button className="primary-button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>打开审查<Icon name="arrow"/></button> : null}
+        <AnalysisLauncher key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
       </div>
     </header>
 
-    <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+    {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
+    <div className="project-workspace">
+      <aside className="pw-rail" aria-label="分析记录">
+        <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
+        {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
+        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
+        {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
+      </aside>
 
-    <section className="project-start" id="analysis-form-section" aria-label="发起分析">
-      <div className="section-label"><h2>发起分析</h2><span>不会覆盖当前结果</span></div>
-      {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
-      <AnalysisForm key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
-    </section>
-
-    <section className="project-result" aria-label="当前分析结果">
-      <div className="section-label"><h2>当前分析结果</h2>{context ? <span>完成于 {context.completedAt ? displayTime(context.completedAt) : '未记录'}</span> : null}</div>
-      {context ? <div className="result-panel">
-        <div className="result-stats">
-          <div><b>{repository.commitCount.toLocaleString()}</b><span>已分析提交</span></div>
-          <div className="high"><b>{repository.distribution.high.toLocaleString()}</b><span>高风险</span></div>
-          <div><b>{repository.distribution.medium.toLocaleString()}</b><span>中风险</span></div>
-          <div><b>{repository.distribution.low.toLocaleString()}</b><span>低风险</span></div>
+      <div className="pw-detail">
+        <div className="pw-detail-head">
+          <h2>当前分析结果</h2>
+          <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
-        <dl className="result-facts">
-          <div><dt>分析模型</dt><dd>{modelName ?? (repository.modelId ? '已保存模型（名称暂不可用）' : '未记录')}</dd></div>
-          <div><dt>数据版本</dt><dd>{context.datasetVersion ?? '未登记'}</dd></div>
-          <div><dt>分支</dt><dd>{context.branch}</dd></div>
-          <div><dt>模型策略</dt><dd>{repository.modelStrategy === 'generic-model' ? '现成模型' : repository.modelStrategy === 'repository-trained' ? '本仓库数据训练' : '未记录'}</dd></div>
-          {repository.degradeReason ? <div><dt>说明</dt><dd>{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</dd></div> : null}
-        </dl>
-        <div className="panel-actions">
-          <button className="primary-button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<Icon name="arrow"/></button>
-        </div>
-      </div> : <div className="result-empty">
-        <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
-      </div>}
-    </section>
+        {context ? <div className="pw-result">
+          <div className="result-hero">
+            <div className="result-total">
+              <b>{repository.commitCount.toLocaleString()}</b>
+              <span>已分析提交</span>
+            </div>
+            <ul className="result-bars" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
+              <li className="is-high"><span className="bar-label">高风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.high)}%` }}/></span><span className="bar-value"><b>{repository.distribution.high.toLocaleString()}</b><em>{share(repository.distribution.high)}%</em></span></li>
+              <li className="is-mid"><span className="bar-label">中风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.medium)}%` }}/></span><span className="bar-value"><b>{repository.distribution.medium.toLocaleString()}</b><em>{share(repository.distribution.medium)}%</em></span></li>
+              <li className="is-low"><span className="bar-label">低风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.low)}%` }}/></span><span className="bar-value"><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></span></li>
+            </ul>
+          </div>
+          {priority.length ? <div className="result-priority">
+            <p className="result-priority-title">最该先看的提交</p>
+            <ol>
+              {priority.map((commit, index) => <li key={commit.commitId}>
+                <span className="priority-rank" aria-hidden="true">{index + 1}</span>
+                <code className="priority-sha">{commit.commitId.slice(0, 7)}</code>
+                <span className="priority-subject" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                <span className="priority-score">
+                  <span className="priority-meter" aria-hidden="true"><span style={{ width: `${Math.round(commit.risk * 100)}%` }}/></span>
+                  <b>{commit.risk.toFixed(2)}</b>
+                </span>
+              </li>)}
+            </ol>
+          </div> : null}
+          <div className="result-bottom">
+          {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
+          <div className="result-foot">
+            <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
+            <Button variant="accent" aria-label="查看提交与审查计划" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交与审查计划</Button>
+          </div>
+          </div>
+        </div> : <div className="result-empty">
+          <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
+        </div>}
+      </div>
+    </div>
 
-    <section className="project-records" aria-label="分析记录">
-      <div className="section-label"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 条` : ''}</span></div>
-      {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-      {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。设置范围后开始第一次分析。</p> : <div className="job-list">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleting(job)} onRetry={() => retryRecord(job)} onCancel={() => setCancelling(job)}/>) }</div>}
-      {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页 · 共 {records.total} 条</span><button className="clear-button" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</button><button className="clear-button" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</button></nav> : null}
-      {deleting ? <div role="alertdialog" aria-label="确认删除分析记录" className="record-confirm"><h3>删除这条分析记录？</h3><p>{deleting.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。' : '这次分析与对应的提交结果将被删除。'} 此操作无法撤销。</p><button className="danger-button" disabled={deleteBusy} onClick={() => void removeRecord(deleting)}>{deleteBusy ? '正在删除…' : '确认删除记录'}</button><button className="text-button" disabled={deleteBusy} onClick={() => setDeleting(null)}>取消</button></div> : null}
-      {cancelling ? <div role="alertdialog" aria-label="确认取消分析" className="record-confirm"><h3>取消这次分析？</h3><p>停止这次分析，保留记录及已有成功结果。取消完成后可以用原参数重新分析；已经登记的数据和模型会保留。</p><button className="danger-button" disabled={cancelBusy} onClick={() => void cancelRecord(cancelling)}>{cancelBusy ? '正在提交取消…' : '确认取消分析'}</button><button className="text-button" disabled={cancelBusy} onClick={() => setCancelling(null)}>继续分析</button></div> : null}
-    </section>
+    <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
+      {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
+    </Dialog>
+    <Dialog
+      open={Boolean(deleteJob)}
+      onOpenChange={next => { if (!next) setDeleteJob(null) }}
+      title="删除这条分析记录？"
+      description={deleteJob && deleteJob.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'}
+      width={460}
+      footer={<>
+        <Button onClick={() => setDeleteJob(null)}>取消</Button>
+        <Button variant="danger" loading={deleteBusy} onClick={() => { if (deleteJob) void removeRecord(deleteJob).then(() => setDeleteJob(null)) }}>确认删除记录</Button>
+      </>}
+    >{null}</Dialog>
+    <Dialog
+      open={Boolean(cancelJob)}
+      onOpenChange={next => { if (!next) setCancelJob(null) }}
+      title="取消这次分析？"
+      description="取消后这次分析不再继续，已经生成的结果不会保留；可以用原参数重新发起。"
+      width={440}
+      footer={<>
+        <Button onClick={() => setCancelJob(null)}>返回</Button>
+        <Button variant="danger" loading={cancelBusy} onClick={() => { if (cancelJob) void cancelRecord(cancelJob).then(() => setCancelJob(null)) }}>确认取消分析</Button>
+      </>}
+    >{null}</Dialog>
   </section>
 }
 
-function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDelete, onRetry, onCancel }: { job: SyncView; current: boolean; selecting: boolean; onOpen: () => void; onCompare?: () => void; onSelect: () => void; onDelete: () => void; onRetry: () => void; onCancel: () => void }) {
+function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDelete, onDetail, onRetry, onCancel, deleteBusy, cancelBusy }: { job: SyncView; current: boolean; selecting: boolean; onOpen: () => void; onCompare?: () => void; onSelect: () => void; onDelete: () => void; onDetail: () => void; onRetry: () => void; onCancel: () => void; deleteBusy: boolean; cancelBusy: boolean }) {
   const active = (ACTIVE_STATUSES as readonly string[]).includes(job.status)
   const completed = job.status === 'completed'
   const pendingCancel = active && Boolean(job.cancelRequestedAt)
   const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
-  const meta = `${displayTime(job.createdAt)} · ${STRATEGY_LABELS[job.requestedStrategy]}`
+  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}`
   const shortId = job.syncId.slice(0, 7)
   return <article className={`analysis-job ${current ? 'is-current' : ''}`} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
+    <span className="record-marker" aria-hidden="true"/>
+    <div className="record-body">
     <div className="job-main">
-      {completed ? <label className="record-pick">
-        <input
-          type="radio"
-          name="current-analysis"
-          checked={current}
-          disabled={selecting}
-          onChange={onSelect}
-          aria-label={current ? `当前结果 ${shortId}` : `将 ${shortId} 设为当前结果`}
-        />
-        <span className="record-radio" aria-hidden/>
+      {completed ? (current ? <div className="record-pick is-static">
+        <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Pin size={12} fill="currentColor" strokeWidth={1.6}/></span>
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
         </span>
-      </label> : <div className="record-pick is-static">
-        <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}><Icon name="info" size={17}/></span>
+      </div> : <button type="button" className="record-pick is-clickable" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>
+        <span className="record-text">
+          <span className="record-title">{title}</span>
+          <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
+        </span>
+      </button>) : <div className="record-pick is-static">
+        <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}>{active ? <Loader size={16}/> : <AlertTriangle size={16}/>}</span>
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}</span>
         </span>
       </div>}
-      <div className="panel-actions">
-        {active ? <button className="text-button danger" disabled={pendingCancel} onClick={onCancel}>{pendingCancel ? '正在取消…' : '取消分析'}</button> : null}
-        {completed ? <button className="text-button" onClick={onOpen}>打开结果</button> : null}
-        {onCompare ? <button className="text-button" onClick={onCompare}>与当前结果对比</button> : null}
-        {!active && !completed ? <button className="text-button" onClick={onRetry}>用这些参数重试</button> : null}
-        {!active ? <button className="text-button danger" onClick={onDelete}>删除记录</button> : null}
-      </div>
+      <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={completed ? onOpen : undefined} onCompare={onCompare} onRetry={!active && !completed ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
-    {job.status === 'cancelled' ? <p className="form-hint">本次分析已取消，已有成功结果保持不变，可用原参数重新分析。</p> : job.error ? <p className="job-error" role="alert">{job.error.message} 请修正后重新分析。</p> : null}
-    <details className="job-details"><summary>分析详情</summary><dl>
-      <div><dt>范围</dt><dd>{job.since ?? '不限'} — {job.until ?? '不限'}，最多 {job.commitLimit} 条</dd></div>
-      <div><dt>分支</dt><dd>{job.branch}</dd></div>
-      {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
-      {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
-      <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>
-      {job.degradeReason ? <div><dt>模型说明</dt><dd>{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
-      {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
-    </dl></details>
+    {job.error ? <p className="record-error" title={job.error.message}><AlertTriangle size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
+    </div>
   </article>
+}
+
+/** 记录详情：放进浮层，避免在列表里向下展开把卡片撑长。 */
+function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
+  return <dl className="record-details">
+    <div><dt>范围</dt><dd>{job.since ?? '不限'} — {job.until ?? '不限'}，最多 {job.commitLimit} 条</dd></div>
+    <div><dt>分支</dt><dd>{job.branch}</dd></div>
+    {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
+    {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
+    <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>
+    {job.degradeReason ? <div><dt>模型说明</dt><dd>{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
+    {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
+  </dl>
+}
+function datasetRange(version?: string | null) {
+  if (!version) return '未登记'
+  // 同一区间重复采集时后端会在末尾追加短哈希，先剥掉再解析区间。
+  const cleaned = version.replace(/-[0-9a-f]{6,}$/, '')
+  const range = cleaned.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/)
+  return range ? `${range[1]} → ${range[2].slice(5)}` : version
+}
+/** 记录卡只放一个入口：点开后再选具体动作，避免每行三四个图标。 */
+function RecordMenu({ job, pendingCancel, onOpen, onCompare, onSelect, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
+  job: SyncView
+  active: boolean
+  pendingCancel: boolean
+  onOpen?: () => void
+  onCompare?: () => void
+  onSelect?: () => void
+  onRetry?: () => void
+  onCancel?: () => void
+  onDetail: () => void
+  onDelete?: () => void
+  cancelBusy: boolean
+  deleteBusy: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const choose = (action?: () => void) => () => { setOpen(false); action?.() }
+  return <Popover open={open} onOpenChange={setOpen} label={`分析记录 ${job.syncId} 的操作`} trigger={<IconButton label="更多操作" icon={<MoreHorizontal size={16}/>}/>}>
+    <div className="record-menu" role="menu" aria-label="分析记录操作">
+      {onOpen ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onOpen)}><ArrowUpRight size={14}/>打开结果</button> : null}
+      {onCompare ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onCompare)}><GitCompare size={14}/>与当前结果对比</button> : null}
+      {onSelect ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onSelect)}><Pin size={14}/>设为当前结果</button> : null}
+      {onRetry ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onRetry)}><RotateCcw size={14}/>用这些参数重试</button> : null}
+      {onCancel ? <button type="button" role="menuitem" className="record-menu-item" disabled={cancelBusy} onClick={choose(onCancel)}><XCircle size={14}/>取消分析</button> : null}
+      {pendingCancel ? <p className="record-menu-note">正在取消…</p> : null}
+      <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onDetail)}><Info size={14}/>分析详情</button>
+      {onDelete ? <button type="button" role="menuitem" className="record-menu-item is-danger" disabled={deleteBusy} onClick={choose(onDelete)}><Trash2 size={14}/>删除记录</button> : null}
+    </div>
+  </Popover>
+}
+
+/** 失败原因：常见错误给一句人话，原始信息留在详情里。 */
+const FAILURE_TEXT: Record<string, string> = {
+  DATASET_EXISTS: '这个日期区间的数据版本已登记且内容不同，换起始日期或先删除旧版本',
+  REPOSITORY_UNAVAILABLE: '无法读取仓库，检查网络或地址后重试',
+  REPOSITORY_CHECK_TIMEOUT: '检查远端仓库超时，可以重试',
+  CONFLICT_ACTIVE_SYNC: '已有进行中的分析，结束后再试',
+  DATASET_INVALID: '这个范围内没有可分析的提交，调整日期后重试',
+  SYNC_TIMEOUT: '分析超过时限，缩小范围后重试',
+  SYNC_INTERRUPTED: '服务停止时分析中断，可以重试',
+  SYNC_CANCELLED: '这次分析已取消，可以重试',
+}
+
+function failureText(error: SyncError) {
+  return FAILURE_TEXT[error.code] ?? error.message
+}
+/** 记录的时间跨度：用采集区间，保持一行可读。 */
+function syncSpan(job: SyncView) {
+  return `${shortDay(job.since)} → ${shortDay(job.until)}`
+}
+
+function shortDay(value?: string | null) {
+  if (!value) return '不限'
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) ? `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : '不限'
+}
+
+/** 记录行的短时间戳：月-日 时:分，避免整行被截断。 */
+function shortTime(value?: string | null) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** 本次分析里分数最高的三条提交：告诉用户下一步先看什么。 */
+function usePriorityCommits(syncId?: string) {
+  const [items, setItems] = useState<SyncCommit[]>([])
+  useEffect(() => {
+    if (!syncId) { setItems([]); return }
+    const controller = new AbortController()
+    fetchRepositorySyncCommits(syncId, 60, 0, controller.signal)
+      .then(page => setItems([...page.commits].sort((a, b) => b.risk - a.risk).slice(0, 3)))
+      .catch(() => setItems([]))
+    return () => controller.abort()
+  }, [syncId])
+  return items
 }

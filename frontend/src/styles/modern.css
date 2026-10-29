@@ -358,20 +358,14 @@ h1 {
   font-weight: 580;
 }
 
-.analysis-disclosure-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.analysis-disclosure-summary {
   margin-left: auto;
-}
-
-.analysis-disclosure-chips span {
-  padding: 4px 9px;
-  border-radius: 8px;
-  background: var(--sunken);
+  padding-left: 16px;
   color: var(--fg-3);
-  font-size: 11.5px;
+  font-size: 12.5px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .analysis-disclosure-chevron {
@@ -396,15 +390,19 @@ h1 {
 
 .analysis-card .form-submit {
   margin: 0;
-  padding: 14px 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
   border-top: 1px solid var(--line);
   background: var(--card);
 }
 
+.analysis-card .form-submit p { color: var(--fg-3); }
+
 .form-submit p { max-width: 64ch; font-size: 12.5px; line-height: 1.65; }
 
 /* ---------- 输入控件 ---------- */
-input, select, textarea {
+input:not([class*="ant-"]), select:not([class*="ant-"]), textarea:not([class*="ant-"]) {
   min-height: 42px;
   padding: 9px 11px;
   border-color: var(--line-strong);
@@ -637,7 +635,7 @@ tbody tr:hover { background: var(--hover); }
   .result-panel { padding: 20px; border-radius: 16px; }
   .result-stats > div { padding-inline: 12px; }
   .result-stats b { font-size: 26px; }
-  .analysis-disclosure-chips { display: none; }
+  .analysis-disclosure-summary { display: none; }
   .analysis-disclosure-toggle { padding: 14px 16px; }
   .analysis-disclosure-body { padding: 16px 16px 14px; }
   .form-submit { gap: 14px; }
@@ -658,3 +656,11 @@ tbody tr:hover { background: var(--hover); }
 
 .report-boundary { margin: -8px 0 10px; }
 
+
+/* ---------- 侧栏与顶栏：保持改版前的原始表面 ---------- */
+/* 全局对比度调整把 --fg-2/--fg-3/--line 加深了，这里把这几个变量在侧栏与顶栏范围内锁回原值，
+   让导航区域与改版前逐像素一致；工作区主体与顶栏仍使用加深后的层级。 */
+.workspace-sidebar { --fg-2: #3A4554; --fg-3: #5C6675; --line: #EDEFF3; --line-strong: #DCE1E9; --line-soft: #F3F5F8; --sunken: #F1F4F8; }
+html[data-theme="steel"] .workspace-sidebar { --fg-2: #394854; --fg-3: #566470; --line: #E8EDF3; --line-strong: #D3DCE5; --line-soft: #F1F5F9; --sunken: #EEF3F9; }
+html[data-theme="charcoal"] .workspace-sidebar { --fg-2: #B7C2D4; --fg-3: #7C8DA6; --line: #1B2436; --line-strong: #2A3550; --line-soft: #151D2C; --sunken: #121A2A; }
+html[data-theme="paper"] .workspace-sidebar { --fg-2: #3F3F3F; --fg-3: #6B6B6B; --line: #ECECEC; --line-strong: #D6D6D6; --line-soft: #F4F4F4; --sunken: #F2F2F2; }
