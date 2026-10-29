@@ -59,6 +59,40 @@ class Log1pColumns:
         return result
 
 
+class ExpertStandardScaler:
+    """只标准化前 N 个专家列；语义向量保持原值。模块级类以便 joblib 序列化。"""
+
+    def __init__(self, expert_columns):
+        self.expert_columns = int(expert_columns)
+        self.scaler_ = StandardScaler()
+
+    def fit(self, X, y=None):
+        X = np.asarray(X)
+        if X.ndim != 2 or self.expert_columns < 0 or self.expert_columns > X.shape[1]:
+            raise ValueError("专家列数与输入矩阵不一致")
+        self.n_features_in_ = X.shape[1]
+        if self.expert_columns:
+            self.scaler_.fit(X[:, :self.expert_columns])
+        return self
+
+    def transform(self, X):
+        result = np.array(X, dtype=np.float64, copy=True)
+        if self.expert_columns:
+            result[:, :self.expert_columns] = self.scaler_.transform(X[:, :self.expert_columns])
+        return result
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def get_params(self, deep=True):
+        return {"expert_columns": self.expert_columns}
+
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
+
 def log_counts(matrix):
     """旧六字段冻结产物的 joblib 兼容入口。
 
@@ -94,15 +128,39 @@ def temporal_split(records):
 
 
 def feature_matrix(records, schema=None):
-    width = len(resolve(schema if schema is not None else DEFAULT_SCHEMA).in_model_names())
-    try:
-        matrix = np.asarray([r["features"] for r in records], dtype=np.float64)
-    except (KeyError, TypeError, ValueError) as exc:
-        raise BaselineError("FEATURES_INVALID", "输入特征矩阵无效") from exc
-    if matrix.ndim != 2 or matrix.shape[1] != width or not len(matrix):
-        raise BaselineError("FEATURES_INVALID", f"输入必须为非空 {width} 字段矩阵")
-    if not np.isfinite(matrix).all() or (matrix < 0).any():
-        raise BaselineError("FEATURES_INVALID", "输入特征含非法数值")
+    schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
+    if not records:
+        raise BaselineError("FEATURES_INVALID", "输入特征矩阵为空")
+    experts = None
+    if not schema.semantic_only:
+        width = len(schema.in_model_names())
+        try:
+            experts = np.asarray([r["features"] for r in records], dtype=np.float64)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise BaselineError("FEATURES_INVALID", "输入特征矩阵无效") from exc
+        if experts.ndim != 2 or experts.shape[1] != width:
+            raise BaselineError("FEATURES_INVALID", f"输入必须为非空 {width} 字段矩阵")
+        if not np.isfinite(experts).all() or (experts < 0).any():
+            raise BaselineError("FEATURES_INVALID", "输入特征含非法数值")
+    if schema.semantic:
+        dim = schema.semantic_dim()
+        vectors = []
+        for record in records:
+            vector = record.get("semantic")
+            if not isinstance(vector, (list, tuple, np.ndarray)) or len(vector) != dim:
+                raise BaselineError("FEATURES_INVALID", "语义向量缺失或维度与 schema 声明不一致")
+            vectors.append(vector)
+        try:
+            semantic = np.asarray(vectors, dtype=np.float64)
+        except (TypeError, ValueError) as exc:
+            raise BaselineError("FEATURES_INVALID", "语义向量无效") from exc
+        if semantic.ndim != 2 or semantic.shape[1] != dim or not np.isfinite(semantic).all():
+            raise BaselineError("FEATURES_INVALID", "语义向量无效")
+        matrix = semantic if schema.semantic_only else np.hstack([experts, semantic])
+    else:
+        matrix = experts
+    if matrix is None or matrix.ndim != 2 or matrix.shape[1] != schema.input_width() or not len(matrix):
+        raise BaselineError("FEATURES_INVALID", "输入特征形状与 schema 声明不一致")
     return matrix
 
 
@@ -125,9 +183,13 @@ def fit_model(train_records, *, schema=None, algorithm=None):
     labels = np.asarray([r["label"] for r in train_records])
     if set(labels.tolist()) != {0, 1}:
         raise BaselineError("MODEL_INVALID", "训练需要两类发布标签")
-    steps = [("counts", FunctionTransformer(Log1pColumns(schema.log1p_indices())))]
+    steps = []
+    if not schema.semantic_only:
+        steps.append(("counts", FunctionTransformer(Log1pColumns(schema.log1p_indices()))))
     if "scale" in entry["preprocess"]:
-        steps.append(("scale", StandardScaler()))
+        steps.append(("scale", ExpertStandardScaler(
+            0 if schema.semantic_only else len(schema.in_model_names()))
+            if schema.semantic else StandardScaler()))
     steps.append(("model", build_estimator(entry)))
     pipeline = Pipeline(steps)
     try:

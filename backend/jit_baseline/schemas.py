@@ -35,6 +35,8 @@ class Field:
 class Schema:
     name: str
     fields: tuple
+    semantic: object = None
+    semantic_only: bool = False
 
     def in_model_fields(self):
         return tuple(f for f in self.fields if f.in_model)
@@ -54,6 +56,13 @@ class Schema:
     def log1p_indices(self):
         """按入模顺序返回需要 log1p 的列索引。"""
         return tuple(index for index, field in enumerate(self.in_model_fields()) if field.transform == LOG1P)
+
+    def semantic_dim(self):
+        return int(self.semantic["dim"]) if self.semantic else 0
+
+    def input_width(self):
+        experts = 0 if self.semantic_only else len(self.in_model_names())
+        return experts + self.semantic_dim()
 
 
 _SIX = Schema("openstack-six-v1", (
@@ -103,7 +112,19 @@ _GIT14 = Schema("kamei14-git-v1", (
     Field("sexp", "sexp", transform=LOG1P, integer=True),
 ))
 
-SCHEMAS = {schema.name: schema for schema in (_SIX, _KAMEI14, _GIT14)}
+_SEMANTIC_BLOCK = {
+    "model": "microsoft/codebert-base",
+    "revision": "3b0952feddeffad0063f274080e3c23d75e7eb39",
+    "dim": 768,
+    "pooling": "mean",
+    "maxLength": 256,
+}
+_GIT14_SEMANTIC = Schema("kamei14-semantic-codebert-v1", _GIT14.fields, semantic=_SEMANTIC_BLOCK)
+_SEMANTIC_ONLY = Schema("code-semantic-codebert-v1", _GIT14.fields, semantic=_SEMANTIC_BLOCK,
+                        semantic_only=True)
+
+SCHEMAS = {schema.name: schema
+           for schema in (_SIX, _KAMEI14, _GIT14, _GIT14_SEMANTIC, _SEMANTIC_ONLY)}
 DEFAULT_SCHEMA = "openstack-six-v1"
 
 

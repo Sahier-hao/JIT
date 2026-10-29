@@ -1,0 +1,105 @@
+{
+  "command": "python -m jit_baseline.cli run --output artifacts/semantic/semantic-only/logistic-regression-l2-v1 --schema code-semantic-codebert-v1 --algorithm logistic-regression-l2-v1 --dataset-manifest data/datasets/flask-3y-text/flask-3y-text-2022-01-11_2024-11-27.json --embedding-dir artifacts/embeddings/flask-3y-text-codebert",
+  "config": {
+    "algorithmVersion": "logistic-regression-l2-v1",
+    "cohort": {
+      "addedLinesGreaterThan": 0,
+      "endEpochExclusive": 1735689600,
+      "maxChurnInclusive": 10000,
+      "maxFilesInclusive": 100,
+      "startEpochInclusive": 1640995200
+    },
+    "coreFiles": {
+      "metrics.json": "e3bce05d844972e202be2128743edf76af9368e4cc74be958d492c2ee880541d",
+      "model.joblib": "4ced92945afa419941b94bba6d8e0601b7d9590cc484a7c0ce641e8e006273a5",
+      "reference-predictions.json": "6241e916046aee6200c9ed0467d40ede46e86360025d0cdbe13120c27d6b0ac7",
+      "source.json": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3",
+      "split.json": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c",
+      "test-input.json": "8a5e25fc3f681c2e9e8143b2b604c41342437c331831e25e317f6ae569938e51",
+      "test-labels.json": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+    },
+    "datasetManifest": {
+      "path": "data/datasets/flask-3y-text/flask-3y-text-2022-01-11_2024-11-27.json",
+      "sha256": "2a81531a210d6580b7ebc18777e5eb451568c0d6793f802acb652dc7f59c5450"
+    },
+    "datasetVersion": "flask-3y-text-2022-01-11_2024-11-27",
+    "features": [
+      "ns",
+      "nd",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "rexp",
+      "sexp"
+    ],
+    "metricSet": "metric-set-v2",
+    "model": {
+      "C": 1.0,
+      "class_weight": null,
+      "max_iter": 1000,
+      "regularization": "L2",
+      "seed": 2026,
+      "solver": "lbfgs",
+      "threads": 1,
+      "tol": 0.0001
+    },
+    "modelSha256": "4ced92945afa419941b94bba6d8e0601b7d9590cc484a7c0ce641e8e006273a5",
+    "protocol": "code-semantic-codebert-v1",
+    "schema": "code-semantic-codebert-v1",
+    "semantic": {
+      "dim": 768,
+      "embeddingsSha256": "bd3f2d298c84da00f22ae98a2e313ef67044e53787dd34547dd7bdb664d88122",
+      "maxLength": 256,
+      "model": "microsoft/codebert-base",
+      "pooling": "mean",
+      "revision": "3b0952feddeffad0063f274080e3c23d75e7eb39",
+      "textSha256": "1d86bf688d7756324784f186fb92b430c6f42609a26d41adc2c5070c66633483"
+    },
+    "sourceCode": {
+      "algorithms.py": "c032930710955d55c0e9afc135833dfd20e512504a2a1e97eab0e5596dc3cae1",
+      "artifacts.py": "20d1708cdabd29ee451861cfa81b7311b717f7419a7d2f908f1bff6a53a654ca",
+      "config.py": "a41f1dac9d1615ef67b322b46d5640dab54b8990dde06e781fe88b17cfb01e7e",
+      "data.py": "0d407615cc359bb91d972aa16bb28ad8f1608ee8386d572f934df9e12e233736",
+      "deep.py": "a85f6e79ea8023afc2fb103a870b732924f61e0bbe4a628ada69d69fc11cf64b",
+      "errors.py": "c6d5168b7dd2ff3a29ca38fe08ca09f3adcdb569e152608ffec61a33380784b3",
+      "metrics.py": "081da1f893a0a3a37fb3f472e2996126b53a13f6c92904177867bf91b3d7da07",
+      "model.py": "5db1f215db53461b373654fcb55493f523a4bf0942e6665b349daf0b51fcf81e",
+      "schemas.py": "91b00ba32d3561eb91c0b70b7435f2f8ffbef445aada682019adf1d01b6ad724",
+      "trends.py": "93b9f7950e38728bafed0e852c5b65c29e2d6188abe6eb0d909674609d1c66e1"
+    },
+    "threshold": 0.5,
+    "trainingEnvironment": {
+      "packages": {
+        "fastapi": "0.143.0",
+        "joblib": "1.6.0",
+        "numpy": "2.5.3",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1",
+        "threadpoolctl": "3.7.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.12.4"
+    }
+  },
+  "files": {
+    "metrics.json": "e3bce05d844972e202be2128743edf76af9368e4cc74be958d492c2ee880541d",
+    "model.joblib": "4ced92945afa419941b94bba6d8e0601b7d9590cc484a7c0ce641e8e006273a5",
+    "reference-predictions.json": "6241e916046aee6200c9ed0467d40ede46e86360025d0cdbe13120c27d6b0ac7",
+    "source.json": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3",
+    "split.json": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c",
+    "summary.json": "66034aa60f54ba91ad956fe134f790538f08b1398a3bbfb6c524624a21f4748a",
+    "test-input.json": "8a5e25fc3f681c2e9e8143b2b604c41342437c331831e25e317f6ae569938e51",
+    "test-labels.json": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+  },
+  "generatedAt": "2026-10-29T12:03:34.048553+00:00",
+  "runId": "915ad341cd6c39189390923820f243a3bfa3601267deee2c29751e77b20e64da",
+  "schema": 1
+}

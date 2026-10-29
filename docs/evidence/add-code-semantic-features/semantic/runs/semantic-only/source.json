@@ -1,0 +1,44 @@
+{
+  "citation": "由本地 Git 仓库采集生成",
+  "files": {
+    "flask-3y-text.csv": {
+      "bytes": 58308,
+      "sha256": "c32ead55e0ea572bb9a3205a944d55994745d9d53061261a6cbdf76ee52bc915",
+      "url": "https://github.com/pallets/flask"
+    }
+  },
+  "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。",
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 20,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 0
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 475,
+    "positiveLabels": 74,
+    "rawRows": 495
+  },
+  "revision": "d086db856be187255b8ec61ef409357393020f32",
+  "sha256": "c32ead55e0ea572bb9a3205a944d55994745d9d53061261a6cbdf76ee52bc915",
+  "url": "https://github.com/pallets/flask"
+}

@@ -1,0 +1,96 @@
+{
+  "command": "python -m jit_baseline.cli run --output artifacts/semantic/expert-only/logistic-regression-l2-v1 --schema kamei14-git-v1 --algorithm logistic-regression-l2-v1 --dataset-manifest data/datasets/flask-3y-text/flask-3y-text-2022-01-11_2024-11-27.json",
+  "config": {
+    "algorithmVersion": "logistic-regression-l2-v1",
+    "cohort": {
+      "addedLinesGreaterThan": 0,
+      "endEpochExclusive": 1735689600,
+      "maxChurnInclusive": 10000,
+      "maxFilesInclusive": 100,
+      "startEpochInclusive": 1640995200
+    },
+    "coreFiles": {
+      "metrics.json": "38d7df789e16e44356caf00ae2d49c89ee8fbfc00a415aecc7a117867081b5e2",
+      "model.joblib": "512fb8313a15314e1260fbe18a12485969c59d0d37deb12a7fe9f664d82a4975",
+      "reference-predictions.json": "385d0a41211bc0961cf45be122d4734b6399558a7a7e8082389c7de2c47446ca",
+      "source.json": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3",
+      "split.json": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c",
+      "test-input.json": "65e2023ffd966cbd5d9bb9f9656a48404a5bfa9c2161fed0cb025f23a2762471",
+      "test-labels.json": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+    },
+    "datasetManifest": {
+      "path": "data/datasets/flask-3y-text/flask-3y-text-2022-01-11_2024-11-27.json",
+      "sha256": "2a81531a210d6580b7ebc18777e5eb451568c0d6793f802acb652dc7f59c5450"
+    },
+    "datasetVersion": "flask-3y-text-2022-01-11_2024-11-27",
+    "features": [
+      "ns",
+      "nd",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "rexp",
+      "sexp"
+    ],
+    "metricSet": "metric-set-v2",
+    "model": {
+      "C": 1.0,
+      "class_weight": null,
+      "max_iter": 1000,
+      "regularization": "L2",
+      "seed": 2026,
+      "solver": "lbfgs",
+      "threads": 1,
+      "tol": 0.0001
+    },
+    "modelSha256": "512fb8313a15314e1260fbe18a12485969c59d0d37deb12a7fe9f664d82a4975",
+    "protocol": "kamei14-git-v1",
+    "schema": "kamei14-git-v1",
+    "sourceCode": {
+      "algorithms.py": "c032930710955d55c0e9afc135833dfd20e512504a2a1e97eab0e5596dc3cae1",
+      "artifacts.py": "20d1708cdabd29ee451861cfa81b7311b717f7419a7d2f908f1bff6a53a654ca",
+      "config.py": "a41f1dac9d1615ef67b322b46d5640dab54b8990dde06e781fe88b17cfb01e7e",
+      "data.py": "0d407615cc359bb91d972aa16bb28ad8f1608ee8386d572f934df9e12e233736",
+      "deep.py": "a85f6e79ea8023afc2fb103a870b732924f61e0bbe4a628ada69d69fc11cf64b",
+      "errors.py": "c6d5168b7dd2ff3a29ca38fe08ca09f3adcdb569e152608ffec61a33380784b3",
+      "metrics.py": "081da1f893a0a3a37fb3f472e2996126b53a13f6c92904177867bf91b3d7da07",
+      "model.py": "5db1f215db53461b373654fcb55493f523a4bf0942e6665b349daf0b51fcf81e",
+      "schemas.py": "91b00ba32d3561eb91c0b70b7435f2f8ffbef445aada682019adf1d01b6ad724",
+      "trends.py": "93b9f7950e38728bafed0e852c5b65c29e2d6188abe6eb0d909674609d1c66e1"
+    },
+    "threshold": 0.5,
+    "trainingEnvironment": {
+      "packages": {
+        "fastapi": "0.143.0",
+        "joblib": "1.6.0",
+        "numpy": "2.5.3",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1",
+        "threadpoolctl": "3.7.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.12.4"
+    }
+  },
+  "files": {
+    "metrics.json": "38d7df789e16e44356caf00ae2d49c89ee8fbfc00a415aecc7a117867081b5e2",
+    "model.joblib": "512fb8313a15314e1260fbe18a12485969c59d0d37deb12a7fe9f664d82a4975",
+    "reference-predictions.json": "385d0a41211bc0961cf45be122d4734b6399558a7a7e8082389c7de2c47446ca",
+    "source.json": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3",
+    "split.json": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c",
+    "summary.json": "acc06642f7e1428f4f840f3596e5e2815bc1b86d41c015af010b74b1ab0570e3",
+    "test-input.json": "65e2023ffd966cbd5d9bb9f9656a48404a5bfa9c2161fed0cb025f23a2762471",
+    "test-labels.json": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+  },
+  "generatedAt": "2026-10-29T12:03:35.078649+00:00",
+  "runId": "a70ce92c7f729dccc405c95292e4ac58e75a720ab952ff848da5e79a2e77f35f",
+  "schema": 1
+}
