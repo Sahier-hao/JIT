@@ -142,10 +142,11 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       <aside className="pw-rail" aria-label="分析记录">
         <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
         {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}
+        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">已显示全部 {records.total} 次分析</p> : null}
         {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
       </aside>
 
+      <div className="pw-main">
       <div className="pw-detail">
         <div className="pw-detail-head">
           <h2>当前分析结果</h2>
@@ -178,11 +179,12 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
         </div>}
       </div>
-    </div>
 
     <Disclosure className="pw-updates" summary={<><span>仓库更新与自动检查</span><span className="pw-updates-meta">{repository.url.replace(/^https?:\/\//, '')} · {context?.branch ?? repository.defaultBranch} · {repository.commitCount.toLocaleString()} 个已分析提交</span></>}>
       <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
     </Disclosure>
+    </div>
+    </div>
 
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
       {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
@@ -220,6 +222,8 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
   const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}`
   const shortId = job.syncId.slice(0, 7)
   return <article className={`analysis-job ${current ? 'is-current' : ''}`} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
+    <span className="record-marker" aria-hidden="true"/>
+    <div className="record-body">
     <div className="job-main">
       {completed ? <label className="record-pick">
         <input
@@ -245,6 +249,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
       <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={completed ? onOpen : undefined} onCompare={onCompare} onRetry={!active && !completed ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
     {job.error ? <p className="record-error" title={job.error.message}><AlertTriangle size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
+    </div>
   </article>
 }
 
