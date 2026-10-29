@@ -65,7 +65,7 @@
 .result-empty p { margin: 0; font-size: 12.5px; line-height: 1.7; color: var(--fg-3); }
 
 /* 右：分析记录（固定高度，记录再多也不推动整页） */
-.pw-rail { display: flex; flex-direction: column; box-sizing: border-box; height: min(560px, calc(100vh - 190px)); padding: 18px 0 12px; }
+.pw-rail { display: flex; flex-direction: column; box-sizing: border-box; height: auto; max-height: min(560px, calc(100vh - 190px)); padding: 18px 0 12px; }
 .pw-list-end { margin: 16px 2px 0; text-align: center; font-size: 11px; color: var(--fg-3); }
 .pw-rail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 0 18px 12px; }
 .pw-rail-head h2 { margin: 0; font: 600 13px/1.4 var(--sans); color: var(--fg); }
@@ -192,3 +192,48 @@
 .pw-detail .pw-updates .update-panel { border-top: 0; }
 .update-status-detail { margin-top: 4px; }
 .update-foot-row { margin-top: 12px; padding-top: 10px; }
+
+/* 仓库更新入口：一行，点开对话框，不再在页面里向下展开 */
+.pw-update-row { grid-column: 1; grid-row: 2; margin-top: 2px; }
+.update-entry {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--fg);
+  font: 13px var(--sans);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--shadow-ink) 4%, transparent);
+  transition: background .14s ease, border-color .14s ease;
+}
+.update-entry:hover { background: var(--sunken); border-color: var(--line-strong); }
+.update-entry:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 1px; }
+.update-entry-icon { display: inline-flex; color: var(--fg-3); flex: none; }
+.update-entry[data-tone='ok'] .update-entry-icon { color: var(--accent); }
+.update-entry[data-tone='active'] .update-entry-icon { color: var(--accent); }
+.update-entry[data-tone='alert'] .update-entry-icon { color: var(--risk-high); }
+.update-entry-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.update-entry-text b { font: 500 13px var(--sans); color: var(--fg); }
+.update-entry-text span { overflow: hidden; font: 12px var(--sans); color: var(--fg-3); text-overflow: ellipsis; white-space: nowrap; }
+.update-entry-chevron { margin-left: auto; color: var(--fg-3); flex: none; }
+
+/* 对话框内的更新设置表单 */
+.ui-dialog .update-body { display: grid; gap: 12px; }
+.update-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+.update-settings-title { grid-column: 1 / -1; margin: 0; font: 600 12.5px var(--sans); color: var(--fg-2); }
+.update-settings .update-field { display: grid; gap: 6px; }
+.update-settings .update-submit { display: flex; align-items: end; justify-content: flex-end; }
+.update-settings .pr-field-label { font: 12px var(--sans); color: var(--fg-3); }
+

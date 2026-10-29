@@ -1,4 +1,6 @@
-import { Button, Disclosure, Input, NumberInput, Select, Switch } from '../ui/controls'
+import { Button, Input, NumberInput, Select, Switch } from '../ui/controls'
+import { Dialog } from '../ui/dialog'
+import { ChevronRight, RefreshCw } from 'lucide-react'
 import { useEffect, useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react'
 import { updateRepository, type UpdateState } from '../repositoryUpdatesClient'
 import { repositoryModels, type ModelChoice } from '../modelClient'
@@ -29,6 +31,7 @@ export function RepositoryUpdates({ repositoryId, onUpdated, ref }: { repository
   const callback = useRef(onUpdated)
   const [models, setModels] = useState<ModelChoice[]>([])
   const [modelError, setModelError] = useState('')
+  const [open, setOpen] = useState(false)
   const [modelAttempt, setModelAttempt] = useState(0)
   const [branch, setBranch] = useState<string | null>(null)
   const [modelId, setModelId] = useState<string | null>(null)
@@ -93,50 +96,61 @@ export function RepositoryUpdates({ repositoryId, onUpdated, ref }: { repository
     'up-to-date': `远端 ${branchLabel}${head ? ` 停在 ${head}` : ''}。`,
     error: '这次检查没有完成，可以重试；已有分析记录仍可查看。',
   }[state.status] : ''
-  return <section className="update-panel" aria-label="仓库更新">
-    {error ? <FailureNotice error={error}/> : null}
-    {!state || error ? <div className="update-empty">
-      <p>更新状态暂时不可用。</p>
-      <Button size="sm" disabled={busy} onClick={() => { setAttempt(value => value + 1); setModelAttempt(value => value + 1) }}>重新读取</Button>
-    </div> : <div className="update-body">
-      <div className="update-status" data-tone={tone}>
-        <span className="update-dot" aria-hidden="true"/>
-        <p role="status" className="update-status-title">{LABELS[state.status]}</p>
-        <span className="update-status-time">{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚未检查'}</span>
-        <Button size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button>
-      </div>
-      <p className="update-status-detail">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `更新未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
-      <div className="update-foot-row">
-        <span className="update-auto"><Switch ariaLabel="自动检查仓库更新" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}/><span>自动检查</span></span>
-        <span className="update-cadence">{`每 ${state.intervalSeconds / 60} 分钟检查一次 · 最近 ${state.windowDays} 天 · 最多 ${state.commitLimit} 条`}</span>
-        <Disclosure className="update-settings" summary="更新设置"><form onSubmit={save}>
-        <div className="update-field">
-          <span className="pr-field-label">跟踪分支</span>
-          <Input aria-label="更新跟踪分支" value={branch ?? state.branch} onChange={event => setBranch(event.target.value)} disabled={busy || running}/>
+  return <>
+    <button type="button" className="update-entry" data-tone={tone} onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <span className="update-entry-icon" aria-hidden="true"><RefreshCw size={15}/></span>
+      <span className="update-entry-text">
+        <b>仓库更新与自动检查</b>
+        <span>{state ? LABELS[state.status] : '正在读取更新状态…'}</span>
+      </span>
+      <ChevronRight size={15} className="update-entry-chevron" aria-hidden="true"/>
+    </button>
+    <Dialog open={open} onOpenChange={setOpen} title="仓库更新与自动检查" width={560}>
+      {error ? <FailureNotice error={error}/> : null}
+      {!state || error ? <div className="update-empty">
+        <p>更新状态暂时不可用。</p>
+        <Button size="sm" disabled={busy} onClick={() => { setAttempt(value => value + 1); setModelAttempt(value => value + 1) }}>重新读取</Button>
+      </div> : <div className="update-body">
+        <div className="update-status" data-tone={tone}>
+          <span className="update-dot" aria-hidden="true"/>
+          <p role="status" className="update-status-title">{LABELS[state.status]}</p>
+          <span className="update-status-time">{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚未检查'}</span>
+          <Button size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button>
         </div>
-        <div className="update-field">
-          <span className="pr-field-label">更新模型</span>
-          <Select ariaLabel="更新模型" value={selectedModel} onChange={setModelId} disabled={busy || running} options={[
-            ...(selectedModel && !models.some(model => model.modelId === selectedModel) ? [{ value: selectedModel, label: '已保存模型（当前不可用）', disabled: true }] : []),
-            ...models.map(model => ({ value: model.modelId, label: model.repositoryPredictionSupported ? model.name : `${model.name}（不可用）`, disabled: !model.repositoryPredictionSupported })),
-          ]}/>
+        <p className="update-status-detail">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `更新未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
+        <div className="update-foot-row">
+          <span className="update-auto"><Switch ariaLabel="自动检查仓库更新" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}/><span>自动检查</span></span>
+          <span className="update-cadence">{`每 ${state.intervalSeconds / 60} 分钟检查一次 · 最近 ${state.windowDays} 天 · 最多 ${state.commitLimit} 条`}</span>
         </div>
-        <div className="update-field">
-          <span className="pr-field-label">检查频率</span>
-          <Select ariaLabel="仓库检查频率" value={interval ?? state.intervalSeconds} onChange={value => setIntervalValue(Number(value))} disabled={busy || running} options={[...new Set([300, 900, 3600, state.intervalSeconds])].sort((a, b) => a - b).map(value => ({ value, label: `每 ${value / 60} 分钟` }))}/>
-        </div>
-        <div className="update-field">
-          <span className="pr-field-label">时间窗口（天）</span>
-          <NumberInput min={1} max={3650} aria-label="更新时间窗口" value={windowDays ?? state.windowDays} onChange={event => setWindowDays(Number(event.target.value))} disabled={busy || running}/>
-        </div>
-        <div className="update-field">
-          <span className="pr-field-label">提交上限</span>
-          <NumberInput min={1} max={5000} aria-label="更新提交上限" value={commitLimit ?? state.commitLimit} onChange={event => setCommitLimit(Number(event.target.value))} disabled={busy || running}/>
-        </div>
-        {modelError ? <p className="field-error">{modelError}<Button variant="ghost" size="sm" onClick={() => setModelAttempt(value => value + 1)}>重试模型选项</Button></p> : null}
-        <div className="update-submit"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
-        </form></Disclosure>
-      </div>
-    </div>}
-  </section>
+        <form className="update-settings" onSubmit={save}>
+          <p className="update-settings-title">更新设置</p>
+          <div className="update-field">
+            <span className="pr-field-label">跟踪分支</span>
+            <Input aria-label="更新跟踪分支" value={branch ?? state.branch} onChange={event => setBranch(event.target.value)} disabled={busy || running}/>
+          </div>
+          <div className="update-field">
+            <span className="pr-field-label">更新模型</span>
+            <Select ariaLabel="更新模型" value={selectedModel} onChange={setModelId} disabled={busy || running} options={[
+              ...(selectedModel && !models.some(model => model.modelId === selectedModel) ? [{ value: selectedModel, label: '已保存模型（当前不可用）', disabled: true }] : []),
+              ...models.map(model => ({ value: model.modelId, label: model.repositoryPredictionSupported ? model.name : `${model.name}（不可用）`, disabled: !model.repositoryPredictionSupported })),
+            ]}/>
+          </div>
+          <div className="update-field">
+            <span className="pr-field-label">检查频率</span>
+            <Select ariaLabel="仓库检查频率" value={interval ?? state.intervalSeconds} onChange={value => setIntervalValue(Number(value))} disabled={busy || running} options={[...new Set([300, 900, 3600, state.intervalSeconds])].sort((a, b) => a - b).map(value => ({ value, label: `每 ${value / 60} 分钟` }))}/>
+          </div>
+          <div className="update-field">
+            <span className="pr-field-label">时间窗口（天）</span>
+            <NumberInput min={1} max={3650} aria-label="更新时间窗口" value={windowDays ?? state.windowDays} onChange={event => setWindowDays(Number(event.target.value))} disabled={busy || running}/>
+          </div>
+          <div className="update-field">
+            <span className="pr-field-label">提交上限</span>
+            <NumberInput min={1} max={5000} aria-label="更新提交上限" value={commitLimit ?? state.commitLimit} onChange={event => setCommitLimit(Number(event.target.value))} disabled={busy || running}/>
+          </div>
+          {modelError ? <p className="field-error">{modelError}<Button variant="ghost" size="sm" onClick={() => setModelAttempt(value => value + 1)}>重试模型选项</Button></p> : null}
+          <div className="update-submit"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
+        </form>
+      </div>}
+    </Dialog>
+  </>
 }

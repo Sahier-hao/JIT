@@ -6,15 +6,15 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, RefreshCw, RotateCcw, Trash2, XCircle } from 'lucide-react'
-import { Button, Disclosure, IconButton } from '../ui/controls'
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, RotateCcw, Trash2, XCircle } from 'lucide-react'
+import { Button, IconButton } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
 import type { SyncForm } from '../apiClient'
 import { projectsChanged } from '../projectEvents'
 import { useModelName } from '../modelClient'
 import { AnalysisLauncher } from '../components/AnalysisLauncher'
-import { RepositoryUpdates, type UpdateHandle } from '../components/RepositoryUpdates'
+import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
@@ -46,7 +46,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   const [detailJob, setDetailJob] = useState<SyncView | null>(null)
   const [deleteJob, setDeleteJob] = useState<SyncView | null>(null)
   const [cancelJob, setCancelJob] = useState<SyncView | null>(null)
-  const updatesRef = useRef<UpdateHandle>(null)
   const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
   const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
   const share = (count: number) => Math.round((count / riskTotal) * 100)
@@ -172,12 +171,10 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         </div> : <div className="result-empty">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
         </div>}
-    <Disclosure className="pw-updates" trailing={<IconButton label="立即检查更新" icon={<RefreshCw size={15}/>} onClick={() => updatesRef.current?.refresh()}/>} summary={<><span>仓库更新与自动检查</span><span className="pw-updates-meta">{repository.url.replace(/^https?:\/\//, '')} · {context?.branch ?? repository.defaultBranch} · {repository.commitCount.toLocaleString()} 个已分析提交</span></>}>
-      <RepositoryUpdates ref={updatesRef} key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
-    </Disclosure>
       </div>
-
-
+      <section className="pw-update-row" aria-label="仓库更新与自动检查">
+        <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+      </section>
     </div>
 
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>

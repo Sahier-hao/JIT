@@ -11,7 +11,7 @@
   border-radius: 8px;
   background: var(--card);
   color: var(--fg);
-  font: 500 13.5px/32px var(--display);
+  font: 500 13.5px/20px var(--display);
   letter-spacing: .01em;
   white-space: nowrap;
   cursor: pointer;
@@ -20,7 +20,7 @@
 .ui-btn:hover { background: var(--sunken); border-color: var(--line-strong); }
 .ui-btn:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 1px; }
 .ui-btn:disabled { opacity: .55; cursor: not-allowed; }
-.ui-btn--sm { height: 28px; padding: 0 10px; font-size: 12.5px; line-height: 28px; border-radius: 7px; }
+.ui-btn--sm { height: 28px; padding: 0 10px; font-size: 13px; line-height: 18px; border-radius: 7px; }
 .ui-btn--block { width: 100%; }
 .ui-btn--primary { background: var(--btn); border-color: var(--btn); color: var(--btn-fg); }
 .ui-btn--primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); color: var(--btn-fg); }
