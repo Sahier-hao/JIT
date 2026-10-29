@@ -257,3 +257,27 @@
 .record-error { max-height: 36px; overflow: hidden; }
 .pw-rail .pw-timeline .analysis-job { background: var(--card); border: 1px solid var(--line); }
 .pw-rail .pw-timeline .analysis-job.is-current { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); }
+.result-bars { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.result-bars li { display: grid; grid-template-columns: 56px minmax(0, 1fr) 74px; align-items: center; gap: 12px; }
+.bar-label { font-size: 12px; color: var(--fg-3); }
+.bar-track { height: 6px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+.bar-track > span { display: block; height: 100%; border-radius: 999px; background: var(--line-strong); }
+.result-bars .is-high .bar-track > span { background: var(--risk-high); }
+.result-bars .is-mid .bar-track > span { background: var(--risk-mid); }
+.bar-value { display: flex; justify-content: flex-end; align-items: baseline; gap: 6px; font: 12px var(--mono); }
+.bar-value b { font-weight: 600; color: var(--fg); }
+.bar-value em { font-style: normal; color: var(--fg-3); }
+.pw-timeline { position: relative; padding: 8px 12px 14px 34px; }
+.pw-timeline::before { content: ''; position: absolute; left: 16px; top: 24px; bottom: 28px; width: 2px; border-radius: 2px; background: var(--line-strong); opacity: .55; }
+.pw-timeline .analysis-job::after { display: none; }
+.pw-timeline .analysis-job::before { left: -21px; top: 20px; }
+.pw-timeline .analysis-job { padding: 15px 16px; }
+.pw-timeline .analysis-job + .analysis-job { margin-top: 12px; }
+.pw-timeline .job-main { gap: 10px; }
+.pw-timeline .record-meta { margin-top: 5px; }
+.pw-timeline .record-error { margin-top: 9px; }
+.result-chart { display: block; margin-top: 16px; }
+.pw-timeline::before { background: color-mix(in srgb, var(--line-strong) 70%, var(--fg-3)); opacity: 1; }
+.pw-rail { height: min(560px, calc(100vh - 220px)); }
+.pw-rail { height: min(620px, calc(100vh - 200px)); }
+.result-bars .is-low .bar-track > span { background: color-mix(in srgb, var(--fg-3) 62%, var(--card)); }

@@ -11,7 +11,7 @@ import * as SelectPrimitive from '@radix-ui/react-select'
 import clsx from 'clsx'
 import { Check, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
-import { useState } from 'react'
+import { forwardRef, useState } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link'
 type Size = 'sm' | 'md' | 'lg'
@@ -125,13 +125,14 @@ export function Switch({ checked, onCheckedChange, ariaLabel, disabled }: {
 }
 
 /** 图标按钮：用于记录行的紧凑动作，必须带可访问名称。 */
-export function IconButton({ label, icon, onClick, disabled, danger, className }: { label: string; icon: ReactNode; onClick?: () => void; disabled?: boolean; danger?: boolean; className?: string }) {
+export const IconButton = forwardRef<HTMLButtonElement, { label: string; icon: ReactNode; onClick?: () => void; disabled?: boolean; danger?: boolean; className?: string }>(function IconButton({ label, icon, disabled, danger, className, ...rest }, ref) {
   return <button
+    ref={ref}
     type="button"
     className={clsx('ui-iconbtn', danger && 'ui-iconbtn--danger', className)}
     aria-label={label}
     title={label}
     disabled={disabled}
-    onClick={onClick}
+    {...rest}
   >{icon}</button>
-}
+})

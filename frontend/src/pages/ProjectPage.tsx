@@ -159,17 +159,12 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
             <div><b>{repository.distribution.low.toLocaleString()}</b><span>低风险</span></div>
           </div>
           <div className="result-chart">
-            <svg className="result-donut" viewBox="0 0 100 100" role="img" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
-              <circle className="donut-track" cx="50" cy="50" r="40"/>
-              {donutSegments(repository.distribution.high, repository.distribution.medium, repository.distribution.low).map(segment => <circle key={segment.key} className={`donut-${segment.key}`} cx="50" cy="50" r="40" strokeDasharray={`${segment.length} ${DONUT_CIRCUMFERENCE - segment.length}`} strokeDashoffset={-segment.offset}/>)}
-            </svg>
-            <dl className="result-chart-legend">
-              <div><dt><i className="is-high"/>高风险</dt><dd><b>{repository.distribution.high.toLocaleString()}</b><em>{share(repository.distribution.high)}%</em></dd></div>
-              <div><dt><i className="is-mid"/>中风险</dt><dd><b>{repository.distribution.medium.toLocaleString()}</b><em>{share(repository.distribution.medium)}%</em></dd></div>
-              <div><dt><i className="is-low"/>低风险</dt><dd><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></dd></div>
-            </dl>
-          </div>
-          {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
+            <ul className="result-bars" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
+              <li className="is-high"><span className="bar-label">高风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.high)}%` }}/></span><span className="bar-value"><b>{repository.distribution.high.toLocaleString()}</b><em>{share(repository.distribution.high)}%</em></span></li>
+              <li className="is-mid"><span className="bar-label">中风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.medium)}%` }}/></span><span className="bar-value"><b>{repository.distribution.medium.toLocaleString()}</b><em>{share(repository.distribution.medium)}%</em></span></li>
+              <li className="is-low"><span className="bar-label">低风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.low)}%` }}/></span><span className="bar-value"><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></span></li>
+            </ul>
+          </div>          {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
             <div className="result-info">
               <p className="result-meta">
@@ -265,25 +260,6 @@ function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
     {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
   </dl>
 }
-const DONUT_CIRCUMFERENCE = 2 * Math.PI * 40
-
-/** 圆环的三段弧：长度按占比，偏移按累计长度。 */
-function donutSegments(high: number, medium: number, low: number) {
-  const total = Math.max(1, high + medium + low)
-  let offset = 0
-  return [
-    { key: 'high', value: high },
-    { key: 'mid', value: medium },
-    { key: 'low', value: low },
-  ].map(item => {
-    const length = (item.value / total) * DONUT_CIRCUMFERENCE
-    const segment = { key: item.key, length, offset }
-    offset += length
-    return segment
-  })
-}
-
-/** 数据集版本号末尾是采集区间，长串只留日期，完整值放在 title 里。 */
 function datasetRange(version?: string | null) {
   if (!version) return '未登记'
   const range = version.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/)
