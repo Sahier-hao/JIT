@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectPage } from './ProjectPage'
@@ -7,6 +7,12 @@ const REPO = '11111111-1111-4111-8111-111111111111'
 const SYNC = '22222222-2222-4222-8222-222222222222'
 const OTHER = '44444444-4444-4444-8444-444444444444'
 const NOW = '2026-10-22T12:00:00Z'
+
+/** 记录操作收在一个「更多操作」菜单里，测试先展开再点。 */
+async function openActions(user: ReturnType<typeof userEvent.setup>, syncId: string) {
+  const row = await screen.findByRole('article', { name: `分析记录 ${syncId}` })
+  await user.click(within(row).getByRole('button', { name: '更多操作' }))
+}
 
 function detail(name = 'demo-project', view = SYNC) {
   return {
@@ -95,7 +101,9 @@ function mockApi(options: { onDeleteRecord?: () => void; onPost?: (body: unknown
 it('opens a comparison of a historical success against the pinned current result without changing it', async () => {
   const fetch = mockApi(), navigate = vi.fn()
   render(<ProjectPage repositoryId={REPO} navigate={navigate}/> )
-  await userEvent.click(await screen.findByRole('button', { name: '与当前结果对比' }))
+  const user = userEvent.setup()
+  await openActions(user, OTHER)
+  await user.click(await screen.findByRole('menuitem', { name: '与当前结果对比' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'comparison', repositoryId: REPO, baseSyncId: OTHER, targetSyncId: SYNC })
   expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(false)
 })
@@ -111,8 +119,8 @@ it('restores normalized dates without widening the cancelled analysis window', a
     return original(input, init)
   })
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
-  const retry = await screen.findByRole('button', { name: '用这些参数重试' })
-  await user.click(retry)
+  await openActions(user, SYNC)
+  await user.click(await screen.findByRole('menuitem', { name: '用这些参数重试' }))
   expect(screen.getByLabelText('起始日期')).toHaveValue('2024-01-01')
   expect(screen.getByLabelText('结束日期')).toHaveValue('2024-01-08')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
@@ -132,11 +140,13 @@ it('shows queue position and confirms cancellation while preserving the current 
   })
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
   expect(await screen.findByText('排队第 2 位')).toBeVisible()
-  await user.click(screen.getByRole('button', { name: '取消分析' }))
+  await openActions(user, OTHER)
+  await user.click(await screen.findByRole('menuitem', { name: '取消分析' }))
   expect(cancelled).toBe(false)
   await user.click(screen.getByRole('button', { name: '确认取消分析' }))
   expect(await screen.findByText('已取消')).toBeVisible()
-  expect(screen.getByRole('button', { name: '用这些参数重试' })).toBeVisible()
+  await openActions(user, OTHER)
+  expect(await screen.findByRole('menuitem', { name: '用这些参数重试' })).toBeVisible()
   expect(screen.getByRole('button', { name: '查看提交与审查计划' })).toBeVisible()
 })
 
@@ -150,7 +160,8 @@ it('keeps a cancellation error actionable and prevents repeated submissions', as
     return original(input, init)
   })
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '取消分析' }))
+  await openActions(user, SYNC)
+  await user.click(await screen.findByRole('menuitem', { name: '取消分析' }))
   await user.click(screen.getByRole('button', { name: '确认取消分析' }))
   expect(await screen.findByText('分析已结束，请刷新')).toBeVisible()
   expect(requests).toBe(1)
@@ -222,7 +233,8 @@ it('deletes an ended analysis record from the list', async () => {
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click((await screen.findAllByRole('button', { name: '删除记录' }))[0])
+  await user.click((await screen.findAllByRole('button', { name: '更多操作' }))[0])
+  await user.click(await screen.findByRole('menuitem', { name: '删除记录' }))
   expect(deleted).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: '确认删除记录' }))
   await waitFor(() => expect(deleted).toHaveBeenCalled())
@@ -278,8 +290,8 @@ it('restores the bound fallback model on retry even if the administrator default
     return original(input, init)
   })
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
-  const retry = await screen.findByRole('button', { name: '用这些参数重试' })
-  await user.click(retry)
+  await openActions(user, SYNC)
+  await user.click(await screen.findByRole('menuitem', { name: '用这些参数重试' }))
   await waitFor(() => expect(screen.getByLabelText('分析模型')).toHaveValue('old-model'))
   await waitFor(() => expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled())
   await user.click(screen.getByRole('button', { name: '开始分析' }))

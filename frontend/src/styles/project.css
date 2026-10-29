@@ -192,3 +192,68 @@
 .pw-timeline::before { left: 13px; }
 .pw-timeline .analysis-job::before { left: -14px; box-shadow: 0 0 0 3px var(--card); }
 .pw-timeline .analysis-job.is-current::before { box-shadow: 0 0 0 3px var(--card), 0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent); }
+
+/* 风险分布圆环 */
+.result-chart { display: flex; align-items: center; gap: 22px; margin-top: 16px; }
+.result-donut { width: 92px; height: 92px; flex: none; transform: rotate(-90deg); }
+.result-donut circle { fill: none; stroke-width: 12; }
+.donut-track { stroke: var(--sunken); }
+.donut-high { stroke: var(--risk-high); }
+.donut-mid { stroke: var(--risk-mid); }
+.donut-low { stroke: var(--line-strong); }
+.result-chart-legend { display: grid; gap: 8px; flex: 1; min-width: 0; margin: 0; }
+.result-chart-legend > div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.result-chart-legend dt { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--fg-2); }
+.result-chart-legend dt i { width: 8px; height: 8px; border-radius: 2px; }
+.result-chart-legend dd { display: inline-flex; align-items: baseline; gap: 8px; margin: 0; }
+.result-chart-legend dd b { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.result-chart-legend dd em { min-width: 30px; font: 11.5px var(--sans); font-style: normal; color: var(--fg-3); text-align: right; }
+
+/* 结果卡的小字改成 chip */
+.result-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 6px; background: var(--sunken); font-size: 11.5px; color: var(--fg-3); }
+.result-chip b { font-weight: 500; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+
+/* 记录区固定高度：条数变化不再推动整页 */
+.pw-rail { display: flex; flex-direction: column; height: min(560px, calc(100vh - 240px)); }
+.pw-rail-head { flex: none; }
+.pw-rail .job-list, .pw-rail .pw-timeline { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.pw-rail .quiet-empty, .pw-rail .state-block { flex: 1; display: grid; place-content: center; text-align: center; margin: 0; }
+
+/* 时间线：节点与连线 */
+.pw-timeline { position: relative; padding-left: 18px; }
+.pw-timeline .analysis-job { position: relative; }
+.pw-timeline .analysis-job::before { content: ''; position: absolute; left: -14px; top: 18px; z-index: 1; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); box-shadow: 0 0 0 2px var(--card); }
+.pw-timeline .analysis-job::after { content: ''; position: absolute; left: -10.5px; top: 29px; bottom: -14px; width: 1px; background: var(--line); }
+.pw-timeline .analysis-job:last-child::after { display: none; }
+.pw-timeline .analysis-job.is-current::before { background: var(--accent); box-shadow: 0 0 0 2px var(--card), 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
+
+/* 记录菜单 */
+.record-menu { display: grid; gap: 2px; min-width: 168px; padding: 4px; }
+.record-menu-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: 0; border-radius: 6px; background: none; font: 13px var(--sans); color: var(--fg); text-align: left; cursor: pointer; }
+.record-menu-item:hover { background: var(--sunken); }
+.record-menu-item.is-danger { color: var(--risk-high); }
+.record-menu-item:disabled { opacity: .5; cursor: not-allowed; }
+.record-menu-note { margin: 4px 8px 2px; font-size: 11.5px; color: var(--fg-3); }
+
+/* 失败记录：一句人话，原文进详情 */
+.record-error { display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; padding-left: 2px; font-size: 12px; line-height: 1.5; color: var(--risk-high); }
+.record-error svg { flex: none; margin-top: 2px; }
+
+/* 记录行：文本在左、菜单在右上 */
+.pw-timeline .job-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
+.pw-timeline .record-pick { min-width: 0; }
+.pw-timeline .analysis-job { box-shadow: var(--sh-1); }
+.pw-timeline .analysis-job + .analysis-job { margin-top: 8px; }
+
+/* chip 之间不再用居中点分隔 */
+.result-meta .result-chip + .result-chip::before { content: none; }
+.pw-rail { height: min(520px, calc(100vh - 240px)); }
+
+.record-error { color: var(--fg-2); }
+.record-error svg { color: var(--risk-high); }
+.pw-timeline .analysis-job::after { left: -10px; width: 2px; background: var(--line-strong); opacity: .7; }
+.pw-timeline .analysis-job::before { left: -14px; width: 9px; height: 9px; border: 2px solid var(--card); box-shadow: none; background: var(--line-strong); }
+.pw-timeline .analysis-job.is-current::before { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.record-error { max-height: 36px; overflow: hidden; }
+.pw-rail .pw-timeline .analysis-job { background: var(--card); border: 1px solid var(--line); }
+.pw-rail .pw-timeline .analysis-job.is-current { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); }
