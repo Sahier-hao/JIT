@@ -1,3 +1,6 @@
+/* 声明层顺序：基础重置低于工具类，组件层可被页面规则覆盖。 */
+@layer theme, base, components, utilities;
+
 /* Tailwind 只取工具类，preflight 关闭以避免覆盖 base.css 的重置。 */
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);

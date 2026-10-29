@@ -20,6 +20,16 @@
 - `npm run lint`：25 条 `set-state-in-effect` / `only-export-components` 警告，无错误；均为数据加载与状态同步的既有写法。
 - 迁移后修正的测试：Radix Select 的指针捕获 stub、模型选择保持原生 select、PR 工作单先进入提交列表、趋势筛选展开后再断言。
 
+## 真实浏览器检查
+
+使用隔离预览 API（真实 Git 夹具、SQLite 与模型副本）与独立 Vite 端口，在 Chromium 中检查：
+
+- 项目列表、项目概览、分析（分析结果）、风险趋势、PR 审查、管理区登录页均正常渲染，控制台无错误。
+- 浅色与深色主题各检查一次：主按钮在深色主题下反转为浅底深字，文字对比正常。
+- 检查中发现并修复两处问题：
+  - `base.css` 的全局 `button { color: inherit }` 是未分层规则，覆盖了 Tailwind 的 `text-primary-foreground`，导致主按钮文字与背景同色。已声明 `@layer theme, base, components, utilities` 并把该重置放入 `@layer base`。
+  - 深色主题下品牌方块使用 `--btn`（浅色）而图标继承 `--fg`，对比不足。已让 `.brand-glyph` 使用 `--btn-fg`。
+
 ## 未验证与边界
 
 - 未在本轮重跑隔离浏览器 E2E（桌面 1440 与手机 390）；需要在本机启动后端后执行。
