@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Segmented } from 'antd'
+import { Segmented } from '../ui/segmented'
 import { Button, Input } from '../ui/controls'
 import { CodeDiff } from '../ui/CodeDiff'
 import { PRModelClues } from './PRModelClues'
@@ -84,7 +84,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
     <div className="pr-preview-grid">
       <aside className="pr-preview-files" aria-label="PR 文件">
         <div className="pr-preview-pane-head"><h2>文件</h2><span>{source.files.length}/{source.totalFiles}</span>{selectedCommit ? <Button size="sm" variant="ghost" onClick={() => setSelectedCommit('')}>全部文件</Button> : null}</div>
-        <Segmented size="small" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/>
+        <Segmented size="sm" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/>
         {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="pr-preview-warning">这条提交没有文件映射（旧分析），显示全部文件。</p> : null}
         <Input placeholder="筛选路径" aria-label="筛选 PR 文件路径" value={filter} onChange={event => setFilter(event.target.value)}/>
         <div className="pr-preview-file-list" role="listbox" aria-label="PR 文件列表">
@@ -100,7 +100,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
         {file ? <>
           <div className="pr-preview-code-head">
             <div><code>{file.path}</code><span>{file.previousPath ? `重命名自 ${file.previousPath}` : ''}</span></div>
-            <Segmented size="small" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
+            <Segmented size="sm" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
           </div>
           {file.patch ? <CodeDiff file={file} view={diffView} onAnchor={() => {}}/> : <p className="pr-preview-empty">没有可展示的完整 Diff，不能视作空文件。开始审查后可读取固定上下文。</p>}
         </> : <p className="pr-preview-empty">这个 PR 没有可展示的文件。</p>}

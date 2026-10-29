@@ -10,9 +10,9 @@ html[data-theme="charcoal"] {
   --project-series-ink: #104281;
 }
 .project-tabs { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--line-strong); margin: 20px 0 24px; padding-bottom: 12px; }
-.project-tabs .ant-btn[aria-current="page"], .project-tabs .ui-btn[aria-current="page"] { color: var(--fg); background: var(--sunken); border-color: var(--line-strong); font-weight: 650; }
+.project-tabs .ui-btn[aria-current="page"] { color: var(--fg); background: var(--sunken); border-color: var(--line-strong); font-weight: 650; }
 .analysis-view-switch { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
-.analysis-view-switch .ant-btn[aria-current="page"], .analysis-view-switch .ui-btn[aria-current="page"] { color: var(--fg); background: var(--sunken); border-color: var(--line-strong); font-weight: 650; }
+.analysis-view-switch .ui-btn[aria-current="page"] { color: var(--fg); background: var(--sunken); border-color: var(--line-strong); font-weight: 650; }
 .project-activity { display: grid; gap: 16px; margin-top: 8px; }
 @media (min-width: 1100px) { .project-activity { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .project-trends .trend-drilldown .ui-btn { height: auto; max-width: 100%; white-space: normal; text-align: left; }
@@ -115,7 +115,7 @@ html[data-theme="charcoal"] {
 .project-trends .trend-drilldown { border: 1px solid var(--line-strong); padding: 20px; margin: 20px 0; border-radius: var(--r-lg); }
 .project-trends .trend-drilldown ul { padding: 0; list-style: none; }
 .project-trends .trend-drilldown li { margin: 8px 0; }
-.project-trends .trend-drilldown li .ant-btn { height: auto; max-width: 100%; white-space: normal; text-align: left; }
+.project-trends .trend-drilldown li .ui-btn { height: auto; max-width: 100%; white-space: normal; text-align: left; }
 .project-trends .trend-sources pre { max-width: 100%; overflow: auto; font-size: 12px; }
 .project-trends .trend-sources dd, .project-trends .field-error { overflow-wrap: anywhere; }
 .project-trends .trend-content[aria-busy="true"] { opacity: .55; }
@@ -134,7 +134,7 @@ html[data-theme="charcoal"] {
   .pr-hub-alert { align-items: flex-start; flex-direction: column; }
   .pr-track-scope { align-items: flex-start; flex-direction: column; }
   .project-tabs { gap: 4px; }
-  .project-tabs .ant-btn { padding-inline: 10px; }
+  .project-tabs .ui-btn { padding-inline: 10px; }
   .project-trends .project-trend-figure { padding-inline: 10px; }
   .project-trends .trend-summary { gap: 18px; }
   .project-trends .trend-summary > div { flex: 1 1 120px; }

@@ -294,7 +294,6 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 .update-settings summary::before { content: ''; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s; }
 .update-settings[open] summary::before { transform: rotate(45deg); }
 .update-settings form { display: grid; gap: 14px; padding: 6px 0 2px; }
-.update-toggle.ant-checkbox-wrapper { display: flex; align-items: flex-start; gap: 9px; margin: 14px 0 10px; font-size: 13px; line-height: 1.5; }
 .update-toggle small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--fg-3); }
 
 /* ---------- 仓库更新：状态带 + 指标 + 设置 ---------- */
@@ -326,9 +325,9 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 }
 .update-foot .update-settings-note { grid-column: 1 / -1; }
 .update-foot .update-submit { grid-column: 1 / -1; }
-.update-foot .update-settings .ant-input,
-.update-foot .update-settings .ant-select,
-.update-foot .update-settings .ant-input-number { width: 100%; }
+.update-foot .update-settings .ui-input,
+.update-foot .update-settings .ui-select,
+.update-foot .update-settings .ui-number { width: 100%; }
 .update-foot .update-settings .update-field { align-content: start; }
 @media (max-width: 640px) {
   .update-band .update-stats { flex-direction: column; gap: 8px; }
@@ -337,11 +336,10 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 }
 .update-foot .update-settings .update-submit { grid-column: auto; justify-self: end; align-self: end; padding-bottom: 2px; }
 
-/* 分析页工具条：原生日期/搜索框与 antd Select 统一到 32px */
+/* 分析页工具条：原生日期/搜索框与下拉统一到 32px */
 .review-toolbar input:not([class*='ant-']),
-.review-toolbar .ant-select-selector { min-height: 32px; height: 32px; }
 .review-toolbar input[type='date']:not([class*='ant-']) { padding-block: 0; }
-.review-toolbar .ant-select { display: flex; align-items: center; }
+.review-toolbar .ui-select { display: flex; align-items: center; }
 
 .review-toolbar .search-field input { padding-left: 32px; }
 
@@ -398,7 +396,7 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
 .analysis-launcher dt { font-size: 12px; color: var(--fg-3); }
 .analysis-launcher dd { margin: 0; font-size: 13px; color: var(--fg); text-align: right; }
 .analysis-launcher .analysis-note { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--fg-3); }
-.analysis-dialog .ant-modal-body { padding-top: 6px; }
+.analysis-dialog .ui-dialog-body { padding-top: 6px; }
 .analysis-dialog .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
 .analysis-dialog .wide-field { grid-column: 1 / -1; }
 .analysis-dialog .analysis-form-error { padding: 0; }
@@ -409,11 +407,11 @@ tbody tr:last-child td { border-bottom: 0; }tbody tr:hover { background: var(--h
   .analysis-dialog .form-submit { flex-direction: column; align-items: stretch; gap: 12px; }
   .analysis-dialog .form-submit-actions { justify-content: flex-end; }
 /* 窄屏对话框：内容在框内滚动，取消与开始分析始终贴底可见 */
-.analysis-dialog .ant-modal-body { max-height: calc(100vh - 190px); overflow: auto; }
+.analysis-dialog .ui-dialog-body { max-height: calc(100vh - 190px); overflow: auto; }
 @media (max-width: 720px) {
   .analysis-dialog { top: 12px; padding-bottom: 12px; }
-  .analysis-dialog .ant-modal-container { display: flex; flex-direction: column; max-height: calc(100vh - 24px); }
-  .analysis-dialog .ant-modal-body { max-height: none; flex: 1 1 auto; overflow: auto; }
+  .analysis-dialog .ui-dialog { display: flex; flex-direction: column; max-height: calc(100vh - 24px); }
+  .analysis-dialog .ui-dialog-body { max-height: none; flex: 1 1 auto; overflow: auto; }
   .analysis-dialog .form-submit { position: sticky; bottom: 0; margin-top: 16px; padding: 12px 0 0; background: var(--card); }
 }
 }

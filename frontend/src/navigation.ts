@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export type Route =
   | { name: 'my-reviews' }
@@ -72,18 +73,15 @@ export function hashFor(route: Route): string {
   }
 }
 export function useRoute() {
-  const [route, setRoute] = useState(() => parseHash(window.location.hash))
+  const location = useLocation()
+  const navigate = useNavigate()
+  // HashRouter 把 `#/projects/...` 解析为 pathname；解析器仍以带 `#` 的地址工作，旧解析逻辑不变。
+  const route = parseHash(`#${location.pathname}${location.search}`)
   useEffect(() => {
-    if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') { const url = new URL(window.location.href); url.hash = '#/projects'; window.history.replaceState({}, '', url) }
-    const sync = () => setRoute(parseHash(window.location.hash))
-    window.addEventListener('hashchange', sync); window.addEventListener('popstate', sync)
-    return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync) }
-  }, [])
-  const navigate = useCallback((next: Route, replace = false) => {
-    const url = new URL(window.location.href); url.hash = hashFor(next)
-    url.searchParams.delete('mode'); url.searchParams.delete('sync')
-    window.history[replace ? 'replaceState' : 'pushState']({}, '', url)
-    setRoute(parseHash(url.hash))
-  }, [])
-  return { route, navigate }
+    if (location.pathname === '/' && !location.search) navigate(hashFor({ name: 'repositories' }).replace(/^#/, ''), { replace: true })
+  }, [location.pathname, location.search, navigate])
+  const go = useCallback((next: Route, replace = false) => {
+    navigate(hashFor(next).replace(/^#/, ''), { replace })
+  }, [navigate])
+  return { route, navigate: go }
 }

@@ -129,7 +129,7 @@
   border-bottom: 0;
 }
 
-.wb-alerts .ant-alert {
+.wb-alerts .ui-alert {
   padding: 7px 12px;
   font-size: 12.5px;
   border-radius: var(--r);
@@ -138,16 +138,15 @@
 }
 
 /* 提示条只用左侧色条区分轻重，不要整条填色抢走代码的注意力。 */
-.wb-alerts .ant-alert-info {
+.wb-alerts .ui-alert--info {
   border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
   background: color-mix(in srgb, var(--accent) 5%, var(--card));
 }
-.wb-alerts .ant-alert-info .ant-alert-icon { color: var(--accent); }
-.wb-alerts .ant-alert-warning {
+.wb-alerts .ui-alert--alert {
   border-color: color-mix(in srgb, var(--risk) 32%, var(--line));
   background: color-mix(in srgb, var(--risk) 5%, var(--card));
 }
-.wb-alerts .ant-alert-error {
+.wb-alerts .ui-alert--alert {
   border-color: color-mix(in srgb, var(--risk-high) 34%, var(--line));
   background: color-mix(in srgb, var(--risk-high) 5%, var(--card));
 }
@@ -753,9 +752,9 @@ html[data-theme='charcoal'] .wb-code .token.variable { color: #ffab70; }
 .mr-intake { display: flex; flex-direction: column; gap: 7px; padding: 15px 18px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
 .mr-intake label { font-size: 12px; font-weight: 600; color: var(--fg-2); }
 .mr-intake-row { display: flex; gap: 8px; }
-.mr-intake-row .ant-input { flex: 1; min-width: 0; }
-.mr-intake-row .ant-btn { flex: none; }
-.mr-restore.ant-btn { color: var(--fg-3); padding-inline: 0; height: 28px; }
+.mr-intake-row .ui-input { flex: 1; min-width: 0; }
+.mr-intake-row .ui-btn { flex: none; }
+.mr-restore.ui-btn { color: var(--fg-3); padding-inline: 0; height: 28px; }
 .mr-intake-note { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--fg-3); }
 
 .mr-group-head { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--fg-2); }
@@ -813,12 +812,11 @@ html[data-theme='charcoal'] .wb-code .token.variable { color: #ffab70; }
 .wb .diff-gutter .wb-gutter-number:hover { color: var(--accent); background: var(--accent-soft); }
 .wb .diff-gutter .wb-gutter-number:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: -2px; }
 /* 提示条更轻：细边 + 浅底，不整块压色 */
-.wb .ant-alert { padding: 7px 12px; border-radius: 6px; font-size: 12.5px; align-items: center; }
-.wb .ant-alert .ant-alert-icon { margin-inline-end: 8px; font-size: 13px; }
-.wb .ant-alert-success { background: var(--card); border: 1px solid var(--line); color: var(--fg-2); }
-.wb .ant-alert-info { background: var(--card); border: 1px solid var(--line); color: var(--fg-2); }
-.wb .ant-alert-warning { background: color-mix(in srgb, var(--risk-mid) 8%, var(--card)); border: 1px solid color-mix(in srgb, var(--risk-mid) 30%, var(--line)); color: var(--fg); }
-.wb .ant-alert-error { background: color-mix(in srgb, var(--risk-high) 8%, var(--card)); border: 1px solid color-mix(in srgb, var(--risk-high) 32%, var(--line)); color: var(--fg); }
+.wb .ui-alert { padding: 7px 12px; border-radius: 6px; font-size: 12.5px; align-items: center; }
+.wb .ui-alert--info { background: var(--card); border: 1px solid var(--line); color: var(--fg-2); }
+.wb .ui-alert--info { background: var(--card); border: 1px solid var(--line); color: var(--fg-2); }
+.wb .ui-alert--alert { background: color-mix(in srgb, var(--risk-mid) 8%, var(--card)); border: 1px solid color-mix(in srgb, var(--risk-mid) 30%, var(--line)); color: var(--fg); }
+.wb .ui-alert--alert { background: color-mix(in srgb, var(--risk-high) 8%, var(--card)); border: 1px solid color-mix(in srgb, var(--risk-high) 32%, var(--line)); color: var(--fg); }
 
 /* 矮视口收紧页头，把高度还给代码 */
 @media (max-height: 780px) {

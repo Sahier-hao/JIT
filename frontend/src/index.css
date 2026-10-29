@@ -1,4 +1,8 @@
-/* Tokens, shared components, domain pages, product composition, then the modern shell. */
+/* Tailwind 只取工具类，preflight 关闭以避免覆盖 base.css 的重置。 */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Tokens、共享组件、领域页面、产品组合，最后是现代外壳。 */
 @import './styles/tokens.css';
 @import './styles/base.css';
 @import './styles/components.css';
@@ -8,6 +12,41 @@
 @import './styles/admin.css';
 @import './styles/pr-review.css';
 @import './styles/workbench.css';
-@import './styles/ui.css';
+@import './styles/update-status.css';
 @import './styles/project.css';
 @import './styles/project-workspace.css';
+
+/*
+ * 把现有设计令牌映射为 Tailwind 语义色，让新组件与旧页面共用同一套变量。
+ * 主题切换仍由 html[data-theme] 决定，Tailwind 不自己保存颜色。
+ */
+@theme inline {
+  --color-background: var(--canvas);
+  --color-foreground: var(--fg);
+  --color-card: var(--card);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--btn);
+  --color-primary-foreground: var(--btn-fg);
+  --color-secondary: var(--sunken);
+  --color-secondary-foreground: var(--fg-2);
+  --color-muted: var(--sunken);
+  --color-muted-foreground: var(--fg-3);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--accent-hover);
+  --color-destructive: var(--risk-high);
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--line);
+  --color-input: var(--line-strong);
+  --color-ring: var(--accent-ring);
+
+  --radius-xs: var(--r);
+  --radius-sm: var(--r-xs);
+  --radius-md: var(--r-lg);
+  --radius-lg: var(--r-md);
+  --radius-xl: var(--r-xl);
+
+  --font-sans: var(--sans);
+  --font-mono: var(--mono);
+}

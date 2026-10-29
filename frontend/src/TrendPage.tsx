@@ -15,7 +15,7 @@
 
 import { shanghaiDate, type BaselineSummary, type Dataset } from './domain'
 import { EmptyState, LoadingNotice } from './Feedback'
-import { Button } from 'antd'
+import { Button } from './ui/controls'
 import { Icon } from './Icon'
 import { parseSummaryTrend, type TrendAggregate, type TrendBucket, type TrendMeasure } from './trendContract'
 import { DEFAULT_INSIGHTS, INSIGHT_DISCLAIMER, type TrendInsight } from './trendInsights'
@@ -354,8 +354,8 @@ function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (bucket:
                 <td>{riskText(bucket)}</td>
                 <td className="trend-drill-cell">
                   <Button
-                    type="link"
-                    size="small"
+                    variant="link"
+                    size="sm"
                     className="trend-drill"
                     aria-label={`查看该桶提交：${range.start} 至 ${range.end}`}
                     onClick={() => onDrill(bucket)}
@@ -543,7 +543,7 @@ export function TrendPage({
           // useDataset 的失败是纯文本原因；FailureNotice 按错误类型分类会把它换成通用文案，
           // 因此这里沿用工作台的"数据不可用 + 原因 + 重新加载"呈现。
           <EmptyState tone="alert" title="数据不可用" description={resource.error}>
-            <Button type="primary" onClick={retry}>重新加载</Button>
+            <Button variant="primary" onClick={retry}>重新加载</Button>
           </EmptyState>
         )}
       </>

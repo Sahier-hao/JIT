@@ -97,10 +97,10 @@
 .mr-restore input { accent-color: var(--accent); }
 
 /* 抽屉内的备份与反馈区块：不再使用页面级分隔线 */
-.ant-drawer .pr-backups,
-.ant-drawer .pr-feedback { border-top: 0; margin-top: 0; padding-top: 0; }
-.ant-drawer .pr-feedback { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); }
-.ant-drawer .pr-backups-head { align-items: flex-start; flex-wrap: wrap; gap: 12px 16px; }
-.ant-drawer .pr-backups-head > div:first-child { flex: 1 1 240px; min-width: 0; }
-.ant-drawer .pr-backups-head h3 { font-size: 14px; margin-bottom: 4px; }
-.ant-drawer .pr-backups-head p { margin: 0; font-size: 12.5px; line-height: 1.7; color: var(--fg-2); }
+.ui-drawer .pr-backups,
+.ui-drawer .pr-feedback { border-top: 0; margin-top: 0; padding-top: 0; }
+.ui-drawer .pr-feedback { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); }
+.ui-drawer .pr-backups-head { align-items: flex-start; flex-wrap: wrap; gap: 12px 16px; }
+.ui-drawer .pr-backups-head > div:first-child { flex: 1 1 240px; min-width: 0; }
+.ui-drawer .pr-backups-head h3 { font-size: 14px; margin-bottom: 4px; }
+.ui-drawer .pr-backups-head p { margin: 0; font-size: 12.5px; line-height: 1.7; color: var(--fg-2); }

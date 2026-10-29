@@ -14,9 +14,15 @@ export function Popover({ trigger, children, label, open, onOpenChange }: {
   return <PopoverPrimitive.Root open={controlled ? open : internal} onOpenChange={controlled ? onOpenChange : setInternal}>
     <PopoverPrimitive.Trigger asChild>{trigger}</PopoverPrimitive.Trigger>
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Content className="ui-popover" side="left" align="start" sideOffset={8} aria-label={label}>
+      <PopoverPrimitive.Content
+        side="left"
+        align="start"
+        sideOffset={8}
+        aria-label={label}
+        className="z-[60] w-72 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-[var(--sh-2)] outline-none"
+      >
         {children}
-        <PopoverPrimitive.Arrow className="ui-popover-arrow"/>
+        <PopoverPrimitive.Arrow className="fill-[var(--card)]"/>
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   </PopoverPrimitive.Root>

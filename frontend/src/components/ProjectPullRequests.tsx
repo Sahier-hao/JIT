@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Empty, Segmented } from 'antd'
+import { Empty } from '../ui/feedback'
+import { Segmented } from '../ui/segmented'
 import { Button } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
@@ -74,7 +75,7 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
           </div>
           {result.owner && result.name ? <Button variant={hasWork ? 'primary' : 'secondary'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })}>{hasWork ? '继续审查' : '查看 PR'}</Button> : <a href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
         </article>
-      })}</div> : <div className="pr-hub-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前范围没有 PR"/></div>}
+      })}</div> : <div className="pr-hub-empty"><Empty description="当前范围没有 PR"/></div>}
       <div className="pr-hub-foot">
         <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}</span>
         {page > 1 || result.hasMore ? <nav className="pr-hub-pager" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)}>上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)}>下一页</Button></nav> : null}

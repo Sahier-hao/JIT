@@ -36,7 +36,7 @@ it('keeps both pins while changing filters and pages',async()=>{
   await userEvent.click(screen.getByRole('button',{name:'下一页'}))
   expect(await screen.findByText('后页提交')).toBeVisible()
   await userEvent.click(screen.getByRole('combobox',{name:'对比筛选'}))
-  await userEvent.click(await screen.findByText('分数或度量变化',{selector:'.ant-select-item-option-content'}))
+  await userEvent.click(await screen.findByRole('option',{name:'分数或度量变化'}))
   await screen.findByText('共同提交')
   expect(fetch.mock.calls.every(([url])=>String(url).includes(`baseSyncId=${BASE}`)&&String(url).includes(`targetSyncId=${TARGET}`))).toBe(true)
 })

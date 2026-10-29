@@ -1,4 +1,6 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
 // 端口与 `/api` 代理目标参数化（任务 1.2，设计 D8）。
@@ -9,7 +11,8 @@ const port = Number(process.env.JIT_FRONTEND_PORT ?? 4173)
 const apiTarget = process.env.JIT_API_PROXY_TARGET ?? 'http://127.0.0.1:8000'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: { host: '127.0.0.1', port, strictPort: true, proxy: { '/api': apiTarget } },
   preview: { host: '127.0.0.1', port, strictPort: true, proxy: { '/api': apiTarget } },
 })

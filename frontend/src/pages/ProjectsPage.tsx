@@ -5,8 +5,9 @@
  * 卡片整卡可点进入项目页；右上角的管理菜单负责改名与删除。
  */
 import { useEffect, useState } from 'react'
-import { Button, Dropdown, Input } from 'antd'
-import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
+import { Button, Input } from '../ui/controls'
+import { Dropdown } from '../ui/dropdown'
+import { Plus, Settings } from 'lucide-react'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
 import type { Route } from '../navigation'
@@ -93,11 +94,11 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
         <h1>{view === 'reviews' ? '我的审查' : '项目'}</h1>
         <p className="page-intro">{view === 'reviews' ? '跨项目查看你的个人审查；草稿、问题和进度只保存在当前浏览器。' : '接入一个仓库，从一次分析开始安排下一次审查。'}</p>
       </div>
-      {view === 'projects' ? <Button aria-label="新建项目" type="primary" icon={<PlusOutlined/>} onClick={() => setCreating(true)}>新建项目</Button> : null}
+      {view === 'projects' ? <Button aria-label="新建项目" variant="primary" icon={<Plus size={15}/>} onClick={() => setCreating(true)}>新建项目</Button> : null}
     </header>
     <nav className="project-tabs" aria-label="项目与个人工作">
-      <Button type="text" aria-current={view === 'projects' ? 'page' : undefined} onClick={() => navigate({ name: 'repositories' })}>项目</Button>
-      <Button type="text" aria-current={view === 'reviews' ? 'page' : undefined} onClick={() => navigate({ name: 'my-reviews' })}>我的审查</Button>
+      <Button variant="ghost" aria-current={view === 'projects' ? 'page' : undefined} onClick={() => navigate({ name: 'repositories' })}>项目</Button>
+      <Button variant="ghost" aria-current={view === 'reviews' ? 'page' : undefined} onClick={() => navigate({ name: 'my-reviews' })}>我的审查</Button>
     </nav>
     {view === 'reviews' ? <PersonalWorks navigate={navigate}/> : <>
     {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry}>重新加载</Button></EmptyState> : items.length ? <>
@@ -120,8 +121,8 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
             <small>最近请求 · {repo.latestSyncAt ? displayTime(repo.latestSyncAt) : '尚未分析'}</small>
           </button>
           <div className="project-card-tools">
-            <Dropdown trigger={['click']} placement="bottomRight" open={menuFor === repo.repositoryId} onOpenChange={open => setMenuFor(open ? repo.repositoryId : '')} menu={{ items: [{ key: 'rename', label: '重命名' }, { key: 'delete', label: '删除项目', danger: true }], onClick: ({ key }) => { if (key === 'rename') startRename(repo); else startDelete(repo) } }}>
-              <Button type="text" size="small" icon={<SettingOutlined/>} aria-label={`管理项目 ${repo.displayName}`} aria-haspopup="menu"/>
+            <Dropdown open={menuFor === repo.repositoryId} onOpenChange={open => setMenuFor(open ? repo.repositoryId : '')} items={[{ key: 'rename', label: '重命名' }, { key: 'delete', label: '删除项目', danger: true }]} onClick={key => { if (key === 'rename') startRename(repo); else startDelete(repo) }}>
+              <Button variant="ghost" size="sm" icon={<Settings size={15}/>} aria-label={`管理项目 ${repo.displayName}`} aria-haspopup="menu"/>
             </Dropdown>
           </div>
           {editing ? <form className="card-editor" onSubmit={event => { event.preventDefault(); void saveName(repo.repositoryId) }}>
@@ -129,7 +130,7 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
             <p className="card-editor-note">只改显示名；仓库地址与分析历史不变。</p>
             {editorError ? <p className="field-error" role="alert">{editorError}</p> : null}
             <div className="panel-actions">
-              <Button type="primary" htmlType="submit" loading={busy}>{busy ? '正在保存…' : '保存名称'}</Button>
+              <Button variant="primary" type="submit" loading={busy}>{busy ? '正在保存…' : '保存名称'}</Button>
               <Button onClick={() => setRenamingId('')}>取消</Button>
             </div>
           </form> : null}
@@ -148,7 +149,7 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
       <div className="onboarding-graphic" aria-hidden="true"><span/><Icon name="project" size={38}/><span/></div>
       <h2>从一个仓库开始</h2>
       <p>接入仓库后自动准备首次分析，并持续跟进新提交；结果与审查记录会一直保留。</p>
-      <Button aria-label="新建项目" type="primary" size="large" icon={<PlusOutlined/>} onClick={() => setCreating(true)}>新建项目</Button>
+      <Button aria-label="新建项目" variant="primary" size="lg" icon={<Plus size={15}/>} onClick={() => setCreating(true)}>新建项目</Button>
       <div className="onboarding-steps"><span><b>01</b> 接入仓库</span><span><b>02</b> 自动分析</span><span><b>03</b> 安排审查</span></div>
     </div>}
     </>}

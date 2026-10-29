@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { Button } from './ui/controls'
 import { useEffect, useState } from 'react'
 import { displayTime, validRisk, type Commit, type Dataset } from './domain'
 import { RepositoryExplanation } from './components/RepositoryExplanation'

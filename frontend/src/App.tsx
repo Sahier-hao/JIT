@@ -1,19 +1,29 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { createHashRouter, RouterProvider } from 'react-router-dom'
 import { AppShell } from './AppShell'
 import { useRoute, type Route } from './navigation'
 import { useRepositories } from './repositoryWorkspace'
-import { ReviewWorkbench, type ReviewDraft } from './ReviewWorkbench'
-import { AdminWorkspace } from './pages/AdminWorkspace'
 import { LoadingNotice, EmptyState } from './Feedback'
 import { apiRequest } from './apiClient'
 import { parseSync } from './repositoryContract'
-import { ProjectsPage } from './pages/ProjectsPage'
-import { ProjectPage } from './pages/ProjectPage'
-import { AnalysisComparison } from './pages/AnalysisComparison'
-import { PullRequestWork, FixedPRSnapshot } from './pages/PullRequestJourney'
-import { ProjectEvents } from './components/ProjectActivity'
+import type { ReviewDraft } from './ReviewWorkbench'
+
+// 页面按路由拆包：首屏只加载项目列表与外壳，其余工作台按需下载。
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(module => ({ default: module.ProjectsPage })))
+const ProjectPage = lazy(() => import('./pages/ProjectPage').then(module => ({ default: module.ProjectPage })))
+const ReviewWorkbench = lazy(() => import('./ReviewWorkbench').then(module => ({ default: module.ReviewWorkbench })))
+const AdminWorkspace = lazy(() => import('./pages/AdminWorkspace').then(module => ({ default: module.AdminWorkspace })))
+const AnalysisComparison = lazy(() => import('./pages/AnalysisComparison').then(module => ({ default: module.AnalysisComparison })))
+const PullRequestWork = lazy(() => import('./pages/PullRequestJourney').then(module => ({ default: module.PullRequestWork })))
+const FixedPRSnapshot = lazy(() => import('./pages/PullRequestJourney').then(module => ({ default: module.FixedPRSnapshot })))
+const ProjectEvents = lazy(() => import('./components/ProjectActivity').then(module => ({ default: module.ProjectEvents })))
 
 export default function App() {
+  const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
+  return <RouterProvider router={router}/>
+}
+
+function Workspace() {
   const { route, navigate } = useRoute()
   const repositories = useRepositories()
   const [drafts] = useState(() => new Map<string, ReviewDraft>())
@@ -30,7 +40,7 @@ export default function App() {
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>
   else if (route.name === 'retired' || route.name === 'unknown') content = <EmptyState title={route.name === 'retired' ? '这个入口已移除' : '没有找到这个页面'} description={route.name === 'retired' ? '独立工具页面已撤下。请从项目开始分析；已保存的数据仍然保留。' : '请核对地址，或返回项目继续。'}><button className="primary-button" onClick={() => navigate({ name: 'repositories' })}>返回项目</button></EmptyState>
   else content = <ProjectsPage navigate={navigate}/>
-  return <AppShell route={route} navigate={navigate} repositories={repositories.items}>{content}</AppShell>
+  return <AppShell route={route} navigate={navigate} repositories={repositories.items}><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></AppShell>
 }
 
 function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy-sync' }>; navigate: (route: Route, replace?: boolean) => void }) {
