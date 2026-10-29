@@ -80,7 +80,7 @@
 .job-list { display: block; }
 
 .analysis-job { display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 10px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
-.analysis-job + .analysis-job { margin-top: 9px; }
+.analysis-job + .analysis-job { margin-top: 10px; }
 .analysis-job:hover { border-color: var(--line-strong); }
 .analysis-job.is-current { border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: color-mix(in srgb, var(--card) 93%, var(--accent)); }
 
@@ -182,8 +182,8 @@
 .result-foot { margin-top: 16px; padding-top: 14px; }
 .result-hero { align-content: start; padding: 2px 0 0; }
 /* 记录卡高度贴合内容：上限 430px，超出在卡内滚动 */
-.pw-rail { height: auto; max-height: min(516px, calc(100vh - 190px)); min-height: 0; overflow: hidden; }
-.pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.pw-rail { height: auto; min-height: min(520px, calc(100vh - 190px)); max-height: min(528px, calc(100vh - 190px)); overflow: hidden; }
+.pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; }
 .pw-detail .pw-updates { margin-top: 18px; }
 /* 结果卡多余高度上下均分，避免底部出现一整块空白 */
 .pw-detail .result-hero { flex: none; align-content: center; grid-template-columns: max-content minmax(0, 1fr); justify-content: start; column-gap: 30px; margin-top: 18px; }
