@@ -58,3 +58,10 @@
 - 风险色改为项目页局部变量：高 `#C9352A`、中 `#DF8B10`、低 `#93A3B6`；深色主题 `#F0736A` / `#F2A93E` / `#94A5BA`。
 - 数字与百分比分列右对齐、`tabular-nums`。
 
+
+## 追加：仓库更新入口移入页头（2026-10-29）
+
+- 页头新增胶囊入口（刷新图标 + 自动更新 + 状态词），点开为对话框；结果卡下方不再有更新行。
+- 按钮字体统一为 `500 13.5px/20px var(--display)`，图标与文字基线对齐。
+- 截图：`docs/evidence/screenshots/project-update-entry-1440.png`、`project-update-dialog.png`。
+
