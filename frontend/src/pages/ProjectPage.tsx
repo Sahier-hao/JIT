@@ -6,7 +6,7 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, RotateCcw, Trash2, XCircle } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
 import { Button, IconButton } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
@@ -241,7 +241,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
           onChange={onSelect}
           aria-label={current ? `当前结果 ${shortId}` : `将 ${shortId} 设为当前结果`}
         />
-        <span className="record-radio" aria-hidden/>
+        {current ? <span className="record-pin" aria-hidden="true"><Pin size={14} fill="currentColor" strokeWidth={1.4}/></span> : <span className="record-radio" aria-hidden/>}
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
