@@ -30,11 +30,11 @@ it('saves the automatic setting on the server and preserves model identity', asy
     return response(state)
   })
   render(<RepositoryUpdates repositoryId={REPO} onUpdated={vi.fn()}/>)
-  await userEvent.click(await screen.findByRole('checkbox', { name: '自动检查仓库更新' }))
-  await waitFor(() => expect(screen.getByRole('checkbox', { name: '自动检查仓库更新' })).toBeChecked())
+  await userEvent.click(await screen.findByRole('switch', { name: '自动检查仓库更新' }))
+  await waitFor(() => expect(screen.getByRole('switch', { name: '自动检查仓库更新' })).toHaveAttribute('data-state', 'checked'))
   const patch = fetch.mock.calls.find(([, options]) => options?.method === 'PATCH')
   expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ enabled: true })
-  expect(screen.getByText(/服务运行期间/)).toBeVisible()
+  expect(screen.getByText(/每 5 分钟检查一次/)).toBeVisible()
 })
 
 it('exposes failure and retry without claiming that the repository is current', async () => {

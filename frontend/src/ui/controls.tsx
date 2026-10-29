@@ -5,6 +5,7 @@
  * 同一个按钮在四个主题里都只用一层表面、一条细边，不叠阴影和渐变。
  */
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox'
+import * as SwitchPrimitive from '@radix-ui/react-switch'
 import * as Collapsible from '@radix-ui/react-collapsible'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import clsx from 'clsx'
@@ -13,7 +14,7 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTML
 import { useState } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link'
-type Size = 'sm' | 'md'
+type Size = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -110,4 +111,15 @@ export function InlineAlert({ tone = 'alert', title, children, action }: { tone?
     <div className="ui-alert-body"><p className="ui-alert-title">{title}</p>{children ? <div className="ui-alert-text">{children}</div> : null}</div>
     {action}
   </div>
+}
+
+export function Switch({ checked, onCheckedChange, ariaLabel, disabled }: {
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+  ariaLabel: string
+  disabled?: boolean
+}) {
+  return <SwitchPrimitive.Root className="ui-switch" checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} aria-label={ariaLabel}>
+    <SwitchPrimitive.Thumb className="ui-switch-thumb"/>
+  </SwitchPrimitive.Root>
 }

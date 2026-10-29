@@ -139,7 +139,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
 
         <section className="project-start" id="analysis-form-section" aria-label="发起分析">
-          <div className="section-label"><h2>发起分析</h2></div>
+          
           {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
           <AnalysisLauncher key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
         </section>
