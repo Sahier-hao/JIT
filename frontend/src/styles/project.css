@@ -147,3 +147,36 @@
   .result-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
   .pw-updates-meta { display: none; }
 }
+/* 两栏对齐：结果卡与记录卡同一行等高，仓库更新独占下一行 */
+.project-workspace { align-items: stretch; }
+.pw-detail { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; }
+.pw-rail { grid-column: 2; grid-row: 1; }
+.pw-updates { grid-column: 1 / -1; grid-row: 2; margin-top: 20px; }
+.pw-result { flex: 1; display: flex; flex-direction: column; }
+.result-hero { flex: 1; align-content: center; padding: 6px 0; }
+.result-note { margin-top: 0; }
+.result-foot { margin-top: 18px; }
+
+/* 风险色阶在图上拉开：红 / 琥珀 / 蓝灰，深色主题提亮不换色相 */
+.project-page { --bar-high: #C9352A; --bar-mid: #DF8B10; --bar-low: #93A3B6; }
+[data-theme='charcoal'] .project-page { --bar-high: #F0736A; --bar-mid: #F2A93E; --bar-low: #94A5BA; }
+.result-bars li { grid-template-columns: 52px minmax(0, 1fr) 92px; }
+.result-bars .is-high .bar-track > span { background: var(--bar-high); }
+.result-bars .is-mid .bar-track > span { background: var(--bar-mid); }
+.result-bars .is-low .bar-track > span { background: var(--bar-low); }
+.bar-value { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: baseline; gap: 8px; justify-items: end; }
+.bar-value b { font-variant-numeric: tabular-nums; }
+.bar-value em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--fg-3); text-align: right; }
+.result-bars .is-high .bar-value b { color: var(--bar-high); }
+.result-bars .is-mid .bar-value b { color: var(--bar-mid); }
+.result-bars .is-low .bar-value b { color: var(--bar-low); }
+/* 更新折叠并在结果卡内部：作为卡片底部的数据来源与自动检查区 */
+.pw-detail .pw-updates { margin-top: auto; padding: 0; border: 0; border-top: 1px solid var(--line-soft); border-radius: 0; background: none; box-shadow: none; }
+.pw-detail .pw-updates .ui-disclosure-trigger { padding: 12px 0; }
+.pw-detail .pw-updates .ui-disclosure-content { padding: 0 0 12px; }
+.result-foot { margin-top: 16px; padding-top: 14px; }
+.result-hero { align-content: start; padding: 2px 0 0; }
+/* 记录卡高度贴合内容：上限 430px，超出在卡内滚动 */
+.pw-rail { height: auto; max-height: 430px; min-height: 0; overflow: hidden; }
+.pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.pw-detail .pw-updates { margin-top: 18px; }

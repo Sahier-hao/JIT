@@ -146,7 +146,6 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
       </aside>
 
-      <div className="pw-main">
       <div className="pw-detail">
         <div className="pw-detail-head">
           <h2>当前分析结果</h2>
@@ -172,12 +171,12 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         </div> : <div className="result-empty">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
         </div>}
-      </div>
-
     <Disclosure className="pw-updates" summary={<><span>仓库更新与自动检查</span><span className="pw-updates-meta">{repository.url.replace(/^https?:\/\//, '')} · {context?.branch ?? repository.defaultBranch} · {repository.commitCount.toLocaleString()} 个已分析提交</span></>}>
       <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
     </Disclosure>
-    </div>
+      </div>
+
+
     </div>
 
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
