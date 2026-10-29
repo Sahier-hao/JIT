@@ -9,6 +9,7 @@
   gap: 20px;
   align-items: start;
   margin-top: 22px;
+  min-height: min(660px, calc(100vh - 210px));
 }
 
 .pw-detail, .pw-rail {
@@ -40,10 +41,10 @@
 .result-total { display: flex; flex-direction: column; gap: 6px; }
 .result-total b { font: 600 46px/1 var(--sans); letter-spacing: -.035em; font-variant-numeric: tabular-nums; color: var(--fg); }
 .result-total span { font-size: 12.5px; color: var(--fg-3); }
-.result-bars { display: grid; gap: 13px; margin: 0; padding: 0; list-style: none; }
+.result-bars { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; }
 .result-bars li { display: grid; grid-template-columns: 52px minmax(0, 1fr) 82px; align-items: center; gap: 14px; }
 .bar-label { font-size: 12.5px; color: var(--fg-2); }
-.bar-track { display: block; height: 12px; border-radius: 6px; background: var(--sunken); overflow: hidden; }
+.bar-track { display: block; height: 14px; border-radius: 7px; background: var(--sunken); overflow: hidden; }
 .bar-track > span { display: block; height: 100%; border-radius: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,.22); }
 .result-bars .is-high .bar-track > span { background: var(--risk-high); }
 .result-bars .is-mid .bar-track > span { background: var(--risk-mid); }
@@ -181,7 +182,7 @@
 .result-foot { margin-top: 16px; padding-top: 14px; }
 .result-hero { align-content: start; padding: 2px 0 0; }
 /* 记录卡高度贴合内容：上限 430px，超出在卡内滚动 */
-.pw-rail { height: auto; max-height: 430px; min-height: 0; overflow: hidden; }
+.pw-rail { height: auto; max-height: min(660px, calc(100vh - 210px)); min-height: 0; overflow: hidden; }
 .pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .pw-detail .pw-updates { margin-top: 18px; }
 /* 结果卡多余高度上下均分，避免底部出现一整块空白 */

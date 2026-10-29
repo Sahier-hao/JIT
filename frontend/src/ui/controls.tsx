@@ -13,7 +13,7 @@ import { Check, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
 import { forwardRef, useState } from 'react'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link'
+type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger' | 'link'
 type Size = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

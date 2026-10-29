@@ -24,6 +24,8 @@
 .ui-btn--block { width: 100%; }
 .ui-btn--primary { background: var(--btn); border-color: var(--btn); color: var(--btn-fg); }
 .ui-btn--primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); color: var(--btn-fg); }
+.ui-btn--accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ui-btn--accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .ui-btn--ghost { border-color: transparent; background: transparent; color: var(--fg-2); }
 .ui-btn--ghost:hover { background: var(--sunken); color: var(--fg); }
 .ui-btn--link { border-color: transparent; background: transparent; color: var(--accent); padding: 0 2px; }

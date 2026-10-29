@@ -167,7 +167,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
             <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
-            <Button variant="primary" aria-label="查看提交与审查计划" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交与审查计划</Button>
+            <Button variant="accent" aria-label="查看提交与审查计划" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交与审查计划</Button>
           </div>
         </div> : <div className="result-empty">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
