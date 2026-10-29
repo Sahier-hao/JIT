@@ -232,13 +232,18 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
     <span className="record-marker" aria-hidden="true"/>
     <div className="record-body">
     <div className="job-main">
-      {completed ? <div className="record-pick is-static">
-        {current ? <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Pin size={12} fill="currentColor" strokeWidth={1.6}/></span> : null}
+      {completed ? (current ? <div className="record-pick is-static">
+        <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Pin size={12} fill="currentColor" strokeWidth={1.6}/></span>
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
         </span>
-      </div> : <div className="record-pick is-static">
+      </div> : <button type="button" className="record-pick is-clickable" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>
+        <span className="record-text">
+          <span className="record-title">{title}</span>
+          <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
+        </span>
+      </button>) : <div className="record-pick is-static">
         <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}>{active ? <Loader size={16}/> : <AlertTriangle size={16}/>}</span>
         <span className="record-text">
           <span className="record-title">{title}</span>
