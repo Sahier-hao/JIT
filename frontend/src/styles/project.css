@@ -35,21 +35,27 @@
 .result-stats .high b { color: var(--risk-high); }
 .result-stats span { display: block; margin-top: 5px; font-size: 11.5px; color: var(--fg-3); }
 
-.result-chart { display: block; margin-top: 18px; }
-.result-bars { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
-.result-bars li { display: grid; grid-template-columns: 54px minmax(0, 1fr) 76px; align-items: center; gap: 12px; }
-.bar-label { font-size: 11.5px; color: var(--fg-3); }
-.bar-track { display: block; height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; }
-.bar-track > span { display: block; height: 100%; border-radius: 3px; }
+/* 结果卡主体：左侧总数字，右侧风险分布，两者并排成为一张图 */
+.result-hero { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 36px; align-items: center; margin-top: 6px; padding: 10px 0 4px; }
+.result-total { display: flex; flex-direction: column; gap: 6px; }
+.result-total b { font: 600 46px/1 var(--sans); letter-spacing: -.035em; font-variant-numeric: tabular-nums; color: var(--fg); }
+.result-total span { font-size: 12.5px; color: var(--fg-3); }
+.result-bars { display: grid; gap: 13px; margin: 0; padding: 0; list-style: none; }
+.result-bars li { display: grid; grid-template-columns: 52px minmax(0, 1fr) 82px; align-items: center; gap: 14px; }
+.bar-label { font-size: 12.5px; color: var(--fg-2); }
+.bar-track { display: block; height: 12px; border-radius: 6px; background: var(--sunken); overflow: hidden; }
+.bar-track > span { display: block; height: 100%; border-radius: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,.22); }
 .result-bars .is-high .bar-track > span { background: var(--risk-high); }
 .result-bars .is-mid .bar-track > span { background: var(--risk-mid); }
-.result-bars .is-low .bar-track > span { background: color-mix(in srgb, var(--fg-3) 60%, var(--card)); }
-.bar-value { display: flex; align-items: baseline; justify-content: flex-end; gap: 7px; font: 11.5px var(--mono); }
-.bar-value b { font-weight: 600; color: var(--fg); }
+.result-bars .is-low .bar-track > span { background: color-mix(in srgb, var(--fg-3) 72%, var(--card)); }
+.bar-value { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; font: 12.5px var(--mono); }
+.bar-value b { font: 600 15px var(--sans); color: var(--fg); }
+.result-bars .is-high .bar-value b { color: var(--risk-high); }
+.result-bars .is-mid .bar-value b { color: var(--risk-mid); }
 .bar-value em { font-style: normal; color: var(--fg-3); }
 
 .result-note { margin: 14px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--fg-3); }
-.result-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.result-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
 .result-info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .result-chip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 4px 9px; border-radius: 6px; background: var(--sunken); font-size: 11px; color: var(--fg-3); }
 .result-chip + .result-chip::before { content: none; }

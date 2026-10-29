@@ -153,27 +153,21 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
         {context ? <div className="pw-result">
-          <div className="result-stats">
-            <div><b>{repository.commitCount.toLocaleString()}</b><span>已分析提交</span></div>
-            <div className="high"><b>{repository.distribution.high.toLocaleString()}</b><span>高风险</span></div>
-            <div><b>{repository.distribution.medium.toLocaleString()}</b><span>中风险</span></div>
-            <div><b>{repository.distribution.low.toLocaleString()}</b><span>低风险</span></div>
-          </div>
-          <div className="result-chart">
+          <div className="result-hero">
+            <div className="result-total">
+              <b>{repository.commitCount.toLocaleString()}</b>
+              <span>已分析提交</span>
+            </div>
             <ul className="result-bars" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
               <li className="is-high"><span className="bar-label">高风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.high)}%` }}/></span><span className="bar-value"><b>{repository.distribution.high.toLocaleString()}</b><em>{share(repository.distribution.high)}%</em></span></li>
               <li className="is-mid"><span className="bar-label">中风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.medium)}%` }}/></span><span className="bar-value"><b>{repository.distribution.medium.toLocaleString()}</b><em>{share(repository.distribution.medium)}%</em></span></li>
               <li className="is-low"><span className="bar-label">低风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.low)}%` }}/></span><span className="bar-value"><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></span></li>
             </ul>
-          </div>          {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
+          </div>
+          {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
-            <div className="result-info">
-              <p className="result-meta">
-                <span className="result-chip">分支 <b>{context.branch}</b></span>
-                <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
-              </p>
-            </div>
-            <Button aria-label="查看提交与审查计划" variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<ArrowRight size={14}/></Button>
+            <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
+            <Button variant="primary" aria-label="查看提交与审查计划" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })}>查看提交与审查计划<ArrowRight size={15}/></Button>
           </div>
         </div> : <div className="result-empty">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
@@ -267,7 +261,9 @@ function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
 }
 function datasetRange(version?: string | null) {
   if (!version) return '未登记'
-  const range = version.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/)
+  // 同一区间重复采集时后端会在末尾追加短哈希，先剥掉再解析区间。
+  const cleaned = version.replace(/-[0-9a-f]{6,}$/, '')
+  const range = cleaned.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/)
   return range ? `${range[1]} → ${range[2].slice(5)}` : version
 }
 /** 记录卡只放一个入口：点开后再选具体动作，避免每行三四个图标。 */
