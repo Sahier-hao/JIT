@@ -182,3 +182,13 @@
 .pw-detail .pw-updates { margin-top: 18px; }
 /* 结果卡多余高度上下均分，避免底部出现一整块空白 */
 .pw-detail .result-hero { flex: 1; align-content: center; }
+
+.update-foot-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.update-cadence { font: 11.5px var(--sans); color: var(--fg-3); }
+.update-foot-row .update-settings { margin-left: auto; }
+
+
+.pw-detail .pw-updates .ui-disclosure-content { border-top: 0; padding-bottom: 2px; }
+.pw-detail .pw-updates .update-panel { border-top: 0; }
+.update-status-detail { margin-top: 4px; }
+.update-foot-row { margin-top: 12px; padding-top: 10px; }

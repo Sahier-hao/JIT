@@ -95,13 +95,16 @@ export function Checkbox({ checked, onCheckedChange, children, ariaLabel, disabl
   </label>
 }
 
-export function Disclosure({ summary, children, className }: { summary: ReactNode; children: ReactNode; className?: string }) {
+export function Disclosure({ summary, children, className, trailing }: { summary: ReactNode; children: ReactNode; className?: string; trailing?: ReactNode }) {
   const [open, setOpen] = useState(false)
   return <Collapsible.Root open={open} onOpenChange={setOpen} className={clsx('ui-disclosure', className)}>
-    <Collapsible.Trigger className="ui-disclosure-trigger">
-      <ChevronRight size={13} className={clsx('ui-disclosure-caret', open && 'is-open')} aria-hidden/>
-      {summary}
-    </Collapsible.Trigger>
+    <div className="ui-disclosure-head">
+      <Collapsible.Trigger className="ui-disclosure-trigger">
+        <ChevronRight size={13} className={clsx('ui-disclosure-caret', open && 'is-open')} aria-hidden/>
+        {summary}
+      </Collapsible.Trigger>
+      {trailing}
+    </div>
     <Collapsible.Content className="ui-disclosure-content">{children}</Collapsible.Content>
   </Collapsible.Root>
 }

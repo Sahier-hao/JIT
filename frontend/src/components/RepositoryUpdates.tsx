@@ -1,5 +1,5 @@
 import { Button, Disclosure, Input, NumberInput, Select, Switch } from '../ui/controls'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react'
 import { updateRepository, type UpdateState } from '../repositoryUpdatesClient'
 import { repositoryModels, type ModelChoice } from '../modelClient'
 import { displayTime } from '../domain'
@@ -18,7 +18,9 @@ const ERRORS: Record<string, string> = {
   DATASET_INVALID: '最近 90 天内没有可分析的提交，或采集数据不可用；可在发起分析中调整日期范围。',
 }
 
-export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: string; onUpdated: () => void }) {
+export type UpdateHandle = { refresh: () => void }
+
+export function RepositoryUpdates({ repositoryId, onUpdated, ref }: { repositoryId: string; onUpdated: () => void; ref?: Ref<UpdateHandle> }) {
   const [state, setState] = useState<UpdateState | null>(null)
   const [error, setError] = useState<unknown>(null)
   const [attempt, setAttempt] = useState(0)
@@ -78,6 +80,7 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
       windowDays: windowDays ?? state?.windowDays ?? 90, commitLimit: commitLimit ?? state?.commitLimit ?? 500,
       ...((modelId ?? state?.modelId) ? { modelId: (modelId ?? state?.modelId)! } : {}) }, true)
   }
+  useImperativeHandle(ref, () => ({ refresh: () => { void act('refresh') } }))
   const selectedModel = modelId ?? state?.modelId ?? ''
   const branchLabel = state?.branch === 'HEAD' ? (state?.resolvedBranch ?? '默认分支') : state?.branch ?? '默认分支'
   const head = state?.remoteHead?.slice(0, 7)
@@ -100,14 +103,13 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
         <span className="update-dot" aria-hidden="true"/>
         <p role="status" className="update-status-title">{LABELS[state.status]}</p>
         <span className="update-status-time">{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚未检查'}</span>
+        <Button size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button>
       </div>
       <p className="update-status-detail">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `更新未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
-      <div className="update-actions">
-        <Button size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '更新进行中…' : state.status === 'error' ? '重试更新' : '立即更新'}</Button>
-        <span className="update-auto"><span>自动检查</span><Switch ariaLabel="自动检查仓库更新" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}/></span>
-      </div>
-      {state.enabled ? <p className="update-next">{`每 ${state.intervalSeconds / 60} 分钟检查一次${state.nextCheckAt ? `，下次 ${displayTime(state.nextCheckAt)}` : ''}。`}</p> : null}
-      <Disclosure className="update-settings" summary="更新设置"><form onSubmit={save}>
+      <div className="update-foot-row">
+        <span className="update-auto"><Switch ariaLabel="自动检查仓库更新" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}/><span>自动检查</span></span>
+        <span className="update-cadence">{`每 ${state.intervalSeconds / 60} 分钟检查一次 · 最近 ${state.windowDays} 天 · 最多 ${state.commitLimit} 条`}</span>
+        <Disclosure className="update-settings" summary="更新设置"><form onSubmit={save}>
         <div className="update-field">
           <span className="pr-field-label">跟踪分支</span>
           <Input aria-label="更新跟踪分支" value={branch ?? state.branch} onChange={event => setBranch(event.target.value)} disabled={busy || running}/>
@@ -133,7 +135,8 @@ export function RepositoryUpdates({ repositoryId, onUpdated }: { repositoryId: s
         </div>
         {modelError ? <p className="field-error">{modelError}<Button variant="ghost" size="sm" onClick={() => setModelAttempt(value => value + 1)}>重试模型选项</Button></p> : null}
         <div className="update-submit"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
-      </form></Disclosure>
+        </form></Disclosure>
+      </div>
     </div>}
   </section>
 }
