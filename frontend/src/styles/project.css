@@ -221,7 +221,7 @@
 .update-entry-icon { display: inline-flex; color: var(--fg-3); flex: none; }
 .update-entry[data-tone='ok'] .update-entry-icon { color: var(--accent); }
 .update-entry[data-tone='active'] .update-entry-icon { color: var(--accent); }
-.update-entry[data-tone='alert'] .update-entry-icon { color: color-mix(in srgb, var(--risk-high) 82%, var(--fg-2)); }
+.update-entry[data-tone='alert'] .update-entry-icon { color: color-mix(in srgb, var(--risk-high) 66%, var(--card)); }
 .update-entry-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .update-entry-text b { font: 500 13px var(--sans); color: var(--fg); }
 .update-entry-text span { overflow: hidden; font: 12px var(--sans); color: var(--fg-3); text-overflow: ellipsis; white-space: nowrap; }
@@ -260,10 +260,10 @@
   color: var(--fg-2);
 }
 .project-title-row .update-entry:hover { background: var(--sunken); border-color: var(--fg-3); }
-.project-title-row .update-entry[data-tone='alert'] { border-color: color-mix(in srgb, var(--risk-high) 20%, var(--line)); background: color-mix(in srgb, var(--risk-high) 4%, var(--card)); }
+.project-title-row .update-entry[data-tone='alert'] { border-color: color-mix(in srgb, var(--risk-high) 16%, var(--line)); background: color-mix(in srgb, var(--risk-high) 3%, var(--card)); }
 .project-title-row .update-entry[data-tone='alert']:hover { background: color-mix(in srgb, var(--risk-high) 7%, var(--card)); border-color: color-mix(in srgb, var(--risk-high) 32%, var(--line)); }
-.project-title-row .update-entry[data-tone='alert'] .update-entry-text b { color: color-mix(in srgb, var(--risk-high) 84%, var(--fg-2)); }
-.project-title-row .update-entry[data-tone='alert'] .update-entry-text span { color: color-mix(in srgb, var(--risk-high) 62%, var(--fg-2)); }
+.project-title-row .update-entry[data-tone='alert'] .update-entry-text b { color: color-mix(in srgb, var(--risk-high) 68%, var(--card)); }
+.project-title-row .update-entry[data-tone='alert'] .update-entry-text span { color: color-mix(in srgb, var(--risk-high) 52%, var(--card)); }
 .project-title-row .update-entry[data-tone='ok'] .update-entry-text b { color: var(--accent); }
 .project-title-row .update-entry-icon svg { width: 13px; height: 13px; }
 .project-title-row .update-entry-text { flex-direction: row; align-items: baseline; gap: 6px; min-width: 0; }
