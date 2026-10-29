@@ -168,18 +168,24 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           </div>
           {priority.length ? <div className="result-priority">
             <p className="result-priority-title">最该先看的提交</p>
-            <ul>
-              {priority.map(commit => <li key={commit.commitId}>
-                <code>{commit.commitId.slice(0, 7)}</code>
-                <span title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
-                <b>{commit.risk.toFixed(2)}</b>
+            <ol>
+              {priority.map((commit, index) => <li key={commit.commitId}>
+                <span className="priority-rank" aria-hidden="true">{index + 1}</span>
+                <code className="priority-sha">{commit.commitId.slice(0, 7)}</code>
+                <span className="priority-subject" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                <span className="priority-score">
+                  <span className="priority-meter" aria-hidden="true"><span style={{ width: `${Math.round(commit.risk * 100)}%` }}/></span>
+                  <b>{commit.risk.toFixed(2)}</b>
+                </span>
               </li>)}
-            </ul>
+            </ol>
           </div> : null}
+          <div className="result-bottom">
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
             <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
             <Button variant="accent" aria-label="查看提交与审查计划" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交与审查计划</Button>
+          </div>
           </div>
         </div> : <div className="result-empty">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
