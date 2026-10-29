@@ -5,7 +5,7 @@ import { CommitDetail } from './CommitDetail'
 import { Dialog } from './ui/dialog'
 import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
-import { Button } from './ui/controls'
+import { Button, Input } from './ui/controls'
 import type { Route } from './navigation'
 import { useRepository, useRepositoryCommits, useRepositoryCommitRecords, type RepositoryDetail } from './repositoryWorkspace'
 import { toCommit } from './domain'
@@ -234,7 +234,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
               />
             </label>
             <label className="date-field">起始日期
-              <input
+              <Input
                 aria-label="起始日期"
                 inputMode="numeric"
                 placeholder="YYYY-MM-DD"
@@ -244,7 +244,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
               />
             </label>
             <label className="date-field">结束日期
-              <input
+              <Input
                 aria-label="结束日期"
                 inputMode="numeric"
                 placeholder="YYYY-MM-DD"

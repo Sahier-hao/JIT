@@ -8,7 +8,7 @@
  * 放在窄栏里展开会把页面拉得很长。
  */
 import { ArrowRight } from 'lucide-react'
-import { Button } from '../ui/controls'
+import { Button, Input } from '../ui/controls'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRepositorySync, type SyncForm } from '../apiClient'
 import { repositoryModels, type ModelChoice } from '../modelClient'
@@ -103,13 +103,13 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
   return <form className="analysis-form" onSubmit={submit}>
     <fieldset className="analysis-options" aria-label="分析选项">
       <div className="form-grid">
-        <label>分支<input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/></label>
-        <label>提交上限<input aria-label="提交上限" type="number" min="1" max="5000" value={commitLimit} onChange={event => setCommitLimit(event.target.value)}/></label>
-        <label>起始日期<input aria-label="起始日期" type="date" value={since} onChange={event => setSince(event.target.value)}/></label>
+        <label>分支<Input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/></label>
+        <label>提交上限<Input aria-label="提交上限" type="number" min="1" max="5000" value={commitLimit} onChange={event => setCommitLimit(event.target.value)}/></label>
+        <label>起始日期<Input aria-label="起始日期" type="date" value={since} onChange={event => setSince(event.target.value)}/></label>
         <p className="form-hint wide-field">起始日期留空时按最近 90 天采集；结束日期在「高级选项」里，留空表示今天。范围越窄，可训练样本越少，自动策略更容易降级用默认模型。</p>
         <details className="advanced-options wide-field" open={advancedOpen} onToggle={event => setAdvancedOpen(event.currentTarget.open)}>
           <summary>高级选项<span>{until ? `结束日期：${until}` : '结束日期默认今天'}</span></summary>
-          <label>结束日期<input aria-label="结束日期" type="date" value={until} onChange={event => setUntil(event.target.value)}/></label>
+          <label>结束日期<Input aria-label="结束日期" type="date" value={until} onChange={event => setUntil(event.target.value)}/></label>
         </details>
         <label className="wide-field">模型来源<select aria-label="模型来源" value={choice} onChange={event => setChoice(event.target.value)}>
           <option value="auto">自动（数据足够就训练，不足用默认模型）</option>
