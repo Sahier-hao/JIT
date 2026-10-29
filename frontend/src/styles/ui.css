@@ -31,6 +31,8 @@
 .ui-btn--danger { border-color: color-mix(in srgb, var(--risk-high) 38%, var(--line)); background: var(--card); color: var(--risk-high); }
 .ui-btn--danger:hover { background: color-mix(in srgb, var(--risk-high) 8%, var(--card)); border-color: var(--risk-high); }
 .ui-btn-spin { animation: ui-spin 1s linear infinite; }
+.ui-btn-trailing { display: inline-flex; align-items: center; height: 18px; }
+.ui-btn-trailing svg { display: block; }
 @keyframes ui-spin { to { transform: rotate(360deg); } }
 
 .ui-input {

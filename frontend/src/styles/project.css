@@ -55,6 +55,7 @@
 .bar-value em { font-style: normal; color: var(--fg-3); }
 
 .result-note { margin: 14px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--fg-3); }
+.pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
 .result-info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .result-chip { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 4px 9px; border-radius: 6px; background: var(--sunken); font-size: 11px; color: var(--fg-3); }
@@ -144,7 +145,8 @@
   .result-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .result-stats > div:nth-child(2n) { border-right: 0; }
   .result-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--line-soft); }
-  .result-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
+.result-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
   .pw-updates-meta { display: none; }
 }
 /* 两栏对齐：结果卡与记录卡同一行等高，仓库更新独占下一行 */
@@ -155,6 +157,7 @@
 .pw-result { flex: 1; display: flex; flex-direction: column; }
 .result-hero { flex: 1; align-content: center; padding: 6px 0; }
 .result-note { margin-top: 0; }
+.pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { margin-top: 18px; }
 
 /* 风险色阶在图上拉开：红 / 琥珀 / 蓝灰，深色主题提亮不换色相 */
@@ -174,6 +177,7 @@
 .pw-detail .pw-updates { margin-top: auto; padding: 0; border: 0; border-top: 1px solid var(--line-soft); border-radius: 0; background: none; box-shadow: none; }
 .pw-detail .pw-updates .ui-disclosure-trigger { padding: 12px 0; }
 .pw-detail .pw-updates .ui-disclosure-content { padding: 0 0 12px; }
+.pw-detail .result-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); }
 .result-foot { margin-top: 16px; padding-top: 14px; }
 .result-hero { align-content: start; padding: 2px 0 0; }
 /* 记录卡高度贴合内容：上限 430px，超出在卡内滚动 */
@@ -181,7 +185,7 @@
 .pw-rail .pw-timeline { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .pw-detail .pw-updates { margin-top: 18px; }
 /* 结果卡多余高度上下均分，避免底部出现一整块空白 */
-.pw-detail .result-hero { flex: 1; align-content: center; }
+.pw-detail .result-hero { flex: 1; align-content: center; grid-template-columns: max-content minmax(0, 1fr); justify-content: start; column-gap: 30px; }
 
 .update-foot-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 .update-cadence { font: 11.5px var(--sans); color: var(--fg-3); }
@@ -236,4 +240,28 @@
 .update-settings .update-field { display: grid; gap: 6px; }
 .update-settings .update-submit { display: flex; align-items: end; justify-content: flex-end; }
 .update-settings .pr-field-label { font: 12px var(--sans); color: var(--fg-3); }
+
+
+/* 自动更新入口收进页头：仓库级状态与标题同排，不再占一整行 */
+.project-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.project-title-row .update-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  height: 26px;
+  padding: 0 11px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: none;
+  font: 12px var(--sans);
+  color: var(--fg-2);
+}
+.project-title-row .update-entry:hover { background: var(--sunken); border-color: var(--line-strong); }
+.project-title-row .update-entry-icon svg { width: 13px; height: 13px; }
+.project-title-row .update-entry-text { flex-direction: row; align-items: baseline; gap: 6px; min-width: 0; }
+.project-title-row .update-entry-text b { font: 500 12px var(--sans); color: var(--fg); white-space: nowrap; }
+.project-title-row .update-entry-text span { max-width: 240px; overflow: hidden; font: 12px var(--sans); color: var(--fg-3); text-overflow: ellipsis; white-space: nowrap; }
+.project-title-row .update-entry-chevron { display: none; }
 

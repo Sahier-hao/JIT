@@ -8,6 +8,7 @@ import { displayTime } from '../domain'
 import { FailureNotice } from '../Feedback'
 
 const LABELS: Record<UpdateState['status'], string> = { idle: '尚未检查仓库', checking: '正在检查远端提交…', analyzing: '发现更新，正在准备新的分析结果…', updated: '新的分析结果已就绪', 'up-to-date': '没有新提交', error: '仓库更新未完成' }
+const SHORT: Record<UpdateState['status'], string> = { idle: '未检查', checking: '检查中', analyzing: '分析中', updated: '有新结果', 'up-to-date': '无新提交', error: '未完成' }
 const ERRORS: Record<string, string> = {
   MODEL_DISABLED: '更新模型已停用，请在更新设置中选择可用模型。已有结果仍可查看。',
   DEFAULT_MODEL_REQUIRED: '还没有可用的默认模型，请在更新设置中选择模型，或联系管理员设置。',
@@ -100,8 +101,8 @@ export function RepositoryUpdates({ repositoryId, onUpdated, ref }: { repository
     <button type="button" className="update-entry" data-tone={tone} onClick={() => setOpen(true)} aria-haspopup="dialog">
       <span className="update-entry-icon" aria-hidden="true"><RefreshCw size={15}/></span>
       <span className="update-entry-text">
-        <b>仓库更新与自动检查</b>
-        <span>{state ? LABELS[state.status] : '正在读取更新状态…'}</span>
+        <b>自动更新</b>
+        <span>{state ? SHORT[state.status] : '读取中'}</span>
       </span>
       <ChevronRight size={15} className="update-entry-chevron" aria-hidden="true"/>
     </button>
