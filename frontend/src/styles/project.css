@@ -92,12 +92,12 @@
 
 .record-body { min-width: 0; }
 .job-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
-.record-pick { display: grid; grid-template-columns: 15px minmax(0, 1fr); column-gap: 9px; align-items: start; cursor: pointer; }
+.record-pick { display: flex; align-items: flex-start; gap: 9px; min-width: 0; }
 .record-pick input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .record-radio { width: 15px; height: 15px; margin-top: 2px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--card); }
 .record-pick input:checked + .record-radio { border-color: var(--accent); background: var(--accent); box-shadow: inset 0 0 0 3px var(--card); }
 .record-pick input:focus-visible + .record-radio { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
-.record-text { display: grid; gap: 4px; min-width: 0; }
+.record-text { display: grid; gap: 4px; min-width: 0; flex: 1; }
 .record-title { font: 500 13px/1.4 var(--sans); color: var(--fg); }
 .record-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; line-height: 1.5; color: var(--fg-3); }
 .job-status-icon { display: grid; place-items: center; width: 15px; height: 15px; margin-top: 2px; color: var(--fg-3); }
@@ -300,5 +300,5 @@
 .result-bottom .result-note { margin: 0; font: 12px/1.6 var(--sans); color: var(--fg-3); }
 .result-bottom .result-foot { margin: 0; padding-top: 13px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 /* 当前结果用「钉住」表达，而不是单选圈 */
-.record-pin { display: grid; place-items: center; width: 18px; height: 18px; color: var(--accent); flex: none; }
-.pw-timeline .analysis-job.is-current { box-shadow: inset 2px 0 0 var(--accent), 0 1px 2px rgba(16, 24, 40, .05); }
+.record-pin { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 7px; background: color-mix(in srgb, var(--accent) 11%, var(--card)); border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent); color: var(--accent); box-shadow: 0 1px 1px color-mix(in srgb, var(--accent) 14%, transparent), inset 0 1px 0 rgba(255,255,255,.6); }
+.pw-timeline .analysis-job.is-current { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--card)), var(--card)); box-shadow: inset 2px 0 0 var(--accent), 0 1px 2px rgba(16, 24, 40, .05), 0 10px 24px -18px rgba(16, 24, 40, .35); }

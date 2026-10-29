@@ -221,7 +221,9 @@ it('switches the current result from an older completed record', async () => {
   render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click(await screen.findByRole('radio', { name: /设为当前结果/ }))
+  const menus = await screen.findAllByRole('button', { name: '更多操作' })
+  await user.click(menus[1])
+  await user.click(await screen.findByRole('menuitem', { name: '设为当前结果' }))
   await waitFor(() => expect(selected).not.toBeNull())
   expect(selected).toEqual({ viewSyncId: OTHER })
   await waitFor(() => expect(screen.getAllByText('当前结果').length).toBeGreaterThan(0))
@@ -257,7 +259,7 @@ it('keeps following a queued job until the result is available', async () => {
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '发起分析' }))
   await user.click(await screen.findByRole('button', { name: '开始分析' }))
-  await waitFor(() => expect(screen.getByRole('radio', { name: /当前结果/ })).toBeVisible(), { timeout: 7000 })
+  await waitFor(() => expect(document.querySelectorAll('.record-pin').length).toBeGreaterThan(0), { timeout: 7000 })
 })
 
 it('lets users reach an older analysis beyond the first ten', async () => {

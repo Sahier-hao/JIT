@@ -232,28 +232,20 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
     <span className="record-marker" aria-hidden="true"/>
     <div className="record-body">
     <div className="job-main">
-      {completed ? <label className="record-pick">
-        <input
-          type="radio"
-          name="current-analysis"
-          checked={current}
-          disabled={selecting}
-          onChange={onSelect}
-          aria-label={current ? `当前结果 ${shortId}` : `将 ${shortId} 设为当前结果`}
-        />
-        {current ? <span className="record-pin" aria-hidden="true"><Pin size={14} fill="currentColor" strokeWidth={1.4}/></span> : <span className="record-radio" aria-hidden/>}
+      {completed ? <div className="record-pick is-static">
+        {current ? <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Pin size={12} fill="currentColor" strokeWidth={1.6}/></span> : null}
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
         </span>
-      </label> : <div className="record-pick is-static">
+      </div> : <div className="record-pick is-static">
         <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}>{active ? <Loader size={16}/> : <AlertTriangle size={16}/>}</span>
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}</span>
         </span>
       </div>}
-      <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={completed ? onOpen : undefined} onCompare={onCompare} onRetry={!active && !completed ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
+      <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={completed ? onOpen : undefined} onCompare={onCompare} onRetry={!active && !completed ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
     {job.error ? <p className="record-error" title={job.error.message}><AlertTriangle size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
     </div>
@@ -280,12 +272,13 @@ function datasetRange(version?: string | null) {
   return range ? `${range[1]} → ${range[2].slice(5)}` : version
 }
 /** 记录卡只放一个入口：点开后再选具体动作，避免每行三四个图标。 */
-function RecordMenu({ job, pendingCancel, onOpen, onCompare, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
+function RecordMenu({ job, pendingCancel, onOpen, onCompare, onSelect, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
   job: SyncView
   active: boolean
   pendingCancel: boolean
   onOpen?: () => void
   onCompare?: () => void
+  onSelect?: () => void
   onRetry?: () => void
   onCancel?: () => void
   onDetail: () => void
@@ -299,6 +292,7 @@ function RecordMenu({ job, pendingCancel, onOpen, onCompare, onRetry, onCancel, 
     <div className="record-menu" role="menu" aria-label="分析记录操作">
       {onOpen ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onOpen)}><ArrowUpRight size={14}/>打开结果</button> : null}
       {onCompare ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onCompare)}><GitCompare size={14}/>与当前结果对比</button> : null}
+      {onSelect ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onSelect)}><Pin size={14}/>设为当前结果</button> : null}
       {onRetry ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onRetry)}><RotateCcw size={14}/>用这些参数重试</button> : null}
       {onCancel ? <button type="button" role="menuitem" className="record-menu-item" disabled={cancelBusy} onClick={choose(onCancel)}><XCircle size={14}/>取消分析</button> : null}
       {pendingCancel ? <p className="record-menu-note">正在取消…</p> : null}
