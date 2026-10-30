@@ -172,11 +172,19 @@ class PullRequestUpdates:
                     continue
                 item = dict(number=row['number'], title=row['title'], author=row['author'], url=row['url'],
                             updatedAt=row['updated_at'], remoteState=row['remote_state'], draft=bool(row['draft']))
-                if row['snapshot_id']:
-                    item['snapshotId'] = row['snapshot_id']
-                    intent = db.execute('SELECT * FROM pr_auto_intent WHERE repository_id=? AND number=? AND snapshot_id=? '
-                        'AND model_id=? ORDER BY updated_at DESC LIMIT 1',
-                        (repository_id, number, row['snapshot_id'], watch['model_id'] if watch else None)).fetchone()
+                snapshot_id = row['snapshot_id']
+                if snapshot_id is None:
+                    # 用户手动查看后保存的快照在 pr_latest；列表也要能关联它的分析。
+                    latest = db.execute('SELECT snapshot_id FROM pr_latest WHERE repository_id=? AND lower(owner)=? '
+                                        'AND lower(name)=? AND number=?', (repository_id, owner, name, number)).fetchone()
+                    snapshot_id = latest['snapshot_id'] if latest else None
+                if snapshot_id:
+                    item['snapshotId'] = snapshot_id
+                    intent = None
+                    if row['snapshot_id']:
+                        intent = db.execute('SELECT * FROM pr_auto_intent WHERE repository_id=? AND number=? AND snapshot_id=? '
+                            'AND model_id=? ORDER BY updated_at DESC LIMIT 1',
+                            (repository_id, number, row['snapshot_id'], watch['model_id'] if watch else None)).fetchone()
                     if intent:
                         item.update(analysisStatus=intent['status'], modelId=intent['model_id'], syncId=intent['sync_id'])
                         if intent['sync_id']:
@@ -188,12 +196,12 @@ class PullRequestUpdates:
                         manual = db.execute('SELECT s.id AS sync_id FROM pr_analysis a JOIN repository_sync s ON s.id=a.sync_id '
                                             "WHERE a.snapshot_id=? AND s.status='completed' "
                                             'ORDER BY a.created_at DESC, s.rowid DESC LIMIT 1',
-                                            (row['snapshot_id'],)).fetchone()
+                                            (snapshot_id,)).fetchone()
                         if manual:
                             analysis_sync = manual['sync_id']
                             item.update(analysisStatus='completed', syncId=analysis_sync)
                     if analysis_sync:
-                        snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?', (row['snapshot_id'],)).fetchone()
+                        snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?', (snapshot_id,)).fetchone()
                         shas = [commit.get('sha') for commit in (json.loads(snapshot['payload_json']).get('commits', []) if snapshot else []) if commit.get('sha')]
                         if shas:
                             marks = ','.join('?' for _ in shas)

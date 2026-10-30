@@ -23,7 +23,7 @@ export function PRModelClues({ source, navigate, modelId, onModelId, readOnly = 
   const [localModel, setLocalModel] = useState('')
   const selected = readOnly ? localModel : (modelId ?? '')
   const chooseModel = readOnly ? setLocalModel : onModelId
-  const [error, setError] = useState<unknown>(null), [busy, setBusy] = useState(false), [attempt, setAttempt] = useState(0), [cancelling, setCancelling] = useState<SyncView | null>(null), [expanded, setExpanded] = useState(false)
+  const [error, setError] = useState<unknown>(null), [busy, setBusy] = useState(false), [attempt, setAttempt] = useState(0), [cancelling, setCancelling] = useState<SyncView | null>(null), [expanded, setExpanded] = useState(readOnly)
   const path = `/api/v1/pr-snapshots/${encodeURIComponent(source.snapshotId)}/analyses`
   const accept = useCallback((raw: unknown, bind = false) => {
     const body = record(raw)
