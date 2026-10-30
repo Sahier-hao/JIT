@@ -35,7 +35,9 @@ def dataset_list(registered):
         grouped.setdefault(manifest["dataset"], []).append({
             "version": manifest["version"], "schema": manifest["schemaName"],
             "timeRange": manifest["timeRange"], "quality": manifest["quality"],
-            "file": manifest["file"], "manifestPath": manifest.get("manifestPath")})
+            "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
+            "source": _source(manifest), "labelRule": _label_rule(manifest),
+            "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
             for name, versions in sorted(grouped.items())]
 
@@ -48,8 +50,38 @@ def version_view(registered, name):
     return {"dataset": name,
             "versions": [{"version": manifest["version"], "schema": manifest["schemaName"],
                           "timeRange": manifest["timeRange"], "quality": manifest["quality"],
-                          "file": manifest["file"], "manifestPath": manifest.get("manifestPath")}
+                          "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
+                          "source": _source(manifest), "labelRule": _label_rule(manifest),
+                          "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}
+
+
+def _source(manifest):
+    collection = manifest.get("collection") or {}
+    repository = collection.get("repository") or {}
+    return {
+        "publisher": manifest.get("publisher"),
+        "url": manifest.get("url"),
+        "revision": manifest.get("revision"),
+        "citation": manifest.get("citation"),
+        "branch": repository.get("resolvedBranch") or repository.get("branch"),
+        "head": repository.get("head"),
+        "window": collection.get("window"),
+    }
+
+
+def _label_rule(manifest):
+    declared = manifest.get("label") or {}
+    if declared.get("rule"):
+        return declared["rule"]
+    collection = manifest.get("collection") or {}
+    return (collection.get("szz") or {}).get("rule") or manifest.get("labelRule")
+
+
+def _limitations(manifest):
+    declared = manifest.get("label") or {}
+    collection = manifest.get("collection") or {}
+    return list(declared.get("limitations") or collection.get("limitations") or [])
 
 
 def import_dataset(csv_path, manifest_path, storage):

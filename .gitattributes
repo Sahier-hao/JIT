@@ -1,4 +1,5 @@
 # Frozen evidence hashes refer to exact bytes; do not normalize line endings.
+docs/evidence/complete-admin-training-workbench/** -text whitespace=cr-at-eol
 docs/evidence/separate-run-evidence-from-archive/** -text
 docs/evidence/register-existing-models-and-predict-json/** -text whitespace=cr-at-eol
 

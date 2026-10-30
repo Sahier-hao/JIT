@@ -455,6 +455,21 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 `invalidate --base <base> --key baseline` 把某个副本的 `model.joblib` 改名，用来验证「模型不可用」
 路径；`restore` 改回。默认开发服务仍用 `cli serve`（端口 8000），两者互不影响，可同时运行。
 
+管理员训练工作区（`complete-admin-training-workbench`）复用同一训练任务服务：
+
+| 方法与路径 | 用途 |
+|---|---|
+| `GET /api/v1/models/{modelId}` | 管理员读取已校验模型的训练指标、数据版本、运行谱系和来源 |
+| `GET /api/v1/datasets` | 管理员读取数据集来源、标签规则和限制 |
+| `POST /api/v1/training-tasks` | 从固定数据集版本、已注册方法和指标集创建任务 |
+| `GET /api/v1/training-tasks/{taskId}` | 查询状态、排队位置、指标、失败原因和运行/模型谱系 |
+| `POST /api/v1/training-tasks/{taskId}/cancel` | 取消排队或运行任务 |
+| `POST /api/v1/training-tasks/{taskId}/retry` | 重试失败、取消或中断任务并保留父任务 |
+
+`JIT_DATASET_ROOT` 同时供数据集只读接口、仓库同步和管理员训练任务使用，避免仓库采集写到隔离目录而
+管理接口仍读取默认目录。模型详情只读取通过当前产物校验的运行摘要；产物缺失、损坏、运行或数据身份
+不一致时返回可定位错误，不回退到其他模型或示例指标。
+
 在 backend 执行：
 
 ```powershell
