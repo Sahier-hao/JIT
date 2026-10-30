@@ -39,6 +39,11 @@ def select_methods(requested=None):
 
 def label_semantics(dataset):
     """由数据集描述文件推导标签语义与限制；不把简化 SZZ 当作完整 SZZ。"""
+    declared_label = dataset.get("label")
+    if isinstance(declared_label, dict):
+        return {"kind": declared_label.get("kind", "declared-label"),
+                "rule": declared_label.get("rule", "declared"),
+                "limitations": list(declared_label.get("limitations") or [])}
     collection = dataset.get("collection") or {}
     if collection.get("kind") == "git-repository" or dataset["schemaName"] == "kamei14-git-v1":
         rule = (collection.get("szz") or {}).get("rule") or "szz-simple-v1"

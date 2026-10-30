@@ -1,0 +1,13 @@
+{
+  "command": "openspec validate \"add-large-jit-benchmark\" --type change --strict --json",
+  "durationMs": 50,
+  "issues": [],
+  "passed": true,
+  "summary": {
+    "failed": 0,
+    "passed": 1,
+    "total": 1
+  },
+  "type": "change",
+  "valid": true
+}

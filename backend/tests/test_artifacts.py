@@ -10,6 +10,22 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from jit_baseline.config import BACKEND
 
 
+def test_limitations_distinguish_complete_semantic_and_partial_feature_schemas():
+    from jit_baseline.artifacts import limitations
+    from jit_baseline.schemas import get_schema
+
+    complete = limitations(get_schema("kamei14-benchmark-v1"))[0]
+    assert "Kamei14 专家字段完整" in complete
+    assert "尚非完整" not in complete
+
+    semantic_only = limitations(get_schema("code-semantic-codebert-v1"))[0]
+    assert "模型仅入模 768 维语义表示" in semantic_only
+    assert "未进入本模型" in semantic_only
+
+    partial = limitations(get_schema("openstack-six-v1"))[0]
+    assert "尚非完整 Kamei14" in partial
+
+
 @pytest.fixture(scope="session")
 def real_run(tmp_path_factory):
     from jit_baseline.artifacts import build_run

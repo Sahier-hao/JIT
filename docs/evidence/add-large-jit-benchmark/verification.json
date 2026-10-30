@@ -1,0 +1,82 @@
+{
+  "change": "add-large-jit-benchmark",
+  "dataset": {
+    "csvSha256": "89a0715bd82e87dc283933b7420453a365861dbf02082bd8bc06ca63c056a0d4",
+    "manifestSha256": "cb96d486f09776a20b09ea1779ab478c6b9082fe957e943a220698bd42a05d03",
+    "name": "jit-fine-kamei14",
+    "normalizedDataIncluded": false,
+    "rawDataIncluded": false,
+    "sourceArchiveSha256": "9e5ca1a393b70ee7e87c410b162005958775f3f3732f9f83da9dd24a7dfe2b47",
+    "sourceRevision": "584799fdec6095ab75a45fd2a5f8db5b12163aa5",
+    "version": "jit-fine-kamei14-2001-03-27_2019-04-06"
+  },
+  "generatedUtc": "2026-10-30T18:03:40+08:00",
+  "protectedScope": {
+    "automaticModelSelectionAdded": false,
+    "changedProtectedPaths": [],
+    "defaultModelChanged": false,
+    "frontendChanged": false,
+    "serviceApiChanged": false
+  },
+  "results": {
+    "backendPytest": {
+      "elapsedSeconds": 397.15,
+      "errors": 0,
+      "failed": 0,
+      "passed": 606,
+      "skipped": 1,
+      "tests": 607
+    },
+    "methodComparison": {
+      "directlyRankable": true,
+      "failedMethods": 0,
+      "featureSchema": "kamei14-benchmark-v1",
+      "methods": 9,
+      "metricSet": "metric-set-v2",
+      "succeededMethods": 9,
+      "testCount": 3843
+    },
+    "methodVerification": {
+      "allPassed": true,
+      "passed": 9,
+      "total": 9
+    },
+    "openSpecValidation": {
+      "issues": 0,
+      "passed": 1,
+      "total": 1,
+      "valid": true
+    }
+  },
+  "sourceHashes": [
+    {
+      "path": "backend/jit_baseline/benchmark.py",
+      "sha256": "690128c47301e2dff40d8228abeb216d527006618562faa88de786f68de2f4b1"
+    },
+    {
+      "path": "backend/jit_baseline/schemas.py",
+      "sha256": "0cff6f17411fb80b8796ae8cc970439be45789e741849a61316572dd4e70c674"
+    },
+    {
+      "path": "backend/jit_baseline/cli.py",
+      "sha256": "7658d4427961a534f937c49213a1e183f3c99d0584305a77cf23fb5b9b13823f"
+    },
+    {
+      "path": "backend/jit_baseline/suite.py",
+      "sha256": "b6b46f304bf0a1cb2a06ab0011e05a8efb7e0d0fc669ff5f632409ce26c38e29"
+    },
+    {
+      "path": "backend/jit_baseline/artifacts.py",
+      "sha256": "251461bcdace748b92103ff78ee131365dcc3b783363d546b0309c92cecb435b"
+    },
+    {
+      "path": "backend/data/datasets/jit-fine-kamei14/jit-fine-kamei14-2001-03-27_2019-04-06.json",
+      "sha256": "cb96d486f09776a20b09ea1779ab478c6b9082fe957e943a220698bd42a05d03"
+    },
+    {
+      "path": "docs/audits/add-large-jit-benchmark.md",
+      "sha256": "88533fc7a163903f15eb27b3db681b977b2b1da8dcd578ab09c4d0069633f461"
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,78 @@
+{
+  "csvSha256": "89a0715bd82e87dc283933b7420453a365861dbf02082bd8bc06ca63c056a0d4",
+  "dataset": "jit-fine-kamei14",
+  "datasetManifest": {
+    "path": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\backend\\data\\datasets\\jit-fine-kamei14\\jit-fine-kamei14-2001-03-27_2019-04-06.json",
+    "sha256": "cb96d486f09776a20b09ea1779ab478c6b9082fe957e943a220698bd42a05d03"
+  },
+  "generatedUtc": "2026-10-30T09:28:32.449731+00:00",
+  "kind": "multi-dataset-suite",
+  "labelSemantics": {
+    "kind": "jit-fine-is-buggy-commit",
+    "limitations": [
+      "标签来自 JIT-Fine 发布数据，未在本项目重新执行 SZZ。",
+      "JIT-Fine 仓库未声明许可证，原始与规范化数据不随仓库分发。"
+    ],
+    "rule": "is_buggy_commit in {0, 1}; transported as bugcount only for the canonical CSV contract"
+  },
+  "methods": [
+    {
+      "method": "logistic-regression-l2-v1",
+      "path": "logistic-regression-l2-v1",
+      "runId": "02cc6b986d8a04cc72f891d70d8ba4a2f209a8bb24c0aceb964fa346e02daf61",
+      "status": "succeeded"
+    },
+    {
+      "method": "decision-tree-v1",
+      "path": "decision-tree-v1",
+      "runId": "edd0d74b195efea0f3e4598635b412c46e9b3685a0d824e5cfdb6bdcb8f921d0",
+      "status": "succeeded"
+    },
+    {
+      "method": "random-forest-v1",
+      "path": "random-forest-v1",
+      "runId": "388e49a1e93506d90535c380cedc563ae0b2a17cac46d2912b26ba2450c1c617",
+      "status": "succeeded"
+    },
+    {
+      "method": "gaussian-naive-bayes-v1",
+      "path": "gaussian-naive-bayes-v1",
+      "runId": "cc9332b0bfbe2367d53aa848e433b499f02e97634989a7598e28f5c46d6cd97b",
+      "status": "succeeded"
+    },
+    {
+      "method": "gradient-boosting-v1",
+      "path": "gradient-boosting-v1",
+      "runId": "e39400be1d92902c4f187b8dcf1bcfac93e05691e06f11a846f9180e0ee83324",
+      "status": "succeeded"
+    },
+    {
+      "method": "mlp-v1",
+      "path": "mlp-v1",
+      "runId": "3650c4fb6c56ee161c071acc441fecd1f7b594c7d4edf1a72ade9930d7f67722",
+      "status": "succeeded"
+    },
+    {
+      "method": "tabular-resnet-v1",
+      "path": "tabular-resnet-v1",
+      "runId": "cef131c4726087994a1a5ac82afc2186b18a291b6ed3c5d7b2a0fab5e833ac4b",
+      "status": "succeeded"
+    },
+    {
+      "method": "ft-transformer-v1",
+      "path": "ft-transformer-v1",
+      "runId": "47574661c46adc5ce83a58eb7b39e427cc0439622547d87aa3c0a888b755389b",
+      "status": "succeeded"
+    },
+    {
+      "method": "wide-deep-v1",
+      "path": "wide-deep-v1",
+      "runId": "aa6e07436da9391011beec9c0b7460d84f44aec6d30e27589a727ce37f9b84f0",
+      "status": "succeeded"
+    }
+  ],
+  "metricSet": "metric-set-v2",
+  "schemaName": "kamei14-benchmark-v1",
+  "status": "complete",
+  "version": "jit-fine-kamei14-2001-03-27_2019-04-06"
+}

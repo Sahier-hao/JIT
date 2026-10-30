@@ -1,0 +1,10 @@
+{
+  "change": "add-large-jit-benchmark",
+  "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+  "failedMethods": [],
+  "methodsAttempted": 9,
+  "methodsSucceeded": 9,
+  "note": "本轮九种方法全部成功；没有逐方法失败记录需要冻结。单方法失败隔离仍由套件契约和测试覆盖。",
+  "schemaName": "kamei14-benchmark-v1",
+  "source": "suite.json"
+}

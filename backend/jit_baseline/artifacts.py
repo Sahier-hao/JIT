@@ -25,6 +25,8 @@ CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json"
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
                  "schemas.py", "algorithms.py", "errors.py", "deep.py", "trends.py")
+KAMEI14_FIELDS = ("ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix",
+                  "ndev", "age", "nuc", "exp", "rexp", "sexp")
 # 每个运行都记录的基础依赖；方法可在其声明里追加自己需要的包（PDB-11）。
 BASE_PACKAGES = ("numpy", "scipy", "scikit-learn", "joblib", "threadpoolctl", "fastapi", "uvicorn")
 
@@ -128,12 +130,24 @@ def limitations(schema):
     """按当前 schema 生成局限说明，第一项如实列出未提供字段。"""
     fields = "、".join(schema.in_model_names())
     gaps = schema.unavailable()
+    complete = set(KAMEI14_FIELDS) <= set(schema.in_model_names())
     if gaps:
         first = (f"特征为具名 schema {schema.name}，入模 {len(schema.in_model_names())} 项（{fields}）；"
                  + "未提供：" + "；".join(f"{field.name}（{field.reason}）" for field in gaps)
                  + "。预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
-    else:
+    elif schema.semantic_only:
+        first = (f"特征为具名 schema {schema.name}，模型仅入模 {schema.semantic_dim()} 维语义表示；"
+                 + "声明的 14 项 Kamei 专家字段仅用于数据完整性，未进入本模型。"
+                 + "预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
+    elif schema.semantic:
+        first = (f"特征为具名 schema {schema.name}，Kamei14 专家字段完整；"
+                 + f"模型另入模 {schema.semantic_dim()} 维语义表示。"
+                 + "预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
+    elif not complete:
         first = (f"特征为具名 schema {schema.name}（{fields}），尚非完整 Kamei14；"
+                 + "预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
+    else:
+        first = (f"特征为具名 schema {schema.name}（{fields}），Kamei14 专家字段完整；"
                  + "预测解释由服务端按遮挡法实时计算，不在此产物内冻结。")
     return [first, *LIMITATIONS]
 
@@ -239,10 +253,11 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
                    "start": part[0]["time"], "end": part[-1]["time"], "ids": [r["id"] for r in part]}
              for key, part in split.items()}
     if dataset_manifest is not None:
+        label_rule = dataset.get("labelRule") or "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"
         source = {"publisher": dataset["publisher"], "revision": dataset["revision"],
                   "url": dataset["url"], "citation": dataset["citation"],
                   "files": sources, "sha256": dataset["file"]["sha256"], "quality": quality,
-                  "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"}
+                  "labelRule": label_rule}
     else:
         source = {"publisher": "software-rebels/JITMovingTarget", "revision": REVISION,
                   "url": "https://github.com/software-rebels/JITMovingTarget/tree/" + REVISION,

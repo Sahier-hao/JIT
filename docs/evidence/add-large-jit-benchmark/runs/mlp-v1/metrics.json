@@ -1,0 +1,87 @@
+{
+  "averagePrecision": {
+    "reason": null,
+    "value": 0.11095453272956249
+  },
+  "confusion": {
+    "fn": 150,
+    "fp": 17,
+    "tn": 3670,
+    "tp": 6
+  },
+  "counts": {
+    "negative": 3687,
+    "positive": 156,
+    "records": 3843
+  },
+  "effort": {
+    "budgetLoc": 132919.80000000002,
+    "name": "Recall@20%LOC (risk-ranked)",
+    "ordering": "risk-desc,time-desc,id-asc",
+    "policy": "whole-commit-prefix-stop",
+    "selectedCount": 52,
+    "totalLoc": 664599,
+    "usedLoc": 131420
+  },
+  "f1": {
+    "reason": null,
+    "value": 0.0670391061452514
+  },
+  "ifa": {
+    "reason": null,
+    "value": 1
+  },
+  "popt": {
+    "reason": null,
+    "value": 0.7541007502688902
+  },
+  "poptEffort": {
+    "areaModel": 0.7456150587585837,
+    "areaOracle": 0.9833025059915657,
+    "areaWorst": 0.016697494008436158,
+    "name": "Popt (density-ranked, full-range)",
+    "ordering": "density-desc,time-desc,id-asc",
+    "policy": "trapezoid-full-range",
+    "totalLoc": 664599
+  },
+  "precision": {
+    "reason": null,
+    "value": 0.2608695652173913
+  },
+  "recall": {
+    "reason": null,
+    "value": 0.038461538461538464
+  },
+  "recall20Loc": {
+    "reason": null,
+    "value": 0.0641025641025641
+  },
+  "reference": {
+    "allNegative": {
+      "confusion": {
+        "fn": 156,
+        "fp": 0,
+        "tn": 3687,
+        "tp": 0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.0
+      },
+      "precision": {
+        "reason": "没有预测为正的提交",
+        "value": null
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0
+      }
+    },
+    "apNoInformation": 0.04059328649492584
+  },
+  "rocAuc": {
+    "reason": null,
+    "value": 0.6959761601746957
+  },
+  "threshold": 0.5
+}

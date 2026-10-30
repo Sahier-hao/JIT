@@ -122,9 +122,26 @@ _SEMANTIC_BLOCK = {
 _GIT14_SEMANTIC = Schema("kamei14-semantic-codebert-v1", _GIT14.fields, semantic=_SEMANTIC_BLOCK)
 _SEMANTIC_ONLY = Schema("code-semantic-codebert-v1", _GIT14.fields, semantic=_SEMANTIC_BLOCK,
                         semantic_only=True)
+_BENCHMARK14 = Schema("kamei14-benchmark-v1", (
+    Field("ns", "ns", transform=LOG1P, integer=True),
+    Field("nd", "nd", transform=LOG1P, integer=True),
+    Field("nf", "nf", transform=LOG1P, integer=True),
+    Field("entropy", "entropy"),
+    Field("la", "la", transform=LOG1P, integer=True),
+    Field("ld", "ld", transform=LOG1P, integer=True),
+    Field("lt", "lt", transform=LOG1P),
+    Field("fix", "fix", integer=True, binary=True),
+    Field("ndev", "ndev", transform=LOG1P, integer=True),
+    Field("age", "age"),
+    Field("nuc", "nuc", transform=LOG1P, integer=True),
+    Field("exp", "exp", transform=LOG1P),
+    Field("rexp", "rexp", transform=LOG1P),
+    Field("sexp", "sexp", transform=LOG1P),
+))
 
 SCHEMAS = {schema.name: schema
-           for schema in (_SIX, _KAMEI14, _GIT14, _GIT14_SEMANTIC, _SEMANTIC_ONLY)}
+           for schema in (_SIX, _KAMEI14, _GIT14,
+                          _GIT14_SEMANTIC, _SEMANTIC_ONLY, _BENCHMARK14)}
 DEFAULT_SCHEMA = "openstack-six-v1"
 
 
