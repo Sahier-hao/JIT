@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type APIRequestContext, type Page } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
 
@@ -10,6 +10,15 @@ async function adminSession(page: Page) {
   const setup = await page.request.post('/api/admin/setup', { data: account })
   if (setup.status() === 409) expect((await page.request.post('/api/admin/login', { data: account })).ok()).toBe(true)
   else expect(setup.status()).toBe(201)
+}
+
+async function completedJob(request: APIRequestContext, id: string) {
+  let job: Record<string, unknown> = {}
+  await expect.poll(async () => {
+    job = await (await request.get(`/api/v1/repository-syncs/${id}`)).json()
+    return job.status
+  }, { timeout: 120000, intervals: [300, 500, 1000] }).toBe('completed')
+  return job
 }
 
 test('普通工作区只显示项目，管理接口拒绝未登录访问', async ({ page }, info) => {
@@ -28,8 +37,8 @@ test('建立项目只登记地址，不产生分析', async ({ page }, info) => 
   await page.getByLabel('仓库地址', { exact: true }).fill(`https://github.com/example/new-${info.project.name}`)
   await page.getByRole('button', { name: '建立项目', exact: true }).click()
   await expect(page.getByRole('heading', { name: '当前分析结果', exact: true })).toBeVisible()
-  await expect(page.getByText('还没有分析记录。设置范围后开始第一次分析。')).toBeVisible()
-  await expect(page.getByRole('button', { name: '开始分析', exact: true })).toBeVisible()
+  await expect(page.getByText('还没有分析记录。发起第一次分析后，这里按时间排列。')).toBeVisible()
+  await expect(page.getByRole('button', { name: '发起分析', exact: true })).toBeVisible()
 })
 
 test('真实本地 Git：选择决策树、等待完成、打开提交详情和刷新', async ({ page }, info) => {
@@ -39,7 +48,7 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   expect(created.ok()).toBe(true)
   const project = await created.json()
   await page.goto(`/#/projects/${project.repositoryId}`)
-  await page.getByRole('button', { name: /分析选项/ }).click()
+  await page.getByRole('button', { name: '发起分析', exact: true }).click()
   await page.getByLabel('起始日期', { exact: true }).fill('2024-01-01')
   await page.getByLabel('结束日期', { exact: true }).fill('2024-01-08')
   await page.getByLabel('提交上限', { exact: true }).fill(info.project.name === 'desktop-1280' ? '431' : '432')
@@ -52,10 +61,11 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   const job = await (await posted).json()
   expect(job.requestedModelId).toBe(tree.modelId)
   const record = page.getByRole('article', { name: `分析记录 ${job.syncId}`, exact: true })
-  await expect(record.getByRole('button', { name: '打开结果', exact: true })).toBeVisible({ timeout: 120000 })
-  const actual = await (await page.request.get(`/api/v1/repository-syncs/${job.syncId}`)).json()
+  await expect(record.getByRole('button', { name: '更多操作', exact: true })).toBeVisible({ timeout: 120000 })
+  const actual = await completedJob(page.request, job.syncId)
   expect(actual.modelId).toBe(tree.modelId)
-  await record.getByRole('button', { name: '打开结果', exact: true }).click()
+  await record.getByRole('button', { name: '更多操作', exact: true }).click()
+  await page.getByRole('menuitem', { name: '打开结果', exact: true }).click()
   const first = page.getByRole('button', { name: /^查看 [a-f0-9]{40}$/ }).first()
   await expect(first).toBeVisible()
   const sha = (await first.getAttribute('title'))!
@@ -74,9 +84,7 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/review-${info.project.name}.png`, fullPage: true })
   await page.getByRole('button', { name: /^返回项目 / }).click()
   await expect(page).toHaveURL(new RegExp(`/projects/${project.repositoryId}$`))
-  if (!await record.getByRole('radio').isChecked()) await record.getByRole('radio').click()
-  await expect(record.getByRole('radio')).toBeChecked()
-  await expect(page.getByRole('region', { name: '当前分析结果', exact: true }).getByText(tree.name, { exact: true })).toBeVisible({ timeout: catalogTimeout })
+  await expect(page.getByText(tree.name, { exact: false })).toBeVisible({ timeout: catalogTimeout })
   await page.setViewportSize({ width: 390, height: 844 })
   await noOverflow(page)
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/project-narrow-${info.project.name}.png`, fullPage: true })
@@ -88,20 +96,22 @@ test('九种模型都实际用于仓库分析', async ({ page }, info) => {
   const project = await response.json()
   const choices = await (await page.request.get('/api/v1/repository-models')).json()
   await page.goto(`/#/projects/${project.repositoryId}`)
-  await page.getByRole('button', { name: /分析选项/ }).click()
+  await page.getByRole('button', { name: '发起分析', exact: true }).click()
   await page.getByLabel('起始日期', { exact: true }).fill('2024-01-01')
   await page.getByLabel('结束日期', { exact: true }).fill('2024-01-08')
   await page.getByLabel('提交上限', { exact: true }).fill(info.project.name === 'desktop-1280' ? '421' : '422')
   expect(choices.models).toHaveLength(9)
   for (const model of choices.models) {
     expect(model?.repositoryPredictionSupported).toBe(true)
-    await page.getByLabel('分析模型', { exact: true }).selectOption(model.modelId)
+    const modelSelect = page.getByLabel('分析模型', { exact: true })
+    if (!await modelSelect.isVisible()) await page.getByRole('button', { name: '发起分析', exact: true }).click()
+    await modelSelect.selectOption(model.modelId)
     const posted = page.waitForResponse(result => result.request().method() === 'POST' && result.url().endsWith('/api/v1/repository-syncs'))
     await page.getByRole('button', { name: '开始分析', exact: true }).click()
     const job = await (await posted).json()
     expect(job.requestedModelId).toBe(model.modelId)
-    await expect(page.getByRole('article', { name: `分析记录 ${job.syncId}`, exact: true }).getByRole('button', { name: '打开结果', exact: true })).toBeVisible({ timeout: 120000 })
-    const actual = await (await page.request.get(`/api/v1/repository-syncs/${job.syncId}`)).json()
+    await expect(page.getByRole('article', { name: `分析记录 ${job.syncId}`, exact: true }).getByRole('button', { name: '更多操作', exact: true })).toBeVisible({ timeout: 120000 })
+    const actual = await completedJob(page.request, job.syncId)
     expect(actual.modelId).toBe(model.modelId)
   }
 })

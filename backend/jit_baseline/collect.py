@@ -5,7 +5,9 @@
 进入既有登记、入库与训练链路。特征为提交级聚合、标签为简化 SZZ，两项限制随产物记录。
 """
 import csv
+import hashlib
 import io
+import json
 import math
 import os
 import re
@@ -25,6 +27,9 @@ SZZ_RULE = "szz-simple-v1"
 SZZ_PATTERN = r"(?i)\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\b"
 RECENT_DAYS = 90
 MAX_COMMITS = 50000
+TEXT_RULE = "diff-bound-v1"
+TEXT_MAX_LINES_PER_FILE = 80
+TEXT_MAX_BYTES_PER_COMMIT = 8192
 LIMITATIONS = (
     "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
     "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。",
@@ -247,6 +252,68 @@ def _directory(path):
     return path.rsplit("/", 1)[0] if "/" in path else ""
 
 
+def _patch_by_commit(repo, branch):
+    """一次 `git log -p` 取回每个提交的补丁文本。"""
+    text = _run(repo, ["log", branch, "--reverse", "--no-merges", "--no-renames",
+                       "--patch", "--unified=0", "--format=%x01%H"]).stdout
+    patches, current = {}, None
+    for line in text.splitlines():
+        if line.startswith("\x01"):
+            current = line[1:].strip()
+            patches[current] = []
+        elif current is not None:
+            patches[current].append(line)
+    return patches
+
+
+def _bound_patch(lines):
+    """按固定规则截断一个提交的补丁：每文件 80 行、每提交 8KB、跳过二进制。"""
+    files, current = [], None
+    for line in lines:
+        if line.startswith("diff --git "):
+            path = line.split(" b/", 1)[-1] if " b/" in line else line
+            current = {"path": path, "lines": []}
+            files.append(current)
+        elif current is not None:
+            current["lines"].append(line)
+    kept, skipped, truncated, used = [], [], False, 0
+    for index, item in enumerate(files):
+        if any("Binary files" in line for line in item["lines"]):
+            skipped.append(item["path"])
+            continue
+        clipped = item["lines"][:TEXT_MAX_LINES_PER_FILE]
+        if len(clipped) < len(item["lines"]):
+            truncated = True
+        chunk = f"diff --git a/{item['path']} b/{item['path']}\n" + "\n".join(clipped)
+        size = len(chunk.encode("utf-8"))
+        if used + size > TEXT_MAX_BYTES_PER_COMMIT:
+            truncated = True
+            skipped.extend(item["path"] for item in files[index:]
+                           if not any("Binary files" in line for line in item["lines"]))
+            break
+        kept.append(chunk)
+        used += size
+    return "\n".join(kept), truncated, skipped
+
+
+def text_entries(repo, branch, records):
+    """为每个纳入提交生成有界文本记录，顺序与 records 一致。"""
+    patches = _patch_by_commit(repo, branch)
+    entries = []
+    for record in records:
+        diff, truncated, skipped = _bound_patch(patches.get(record["id"], []))
+        entries.append({"commit_id": record["id"], "subject": record["subject"],
+                        "diff": diff, "truncated": truncated, "skippedFiles": skipped})
+    return entries
+
+
+def _jsonl_bytes(entries):
+    if not entries:
+        return b""
+    return b"\n".join(json.dumps(entry, ensure_ascii=False, sort_keys=True).encode("utf-8")
+                      for entry in entries) + b"\n"
+
+
 class _History:
     """单遍历史索引：文件与作者的既往状态，随遍历推进。"""
 
@@ -305,7 +372,7 @@ class _History:
         }
 
 
-def collect(repo, since=None, until=None, branch="HEAD", limit=None):
+def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=False):
     """采集一个仓库的提交窗口；返回记录、标签统计、采集证据与 CSV 字节。"""
     repo = repository(repo)
     start, end = parse_time(since), parse_time(until)
@@ -381,8 +448,14 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None):
                                       if item["binary"])},
         "limitations": list(LIMITATIONS),
     }
+    text = None
+    if with_text:
+        entries = text_entries(repo, branch, records)
+        text = {"records": entries, "bytes": _jsonl_bytes(entries), "rule": TEXT_RULE,
+                "truncated": sum(1 for entry in entries if entry["truncated"]),
+                "skippedFiles": sum(len(entry["skippedFiles"]) for entry in entries)}
     return {"records": records, "csv": blob, "collection": collection, "excluded": excluded,
-            "skipped": skipped, "fixCommits": fix_commits, "labeled": len(labels)}
+            "skipped": skipped, "fixCommits": fix_commits, "labeled": len(labels), "text": text}
 
 
 def _csv_bytes(records, names):
@@ -505,7 +578,7 @@ def _clone_bare(repo, clone):
 
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
-                       allow_local=True, return_blob=False):
+                       allow_local=True, return_blob=False, with_text=False):
     """采集 → 写 CSV → 可选登记；远程来源克隆到临时目录并在结束时清理。
 
     `allow_local=False` 时只接受公开 HTTP(S) 地址（同步接口使用）；
@@ -520,7 +593,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             clone = Path(temporary) / "repository.git"
             _clone_bare(repo, clone)
             target = clone
-        collected = collect(target, since, until, branch, limit)
+        collected = collect(target, since, until, branch, limit, with_text=with_text)
         if not collected["records"]:
             raise BaselineError("DATASET_INVALID", "采集范围内没有可纳入的提交")
         blob = collected["csv"]
@@ -530,10 +603,29 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             temporary_csv = path.with_name(path.name + ".tmp")
             temporary_csv.write_bytes(blob)
             temporary_csv.replace(path)
+        text_meta = None
+        if with_text:
+            if path is None:
+                raise BaselineError("INPUT_INVALID", "文本采集需要 --output 指定 CSV 路径")
+            text_path = path.with_name(path.stem + ".text.jsonl")
+            text_bytes = collected["text"]["bytes"]
+            temporary_text = text_path.with_name(text_path.name + ".tmp")
+            temporary_text.write_bytes(text_bytes)
+            temporary_text.replace(text_path)
+            from .config import BACKEND
+            resolved = text_path.resolve()
+            relative = (resolved.relative_to(BACKEND.resolve()).as_posix()
+                        if resolved.is_relative_to(BACKEND.resolve()) else resolved.as_posix())
+            text_meta = {"path": relative, "sha256": hashlib.sha256(text_bytes).hexdigest(),
+                         "bytes": len(text_bytes), "rule": TEXT_RULE,
+                         "records": len(collected["text"]["records"]),
+                         "truncated": collected["text"]["truncated"],
+                         "skippedFiles": collected["text"]["skippedFiles"]}
         result = {"kind": "repository-collected", "repository": str(repo),
                   "records": len(collected["records"]), "fixCommits": collected["fixCommits"],
                   "labeled": collected["labeled"], "skipped": collected["skipped"],
-                  "excluded": collected["excluded"], "collection": collected["collection"]}
+                  "excluded": collected["excluded"], "collection": collected["collection"],
+                  "text": text_meta}
         if return_blob:
             result["blob"] = blob
             result["rawRecords"] = collected["records"]
@@ -546,7 +638,8 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             result["dataset"] = store.register(path, schema=SCHEMA_NAME,
                                                dataset=dataset or dataset_name(repo),
                                                cohort=cohort(since, until), root=root,
-                                               extra={"collection": collected["collection"]},
+                                               extra={"collection": collected["collection"],
+                                                      **({"text": text_meta} if text_meta else {})},
                                                provenance={"publisher": "collected",
                                                            "revision": collected["collection"]["repository"]["head"],
                                                            "url": str(repo),

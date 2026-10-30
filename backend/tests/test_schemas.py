@@ -7,13 +7,18 @@ import pytest
 
 def test_two_schemas_are_registered_with_declared_order():
     from jit_baseline.schemas import SCHEMAS, get_schema
-    assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1", "kamei14-git-v1"}
+    assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1", "kamei14-git-v1",
+                            "kamei14-semantic-codebert-v1", "code-semantic-codebert-v1"}
     assert get_schema("openstack-six-v1").in_model_names() == ("ns", "nd", "nf", "ent", "la", "ld")
     kamei = get_schema("kamei14-v1")
     assert [field.name for field in kamei.fields] == [
         "ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix", "ndev", "age", "nuc", "exp", "rexp", "sexp"]
     assert kamei.in_model_names() == (
         "ns", "nd", "nf", "entropy", "la", "ld", "fix", "ndev", "age", "nuc", "exp", "sexp")
+    fused = get_schema("kamei14-semantic-codebert-v1")
+    assert fused.semantic_dim() == 768 and fused.input_width() == 782
+    only = get_schema("code-semantic-codebert-v1")
+    assert only.semantic_only is True and only.input_width() == 768
 
 
 def test_unknown_schema_is_rejected_not_defaulted():

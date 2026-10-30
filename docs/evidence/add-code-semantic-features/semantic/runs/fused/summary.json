@@ -1,0 +1,1147 @@
+{
+  "algorithmVersion": "logistic-regression-l2-v1",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1640995200
+  },
+  "datasetVersion": "flask-3y-text-2022-01-11_2024-11-27",
+  "featureSchema": {
+    "inModel": [
+      "ns",
+      "nd",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "rexp",
+      "sexp"
+    ],
+    "name": "kamei14-semantic-codebert-v1",
+    "unavailable": []
+  },
+  "features": [
+    "ns",
+    "nd",
+    "nf",
+    "entropy",
+    "la",
+    "ld",
+    "lt",
+    "fix",
+    "ndev",
+    "age",
+    "nuc",
+    "exp",
+    "rexp",
+    "sexp"
+  ],
+  "limitations": [
+    "特征为具名 schema kamei14-semantic-codebert-v1（ns、nd、nf、entropy、la、ld、lt、fix、ndev、age、nuc、exp、rexp、sexp），尚非完整 Kamei14；预测解释由服务端按遮挡法实时计算，不在此产物内冻结。",
+    "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+    "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+    "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+    "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+    "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+  ],
+  "metricSet": "metric-set-v2",
+  "metrics": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.40803384345221483
+    },
+    "confusion": {
+      "fn": 15,
+      "fp": 0,
+      "tn": 55,
+      "tp": 0
+    },
+    "counts": {
+      "negative": 55,
+      "positive": 15,
+      "records": 70
+    },
+    "effort": {
+      "budgetLoc": 513.0,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 1,
+      "totalLoc": 2565,
+      "usedLoc": 416
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.0
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": null,
+      "value": 0.7936066301613145
+    },
+    "poptEffort": {
+      "areaModel": 0.7578167641325533,
+      "areaOracle": 0.9390513320337874,
+      "areaWorst": 0.060948667966211775,
+      "name": "Popt (density-ranked, full-range)",
+      "ordering": "density-desc,time-desc,id-asc",
+      "policy": "trapezoid-full-range",
+      "totalLoc": 2565
+    },
+    "precision": {
+      "reason": "没有预测为正的提交",
+      "value": null
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.0
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.06666666666666667
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 15,
+          "fp": 0,
+          "tn": 55,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.21428571428571427
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.6666666666666666
+    },
+    "threshold": 0.5
+  },
+  "model": {
+    "id": "logistic-regression@kamei14-semantic-codebert-v1",
+    "name": "逻辑回归 · kamei14-semantic-codebert-v1"
+  },
+  "modelSha256": "5f8fb40e77f97b506466cf265f7ba166638cdeabf207437ba9c1362f43a066a7",
+  "protocolVersion": "kamei14-semantic-codebert-v1",
+  "runId": "e2ed3f267c7fe2661197a48b9446b5e958fe07195c43738ca4e8d58a9d2ad68a",
+  "semantic": {
+    "dim": 768,
+    "embeddingsSha256": "bd3f2d298c84da00f22ae98a2e313ef67044e53787dd34547dd7bdb664d88122",
+    "maxLength": 256,
+    "model": "microsoft/codebert-base",
+    "pooling": "mean",
+    "revision": "3b0952feddeffad0063f274080e3c23d75e7eb39",
+    "textSha256": "1d86bf688d7756324784f186fb92b430c6f42609a26d41adc2c5070c66633483"
+  },
+  "source": {
+    "citation": "由本地 Git 仓库采集生成",
+    "files": {
+      "flask-3y-text.csv": {
+        "bytes": 58308,
+        "sha256": "c32ead55e0ea572bb9a3205a944d55994745d9d53061261a6cbdf76ee52bc915",
+        "url": "https://github.com/pallets/flask"
+      }
+    },
+    "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。",
+    "publisher": "collected",
+    "quality": {
+      "blankLabels": 0,
+      "excluded": {
+        "missingRequiredField": 0,
+        "noAddedLines": 20,
+        "outsideWindow": 0,
+        "tooManyFiles": 0,
+        "tooMuchChurn": 0
+      },
+      "featureMissing": {
+        "age": 0,
+        "entropy": 0,
+        "exp": 0,
+        "fix": 0,
+        "la": 0,
+        "ld": 0,
+        "lt": 0,
+        "nd": 0,
+        "ndev": 0,
+        "nf": 0,
+        "ns": 0,
+        "nuc": 0,
+        "rexp": 0,
+        "sexp": 0
+      },
+      "includedRows": 475,
+      "positiveLabels": 74,
+      "rawRows": 495
+    },
+    "revision": "d086db856be187255b8ec61ef409357393020f32",
+    "sha256": "c32ead55e0ea572bb9a3205a944d55994745d9d53061261a6cbdf76ee52bc915",
+    "url": "https://github.com/pallets/flask"
+  },
+  "split": {
+    "test": {
+      "count": 70,
+      "end": "2024-11-27T10:14:18Z",
+      "positiveCount": 15,
+      "start": "2024-04-15T16:28:25Z"
+    },
+    "train": {
+      "count": 330,
+      "end": "2023-08-01T16:56:18Z",
+      "positiveCount": 45,
+      "start": "2022-01-11T12:59:08Z"
+    },
+    "validation": {
+      "count": 75,
+      "end": "2024-04-08T22:28:57Z",
+      "positiveCount": 14,
+      "start": "2023-08-01T16:56:22Z"
+    }
+  },
+  "threshold": 0.5,
+  "trainingSeconds": 0.187858,
+  "trendBuckets": {
+    "buckets": [
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 6,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 6,
+        "end": "2022-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 6 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2022-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 13,
+            "positives": 1
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 13,
+        "end": "2022-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 13 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 1,
+        "risk": null,
+        "start": "2022-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 22,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 22,
+        "end": "2022-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.13636363636363635
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2022-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 16,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 16,
+        "end": "2022-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 16 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2022-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 25,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 25,
+        "end": "2022-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2022-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 30,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 30,
+        "end": "2022-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.23333333333333334
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2022-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 32,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 32,
+        "end": "2022-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.21875
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2022-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 30,
+            "positives": 9
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 30,
+        "end": "2022-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.3
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2022-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 6,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 6,
+        "end": "2022-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 6 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2022-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 6,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 6,
+        "end": "2022-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 6 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2022-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 5,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 5,
+        "end": "2022-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 5 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2022-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 11,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 11,
+        "end": "2023-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 11 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2022-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 12,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 12,
+        "end": "2023-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 12 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2023-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 21,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 21,
+        "end": "2023-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2023-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 8,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 8,
+        "end": "2023-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 8 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2023-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 32,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 32,
+        "end": "2023-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09375
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2023-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 22,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 22,
+        "end": "2023-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.13636363636363635
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2023-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 22,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 22,
+        "end": "2023-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09090909090909091
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2023-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 9,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 9,
+        "end": "2023-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 9 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2023-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 2,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 16,
+            "positives": 2
+          }
+        },
+        "commits": 18,
+        "end": "2023-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 18 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2023-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 7,
+            "positives": 0
+          }
+        },
+        "commits": 7,
+        "end": "2023-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 7 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2023-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 5,
+            "positives": 1
+          }
+        },
+        "commits": 5,
+        "end": "2023-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 5 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 1,
+        "risk": null,
+        "start": "2023-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 15,
+            "positives": 2
+          }
+        },
+        "commits": 15,
+        "end": "2023-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 15 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2023-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 6,
+            "positives": 1
+          }
+        },
+        "commits": 6,
+        "end": "2024-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 6 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 1,
+        "risk": null,
+        "start": "2023-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 12,
+            "positives": 5
+          }
+        },
+        "commits": 12,
+        "end": "2024-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 12 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2024-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 6,
+            "positives": 0
+          }
+        },
+        "commits": 6,
+        "end": "2024-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 6 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2024-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 0,
+        "end": "2024-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 0 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2024-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 4,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 8,
+            "positives": 3
+          }
+        },
+        "commits": 12,
+        "end": "2024-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 12 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 4,
+        "risk": {
+          "count": 4,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 4 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 10,
+            "positives": 3
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 10,
+        "end": "2024-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 10 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 3,
+        "risk": {
+          "count": 10,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 10 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 5,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 5,
+        "end": "2024-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 5 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 1,
+        "risk": {
+          "count": 5,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 5 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 5,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 5,
+        "end": "2024-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 5 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 1,
+        "risk": {
+          "count": 5,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 5 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 8,
+            "positives": 4
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 8,
+        "end": "2024-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 8 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 4,
+        "risk": {
+          "count": 8,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 8 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 4,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 4,
+        "end": "2024-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 4 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": {
+          "count": 4,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 4 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 8,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 8,
+        "end": "2024-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 8 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 1,
+        "risk": {
+          "count": 8,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 8 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 26,
+            "positives": 4
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 26,
+        "end": "2024-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.15384615384615385
+        },
+        "positives": 4,
+        "risk": {
+          "count": 26,
+          "median": 0.08668824708636313,
+          "p90": 0.4293494716677658,
+          "reason": null
+        },
+        "start": "2024-11-01T00:00:00+08:00"
+      }
+    ],
+    "grain": "month",
+    "minSample": 20,
+    "timezone": "UTC+08:00"
+  }
+}

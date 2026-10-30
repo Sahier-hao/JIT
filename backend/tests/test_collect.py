@@ -329,3 +329,43 @@ def test_clone_stops_without_fallback_when_repository_missing(monkeypatch, tmp_p
     assert caught.value.code == "REPOSITORY_UNAVAILABLE"
     assert "代理：fatal: repository" in str(caught.value)
     assert "直连：" not in str(caught.value)
+
+
+def test_text_sidecar_is_deterministic_and_bounded(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    long_file = "\n".join(f"line {index}" for index in range(200)) + "\n"
+    _commit(repo, "feat: add long file", {"pkg/a.py": long_file}, "2024-01-01T10:00:00+0000")
+    _commit(repo, "fix: repair and add binary",
+            {"pkg/a.py": long_file.replace("line 1\n", "line one\n"),
+             "pkg/blob.bin": b"\x00\x01\x02"}, "2024-01-02T10:00:00+0000")
+    first = collect(repo, since="2023-01-01", until="2025-01-01", with_text=True)
+    second = collect(repo, since="2023-01-01", until="2025-01-01", with_text=True)
+    assert first["text"]["bytes"] == second["text"]["bytes"]
+    assert first["text"]["rule"] == "diff-bound-v1"
+    entries = first["text"]["records"]
+    assert [entry["commit_id"] for entry in entries] == [record["id"] for record in first["records"]]
+    assert any(entry["diff"] for entry in entries)
+    assert any(entry["truncated"] for entry in entries)
+    assert any(entry["skippedFiles"] for entry in entries)
+
+
+def test_collect_repository_writes_text_sidecar_and_registers_it(tmp_path):
+    import hashlib
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "fix: repair", {"a.py": "x\n"}, "2024-01-01T10:00:00+0000")
+    _commit(repo, "feat: add", {"a.py": "x\ny\n"}, "2024-01-02T10:00:00+0000")
+    output = tmp_path / "out" / "repo.csv"
+    root = tmp_path / "registry"
+    result = collect_repository(repo, since="2023-01-01", until="2025-01-01",
+                                output=output, dataset="repo-text", register=True,
+                                root=root, with_text=True)
+    text_path = output.with_name(output.stem + ".text.jsonl")
+    assert text_path.is_file()
+    assert result["text"]["rule"] == "diff-bound-v1"
+    assert result["text"]["records"] == result["records"]
+    assert result["text"]["sha256"] == hashlib.sha256(text_path.read_bytes()).hexdigest()
+    manifests = list(root.rglob("*.json"))
+    assert len(manifests) == 1
+    manifest = json.loads(manifests[0].read_text(encoding="utf-8"))
+    assert manifest["text"]["sha256"] == result["text"]["sha256"]
+    assert manifest["text"]["path"].endswith(".text.jsonl")
