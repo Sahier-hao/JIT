@@ -42,9 +42,11 @@
 
 ## 数据层与表单
 
-- 引入 TanStack Query：`lib/queryClient.ts` 统一关闭自动重试与窗口聚焦重取；`useRepositories` 与 `useRepository` 改为 `useQuery`，保留原有 `{ state, items/repository, error, retry }` 返回结构，页面无需改动。项目增删改仍由 `PROJECTS_CHANGED` 事件触发失效重读；进行中的分析沿用 1.5 秒轮询、空闲 15 秒。
-- 测试基建：新增 `src/test-utils.tsx`，为直接渲染页面的测试提供独立 `QueryClient`；`ProductWorkspace` 等渲染 `App` 的测试使用应用内 provider。`test-setup.ts` 在每个用例后清空缓存。
+- 引入 TanStack Query：`lib/queryClient.ts` 统一关闭自动重试与窗口聚焦重取；`useRepositories`、`useRepository`、`useRepositoryCommits` 与 `useDataset` 改为 `useQuery`，保留原有返回结构，页面无需改动。项目增删改仍由 `PROJECTS_CHANGED` 事件触发失效重读；进行中的分析沿用 1.5 秒轮询、空闲 15 秒；提交分页与数据集读取使用各自的查询键。
+- 测试基建：新增 `src/test-utils.tsx`，为直接渲染页面与 hook 的测试提供独立 `QueryClient`（`render` 与 `renderHook`）；`ProductWorkspace` 等渲染 `App` 的测试使用应用内 provider。`test-setup.ts` 在每个用例后清空缓存。
 - 新建项目表单改用 `react-hook-form`：地址校验、提交中状态与服务器错误提示保持原行为；`ui/controls` 的 `Input` 支持 ref 转发以配合表单注册。
+- 数据层改造后在隔离服务上回归项目概览、分析、风险趋势、PR 审查与提交明细五个视图，控制台无错误。
+
 
 ## 未验证与边界
 

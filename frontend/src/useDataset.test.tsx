@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from './test-utils'
 import { expect, it } from 'vitest'
 import { useDataset } from './useDataset'
 
@@ -11,7 +11,7 @@ it('CRR-11 等待数据时加载，完成后提供验证后的提交', async () 
   const { result } = renderHook(() => useDataset(loader, 'demo'))
   expect(result.current.resource.state).toBe('loading')
   await act(async () => resolve(good))
-  expect(result.current.resource).toMatchObject({ state: 'ready', data: { records: [{ id: 'demo-a' }] } })
+  await waitFor(() => expect(result.current.resource).toMatchObject({ state: 'ready', data: { records: [{ id: 'demo-a' }] } }))
 })
 
 it('CRR-11 空集合成功，不误报错误', async () => {

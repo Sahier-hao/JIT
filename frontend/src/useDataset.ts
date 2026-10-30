@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { parseDataset, parseHistorical, parseRepository, type Dataset, type Mode } from './domain'
 export type Loader = () => Promise<unknown>
 export type Resource = { state: 'loading' } | { state: 'ready'; data: Dataset } | { state: 'error'; error: string }
@@ -14,17 +14,15 @@ export const historicalLoader: Loader = async () => {
 }
 const PARSERS: Record<Mode, (input: unknown) => Dataset> = { demo: parseDataset, historical: parseHistorical, repository: parseRepository }
 export function useDataset(loader: Loader = historicalLoader, mode: Mode = 'historical'): { resource: Resource; retry: () => void } {
-  const [settled, setSettled] = useState<{ loader: Loader; mode: Mode; attempt: number; resource: Resource }>(() => ({ loader, mode, attempt: 0, resource: { state: 'loading' } }))
-  const [attempt, setAttempt] = useState(0)
-  useEffect(() => {
-    let active = true
-    Promise.resolve().then(loader).then(PARSERS[mode]).then(data => {
-      if (active) setSettled({ loader, mode, attempt, resource: { state: 'ready', data } })
-    }).catch(error => {
-      if (active) setSettled({ loader, mode, attempt, resource: { state: 'error', error: error instanceof Error ? error.message : '数据读取失败' } })
-    })
-    return () => { active = false }
-  }, [loader, attempt, mode])
-  const resource: Resource = settled.loader === loader && settled.mode === mode && settled.attempt === attempt ? settled.resource : { state: 'loading' }
-  return { resource, retry: () => setAttempt(value => value + 1) }
+  const query = useQuery({
+    queryKey: ['dataset', mode, loader.name || 'custom'],
+    queryFn: async () => PARSERS[mode](await loader()),
+    staleTime: 0,
+  })
+  const resource: Resource = query.isPending
+    ? { state: 'loading' }
+    : query.isError
+      ? { state: 'error', error: query.error instanceof Error ? query.error.message : '数据读取失败' }
+      : { state: 'ready', data: query.data as Dataset }
+  return { resource, retry: () => { void query.refetch() } }
 }

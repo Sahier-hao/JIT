@@ -257,41 +257,31 @@ export function useRepositoryCommits(
   limit = 20,
   pinnedSyncId?: string,
 ): RepositoryCommitPage {
-  const [attempt, setAttempt] = useState(0)
-  const [state, setState] = useState<Omit<RepositoryCommitPage, 'retry'>>({
-    state: 'idle', commits: [], total: 0, viewSyncId: null, error: '',
-  })
   const { search, start, end, sort } = query
-  useEffect(() => {
-    if (repositoryId === '') return
-    const controller = new AbortController()
-    let active = true
-    setState({ state: 'loading', commits: [], total: 0, viewSyncId: null, error: '' })
-    const path = repositoryCommitsPath(repositoryId, { search, start, end, sort }, offset, limit, pinnedSyncId)
-    apiRequest({ path, method: 'GET', signal: controller.signal })
-      .then(raw => {
-        const body = record(raw)
-        const viewSyncId = body.viewSyncId == null ? null : uuidText(body.viewSyncId, '展示同步标识')
-        if (body.repositoryId !== repositoryId || (pinnedSyncId && pinnedSyncId !== viewSyncId)) contractFailed('提交页分析来源不一致')
-        return {
-          viewSyncId,
-          total: count(body.total),
-          commits: recordList(body.commits).map(parseSyncCommit),
-        }
-      })
-      .then(page => { if (active) setState({ state: 'ready', ...page, error: '' }) })
-      .catch(error => { if (active) setState({ state: 'error', commits: [], total: 0, viewSyncId: null, error: describe(error) }) })
-    return () => { active = false; controller.abort() }
-  }, [repositoryId, search, start, end, sort, offset, limit, pinnedSyncId, attempt])
-  return { ...state, retry: () => setAttempt(value => value + 1) }
+  const page = useQuery({
+    queryKey: ['repository-commits', repositoryId, search, start, end, sort, offset, limit, pinnedSyncId ?? ''],
+    enabled: repositoryId !== '',
+    queryFn: async ({ signal }) => {
+      const body = record(await apiRequest({ path: repositoryCommitsPath(repositoryId, { search, start, end, sort }, offset, limit, pinnedSyncId), method: 'GET', signal }))
+      const viewSyncId = body.viewSyncId == null ? null : uuidText(body.viewSyncId, '展示同步标识')
+      if (body.repositoryId !== repositoryId || (pinnedSyncId && pinnedSyncId !== viewSyncId)) contractFailed('提交页分析来源不一致')
+      return {
+        viewSyncId,
+        total: count(body.total),
+        commits: recordList(body.commits).map(parseSyncCommit),
+      }
+    },
+  })
+  return {
+    state: repositoryId === '' ? 'idle' : page.isPending ? 'loading' : page.isError ? 'error' : 'ready',
+    commits: page.data?.commits ?? [],
+    total: page.data?.total ?? 0,
+    viewSyncId: page.data?.viewSyncId ?? null,
+    error: page.error ? describe(page.error) : '',
+    retry: () => { void page.refetch() },
+  }
 }
 
-/**
- * 按提交标识逐条取详情（仓库维度）。
- *
- * 详情可能来自深链接而不在当前分页里；逐条请求可以确认来源仍属于这次固定分析，
- * 取不到的单独列出，而不是悄悄回退到别的分析。
- */
 export interface RepositoryCommitRecords {
   state: 'idle' | 'loading' | 'ready' | 'error'
   records: Map<string, Commit>
