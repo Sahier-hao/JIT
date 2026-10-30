@@ -32,7 +32,7 @@ export default function App() {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])
-  return <MantineProvider theme={mantineTheme} forceColorScheme={dark ? 'dark' : 'light'}>
+  return <MantineProvider theme={mantineTheme} forceColorScheme={dark ? 'dark' : 'light'} env={import.meta.env.MODE === 'test' ? 'test' : undefined}>
     <QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>
   </MantineProvider>
 }

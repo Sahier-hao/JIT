@@ -13,6 +13,16 @@ export function parseProjectPRs(raw: unknown, id: string): ProjectPRPage {
   const b = identity(raw, id)
   return { repositoryId: id, supported: flag(b.supported), owner: textOrNull(b.owner), name: textOrNull(b.name), pullRequests: recordList(b.pullRequests).map(p => ({ ...parseItem(p), draft: flag(p.draft), snapshotId: textOrNull(p.snapshotId), analysisStatus: textOrNull(p.analysisStatus), modelId: textOrNull(p.modelId), syncId: textOrNull(p.syncId), maxRisk: p.maxRisk == null ? null : riskNumber(p.maxRisk), scoredCommits: p.scoredCommits == null ? null : count(p.scoredCommits) })), page: count(b.page), hasMore: flag(b.hasMore), checkedAt: textOrNull(b.checkedAt), errorCode: textOrNull(b.errorCode) }
 }
+/** 为当前所有开放 PR 提交后台分析任务；进度通过列表的 analysisStatus 反映。 */
+export async function analyzeAllProjectPRs(repositoryId: string, modelId?: string) {
+  return apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}/pull-requests/analyze`, method: 'POST', body: modelId ? { modelId } : {} })
+}
+
+/** 为项目 PR 读取固定快照并创建一次默认模型分析；列表页可直接调用。 */
+export async function analyzeProjectPR(repositoryId: string, number: number, signal?: AbortSignal) {
+  return apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}/pull-requests/${number}/analyze`, method: 'POST', body: {}, signal })
+}
+
 export async function projectPRs(id: string, state: PRState, page: number, refresh = false, signal?: AbortSignal) {
   const result = parseProjectPRs(await apiRequest({ path: `${root(id)}/pull-requests${refresh ? '/refresh' : ''}?state=${state}&page=${page}`, method: refresh ? 'POST' : 'GET', signal }), id)
   if (result.page !== page) contractFailed('PR 清单页码不一致')

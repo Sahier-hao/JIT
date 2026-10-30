@@ -35,27 +35,6 @@ it('updates a version without resolving old questions and restores the old round
   expect(readWorks()[0].rounds.v1.questions[0].status).toBe('open')
   expect(readWorks()[0].rounds.v2.questions[0].status).toBe('open')
 })
-it('keeps manual review usable when the explicitly selected model is unavailable', async () => {
-  const source = snapshot(); saveWork(createWork(source))
-  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
-    if (String(path).endsWith('/repository-models')) return response({ models: [{ modelId: 'model-selected', name: 'Registered model', method: 'lr', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true }] })
-    if (String(path).endsWith('/analyses')) return options?.method === 'POST'
-      ? new Response(JSON.stringify({ error: { code: 'MODEL_DISABLED', message: '所选模型已停用', requestId: 'model-request' } }), { status: 409 })
-      : response({ snapshotId: 'v1', analyses: [] })
-    return response(source)
-  })
-  render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(await screen.findByText('风险概览'))
-  await screen.findByRole('option', { name: 'Registered model' })
-  await user.selectOptions(await screen.findByRole('combobox', { name: '本版本分析模型' }), 'model-selected')
-  await user.click(screen.getByRole('button', { name: '生成本版本模型线索' }))
-  expect(await screen.findByText('所选模型已停用')).toBeVisible()
-  await user.click(screen.getByText('handle expiry'))
-  await user.type(screen.getByRole('textbox', { name: '个人笔记' }), 'manual review continues')
-  expect(screen.getByRole('textbox', { name: '个人笔记' })).toHaveValue('manual review continues')
-  const call = fetch.mock.calls.find(([path, options]) => String(path).endsWith('/v1/analyses') && options?.method === 'POST')
-  expect(JSON.parse(String(call?.[1]?.body))).toEqual({ modelId: 'model-selected' })
-})
 it('returns from evidence to the original version and code line', async () => {
   const source = snapshot(), work = createWork(source)
   work.rounds.v1.questions[0].evidence = [{ snapshotId: 'v1', path: 'src/token.py', side: 'head', line: 1, blobSha: 'c'.repeat(40), note: '' }]

@@ -27,9 +27,8 @@ it('does not create local work for unopened server notifications', async () => {
   render(<FixedPRSnapshot owner="example" repositoryName="project" number={12} repositoryId={PROJECT} snapshotId="v1" navigate={vi.fn()}/>)
   await screen.findByRole('button', { name: '开始审查此固定版本' })
   expect(readWorks()).toEqual([])
-  // 只读详情允许生成项目级模型分析，但不得写入个人工作单。
-  await userEvent.setup().click(screen.getByText('风险概览'))
-  expect(await screen.findByRole('button', { name: '生成本版本模型线索' })).toBeVisible()
+  // 分析统一从 PR 列表发起，只读详情不提供分析入口，也不创建工作单。
+  expect(screen.queryByRole('button', { name: '生成本版本模型线索' })).not.toBeInTheDocument()
   expect(readWorks()).toEqual([])
 })
 it('adds an explicit historical round without moving latest snapshot backwards', async () => {

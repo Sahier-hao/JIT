@@ -22,6 +22,7 @@ export function Dialog({ open, onOpenChange, title, description, footer, childre
     size={width}
     centered
     className="ui-dialog"
+    closeButtonProps={{ 'aria-label': '关闭' }}
   >
     {description ? <Text c="dimmed" size="sm" mb="md">{description}</Text> : null}
     {children}

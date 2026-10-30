@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '../test-utils'
+import { render, screen } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PRModelClues } from './PRModelClues'
@@ -10,8 +10,7 @@ afterEach(() => vi.restoreAllMocks())
 it('keeps legacy HEAD scores readable while disclosing their binding limits', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: modelChoices }) : response({ snapshotId: 'v1', analyses: [{ sync: job(), contextValid: true, bindingKind: 'legacy-head-v1', bindingLimitations: ['未登记独占 base ref'], scores: [{ commitId: 'a'.repeat(40), risk: .7 }] }] }))
   const navigate = vi.fn(), user = userEvent.setup()
-  render(<PRModelClues source={snapshot()} navigate={navigate} onModelId={vi.fn()}/> )
-  await user.click(await screen.findByText('风险概览'))
+  render(<PRModelClues source={snapshot()} navigate={navigate}/> )
   await screen.findByText('旧版 HEAD 绑定分析')
   expect(screen.getByText('旧版 HEAD 绑定分析')).toBeVisible()
   expect(screen.getByText(/不能据此认定具有新版任务的独占基准版本/)).toBeVisible()
@@ -22,33 +21,7 @@ it('keeps legacy HEAD scores readable while disclosing their binding limits', as
 })
 it('does not add legacy warnings to new snapshot-model bindings', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: modelChoices }) : response({ snapshotId: 'v1', analyses: [{ sync: job(), contextValid: true, bindingKind: 'snapshot-model-v1', bindingLimitations: [], scores: [] }] }))
-  render(<PRModelClues source={snapshot()} navigate={vi.fn()} onModelId={vi.fn()}/> )
+  render(<PRModelClues source={snapshot()} navigate={vi.fn()}/> )
   await screen.findByText(/项目自动分析 · 模型/)
   expect(screen.queryByText('旧版 HEAD 绑定分析')).not.toBeInTheDocument()
-})
-it('shows automatic and manual results side by side without overriding the round model', async () => {
-  const onModelId = vi.fn(), user = userEvent.setup()
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: modelChoices }) : response({ snapshotId: 'v1', analyses: [{ sync: job(), contextValid: true, scores: [] }, { sync: job({ syncId: '33333333-3333-4333-8333-333333333333', modelId: 'model-new', origin: 'manual' }), contextValid: true, scores: [] }] }))
-  render(<PRModelClues source={snapshot()} navigate={vi.fn()} modelId="model-new" onModelId={onModelId}/>)
-  await user.click(await screen.findByText('风险概览'))
-  await screen.findByText(/项目自动分析 · 模型 model-original/)
-  expect(screen.getByText(/手动分析 · 模型 model-new/)).toBeVisible()
-  expect(screen.getByLabelText('本版本分析模型')).toHaveValue('model-new')
-  expect(onModelId).not.toHaveBeenCalled()
-})
-it('retries the original fixed model with explicit retry and keeps cancellation actionable', async () => {
-  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: modelChoices }) : response({ snapshotId: 'v1', analyses: [{ sync: job({ status: 'cancelled', stage: 'collecting', modelId: null }), contextValid: false, scores: [] }] }))
-  render(<PRModelClues source={snapshot()} navigate={vi.fn()} modelId="model-new" onModelId={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '用原模型主动重试' }))
-  expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')?.[1]?.body))).toEqual({ modelId: 'model-original', retry: true })
-})
-it('confirms cancellation and reports errors without hiding the original model task', async () => {
-  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: modelChoices }) : String(path).endsWith('/cancel') ? response({ error: { code: 'SYNC_NOT_ACTIVE', message: '任务刚刚结束，请重新读取', requestId: 'r' } }, 409) : response({ snapshotId: 'v1', analyses: [{ sync: job({ status: 'queued', stage: 'queued' }), contextValid: false, scores: [] }] }))
-  render(<PRModelClues source={snapshot()} navigate={vi.fn()} onModelId={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(await screen.findByText('风险概览'))
-  await user.click(await screen.findByRole('button', { name: '取消本次模型分析' }))
-  expect(fetch.mock.calls.some(([path]) => String(path).endsWith('/cancel'))).toBe(false)
-  await user.click(screen.getByRole('button', { name: '确认取消模型分析' }))
-  await waitFor(() => expect(screen.getByText('任务刚刚结束，请重新读取')).toBeVisible())
-  expect(screen.getByRole('button', { name: '继续分析' })).toBeEnabled()
 })

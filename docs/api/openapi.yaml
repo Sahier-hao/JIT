@@ -85,6 +85,68 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-requests/analyze:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    post:
+      operationId: analyzeRepositoryPullRequests
+      summary: 为项目全部开放 PR 提交模型分析任务
+      description: 读取每个开放 PR 的固定快照并创建分析任务；已有完成分析的 PR 跳过。后台逐个执行，进度通过 PR 清单的 analysisStatus 反映。可选 modelId 固定本次使用的真实兼容模型。
+      security: []
+      tags: [目标共享产品]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PRBatchAnalyzeRequest'
+      responses:
+        '200':
+          description: 已排队的 PR 数量
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRBatchAnalyze'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-requests/{number}/analyze:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: number
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    post:
+      operationId: analyzeRepositoryPullRequest
+      summary: 为单个项目 PR 读取固定快照并创建模型分析
+      description: 返回该快照的模型任务与已有分数；旧任务与新任务的来源边界按 PRAnalyses 说明。
+      security: []
+      tags: [目标共享产品]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PRBatchAnalyzeRequest'
+      responses:
+        '200':
+          description: 当前响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRAnalyses'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/pr-tracking:
     parameters:
     - $ref: '#/components/parameters/ProjectRepositoryId'
@@ -1798,7 +1860,7 @@ paths:
       summary: 读取公开 GitHub 仓库概览
       security: []
       tags: [目标共享产品]
-      description: 只读公开 GitHub 元数据、语言、最近 100 条提交与最近 12 周活跃度；服务端缓存约 10 分钟。限流或失败时返回缓存或原因；不读标签、不跑模型。
+      description: 只读公开 GitHub 元数据、语言、最近 100 条提交与最近 52 周周提交统计；统计接口不可用时回退为最近 100 条提交的 12 周聚合并标注覆盖范围。服务端缓存约 10 分钟。限流或失败时返回缓存或原因；不读标签、不跑模型。
       parameters:
       - name: repositoryId
         in: path
@@ -3238,6 +3300,23 @@ components:
       - complete
       - absent
       - totalLines
+    PRBatchAnalyzeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        modelId:
+          type: string
+          minLength: 1
+    PRBatchAnalyze:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, queued]
+      properties:
+        repositoryId:
+          type: string
+        queued:
+          type: integer
+          minimum: 0
     PRAnalyses:
       type: object
       additionalProperties: false
@@ -5384,6 +5463,7 @@ components:
                 minimum: 0
         activityCoverage:
           type: [string, 'null']
+          description: last-52-weeks 表示 GitHub 默认分支最近 52 周周提交统计；last-100-commits 表示最近 100 条提交的 12 周回退聚合。
         recentCommits:
           type: array
           items:

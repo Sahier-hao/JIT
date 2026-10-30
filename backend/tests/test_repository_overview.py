@@ -31,10 +31,18 @@ def payloads():
     return meta, languages, commits
 
 
-def request(meta, languages, commits):
+def stats_payload():
+    base = datetime(2025, 11, 2, tzinfo=timezone.utc)
+    return [dict(week=int((base + timedelta(weeks=index)).timestamp()), total=3 if index == 51 else 1,
+                 days=[0, 0, 0, 0, 0, 0, 3 if index == 51 else 1]) for index in range(52)]
+
+
+def request(meta, languages, commits, stats):
     def call(path):
         if path.endswith('/languages'):
             return languages
+        if path.endswith('/stats/commit_activity'):
+            return stats
         if '/commits?' in path:
             return commits
         return meta
@@ -48,7 +56,7 @@ def overview(tmp_path):
     service = SyncService(storage, allow_local=False, collect_fn=lambda **kw: None)
     repo, _ = service.create_repository({'repositoryUrl': 'https://github.com/example/project'})
     meta, languages, commits = payloads()
-    service_overview = RepositoryOverview(service, request=request(meta, languages, commits))
+    service_overview = RepositoryOverview(service, request=request(meta, languages, commits, stats_payload()))
     yield service_overview, service, repo['repositoryId'], meta
     service.close()
 
@@ -61,12 +69,32 @@ def test_reads_public_metadata_languages_and_activity(overview):
     assert value['metadata']['license'] == 'MIT'
     assert [item['name'] for item in value['languages']] == ['Python', 'TypeScript']
     assert [item['percent'] for item in value['languages']] == [75.0, 25.0]
-    assert len(value['activity']) == 12
-    assert sum(item['commits'] for item in value['activity']) == 3
-    assert value['activityCoverage'] == 'last-100-commits'
+    assert len(value['activity']) == 52
+    assert value['activity'][0] == dict(weekStart='2025-11-02', commits=1)
+    assert value['activity'][-1] == dict(weekStart='2026-10-25', commits=3)
+    assert value['activityCoverage'] == 'last-52-weeks'
     assert value['recentCommits'][0]['message'] == 'fix: handle token'
     assert value['recentCommits'][0]['author'] == 'alice'
     assert value['fetchedAt']
+
+
+def test_stats_failure_falls_back_to_recent_commits(overview):
+    service_overview, _, repo, _ = overview
+    meta, languages, commits = payloads()
+    def unavailable(path):
+        if path.endswith('/stats/commit_activity'):
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', 'stats unavailable')
+        if path.endswith('/languages'):
+            return languages
+        if '/commits?' in path:
+            return commits
+        return meta
+    service_overview.request = unavailable
+    value = service_overview.get(repo)
+    assert len(value['activity']) == 12
+    assert value['activityCoverage'] == 'last-100-commits'
+    assert sum(item['commits'] for item in value['activity']) == 3
+    assert value['metadata']['stars'] == 12
 
 
 def test_cache_is_reused_and_rate_limit_keeps_old_payload(overview):

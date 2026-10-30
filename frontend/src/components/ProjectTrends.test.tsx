@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
-import { ProjectTrends } from './ProjectTrends'
+import { ProjectTrends, trendOption } from './ProjectTrends'
 import { GROUP, PROJECT, response, trendView } from '../projectActivity.fixture'
 afterEach(() => vi.restoreAllMocks())
 function api(overrides: { conflict?: boolean; commitsSource?: string } = {}) {
@@ -19,20 +19,22 @@ it('opens fixed views via GET only, leaves new sources unapplied, and renders nu
   expect(screen.getByText('有新的分支分析来源，当前视图保持不变。')).toBeVisible()
   expect(screen.getAllByText('未知').length).toBeGreaterThan(0)
   expect(screen.getAllByText(/已评分样本不足 20/).length).toBeGreaterThan(0)
-  expect(screen.getAllByRole('group', { name: /单轴|方向键/ })).toHaveLength(2)
+  expect(screen.getAllByRole('group', { name: /方向键/ })).toHaveLength(2)
+  expect(document.querySelectorAll('.ui-chart svg')).toHaveLength(2)
   expect(fetch.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true)
-  const svg = document.querySelectorAll('svg')
-  expect(svg[0].querySelectorAll('.trend-dot')).toHaveLength(2)
-  expect(svg[0].querySelector('.trend-line')?.getAttribute('d')?.match(/L/g)).toBeNull()
-  expect(svg[1].querySelectorAll('.trend-dot')).toHaveLength(1)
-  expect(svg[1].querySelector('.trend-line')?.getAttribute('d')?.match(/L/g)).toBeNull()
+  const option = trendOption(trendView().buckets, 'risk', { series: '#2a78d6', seriesInk: '#104281', grid: '#e3e7ee', axis: '#cdd4df', text: '#4a5464', textStrong: '#111827', surface: '#ffffff', border: '#cdd4df', categorical: [], other: '#8a8a83' })
+  const series = option.series as { data: unknown[]; connectNulls?: boolean }[]
+  expect(series[0].data).toEqual([.42, null, .55])
+  expect(series[0].connectNulls).toBe(false)
 })
 it('supports keyboard and touch-compatible bucket actions and preserves each commit sourceSyncId', async () => {
   api(); const navigate = vi.fn(), user = userEvent.setup()
   render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={navigate}/>)
-  const mark = (await screen.findAllByRole('button', { name: /2026-10-01，24 个已分析提交/ }))[0]
-  mark.focus(); await user.keyboard('{ArrowRight}')
-  expect(document.activeElement?.getAttribute('aria-label')).toContain('2026-10-08')
+  const chart = (await screen.findAllByRole('group', { name: /左右方向键选择时间段/ }))[0]
+  chart.focus(); await user.keyboard('{Home}')
+  const figure = chart.closest('figure')!
+  await waitFor(() => expect(figure.querySelector('[role="status"]')).toHaveTextContent('2026-10-01 至 2026-10-08（不含）'))
+  expect(figure.querySelector('[role="status"]')).toHaveTextContent('24 个已分析提交')
   await user.keyboard('{Enter}')
   await user.click(await screen.findByRole('button', { name: /原分析提交/ }))
   expect(navigate).toHaveBeenCalledWith({ name: 'analysis', repositoryId: PROJECT, viewSyncId: 's2', commitId: 'a'.repeat(40), view: 'commits' })

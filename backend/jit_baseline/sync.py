@@ -440,13 +440,14 @@ class SyncStorage:
                                unknown_count=counts["unknown"],
                                distribution_rule=DISTRIBUTION_RULE)
 
-    def repository_syncs(self, repository_id, limit=20, offset=0):
+    def repository_syncs(self, repository_id, limit=20, offset=0, *, exclude_pr=False):
+        condition = " AND COALESCE(source_kind,'branch')!='pr'" if exclude_pr else ''
         with self.storage.connection() as db:
             rows = db.execute(
-                "SELECT * FROM repository_sync WHERE repository_id=? "
-                "ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+                "SELECT * FROM repository_sync WHERE repository_id=?" + condition +
+                " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
                 (repository_id, limit, offset)).fetchall()
-            total = db.execute("SELECT COUNT(*) FROM repository_sync WHERE repository_id=?",
+            total = db.execute("SELECT COUNT(*) FROM repository_sync WHERE repository_id=?" + condition,
                                (repository_id,)).fetchone()[0]
         return [_view(row) for row in rows], total
 
@@ -970,7 +971,7 @@ class SyncService:
             raise BaselineError("CONFLICT_ACTIVE_SYNC", "该项目还有进行中的分析，请等待结束后再删除")
         return self.sync.repository_delete(repository_id)
 
-    def repository_syncs(self, repository_id, limit=20, offset=0):
+    def repository_syncs(self, repository_id, limit=20, offset=0, *, exclude_pr=False):
         """项目的分析记录：按创建时间倒序分页，包含失败与中断的历史。"""
         if self.sync.repository_get(repository_id) is None:
             raise BaselineError("REPOSITORY_UNKNOWN", "仓库不存在")
@@ -978,7 +979,7 @@ class SyncService:
             raise BaselineError("INPUT_INVALID", "limit 必须在 1 到 100 之间")
         if offset < 0:
             raise BaselineError("INPUT_INVALID", "offset 不能为负")
-        items, total = self.sync.repository_syncs(repository_id, limit, offset)
+        items, total = self.sync.repository_syncs(repository_id, limit, offset, exclude_pr=exclude_pr)
         return {"repositoryId": repository_id, "syncs": self._positions(items), "total": total,
                 "limit": limit, "offset": offset}
 

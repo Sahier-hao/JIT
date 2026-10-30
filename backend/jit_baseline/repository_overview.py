@@ -10,9 +10,10 @@ from .catalog_storage import utc_now
 from .errors import BaselineError
 from .pr_review import github_request, github_source
 
-FORMAT = 'repository-overview-v3'
+FORMAT = 'repository-overview-v4'
 CACHE_SECONDS = 600
 WEEKS = 12
+ACTIVITY_WEEKS = 52
 RECENT = 10
 
 
@@ -25,6 +26,26 @@ def _commit_date(item):
         return datetime.fromisoformat(str(item['commit']['author']['date']).replace('Z', '+00:00')).astimezone(timezone.utc)
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def _stats_activity(stats):
+    """GitHub 周统计的宽松解析：任何一项不可信都返回 None，由调用方回退到提交聚合。"""
+    if not isinstance(stats, list) or len(stats) < 2:
+        return None
+    items = []
+    for entry in stats:
+        if not isinstance(entry, dict):
+            return None
+        week, total = entry.get('week'), entry.get('total')
+        if isinstance(week, bool) or not isinstance(week, int) or isinstance(total, bool) or not isinstance(total, int) or total < 0:
+            return None
+        try:
+            start = datetime.fromtimestamp(week, timezone.utc).date()
+        except (OverflowError, OSError, ValueError):
+            return None
+        items.append(dict(weekStart=start.isoformat(), commits=total))
+    items.sort(key=lambda item: item['weekStart'])
+    return items[-ACTIVITY_WEEKS:]
 
 
 class RepositoryOverview:
@@ -96,13 +117,20 @@ class RepositoryOverview:
         language_items = [dict(name=str(key), bytes=int(value), percent=round(value * 100 / total, 1))
                           for key, value in sorted(languages.items(), key=lambda item: (-item[1], item[0]))
                           if isinstance(value, (int, float)) and value > 0] if total else []
-        current_start = _week_start(now)
-        weeks = [current_start - timedelta(weeks=index) for index in range(WEEKS - 1, -1, -1)]
-        counts = {start: 0 for start in weeks}
+        try:
+            stats = self.request(prefix + '/stats/commit_activity')
+        except BaselineError:
+            stats = None
+        activity = _stats_activity(stats)
+        counts = None
+        if activity is None:
+            current_start = _week_start(now)
+            weeks = [current_start - timedelta(weeks=index) for index in range(WEEKS - 1, -1, -1)]
+            counts = {start: 0 for start in weeks}
         recent = []
         for item in commits:
             date = _commit_date(item)
-            if date is not None:
+            if counts is not None and date is not None:
                 start = _week_start(date)
                 if start in counts:
                     counts[start] += 1
@@ -113,6 +141,9 @@ class RepositoryOverview:
                                        date=item['commit']['author']['date'], url=item.get('html_url')))
                 except (KeyError, TypeError, IndexError):
                     continue
+        if counts is not None:
+            activity = [dict(weekStart=start.isoformat(), commits=counts[start]) for start in weeks]
+        activity_coverage = 'last-100-commits' if counts is not None else 'last-52-weeks'
         license_info = meta.get('license') or {}
         return dict(
             format=FORMAT, repositoryId=repository_id, supported=True, fetchedAt=utc_now(),
@@ -126,8 +157,8 @@ class RepositoryOverview:
                           license=license_info.get('spdx_id') or None, homepage=meta.get('homepage') or None,
                           htmlUrl=meta.get('html_url')),
             languages=language_items,
-            activity=[dict(weekStart=start.isoformat(), commits=counts[start]) for start in weeks],
-            activityCoverage='last-100-commits',
+            activity=activity,
+            activityCoverage=activity_coverage,
             recentCommits=recent,
             rateLimit=dict(limited=False, resetAt=None), stale=False, errorCode=None, retryAfter=None,
         )

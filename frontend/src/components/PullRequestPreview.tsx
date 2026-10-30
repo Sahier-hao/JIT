@@ -60,7 +60,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
       </div>
     </header>
     <p className="pr-preview-note">只读预览。先看提交风险排序，点一条提交再看它触及的文件与代码；点「开始审查」创建工作单。</p>
-    <PRModelClues readOnly source={source} navigate={navigate} onModelId={() => {}} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
+    <PRModelClues source={source} navigate={navigate} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
     {!filesOpen ? <>
       <section className="wb-commit-table is-preview" aria-label="PR 提交风险排序">
         <div className="wb-commit-table-head">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert, Space, Tag, Tooltip } from '../ui/feedback'
 import { Button, Input, Select } from '../ui/controls'
 import { Drawer } from '../ui/drawer'
+import { Dialog } from '../ui/dialog'
 import { Segmented } from '../ui/segmented'
 import * as ui from '../ui/controls'
 import { ArrowLeft, ExternalLink, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
@@ -76,7 +77,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
         {existing ? <ui.Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })}>返回原阅读轮次</ui.Button> : null}
         <a href={source.url} target="_blank" rel="noreferrer">核对远端 PR</a>
       </div>
-      <PRModelClues readOnly source={source} navigate={navigate} onModelId={() => {}}/>
+      <PRModelClues source={source} navigate={navigate}/>
       <label>预览文件<select aria-label="固定快照预览文件" value={fileIndex} onChange={e => setFileIndex(Number(e.target.value))}>{source.files.map((f, i) => <option key={f.path} value={i}>{f.path}</option>)}</select></label>
       {file?.patch ? <CodeDiff file={file} view="unified" onAnchor={() => {}}/> : <p>没有可展示的完整 Diff，未视作空文件。可以进入此轮次后读取固定上下文。</p>}
       {!source.filesComplete ? <p className="field-error">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
@@ -153,23 +154,18 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
     const failed = Boolean(readError || initial.error)
     if (!failed && source) return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={begin}/>
     const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 的文件与固定代码版本。首次接入要逐个取文件，通常需要 20 到 30 秒。'
-    return (
-      <section className="wb-read-page">
-        <div className="wb-read" role={failed ? 'alert' : 'status'} aria-live="polite">
-          <div className="wb-read-head">
-            <span className={failed ? 'wb-read-dot is-failed' : 'wb-read-dot'} aria-hidden="true"/>
-            <h1 className="wb-read-title">{failed ? '这个 PR 暂时读不出来' : '正在读取 PR'}</h1>
-          </div>
-          <p className="wb-read-text">{detail}</p>
-          <div className="wb-read-actions">
-            {failed
-              ? <Button variant="primary" onClick={() => { setReadError(null); setAttempt(v => v + 1) }}>重试读取</Button>
-              : null}
-            <Button onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })}>返回{repositoryId ? '项目 PR 审查' : '我的审查'}</Button>
-          </div>
-        </div>
-      </section>
-    )
+    const back = () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })
+    return <Dialog
+      open
+      onOpenChange={next => { if (!next) back() }}
+      title={<span className="wb-read-head"><span className={failed ? 'wb-read-dot is-failed' : 'wb-read-dot'} aria-hidden="true"/>{failed ? '这个 PR 暂时读不出来' : '正在读取 PR'}</span>}
+      description={<span role={failed ? 'alert' : 'status'}>{detail}</span>}
+      width={480}
+      footer={<>
+        {failed ? <Button variant="primary" onClick={() => { setReadError(null); setAttempt(v => v + 1) }}>重试读取</Button> : null}
+        <Button variant={failed ? undefined : 'primary'} onClick={back}>返回{repositoryId ? '项目 PR 审查' : '我的审查'}</Button>
+      </>}
+    >{null}</Dialog>
   }
   const round = work.rounds[version], live = source?.snapshotId === version ? source : round.source
   const path = round.currentFile, file = live.files.find(f => f.path === path)
@@ -305,7 +301,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
       {round.historyNotice ? <Alert type="info" showIcon title={round.historyNotice}/> : null}
     </div> : null}
     <div className="wb-clues">
-      <PRModelClues key={`model:${version}`} source={live} navigate={navigate} modelId={round.modelId} onModelId={id => changeRound(r => ({ ...r, modelId: id }))} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
+      <PRModelClues key={`model:${version}`} source={live} navigate={navigate} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
     </div>
     {reviewView === 'commits' ? <section className="wb-commit-table" aria-label="PR 提交风险排序">
       <div className="wb-commit-table-head">

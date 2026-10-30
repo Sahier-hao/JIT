@@ -109,6 +109,22 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def refresh_repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
         return pr_updates.refresh_list(repository_id, state=state, page=page)
 
+    @app.post('/api/v1/repositories/{repository_id}/pull-requests/analyze')
+    async def analyze_all_repository_pull_requests(repository_id: str, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'modelId'} or 'modelId' in payload and not isinstance(payload['modelId'], str):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_updates.analyze_all_prs, repository_id, payload.get('modelId'))
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-requests/{number}/analyze')
+    async def analyze_repository_pull_request(repository_id: str, number: int, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'modelId'} or 'modelId' in payload and not isinstance(payload['modelId'], str):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number, payload.get('modelId'))
+
     @app.get('/api/v1/repositories/{repository_id}/pr-tracking')
     def pr_tracking(repository_id: str):
         return pr_updates.get(repository_id)
@@ -345,7 +361,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/repositories/{repository_id}/syncs')
     def repository_syncs(repository_id: str, limit: int = 20, offset: int = 0):
-        return sync_service.repository_syncs(repository_id, limit, offset)
+        return sync_service.repository_syncs(repository_id, limit, offset, exclude_pr=True)
 
     @app.get('/api/v1/repositories/{repository_id}')
     def repository_detail(repository_id: str, viewSyncId: str | None = None):

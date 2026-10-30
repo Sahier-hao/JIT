@@ -5,6 +5,7 @@ import { Button } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
+import { repositoryModels, type ModelChoice } from '../modelClient'
 import { getTracking, projectPRs, type PRState, type PRTracking, type ProjectPRPage } from '../projectActivityClient'
 import { cacheKey, readCache, writeCache } from '../lib/localCache'
 import { readWorks, workKey } from '../prReview'
@@ -25,6 +26,7 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
   const [busy, setBusy] = useState(false)
   const [tracking, setTracking] = useState<PRTracking | null>(null)
   const [trackingOpen, setTrackingOpen] = useState(false)
+  const [models, setModels] = useState<ModelChoice[]>([])
   const automatic = useRef(new Set<string>()), refreshRequested = useRef(false)
   useEffect(() => {
     const controller = new AbortController(); setBusy(true); setError(null)
@@ -46,12 +48,35 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
     getTracking(repositoryId, controller.signal).then(value => { if (!controller.signal.aborted) setTracking(value) }).catch(() => { if (!controller.signal.aborted) setTracking(null) })
     return () => controller.abort()
   }, [repositoryId, trackingOpen])
+  useEffect(() => {
+    const controller = new AbortController()
+    repositoryModels(controller.signal).then(value => { if (!controller.signal.aborted) setModels(value) }).catch(() => {})
+    return () => controller.abort()
+  }, [])
+  const modelName = (id?: string | null) => id ? (models.find(model => model.modelId === id)?.name ?? id.slice(0, 8)) : ''
+  const hasRunning = Boolean(result?.pullRequests.some(pr => ['queued', 'running', 'checking', 'collecting'].includes(pr.analysisStatus ?? '')))
+  useEffect(() => {
+    if (!hasRunning) return
+    const timer = setInterval(() => setAttempt(value => value + 1), 4000)
+    return () => clearInterval(timer)
+  }, [hasRunning])
   let localWorks: Set<string> = new Set()
   try { localWorks = new Set(readWorks().map(work => work.key)) } catch { /* 本地存储损坏时仍允许查看远端 PR */ }
   const refresh = () => { refreshRequested.current = true; setAttempt(v => v + 1) }
   const rows = result ? (sortBy === 'risk' ? [...result.pullRequests].sort((a, b) => (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt)) : result.pullRequests) : []
+  const summary = rows.reduce((acc, pr) => {
+    if (pr.analysisStatus === 'completed') acc.completed += 1
+    else if (['queued', 'running', 'checking'].includes(pr.analysisStatus ?? '')) acc.running += 1
+    else if (['failed', 'cancelled', 'interrupted'].includes(pr.analysisStatus ?? '')) acc.failed += 1
+    else acc.none += 1
+    return acc
+  }, { completed: 0, running: 0, failed: 0, none: 0 })
+  const statusRank = (status?: string | null) => ['running', 'queued', 'checking'].includes(status ?? '') ? 0 : status === 'completed' ? 1 : ['failed', 'cancelled', 'interrupted'].includes(status ?? '') ? 2 : 3
+  const recordRows = [...rows].sort((a, b) => statusRank(a.analysisStatus) - statusRank(b.analysisStatus) || (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt))
   return <section className="pr-hub" aria-label="项目 PR 审查">
     <h2 className="sr-only">PR 审查</h2>
+    <div className="pr-hub-layout">
+    <div className="pr-hub-main">
     {result?.supported === false ? null : <>
       <div className="pr-hub-toolbar">
         <div className="pr-hub-filters">
@@ -63,7 +88,6 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
           <Button variant="primary" disabled={busy} onClick={refresh}>{busy ? '正在检查…' : '检查远端 PR'}</Button>
         </div>
       </div>
-      <p className="pr-hub-note">读取公开 GitHub PR。打开是只读详情，只有点「开始审查」才会创建个人工作单。列表中的最高分来自该 PR 已保存的分析；尚无分析的 PR 不显示分数。{sortBy === 'risk' ? '按风险只排序当前页；未分析的 PR 排在最后，不能当作低风险。' : ''}</p>
     </>}
     {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
     {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
@@ -75,9 +99,11 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
         return <article className="pr-row" key={pr.number}>
           <div className="pr-row-main">
             <div className="pr-row-title"><h3><span className="pr-row-number">#{pr.number}</span> {pr.title}</h3><span className="pr-row-state" data-state={pr.remoteState}>{remoteLabel[pr.remoteState]}</span>{pr.draft ? <span className="pr-row-draft">草稿</span> : null}</div>
-            <p className="pr-row-meta"><span>{pr.author}</span><span>更新于 {displayTime(pr.updatedAt)}</span><span>{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}</span>{pr.maxRisk != null ? <span className="pr-row-risk" title="该 PR 已分析提交中的最高分数；排序参考，不是 PR 整体缺陷概率">{`最高风险 ${pr.maxRisk.toFixed(3)}${pr.scoredCommits != null ? ` · ${pr.scoredCommits} 条有分数` : ''}`}</span> : null}</p>
+            <p className="pr-row-meta"><span>{pr.author}</span><span>更新于 {displayTime(pr.updatedAt)}</span><span>{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}</span>{pr.maxRisk != null ? <span className="pr-row-risk" title="该 PR 已分析提交中的最高分数；排序参考，不是 PR 整体缺陷概率">{`最高风险 ${pr.maxRisk.toFixed(3)}${pr.scoredCommits != null ? ` · ${pr.scoredCommits} 条有分数` : ''}`}</span> : null}</p>
           </div>
-          {result.owner && result.name ? <Button variant={hasWork ? 'primary' : 'secondary'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })}>{hasWork ? '继续审查' : '查看 PR'}</Button> : <a href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
+          <div className="pr-row-actions">
+            {result.owner && result.name ? <Button variant={hasWork ? 'primary' : 'secondary'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })}>{hasWork ? '继续审查' : '查看 PR'}</Button> : <a href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
+          </div>
         </article>
       })}</div> : <div className="pr-hub-empty"><Empty description="当前范围没有 PR"/></div>}
       <div className="pr-hub-foot">
@@ -85,6 +111,18 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
         {page > 1 || result.hasMore ? <nav className="pr-hub-pager" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)}>上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)}>下一页</Button></nav> : null}
       </div>
     </div> : null}
+    </div>
+    {result?.supported ? <aside className="pr-hub-records" aria-label="PR 分析记录">
+      <div className="pw-rail-head"><h2>PR 分析记录</h2><span>{rows.length} 个</span></div>
+      <p className="pr-hub-records-summary">已分析 {summary.completed} · 分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
+      <div className="pr-record-list">
+        {recordRows.map(pr => <button key={pr.number} type="button" className="pr-record" data-status={pr.analysisStatus ?? 'none'} onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
+          <span className="pr-record-title"><b>#{pr.number}</b> {pr.title}</span>
+          <span className="pr-record-meta">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
+        </button>)}
+      </div>
+    </aside> : null}
+    </div>
     <Dialog open={trackingOpen} onOpenChange={setTrackingOpen} title="PR 自动分析" width={620}>
       <PRTrackingPanel repositoryId={repositoryId} onTracking={setTracking}/>
     </Dialog>

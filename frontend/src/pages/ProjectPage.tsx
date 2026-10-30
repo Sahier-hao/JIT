@@ -7,17 +7,17 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
-import { Button, IconButton } from '../ui/controls'
+import { Button, IconButton, Select } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
 import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
 import type { SyncCommit } from '../repositoryContract'
 import { projectsChanged } from '../projectEvents'
-import { useModelName } from '../modelClient'
+import { repositoryModels, useModelName, type ModelChoice } from '../modelClient'
+import { analyzeAllProjectPRs } from '../projectActivityClient'
 import { AnalysisLauncher } from '../components/AnalysisLauncher'
 import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { RepositoryOverviewView } from '../components/RepositoryOverview'
-import { ProjectEvents, ProjectPersonal } from '../components/ProjectActivity'
 import { ProjectPullRequests } from '../components/ProjectPullRequests'
 import { ProjectTrends } from '../components/ProjectTrends'
 import { getPRSnapshot } from '../prReviewClient'
@@ -45,6 +45,33 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const activeTab = trendMode ? 'analyses' : tab ?? 'overview'
   const detail = useRepository(repositoryId)
   const modelName = useModelName(detail.repository?.modelId)
+  const [prAnalyzing, setPrAnalyzing] = useState(false)
+  const [prAnalysisError, setPrAnalysisError] = useState('')
+  const [prDialog, setPrDialog] = useState(false)
+  const [modelChoices, setModelChoices] = useState<ModelChoice[]>([])
+  const [selectedModel, setSelectedModel] = useState('')
+  async function openPrAnalysis() {
+    setPrAnalysisError('')
+    try {
+      const list = await repositoryModels()
+      const usable = list.filter(model => model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
+      setModelChoices(usable)
+      setSelectedModel(usable.find(model => model.isDefault)?.modelId ?? usable[0]?.modelId ?? '')
+      setPrDialog(true)
+    } catch (failure) {
+      setPrAnalysisError(failure instanceof Error ? failure.message : '读取模型失败')
+    }
+  }
+  async function analyzeAllPRs() {
+    setPrAnalyzing(true); setPrAnalysisError('')
+    try {
+      await analyzeAllProjectPRs(repositoryId, selectedModel || undefined)
+      setPrDialog(false)
+      navigate({ name: 'repository', repositoryId, tab: 'prs' })
+    } catch (failure) {
+      setPrAnalysisError(failure instanceof Error ? failure.message : '提交 PR 分析失败')
+    } finally { setPrAnalyzing(false) }
+  }
   const [page, setPage] = useState(0)
   const records = useRepositorySyncs(repositoryId, 10, page * 10)
   const refreshRecords = records.retry
@@ -168,8 +195,10 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         </div>
       </div>
       <div className="page-actions">
+        <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
         <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate({ name: 'repository', repositoryId, tab: 'analyses' }) }}/>
       </div>
+      {prAnalysisError ? <p className="field-error" role="alert">{prAnalysisError}</p> : null}
     </header>
 
     <nav className="project-tabs" aria-label="项目工作台视图">
@@ -178,10 +207,6 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
     {activeTab === 'overview' ? <>
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onStartAnalysis={() => analyzeBranch(repository.defaultBranch ?? '')} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
-      <div className="project-activity">
-        <ProjectPersonal repositoryId={repositoryId} navigate={navigate}/>
-        <ProjectEvents repositoryId={repositoryId} navigate={navigate}/>
-      </div>
     </> : null}
     {activeTab === 'analyses' ? <>
     <nav className="analysis-view-switch" aria-label="分析视图">
@@ -246,6 +271,10 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     </> : null}
     {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} navigate={navigate}/> : null}
 
+    <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={440}
+      footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
+      <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={modelChoices.map(model => ({ value: model.modelId, label: model.name }))}/>
+    </Dialog>
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
       {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
     </Dialog>

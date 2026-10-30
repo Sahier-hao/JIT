@@ -149,6 +149,45 @@ class PullRequestUpdates:
         if state not in ('open', 'closed', 'all') or type(page) is not int or not 1 <= page <= 100:
             raise BaselineError('INPUT_INVALID', 'PR 列表参数无效')
 
+    def analyze_pr(self, repository_id, number, model_id=None):
+        """为项目 PR 读取固定快照并创建分析；列表页可直接调用。"""
+        _, owner, name, supported = self._repository(repository_id)
+        if not supported:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '该项目不是公开 GitHub 来源')
+        prepared = self.review.refresh(owner, name, number, repository_id)
+        snapshot_id = prepared['snapshot']['snapshotId']
+        payload = {'modelId': model_id} if model_id else {}
+        return self.review.analyze(snapshot_id, payload)
+
+    def analyze_all_prs(self, repository_id, model_id=None):
+        """在后台逐个分析当前缓存的开放 PR；返回排队数量，前端轮询列表状态。"""
+        _, owner, name, supported = self._repository(repository_id)
+        if not supported:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '该项目不是公开 GitHub 来源')
+        with self.storage.connection() as db:
+            rows = db.execute("SELECT number FROM pr_cache WHERE repository_id=? AND remote_state='open' "
+                              'ORDER BY updated_at DESC', (repository_id,)).fetchall()
+        numbers = [row['number'] for row in rows]
+
+        def work():
+            for number in numbers:
+                try:
+                    with self.storage.connection() as db:
+                        latest = db.execute('SELECT snapshot_id FROM pr_latest WHERE repository_id=? AND lower(owner)=? '
+                                            'AND lower(name)=? AND number=?', (repository_id, owner, name, number)).fetchone()
+                        done = latest is not None and db.execute(
+                            'SELECT 1 FROM pr_analysis a JOIN repository_sync s ON s.id=a.sync_id '
+                            "WHERE a.snapshot_id=? AND s.status='completed' LIMIT 1", (latest['snapshot_id'],)).fetchone()
+                    if done:
+                        continue
+                    self.analyze_pr(repository_id, number, model_id)
+                except Exception:
+                    continue
+
+        if numbers:
+            self.executor.submit(work)
+        return dict(repositoryId=repository_id, queued=len(numbers))
+
     def list_prs(self, repository_id, state='open', page=1):
         """只读取持久缓存；GET 不访问远端，也不补建配置或项目。"""
         self._pagination(state, page)
@@ -193,14 +232,19 @@ class PullRequestUpdates:
                                 item['analysisStatus'] = 'queued' if job[0] == 'queued' else 'running'
                     analysis_sync = intent['sync_id'] if intent and intent['sync_id'] else None
                     if analysis_sync is None:
-                        manual = db.execute('SELECT s.id AS sync_id FROM pr_analysis a JOIN repository_sync s ON s.id=a.sync_id '
-                                            "WHERE a.snapshot_id=? AND s.status='completed' "
+                        manual = db.execute('SELECT s.id AS sync_id, s.status AS status, s.model_id, '
+                                            's.resolved_model_id, s.requested_model_id FROM pr_analysis a '
+                                            'JOIN repository_sync s ON s.id=a.sync_id WHERE a.snapshot_id=? '
                                             'ORDER BY a.created_at DESC, s.rowid DESC LIMIT 1',
                                             (snapshot_id,)).fetchone()
                         if manual:
                             analysis_sync = manual['sync_id']
-                            item.update(analysisStatus='completed', syncId=analysis_sync)
-                    if analysis_sync:
+                            state = manual['status']
+                            mapped = ('completed' if state == 'completed' else 'queued' if state == 'queued'
+                                      else state if state in ('failed', 'cancelled', 'interrupted') else 'running')
+                            item.update(analysisStatus=mapped, syncId=analysis_sync,
+                                        modelId=manual['model_id'] or manual['resolved_model_id'] or manual['requested_model_id'])
+                    if analysis_sync and item.get('analysisStatus') == 'completed':
                         snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?', (snapshot_id,)).fetchone()
                         shas = [commit.get('sha') for commit in (json.loads(snapshot['payload_json']).get('commits', []) if snapshot else []) if commit.get('sha')]
                         if shas:

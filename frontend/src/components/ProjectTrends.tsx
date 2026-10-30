@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import type { ECharts } from 'echarts/core'
+import { EChartCanvas, chartTooltip, escapeHtml, useChartColors, type ChartColors, type ChartOption } from '../ui/chart'
 import { Button, Input } from '../ui/controls'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ApiError } from '../apiContract'
@@ -86,27 +88,94 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate }:
     </details>
   </section>
 }
+const PLOT_TITLES = { risk: '平均模型风险分', rate: '高分提交占已评分提交比例' } as const
+
+function plotValue(bucket: TrendBucket, kind: 'risk' | 'rate'): number | null {
+  return kind === 'risk' ? bucket.riskMean : bucket.highRate
+}
+
+function plotTooltip(bucket: TrendBucket, kind: 'risk' | 'rate'): string {
+  const range = `<strong>${escapeHtml(bucket.start.slice(0, 10))} 至 ${escapeHtml(bucket.end.slice(0, 10))}（不含）</strong>`
+  if (kind === 'risk') return `${range}<br/>平均风险 ${score(bucket.riskMean)}；${number(bucket.commitCount)} 个已分析提交；已评分 ${number(bucket.scoredCount)} / 未知 ${number(bucket.unknownCount)}；${escapeHtml(coverageLabel(bucket.coverage))}`
+  const missing = bucket.highRate == null ? `：${escapeHtml(rateReason(bucket.rateReason))}` : ''
+  return `${range}<br/>${percent(bucket.highRate)} 高分占比${missing}；已评分 ${number(bucket.scoredCount)} / 未知 ${number(bucket.unknownCount)}；${escapeHtml(coverageLabel(bucket.coverage))}`
+}
+
+export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', colors: ChartColors): ChartOption {
+  const values = buckets.map(bucket => plotValue(bucket, kind)).filter((value): value is number => value != null)
+  // 固定 0–1 会让常见的小比例挤在底部；仍从 0 起，只把上限收到数据上方的整齐刻度。
+  const axisMax = Math.max(0.25, Math.ceil((values.length ? Math.max(...values) : 0) / 0.25) * 0.25)
+  return {
+    animationDuration: 360,
+    grid: { left: 46, right: 18, top: 16, bottom: 30 },
+    tooltip: {
+      ...chartTooltip(colors),
+      formatter: (params: unknown) => {
+        const list = Array.isArray(params) ? params : [params]
+        const first = list[0] as { dataIndex?: unknown } | undefined
+        const bucket = buckets[typeof first?.dataIndex === 'number' ? first.dataIndex : 0]
+        return bucket ? plotTooltip(bucket, kind) : ''
+      },
+    },
+    xAxis: {
+      type: 'category', data: buckets.map(bucket => bucket.start.slice(5, 10)), boundaryGap: false,
+      axisLine: { lineStyle: { color: colors.axis } }, axisTick: { show: false },
+      axisLabel: { color: colors.text, fontSize: 11, hideOverlap: true },
+    },
+    yAxis: {
+      type: 'value', min: 0, max: axisMax, splitNumber: 5,
+      axisLabel: { color: colors.text, fontSize: 11, formatter: (value: number) => kind === 'risk' ? value.toFixed(2) : `${Math.round(value * 100)}%` },
+      splitLine: { lineStyle: { color: colors.grid, width: 1 } },
+      axisLine: { show: false }, axisTick: { show: false },
+    },
+    series: [{
+      name: PLOT_TITLES[kind], type: 'line', data: buckets.map(bucket => plotValue(bucket, kind)),
+      connectNulls: false, showSymbol: buckets.length <= 40, symbol: 'circle', symbolSize: 8,
+      lineStyle: { width: 2, color: colors.series, cap: 'round', join: 'round' },
+      itemStyle: { color: colors.series, borderColor: colors.surface, borderWidth: 2 },
+      areaStyle: { color: colors.series, opacity: 0.08 },
+      emphasis: { focus: 'series' },
+    }],
+  }
+}
+
 function TrendPlot({ buckets, kind, onBucket }: { buckets: TrendBucket[]; kind: 'risk' | 'rate'; onBucket: (b: TrendBucket) => void }) {
-  const [active, setActive] = useState<number | null>(null), refs = useRef<(SVGGElement | null)[]>([])
-  const width = Math.max(720, buckets.length * 32 + 100), height = 248, left = 54, right = width - 50, top = 20, bottom = 195, slot = (right - left) / buckets.length
-  const values = buckets.map(b => kind === 'risk' ? b.riskMean : b.highRate), axisMax = 1
-  const x = (i: number) => left + slot * (i + 0.5), y = (v: number) => bottom - v / axisMax * (bottom - top)
-  const title = kind === 'risk' ? '平均模型风险分' : '高分提交占已评分提交比例'
-  let path = '', joined = false
-  values.forEach((v, i) => { if (v == null) { joined = false; return } path += `${joined ? 'L' : 'M'}${x(i)},${y(v)} `; joined = true })
-  function keys(e: KeyboardEvent<SVGGElement>, i: number) { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) { e.preventDefault(); const target = e.key === 'Home' ? 0 : e.key === 'End' ? buckets.length - 1 : Math.max(0, Math.min(buckets.length - 1, i + (e.key === 'ArrowLeft' ? -1 : 1))); setActive(target); refs.current[target]?.focus() } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBucket(buckets[i]) } else if (e.key === 'Escape') setActive(null) }
-  const current = active == null ? null : buckets[active], currentValue = active == null ? null : values[active]
-  return <figure className="project-trend-figure"><figcaption><h3>{title}</h3><p>{kind === 'risk' ? '单轴折线图；按已评分提交取平均，空白表示该时间段没有已评分提交' : '单轴折线图；样本不足或无评分时断开，不画成 0'}</p></figcaption><div className="trend-plot-scroll"><svg viewBox={`0 0 ${width} ${height}`} style={{ minWidth: width }} role="group" aria-label={`${title}，左右方向键选择时间段，回车查看提交`} onPointerLeave={() => setActive(null)}>
-    {[0, 1, 2, 3, 4].map(t => { const v = axisMax * t / 4; return <g key={t}><line className="trend-grid" x1={left} x2={right} y1={y(v)} y2={y(v)}/><text className="trend-axis-label" x={left - 10} y={y(v) + 4} textAnchor="end">{kind === 'risk' ? v.toFixed(2) : `${v * 100}%`}</text></g> })}
-    <path className="trend-line" d={path}/>
-    {active != null ? <line className="trend-crosshair" x1={x(active)} x2={x(active)} y1={top} y2={bottom}/> : null}
-    {buckets.map((b, i) => { const v = values[i], step = Math.max(1, Math.ceil(buckets.length / 8)), label = kind === 'risk' ? `${b.start.slice(0, 10)}，${number(b.commitCount)} 个已分析提交，平均风险 ${score(v)}，已评分 ${number(b.scoredCount)}` : `${b.start.slice(0, 10)}，${percent(v)}，${coverageLabel(b.coverage)}${v == null ? '，' + rateReason(b.rateReason) : ''}`; return <g key={b.start} ref={node => { refs.current[i] = node }} role="button" tabIndex={0} aria-label={label} onFocus={() => setActive(i)} onKeyDown={e => keys(e, i)} onPointerMove={() => setActive(i)} onClick={() => { setActive(i); onBucket(b) }} className={`trend-mark-target${active === i ? ' is-active' : ''}`}>
-      {v != null ? <circle className="trend-dot" cx={x(i)} cy={y(v)} r="4"/> : null}
-      {v == null ? <text className="trend-axis-label" x={x(i)} y={bottom - 8} textAnchor="middle">—</text> : null}
-      <rect className="trend-hit" x={x(i) - slot / 2} y={top} width={slot} height={bottom - top}/>
-      {i % step === 0 || i === buckets.length - 1 ? <text className="trend-axis-label" x={x(i)} y={bottom + 23} textAnchor="middle">{b.start.slice(5, 10)}</text> : null}
-    </g> })}
-  </svg></div><div className="trend-tooltip" role="status" aria-live="polite">{current ? <><strong>{current.start.slice(0, 10)} 至 {current.end.slice(0, 10)}（不含）</strong><span>{kind === 'risk' ? `平均风险 ${score(currentValue)}；${number(current.commitCount)} 个已分析提交；已评分 ${number(current.scoredCount)} / 未知 ${number(current.unknownCount)}；${coverageLabel(current.coverage)}` : `${percent(current.highRate)} 高分占比${current.highRate == null ? '：' + rateReason(current.rateReason) : ''}；已评分 ${number(current.scoredCount)} / 未知 ${number(current.unknownCount)}；${coverageLabel(current.coverage)}`}</span></> : <span>悬停、聚焦或触碰时间段查看详情；等价数据表提供所有数值和提交入口。</span>}</div></figure>
+  const colors = useChartColors()
+  const chart = useRef<ECharts | null>(null)
+  const [active, setActive] = useState<number | null>(null)
+  const data = useRef({ buckets, onBucket })
+  useEffect(() => { data.current = { buckets, onBucket } }, [buckets, onBucket])
+  const option = useMemo(() => trendOption(buckets, kind, colors), [buckets, kind, colors])
+  const title = PLOT_TITLES[kind]
+  const current = active == null ? null : buckets[active]
+  function show(index: number) {
+    setActive(index)
+    chart.current?.dispatchAction({ type: 'downplay', seriesIndex: 0 })
+    chart.current?.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: index })
+    chart.current?.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: index })
+  }
+  function keys(event: KeyboardEvent<HTMLDivElement>) {
+    const at = active ?? buckets.length - 1
+    if (event.key === 'ArrowLeft') { event.preventDefault(); show(Math.max(0, at - 1)) }
+    else if (event.key === 'ArrowRight') { event.preventDefault(); show(Math.min(buckets.length - 1, at + 1)) }
+    else if (event.key === 'Home') { event.preventDefault(); show(0) }
+    else if (event.key === 'End') { event.preventDefault(); show(buckets.length - 1) }
+    else if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (active != null) data.current.onBucket(buckets[active]) }
+    else if (event.key === 'Escape') { setActive(null); chart.current?.dispatchAction({ type: 'downplay', seriesIndex: 0 }); chart.current?.dispatchAction({ type: 'hideTip' }) }
+  }
+  return <figure className="project-trend-figure"><figcaption><h3>{title}</h3><p>{kind === 'risk' ? '单轴折线图；按已评分提交取平均，空白表示该时间段没有已评分提交' : '单轴折线图；样本不足或无评分时断开，不画成 0'}</p></figcaption>
+    <div className="trend-plot" tabIndex={0} role="group" aria-label={`${title}折线图，共 ${buckets.length} 个时间段；左右方向键选择时间段，回车查看提交`} onKeyDown={keys} onFocus={() => { if (active === null) show(buckets.length - 1) }} onBlur={() => { setActive(null); chart.current?.dispatchAction({ type: 'hideTip' }) }}>
+      <EChartCanvas option={option} height={240} label={`${title}折线图`} onChart={instance => {
+        chart.current = instance
+        instance.on('click', params => {
+          const index = Number(params.dataIndex)
+          const latest = data.current
+          if (Number.isInteger(index) && latest.buckets[index]) { setActive(index); latest.onBucket(latest.buckets[index]) }
+        })
+      }}/>
+    </div>
+    <div className="trend-tooltip" role="status" aria-live="polite">{current ? <><strong>{current.start.slice(0, 10)} 至 {current.end.slice(0, 10)}（不含）</strong><span>{kind === 'risk' ? `平均风险 ${score(current.riskMean)}；${number(current.commitCount)} 个已分析提交；已评分 ${number(current.scoredCount)} / 未知 ${number(current.unknownCount)}；${coverageLabel(current.coverage)}` : `${percent(current.highRate)} 高分占比${current.highRate == null ? '：' + rateReason(current.rateReason) : ''}；已评分 ${number(current.scoredCount)} / 未知 ${number(current.unknownCount)}；${coverageLabel(current.coverage)}`}</span></> : <span>悬停、聚焦或触碰曲线查看详情；聚焦后用左右方向键选择时间段、回车下钻，等价数据表提供所有数值和提交入口。</span>}</div>
+  </figure>
 }
 function TrendDrilldown({ repositoryId, view, bucket, navigate, onClose }: { repositoryId: string; view: TrendView; bucket: TrendBucket; navigate: (r: Route) => void; onClose: () => void }) {
   const [items, setItems] = useState<TrendCommit[]>([]), [offset, setOffset] = useState(0), [total, setTotal] = useState(0), [busy, setBusy] = useState(true), [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0)
