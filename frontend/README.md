@@ -1,6 +1,16 @@
 # JIT Review 前端
 
-普通用户围绕项目完成分析和提交审查；管理员在独立工作区登录后维护模型、数据和历史验证。当前产品与运行约定见 [当前产品](../docs/当前产品.md)。
+普通用户围绕项目完成分支分析和 PR 审查；管理员在独立工作区登录后维护模型、数据和历史验证。当前产品与运行约定见 [当前产品](../docs/当前产品.md)。
+
+## 技术栈
+
+- React 19 + TypeScript + Vite。
+- 路由：React Router 7 的 `createHashRouter`；地址继续使用 `#/projects/...`，旧链接由 `navigation.ts` 的解析器映射。
+- 样式：Tailwind CSS 4（只取 theme/utilities，不启用 preflight）+ `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把令牌映射为 Tailwind 语义色，四套主题由 `html[data-theme]` 切换。
+- 组件：Mantine 8（`@mantine/core`）。`src/ui/` 是适配层，把项目既有 API 映射到 Mantine 的 Button、TextInput、Select、Checkbox、Switch、Modal、Drawer、SegmentedControl、Menu、Tooltip、Alert 等组件；颜色、圆角与字体通过 `lib/mantineTheme.ts` 和 `styles/mantine-bridge.css` 指回设计令牌，四套主题继续生效。
+- 图标：`Icon.tsx` 的自绘 SVG 与 lucide-react。
+- 代码对比：react-diff-view + refractor；图表为手写 SVG。
+- 测试：Vitest + Testing Library（组件）与 Playwright（浏览器验收）。
 
 ## 运行
 
@@ -22,11 +32,11 @@ npm run dev
 
 1. 在项目页选择“新建项目”，登记公开 HTTP(S) 仓库地址；登记不会启动分析。
 2. 进入项目，展开分析选项，选择分支、日期、上限以及真实可用模型或自动策略。
-3. 发起分析后自动跟踪执行状态，完成后打开固定分析的提交、详情及个人审查计划。
+3. 发起分析后自动跟踪执行状态，完成后打开固定分析的提交明细与单条详情。
 4. 分析记录支持分页、设置当前结果、恢复失败参数后修改重试；删除记录前确认影响范围。
 5. 项目改名、删除和分析完成后，侧栏及项目数据同步更新。表单草稿在同一浏览器会话内保留。
 
-风险是未校准的模型估计，不代表已确认缺陷。个人计划按项目、分析和数据版本保存在同一浏览器；没有跨设备同步或团队审查状态。
+风险是未校准的模型估计，不代表已确认缺陷。分支分析用于风险度量与复盘；PR 的审查进度与结论在 PR 工作单和「我的审查」里。
 
 ## 页面
 
@@ -36,7 +46,7 @@ npm run dev
 | 新建项目 | `#/projects/new` | 只登记仓库 |
 | 项目详情 | `#/projects/{id}` | 分析选项、状态、当前结果与历史记录 |
 | 提交与详情 | `#/projects/{id}/analyses/{syncId}/commits[/{commitId}]` | 始终绑定指定分析 |
-| 审查计划 | 同一分析的 `/plan` | 保存顺序、来源隔离和存储失败反馈 |
+| 旧计划地址 | 同一分析的 `/plan` | 兼容旧链接，显示同一份提交明细 |
 | 管理模型 | `#/admin/models` | 登录后校验、登记本机真实模型产物 |
 | 管理数据 | `#/admin/datasets` | 登录后核对数据和版本 |
 | 管理验证 | `#/admin/reports[/{runId}/{overview|trends|commits}]` | 登录后核对真实历史运行 |

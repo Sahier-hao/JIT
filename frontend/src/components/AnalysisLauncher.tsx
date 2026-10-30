@@ -27,7 +27,7 @@ export function AnalysisLauncher({ repositoryUrl, defaultBranch, onStarted, init
       open={open}
       onOpenChange={next => { if (!next) close() }}
       title="发起分析"
-      description="用固定版本的数据重新分析这个仓库。每次发起都会新增一条记录，当前结果不受影响。"
+      description="用固定版本的数据重新分析这个仓库。每次发起都会新增一条记录，旧记录保留；分析成功后，新结果会接替当前结果。"
       width={600}
     >
       <AnalysisForm

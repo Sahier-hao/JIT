@@ -26,7 +26,7 @@ export function createRepository(url: string, signal?: AbortSignal): Promise<Cre
   return apiRequestWithStatus({
     path: '/api/v1/repositories',
     method: 'POST',
-    body: { repositoryUrl: url.trim() },
+    body: { repositoryUrl: url.trim(), autoUpdate: false },
     signal,
   }).then(({ body, status }) => { const repository = parseRepositoryView(body); projectsChanged(); return { repository, created: status === 201 } })
 }

@@ -1,0 +1,19 @@
+/* 仓库更新与 PR 跟踪的状态面板；按钮、输入与折叠等基础控件已由 ui/controls.tsx 的 Tailwind 样式提供。 */
+
+.update-panel { display: grid; gap: 10px; }
+.update-empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font: 13px var(--sans); color: var(--fg-2); }
+.update-empty p { margin: 0; }
+.update-body { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.update-status { display: flex; align-items: center; gap: 8px; }
+.update-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.update-status[data-tone='alert'] .update-dot { background: var(--risk-high); }
+.update-status[data-tone='active'] .update-dot { background: var(--accent); animation: wb-state-pulse 1.6s ease-in-out infinite; }
+.update-status[data-tone='muted'] .update-dot { background: var(--fg-3); }
+.update-status-title { margin: 0; font: 500 13.5px/1.4 var(--sans); color: var(--fg); }
+.update-status[data-tone='alert'] .update-status-title { color: var(--risk-high); }
+.update-status-time { margin-left: auto; font: 12px var(--mono); color: var(--fg-3); white-space: nowrap; }
+.update-status-detail { margin: -4px 0 0; font: 12.5px/1.6 var(--sans); color: var(--fg-2); }
+.update-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.update-auto { display: inline-flex; align-items: center; gap: 8px; font: 12.5px var(--sans); color: var(--fg-2); }
+.update-next { margin: -2px 0 0; font: 12px/1.5 var(--sans); color: var(--fg-3); }
+.update-settings { margin-top: 2px; padding-top: 12px; border-top: 1px solid var(--line-soft); }

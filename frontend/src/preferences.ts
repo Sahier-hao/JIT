@@ -6,8 +6,8 @@
  * - 存储不可用时静默回落默认值，不阻塞任何功能。
  */
 export const THEMES = [
-  { id: 'concrete', name: '冷灰', preview: { bg: '#F7F8FA', rail: '#FFFFFF', accent: '#1D4ED8' } },
-  { id: 'steel', name: '钢青', preview: { bg: '#F5F7FA', rail: '#FFFFFF', accent: '#1D4ED8' } },
+  { id: 'concrete', name: '冷灰', preview: { bg: '#F7F8FA', rail: '#FFFFFF', accent: '#277452' } },
+  { id: 'steel', name: '钢青', preview: { bg: '#F5F7FA', rail: '#FFFFFF', accent: '#277452' } },
   { id: 'charcoal', name: '炭黑', preview: { bg: '#0B1120', rail: '#070C16', accent: '#7BA3F7' } },
   { id: 'paper', name: '纸墨', preview: { bg: '#FAFAFA', rail: '#FFFFFF', accent: '#333333' } },
 ] as const

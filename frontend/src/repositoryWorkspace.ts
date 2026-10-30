@@ -13,6 +13,7 @@ import { contractFailed, finiteNumber, record, recordList, text, textList, textO
 import type { Commit, Query } from './domain'
 import { toCommit } from './domain'
 import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from './apiClient'
 import { parseSync, parseSyncCommit, type SyncCommit, type SyncView } from './repositoryContract'
 import { PROJECTS_CHANGED } from './projectEvents'
@@ -56,6 +57,9 @@ export interface AnalysisContext {
   repositoryId: string; syncId: string; branch: string; completedAt: string | null
   headCommit: string | null; datasetVersion: string | null; modelId: string | null; runId: string | null
   missingMetadata: string[]
+  sourceKind?: string | null
+  sourceSnapshotId?: string | null
+  featureSchemaVersion?: string | null
 }
 
 export interface RepositoryListPage {
@@ -114,6 +118,7 @@ export function parseRepositoryDetail(value: unknown): RepositoryDetail {
       branch: text(context.branch), completedAt: textOrNull(context.completedAt), headCommit: textOrNull(context.headCommit),
       datasetVersion: textOrNull(context.datasetVersion), modelId: textOrNull(context.modelId), runId: textOrNull(context.runId),
       missingMetadata: textList(context.missingMetadata),
+      sourceKind: textOrNull(context.sourceKind), sourceSnapshotId: textOrNull(context.sourceSnapshotId), featureSchemaVersion: textOrNull(context.featureSchemaVersion),
     } : null,
     modelStrategy: strategy !== null && (STRATEGY_VALUES as readonly string[]).includes(strategy)
       ? (strategy as RepositoryDetail['modelStrategy'])
@@ -168,27 +173,41 @@ export interface RepositoryListLoad {
 }
 
 export function useRepositories(): RepositoryListLoad {
-  const [attempt, setAttempt] = useState(0)
-  useEffect(() => { const refresh = () => setAttempt(value => value + 1); window.addEventListener(PROJECTS_CHANGED, refresh); return () => window.removeEventListener(PROJECTS_CHANGED, refresh) }, [])
-  const [state, setState] = useState<Omit<RepositoryListLoad, 'retry'>>({ state: 'loading', items: [], total: 0, error: '' })
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
+  useRepositoryInvalidation()
+  const query = useQuery({
+    queryKey: ['repositories'],
+    queryFn: async ({ signal }) => {
       const items: RepositoryView[] = []
       let total = 0
       do {
-        const page = parseRepositoryListPage(await apiRequest({ path: `/api/v1/repositories?limit=100&offset=${items.length}`, method: 'GET', signal: controller.signal }))
+        const page = parseRepositoryListPage(await apiRequest({ path: `/api/v1/repositories?limit=100&offset=${items.length}`, method: 'GET', signal }))
         if (page.offset !== items.length || (!page.repositories.length && page.total > items.length)) contractFailed('项目分页不一致，请刷新')
         total = page.total; items.push(...page.repositories)
       } while (items.length < total)
       if (new Set(items.map(item => item.repositoryId)).size !== items.length) contractFailed('项目列表重复，请刷新')
       return { items, total }
+    },
+  })
+  return {
+    state: query.isPending ? 'loading' : query.isError ? 'error' : 'ready',
+    items: query.data?.items ?? [],
+    total: query.data?.total ?? 0,
+    error: query.error ? describe(query.error) : '',
+    retry: () => { void query.refetch() },
+  }
+}
+
+/** 项目增删改后让列表与详情重新读取；事件由页面在保存成功后派发。 */
+function useRepositoryInvalidation() {
+  const client = useQueryClient()
+  useEffect(() => {
+    const refresh = () => {
+      void client.invalidateQueries({ queryKey: ['repositories'] })
+      void client.invalidateQueries({ queryKey: ['repository'] })
     }
-    setState(previous => ({ ...previous, state: 'loading', error: '' }))
-    load().then(result => { if (!controller.signal.aborted) setState({ state: 'ready', ...result, error: '' }) }).catch(error => { if (!controller.signal.aborted) setState({ state: 'error', items: [], total: 0, error: describe(error) }) })
-    return () => controller.abort()
-  }, [attempt])
-  return { ...state, retry: () => setAttempt(value => value + 1) }
+    window.addEventListener(PROJECTS_CHANGED, refresh)
+    return () => window.removeEventListener(PROJECTS_CHANGED, refresh)
+  }, [client])
 }
 
 export interface RepositoryLoad {
@@ -199,28 +218,26 @@ export interface RepositoryLoad {
 }
 
 export function useRepository(repositoryId: string, viewSyncId?: string): RepositoryLoad {
-  const [attempt, setAttempt] = useState(0)
-  useEffect(() => { const refresh = () => setAttempt(value => value + 1); window.addEventListener(PROJECTS_CHANGED, refresh); return () => window.removeEventListener(PROJECTS_CHANGED, refresh) }, [])
-  const [state, setState] = useState<Omit<RepositoryLoad, 'retry'>>({ state: 'idle', repository: null, error: '' })
-  useEffect(() => {
-    if (repositoryId === '') return
-    const controller = new AbortController()
-    let active = true
-    setState(previous => ({ ...previous, state: 'loading', error: '' }))
-    apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}${viewSyncId ? `?viewSyncId=${encodeURIComponent(viewSyncId)}` : ''}`, method: 'GET', signal: controller.signal })
-      .then(parseRepositoryDetail)
-      .then(repo => { if (repo.repositoryId !== repositoryId || (viewSyncId && (repo.viewSyncId !== viewSyncId || !repo.viewContext))) contractFailed('仓库分析来源不一致'); return repo })
-      .then(repository => { if (active) setState({ state: 'ready', repository, error: '' }) })
-      .catch(error => { if (active) setState({ state: 'error', repository: null, error: describe(error) }) })
-    return () => { active = false; controller.abort() }
-  }, [repositoryId, viewSyncId, attempt])
-  useEffect(() => {
-    if (!repositoryId) return
-    const running = ['queued', 'collecting', 'registering', 'training', 'scoring'].includes(state.repository?.latestSync?.status ?? '')
-    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, viewSyncId || !running ? 15000 : 1500)
-    return () => clearInterval(timer)
-  }, [repositoryId, viewSyncId, state.repository?.latestSync?.status])
-  return { ...state, retry: () => setAttempt(value => value + 1) }
+  useRepositoryInvalidation()
+  const query = useQuery({
+    queryKey: ['repository', repositoryId, viewSyncId ?? ''],
+    enabled: repositoryId !== '',
+    queryFn: async ({ signal }) => {
+      const repository = parseRepositoryDetail(await apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}${viewSyncId ? `?viewSyncId=${encodeURIComponent(viewSyncId)}` : ''}`, method: 'GET', signal }))
+      if (repository.repositoryId !== repositoryId || (viewSyncId && (repository.viewSyncId !== viewSyncId || !repository.viewContext))) contractFailed('仓库分析来源不一致')
+      return repository
+    },
+    refetchInterval: (q) => {
+      const running = ['queued', 'collecting', 'registering', 'training', 'scoring'].includes(q.state.data?.latestSync?.status ?? '')
+      return viewSyncId || !running ? 15000 : 1500
+    },
+  })
+  return {
+    state: repositoryId === '' ? 'idle' : query.isPending ? 'loading' : query.isError ? 'error' : 'ready',
+    repository: query.data ?? null,
+    error: query.error ? describe(query.error) : '',
+    retry: () => { void query.refetch() },
+  }
 }
 
 export interface RepositoryCommitPage {
@@ -240,51 +257,41 @@ export function useRepositoryCommits(
   limit = 20,
   pinnedSyncId?: string,
 ): RepositoryCommitPage {
-  const [attempt, setAttempt] = useState(0)
-  const [state, setState] = useState<Omit<RepositoryCommitPage, 'retry'>>({
-    state: 'idle', commits: [], total: 0, viewSyncId: null, error: '',
-  })
   const { search, start, end, sort } = query
-  useEffect(() => {
-    if (repositoryId === '') return
-    const controller = new AbortController()
-    let active = true
-    setState({ state: 'loading', commits: [], total: 0, viewSyncId: null, error: '' })
-    const path = repositoryCommitsPath(repositoryId, { search, start, end, sort }, offset, limit, pinnedSyncId)
-    apiRequest({ path, method: 'GET', signal: controller.signal })
-      .then(raw => {
-        const body = record(raw)
-        const viewSyncId = body.viewSyncId == null ? null : uuidText(body.viewSyncId, '展示同步标识')
-        if (body.repositoryId !== repositoryId || (pinnedSyncId && pinnedSyncId !== viewSyncId)) contractFailed('提交页分析来源不一致')
-        return {
-          viewSyncId,
-          total: count(body.total),
-          commits: recordList(body.commits).map(parseSyncCommit),
-        }
-      })
-      .then(page => { if (active) setState({ state: 'ready', ...page, error: '' }) })
-      .catch(error => { if (active) setState({ state: 'error', commits: [], total: 0, viewSyncId: null, error: describe(error) }) })
-    return () => { active = false; controller.abort() }
-  }, [repositoryId, search, start, end, sort, offset, limit, pinnedSyncId, attempt])
-  return { ...state, retry: () => setAttempt(value => value + 1) }
+  const page = useQuery({
+    queryKey: ['repository-commits', repositoryId, search, start, end, sort, offset, limit, pinnedSyncId ?? ''],
+    enabled: repositoryId !== '',
+    queryFn: async ({ signal }) => {
+      const body = record(await apiRequest({ path: repositoryCommitsPath(repositoryId, { search, start, end, sort }, offset, limit, pinnedSyncId), method: 'GET', signal }))
+      const viewSyncId = body.viewSyncId == null ? null : uuidText(body.viewSyncId, '展示同步标识')
+      if (body.repositoryId !== repositoryId || (pinnedSyncId && pinnedSyncId !== viewSyncId)) contractFailed('提交页分析来源不一致')
+      return {
+        viewSyncId,
+        total: count(body.total),
+        commits: recordList(body.commits).map(parseSyncCommit),
+      }
+    },
+  })
+  return {
+    state: repositoryId === '' ? 'idle' : page.isPending ? 'loading' : page.isError ? 'error' : 'ready',
+    commits: page.data?.commits ?? [],
+    total: page.data?.total ?? 0,
+    viewSyncId: page.data?.viewSyncId ?? null,
+    error: page.error ? describe(page.error) : '',
+    retry: () => { void page.refetch() },
+  }
 }
 
-/**
- * 清单里的提交逐条取详情（仓库维度）。
- *
- * 清单是本地保存的标识集合，不属于任何一页查询；逐条请求可以确认"这条还在当前视图里"，
- * 取不到的单独列出来让用户移除，而不是悄悄从清单消失（CRR-10）。
- */
-export interface RepositoryShortlist {
+export interface RepositoryCommitRecords {
   state: 'idle' | 'loading' | 'ready' | 'error'
   records: Map<string, Commit>
   failed: string[]
 }
 
-const EMPTY_SHORTLIST: RepositoryShortlist = { state: 'ready', records: new Map(), failed: [] }
+const EMPTY_COMMIT_RECORDS: RepositoryCommitRecords = { state: 'ready', records: new Map(), failed: [] }
 
-export function useRepositoryShortlist(repositoryId: string, ids: string[], viewSyncId?: string): RepositoryShortlist {
-  const [state, setState] = useState<RepositoryShortlist>({ state: 'idle', records: new Map(), failed: [] })
+export function useRepositoryCommitRecords(repositoryId: string, ids: string[], viewSyncId?: string): RepositoryCommitRecords {
+  const [state, setState] = useState<RepositoryCommitRecords>({ state: 'idle', records: new Map(), failed: [] })
   const key = ids.join(',')
   useEffect(() => {
     if (repositoryId === '' || key === '') return
@@ -310,6 +317,6 @@ export function useRepositoryShortlist(repositoryId: string, ids: string[], view
       .catch(() => { if (active) setState({ state: 'error', records: new Map(), failed: wanted }) })
     return () => { active = false; controller.abort() }
   }, [repositoryId, key, viewSyncId])
-  if (repositoryId === '' || key === '') return EMPTY_SHORTLIST
+  if (repositoryId === '' || key === '') return EMPTY_COMMIT_RECORDS
   return state
 }

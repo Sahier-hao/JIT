@@ -1,5 +1,7 @@
 # 固定公开数据基线
 
+> 当前产品与运行入口见 [当前产品](../docs/当前产品.md)。本文保留固定公开数据基线的运行说明；2026-10-29 新增的项目持续审查服务、接口与迁移见文末「项目持续审查服务（迁移 013–015）」。
+
 > 当前产品操作与管理员权限以 [当前产品](../docs/当前产品.md) 为准；下文保留离线实验协议与交付说明。
 
 本目录离线处理发布者 OpenStack 数据，按具名方法训练模型，并通过本机只读 HTTP 提供冻结测试批次。它是回顾性历史评价，六字段尚非完整 Kamei14，历史回放没有逐条解释或逐条 SZZ 复核；手工预测按方法声明保留支持的真实归因；完整课程要求仍需后续 change。来源与标签依据见 [DATA.md](DATA.md)，计算规则见 [PROTOCOL.md](PROTOCOL.md)，方法清单与按声明校验见 [PROTOCOL.md](PROTOCOL.md) 的「方法清单与按声明校验」一节。
@@ -380,6 +382,65 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 服务启动核验必要文件后只保留该运行快照；每次批次请求都调用已加载模型，服务不读取 test-labels.json 或 reference-predictions.json，不训练、不写文件。缺少必要文件返回 503 `ARTIFACT_UNAVAILABLE`，哈希错误为 503 `INTEGRITY_ERROR`，其他结构和环境错误为 503 `ARTIFACT_INVALID`，无法加载模型为 503 `MODEL_INVALID`。推理异常、非法风险或数量不符返回 500 `INFERENCE_ERROR`。错误响应仅含 `error: {code, message}`，不带部分或旧批次。
 
 修复产物后先执行 verify，再结束本项目服务并重新启动，前端点击“重新加载”。启动时失效的快照不会自动刷新。只提供该 GET 产品接口，其他路径不启动任务；POST 同路径为 405。前端 dev/preview 用 `/api` 代理，无需扩大监听范围。
+
+### 项目持续审查服务（迁移 013–015）
+
+2026-10-29 起，后端在原有分支同步之外增加三类服务，仍由 `create_app` lifespan 启停，维持单后端实例、单分析 worker：
+
+- `RepositoryUpdates`：分支提醒，只检查远端 HEAD；发现新 HEAD 写 `branch-updated` 事件，不创建分析。
+- `PullRequestUpdates`：项目级 PR 自动检查与入队，使用独立单线程检查 executor；`JIT_GITHUB_TOKEN` 只从服务端环境读取，仅支持公开 GitHub。
+- `RepositoryOverview` 的 GitHub 请求同样只读服务端 `JIT_GITHUB_TOKEN`。本机可先 `gh auth login`，再在启动后端前设置 `$env:JIT_GITHUB_TOKEN = & 'C:\Program Files\GitHub CLI\gh.exe' auth token`；令牌只进入进程环境，不写入仓库、数据库、浏览器或日志。
+- `ProjectTrendService`：按请求生成或读取固定趋势视图，不加载模型、不读标签、不复制分数。
+- `RepositoryOverview`：读取并缓存公开 GitHub 元数据、语言、最近 100 条提交与最近 12 周活跃度；不加载模型、不读标签。
+
+迁移：
+
+- 013：`repository_sync` 增加 `source_kind`（branch/pr/unknown）、`source_snapshot_id`、`origin`（manual/automatic）、`feature_schema_version`、`distribution_rule`；PR 快照与 latest 改为项目作用域；新增分析意图表与旧 PR 评分冻结绑定表。
+- 014：`project_trend_view` 保存固定 manifest 与签名。
+- 015：`pr_watch`、`pr_cache`、`pr_list_page`、`pr_auto_intent`、`pr_auto_attempt`、`project_event`。
+- 016：`repository_overview` 保存公开 GitHub 概览缓存与读取时间。
+- 017：`repository_commit` 增加 `file_paths_json`，保存提交触及的文件路径，供 PR 文件级风险排序；旧记录为空。
+
+显式 `catalog-init` 初始化旧库时先写一致的 SQLite 副本 `<库名>.before-v<旧版本>-<随机>.sqlite3`，备份失败阻止升级；当前版本重复初始化不重复备份。
+
+接口（均返回 `requestId`，错误路径见 `api_errors.managed_path`）：
+
+| 方法与路径 | 用途 |
+|---|---|
+| `GET /api/v1/project-events` | 跨项目公开事件分页 |
+| `GET /api/v1/repositories/{id}/events` | 单项目公开事件分页 |
+| `GET /api/v1/repositories/{id}/overview` | 公开 GitHub 仓库概览与缓存状态 |
+| `GET /api/v1/repositories/{id}/pull-requests` | 读取持久 PR 清单缓存（不访问远端） |
+| `POST /api/v1/repositories/{id}/pull-requests/refresh` | 显式刷新 PR 清单 |
+| `GET/PATCH /api/v1/repositories/{id}/pr-tracking` | 读取/修改项目自动跟踪 |
+| `POST /api/v1/repositories/{id}/pr-tracking/check` | 立即检查，返回 202 |
+| `GET /api/v1/repositories/{id}/trend-groups` | 列出可比较口径 |
+| `POST /api/v1/repositories/{id}/trend-views` | 准备或复用固定趋势视图 |
+| `GET /api/v1/repositories/{id}/trend-views/{viewId}` | 读取固定视图聚合 |
+| `GET /api/v1/repositories/{id}/trend-views/{viewId}/commits` | 固定视图提交分页 |
+
+行为约束摘要：
+
+- PR 跟踪设置只接受 `enabled`、`modelId`、`intervalSeconds`（300–86400）、`confirmExisting`；首次开启必须确认现有开放且非草稿 PR；检查中不能换模型；启用时解析真实兼容模型。分支提醒设置只接受 `enabled`、`branch`、`intervalSeconds`，不绑定模型或分析范围。
+- 每个 PR 至多一个在途自动分析、一个最新待处理目标；临时失败最多自动重试3次（60/300/900秒），限流遵守 Retry-After/reset；取消或中断不复活；项目暂停不取消已提交任务。
+- 每项目每轮最多深入20个PR、新增1个分析，全局自动排队2个；租约600秒，游标与分页持久。
+- 事件类型：`pr-discovered`、`pr-initial-summary`、`pr-updated`、`pr-open`/`pr-closed`/`pr-merged`、`pr-analysis-ready`、`pr-analysis-failed`、`branch-updated`；`dedupe_key` 唯一，PR 事件的 `isCurrent` 同时核对快照与当前自动模型，分支事件在项目分析 HEAD 等于提醒 HEAD 后不再待处理。
+- 趋势只纳入 `source_kind='branch'` 且口径完整的成功分析；PR 和 unknown 不拼接；同 SHA 去重；冲突返回 409 `TREND_SOURCE_CONFLICT`，来源失效返回 409 `TREND_SOURCE_UNAVAILABLE`；固定视图按 manifest 指纹校验，新来源只置 `hasNewSources`。
+
+验证入口（在 backend 执行，使用一次性临时库、模型副本与端口）：
+
+```powershell
+& .venv/Scripts/python.exe -m pytest tests/test_pr_review.py tests/test_project_trends.py tests/test_pr_updates.py tests/test_repository_overview.py tests/test_repository_updates.py tests/test_catalog_storage.py tests/test_openapi.py -q --basetemp=D:/tmp/jit-continuous
+& .venv/Scripts/python.exe -m pytest -q --basetemp=D:/tmp/jit-full
+```
+
+隔离浏览器验收由 `backend/tests/project_review_preview.py`（仅直接运行时注册 `/__test/*`）提供临时 Git 仓库、真实采集与真实模型推理，GitHub HTTP 响应受控；在仓库根目录执行：
+
+```powershell
+npm --prefix frontend exec -- playwright test --config=frontend/playwright.project-workspace.config.ts
+```
+
+运行证据写入 `docs/evidence/_run/project-workspace-browser/`，不自动冻结。
 
 ## 检查
 

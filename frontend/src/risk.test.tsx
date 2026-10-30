@@ -2,7 +2,7 @@
  * 风险编码（design D11 / IP-06 / CRR-03）：
  * 等宽百分比 + 4px 条 + 60% 刻度 + 分档色，低风险不使用绿色。
  */
-import { render } from '@testing-library/react'
+import { render } from './test-utils'
 import { describe, expect, it } from 'vitest'
 import { Risk } from './Risk'
 

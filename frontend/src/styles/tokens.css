@@ -11,7 +11,7 @@
  * - 蓝色只用于选中态、链接与焦点环；主按钮走近黑的 --btn。
  */
 
-:root {
+:root, html[data-theme="concrete"] {
   /* ---------- 字体（3） ---------- */
   --sans: 'Inter var', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI',
     'Microsoft YaHei', sans-serif;

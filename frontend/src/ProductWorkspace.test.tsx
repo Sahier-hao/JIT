@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from './test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from './App'
@@ -50,19 +50,19 @@ it('offers the new successful result and comparison while preserving the open an
   await user.click(screen.getByRole('button', { name: '对比新结果' }))
   expect(window.location.hash).toBe(hashFor({ name: 'comparison', repositoryId: REPO_B, baseSyncId: ANALYSIS, targetSyncId: newer }))
 })
-it('keeps repository B and its plan when visiting a report and returning', async () => {
+it('keeps repository B and its fixed analysis when visiting a report and returning', async () => {
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByRole('button', { name: `查看 ${SHA}` })
   expect(screen.getByRole('heading', { name: '项目 B' })).toBeVisible()
   expect(screen.getByText('0.81')).toBeVisible()
   expect(screen.getByText('main 分支', { exact: false })).toBeVisible()
-  await user.click(screen.getByRole('button', { name: `加入 ${SHA} 到清单` }))
   await user.click(screen.getByRole('button', { name: '管理工作区' }))
   await user.click(await screen.findByRole('button', { name: '验证报告' }))
   await user.click(screen.getByRole('button', { name: '项目 B' }))
-  await user.click(await screen.findByRole('button', { name: '查看提交与审查计划' }))
-  await screen.findByRole('button', { name: `${SHA} 已在清单` })
+  await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 5000 }))
+  await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
+  await screen.findByText('0.81')
   expect(window.location.hash).toContain(REPO_B)
   const calls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/repositories/') && path.includes('/commits'))
   expect(calls.every(path => path.includes(`viewSyncId=${ANALYSIS}`))).toBe(true)
@@ -101,7 +101,8 @@ it('ignores an earlier repository response after navigating to another repositor
   fetch.mockImplementation(async (...args) => String(args[0]).includes(`${REPO_A}/commits?`) ? pending : original(...args))
   render(<App/>); const user = await connect()
   await user.click(await screen.findByRole('button', { name: '项目 B' }))
-  await user.click(await screen.findByRole('button', { name: '查看提交与审查计划' }))
+  await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 5000 }))
+  await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
   await screen.findByText('0.81')
   await act(async () => release(response({ repositoryId: REPO_A, viewSyncId: ANALYSIS, total: 1, commits: [{ ...commit(REPO_A), risk: .99 }] })))
   expect(screen.queryByText('0.99')).not.toBeInTheDocument()
@@ -116,12 +117,11 @@ it('reports total mismatches rather than presenting an empty successful analysis
   expect(await screen.findByRole('alert')).toHaveTextContent('提交总数与固定分析不一致')
 })
 
-it('returns from an empty plan to the same fixed analysis', async () => {
+it('opens legacy plan addresses as the same commit list', async () => {
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'plan' }))
-  const fetch = mockApi(); render(<App/>); const user = await connect()
-  await user.click(await screen.findByRole('button', { name: '返回评审台' }))
-  expect(window.location.hash).toBe(hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
-  expect(fetch.mock.calls.some(call => new URL(String(call[0]), 'http://localhost').pathname === `/api/v1/repositories/${REPO_B}` && !String(call[0]).includes('viewSyncId='))).toBe(false)
+  mockApi(); render(<App/>)
+  expect(await screen.findByText('0.81')).toBeVisible()
+  expect(screen.queryByRole('button', { name: '返回评审台' })).not.toBeInTheDocument()
 })
 
 it('returns from a report to the same pinned analysis instead of a newer result', async () => {
@@ -131,7 +131,8 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   await user.click(screen.getByRole('button', { name: '管理工作区' }))
   await user.click(await screen.findByRole('button', { name: '验证报告' }))
   await user.click(screen.getByRole('button', { name: '项目 B' }))
-  await user.click(await screen.findByRole('button', { name: '查看提交与审查计划' }))
+  await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 5000 }))
+  await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
   await screen.findByText('0.81')
   expect(window.location.hash).toBe(hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const commitCalls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/repositories/') && path.includes('/commits?'))

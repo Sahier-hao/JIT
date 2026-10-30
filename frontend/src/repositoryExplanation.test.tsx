@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from './test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { CommitDetail } from './CommitDetail'
@@ -26,7 +26,7 @@ const supported = { ...empty, explanationStatus: 'supported', explanationMethod:
   explanation: [{ feature: 'la', value: 30, baseline: 0, delta: .12, direction: 'increases' }] }
 function response(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status }) }
 function renderDetail(dataset = data, id = SHA) {
-  return render(<CommitDetail data={dataset} id={id} added={false} onAdd={vi.fn()} onClose={vi.fn()}/> )
+  return render(<CommitDetail data={dataset} id={id} onClose={vi.fn()}/> )
 }
 afterEach(() => vi.restoreAllMocks())
 
@@ -79,7 +79,7 @@ it('does not display a late explanation after switching to another commit', asyn
   const view = renderDetail()
   await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
   const next = { ...data, records: [{ ...data.records[0], id: nextSha }] }
-  view.rerender(<CommitDetail data={next} id={nextSha} added={false} onAdd={vi.fn()} onClose={vi.fn()}/>)
+  view.rerender(<CommitDetail data={next} id={nextSha} onClose={vi.fn()}/>)
   expect(await screen.findByRole('button', { name: '生成模型解释' })).toBeVisible()
   complete(response(supported))
   await waitFor(() => expect(screen.queryByText('新增行数推高模型分数。')).not.toBeInTheDocument())

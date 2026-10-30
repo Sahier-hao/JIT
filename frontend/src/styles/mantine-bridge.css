@@ -1,0 +1,53 @@
+/**
+ * Mantine 与现有设计令牌的桥接。
+ *
+ * Mantine 组件使用 --mantine-color-* 变量；这里把 surface、文字、边框与强调色
+ * 全部指回 tokens.css，四套主题切换时不需要重建组件。
+ */
+:root {
+  --mantine-color-body: var(--canvas);
+  --mantine-color-text: var(--fg);
+  --mantine-color-dimmed: var(--fg-3);
+  --mantine-color-bright: var(--fg);
+  --mantine-color-anchor: var(--accent);
+  --mantine-color-placeholder: var(--fg-3);
+  --mantine-color-error: var(--risk-high);
+
+  --mantine-color-default: var(--card);
+  --mantine-color-default-hover: var(--hover);
+  --mantine-color-default-color: var(--fg);
+  --mantine-color-default-border: var(--line-strong);
+
+  --mantine-color-gray-0: var(--card);
+  --mantine-color-gray-1: var(--sunken);
+  --mantine-color-gray-2: var(--line-soft);
+  --mantine-color-gray-3: var(--line);
+  --mantine-color-gray-4: var(--line-strong);
+  --mantine-color-gray-5: var(--fg-3);
+  --mantine-color-gray-6: var(--fg-3);
+  --mantine-color-gray-7: var(--fg-2);
+  --mantine-color-gray-8: var(--fg);
+  --mantine-color-gray-9: var(--fg);
+}
+
+[data-mantine-color-scheme='dark'] {
+  --mantine-color-body: var(--canvas);
+  --mantine-color-text: var(--fg);
+  --mantine-color-dimmed: var(--fg-3);
+  --mantine-color-bright: var(--fg);
+  --mantine-color-default: var(--card);
+  --mantine-color-default-hover: var(--hover);
+  --mantine-color-default-color: var(--fg);
+  --mantine-color-default-border: var(--line-strong);
+
+  --mantine-color-dark-0: #E8EEF6;
+  --mantine-color-dark-1: #C6D0DF;
+  --mantine-color-dark-2: #95A5BC;
+  --mantine-color-dark-3: #6F8199;
+  --mantine-color-dark-4: var(--line-strong);
+  --mantine-color-dark-5: var(--line);
+  --mantine-color-dark-6: var(--card);
+  --mantine-color-dark-7: var(--card);
+  --mantine-color-dark-8: var(--sunken);
+  --mantine-color-dark-9: var(--rail);
+}

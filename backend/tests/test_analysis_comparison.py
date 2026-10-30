@@ -2,26 +2,41 @@
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 
-from test_review_plan import plan_context  # noqa: F401
 from test_artifacts import real_run  # noqa: F401
+from jit_baseline.api import create_app
 from jit_baseline.catalog import ModelCatalog
-from jit_baseline.catalog_storage import utc_now
+from jit_baseline.catalog_storage import CatalogStorage, utc_now
+from jit_baseline.sync import SyncService
 
 
 @pytest.fixture
-def comparison(plan_context):
-    client, service, _, params, manifest = plan_context
-    repo = manifest['source']['repositoryId']
+def comparison(tmp_path):
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    root = tmp_path / 'artifacts'
+    service = SyncService(storage, ModelCatalog(storage, root), artifact_root=root, dataset_root=tmp_path / 'datasets')
+    repo, _ = service.create_repository({'repositoryUrl': 'https://github.com/example/comparison'})
+    base = str(uuid4())
+    service.sync.create(dict(id=base, repository_url=repo['url'], repository_id=repo['repositoryId'],
+        branch='main', requested_strategy='generic-model', status='scoring', stage='scoring',
+        created_at=utc_now(), updated_at=utc_now()))
+    service.sync.complete(base, repo['repositoryId'], [dict(id=f'{i:040x}', epoch=1700000000,
+        risk=.2, addedLines=1, deletedLines=2, files=1, features={}, label=0) for i in range(26)],
+        head_commit='a'*40, dataset_version='base-data', model_id=str(uuid4()), run_id=str(uuid4()))
     target = str(uuid4())
-    service.sync.create(dict(id=target, repository_url='https://github.com/example/plans', repository_id=repo,
+    service.sync.create(dict(id=target, repository_url=repo['url'], repository_id=repo['repositoryId'],
         branch='release', requested_strategy='generic-model', status='scoring', stage='scoring',
         created_at=utc_now(), updated_at=utc_now()))
-    service.sync.complete(target, repo, [dict(id=f'{i:040x}', epoch=1700000010,
+    service.sync.complete(target, repo['repositoryId'], [dict(id=f'{i:040x}', epoch=1700000010,
         risk=.5 if i==1 else .2, addedLines=1, deletedLines=2, files=1,
         features={'la': 4} if i==2 else {}, label=1) for i in range(1,27)],
         head_commit='b'*40, dataset_version='target-data', model_id=str(uuid4()), run_id=str(uuid4()))
-    return client, service, f'/api/v1/repositories/{repo}/comparison', dict(baseSyncId=params['viewSyncId'],targetSyncId=target), repo
+    app = create_app(database=storage.path, artifact_root=root, sync_service=service)
+    with TestClient(app) as client:
+        yield client, service, f'/api/v1/repositories/{repo["repositoryId"]}/comparison', dict(baseSyncId=base, targetSyncId=target), repo['repositoryId']
+    service.close()
 
 
 def test_comparison_retains_both_sources_and_saved_scores_without_loading_models(comparison, monkeypatch):

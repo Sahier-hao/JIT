@@ -1,20 +1,39 @@
 /**
- * 工作区的控件层。
+ * 控件层适配：全部由 Mantine 渲染，这里只负责把项目既有 API 映射到 Mantine 组件。
  *
- * 行为交给 Radix（焦点、键盘、无障碍语义），外观完全由 ui.css 用设计变量控制：
- * 同一个按钮在四个主题里都只用一层表面、一条细边，不叠阴影和渐变。
+ * 颜色、圆角与字体由 mantineTheme 和 mantine-bridge.css 指回设计令牌，
+ * 四套主题切换时无需重建组件。
  */
-import * as CheckboxPrimitive from '@radix-ui/react-checkbox'
-import * as SwitchPrimitive from '@radix-ui/react-switch'
-import * as Collapsible from '@radix-ui/react-collapsible'
-import * as SelectPrimitive from '@radix-ui/react-select'
-import clsx from 'clsx'
-import { Check, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
+import {
+  ActionIcon,
+  Alert as MantineAlert,
+  Button as MantineButton,
+  Checkbox as MantineCheckbox,
+  CloseButton,
+  Collapse,
+  Select as MantineSelect,
+  PasswordInput as MantinePasswordInput,
+  Switch as MantineSwitch,
+  Textarea as MantineTextarea,
+  TextInput,
+  UnstyledButton,
+} from '@mantine/core'
+import type { ButtonHTMLAttributes, ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
 import { forwardRef, useState } from 'react'
+import { ChevronRight, Info } from 'lucide-react'
+import clsx from 'clsx'
 
 type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger' | 'link'
 type Size = 'sm' | 'md' | 'lg'
+
+const buttonVariants: Record<Variant, { variant: 'filled' | 'default' | 'subtle'; color?: string }> = {
+  primary: { variant: 'filled' },
+  accent: { variant: 'filled', color: 'accent' },
+  secondary: { variant: 'default' },
+  ghost: { variant: 'subtle' },
+  danger: { variant: 'filled', color: 'red' },
+  link: { variant: 'subtle', color: 'accent' },
+}
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -24,60 +43,95 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
   block?: boolean
   danger?: boolean
+  href?: string
+  target?: string
+  rel?: string
 }
 
-export function Button({ variant = 'secondary', size = 'md', icon, trailing, loading, block, danger, className, children, disabled, ...rest }: ButtonProps) {
-  return <button
+export function Button({ variant = 'secondary', size = 'md', type = 'button', icon, trailing, loading, block, danger, className, children, disabled, href, target, rel, ...rest }: ButtonProps) {
+  const resolved = danger && variant === 'secondary' ? 'danger' : variant
+  const config = buttonVariants[resolved]
+  const common = {
+    size,
+    variant: config.variant,
+    color: config.color,
+    leftSection: icon,
+    rightSection: trailing,
+    loading,
+    fullWidth: block,
+    disabled,
+    className: clsx('ui-btn', `ui-btn--${resolved}`, `ui-btn--${size}`, className),
+  }
+  if (href) {
+    return <MantineButton component="a" href={href} target={target} rel={rel} {...common}>{children}</MantineButton>
+  }
+  return <MantineButton type={type} {...common} {...rest}>{children}</MantineButton>
+}
+
+export function Input({ prefix, allowClear, size = 'md', className, value, onChange, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> & {
+  prefix?: ReactNode
+  allowClear?: boolean
+  size?: Size
+}) {
+  return <TextInput
     {...rest}
-    disabled={disabled || loading}
-    className={clsx('ui-btn', `ui-btn--${danger && variant === 'secondary' ? 'danger' : variant}`, `ui-btn--${size}`, block && 'ui-btn--block', className)}
-  >
-    {loading ? <Loader2 className="ui-btn-spin" size={14} aria-hidden/> : icon}
-    {children ? <span>{children}</span> : null}
-    {trailing}
-  </button>
-}
-
-export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...rest} className={clsx('ui-input', className)}/>
+    value={value}
+    onChange={onChange}
+    size={size}
+    leftSection={prefix}
+    rightSection={allowClear && value ? <CloseButton onClick={() => onChange?.({ target: { value: '' } } as unknown as ChangeEvent<HTMLInputElement>)} aria-label="清除"/> : undefined}
+    className={clsx('ui-input', className)}
+  />
 }
 
 export function TextArea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...rest} className={clsx('ui-input ui-textarea', className)}/>
+  return <MantineTextarea
+    value={rest.value as string | undefined}
+    onChange={rest.onChange as never}
+    readOnly={rest.readOnly}
+    disabled={rest.disabled}
+    placeholder={rest.placeholder}
+    aria-label={rest['aria-label']}
+    rows={3}
+    className={clsx('ui-input ui-textarea', className)}
+  />
 }
 
-export function NumberInput({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input type="number" {...rest} className={clsx('ui-input ui-number', className)}/>
+export function NumberInput({ className, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'>) {
+  return <TextInput {...rest} type="number" className={clsx('ui-input ui-number', className)}/>
+}
+
+export function PasswordInput({ className, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>) {
+  return <MantinePasswordInput {...rest} className={clsx('ui-input', className)}/>
 }
 
 export interface Choice { value: string | number; label: string; disabled?: boolean }
 
-export function Select({ value, onChange, options, placeholder = '请选择', ariaLabel, className, disabled }: {
+export function Select({ value, onChange, options, placeholder = '请选择', ariaLabel, 'aria-label': ariaLabelProp, className, style, size = 'md', disabled }: {
   value?: string | number
   onChange: (value: string) => void
   options: Choice[]
   placeholder?: string
-  ariaLabel: string
+  ariaLabel?: string
+  'aria-label'?: string
   className?: string
+  style?: CSSProperties
+  size?: Size
   disabled?: boolean
 }) {
-  const current = options.find(option => String(option.value) === String(value ?? ''))
-  return <SelectPrimitive.Root value={value === undefined || value === null ? undefined : String(value)} onValueChange={onChange} disabled={disabled}>
-    <SelectPrimitive.Trigger className={clsx('ui-select', className)} aria-label={ariaLabel}>
-      <SelectPrimitive.Value placeholder={<span className="ui-select-placeholder">{placeholder}</span>}>{current?.label}</SelectPrimitive.Value>
-      <SelectPrimitive.Icon className="ui-select-caret"><ChevronDown size={14}/></SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Content className="ui-select-content" position="popper" sideOffset={4}>
-        <SelectPrimitive.Viewport className="ui-select-viewport">
-          {options.map(option => <SelectPrimitive.Item key={option.value} value={String(option.value)} disabled={option.disabled} className="ui-select-item">
-            <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
-            <SelectPrimitive.ItemIndicator className="ui-select-check"><Check size={13}/></SelectPrimitive.ItemIndicator>
-          </SelectPrimitive.Item>)}
-        </SelectPrimitive.Viewport>
-      </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>
-  </SelectPrimitive.Root>
+  return <MantineSelect
+    data={options.map(option => ({ value: String(option.value), label: option.label, disabled: option.disabled }))}
+    value={value === undefined || value === null ? null : String(value)}
+    onChange={next => onChange(next ?? '')}
+    placeholder={placeholder}
+    disabled={disabled}
+    size={size}
+    style={style}
+    className={clsx('ui-select', className)}
+    aria-label={ariaLabel ?? ariaLabelProp}
+    comboboxProps={{ withinPortal: true, zIndex: 400 }}
+    allowDeselect={false}
+  />
 }
 
 export function Checkbox({ checked, onCheckedChange, children, ariaLabel, disabled }: {
@@ -87,33 +141,39 @@ export function Checkbox({ checked, onCheckedChange, children, ariaLabel, disabl
   ariaLabel?: string
   disabled?: boolean
 }) {
-  return <label className={clsx('ui-check', disabled && 'is-disabled')}>
-    <CheckboxPrimitive.Root className="ui-check-box" checked={checked} disabled={disabled} onCheckedChange={value => onCheckedChange(value === true)} aria-label={ariaLabel}>
-      <CheckboxPrimitive.Indicator className="ui-check-mark"><Check size={11} strokeWidth={3}/></CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-    {children ? <span className="ui-check-label">{children}</span> : null}
-  </label>
+  return <MantineCheckbox
+    checked={checked}
+    onChange={event => onCheckedChange(event.currentTarget.checked)}
+    label={children}
+    disabled={disabled}
+    aria-label={ariaLabel}
+    className="ui-check"
+  />
 }
 
 export function Disclosure({ summary, children, className, trailing }: { summary: ReactNode; children: ReactNode; className?: string; trailing?: ReactNode }) {
   const [open, setOpen] = useState(false)
-  return <Collapsible.Root open={open} onOpenChange={setOpen} className={clsx('ui-disclosure', className)}>
+  return <div className={clsx('ui-disclosure', className)}>
     <div className="ui-disclosure-head">
-      <Collapsible.Trigger className="ui-disclosure-trigger">
+      <UnstyledButton className="ui-disclosure-trigger" onClick={() => setOpen(value => !value)} aria-expanded={open}>
         <ChevronRight size={13} className={clsx('ui-disclosure-caret', open && 'is-open')} aria-hidden/>
         {summary}
-      </Collapsible.Trigger>
+      </UnstyledButton>
       {trailing}
     </div>
-    <Collapsible.Content className="ui-disclosure-content">{children}</Collapsible.Content>
-  </Collapsible.Root>
+    <Collapse expanded={open}><div className="ui-disclosure-content">{children}</div></Collapse>
+  </div>
 }
 
 export function InlineAlert({ tone = 'alert', title, children, action }: { tone?: 'alert' | 'info'; title: ReactNode; children?: ReactNode; action?: ReactNode }) {
-  return <div className={clsx('ui-alert', `ui-alert--${tone}`)} role="alert">
-    <div className="ui-alert-body"><p className="ui-alert-title">{title}</p>{children ? <div className="ui-alert-text">{children}</div> : null}</div>
-    {action}
-  </div>
+  return <MantineAlert
+    color={tone === 'alert' ? 'red' : 'blue'}
+    title={title}
+    icon={<Info size={16}/>}
+    className={clsx('ui-alert', `ui-alert--${tone}`)}
+  >
+    <div className="flex items-start justify-between gap-3">{children ? <div>{children}</div> : <span/>}{action}</div>
+  </MantineAlert>
 }
 
 export function Switch({ checked, onCheckedChange, ariaLabel, disabled }: {
@@ -122,20 +182,25 @@ export function Switch({ checked, onCheckedChange, ariaLabel, disabled }: {
   ariaLabel: string
   disabled?: boolean
 }) {
-  return <SwitchPrimitive.Root className="ui-switch" checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} aria-label={ariaLabel}>
-    <SwitchPrimitive.Thumb className="ui-switch-thumb"/>
-  </SwitchPrimitive.Root>
+  return <MantineSwitch
+    checked={checked}
+    onChange={event => onCheckedChange(event.currentTarget.checked)}
+    disabled={disabled}
+    aria-label={ariaLabel}
+    className="ui-switch"
+  />
 }
 
 /** 图标按钮：用于记录行的紧凑动作，必须带可访问名称。 */
-export const IconButton = forwardRef<HTMLButtonElement, { label: string; icon: ReactNode; onClick?: () => void; disabled?: boolean; danger?: boolean; className?: string }>(function IconButton({ label, icon, disabled, danger, className, ...rest }, ref) {
-  return <button
+export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'title'> & { label: string; icon: ReactNode; danger?: boolean }>(function IconButton({ label, icon, danger, className, ...rest }, ref) {
+  return <ActionIcon
     ref={ref}
-    type="button"
-    className={clsx('ui-iconbtn', danger && 'ui-iconbtn--danger', className)}
+    variant="subtle"
+    color={danger ? 'red' : 'gray'}
+    size="lg"
     aria-label={label}
     title={label}
-    disabled={disabled}
+    className={clsx('ui-iconbtn', danger && 'ui-iconbtn--danger', className)}
     {...rest}
-  >{icon}</button>
+  >{icon}</ActionIcon>
 })

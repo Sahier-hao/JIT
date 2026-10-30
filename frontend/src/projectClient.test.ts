@@ -5,7 +5,7 @@
  * 以及项目分析记录页对归属不一致的拒绝。页面接线由后续任务覆盖。
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor } from './test-utils'
 import {
   createRepository,
   cancelRepositorySync,
@@ -84,7 +84,7 @@ describe('createRepository', () => {
     })
     expect(fetch.mock.calls[0][0]).toBe('/api/v1/repositories')
     expect(fetch.mock.calls[0][1]?.method).toBe('POST')
-    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ repositoryUrl: 'https://github.com/octo/example' })
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ repositoryUrl: 'https://github.com/octo/example', autoUpdate: false })
 
     fetch.mockResolvedValue(json(REPOSITORY, 200))
     await expect(createRepository('https://github.com/octo/example')).resolves.toMatchObject({ created: false })

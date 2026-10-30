@@ -1,7 +1,8 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectPage } from './ProjectPage'
+import { snapshot } from '../prReview.fixture'
 
 const REPO = '11111111-1111-4111-8111-111111111111'
 const SYNC = '22222222-2222-4222-8222-222222222222'
@@ -100,7 +101,7 @@ function mockApi(options: { onDeleteRecord?: () => void; onPost?: (body: unknown
 
 it('opens a comparison of a historical success against the pinned current result without changing it', async () => {
   const fetch = mockApi(), navigate = vi.fn()
-  render(<ProjectPage repositoryId={REPO} navigate={navigate}/> )
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/> )
   const user = userEvent.setup()
   await openActions(user, OTHER)
   await user.click(await screen.findByRole('menuitem', { name: '与当前结果对比' }))
@@ -118,7 +119,7 @@ it('restores normalized dates without widening the cancelled analysis window', a
     if (String(input).includes('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'cancelled', stage: 'collecting', since: '2024-01-01T00:00:00+00:00', until: '2024-01-09T00:00:00+00:00' })], total: 1, limit: 10, offset: 0 })
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await openActions(user, SYNC)
   await user.click(await screen.findByRole('menuitem', { name: '用这些参数重试' }))
   expect(screen.getByLabelText('起始日期')).toHaveValue('2024-01-01')
@@ -138,7 +139,7 @@ it('shows queue position and confirms cancellation while preserving the current 
     if (url.pathname.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [queued, job()], total: 2, limit: 10, offset: 0 })
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   expect(await screen.findByText('排队第 2 位')).toBeVisible()
   await openActions(user, OTHER)
   await user.click(await screen.findByRole('menuitem', { name: '取消分析' }))
@@ -147,7 +148,7 @@ it('shows queue position and confirms cancellation while preserving the current 
   expect(await screen.findByText('已取消')).toBeVisible()
   await openActions(user, OTHER)
   expect(await screen.findByRole('menuitem', { name: '用这些参数重试' })).toBeVisible()
-  expect(screen.getByRole('button', { name: '查看提交与审查计划' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '查看提交明细' })).toBeVisible()
 })
 
 it('keeps a cancellation error actionable and prevents repeated submissions', async () => {
@@ -159,7 +160,7 @@ it('keeps a cancellation error actionable and prevents repeated submissions', as
     if (url.pathname.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'scoring', stage: 'scoring' })], total: 1, limit: 10, offset: 0 })
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await openActions(user, SYNC)
   await user.click(await screen.findByRole('menuitem', { name: '取消分析' }))
   await user.click(screen.getByRole('button', { name: '确认取消分析' }))
@@ -173,7 +174,7 @@ it('shows pending cancellation and does not offer deletion before the worker exi
     if (String(input).includes('/syncs')) return response({ repositoryId: REPO, syncs: [job({ status: 'collecting', stage: 'collecting', cancelRequestedAt: NOW })], total: 1, limit: 10, offset: 0 })
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
   expect(await screen.findByText('正在取消')).toBeVisible()
   expect(screen.queryByRole('button', { name: '删除记录' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '取消分析' })).not.toBeInTheDocument()
@@ -183,11 +184,11 @@ it('shows pending cancellation and does not offer deletion before the worker exi
 it('shows the current result and opens the pinned review', async () => {
   mockApi()
   const navigate = vi.fn()
-  render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: 'demo-project' })).toBeVisible()
   expect(screen.getByRole('heading', { name: '当前分析结果' })).toBeVisible()
   expect(screen.getAllByText('data-1')[0]).toBeVisible()
-  await userEvent.setup().click(screen.getByRole('button', { name: '查看提交与审查计划' }))
+  await userEvent.setup().click(screen.getByRole('button', { name: '查看提交明细' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'analysis', repositoryId: REPO, viewSyncId: SYNC, view: 'commits' })
 })
 
@@ -195,7 +196,7 @@ it('posts a new analysis with the chosen branch and the default strategy', async
   let posted: unknown = null
   mockApi({ onPost: body => { posted = body } })
   const navigate = vi.fn()
-  render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '发起分析' }))
@@ -209,7 +210,7 @@ it('posts a new analysis with the chosen branch and the default strategy', async
 it('returns to the project list from the back link', async () => {
   mockApi()
   const navigate = vi.fn()
-  render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
   await screen.findByRole('heading', { name: 'demo-project' })
   await userEvent.setup().click(screen.getByRole('button', { name: '全部项目' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'repositories' })
@@ -218,7 +219,7 @@ it('returns to the project list from the back link', async () => {
 it('switches the current result from an older completed record', async () => {
   let selected: unknown = null
   mockApi({ onSelect: body => { selected = body } })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
   const menus = await screen.findAllByRole('button', { name: '更多操作' })
@@ -232,7 +233,7 @@ it('switches the current result from an older completed record', async () => {
 it('deletes an ended analysis record from the list', async () => {
   const deleted = vi.fn()
   mockApi({ onDeleteRecord: deleted })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click((await screen.findAllByRole('button', { name: '更多操作' }))[0])
@@ -255,7 +256,7 @@ it('keeps following a queued job until the result is available', async () => {
     }
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '发起分析' }))
   await user.click(await screen.findByRole('button', { name: '开始分析' }))
@@ -272,7 +273,7 @@ it('lets users reach an older analysis beyond the first ten', async () => {
     }
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '下一页' }))
   expect(await screen.findByRole('article', { name: `分析记录 ${OTHER}` })).toBeVisible()
@@ -291,13 +292,87 @@ it('restores the bound fallback model on retry even if the administrator default
     ] })
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await openActions(user, SYNC)
   await user.click(await screen.findByRole('menuitem', { name: '用这些参数重试' }))
-  await waitFor(() => expect(screen.getByLabelText('分析模型')).toHaveValue('old-model'))
+  await waitFor(() => expect(screen.getByLabelText('模型来源')).toHaveValue('old-model'))
   await waitFor(() => expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled())
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(posted).toMatchObject({ modelId: 'old-model', strategy: 'generic-model' }))
 })
 
 
+
+it('switches project subviews without dropping project identity', async () => {
+  mockApi(); const navigate = vi.fn(), user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
+  await user.click(await screen.findByRole('button', { name: 'PR 审查' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'prs' })
+  await user.click(screen.getByRole('button', { name: '风险趋势' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'trends' })
+})
+
+it('opens a PR-sourced record at its fixed snapshot and never offers branch retry', async () => {
+  const SNAP = '55555555-5555-4555-8555-555555555555'
+  const source = snapshot(SNAP); source.repositoryId = REPO
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === `/api/v1/repositories/${REPO}/syncs`) return response({ repositoryId: REPO, syncs: [job({ sourceKind: 'pr', origin: 'automatic', sourceSnapshotId: SNAP })], total: 1, limit: 10, offset: 0 })
+    if (url.pathname === `/api/v1/pr-snapshots/${SNAP}`) return response(source)
+    return response(detail())
+  })
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
+  const row = await screen.findByRole('article', { name: `分析记录 ${SYNC}` })
+  await user.click(within(row).getByRole('button', { name: '更多操作' }))
+  expect(screen.queryByRole('menuitem', { name: '用这些参数重试' })).not.toBeInTheDocument()
+  await user.click(await screen.findByRole('menuitem', { name: '查看原 PR 快照' }))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'pr-work', repositoryId: REPO, owner: 'example', repositoryName: 'project', number: 12, snapshotId: SNAP }))
+})
+
+it('explains an old current pointer that came from a PR analysis', async () => {
+  const fetch = mockApi(), original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    if (new URL(String(input), 'http://localhost').pathname === `/api/v1/repositories/${REPO}`) {
+      const base = detail()
+      return response({ ...base, viewContext: { ...base.viewContext, sourceKind: 'pr' } })
+    }
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
+  expect(await screen.findByText(/此项目当前指针来自旧 PR 分析/)).toBeVisible()
+})
+
+function overviewPayload() {
+  return {
+    repositoryId: REPO, supported: true, url: 'https://github.com/example/demo', displayName: 'demo-project',
+    metadata: { fullName: 'example/demo', description: 'Demo repository', defaultBranch: 'main', private: false, stars: 12, forks: 3,
+      openIssues: 5, watchers: 8, pushedAt: NOW, createdAt: NOW, topics: ['review'], license: 'MIT', homepage: null, htmlUrl: 'https://github.com/example/demo' },
+    languages: [{ name: 'Python', bytes: 750, percent: 75 }, { name: 'TypeScript', bytes: 250, percent: 25 }],
+    activity: Array.from({ length: 12 }, (_, index) => ({ weekStart: `2026-08-${String(index + 1).padStart(2, '0')}`, commits: index === 11 ? 3 : 0 })),
+    activityCoverage: 'last-100-commits',
+    recentCommits: [{ sha: 'a'.repeat(40), message: 'fix: demo', author: 'alice', date: NOW, url: 'https://github.com/example/demo/commit/a' }],
+    fetchedAt: NOW, errorCode: null, stale: false, retryAfter: null,
+  }
+}
+function updateState() {
+  return { repositoryId: REPO, enabled: false, branch: 'HEAD', intervalSeconds: 300, status: 'idle', lastAttemptAt: null, lastCheckedAt: null, nextCheckAt: null, remoteHead: null, resolvedBranch: null, errorCode: null }
+}
+it('lands on the repository overview before any analysis and starts analysis explicitly', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === `/api/v1/repositories/${REPO}/overview`) return response(overviewPayload())
+    if (url.pathname === `/api/v1/repositories/${REPO}/updates`) return response(updateState())
+    if (url.pathname === `/api/v1/repositories/${REPO}/syncs`) return response({ repositoryId: REPO, syncs: [], total: 0, limit: 10, offset: 0 })
+    if (url.pathname === `/api/v1/repositories/${REPO}`) return response({ ...detail(), viewSyncId: null, latestSync: null, latestSyncAt: null, viewContext: null, commitCount: 0, distribution: { high: 0, medium: 0, low: 0, unknown: 0 } })
+    return response({})
+  })
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  expect(await screen.findByRole('region', { name: '仓库概览' })).toBeVisible()
+  expect(await screen.findByText('仓库活跃度')).toBeVisible()
+  expect(await screen.findByText('语言构成')).toBeVisible()
+  expect(screen.queryByText('分析记录')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: '发起第一次分析' }))
+  expect(await screen.findByRole('dialog')).toHaveTextContent('发起分析')
+})

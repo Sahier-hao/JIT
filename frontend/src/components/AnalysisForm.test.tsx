@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { AnalysisForm } from './AnalysisForm'
@@ -24,7 +24,7 @@ it('explains the administrator default and blocks a saved disabled selection unt
   expect(await screen.findByText(/原选模型已停用或不可用/)).toBeVisible()
   expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
   expect(fetch.mock.calls.every(([, options]) => options?.method !== 'POST')).toBe(true)
-  await userEvent.setup().selectOptions(screen.getByLabelText('分析模型'), '')
+  await userEvent.setup().selectOptions(screen.getByLabelText('模型来源'), 'auto')
   expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled()
 })
 
@@ -37,7 +37,7 @@ it('offers real registered models and sends the explicitly selected model', asyn
     ] }), { status: 200 })
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/repo" onStarted={vi.fn()}/>); const user = userEvent.setup()
-  await user.selectOptions(await screen.findByLabelText('分析模型'), 'dt')
+  await user.selectOptions(await screen.findByLabelText('模型来源'), 'dt')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
   const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!

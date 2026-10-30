@@ -1,13 +1,11 @@
 /**
- * 仓库来源的数据集与清单隔离（任务 7.5、RCL-08、CRR-09）。
+ * 仓库来源的数据集解析（任务 7.5、RCL-08）。
  *
- * 两个要点：工作台里看到的"提交"必须来自同一次同步（身份不一致就拒绝），
- * 清单按同步作业隔离——同一个仓库再次同步后风险会变，旧清单不跨作业沿用。
+ * 工作台里看到的"提交"必须来自同一次同步：身份不一致就拒绝。
  */
 
 import { describe, expect, it } from 'vitest'
 import { parseRepository } from './domain'
-import { restoreShortlist, saveShortlist, storageKey } from './shortlist'
 
 const SYNC = { repositoryId: '11111111-1111-4111-8111-111111111111',
   syncId: '5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f',
@@ -80,24 +78,5 @@ describe('parseRepository', () => {
   it('缺少任一来源时拒绝', () => {
     expect(() => parseRepository({ page: page() })).toThrow()
     expect(() => parseRepository({ sync: SYNC })).toThrow()
-  })
-})
-
-describe('仓库清单隔离', () => {
-  const entries = new Map<string, string>()
-  const access = () => ({ getItem: (key: string) => entries.get(key) ?? null, setItem: (key: string, value: string) => { entries.set(key, value) } })
-
-  it('按同步作业隔离；同一仓库再次同步不继承旧清单', () => {
-    entries.clear()
-    const first = parseRepository({ sync: SYNC, page: page() })
-    const second = parseRepository({
-      sync: { ...SYNC, syncId: '00000000-1111-4222-8333-444444444444' },
-      page: page({ syncId: '00000000-1111-4222-8333-444444444444' }),
-    })
-    saveShortlist(first, [COMMIT.commitId], access)
-    expect(restoreShortlist(first, access).ids).toEqual([COMMIT.commitId])
-    expect(restoreShortlist(second, access).ids).toEqual([])
-    expect(storageKey(first)).not.toBe(storageKey(second))
-    expect(storageKey(first)).toContain('repository')
   })
 })

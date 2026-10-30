@@ -35,9 +35,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; }
-button:disabled { cursor: default; }
+@layer base {
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; }
+}
 
 /* 单选与复选仍用浏览器原生控件（不另造一套），但着色跟随强调色：
  * 深色主题下默认的白底空心圆点几乎不可见（实测踩到）。 */

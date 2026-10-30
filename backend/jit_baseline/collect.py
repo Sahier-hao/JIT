@@ -421,7 +421,8 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                 labels.add(identity)
         records.append({"id": commit["id"], "epoch": commit["epoch"],
                         "time": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z"),
-                        "subject": commit["subject"], "authorName": commit["author"], "metrics": metrics})
+                        "subject": commit["subject"], "authorName": commit["author"],
+                        "filePaths": [item["path"] for item in commit["files"]], "metrics": metrics})
         history.advance(commit)
 
     names = resolve(SCHEMA_NAME).in_model_names()

@@ -27,7 +27,7 @@ function parse(body: string): Map<string, string> {
   return map
 }
 
-const rootTokens = parse(blockBody(':root {'))
+const rootTokens = parse(blockBody(':root'))
 
 /** 取某套主题下的有效令牌：主题块覆盖根层。 */
 function tokensFor(theme: string): Map<string, string> {

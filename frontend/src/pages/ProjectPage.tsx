@@ -7,15 +7,20 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
-import { Button, IconButton } from '../ui/controls'
+import { Button, IconButton, Select } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
 import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
 import type { SyncCommit } from '../repositoryContract'
 import { projectsChanged } from '../projectEvents'
-import { useModelName } from '../modelClient'
+import { repositoryModels, useModelName, type ModelChoice } from '../modelClient'
+import { analyzeAllProjectPRs } from '../projectActivityClient'
 import { AnalysisLauncher } from '../components/AnalysisLauncher'
 import { RepositoryUpdates } from '../components/RepositoryUpdates'
+import { RepositoryOverviewView } from '../components/RepositoryOverview'
+import { ProjectPullRequests } from '../components/ProjectPullRequests'
+import { ProjectTrends } from '../components/ProjectTrends'
+import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
@@ -23,6 +28,8 @@ import { projectStatus } from '../projectStatus'
 import { ACTIVE_STATUSES, DEGRADE_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
 import { useRepository } from '../repositoryWorkspace'
 import { displayTime } from '../domain'
+
+type ProjectTab = 'overview' | 'prs' | 'trends' | 'analyses'
 
 function retryDate(value: string | null, exclusiveEnd = false): string {
   if (!value) return ''
@@ -32,9 +39,39 @@ function retryDate(value: string | null, exclusiveEnd = false): string {
   return Number.isFinite(epoch) ? new Date(epoch - (exclusiveEnd ? 86400000 : 0)).toISOString().slice(0, 10) : ''
 }
 
-export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; navigate: (route: Route, replace?: boolean) => void }) {
+export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositoryId: string; tab?: ProjectTab; viewId?: string; navigate: (route: Route, replace?: boolean) => void }) {
+  // 风险趋势不再是独立页签：地址仍保留 /trends[/viewId] 以支持旧链接，界面并入「分析」。
+  const trendMode = tab === 'trends'
+  const activeTab = trendMode ? 'analyses' : tab ?? 'overview'
   const detail = useRepository(repositoryId)
   const modelName = useModelName(detail.repository?.modelId)
+  const [prAnalyzing, setPrAnalyzing] = useState(false)
+  const [prAnalysisError, setPrAnalysisError] = useState('')
+  const [prDialog, setPrDialog] = useState(false)
+  const [modelChoices, setModelChoices] = useState<ModelChoice[]>([])
+  const [selectedModel, setSelectedModel] = useState('')
+  async function openPrAnalysis() {
+    setPrAnalysisError('')
+    try {
+      const list = await repositoryModels()
+      const usable = list.filter(model => model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
+      setModelChoices(usable)
+      setSelectedModel(usable.find(model => model.isDefault)?.modelId ?? usable[0]?.modelId ?? '')
+      setPrDialog(true)
+    } catch (failure) {
+      setPrAnalysisError(failure instanceof Error ? failure.message : '读取模型失败')
+    }
+  }
+  async function analyzeAllPRs() {
+    setPrAnalyzing(true); setPrAnalysisError('')
+    try {
+      await analyzeAllProjectPRs(repositoryId, selectedModel || undefined)
+      setPrDialog(false)
+      navigate({ name: 'repository', repositoryId, tab: 'prs' })
+    } catch (failure) {
+      setPrAnalysisError(failure instanceof Error ? failure.message : '提交 PR 分析失败')
+    } finally { setPrAnalyzing(false) }
+  }
   const [page, setPage] = useState(0)
   const records = useRepositorySyncs(repositoryId, 10, page * 10)
   const refreshRecords = records.retry
@@ -48,6 +85,9 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   const [deleteJob, setDeleteJob] = useState<SyncView | null>(null)
   const [cancelJob, setCancelJob] = useState<SyncView | null>(null)
   const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
+  const [analysisSeed, setAnalysisSeed] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
+  const [openingPR, setOpeningPR] = useState(false)
+  const openPRLock = useRef(false)
   const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
   const share = (count: number) => Math.round((count / riskTotal) * 100)
   const latestStatus = detail.repository?.latestSync?.status
@@ -113,7 +153,12 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       cancelLock.current = false; setCancelBusy(false)
     }
   }
+  function analyzeBranch(branch: string) {
+    setRetryDraft(null)
+    setAnalysisSeed(previous => ({ key: (previous?.key ?? 0) + 1, form: { branch } }))
+  }
   function retryRecord(job: SyncView) {
+    if (job.sourceKind === 'pr') return
     setRetryDraft(previous => ({ key: (previous?.key ?? 0) + 1, form: {
       repositoryUrl: repository.url,
       branch: job.branch,
@@ -124,6 +169,20 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
   }
+  async function openPRRecord(job: SyncView) {
+    if (!job.sourceSnapshotId || openPRLock.current) return
+    openPRLock.current = true; setOpeningPR(true)
+    if (recordError !== '') setRecordError('')
+    try {
+      const source = await getPRSnapshot(job.sourceSnapshotId)
+      if (source.repositoryId !== repositoryId) throw new Error('固定 PR 快照与当前项目不一致，未打开其他来源')
+      navigate({ name: 'pr-work', repositoryId, owner: source.owner, repositoryName: source.name, number: source.number, snapshotId: source.snapshotId })
+    } catch (failure) {
+      setRecordError(failure instanceof Error ? failure.message : '读取原 PR 快照失败，请重试')
+    } finally {
+      openPRLock.current = false; setOpeningPR(false)
+    }
+  }
 
   return <section className="project-page">
     <Button aria-label="全部项目" variant="ghost" size="sm" icon={<ArrowLeft size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
@@ -132,20 +191,35 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         <div className="project-title-row">
           <h1 title={repository.url}>{repository.displayName}</h1>
           <p className={`status-line tone-${status.tone}`} role="status">{status.label}</p>
-          <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+          <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onAnalyze={branch => analyzeBranch(branch)} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
         </div>
       </div>
       <div className="page-actions">
-        <AnalysisLauncher key={retryDraft?.key ?? 'new'} initial={retryDraft?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry() }}/>
+        <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
+        <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate({ name: 'repository', repositoryId, tab: 'analyses' }) }}/>
       </div>
+      {prAnalysisError ? <p className="field-error" role="alert">{prAnalysisError}</p> : null}
     </header>
 
+    <nav className="project-tabs" aria-label="项目工作台视图">
+      {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: value })}>{label}</Button>)}
+    </nav>
+
+    {activeTab === 'overview' ? <>
+      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onStartAnalysis={() => analyzeBranch(repository.defaultBranch ?? '')} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
+    </> : null}
+    {activeTab === 'analyses' ? <>
+    <nav className="analysis-view-switch" aria-label="分析视图">
+      <Button size="sm" variant={trendMode ? 'ghost' : 'primary'} aria-current={trendMode ? undefined : 'page'} onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
+      <Button size="sm" variant={trendMode ? 'primary' : 'ghost'} aria-current={trendMode ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+    </nav>
+    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate}/> : <>
     {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
     <div className="project-workspace">
       <aside className="pw-rail" aria-label="分析记录">
         <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
         {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
+        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
         {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
       </aside>
 
@@ -154,6 +228,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           <h2>当前分析结果</h2>
           <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
+        {context && context.sourceKind === 'pr' ? <p className="status-note">此项目当前指针来自旧 PR 分析，不代表分支主线趋势。原结果仍可打开；请在分析记录明确选择已有分支结果，或发起新的分支分析。</p> : null}
         {context ? <div className="pw-result">
           <div className="result-hero">
             <div className="result-total">
@@ -184,7 +259,7 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
             <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
-            <Button variant="accent" aria-label="查看提交与审查计划" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交与审查计划</Button>
+            <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交明细</Button>
           </div>
           </div>
         </div> : <div className="result-empty">
@@ -192,7 +267,14 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
         </div>}
       </div>
     </div>
+    </>}
+    </> : null}
+    {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} navigate={navigate}/> : null}
 
+    <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={440}
+      footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
+      <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={modelChoices.map(model => ({ value: model.modelId, label: model.name }))}/>
+    </Dialog>
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
       {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
     </Dialog>
@@ -221,12 +303,13 @@ export function ProjectPage({ repositoryId, navigate }: { repositoryId: string; 
   </section>
 }
 
-function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDelete, onDetail, onRetry, onCancel, deleteBusy, cancelBusy }: { job: SyncView; current: boolean; selecting: boolean; onOpen: () => void; onCompare?: () => void; onSelect: () => void; onDelete: () => void; onDetail: () => void; onRetry: () => void; onCancel: () => void; deleteBusy: boolean; cancelBusy: boolean }) {
+function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDelete, onDetail, onRetry, onOpenPR, openingPR, onCancel, deleteBusy, cancelBusy }: { job: SyncView; current: boolean; selecting: boolean; onOpen: () => void; onCompare?: () => void; onSelect: () => void; onDelete: () => void; onDetail: () => void; onRetry: () => void; onOpenPR?: () => void; openingPR: boolean; onCancel: () => void; deleteBusy: boolean; cancelBusy: boolean }) {
   const active = (ACTIVE_STATUSES as readonly string[]).includes(job.status)
   const completed = job.status === 'completed'
+  const isPR = job.sourceKind === 'pr'
   const pendingCancel = active && Boolean(job.cancelRequestedAt)
   const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
-  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}`
+  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}${isPR ? ' · PR 固定版本' : ''}`
   const shortId = job.syncId.slice(0, 7)
   return <article className={`analysis-job ${current ? 'is-current' : ''}`} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
     <span className="record-marker" aria-hidden="true"/>
@@ -237,6 +320,11 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
+        </span>
+      </div> : isPR ? <div className="record-pick is-static">
+        <span className="record-text">
+          <span className="record-title">{title}</span>
+          <span className="record-meta">{meta}</span>
         </span>
       </div> : <button type="button" className="record-pick is-clickable" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>
         <span className="record-text">
@@ -250,7 +338,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
           <span className="record-meta">{meta}</span>
         </span>
       </div>}
-      <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={completed ? onOpen : undefined} onCompare={onCompare} onRetry={!active && !completed ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
+      <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
     {job.error ? <p className="record-error" title={job.error.message}><AlertTriangle size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
     </div>
@@ -277,11 +365,13 @@ function datasetRange(version?: string | null) {
   return range ? `${range[1]} → ${range[2].slice(5)}` : version
 }
 /** 记录卡只放一个入口：点开后再选具体动作，避免每行三四个图标。 */
-function RecordMenu({ job, pendingCancel, onOpen, onCompare, onSelect, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
+function RecordMenu({ job, pendingCancel, onOpen, openLabel = '打开结果', openBusy, onCompare, onSelect, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
   job: SyncView
   active: boolean
   pendingCancel: boolean
   onOpen?: () => void
+  openLabel?: string
+  openBusy?: boolean
   onCompare?: () => void
   onSelect?: () => void
   onRetry?: () => void
@@ -295,7 +385,7 @@ function RecordMenu({ job, pendingCancel, onOpen, onCompare, onSelect, onRetry, 
   const choose = (action?: () => void) => () => { setOpen(false); action?.() }
   return <Popover open={open} onOpenChange={setOpen} label={`分析记录 ${job.syncId} 的操作`} trigger={<IconButton label="更多操作" icon={<MoreHorizontal size={16}/>}/>}>
     <div className="record-menu" role="menu" aria-label="分析记录操作">
-      {onOpen ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onOpen)}><ArrowUpRight size={14}/>打开结果</button> : null}
+      {onOpen ? <button type="button" role="menuitem" className="record-menu-item" disabled={openBusy} onClick={choose(onOpen)}><ArrowUpRight size={14}/>{openLabel}</button> : null}
       {onCompare ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onCompare)}><GitCompare size={14}/>与当前结果对比</button> : null}
       {onSelect ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onSelect)}><Pin size={14}/>设为当前结果</button> : null}
       {onRetry ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onRetry)}><RotateCcw size={14}/>用这些参数重试</button> : null}
@@ -320,6 +410,8 @@ const FAILURE_TEXT: Record<string, string> = {
 }
 
 function failureText(error: SyncError) {
+  // DATASET_INVALID 的具体原因（如超过提交上限）由后端给出，优先显示，避免误报成"没有提交"。
+  if (error.code === 'DATASET_INVALID' && error.message) return error.message
   return FAILURE_TEXT[error.code] ?? error.message
 }
 /** 记录的时间跨度：用采集区间，保持一行可读。 */

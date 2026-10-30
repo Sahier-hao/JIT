@@ -1,14 +1,14 @@
 /**
  * 图标材料约定（design D5 / IP-09）：同一网格、同一描边、方头端点、矩形圆角 2。
  */
-import { render } from '@testing-library/react'
+import { render } from './test-utils'
 import { describe, expect, it } from 'vitest'
 import { ICON_NAMES, Icon } from './Icon'
 
 describe('图标材料', () => {
   it('图标集覆盖既有 12 个键与新增 8 个键', () => {
     const required = [
-      'logo', 'list', 'shortlist', 'project', 'search', 'arrow',
+      'logo', 'list', 'project', 'search', 'arrow',
       'chevron', 'check', 'plus', 'close', 'info', 'trend',
       'sliders', 'copy', 'external', 'warning', 'collapse', 'filter', 'sort', 'download',
     ]

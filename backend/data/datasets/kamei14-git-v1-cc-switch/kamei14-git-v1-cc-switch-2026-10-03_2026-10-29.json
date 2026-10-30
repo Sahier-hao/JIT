@@ -1,0 +1,277 @@
+{
+  "citation": "由仓库同步采集生成（简化 SZZ）",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1793318400,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1790985600
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 102,
+      "commitsInWindow": 739,
+      "excluded": {
+        "empty": 0,
+        "merges": 0,
+        "outsideWindow": 2587,
+        "unparsed": 0
+      },
+      "records": 739
+    },
+    "gitVersion": "git version 2.53.0.windows.1",
+    "kind": "git-repository",
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。"
+    ],
+    "repository": {
+      "branch": "691a8088057f77886623b0b11ce32b6264415dd0",
+      "head": "691a8088057f77886623b0b11ce32b6264415dd0",
+      "path": "C:\\Users\\荀浩\\AppData\\Local\\Temp\\jit-sync-xm7eibhx\\jit-collect-3icsycwf\\repository.git",
+      "resolvedBranch": ""
+    },
+    "szz": {
+      "fixCommits": 371,
+      "labeledCommits": 373,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 47,
+        "outsideWindow": 250
+      }
+    },
+    "window": {
+      "endEpoch": 1793318400,
+      "since": "2026-10-03T00:00:00+00:00",
+      "startEpoch": 1790985600,
+      "until": "2026-10-30T00:00:00+00:00"
+    }
+  },
+  "dataset": "kamei14-git-v1-cc-switch",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 93648,
+    "name": "kamei14-git-v1-cc-switch-2026-10-03_2026-10-29.csv",
+    "path": "data/datasets/kamei14-git-v1-cc-switch/kamei14-git-v1-cc-switch-2026-10-03_2026-10-29.csv",
+    "sha256": "93e9da2b2b242c30f0201ee67ea0de7f31346e4c66edc13cee439d97f69d0694"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 11,
+      "outsideWindow": 0,
+      "tooManyFiles": 3,
+      "tooMuchChurn": 2
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 723,
+    "positiveLabels": 366,
+    "rawRows": 739
+  },
+  "revision": "691a8088057f77886623b0b11ce32b6264415dd0",
+  "samples": [
+    {
+      "id": "081fdd4d7ad86b0f57cea47bed6c17afd9fe52fd",
+      "time": "2026-10-03T00:02:58Z"
+    },
+    {
+      "id": "4fd53be9e67c32dcab3206215fac8ab2e9a35ccd",
+      "time": "2026-10-03T00:06:50Z"
+    },
+    {
+      "id": "05d70dc32f7271dd0a559ee9612d60721584a937",
+      "time": "2026-10-03T00:08:34Z"
+    },
+    {
+      "id": "d8fa4a0621a052e42b649350095365747110d3f2",
+      "time": "2026-10-29T12:11:21Z"
+    },
+    {
+      "id": "691a8088057f77886623b0b11ce32b6264415dd0",
+      "time": "2026-10-29T12:35:04Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v1",
+  "timeRange": {
+    "end": "2026-10-29T12:35:04Z",
+    "endEpoch": 1793277304,
+    "start": "2026-10-03T00:02:58Z",
+    "startEpoch": 1790985778
+  },
+  "url": "https://github.com/minc-nice-100/cc-switch",
+  "version": "kamei14-git-v1-cc-switch-2026-10-03_2026-10-29"
+}

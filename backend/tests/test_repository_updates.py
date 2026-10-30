@@ -1,4 +1,5 @@
-"""Recurring repository updates own their schedule, model and immutable analysis source."""
+"""Repository reminders: a changed HEAD writes an in-app event, never an analysis."""
+import json
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -7,7 +8,7 @@ import pytest
 
 from jit_baseline.catalog_storage import CatalogStorage
 from jit_baseline.errors import BaselineError
-from jit_baseline.sync import SyncService, utc_now
+from jit_baseline.sync import PROGRESS, SyncService, utc_now
 from test_artifacts import real_run  # noqa: F401
 
 
@@ -43,39 +44,56 @@ def complete(service, job_id, head):
     service.sync.repository_refresh(service.get(job_id)['repositoryId'], job_id)
 
 
-def test_first_check_binds_model_and_no_change_does_not_duplicate(updates):
+def events(service, repository_id):
+    with service.sync.storage.connection() as db:
+        return [dict(row) for row in db.execute(
+            'SELECT * FROM project_event WHERE repository_id=? ORDER BY created_at,id', (repository_id,))]
+
+
+def manual_analysis(service, repository_id, head):
+    job, _ = service.create({'repositoryUrl': service.sync.repository_get(repository_id)['url'], 'branch': 'main',
+                             'strategy': 'generic-model', 'modelId': 'model-original', 'commitLimit': 500,
+                             'since': '2026-01-01'})
+    complete(service, job['syncId'], head)
+    return job['syncId']
+
+
+def test_first_check_reminds_without_creating_an_analysis(updates):
     watcher, service, repo, heads = updates
     assert watcher.get(repo)['enabled'] is False
     watcher.request(repo)
     first = settle(watcher, repo)
-    assert first['status'] == 'analyzing'
-    job = service.get(first['syncId'])
-    assert job['requestedModelId'] == 'model-original'
-    assert job['requestedStrategy'] == 'generic-model'
-    assert job['branch'] == 'main'
-    complete(service, job['syncId'], heads[0])
-    assert watcher.get(repo)['status'] == 'updated'
+    assert first['status'] == 'updated'
+    assert 'syncId' not in first
+    assert service.repository_syncs(repo)['total'] == 0
+    notes = events(service, repo)
+    assert len(notes) == 1
+    assert notes[0]['kind'] == 'branch-updated'
+    assert json.loads(notes[0]['payload_json']) == {'branch': 'main', 'head': heads[0], 'previousHead': None}
     watcher.request(repo)
-    assert settle(watcher, repo)['status'] == 'up-to-date'
-    assert service.repository_syncs(repo)['total'] == 1
+    assert settle(watcher, repo)['status'] == 'updated'
+    assert service.repository_syncs(repo)['total'] == 0
+    assert len(events(service, repo)) == 1
 
 
-def test_new_head_keeps_old_snapshot_and_bound_model(updates, monkeypatch):
+def test_new_head_reminds_and_preserves_old_result(updates):
     watcher, service, repo, heads = updates
-    watcher.request(repo)
-    first = settle(watcher, repo)['syncId']
-    complete(service, first, heads[0])
-    monkeypatch.setattr(service.catalog, 'default_model_id', lambda: 'different-default')
+    first = manual_analysis(service, repo, heads[0])
     heads[0] = 'b' * 40
     watcher.request(repo)
-    second = settle(watcher, repo)['syncId']
-    assert second != first
-    assert service.get(second)['requestedModelId'] == 'model-original'
+    assert settle(watcher, repo)['status'] == 'updated'
+    assert service.repository_syncs(repo)['total'] == 1
+    notes = events(service, repo)
+    assert len(notes) == 1
+    assert json.loads(notes[0]['payload_json'])['previousHead'] == 'a' * 40
     assert service.repository(repo, view_sync_id=first)['viewContext']['headCommit'] == 'a' * 40
     assert service.get(first)['status'] == 'completed'
+    watcher.request(repo)
+    assert settle(watcher, repo)['status'] == 'updated'
+    assert len(events(service, repo)) == 1
 
 
-def test_failed_check_is_error_and_retry_rechecks_same_head(updates):
+def test_failed_check_is_error_and_retry_reminds(updates):
     watcher, service, repo, heads = updates
     watcher.probe = lambda *args: (_ for _ in ()).throw(BaselineError('REPOSITORY_UNAVAILABLE', 'network'))
     watcher.request(repo)
@@ -84,30 +102,27 @@ def test_failed_check_is_error_and_retry_rechecks_same_head(updates):
     assert failed['errorCode'] == 'REPOSITORY_UNAVAILABLE'
     watcher.probe = lambda *args: {'head': heads[0], 'branch': 'main'}
     watcher.request(repo)
-    job = settle(watcher, repo)['syncId']
-    service.sync.finish(job, 'failed', 'SYNC_TIMEOUT', 'timeout')
-    assert watcher.get(repo)['errorCode'] == 'SYNC_TIMEOUT'
-    watcher.request(repo)
-    assert settle(watcher, repo)['syncId'] != job
+    assert settle(watcher, repo)['status'] == 'updated'
+    assert service.repository_syncs(repo)['total'] == 0
+    assert len(events(service, repo)) == 1
 
 
-def test_overlapping_clicks_and_existing_analysis_do_not_duplicate(updates):
+def test_overlapping_requests_create_one_event(updates):
     watcher, service, repo, heads = updates
     gate = threading.Event()
     watcher.probe = lambda *args: (gate.wait(2), {'head': heads[0], 'branch': 'main'})[1]
     with ThreadPoolExecutor(max_workers=5) as executor:
         list(executor.map(lambda _: watcher.request(repo), range(5)))
     gate.set()
-    settle(watcher, repo)
-    assert service.repository_syncs(repo)['total'] == 1
-    watcher.request(repo)
-    assert service.repository_syncs(repo)['total'] == 1
+    assert settle(watcher, repo)['status'] == 'updated'
+    assert service.repository_syncs(repo)['total'] == 0
+    assert len(events(service, repo)) == 1
 
 
 def test_schedule_survives_restart_and_disable_stops_tick(updates):
     from jit_baseline.repository_updates import RepositoryUpdates
     watcher, service, repo, heads = updates
-    watcher.configure(repo, {'enabled': True, 'branch': 'main', 'modelId': 'model-original'})
+    watcher.configure(repo, {'enabled': True, 'branch': 'main'})
     with service.sync.storage.connection(write=True) as db:
         db.execute("UPDATE repository_watch SET next_check_at='2000-01-01T00:00:00Z' WHERE repository_id=?", (repo,))
     watcher.close()
@@ -115,7 +130,7 @@ def test_schedule_survives_restart_and_disable_stops_tick(updates):
     try:
         assert restarted.get(repo)['enabled'] is True
         restarted.tick()
-        assert settle(restarted, repo)['status'] == 'analyzing'
+        assert settle(restarted, repo)['status'] == 'updated'
         restarted.configure(repo, {'enabled': False})
         assert restarted.get(repo)['nextCheckAt'] is None
         assert restarted.tick() == 0
@@ -123,43 +138,35 @@ def test_schedule_survives_restart_and_disable_stops_tick(updates):
         restarted.close()
 
 
-def test_disabled_model_never_falls_back(updates, monkeypatch):
-    watcher, service, repo, heads = updates
-    watcher.configure(repo, {'enabled': True, 'modelId': 'model-original'})
-    def disabled(model_id):
-        raise BaselineError('MODEL_DISABLED', 'disabled')
-    monkeypatch.setattr(service, '_generic_model', disabled)
+def test_reminder_does_not_need_a_model(updates, monkeypatch):
+    watcher, service, repo, _ = updates
+    monkeypatch.setattr(service.catalog, 'default_model_id', lambda: None)
+    monkeypatch.setattr(service, '_generic_model', lambda model_id: (_ for _ in ()).throw(BaselineError('MODEL_DISABLED', 'disabled')))
     watcher.request(repo)
-    failed = settle(watcher, repo)
-    assert failed['modelId'] == 'model-original'
-    assert failed['errorCode'] == 'MODEL_DISABLED'
+    assert settle(watcher, repo)['status'] == 'updated'
     assert service.repository_syncs(repo)['total'] == 0
 
 
-def test_unchanged_head_with_different_actual_analysis_head_rechecks(updates):
+def test_completed_analysis_clears_reminder(updates):
     watcher, service, repo, heads = updates
     watcher.request(repo)
-    first = settle(watcher, repo)['syncId']
-    complete(service, first, 'c' * 40)
+    assert settle(watcher, repo)['status'] == 'updated'
+    manual_analysis(service, repo, heads[0])
     watcher.request(repo)
-    assert settle(watcher, repo)['syncId'] != first
+    assert settle(watcher, repo)['status'] == 'up-to-date'
+    assert len(events(service, repo)) == 1
 
 
-def test_update_window_and_limit_can_recover_busy_repository(updates):
-    from datetime import datetime, timezone
+def test_changing_branch_clears_previous_reminder(updates):
     watcher, service, repo, heads = updates
-    watcher.configure(repo, {'windowDays': 7, 'commitLimit': 5000})
     watcher.request(repo)
-    first = settle(watcher, repo)['syncId']
-    job = service.get(first)
-    assert job['commitLimit'] == 5000
-    days = (datetime.now(timezone.utc).date() - datetime.fromisoformat(job['since']).date()).days
-    assert days == 7
-    complete(service, first, heads[0])
-    # A different coverage setting deliberately creates a new immutable result even at the same HEAD.
-    watcher.configure(repo, {'windowDays': 30})
+    assert settle(watcher, repo)['status'] == 'updated'
+    watcher.probe = lambda *args: {'head': heads[0], 'branch': 'release'}
+    changed = watcher.configure(repo, {'branch': 'release'})
+    assert changed['status'] == 'idle' and changed['remoteHead'] is None
     watcher.request(repo)
-    assert settle(watcher, repo)['syncId'] != first
+    assert settle(watcher, repo)['status'] == 'updated'
+    assert len(events(service, repo)) == 2
 
 
 def test_fixed_pr_head_analysis_does_not_replace_tracked_branch(updates):
@@ -176,12 +183,15 @@ def test_configuration_validation_and_delete_cascade(updates):
         with pytest.raises(BaselineError) as exc:
             watcher.configure(repo, payload)
         assert exc.value.code == 'INPUT_INVALID'
+    watcher.request(repo)
+    settle(watcher, repo)
     service.delete_repository(repo)
     with service.sync.storage.connection() as db:
         assert db.execute('SELECT COUNT(*) FROM repository_watch').fetchone()[0] == 0
+        assert db.execute('SELECT COUNT(*) FROM project_event').fetchone()[0] == 0
 
 
-def test_old_project_initial_settings_preserve_successful_branch_and_model(updates):
+def test_old_project_initial_settings_preserve_successful_branch(updates):
     watcher, service, _, _ = updates
     repo, _ = service.create_repository({'repositoryUrl': 'https://github.com/example/existing'})
     repo_id = repo['repositoryId']
@@ -193,7 +203,7 @@ def test_old_project_initial_settings_preserve_successful_branch_and_model(updat
     initial = watcher.get(repo_id)
     assert initial['enabled'] is False
     assert initial['branch'] == 'release'
-    assert initial['modelId'] == 'saved-selected-model'
+    assert 'modelId' not in initial
 
 
 def test_stale_check_lease_recovers_and_source_cannot_change_during_check(updates):
@@ -219,26 +229,30 @@ def test_update_api_and_onboarding(tmp_path):
     storage = CatalogStorage(tmp_path / 'api.sqlite3')
     storage.initialize()
     with TestClient(create_app(database=storage.path, artifact_root=tmp_path / 'artifacts')) as client:
-        response = client.post('/api/v1/repositories', json={'repositoryUrl': 'https://github.com/example/onboarding'})
+        client.app.state.updates.probe = lambda url, branch, stop: {'head': 'a' * 40, 'branch': 'main'}
+        response = client.post('/api/v1/repositories', json={'repositoryUrl': 'https://github.com/example/onboarding', 'autoUpdate': False})
         assert response.status_code == 201
         repo = response.json()['repositoryId']
         base = f'/api/v1/repositories/{repo}'
         state = client.get(base + '/updates')
-        assert state.status_code == 200 and state.json()['enabled'] is True
+        assert state.status_code == 200 and state.json()['enabled'] is False
         import jsonschema
         from test_openapi import document
         doc = document()
         jsonschema.Draft202012Validator({'$ref': '#/components/schemas/RepositoryUpdateState',
                                         'components': doc['components']}).validate(state.json())
         assert doc['paths']['/api/v1/repositories/{repositoryId}/updates']['get']['security'] == []
-        failed = settle(client.app.state.updates, repo)
-        assert failed['errorCode'] == 'DEFAULT_MODEL_REQUIRED'
+        assert client.patch(base + '/updates', json={'enabled': True}).json()['enabled'] is True
+        assert client.post(base + '/refresh').status_code == 202
+        assert settle(client.app.state.updates, repo)['status'] == 'updated'
+        assert client.get(base + '/syncs').json()['total'] == 0
+        event = client.get(base + '/events').json()['events'][0]
+        assert event['kind'] == 'branch-updated' and event['isCurrent'] is True
+        assert event['head'] == 'a' * 40 and event['branch'] == 'main'
         assert client.patch(base + '/updates', json={'enabled': False}).json()['enabled'] is False
         # Re-adding an existing address preserves the user's paused setting.
-        assert client.post('/api/v1/repositories', json={'repositoryUrl': 'https://github.com/example/onboarding'}).status_code == 200
+        assert client.post('/api/v1/repositories', json={'repositoryUrl': 'https://github.com/example/onboarding', 'autoUpdate': False}).status_code == 200
         assert client.get(base + '/updates').json()['enabled'] is False
-        assert client.post(base + '/refresh').status_code == 202
-        settle(client.app.state.updates, repo)
         invalid = client.patch(base + '/updates', json={'branch': '--bad'})
         assert invalid.status_code == 422 and invalid.json()['error']['requestId']
         missing = client.get('/api/v1/repositories/missing/updates')
@@ -252,7 +266,7 @@ def test_real_git_probe_tracks_default_and_named_branch(tmp_path):
     repo = tmp_path / 'source'
     repo.mkdir()
     def git(*args):
-        return subprocess.run(['git', '-C', str(repo), *args], capture_output=True, text=True, check=True).stdout.strip()
+        return subprocess.run(['git', '-C', str(repo), *args], capture_output=True, text=True, encoding='utf-8', errors='replace', check=True).stdout.strip()
     git('init', '-b', 'main')
     git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '--allow-empty', '-m', 'initial')
     old = git('rev-parse', 'HEAD')
@@ -265,7 +279,7 @@ def test_real_git_probe_tracks_default_and_named_branch(tmp_path):
     assert exc.value.code == 'REPOSITORY_UNAVAILABLE'
 
 
-def test_real_updates_score_new_commits_without_mutating_previous_result(tmp_path, real_run):  # noqa: F811
+def test_real_updates_remind_without_analyzing(tmp_path, real_run):  # noqa: F811
     import shutil
     from datetime import datetime, timedelta, timezone
     from jit_baseline.catalog import ModelCatalog
@@ -285,30 +299,36 @@ def test_real_updates_score_new_commits_without_mutating_previous_result(tmp_pat
     watcher = RepositoryUpdates(service)
     repo, _ = service.create_repository({'repositoryUrl': str(source)})
     repository_id = repo['repositoryId']
-    def finish():
+    def wait_job(sync_id):
         for _ in range(1500):
-            state = watcher.get(repository_id)
-            if state['status'] not in ('checking', 'analyzing'):
-                assert state['status'] == 'updated', state
-                return state['syncId']
+            job = service.get(sync_id)
+            if job['status'] not in PROGRESS:
+                return job
             time.sleep(.05)
         pytest.fail('real analysis timeout')
     try:
         watcher.enroll(repository_id)
-        first = finish()
-        old = service.repository_commits(repository_id, view_sync_id=first)
+        assert settle(watcher, repository_id)['status'] == 'updated'
+        assert service.repository_syncs(repository_id)['total'] == 0
+        assert json.loads(events(service, repository_id)[0]['payload_json'])['head'] == first_head
+        job, _ = service.create({'repositoryUrl': str(source), 'branch': 'main', 'strategy': 'generic-model',
+                                 'modelId': model_id, 'commitLimit': 500,
+                                 'since': (now - timedelta(days=90)).date().isoformat()})
+        finished = wait_job(job['syncId'])
+        assert finished['status'] == 'completed'
+        old = service.repository_commits(repository_id, view_sync_id=job['syncId'])
         assert old['total'] == 2
-        assert service.get(first)['headCommit'] == first_head
         _commit(source, 'add service', {'pkg/service.py': 'service = True\n' * 20}, now.isoformat())
         watcher.request(repository_id)
-        second = finish()
-        assert second != first
-        assert service.repository_commits(repository_id, view_sync_id=second)['total'] == 3
-        assert service.repository_commits(repository_id, view_sync_id=first) == old
-        assert service.get(second)['modelId'] == model_id == service.get(first)['modelId']
+        assert settle(watcher, repository_id)['status'] == 'updated'
+        notes = events(service, repository_id)
+        assert len(notes) == 2
+        assert json.loads(notes[1]['payload_json'])['previousHead'] == first_head
+        assert service.repository_syncs(repository_id)['total'] == 1
+        assert service.repository_commits(repository_id, view_sync_id=job['syncId']) == old
         watcher.request(repository_id)
-        assert settle(watcher, repository_id)['status'] == 'up-to-date'
-        assert service.repository_syncs(repository_id)['total'] == 2
+        assert settle(watcher, repository_id)['status'] == 'updated'
+        assert service.repository_syncs(repository_id)['total'] == 1
     finally:
         watcher.close()
         service.close()
