@@ -7,7 +7,7 @@
 - React 19 + TypeScript + Vite。
 - 路由：React Router 7 的 `createHashRouter`；地址继续使用 `#/projects/...`，旧链接由 `navigation.ts` 的解析器映射。
 - 样式：Tailwind CSS 4（只取 theme/utilities，不启用 preflight）+ `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把令牌映射为 Tailwind 语义色，四套主题由 `html[data-theme]` 切换。
-- 组件：`src/ui/` 内的自持控件层（shadcn 风格）。Radix 提供焦点、键盘与无障碍行为，Tailwind 提供外观；不使用 Ant Design 或其他成品组件库。
+- 组件：Mantine 8（`@mantine/core`）。`src/ui/` 是适配层，把项目既有 API 映射到 Mantine 的 Button、TextInput、Select、Checkbox、Switch、Modal、Drawer、SegmentedControl、Menu、Tooltip、Alert 等组件；颜色、圆角与字体通过 `lib/mantineTheme.ts` 和 `styles/mantine-bridge.css` 指回设计令牌，四套主题继续生效。
 - 图标：`Icon.tsx` 的自绘 SVG 与 lucide-react。
 - 代码对比：react-diff-view + refractor；图表为手写 SVG。
 - 测试：Vitest + Testing Library（组件）与 Playwright（浏览器验收）。

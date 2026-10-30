@@ -48,6 +48,16 @@
 - 数据层改造后在隔离服务上回归项目概览、分析、风险趋势、PR 审查与提交明细五个视图，控制台无错误。
 
 
+## 控件层改用 Mantine
+
+首轮自写的 shadcn 风格控件视觉偏朴素，用户要求直接用成熟组件库。本轮引入 Mantine 8：
+
+- `@mantine/core` 接管 Button、TextInput、Textarea、PasswordInput、Select、Checkbox、Switch、Modal、Drawer、SegmentedControl、Menu、Popover、Tooltip、Alert、Badge、ActionIcon、Collapse。
+- `ui/*` 保留原有导出 API，只做参数映射，页面代码不需要改；需要差异化的按钮尺寸、变体映射在适配层完成。
+- `lib/mantineTheme.ts` 定义 ink/accent/risk 色阶与字号、圆角；`styles/mantine-bridge.css` 把 `--mantine-color-*` 指回 tokens.css，四套主题与深色模式继续由 `data-theme` 驱动。
+- PostCSS 使用 `postcss-preset-mantine`；测试通过 `test-utils.tsx` 统一包裹 MantineProvider 与 QueryClientProvider，并设置 `env="test"` 关闭过渡动画。
+- 验证：前端全量 38 个文件、306 项通过；构建通过（CSS gzip 62 kB、首包 JS gzip 139 kB）。
+
 ## 未验证与边界
 
 - 未在本轮重跑隔离浏览器 E2E（桌面 1440 与手机 390）；需要在本机启动后端后执行。

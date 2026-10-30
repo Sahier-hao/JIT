@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { EVENT_READ_KEY, ProjectEvents, ProjectPersonal, eventRoute } from './ProjectActivity'

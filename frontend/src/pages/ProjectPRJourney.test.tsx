@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { FixedPRSnapshot, PullRequestWork } from './PullRequestJourney'
@@ -55,7 +55,7 @@ it('uses base-project context when starting a fork PR and returns to the project
   await user.click(await screen.findByRole('button', { name: '返回项目 PR 审查' }))
   expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')?.[1]?.body))).toEqual({ repositoryId: PROJECT })
   expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: PROJECT, tab: 'prs' })
-  await user.click(screen.getByLabelText('个人关注状态'))
+  await user.click(screen.getByRole('combobox', { name: '个人关注状态' }))
   await user.click(await screen.findByText('已暂停'))
   await waitFor(() => expect(readWorks()[0].interest).toBe('paused'))
   expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(false)

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { RepositoryUpdates } from './RepositoryUpdates'
@@ -31,7 +31,7 @@ it('saves the reminder setting on the server', async () => {
   render(<RepositoryUpdates repositoryId={REPO} onUpdated={vi.fn()}/>)
   await userEvent.click(await screen.findByRole('button', { name: /分支提醒/ }))
   await userEvent.click(await screen.findByRole('switch', { name: '分支提醒' }))
-  await waitFor(() => expect(screen.getByRole('switch', { name: '分支提醒' })).toHaveAttribute('data-state', 'checked'))
+  await waitFor(() => expect(screen.getByRole('switch', { name: '分支提醒' })).toBeChecked())
   const patch = fetch.mock.calls.find(([, options]) => options?.method === 'PATCH')
   expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ enabled: true })
   expect(screen.getByText(/每 5 分钟检查一次/)).toBeVisible()

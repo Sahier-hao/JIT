@@ -1,12 +1,16 @@
 /* 声明层顺序：基础重置低于工具类，组件层可被页面规则覆盖。 */
 @layer theme, base, components, utilities;
 
+/* Mantine 组件样式必须先于其他 import 加载。 */
+@import '@mantine/core/styles.css';
+
 /* Tailwind 只取工具类，preflight 关闭以避免覆盖 base.css 的重置。 */
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /* Tokens、共享组件、领域页面、产品组合，最后是现代外壳。 */
 @import './styles/tokens.css';
+@import './styles/mantine-bridge.css';
 @import './styles/base.css';
 @import './styles/components.css';
 
@@ -44,11 +48,10 @@
   --color-input: var(--line-strong);
   --color-ring: var(--accent-ring);
 
-  --radius-xs: var(--r);
-  --radius-sm: var(--r-xs);
-  --radius-md: var(--r-lg);
-  --radius-lg: var(--r-md);
-  --radius-xl: var(--r-xl);
+  --radius-sm: var(--r);
+  --radius-md: var(--r-xs);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-md);
 
   --font-sans: var(--sans);
   --font-mono: var(--mono);

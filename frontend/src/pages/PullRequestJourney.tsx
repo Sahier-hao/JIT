@@ -108,6 +108,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [commitRisks, setCommitRisks] = useState<Record<string, { risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }>>({})
   const [selectedCommit, setSelectedCommit] = useState<string | null>(null)
   const [reviewView, setReviewView] = useState<'commits' | 'files'>('commits')
+  const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
   const [diffView, setDiffView] = useState<'unified' | 'split'>('unified')
   const version = work?.viewedSnapshotId ?? ''
   useEffect(() => { setSelectedCommit(null); setCommitRisks({}); setFileRisks({}); setReviewView('commits') }, [version])
@@ -242,7 +243,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   }
   const readPercent = live.totalFiles ? Math.round((readCount / live.totalFiles) * 100) : 0
   const needle = filter.trim().toLowerCase()
-  const commitRows = [...live.commits].sort((a, b) => {
+  const commitRows = commitOrder === 'order' ? live.commits : [...live.commits].sort((a, b) => {
     const left = commitRisks[a.sha]?.risk, right = commitRisks[b.sha]?.risk
     if (left == null && right == null) return 0
     if (left == null) return 1
@@ -309,7 +310,10 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
     {reviewView === 'commits' ? <section className="wb-commit-table" aria-label="PR 提交风险排序">
       <div className="wb-commit-table-head">
         <h2>提交风险排序</h2>
-        <span>{scoredCommits}/{live.commits.length} 有分数</span>
+        <div className="wb-commit-head-actions">
+          <span>{scoredCommits}/{live.commits.length} 有分数</span>
+          <Segmented size="sm" aria-label="提交排序" value={commitOrder} onChange={value => setCommitOrder(value as 'risk' | 'order')} options={[{ label: '按风险', value: 'risk' }, { label: '按提交顺序', value: 'order' }]}/>
+        </div>
       </div>
       <div className="table-scroll">
         <table>
@@ -339,7 +343,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
           <Button size="sm" icon={<ArrowLeft/>} onClick={showCommitList}>提交列表</Button>
           {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code><Button variant="link" size="sm" onClick={() => selectCommit(null)}>全部文件</Button></> : <span>全部文件</span>}
         </div>
-        {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="wb-pane-note">这条提交没有文件映射（旧分析），下方仍显示全部文件。</p> : null}
+        {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="wb-pane-note">{scoredCommits === 0 ? '此版本尚未分析，无法按提交筛选文件；下方显示全部文件。' : '这条提交没有文件映射（旧分析），下方仍显示全部文件。'}</p> : null}
         <Input size="sm" allowClear prefix={<Search/>} placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径"/>
         <Segmented size="sm" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/>
         <div className="wb-file-list" role="listbox" aria-label="改动文件">

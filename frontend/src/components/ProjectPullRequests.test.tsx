@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectPullRequests } from './ProjectPullRequests'
@@ -49,8 +49,8 @@ function trackingApi(overrides: Record<string, unknown> = {}) {
 it('requires an explicit existing PR confirmation and pins the selected model rather than the new default', async () => {
   const fetch = trackingApi()
   render(<PRTrackingPanel repositoryId={PROJECT}/>); const user = userEvent.setup()
-  expect(await screen.findByLabelText('固定自动分析模型')).toHaveTextContent('原固定模型 · model-original')
-  await user.click(screen.getByLabelText('固定自动分析模型'))
+  expect(await screen.findByPlaceholderText('选择真实兼容模型')).toHaveValue('原固定模型 · model-original')
+  await user.click(screen.getByPlaceholderText('选择真实兼容模型'))
   expect(await screen.findByRole('option', { name: /停用模型/ })).toHaveAttribute('aria-disabled', 'true')
   await user.keyboard('{Escape}')
   expect(screen.getByText(/还有后续页，以上不是完整数量/)).toBeVisible()
@@ -69,7 +69,7 @@ it('does not silently substitute a disabled fixed model and pauses without sendi
   const fetch = trackingApi({ enabled: true, modelId: 'model-disabled' })
   render(<PRTrackingPanel repositoryId={PROJECT}/>); const user = userEvent.setup()
   await screen.findByText(/原选模型已不可用/)
-  expect(screen.getByLabelText('固定自动分析模型')).toHaveTextContent('model-disabled')
+  expect((screen.getByPlaceholderText('选择真实兼容模型') as HTMLInputElement).value).toContain('model-disabled')
   expect(screen.getByRole('button', { name: '保存修改' })).toBeDisabled()
   await user.click(screen.getByRole('button', { name: '暂停自动分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(true))

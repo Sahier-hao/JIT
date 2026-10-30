@@ -1,4 +1,4 @@
-import { Button } from './ui/controls'
+import { Button, IconButton } from './ui/controls'
 import { useEffect, useState } from 'react'
 import { displayTime, validRisk, type Commit, type Dataset } from './domain'
 import { RepositoryExplanation } from './components/RepositoryExplanation'
@@ -15,7 +15,7 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
   const safeOriginal = original && /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/commit\/(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})$/.test(original) && original.endsWith('/'+id) ? original : null
   useEffect(() => { setCopied('') }, [id])
   async function copy() { try { await navigator.clipboard.writeText(id); setCopied('完整提交 ID 已复制') } catch { setCopied('自动复制不可用，可在来源中选择完整 ID。') } }
-  return record ? <div className="detail-body"><div className="detail-identity"><h2>{record.title || `提交 ${record.id.slice(0, 12)}`}</h2><p>{record.authorName || '作者未提供'} <span>·</span> {displayTime(record.time)}</p><div className="commit-actions"><code>{record.id.slice(0, 12)}</code><button className="icon-button" aria-label="复制完整提交 ID" onClick={copy}><Icon name="copy" size={15}/></button>{safeOriginal ? <a href={safeOriginal} target="_blank" rel="noopener noreferrer">原始提交 <Icon name="external" size={14}/></a> : null}</div>{copied ? <p className="muted" role="status">{copied}</p> : null}</div>
+  return record ? <div className="detail-body"><div className="detail-identity"><h2>{record.title || `提交 ${record.id.slice(0, 12)}`}</h2><p>{record.authorName || '作者未提供'} <span>·</span> {displayTime(record.time)}</p><div className="commit-actions"><code>{record.id.slice(0, 12)}</code><IconButton label="复制完整提交 ID" icon={<Icon name="copy" size={15}/>} onClick={copy}/>{safeOriginal ? <a href={safeOriginal} target="_blank" rel="noopener noreferrer">原始提交 <Icon name="external" size={14}/></a> : null}</div>{copied ? <p className="muted" role="status">{copied}</p> : null}</div>
     <div className="detail-risk"><div><span>模型分数</span><Risk risk={record.risk} large/></div><p>用于排序参考，未经概率校准，不代表已确认缺陷。</p></div>
     <div className="detail-metrics"><div><span>变更行</span><strong>{record.lines ?? '未提供'}</strong></div><div><span>文件</span><strong>{record.files ?? '未提供'}</strong></div></div>
     {data.mode === 'repository' && data.repository?.repositoryId && validRisk(record.risk) ? <RepositoryExplanation key={`${data.repository.repositoryId}:${data.repository.syncId}:${record.id}`} context={{ repositoryId: data.repository.repositoryId, viewSyncId: data.repository.syncId, commitId: record.id, risk: record.risk, modelId: data.repository.modelId, runId: data.repository.runId, datasetVersion: data.repository.datasetVersion }}/> : <p className="detail-explanation-note"><Icon name="info" size={14}/>当前分析未提供逐条模型归因。</p>}

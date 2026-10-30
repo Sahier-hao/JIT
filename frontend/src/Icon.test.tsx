@@ -1,7 +1,7 @@
 /**
  * 图标材料约定（design D5 / IP-09）：同一网格、同一描边、方头端点、矩形圆角 2。
  */
-import { render } from '@testing-library/react'
+import { render } from './test-utils'
 import { describe, expect, it } from 'vitest'
 import { ICON_NAMES, Icon } from './Icon'
 

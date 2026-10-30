@@ -223,3 +223,22 @@ html[data-theme="charcoal"] {
 .pr-preview-details li:last-child { border-bottom: 0; }
 @media (max-width: 900px) { .pr-preview-grid { grid-template-columns: 1fr; height: auto; } .pr-preview-code .wb-diff-scroll { max-height: 70vh; } .pr-preview-files { max-height: 230px; border-right: 0; border-bottom: 1px solid var(--line); } .pr-preview-top { align-items: flex-start; flex-direction: column; } }
 .pr-preview-hint { margin: 0 18px 12px; color: var(--fg-3); font-size: 12.5px; line-height: 1.6; }
+.pr-preview-files-bar { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.pr-preview-files-bar code { padding: 2px 6px; border: 1px solid var(--line); border-radius: var(--r); background: var(--sunken); font-size: 12px; }
+.pr-preview-files-bar span { color: var(--fg-3); font-size: 13px; }
+.pr-preview-empty-state { margin: 0; padding: 28px 18px; border: 1px dashed var(--line-strong); border-radius: var(--r-lg); color: var(--fg-3); font-size: 13px; text-align: center; }
+.wb-commit-head-actions { display: flex; align-items: center; gap: 12px; }
+
+/* 统一卡片表面：项目、分析、PR 与报告使用同一组边框、圆角与阴影。 */
+.project-card,
+.review-table-wrap,
+.wb-commit-table,
+.pr-hub-panel,
+.pr-preview-grid,
+.pr-preview-details details,
+.pr-model-clues {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+  box-shadow: var(--sh-3);
+}
