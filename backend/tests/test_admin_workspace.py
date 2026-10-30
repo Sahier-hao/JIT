@@ -16,7 +16,7 @@ def client(tmp_path):
     storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
     storage.initialize()
     with TestClient(create_app(tmp_path / 'missing', database=storage.path,
-                               artifact_root=tmp_path / 'artifacts', dataset_root=tmp_path / 'data')) as value:
+                               artifact_root=tmp_path / 'artifacts')) as value:
         yield value
 
 
@@ -90,7 +90,7 @@ def test_admin_dataset_refresh_reads_newly_registered_versions(client, monkeypat
     assert client.post('/api/admin/setup', json={'username': 'admin', 'password': 'dataset-admin-password'}).status_code == 201
     current = datasets.load_all()
     new = dict(next(iter(current.values())), dataset='newly-registered', version='new-version')
-    monkeypatch.setattr(datasets, 'load_all', lambda: {**current, 'new-version': new})
+    monkeypatch.setattr(datasets, 'load_all', lambda root=None: {**current, 'new-version': new})
     body = client.get('/api/v1/datasets').json()
     assert any(item['dataset'] == 'newly-registered' for item in body['datasets'])
 

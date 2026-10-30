@@ -1441,6 +1441,35 @@ paths:
         schema:
           $ref: '#/components/schemas/Uuid'
       security: []
+  /api/v1/models/{modelId}:
+    get:
+      operationId: getRegisteredModelDetail
+      summary: 读取已校验模型详情、训练指标与运行谱系
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: modelId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 模型身份、策略、真实训练指标和只读谱系。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelDetail'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ModelUnavailable'
   /api/v1/model-candidates:
     get:
       operationId: listModelCandidates
@@ -1538,6 +1567,175 @@ paths:
       description: 201 新模型，200 复用原 runId；仅选择候选，不接受路径／URL／上传。
       security:
       - AdminSession: []
+  /api/v1/training-tasks:
+    post:
+      operationId: createTrainingTask
+      summary: 创建管理员数据集训练任务
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingTaskCreate'
+      responses:
+        '202':
+          description: 已创建并进入训练队列。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskView'
+        '200':
+          description: 相同参数已有活动任务，复用该任务。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskView'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+    get:
+      operationId: listTrainingTasks
+      summary: 分页查询训练任务
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: limit
+        in: query
+        schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+      - name: offset
+        in: query
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 训练任务分页。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskPage'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/training-tasks/{taskId}:
+    get:
+      operationId: getTrainingTask
+      summary: 读取训练任务、指标及运行/模型谱系
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: 任务详情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskView'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/training-tasks/{taskId}/cancel:
+    post:
+      operationId: cancelTrainingTask
+      summary: 取消排队或运行中的训练任务
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: 排队任务已立即取消。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskView'
+        '202':
+          description: 运行任务已请求取消，待进程停止后进入终态。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskView'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/TrainingConflict'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/training-tasks/{taskId}/retry:
+    post:
+      operationId: retryTrainingTask
+      summary: 显式重试失败、取消或中断任务
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        '202':
+          description: 已创建带 parentTaskId 的新排队任务。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingTaskView'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/TrainingConflict'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repository-syncs:
     post:
       operationId: createRepositorySync
@@ -4730,12 +4928,31 @@ components:
           type:
           - string
           - 'null'
+        source:
+          type: object
+          properties:
+            publisher: {type: [string, 'null']}
+            url: {type: [string, 'null']}
+            revision: {type: [string, 'null']}
+            citation: {type: [string, 'null']}
+            branch: {type: [string, 'null']}
+            head: {type: [string, 'null']}
+            window: {type: [object, 'null']}
+          additionalProperties: false
+        labelRule:
+          type: [string, 'null']
+        limitations:
+          type: array
+          items: {type: string}
       required:
       - version
       - schema
       - timeRange
       - quality
       - file
+      - source
+      - labelRule
+      - limitations
       additionalProperties: false
     DatasetQuality:
       type: object
@@ -6105,6 +6322,111 @@ components:
       - reproducibility
       - origin
       additionalProperties: false
+    ModelDetail:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        isDefault:
+          type: boolean
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        sha256:
+          $ref: '#/components/schemas/Hash'
+        state:
+          type: string
+          enum:
+          - ready
+          - invalid
+        limitations:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          minItems: 0
+        artifactRunId:
+          $ref: '#/components/schemas/Hash'
+        artifactDatasetVersion:
+          type: string
+          minLength: 1
+        artifactModelId:
+          type: string
+          minLength: 1
+        method:
+          type: string
+          minLength: 1
+        featureSchema:
+          $ref: '#/components/schemas/FeatureSchema'
+        jsonPredictionSupported:
+          type: boolean
+        trainingEnvironment:
+          type: object
+        verificationEnvironment:
+          type: object
+        reproducibility:
+          type: object
+        origin:
+          enum:
+          - local
+          - external
+        error:
+          type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/GlobalErrorCode'
+            message:
+              type: string
+              minLength: 1
+          required:
+          - code
+          - message
+          additionalProperties: false
+        artifactKey: {type: string, minLength: 1}
+        metrics: {type: object}
+        trainingSeconds: {type: [number, 'null'], minimum: 0}
+        threshold: {type: number}
+        metricSet: {type: [string, 'null']}
+        split: {type: object}
+        source: {type: object}
+      required:
+      - enabled
+      - isDefault
+      - modelId
+      - name
+      - runId
+      - datasetVersion
+      - featureSchemaVersion
+      - sha256
+      - state
+      - limitations
+      - artifactRunId
+      - artifactDatasetVersion
+      - artifactModelId
+      - method
+      - featureSchema
+      - jsonPredictionSupported
+      - trainingEnvironment
+      - verificationEnvironment
+      - reproducibility
+      - origin
+      - artifactKey
+      - metrics
+      - trainingSeconds
+      - threshold
+      - metricSet
+      - split
+      - source
+      additionalProperties: false
     ModelList:
       type: object
       properties:
@@ -6752,6 +7074,128 @@ components:
       - attempts
       - limitations
       additionalProperties: false
+    TrainingTaskCreate:
+      type: object
+      properties:
+        datasetVersion:
+          type: string
+          minLength: 1
+        method:
+          type: string
+          enum:
+          - logistic-regression-l2-v1
+          - decision-tree-v1
+          - random-forest-v1
+          - gaussian-naive-bayes-v1
+          - gradient-boosting-v1
+          - mlp-v1
+          - tabular-resnet-v1
+          - ft-transformer-v1
+          - wide-deep-v1
+        metricSet:
+          type: string
+          enum: [metric-set-v1, metric-set-v2]
+          default: metric-set-v2
+      required: [datasetVersion, method]
+      additionalProperties: false
+    TrainingTaskView:
+      type: object
+      properties:
+        taskId:
+          $ref: '#/components/schemas/Uuid'
+        datasetVersion:
+          type: string
+        datasetManifest:
+          type: string
+        manifestSha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        method:
+          type: string
+        metricSet:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed, cancelled, interrupted]
+        stage:
+          type: string
+          enum: [queued, training, completed, failed, cancelled, interrupted]
+        error:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              code: {type: string, minLength: 1}
+              message: {type: string, minLength: 1}
+            required: [code, message]
+            additionalProperties: false
+        parentTaskId:
+          type: [string, 'null']
+          format: uuid
+        createdBy:
+          type: string
+        requestId:
+          type: [string, 'null']
+        artifactKey:
+          type: [string, 'null']
+        artifactRunId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+          format: uuid
+        modelId:
+          type: [string, 'null']
+          format: uuid
+        featureSchemaVersion:
+          type: [string, 'null']
+        metrics:
+          type: [object, 'null']
+        createdAt: {type: string, minLength: 1}
+        updatedAt: {type: string, minLength: 1}
+        startedAt: {type: [string, 'null']}
+        deadlineAt: {type: [string, 'null']}
+        cancelRequestedAt: {type: [string, 'null']}
+        completedAt: {type: [string, 'null']}
+        queuePosition: {type: [integer, 'null'], minimum: 1}
+      required:
+      - taskId
+      - datasetVersion
+      - datasetManifest
+      - manifestSha256
+      - method
+      - metricSet
+      - status
+      - stage
+      - error
+      - parentTaskId
+      - createdBy
+      - requestId
+      - artifactKey
+      - artifactRunId
+      - runId
+      - modelId
+      - featureSchemaVersion
+      - metrics
+      - createdAt
+      - updatedAt
+      - startedAt
+      - deadlineAt
+      - cancelRequestedAt
+      - completedAt
+      - queuePosition
+      additionalProperties: false
+    TrainingTaskPage:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingTaskView'
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0}
+      required: [tasks, total, limit, offset]
+      additionalProperties: false
     DatasetImportForm:
       type: object
       properties:
@@ -6895,6 +7339,24 @@ components:
             $ref: '#/components/schemas/CurrentError'
     NotFound:
       description: 资源标识不存在。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharedError'
+    AdminRequired:
+      description: 需要有效管理员会话；不返回维护数据。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharedError'
+    TrainingConflict:
+      description: 训练任务已结束、不可重试或当前状态不允许该操作；原任务保持不变。
       headers:
         X-Request-Id:
           $ref: '#/components/headers/ProjectRequestId'

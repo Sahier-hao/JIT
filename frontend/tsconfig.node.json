@@ -26,6 +26,7 @@
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",
+    "playwright.admin-training.config.ts",
     "playwright.acceptance.config.ts",
     "playwright.project-workspace.config.ts",
     "e2e/**/*.ts"

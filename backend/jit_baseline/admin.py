@@ -39,7 +39,8 @@ def protected(path):
     return (path == '/api/review-batch' or path.startswith('/api/admin/data') or
             any(path == prefix or path.startswith(prefix + '/') for prefix in
                 ('/api/v1/models', '/api/v1/model-candidates', '/api/v1/datasets',
-                 '/api/v1/commits', '/api/v1/predictions', '/api/v1/prediction-batches', '/api/v1/feature-schemas')))
+                 '/api/v1/training-tasks', '/api/v1/commits', '/api/v1/predictions',
+                 '/api/v1/prediction-batches', '/api/v1/feature-schemas')))
 
 
 def error(code, message, status):

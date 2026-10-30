@@ -1,0 +1,12 @@
+{
+  "command": "openspec validate \"add-multi-project-training-comparison\" --type change --strict --json",
+  "issues": [],
+  "passed": true,
+  "summary": {
+    "failed": 0,
+    "passed": 1,
+    "total": 1
+  },
+  "type": "change",
+  "valid": true
+}

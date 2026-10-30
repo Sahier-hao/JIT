@@ -11,6 +11,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:admin-training": "playwright test --config=playwright.admin-training.config.ts",
     "test:e2e:acceptance": "playwright test"
   },
   "dependencies": {

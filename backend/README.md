@@ -179,6 +179,34 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 报告按项目分组；跨项目固定 `directlyRankable: false`，并列出数据集版本、特征 schema、
 标签语义（发布者 `bugcount` vs 简化 SZZ）与测试成员的差异。项目内比较沿用既有并列规则。
 
+### 四项目训练与迁移比较（add-multi-project-training-comparison）
+
+`run-multi-project` 接受恰好四个口径一致的 `kamei14-git-v1` 项目描述文件，分别执行：
+
+- `local`：目标项目 train 训练，目标 test 评价。
+- `pooled`：四项目 train 并集训练一个共享模型，分别评价四个 test。
+- `leave-one-project-out`：排除目标项目，其余三个 train 训练，目标 test 评价。
+- `global+local`：留一全局模型与目标本地模型在目标 validation 上按固定网格选择 Brier
+  最优融合权重，再评价目标 test。
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli run-multi-project `
+  --dataset-manifest data/datasets/mp-commons-lang/mp-commons-lang-2022-01-30_2024-12-27.json `
+    data/datasets/mp-vue-core/mp-vue-core-2022-01-04_2024-12-30.json `
+    data/datasets/mp-redis/mp-redis-2022-01-01_2024-12-31.json `
+    data/datasets/mp-scikit-learn/mp-scikit-learn-2022-01-02_2024-12-30.json `
+  --output artifacts/multi-project/four-projects-2022-01-01_2025-01-01 `
+  --methods logistic-regression-l2-v1 decision-tree-v1 random-forest-v1 `
+    gaussian-naive-bayes-v1 gradient-boosting-v1 `
+  --metric-set metric-set-v2
+```
+
+输出为 `<output>/multi-project-report.json`。默认方法子集是五种经典方法；全部九种方法可
+通过 `--methods` 显式选择。报告对每个方法、口径和指标给出四个项目的宏平均、总体方差、
+最差项目和未定义原因；训练、预测、融合和评价失败按目标项目隔离。`global+local` 的权重
+只读取目标验证段，报告记录网格权重、验证样本数和 Brier。结果只用于离线稳健性分析，
+不设置默认模型或自动推荐方法。
+
 ### 代码语义特征与三方案比较（add-code-semantic-features）
 
 Git 数据可以额外保存有界提交文本，再用固定版本的预训练代码模型离线生成嵌入。默认采集
@@ -295,6 +323,26 @@ CLI 与 HTTP 复用完整 verify 准入，失败不登记模型，正常失败�
 成员用 `GET /api/v1/models` 读取实际登记版本；五种方法条目不代表已有五个可用模型。
 模型目录可保存十二字段运行，但 `jsonPredictionSupported=false`，本轮新输入仅支持六字段。
 
+### 管理员训练任务（add-training-task-backend）
+
+管理员可通过受保护接口从已登记数据集和方法创建独立训练任务：
+
+| 接口 | 用途 |
+| --- | --- |
+| `POST /api/v1/training-tasks` | 提交 `{datasetVersion, method, metricSet}`，相同活动参数复用现有任务 |
+| `GET /api/v1/training-tasks` | 分页查询任务和队列位置 |
+| `GET /api/v1/training-tasks/{taskId}` | 查询状态、日志摘要、指标及数据/运行/模型谱系 |
+| `POST /api/v1/training-tasks/{taskId}/cancel` | 取消排队或运行任务 |
+| `POST /api/v1/training-tasks/{taskId}/retry` | 显式重试失败、取消或中断任务，生成父任务链接的新任务 |
+
+任务由单工作器隔离进程执行，状态为 `queued`、`running`、`succeeded`、`failed`、
+`cancelled` 或 `interrupted`。成功前必须完成训练、完整产物校验和模型目录登记；失败任务不保存
+伪指标。`runId`、`artifactRunId`、`modelId`、`datasetVersion`、`featureSchemaVersion` 和
+`artifactKey` 共同构成谱系。全部训练任务接口要求管理员会话，普通项目分析接口不能读取或控制它们。
+
+管理员任务和用户仓库强制训练共用 `TrainingExecutor`，但分别保存为 `training_task` 与
+`repository_sync`。共享执行器只负责建跑、校验和登记，不替调用方选择权限、状态机或结果归属。
+
 ### 单条 JSON 预测与结果重开
 
 预测输入有两种来源，一次请求必须恰好给出一种。
@@ -406,6 +454,21 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 临时根。`serve` 用 `JIT_CATALOG_DATABASE`／`JIT_ARTIFACT_ROOT` 指向临时根，无需配置凭证。
 `invalidate --base <base> --key baseline` 把某个副本的 `model.joblib` 改名，用来验证「模型不可用」
 路径；`restore` 改回。默认开发服务仍用 `cli serve`（端口 8000），两者互不影响，可同时运行。
+
+管理员训练工作区（`complete-admin-training-workbench`）复用同一训练任务服务：
+
+| 方法与路径 | 用途 |
+|---|---|
+| `GET /api/v1/models/{modelId}` | 管理员读取已校验模型的训练指标、数据版本、运行谱系和来源 |
+| `GET /api/v1/datasets` | 管理员读取数据集来源、标签规则和限制 |
+| `POST /api/v1/training-tasks` | 从固定数据集版本、已注册方法和指标集创建任务 |
+| `GET /api/v1/training-tasks/{taskId}` | 查询状态、排队位置、指标、失败原因和运行/模型谱系 |
+| `POST /api/v1/training-tasks/{taskId}/cancel` | 取消排队或运行任务 |
+| `POST /api/v1/training-tasks/{taskId}/retry` | 重试失败、取消或中断任务并保留父任务 |
+
+`JIT_DATASET_ROOT` 同时供数据集只读接口、仓库同步和管理员训练任务使用，避免仓库采集写到隔离目录而
+管理接口仍读取默认目录。模型详情只读取通过当前产物校验的运行摘要；产物缺失、损坏、运行或数据身份
+不一致时返回可定位错误，不回退到其他模型或示例指标。
 
 在 backend 执行：
 

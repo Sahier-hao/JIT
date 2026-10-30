@@ -103,6 +103,25 @@ def validate_response(response, path, method='get', status=200):
     return response.json()
 
 
+def test_model_detail_matches_strict_contract(settings):
+    from admin_support import AdminTestClient as TestClient
+    from jit_baseline.api import create_app
+
+    with TestClient(create_app(**settings)) as client:
+        model = register(client)
+        detail = validate_response(
+            client.get(f"/api/v1/models/{model['modelId']}"),
+            '/api/v1/models/{modelId}',
+        )
+        assert detail['modelId'] == model['modelId']
+        assert detail['artifactDatasetVersion'] == model['artifactDatasetVersion']
+        assert detail['metrics']['averagePrecision']['value'] is not None
+        assert detail['source']['files']
+        assert detail['split']
+        validator = contract_validator({'$ref': '#/components/schemas/ModelDetail'})
+        assert not validator.is_valid(dict(detail, artifactPath='/private/model'))
+
+
 @pytest.fixture
 def project_api(settings, monkeypatch):
     """复用临时模型副本，禁用后台计时，GitHub与worker均由测试显式推进。"""
