@@ -9,7 +9,7 @@ import * as SwitchPrimitive from '@radix-ui/react-switch'
 import * as Collapsible from '@radix-ui/react-collapsible'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { Check, ChevronDown, ChevronRight, Loader2, X } from 'lucide-react'
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, Ref, TextareaHTMLAttributes } from 'react'
 import { forwardRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -71,13 +71,15 @@ export function Button({ variant = 'secondary', size = 'md', type = 'button', ic
 const fieldBase = 'w-full rounded-md border border-input bg-card px-2.5 text-[13px] text-foreground placeholder:text-muted-foreground transition-colors ' +
   'focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
-export function Input({ prefix, allowClear, size, className, value, onChange, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> & {
+export function Input({ prefix, allowClear, size, className, value, onChange, ref, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> & {
   prefix?: ReactNode
   allowClear?: boolean
   size?: 'sm' | 'md'
+  ref?: Ref<HTMLInputElement>
 }) {
   const input = <input
     {...rest}
+    ref={ref}
     value={value}
     onChange={onChange}
     className={cn('ui-input', fieldBase, size === 'sm' ? 'h-[26px] text-xs' : 'h-[30px]',

@@ -40,6 +40,12 @@
 - **样式守卫随结构调整**：`tokens.test.ts`、`contrast.test.ts` 改为识别新的根选择器；`chartTokens.test.ts` 增加 `TrendPanels.tsx` 作为图表令牌的引用来源。
 - **验证**：前端全量 **38 个文件、306 项通过**；类型检查、构建通过；浏览器确认四个主题按钮存在且 `steel`、`paper`、`concrete` 切换后背景色与 `data-theme` 一致，无控制台错误。
 
+## 数据层与表单
+
+- 引入 TanStack Query：`lib/queryClient.ts` 统一关闭自动重试与窗口聚焦重取；`useRepositories` 与 `useRepository` 改为 `useQuery`，保留原有 `{ state, items/repository, error, retry }` 返回结构，页面无需改动。项目增删改仍由 `PROJECTS_CHANGED` 事件触发失效重读；进行中的分析沿用 1.5 秒轮询、空闲 15 秒。
+- 测试基建：新增 `src/test-utils.tsx`，为直接渲染页面的测试提供独立 `QueryClient`；`ProductWorkspace` 等渲染 `App` 的测试使用应用内 provider。`test-setup.ts` 在每个用例后清空缓存。
+- 新建项目表单改用 `react-hook-form`：地址校验、提交中状态与服务器错误提示保持原行为；`ui/controls` 的 `Input` 支持 ref 转发以配合表单注册。
+
 ## 未验证与边界
 
 - 未在本轮重跑隔离浏览器 E2E（桌面 1440 与手机 390）；需要在本机启动后端后执行。

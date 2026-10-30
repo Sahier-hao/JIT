@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'
+import { queryClient } from './lib/queryClient'
 
 // antd 的弹层组件在 jsdom 下需要这两个浏览器 API，否则打开 Select 下拉会抛
 // ReferenceError: ResizeObserver is not defined。
@@ -31,4 +32,4 @@ if (!window.matchMedia) {
   }) as unknown as MediaQueryList
 }
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); queryClient.clear() })

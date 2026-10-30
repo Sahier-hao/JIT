@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './lib/queryClient'
 import { AppShell } from './AppShell'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useRoute, type Route } from './navigation'
@@ -21,7 +23,7 @@ const ProjectEvents = lazy(() => import('./components/ProjectActivity').then(mod
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
-  return <RouterProvider router={router}/>
+  return <QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>
 }
 
 function Workspace() {
