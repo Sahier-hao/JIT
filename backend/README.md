@@ -323,6 +323,26 @@ CLI 与 HTTP 复用完整 verify 准入，失败不登记模型，正常失败�
 成员用 `GET /api/v1/models` 读取实际登记版本；五种方法条目不代表已有五个可用模型。
 模型目录可保存十二字段运行，但 `jsonPredictionSupported=false`，本轮新输入仅支持六字段。
 
+### 管理员训练任务（add-training-task-backend）
+
+管理员可通过受保护接口从已登记数据集和方法创建独立训练任务：
+
+| 接口 | 用途 |
+| --- | --- |
+| `POST /api/v1/training-tasks` | 提交 `{datasetVersion, method, metricSet}`，相同活动参数复用现有任务 |
+| `GET /api/v1/training-tasks` | 分页查询任务和队列位置 |
+| `GET /api/v1/training-tasks/{taskId}` | 查询状态、日志摘要、指标及数据/运行/模型谱系 |
+| `POST /api/v1/training-tasks/{taskId}/cancel` | 取消排队或运行任务 |
+| `POST /api/v1/training-tasks/{taskId}/retry` | 显式重试失败、取消或中断任务，生成父任务链接的新任务 |
+
+任务由单工作器隔离进程执行，状态为 `queued`、`running`、`succeeded`、`failed`、
+`cancelled` 或 `interrupted`。成功前必须完成训练、完整产物校验和模型目录登记；失败任务不保存
+伪指标。`runId`、`artifactRunId`、`modelId`、`datasetVersion`、`featureSchemaVersion` 和
+`artifactKey` 共同构成谱系。全部训练任务接口要求管理员会话，普通项目分析接口不能读取或控制它们。
+
+管理员任务和用户仓库强制训练共用 `TrainingExecutor`，但分别保存为 `training_task` 与
+`repository_sync`。共享执行器只负责建跑、校验和登记，不替调用方选择权限、状态机或结果归属。
+
 ### 单条 JSON 预测与结果重开
 
 预测输入有两种来源，一次请求必须恰好给出一种。

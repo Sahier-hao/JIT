@@ -1,0 +1,14 @@
+{
+  "anonymousApi": "401",
+  "concurrentActiveTask": "reused",
+  "crossOriginWrite": "403",
+  "failure": "stage, code and message retained; no metrics or lineage",
+  "globalErrorEnvelopes": "covered by API tests",
+  "interruptedRecovery": "explicit retry required; no automatic rerun",
+  "queueCancellation": "immediate and idempotent",
+  "realIsolatedTraining": "succeeded with metrics and model lineage",
+  "retry": "new task with parentTaskId; original immutable",
+  "runningCancellation": "owned process tree stopped",
+  "success": "metrics, dataset, artifactRunId, runId, modelId and schema persisted",
+  "terminalProtection": "late results cannot overwrite terminal state"
+}

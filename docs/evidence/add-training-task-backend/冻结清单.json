@@ -1,0 +1,54 @@
+{
+  "copiedFromWorkspace": [
+    "018_training_tasks.sql",
+    "openapi.yaml",
+    "README.md",
+    "verification/lifecycle-scenarios.json",
+    "verification/openspec-validation.json",
+    "verification/pytest.xml",
+    "verification/shared-executor.json",
+    "verification.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 8,
+  "files": [
+    {
+      "path": "018_training_tasks.sql",
+      "sha256": "4aca057ed89e0dacc8da2b65532db42d3d1161494650333c3e4c5969f79b9b1b"
+    },
+    {
+      "path": "openapi.yaml",
+      "sha256": "8e69cece62fbf789efe19bc509ea0cdada8cee074b6cb9288232d5d33ae418e2"
+    },
+    {
+      "path": "README.md",
+      "sha256": "2fe20ead1da2d6ed7209b0b6e9ebf2c34bc58a404dbf1bee83e169adcda19a82"
+    },
+    {
+      "path": "verification/lifecycle-scenarios.json",
+      "sha256": "d1562b6fdddc9df08c7de8d3ccd6a85085b7f196784b8ceb3ac3a6d11a724f00"
+    },
+    {
+      "path": "verification/openspec-validation.json",
+      "sha256": "10a9894c3be6c69f1796b34a2f1b338ebdca461ab82c1f1a7dade77d6e66726f"
+    },
+    {
+      "path": "verification/pytest.xml",
+      "sha256": "a987d5417c1ee5a30731543e5890fea962de3bb8916ac3bcfb721ad7f3510025"
+    },
+    {
+      "path": "verification/shared-executor.json",
+      "sha256": "fab6e0196f4b7bfc5e18a137104294b08eb43ffd0e9b016c68fd31db9cc8c7d7"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "71c9e8564a2c3104b3009c3eff80e44161134cc02183122edde206b421addfba"
+    }
+  ],
+  "frozenUtc": "2026-10-30T11:52:10.220859+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "026fe5fde5ad59a49e167e6ab4f02818500ba8946484463e6625c42f0e2a810f",
+  "workspace": "docs/evidence/_run/add-training-task-backend"
+}
