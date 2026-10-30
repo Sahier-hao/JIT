@@ -53,6 +53,16 @@ def main():
     suite.add_argument("--methods", nargs="*", default=None,
                        help="方法子集；省略表示全部已注册方法")
     suite.add_argument("--metric-set", default=None, help="默认 metric-set-v2")
+    benchmark_import = commands.add_parser("import-benchmark")
+    benchmark_import.add_argument("--source", choices=("jit-fine-v1",), required=True)
+    benchmark_import.add_argument("--input", type=Path, required=True,
+                                  help="固定 JIT-Fine data.zip 快照")
+    benchmark_import.add_argument("--output", type=Path, required=True,
+                                  help="规范化 CSV 输出路径")
+    benchmark_import.add_argument("--dataset", default="jit-fine-kamei14")
+    benchmark_import.add_argument("--version", default=None)
+    benchmark_import.add_argument("--root", type=Path, default=None,
+                                  help="数据集描述文件根目录；默认 backend/data/datasets")
     embeddings = commands.add_parser("build-embeddings")
     embeddings.add_argument("--text", type=Path, required=True)
     embeddings.add_argument("--output", type=Path, required=True)
@@ -169,6 +179,10 @@ def main():
             write_json(args.report, result)
         elif args.command == "run-suite":
             result = run_suite(args.dataset_manifest, args.output, args.methods, args.metric_set)
+        elif args.command == "import-benchmark":
+            from .benchmark import import_jit_fine
+            result = import_jit_fine(args.input, args.output, dataset=args.dataset,
+                                     version=args.version, root=args.root)
         elif args.command == "compare-projects":
             result = compare_projects(args.suites)
             args.report.parent.mkdir(parents=True, exist_ok=True)

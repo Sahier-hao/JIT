@@ -1,0 +1,5903 @@
+{
+  "algorithmVersion": "gradient-boosting-v1",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1554589287,
+    "maxChurnInclusive": 9650,
+    "maxFilesInclusive": 97,
+    "startEpochInclusive": 985670757
+  },
+  "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+  "featureSchema": {
+    "inModel": [
+      "ns",
+      "nd",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "rexp",
+      "sexp"
+    ],
+    "name": "kamei14-benchmark-v1",
+    "unavailable": []
+  },
+  "features": [
+    "ns",
+    "nd",
+    "nf",
+    "entropy",
+    "la",
+    "ld",
+    "lt",
+    "fix",
+    "ndev",
+    "age",
+    "nuc",
+    "exp",
+    "rexp",
+    "sexp"
+  ],
+  "limitations": [
+    "特征为具名 schema kamei14-benchmark-v1（ns、nd、nf、entropy、la、ld、lt、fix、ndev、age、nuc、exp、rexp、sexp），Kamei14 专家字段完整；预测解释由服务端按遮挡法实时计算，不在此产物内冻结。",
+    "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+    "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+    "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+    "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+    "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+  ],
+  "metricSet": "metric-set-v2",
+  "metrics": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.10824244311286217
+    },
+    "confusion": {
+      "fn": 151,
+      "fp": 26,
+      "tn": 3661,
+      "tp": 5
+    },
+    "counts": {
+      "negative": 3687,
+      "positive": 156,
+      "records": 3843
+    },
+    "effort": {
+      "budgetLoc": 132919.80000000002,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 57,
+      "totalLoc": 664599,
+      "usedLoc": 131374
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.053475935828877004
+    },
+    "ifa": {
+      "reason": null,
+      "value": 8
+    },
+    "popt": {
+      "reason": null,
+      "value": 0.7788125061386646
+    },
+    "poptEffort": {
+      "areaModel": 0.7695015658372112,
+      "areaOracle": 0.9833025059915657,
+      "areaWorst": 0.016697494008436158,
+      "name": "Popt (density-ranked, full-range)",
+      "ordering": "density-desc,time-desc,id-asc",
+      "policy": "trapezoid-full-range",
+      "totalLoc": 664599
+    },
+    "precision": {
+      "reason": null,
+      "value": 0.16129032258064516
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.03205128205128205
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.057692307692307696
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 156,
+          "fp": 0,
+          "tn": 3687,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.04059328649492584
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.7081168763430765
+    },
+    "threshold": 0.5
+  },
+  "model": {
+    "id": "gradient-boosting@kamei14-benchmark-v1",
+    "name": "梯度提升树 · kamei14-benchmark-v1"
+  },
+  "modelSha256": "38effe27ec1a5bbd6041389c9c6004f34fc006ed1b8ecfbd0556084c460b1f06",
+  "protocolVersion": "kamei14-benchmark-v1",
+  "runId": "e39400be1d92902c4f187b8dcf1bcfac93e05691e06f11a846f9180e0ee83324",
+  "source": {
+    "citation": "Ni et al. (2022), The Best of Both Worlds: Integrating Semantic Features with Expert Features for Defect Prediction and Localization, FSE.",
+    "files": {
+      "jit-fine-kamei14.csv": {
+        "bytes": 3875947,
+        "sha256": "89a0715bd82e87dc283933b7420453a365861dbf02082bd8bc06ca63c056a0d4",
+        "url": "https://github.com/jacknichao/JIT-Fine"
+      }
+    },
+    "labelRule": "is_buggy_commit in {0, 1}; transported as bugcount only for the canonical CSV contract",
+    "publisher": "JIT-Fine / JIT-Defect4J",
+    "quality": {
+      "blankLabels": 0,
+      "excluded": {
+        "missingRequiredField": 0,
+        "noAddedLines": 64,
+        "outsideWindow": 0,
+        "tooManyFiles": 0,
+        "tooMuchChurn": 0
+      },
+      "featureMissing": {
+        "age": 0,
+        "entropy": 0,
+        "exp": 0,
+        "fix": 0,
+        "la": 0,
+        "ld": 0,
+        "lt": 0,
+        "nd": 0,
+        "ndev": 0,
+        "nf": 0,
+        "ns": 0,
+        "nuc": 0,
+        "rexp": 0,
+        "sexp": 0
+      },
+      "includedRows": 25602,
+      "positiveLabels": 2217,
+      "rawRows": 25666
+    },
+    "revision": "584799fdec6095ab75a45fd2a5f8db5b12163aa5",
+    "sha256": "89a0715bd82e87dc283933b7420453a365861dbf02082bd8bc06ca63c056a0d4",
+    "url": "https://github.com/jacknichao/JIT-Fine"
+  },
+  "split": {
+    "test": {
+      "count": 3843,
+      "end": "2019-04-06T22:21:26Z",
+      "positiveCount": 156,
+      "start": "2015-06-04T13:04:43Z"
+    },
+    "train": {
+      "count": 17912,
+      "end": "2013-08-10T16:41:19Z",
+      "positiveCount": 1751,
+      "start": "2001-03-27T05:25:57Z"
+    },
+    "validation": {
+      "count": 3847,
+      "end": "2015-06-04T12:26:19Z",
+      "positiveCount": 310,
+      "start": "2013-08-10T16:44:04Z"
+    }
+  },
+  "threshold": 0.5,
+  "trainingSeconds": 12.493513,
+  "trendBuckets": {
+    "buckets": [
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 2,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 2,
+        "end": "2001-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 2 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 22,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 22,
+        "end": "2001-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09090909090909091
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2001-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 25,
+            "positives": 1
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 25,
+        "end": "2001-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.04
+        },
+        "positives": 1,
+        "risk": null,
+        "start": "2001-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 3,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 3,
+        "end": "2001-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 3 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 3,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 3,
+        "end": "2001-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 3 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 30,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 30,
+        "end": "2001-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 20,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 20,
+        "end": "2001-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 8,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 8,
+        "end": "2001-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 8 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 12,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 12,
+        "end": "2001-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 12 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2001-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 17,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 17,
+        "end": "2002-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 17 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2001-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 50,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 50,
+        "end": "2002-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.04
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2002-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 85,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 85,
+        "end": "2002-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.023529411764705882
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2002-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 86,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 86,
+        "end": "2002-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.023255813953488372
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2002-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 65,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 65,
+        "end": "2002-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.2
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2002-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 69,
+            "positives": 4
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 69,
+        "end": "2002-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.057971014492753624
+        },
+        "positives": 4,
+        "risk": null,
+        "start": "2002-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 66,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 66,
+        "end": "2002-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07575757575757576
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2002-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 66,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 66,
+        "end": "2002-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07575757575757576
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2002-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 117,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 117,
+        "end": "2002-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05128205128205128
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2002-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 68,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 68,
+        "end": "2002-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07352941176470588
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2002-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 96,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 96,
+        "end": "2002-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.10416666666666667
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2002-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 127,
+            "positives": 1
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 127,
+        "end": "2002-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.007874015748031496
+        },
+        "positives": 1,
+        "risk": null,
+        "start": "2002-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 68,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 68,
+        "end": "2003-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.04411764705882353
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2002-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 96,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 96,
+        "end": "2003-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.052083333333333336
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2003-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 66,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 66,
+        "end": "2003-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.045454545454545456
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2003-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 84,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 84,
+        "end": "2003-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08333333333333333
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2003-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 89,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 89,
+        "end": "2003-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.033707865168539325
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2003-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 197,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 197,
+        "end": "2003-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.04060913705583756
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2003-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 127,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 127,
+        "end": "2003-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05511811023622047
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2003-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 161,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 161,
+        "end": "2003-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.043478260869565216
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2003-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 169,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 169,
+        "end": "2003-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05917159763313609
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2003-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 105,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 105,
+        "end": "2003-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.01904761904761905
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2003-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 120,
+            "positives": 1
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 120,
+        "end": "2003-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.008333333333333333
+        },
+        "positives": 1,
+        "risk": null,
+        "start": "2003-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 148,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 148,
+        "end": "2003-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05405405405405406
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2003-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 124,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 124,
+        "end": "2004-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2003-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 114,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 114,
+        "end": "2004-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06140350877192982
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2004-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 81,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 81,
+        "end": "2004-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07407407407407407
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2004-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 87,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 87,
+        "end": "2004-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05747126436781609
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2004-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 131,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 131,
+        "end": "2004-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03816793893129771
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2004-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 158,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 158,
+        "end": "2004-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12025316455696203
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2004-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 198,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 198,
+        "end": "2004-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06060606060606061
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2004-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 155,
+            "positives": 11
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 155,
+        "end": "2004-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07096774193548387
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2004-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 52,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 52,
+        "end": "2004-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11538461538461539
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2004-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 93,
+            "positives": 11
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 93,
+        "end": "2004-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11827956989247312
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2004-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 94,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 94,
+        "end": "2004-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.13829787234042554
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2004-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 38,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 38,
+        "end": "2004-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07894736842105263
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2004-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 47,
+            "positives": 9
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 47,
+        "end": "2005-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.19148936170212766
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2004-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 113,
+            "positives": 4
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 113,
+        "end": "2005-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.035398230088495575
+        },
+        "positives": 4,
+        "risk": null,
+        "start": "2005-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 87,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 87,
+        "end": "2005-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08045977011494253
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2005-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 39,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 39,
+        "end": "2005-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2005-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 38,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 38,
+        "end": "2005-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07894736842105263
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2005-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 51,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 51,
+        "end": "2005-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11764705882352941
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2005-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 75,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 75,
+        "end": "2005-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.21333333333333335
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2005-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 78,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 78,
+        "end": "2005-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2005-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 172,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 172,
+        "end": "2005-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11046511627906977
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2005-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 76,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 76,
+        "end": "2005-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.17105263157894737
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2005-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 103,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 103,
+        "end": "2005-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1262135922330097
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2005-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 42,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 42,
+        "end": "2005-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11904761904761904
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2005-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 38,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 38,
+        "end": "2006-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.15789473684210525
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2005-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 143,
+            "positives": 41
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 143,
+        "end": "2006-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.2867132867132867
+        },
+        "positives": 41,
+        "risk": null,
+        "start": "2006-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 97,
+            "positives": 17
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 97,
+        "end": "2006-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.17525773195876287
+        },
+        "positives": 17,
+        "risk": null,
+        "start": "2006-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 112,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 112,
+        "end": "2006-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11607142857142858
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2006-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 99,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 99,
+        "end": "2006-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.16161616161616163
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2006-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 48,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 48,
+        "end": "2006-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.25
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2006-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 58,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 58,
+        "end": "2006-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.20689655172413793
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2006-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 90,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 90,
+        "end": "2006-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.14444444444444443
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2006-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 183,
+            "positives": 31
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 183,
+        "end": "2006-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.16939890710382513
+        },
+        "positives": 31,
+        "risk": null,
+        "start": "2006-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 68,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 68,
+        "end": "2006-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.23529411764705882
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2006-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 77,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 77,
+        "end": "2006-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.16883116883116883
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2006-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 97,
+            "positives": 14
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 97,
+        "end": "2006-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.14432989690721648
+        },
+        "positives": 14,
+        "risk": null,
+        "start": "2006-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 90,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 90,
+        "end": "2007-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07777777777777778
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2006-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 60,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 60,
+        "end": "2007-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08333333333333333
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2007-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 59,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 59,
+        "end": "2007-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11864406779661017
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2007-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 91,
+            "positives": 22
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 91,
+        "end": "2007-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.24175824175824176
+        },
+        "positives": 22,
+        "risk": null,
+        "start": "2007-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 61,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 61,
+        "end": "2007-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.19672131147540983
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2007-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 100,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 100,
+        "end": "2007-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.19
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2007-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 92,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 92,
+        "end": "2007-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.20652173913043478
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2007-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 70,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 70,
+        "end": "2007-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11428571428571428
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2007-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 40,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 40,
+        "end": "2007-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.125
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2007-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 35,
+            "positives": 4
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 35,
+        "end": "2007-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11428571428571428
+        },
+        "positives": 4,
+        "risk": null,
+        "start": "2007-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 101,
+            "positives": 14
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 101,
+        "end": "2007-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.13861386138613863
+        },
+        "positives": 14,
+        "risk": null,
+        "start": "2007-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 107,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 107,
+        "end": "2007-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.17757009345794392
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2007-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 89,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 89,
+        "end": "2008-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.16853932584269662
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2007-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 168,
+            "positives": 14
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 168,
+        "end": "2008-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08333333333333333
+        },
+        "positives": 14,
+        "risk": null,
+        "start": "2008-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 133,
+            "positives": 23
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 133,
+        "end": "2008-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.17293233082706766
+        },
+        "positives": 23,
+        "risk": null,
+        "start": "2008-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 138,
+            "positives": 32
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 138,
+        "end": "2008-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.2318840579710145
+        },
+        "positives": 32,
+        "risk": null,
+        "start": "2008-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 113,
+            "positives": 14
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 113,
+        "end": "2008-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12389380530973451
+        },
+        "positives": 14,
+        "risk": null,
+        "start": "2008-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 77,
+            "positives": 9
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 77,
+        "end": "2008-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11688311688311688
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2008-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 87,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 87,
+        "end": "2008-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1724137931034483
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2008-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 82,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 82,
+        "end": "2008-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12195121951219512
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2008-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 67,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 67,
+        "end": "2008-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.22388059701492538
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2008-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 52,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 52,
+        "end": "2008-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.25
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2008-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 55,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 55,
+        "end": "2008-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.18181818181818182
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2008-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 90,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 90,
+        "end": "2008-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.16666666666666666
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2008-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 105,
+            "positives": 18
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 105,
+        "end": "2009-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.17142857142857143
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2008-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 128,
+            "positives": 18
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 128,
+        "end": "2009-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.140625
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2009-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 147,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 147,
+        "end": "2009-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.10884353741496598
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2009-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 260,
+            "positives": 32
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 260,
+        "end": "2009-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12307692307692308
+        },
+        "positives": 32,
+        "risk": null,
+        "start": "2009-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 197,
+            "positives": 18
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 197,
+        "end": "2009-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09137055837563451
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2009-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 82,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 82,
+        "end": "2009-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08536585365853659
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2009-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 149,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 149,
+        "end": "2009-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12751677852348994
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2009-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 127,
+            "positives": 9
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 127,
+        "end": "2009-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07086614173228346
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2009-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 82,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 82,
+        "end": "2009-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.14634146341463414
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2009-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 195,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 195,
+        "end": "2009-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2009-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 142,
+            "positives": 11
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 142,
+        "end": "2009-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07746478873239436
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2009-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 115,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 115,
+        "end": "2009-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08695652173913043
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2009-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 76,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 76,
+        "end": "2010-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.13157894736842105
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2009-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 161,
+            "positives": 9
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 161,
+        "end": "2010-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.055900621118012424
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2010-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 72,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 72,
+        "end": "2010-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09722222222222222
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2010-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 153,
+            "positives": 11
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 153,
+        "end": "2010-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0718954248366013
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2010-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 29,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 29,
+        "end": "2010-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06896551724137931
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2010-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 53,
+            "positives": 3
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 53,
+        "end": "2010-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05660377358490566
+        },
+        "positives": 3,
+        "risk": null,
+        "start": "2010-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 62,
+            "positives": 11
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 62,
+        "end": "2010-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1774193548387097
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2010-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 74,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 74,
+        "end": "2010-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06756756756756757
+        },
+        "positives": 5,
+        "risk": null,
+        "start": "2010-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 71,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 71,
+        "end": "2010-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.028169014084507043
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2010-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 130,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 130,
+        "end": "2010-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09230769230769231
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2010-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 180,
+            "positives": 10
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 180,
+        "end": "2010-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05555555555555555
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2010-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 167,
+            "positives": 11
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 167,
+        "end": "2010-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0658682634730539
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2010-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 84,
+            "positives": 6
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 84,
+        "end": "2011-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07142857142857142
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2010-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 322,
+            "positives": 20
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 322,
+        "end": "2011-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.062111801242236024
+        },
+        "positives": 20,
+        "risk": null,
+        "start": "2011-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 273,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 273,
+        "end": "2011-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.02564102564102564
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2011-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 337,
+            "positives": 23
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 337,
+        "end": "2011-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06824925816023739
+        },
+        "positives": 23,
+        "risk": null,
+        "start": "2011-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 170,
+            "positives": 7
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 170,
+        "end": "2011-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.041176470588235294
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2011-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 408,
+            "positives": 21
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 408,
+        "end": "2011-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.051470588235294115
+        },
+        "positives": 21,
+        "risk": null,
+        "start": "2011-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 174,
+            "positives": 18
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 174,
+        "end": "2011-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.10344827586206896
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2011-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 327,
+            "positives": 26
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 327,
+        "end": "2011-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07951070336391437
+        },
+        "positives": 26,
+        "risk": null,
+        "start": "2011-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 336,
+            "positives": 37
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 336,
+        "end": "2011-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11011904761904762
+        },
+        "positives": 37,
+        "risk": null,
+        "start": "2011-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 152,
+            "positives": 9
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 152,
+        "end": "2011-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05921052631578947
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2011-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 156,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 156,
+        "end": "2011-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2011-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 270,
+            "positives": 33
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 270,
+        "end": "2011-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12222222222222222
+        },
+        "positives": 33,
+        "risk": null,
+        "start": "2011-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 201,
+            "positives": 17
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 201,
+        "end": "2012-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0845771144278607
+        },
+        "positives": 17,
+        "risk": null,
+        "start": "2011-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 126,
+            "positives": 17
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 126,
+        "end": "2012-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1349206349206349
+        },
+        "positives": 17,
+        "risk": null,
+        "start": "2012-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 188,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 188,
+        "end": "2012-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0797872340425532
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2012-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 270,
+            "positives": 22
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 270,
+        "end": "2012-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08148148148148149
+        },
+        "positives": 22,
+        "risk": null,
+        "start": "2012-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 190,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 190,
+        "end": "2012-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07894736842105263
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2012-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 168,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 168,
+        "end": "2012-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07142857142857142
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2012-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 134,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 134,
+        "end": "2012-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08955223880597014
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2012-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 220,
+            "positives": 19
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 220,
+        "end": "2012-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08636363636363636
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2012-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 253,
+            "positives": 33
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 253,
+        "end": "2012-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.13043478260869565
+        },
+        "positives": 33,
+        "risk": null,
+        "start": "2012-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 244,
+            "positives": 28
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 244,
+        "end": "2012-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11475409836065574
+        },
+        "positives": 28,
+        "risk": null,
+        "start": "2012-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 190,
+            "positives": 15
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 190,
+        "end": "2012-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07894736842105263
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2012-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 229,
+            "positives": 21
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 229,
+        "end": "2012-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09170305676855896
+        },
+        "positives": 21,
+        "risk": null,
+        "start": "2012-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 141,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 141,
+        "end": "2013-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11347517730496454
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2012-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 192,
+            "positives": 22
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 192,
+        "end": "2013-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11458333333333333
+        },
+        "positives": 22,
+        "risk": null,
+        "start": "2013-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 161,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 161,
+        "end": "2013-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09937888198757763
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2013-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 260,
+            "positives": 24
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 260,
+        "end": "2013-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09230769230769231
+        },
+        "positives": 24,
+        "risk": null,
+        "start": "2013-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 304,
+            "positives": 34
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 304,
+        "end": "2013-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1118421052631579
+        },
+        "positives": 34,
+        "risk": null,
+        "start": "2013-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 211,
+            "positives": 17
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 211,
+        "end": "2013-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08056872037914692
+        },
+        "positives": 17,
+        "risk": null,
+        "start": "2013-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 159,
+            "positives": 14
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 159,
+        "end": "2013-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0880503144654088
+        },
+        "positives": 14,
+        "risk": null,
+        "start": "2013-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 166,
+            "positives": 16
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 166,
+        "end": "2013-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0963855421686747
+        },
+        "positives": 16,
+        "risk": null,
+        "start": "2013-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 59,
+            "positives": 5
+          },
+          "validation": {
+            "commits": 107,
+            "positives": 9
+          }
+        },
+        "commits": 166,
+        "end": "2013-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08433734939759036
+        },
+        "positives": 14,
+        "risk": null,
+        "start": "2013-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 218,
+            "positives": 18
+          }
+        },
+        "commits": 218,
+        "end": "2013-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08256880733944955
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2013-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 247,
+            "positives": 18
+          }
+        },
+        "commits": 247,
+        "end": "2013-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0728744939271255
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2013-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 228,
+            "positives": 6
+          }
+        },
+        "commits": 228,
+        "end": "2013-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.02631578947368421
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2013-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 265,
+            "positives": 19
+          }
+        },
+        "commits": 265,
+        "end": "2014-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07169811320754717
+        },
+        "positives": 19,
+        "risk": null,
+        "start": "2013-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 312,
+            "positives": 38
+          }
+        },
+        "commits": 312,
+        "end": "2014-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12179487179487179
+        },
+        "positives": 38,
+        "risk": null,
+        "start": "2014-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 358,
+            "positives": 36
+          }
+        },
+        "commits": 358,
+        "end": "2014-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1005586592178771
+        },
+        "positives": 36,
+        "risk": null,
+        "start": "2014-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 192,
+            "positives": 17
+          }
+        },
+        "commits": 192,
+        "end": "2014-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08854166666666667
+        },
+        "positives": 17,
+        "risk": null,
+        "start": "2014-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 310,
+            "positives": 20
+          }
+        },
+        "commits": 310,
+        "end": "2014-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "positives": 20,
+        "risk": null,
+        "start": "2014-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 171,
+            "positives": 15
+          }
+        },
+        "commits": 171,
+        "end": "2014-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08771929824561403
+        },
+        "positives": 15,
+        "risk": null,
+        "start": "2014-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 120,
+            "positives": 11
+          }
+        },
+        "commits": 120,
+        "end": "2014-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09166666666666666
+        },
+        "positives": 11,
+        "risk": null,
+        "start": "2014-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 129,
+            "positives": 10
+          }
+        },
+        "commits": 129,
+        "end": "2014-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07751937984496124
+        },
+        "positives": 10,
+        "risk": null,
+        "start": "2014-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 68,
+            "positives": 6
+          }
+        },
+        "commits": 68,
+        "end": "2014-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08823529411764706
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2014-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 62,
+            "positives": 7
+          }
+        },
+        "commits": 62,
+        "end": "2014-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11290322580645161
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2014-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 100,
+            "positives": 6
+          }
+        },
+        "commits": 100,
+        "end": "2014-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2014-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 82,
+            "positives": 7
+          }
+        },
+        "commits": 82,
+        "end": "2014-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08536585365853659
+        },
+        "positives": 7,
+        "risk": null,
+        "start": "2014-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 155,
+            "positives": 12
+          }
+        },
+        "commits": 155,
+        "end": "2015-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07741935483870968
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2014-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 238,
+            "positives": 18
+          }
+        },
+        "commits": 238,
+        "end": "2015-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07563025210084033
+        },
+        "positives": 18,
+        "risk": null,
+        "start": "2015-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 94,
+            "positives": 6
+          }
+        },
+        "commits": 94,
+        "end": "2015-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06382978723404255
+        },
+        "positives": 6,
+        "risk": null,
+        "start": "2015-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 87,
+            "positives": 9
+          }
+        },
+        "commits": 87,
+        "end": "2015-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.10344827586206896
+        },
+        "positives": 9,
+        "risk": null,
+        "start": "2015-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 121,
+            "positives": 8
+          }
+        },
+        "commits": 121,
+        "end": "2015-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.06611570247933884
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2015-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 161,
+            "positives": 12
+          }
+        },
+        "commits": 161,
+        "end": "2015-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07453416149068323
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2015-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 116,
+            "positives": 5
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 22,
+            "positives": 2
+          }
+        },
+        "commits": 138,
+        "end": "2015-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.050724637681159424
+        },
+        "positives": 7,
+        "risk": {
+          "count": 116,
+          "median": 0.07542921473407194,
+          "p90": 0.2897629376046002,
+          "reason": null
+        },
+        "start": "2015-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 75,
+            "positives": 8
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 75,
+        "end": "2015-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.10666666666666667
+        },
+        "positives": 8,
+        "risk": {
+          "count": 75,
+          "median": 0.04860515440842072,
+          "p90": 0.22458323592486523,
+          "reason": null
+        },
+        "start": "2015-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 277,
+            "positives": 13
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 277,
+        "end": "2015-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.04693140794223827
+        },
+        "positives": 13,
+        "risk": {
+          "count": 277,
+          "median": 0.03317824750990235,
+          "p90": 0.11388890597967646,
+          "reason": null
+        },
+        "start": "2015-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 108,
+            "positives": 10
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 108,
+        "end": "2015-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09259259259259259
+        },
+        "positives": 10,
+        "risk": {
+          "count": 108,
+          "median": 0.04305109277748677,
+          "p90": 0.17316324727261412,
+          "reason": null
+        },
+        "start": "2015-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 37,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 37,
+        "end": "2015-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05405405405405406
+        },
+        "positives": 2,
+        "risk": {
+          "count": 37,
+          "median": 0.06613715352077905,
+          "p90": 0.15645438373009135,
+          "reason": null
+        },
+        "start": "2015-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 111,
+            "positives": 11
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 111,
+        "end": "2015-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0990990990990991
+        },
+        "positives": 11,
+        "risk": {
+          "count": 111,
+          "median": 0.041509895891735815,
+          "p90": 0.17942592334249055,
+          "reason": null
+        },
+        "start": "2015-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 93,
+            "positives": 8
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 93,
+        "end": "2016-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08602150537634409
+        },
+        "positives": 8,
+        "risk": {
+          "count": 93,
+          "median": 0.04610419894353907,
+          "p90": 0.2244951861895517,
+          "reason": null
+        },
+        "start": "2015-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 173,
+            "positives": 5
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 173,
+        "end": "2016-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.028901734104046242
+        },
+        "positives": 5,
+        "risk": {
+          "count": 173,
+          "median": 0.028101329692054967,
+          "p90": 0.1106374787561501,
+          "reason": null
+        },
+        "start": "2016-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 69,
+            "positives": 3
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 69,
+        "end": "2016-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.043478260869565216
+        },
+        "positives": 3,
+        "risk": {
+          "count": 69,
+          "median": 0.043800862781973114,
+          "p90": 0.19034682745312423,
+          "reason": null
+        },
+        "start": "2016-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 55,
+            "positives": 7
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 55,
+        "end": "2016-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12727272727272726
+        },
+        "positives": 7,
+        "risk": {
+          "count": 55,
+          "median": 0.08122001444061555,
+          "p90": 0.28797621418751923,
+          "reason": null
+        },
+        "start": "2016-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 90,
+            "positives": 3
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 90,
+        "end": "2016-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03333333333333333
+        },
+        "positives": 3,
+        "risk": {
+          "count": 90,
+          "median": 0.04869489506097059,
+          "p90": 0.195393642880293,
+          "reason": null
+        },
+        "start": "2016-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 174,
+            "positives": 5
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 174,
+        "end": "2016-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.028735632183908046
+        },
+        "positives": 5,
+        "risk": {
+          "count": 174,
+          "median": 0.04861605640148742,
+          "p90": 0.1949763294751538,
+          "reason": null
+        },
+        "start": "2016-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 88,
+            "positives": 4
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 88,
+        "end": "2016-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.045454545454545456
+        },
+        "positives": 4,
+        "risk": {
+          "count": 88,
+          "median": 0.036683342253565496,
+          "p90": 0.12170010764751499,
+          "reason": null
+        },
+        "start": "2016-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 56,
+            "positives": 4
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 56,
+        "end": "2016-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.07142857142857142
+        },
+        "positives": 4,
+        "risk": {
+          "count": 56,
+          "median": 0.05083821288279122,
+          "p90": 0.16517437723050174,
+          "reason": null
+        },
+        "start": "2016-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 56,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 56,
+        "end": "2016-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03571428571428571
+        },
+        "positives": 2,
+        "risk": {
+          "count": 56,
+          "median": 0.05132634316771582,
+          "p90": 0.16949017332533783,
+          "reason": null
+        },
+        "start": "2016-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 72,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 72,
+        "end": "2016-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 72,
+          "median": 0.04306521292445825,
+          "p90": 0.14901792144287587,
+          "reason": null
+        },
+        "start": "2016-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 80,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 80,
+        "end": "2016-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.025
+        },
+        "positives": 2,
+        "risk": {
+          "count": 80,
+          "median": 0.04619880010532058,
+          "p90": 0.19337762927999327,
+          "reason": null
+        },
+        "start": "2016-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 89,
+            "positives": 5
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 89,
+        "end": "2016-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.056179775280898875
+        },
+        "positives": 5,
+        "risk": {
+          "count": 89,
+          "median": 0.04425187113681187,
+          "p90": 0.17870766859426573,
+          "reason": null
+        },
+        "start": "2016-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 102,
+            "positives": 10
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 102,
+        "end": "2017-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09803921568627451
+        },
+        "positives": 10,
+        "risk": {
+          "count": 102,
+          "median": 0.040081566930309676,
+          "p90": 0.13665279548622294,
+          "reason": null
+        },
+        "start": "2016-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 150,
+            "positives": 8
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 150,
+        "end": "2017-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05333333333333334
+        },
+        "positives": 8,
+        "risk": {
+          "count": 150,
+          "median": 0.049862616988327946,
+          "p90": 0.15945043566677677,
+          "reason": null
+        },
+        "start": "2017-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 110,
+            "positives": 4
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 110,
+        "end": "2017-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03636363636363636
+        },
+        "positives": 4,
+        "risk": {
+          "count": 110,
+          "median": 0.03484768948559676,
+          "p90": 0.0909094009653451,
+          "reason": null
+        },
+        "start": "2017-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 95,
+            "positives": 5
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 95,
+        "end": "2017-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.05263157894736842
+        },
+        "positives": 5,
+        "risk": {
+          "count": 95,
+          "median": 0.05005670634630031,
+          "p90": 0.12886348815411366,
+          "reason": null
+        },
+        "start": "2017-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 120,
+            "positives": 7
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 120,
+        "end": "2017-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.058333333333333334
+        },
+        "positives": 7,
+        "risk": {
+          "count": 120,
+          "median": 0.04616474114113953,
+          "p90": 0.1160848449534192,
+          "reason": null
+        },
+        "start": "2017-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 111,
+            "positives": 5
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 111,
+        "end": "2017-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.04504504504504504
+        },
+        "positives": 5,
+        "risk": {
+          "count": 111,
+          "median": 0.04519558743807968,
+          "p90": 0.1540104732872053,
+          "reason": null
+        },
+        "start": "2017-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 118,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 118,
+        "end": "2017-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.01694915254237288
+        },
+        "positives": 2,
+        "risk": {
+          "count": 118,
+          "median": 0.052540537793310235,
+          "p90": 0.23331779599739566,
+          "reason": null
+        },
+        "start": "2017-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 84,
+            "positives": 3
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 84,
+        "end": "2017-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03571428571428571
+        },
+        "positives": 3,
+        "risk": {
+          "count": 84,
+          "median": 0.05569349093523812,
+          "p90": 0.3519978545452445,
+          "reason": null
+        },
+        "start": "2017-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 56,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 56,
+        "end": "2017-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03571428571428571
+        },
+        "positives": 2,
+        "risk": {
+          "count": 56,
+          "median": 0.06887396345654581,
+          "p90": 0.2874674409549301,
+          "reason": null
+        },
+        "start": "2017-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 103,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 103,
+        "end": "2017-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 103,
+          "median": 0.044702324314563474,
+          "p90": 0.10730363017734135,
+          "reason": null
+        },
+        "start": "2017-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 99,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 99,
+        "end": "2017-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 99,
+          "median": 0.042192424752901275,
+          "p90": 0.20917419830977102,
+          "reason": null
+        },
+        "start": "2017-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 67,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 67,
+        "end": "2017-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.014925373134328358
+        },
+        "positives": 1,
+        "risk": {
+          "count": 67,
+          "median": 0.05073077726112147,
+          "p90": 0.16731155270565923,
+          "reason": null
+        },
+        "start": "2017-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 82,
+            "positives": 3
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 82,
+        "end": "2018-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.036585365853658534
+        },
+        "positives": 3,
+        "risk": {
+          "count": 82,
+          "median": 0.058328036266814,
+          "p90": 0.2919760553692517,
+          "reason": null
+        },
+        "start": "2017-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 116,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 116,
+        "end": "2018-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.017241379310344827
+        },
+        "positives": 2,
+        "risk": {
+          "count": 116,
+          "median": 0.038979294984598185,
+          "p90": 0.13069892970435523,
+          "reason": null
+        },
+        "start": "2018-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 31,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 31,
+        "end": "2018-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "positives": 1,
+        "risk": {
+          "count": 31,
+          "median": 0.046522180394025635,
+          "p90": 0.168027602753093,
+          "reason": null
+        },
+        "start": "2018-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 48,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 48,
+        "end": "2018-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 48,
+          "median": 0.029016831905144196,
+          "p90": 0.10127941668886382,
+          "reason": null
+        },
+        "start": "2018-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 71,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 71,
+        "end": "2018-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 71,
+          "median": 0.03427177744471969,
+          "p90": 0.13696099174037704,
+          "reason": null
+        },
+        "start": "2018-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 70,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 70,
+        "end": "2018-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.02857142857142857
+        },
+        "positives": 2,
+        "risk": {
+          "count": 70,
+          "median": 0.04144434206415199,
+          "p90": 0.10613164994169097,
+          "reason": null
+        },
+        "start": "2018-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 148,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 148,
+        "end": "2018-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 148,
+          "median": 0.06410732517719285,
+          "p90": 0.1567692011275063,
+          "reason": null
+        },
+        "start": "2018-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 55,
+            "positives": 2
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 55,
+        "end": "2018-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03636363636363636
+        },
+        "positives": 2,
+        "risk": {
+          "count": 55,
+          "median": 0.04553876220773455,
+          "p90": 0.22147519761335807,
+          "reason": null
+        },
+        "start": "2018-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 26,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 26,
+        "end": "2018-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 26,
+          "median": 0.039511154367684084,
+          "p90": 0.1347922739080636,
+          "reason": null
+        },
+        "start": "2018-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 73,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 73,
+        "end": "2018-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0136986301369863
+        },
+        "positives": 1,
+        "risk": {
+          "count": 73,
+          "median": 0.05311814856587606,
+          "p90": 0.08965346394379031,
+          "reason": null
+        },
+        "start": "2018-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 48,
+            "positives": 1
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 48,
+        "end": "2018-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.020833333333333332
+        },
+        "positives": 1,
+        "risk": {
+          "count": 48,
+          "median": 0.039105421046926145,
+          "p90": 0.10836888229594782,
+          "reason": null
+        },
+        "start": "2018-10-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 21,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 21,
+        "end": "2018-12-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.0
+        },
+        "positives": 0,
+        "risk": {
+          "count": 21,
+          "median": 0.05448170184117108,
+          "p90": 0.20643748831646958,
+          "reason": null
+        },
+        "start": "2018-11-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 0,
+        "end": "2019-01-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 0 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": null,
+        "start": "2018-12-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 3,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 3,
+        "end": "2019-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 3 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": {
+          "count": 3,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 3 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2019-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 6,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 6,
+        "end": "2019-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 6 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": {
+          "count": 6,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 6 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2019-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 9,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 9,
+        "end": "2019-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 9 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": {
+          "count": 9,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 9 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2019-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 2,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 2,
+        "end": "2019-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 2 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": {
+          "count": 2,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 2 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2019-04-01T00:00:00+08:00"
+      }
+    ],
+    "grain": "month",
+    "minSample": 20,
+    "timezone": "UTC+08:00"
+  }
+}

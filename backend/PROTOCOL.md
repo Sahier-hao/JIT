@@ -59,3 +59,12 @@
 19. 三种方案必须在同一数据版本、同一时间切分与测试成员、同一 `metric-set-v2` 和同一方法下并列。报告只披露指标与失败，不据测试指标自动择优；任一方案失败或缺指标时，整体不得声明为可直接比较。
 20. 语义运行仅用于离线评估。六字段单条 JSON 预测接口不接受语义模型；无登记文本的数据集（包括 OpenStack 快照）不得运行语义方案，不得伪造空文本或零向量。
 
+## 大型公开 14 维基准（add-large-jit-benchmark）
+
+21. 本轮大型基准固定为 JIT-Fine `data.zip` revision `584799fdec6095ab75a45fd2a5f8db5b12163aa5`、SHA-256 `9e5ca1a393b70ee7e87c410b162005958775f3f3732f9f83da9dd24a7dfe2b47`。适配器 `jit-fine-v1` 同时校验 train/valid/test 三个成员哈希；不匹配不得进入导入。
+22. `kamei14-benchmark-v1` 固定 `ns,nd,nf,entropy,la,ld,lt,fix,ndev,age,nuc,exp,rexp,sexp` 共 14 个入模字段。`lt` 按非负实数处理，其余计数按 schema 约束；标签、项目、提交身份和时间不进入模型输入。
+23. JIT-Fine 的 `is_buggy_commit ∈ {0,1}` 是标签来源；规范 CSV 的 `bugcount` 只是运输列。运行来源必须记录 `jit-fine-is-buggy-commit` 规则，不得改写为发布者 `bugcount`。源包未声明许可证，原始数据和规范化 CSV 不随仓库分发。
+24. 源表 27,319 条中有 1,653 条因负 `lt` 或 `age` 被适配器显式排除，不裁剪、不补值；既有 `la > 0` 规则再排除 64 条，最终 25,602 条、2,217 个正例。时间切分为 train 17,912/1,751、validation 3,847/310、test 3,843/156（样本/正例）。
+25. 九种已登记方法必须在同一基准、同一时间切分、同一 `metric-set-v2` 下运行。报告同时披露 AP、ROC-AUC、Recall@20%LOC、Popt、IFA、训练耗时和失败；不得根据测试指标自动选择、淘汰或登记默认模型。
+26. 本基准不接入六字段 JSON 预测接口、用户仓库同步或管理员模型策略。它只产生离线数据、运行、报告与证据，不改变现有服务行为。
+

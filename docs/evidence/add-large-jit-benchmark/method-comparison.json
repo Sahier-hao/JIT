@@ -1,0 +1,665 @@
+{
+  "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+  "directlyRankable": true,
+  "featureSchema": "kamei14-benchmark-v1",
+  "kind": "method-comparison",
+  "methods": [
+    {
+      "confusion": {
+        "fn": 143,
+        "fp": 47,
+        "tn": 3640,
+        "tp": 13
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 51,
+        "totalLoc": 664599,
+        "usedLoc": 132757
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "logistic-regression-l2-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.12508660370378327
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.12037037037037036
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7764319376223549
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.21666666666666667
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.08333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7039355184188382
+        }
+      },
+      "parameters": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "runId": "02cc6b986d8a04cc72f891d70d8ba4a2f209a8bb24c0aceb964fa346e02daf61",
+      "threshold": 0.5,
+      "trainingSeconds": 0.222849
+    },
+    {
+      "confusion": {
+        "fn": 135,
+        "fp": 90,
+        "tn": 3597,
+        "tp": 21
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 55,
+        "totalLoc": 664599,
+        "usedLoc": 131978
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "decision-tree-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.09864876072933106
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.15730337078651685
+        },
+        "ifa": {
+          "reason": null,
+          "value": 10
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.720395502727294
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1891891891891892
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.1346153846153846
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.07051282051282051
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6829426675846529
+        }
+      },
+      "parameters": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "runId": "edd0d74b195efea0f3e4598635b412c46e9b3685a0d824e5cfdb6bdcb8f921d0",
+      "threshold": 0.5,
+      "trainingSeconds": 0.187659
+    },
+    {
+      "confusion": {
+        "fn": 155,
+        "fp": 1,
+        "tn": 3686,
+        "tp": 1
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 49,
+        "totalLoc": 664599,
+        "usedLoc": 131960
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "random-forest-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.12912287419828666
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.012658227848101266
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7932710305031032
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.5
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.00641025641025641
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.08974358974358974
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7147705382042242
+        }
+      },
+      "parameters": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "seed": 2026,
+        "threads": 1
+      },
+      "runId": "388e49a1e93506d90535c380cedc563ae0b2a17cac46d2912b26ba2450c1c617",
+      "threshold": 0.5,
+      "trainingSeconds": 4.936337
+    },
+    {
+      "confusion": {
+        "fn": 92,
+        "fp": 560,
+        "tn": 3127,
+        "tp": 64
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 113,
+        "totalLoc": 664599,
+        "usedLoc": 132539
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "gaussian-naive-bayes-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10629315534398405
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.1641025641025641
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.5316086031993342
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.10256410256410256
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.41025641025641024
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.1346153846153846
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6780545645476483
+        }
+      },
+      "parameters": {
+        "threads": 1,
+        "var_smoothing": 1e-09
+      },
+      "runId": "cc9332b0bfbe2367d53aa848e433b499f02e97634989a7598e28f5c46d6cd97b",
+      "threshold": 0.5,
+      "trainingSeconds": 0.048989
+    },
+    {
+      "confusion": {
+        "fn": 151,
+        "fp": 26,
+        "tn": 3661,
+        "tp": 5
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 57,
+        "totalLoc": 664599,
+        "usedLoc": 131374
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "gradient-boosting-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10824244311286217
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.053475935828877004
+        },
+        "ifa": {
+          "reason": null,
+          "value": 8
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7788125061386646
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.03205128205128205
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.057692307692307696
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7081168763430765
+        }
+      },
+      "parameters": {
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "seed": 2026,
+        "threads": 1
+      },
+      "runId": "e39400be1d92902c4f187b8dcf1bcfac93e05691e06f11a846f9180e0ee83324",
+      "threshold": 0.5,
+      "trainingSeconds": 12.493513
+    },
+    {
+      "confusion": {
+        "fn": 150,
+        "fp": 17,
+        "tn": 3670,
+        "tp": 6
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 52,
+        "totalLoc": 664599,
+        "usedLoc": 131420
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "mlp-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.11095453272956249
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0670391061452514
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7541007502688902
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2608695652173913
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.038461538461538464
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0641025641025641
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6959761601746957
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "runId": "3650c4fb6c56ee161c071acc441fecd1f7b594c7d4edf1a72ade9930d7f67722",
+      "threshold": 0.5,
+      "trainingSeconds": 14.083864
+    },
+    {
+      "confusion": {
+        "fn": 147,
+        "fp": 43,
+        "tn": 3644,
+        "tp": 9
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 55,
+        "totalLoc": 664599,
+        "usedLoc": 131984
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "tabular-resnet-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10861030006639041
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.08653846153846154
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7731200327551286
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.17307692307692307
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.057692307692307696
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.057692307692307696
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.714820957904766
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "blocks": 2,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": 64,
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "runId": "cef131c4726087994a1a5ac82afc2186b18a291b6ed3c5d7b2a0fab5e833ac4b",
+      "threshold": 0.5,
+      "trainingSeconds": 12.649307
+    },
+    {
+      "confusion": {
+        "fn": 143,
+        "fp": 45,
+        "tn": 3642,
+        "tp": 13
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 45,
+        "totalLoc": 664599,
+        "usedLoc": 132841
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "ft-transformer-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.12221452592611257
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.12149532710280374
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7847036121898401
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.22413793103448276
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.08333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0641025641025641
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7255464452372508
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "d_token": 32,
+        "dropout": 0.1,
+        "epochs": 30,
+        "heads": 4,
+        "layers": 1,
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1
+      },
+      "runId": "47574661c46adc5ce83a58eb7b39e427cc0439622547d87aa3c0a888b755389b",
+      "threshold": 0.5,
+      "trainingSeconds": 640.317239
+    },
+    {
+      "confusion": {
+        "fn": 149,
+        "fp": 32,
+        "tn": 3655,
+        "tp": 7
+      },
+      "counts": {
+        "negative": 3687,
+        "positive": 156,
+        "records": 3843
+      },
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "effort": {
+        "budgetLoc": 132919.80000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 48,
+        "totalLoc": 664599,
+        "usedLoc": 131261
+      },
+      "featureSchema": "kamei14-benchmark-v1",
+      "method": "wide-deep-v1",
+      "metricSet": "metric-set-v2",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10870910421729708
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.07179487179487179
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7734848479027638
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1794871794871795
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.04487179487179487
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.05128205128205128
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7130597456065316
+        }
+      },
+      "parameters": {
+        "batch_size": 256,
+        "deep": [
+          64,
+          32
+        ],
+        "dropout": 0.2,
+        "epochs": 30,
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "runId": "aa6e07436da9391011beec9c0b7460d84f44aec6d30e27589a727ce37f9b84f0",
+      "threshold": 0.5,
+      "trainingSeconds": 8.792312
+    }
+  ],
+  "metricSet": "metric-set-v2",
+  "note": "同口径时可并列比较；口径不一致时不可直接排名，也不得据此择优。",
+  "reasons": [],
+  "testCount": 3843,
+  "threshold": 0.5
+}

@@ -1,0 +1,53 @@
+{
+  "allPassed": true,
+  "origin": "local",
+  "passed": 9,
+  "runs": [
+    {
+      "method": "logistic-regression-l2-v1",
+      "passed": true,
+      "runId": "02cc6b986d8a04cc72f891d70d8ba4a2f209a8bb24c0aceb964fa346e02daf61"
+    },
+    {
+      "method": "decision-tree-v1",
+      "passed": true,
+      "runId": "edd0d74b195efea0f3e4598635b412c46e9b3685a0d824e5cfdb6bdcb8f921d0"
+    },
+    {
+      "method": "random-forest-v1",
+      "passed": true,
+      "runId": "388e49a1e93506d90535c380cedc563ae0b2a17cac46d2912b26ba2450c1c617"
+    },
+    {
+      "method": "gaussian-naive-bayes-v1",
+      "passed": true,
+      "runId": "cc9332b0bfbe2367d53aa848e433b499f02e97634989a7598e28f5c46d6cd97b"
+    },
+    {
+      "method": "gradient-boosting-v1",
+      "passed": true,
+      "runId": "e39400be1d92902c4f187b8dcf1bcfac93e05691e06f11a846f9180e0ee83324"
+    },
+    {
+      "method": "mlp-v1",
+      "passed": true,
+      "runId": "3650c4fb6c56ee161c071acc441fecd1f7b594c7d4edf1a72ade9930d7f67722"
+    },
+    {
+      "method": "tabular-resnet-v1",
+      "passed": true,
+      "runId": "cef131c4726087994a1a5ac82afc2186b18a291b6ed3c5d7b2a0fab5e833ac4b"
+    },
+    {
+      "method": "ft-transformer-v1",
+      "passed": true,
+      "runId": "47574661c46adc5ce83a58eb7b39e427cc0439622547d87aa3c0a888b755389b"
+    },
+    {
+      "method": "wide-deep-v1",
+      "passed": true,
+      "runId": "aa6e07436da9391011beec9c0b7460d84f44aec6d30e27589a727ce37f9b84f0"
+    }
+  ],
+  "total": 9
+}

@@ -240,6 +240,44 @@ $env:HF_HOME = (Join-Path $PWD ".cache/huggingface")
 作为失败项保留，整体不因结果好坏自动选方案。语义模型仅用于离线回顾性评估，不接入
 六字段 JSON 预测接口；OpenStack 快照没有文本，不能运行语义方案。
 
+### JIT-Fine 大型 14 维基准（add-large-jit-benchmark）
+
+`JIT-Fine / JIT-Defect4J` 发布包提供一个固定 revision、21 个项目、提交级的
+Kamei 14 维专家特征数据。它补充了 OpenStack 六字段基线之外的完整 14 维评价，
+但仅用于离线实验，不注册为默认模型，也不改变用户仓库分析。字段、标签和许可证审计见
+[`docs/audits/add-large-jit-benchmark.md`](../docs/audits/add-large-jit-benchmark.md)。
+
+来源固定为：
+
+- 仓库：`https://github.com/jacknichao/JIT-Fine`
+- revision：`584799fdec6095ab75a45fd2a5f8db5b12163aa5`
+- `data.zip` SHA-256：
+  `9e5ca1a393b70ee7e87c410b162005958775f3f3732f9f83da9dd24a7dfe2b47`
+
+该仓库未声明许可证，因此原始数据包和规范化 CSV 不随仓库分发，只提交来源哈希、
+审计统计和实验结果。复现时需要自行取得固定数据包，并自行确认使用条件。
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli import-benchmark `
+  --source jit-fine-v1 `
+  --input .cache/audit/jit-fine-data.zip `
+  --output data/collected/jit-fine-kamei14.csv
+
+& .venv/Scripts/python.exe -m jit_baseline.cli run-suite `
+  --dataset-manifest data/datasets/jit-fine-kamei14/jit-fine-kamei14-2001-03-27_2019-04-06.json `
+  --output artifacts/suites/jit-fine-kamei14 --metric-set metric-set-v2
+```
+
+导入器固定 `jit-fine-v1` 适配器和三个成员文件的 SHA-256。发布包源表有 27,319 条；
+负 `lt` 或 `age` 的 1,653 条被显式排除，既有 `la > 0` 纳入规则再排除 64 条，
+最终登记 25,602 条、2,217 个正例、21 个项目。规范化标签源为
+`is_buggy_commit ∈ {0,1}`，只在规范 CSV 中放到 `bugcount` 传输列，运行来源记录原始
+标签规则。新 schema `kamei14-benchmark-v1` 的 14 个专家字段全部入模；`lt` 按实数处理，
+不做整数截断。
+
+九种方法使用同一数据版本、同一时间切分、同一测试成员和 `metric-set-v2`。本次结果只用于
+并列观察，不据此设置默认模型或宣称某方法最佳。
+
 ### 已有模型登记
 
 维护者运行 `cli register-model --run-key baseline`（完整命令为

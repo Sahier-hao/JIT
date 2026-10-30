@@ -137,3 +137,14 @@ def test_compare_projects_rejects_empty_input():
     with pytest.raises(BaselineError) as info:
         compare_projects([])
     assert info.value.code == "EVALUATION_INVALID"
+
+
+def test_declared_label_semantics_override_publisher_default():
+    from jit_baseline.suite import label_semantics
+    result = label_semantics({
+        "schemaName": "kamei14-benchmark-v1",
+        "label": {"kind": "jit-fine-is-buggy-commit", "rule": "binary",
+                  "limitations": ["declared limitation"]},
+    })
+    assert result == {"kind": "jit-fine-is-buggy-commit", "rule": "binary",
+                      "limitations": ["declared limitation"]}

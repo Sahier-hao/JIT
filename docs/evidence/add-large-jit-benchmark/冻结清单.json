@@ -1,0 +1,199 @@
+{
+  "copiedFromWorkspace": [
+    "audit.md",
+    "dataset-manifest.json",
+    "failure-records.json",
+    "method-comparison.json",
+    "README.md",
+    "runs/decision-tree-v1/manifest.json",
+    "runs/decision-tree-v1/metrics.json",
+    "runs/decision-tree-v1/summary.json",
+    "runs/ft-transformer-v1/manifest.json",
+    "runs/ft-transformer-v1/metrics.json",
+    "runs/ft-transformer-v1/summary.json",
+    "runs/gaussian-naive-bayes-v1/manifest.json",
+    "runs/gaussian-naive-bayes-v1/metrics.json",
+    "runs/gaussian-naive-bayes-v1/summary.json",
+    "runs/gradient-boosting-v1/manifest.json",
+    "runs/gradient-boosting-v1/metrics.json",
+    "runs/gradient-boosting-v1/summary.json",
+    "runs/logistic-regression-l2-v1/manifest.json",
+    "runs/logistic-regression-l2-v1/metrics.json",
+    "runs/logistic-regression-l2-v1/summary.json",
+    "runs/mlp-v1/manifest.json",
+    "runs/mlp-v1/metrics.json",
+    "runs/mlp-v1/summary.json",
+    "runs/random-forest-v1/manifest.json",
+    "runs/random-forest-v1/metrics.json",
+    "runs/random-forest-v1/summary.json",
+    "runs/tabular-resnet-v1/manifest.json",
+    "runs/tabular-resnet-v1/metrics.json",
+    "runs/tabular-resnet-v1/summary.json",
+    "runs/wide-deep-v1/manifest.json",
+    "runs/wide-deep-v1/metrics.json",
+    "runs/wide-deep-v1/summary.json",
+    "suite.json",
+    "verification/openspec-validation.json",
+    "verification/pytest.xml",
+    "verification/run-verifications.json",
+    "verification.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 37,
+  "files": [
+    {
+      "path": "audit.md",
+      "sha256": "88533fc7a163903f15eb27b3db681b977b2b1da8dcd578ab09c4d0069633f461"
+    },
+    {
+      "path": "dataset-manifest.json",
+      "sha256": "cb96d486f09776a20b09ea1779ab478c6b9082fe957e943a220698bd42a05d03"
+    },
+    {
+      "path": "failure-records.json",
+      "sha256": "8d6932bbc635d76858308a36555062e24bb4156f0a82c34f1c62ad09144cd145"
+    },
+    {
+      "path": "method-comparison.json",
+      "sha256": "4ab86519539f63d5e35b546133040151551cee07d492a614bb1272d709f0e846"
+    },
+    {
+      "path": "README.md",
+      "sha256": "019bc9f03cff20dd826a972692497a933fc5fe04c589fb66a046d468fc7a2cd7"
+    },
+    {
+      "path": "runs/decision-tree-v1/manifest.json",
+      "sha256": "525004703048e6f778f10e9ef7b0a480563c7356650cbb67a3d760b2e3f4dd2c"
+    },
+    {
+      "path": "runs/decision-tree-v1/metrics.json",
+      "sha256": "4847657d28f0cb17dcca9629224f622beb07afa31d5d0c77291052e1c42d9846"
+    },
+    {
+      "path": "runs/decision-tree-v1/summary.json",
+      "sha256": "38ff1af81c9cc71f55c80536a673e3a1fc4104e9dfe79cca8f9286a8ce4638d2"
+    },
+    {
+      "path": "runs/ft-transformer-v1/manifest.json",
+      "sha256": "e87e917b0c40beea51ba4105052507afdc3c01230b6536e4d79d856021fa06e3"
+    },
+    {
+      "path": "runs/ft-transformer-v1/metrics.json",
+      "sha256": "68d55b9d74648225b7f56dd007c8012c666572a2761c463463b5370b519b322c"
+    },
+    {
+      "path": "runs/ft-transformer-v1/summary.json",
+      "sha256": "da07b79d73da1a0b8c9c90dd80780c3d0dfa8c4135770dcc7a1f578f339868ae"
+    },
+    {
+      "path": "runs/gaussian-naive-bayes-v1/manifest.json",
+      "sha256": "9b831a948c36ab62ad91523a21af2a1a628fc730591b2a911ba5689520eb93e5"
+    },
+    {
+      "path": "runs/gaussian-naive-bayes-v1/metrics.json",
+      "sha256": "96cab3ef1e8acaad25816fcef8c27717d85c2aa9fc93abafbfee571362051f64"
+    },
+    {
+      "path": "runs/gaussian-naive-bayes-v1/summary.json",
+      "sha256": "639c46e2cdb80b247263964cfcca277a9b56e019b38588285cdca88f2d6b1d38"
+    },
+    {
+      "path": "runs/gradient-boosting-v1/manifest.json",
+      "sha256": "f02a80a5d95b043d9c91a0e4258a108ec79f309347570951cfb83d0cff22c938"
+    },
+    {
+      "path": "runs/gradient-boosting-v1/metrics.json",
+      "sha256": "407ced3289dc8b69c64eec07a1497a4061911be0315ff9aa8825c39218da366f"
+    },
+    {
+      "path": "runs/gradient-boosting-v1/summary.json",
+      "sha256": "6568cb2bfcd9989938bcc0f6136c2ed1c7df10825e4fe5cc57324e213da7f0ee"
+    },
+    {
+      "path": "runs/logistic-regression-l2-v1/manifest.json",
+      "sha256": "ff50fef2b1c7f86677028c1a2914c0e99539c33edade28e796afc4b3845c4f57"
+    },
+    {
+      "path": "runs/logistic-regression-l2-v1/metrics.json",
+      "sha256": "8c1c8b318ffd0446c0c56e0dfe95a3bbf7a5f8455fc116d8f4a1fe934a3b4f4a"
+    },
+    {
+      "path": "runs/logistic-regression-l2-v1/summary.json",
+      "sha256": "a8b192cd9634b7970061ad8011536c9065b0016ad9ec88ddb23783915a69469d"
+    },
+    {
+      "path": "runs/mlp-v1/manifest.json",
+      "sha256": "776c19e0af3a48bf6a21dfc727424f007350d2fc164f7ab6462c104b6a296716"
+    },
+    {
+      "path": "runs/mlp-v1/metrics.json",
+      "sha256": "d8d6cff53956e8d2e1dce86fbc6c3734b1288e8aaafeb143a6c950ee6e39645d"
+    },
+    {
+      "path": "runs/mlp-v1/summary.json",
+      "sha256": "0d1079216c17de25c1be64900967a49c414252c4397c827a4234b4122b1d0cbd"
+    },
+    {
+      "path": "runs/random-forest-v1/manifest.json",
+      "sha256": "1f48ebfdec3d717d5e05cba62a844224d6daf5b188f78f19f91aebd2ef2b2220"
+    },
+    {
+      "path": "runs/random-forest-v1/metrics.json",
+      "sha256": "5001b88887c9291fcdf251ba8d649297c78e85378390bcb81a527080a78845de"
+    },
+    {
+      "path": "runs/random-forest-v1/summary.json",
+      "sha256": "dd33ea7599d885dcc780bfc58b99458163b0c0e9147b90b8e6ac15767d9313cf"
+    },
+    {
+      "path": "runs/tabular-resnet-v1/manifest.json",
+      "sha256": "7f4d207081270bfd65f137d438c2b53727d3c1415702df8a2eb042d2eb6192d5"
+    },
+    {
+      "path": "runs/tabular-resnet-v1/metrics.json",
+      "sha256": "c003969f2fe28c203c24a79fd6ec125c74dca22ff8d8c61cb136373734b3797d"
+    },
+    {
+      "path": "runs/tabular-resnet-v1/summary.json",
+      "sha256": "4380188f2743d96773e25a04aced693de424ad9fb1b7abe9ccb9c06613bfb680"
+    },
+    {
+      "path": "runs/wide-deep-v1/manifest.json",
+      "sha256": "82d7b2f181b57731d2725389f525578ba739217af063a8dff8b628984ff9e0e4"
+    },
+    {
+      "path": "runs/wide-deep-v1/metrics.json",
+      "sha256": "4fafc8ff4fe4d72dd4e92eb84f100cad3000c4d2fc4b31206f68dd7f1ef0969c"
+    },
+    {
+      "path": "runs/wide-deep-v1/summary.json",
+      "sha256": "a72a6bf1df669e0a3a28dad7e0a09a3ff09a4d16ed57766fabfac663dd7190a3"
+    },
+    {
+      "path": "suite.json",
+      "sha256": "664cd11f3a0fda96a57d3fd5995701050f9b866da9fdb9d6019e803d1976beca"
+    },
+    {
+      "path": "verification/openspec-validation.json",
+      "sha256": "841e5ce80df6d19e6ccf7de0e07348a669deb91f5e54fd5c3d348182c92e8c35"
+    },
+    {
+      "path": "verification/pytest.xml",
+      "sha256": "91a35e537bb9d7a0be48cf8cf25212ff8d43034da92888a9fb17983ff6dd3b98"
+    },
+    {
+      "path": "verification/run-verifications.json",
+      "sha256": "53576c72e2c97475e7f0b4a91f36c772ff5e28cd3a2f8c6c59bf028023070d74"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "e21fda4db3d1781532560b7e059d25923d97de0989441e34e4a26334189fa3b6"
+    }
+  ],
+  "frozenUtc": "2026-10-30T10:04:32.793731+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "36d70bd0d66b0a37d6f8e046e39ad4aed8ab9e6f0d3ae780d009cb91cf7280f6",
+  "workspace": "docs/evidence/_run/add-large-jit-benchmark"
+}

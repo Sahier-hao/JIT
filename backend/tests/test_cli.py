@@ -67,6 +67,19 @@ def test_run_suite_and_compare_projects_are_wired(monkeypatch):
     assert reports[0][0] == Path("r.json")
 
 
+def test_import_benchmark_is_wired(monkeypatch):
+    from jit_baseline import cli
+    calls = []
+    monkeypatch.setattr("jit_baseline.benchmark.import_jit_fine",
+                        lambda *args, **kwargs: calls.append((args, kwargs)) or {"kind": "imported"})
+    monkeypatch.setattr(sys, "argv", ["jit_baseline.cli", "import-benchmark",
+                                      "--source", "jit-fine-v1", "--input", "data.zip",
+                                      "--output", "out.csv"])
+    cli.main()
+    assert calls[0][0] == (Path("data.zip"), Path("out.csv"))
+    assert calls[0][1]["dataset"] == "jit-fine-kamei14"
+
+
 def test_verify_records_this_machines_verification_environment(monkeypatch, capsys):
     """校验记录本机验证环境与本次判定，与运行声明的产方训练环境分开（PDB-16、PDB-19）。"""
     import json

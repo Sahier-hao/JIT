@@ -1,0 +1,291 @@
+{
+  "benchmark": {
+    "adapter": "jit-fine-v1",
+    "excludedByField": {
+      "age": 74,
+      "lt": 1580
+    },
+    "excludedRows": 1653,
+    "license": "NOASSERTION",
+    "memberSha256": {
+      "data/jitfine/features_test.pkl": "136eebbb1c1719bffbfed8f0d686e3c015c5756a7b3c43d6f700a07687ab58fa",
+      "data/jitfine/features_train.pkl": "0b9992d77cd07f45a71bd327a3d408ed3f0ab7a907ffdc10f9916a8f226dc42a",
+      "data/jitfine/features_valid.pkl": "e2ee48d5cd9e7f59bea726d4f6a71ef58712ae58d3388d8195a798369cf0d2cf"
+    },
+    "normalizedRows": 25666,
+    "positiveRows": 2217,
+    "projects": [
+      "ant-ivy",
+      "commons-bcel",
+      "commons-beanutils",
+      "commons-codec",
+      "commons-collections",
+      "commons-compress",
+      "commons-configuration",
+      "commons-dbcp",
+      "commons-digester",
+      "commons-io",
+      "commons-jcs",
+      "commons-lang",
+      "commons-math",
+      "commons-net",
+      "commons-scxml",
+      "commons-validator",
+      "commons-vfs",
+      "giraph",
+      "gora",
+      "opennlp",
+      "parquet-mr"
+    ],
+    "sampleUnit": "commit",
+    "sourceArchiveSha256": "9e5ca1a393b70ee7e87c410b162005958775f3f3732f9f83da9dd24a7dfe2b47",
+    "sourceBlobSha1": "6cd2f45d97a7c430533cde382be6bf42d9ff3649",
+    "sourceRepository": "https://github.com/jacknichao/JIT-Fine",
+    "sourceRevision": "584799fdec6095ab75a45fd2a5f8db5b12163aa5",
+    "sourceRows": 27319
+  },
+  "citation": "Ni et al. (2022), The Best of Both Worlds: Integrating Semantic Features with Expert Features for Defect Prediction and Localization, FSE.",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1554589287,
+    "maxChurnInclusive": 9650,
+    "maxFilesInclusive": 97,
+    "startEpochInclusive": 985670757
+  },
+  "dataset": "jit-fine-kamei14",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 3875947,
+    "name": "jit-fine-kamei14.csv",
+    "path": "data/collected/jit-fine-kamei14.csv",
+    "sha256": "89a0715bd82e87dc283933b7420453a365861dbf02082bd8bc06ca63c056a0d4"
+  },
+  "label": {
+    "kind": "jit-fine-is-buggy-commit",
+    "limitations": [
+      "标签来自 JIT-Fine 发布数据，未在本项目重新执行 SZZ。",
+      "JIT-Fine 仓库未声明许可证，原始与规范化数据不随仓库分发。"
+    ],
+    "rule": "is_buggy_commit in {0, 1}; transported as bugcount only for the canonical CSV contract",
+    "sourceColumn": "is_buggy_commit"
+  },
+  "labelRule": "is_buggy_commit in {0, 1}; transported as bugcount only for the canonical CSV contract",
+  "publisher": "JIT-Fine / JIT-Defect4J",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 64,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 0
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 25602,
+    "positiveLabels": 2217,
+    "rawRows": 25666
+  },
+  "revision": "584799fdec6095ab75a45fd2a5f8db5b12163aa5",
+  "samples": [
+    {
+      "id": "c44f209fe457fc6593b09bbec020680665da5443",
+      "time": "2001-03-27T05:25:57Z"
+    },
+    {
+      "id": "c1ea2007d4f6527bd174869603f53841380b5c31",
+      "time": "2001-03-27T05:33:07Z"
+    },
+    {
+      "id": "87361f16b0eb35ab5fe25fe2ce3cb57a96dcedbb",
+      "time": "2001-04-03T00:09:35Z"
+    },
+    {
+      "id": "2325c61a9280d310818f99dea19853718c613557",
+      "time": "2019-03-31T18:01:23Z"
+    },
+    {
+      "id": "7b80edbfe28a488e1bbbe69741ff9f8432a676b8",
+      "time": "2019-04-06T22:21:26Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-benchmark-v1",
+  "timeRange": {
+    "end": "2019-04-06T22:21:26Z",
+    "endEpoch": 1554589286,
+    "start": "2001-03-27T05:25:57Z",
+    "startEpoch": 985670757
+  },
+  "url": "https://github.com/jacknichao/JIT-Fine",
+  "version": "jit-fine-kamei14-2001-03-27_2019-04-06"
+}
