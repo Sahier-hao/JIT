@@ -29,6 +29,7 @@ from .errors import BaselineError
 from .model import predict_risks, temporal_split
 from .schemas import resolve
 from .task_process import OwnedProcess
+from .training import TrainingExecutor
 
 SCHEMA_NAME = collect.SCHEMA_NAME
 GENERIC_SCHEMA = "openstack-six-v1"
@@ -688,7 +689,8 @@ class SyncService:
     """同步作业编排：单 worker 顺序执行，同参数在途作业直接复用（RCL-08）。"""
 
     def __init__(self, storage=None, catalog=None, dataset_root=None, artifact_root=None,
-                 allow_local=False, timeout=SYNC_TIMEOUT, collect_fn=None):
+                 allow_local=False, timeout=SYNC_TIMEOUT, collect_fn=None,
+                 training_executor=None):
         self.sync = SyncStorage(storage)
         self.catalog = catalog or ModelCatalog(self.sync.storage)
         self.dataset_root = Path(dataset_root) if dataset_root is not None else DATASETS
@@ -696,6 +698,7 @@ class SyncService:
         self.allow_local = allow_local
         self.timeout = timeout
         self.collect = collect_fn or collect.collect_repository
+        self.training = training_executor or TrainingExecutor(self.catalog, self.artifact_root)
         self._isolated = collect_fn is None
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._lock = threading.RLock()
@@ -1156,16 +1159,15 @@ class SyncService:
                              train_records=decision["trainRecords"],
                              train_positives=decision["trainPositives"])
             if decision["modelStrategy"] == TRAINED:
-                output = self.artifact_root / f"repository-sync-{sync_id[:8]}"
-                built = artifacts.build_run(BACKEND / "data" / "openstack", output, schema=SCHEMA_NAME,
-                                            dataset_manifest=manifest_path, holdout=holdout)
-                registered = self.catalog.register_key(output.name, channel="repository-sync",
-                                                       request_id=item.get("requestId"))
-                model_id = registered["model"]["modelId"]
-                snapshot = Snapshot.load(output)
+                trained = self.training.run(
+                    manifest_path, "logistic-regression-l2-v1", None,
+                    output_key=f"repository-sync-{sync_id[:8]}",
+                    channel="repository-sync", request_id=item.get("requestId"))
+                model_id = trained["modelId"]
+                snapshot = trained["snapshot"]
                 schema = snapshot.schema
                 inputs = [{"features": record["features"]} for record in records]
-                run_id = built["runId"]
+                run_id = trained["runId"]
             else:
                 model_choice = item.get('resolvedModelId') or item.get('requestedModelId')
                 if not model_choice:

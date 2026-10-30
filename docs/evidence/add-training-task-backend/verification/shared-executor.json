@@ -1,0 +1,14 @@
+{
+  "adminTaskLifecycle": "training_task",
+  "executor": "backend/jit_baseline/training.py:TrainingExecutor",
+  "executorResponsibilities": [
+    "build run",
+    "verify artifacts",
+    "register model"
+  ],
+  "projectLifecycle": "repository_sync",
+  "projectTrainingUsesExecutor": true,
+  "separateFailureSemantics": true,
+  "separatePermissions": true,
+  "separateResultOwnership": true
+}

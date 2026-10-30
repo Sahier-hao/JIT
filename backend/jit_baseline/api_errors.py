@@ -15,7 +15,8 @@ if not LOGGER.handlers:
     LOGGER.addHandler(handler)
 API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
-                '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models'}
+                '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models',
+                '/api/v1/training-tasks'}
 MESSAGES = {
     'TREND_SOURCE_CONFLICT': '同一提交的保存观测存在冲突，不能直接拼接；请选择单次固定分析',
     'TREND_SOURCE_UNAVAILABLE': '固定趋势来源已删除或内容发生变化，原视图不可用；请明确重新生成',
@@ -27,6 +28,9 @@ MESSAGES = {
     'NOT_FOUND': '指定资源不存在',
     'INPUT_INVALID': '请求格式或字段值无效',
     'INPUT_SCHEMA_MISMATCH': '输入与所选模型的 schema 不匹配或未支持',
+    'ALGORITHM_UNKNOWN': '训练方法未注册',
+    'METRIC_SET_UNKNOWN': '指标集未注册',
+    'MODEL_NOT_CONVERGED': '训练方法未收敛',
     'INPUT_LIMIT_EXCEEDED': '单条 JSON 请求超过 64 KiB 上限',
     'CONTEXT_MISMATCH': '候选或运行上下文发生变化，请重新选择',
     'DATASET_INVALID': '数据集描述或原始文件不符合约定',
@@ -54,18 +58,30 @@ MESSAGES = {
     'CONFLICT_ACTIVE_SYNC': '还有进行中的分析，请等待结束后再操作',
     'SYNC_NOT_ACTIVE': '该分析已经结束，请刷新记录；已有结果保持不变',
     'SYNC_SERVICE_STOPPING': '分析服务正在停止，请稍后重试',
+    'TRAINING_TIMEOUT': '训练超过执行时限，任务已停止',
+    'TRAINING_INTERRUPTED': '服务重启时训练未完成，请显式重试',
+    'TRAINING_WORKER_EXITED': '训练进程意外退出，请重试',
+    'TRAINING_CANCELLED': '训练任务已取消',
+    'TASK_NOT_ACTIVE': '训练任务已经结束，请刷新记录',
+    'TASK_NOT_RETRYABLE': '只有失败、取消或中断的训练任务可以重试',
+    'TASK_SERVICE_STOPPING': '训练服务正在停止，请稍后重试',
 }
 STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,
           'PR_SOURCE_UNAVAILABLE': 502, 'PR_RATE_LIMITED': 429, 'PR_VERSION_CHANGED': 409,
           'PR_SOURCE_TOO_LARGE': 413, 'PR_CONTENT_UNAVAILABLE': 422,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
+          'ALGORITHM_UNKNOWN': 404, 'METRIC_SET_UNKNOWN': 404,
           'REPOSITORY_ANALYSIS_UNKNOWN': 404, 'REPOSITORY_ANALYSIS_UNAVAILABLE': 409,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
+          'DATASET_INVALID': 422, 'MODEL_NOT_CONVERGED': 422,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'REPOSITORY_CHECK_TIMEOUT': 504, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
           'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
           'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503}
+STATUS.update({'TRAINING_TIMEOUT': 504, 'TRAINING_INTERRUPTED': 503,
+               'TRAINING_WORKER_EXITED': 503, 'TASK_NOT_ACTIVE': 409,
+               'TASK_NOT_RETRYABLE': 409, 'TASK_SERVICE_STOPPING': 503})
 
 
 class RequestError(BaselineError):
@@ -80,7 +96,7 @@ def managed_path(path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/training-tasks') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'

@@ -128,6 +128,10 @@ def test_real_dataset_commits_page_stays_bounded(real_run, tmp_path):
     from jit_baseline.api import create_app
     import sqlite3
     from jit_baseline.catalog_storage import CatalogStorage
+    with sqlite3.connect(f'{REAL_DATABASE.as_uri()}?mode=ro', uri=True) as source:
+        if source.execute('SELECT 1 FROM dataset_record WHERE dataset_version=?',
+                          (REAL_VERSION,)).fetchone() is None:
+            pytest.skip('真实数据集尚未导入')
     # Upgrade a snapshot in this test's owned directory, never the developer's live catalog.
     copied = tmp_path / 'real-dataset.sqlite3'
     with sqlite3.connect(f'{REAL_DATABASE.as_uri()}?mode=ro', uri=True) as source:

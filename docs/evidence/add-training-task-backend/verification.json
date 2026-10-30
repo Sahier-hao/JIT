@@ -1,0 +1,56 @@
+{
+  "backendPytest": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 626,
+    "skipped": 1,
+    "tests": 627,
+    "timeSeconds": 397.1
+  },
+  "change": "add-training-task-backend",
+  "database": {
+    "backupBeforeMigration": true,
+    "currentVersion": 18,
+    "oldTablesPreserved": true
+  },
+  "generatedUtc": "2026-10-30T19:51:30+08:00",
+  "hashes": {
+    "018_training_tasks.sql": "4aca057ed89e0dacc8da2b65532db42d3d1161494650333c3e4c5969f79b9b1b",
+    "openapi.yaml": "8e69cece62fbf789efe19bc509ea0cdada8cee074b6cb9288232d5d33ae418e2",
+    "pytest.xml": "a987d5417c1ee5a30731543e5890fea962de3bb8916ac3bcfb721ad7f3510025"
+  },
+  "protectedScope": {
+    "defaultModelSelectionUnaffected": true,
+    "frontendUnchanged": true,
+    "predictionApiUnchanged": true,
+    "projectAnalysisLifecyclePreserved": true,
+    "unexpectedProtectedChanges": []
+  },
+  "sourceHashes": [
+    {
+      "path": "backend/jit_baseline/training.py",
+      "sha256": "c770d8fc60b1723f98c2cca29c3a7f85401e59e536e2df6d83b9f6d98ee60dc5"
+    },
+    {
+      "path": "backend/jit_baseline/training_tasks.py",
+      "sha256": "c355e41c579be2c959da1c00ec8b5969d1dbd46c85a3dd37faa77af886c090b8"
+    },
+    {
+      "path": "backend/jit_baseline/training_worker.py",
+      "sha256": "ad95a4fa52dd8fa3311be8d565d056837133f9847cd5da8cb03da0d337a6b7e5"
+    },
+    {
+      "path": "backend/jit_baseline/sync.py",
+      "sha256": "ed7bfab4796446134ffe0df0e9f882d844db11719ca8a8c3545e6a2aef8143c8"
+    },
+    {
+      "path": "backend/jit_baseline/api.py",
+      "sha256": "a1dbc65f2aabba7bb61cc0ee770278f924ae356fe6f63bf557516acab5f3d449"
+    },
+    {
+      "path": "backend/tests/test_training_tasks.py",
+      "sha256": "fe0b3de64f0945af291ddc2ac8e1682f043105d12250a92521def43857aaf265"
+    }
+  ],
+  "status": "passed"
+}

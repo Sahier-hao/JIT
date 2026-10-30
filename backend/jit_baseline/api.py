@@ -21,9 +21,10 @@ def _supplied_directory():
 
 
 def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
-               sync_service=None, dataset_root=None):
+               sync_service=None, dataset_root=None, training_service=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
     owns_sync = sync_service is None
+    owns_training = training_service is None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -37,6 +38,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             await run_in_threadpool(app.state.updates.close)
             if owns_sync:
                 await run_in_threadpool(app.state.sync.close)
+            if owns_training:
+                await run_in_threadpool(app.state.training.close)
 
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     @app.get('/api/health')
@@ -73,6 +76,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                    dataset_root=dataset_root, allow_local=allow_local)
     sync_service.recover()
     app.state.sync = sync_service
+    from .training_tasks import TrainingTaskService
+    if training_service is None:
+        training_service = TrainingTaskService(storage, catalog, artifact_root=catalog.root)
+    training_service.recover()
+    app.state.training = training_service
     from .repository_updates import RepositoryUpdates
     updates = RepositoryUpdates(sync_service)
     app.state.updates = updates
@@ -241,6 +249,40 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                 enabled=item['enabled'], isDefault=item['isDefault'],
                                 repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
                                 ('openstack-six-v1', 'kamei14-git-v1')) for item in catalog.models()]}
+
+    @app.post('/api/v1/training-tasks')
+    async def create_training_task(request: Request):
+        result, created = await run_in_threadpool(
+            training_service.create, await read_object(request), request.state.request_id,
+            created_by=request.state.admin_username)
+        request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/training-tasks')
+    def training_task_list(limit: int = 20, offset: int = 0):
+        return training_service.pages(limit, offset)
+
+    @app.get('/api/v1/training-tasks/{task_id}')
+    def training_task_detail(task_id: str):
+        return training_service.get(task_id)
+
+    @app.post('/api/v1/training-tasks/{task_id}/cancel')
+    def cancel_training_task(task_id: str):
+        result = training_service.cancel(task_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
+
+    @app.post('/api/v1/training-tasks/{task_id}/retry')
+    async def retry_training_task(task_id: str, request: Request):
+        body = await request.body()
+        if body:
+            payload = await read_object(request)
+            if payload:
+                raise RequestError('INPUT_INVALID')
+        result, created = await run_in_threadpool(
+            training_service.retry, task_id, request.state.request_id,
+            created_by=request.state.admin_username)
+        request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
+        return JSONResponse(result, status_code=202 if created else 200)
 
     @app.patch('/api/v1/models/{model_id}/policy')
     async def model_policy(model_id: str, request: Request):
