@@ -10,6 +10,8 @@ const servicePort = numberFromEnv('JIT_SERVICE_PORT', DEFAULT_SERVICE_PORT)
 
 export default defineConfig({
   testDir: './e2e',
+  // 专用预览服务与大型仓库闭环各自使用独立数据库/模型状态，不能混入共享默认套件。
+  testIgnore: ['**/admin-training-workbench.spec.ts', '**/project-workspace.spec.ts'],
   outputDir: './test-results/default',
   globalSetup: './e2e/repository-setup.ts',
   fullyParallel: true,
@@ -29,7 +31,7 @@ export default defineConfig({
   webServer: [
     // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。
     {
-      command: `.venv\\Scripts\\python.exe -m jit_baseline.cli serve --port ${servicePort}`,
+      command: `.venv\\Scripts\\python.exe ..\\frontend\\e2e\\server.py ${servicePort}`,
       cwd: '../backend',
       url: `${serviceUrl(servicePort)}/api/health`,
       reuseExistingServer: false,

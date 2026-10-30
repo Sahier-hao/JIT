@@ -14,6 +14,11 @@ it.each<Route>([
   { name: 'pr-work', repositoryId: 'repo-B', owner: 'EXample', repositoryName: 'Project', number: 12, snapshotId: 'fixed-v2' },
   { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12, snapshotId: 'fixed-v1' },
   { name: 'legacy-sync', syncId: 'analysis-1', view: 'plan' },
+  { name: 'admin', view: 'models' },
+  { name: 'admin', view: 'models', resourceId: '11111111-1111-4111-8111-111111111111' },
+  { name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: 'mp-scikit-learn-2022-01-02_2024-12-30' },
+  { name: 'admin', view: 'training', resourceId: '22222222-2222-4222-8222-222222222222' },
+  { name: 'admin', view: 'comparisons', models: ['model-a', 'model-b'] },
 ])('round trips the exact object %j', route => expect(parseHash(hashFor(route))).toEqual(route))
 it.each(['#/models', '#/lab/models', '#/predict', '#/lab/predict', '#/predictions/batch-1', '#/lab/results/batch-1', '#/lab/demo/commits', '#/settings/connection'])('explicitly retires %s', hash => expect(parseHash(hash).name).toBe('retired'))
 it('opens projects on first visit and preserves personal reviews', () => { expect(parseHash('')).toEqual({ name: 'repositories' }); expect(parseHash('#/reviews')).toEqual({ name: 'my-reviews' }) })

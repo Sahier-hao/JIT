@@ -1,0 +1,48 @@
+{
+  "dataset": "kamei14-git-v1-e2e-large-repo",
+  "version": "kamei14-git-v1-e2e-large-repo-2024-01-01_2024-10-26",
+  "schema": "kamei14-git-v1",
+  "sourceHead": "95f4d33be0c02474667b16dfa1df7e10be41cc2c",
+  "timeRange": {
+    "start": "2024-01-01T00:00:00Z",
+    "end": "2024-10-26T00:00:00Z"
+  },
+  "collection": {
+    "commitsInWindow": 300,
+    "records": 300,
+    "fixCommits": 150,
+    "labeledCommits": 140,
+    "szzRule": "szz-simple-v1"
+  },
+  "quality": {
+    "rawRows": 300,
+    "includedRows": 300,
+    "positiveLabels": 140,
+    "blankLabels": 0,
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    }
+  },
+  "file": {
+    "name": "kamei14-git-v1-e2e-large-repo-2024-01-01_2024-10-26.csv",
+    "bytes": 27838,
+    "sha256": "8797fefa25cbf1cfa483c73a8f3546b5086dbac5cf3f04d7506758691767664f"
+  },
+  "limitations": [
+    "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+    "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。"
+  ]
+}

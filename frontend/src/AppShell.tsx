@@ -12,6 +12,9 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
   const [theme, setTheme] = useState<ThemeId>(initialTheme)
   const [density, setDensity] = useState(initialDensity)
   const report = route.name === 'report' || route.name === 'admin'
+  const adminLabel = route.name === 'admin'
+    ? route.view === 'models' ? '模型管理' : route.view === 'datasets' ? '数据集' : route.view === 'training' ? '训练任务' : '模型比较'
+    : '验证报告'
   function chooseTheme(id: ThemeId) {
     setTheme(id)
     applyTheme(id)
@@ -29,7 +32,7 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
       <div className="sidebar-bottom"><Button variant="ghost" size="sm" aria-current={report ? 'page' : undefined} onClick={() => navigate({ name: 'admin', view: 'models' })}><Icon name="sliders"/>管理工作区</Button></div>
     </aside>
     <div className="workspace-content">
-      <header className="workspace-topbar"><span className="breadcrumb">{report ? '管理工作区' : '工作空间'} <span>/</span> <b>{route.name === 'report' ? '验证报告' : route.name === 'admin' ? route.view === 'models' ? '模型管理' : '数据记录' : route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查' : route.name === 'pr-work' ? 'PR 审查' : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细' : route.name === 'comparison' ? '分析对比' : '项目'}</b></span><div className="appearance-anchor"><NotificationEntry navigate={navigate}/><Popover
+      <header className="workspace-topbar"><span className="breadcrumb">{report ? '管理工作区' : '工作空间'} <span>/</span> <b>{report ? adminLabel : route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查' : route.name === 'pr-work' ? 'PR 审查' : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细' : route.name === 'comparison' ? '分析对比' : '项目'}</b></span><div className="appearance-anchor"><NotificationEntry navigate={navigate}/><Popover
         label="外观偏好"
         open={appearance}
         onOpenChange={setAppearance}

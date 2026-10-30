@@ -1441,6 +1441,35 @@ paths:
         schema:
           $ref: '#/components/schemas/Uuid'
       security: []
+  /api/v1/models/{modelId}:
+    get:
+      operationId: getRegisteredModelDetail
+      summary: 读取已校验模型详情、训练指标与运行谱系
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: modelId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 模型身份、策略、真实训练指标和只读谱系。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelDetail'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ModelUnavailable'
   /api/v1/model-candidates:
     get:
       operationId: listModelCandidates
@@ -4899,12 +4928,31 @@ components:
           type:
           - string
           - 'null'
+        source:
+          type: object
+          properties:
+            publisher: {type: [string, 'null']}
+            url: {type: [string, 'null']}
+            revision: {type: [string, 'null']}
+            citation: {type: [string, 'null']}
+            branch: {type: [string, 'null']}
+            head: {type: [string, 'null']}
+            window: {type: [object, 'null']}
+          additionalProperties: false
+        labelRule:
+          type: [string, 'null']
+        limitations:
+          type: array
+          items: {type: string}
       required:
       - version
       - schema
       - timeRange
       - quality
       - file
+      - source
+      - labelRule
+      - limitations
       additionalProperties: false
     DatasetQuality:
       type: object
@@ -6273,6 +6321,111 @@ components:
       - verificationEnvironment
       - reproducibility
       - origin
+      additionalProperties: false
+    ModelDetail:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        isDefault:
+          type: boolean
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        runId:
+          $ref: '#/components/schemas/Uuid'
+        datasetVersion:
+          $ref: '#/components/schemas/Uuid'
+        featureSchemaVersion:
+          type: string
+          minLength: 1
+        sha256:
+          $ref: '#/components/schemas/Hash'
+        state:
+          type: string
+          enum:
+          - ready
+          - invalid
+        limitations:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          minItems: 0
+        artifactRunId:
+          $ref: '#/components/schemas/Hash'
+        artifactDatasetVersion:
+          type: string
+          minLength: 1
+        artifactModelId:
+          type: string
+          minLength: 1
+        method:
+          type: string
+          minLength: 1
+        featureSchema:
+          $ref: '#/components/schemas/FeatureSchema'
+        jsonPredictionSupported:
+          type: boolean
+        trainingEnvironment:
+          type: object
+        verificationEnvironment:
+          type: object
+        reproducibility:
+          type: object
+        origin:
+          enum:
+          - local
+          - external
+        error:
+          type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/GlobalErrorCode'
+            message:
+              type: string
+              minLength: 1
+          required:
+          - code
+          - message
+          additionalProperties: false
+        artifactKey: {type: string, minLength: 1}
+        metrics: {type: object}
+        trainingSeconds: {type: [number, 'null'], minimum: 0}
+        threshold: {type: number}
+        metricSet: {type: [string, 'null']}
+        split: {type: object}
+        source: {type: object}
+      required:
+      - enabled
+      - isDefault
+      - modelId
+      - name
+      - runId
+      - datasetVersion
+      - featureSchemaVersion
+      - sha256
+      - state
+      - limitations
+      - artifactRunId
+      - artifactDatasetVersion
+      - artifactModelId
+      - method
+      - featureSchema
+      - jsonPredictionSupported
+      - trainingEnvironment
+      - verificationEnvironment
+      - reproducibility
+      - origin
+      - artifactKey
+      - metrics
+      - trainingSeconds
+      - threshold
+      - metricSet
+      - split
+      - source
       additionalProperties: false
     ModelList:
       type: object

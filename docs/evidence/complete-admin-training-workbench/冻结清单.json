@@ -1,0 +1,69 @@
+{
+  "copiedFromWorkspace": [
+    "admin-training-browser-results.json",
+    "browser-results.json",
+    "large-repository-dataset.json",
+    "model-metrics.json",
+    "README.md",
+    "screenshots/admin-large-repository-training-1280.png",
+    "screenshots/admin-large-repository-training-1440.png",
+    "screenshots/admin-large-repository-training-390.png",
+    "unit-results.json",
+    "verification.json",
+    "verification.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 11,
+  "files": [
+    {
+      "path": "admin-training-browser-results.json",
+      "sha256": "d2e019641dd0cda4657d1f29e179a7f3e927c57956c600169a7d6fe0b1313714"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "c0a378415e0a7a680ba0c468d3dda3653b3c2035ddee0958a6036b0a7df3f65d"
+    },
+    {
+      "path": "large-repository-dataset.json",
+      "sha256": "addb350efcc065cab74133c0ef2ab1e3cc6208d46345e0cb929b2d3fc50fdf78"
+    },
+    {
+      "path": "model-metrics.json",
+      "sha256": "ed461a634b0f7c874e242aa50891349c0ad0039fd01318dda3aaf403978084b4"
+    },
+    {
+      "path": "README.md",
+      "sha256": "75ba469e202f9de2c73a665338bf0b8b4e9807ba1c8bd904b480324be537a8eb"
+    },
+    {
+      "path": "screenshots/admin-large-repository-training-1280.png",
+      "sha256": "256819297b02a86dba2b4c53c4e0675002bf2f5f50286087d67051bcce707973"
+    },
+    {
+      "path": "screenshots/admin-large-repository-training-1440.png",
+      "sha256": "cd65a1425732f3bf22a0d93b7acde012f6fa1e39bca35d4eafb5c03e4b086abd"
+    },
+    {
+      "path": "screenshots/admin-large-repository-training-390.png",
+      "sha256": "6ca836b18dc82fc255c5e4e6efac063cd5493bf5da5644103224f81198a1fb3c"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "16342393a7a4c5f85270175cfb3e7b4efb5f38aedb6f8e66861ce5dc0fcc696f"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "28bd519a0d1f0093ee25befa4a9c17d0ad641f9845d2285e3a55273c1c7f35b7"
+    },
+    {
+      "path": "verification.log",
+      "sha256": "1ba0638256e76dba62a915094f20964df24b7171bd90c918052255277c39e2c9"
+    }
+  ],
+  "frozenUtc": "2026-10-30T14:38:50.454621+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "14afea1da2ee942b3d039faded0bc12cccd1377682cafd2c261f117d72d7885c",
+  "workspace": "docs/evidence/_run/complete-admin-training-workbench"
+}

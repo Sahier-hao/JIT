@@ -62,8 +62,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     app.state.storage = storage
     from . import store
     from . import datasets as dataset_module
+    dataset_root = dataset_root if dataset_root is not None else os.environ.get('JIT_DATASET_ROOT')
+    registry_root = Path(dataset_root) if dataset_root else None
     # 描述文件是登记事实：缺失或校验失败即拒绝启动（DSR-06），不退回空目录。
-    registered = dataset_module.load_all()
+    registered = dataset_module.load_all(registry_root)
     app.state.datasets = registered
     from .prediction import PredictionService
     prediction_service = PredictionService(catalog)
@@ -71,14 +73,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     if sync_service is None:
         # 本地仓库只用于验收与测试；默认只接受公开 HTTP(S) 地址。
         allow_local = os.environ.get('JIT_SYNC_ALLOW_LOCAL') == '1'
-        dataset_root = dataset_root if dataset_root is not None else os.environ.get('JIT_DATASET_ROOT')
         sync_service = SyncService(storage, catalog, artifact_root=catalog.root,
-                                   dataset_root=dataset_root, allow_local=allow_local)
+                                   dataset_root=registry_root, allow_local=allow_local)
     sync_service.recover()
     app.state.sync = sync_service
     from .training_tasks import TrainingTaskService
     if training_service is None:
-        training_service = TrainingTaskService(storage, catalog, artifact_root=catalog.root)
+        training_service = TrainingTaskService(
+            storage, catalog, artifact_root=catalog.root, dataset_root=registry_root)
     training_service.recover()
     app.state.training = training_service
     from .repository_updates import RepositoryUpdates
@@ -241,6 +243,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return {'models': [model for model in registered_models if state is None or model['state'] == state],
                 'methods': methods}
 
+    @app.get('/api/v1/models/{model_id}')
+    def model_detail(model_id: str):
+        return catalog.detail(model_id)
+
     @app.get('/api/v1/repository-models')
     def repository_models():
         # Public selection metadata only: no training evidence, paths or verification reports.
@@ -294,11 +300,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/datasets')
     def dataset_versions_all():
-        return {'datasets': store.dataset_list(dataset_module.load_all())}
+        return {'datasets': store.dataset_list(dataset_module.load_all(registry_root))}
 
     @app.get('/api/v1/datasets/{name}/versions')
     def dataset_versions(name: str):
-        view = store.version_view(dataset_module.load_all(), name)
+        view = store.version_view(dataset_module.load_all(registry_root), name)
         if view is None:
             raise RequestError('NOT_FOUND')
         return view

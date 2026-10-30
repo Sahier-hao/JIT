@@ -16,8 +16,7 @@ def client(tmp_path):
     database = tmp_path / 'management.sqlite3'
     CatalogStorage(database).initialize()
     with TestClient(create_app(tmp_path / 'missing-run', database=database,
-                               artifact_root=tmp_path / 'artifacts',
-                               dataset_root=tmp_path / 'datasets')) as value:
+                               artifact_root=tmp_path / 'artifacts')) as value:
         value.database = database
         yield value
 

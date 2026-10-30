@@ -135,9 +135,11 @@ html[data-theme="charcoal"] {
 .new-project-form .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 
 .repo-overview { display: grid; gap: 20px; }
-.repo-overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.repo-overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; min-width: 0; }
+.repo-overview-head > div { min-width: 0; max-width: 100%; }
 .repo-overview-head .page-intro { margin: 0 0 8px; }
-.repo-overview-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--fg-3); font-size: 13px; }
+.repo-overview-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--fg-3); font-size: 13px; min-width: 0; }
+.repo-overview-meta > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .repo-overview-meta a { color: var(--accent); }
 .repo-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
 .repo-stats > div { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--card); }

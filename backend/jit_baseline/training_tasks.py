@@ -221,12 +221,13 @@ class TrainingTaskStorage:
 
 class TrainingTaskService:
     def __init__(self, storage=None, catalog=None, artifact_root=None,
-                 timeout=TRAINING_TIMEOUT, runner=None):
+                 dataset_root=None, timeout=TRAINING_TIMEOUT, runner=None):
         self.storage = storage if storage is not None else CatalogStorage()
         self.tasks = TrainingTaskStorage(self.storage)
         self.catalog = catalog or ModelCatalog(self.storage, artifact_root)
         self.artifact_root = Path(
             artifact_root if artifact_root is not None else BACKEND / "artifacts").resolve()
+        self.dataset_root = Path(dataset_root) if dataset_root is not None else None
         self.timeout = timeout
         self._runner = runner
         self.training = TrainingExecutor(self.catalog, self.artifact_root)
@@ -294,7 +295,7 @@ class TrainingTaskService:
 
     def _dataset(self, dataset_version):
         try:
-            registered = load_all()
+            registered = load_all(self.dataset_root)
         except BaselineError as exc:
             raise BaselineError("DATASET_REGISTRY_EMPTY", str(exc)) from exc
         dataset = registered.get(dataset_version)

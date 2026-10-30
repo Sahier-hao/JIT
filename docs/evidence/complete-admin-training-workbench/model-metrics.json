@@ -1,0 +1,78 @@
+{
+  "automaticRepositoryTraining": {
+    "modelId": "19e4b3dc-476a-451f-b6a7-d956c7f219ab",
+    "artifactKey": "repository-sync-f4be2332",
+    "runId": "02081a5c-f025-47f8-b77d-75b4eafe98ff",
+    "artifactRunId": "8a2324baec6141000b209bdb96e8bdc613a78d64295b8539cc0f6ebcdab25f32",
+    "datasetVersion": "kamei14-git-v1-e2e-large-repo-2024-01-01_2024-10-26",
+    "method": "logistic-regression-l2-v1",
+    "metricSet": "metric-set-v1",
+    "trainingSeconds": 0.159576,
+    "metrics": {
+      "averagePrecision": 0.8571886446886445,
+      "rocAuc": 0.9326923076923077,
+      "recall20Loc": 0.5384615384615384,
+      "popt": null,
+      "f1": 0.7222222222222222,
+      "ifa": null
+    },
+    "split": {
+      "train": {
+        "count": 210,
+        "positiveCount": 105,
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-07-28T00:00:00Z"
+      },
+      "validation": {
+        "count": 45,
+        "positiveCount": 22,
+        "start": "2024-07-29T00:00:00Z",
+        "end": "2024-09-11T00:00:00Z"
+      },
+      "test": {
+        "count": 45,
+        "positiveCount": 13,
+        "start": "2024-09-12T00:00:00Z",
+        "end": "2024-10-26T00:00:00Z"
+      }
+    }
+  },
+  "adminForcedTraining": {
+    "modelId": "c84f2a18-ae50-4925-a410-351b55e6dc8e",
+    "artifactKey": "training-task-5fe1c487",
+    "runId": "2619424d-c231-4df9-bc32-60052d8fa1d2",
+    "artifactRunId": "14641f737a6be65471606a1ae5b9f971693617aa1b8992e7087c2d1597ccb7a7",
+    "datasetVersion": "kamei14-git-v1-e2e-large-repo-2024-01-01_2024-10-26",
+    "method": "logistic-regression-l2-v1",
+    "metricSet": "metric-set-v2",
+    "trainingSeconds": 0.153451,
+    "metrics": {
+      "averagePrecision": 0.8571886446886445,
+      "rocAuc": 0.9326923076923077,
+      "recall20Loc": 0.5384615384615384,
+      "popt": 0.9326923076923079,
+      "f1": 0.7222222222222222,
+      "ifa": 0
+    },
+    "split": {
+      "train": {
+        "count": 210,
+        "positiveCount": 105,
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-07-28T00:00:00Z"
+      },
+      "validation": {
+        "count": 45,
+        "positiveCount": 22,
+        "start": "2024-07-29T00:00:00Z",
+        "end": "2024-09-11T00:00:00Z"
+      },
+      "test": {
+        "count": 45,
+        "positiveCount": 13,
+        "start": "2024-09-12T00:00:00Z",
+        "end": "2024-10-26T00:00:00Z"
+      }
+    }
+  }
+}

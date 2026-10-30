@@ -226,6 +226,31 @@ class ModelCatalog:
             raise RequestError(code) from exc
         return snapshot, dict(payload, state='ready', **self.policy(model_id))
 
+    def detail(self, model_id):
+        """Read-only model details from the verified preferred run location."""
+        snapshot, payload = self.load_model(model_id)
+        summary = snapshot.summary
+        manifest = snapshot.manifest
+        metrics = summary.get('metrics')
+        if not isinstance(metrics, dict):
+            raise RequestError('ARTIFACT_INVALID')
+        dataset_version = summary.get('datasetVersion')
+        if dataset_version != payload.get('artifactDatasetVersion'):
+            raise RequestError('ARTIFACT_INVALID')
+        return dict(
+            payload,
+            artifactKey=self._row(model_id)['relative_key'],
+            artifactDatasetVersion=dataset_version,
+            metrics=metrics,
+            trainingSeconds=summary.get('trainingSeconds'),
+            threshold=summary.get('threshold'),
+            metricSet=manifest['config'].get('metricSet'),
+            split=summary.get('split'),
+            source=summary.get('source'),
+            limitations=summary.get('limitations') or payload.get('limitations') or [],
+            featureSchemaVersion=snapshot.schema.name,
+        )
+
     def default_model_id(self):
         with self.store.connection() as db:
             return db.execute('SELECT model_id FROM model_default WHERE singleton=1').fetchone()[0]

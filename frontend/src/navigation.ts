@@ -11,7 +11,7 @@ export type Route =
   | { name: 'analysis'; repositoryId: string; viewSyncId: string; view: 'commits' | 'plan'; commitId?: string }
   | { name: 'comparison'; repositoryId: string; baseSyncId: string; targetSyncId: string }
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
-  | { name: 'admin'; view: 'models' | 'datasets' }
+  | { name: 'admin'; view: 'models' | 'datasets' | 'training' | 'comparisons'; resourceId?: string; version?: string; models?: string[] }
   | { name: 'legacy-sync'; syncId: string; view: 'commits' | 'plan' }
   | { name: 'retired'; hash: string }
   | { name: 'unknown'; hash: string }
@@ -35,8 +35,14 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]), ...(snapshotId ? { snapshotId } : {}) }
     if (['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
     if (['/projects/new', '/connect', '/sources'].includes(path)) return { name: 'sources' }
+    const comparisonModels = (params.get('models') ?? '').split(',').map(value => value.trim()).filter(Boolean)
     if (path === '/admin' || path === '/admin/models') return { name: 'admin', view: 'models' }
+    if (parts[0] === 'admin' && parts[1] === 'models' && parts.length === 3) return { name: 'admin', view: 'models', resourceId: parts[2] }
     if (path === '/admin/datasets') return { name: 'admin', view: 'datasets' }
+    if (parts[0] === 'admin' && parts[1] === 'datasets' && [3, 4].includes(parts.length)) return { name: 'admin', view: 'datasets', resourceId: parts[2], ...(parts[3] ? { version: parts[3] } : {}) }
+    if (path === '/admin/training') return { name: 'admin', view: 'training' }
+    if (parts[0] === 'admin' && parts[1] === 'training' && parts.length === 3) return { name: 'admin', view: 'training', resourceId: parts[2] }
+    if (path === '/admin/comparisons') return { name: 'admin', view: 'comparisons', ...(comparisonModels.length ? { models: comparisonModels } : {}) }
     if (path === '/admin/reports') return { name: 'report', view: 'overview' }
     if (parts[0] === 'admin' && parts[1] === 'reports' && parts.length === 4 && ['overview', 'commits', 'trends'].includes(parts[3])) return { name: 'report', runId: parts[2], view: parts[3] as 'overview' | 'commits' | 'trends' }
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
@@ -67,7 +73,14 @@ export function hashFor(route: Route): string {
     case 'comparison': return `#/projects/${encodeURIComponent(route.repositoryId)}/compare/${encodeURIComponent(route.baseSyncId)}/${encodeURIComponent(route.targetSyncId)}`
     case 'analysis': return `#/projects/${encodeURIComponent(route.repositoryId)}/analyses/${encodeURIComponent(route.viewSyncId)}/${route.view}${route.commitId ? '/'+encodeURIComponent(route.commitId) : ''}`
     case 'report': return route.runId ? `#/admin/reports/${encodeURIComponent(route.runId)}/${route.view}` : '#/admin/reports'
-    case 'admin': return `#/admin/${route.view}`
+    case 'admin': {
+      const base = `#/admin/${route.view}`
+      if (route.view === 'models' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
+      if (route.view === 'datasets' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}${route.version ? `/${encodeURIComponent(route.version)}` : ''}`
+      if (route.view === 'training' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
+      if (route.view === 'comparisons' && route.models?.length) return `${base}?models=${encodeURIComponent(route.models.join(','))}`
+      return base
+    }
     case 'legacy-sync': return `#/legacy/sync/${encodeURIComponent(route.syncId)}/${route.view}`
     default: return route.hash
   }

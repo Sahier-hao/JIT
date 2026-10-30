@@ -43,6 +43,36 @@ def test_admin_register_member_list_and_cli_share_identity(settings, monkeypatch
         assert json.loads(capsys.readouterr().out)['model']['modelId'] == models[0]['modelId']
 
 
+def test_admin_model_detail_returns_verified_metrics_and_lineage(settings):
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+
+    with TestClient(create_app(**settings)) as client:
+        candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
+        registered = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        }).json()
+        model = registered['model']
+        detail = client.get(f"/api/v1/models/{model['modelId']}")
+        assert detail.status_code == 200
+        body = detail.json()
+        assert body['modelId'] == model['modelId']
+        assert body['runId'] == model['runId']
+        assert body['artifactRunId'] == model['artifactRunId']
+        assert body['artifactDatasetVersion']
+        assert body['artifactKey'] == 'baseline'
+        assert body['metrics']['averagePrecision']['value'] is not None
+        assert body['source']['files']
+        assert str(settings['artifact_root']) not in detail.text
+        (settings['artifact_root'] / 'baseline/model.joblib').unlink()
+        unavailable = client.get(f"/api/v1/models/{model['modelId']}")
+        assert unavailable.status_code == 503
+        assert unavailable.json()['error']['code'] == 'ARTIFACT_UNAVAILABLE'
+    with PublicTestClient(create_app(**settings)) as public:
+        assert public.get(f"/api/v1/models/{model['modelId']}").status_code == 401
+
+
 @pytest.mark.parametrize('change,code', [('unknown','NOT_FOUND'), ('changed','CONTEXT_MISMATCH'),
                                       ('path','INPUT_INVALID'), ('broken','INTEGRITY_ERROR')])
 def test_register_errors_never_publish_models(settings, change, code):
@@ -89,7 +119,19 @@ def test_dataset_and_commit_queries_share_one_registry(settings):
     with TestClient(create_app(**settings)) as client:
         listing = client.get('/api/v1/datasets', headers=HEADERS)
         assert listing.status_code == 200
-        assert 'openstack-six-v1' in [item['dataset'] for item in listing.json()['datasets']]
+        listed = next(item for item in listing.json()['datasets'] if item['dataset'] == 'openstack-six-v1')
+        version = listed['versions'][0]
+        assert version['source'] == {
+            'publisher': manifest['publisher'],
+            'url': manifest['url'],
+            'revision': manifest['revision'],
+            'citation': manifest.get('citation'),
+            'branch': None,
+            'head': None,
+            'window': None,
+        }
+        assert version['labelRule'] is None
+        assert version['limitations'] == []
         versions = client.get('/api/v1/datasets/openstack-six-v1/versions', headers=HEADERS)
         assert [item['version'] for item in versions.json()['versions']] == [manifest['version']]
         assert client.get('/api/v1/datasets/unknown/versions', headers=HEADERS).status_code == 404
