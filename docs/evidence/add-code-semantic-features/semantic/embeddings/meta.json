@@ -1,0 +1,10 @@
+{
+  "count": 495,
+  "dim": 768,
+  "embeddingsSha256": "bd3f2d298c84da00f22ae98a2e313ef67044e53787dd34547dd7bdb664d88122",
+  "maxLength": 256,
+  "model": "microsoft/codebert-base",
+  "pooling": "mean",
+  "revision": "3b0952feddeffad0063f274080e3c23d75e7eb39",
+  "textSha256": "1d86bf688d7756324784f186fb92b430c6f42609a26d41adc2c5070c66633483"
+}

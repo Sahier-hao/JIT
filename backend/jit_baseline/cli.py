@@ -36,6 +36,8 @@ def main():
                      help="数据集描述文件；给定后改读该数据集而不是 OpenStack 快照")
     run.add_argument("--holdout", type=int, default=None,
                      help="epoch 截止时间；只把早于它的记录用于切分与训练")
+    run.add_argument("--embedding-dir", type=Path, default=None,
+                     help="语义 schema 使用的嵌入表目录")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -51,6 +53,18 @@ def main():
     suite.add_argument("--methods", nargs="*", default=None,
                        help="方法子集；省略表示全部已注册方法")
     suite.add_argument("--metric-set", default=None, help="默认 metric-set-v2")
+    embeddings = commands.add_parser("build-embeddings")
+    embeddings.add_argument("--text", type=Path, required=True)
+    embeddings.add_argument("--output", type=Path, required=True)
+    embeddings.add_argument("--model", default=None)
+    embeddings.add_argument("--revision", default=None)
+    embeddings.add_argument("--pooling", default=None)
+    embeddings.add_argument("--max-length", type=int, default=None)
+    embeddings.add_argument("--batch-size", type=int, default=16)
+    embeddings.add_argument("--hf-endpoint", default=None)
+    schemes = commands.add_parser("compare-schemes")
+    schemes.add_argument("runs", type=Path, nargs="+")
+    schemes.add_argument("--report", type=Path, required=True)
     projects = commands.add_parser("compare-projects")
     projects.add_argument("suites", type=Path, nargs="+")
     projects.add_argument("--report", type=Path, required=True)
@@ -85,6 +99,7 @@ def main():
     collect.add_argument('--dataset', default=None, help='数据集名；默认由仓库名派生')
     collect.add_argument('--output', type=Path, default=None, help='采集 CSV 输出路径')
     collect.add_argument('--register', action='store_true', help='采集后直接登记数据集')
+    collect.add_argument('--with-text', action='store_true', help='同时产出有界 diff 文本 sidecar')
     collect.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
@@ -125,13 +140,15 @@ def main():
             result = collector.collect_repository(args.repo, since=args.since, until=args.until,
                                                   branch=args.branch, output=args.output,
                                                   dataset=args.dataset, register=args.register,
-                                                  limit=args.limit, root=args.root)
+                                                  limit=args.limit, root=args.root,
+                                                  with_text=args.with_text)
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
                                  metric_set=args.metric_set,
-                                 dataset_manifest=args.dataset_manifest, holdout=args.holdout)
+                                 dataset_manifest=args.dataset_manifest, holdout=args.holdout,
+                                 embedding_dir=args.embedding_dir)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)
@@ -154,6 +171,25 @@ def main():
             result = run_suite(args.dataset_manifest, args.output, args.methods, args.metric_set)
         elif args.command == "compare-projects":
             result = compare_projects(args.suites)
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+            write_json(args.report, result)
+        elif args.command == "build-embeddings":
+            from .semantic import build_embeddings
+            options = {"batch_size": args.batch_size}
+            if args.model:
+                options["model_id"] = args.model
+            if args.revision:
+                options["revision"] = args.revision
+            if args.pooling:
+                options["pooling"] = args.pooling
+            if args.max_length:
+                options["max_length"] = args.max_length
+            if args.hf_endpoint:
+                options["hf_endpoint"] = args.hf_endpoint
+            result = build_embeddings(args.text, args.output, **options)
+        elif args.command == "compare-schemes":
+            from .semantic import compare_schemes
+            result = compare_schemes(args.runs)
             args.report.parent.mkdir(parents=True, exist_ok=True)
             write_json(args.report, result)
         elif args.command == "freeze-evidence":

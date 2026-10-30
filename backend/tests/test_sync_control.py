@@ -106,8 +106,15 @@ def test_running_cancel_and_timeout_stop_owned_process_and_release_queue(service
     monkeypatch.setattr(sync, 'worker_command', lambda: [sys.executable, '-c', script])
     payload = {'repositoryUrl': 'https://example.com/repo', 'strategy': 'auto'}
     first, _ = service.create(payload)
-    wait_for(pidfile.exists)
-    pids = json.loads(pidfile.read_text())
+
+    def read_pids():
+        try:
+            value = json.loads(pidfile.read_text())
+        except (OSError, json.JSONDecodeError):
+            return None
+        return value if isinstance(value, list) and len(value) == 2 else None
+
+    pids = wait_for(read_pids)
     service.timeout = .25
     second, _ = service.create(dict(payload, branch='other'))
     assert service.get(second['syncId'])['queuePosition'] == 1

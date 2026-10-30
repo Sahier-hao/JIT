@@ -1,0 +1,286 @@
+{
+  "citation": "由本地 Git 仓库采集生成",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1640995200
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 10,
+      "commitsInWindow": 496,
+      "excluded": {
+        "empty": 1,
+        "merges": 369,
+        "outsideWindow": 3333,
+        "unparsed": 0
+      },
+      "records": 495
+    },
+    "gitVersion": "git version 2.50.0.windows.1",
+    "kind": "git-repository",
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。"
+    ],
+    "repository": {
+      "branch": "HEAD",
+      "head": "d086db856be187255b8ec61ef409357393020f32",
+      "path": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\backend\\.cache\\tmp\\jit-collect-4bf9n9y6\\repository.git",
+      "resolvedBranch": "main"
+    },
+    "szz": {
+      "fixCommits": 73,
+      "labeledCommits": 76,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 0,
+        "outsideWindow": 5
+      }
+    },
+    "window": {
+      "endEpoch": 1735689600,
+      "since": "2022-01-01",
+      "startEpoch": 1640995200,
+      "until": "2025-01-01"
+    }
+  },
+  "dataset": "flask-3y-text",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 58308,
+    "name": "flask-3y-text.csv",
+    "path": "data/collected/flask-3y-text.csv",
+    "sha256": "c32ead55e0ea572bb9a3205a944d55994745d9d53061261a6cbdf76ee52bc915"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 20,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 0
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 475,
+    "positiveLabels": 74,
+    "rawRows": 495
+  },
+  "revision": "d086db856be187255b8ec61ef409357393020f32",
+  "samples": [
+    {
+      "id": "afe77feef351c2752bb9d4a93b65e11215633e06",
+      "time": "2022-01-11T12:59:08Z"
+    },
+    {
+      "id": "a025ee3f25044145a38e650aaf097f32bc5b2e83",
+      "time": "2022-01-13T19:10:06Z"
+    },
+    {
+      "id": "66f2ac669610accd76395a98b623a21b1f15a9c8",
+      "time": "2022-01-13T22:42:36Z"
+    },
+    {
+      "id": "b394a994e6d632643d0061e0e67772f076925951",
+      "time": "2024-11-24T00:03:47Z"
+    },
+    {
+      "id": "75a8327cfd6eb912e469a8a613151d7ee50a1c1c",
+      "time": "2024-11-27T10:14:18Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v1",
+  "text": {
+    "bytes": 1008412,
+    "path": "data/collected/flask-3y-text.text.jsonl",
+    "records": 495,
+    "rule": "diff-bound-v1",
+    "sha256": "1d86bf688d7756324784f186fb92b430c6f42609a26d41adc2c5070c66633483",
+    "skippedFiles": 228,
+    "truncated": 58
+  },
+  "timeRange": {
+    "end": "2024-11-27T10:14:18Z",
+    "endEpoch": 1732702458,
+    "start": "2022-01-11T12:59:08Z",
+    "startEpoch": 1641905948
+  },
+  "url": "https://github.com/pallets/flask",
+  "version": "flask-3y-text-2022-01-11_2024-11-27"
+}

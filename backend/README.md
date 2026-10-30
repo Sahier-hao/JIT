@@ -177,6 +177,67 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 报告按项目分组；跨项目固定 `directlyRankable: false`，并列出数据集版本、特征 schema、
 标签语义（发布者 `bugcount` vs 简化 SZZ）与测试成员的差异。项目内比较沿用既有并列规则。
 
+### 代码语义特征与三方案比较（add-code-semantic-features）
+
+Git 数据可以额外保存有界提交文本，再用固定版本的预训练代码模型离线生成嵌入。默认采集
+保持原行为；只有显式传入 `--with-text` 才产出与 CSV 同名的 `.text.jsonl`：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli collect-repository `
+  --repo https://github.com/pallets/flask --since 2022-01-01 --until 2025-01-01 `
+  --dataset flask-3y-text --output data/collected/flask-3y-text.csv --with-text --register
+```
+
+文本规则固定为 `diff-bound-v1`：文件按路径排序、每文件最多 80 行、每提交最多 8 KiB，
+二进制文件跳过；记录逐提交的 `truncated` 与 `skippedFiles`。数据集描述文件的 `text`
+块登记文本路径、字节数、记录数、截断/跳过总数与 SHA-256。
+
+嵌入只在离线构建阶段生成。将 Hugging Face 缓存放在可写目录，避免写入用户主目录：
+
+```powershell
+$env:HF_HOME = (Join-Path $PWD ".cache/huggingface")
+& .venv/Scripts/python.exe -m jit_baseline.cli build-embeddings `
+  --text data/collected/flask-3y-text.text.jsonl `
+  --output artifacts/embeddings/flask-3y-text-codebert `
+  --model microsoft/codebert-base `
+  --revision 3b0952feddeffad0063f274080e3c23d75e7eb39 `
+  --pooling mean --max-length 256 --batch-size 16
+```
+
+可用 `--hf-endpoint https://hf-mirror.com` 指定镜像。产物目录含 `embeddings.npy`、
+`ids.json`、`meta.json`；训练会拒绝缺失向量、数量/维度不符、哈希不符、编码器/revision
+不符，以及嵌入元数据与数据集 `text.sha256` 不一致的情况，不会补零或静默换模型。
+
+同一 Git 数据集上，以同一方法、同一时间切分和 `metric-set-v2` 并列三种输入方案：
+
+```powershell
+# 专家-only：14 维
+& .venv/Scripts/python.exe -m jit_baseline.cli run --dataset-manifest <manifest> `
+  --schema kamei14-git-v1 --algorithm logistic-regression-l2-v1 `
+  --metric-set metric-set-v2 --output artifacts/semantic/expert-only/lr
+
+# 语义-only：768 维
+& .venv/Scripts/python.exe -m jit_baseline.cli run --dataset-manifest <manifest> `
+  --schema code-semantic-codebert-v1 --embedding-dir <embedding-dir> `
+  --algorithm logistic-regression-l2-v1 --metric-set metric-set-v2 `
+  --output artifacts/semantic/semantic-only/lr
+
+# 语义+专家：768+14 = 782 维
+& .venv/Scripts/python.exe -m jit_baseline.cli run --dataset-manifest <manifest> `
+  --schema kamei14-semantic-codebert-v1 --embedding-dir <embedding-dir> `
+  --algorithm logistic-regression-l2-v1 --metric-set metric-set-v2 `
+  --output artifacts/semantic/fused/lr
+
+& .venv/Scripts/python.exe -m jit_baseline.cli compare-schemes `
+  artifacts/semantic/expert-only/lr artifacts/semantic/semantic-only/lr artifacts/semantic/fused/lr `
+  --report artifacts/semantic/comparison.json
+```
+
+融合矩阵固定为“专家变换后 | 语义向量”，标准化只拟合专家块。`compare-schemes`
+只在数据版本、测试成员、指标集与阈值一致时声明 `directlyComparable: true`；不可用运行
+作为失败项保留，整体不因结果好坏自动选方案。语义模型仅用于离线回顾性评估，不接入
+六字段 JSON 预测接口；OpenStack 快照没有文本，不能运行语义方案。
+
 ### 已有模型登记
 
 维护者运行 `cli register-model --run-key baseline`（完整命令为

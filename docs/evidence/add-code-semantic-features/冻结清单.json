@@ -1,0 +1,214 @@
+{
+  "copiedFromWorkspace": [
+    "dataset/flask-3y-text.csv",
+    "dataset/flask-3y-text.text.jsonl",
+    "dataset/manifest.json",
+    "README.md",
+    "semantic/comparison.json",
+    "semantic/embeddings/embeddings.npy",
+    "semantic/embeddings/ids.json",
+    "semantic/embeddings/meta.json",
+    "semantic/runs/expert-only/manifest.json",
+    "semantic/runs/expert-only/metrics.json",
+    "semantic/runs/expert-only/model.joblib",
+    "semantic/runs/expert-only/reference-predictions.json",
+    "semantic/runs/expert-only/source.json",
+    "semantic/runs/expert-only/split.json",
+    "semantic/runs/expert-only/summary.json",
+    "semantic/runs/expert-only/test-input.json",
+    "semantic/runs/expert-only/test-labels.json",
+    "semantic/runs/fused/manifest.json",
+    "semantic/runs/fused/metrics.json",
+    "semantic/runs/fused/model.joblib",
+    "semantic/runs/fused/reference-predictions.json",
+    "semantic/runs/fused/source.json",
+    "semantic/runs/fused/split.json",
+    "semantic/runs/fused/summary.json",
+    "semantic/runs/fused/test-input.json",
+    "semantic/runs/fused/test-labels.json",
+    "semantic/runs/semantic-only/manifest.json",
+    "semantic/runs/semantic-only/metrics.json",
+    "semantic/runs/semantic-only/model.joblib",
+    "semantic/runs/semantic-only/reference-predictions.json",
+    "semantic/runs/semantic-only/source.json",
+    "semantic/runs/semantic-only/split.json",
+    "semantic/runs/semantic-only/summary.json",
+    "semantic/runs/semantic-only/test-input.json",
+    "semantic/runs/semantic-only/test-labels.json",
+    "verification/browser-results.json",
+    "verification/reproduction-comparison.json",
+    "verification/unit-results.json",
+    "verification/verification.json",
+    "verification/verification.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 40,
+  "files": [
+    {
+      "path": "dataset/flask-3y-text.csv",
+      "sha256": "c32ead55e0ea572bb9a3205a944d55994745d9d53061261a6cbdf76ee52bc915"
+    },
+    {
+      "path": "dataset/flask-3y-text.text.jsonl",
+      "sha256": "1d86bf688d7756324784f186fb92b430c6f42609a26d41adc2c5070c66633483"
+    },
+    {
+      "path": "dataset/manifest.json",
+      "sha256": "2a81531a210d6580b7ebc18777e5eb451568c0d6793f802acb652dc7f59c5450"
+    },
+    {
+      "path": "README.md",
+      "sha256": "d7313f0f6540e686d3c71ccb87e91c815c09924573a513af881b53f739d4dc02"
+    },
+    {
+      "path": "semantic/comparison.json",
+      "sha256": "91aaa464bacd22b0fc5cc31adfe31d742cef018e6b24725f508272c0c4cdca0c"
+    },
+    {
+      "path": "semantic/embeddings/embeddings.npy",
+      "sha256": "bd3f2d298c84da00f22ae98a2e313ef67044e53787dd34547dd7bdb664d88122"
+    },
+    {
+      "path": "semantic/embeddings/ids.json",
+      "sha256": "d1e69b8cb1996499d2e5eabfe2c2d972ce84a36c6798b018186f1198b2bb3166"
+    },
+    {
+      "path": "semantic/embeddings/meta.json",
+      "sha256": "6debdd003d9ed08f224ac96345c79e635087d891fa2a8396e290425512045ad4"
+    },
+    {
+      "path": "semantic/runs/expert-only/manifest.json",
+      "sha256": "434a46d9046254e36bcedfffd53ed95bbf4dceef215d064e34126fbfdcb1d6de"
+    },
+    {
+      "path": "semantic/runs/expert-only/metrics.json",
+      "sha256": "38d7df789e16e44356caf00ae2d49c89ee8fbfc00a415aecc7a117867081b5e2"
+    },
+    {
+      "path": "semantic/runs/expert-only/model.joblib",
+      "sha256": "512fb8313a15314e1260fbe18a12485969c59d0d37deb12a7fe9f664d82a4975"
+    },
+    {
+      "path": "semantic/runs/expert-only/reference-predictions.json",
+      "sha256": "385d0a41211bc0961cf45be122d4734b6399558a7a7e8082389c7de2c47446ca"
+    },
+    {
+      "path": "semantic/runs/expert-only/source.json",
+      "sha256": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3"
+    },
+    {
+      "path": "semantic/runs/expert-only/split.json",
+      "sha256": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c"
+    },
+    {
+      "path": "semantic/runs/expert-only/summary.json",
+      "sha256": "acc06642f7e1428f4f840f3596e5e2815bc1b86d41c015af010b74b1ab0570e3"
+    },
+    {
+      "path": "semantic/runs/expert-only/test-input.json",
+      "sha256": "65e2023ffd966cbd5d9bb9f9656a48404a5bfa9c2161fed0cb025f23a2762471"
+    },
+    {
+      "path": "semantic/runs/expert-only/test-labels.json",
+      "sha256": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+    },
+    {
+      "path": "semantic/runs/fused/manifest.json",
+      "sha256": "e80c3432c89ddaefd29d35b3944bcc34f18daca6015d74109b0c1373613f1780"
+    },
+    {
+      "path": "semantic/runs/fused/metrics.json",
+      "sha256": "82636e178bd160092d0e108c73771f0144e84912402dfb72b91436b9d4ac8da0"
+    },
+    {
+      "path": "semantic/runs/fused/model.joblib",
+      "sha256": "5f8fb40e77f97b506466cf265f7ba166638cdeabf207437ba9c1362f43a066a7"
+    },
+    {
+      "path": "semantic/runs/fused/reference-predictions.json",
+      "sha256": "61d52513c9f1945abe1e9e3980497d826978f4b0b33f66bc23b8fa712e689766"
+    },
+    {
+      "path": "semantic/runs/fused/source.json",
+      "sha256": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3"
+    },
+    {
+      "path": "semantic/runs/fused/split.json",
+      "sha256": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c"
+    },
+    {
+      "path": "semantic/runs/fused/summary.json",
+      "sha256": "7481f3b488f987f28118d96773e558bec8f1ee9e9ee6ac3ef2573941c2d96522"
+    },
+    {
+      "path": "semantic/runs/fused/test-input.json",
+      "sha256": "8a5e25fc3f681c2e9e8143b2b604c41342437c331831e25e317f6ae569938e51"
+    },
+    {
+      "path": "semantic/runs/fused/test-labels.json",
+      "sha256": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+    },
+    {
+      "path": "semantic/runs/semantic-only/manifest.json",
+      "sha256": "b9bb2702480838b105b11056d4199915e2b9557238b3da969b2b8c94adf8de25"
+    },
+    {
+      "path": "semantic/runs/semantic-only/metrics.json",
+      "sha256": "e3bce05d844972e202be2128743edf76af9368e4cc74be958d492c2ee880541d"
+    },
+    {
+      "path": "semantic/runs/semantic-only/model.joblib",
+      "sha256": "4ced92945afa419941b94bba6d8e0601b7d9590cc484a7c0ce641e8e006273a5"
+    },
+    {
+      "path": "semantic/runs/semantic-only/reference-predictions.json",
+      "sha256": "6241e916046aee6200c9ed0467d40ede46e86360025d0cdbe13120c27d6b0ac7"
+    },
+    {
+      "path": "semantic/runs/semantic-only/source.json",
+      "sha256": "bfa0ba480733635749f334d0614528f1784026024c672e5b0bc655a3d40724b3"
+    },
+    {
+      "path": "semantic/runs/semantic-only/split.json",
+      "sha256": "bc6203e68504faeebd6430b082ccf836e6cd2250de31586c8a6f55dc21c0251c"
+    },
+    {
+      "path": "semantic/runs/semantic-only/summary.json",
+      "sha256": "66034aa60f54ba91ad956fe134f790538f08b1398a3bbfb6c524624a21f4748a"
+    },
+    {
+      "path": "semantic/runs/semantic-only/test-input.json",
+      "sha256": "8a5e25fc3f681c2e9e8143b2b604c41342437c331831e25e317f6ae569938e51"
+    },
+    {
+      "path": "semantic/runs/semantic-only/test-labels.json",
+      "sha256": "59e51391598411c8b67be9e37ffb2eb93255474fb28869c59f0b871434ece54e"
+    },
+    {
+      "path": "verification/browser-results.json",
+      "sha256": "8e04df720d421bf56cb25b6200d119e42bf9619e1d5b7d82d41b3d3241f39a77"
+    },
+    {
+      "path": "verification/reproduction-comparison.json",
+      "sha256": "e1fcbbc2cc9ec8771c2cb087c95e0a98807ed5804e5e17c9622ccb72add71180"
+    },
+    {
+      "path": "verification/unit-results.json",
+      "sha256": "e552118bd9d799f24bb89a70446cccd00df033f726c940475e1dc271ff24e365"
+    },
+    {
+      "path": "verification/verification.json",
+      "sha256": "c46c745e2717cee99b64f34e7309a409c5b93882b5ab110dbdaac4d8bfea3031"
+    },
+    {
+      "path": "verification/verification.log",
+      "sha256": "31e226440610a140a67ad62c6c874f45ef5330cd15fd64876e3c931a6f0a5063"
+    }
+  ],
+  "frozenUtc": "2026-10-29T14:16:11.650964+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "448c81d7946ffab6711ebd2437ba2b75435f98ae2f2f72c7db690316524cc520",
+  "workspace": "docs/evidence/_run/add-code-semantic-features"
+}

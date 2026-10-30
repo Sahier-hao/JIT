@@ -139,7 +139,7 @@ def limitations(schema):
 
 
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
-              holdout=None):
+              holdout=None, embedding_dir=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
@@ -150,6 +150,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     entry = get_algorithm(algorithm_version)
     metric_set = metric_set if metric_set else DEFAULT_METRIC_SET
     declared_metric_set(metric_set)
+    if dataset_manifest is None and schema is not None and resolve(schema).semantic:
+        raise BaselineError("DATASET_INVALID", "语义 schema 需要带文本的数据集描述文件")
     if output.exists():
         raise BaselineError("OUTPUT_EXISTS", "运行目录已存在，请为独立复现指定新目录")
     manifest_file, dataset, declared = None, None, False
@@ -158,7 +160,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         dataset = load_manifest(manifest_file)
         schema = resolve(schema if schema is not None else dataset["schemaName"])
         if dataset["schemaName"] != schema.name:
-            raise BaselineError("DATASET_INVALID", "数据集描述文件的 schema 与运行声明不一致")
+            base = resolve(dataset["schemaName"])
+            compatible = schema.semantic and list(schema.in_model_names()) == list(base.in_model_names())
+            if not compatible:
+                raise BaselineError("DATASET_INVALID", "数据集描述文件的 schema 与运行声明不一致")
         csv_path = Path(dataset["file"]["path"])
         csv_path = csv_path if csv_path.is_absolute() else BACKEND / csv_path
         try:
@@ -196,6 +201,24 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         else:
             dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": list(schema.in_model_names()),
                                                        "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
+    semantic_meta = None
+    if schema.semantic and dataset_manifest is None:
+        raise BaselineError("DATASET_INVALID", "语义 schema 需要带文本的数据集描述文件")
+    if schema.semantic:
+        if embedding_dir is None:
+            raise BaselineError("ARTIFACT_UNAVAILABLE", "含语义的 schema 需要 --embedding-dir 指定嵌入表")
+        from .semantic import load_embeddings, validate_embedding_meta
+        table, meta = load_embeddings(embedding_dir)
+        validate_embedding_meta(meta, schema.semantic, dataset.get("text"))
+        for record in records:
+            vector = table.get(record["id"])
+            if vector is None:
+                raise BaselineError("ARTIFACT_INVALID", f"缺少嵌入：{record['id'][:12]}")
+            record["semantic"] = [float(value) for value in vector]
+        semantic_meta = {"model": meta["model"], "revision": meta["revision"], "dim": meta["dim"],
+                         "pooling": meta["pooling"], "maxLength": meta["maxLength"],
+                         "embeddingsSha256": meta["embeddingsSha256"],
+                         "textSha256": meta.get("textSha256")}
     fields = list(schema.in_model_names())
     trainable = records
     if holdout is not None:
@@ -233,7 +256,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     if holdout is not None:
         split_rule += f"; only records with epoch < {int(holdout)}"
     write_json(output / "split.json", {"boundaries": boundaries, "rule": split_rule, "partitions": stats})
-    inputs = [{k: r[k] for k in ("id", "time", "epoch", "sourceRow", "metrics", "features")} for r in split["test"]]
+    keys = ["id", "time", "epoch", "sourceRow", "metrics", "features"]
+    if schema.semantic:
+        keys.append("semantic")
+    inputs = [{k: r[k] for k in keys} for r in split["test"]]
     write_json(output / "test-input.json", {"features": fields, "records": inputs})
     write_json(output / "test-labels.json", [{"id": r["id"], "label": r["label"]} for r in split["test"]])
     joblib.dump(pipeline, output / "model.joblib")
@@ -250,6 +276,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
                                      "sha256": sha256(Path(manifest_file).read_bytes())}
     if holdout is not None:
         config["holdout"] = {"epoch": int(holdout), "trainableRecords": len(trainable)}
+    if semantic_meta is not None:
+        config["semantic"] = semantic_meta
     run_id = identity(config)
     label = model_descriptor(schema.name, algorithm_version)
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
@@ -263,6 +291,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
                "limitations": limitations(schema)}
     if holdout is not None:
         summary["holdout"] = {"epoch": int(holdout), "trainableRecords": len(trainable)}
+    if semantic_meta is not None:
+        summary["semantic"] = semantic_meta
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     command = (f"python -m jit_baseline.cli run --output {output.as_posix()}"
@@ -271,6 +301,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         command += f" --dataset-manifest {Path(dataset_manifest).as_posix()}"
     if holdout is not None:
         command += f" --holdout {int(holdout)}"
+    if embedding_dir is not None:
+        command += f" --embedding-dir {Path(embedding_dir).as_posix()}"
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
                 "generatedAt": datetime.now(timezone.utc).isoformat(),
                 "command": command}
@@ -303,6 +335,13 @@ def check_files(directory, names):
             raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
         if config["threshold"] != THRESHOLD:
             raise BaselineError("ARTIFACT_INVALID", "阈值不匹配")
+        if schema.semantic:
+            semantic = config.get("semantic")
+            if not isinstance(semantic, dict):
+                raise BaselineError("ARTIFACT_INVALID", "语义运行缺少嵌入声明")
+            if any(semantic.get(key) != schema.semantic.get(key)
+                   for key in ("model", "revision", "dim", "pooling", "maxLength")):
+                raise BaselineError("ARTIFACT_INVALID", "嵌入声明与 schema 不一致")
         # 声明了数据集描述文件的运行按其声明校验（DSR-06、PDB-01）；未声明的旧运行
         # 继续按模块常量校验，行为不变（design D3 兼容路径）。
         declared_manifest = config.get("datasetManifest")
@@ -383,9 +422,15 @@ class Snapshot:
             if not records or [r["id"] for r in records] != expected_ids or len(set(expected_ids)) != len(expected_ids) or len(records) != summary["split"]["test"]["count"] or len(records) != metrics["counts"]["records"]:
                 raise BaselineError("ARTIFACT_INVALID", "测试身份或数量不一致")
             feature_matrix(records, schema)
+            allowed = {"id", "time", "epoch", "sourceRow", "metrics", "features"}
+            if schema.semantic:
+                allowed.add("semantic")
             for r in records:
-                if set(r) != {"id", "time", "epoch", "sourceRow", "metrics", "features"} or set(r["metrics"]) != set(fields) or r["features"] != [r["metrics"][f] for f in fields]:
+                if set(r) != allowed or set(r["metrics"]) != set(fields) or r["features"] != [r["metrics"][f] for f in fields]:
                     raise BaselineError("ARTIFACT_INVALID", "原始字段与模型输入不一致")
+                if schema.semantic and (not isinstance(r.get("semantic"), list)
+                                        or len(r["semantic"]) != schema.semantic_dim()):
+                    raise BaselineError("ARTIFACT_INVALID", "语义向量维度与 schema 不一致")
                 if datetime.fromisoformat(r["time"]).timestamp() != r["epoch"]:
                     raise BaselineError("ARTIFACT_INVALID", "提交时间与原始时间不一致")
         except (KeyError, TypeError, ValueError) as exc:
@@ -394,7 +439,8 @@ class Snapshot:
             raise BaselineError("ARTIFACT_INVALID", "输入或摘要结构无效") from exc
         try:
             model = joblib.load(directory / "model.joblib")
-            if not isinstance(model, Pipeline) or model.n_features_in_ != len(fields) or set(model.classes_.tolist()) != {0, 1}:
+            if (not isinstance(model, Pipeline) or model.n_features_in_ != schema.input_width()
+                    or set(model.classes_.tolist()) != {0, 1}):
                 raise ValueError("model shape")
         except Exception as exc:
             raise BaselineError("MODEL_INVALID", "模型无法加载或类型无效") from exc
