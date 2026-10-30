@@ -3,6 +3,7 @@ import { Button } from '../ui/controls'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { getRepositoryOverview, type RepositoryOverview, type RepositoryOverviewActivity } from '../repositoryOverviewClient'
+import { cacheKey, readCache, writeCache } from '../lib/localCache'
 import type { RepositoryView } from '../repositoryWorkspace'
 
 function compact(value: string | null) {
@@ -26,14 +27,15 @@ function ActivityChart({ activity, coverage }: { activity: RepositoryOverviewAct
 }
 
 export function RepositoryOverviewView({ repositoryId, repository, onStartAnalysis, onOpenAnalysis }: { repositoryId: string; repository: RepositoryView; onStartAnalysis: () => void; onOpenAnalysis: () => void }) {
-  const [overview, setOverview] = useState<RepositoryOverview | null>(null)
+  const cache = cacheKey('overview', repositoryId)
+  const [overview, setOverview] = useState<RepositoryOverview | null>(() => readCache<RepositoryOverview>(cache, 30 * 60_000))
   const [error, setError] = useState<unknown>(null)
   const [attempt, setAttempt] = useState(0)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true); setError(null)
-    getRepositoryOverview(repositoryId, attempt > 0, controller.signal).then(value => { if (!controller.signal.aborted) setOverview(value) })
+    getRepositoryOverview(repositoryId, attempt > 0, controller.signal).then(value => { if (!controller.signal.aborted) { setOverview(value); if (value.supported && !value.errorCode) writeCache(cache, value) } })
       .catch(failure => { if (!controller.signal.aborted) setError(failure) })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()

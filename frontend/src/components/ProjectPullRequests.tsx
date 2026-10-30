@@ -6,6 +6,7 @@ import { Dialog } from '../ui/dialog'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { getTracking, projectPRs, type PRState, type PRTracking, type ProjectPRPage } from '../projectActivityClient'
+import { cacheKey, readCache, writeCache } from '../lib/localCache'
 import { readWorks, workKey } from '../prReview'
 import type { Route } from '../navigation'
 import { PRTrackingPanel } from './PRTrackingPanel'
@@ -19,20 +20,23 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
   const [sortBy, setSortBy] = useState<'updated' | 'risk'>('updated')
   const [page, setPage] = useState(1)
   const [attempt, setAttempt] = useState(0)
-  const [result, setResult] = useState<ProjectPRPage | null>(null)
+  const [result, setResult] = useState<ProjectPRPage | null>(() => readCache(cacheKey('prs', repositoryId, 'open', 1), 10 * 60_000))
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
   const [tracking, setTracking] = useState<PRTracking | null>(null)
   const [trackingOpen, setTrackingOpen] = useState(false)
   const automatic = useRef(new Set<string>()), refreshRequested = useRef(false)
   useEffect(() => {
-    const controller = new AbortController(); setBusy(true); setError(null); setResult(null)
+    const controller = new AbortController(); setBusy(true); setError(null)
+    const cache = cacheKey('prs', repositoryId, state, page)
+    const cached = readCache<ProjectPRPage>(cache, 10 * 60_000)
+    if (cached) setResult(cached)
     const refresh = refreshRequested.current; refreshRequested.current = false
     async function load() {
       let value = await projectPRs(repositoryId, state, page, refresh, controller.signal)
       const key = `${repositoryId}:${state}:${page}`
       if (!refresh && value.supported && !value.checkedAt && !value.errorCode && !automatic.current.has(key)) { automatic.current.add(key); value = await projectPRs(repositoryId, state, page, true, controller.signal) }
-      if (!controller.signal.aborted) setResult(value)
+      if (!controller.signal.aborted) { setResult(value); if (value.supported && !value.errorCode) writeCache(cache, value) }
     }
     void load().catch(e => { if (!controller.signal.aborted) setError(e) }).finally(() => { if (!controller.signal.aborted) setBusy(false) })
     return () => controller.abort()
