@@ -63,7 +63,7 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
           <Button variant="primary" disabled={busy} onClick={refresh}>{busy ? '正在检查…' : '检查远端 PR'}</Button>
         </div>
       </div>
-      <p className="pr-hub-note">读取公开 GitHub PR。打开是只读详情，只有点「开始审查」才会创建个人工作单。{sortBy === 'risk' ? '按风险只排序当前页；未分析的 PR 排在最后，不能当作低风险。' : ''}</p>
+      <p className="pr-hub-note">读取公开 GitHub PR。打开是只读详情，只有点「开始审查」才会创建个人工作单。列表中的最高分来自该 PR 已保存的分析；尚无分析的 PR 不显示分数。{sortBy === 'risk' ? '按风险只排序当前页；未分析的 PR 排在最后，不能当作低风险。' : ''}</p>
     </>}
     {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
     {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}

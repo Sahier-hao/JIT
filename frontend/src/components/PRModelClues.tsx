@@ -78,7 +78,7 @@ export function PRModelClues({ source, navigate, modelId, onModelId, readOnly = 
   }
   const compatible = (m: ModelChoice) => m.state === 'ready' && m.enabled && m.repositoryPredictionSupported
   const invalid = Boolean(selected && !models.some(m => m.modelId === selected && compatible(m)))
-  return <details className="pr-model-clues" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}><summary title="按提交分数排序；不是 PR 整体缺陷概率，也不提供行级定位"><span>风险概览</span><span className="pr-clue-summary">{topRisk === null ? (running ? '分析中' : '尚无分数') : `最高 ${topRisk.toFixed(3)} · ${coverage} 有分数`}</span></summary>
+  return <details className="pr-model-clues" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}><summary title="按提交分数排序；不是 PR 整体缺陷概率，也不提供行级定位"><span>风险概览</span><span className="pr-clue-summary">{topRisk === null ? (running ? '分析中' : '尚无分数 · 点开查看模型线索') : `最高 ${topRisk.toFixed(3)} · ${coverage} 有分数`}</span></summary>
     {error ? <FailureNotice error={error}/> : null}
     {readOnly ? <p className="form-hint">固定快照只读预览，不新建分析或改变当前工作轮次。</p> : <>
       <label>模型<select aria-label="本版本分析模型" value={selected} onChange={e => onModelId(e.target.value)} disabled={busy || running}><option value="">使用管理员默认模型（任务创建时固定）</option>{selected && !models.some(model => model.modelId === selected) ? <option value={selected} disabled>已选择的原模型（当前不可用）</option> : null}{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!compatible(model)}>{model.name}{!compatible(model) ? '（不可用）' : ''}</option>)}</select></label>
