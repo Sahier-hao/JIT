@@ -1,0 +1,69 @@
+{
+  "copiedFromWorkspace": [
+    "datasets/mp-commons-lang-2022-01-30_2024-12-27.json",
+    "datasets/mp-redis-2022-01-01_2024-12-31.json",
+    "datasets/mp-scikit-learn-2022-01-02_2024-12-30.json",
+    "datasets/mp-vue-core-2022-01-04_2024-12-30.json",
+    "failure-records.json",
+    "multi-project-report.json",
+    "README.md",
+    "verification/openspec-validation.json",
+    "verification/pytest.xml",
+    "verification/report-invariants.json",
+    "verification.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 11,
+  "files": [
+    {
+      "path": "datasets/mp-commons-lang-2022-01-30_2024-12-27.json",
+      "sha256": "cef8abed55c3bcadc5aeeb4bc19c148f180724dd3bea0f76e0c6a06f00f99d05"
+    },
+    {
+      "path": "datasets/mp-redis-2022-01-01_2024-12-31.json",
+      "sha256": "4d9310bab06b0e319644f2995e5fea9a77dcc92ea95db5ecfa56cdcba4afdf9f"
+    },
+    {
+      "path": "datasets/mp-scikit-learn-2022-01-02_2024-12-30.json",
+      "sha256": "6fd26fa91d9d072616f0557bf00c14359052c77e0a3f979ddc24dff915aefb32"
+    },
+    {
+      "path": "datasets/mp-vue-core-2022-01-04_2024-12-30.json",
+      "sha256": "c0c946e8c3d82b2f36036dcaf80d9dffe22bff7b0a15ab3e8a6cb3890ea6e128"
+    },
+    {
+      "path": "failure-records.json",
+      "sha256": "ba8a0871c987b4493c3a72fa817f9665dbf18be44f739c01de0238653adbd6cd"
+    },
+    {
+      "path": "multi-project-report.json",
+      "sha256": "7527a8cf4832a7bc3e02384ada04e81745b4631d00a65b21b906c13e2642e96d"
+    },
+    {
+      "path": "README.md",
+      "sha256": "a69ac634f8b6d5331258ab1bba185b210561af34719fce0778fbba7950fdcd98"
+    },
+    {
+      "path": "verification/openspec-validation.json",
+      "sha256": "d3fa417aa21eba4b57b0986a90ffb25624583fb4bac44ae73b55d66961c17b57"
+    },
+    {
+      "path": "verification/pytest.xml",
+      "sha256": "8b4c59b49535db70325e3198bea9b094ad0cb84e60d130fcdc2c048a73c7aed3"
+    },
+    {
+      "path": "verification/report-invariants.json",
+      "sha256": "c818f580906b7de6e270e9d6649672ebadbe39d90388a9f12fb1830d38feefab"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "0f25c24d0aa98daf63013ed75f5b5aa175170f5afd6954e39deb0476a027fdd9"
+    }
+  ],
+  "frozenUtc": "2026-10-30T11:14:09.298257+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "c68496bae19443766c07b22bf1745f5ad488d8f79a59a8692b85ed9031b934bd",
+  "workspace": "docs/evidence/_run/add-multi-project-training-comparison"
+}

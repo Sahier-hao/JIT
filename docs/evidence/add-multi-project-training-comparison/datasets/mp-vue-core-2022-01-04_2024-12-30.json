@@ -1,0 +1,277 @@
+{
+  "citation": "由本地 Git 仓库采集生成",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1640995200
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 2,
+      "commitsInWindow": 2346,
+      "excluded": {
+        "empty": 2,
+        "merges": 26,
+        "outsideWindow": 4856,
+        "unparsed": 0
+      },
+      "records": 2344
+    },
+    "gitVersion": "git version 2.50.0.windows.1",
+    "kind": "git-repository",
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。"
+    ],
+    "repository": {
+      "branch": "HEAD",
+      "head": "24c9d0bffb2299635b8112a978d74a38723aaa10",
+      "path": "C:\\Users\\fgdvf\\AppData\\Local\\Temp\\jit-collect-8vwgq70m\\repository.git",
+      "resolvedBranch": "main"
+    },
+    "szz": {
+      "fixCommits": 1020,
+      "labeledCommits": 1074,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 35,
+        "outsideWindow": 174
+      }
+    },
+    "window": {
+      "endEpoch": 1735689600,
+      "since": "2022-01-01",
+      "startEpoch": 1640995200,
+      "until": "2025-01-01"
+    }
+  },
+  "dataset": "mp-vue-core",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 284745,
+    "name": "mp-vue-core.csv",
+    "path": "data/collected/mp-vue-core.csv",
+    "sha256": "74e8b4625d12bc94e7c9fe3e444a397e2ccf43bf528bab5d8ec3108752927fc7"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 53,
+      "outsideWindow": 0,
+      "tooManyFiles": 1,
+      "tooMuchChurn": 2
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 2288,
+    "positiveLabels": 1052,
+    "rawRows": 2344
+  },
+  "revision": "24c9d0bffb2299635b8112a978d74a38723aaa10",
+  "samples": [
+    {
+      "id": "2b506d7df6c9e2e03726e034c85e9be8c1324a13",
+      "time": "2022-01-04T09:09:13Z"
+    },
+    {
+      "id": "eb721d49c004abf5eff0a4e7da71bad904aa6bac",
+      "time": "2022-01-04T09:32:25Z"
+    },
+    {
+      "id": "92f11d6740929f5b591740e30ae5fba50940ec82",
+      "time": "2022-01-10T07:05:07Z"
+    },
+    {
+      "id": "eb618fd88955861bf5f6fe38701a92f1f02d4235",
+      "time": "2024-12-30T01:57:12Z"
+    },
+    {
+      "id": "5a6e98ca323ff0e50450580412694961dce5e312",
+      "time": "2024-12-30T01:57:28Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v1",
+  "timeRange": {
+    "end": "2024-12-30T01:57:28Z",
+    "endEpoch": 1735523848,
+    "start": "2022-01-04T09:09:13Z",
+    "startEpoch": 1641287353
+  },
+  "url": "https://github.com/vuejs/core",
+  "version": "mp-vue-core-2022-01-04_2024-12-30"
+}

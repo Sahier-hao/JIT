@@ -1,0 +1,14 @@
+{
+  "allProtocolsComplete": true,
+  "automaticModelSelection": false,
+  "bestMethodDeclared": false,
+  "defaultModelChanged": false,
+  "failureCount": 0,
+  "methods": 5,
+  "offlineOnly": true,
+  "outcomes": 80,
+  "projects": 4,
+  "protocols": 4,
+  "reportStatus": "complete",
+  "targetTestDigestsMatchProjectSplits": true
+}

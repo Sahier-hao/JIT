@@ -1,0 +1,277 @@
+{
+  "citation": "由本地 Git 仓库采集生成",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1640995200
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 34,
+      "commitsInWindow": 4329,
+      "excluded": {
+        "empty": 7,
+        "merges": 0,
+        "outsideWindow": 26804,
+        "unparsed": 0
+      },
+      "records": 4322
+    },
+    "gitVersion": "git version 2.50.0.windows.1",
+    "kind": "git-repository",
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。"
+    ],
+    "repository": {
+      "branch": "HEAD",
+      "head": "583b8c40912b9b57f59fd4ab2f63d961e6dafe57",
+      "path": "C:\\Users\\fgdvf\\AppData\\Local\\Temp\\jit-collect-2b_h8dhn\\repository.git",
+      "resolvedBranch": "main"
+    },
+    "szz": {
+      "fixCommits": 969,
+      "labeledCommits": 1325,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 32,
+        "outsideWindow": 173
+      }
+    },
+    "window": {
+      "endEpoch": 1735689600,
+      "since": "2022-01-01",
+      "startEpoch": 1640995200,
+      "until": "2025-01-01"
+    }
+  },
+  "dataset": "mp-scikit-learn",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 509179,
+    "name": "mp-scikit-learn.csv",
+    "path": "data/collected/mp-scikit-learn.csv",
+    "sha256": "0d294a7b92371e2b84c7d7ae49f065a54ee26f3f336c4612901ca175ab250c7a"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 100,
+      "outsideWindow": 0,
+      "tooManyFiles": 10,
+      "tooMuchChurn": 2
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 4210,
+    "positiveLabels": 1301,
+    "rawRows": 4322
+  },
+  "revision": "583b8c40912b9b57f59fd4ab2f63d961e6dafe57",
+  "samples": [
+    {
+      "id": "ed865d7a3363a92846d7955a9bdedae2ad29542e",
+      "time": "2022-01-02T19:56:57Z"
+    },
+    {
+      "id": "bc82e19512b43618a2ec698f77f8b36820ec3075",
+      "time": "2022-01-03T07:58:50Z"
+    },
+    {
+      "id": "f87b5ae223b01414a83a610246a40dae2356a039",
+      "time": "2022-01-03T09:00:36Z"
+    },
+    {
+      "id": "6385b7f7f4395f050cb4c85449fa3987031598c1",
+      "time": "2024-12-30T09:08:33Z"
+    },
+    {
+      "id": "74775cac41cb299d029417d0b06d2cd25ec8f1fc",
+      "time": "2024-12-30T21:53:07Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v1",
+  "timeRange": {
+    "end": "2024-12-30T21:53:07Z",
+    "endEpoch": 1735595587,
+    "start": "2022-01-02T19:56:57Z",
+    "startEpoch": 1641153417
+  },
+  "url": "https://github.com/scikit-learn/scikit-learn",
+  "version": "mp-scikit-learn-2022-01-02_2024-12-30"
+}

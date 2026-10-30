@@ -67,6 +67,28 @@ def test_run_suite_and_compare_projects_are_wired(monkeypatch):
     assert reports[0][0] == Path("r.json")
 
 
+def test_run_multi_project_is_wired(monkeypatch, tmp_path):
+    from jit_baseline import cli
+    calls = []
+
+    def fake_run(manifests, report, methods=None, metric_set=None):
+        calls.append((manifests, report, methods, metric_set))
+        return {"kind": "multi-project-training-report"}
+
+    monkeypatch.setattr(cli, "run_multi_project", fake_run)
+    output = tmp_path / "multi"
+    monkeypatch.setattr(sys, "argv", [
+        "jit_baseline.cli", "run-multi-project",
+        "--dataset-manifest", "a.json", "b.json", "c.json", "d.json",
+        "--output", str(output), "--methods", "decision-tree-v1",
+        "--metric-set", "metric-set-v2",
+    ])
+    cli.main()
+    assert calls[-1][1] == output / "multi-project-report.json"
+    assert calls[-1][2] == ["decision-tree-v1"]
+    assert calls[-1][3] == "metric-set-v2"
+
+
 def test_import_benchmark_is_wired(monkeypatch):
     from jit_baseline import cli
     calls = []

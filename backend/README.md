@@ -179,6 +179,34 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 报告按项目分组；跨项目固定 `directlyRankable: false`，并列出数据集版本、特征 schema、
 标签语义（发布者 `bugcount` vs 简化 SZZ）与测试成员的差异。项目内比较沿用既有并列规则。
 
+### 四项目训练与迁移比较（add-multi-project-training-comparison）
+
+`run-multi-project` 接受恰好四个口径一致的 `kamei14-git-v1` 项目描述文件，分别执行：
+
+- `local`：目标项目 train 训练，目标 test 评价。
+- `pooled`：四项目 train 并集训练一个共享模型，分别评价四个 test。
+- `leave-one-project-out`：排除目标项目，其余三个 train 训练，目标 test 评价。
+- `global+local`：留一全局模型与目标本地模型在目标 validation 上按固定网格选择 Brier
+  最优融合权重，再评价目标 test。
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli run-multi-project `
+  --dataset-manifest data/datasets/mp-commons-lang/mp-commons-lang-2022-01-30_2024-12-27.json `
+    data/datasets/mp-vue-core/mp-vue-core-2022-01-04_2024-12-30.json `
+    data/datasets/mp-redis/mp-redis-2022-01-01_2024-12-31.json `
+    data/datasets/mp-scikit-learn/mp-scikit-learn-2022-01-02_2024-12-30.json `
+  --output artifacts/multi-project/four-projects-2022-01-01_2025-01-01 `
+  --methods logistic-regression-l2-v1 decision-tree-v1 random-forest-v1 `
+    gaussian-naive-bayes-v1 gradient-boosting-v1 `
+  --metric-set metric-set-v2
+```
+
+输出为 `<output>/multi-project-report.json`。默认方法子集是五种经典方法；全部九种方法可
+通过 `--methods` 显式选择。报告对每个方法、口径和指标给出四个项目的宏平均、总体方差、
+最差项目和未定义原因；训练、预测、融合和评价失败按目标项目隔离。`global+local` 的权重
+只读取目标验证段，报告记录网格权重、验证样本数和 Brier。结果只用于离线稳健性分析，
+不设置默认模型或自动推荐方法。
+
 ### 代码语义特征与三方案比较（add-code-semantic-features）
 
 Git 数据可以额外保存有界提交文本，再用固定版本的预训练代码模型离线生成嵌入。默认采集

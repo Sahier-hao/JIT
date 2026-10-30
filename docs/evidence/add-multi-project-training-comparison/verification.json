@@ -1,0 +1,36 @@
+{
+  "backendPytest": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 613,
+    "skipped": 1,
+    "tests": 614,
+    "timeSeconds": 385.048
+  },
+  "change": "add-multi-project-training-comparison",
+  "generatedUtc": "2026-10-30T19:13:25+08:00",
+  "hashes": {
+    "multi-project-report.json": "7527a8cf4832a7bc3e02384ada04e81745b4631d00a65b21b906c13e2642e96d",
+    "pytest.xml": "8b4c59b49535db70325e3198bea9b094ad0cb84e60d130fcdc2c048a73c7aed3"
+  },
+  "protectedScope": {
+    "changedProtectedPaths": [],
+    "frontendChanged": false,
+    "serviceApiChanged": false
+  },
+  "sourceHashes": [
+    {
+      "path": "backend/jit_baseline/multi_project.py",
+      "sha256": "784f7293a7f534d3df40895b5be1675f627935ef637ea9cc327f9ed91a042de3"
+    },
+    {
+      "path": "backend/jit_baseline/cli.py",
+      "sha256": "a26820e4979b677dc2acb257548e8f69d0bc2c61a044848d9a6dcd5f4a65c7be"
+    },
+    {
+      "path": "backend/tests/test_multi_project.py",
+      "sha256": "9a5c49c1ea0cd355e45730173fa899c28048f136f0e8a57720a8f9fd9c68a8d4"
+    }
+  ],
+  "status": "passed"
+}

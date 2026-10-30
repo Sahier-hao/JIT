@@ -8,6 +8,7 @@ from pathlib import Path
 from .artifacts import (DEFAULT_RUN, Snapshot, build_run, compare_methods, compare_runs,
                         declared_reproducibility, environment, run_origin, verify_run, write_json)
 from .suite import compare_projects, run_suite
+from .multi_project import run_multi_project
 from . import evidence
 from .config import BACKEND
 from .data import BaselineError, fetch_sources
@@ -78,6 +79,12 @@ def main():
     projects = commands.add_parser("compare-projects")
     projects.add_argument("suites", type=Path, nargs="+")
     projects.add_argument("--report", type=Path, required=True)
+    multi_project = commands.add_parser("run-multi-project")
+    multi_project.add_argument("--dataset-manifest", type=Path, nargs="+", required=True)
+    multi_project.add_argument("--output", type=Path, required=True)
+    multi_project.add_argument("--methods", nargs="*", default=None,
+                               help="方法子集；省略表示五种经典方法")
+    multi_project.add_argument("--metric-set", default=None, help="默认 metric-set-v2")
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -187,6 +194,10 @@ def main():
             result = compare_projects(args.suites)
             args.report.parent.mkdir(parents=True, exist_ok=True)
             write_json(args.report, result)
+        elif args.command == "run-multi-project":
+            report_path = args.output / "multi-project-report.json"
+            result = run_multi_project(args.dataset_manifest, report_path,
+                                       methods=args.methods, metric_set=args.metric_set)
         elif args.command == "build-embeddings":
             from .semantic import build_embeddings
             options = {"batch_size": args.batch_size}
