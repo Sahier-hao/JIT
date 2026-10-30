@@ -86,6 +86,12 @@ class RepositoryOverview:
         commits = self.request(prefix + '/commits?per_page=100')
         if not isinstance(meta, dict) or not isinstance(languages, dict) or not isinstance(commits, list):
             raise BaselineError('PR_SOURCE_UNAVAILABLE', 'GitHub 仓库概览格式不可识别')
+        # 登记时 GitHub 元数据可能因限流失败，默认分支被记成 HEAD；概览读取成功后回填真实分支。
+        default_branch = meta.get('default_branch')
+        if isinstance(default_branch, str) and default_branch and default_branch != repository.get('defaultBranch'):
+            with self.storage.connection(write=True) as db:
+                db.execute("UPDATE repository SET default_branch=? WHERE id=? AND (default_branch IS NULL OR default_branch='' OR default_branch='HEAD')",
+                           (default_branch, repository_id))
         total = sum(value for value in languages.values() if isinstance(value, (int, float)) and value > 0)
         language_items = [dict(name=str(key), bytes=int(value), percent=round(value * 100 / total, 1))
                           for key, value in sorted(languages.items(), key=lambda item: (-item[1], item[0]))

@@ -381,6 +381,8 @@ const FAILURE_TEXT: Record<string, string> = {
 }
 
 function failureText(error: SyncError) {
+  // DATASET_INVALID 的具体原因（如超过提交上限）由后端给出，优先显示，避免误报成"没有提交"。
+  if (error.code === 'DATASET_INVALID' && error.message) return error.message
   return FAILURE_TEXT[error.code] ?? error.message
 }
 /** 记录的时间跨度：用采集区间，保持一行可读。 */
