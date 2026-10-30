@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import { AppShell } from './AppShell'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { useRoute, type Route } from './navigation'
 import { useRepositories } from './repositoryWorkspace'
 import { LoadingNotice, EmptyState } from './Feedback'
@@ -40,7 +41,7 @@ function Workspace() {
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>
   else if (route.name === 'retired' || route.name === 'unknown') content = <EmptyState title={route.name === 'retired' ? '这个入口已移除' : '没有找到这个页面'} description={route.name === 'retired' ? '独立工具页面已撤下。请从项目开始分析；已保存的数据仍然保留。' : '请核对地址，或返回项目继续。'}><button className="primary-button" onClick={() => navigate({ name: 'repositories' })}>返回项目</button></EmptyState>
   else content = <ProjectsPage navigate={navigate}/>
-  return <AppShell route={route} navigate={navigate} repositories={repositories.items}><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></AppShell>
+  return <AppShell route={route} navigate={navigate} repositories={repositories.items}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell>
 }
 
 function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy-sync' }>; navigate: (route: Route, replace?: boolean) => void }) {

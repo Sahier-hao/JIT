@@ -62,7 +62,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   }
 }
 
-const root = declarations(block(':root {'))
+const root = declarations(block(':root'))
 
 describe('令牌层', () => {
   it('根层定义了全部 26 个语义键', () => {

@@ -1,5 +1,5 @@
 /* A project-first workspace. One navigation, one task surface, one detail panel. */
-:root { --workspace-sidebar: 218px; --surface-raised: #fff; --focus-ring: #0f766e; }
+:root { --workspace-sidebar: 218px; --focus-ring: #0f766e; }
 body { margin: 0; background: var(--canvas); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
 * { box-sizing: border-box; }
 button, input, select, textarea { font: inherit; }
@@ -54,7 +54,7 @@ code { font-family: var(--mono); overflow-wrap: anywhere; }
 .icon-button { border: 0; background: transparent; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; color: var(--fg-3); padding: 5px; }
 .icon-button:hover { background: var(--hover); color: var(--fg); }
 .appearance-anchor { position: relative; }
-.appearance-popover { position: absolute; right: 0; top: 44px; width: 224px; padding: 17px; background: var(--card); border: 1px solid var(--line-strong); box-shadow: 0 14px 42px #10242818; border-radius: 10px; z-index: 20; }
+.appearance-popover { width: 240px; padding: 4px; }
 .appearance-popover strong { display: block; margin-bottom: 12px; }
 .appearance-popover [role=group] { display: flex; gap: 6px; margin-top: 8px; }
 .appearance-popover button { flex: 1; padding: 7px; border-radius: 5px; border: 1px solid var(--line); color: var(--fg-2); background: var(--canvas); }

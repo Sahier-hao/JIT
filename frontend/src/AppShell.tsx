@@ -3,13 +3,19 @@ import { Icon } from './Icon'
 import type { Route } from './navigation'
 import type { RepositoryView } from './repositoryWorkspace'
 import { NotificationEntry } from './components/ProjectActivity'
-import { initialTheme, initialDensity, applyTheme, applyDensity, writeStored, THEME_KEY, DENSITY_KEY } from './preferences'
+import { Popover } from './ui/popover'
+import { THEMES, initialTheme, initialDensity, applyTheme, applyDensity, writeStored, THEME_KEY, DENSITY_KEY, type ThemeId } from './preferences'
 
 export function AppShell({ route, navigate, repositories, children }: { route: Route; navigate: (route: Route) => void; repositories: RepositoryView[]; children: ReactNode }) {
   const [appearance, setAppearance] = useState(false)
-  const [theme, setTheme] = useState(initialTheme)
+  const [theme, setTheme] = useState<ThemeId>(initialTheme)
   const [density, setDensity] = useState(initialDensity)
   const report = route.name === 'report' || route.name === 'admin'
+  function chooseTheme(id: ThemeId) {
+    setTheme(id)
+    applyTheme(id)
+    writeStored(THEME_KEY, id)
+  }
   return <div className="app-frame" data-route={route.name}>
     <a className="skip-link" href="#product-main">跳到主要内容</a>
     <aside className="workspace-sidebar">
@@ -22,7 +28,17 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
       <div className="sidebar-bottom"><button className="text-button" aria-current={report ? 'page' : undefined} onClick={() => navigate({ name: 'admin', view: 'models' })}><Icon name="sliders"/>管理工作区</button></div>
     </aside>
     <div className="workspace-content">
-      <header className="workspace-topbar"><span className="breadcrumb">{report ? '管理工作区' : '工作空间'} <span>/</span> <b>{route.name === 'report' ? '验证报告' : route.name === 'admin' ? route.view === 'models' ? '模型管理' : '数据记录' : route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查' : route.name === 'pr-work' ? 'PR 审查' : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细' : route.name === 'comparison' ? '分析对比' : '项目'}</b></span><div className="appearance-anchor"><NotificationEntry navigate={navigate}/><button className="icon-button" aria-label="外观偏好" aria-expanded={appearance} onClick={() => setAppearance(!appearance)}><Icon name="sliders" size={18}/></button>{appearance ? <div className="appearance-popover"><strong>外观偏好</strong><div role="group" aria-label="主题"><button aria-pressed={theme !== 'charcoal'} onClick={() => { setTheme('concrete'); applyTheme('concrete'); writeStored(THEME_KEY, 'concrete'); }}>浅色</button><button aria-pressed={theme === 'charcoal'} onClick={() => { setTheme('charcoal'); applyTheme('charcoal'); writeStored(THEME_KEY, 'charcoal') }}>深色</button></div><div role="group" aria-label="阅读密度"><button aria-pressed={density === 'comfortable'} onClick={() => { setDensity('comfortable'); applyDensity('comfortable'); writeStored(DENSITY_KEY, 'comfortable') }}>舒适</button><button aria-pressed={density === 'compact'} onClick={() => { setDensity('compact'); applyDensity('compact'); writeStored(DENSITY_KEY, 'compact') }}>紧凑</button></div></div> : null}</div></header>
+      <header className="workspace-topbar"><span className="breadcrumb">{report ? '管理工作区' : '工作空间'} <span>/</span> <b>{route.name === 'report' ? '验证报告' : route.name === 'admin' ? route.view === 'models' ? '模型管理' : '数据记录' : route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查' : route.name === 'pr-work' ? 'PR 审查' : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细' : route.name === 'comparison' ? '分析对比' : '项目'}</b></span><div className="appearance-anchor"><NotificationEntry navigate={navigate}/><Popover
+        label="外观偏好"
+        open={appearance}
+        onOpenChange={setAppearance}
+        trigger={<button className="icon-button" aria-label="外观偏好" aria-expanded={appearance}><Icon name="sliders" size={18}/></button>}
+      >
+        <div className="appearance-popover"><strong>外观偏好</strong>
+          <div role="group" aria-label="主题">{THEMES.map(item => <button key={item.id} aria-pressed={theme === item.id} data-theme-option={item.id} onClick={() => chooseTheme(item.id)}>{item.name}</button>)}</div>
+          <div role="group" aria-label="阅读密度"><button aria-pressed={density === 'comfortable'} onClick={() => { setDensity('comfortable'); applyDensity('comfortable'); writeStored(DENSITY_KEY, 'comfortable') }}>舒适</button><button aria-pressed={density === 'compact'} onClick={() => { setDensity('compact'); applyDensity('compact'); writeStored(DENSITY_KEY, 'compact') }}>紧凑</button></div>
+        </div>
+      </Popover></div></header>
       <main id="product-main" className="workspace-main" tabIndex={-1}>{children}</main>
     </div>
   </div>

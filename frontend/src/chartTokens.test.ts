@@ -20,6 +20,7 @@ const SOURCE_FILES = [
   'src/trend.css',
   // SVG 的纹理线写在 JSX 属性里（pattern 的 stroke），不是 CSS 规则。
   'src/TrendPage.tsx',
+  'src/components/report/TrendPanels.tsx',
 ]
 
 const CHART_TOKENS = ['chart-obs', 'chart-est', 'chart-bar', 'chart-hatch']

@@ -30,6 +30,16 @@
   - `base.css` 的全局 `button { color: inherit }` 是未分层规则，覆盖了 Tailwind 的 `text-primary-foreground`，导致主按钮文字与背景同色。已声明 `@layer theme, base, components, utilities` 并把该重置放入 `@layer base`。
   - 深色主题下品牌方块使用 `--btn`（浅色）而图标继承 `--fg`，对比不足。已让 `.brand-glyph` 使用 `--btn-fg`。
 
+## 第二轮收敛
+
+在首轮迁移之后继续完成：
+
+- **四套主题全部可达**：外观偏好从「浅色/深色」两个按钮改为 `THEMES` 的四个主题按钮（冷灰、钢青、炭黑、纸墨），选择后写入 `jit.theme`；`tokens.css` 的默认块同时匹配 `:root` 与 `html[data-theme="concrete"]`，消除"值存在但没有选择器"的隐式回退。外观弹层改用 Radix Popover，点击外部可关闭。
+- **拆分大文件**：`pages/PullRequestJourney.tsx` 从 557 行降到 458 行，备份、反馈、交付与问题编辑移入 `components/pr/WorkPanels.tsx`；`TrendPage.tsx` 从 647 行降到 298 行，图表、分区带与等价表格移入 `components/report/TrendPanels.tsx`。
+- **页面级错误边界**：新增 `components/ErrorBoundary.tsx` 包住路由内容，渲染异常时保留外壳、显示原因并提供重试与返回项目列表入口。
+- **样式守卫随结构调整**：`tokens.test.ts`、`contrast.test.ts` 改为识别新的根选择器；`chartTokens.test.ts` 增加 `TrendPanels.tsx` 作为图表令牌的引用来源。
+- **验证**：前端全量 **38 个文件、306 项通过**；类型检查、构建通过；浏览器确认四个主题按钮存在且 `steel`、`paper`、`concrete` 切换后背景色与 `data-theme` 一致，无控制台错误。
+
 ## 未验证与边界
 
 - 未在本轮重跑隔离浏览器 E2E（桌面 1440 与手机 390）；需要在本机启动后端后执行。
