@@ -9,6 +9,7 @@ from .artifacts import (DEFAULT_RUN, Snapshot, build_run, compare_methods, compa
                         declared_reproducibility, environment, run_origin, verify_run, write_json)
 from .suite import compare_projects, run_suite
 from .multi_project import run_multi_project
+from .benefit import DEFAULT_RANDOM_RUNS, DEFAULT_SEED, run_benefit
 from . import evidence
 from .config import BACKEND
 from .data import BaselineError, fetch_sources
@@ -85,6 +86,12 @@ def main():
     multi_project.add_argument("--methods", nargs="*", default=None,
                                help="方法子集；省略表示五种经典方法")
     multi_project.add_argument("--metric-set", default=None, help="默认 metric-set-v2")
+    benefit = commands.add_parser("evaluate-benefit", help="用冻结测试分区比较模型、时间与随机检查顺序")
+    benefit.add_argument("--run", type=Path, required=True, help="已交付模型产物目录")
+    benefit.add_argument("--output", type=Path, required=True, help="报告文件或目录；目录写 benefit-report.json")
+    benefit.add_argument("--random-runs", type=int, default=DEFAULT_RANDOM_RUNS,
+                         help=f"随机重复次数，默认 {DEFAULT_RANDOM_RUNS}")
+    benefit.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"随机种子，默认 {DEFAULT_SEED}")
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -198,6 +205,13 @@ def main():
             report_path = args.output / "multi-project-report.json"
             result = run_multi_project(args.dataset_manifest, report_path,
                                        methods=args.methods, metric_set=args.metric_set)
+        elif args.command == "evaluate-benefit":
+            report, path = run_benefit(args.run, args.output,
+                                       random_runs=args.random_runs, seed=args.seed)
+            result = {"kind": report["kind"], "runId": report["artifact"]["runId"],
+                      "artifact": report["artifact"]["artifactPath"],
+                      "test": report["test"], "conclusion": report["conclusion"],
+                      "reportPath": str(path)}
         elif args.command == "build-embeddings":
             from .semantic import build_embeddings
             options = {"batch_size": args.batch_size}

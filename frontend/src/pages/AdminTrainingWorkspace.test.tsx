@@ -226,3 +226,53 @@ it('keeps an unavailable model detail error actionable', async () => {
   expect(screen.getByText('模型产物缺失')).toBeVisible()
   expect(screen.getByRole('button', { name: '返回模型列表' })).toBeVisible()
 })
+
+it('pages past the first twenty training tasks', async () => {
+  const tasks = Array.from({ length: 45 }, (_, index) => ({ ...TASK, taskId: `task-${index}`, datasetVersion: `dataset-${index}` }))
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    const url = new URL(String(path), 'http://localhost')
+    const offset = Number(url.searchParams.get('offset') ?? 0)
+    return Response.json({ tasks: tasks.slice(offset, offset + 20), total: tasks.length, limit: 20, offset })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  await userEvent.setup().click(await screen.findByRole('button', { name: '下一页' }))
+  expect(await screen.findByText('第 2 页 · 共 45 条')).toBeVisible()
+  expect(screen.getByText('dataset-20')).toBeVisible()
+  expect(fetch.mock.calls.some(([path]) => String(path).includes('offset=20'))).toBe(true)
+  await userEvent.setup().click(screen.getByRole('button', { name: '下一页' }))
+  expect(await screen.findByText('第 3 页 · 共 45 条')).toBeVisible()
+  expect(screen.getByText('dataset-40')).toBeVisible()
+  expect(screen.getByRole('button', { name: '下一页' })).toBeDisabled()
+})
+
+it('clears the previous task detail when returning to the list', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).includes(`/training-tasks/${TASK.taskId}`)) return Response.json(TASK)
+    return Response.json({ tasks: [TASK], total: 1, limit: 20, offset: 0 })
+  })
+  const view = render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
+  view.rerender(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  await waitFor(() => expect(screen.queryByRole('heading', { name: '训练任务详情' })).not.toBeInTheDocument())
+  expect(await screen.findByRole('heading', { name: '训练任务' })).toBeVisible()
+})
+
+it('reissues a real request when a task read fails and the user retries', async () => {
+  let detailCalls = 0
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    detailCalls += 1
+    if (detailCalls === 1) return Response.json({ error: { code: 'STORAGE_UNAVAILABLE', message: '训练任务暂时不可用', requestId: 'task-request' } }, { status: 503 })
+    return Response.json(TASK)
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('训练任务暂时不可用')).toBeVisible()
+  await userEvent.setup().click(screen.getByRole('button', { name: '重试' }))
+  expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
+  expect(detailCalls).toBe(2)
+})

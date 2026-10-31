@@ -479,6 +479,12 @@ class SyncStorage:
                                      sync_ids).rowcount
             syncs = db.execute("DELETE FROM repository_sync WHERE repository_id=?",
                                (repository_id,)).rowcount
+            batch_ids = [row[0] for row in db.execute(
+                "SELECT id FROM pr_batch WHERE repository_id=?", (repository_id,))]
+            if batch_ids:
+                marks = ", ".join("?" for _ in batch_ids)
+                db.execute(f"DELETE FROM pr_batch_item WHERE batch_id IN ({marks})", batch_ids)
+                db.execute(f"DELETE FROM pr_batch WHERE id IN ({marks})", batch_ids)
             db.execute("DELETE FROM repository WHERE id=?", (repository_id,))
         return {"syncs": syncs, "commits": commits}
 
@@ -1162,7 +1168,8 @@ class SyncService:
                 trained = self.training.run(
                     manifest_path, "logistic-regression-l2-v1", None,
                     output_key=f"repository-sync-{sync_id[:8]}",
-                    channel="repository-sync", request_id=item.get("requestId"))
+                    channel="repository-sync", request_id=item.get("requestId"),
+                    holdout=holdout)
                 model_id = trained["modelId"]
                 snapshot = trained["snapshot"]
                 schema = snapshot.schema

@@ -2,8 +2,8 @@ openapi: 3.1.0
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
   title: JIT Review 产品接口文档
-  version: 1.3.0
-  description: 文档基线评审稿。API-01及提交／数据版本查询／数据来源、模型候选／登记／列表／schema／JSON预测／结果重开、仓库同步与仓库提交查询、仓库工作区视图已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。
+  version: 1.6.0
+  description: 文档基线评审稿。API-01及提交／数据版本查询／数据来源、模型候选／登记／列表／schema／JSON预测／结果重开、仓库同步与仓库提交查询、仓库工作区视图、PR 批量分析批次、多项目实验报告只读查询、模型审查收益评估已实现；其他操作仍是候选契约。字段例子为人工格式示例。当前API-01保持本机与既有响应；本文件不部署接口。全局错误码见../全局错误码表.md。
 tags:
 - name: 现有历史回放
 - name: 目标共享产品
@@ -90,8 +90,8 @@ paths:
     - $ref: '#/components/parameters/ProjectRepositoryId'
     post:
       operationId: analyzeRepositoryPullRequests
-      summary: 为项目全部开放 PR 提交模型分析任务
-      description: 读取每个开放 PR 的固定快照并创建分析任务；已有完成分析的 PR 跳过。后台逐个执行，进度通过 PR 清单的 analysisStatus 反映。可选 modelId 固定本次使用的真实兼容模型。
+      summary: 创建或复用一次可追踪的「分析全部 PR」批次
+      description: 批次开始时解析并固定真实兼容模型，从远端分页获取完整开放 PR 范围，再逐条刷新快照：同快照同模型在途任务复用任务、已成功任务复用结果、快照变化创建新分析、此前失败或取消仅在用户本次主动发起时重试。返回批次标识，进度通过批次接口读取。已有进行中的同模型批次直接返回原批次；不同模型返回 409。
       security: []
       tags: [目标共享产品]
       requestBody:
@@ -101,14 +101,97 @@ paths:
             schema:
               $ref: '#/components/schemas/PRBatchAnalyzeRequest'
       responses:
-        '200':
-          description: 已排队的 PR 数量
+        '202':
+          description: 批次已创建或复用，返回真实批次状态与逐条结果
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PRBatchAnalyze'
         '404':
           $ref: '#/components/responses/RepositoryUnknown'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '502':
+          $ref: '#/components/responses/ModelUnavailable'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-request-batches/latest:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    get:
+      operationId: getLatestRepositoryPullRequestBatch
+      summary: 读取项目最近一次批量分析批次
+      description: 未发起过批次时返回 null。批次只保存固定模型、逐条快照与任务引用，不复制分数；逐条 effectiveStatus 同时读取实际任务状态。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 最近批次或 null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/PRBatchAnalyze'
+                - type: 'null'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: batchId
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: getRepositoryPullRequestBatch
+      summary: 读取指定批量分析批次的真实进度
+      description: discoveryComplete=false 表示开放 PR 范围未完整获取，不能视为「全部完成」。counts 为实际任务状态，submission 为逐条提交结果。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRBatchAnalyze'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/retry:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: batchId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: retryRepositoryPullRequestBatch
+      summary: 只重试上一批次的失败项
+      description: 以原批次固定的模型创建新批次，只复制有效状态为 failed 的条目；模型不可用时失败，不替换模型。批次仍在处理或没有失败项时返回冲突。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '202':
+          description: 新的重试批次
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRBatchAnalyze'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
         '422':
           $ref: '#/components/responses/InputInvalid'
         '503':
@@ -1074,6 +1157,53 @@ paths:
         schema:
           $ref: '#/components/schemas/Uuid'
       security: []
+  /api/admin/multi-project-reports:
+    get:
+      operationId: listMultiProjectReports
+      summary: 列出管理工作区可见的多项目实验报告
+      description: 只读取固定报告根目录中的已冻结报告，按内容哈希返回受控标识；无效报告如实标记，不触发训练或修改模型。必须管理员会话。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 报告摘要列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiProjectReportList'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/admin/multi-project-reports/{reportId}:
+    parameters:
+    - name: reportId
+      in: path
+      required: true
+      schema:
+        type: string
+        description: 报告内容哈希前 24 位；不接受文件路径。
+    get:
+      operationId: getMultiProjectReport
+      summary: 读取指定多项目实验报告
+      description: 返回源报告结构及受控来源标识。报告标识未知、无效或不是内容哈希时返回结构化错误。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 报告详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiProjectReportDetail'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/models:
     get:
       operationId: listModels
@@ -1441,6 +1571,34 @@ paths:
         schema:
           $ref: '#/components/schemas/Uuid'
       security: []
+  /api/v1/models/{modelId}/benefit:
+    parameters:
+    - name: modelId
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: getModelBenefit
+      summary: 读取模型在冻结测试分区上的审查收益评估
+      description: 按模型产物运行身份匹配已冻结的收益评估报告；比较模型分数、时间顺序和固定种子随机顺序在同一 20% LOC 预算下的覆盖。报告只读，不训练、不调参、不改变默认模型。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 收益评估或明确的未评估原因
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelBenefit'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ReportInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/models/{modelId}:
     get:
       operationId: getRegisteredModelDetail
@@ -3508,13 +3666,165 @@ components:
     PRBatchAnalyze:
       type: object
       additionalProperties: false
-      required: [repositoryId, queued]
+      required: [batchId, repositoryId, modelId, status, discoveryComplete, discovered, retryOf, createdAt, updatedAt, completedAt, error, counts, submission, items]
       properties:
+        batchId:
+          type: string
         repositoryId:
           type: string
-        queued:
+        modelId:
+          type: string
+          description: 批次开始时解析并固定的真实兼容模型；执行或重试时不替换。
+        status:
+          type: string
+          enum: [discovering, running, completed, partial, failed, interrupted]
+        discoveryComplete:
+          type: boolean
+          description: false 表示开放 PR 范围未完整获取，不能宣称全部完成。
+        discovered:
           type: integer
           minimum: 0
+        retryOf:
+          type: [string, 'null']
+          description: 仅重试批次指向的原批次标识。
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: [string, 'null']
+          format: date-time
+        error:
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: false
+            required: [code, message]
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+        counts:
+          type: object
+          additionalProperties: false
+          required: [pending, queued, running, completed, failed, cancelled, interrupted, skipped]
+          properties:
+            pending: {type: integer, minimum: 0}
+            queued: {type: integer, minimum: 0}
+            running: {type: integer, minimum: 0}
+            completed: {type: integer, minimum: 0}
+            failed: {type: integer, minimum: 0}
+            cancelled: {type: integer, minimum: 0}
+            interrupted: {type: integer, minimum: 0}
+            skipped: {type: integer, minimum: 0}
+        submission:
+          type: object
+          additionalProperties: false
+          required: [pending, submitted, reused, failed, skipped]
+          properties:
+            pending: {type: integer, minimum: 0}
+            submitted: {type: integer, minimum: 0}
+            reused: {type: integer, minimum: 0}
+            failed: {type: integer, minimum: 0}
+            skipped: {type: integer, minimum: 0}
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [number, status, effectiveStatus, snapshotId, syncId, modelId, errorCode, errorMessage, updatedAt]
+            properties:
+              number: {type: integer, minimum: 1}
+              status:
+                type: string
+                enum: [pending, submitted, reused, failed, skipped]
+              effectiveStatus:
+                type: string
+                enum: [pending, queued, running, completed, failed, cancelled, interrupted, skipped]
+              snapshotId: {type: [string, 'null']}
+              syncId: {type: [string, 'null']}
+              modelId: {type: [string, 'null']}
+              errorCode: {type: [string, 'null']}
+              errorMessage: {type: [string, 'null']}
+              updatedAt:
+                type: string
+                format: date-time
+    MultiProjectReportSummary:
+      type: object
+      additionalProperties: false
+      required: [reportId, source, status, reportStatus, generatedUtc, schema, metricSet, protocols, methods, projectCount, failedProjectCount, failureCount, methodCount, protocolCount, resultCount, partialProtocolCount, completeProtocolCount, failedProtocolCount, error]
+      properties:
+        reportId:
+          type: string
+          description: 报告内容 SHA-256 前 24 位；浏览器不能提交文件路径。
+        source:
+          type: string
+          description: 受控相对来源，不包含绝对文件系统路径。
+        status:
+          type: string
+          enum: [complete, partial, failed, invalid]
+        reportStatus:
+          type: [string, 'null']
+        generatedUtc:
+          type: [string, 'null']
+          format: date-time
+        schema:
+          type: [string, 'null']
+        metricSet:
+          type: [string, 'null']
+        protocols:
+          type: array
+          items: {type: string}
+        methods:
+          type: array
+          items: {type: string}
+        projectCount: {type: integer, minimum: 0}
+        failedProjectCount: {type: integer, minimum: 0}
+        failureCount: {type: integer, minimum: 0}
+        methodCount: {type: integer, minimum: 0}
+        protocolCount: {type: integer, minimum: 0}
+        resultCount: {type: integer, minimum: 0}
+        partialProtocolCount: {type: integer, minimum: 0}
+        completeProtocolCount: {type: integer, minimum: 0}
+        failedProtocolCount: {type: integer, minimum: 0}
+        error:
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: false
+            required: [code, message]
+            properties:
+              code: {type: string}
+              message: {type: string}
+    MultiProjectReportList:
+      type: object
+      additionalProperties: false
+      required: [reports, total]
+      properties:
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/MultiProjectReportSummary'
+        total:
+          type: integer
+          minimum: 0
+    MultiProjectReport:
+      type: object
+      additionalProperties: true
+      required: [kind, reportVersion, generatedUtc, schema, metricSet, protocols, methods, projects, results, failures, boundary]
+      description: 由 run-multi-project 生成的冻结报告；字段按源文件原样返回，不重算指标。
+    MultiProjectReportDetail:
+      allOf:
+      - $ref: '#/components/schemas/MultiProjectReportSummary'
+      - type: object
+        additionalProperties: false
+        required: [report]
+        properties:
+          report:
+            $ref: '#/components/schemas/MultiProjectReport'
     PRAnalyses:
       type: object
       additionalProperties: false
@@ -3611,6 +3921,63 @@ components:
       required:
       - snapshotId
       - analyses
+    BenefitMetric:
+      type: object
+      additionalProperties: false
+      required: [value, reason]
+      properties:
+        value: {type: [number, 'null']}
+        reason: {type: [string, 'null']}
+    BenefitStrategy:
+      type: object
+      additionalProperties: true
+      required: [ordering, recall20Loc, ifa, popt, coverage]
+      properties:
+        ordering: {type: string}
+        recall20Loc: {$ref: '#/components/schemas/BenefitMetric'}
+        ifa: {$ref: '#/components/schemas/BenefitMetric'}
+        popt: {$ref: '#/components/schemas/BenefitMetric'}
+        coverage:
+          type: object
+          additionalProperties: true
+          required: [positives, totalLoc, budgetLoc, selectedCount, usedLoc, issuesCovered, precisionAtBudget]
+          properties:
+            positives: {type: integer, minimum: 0}
+            totalLoc: {type: number, minimum: 0}
+            budgetLoc: {type: number, minimum: 0}
+            selectedCount: {type: integer, minimum: 0}
+            usedLoc: {type: number, minimum: 0}
+            issuesCovered: {type: integer, minimum: 0}
+            precisionAtBudget: {$ref: '#/components/schemas/BenefitMetric'}
+    BenefitRandomSummary:
+      type: object
+      additionalProperties: false
+      required: [mean, std, min, max, validRuns, reason]
+      properties:
+        mean: {type: [number, 'null']}
+        std: {type: [number, 'null']}
+        min: {type: [number, 'null']}
+        max: {type: [number, 'null']}
+        validRuns: {type: integer, minimum: 0}
+        reason: {type: [string, 'null']}
+    BenefitReport:
+      type: object
+      additionalProperties: true
+      required: [kind, reportVersion, generatedUtc, artifact, test, strategies, conclusion, limitations, boundary]
+      description: 冻结测试分区上的回顾性收益评估；风险分数不是缺陷概率，跨模型不排名。
+    ModelBenefit:
+      type: object
+      additionalProperties: false
+      required: [modelId, runId, available]
+      properties:
+        modelId: {type: string}
+        runId: {type: string}
+        available: {type: boolean}
+        reason: {type: [string, 'null']}
+        reportId: {type: string}
+        source: {type: string}
+        report:
+          $ref: '#/components/schemas/BenefitReport'
     ModelPolicyUpdate:
       type: object
       properties:
@@ -7337,6 +7704,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CurrentError'
+    ReportInvalid:
+      description: REPORT_INVALID；报告文件存在但类型、版本或结构不受支持。
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/ProjectRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SharedError'
     NotFound:
       description: 资源标识不存在。
       headers:
