@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { apiRequest } from '../apiClient'
 import { record } from '../apiContract'
 import { EmptyState, LoadingNotice } from '../Feedback'
+import { Icon, type IconName } from '../Icon'
 import type { Route } from '../navigation'
 import { VerificationReport } from '../VerificationReport'
+import { AppearanceControl } from '../components/AppearanceControl'
+import { Dialog } from '../ui/dialog'
 import { Button, Input, PasswordInput } from '../ui/controls'
 import { AdminComparisonPage } from './admin/AdminComparisonPage'
 import { AdminDatasetsPage } from './admin/AdminDatasetsPage'
@@ -15,6 +18,17 @@ interface Session { authenticated: boolean; setupRequired: boolean; username: st
 
 function label(value: unknown, fallback = '未提供') {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : fallback
+}
+
+const NAV: { view: 'models' | 'datasets' | 'training' | 'comparisons'; label: string; icon: IconName }[] = [
+  { view: 'models', label: '模型管理', icon: 'sliders' },
+  { view: 'datasets', label: '数据集', icon: 'list' },
+  { view: 'training', label: '训练任务', icon: 'trend' },
+  { view: 'comparisons', label: '模型比较', icon: 'sort' },
+]
+
+const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'comparisons', string> = {
+  models: '模型管理', datasets: '数据集', training: '训练任务', comparisons: '模型比较',
 }
 
 export function AdminWorkspace({ route, navigate }: {
@@ -39,19 +53,27 @@ export function AdminWorkspace({ route, navigate }: {
     window.addEventListener('focus', read)
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener('focus', read) }
   }, [revision])
-  if (!session) return sessionError
-    ? <EmptyState title="管理服务暂时不可用" description={sessionError}><Button onClick={() => setRevision(value => value + 1)}>重新连接</Button></EmptyState>
-    : <LoadingNotice label="正在检查管理会话"/>
-  if (!session.authenticated) return <AdminSignIn setup={session.setupRequired} onSignedIn={setSession}/>
+
+  if (!session) return <div className="admin-boot">
+    {sessionError
+      ? <EmptyState title="管理服务暂时不可用" description={sessionError}><Button onClick={() => setRevision(value => value + 1)}>重新连接</Button></EmptyState>
+      : <LoadingNotice label="正在检查管理会话"/>}
+  </div>
+
+  if (!session.authenticated) return <AdminSignIn setup={session.setupRequired} onSignedIn={setSession} onClose={() => navigate({ name: 'repositories' })}/>
+
   async function logout() {
     try {
       await apiRequest({ path: '/api/admin/logout', method: 'POST' })
       expired()
+      navigate({ name: 'repositories' })
     } catch (error) {
       setSessionError(error instanceof Error ? error.message : '退出失败')
     }
   }
-  const active = (view: 'models' | 'datasets' | 'training' | 'comparisons') => route.name === 'admin' && route.view === view ? 'page' : undefined
+
+  const active = (view: typeof NAV[number]['view']) => route.name === 'admin' && route.view === view ? 'page' : undefined
+  const section = route.name === 'report' ? '验证报告' : SECTION_TITLES[route.view]
   let content
   if (route.name === 'report') content = <VerificationReport route={route} navigate={navigate}/>
   else if (route.view === 'models' && route.resourceId) content = <AdminModelDetailPage modelId={route.resourceId} navigate={navigate} expired={expired}/>
@@ -59,21 +81,41 @@ export function AdminWorkspace({ route, navigate }: {
   else if (route.view === 'datasets') content = <AdminDatasetsPage dataset={route.resourceId} version={route.version} navigate={navigate} expired={expired}/>
   else if (route.view === 'training') content = <AdminTrainingPage taskId={route.resourceId} navigate={navigate} expired={expired}/>
   else content = <AdminComparisonPage modelIds={route.models} navigate={navigate} expired={expired}/>
-  return <div className="admin-workspace">
-    <div className="admin-toolbar"><span className="admin-badge">管理员 · {session.username}</span><Button variant="ghost" onClick={() => void logout()}>退出管理</Button><Button variant="ghost" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</Button></div>
-    <nav className="view-tabs" aria-label="管理导航">
-      <Button variant="ghost" size="sm" aria-current={active('models')} onClick={() => navigate({ name: 'admin', view: 'models' })}>模型管理</Button>
-      <Button variant="ghost" size="sm" aria-current={active('datasets')} onClick={() => navigate({ name: 'admin', view: 'datasets' })}>数据集</Button>
-      <Button variant="ghost" size="sm" aria-current={active('training')} onClick={() => navigate({ name: 'admin', view: 'training' })}>训练任务</Button>
-      <Button variant="ghost" size="sm" aria-current={active('comparisons')} onClick={() => navigate({ name: 'admin', view: 'comparisons' })}>模型比较</Button>
-      <Button variant="ghost" size="sm" aria-current={route.name === 'report' ? 'page' : undefined} onClick={() => navigate({ name: 'report', view: 'overview' })}>验证报告</Button>
-    </nav>
-    {sessionError ? <p role="alert" className="field-error">{sessionError}</p> : null}
-    {content}
+
+  return <div className="admin-frame">
+    <a className="skip-link" href="#admin-main">跳到主要内容</a>
+    <aside className="admin-rail">
+      <button className="admin-rail-brand" onClick={() => navigate({ name: 'repositories' })}><span className="brand-glyph"><Icon name="logo" size={22}/></span><span>JIT<span className="brand-caption">REVIEW</span></span></button>
+      <nav className="admin-nav" aria-label="管理导航">
+        {NAV.map(item => <button key={item.view} aria-current={active(item.view)} onClick={() => navigate({ name: 'admin', view: item.view })}><Icon name={item.icon} size={17}/><span>{item.label}</span></button>)}
+        <button aria-current={route.name === 'report' ? 'page' : undefined} onClick={() => navigate({ name: 'report', view: 'overview' })}><Icon name="download" size={17}/><span>验证报告</span></button>
+      </nav>
+      <div className="admin-rail-footer">
+        <div className="admin-account"><span className="admin-account-name">{label(session.username, '管理员')}</span><span className="admin-account-role">管理员</span></div>
+        <div className="admin-rail-actions">
+          <Button variant="ghost" size="sm" onClick={() => void logout()}>退出管理</Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</Button>
+        </div>
+      </div>
+    </aside>
+    <div className="admin-main">
+      <header className="admin-topbar">
+        <nav className="admin-breadcrumb" aria-label="面包屑"><span>管理工作区</span><span aria-hidden="true">/</span><b>{section}</b></nav>
+        <AppearanceControl/>
+      </header>
+      <main className="admin-content" id="admin-main" tabIndex={-1}>
+        {sessionError ? <p role="alert" className="admin-inline-error">{sessionError}</p> : null}
+        {content}
+      </main>
+    </div>
   </div>
 }
 
-function AdminSignIn({ setup, onSignedIn }: { setup: boolean; onSignedIn: (session: Session) => void }) {
+function AdminSignIn({ setup, onSignedIn, onClose }: {
+  setup: boolean
+  onSignedIn: (session: Session) => void
+  onClose: () => void
+}) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -100,14 +142,22 @@ function AdminSignIn({ setup, onSignedIn }: { setup: boolean; onSignedIn: (sessi
       setConfirmation('')
     }
   }
-  return <section className="admin-signin">
-    <div className="admin-signin-intro"><h1>{setup ? '建立管理员账户' : '管理员登录'}</h1><p>在独立工作区维护数据集、训练任务、模型指标和验证记录。项目审查无需管理员登录。</p></div>
-    <form className="admin-signin-form" onSubmit={submit}>
-      <div className="pr-field"><span className="pr-field-label">账户名</span><Input aria-label="管理员账户名" autoComplete="username" maxLength={80} value={username} onChange={event => setUsername(event.target.value)}/></div>
-      <div className="pr-field"><span className="pr-field-label">密码</span><PasswordInput aria-label="管理员密码" autoComplete={setup ? 'new-password' : 'current-password'} maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/></div>
-      {setup ? <><div className="pr-field"><span className="pr-field-label">确认密码</span><PasswordInput aria-label="确认管理员密码" autoComplete="new-password" value={confirmation} onChange={event => setConfirmation(event.target.value)}/></div><p className="admin-signin-hint">首次使用请建立本机管理员，密码至少 12 位。</p></> : null}
-      {error ? <p className="field-error" role="alert">{error}</p> : null}
-      <Button variant="primary" type="submit" loading={busy} block>{setup ? '建立账户并进入' : '登录管理工作区'}</Button>
-    </form>
-  </section>
+  return <div className="admin-auth-stage">
+    <div className="admin-auth-masthead"><span className="brand-glyph"><Icon name="logo" size={22}/></span><span className="admin-auth-wordmark">JIT REVIEW</span><span className="admin-auth-divider"/><span className="admin-auth-section">管理工作区</span></div>
+    <Dialog
+      open
+      onOpenChange={open => { if (!open) onClose() }}
+      width={430}
+      title={<span className="admin-auth-title">{setup ? '建立管理员账户' : '管理员登录'}</span>}
+    >
+      <form className="admin-auth-form" onSubmit={submit}>
+        <label className="admin-field"><span className="admin-field-label">账户名</span><Input aria-label="管理员账户名" autoComplete="username" maxLength={80} value={username} onChange={event => setUsername(event.target.value)} autoFocus/></label>
+        <label className="admin-field"><span className="admin-field-label">密码</span><PasswordInput aria-label="管理员密码" autoComplete={setup ? 'new-password' : 'current-password'} maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/></label>
+        {setup ? <label className="admin-field"><span className="admin-field-label">确认密码</span><PasswordInput aria-label="确认管理员密码" autoComplete="new-password" value={confirmation} onChange={event => setConfirmation(event.target.value)}/></label> : null}
+        {setup ? <p className="admin-field-note">密码至少 12 位。</p> : null}
+        {error ? <p className="field-error" role="alert">{error}</p> : null}
+        <Button variant="primary" type="submit" loading={busy} block>{setup ? '建立账户并进入' : '登录'}</Button>
+      </form>
+    </Dialog>
+  </div>
 }

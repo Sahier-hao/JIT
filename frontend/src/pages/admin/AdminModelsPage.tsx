@@ -88,24 +88,23 @@ export function AdminModelsPage({ navigate, expired }: {
   if (loading) return <LoadingNotice label="正在读取模型目录"/>
   if (error && !models.length) return <EmptyState title="模型目录不可用" description={error}><Button onClick={() => setRevision(value => value + 1)}>重试</Button></EmptyState>
   return <section>
-    <AdminPageHeader title="模型管理" intro="核对已登记模型的真实训练指标与运行来源，并维护项目可选策略。" onRefresh={() => setRevision(value => value + 1)}/>
+    <AdminPageHeader title="模型管理" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
     {notice ? <p role="status" className="admin-notice">{notice}</p> : null}
-    <h2>已登记模型 <small>{models.length}</small></h2>
+    <h2 className="admin-section-title">已登记模型 <span className="admin-count">{models.length}</span></h2>
     <ModelPolicyCards models={models} busy={!!busy} update={updatePolicy} open={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/>
-    {!models.length ? <p className="quiet-empty">尚无已登记模型，请从下方实际产物校验登记。</p> : null}
+    {!models.length ? <p className="quiet-empty">尚无已登记模型</p> : null}
     <MethodAvailability methods={methods}/>
-    <h2>本机模型产物</h2>
-    <p className="form-hint">产物存在不代表已通过准入。登记会检查文件完整性、输入契约和运行环境，不会重训。</p>
+    <h2 className="admin-section-title">本机模型产物</h2>
     <div className="admin-candidates">{candidates.map(candidate => <article className="admin-candidate" key={label(candidate.candidateId)}>
       <div><strong>{label(candidate.displayName)}</strong><p>{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div>
       <Button disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '校验并登记'}</Button>
     </article>)}</div>
-    {!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型。</p> : null}
+    {!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型</p> : null}
   </section>
 }
 
 function MethodAvailability({ methods }: { methods: Row[] }) {
   if (!methods.length) return null
-  return <section className="method-availability" aria-label="方法支持情况"><h2>方法支持情况 <small>{methods.length}</small></h2><p className="form-hint">支持方法与已校验模型分别统计。</p><ul>{methods.map(method => <li key={label(method.method)}><div><strong>{label(method.name)}</strong><span className="form-hint">{method.category === 'deep' ? '深度学习' : '经典机器学习'}</span></div><span>{Number(method.registeredModels) > 0 ? `已校验模型 ${method.registeredModels}` : Number(method.deliveredArtifacts) > 0 ? '待校验登记' : '无已交付产物'}</span></li>)}</ul></section>
+  return <section className="admin-panel method-availability" aria-label="方法支持情况"><h2 className="admin-section-title">方法支持情况 <span className="admin-count">{methods.length}</span></h2><ul>{methods.map(method => <li key={label(method.method)}><div><strong>{label(method.name)}</strong><span>{method.category === 'deep' ? '深度学习' : '经典机器学习'}</span></div><span className="admin-status-chip">{Number(method.registeredModels) > 0 ? `已校验模型 ${method.registeredModels}` : Number(method.deliveredArtifacts) > 0 ? '待校验登记' : '无已交付产物'}</span></li>)}</ul></section>
 }

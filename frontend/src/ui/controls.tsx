@@ -102,7 +102,7 @@ export function NumberInput({ className, ...rest }: Omit<InputHTMLAttributes<HTM
 }
 
 export function PasswordInput({ className, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>) {
-  return <MantinePasswordInput {...rest} className={clsx('ui-input', className)}/>
+  return <MantinePasswordInput {...rest} className={clsx('ui-input', className)} visibilityToggleButtonProps={{ 'aria-label': '显示或隐藏密码' }}/>
 }
 
 export interface Choice { value: string | number; label: string; disabled?: boolean }

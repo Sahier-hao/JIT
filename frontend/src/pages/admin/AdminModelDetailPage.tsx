@@ -26,7 +26,7 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
   if (!model) return <LoadingNotice label="正在校验模型与读取指标"/>
   const source = model.source ?? {}
   return <section>
-    <AdminPageHeader title={model.name} intro="指标来自该模型的训练数据，不代表当前仓库的在线效果。"/>
+    <AdminPageHeader title={model.name} meta={model.method}/>
     <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'models' })}>返回模型列表</Button><Button onClick={() => navigate({ name: 'admin', view: 'comparisons', models: [model.modelId] })}>加入比较</Button></div>
     <div className="admin-status-line"><span className="source-chip">{model.state === 'ready' ? '已校验' : '不可用'}</span><span>{model.enabled ? '已启用' : '已停用'}</span>{model.isDefault ? <strong>默认模型</strong> : null}</div>
     <MetricGrid metrics={model.metrics}/>

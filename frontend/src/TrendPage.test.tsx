@@ -52,11 +52,11 @@ it('DTD-03/05 两类序列分别标注，文本视图逐桶可读', async () => 
   render(<TrendPage />)
   await screen.findByRole('heading', { name: '历史趋势' })
 
-  expect(screen.getByText(/提交数 · 历史观测/)).toBeVisible()
-  expect(screen.getByText(/观测正标签比例 · 历史观测 · 覆盖全部纳入记录/)).toBeVisible()
-  expect(screen.getByText(/模型风险中位数 · 模型估计 · 仅测试区间/)).toBeVisible()
-  expect(screen.getByText(/观测比例来自发布者历史标签聚合，不是模型效果/)).toBeVisible()
-  expect(screen.getByText(/整体为回顾性评价/)).toBeVisible()
+  expect(screen.getByText('提交数', { selector: '.trend-legend li' })).toBeVisible()
+  expect(screen.getByText('观测正标签比例', { selector: '.trend-legend li' })).toBeVisible()
+  expect(screen.getByText('模型风险中位数', { selector: '.trend-legend li' })).toBeVisible()
+  expect(screen.getByText(/样本不足的桶不绘制数据点/)).toBeVisible()
+  expect(screen.getByText(/风险为模型估计，未经概率校准/)).toBeVisible()
 
   const rows = within(table()).getAllByRole('row')
   expect(rows).toHaveLength(4)

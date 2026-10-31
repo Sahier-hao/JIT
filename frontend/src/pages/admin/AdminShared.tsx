@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react'
 import { Button } from '../../ui/controls'
 import { metricReason, metricValue, type Row } from '../../adminContracts'
 
-export function AdminPageHeader({ title, intro, onRefresh }: { title: string; intro: string; onRefresh?: () => void }) {
-  return <header className="page-heading">
-    <div><h1>{title}</h1><p className="page-intro">{intro}</p></div>
-    {onRefresh ? <Button onClick={onRefresh}>刷新</Button> : null}
+export function AdminPageHeader({ title, meta, actions, onRefresh }: { title: string; meta?: ReactNode; actions?: ReactNode; onRefresh?: () => void }) {
+  return <header className="admin-page-head">
+    <div className="admin-page-title"><h1>{title}</h1>{meta ? <p className="admin-page-meta">{meta}</p> : null}</div>
+    <div className="admin-page-actions">{actions}{onRefresh ? <Button onClick={onRefresh}>刷新</Button> : null}</div>
   </header>
 }
 
