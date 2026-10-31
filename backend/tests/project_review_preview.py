@@ -57,6 +57,8 @@ def build_preview(parent):
 
     root = room / 'artifacts'
     shutil.copytree(BACKEND / 'artifacts' / 'baseline', root / 'baseline')
+    # 描述文件登记是服务启动前提：给隔离运行一份只读副本，不引用开发目录。
+    shutil.copytree(BACKEND / 'data' / 'datasets', room / 'datasets')
     storage = CatalogStorage(room / 'catalog.sqlite3')
     storage.initialize()
     catalog = ModelCatalog(storage, root)

@@ -13,9 +13,78 @@ export function parseProjectPRs(raw: unknown, id: string): ProjectPRPage {
   const b = identity(raw, id)
   return { repositoryId: id, supported: flag(b.supported), owner: textOrNull(b.owner), name: textOrNull(b.name), pullRequests: recordList(b.pullRequests).map(p => ({ ...parseItem(p), draft: flag(p.draft), snapshotId: textOrNull(p.snapshotId), analysisStatus: textOrNull(p.analysisStatus), modelId: textOrNull(p.modelId), syncId: textOrNull(p.syncId), maxRisk: p.maxRisk == null ? null : riskNumber(p.maxRisk), scoredCommits: p.scoredCommits == null ? null : count(p.scoredCommits) })), page: count(b.page), hasMore: flag(b.hasMore), checkedAt: textOrNull(b.checkedAt), errorCode: textOrNull(b.errorCode) }
 }
-/** 为当前所有开放 PR 提交后台分析任务；进度通过列表的 analysisStatus 反映。 */
+/** 为当前所有开放 PR 创建或复用一次可追踪批次；进度通过批次接口读取。 */
 export async function analyzeAllProjectPRs(repositoryId: string, modelId?: string) {
-  return apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}/pull-requests/analyze`, method: 'POST', body: modelId ? { modelId } : {} })
+  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-requests/analyze`, method: 'POST', body: modelId ? { modelId } : {} }), repositoryId)
+}
+
+export type PRBatchStatus = 'discovering' | 'running' | 'completed' | 'partial' | 'failed' | 'interrupted'
+export type PRBatchItemStatus = 'pending' | 'submitted' | 'reused' | 'failed' | 'skipped'
+export interface PRBatchItem {
+  number: number
+  status: PRBatchItemStatus
+  effectiveStatus: string
+  snapshotId: string | null
+  syncId: string | null
+  modelId: string | null
+  errorCode: string | null
+  errorMessage: string | null
+  updatedAt: string
+}
+export interface PRBatch {
+  batchId: string
+  repositoryId: string
+  modelId: string
+  status: PRBatchStatus
+  discoveryComplete: boolean
+  discovered: number
+  retryOf: string | null
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+  error: { code: string; message: string } | null
+  counts: Record<string, number>
+  submission: Record<string, number>
+  items: PRBatchItem[]
+}
+const BATCH_STATUSES: PRBatchStatus[] = ['discovering', 'running', 'completed', 'partial', 'failed', 'interrupted']
+const ITEM_STATUSES: PRBatchItemStatus[] = ['pending', 'submitted', 'reused', 'failed', 'skipped']
+const counter = (raw: unknown, keys: string[]) => {
+  const value = record(raw)
+  return Object.fromEntries(keys.map(key => [key, count(value[key])]))
+}
+export function parsePRBatch(raw: unknown, id: string): PRBatch {
+  const b = identity(raw, id)
+  if (!BATCH_STATUSES.includes(b.status as PRBatchStatus)) contractFailed('批次状态未登记')
+  return {
+    batchId: text(b.batchId), repositoryId: id, modelId: text(b.modelId),
+    status: b.status as PRBatchStatus, discoveryComplete: flag(b.discoveryComplete),
+    discovered: count(b.discovered), retryOf: textOrNull(b.retryOf),
+    createdAt: text(b.createdAt), updatedAt: text(b.updatedAt), completedAt: textOrNull(b.completedAt),
+    error: b.error == null ? null : { code: text(record(b.error).code), message: text(record(b.error).message) },
+    counts: counter(b.counts, ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted', 'skipped']),
+    submission: counter(b.submission, ['pending', 'submitted', 'reused', 'failed', 'skipped']),
+    items: recordList(b.items).map(item => {
+      if (!ITEM_STATUSES.includes(item.status as PRBatchItemStatus)) contractFailed('批次条目状态未登记')
+      return {
+        number: count(item.number), status: item.status as PRBatchItemStatus,
+        effectiveStatus: text(item.effectiveStatus), snapshotId: textOrNull(item.snapshotId),
+        syncId: textOrNull(item.syncId), modelId: textOrNull(item.modelId),
+        errorCode: textOrNull(item.errorCode), errorMessage: textOrNull(item.errorMessage),
+        updatedAt: text(item.updatedAt),
+      }
+    }),
+  }
+}
+export async function latestProjectPRBatch(repositoryId: string, signal?: AbortSignal): Promise<PRBatch | null> {
+  const raw = await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/latest`, method: 'GET', signal })
+  return raw == null ? null : parsePRBatch(raw, repositoryId)
+}
+export async function getProjectPRBatch(repositoryId: string, batchId: string, signal?: AbortSignal) {
+  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/${encodeURIComponent(batchId)}`, method: 'GET', signal }), repositoryId)
+}
+export async function retryProjectPRBatch(repositoryId: string, batchId: string) {
+  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/${encodeURIComponent(batchId)}/retry`, method: 'POST' }), repositoryId)
 }
 
 /** 为项目 PR 读取固定快照并创建一次默认模型分析；列表页可直接调用。 */

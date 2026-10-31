@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test'
 // 只连接本轮专用预览端口，不执行共享清理、不启动或停止其他服务。
 export default defineConfig({
   testDir: './e2e',
-  testMatch: 'project-workspace.spec.ts',
+  testMatch: ['project-workspace.spec.ts', 'admin-experiments.spec.ts'],
   outputDir: '../docs/evidence/_run/project-workspace-browser/results',
   fullyParallel: false,
   workers: 1,

@@ -101,6 +101,8 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [contexts, setContexts] = useState<Record<string, PRContext>>({})
   const [contextError, setContextError] = useState('')
   const [contextBusy, setContextBusy] = useState(false)
+  const [evidenceError, setEvidenceError] = useState('')
+  const evidenceJump = useRef(false)
   const [delivery, setDelivery] = useState<{ kind: Conclusion; note: string; preview: string; checked: boolean; oldConfirmed: boolean } | null>(null)
   const [drawer, setDrawer] = useState<'source' | 'delivery' | 'backup' | null>(null)
   const [filter, setFilter] = useState('')
@@ -112,7 +114,11 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
   const [diffView, setDiffView] = useState<'unified' | 'split'>('unified')
   const version = work?.viewedSnapshotId ?? ''
-  useEffect(() => { setSelectedCommit(null); setCommitRisks({}); setFileRisks({}); setReviewView('commits') }, [version])
+  useEffect(() => {
+    setSelectedCommit(null); setCommitRisks({}); setFileRisks({})
+    if (evidenceJump.current) { evidenceJump.current = false; setReviewView('files') }
+    else setReviewView('commits')
+  }, [version])
   function commit(next: PRWork) {
     let saved = next
     try { saved = saveWork(next); setSaveError('') } catch (error) { setSaveError(`尚未保存：${message(error)}。正在编辑的文本仍在本页，可重试或导出完整草稿。`) }
@@ -189,11 +195,21 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
     if (sha && files.length && !files.includes(path)) chooseFile(files[0])
   }
   function showCommitList() { setReviewView('commits'); setSelectedCommit(null) }
-  function switchVersion(value: string, targetPath?: string, location?: { side: 'base' | 'head'; line: number }) {
+  function switchVersion(value: string, targetPath?: string, location?: { side: 'base' | 'head'; line: number }, options?: { evidence?: boolean }) {
     const active = current.current!
+    const evidence = Boolean(options?.evidence && targetPath)
+    if (evidence) {
+      const readable = active.rounds[value]?.source.files.some(item => item.path === targetPath)
+      setEvidenceError(readable ? '' : '证据文件不在该版本的文件列表中；原版本与位置已保留。')
+    } else {
+      setEvidenceError('')
+    }
+    if (evidence && value === version) setReviewView('files')
+    evidenceJump.current = evidence && value !== version
     commit({ ...active, viewedSnapshotId: value, rounds: targetPath ? { ...active.rounds, [value]: { ...active.rounds[value], currentFile: targetPath, location } } : active.rounds })
     if (value !== version) setSource(null)
     setReadError(null); setContextError(''); setDelivery(null)
+    if (!evidence) evidenceJump.current = false
   }
   async function check(): Promise<PRWork | null> {
     if (lock.current) return null
@@ -332,6 +348,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
       </div>
       {!live.commitsComplete ? <p className="wb-pane-note">仅显示已加载的 {live.commits.length}/{live.totalCommits} 条提交。</p> : null}
     </section> : null}
+    {reviewView === 'files' && evidenceError ? <Alert type="error" showIcon title={evidenceError}/> : null}
     {reviewView === 'files' ? <div className="wb-body">
       <aside className="wb-files" aria-label="提交与文件">
         <div className="wb-pane-head"><h2>文件</h2><span className="wb-count">{selectedCommit ? `${scopedFiles.length} 个文件` : `${live.files.length}/${live.totalFiles}`}</span></div>
@@ -395,7 +412,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
           {!round.questions.length ? <p className="wb-pane-empty">还没有问题记录。新建一条，或点击代码行把位置关联进来。</p> : null}
         </div>
         <div className="wb-question-detail">
-          {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setContextError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined) }} work={work}/> : null}
+          {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setContextError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined, { evidence: true }) }} work={work}/> : null}
         </div>
         <label className="wb-note">
           <span>个人笔记{round.scratchOriginSnapshotId ? <small>沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}</span>

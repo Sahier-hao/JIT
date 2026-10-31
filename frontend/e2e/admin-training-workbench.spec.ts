@@ -92,6 +92,14 @@ test('大型仓库完成现成模型、自动训练、强制训练和管理员�
   await expect(page.getByText('AP', { exact: true })).toBeVisible()
   await expect(page.getByText(String(completed.runId), { exact: true })).toBeVisible()
 
+  // 返回列表先清除旧详情，再从列表重新打开同一任务。
+  await page.getByRole('button', { name: '返回任务列表', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '训练任务', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '训练任务详情' })).toHaveCount(0)
+  await page.getByRole('button', { name: '查看', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: '训练任务详情' })).toBeVisible()
+  await expect(page.getByText(String(completed.runId), { exact: true })).toBeVisible()
+
   for (const [width, height] of [[1280, 720], [1440, 900], [390, 844]] as const) {
     await page.setViewportSize({ width, height })
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

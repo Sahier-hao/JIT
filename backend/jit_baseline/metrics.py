@@ -64,6 +64,38 @@ def _curve_area(order, costs, labels, total_cost, positives):
     return _trapezoid_area(points)
 
 
+def normalized_effort_area(records, order, *, ordering, name="Popt (normalized cost-recall area)"):
+    """按给定整提交顺序计算 Popt 的归一化成本-召回面积。
+
+    公式与既有 Popt 相同：梯形面积，按 oracle（正例密度降序）与 worst（其反向）
+    归一化；`ordering` 只记录本结果采用的检查顺序，不改变标签或归一化口径。
+    """
+    labels = [r["label"] for r in records]
+    costs = [r["metrics"]["la"] + r["metrics"]["ld"] for r in records]
+    total = sum(costs)
+    positives = sum(labels)
+    detail = {"name": name,
+              "ordering": ordering, "totalLoc": total,
+              "areaModel": None, "areaOracle": None, "areaWorst": None,
+              "policy": "trapezoid-full-range"}
+    if total <= 0:
+        return metric(reason="总工作量为零"), detail
+    if any(cost <= 0 for cost in costs):
+        return metric(reason="存在零成本提交，Popt 未定义"), detail
+    if positives == 0:
+        return metric(reason="没有正标签提交"), detail
+    oracle_order = sorted(range(len(records)),
+                          key=lambda i: (-labels[i] / costs[i], -records[i]["epoch"], records[i]["id"]))
+    worst_order = list(reversed(oracle_order))
+    detail["areaModel"] = _curve_area(order, costs, labels, total, positives)
+    detail["areaOracle"] = _curve_area(oracle_order, costs, labels, total, positives)
+    detail["areaWorst"] = _curve_area(worst_order, costs, labels, total, positives)
+    denominator = detail["areaOracle"] - detail["areaWorst"]
+    if abs(denominator) <= 1e-12:
+        return metric(reason="oracle 与 worst 面积相等，Popt 未定义"), detail
+    return metric((detail["areaModel"] - detail["areaWorst"]) / denominator), detail
+
+
 def effort_metrics(records, risks):
     """Popt 与 IFA；定义见 PDB-23。
 
@@ -73,37 +105,16 @@ def effort_metrics(records, risks):
     """
     labels = [r["label"] for r in records]
     costs = [r["metrics"]["la"] + r["metrics"]["ld"] for r in records]
-    total = sum(costs)
-    positives = sum(labels)
     risk_order = sorted(range(len(records)),
                         key=lambda i: (-risks[i], -records[i]["epoch"], records[i]["id"]))
     first_positive = next((position for position, i in enumerate(risk_order) if labels[i] == 1), None)
     ifa = (metric(reason="没有正标签提交") if first_positive is None
            else metric(first_positive))
-    detail = {"name": "Popt (density-ranked, full-range)",
-              "ordering": "density-desc,time-desc,id-asc", "totalLoc": total,
-              "areaModel": None, "areaOracle": None, "areaWorst": None,
-              "policy": "trapezoid-full-range"}
-    if total <= 0:
-        popt = metric(reason="总工作量为零")
-    elif any(cost <= 0 for cost in costs):
-        popt = metric(reason="存在零成本提交，density-ranked Popt 未定义")
-    elif positives == 0:
-        popt = metric(reason="没有正标签提交")
-    else:
-        model_order = sorted(range(len(records)),
-                             key=lambda i: (-risks[i] / costs[i], -records[i]["epoch"], records[i]["id"]))
-        oracle_order = sorted(range(len(records)),
-                              key=lambda i: (-labels[i] / costs[i], -records[i]["epoch"], records[i]["id"]))
-        worst_order = list(reversed(oracle_order))
-        detail["areaModel"] = _curve_area(model_order, costs, labels, total, positives)
-        detail["areaOracle"] = _curve_area(oracle_order, costs, labels, total, positives)
-        detail["areaWorst"] = _curve_area(worst_order, costs, labels, total, positives)
-        denominator = detail["areaOracle"] - detail["areaWorst"]
-        if abs(denominator) <= 1e-12:
-            popt = metric(reason="oracle 与 worst 面积相等，Popt 未定义")
-        else:
-            popt = metric((detail["areaModel"] - detail["areaWorst"]) / denominator)
+    model_order = sorted(range(len(records)),
+                         key=lambda i: (-risks[i] / costs[i], -records[i]["epoch"], records[i]["id"]))         if all(cost > 0 for cost in costs) else list(range(len(records)))
+    popt, detail = normalized_effort_area(
+        records, model_order, ordering="density-desc,time-desc,id-asc",
+        name="Popt (density-ranked, full-range)")
     return {"popt": popt, "ifa": ifa, "poptEffort": detail}
 
 

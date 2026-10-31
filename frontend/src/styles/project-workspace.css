@@ -37,6 +37,9 @@ html[data-theme="charcoal"] {
 .pr-hub-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pr-hub-actions { display: flex; align-items: center; gap: 10px; }
 .pr-hub-note { margin: 0; color: var(--fg-3); font-size: 14px; line-height: 1.6; }
+.pr-batch-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--sunken); color: var(--fg-2); font-size: 13.5px; }
+.pr-batch-line[data-status='partial'], .pr-batch-line[data-status='failed'], .pr-batch-line[data-status='interrupted'] { border-color: color-mix(in srgb, var(--risk) 35%, var(--line)); }
+.pr-batch-state { font-weight: 600; color: var(--fg); }
 .pr-hub-panel { overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--sh-3); }
 .pr-hub-alert { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--risk) 8%, var(--card)); color: var(--fg-2); font-size: 13.5px; }
 .pr-hub-list { display: grid; }

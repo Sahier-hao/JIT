@@ -204,6 +204,18 @@ class ModelCatalog:
             raise RequestError('NOT_FOUND')
         return dict(row)
 
+    def run_id(self, model_id):
+        """Catalog model's business run identity, without loading the model."""
+        return self._row(model_id)['run_id']
+
+    def artifact_run_id(self, model_id):
+        """Artifact run identity recorded in the model payload (manifest runId)."""
+        payload = json.loads(self._row(model_id)['payload_json'])
+        value = payload.get('artifactRunId')
+        if not isinstance(value, str) or not value:
+            raise RequestError('ARTIFACT_INVALID')
+        return value
+
     def load_model(self, model_id):
         row = self._row(model_id)
         if row['state'] != 'ready':

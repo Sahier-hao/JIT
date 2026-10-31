@@ -48,6 +48,7 @@ class PullRequestUpdates:
         with self.lock:
             if self.thread is None and not self.stop.is_set():
                 self._recover_leases()
+                self._recover_batches()
                 self.thread = threading.Thread(target=self._loop, daemon=True, name='pr-schedule')
                 self.thread.start()
 
@@ -91,6 +92,14 @@ class PullRequestUpdates:
             return db.execute("UPDATE pr_watch SET status='error',error_code='SYNC_INTERRUPTED',"
                 'check_token=NULL,lease_until=NULL WHERE status=\'checking\' AND (lease_until IS NULL OR lease_until<=?)',
                 (self._now(),)).rowcount
+
+    def _recover_batches(self):
+        """服务重启时未完成批次如实标为中断，不冒充成功，也不自动重跑。"""
+        now = self._now()
+        with self.storage.connection(write=True) as db:
+            return db.execute("UPDATE pr_batch SET status='interrupted',error_code='SYNC_INTERRUPTED',"
+                'error_message=?,updated_at=?,completed_at=? WHERE status IN (\'discovering\',\'running\')',
+                ('服务重启时批量分析未完成，请重试失败项', now, now)).rowcount
 
     def get(self, repository_id):
         _, _, _, supported = self._repository(repository_id)
@@ -159,34 +168,292 @@ class PullRequestUpdates:
         payload = {'modelId': model_id} if model_id else {}
         return self.review.analyze(snapshot_id, payload)
 
-    def analyze_all_prs(self, repository_id, model_id=None):
-        """在后台逐个分析当前缓存的开放 PR；返回排队数量，前端轮询列表状态。"""
-        _, owner, name, supported = self._repository(repository_id)
+    def analyze_all_prs(self, repository_id, model_id=None, request_id=None):
+        """创建或复用一次「分析全部 PR」持久批次。
+
+        批次在开始时固定真实兼容模型，随后从远端分页获取完整开放 PR 范围，
+        再逐条刷新快照并复用/入队分析。返回批次进度，而不是候选数量回执。
+        """
+        _, _, _, supported = self._repository(repository_id)
         if not supported:
             raise BaselineError('PR_SOURCE_UNAVAILABLE', '该项目不是公开 GitHub 来源')
+        fixed_model = self._fixed_model(model_id)
+        with self.lock:
+            row = self._active_batch_row(repository_id)
+            if row is not None:
+                if row['model_id'] != fixed_model:
+                    raise BaselineError('CONFLICT_ACTIVE_SYNC',
+                                        '已有进行中的批量分析，请等待完成或使用同一模型')
+                return self.batch(repository_id, row['id'])
+            batch_id = str(uuid.uuid4())
+            now = self._now()
+            with self.storage.connection(write=True) as db:
+                db.execute('INSERT INTO pr_batch(id,repository_id,model_id,status,discovery_complete,'
+                           'discovered,request_id,created_at,updated_at) '
+                           'VALUES (?,?,?,?,0,0,?,?,?)',
+                           (batch_id, repository_id, fixed_model, 'discovering', request_id, now, now))
+            try:
+                self.executor.submit(self._run_batch, batch_id, repository_id, fixed_model)
+            except RuntimeError as exc:
+                self._finish_batch(batch_id, 'interrupted', 'SYNC_SERVICE_STOPPING',
+                                   'PR 批量分析服务正在停止，请稍后重试')
+                raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止') from exc
+        return self.batch(repository_id, batch_id)
+
+    def _fixed_model(self, model_id=None):
+        """批次开始时解析并固定模型；未选择时固定当时默认模型。"""
+        fixed = model_id or self.service.catalog.default_model_id()
+        if not fixed:
+            raise BaselineError('DEFAULT_MODEL_REQUIRED', '请选择兼容模型或先设置默认模型')
+        self.service._generic_model(fixed)
+        return fixed
+
+    def _active_batch_row(self, repository_id):
         with self.storage.connection() as db:
-            rows = db.execute("SELECT number FROM pr_cache WHERE repository_id=? AND remote_state='open' "
-                              'ORDER BY updated_at DESC', (repository_id,)).fetchall()
-        numbers = [row['number'] for row in rows]
+            row = db.execute("SELECT * FROM pr_batch WHERE repository_id=? AND status IN ('discovering','running') "
+                             'ORDER BY created_at DESC, id DESC LIMIT 1', (repository_id,)).fetchone()
+        return dict(row) if row else None
 
-        def work():
+    def _finish_batch(self, batch_id, status, error_code=None, error_message=None):
+        now = self._now()
+        with self.storage.connection(write=True) as db:
+            db.execute('UPDATE pr_batch SET status=?,error_code=?,error_message=?,updated_at=?,completed_at=? WHERE id=?',
+                       (status, error_code, error_message, now, now, batch_id))
+
+    def _item(self, batch_id, number, status, *, snapshot_id=None, sync_id=None, model_id=None,
+              error_code=None, error_message=None):
+        with self.storage.connection(write=True) as db:
+            db.execute('INSERT INTO pr_batch_item(batch_id,number,status,snapshot_id,sync_id,model_id,'
+                       'error_code,error_message,updated_at) VALUES (?,?,?,?,?,?,?,?,?) '
+                       'ON CONFLICT(batch_id,number) DO UPDATE SET status=excluded.status,'
+                       'snapshot_id=excluded.snapshot_id,sync_id=excluded.sync_id,model_id=excluded.model_id,'
+                       'error_code=excluded.error_code,error_message=excluded.error_message,'
+                       'updated_at=excluded.updated_at',
+                       (batch_id, number, status, snapshot_id, sync_id, model_id,
+                        error_code, error_message, self._now()))
+
+    def _run_batch(self, batch_id, repository_id, model_id):
+        """发现完整范围后逐条刷新快照、复用或入队；失败逐条记录，不吞掉批次状态。"""
+        discovered, discovery_error = [], None
+        try:
+            _, owner, name, _ = self._repository(repository_id)
+            for page in range(1, 101):
+                if self.stop.is_set():
+                    raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
+                result = self._refresh_list(repository_id, 'open', page)
+                discovered.extend((item['number'], item) for item in result['pullRequests'])
+                if not result['hasMore']:
+                    break
+                if page == 100:
+                    raise BaselineError('PR_SOURCE_TOO_LARGE', '开放 PR 超过可读取分页上限，范围可能不完整')
+        except BaselineError as exc:
+            discovery_error = exc
+        except Exception:
+            LOGGER.exception('PR 批量发现失败')
+            discovery_error = BaselineError('PR_SOURCE_UNAVAILABLE', '开放 PR 范围读取失败，请重试')
+
+        numbers, seen = [], set()
+        for number, _ in discovered:
+            if number not in seen:
+                seen.add(number)
+                numbers.append(number)
+        for number in numbers:
+            self._item(batch_id, number, 'pending', model_id=model_id)
+        with self.storage.connection(write=True) as db:
+            db.execute('UPDATE pr_batch SET discovered=?,discovery_complete=?,status=?,updated_at=?,'
+                       'error_code=?,error_message=? WHERE id=?',
+                       (len(numbers), int(discovery_error is None), 'running', self._now(),
+                        discovery_error.code if discovery_error else None,
+                        str(discovery_error) if discovery_error else None, batch_id))
+
+        failures = successes = 0
+        try:
             for number in numbers:
+                if self.stop.is_set():
+                    raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
                 try:
-                    with self.storage.connection() as db:
-                        latest = db.execute('SELECT snapshot_id FROM pr_latest WHERE repository_id=? AND lower(owner)=? '
-                                            'AND lower(name)=? AND number=?', (repository_id, owner, name, number)).fetchone()
-                        done = latest is not None and db.execute(
-                            'SELECT 1 FROM pr_analysis a JOIN repository_sync s ON s.id=a.sync_id '
-                            "WHERE a.snapshot_id=? AND s.status='completed' LIMIT 1", (latest['snapshot_id'],)).fetchone()
-                    if done:
-                        continue
-                    self.analyze_pr(repository_id, number, model_id)
+                    self._submit_item(batch_id, repository_id, owner, name, number, model_id)
+                    successes += 1
+                except BaselineError as exc:
+                    failures += 1
+                    self._item(batch_id, number, 'failed', model_id=model_id,
+                               error_code=exc.code, error_message=str(exc))
                 except Exception:
-                    continue
+                    failures += 1
+                    LOGGER.exception('PR 批量分析单条失败 repository=%s number=%s', repository_id, number)
+                    self._item(batch_id, number, 'failed', model_id=model_id,
+                               error_code='PR_SOURCE_UNAVAILABLE',
+                               error_message='该 PR 当前无法读取或提交分析，可稍后重试')
+        except BaselineError as exc:
+            self._finish_batch(batch_id, 'interrupted', exc.code, str(exc))
+            return
+        except Exception:
+            LOGGER.exception('PR 批量分析中断')
+            self._finish_batch(batch_id, 'interrupted', 'PR_SOURCE_UNAVAILABLE',
+                               '批量分析中断，可稍后重试失败项')
+            return
 
-        if numbers:
-            self.executor.submit(work)
-        return dict(repositoryId=repository_id, queued=len(numbers))
+        if discovery_error is not None:
+            status = 'partial' if successes else 'failed'
+        elif failures and not successes:
+            status = 'failed'
+        elif failures:
+            status = 'partial'
+        else:
+            status = 'completed'
+        self._finish_batch(batch_id, status,
+                           discovery_error.code if discovery_error else None,
+                           str(discovery_error) if discovery_error else None)
+
+    def _submit_item(self, batch_id, repository_id, owner, name, number, model_id):
+        prepared = self.review.refresh(owner, name, number, repository_id)
+        snapshot_id = prepared['snapshot']['snapshotId']
+        records = [record for record in self.review.analyses(snapshot_id)['analyses']
+                   if self._model(record['sync']) == model_id]
+        active = next((record['sync'] for record in records
+                       if record['sync']['status'] in PROGRESS), None)
+        if active is not None:
+            self._item(batch_id, number, 'submitted', snapshot_id=snapshot_id,
+                       sync_id=active['syncId'], model_id=model_id)
+            return
+        completed = next((record['sync'] for record in records
+                          if record['sync']['status'] == 'completed'), None)
+        if completed is not None:
+            self._item(batch_id, number, 'reused', snapshot_id=snapshot_id,
+                       sync_id=completed['syncId'], model_id=model_id)
+            return
+        # 用户本次主动发起：失败、取消或中断的旧任务允许创建重试；后台轮询不会走到这里。
+        retry = any(record['sync']['status'] in ('failed', 'cancelled', 'interrupted')
+                    for record in records)
+        envelope = self.review.analyze(snapshot_id, {'modelId': model_id}, retry=retry)
+        jobs = [record['sync'] for record in envelope['analyses'] if self._model(record['sync']) == model_id]
+        if not jobs:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '分析未返回固定模型的任务')
+        job = next((item for item in jobs if item['status'] in PROGRESS), jobs[0])
+        self._item(batch_id, number, 'submitted', snapshot_id=snapshot_id,
+                   sync_id=job['syncId'], model_id=model_id)
+
+    def batch(self, repository_id, batch_id):
+        self._repository(repository_id)
+        with self.storage.connection() as db:
+            row = db.execute('SELECT * FROM pr_batch WHERE id=? AND repository_id=?',
+                             (batch_id, repository_id)).fetchone()
+            if row is None:
+                raise BaselineError('NOT_FOUND', 'PR 批量分析批次不存在')
+            items = db.execute('SELECT * FROM pr_batch_item WHERE batch_id=? ORDER BY number',
+                               (batch_id,)).fetchall()
+            jobs = {}
+            sync_ids = [item['sync_id'] for item in items if item['sync_id']]
+            if sync_ids:
+                marks = ','.join('?' for _ in sync_ids)
+                jobs = {job['id']: job for job in db.execute(
+                    f'SELECT id,status,model_id,resolved_model_id,requested_model_id FROM repository_sync '
+                    f'WHERE id IN ({marks})', sync_ids)}
+        return self._batch_view(dict(row), [dict(item) for item in items], jobs)
+
+    def latest_batch(self, repository_id):
+        self._repository(repository_id)
+        with self.storage.connection() as db:
+            row = db.execute('SELECT id FROM pr_batch WHERE repository_id=? '
+                             'ORDER BY created_at DESC, id DESC LIMIT 1', (repository_id,)).fetchone()
+        return self.batch(repository_id, row['id']) if row else None
+
+    def retry_batch(self, repository_id, batch_id, request_id=None):
+        """只把失败或终态失败的条目复制到新批次，固定原模型，不复活原批次。"""
+        original = self.batch(repository_id, batch_id)
+        if original['status'] in ('discovering', 'running'):
+            raise BaselineError('CONFLICT_ACTIVE_SYNC', '批次仍在处理，请等待完成后再重试失败项')
+        failed = [item['number'] for item in original['items']
+                  if item['effectiveStatus'] in ('failed', 'cancelled', 'interrupted')]
+        if not failed:
+            raise BaselineError('TASK_NOT_RETRYABLE', '该批次没有可重试的失败、取消或中断项')
+        fixed_model = self._fixed_model(original['modelId'])
+        with self.lock:
+            active = self._active_batch_row(repository_id)
+            if active is not None:
+                if active['model_id'] != fixed_model:
+                    raise BaselineError('CONFLICT_ACTIVE_SYNC', '已有进行中的批量分析，请等待完成')
+                return self.batch(repository_id, active['id'])
+            new_id, now = str(uuid.uuid4()), self._now()
+            with self.storage.connection(write=True) as db:
+                db.execute('INSERT INTO pr_batch(id,repository_id,model_id,status,discovery_complete,'
+                           'discovered,retry_of,request_id,created_at,updated_at) VALUES (?,?,?,?,0,?,?,?,?,?)',
+                           (new_id, repository_id, fixed_model, 'discovering', len(failed),
+                            batch_id, request_id, now, now))
+                for number in failed:
+                    db.execute('INSERT INTO pr_batch_item(batch_id,number,status,model_id,updated_at) '
+                               'VALUES (?,?,?,?,?)', (new_id, number, 'pending', fixed_model, now))
+            try:
+                self.executor.submit(self._run_batch_items, new_id, repository_id, fixed_model, failed)
+            except RuntimeError as exc:
+                self._finish_batch(new_id, 'interrupted', 'SYNC_SERVICE_STOPPING',
+                                   'PR 批量分析服务正在停止，请稍后重试')
+                raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止') from exc
+        return self.batch(repository_id, new_id)
+
+    def _run_batch_items(self, batch_id, repository_id, model_id, numbers):
+        """重试批次不重新发现范围；只处理复制过来的失败条目。"""
+        _, owner, name, _ = self._repository(repository_id)
+        with self.storage.connection(write=True) as db:
+            db.execute("UPDATE pr_batch SET status='running',discovery_complete=1,discovered=?,updated_at=? "
+                       'WHERE id=?', (len(numbers), self._now(), batch_id))
+        failures = successes = 0
+        try:
+            for number in numbers:
+                if self.stop.is_set():
+                    raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
+                try:
+                    self._submit_item(batch_id, repository_id, owner, name, number, model_id)
+                    successes += 1
+                except BaselineError as exc:
+                    failures += 1
+                    self._item(batch_id, number, 'failed', model_id=model_id,
+                               error_code=exc.code, error_message=str(exc))
+                except Exception:
+                    failures += 1
+                    LOGGER.exception('PR 批量重试单条失败 repository=%s number=%s', repository_id, number)
+                    self._item(batch_id, number, 'failed', model_id=model_id,
+                               error_code='PR_SOURCE_UNAVAILABLE',
+                               error_message='该 PR 当前无法读取或提交分析，可稍后重试')
+        except BaselineError as exc:
+            self._finish_batch(batch_id, 'interrupted', exc.code, str(exc))
+            return
+        self._finish_batch(batch_id, 'partial' if failures and successes else 'failed' if failures else 'completed')
+
+    def _batch_view(self, row, items, jobs):
+        counts = {key: 0 for key in ('pending', 'queued', 'running', 'completed', 'failed',
+                                     'cancelled', 'interrupted', 'skipped')}
+        submission = {key: 0 for key in ('pending', 'submitted', 'reused', 'failed', 'skipped')}
+        result = []
+        for item in items:
+            job = jobs.get(item['sync_id'])
+            status = job['status'] if job else None
+            if item['status'] == 'reused':
+                effective = 'completed'
+            elif item['status'] == 'failed':
+                effective = 'failed'
+            elif item['status'] == 'skipped':
+                effective = 'skipped'
+            elif item['status'] == 'pending':
+                effective = 'pending'
+            elif item['sync_id'] and job is None:
+                effective = 'failed'
+            else:
+                effective = status if status in counts else 'queued'
+            counts[effective] = counts.get(effective, 0) + 1
+            submission[item['status']] = submission.get(item['status'], 0) + 1
+            result.append(dict(number=item['number'], status=item['status'], effectiveStatus=effective,
+                               snapshotId=item['snapshot_id'], syncId=item['sync_id'],
+                               modelId=item['model_id'], errorCode=item['error_code'],
+                               errorMessage=item['error_message'], updatedAt=item['updated_at']))
+        return dict(batchId=row['id'], repositoryId=row['repository_id'], modelId=row['model_id'],
+                    status=row['status'], discoveryComplete=bool(row['discovery_complete']),
+                    discovered=row['discovered'], retryOf=row['retry_of'],
+                    createdAt=row['created_at'], updatedAt=row['updated_at'],
+                    completedAt=row['completed_at'],
+                    error=({'code': row['error_code'], 'message': row['error_message']}
+                           if row['error_code'] else None),
+                    counts=counts, submission=submission, items=result)
 
     def list_prs(self, repository_id, state='open', page=1):
         """只读取持久缓存；GET 不访问远端，也不补建配置或项目。"""

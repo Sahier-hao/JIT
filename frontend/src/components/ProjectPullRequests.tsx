@@ -6,14 +6,16 @@ import { Dialog } from '../ui/dialog'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { repositoryModels, type ModelChoice } from '../modelClient'
-import { getTracking, projectPRs, type PRState, type PRTracking, type ProjectPRPage } from '../projectActivityClient'
+import { getTracking, latestProjectPRBatch, projectPRs, retryProjectPRBatch, type PRBatch, type PRState, type PRTracking, type ProjectPRPage } from '../projectActivityClient'
 import { cacheKey, readCache, writeCache } from '../lib/localCache'
 import { readWorks, workKey } from '../prReview'
 import type { Route } from '../navigation'
+import { PR_BATCH_CHANGED } from '../projectEvents'
 import { PRTrackingPanel } from './PRTrackingPanel'
 
 const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', scoring: '评分中' }
+const batchLabel: Record<string, string> = { discovering: '正在获取 PR 范围', running: '正在提交分析', completed: '提交完成', partial: '部分完成', failed: '未能开始', interrupted: '已中断' }
 
 /** 项目 PR 审查：只负责发现、筛选与打开 PR；后台自动分析在工具栏的「自动分析」里配置。 */
 export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: string; navigate: (r: Route) => void }) {
@@ -26,6 +28,9 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
   const [busy, setBusy] = useState(false)
   const [tracking, setTracking] = useState<PRTracking | null>(null)
   const [trackingOpen, setTrackingOpen] = useState(false)
+  const [batch, setBatch] = useState<PRBatch | null>(null)
+  const [batchError, setBatchError] = useState('')
+  const [batchBusy, setBatchBusy] = useState(false)
   const [models, setModels] = useState<ModelChoice[]>([])
   const automatic = useRef(new Set<string>()), refreshRequested = useRef(false)
   useEffect(() => {
@@ -53,6 +58,35 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
     repositoryModels(controller.signal).then(value => { if (!controller.signal.aborted) setModels(value) }).catch(() => {})
     return () => controller.abort()
   }, [])
+  const batchActive = Boolean(batch && ['discovering', 'running'].includes(batch.status))
+  const batchPolling = Boolean(batch && (batchActive || batch.counts.queued || batch.counts.running))
+  useEffect(() => {
+    const controller = new AbortController()
+    latestProjectPRBatch(repositoryId, controller.signal)
+      .then(value => { if (!controller.signal.aborted) { setBatch(value); setBatchError('') } })
+      .catch(failure => { if (!controller.signal.aborted) setBatchError(failure instanceof Error ? failure.message : '批次进度读取失败') })
+    return () => controller.abort()
+  }, [repositoryId, attempt])
+  useEffect(() => {
+    if (!batchPolling) return
+    const timer = setInterval(() => setAttempt(value => value + 1), 4000)
+    return () => clearInterval(timer)
+  }, [batchPolling])
+  useEffect(() => {
+    const bump = () => setAttempt(value => value + 1)
+    window.addEventListener(PR_BATCH_CHANGED, bump)
+    return () => window.removeEventListener(PR_BATCH_CHANGED, bump)
+  }, [])
+  async function retryFailed() {
+    if (!batch) return
+    setBatchBusy(true); setBatchError('')
+    try {
+      const next = await retryProjectPRBatch(repositoryId, batch.batchId)
+      setBatch(next); setAttempt(value => value + 1)
+    } catch (failure) {
+      setBatchError(failure instanceof Error ? failure.message : '重试失败项失败')
+    } finally { setBatchBusy(false) }
+  }
   const modelName = (id?: string | null) => id ? (models.find(model => model.modelId === id)?.name ?? id.slice(0, 8)) : ''
   const hasRunning = Boolean(result?.pullRequests.some(pr => ['queued', 'running', 'checking', 'collecting'].includes(pr.analysisStatus ?? '')))
   useEffect(() => {
@@ -89,6 +123,18 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
         </div>
       </div>
     </>}
+    {batch ? <div className="pr-batch-line" data-status={batch.status}>
+      <span className="pr-batch-state">批量分析 · {batchLabel[batch.status] ?? batch.status}</span>
+      <span>{batch.discoveryComplete ? `范围 ${batch.discovered} 个开放 PR` : `已发现 ${batch.discovered} 个，范围未完整获取`}</span>
+      <span>已入队 {batch.submission.submitted} · 复用 {batch.submission.reused} · 失败 {batch.counts.failed} · 待处理 {batch.submission.pending}</span>
+      {batch.counts.cancelled || batch.counts.interrupted ? <span>取消/中断 {batch.counts.cancelled + batch.counts.interrupted}</span> : null}
+      {batch.counts.queued || batch.counts.running ? <span>分析中 {batch.counts.queued + batch.counts.running}</span> : null}
+      <span>模型 {modelName(batch.modelId)}</span>
+      {batch.error ? <span role="alert">{batch.error.message}</span> : null}
+      {batchError ? <span role="alert">{batchError}</span> : null}
+      {batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryFailed()}>{batchBusy ? '正在重试…' : '重试失败项'}</Button> : null}
+    </div> : null}
+    {batchError && !batch ? <div className="pr-hub-alert" role="alert"><span>{batchError}</span><Button size="sm" onClick={() => setAttempt(value => value + 1)}>重试读取</Button></div> : null}
     {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
     {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
     {result && !result.supported ? <EmptyState title="此项目不是公开 GitHub 来源" description="PR 发现和自动分析只读取公开 GitHub；分支分析和风险趋势仍可使用。"/> : null}
