@@ -242,8 +242,8 @@ def test_same_day_range_is_one_day():
     since, until = _window({"since": "2026-10-18", "until": "2026-10-18"})
     assert (since, until) == ("2026-10-18T00:00:00+00:00", "2026-10-19T00:00:00+00:00")
 
-def test_register_unique_keeps_both_versions_when_metadata_changes(tmp_path):
-    """同一天窗口下采集元信息变了要成为新版本，不能覆盖已有版本或让整次同步失败。"""
+def test_register_unique_reuses_same_rows_and_versions_new_content(tmp_path):
+    """同一 CSV 只是采集元信息不同时按幂等复用；CSV 内容变化才成为新版本。"""
     from jit_baseline import collect as collector
     from jit_baseline.sync import _register_unique
 
@@ -261,9 +261,13 @@ def test_register_unique_keeps_both_versions_when_metadata_changes(tmp_path):
     second = _register_unique(room, dataset, version, collected["csv"],
                               extra={"collection": {"window": {"since": UNTIL}}}, **kwargs)
     assert first["version"] == version
-    assert second["version"].startswith(version + "-")
+    assert second["version"] == version
+    assert len(list(room.glob("*.json"))) == 1
+    third = _register_unique(room, dataset, version, collected["csv"] + b"\n",
+                             extra={"collection": {"window": {"since": SINCE}}}, **kwargs)
+    assert third["version"].startswith(version + "-")
     assert (room / f"{first['version']}.json").exists()
-    assert (room / f"{second['version']}.json").exists()
+    assert (room / f"{third['version']}.json").exists()
 
 
 def test_dataset_version_accepts_hash_suffix():

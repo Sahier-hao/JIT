@@ -31,8 +31,8 @@
 
 更新用例：
 
-- `tests/test_repository_sync.py`：提交上限边界改为 50,001。
-- `tests/test_repository_updates.py`：真实同步完成后断言存在 `analysis-completed` 提醒，并把分支检查事件过滤后计数。
+- `tests/test_repository_sync.py`：提交上限边界改为 50,001；数据集登记测试覆盖「同 CSV 不同采集元信息复用」与「CSV 内容变化新建哈希版本」。
+- `tests/test_repository_updates.py`：真实同步完成后断言存在 `analysis-completed` 提醒，并把分支检查事件过滤后计数；同步相关用例 **34 passed**。
 
 ### 前端
 
@@ -59,6 +59,10 @@
 ### 本地模型目录修复
 
 本机九份模型产物的 `featureSchema` 元数据早于当前 schema 定义，读取时被判为 `ARTIFACT_INVALID`。升级前备份 `backend/storage/catalog.sqlite3` 为 `catalog.sqlite3.before-model-repair-20261101.sqlite3`，随后按原运行键重新登记；模型 ID、运行 ID 与产物不变，九个模型恢复可用。
+
+### 重复分析的版本冲突修复
+
+改为全量历史后，同一仓库第二次分析在「描述文件只差采集时间、CSV 数据相同」时以 `DATASET_EXISTS` 失败，界面提示还引导用户修改已经移除的日期参数。现修复为：同名版本的 CSV 字节一致时复用既有版本并继续导入；CSV 不同仍使用内容哈希版本；目录库 manifest 冲突仍换哈希名重试。真实重跑 cc-switch 全量分析完成，并复用版本 `kamei14-git-v1-cc-switch-2025-08-04_2026-10-31`。变更 `reuse-identical-dataset-rows` 已归档并同步 RCL-05。
 
 ### OpenSpec
 

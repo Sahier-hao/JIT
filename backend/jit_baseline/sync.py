@@ -24,7 +24,7 @@ from .catalog import ModelCatalog
 from .catalog_storage import CatalogStorage, utc_now
 from .config import BACKEND
 from .data import parse_source
-from .datasets import DATASETS
+from .datasets import DATASETS, manifest_relative
 from .errors import BaselineError
 from .model import predict_risks, temporal_split
 from .schemas import resolve
@@ -587,20 +587,20 @@ def _absolute(path):
 
 
 def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
-    """登记数据集；同名版本已存在但内容（含采集元信息）不同时追加内容哈希，不覆盖。
+    """登记数据集；同名版本已存在但数据不同时追加内容哈希，不覆盖。
 
-    版本名只到日期，而"最近 90 天"的窗口在同一天里是稳定的：两次同步可能采到
-    不同的提交集合（例如当天新提交），此时必须成为两个版本，而不是互相覆盖或
-    报错让整次同步失败。
+    同名版本下 CSV 字节一致、只有采集时间等元信息不同时，按幂等复用既有版本；
+    CSV 内容不同必须成为新版本，不能互相覆盖或让整次同步失败。
 
     ``after`` 在登记成功后调用（用于按新版本名导入目录库）；它抛出的
-    ``DATASET_EXISTS`` 同样视为版本冲突，换带哈希的版本名再试一次——否则
+    ``DATASET_EXISTS`` 视为目录库版本冲突，换带哈希的版本名再试一次——否则
     "描述文件可复用、但目录库里同版本内容已不同"的旧数据会让同步失败。
     """
     digest = hashlib.sha256(blob).hexdigest()
     last = None
     for name in (version, f"{version}-{digest[:8]}"):
         path = Path(room) / f"{name}.csv"
+        manifest_path = Path(room) / f"{name}.json"
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             if not path.exists():
@@ -615,7 +615,24 @@ def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
                     temporary.unlink(missing_ok=True)
             if path.read_bytes() != blob:
                 raise BaselineError('DATASET_EXISTS', f'已有 CSV 内容不同，不覆盖：{name}')
-            registered = store.register(path, dataset=dataset, version=name, **kwargs)
+            try:
+                registered = store.register(path, dataset=dataset, version=name, **kwargs)
+            except BaselineError as exc:
+                if exc.code != 'DATASET_EXISTS' or not manifest_path.exists():
+                    raise
+                # 同一版本的 CSV 字节一致，只是采集时间、HEAD 等元信息不同：
+                # 数据本身没有变化，按幂等复用既有描述，不新建版本。
+                entry = {"dataset": dataset, "version": name,
+                         "path": manifest_relative(manifest_path),
+                         "sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                         "created": False}
+                if after is not None:
+                    try:
+                        after(entry, path)
+                    except BaselineError as import_exc:
+                        if import_exc.code != 'DATASET_EXISTS':
+                            raise
+                return entry
             if after is not None:
                 after(registered, path)
             return registered

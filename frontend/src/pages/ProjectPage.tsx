@@ -401,12 +401,12 @@ function RecordMenu({ job, pendingCancel, onOpen, openLabel = '打开结果', op
 
 /** 失败原因：常见错误给一句人话，原始信息留在详情里。 */
 const FAILURE_TEXT: Record<string, string> = {
-  DATASET_EXISTS: '这个日期区间的数据版本已登记且内容不同，换起始日期或先删除旧版本',
+  DATASET_EXISTS: '同一数据版本已有不同内容，未覆盖；请重试，仍失败请联系维护者',
   REPOSITORY_UNAVAILABLE: '无法读取仓库，检查网络或地址后重试',
   REPOSITORY_CHECK_TIMEOUT: '检查远端仓库超时，可以重试',
   CONFLICT_ACTIVE_SYNC: '已有进行中的分析，结束后再试',
   DATASET_INVALID: '这个范围内没有可分析的提交，调整日期后重试',
-  SYNC_TIMEOUT: '分析超过时限，缩小范围后重试',
+  SYNC_TIMEOUT: '分析超过时限，可稍后重试',
   SYNC_INTERRUPTED: '服务停止时分析中断，可以重试',
   SYNC_CANCELLED: '这次分析已取消，可以重试',
 }
