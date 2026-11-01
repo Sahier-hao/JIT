@@ -63,7 +63,6 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
       <span className="update-status-time">{tracking.enabled ? (tracking.nextCheckAt ? `下次 ${displayTime(tracking.nextCheckAt)}` : watchLabel[tracking.status] ?? tracking.status) : '开启后由后台定期检查'}</span>
       {tracking.enabled ? <Button size="sm" disabled={busy} onClick={() => void action(() => checkTracking(repositoryId))}>立即检查</Button> : null}
     </div>
-    <p className="pr-track-desc">后台定期发现开放 PR，把固定的 base/head 快照交给指定模型分析；结果写入站内提醒，不改变项目当前分支结果。</p>
     {tracking.lastCheckedAt ? <p className="pr-track-last">最近检查 {displayTime(tracking.lastCheckedAt)}{tracking.errorCode ? ` · 失败原因 ${tracking.errorCode}` : ''}</p> : null}
     {error && tracking ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}
     <div className="pr-track-fields">
@@ -93,7 +92,7 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
       <Button variant="primary" disabled={busy || !validModel || !validInterval || !scope?.checkedAt || Boolean(scope.errorCode)} onClick={() => setConfirm(true)}>{tracking.enabled ? '保存修改' : '启用自动分析'}</Button>
       {tracking.enabled ? <Button disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: false }))}>暂停自动分析</Button> : null}
     </div>
-    <p className="pr-track-note">只分析开放且非草稿 PR，不回填历史；草稿转为可审查后才纳入。暂停不会取消已提交的任务，服务停止期间不承诺检查。</p>
+    <p className="pr-track-note">只分析开放且非草稿 PR；暂停不会取消已提交的任务。</p>
     {confirm ? <div className="pr-track-confirm" role="alertdialog" aria-label="确认项目 PR 自动分析">
       <strong>{tracking.enabled ? '确认保存自动分析设置？' : '确认使用固定模型分析开放 PR？'}</strong>
       <p>模型 {modelId}，每 {cadence / 60} 分钟检查一次；{tracking.enabled ? '之后新增的版本会按新设置处理' : `首次会处理当前开放非草稿 PR ${eligible} 项${scope?.hasMore ? '（清单尚未取完）' : ''}`}。不会上传个人笔记、问题或阅读进度。</p>

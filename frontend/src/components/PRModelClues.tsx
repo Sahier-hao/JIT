@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button } from '../ui/controls'
 import { apiRequest } from '../apiClient'
 import { contractFailed, finiteNumber, flag, record, recordList, riskNumber, text, textList } from '../apiContract'
-import { ACTIVE_STATUSES, parseSync, STATUS_LABELS, type SyncView } from '../repositoryContract'
+import { ACTIVE_STATUSES, parseSync, type SyncView } from '../repositoryContract'
+import { repositoryModels } from '../modelClient'
 import { FailureNotice } from '../Feedback'
 import type { PRSnapshot } from '../prReviewClient'
 import type { Route } from '../navigation'
@@ -10,14 +10,11 @@ import type { Route } from '../navigation'
 type BindingKind = 'snapshot-model-v1' | 'legacy-head-v1'
 interface Analysis { sync: SyncView; contextValid: boolean; scores: { commitId: string; risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }[]; fileRisks: { path: string; risk: number }[]; bindingKind?: BindingKind; bindingLimitations: string[]; coverageComplete?: boolean; scoredCommits?: number; totalCommits?: number }
 
-function originLabel(job: SyncView) {
-  return job.origin === 'auto' || job.origin === 'automatic' || job.origin === 'pr-tracking' ? '项目自动分析' : job.origin === 'manual' ? '手动分析' : '已保存分析（来源未标注）'
-}
-
-/** 风险概览：只展示该 PR 版本已有的分析结果；分析统一从 PR 列表发起。 */
+/** 风险概览：一行摘要 + 打开固定分析；详细排序在提交表与固定分析里。 */
 export function PRModelClues({ source, navigate, onFileRisks, onCommitRisks }: { source: PRSnapshot; navigate: (route: Route) => void; onFileRisks?: (risks: Record<string, number>) => void; onCommitRisks?: (risks: Record<string, { risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }>) => void }) {
   const [items, setItems] = useState<Analysis[]>([])
-  const [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0), [expanded, setExpanded] = useState(true)
+  const [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0)
+  const [names, setNames] = useState<Record<string, string>>({})
   const path = `/api/v1/pr-snapshots/${encodeURIComponent(source.snapshotId)}/analyses`
   const accept = useCallback((raw: unknown) => {
     const body = record(raw)
@@ -41,8 +38,13 @@ export function PRModelClues({ source, navigate, onFileRisks, onCommitRisks }: {
     apiRequest({ path, method: 'GET', signal: controller.signal }).then(raw => { if (!controller.signal.aborted) accept(raw) }).catch(failure => { if (!controller.signal.aborted) setError(failure) })
     return () => controller.abort()
   }, [path, attempt, accept])
+  useEffect(() => {
+    const controller = new AbortController()
+    repositoryModels(controller.signal).then(list => { if (!controller.signal.aborted) setNames(Object.fromEntries(list.map(model => [model.modelId, model.name]))) }).catch(() => undefined)
+    return () => controller.abort()
+  }, [])
   const running = items.some(item => (ACTIVE_STATUSES as readonly string[]).includes(item.sync.status))
-  // 风险概览只取一条已完成且来源有效的分析；没有就如实说明，不把未分析当作低风险。
+  // 只取一条已完成且来源有效的分析；没有就如实说明，不把未分析当作低风险。
   const primary = items.find(item => item.contextValid && item.sync.status === 'completed' && item.scores.length)
   const topRisk = primary ? Math.max(...primary.scores.map(score => score.risk)) : null
   const coverage = primary ? `${primary.scoredCommits ?? primary.scores.length}/${primary.totalCommits ?? source.totalCommits}` : null
@@ -51,10 +53,18 @@ export function PRModelClues({ source, navigate, onFileRisks, onCommitRisks }: {
   useEffect(() => { onFileRisks?.(fileRiskMap) }, [fileRiskMap, onFileRisks])
   useEffect(() => { onCommitRisks?.(commitRiskMap) }, [commitRiskMap, onCommitRisks])
   useEffect(() => { if (!running) return; const timer = setInterval(() => setAttempt(value => value + 1), 2000); return () => clearInterval(timer) }, [running])
-  return <details className="pr-model-clues" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}><summary title="按提交分数排序；不是 PR 整体缺陷概率，也不提供行级定位"><span>风险概览</span><span className="pr-clue-summary">{topRisk === null ? (running ? '分析中' : '尚无分数') : `最高 ${topRisk.toFixed(3)} · ${coverage} 有分数`}</span></summary>
-    {error ? <FailureNotice error={error}/> : null}
-    <p className="form-hint">分析由 PR 列表的「分析本页 PR」统一发起；这里只展示已保存的结果。</p>
-    <Button variant="link" size="sm" onClick={() => { setError(null); setAttempt(value => value + 1) }}>重新读取模型线索</Button>
-    {!items.length ? <p>此版本尚无模型分析；可在 PR 列表点击「分析本页 PR」。</p> : items.map(item => <article key={item.sync.syncId}><strong>{STATUS_LABELS[item.sync.status]}</strong><p>{originLabel(item.sync)} · 模型 {item.sync.modelId ?? item.sync.resolvedModelId ?? item.sync.requestedModelId ?? '尚未绑定'} · 任务 {item.sync.syncId}</p>{item.bindingKind === 'legacy-head-v1' ? <div className="status-note"><strong>旧版 HEAD 绑定分析</strong><p>可读取实际固定 HEAD 与已保存评分；不能据此认定具有新版任务的独占基准版本、提交前模型绑定。</p>{item.bindingLimitations.length ? <ul>{item.bindingLimitations.map((limitation, index) => <li key={index}>{limitation}</li>)}</ul> : null}</div> : null}{item.sync.error ? <p className="field-error">{item.sync.error.message}</p> : null}{item.sync.status === 'completed' && !item.contextValid ? <p className="field-error">实际分析 HEAD 与当前 PR 版本不一致，未采用任何分数。</p> : null}{item.contextValid ? <><p>{item.scoredCommits ?? item.scores.length}/{item.totalCommits ?? source.totalCommits} 有分数</p><ol className="pr-clue-ranking">{ [...item.scores].sort((a, b) => b.risk - a.risk).slice(0, 10).map(score => { const message = source.commits.find(commit => commit.sha === score.commitId)?.message.split('\n')[0] ?? ''; return <li key={score.commitId}><code>{score.commitId.slice(0, 12)}</code><span className="pr-clue-message" title={message}>{message || '提交标题未加载'}</span><strong>{score.risk.toFixed(4)}</strong></li> })}</ol>{item.scores.length > 10 ? <p className="form-hint">其余 {item.scores.length - 10} 条在固定分析中查看</p> : null}<Button variant="link" size="sm" onClick={() => { if (item.sync.repositoryId) navigate({ name: 'analysis', repositoryId: item.sync.repositoryId, viewSyncId: item.sync.syncId, view: 'commits' }) }}>打开固定分析</Button></> : null}</article>)}
-  </details>
+  const modelId = primary?.sync.modelId ?? primary?.sync.resolvedModelId ?? primary?.sync.requestedModelId ?? null
+  const modelName = modelId ? names[modelId] ?? null : null
+  return <div className="pr-risk-line" data-state={primary ? 'ready' : running ? 'running' : 'empty'}>
+    <span className="pr-risk-label">模型分数</span>
+    <span className="pr-risk-value">{primary ? `${coverage} 有分数 · 最高 ${topRisk!.toFixed(3)}` : running ? '分析中' : '尚无分数'}</span>
+    {modelName ? <span className="pr-risk-model">{modelName}</span> : null}
+    {primary?.sync.repositoryId ? <button type="button" className="pr-risk-link" onClick={() => navigate({ name: 'analysis', repositoryId: primary.sync.repositoryId!, viewSyncId: primary.sync.syncId, view: 'commits' })}>打开分析</button> : null}
+    {error ? <span className="pr-risk-error" role="alert"><FailureNotice error={error}/></span> : null}
+    {primary?.bindingKind === 'legacy-head-v1' ? <details className="pr-risk-legacy">
+      <summary>旧版 HEAD 绑定</summary>
+      <p>可读取实际固定 HEAD 与已保存评分；不能据此认定具有新版任务的独占基准版本、提交前模型绑定。</p>
+      {primary.bindingLimitations.length ? <ul>{primary.bindingLimitations.map((limitation, index) => <li key={index}>{limitation}</li>)}</ul> : null}
+    </details> : null}
+  </div>
 }

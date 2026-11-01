@@ -95,7 +95,7 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
     })}
     {!personal.works.length && !personal.error ? <div className="mr-empty">
       <h2>还没有审查工作</h2>
-      <p>到「项目」标签选择一个 PR 审查。工作会按「作者更新待复核 / 继续审查 / 新关注的工作 / 等待作者处理 / 历史与暂停」自动分组；模型暂时不可用时也能阅读代码并留下判断。</p>
+      <p>到「项目」选择一个 PR 开始审查。</p>
     </div> : null}
     <Button className="mr-restore" variant="ghost" size="sm" icon={<Upload size={14}/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button>
     <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>

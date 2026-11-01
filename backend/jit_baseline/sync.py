@@ -40,12 +40,11 @@ TRAINED = "repository-trained"
 GENERIC = "generic-model"
 PROGRESS = ("queued", "collecting", "registering", "training", "scoring")
 HOLDOUT_DAYS = 90
-DEFAULT_WINDOW_DAYS = 90
 MIN_TRAIN_RECORDS = 200
 MIN_TRAIN_POSITIVES = 20
 MIN_TEST_POSITIVES = 3
-DEFAULT_LIMIT = 500
-MAX_LIMIT = 5000
+DEFAULT_LIMIT = 50000
+MAX_LIMIT = 50000
 SYNC_TIMEOUT = 600
 DISTRIBUTION_RULE = "repo-distribution-v1"
 HIGH_THRESHOLD = 0.25
@@ -75,7 +74,7 @@ def check_control(row):
     if row['cancel_requested_at']:
         raise BaselineError('SYNC_CANCELLED', '分析已取消；可用原参数重新分析')
     if row['deadline_at'] and datetime.now(timezone.utc) >= datetime.fromisoformat(row['deadline_at']):
-        raise BaselineError('SYNC_TIMEOUT', '分析超过执行时限，已停止；请缩小范围后重试')
+        raise BaselineError('SYNC_TIMEOUT', '分析超过执行时限，已停止；请稍后重试')
 
 REPOSITORY_COLUMNS = ("id", "url", "display_name", "default_branch", "latest_sync_id",
                       "latest_sync_at", "view_sync_id", "head_commit", "commit_count",
@@ -651,11 +650,11 @@ def _date_start(text, *, next_day=False):
 
 
 def _window(payload, now=None):
-    """解析采集窗口：留空按最近 90 天，避免默认拉全历史直接撞上限。"""
+    """解析采集窗口：起点留空表示全部历史，终点留空表示今天。"""
     now = now or datetime.now(timezone.utc)
     since, until = payload.get("since"), payload.get("until")
     if since is None:
-        start = _day_floor(now.timestamp()) - DEFAULT_WINDOW_DAYS * 86400
+        start = 0
     else:
         start = _day_floor(collect.parse_time(since))
     if until is None:
@@ -757,10 +756,12 @@ class SyncService:
                             return
                         if datetime.now(timezone.utc) >= datetime.fromisoformat(item['deadlineAt']):
                             process.close()
-                            self.sync.finish(sync_id, 'failed', 'SYNC_TIMEOUT', '分析超过执行时限，已停止；请缩小范围后重试')
+                            self.sync.finish(sync_id, 'failed', 'SYNC_TIMEOUT', '分析超过执行时限，已停止；请稍后重试')
+                            self._event(sync_id, 'analysis-failed', '分析失败', '分析超过执行时限，已停止', payload={'errorCode': 'SYNC_TIMEOUT'})
                             return
                         if process.poll() is not None:
                             self.sync.finish(sync_id, 'failed', 'SYNC_WORKER_EXITED', '分析进程意外退出，请重新分析')
+                            self._event(sync_id, 'analysis-failed', '分析失败', '分析进程意外退出，请重新分析', payload={'errorCode': 'SYNC_WORKER_EXITED'})
                             return
                         self._closing.wait(.1)
                 finally:
@@ -1095,10 +1096,25 @@ class SyncService:
                 "low": dist["low"], "unknown": dist["unknown"],
                 "distributionRule": repo["distributionRule"] or DISTRIBUTION_RULE}
 
+    def _event(self, sync_id, kind, title, message, *, model_id=None, payload=None):
+        """分支分析的终态写一条站内提醒；PR 分析由 PR 跟踪写自己的提醒。"""
+        item = self.sync.get(sync_id)
+        if item is None or item.get('sourceKind') == 'pr' or not item.get('repositoryId'):
+            return
+        expected = {'analysis-completed': 'completed', 'analysis-failed': 'failed'}.get(kind)
+        if expected and item.get('status') != expected:
+            return
+        key = f'{kind}:{sync_id}'
+        with self.sync.storage.connection(write=True) as db:
+            db.execute('INSERT OR IGNORE INTO project_event VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                       (str(uuid.uuid5(uuid.NAMESPACE_URL, key)), item['repositoryId'], kind, key, None, None,
+                        sync_id, model_id or item.get('modelId'), title, message,
+                        json.dumps(payload or {}, ensure_ascii=False), utc_now()))
+
     def _step(self, sync_id, stage, started):
         if time.monotonic() - started > self.timeout:
             raise BaselineError("SYNC_TIMEOUT",
-                                f"同步超过 {self.timeout} 秒未完成，请缩小时间范围或提交上限后重试")
+                                f"同步超过 {self.timeout} 秒未完成，请稍后重试")
         self.sync.advance(sync_id, stage)
 
     def _generic_model(self, model_id=None):
@@ -1120,7 +1136,7 @@ class SyncService:
         cohort = collect.cohort(item["since"], item["until"])
         parsed, _ = parse_source(collected["blob"], SCHEMA_NAME, cohort)
         if not parsed:
-            raise BaselineError("DATASET_INVALID", "采集结果没有可纳入的记录，请调整时间范围或提交上限")
+            raise BaselineError("DATASET_INVALID", "采集结果没有可纳入的记录；请确认分支存在且仓库可读")
         start, end = parsed[0]["time"][:10], parsed[-1]["time"][:10]
         version = f"{dataset}-{start}_{end}"
         room = self.dataset_root / dataset
@@ -1200,6 +1216,8 @@ class SyncService:
                 head_commit=collected['collection']['repository']['head'],
                 analysis_branch=collected['collection']['repository'].get('resolvedBranch'),
                 dataset_version=version, run_id=run_id, model_id=model_id, feature_schema_version=schema.name)
+            self._event(sync_id, 'analysis-completed', '分析完成',
+                        f'{item["branch"]} · {len(records)} 个提交已评分', model_id=model_id)
         except BaselineError as exc:
             degrade = (decision or {}).get("degradeReason")
             if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):
@@ -1207,6 +1225,9 @@ class SyncService:
             self.sync.finish(sync_id, 'cancelled' if exc.code == 'SYNC_CANCELLED' else 'failed', exc.code, str(exc),
                              **({"degrade_reason": degrade} if degrade else {}),
                              **({"dataset_version": version} if version else {}))
+            if exc.code != 'SYNC_CANCELLED':
+                self._event(sync_id, 'analysis-failed', '分析失败', str(exc), payload={'errorCode': exc.code})
         except Exception:
             self.sync.finish(sync_id, 'failed', 'INTERNAL_ERROR',
                              '同步过程中出现未预期错误，请重试；如果反复失败请联系维护者')
+            self._event(sync_id, 'analysis-failed', '分析失败', '同步过程中出现未预期错误，请重试', payload={'errorCode': 'INTERNAL_ERROR'})

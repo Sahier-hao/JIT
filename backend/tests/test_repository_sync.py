@@ -143,7 +143,7 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     ({"repositoryUrl": "ssh://git@example.com/x.git"}, "REPOSITORY_UNAVAILABLE"),
     ({"repositoryUrl": "http://127.0.0.1/x.git"}, "REPOSITORY_UNAVAILABLE"),
     ({"commitLimit": 0}, "INPUT_INVALID"),
-    ({"commitLimit": 5001}, "INPUT_INVALID"),
+    ({"commitLimit": 50001}, "INPUT_INVALID"),
     ({"strategy": "train-maybe"}, "INPUT_INVALID"),
     ({"since": "2025-02-01", "until": "2025-01-01"}, "INPUT_INVALID"),
 ])

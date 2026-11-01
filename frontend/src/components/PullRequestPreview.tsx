@@ -59,7 +59,6 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
         <p className="pr-preview-meta">{source.author} <span>·</span> {source.baseBranch} → {source.headBranch} <span>·</span> 文件 {source.files.length}/{source.totalFiles} <span>·</span> 提交 {source.commits.length}/{source.totalCommits} <span>·</span> 读取于 {displayTime(source.capturedAt)}</p>
       </div>
     </header>
-    <p className="pr-preview-note">只读预览。先看提交风险排序，点一条提交再看它触及的文件与代码；点「开始审查」创建工作单。</p>
     <PRModelClues source={source} navigate={navigate} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
     {!filesOpen ? <>
       <section className="wb-commit-table is-preview" aria-label="PR 提交风险排序">
@@ -70,7 +69,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
             <Segmented size="sm" aria-label="提交排序" value={commitOrder} onChange={value => setCommitOrder(value as 'risk' | 'order')} options={[{ label: '按风险', value: 'risk' }, { label: '按提交顺序', value: 'order' }]}/>
           </div>
         </div>
-        {scoredCommitCount === 0 ? <p className="pr-preview-hint">此版本尚未分析，提交与文件暂无模型分数。点「开始审查」后可在工作单生成模型线索；也可以在项目「PR 审查」里开启自动分析，之后回到这里刷新。</p> : null}
+        {scoredCommitCount === 0 ? <p className="pr-preview-hint">此版本尚未分析，暂无模型分数。</p> : null}
         <div className="table-scroll">
           <table>
             <thead><tr><th scope="col">提交 / 改动</th><th scope="col">模型分数</th><th scope="col">变更行</th><th scope="col">文件</th></tr></thead>

@@ -22,6 +22,7 @@
 @import './styles/update-status.css';
 @import './styles/project.css';
 @import './styles/project-workspace.css';
+@import './styles/progress.css';
 
 /*
  * 把现有设计令牌映射为 Tailwind 语义色，让新组件与旧页面共用同一套变量。

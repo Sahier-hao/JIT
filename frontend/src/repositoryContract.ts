@@ -268,17 +268,17 @@ export function syncBody(form: {
   modelId?: string
   repositoryUrl: string
   branch: string
-  since: string
-  until: string
-  commitLimit: string
+  since?: string
+  until?: string
+  commitLimit?: string
   strategy: SyncStrategy
 }): Record<string, unknown> {
   const body: Record<string, unknown> = { repositoryUrl: form.repositoryUrl.trim(), strategy: form.strategy }
   if (form.modelId) body.modelId = form.modelId
   if (form.branch.trim() !== '') body.branch = form.branch.trim()
-  if (form.since.trim() !== '') body.since = form.since.trim()
-  if (form.until.trim() !== '') body.until = form.until.trim()
-  if (form.commitLimit.trim() !== '') body.commitLimit = Number(form.commitLimit.trim())
+  if (form.since?.trim()) body.since = form.since.trim()
+  if (form.until?.trim()) body.until = form.until.trim()
+  if (form.commitLimit?.trim()) body.commitLimit = Number(form.commitLimit.trim())
   return body
 }
 
