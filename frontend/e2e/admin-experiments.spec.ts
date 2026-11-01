@@ -6,6 +6,9 @@ const api = 'http://127.0.0.1:18769'
 const evidence = fileURLToPath(new URL('../../docs/evidence/_run/admin-experiments-browser/', import.meta.url))
 mkdirSync(evidence, { recursive: true })
 
+// 管理区报告表格按桌面布局验证；移动端由项目工作台套件覆盖。
+test.skip(({ viewport }) => (viewport?.width ?? 1440) < 1000, '管理报告按桌面布局验证')
+
 async function signIn(page: Page) {
   const credentials = { username: 'report-admin', password: 'report-password-2026' }
   const setup = await page.request.post(`${api}/api/admin/setup`, { data: credentials })

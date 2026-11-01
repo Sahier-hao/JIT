@@ -66,6 +66,10 @@
 
 结论：在这批冻结测试数据上，按原始模型分数检查并没有比时间顺序或随机顺序覆盖更多历史标记，模型未显示出节省代码检查时间的效果。主要原因是原始分数排序不感知工作量，模型选中的提交平均更大，预算内只能检查更少提交。报告和界面如实保留这一不利结果。完整表见 `docs/evidence/benefit-evaluation/README.md`。
 
+### 2026-11-01 统一验证
+
+`frontend/scripts/verify.ps1`（PowerShell 7）全量通过：后端 **650 passed**、前端 **333 passed**、默认浏览器 **16 passed**、管理训练浏览器 **1 passed**、预览浏览器 **4 passed / 2 skipped**、OpenSpec 主规格 **27 passed**。预览套件由 `scripts/verify-preview.ps1` 启动隔离服务，包含项目工作台、多项目报告和模型收益三项桌面用例及项目工作台手机用例；管理区报告表格按桌面布局验证。
+
 ### OpenSpec
 
 `openspec validate expose-model-benefit-evaluation --type change --strict`：通过。
@@ -75,5 +79,5 @@
 - 仅评估冻结测试分区，不代表在线效果；随机均值和波动不是置信区间。
 - 模型策略按原始风险排序，不按风险/成本密度；既有密度 Popt 仅在报告中另列，不能与收益表混读。
 - 没有收益报告的模型显示原因，不生成替代指标。
-- 未把项目工作台专用 E2E 和收益浏览器用例接入 `verify.ps1`/CI；自动化测试由 pytest/vitest 全量覆盖，收益浏览器用例使用隔离预览服务单独执行。
+- 仓库平台侧托管 CI 尚未配置；本轮通过 `verify.ps1` 在本机完成统一验证。
 - 无数据库迁移；既有数据库、模型、训练任务、默认模型和产物不变。

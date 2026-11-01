@@ -64,6 +64,14 @@
 - `openspec validate --changes --strict`：4 个变更全部通过。
 - `openspec validate --specs --strict`：26 个主规格通过；`focused-project-review` 的 FPR-02 因既有正文超过 500 字符产生警告，被严格模式计为失败。该警告位于既有主规格，本次未修改其正文。
 
+## 2026-11-01 补充验证
+
+- `frontend/scripts/verify.ps1`（PowerShell 7）全量通过：后端 **650 passed**、前端 **333 passed**、默认浏览器 **16 passed**、管理训练浏览器 **1 passed**、预览浏览器 **4 passed / 2 skipped**、OpenSpec 主规格 **27 passed**。
+- 项目工作台趋势浏览器断言改为 ECharts SVG 系列色与主题名称；桌面 1440 和手机 390 均通过。
+- 新增 `frontend/e2e/admin-training-pagination.spec.ts`，在真实浏览器覆盖训练任务第 1/2/3 页、列表→详情→返回→再打开、详情读取失败后重试；默认浏览器套件两个视口通过。
+- 新增 `frontend/scripts/verify-preview.ps1`：在 18769/18770 启动隔离预览后端和前端，运行项目工作台、多项目报告和模型收益套件，结束后只停止本轮自有进程；端口占用时拒绝运行。
+- `clarify-focused-review-spec` 已归档：FPR-02 正文压缩到 500 字符以内，13 个原有场景全部保留；严格规格校验 27/27 通过。
+
 ## 数据库升级与备份
 
 - 前向迁移 `019_pr_batches.sql` 只新增表和索引，保留既有项目、分析、模型、数据集、训练任务和管理员账户。
@@ -73,7 +81,6 @@
 ## 未完成或未验证
 
 - 第二阶段（管理区多项目实验报告）与第三阶段（模型收益评估）未开始。
-- `frontend/scripts/verify.ps1` 尚未接入 `playwright.project-workspace.config.ts` 的专用入口；该套件依赖单独的预览服务和夹具。
-- 项目工作台浏览器脚本的趋势图断言仍按旧 SVG 线选择器编写，需随 ECharts 改造更新。
-- 管理训练页的分页和失败恢复由组件行为测试覆盖；真实浏览器已验证列表→详情→返回→再打开，未在浏览器中构造 21 条以上任务或中断后端请求。
+- 项目工作台预览套件已接入 `verify.ps1`（`scripts/verify-preview.ps1`），趋势图断言已改为 ECharts SVG 系列色。
+- 管理训练分页/返回/失败恢复已由 `frontend/e2e/admin-training-pagination.spec.ts` 在真实浏览器中覆盖。
 - 批次前端进度面板由组件测试与隔离接口流程验证，尚无连接真实 GitHub 的浏览器用例。
