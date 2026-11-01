@@ -19,6 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
+from .algorithms import get_algorithm
 from .artifacts import Snapshot
 from .catalog import ModelCatalog
 from .catalog_storage import CatalogStorage, utc_now
@@ -124,6 +125,13 @@ def display_name_for(url):
     normalized = normalize_repository_url(url).replace("\\", "/")
     name = normalized.rstrip("/").rsplit("/", 1)[-1]
     return name or "repository"
+
+
+def training_model_name(url, version):
+    """本仓库训练出的模型显示名：仓库 + 方法 + 数据范围，便于在模型列表里区分。"""
+    name = f'{display_name_for(url)} · {get_algorithm("logistic-regression-l2-v1")["name"]}'
+    match = re.search(r"(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})(?:-[0-9a-f]{8})?$", version)
+    return f"{name} · {match.group(1)}→{match.group(2)}" if match else name
 
 
 def distribution_of(risks):
@@ -1202,7 +1210,7 @@ class SyncService:
                     manifest_path, "logistic-regression-l2-v1", None,
                     output_key=f"repository-sync-{sync_id[:8]}",
                     channel="repository-sync", request_id=item.get("requestId"),
-                    holdout=holdout)
+                    holdout=holdout, model_name=training_model_name(item["repositoryUrl"], version))
                 model_id = trained["modelId"]
                 snapshot = trained["snapshot"]
                 schema = snapshot.schema

@@ -153,11 +153,13 @@ def limitations(schema):
 
 
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
-              holdout=None, embedding_dir=None):
+              holdout=None, embedding_dir=None, model_name=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
     评估，质量统计与文件校验仍按全量；默认 `None` 保持既有行为。
+    `model_name` 覆盖产物里的模型显示名，用于区分同一方法在不同仓库或范围上训练出的模型；
+    模型身份仍由 runId 与产物内容确定。
     """
     output, source_dir = Path(output), Path(source_dir)
     algorithm_version = algorithm if algorithm else DEFAULT_ALGORITHM
@@ -295,6 +297,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         config["semantic"] = semantic_meta
     run_id = identity(config)
     label = model_descriptor(schema.name, algorithm_version)
+    if model_name is not None:
+        if not isinstance(model_name, str) or not model_name.strip():
+            raise BaselineError("INPUT_INVALID", "模型显示名必须是非空字符串")
+        label = {"id": label["id"], "name": model_name.strip()}
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
                "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},

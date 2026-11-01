@@ -270,6 +270,17 @@ def test_register_unique_reuses_same_rows_and_versions_new_content(tmp_path):
     assert (room / f"{third['version']}.json").exists()
 
 
+def test_training_model_name_includes_repository_and_range():
+    """本仓库训练出的模型名要能看出仓库与数据范围，便于在模型列表里区分。"""
+    from jit_baseline.sync import training_model_name
+
+    name = training_model_name(
+        "https://github.com/example/cc-switch.git",
+        "kamei14-git-v1-cc-switch-2025-08-04_2026-10-31-ada0b43a")
+    assert name.startswith("cc-switch · ")
+    assert "2025-08-04→2026-10-31" in name
+
+
 def test_dataset_version_accepts_hash_suffix():
     from jit_baseline.datasets import VERSION_PATTERN
 
