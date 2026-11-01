@@ -27,12 +27,12 @@
 
 ### 后端
 
-`backend/.venv/Scripts/python.exe -m pytest -q --basetemp=.cache/stream-full`：**650 passed**，1 条既有 PyTorch 警告。
+`backend/.venv/Scripts/python.exe -m pytest -q --basetemp=.cache/name-full`：**651 passed**，1 条既有 PyTorch 警告。
 
 更新用例：
 
 - `tests/test_repository_sync.py`：提交上限边界改为 50,001；数据集登记测试覆盖「同 CSV 不同采集元信息复用」与「CSV 内容变化新建哈希版本」。
-- `tests/test_repository_updates.py`：真实同步完成后断言存在 `analysis-completed` 提醒，并把分支检查事件过滤后计数；同步相关用例 **34 passed**。
+- `tests/test_repository_updates.py`：真实同步完成后断言存在 `analysis-completed` 提醒，并把分支检查事件过滤后计数；同步相关用例 **35 passed**。
 
 ### 前端
 
