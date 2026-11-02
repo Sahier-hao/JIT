@@ -1470,6 +1470,111 @@ paths:
           $ref: '#/components/responses/NotFound'
         '503':
           $ref: '#/components/responses/ModelUnavailable'
+  /api/v1/experiment-runs:
+    get:
+      operationId: listExperimentRuns
+      summary: 盘点受控实验运行及其登记和用户分析兼容状态
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: registrationState
+        in: query
+        schema:
+          type: string
+          enum: [registered, unregistered]
+      - name: compatibility
+        in: query
+        schema:
+          type: string
+          enum: [repository-analysis, offline-only, input-unsupported, schema-incompatible]
+      - name: artifactState
+        in: query
+        schema:
+          type: string
+          enum: [complete, invalid, failed]
+      - name: limit
+        in: query
+        schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      - name: offset
+        in: query
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 按运行身份合并位置的实验运行页。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelExperimentRunPage'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/experiment-runs/promote:
+    post:
+      operationId: promoteExperimentRuns
+      summary: 选择性登记实验运行并逐项返回结果
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentPromotionRequest'
+      responses:
+        '200':
+          description: 每个候选各自的登记结果。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentPromotionResult'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/experiment-runs/{candidateId}:
+    get:
+      operationId: getExperimentRun
+      summary: 读取实验运行详情、兼容性和登记状态
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: candidateId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Hash'
+      responses:
+        '200':
+          description: 实验运行详情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelExperimentRun'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/model-candidates:
     get:
       operationId: listModelCandidates
@@ -6427,6 +6532,229 @@ components:
       - split
       - source
       additionalProperties: false
+    ExperimentMetric:
+      type: object
+      properties:
+        value: {type: [number, 'null']}
+        reason: {type: [string, 'null']}
+      required: [value, reason]
+      additionalProperties: false
+    ModelExperimentRunLocation:
+      type: object
+      properties:
+        candidateId:
+          $ref: '#/components/schemas/Hash'
+        artifactKey: {type: [string, 'null']}
+        artifactState:
+          type: string
+          enum: [complete, invalid, failed]
+        manifestSha256:
+          oneOf:
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
+        reason: {type: [string, 'null']}
+      required: [candidateId, artifactKey, artifactState, manifestSha256, reason]
+      additionalProperties: false
+    ModelExperimentRun:
+      type: object
+      properties:
+        candidateId:
+          $ref: '#/components/schemas/Hash'
+        displayName: {type: string, minLength: 1}
+        artifactKey: {type: [string, 'null']}
+        candidateKind:
+          const: experiment
+        artifactState:
+          type: string
+          enum: [complete, invalid, failed]
+        artifactStateReason: {type: [string, 'null']}
+        manifestSha256:
+          oneOf:
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
+        artifactRunId: {type: [string, 'null'], minLength: 1}
+        name: {type: [string, 'null']}
+        runId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        modelId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        modelState:
+          type: [string, 'null']
+          enum: [ready, invalid, null]
+        registrationState:
+          type: string
+          enum: [registered, unregistered]
+        enabled: {type: [boolean, 'null']}
+        isDefault: {type: [boolean, 'null']}
+        method: {type: [string, 'null']}
+        featureSchemaVersion: {type: [string, 'null']}
+        datasetVersion: {type: [string, 'null']}
+        metricSet: {type: [string, 'null']}
+        metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ExperimentMetric'
+        trainingSeconds: {type: [number, 'null'], minimum: 0}
+        split: {type: object}
+        source: {type: object}
+        limitations:
+          type: array
+          items: {type: string}
+        serviceCompatibility:
+          type: string
+          enum: [repository-analysis, offline-only, input-unsupported, schema-incompatible]
+        serviceCompatibilityReason: {type: [string, 'null']}
+        promotable: {type: boolean}
+        locations:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ModelExperimentRunLocation'
+      required:
+      - candidateId
+      - displayName
+      - artifactKey
+      - candidateKind
+      - artifactState
+      - artifactStateReason
+      - manifestSha256
+      - artifactRunId
+      - name
+      - runId
+      - modelId
+      - modelState
+      - registrationState
+      - enabled
+      - isDefault
+      - method
+      - featureSchemaVersion
+      - datasetVersion
+      - metricSet
+      - metrics
+      - trainingSeconds
+      - split
+      - source
+      - limitations
+      - serviceCompatibility
+      - serviceCompatibilityReason
+      - promotable
+      - locations
+      additionalProperties: false
+    ModelExperimentReport:
+      type: object
+      properties:
+        artifactKey: {type: string, minLength: 1}
+        registrationEligible: {const: false}
+        reason: {type: string, minLength: 1}
+      required: [artifactKey, registrationEligible, reason]
+      additionalProperties: false
+    ModelExperimentRunPage:
+      type: object
+      properties:
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelExperimentRun'
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelExperimentReport'
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0}
+      required: [runs, reports, total, limit, offset]
+      additionalProperties: false
+    ExperimentPromotionRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+            properties:
+              candidateId:
+                $ref: '#/components/schemas/Hash'
+              expectedManifestSha256:
+                $ref: '#/components/schemas/Hash'
+            required: [candidateId, expectedManifestSha256]
+            additionalProperties: false
+      required: [items]
+      additionalProperties: false
+    ExperimentPromotionItem:
+      type: object
+      properties:
+        candidateId:
+          $ref: '#/components/schemas/Hash'
+        status:
+          type: string
+          enum: [registered, reused, already-registered, failed]
+        modelId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        runId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        code: {type: [string, 'null']}
+        message: {type: [string, 'null']}
+      required: [candidateId, status, modelId, runId, code, message]
+      additionalProperties: false
+    ExperimentPromotionResult:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentPromotionItem'
+        registered: {type: integer, minimum: 0}
+        failed: {type: integer, minimum: 0}
+      required: [items, registered, failed]
+      additionalProperties: false
+    ModelReadinessIssue:
+      type: object
+      properties:
+        code: {type: string, minLength: 1}
+        message: {type: string, minLength: 1}
+      required: [code, message]
+      additionalProperties: false
+    ModelReadiness:
+      type: object
+      properties:
+        ready: {type: boolean}
+        completeArtifacts: {type: integer, minimum: 0}
+        unregisteredExperiments: {type: integer, minimum: 0}
+        registeredModels: {type: integer, minimum: 0}
+        readyModels: {type: integer, minimum: 0}
+        repositorySelectableModels: {type: integer, minimum: 0}
+        defaultModelId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        defaultAvailable: {type: boolean}
+        reportOnlyArtifacts: {type: integer, minimum: 0}
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelReadinessIssue'
+      required:
+      - ready
+      - completeArtifacts
+      - unregisteredExperiments
+      - registeredModels
+      - readyModels
+      - repositorySelectableModels
+      - defaultModelId
+      - defaultAvailable
+      - reportOnlyArtifacts
+      - issues
+      additionalProperties: false
     ModelList:
       type: object
       properties:
@@ -6462,9 +6790,12 @@ components:
             - registeredModels
             - deliveredArtifacts
             additionalProperties: false
+        readiness:
+          $ref: '#/components/schemas/ModelReadiness'
       required:
       - models
       - methods
+      - readiness
       additionalProperties: false
     FeatureInputRecord:
       type: object

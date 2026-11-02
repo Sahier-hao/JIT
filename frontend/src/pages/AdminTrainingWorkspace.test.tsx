@@ -6,6 +6,11 @@ import { AdminWorkspace } from './AdminWorkspace'
 afterEach(() => vi.restoreAllMocks())
 
 const NOW = '2026-10-30T10:00:00Z'
+const READINESS = {
+  ready: true, completeArtifacts: 2, unregisteredExperiments: 0, registeredModels: 2,
+  readyModels: 2, repositorySelectableModels: 2, defaultModelId: 'm1',
+  defaultAvailable: true, reportOnlyArtifacts: 0, issues: [],
+}
 const TASK = {
   taskId: '22222222-2222-4222-8222-222222222222',
   datasetVersion: 'mp-scikit-learn-2022-01-02_2024-12-30',
@@ -165,7 +170,7 @@ it('creates a training task from a dataset detail page', async () => {
     const auth = session(String(path))
     if (auth) return auth
     if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [DATASET] })
-    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [{ method: 'logistic-regression-l2-v1', name: '逻辑回归' }] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [{ method: 'logistic-regression-l2-v1', name: '逻辑回归' }], readiness: READINESS })
     if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
     if (String(path).endsWith('/api/v1/training-tasks') && options?.method === 'POST') {
       return Response.json({ ...TASK, status: 'queued', stage: 'queued', metrics: null, runId: null, modelId: null, artifactRunId: null })
@@ -189,7 +194,7 @@ it('shows model metrics and compares two models without declaring a winner', asy
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     const auth = session(String(path))
     if (auth) return auth
-    if (String(path).endsWith('/api/v1/models')) return Response.json({ models, methods: [] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models, methods: [], readiness: READINESS })
     if (String(path).includes('/api/v1/models/m1')) return Response.json(detail(models[0]))
     if (String(path).includes('/api/v1/models/m2')) return Response.json(detail(models[1]))
     return Response.json({ candidates: [] })

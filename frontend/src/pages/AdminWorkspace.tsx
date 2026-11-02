@@ -7,6 +7,7 @@ import { VerificationReport } from '../VerificationReport'
 import { Button, Input, PasswordInput } from '../ui/controls'
 import { AdminComparisonPage } from './admin/AdminComparisonPage'
 import { AdminDatasetsPage } from './admin/AdminDatasetsPage'
+import { AdminExperimentsPage } from './admin/AdminExperimentsPage'
 import { AdminModelDetailPage } from './admin/AdminModelDetailPage'
 import { AdminModelsPage } from './admin/AdminModelsPage'
 import { AdminTrainingPage } from './admin/AdminTrainingPage'
@@ -51,13 +52,19 @@ export function AdminWorkspace({ route, navigate }: {
       setSessionError(error instanceof Error ? error.message : '退出失败')
     }
   }
-  const active = (view: 'models' | 'datasets' | 'training' | 'comparisons') => route.name === 'admin' && route.view === view ? 'page' : undefined
+  const active = (view: 'models' | 'datasets' | 'training' | 'comparisons' | 'experiments') => route.name === 'admin' && route.view === view ? 'page' : undefined
   let content
   if (route.name === 'report') content = <VerificationReport route={route} navigate={navigate}/>
   else if (route.view === 'models' && route.resourceId) content = <AdminModelDetailPage modelId={route.resourceId} navigate={navigate} expired={expired}/>
   else if (route.view === 'models') content = <AdminModelsPage navigate={navigate} expired={expired}/>
   else if (route.view === 'datasets') content = <AdminDatasetsPage dataset={route.resourceId} version={route.version} navigate={navigate} expired={expired}/>
   else if (route.view === 'training') content = <AdminTrainingPage taskId={route.resourceId} navigate={navigate} expired={expired}/>
+  else if (route.view === 'experiments') content = <AdminExperimentsPage candidateId={route.resourceId} filters={{
+    registrationState: route.registrationState,
+    compatibility: route.compatibility,
+    artifactState: route.artifactState,
+    offset: route.offset,
+  }} navigate={navigate} expired={expired}/>
   else content = <AdminComparisonPage modelIds={route.models} navigate={navigate} expired={expired}/>
   return <div className="admin-workspace">
     <div className="admin-toolbar"><span className="admin-badge">管理员 · {session.username}</span><Button variant="ghost" onClick={() => void logout()}>退出管理</Button><Button variant="ghost" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</Button></div>
@@ -65,6 +72,7 @@ export function AdminWorkspace({ route, navigate }: {
       <Button variant="ghost" size="sm" aria-current={active('models')} onClick={() => navigate({ name: 'admin', view: 'models' })}>模型管理</Button>
       <Button variant="ghost" size="sm" aria-current={active('datasets')} onClick={() => navigate({ name: 'admin', view: 'datasets' })}>数据集</Button>
       <Button variant="ghost" size="sm" aria-current={active('training')} onClick={() => navigate({ name: 'admin', view: 'training' })}>训练任务</Button>
+      <Button variant="ghost" size="sm" aria-current={active('experiments')} onClick={() => navigate({ name: 'admin', view: 'experiments' })}>实验运行</Button>
       <Button variant="ghost" size="sm" aria-current={active('comparisons')} onClick={() => navigate({ name: 'admin', view: 'comparisons' })}>模型比较</Button>
       <Button variant="ghost" size="sm" aria-current={route.name === 'report' ? 'page' : undefined} onClick={() => navigate({ name: 'report', view: 'overview' })}>验证报告</Button>
     </nav>

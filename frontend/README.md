@@ -53,6 +53,7 @@ npm run dev
 | 数据详情 | `#/admin/datasets/{name}/{version}` | 登录后核对固定版本，并可选择方法创建训练任务 |
 | 训练任务 | `#/admin/training[/{taskId}]` | 登录后查看活动/终态任务，取消、重试并核对成功指标 |
 | 模型比较 | `#/admin/comparisons?models={id},{id}` | 登录后并列指标与口径，不自动选出最佳模型 |
+| 实验运行 | `#/admin/experiments[/{candidateId}]` | 登录后盘点实验、筛选兼容性并选择性登记；训练成功不自动上线 |
 | 管理验证 | `#/admin/reports[/{runId}/{overview|trends|commits}]` | 登录后核对真实历史运行 |
 
 旧项目/分析地址继续映射到原对象；旧报告地址进入管理员登录保护。已经退役的手工预测/演示页面明确提示。管理员接口在服务端鉴权，隐藏菜单不代替权限校验。
@@ -70,6 +71,7 @@ $env:JIT_FRONTEND_PORT='14373'
 $env:JIT_SERVICE_PORT='18323'
 npm run test:e2e
 npm run test:e2e:admin-training
+npm run test:e2e:experiments
 ```
 
 默认浏览器验收使用独立库、9 个真实模型副本和两个本地 Git 夹具，检查 1280/1440 桌面及 390px 窄屏、登录/退出、指定模型的实际结果身份、异步分析、计划刷新及旧链接。大型仓库闭环使用独立 Playwright 配置和新的隔离后端，避免新项目、训练模型和任务污染默认套件；夹具以 300 个固定日期提交采集 `kamei14-git-v1` 数据集，实际完成现有模型、自动训练和强制训练，并从管理员页面创建训练任务、核对指标与谱系。测试不访问生产仓库或重训本机已登记模型。

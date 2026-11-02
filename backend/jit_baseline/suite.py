@@ -15,6 +15,8 @@ from .metrics import get_metric_set
 
 SUITE_FILE = "suite.json"
 SUITE_METRIC_SET = "metric-set-v2"
+RUN_INDEX_VERSION = 1
+INDEXED_METRICS = ("averagePrecision", "rocAuc", "recall20Loc", "popt", "f1", "ifa")
 
 PUBLISHER_LABEL_LIMITATIONS = (
     "零或空 bugcount 表示未观测到缺陷引入，不是已证实无缺陷。",
@@ -65,14 +67,27 @@ def run_suite(dataset_manifest, output_root, methods=None, metric_set=None, runn
         raise BaselineError("OUTPUT_EXISTS", "套件目录已存在，请换一个新目录")
     root.mkdir(parents=True)
     run = runner or build_run
+    artifact_root = (BACKEND / "artifacts").resolve()
     entries = []
     for name in names:
         target = root / name
         try:
             manifest = run(BACKEND / "data/openstack", target, dataset["schemaName"], name,
                            metric_set, dataset_manifest=manifest_path)
+            summary_path = target / "summary.json"
+            summary = read_json(summary_path) if summary_path.is_file() else {}
+            metrics = summary.get("metrics") if isinstance(summary.get("metrics"), dict) else {}
+            try:
+                artifact_key = target.resolve().relative_to(artifact_root).as_posix()
+            except ValueError:
+                artifact_key = None
             entries.append({"method": name, "status": "succeeded",
-                            "runId": manifest["runId"], "path": name})
+                            "runId": manifest["runId"], "path": name,
+                            "artifactPath": str(target.resolve()),
+                            "artifactKey": artifact_key,
+                            "manifestSha256": sha256((target / "manifest.json").read_bytes())
+                            if (target / "manifest.json").is_file() else None,
+                            "metrics": {key: metrics[key] for key in INDEXED_METRICS if key in metrics}})
         except BaselineError as exc:
             entries.append({"method": name, "status": "failed",
                             "code": exc.code, "message": str(exc)})
@@ -88,6 +103,7 @@ def run_suite(dataset_manifest, output_root, methods=None, metric_set=None, runn
                             "sha256": sha256(manifest_path.read_bytes())},
         "csvSha256": dataset["file"]["sha256"],
         "metricSet": metric_set,
+        "runIndexVersion": RUN_INDEX_VERSION,
         "labelSemantics": label_semantics(dataset),
         "methods": entries,
         "status": "complete" if all(entry["status"] == "succeeded" for entry in entries) else "partial",

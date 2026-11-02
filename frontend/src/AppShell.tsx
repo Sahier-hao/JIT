@@ -13,7 +13,7 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
   const [density, setDensity] = useState(initialDensity)
   const report = route.name === 'report' || route.name === 'admin'
   const adminLabel = route.name === 'admin'
-    ? route.view === 'models' ? '模型管理' : route.view === 'datasets' ? '数据集' : route.view === 'training' ? '训练任务' : '模型比较'
+    ? route.view === 'models' ? '模型管理' : route.view === 'datasets' ? '数据集' : route.view === 'training' ? '训练任务' : route.view === 'experiments' ? '实验运行' : '模型比较'
     : '验证报告'
   function chooseTheme(id: ThemeId) {
     setTheme(id)

@@ -77,6 +77,7 @@ try {
   Invoke-Check 'build' 'npm' @('run', 'build')
   Invoke-Check 'browser-tests' 'npm' @('run', 'test:e2e')
   Invoke-Check 'admin-training-browser-tests' 'npm' @('run', 'test:e2e:admin-training')
+  Invoke-Check 'experiment-model-browser-tests' 'npm' @('run', 'test:e2e:experiments')
   Set-Location -LiteralPath $projectRoot
   Invoke-Check 'openspec-validation' 'openspec' @('validate', '--specs', '--strict', '--no-interactive')
   $summary.success = $true

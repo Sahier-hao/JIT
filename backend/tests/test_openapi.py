@@ -122,6 +122,36 @@ def test_model_detail_matches_strict_contract(settings):
         assert not validator.is_valid(dict(detail, artifactPath='/private/model'))
 
 
+def test_experiment_run_contract_and_promotion(settings):
+    from admin_support import AdminTestClient as TestClient
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+
+    with TestClient(create_app(**settings)) as client:
+        page = validate_response(client.get('/api/v1/experiment-runs', params={'limit': 100}),
+                                 '/api/v1/experiment-runs')
+        assert page['total'] == 1
+        run = page['runs'][0]
+        assert run['registrationState'] == 'unregistered'
+        assert run['serviceCompatibility'] == 'repository-analysis'
+        detail = validate_response(
+            client.get(f"/api/v1/experiment-runs/{run['candidateId']}"),
+            '/api/v1/experiment-runs/{candidateId}',
+        )
+        assert detail['artifactRunId'] == run['artifactRunId']
+        location = run['locations'][0]
+        promotion = validate_response(client.post('/api/v1/experiment-runs/promote', json={'items': [{
+            'candidateId': location['candidateId'],
+            'expectedManifestSha256': location['manifestSha256'],
+        }]}), '/api/v1/experiment-runs/promote', 'post')
+        assert promotion['items'][0]['status'] == 'registered'
+        assert validate_response(client.get('/api/v1/models'), '/api/v1/models')['readiness']['readyModels'] == 1
+        assert client.get('/api/v1/experiment-runs', params={'limit': 0}).status_code == 422
+        assert client.post('/api/v1/experiment-runs/promote', json={'items': []}).status_code == 422
+    with PublicTestClient(create_app(**settings)) as public:
+        assert public.get('/api/v1/experiment-runs').status_code == 401
+
+
 @pytest.fixture
 def project_api(settings, monkeypatch):
     """复用临时模型副本，禁用后台计时，GitHub与worker均由测试显式推进。"""

@@ -17,7 +17,16 @@ def fake_runner(calls, fail=None):
             from jit_baseline.data import BaselineError
             raise BaselineError("MODEL_NOT_CONVERGED", "注入的失败")
         Path(target).mkdir(parents=True)
-        return {"runId": f"run-{algorithm}"}
+        run_id = f"run-{algorithm}"
+        (Path(target) / "manifest.json").write_text(json.dumps({
+            "runId": run_id, "config": {"algorithmVersion": algorithm, "schema": schema,
+                                        "metricSet": metric_set, "datasetVersion": "fixture-v1"},
+        }), encoding="utf-8")
+        (Path(target) / "summary.json").write_text(json.dumps({
+            "runId": run_id, "datasetVersion": "fixture-v1",
+            "metrics": {"averagePrecision": {"value": 0.5, "reason": None}},
+        }), encoding="utf-8")
+        return {"runId": run_id}
     return run
 
 
@@ -31,10 +40,13 @@ def test_run_suite_records_every_method(tmp_path):
     assert len(suite["methods"]) == 9
     assert all(item["status"] == "succeeded" for item in suite["methods"])
     assert {item["runId"] for item in suite["methods"]} == {f"run-{item['method']}" for item in suite["methods"]}
+    assert suite["runIndexVersion"] == 1
+    assert all(item["manifestSha256"] and item["metrics"] for item in suite["methods"])
     assert all(call[0] == "openstack-six-v1" for call in calls)
     stored = json.loads((tmp_path / "suite" / SUITE_FILE).read_text(encoding="utf-8"))
     assert stored["datasetManifest"]["sha256"] == suite["datasetManifest"]["sha256"]
     assert stored["labelSemantics"]["kind"] == "publisher-labels"
+    assert stored["runIndexVersion"] == 1
 
 
 def test_run_suite_failure_is_recorded_and_others_continue(tmp_path):
@@ -48,6 +60,8 @@ def test_run_suite_failure_is_recorded_and_others_continue(tmp_path):
     assert failed["status"] == "failed" and failed["code"] == "MODEL_NOT_CONVERGED"
     succeeded = [item for item in suite["methods"] if item["status"] == "succeeded"]
     assert [item["method"] for item in succeeded] == ["random-forest-v1"]
+    assert succeeded[0]["manifestSha256"] and succeeded[0]["metrics"]["averagePrecision"]["value"] == 0.5
+    assert "artifactKey" not in failed and "manifestSha256" not in failed
     assert len(calls) == 2
 
 

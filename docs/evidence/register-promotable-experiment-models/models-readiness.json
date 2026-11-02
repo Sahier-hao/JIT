@@ -1,0 +1,172 @@
+{
+  "kind": "local-model-readiness",
+  "capturedUtc": "2026-11-02T02:39:11.148993+00:00",
+  "migrationVersion": 19,
+  "modelCount": 9,
+  "readyCount": 9,
+  "defaultModelIds": [
+    "5b608a1c-c1dc-4b7e-b86e-27994892eef7"
+  ],
+  "expectedArtifactModelIds": [
+    "decision-tree@openstack-six-v1",
+    "gaussian-naive-bayes@openstack-six-v1",
+    "gradient-boosting@openstack-six-v1",
+    "logistic-regression-six-v1",
+    "random-forest@openstack-six-v1",
+    "torch-ft-transformer@openstack-six-v1",
+    "torch-mlp@openstack-six-v1",
+    "torch-tabular-resnet@openstack-six-v1",
+    "torch-wide-deep@openstack-six-v1"
+  ],
+  "models": [
+    {
+      "modelId": "0dbe0a1a-2dec-48bd-81c1-81efb8c74701",
+      "runId": "3b26da72-0a8f-4bee-bc53-b971490711a9",
+      "artifactRunId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+      "artifactModelId": "decision-tree@openstack-six-v1",
+      "artifactKey": "decision-tree-v1",
+      "name": "决策树 · openstack-six-v1",
+      "method": "decision-tree-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "4d7bfd4f-6626-4322-8805-586c7e163ccd",
+      "runId": "6447587b-3e95-49be-b840-6e0284499cbe",
+      "artifactRunId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+      "artifactModelId": "torch-tabular-resnet@openstack-six-v1",
+      "artifactKey": "tabular-resnet-v1",
+      "name": "深度 · 表格 ResNet · openstack-six-v1",
+      "method": "tabular-resnet-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "5b608a1c-c1dc-4b7e-b86e-27994892eef7",
+      "runId": "e3e994de-9a61-49b3-ba57-0664e53d1a4b",
+      "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+      "artifactModelId": "logistic-regression-six-v1",
+      "artifactKey": "baseline",
+      "name": "逻辑回归 · 六字段",
+      "method": "logistic-regression-l2-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": true,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "648db232-2270-4dac-8f79-9813d3d848f3",
+      "runId": "8d1bf6e9-902c-4deb-8a23-3434dd237341",
+      "artifactRunId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+      "artifactModelId": "torch-wide-deep@openstack-six-v1",
+      "artifactKey": "wide-deep-v1",
+      "name": "深度 · Wide&Deep · openstack-six-v1",
+      "method": "wide-deep-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "73d58f06-9639-4d2f-a083-c60d171f89cb",
+      "runId": "657598ae-5d55-45ea-bd21-7c894d8957a9",
+      "artifactRunId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+      "artifactModelId": "gaussian-naive-bayes@openstack-six-v1",
+      "artifactKey": "gaussian-naive-bayes-v1",
+      "name": "高斯朴素贝叶斯 · openstack-six-v1",
+      "method": "gaussian-naive-bayes-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "9518d63a-07c7-45d0-8c47-4d2457b34607",
+      "runId": "b256c5bd-f23e-4f5b-b4ae-18b4691ef908",
+      "artifactRunId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+      "artifactModelId": "torch-mlp@openstack-six-v1",
+      "artifactKey": "mlp-v1",
+      "name": "深度 · MLP · openstack-six-v1",
+      "method": "mlp-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "a94cbd17-5257-4507-b6fd-92ba9689a4e9",
+      "runId": "8b2f622a-33f2-49aa-9e73-00c6509a6ccf",
+      "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+      "artifactModelId": "random-forest@openstack-six-v1",
+      "artifactKey": "random-forest-v1",
+      "name": "随机森林 · openstack-six-v1",
+      "method": "random-forest-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "b14cdb11-143d-4207-b582-e356a5380f54",
+      "runId": "88dab167-2233-4abd-8d96-cc17da9b3223",
+      "artifactRunId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+      "artifactModelId": "torch-ft-transformer@openstack-six-v1",
+      "artifactKey": "ft-transformer-v1",
+      "name": "深度 · FT-Transformer · openstack-six-v1",
+      "method": "ft-transformer-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    },
+    {
+      "modelId": "e2dcdc89-b2f7-4f5e-aee7-47e5d84d63e6",
+      "runId": "eecf8406-b49b-4e7a-bca0-c2ad92bc5974",
+      "artifactRunId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+      "artifactModelId": "gradient-boosting@openstack-six-v1",
+      "artifactKey": "gradient-boosting-v1",
+      "name": "梯度提升树 · openstack-six-v1",
+      "method": "gradient-boosting-v1",
+      "featureSchemaVersion": "openstack-six-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "repositoryPredictionSupported": true
+    }
+  ],
+  "readiness": {
+    "ready": true,
+    "completeArtifacts": 49,
+    "unregisteredExperiments": 40,
+    "registeredModels": 9,
+    "readyModels": 9,
+    "repositorySelectableModels": 9,
+    "defaultModelId": "5b608a1c-c1dc-4b7e-b86e-27994892eef7",
+    "defaultAvailable": true,
+    "reportOnlyArtifacts": 2,
+    "issues": [
+      {
+        "code": "UNREGISTERED_EXPERIMENTS",
+        "message": "40 个完整实验运行尚未登记。"
+      }
+    ]
+  },
+  "compatibilityPolicy": {
+    "repository-analysis": "openstack-six-v1 / kamei14-git-v1",
+    "offline-only": "kamei14-benchmark-v1",
+    "input-unsupported": "semantic schema",
+    "schema-incompatible": "other schema"
+  }
+}
