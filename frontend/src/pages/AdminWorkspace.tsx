@@ -10,6 +10,8 @@ import { Dialog } from '../ui/dialog'
 import { Button, Input, PasswordInput } from '../ui/controls'
 import { AdminComparisonPage } from './admin/AdminComparisonPage'
 import { AdminDatasetsPage } from './admin/AdminDatasetsPage'
+import { AdminExperimentDetailPage } from './admin/AdminExperimentDetailPage'
+import { AdminExperimentsPage } from './admin/AdminExperimentsPage'
 import { AdminModelDetailPage } from './admin/AdminModelDetailPage'
 import { AdminModelsPage } from './admin/AdminModelsPage'
 import { AdminTrainingPage } from './admin/AdminTrainingPage'
@@ -20,15 +22,16 @@ function label(value: unknown, fallback = '未提供') {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : fallback
 }
 
-const NAV: { view: 'models' | 'datasets' | 'training' | 'comparisons'; label: string; icon: IconName }[] = [
+const NAV: { view: 'models' | 'datasets' | 'training' | 'comparisons' | 'experiments'; label: string; icon: IconName }[] = [
   { view: 'models', label: '模型管理', icon: 'sliders' },
   { view: 'datasets', label: '数据集', icon: 'list' },
   { view: 'training', label: '训练任务', icon: 'trend' },
   { view: 'comparisons', label: '模型比较', icon: 'sort' },
+  { view: 'experiments', label: '多项目实验', icon: 'trend' },
 ]
 
-const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'comparisons', string> = {
-  models: '模型管理', datasets: '数据集', training: '训练任务', comparisons: '模型比较',
+const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'comparisons' | 'experiments', string> = {
+  models: '模型管理', datasets: '数据集', training: '训练任务', comparisons: '模型比较', experiments: '多项目实验',
 }
 
 export function AdminWorkspace({ route, navigate }: {
@@ -80,6 +83,8 @@ export function AdminWorkspace({ route, navigate }: {
   else if (route.view === 'models') content = <AdminModelsPage navigate={navigate} expired={expired}/>
   else if (route.view === 'datasets') content = <AdminDatasetsPage dataset={route.resourceId} version={route.version} navigate={navigate} expired={expired}/>
   else if (route.view === 'training') content = <AdminTrainingPage taskId={route.resourceId} navigate={navigate} expired={expired}/>
+  else if (route.view === 'experiments' && route.resourceId) content = <AdminExperimentDetailPage reportId={route.resourceId} navigate={navigate} expired={expired}/>
+  else if (route.view === 'experiments') content = <AdminExperimentsPage navigate={navigate} expired={expired}/>
   else content = <AdminComparisonPage modelIds={route.models} navigate={navigate} expired={expired}/>
 
   return <div className="admin-frame">

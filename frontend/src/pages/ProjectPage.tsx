@@ -12,7 +12,7 @@ import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
 import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
 import type { SyncCommit } from '../repositoryContract'
-import { projectsChanged } from '../projectEvents'
+import { prBatchChanged, projectsChanged } from '../projectEvents'
 import { repositoryModels, useModelName, type ModelChoice } from '../modelClient'
 import { analyzeAllProjectPRs } from '../projectActivityClient'
 import { AnalysisLauncher } from '../components/AnalysisLauncher'
@@ -67,6 +67,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     try {
       await analyzeAllProjectPRs(repositoryId, selectedModel || undefined)
       setPrDialog(false)
+      prBatchChanged()
       navigate({ name: 'repository', repositoryId, tab: 'prs' })
     } catch (failure) {
       setPrAnalysisError(failure instanceof Error ? failure.message : '提交 PR 分析失败')

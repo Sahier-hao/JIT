@@ -83,6 +83,12 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             storage, catalog, artifact_root=catalog.root, dataset_root=registry_root)
     training_service.recover()
     app.state.training = training_service
+    from .multi_project_reports import MultiProjectReportService
+    multi_project_reports = MultiProjectReportService()
+    app.state.multi_project_reports = multi_project_reports
+    from .benefit_reports import BenefitReportService
+    benefit_reports = BenefitReportService()
+    app.state.benefit_reports = benefit_reports
     from .repository_updates import RepositoryUpdates
     updates = RepositoryUpdates(sync_service)
     app.state.updates = updates
@@ -123,15 +129,35 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def analyze_all_repository_pull_requests(repository_id: str, request: Request):
         body = await request.body()
         payload = await read_object(request) if body else {}
-        if set(payload) - {'modelId'} or 'modelId' in payload and not isinstance(payload['modelId'], str):
+        if set(payload) - {'modelId'} or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip()):
             raise RequestError('INPUT_INVALID')
-        return await run_in_threadpool(pr_updates.analyze_all_prs, repository_id, payload.get('modelId'))
+        result = await run_in_threadpool(pr_updates.analyze_all_prs, repository_id,
+                                         payload.get('modelId'),
+                                         getattr(request.state, 'request_id', None))
+        return JSONResponse(result, status_code=202)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-request-batches/latest')
+    def latest_pull_request_batch(repository_id: str):
+        return pr_updates.latest_batch(repository_id)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}')
+    def pull_request_batch(repository_id: str, batch_id: str):
+        return pr_updates.batch(repository_id, batch_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/retry')
+    async def retry_pull_request_batch(repository_id: str, batch_id: str, request: Request):
+        body = await request.body()
+        if body:
+            raise RequestError('INPUT_INVALID')
+        result = await run_in_threadpool(pr_updates.retry_batch, repository_id, batch_id,
+                                         getattr(request.state, 'request_id', None))
+        return JSONResponse(result, status_code=202)
 
     @app.post('/api/v1/repositories/{repository_id}/pull-requests/{number}/analyze')
     async def analyze_repository_pull_request(repository_id: str, number: int, request: Request):
         body = await request.body()
         payload = await read_object(request) if body else {}
-        if set(payload) - {'modelId'} or 'modelId' in payload and not isinstance(payload['modelId'], str):
+        if set(payload) - {'modelId'} or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip()):
             raise RequestError('INPUT_INVALID')
         return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number, payload.get('modelId'))
 
@@ -289,6 +315,25 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             created_by=request.state.admin_username)
         request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
         return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/models/{model_id}/benefit')
+    def model_benefit(model_id: str):
+        run_id = catalog.artifact_run_id(model_id)
+        entry, error = benefit_reports.for_run(run_id)
+        if error is not None:
+            raise BaselineError('REPORT_INVALID', error['message'])
+        if entry is None:
+            return {'modelId': model_id, 'runId': run_id, 'available': False,
+                    'reason': '尚无该模型的收益评估报告'}
+        return {'modelId': model_id, 'runId': run_id, 'available': True, **entry}
+
+    @app.get('/api/admin/multi-project-reports')
+    def list_multi_project_reports():
+        return multi_project_reports.list()
+
+    @app.get('/api/admin/multi-project-reports/{report_id}')
+    def get_multi_project_report(report_id: str):
+        return multi_project_reports.get(report_id)
 
     @app.patch('/api/v1/models/{model_id}/policy')
     async def model_policy(model_id: str, request: Request):

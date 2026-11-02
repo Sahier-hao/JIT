@@ -13,6 +13,7 @@ const STATUS_LABELS: Record<string, string> = {
   queued: '排队中', running: '训练中', succeeded: '成功', failed: '失败',
   cancelled: '已取消', interrupted: '已中断',
 }
+const PAGE_SIZE = 20
 
 export function AdminTrainingPage({ taskId, navigate, expired }: {
   taskId?: string
@@ -21,6 +22,8 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
 }) {
   const [tasks, setTasks] = useState<TrainingTask[]>([])
   const [task, setTask] = useState<TrainingTask | null>(null)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
@@ -30,10 +33,14 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
     if (failure instanceof ApiError && failure.status === 401) expired()
     else setError(failure instanceof Error ? failure.message : fallback)
   }, [expired])
+  const retryLoad = useCallback(() => {
+    setError(''); setLoading(true); setRevision(value => value + 1)
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
     let timer: number | undefined
+    setLoading(true)
     const load = async () => {
       try {
         if (taskId) {
@@ -42,10 +49,15 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
           setTask(current)
           if (ACTIVE_TASK_STATUSES.includes(current.status)) timer = window.setTimeout(load, 3000)
         } else {
-          const page = await fetchTrainingTasks(20, 0, controller.signal)
+          const result = await fetchTrainingTasks(PAGE_SIZE, page * PAGE_SIZE, controller.signal)
           if (controller.signal.aborted) return
-          setTasks(page.tasks)
-          if (page.tasks.some(item => ACTIVE_TASK_STATUSES.includes(item.status))) timer = window.setTimeout(load, 3000)
+          setTasks(result.tasks)
+          setTotal(result.total)
+          if (page > 0 && result.tasks.length === 0 && result.total > 0) {
+            setPage(Math.max(0, Math.ceil(result.total / PAGE_SIZE) - 1))
+            return
+          }
+          if (result.tasks.some(item => ACTIVE_TASK_STATUSES.includes(item.status))) timer = window.setTimeout(load, 3000)
         }
         setError('')
       } catch (failure) {
@@ -56,7 +68,9 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
     }
     void load()
     return () => { controller.abort(); if (timer) clearTimeout(timer) }
-  }, [taskId, handleFailure, revision])
+  }, [taskId, page, handleFailure, revision])
+
+  useEffect(() => { if (!taskId) setTask(null) }, [taskId])
 
   async function act(id: string, action: 'cancel' | 'retry') {
     setBusy(id); setError('')
@@ -69,11 +83,13 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   }
 
   if (loading) return <LoadingNotice label="正在读取训练任务"/>
-  if (error && !tasks.length && !task) return <EmptyState title="训练任务不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'training' })}>重试</Button></EmptyState>
-  if (task) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} back={() => navigate({ name: 'admin', view: 'training' })}/>
+  if (error && !taskId && !tasks.length) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button></EmptyState>
+  if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })}>返回任务列表</Button></EmptyState>
+  if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })}/>
   return <section>
-    <AdminPageHeader title="训练任务" onRefresh={() => setRevision(value => value + 1)}/>
+    <AdminPageHeader title="训练任务" onRefresh={retryLoad}/>
     <ErrorNotice>{error}</ErrorNotice>
+    {error ? <div className="admin-detail-actions"><Button size="sm" onClick={retryLoad}>重新读取</Button></div> : null}
     {!tasks.length ? <p className="quiet-empty">尚无训练任务。请从数据集详情创建。</p> : <div className="admin-table-wrap"><table className="admin-table admin-task-table">
       <thead><tr><th>数据集</th><th>方法</th><th>状态</th><th>时间</th><th><span className="sr-only">操作</span></th></tr></thead>
       <tbody>{tasks.map(item => <tr key={item.taskId}>
@@ -84,14 +100,20 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
         <td><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })}>查看</Button></td>
       </tr>)}</tbody>
     </table></div>}
+    {total > PAGE_SIZE ? <div className="admin-detail-actions">
+      <Button size="sm" disabled={page <= 0} onClick={() => setPage(value => value - 1)}>上一页</Button>
+      <span>第 {page + 1} 页 · 共 {total} 条</span>
+      <Button size="sm" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(value => value + 1)}>下一页</Button>
+    </div> : null}
   </section>
 }
 
-function TrainingTaskDetail({ task, error, busy, act, back }: {
+function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
   task: TrainingTask
   error: string
   busy: string
   act: (id: string, action: 'cancel' | 'retry') => Promise<void>
+  retry: () => void
   back: () => void
 }) {
   const active = ACTIVE_TASK_STATUSES.includes(task.status)
@@ -99,7 +121,7 @@ function TrainingTaskDetail({ task, error, busy, act, back }: {
   return <section>
     <AdminPageHeader title="训练任务详情" meta={`${task.datasetVersion} · ${task.method}`}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
+    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
     <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>
     {task.error ? <div className="admin-error-box" role="alert"><strong>{task.error.code}</strong><p>{task.error.message}</p></div> : null}
     {task.status === 'succeeded' ? <><MetricGrid metrics={task.metrics}/><dl className="admin-facts">

@@ -492,3 +492,46 @@ def test_project_error_responses_validate_request_ids_and_standard_envelope(proj
 
     monkeypatch.setattr(ctx.watcher, 'events', unavailable)
     validate_response(ctx.client.get('/api/v1/project-events'), '/api/v1/project-events', status=503)
+
+
+def test_pr_batch_contract_documents_fixed_model_and_real_progress():
+    document_ = document()
+    schema = document_['components']['schemas']['PRBatchAnalyze']
+    assert {'batchId', 'modelId', 'status', 'discoveryComplete', 'counts', 'submission', 'items'} <= set(schema['properties'])
+    assert schema['properties']['status']['enum'] == ['discovering', 'running', 'completed', 'partial', 'failed', 'interrupted']
+    assert set(schema['properties']['counts']['required']) == {
+        'pending', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted', 'skipped'}
+    assert set(schema['properties']['submission']['required']) == {
+        'pending', 'submitted', 'reused', 'failed', 'skipped'}
+    paths = document_['paths']
+    assert '202' in paths['/api/v1/repositories/{repositoryId}/pull-requests/analyze']['post']['responses']
+    for path in ('/api/v1/repositories/{repositoryId}/pull-request-batches/latest',
+                 '/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}'):
+        assert path in paths
+    retry = paths['/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/retry']['post']
+    assert '202' in retry['responses']
+
+
+def test_multi_project_report_contract_requires_admin_and_controlled_ids():
+    document_ = document()
+    paths = document_['paths']
+    listing = paths['/api/admin/multi-project-reports']['get']
+    detail = paths['/api/admin/multi-project-reports/{reportId}']['get']
+    assert listing['responses']['401']['$ref'] == '#/components/responses/AdminRequired'
+    assert detail['responses']['401']['$ref'] == '#/components/responses/AdminRequired'
+    assert detail['responses']['404']['$ref'] == '#/components/responses/NotFound'
+    summary = document_['components']['schemas']['MultiProjectReportSummary']
+    assert summary['properties']['status']['enum'] == ['complete', 'partial', 'failed', 'invalid']
+    assert summary['properties']['reportId']
+    assert 'report' in document_['components']['schemas']['MultiProjectReportDetail']['allOf'][1]['properties']
+
+
+def test_model_benefit_contract_documents_read_only_evaluation():
+    document_ = document()
+    path = document_['paths']['/api/v1/models/{modelId}/benefit']['get']
+    assert path['responses']['401']['$ref'] == '#/components/responses/AdminRequired'
+    assert path['responses']['422']['$ref'] == '#/components/responses/ReportInvalid'
+    benefit = document_['components']['schemas']['ModelBenefit']
+    assert {'modelId', 'runId', 'available', 'reason', 'report'} <= set(benefit['properties'])
+    report = document_['components']['schemas']['BenefitReport']
+    assert {'kind', 'artifact', 'test', 'strategies', 'conclusion', 'limitations', 'boundary'} <= set(report['required'])

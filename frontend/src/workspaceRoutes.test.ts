@@ -19,6 +19,8 @@ it.each<Route>([
   { name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: 'mp-scikit-learn-2022-01-02_2024-12-30' },
   { name: 'admin', view: 'training', resourceId: '22222222-2222-4222-8222-222222222222' },
   { name: 'admin', view: 'comparisons', models: ['model-a', 'model-b'] },
+  { name: 'admin', view: 'experiments' },
+  { name: 'admin', view: 'experiments', resourceId: 'abc123def456' },
 ])('round trips the exact object %j', route => expect(parseHash(hashFor(route))).toEqual(route))
 it.each(['#/models', '#/lab/models', '#/predict', '#/lab/predict', '#/predictions/batch-1', '#/lab/results/batch-1', '#/lab/demo/commits', '#/settings/connection'])('explicitly retires %s', hash => expect(parseHash(hash).name).toBe('retired'))
 it('opens projects on first visit and preserves personal reviews', () => { expect(parseHash('')).toEqual({ name: 'repositories' }); expect(parseHash('#/reviews')).toEqual({ name: 'my-reviews' }) })
