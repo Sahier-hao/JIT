@@ -37,7 +37,7 @@ it('opens administrator sign-in instead of showing maintenance data to visitors'
     : { repositories: [], total: 0, offset: 0, limit: 100 }), { status: 200 }))
   window.history.replaceState({}, '', '/#/admin')
   render(<App/>)
-  expect(await screen.findByRole('heading', { name: '管理员登录' })).toBeVisible()
+  expect(await screen.findByRole('heading', { name: '管理员登录' }, { timeout: 5000 })).toBeVisible()
   expect(screen.queryByRole('heading', { name: '验证报告' })).not.toBeInTheDocument()
 })
 

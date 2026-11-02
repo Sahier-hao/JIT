@@ -52,7 +52,7 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
   const right = comparison?.right ?? null
   const options = models.map(model => ({ value: model.modelId, label: `${model.name} · ${model.method}` }))
   return <section>
-    <AdminPageHeader title="模型比较" intro="只并列已选模型及其训练指标。不同数据版本或 schema 不构成胜负结论。"/>
+    <AdminPageHeader title="模型比较"/>
     <div className="admin-compare-picker">
       <Select ariaLabel="模型 A" value={first} onChange={setFirst} options={options}/>
       <Select ariaLabel="模型 B" value={second} onChange={setSecond} options={options}/>

@@ -72,7 +72,7 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   if (error && !tasks.length && !task) return <EmptyState title="训练任务不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'training' })}>重试</Button></EmptyState>
   if (task) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} back={() => navigate({ name: 'admin', view: 'training' })}/>
   return <section>
-    <AdminPageHeader title="训练任务" intro="从已登记数据集训练指定方法，并核对指标、运行与模型谱系。" onRefresh={() => setRevision(value => value + 1)}/>
+    <AdminPageHeader title="训练任务" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
     {!tasks.length ? <p className="quiet-empty">尚无训练任务。请从数据集详情创建。</p> : <div className="admin-table-wrap"><table className="admin-table admin-task-table">
       <thead><tr><th>数据集</th><th>方法</th><th>状态</th><th>时间</th><th><span className="sr-only">操作</span></th></tr></thead>
@@ -97,7 +97,7 @@ function TrainingTaskDetail({ task, error, busy, act, back }: {
   const active = ACTIVE_TASK_STATUSES.includes(task.status)
   const retryable = ['failed', 'cancelled', 'interrupted'].includes(task.status)
   return <section>
-    <AdminPageHeader title="训练任务详情" intro={`${task.datasetVersion} · ${task.method}`}/>
+    <AdminPageHeader title="训练任务详情" meta={`${task.datasetVersion} · ${task.method}`}/>
     <ErrorNotice>{error}</ErrorNotice>
     <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
     <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>

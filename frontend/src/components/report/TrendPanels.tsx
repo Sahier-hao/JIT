@@ -259,19 +259,26 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
       <text className="trend-axis-unit" x={CHART.left} y={rateTop - 10}>观测比例</text>
       <text className="trend-axis-unit" x={CHART.left + plotWidth} y={rateTop - 10} textAnchor="end">模型分数</text>
       <line className="trend-axis" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateBottom} y2={rateBottom} />
-      {buckets.map((bucket, index) =>
-        index % labelStep === 0 ? (
-          <text
-            key={`label-${bucket.start}`}
-            className="trend-axis-text"
-            x={midOf(bucket)}
-            y={CHART.top + plotHeight + 20}
-            textAnchor="middle"
-          >
-            {monthOf(bucket.start)}
-          </text>
-        ) : null,
-      )}
+      {(() => {
+        let lastLabelX = -Infinity
+        return buckets.map((bucket, index) => {
+          if (index % labelStep !== 0) return null
+          const x = midOf(bucket)
+          if (x - lastLabelX < 56) return null
+          lastLabelX = x
+          return (
+            <text
+              key={`label-${bucket.start}`}
+              className="trend-axis-text"
+              x={x}
+              y={CHART.top + plotHeight + 20}
+              textAnchor="middle"
+            >
+              {monthOf(bucket.start)}
+            </text>
+          )
+        })
+      })()}
     </svg>
   )
 }

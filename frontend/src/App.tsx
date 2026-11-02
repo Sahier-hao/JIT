@@ -42,6 +42,10 @@ function Workspace() {
   const repositories = useRepositories()
   const [drafts] = useState(() => new Map<string, ReviewDraft>())
   const stateKey = route.name === 'analysis' ? `${route.repositoryId}:${route.viewSyncId}` : ''
+  // 管理工作区是独立外壳：不显示用户项目导航，也不依赖项目侧栏。
+  if (route.name === 'admin' || route.name === 'report') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><AdminWorkspace route={route} navigate={navigate}/></Suspense></ErrorBoundary>
+  }
   let content
   if (route.name === 'my-reviews') content = <ProjectsPage navigate={navigate} view="reviews"/>
   else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} navigate={navigate}/>
@@ -50,7 +54,6 @@ function Workspace() {
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
   else if (route.name === 'analysis') content = <ReviewWorkbench key={stateKey} repositoryId={route.repositoryId} viewSyncId={route.viewSyncId} commitId={route.commitId} stateKey={stateKey} drafts={drafts} navigate={navigate}/>
-  else if (route.name === 'report' || route.name === 'admin') content = <AdminWorkspace route={route} navigate={navigate}/>
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>
   else if (route.name === 'retired' || route.name === 'unknown') content = <EmptyState title={route.name === 'retired' ? '这个入口已移除' : '没有找到这个页面'} description={route.name === 'retired' ? '独立工具页面已撤下。请从项目开始分析；已保存的数据仍然保留。' : '请核对地址，或返回项目继续。'}><Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>返回项目</Button></EmptyState>
   else content = <ProjectsPage navigate={navigate}/>

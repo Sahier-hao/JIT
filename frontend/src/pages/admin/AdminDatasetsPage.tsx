@@ -48,10 +48,10 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
     return <AdminDatasetDetailPage dataset={dataset} versions={versions} initialVersion={version} methods={methods} navigate={navigate} expired={expired}/>
   }
   return <section>
-    <AdminPageHeader title="数据集" intro="核对仓库采集或公开来源的版本、质量、字段与训练限制。" onRefresh={() => setRevision(value => value + 1)}/>
+    <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {!grouped.length ? <p className="quiet-empty">尚无已登记数据集。</p> : <div className="admin-dataset-list">{grouped.map(([name, versions]) => <article className="admin-dataset-card" key={name}>
-      <div><h2>{name}</h2><p>{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="form-hint">最新数据：{versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'}</p></div>
+    {!grouped.length ? <p className="quiet-empty">尚无已登记数据集</p> : <div className="admin-dataset-list">{grouped.map(([name, versions]) => <article className="admin-dataset-card" key={name}>
+      <div className="admin-dataset-main"><h2>{name}</h2><p>{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="admin-card-meta">最新数据 {versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'}</p></div>
       <Button onClick={() => navigate({ name: 'admin', view: 'datasets', resourceId: name, version: versions.at(-1)?.version })}>查看详情</Button>
     </article>)}</div>}
   </section>

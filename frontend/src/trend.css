@@ -200,3 +200,48 @@
   line-height: 1.6;
   color: var(--fg-3);
 }
+
+/* ---------- 报告页内的面板外观 ---------- */
+
+.list-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  margin-top: 14px;
+}
+
+.trend-panel { margin-top: 0; }
+
+.trend-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.trend-table .time-cell span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.trend-table caption { padding: 12px 14px 8px; }
+
+/* 历史观测提示条：与通用 .notice 一致的块级信息条。 */
+.demo-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--sunken);
+  color: var(--fg-2);
+  font-size: 13px;
+}
+
+.demo-notice > svg { flex: none; margin-top: 2px; color: var(--fg-3); }
+.demo-notice > div { min-width: 0; }
+.demo-notice strong { display: block; margin-bottom: 2px; }
+.demo-notice span { display: block; color: var(--fg-3); }

@@ -174,7 +174,6 @@ function ExperimentList({ filters, navigate, expired }: {
   return <section>
     <AdminPageHeader
       title="实验运行"
-      intro="训练成功不等于已登记。选择兼容运行后登记，用户模型选择才会出现。"
       onRefresh={() => setRevision(value => value + 1)}
     />
     <ErrorNotice>{error}</ErrorNotice>
@@ -229,7 +228,7 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
   if (error) return <EmptyState title="实验运行不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'experiments' })}>返回实验运行</Button></EmptyState>
   if (!run) return <LoadingNotice label="正在读取实验运行详情"/>
   return <section>
-    <AdminPageHeader title={experimentLabel(run)} intro={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
+    <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
     <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'experiments' })}>返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型详情</Button> : null}</div>
     <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span></div>
     {run.serviceCompatibilityReason ? <p className="admin-notice">{run.serviceCompatibilityReason}</p> : null}

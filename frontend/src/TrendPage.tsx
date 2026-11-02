@@ -26,10 +26,7 @@ import './trend.css'
 function InsightPanel({ insights, trend }: { insights: readonly TrendInsight[]; trend: TrendAggregate }) {
   return (
     <section className="list-panel trend-insight-panel" aria-label="趋势洞察">
-      <h2 className="trend-insight-title">
-        趋势洞察
-        <span>由当前运行的摘要计算，可注册扩展</span>
-      </h2>
+      <h2 className="trend-insight-title">趋势洞察</h2>
       <p className="trend-insight-meta">{INSIGHT_DISCLAIMER}</p>
       {insights.map((insight) => {
         const result = insight.compute(trend)
@@ -41,15 +38,9 @@ function InsightPanel({ insights, trend }: { insights: readonly TrendInsight[]; 
             ) : (
               <>
                 <p className="trend-insight-headline">{result.headline}</p>
-                <p className="trend-insight-meta">
-                  {result.approximate ? (
-                    <>
-                      <span className="trend-insight-approx">近似</span> 运行只提供中位风险，估计正例数按中位风险折算，不代表期望值。
-                    </>
-                  ) : (
-                    '估计正例数按运行提供的平均风险计算。'
-                  )}
-                </p>
+                {result.approximate ? (
+                  <p className="trend-insight-meta"><span className="trend-insight-approx">近似</span> 按中位风险折算。</p>
+                ) : null}
                 <ol className="trend-insight-list">
                   {result.ranking.map((entry) => (
                     <li key={entry.bucket.start} className="trend-insight-row" data-bucket={entry.bucket.start}>
@@ -81,39 +72,27 @@ function TrendBody({
   navigate: (search: string) => void
 }) {
   const split = data.summary?.split
-  const sparse = trend.buckets.filter((bucket) => bucket.observedRate.value === null).length
-  const withRisk = trend.buckets.filter((bucket) => bucket.risk !== null && bucket.risk.median !== null).length
   return (
     <>
-      <div className="section-caption">
-        <span>
-          历史趋势<b>{trend.buckets.length}</b>
-        </span>
-        <span>
-          粒度：按月 · 时区：{trend.timezone} · 最小样本：{trend.minSample}
-        </span>
-      </div>
       <section className="list-panel trend-panel" aria-label="历史趋势图">
         <TrendChart data={trend} split={split} />
         <ul className="trend-legend">
           <li>
             <span className="trend-swatch trend-swatch-bar" aria-hidden="true" />
-            提交数 · 历史观测
+            提交数
           </li>
           <li>
             <span className="trend-swatch trend-swatch-observed" aria-hidden="true" />
-            观测正标签比例 · 历史观测 · 覆盖全部纳入记录
+            观测正标签比例
           </li>
           <li>
             <span className="trend-swatch trend-swatch-estimated" aria-hidden="true" />
-            模型风险中位数 · 模型估计 · 仅测试区间
+            模型风险中位数
           </li>
         </ul>
         <PartitionList split={split} />
         <p className="trend-note">
-          背景带按运行摘要的分区范围绘制（越过时间桶范围的按域裁剪）。样本不足的桶不绘制数据点（图中以虚线标出），也不画成 0；
-          共 {sparse} 个桶样本不足，{withRisk} 个桶含测试记录的风险分布。观测比例来自发布者历史标签聚合，不是模型效果；风险是模型估计，
-          未经概率校准，不等于已确认缺陷。
+          样本不足的桶不绘制数据点；模型风险是估计值，未经概率校准。
         </p>
       </section>
       <InsightPanel insights={insights} trend={trend} />
@@ -257,7 +236,7 @@ export function TrendPage({
         <div>
           <strong>历史观测 · 模型估计</strong>
           <span>
-            观测比例来自发布者历史标签聚合，覆盖全部纳入记录；风险是模型对冻结测试批次的估计，未经概率校准，不等于已确认缺陷。整体为回顾性评价。
+            风险为模型估计，未经概率校准；观测比例来自历史标签聚合。
           </span>
         </div>
       </div>
@@ -289,10 +268,6 @@ export function TrendPage({
       {trend.state === 'ready' ? (
         <TrendBody data={resource.data} trend={trend.data} insights={insights} navigate={go} />
       ) : null}
-      <footer className="page-foot">
-        <span>JIT Review</span>
-        <span>历史趋势 · 公开数据基线 · 个人审查选择</span>
-      </footer>
     </>
   )
 }

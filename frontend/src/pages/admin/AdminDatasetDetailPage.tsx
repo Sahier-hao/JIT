@@ -33,7 +33,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     } finally { setBusy(false) }
   }
   return <section>
-    <AdminPageHeader title={dataset} intro="数据集描述是训练的事实来源；本页不会修改原文件。"/>
+    <AdminPageHeader title={dataset} meta={selected.schema}/>
     <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集列表</Button></div>
     <div className="admin-dataset-version-picker"><span>版本</span><Select ariaLabel="数据集版本" value={version} onChange={setVersion} options={versions.map(item => ({ value: item.version, label: item.version }))}/></div>
     <div className="admin-detail-grid">
@@ -64,6 +64,6 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       <Select ariaLabel="训练方法" value={selectedMethod} onChange={setMethod} options={methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))}/>
       <Select ariaLabel="指标集" value={metricSet} onChange={setMetricSet} options={[{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]}/>
       <Button variant="primary" loading={busy} disabled={!selectedMethod || !version} onClick={() => void train()}>创建训练任务</Button>
-    </div><p className="form-hint">训练只读取固定版本描述与原文件，不覆盖数据集；指标来自训练运行的测试分区。</p></section>
+    </div></section>
   </section>
 }
