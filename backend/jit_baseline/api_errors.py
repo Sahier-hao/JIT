@@ -65,6 +65,8 @@ MESSAGES = {
     'TASK_NOT_ACTIVE': '训练任务已经结束，请刷新记录',
     'TASK_NOT_RETRYABLE': '只有失败、取消或中断的训练任务可以重试',
     'TASK_SERVICE_STOPPING': '训练服务正在停止，请稍后重试',
+    'REPORT_NOT_FOUND': '多项目实验报告不存在或已移除',
+    'REPORT_INVALID': '多项目实验报告结构无效，无法展示',
 }
 STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,
           'PR_SOURCE_UNAVAILABLE': 502, 'PR_RATE_LIMITED': 429, 'PR_VERSION_CHANGED': 409,
@@ -81,7 +83,8 @@ STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILA
           'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503}
 STATUS.update({'TRAINING_TIMEOUT': 504, 'TRAINING_INTERRUPTED': 503,
                'TRAINING_WORKER_EXITED': 503, 'TASK_NOT_ACTIVE': 409,
-               'TASK_NOT_RETRYABLE': 409, 'TASK_SERVICE_STOPPING': 503})
+               'TASK_NOT_RETRYABLE': 409, 'TASK_SERVICE_STOPPING': 503,
+               'REPORT_NOT_FOUND': 404, 'REPORT_INVALID': 422})
 
 
 class RequestError(BaselineError):
@@ -92,7 +95,7 @@ class RequestError(BaselineError):
 
 def managed_path(path):
     if path == '/api/v1/project-events' or re.fullmatch(
-            r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/refresh)?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?)', path):
+            r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/(?:refresh|analyze|\d+/analyze))?|pull-request-batches(?:/(?:latest|[^/]+(?:/retry)?))?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?)', path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True

@@ -32,7 +32,7 @@ test('空目录库从实验运行登记到用户可用模型', async ({ page }, 
   const failed = before.runs.find((run: { artifactState: string }) => run.artifactState === 'failed')
   expect(compatible && secondCompatible && offline && failed).toBeTruthy()
 
-  await page.goto('/#/admin/experiments?registrationState=unregistered&compatibility=repository-analysis&artifactState=complete')
+  await page.goto('/#/admin/experiment-runs?registrationState=unregistered&compatibility=repository-analysis&artifactState=complete')
   await expect(page.getByRole('heading', { name: '实验运行', exact: true })).toBeVisible()
   await expect(page.getByText('逻辑回归 · 六字段', { exact: true }).first()).toBeVisible({ timeout: 30000 })
   const checkbox = page.getByRole('checkbox', { name: `选择实验 ${compatible.artifactRunId}` })
@@ -49,7 +49,7 @@ test('空目录库从实验运行登记到用户可用模型', async ({ page }, 
   const repositoryModels = await (await page.request.get('/api/v1/repository-models')).json()
   expect(repositoryModels.models.some((model: { modelId: string }) => model.modelId === promotion.items[0].modelId)).toBe(true)
 
-  await page.goto('/#/admin/experiments')
+  await page.goto('/#/admin/experiment-runs')
   await page.getByRole('checkbox', { name: `选择实验 ${secondCompatible.artifactRunId}` }).check()
   await page.getByRole('checkbox', { name: `选择实验 ${offline.artifactRunId}` }).check()
   writeFileSync(resolve(ARTIFACT_ROOT, 'decision-tree-v1', 'model.joblib'), 'broken fixture')
@@ -60,7 +60,7 @@ test('空目录库从实验运行登记到用户可用模型', async ({ page }, 
   expect(mixed.items.map((item: { status: string }) => item.status).sort()).toEqual(['failed', 'registered'])
   await expect(page.getByRole('heading', { name: '登记结果', exact: true })).toBeVisible()
 
-  await page.goto('/#/admin/experiments')
+  await page.goto('/#/admin/experiment-runs')
   const offlineRow = page.getByRole('row').filter({ hasText: 'kamei14-benchmark-v1' })
   await expect(offlineRow).toContainText('仅离线基准')
   await expect(offlineRow).toContainText('已登记')

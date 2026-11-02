@@ -14,6 +14,7 @@ export default defineConfig({
   testIgnore: [
     '**/admin-training-workbench.spec.ts',
     '**/project-workspace.spec.ts',
+    '**/admin-experiments.spec.ts',
     '**/experiment-model-promotion.spec.ts',
   ],
   outputDir: './test-results/default',

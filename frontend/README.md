@@ -53,7 +53,7 @@ npm run dev
 | 数据详情 | `#/admin/datasets/{name}/{version}` | 登录后核对固定版本，并可选择方法创建训练任务 |
 | 训练任务 | `#/admin/training[/{taskId}]` | 登录后查看活动/终态任务，取消、重试并核对成功指标 |
 | 模型比较 | `#/admin/comparisons?models={id},{id}` | 登录后并列指标与口径，不自动选出最佳模型 |
-| 实验运行 | `#/admin/experiments[/{candidateId}]` | 登录后盘点实验、筛选兼容性并选择性登记；训练成功不自动上线 |
+| 实验登记 | `#/admin/experiment-runs[/{candidateId}]` | 登录后盘点实验、筛选兼容性并选择性登记；训练成功不自动上线 |
 | 管理验证 | `#/admin/reports[/{runId}/{overview|trends|commits}]` | 登录后核对真实历史运行 |
 
 旧项目/分析地址继续映射到原对象；旧报告地址进入管理员登录保护。已经退役的手工预测/演示页面明确提示。管理员接口在服务端鉴权，隐藏菜单不代替权限校验。

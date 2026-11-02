@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PullRequestWork } from './PullRequestJourney'
-import { createWork, readWorks, saveWork } from '../prReview'
+import { adoptVersion, createWork, readWorks, saveWork } from '../prReview'
 import { snapshot } from '../prReview.fixture'
 
 afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
@@ -83,4 +83,25 @@ it('restores an unfinished delivery note and conclusion choice after reopening',
   await user.click(await screen.findByRole('button', { name: '输出意见' }))
   expect(screen.getByRole('combobox', { name: '本轮结论' })).toHaveValue('暂缓并说明原因')
   expect(screen.getByRole('textbox', { name: '本轮结论说明' })).toHaveValue('Still checking the expiry boundary')
+})
+
+it('opens an old evidence version directly instead of returning to the commit list', async () => {
+  const old = snapshot('v1')
+  const latest = snapshot('v2', 'e'.repeat(40)); latest.previousSnapshotId = 'v1'
+  const work = adoptVersion(createWork(old), latest)
+  work.rounds.v1.questions[0].evidence = [{ snapshotId: 'v1', path: 'src/token.py', side: 'head', line: 1, blobSha: 'c'.repeat(40), note: '' }]
+  saveWork(work)
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    if (String(path).endsWith('/repository-models')) return response({ models: [] })
+    if (String(path).endsWith('/analyses')) return response({ snapshotId: String(path).includes('v1') ? 'v1' : 'v2', analyses: [] })
+    return response(snapshot(String(path).includes('/v1') ? 'v1' : 'v2', String(path).includes('/v1') ? 'b'.repeat(40) : 'e'.repeat(40)))
+  })
+  render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
+  await screen.findByText('提交风险排序')
+  await user.click(screen.getByText('handle expiry'))
+  await user.click(await screen.findByRole('button', { name: 'src/token.py:1 · 目标 · 原版本' }))
+  await waitFor(() => expect(readWorks()[0].viewedSnapshotId).toBe('v1'))
+  expect(screen.queryByText('提交风险排序')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '提交列表' })).toBeVisible()
+  await waitFor(() => expect(screen.getByRole('button', { name: '关联 src/token.py:head:1' })).toHaveAttribute('data-focused', 'true'))
 })

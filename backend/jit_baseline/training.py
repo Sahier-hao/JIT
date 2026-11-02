@@ -20,7 +20,13 @@ class TrainingExecutor:
             artifact_root if artifact_root is not None else BACKEND / "artifacts").resolve()
 
     def run(self, dataset_manifest, algorithm, metric_set=None, *, output_key,
-            channel="training-task", request_id=None):
+            channel="training-task", request_id=None, holdout=None):
+        """执行一次训练并登记模型。
+
+        `holdout` 是 epoch 截止时间：给出时只有早于该时间的记录参与时间切分、
+        训练与验证，近期记录仍可由调用方用于评分。管理员普通训练不传，保持
+        既有全量切分行为。
+        """
         manifest_path = Path(dataset_manifest).resolve()
         dataset = load_manifest(manifest_path)
         get_algorithm(algorithm)
@@ -36,7 +42,8 @@ class TrainingExecutor:
             raise BaselineError("OUTPUT_EXISTS", "训练产物目录已存在，请为新任务使用新标识")
         built = artifacts.build_run(
             BACKEND / "data/openstack", output, schema=dataset["schemaName"],
-            algorithm=algorithm, metric_set=metric_set, dataset_manifest=manifest_path)
+            algorithm=algorithm, metric_set=metric_set, dataset_manifest=manifest_path,
+            holdout=holdout)
         # Catalog registration performs full verification before publishing readiness.
         registered = self.catalog.register_key(
             output_key, channel=channel, request_id=request_id)

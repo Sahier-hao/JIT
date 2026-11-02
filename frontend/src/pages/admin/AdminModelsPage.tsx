@@ -97,7 +97,7 @@ export function AdminModelsPage({ navigate, expired }: {
       <strong>模型目录需要处理 {readiness.issues.length} 项</strong>
       <ul>{readiness.issues.map(issue => <li key={issue.code}>{issue.message}</li>)}</ul>
       <div className="admin-status-line"><span>{readiness.completeArtifacts} 个完整产物</span><span>{readiness.unregisteredExperiments} 个未登记</span><span>{readiness.readyModels} 个可用模型</span><span>{readiness.repositorySelectableModels} 个可用于仓库分析</span></div>
-      {readiness.unregisteredExperiments ? <Button onClick={() => navigate({ name: 'admin', view: 'experiments', registrationState: 'unregistered', artifactState: 'complete' })}>查看未登记实验</Button> : null}
+      {readiness.unregisteredExperiments ? <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })}>查看未登记实验</Button> : null}
     </section> : null}
     <h2 className="admin-section-title">已登记模型 <span className="admin-count">{models.length}</span></h2>
     <ModelPolicyCards models={models} busy={!!busy} update={updatePolicy} open={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/>

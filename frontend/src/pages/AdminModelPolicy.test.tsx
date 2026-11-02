@@ -82,6 +82,6 @@ it('shows unregistered experiment readiness without counting them as models', as
   expect(screen.getByText('0 个可用模型')).toBeVisible()
   await userEvent.setup().click(screen.getByRole('button', { name: '查看未登记实验' }))
   expect(navigate).toHaveBeenCalledWith({
-    name: 'admin', view: 'experiments', registrationState: 'unregistered', artifactState: 'complete',
+    name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete',
   })
 })

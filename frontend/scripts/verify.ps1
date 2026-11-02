@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+if ($PSVersionTable.PSVersion.Major -lt 6) { throw 'verify.ps1 requires PowerShell 7+ (pwsh.exe)' }
 $frontendRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $frontendRoot '..'))
 $backendRoot = Join-Path $projectRoot 'backend'
@@ -78,6 +79,7 @@ try {
   Invoke-Check 'browser-tests' 'npm' @('run', 'test:e2e')
   Invoke-Check 'admin-training-browser-tests' 'npm' @('run', 'test:e2e:admin-training')
   Invoke-Check 'experiment-model-browser-tests' 'npm' @('run', 'test:e2e:experiments')
+  Invoke-Check 'preview-browser-tests' 'pwsh.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'verify-preview.ps1'))
   Set-Location -LiteralPath $projectRoot
   Invoke-Check 'openspec-validation' 'openspec' @('validate', '--specs', '--strict', '--no-interactive')
   $summary.success = $true

@@ -20,6 +20,7 @@ from fastapi import Request
 import uvicorn
 
 from jit_baseline.api import create_app
+from jit_baseline.benefit import run_benefit
 from jit_baseline.catalog import ModelCatalog
 from jit_baseline.catalog_storage import CatalogStorage
 from jit_baseline.collect import collect_repository
@@ -30,6 +31,8 @@ URL = 'https://github.com/preview/project'
 
 
 def build_preview(parent):
+    parent = Path(parent) if parent else Path(tempfile.gettempdir())
+    parent.mkdir(parents=True, exist_ok=True)
     room = Path(tempfile.mkdtemp(prefix='project-review-', dir=parent)).resolve()
     repository = room / 'repository'
     repository.mkdir()
@@ -57,6 +60,17 @@ def build_preview(parent):
 
     root = room / 'artifacts'
     shutil.copytree(BACKEND / 'artifacts' / 'baseline', root / 'baseline')
+    benefit_root = room / 'benefit'
+    run_benefit(root / 'baseline', benefit_root)
+    report_root = room / 'multi-project'
+    report_source = (BACKEND.parent / 'docs/evidence/add-multi-project-training-comparison/'
+                     'multi-project-report.json')
+    (report_root / 'preview').mkdir(parents=True)
+    shutil.copy2(report_source, report_root / 'preview/multi-project-report.json')
+    os.environ['JIT_BENEFIT_REPORT_ROOT'] = str(benefit_root)
+    os.environ['JIT_MULTI_PROJECT_REPORT_ROOT'] = str(report_root)
+    # 描述文件登记是服务启动前提：给隔离运行一份只读副本，不引用开发目录。
+    shutil.copytree(BACKEND / 'data' / 'datasets', room / 'datasets')
     storage = CatalogStorage(room / 'catalog.sqlite3')
     storage.initialize()
     catalog = ModelCatalog(storage, root)
@@ -163,7 +177,7 @@ def build_preview(parent):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='启动一次性持续审查验收环境')
-    parser.add_argument('--parent', default='D:/tmp')
+    parser.add_argument('--parent', type=Path, default=None)
     parser.add_argument('--port', type=int, default=18769)
     options = parser.parse_args()
     application, sync = build_preview(options.parent)

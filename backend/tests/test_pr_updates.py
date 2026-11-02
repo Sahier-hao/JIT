@@ -678,3 +678,137 @@ def test_single_failed_source_advances_cursor_so_other_prs_are_not_starved(env):
     assert env.review.get(env.jobs(repo)[0]['sourceSnapshotId'])['number'] == 2
     env.check(repo)
     assert len(env.jobs(repo)) == 1
+
+
+def test_batch_discovers_remote_scope_and_reports_real_submission(env):
+    repo = env.repository()
+    env.github.add(number=1)
+    env.github.add(number=2)
+    assert env.watcher.list_prs(repo)['pullRequests'] == []
+
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    assert batch['status'] == 'discovering' and batch['modelId'] == 'fixed-model'
+    assert env.watcher.analyze_all_prs(repo, 'fixed-model')['batchId'] == batch['batchId']
+    with pytest.raises(BaselineError) as error:
+        env.watcher.analyze_all_prs(repo, 'other-model')
+    assert error.value.code == 'CONFLICT_ACTIVE_SYNC'
+
+    env.worker.run()
+    done = env.watcher.batch(repo, batch['batchId'])
+    assert done['status'] == 'completed'
+    assert done['discoveryComplete'] is True and done['discovered'] == 2
+    assert done['submission'] == {'pending': 0, 'submitted': 2, 'reused': 0, 'failed': 0, 'skipped': 0}
+    assert done['counts']['queued'] == 2
+    assert {item['number'] for item in done['items']} == {1, 2}
+    assert all(item['snapshotId'] and item['syncId'] and item['modelId'] == 'fixed-model'
+               for item in done['items'])
+    assert len(env.jobs(repo)) == 2
+
+
+def test_batch_reuses_completed_result_and_retries_only_failed_items(env, monkeypatch):
+    repo = env.repository()
+    env.github.add(number=1)
+    env.github.add(number=2)
+    original = env.watcher._submit_item
+
+    def flaky(batch_id, repository_id, owner, name, number, model_id):
+        if number == 2:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '第二个 PR 暂时不可读')
+        original(batch_id, repository_id, owner, name, number, model_id)
+
+    monkeypatch.setattr(env.watcher, '_submit_item', flaky)
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.worker.run()
+    first = env.watcher.batch(repo, batch['batchId'])
+    assert first['status'] == 'partial'
+    assert first['submission']['submitted'] == 1 and first['submission']['failed'] == 1
+    assert first['counts']['queued'] == 1 and first['counts']['failed'] == 1
+    failed = next(item for item in first['items'] if item['effectiveStatus'] == 'failed')
+    assert failed['number'] == 2 and failed['errorCode'] == 'PR_SOURCE_UNAVAILABLE'
+
+    monkeypatch.setattr(env.watcher, '_submit_item', original)
+    retried = env.watcher.retry_batch(repo, batch['batchId'])
+    assert retried['retryOf'] == batch['batchId']
+    assert [item['number'] for item in retried['items']] == [2]
+    assert len(env.jobs(repo)) == 1
+    env.worker.run()
+    second = env.watcher.batch(repo, retried['batchId'])
+    assert second['status'] == 'completed'
+    assert second['submission']['submitted'] == 1
+    assert len(env.jobs(repo)) == 2
+
+    # 两个分析完成后再次批量分析：同快照同模型的结果被复用，不重复入队。
+    for job in env.jobs(repo):
+        env.complete(job)
+    reused = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.worker.run()
+    view = env.watcher.batch(repo, reused['batchId'])
+    assert view['submission']['reused'] == 2
+    assert view['counts']['completed'] == 2
+    assert len(env.jobs(repo)) == 2
+
+
+def test_batch_restart_marks_unfinished_as_interrupted(env):
+    repo = env.repository()
+    env.github.add(number=1)
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.watcher._recover_batches()
+    view = env.watcher.batch(repo, batch['batchId'])
+    assert view['status'] == 'interrupted'
+    assert view['error']['code'] == 'SYNC_INTERRUPTED'
+
+
+def test_retry_fails_when_fixed_model_is_no_longer_available(env, monkeypatch):
+    repo = env.repository()
+    env.github.add(number=1)
+    original = env.watcher._submit_item
+
+    def failing(*args):
+        raise BaselineError('MODEL_DISABLED', '模型已停用')
+
+    monkeypatch.setattr(env.watcher, '_submit_item', failing)
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.worker.run()
+    assert env.watcher.batch(repo, batch['batchId'])['status'] == 'failed'
+
+    def disabled(model_id):
+        raise BaselineError('MODEL_DISABLED', '所选模型已停用，请重新选择')
+
+    monkeypatch.setattr(env.service, '_generic_model', disabled)
+    with pytest.raises(BaselineError) as error:
+        env.watcher.retry_batch(repo, batch['batchId'])
+    assert error.value.code == 'MODEL_DISABLED'
+    monkeypatch.setattr(env.watcher, '_submit_item', original)
+
+
+def test_retry_batch_includes_cancelled_analysis_but_not_running_ones(env):
+    repo = env.repository()
+    env.github.add(number=1)
+    env.github.add(number=2)
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.worker.run()
+    first = env.watcher.batch(repo, batch['batchId'])
+    cancelled = next(item for item in first['items'] if item['number'] == 1)
+    env.fail(next(job for job in env.jobs(repo) if job['syncId'] == cancelled['syncId']),
+             code='SYNC_CANCELLED', status='cancelled')
+    view = env.watcher.batch(repo, batch['batchId'])
+    assert view['counts']['cancelled'] == 1
+    assert view['counts']['queued'] == 1
+    retried = env.watcher.retry_batch(repo, batch['batchId'])
+    assert [item['number'] for item in retried['items']] == [1]
+
+
+def test_batch_reads_every_remote_page_without_local_cache(env):
+    repo = env.repository()
+    for number in range(1, 32):
+        env.github.add(number=number)
+    assert env.watcher.list_prs(repo)['pullRequests'] == []
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.worker.run()
+    view = env.watcher.batch(repo, batch['batchId'])
+    assert view['discoveryComplete'] is True
+    assert view['discovered'] == 31
+    assert len(view['items']) == 31
+    assert view['submission']['submitted'] == 31
+    assert {item['number'] for item in view['items']} == set(range(1, 32))
+    assert env.service.repository_syncs(repo, limit=100)['total'] == 31

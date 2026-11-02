@@ -146,6 +146,7 @@ test('管理员登录、模型产物登记、验证报告和退出权限', async
   await page.getByRole('button', { name: '模型管理', exact: true }).click()
   await page.getByRole('button', { name: '验证报告', exact: true }).click()
   await expect(page.getByRole('heading', { name: '验证报告', exact: true })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: '验证报告视图' })).toBeVisible()
   await expect(page.getByText('公开历史数据', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '退出管理', exact: true }).click()
   await expect(page.getByRole('heading', { name: '项目', exact: true })).toBeVisible()

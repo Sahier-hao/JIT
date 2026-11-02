@@ -92,7 +92,7 @@ it('lists experiment runs and promotes an explicit batch with partial results', 
       offset: 0,
     })
   })
-  render(<AdminWorkspace route={{ name: 'admin', view: 'experiments' }} navigate={navigate}/>)
+  render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs' }} navigate={navigate}/>)
   expect(await screen.findByText('实验甲')).toBeVisible()
   expect(screen.getAllByText('AP 0.5000 · ROC-AUC 0.7000')).toHaveLength(2)
   expect(screen.getAllByText('仅离线基准').length).toBeGreaterThan(0)
@@ -101,7 +101,7 @@ it('lists experiment runs and promotes an explicit batch with partial results', 
   const statusFilter = screen.getByLabelText('登记状态')
   statusFilter.focus()
   await user.selectOptions(statusFilter, 'unregistered')
-  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ view: 'experiments', registrationState: 'unregistered' }))
+  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ view: 'experiment-runs', registrationState: 'unregistered' }))
   const first = screen.getByRole('checkbox', { name: '选择实验 run-a' })
   first.focus()
   await user.keyboard(' ')
@@ -118,7 +118,7 @@ it('lists experiment runs and promotes an explicit batch with partial results', 
 
 it('shows an experiment detail with provenance and metric limitations', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => session(String(path)) ?? Response.json(FULL_RUN))
-  render(<AdminWorkspace route={{ name: 'admin', view: 'experiments', resourceId: FULL_RUN.candidateId }} navigate={vi.fn()}/>)
+  render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs', resourceId: FULL_RUN.candidateId }} navigate={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: '实验甲' })).toBeVisible()
   expect(screen.getByText('suites/demo/logistic-regression-l2-v1')).toBeVisible()
   expect(screen.getByText('提交级聚合')).toBeVisible()
@@ -132,7 +132,7 @@ it('shows loading and empty states', async () => {
     if (auth) return auth
     return new Promise(resolve => { release = resolve })
   })
-  render(<AdminWorkspace route={{ name: 'admin', view: 'experiments' }} navigate={vi.fn()}/>)
+  render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs' }} navigate={vi.fn()}/>)
   expect(await screen.findByText('正在盘点实验运行')).toBeVisible()
   await act(async () => {
     release?.(Response.json({ runs: [], reports: [], total: 0, limit: 20, offset: 0 }))
@@ -143,7 +143,7 @@ it('shows loading and empty states', async () => {
 
 it('shows a recoverable error state', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => session(String(path)) ?? Response.json({ error: { code: 'STORAGE_UNAVAILABLE', message: '目录库不可用', requestId: 'experiments' } }, { status: 503 }))
-  render(<AdminWorkspace route={{ name: 'admin', view: 'experiments' }} navigate={vi.fn()}/>)
+  render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs' }} navigate={vi.fn()}/>)
   expect(await screen.findByText('目录库不可用')).toBeVisible()
   expect(screen.getByRole('button', { name: '刷新' })).toBeVisible()
 })

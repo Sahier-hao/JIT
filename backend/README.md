@@ -480,7 +480,7 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 
 发现客户端只提交不透明候选身份；登记时重新校验 manifest 哈希和全部模型文件。`suite.json` 新运行
 记录 `artifactPath`、可用的 `artifactKey`、`manifestSha256` 和指标摘要，但不会自动登记。
-目录中的聚合报告不生成模型候选。迁移 `019_experiment_promotion.sql` 扩展登记审计来源。
+目录中的聚合报告不生成模型候选。迁移 `020_experiment_promotion.sql` 扩展登记审计来源。
 
 在 backend 执行：
 
