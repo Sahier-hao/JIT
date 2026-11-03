@@ -1,0 +1,631 @@
+{
+  "models": [
+    {
+      "modelId": "06d695ef-1bbd-4c0c-a987-0b767f6adb55",
+      "name": "��� �� ���� ResNet �� openstack-six-v1",
+      "method": "tabular-resnet-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "9ff28087-a9af-40d8-93bc-c59c7db4b4c7",
+      "artifactRunId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "5d772cc6-994a-4921-893e-ab3509be9772",
+      "name": "��� �� FT-Transformer �� openstack-six-v1",
+      "method": "ft-transformer-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "59dacbb4-d910-440e-9ce3-6636af4f7e9e",
+      "artifactRunId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "66139218-3d30-413f-921e-d73d618fc720",
+      "name": "��� �� Wide&Deep �� openstack-six-v1",
+      "method": "wide-deep-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "6e4aecef-c958-4f1f-86be-11db971a8734",
+      "artifactRunId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "7438bb8c-b8c4-4e18-b7f6-1730256b9b33",
+      "name": "���ɭ�� �� openstack-six-v1",
+      "method": "random-forest-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "0f12788d-de6a-497e-8efb-5aa928fe23ef",
+      "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "89adb17b-5071-4ecb-ab4f-06315c234535",
+      "name": "�߼��ع� �� ���ֶ�",
+      "method": "logistic-regression-l2-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": true,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "3b73aad7-b067-4c0a-934c-791f547f92ca",
+      "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "b71011b8-cc84-4f7e-a2eb-dd40e8f7fd62",
+      "name": "������ �� openstack-six-v1",
+      "method": "decision-tree-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "6ba70fc5-52b3-4bca-9b8a-a305663f1d32",
+      "artifactRunId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "bdec063a-0611-497b-a4f9-e293259ef535",
+      "name": "������ �� openstack-six-v1",
+      "method": "decision-tree-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "8385cc10-7d3a-4406-880c-b6ddca77cb6e",
+      "artifactRunId": "ebf5736d6e12b279fc1aec405b15613d891492932b66f01b9a67c874e3bb4766",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "e7bbceeb-423d-4cc5-9a08-4d5a4d75eccc",
+      "name": "�ݶ������� �� openstack-six-v1",
+      "method": "gradient-boosting-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "4c08d340-fb82-4d2f-bda7-070d7a51d1d5",
+      "artifactRunId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "f145b351-c5f2-44b7-b7a1-3f82aec662c6",
+      "name": "��� �� MLP �� openstack-six-v1",
+      "method": "mlp-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "3cec661c-084d-4bda-93f5-61f144b25f5d",
+      "artifactRunId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    },
+    {
+      "modelId": "f4ab3336-8dbd-4735-8d8c-53150beafe37",
+      "name": "��˹���ر�Ҷ˹ �� openstack-six-v1",
+      "method": "gaussian-naive-bayes-v1",
+      "state": "ready",
+      "enabled": true,
+      "isDefault": false,
+      "featureSchemaVersion": "openstack-six-v1",
+      "runId": "8bab4d41-a218-4e86-8dca-a6a097b21056",
+      "artifactRunId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+      "artifactDatasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c"
+    }
+  ],
+  "readiness": {
+    "ready": true,
+    "completeArtifacts": 10,
+    "unregisteredExperiments": 0,
+    "completeUnregisteredExperiments": 0,
+    "invalidArtifacts": 0,
+    "registeredModels": 10,
+    "readyModels": 10,
+    "repositorySelectableModels": 10,
+    "userSelectableModels": 10,
+    "invalidModels": 0,
+    "artifactInvalidModels": 0,
+    "dependencyUnavailableModels": 0,
+    "disabledModels": 0,
+    "incompatibleModels": 0,
+    "defaultModelId": "89adb17b-5071-4ecb-ab4f-06315c234535",
+    "defaultAvailable": true,
+    "reportOnlyArtifacts": 0,
+    "issues": []
+  },
+  "coverage": {
+    "datasets": [
+      {
+        "datasetKey": "ab64a3d5c182ce6acf5688f6",
+        "dataset": "�������� JIT ��׼",
+        "datasetVersion": "jit-package-e2e-v1",
+        "schema": "openstack-six-v1",
+        "metricSet": "metric-set-v2",
+        "source": "suite",
+        "suitePath": "suites/jit-package-e2e",
+        "suiteStatus": "complete",
+        "methods": [
+          {
+            "method": "logistic-regression-l2-v1",
+            "name": "�߼��ع� �� L2",
+            "category": "classic",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+            "modelId": "89adb17b-5071-4ecb-ab4f-06315c234535",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.38293951606100585
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7709845993189962
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.04195804195804196
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.066006600660066
+              }
+            }
+          },
+          {
+            "method": "decision-tree-v1",
+            "name": "������ �� CART",
+            "category": "classic",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+            "modelId": "b71011b8-cc84-4f7e-a2eb-dd40e8f7fd62",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3288404735927449
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7433059920296679
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.1258741258741259
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.0761904761904762
+              }
+            }
+          },
+          {
+            "method": "random-forest-v1",
+            "name": "���ɭ�� �� 200 �� CART",
+            "category": "classic",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+            "modelId": "7438bb8c-b8c4-4e18-b7f6-1730256b9b33",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3879739107216317
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7644981055957445
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.08391608391608392
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.0
+              }
+            }
+          },
+          {
+            "method": "gaussian-naive-bayes-v1",
+            "name": "��˹���ر�Ҷ˹ �� ��˹����",
+            "category": "classic",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+            "modelId": "f4ab3336-8dbd-4735-8d8c-53150beafe37",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3295193428697234
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7375190221393157
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.05944055944055944
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.3626943005181347
+              }
+            }
+          },
+          {
+            "method": "gradient-boosting-v1",
+            "name": "�ݶ������� �� 200 ��С��",
+            "category": "classic",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+            "modelId": "e7bbceeb-423d-4cc5-9a08-4d5a4d75eccc",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.38988382369182484
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7637628803870029
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.11538461538461539
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.09061488673139159
+              }
+            }
+          },
+          {
+            "method": "mlp-v1",
+            "name": "����֪����2 ���㣩",
+            "category": "deep",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+            "modelId": "f145b351-c5f2-44b7-b7a1-3f82aec662c6",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3812939371886064
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7701099156108728
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.05244755244755245
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.0
+              }
+            }
+          },
+          {
+            "method": "tabular-resnet-v1",
+            "name": "����в����磨2 ���в�飩",
+            "category": "deep",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+            "modelId": "06d695ef-1bbd-4c0c-a987-0b767f6adb55",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.37849128439155655
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7656126579228046
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.06993006993006994
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.0
+              }
+            }
+          },
+          {
+            "method": "ft-transformer-v1",
+            "name": "���� token �� Transformer��ÿ�ֶ�һ�� token��",
+            "category": "deep",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+            "modelId": "5d772cc6-994a-4921-893e-ab3509be9772",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3810518489930118
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7640317563738113
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.06643356643356643
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.0
+              }
+            }
+          },
+          {
+            "method": "wide-deep-v1",
+            "name": "����˫�������Է��� + MLP ����������",
+            "category": "deep",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+            "modelId": "66139218-3d30-413f-921e-d73d618fc720",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3847734924108716
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7688715241363614
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.06993006993006994
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.006968641114982578
+              }
+            }
+          }
+        ],
+        "counts": {
+          "missing": 0,
+          "failed": 0,
+          "invalid": 0,
+          "offline-only": 0,
+          "input-unsupported": 0,
+          "incompatible": 0,
+          "complete-unregistered": 0,
+          "registered-ready": 9,
+          "registered-unavailable": 0
+        }
+      },
+      {
+        "datasetKey": "66935cb1487cc9785fc7b6fd",
+        "dataset": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+        "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+        "schema": "openstack-six-v1",
+        "metricSet": "metric-set-v1",
+        "source": "artifacts",
+        "suitePath": null,
+        "suiteStatus": null,
+        "methods": [
+          {
+            "method": "logistic-regression-l2-v1",
+            "name": "�߼��ع� �� L2",
+            "category": "classic",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "decision-tree-v1",
+            "name": "������ �� CART",
+            "category": "classic",
+            "state": "registered-ready",
+            "reason": null,
+            "runId": "ebf5736d6e12b279fc1aec405b15613d891492932b66f01b9a67c874e3bb4766",
+            "modelId": "bdec063a-0611-497b-a4f9-e293259ef535",
+            "modelState": "ready",
+            "enabled": true,
+            "metrics": {
+              "averagePrecision": {
+                "reason": null,
+                "value": 0.3288404735927449
+              },
+              "rocAuc": {
+                "reason": null,
+                "value": 0.7433059920296679
+              },
+              "recall20Loc": {
+                "reason": null,
+                "value": 0.1258741258741259
+              },
+              "f1": {
+                "reason": null,
+                "value": 0.0761904761904762
+              }
+            }
+          },
+          {
+            "method": "random-forest-v1",
+            "name": "���ɭ�� �� 200 �� CART",
+            "category": "classic",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "gaussian-naive-bayes-v1",
+            "name": "��˹���ر�Ҷ˹ �� ��˹����",
+            "category": "classic",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "gradient-boosting-v1",
+            "name": "�ݶ������� �� 200 ��С��",
+            "category": "classic",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "mlp-v1",
+            "name": "����֪����2 ���㣩",
+            "category": "deep",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "tabular-resnet-v1",
+            "name": "����в����磨2 ���в�飩",
+            "category": "deep",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "ft-transformer-v1",
+            "name": "���� token �� Transformer��ÿ�ֶ�һ�� token��",
+            "category": "deep",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          },
+          {
+            "method": "wide-deep-v1",
+            "name": "����˫�������Է��� + MLP ����������",
+            "category": "deep",
+            "state": "missing",
+            "reason": "�׼�����û�ж�Ӧ����������",
+            "runId": null,
+            "modelId": null,
+            "modelState": null,
+            "enabled": null,
+            "metrics": {}
+          }
+        ],
+        "counts": {
+          "missing": 8,
+          "failed": 0,
+          "invalid": 0,
+          "offline-only": 0,
+          "input-unsupported": 0,
+          "incompatible": 0,
+          "complete-unregistered": 0,
+          "registered-ready": 1,
+          "registered-unavailable": 0
+        }
+      }
+    ],
+    "total": 2,
+    "limit": 100,
+    "offset": 0,
+    "latestImport": {
+      "importId": "ed680118-dbed-49db-9243-a0d27dd416a7",
+      "packageSha256": "193b71a22c1c9e6e48733f22c87042e6e8566180c3596958f661b7e954fd7b2b",
+      "packageVersion": 1,
+      "packageName": "jit-partial-package.zip",
+      "status": "partial",
+      "modelCount": 3,
+      "registeredCount": 1,
+      "reusedCount": 0,
+      "alreadyRegisteredCount": 0,
+      "conflictCount": 1,
+      "failedCount": 1,
+      "code": null,
+      "message": null,
+      "createdAt": "2026-11-03T12:43:06.354397Z",
+      "items": [
+        {
+          "artifactRunId": "ebf5736d6e12b279fc1aec405b15613d891492932b66f01b9a67c874e3bb4766",
+          "sourceModelId": "bdec063a-0611-497b-a4f9-e293259ef535",
+          "artifactKey": "package-extra",
+          "status": "registered",
+          "modelId": "bdec063a-0611-497b-a4f9-e293259ef535",
+          "runId": "8385cc10-7d3a-4406-880c-b6ddca77cb6e",
+          "code": null,
+          "message": null
+        },
+        {
+          "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+          "sourceModelId": "7438bb8c-b8c4-4e18-b7f6-1730256b9b33",
+          "artifactKey": "decision-tree-v1",
+          "status": "conflict",
+          "modelId": null,
+          "runId": null,
+          "code": "CONTEXT_MISMATCH",
+          "message": "Ŀ�껷��������ͬ�������ݵ����ݲ�ͬ"
+        },
+        {
+          "artifactRunId": "9322bea82efee2521df28f5221060bcf416c364bf6a2a9fc7f2e28d8ef0b384d",
+          "sourceModelId": "af68ac33-8aeb-4bb6-8437-18211ce257fb",
+          "artifactKey": "package-corrupt",
+          "status": "failed",
+          "modelId": null,
+          "runId": null,
+          "code": "INTEGRITY_ERROR",
+          "message": "����У�鲻ƥ�䣺model.joblib"
+        }
+      ]
+    }
+  }
+}

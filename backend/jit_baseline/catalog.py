@@ -3,7 +3,7 @@ import json
 import os
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from .artifacts import (CORE_FILES, SERVICE_FILES, Snapshot, declared_reproducibility,
                         environment, identity, read_json, run_origin, verify_run)
@@ -319,12 +319,40 @@ class ModelCatalog:
                 return run
         raise RequestError('NOT_FOUND')
 
+    def _run_has_verified_location(self, run):
+        if run.get('artifactState') != 'complete':
+            return False
+        for location in run.get('locations') or []:
+            key = location.get('artifactKey')
+            if not key or location.get('artifactState') != 'complete':
+                continue
+            try:
+                verify_run(self._nested_directory(key))
+            except (BaselineError, OSError, ValueError):
+                continue
+            return True
+        return False
+
     def readiness(self, registered=None):
         registered = self.models() if registered is None else registered
         page = self.experiment_runs(limit=100000)
-        complete = [run for run in page['runs'] if run['artifactState'] == 'complete']
+        complete = [run for run in page['runs'] if self._run_has_verified_location(run)]
+        invalid_artifacts = [
+            run for run in page['runs']
+            if run['artifactState'] != 'complete'
+            or run['artifactState'] == 'complete' and run not in complete
+        ]
         unregistered = sum(run['registrationState'] == 'unregistered' for run in complete)
         ready_models = [model for model in registered if model.get('state') == 'ready']
+        invalid_models = [model for model in registered if model.get('state') != 'ready']
+        dependency_unavailable = sum(
+            (model.get('error') or {}).get('code') == 'MODEL_DEPENDENCY_UNAVAILABLE'
+            for model in invalid_models
+        )
+        artifact_invalid = len(invalid_models) - dependency_unavailable
+        disabled_models = [model for model in ready_models if not model.get('enabled')]
+        incompatible_models = [model for model in ready_models
+                               if model.get('featureSchemaVersion') not in REPOSITORY_SCHEMAS]
         selectable = [model for model in ready_models if model.get('enabled')
                       and model.get('featureSchemaVersion') in REPOSITORY_SCHEMAS]
         with self.store.connection() as db:
@@ -338,6 +366,21 @@ class ModelCatalog:
         if unregistered:
             issues.append({'code': 'UNREGISTERED_EXPERIMENTS',
                            'message': f'{unregistered} 个完整实验运行尚未登记。'})
+        if invalid_artifacts:
+            issues.append({'code': 'INVALID_ARTIFACTS',
+                           'message': f'{len(invalid_artifacts)} 个实验产物缺失、失败或校验不一致。'})
+        if invalid_models:
+            issues.append({'code': 'INVALID_MODEL_ARTIFACTS',
+                           'message': f'{len(invalid_models)} 个已登记模型产物不可用。'})
+        if dependency_unavailable:
+            issues.append({'code': 'DEPENDENCY_UNAVAILABLE',
+                           'message': f'{dependency_unavailable} 个模型缺少运行依赖。'})
+        if disabled_models:
+            issues.append({'code': 'DISABLED_MODELS',
+                           'message': f'{len(disabled_models)} 个候选模型已停用。'})
+        if incompatible_models:
+            issues.append({'code': 'INCOMPATIBLE_MODELS',
+                           'message': f'{len(incompatible_models)} 个模型不能用于当前仓库分析。'})
         if not ready_models:
             issues.append({'code': 'NO_READY_MODELS',
                            'message': '模型目录没有可用模型，用户不能选择模型。'})
@@ -354,9 +397,17 @@ class ModelCatalog:
             'ready': bool(ready_models) and default_available and bool(selectable),
             'completeArtifacts': len(complete),
             'unregisteredExperiments': unregistered,
+            'completeUnregisteredExperiments': unregistered,
+            'invalidArtifacts': len(invalid_artifacts),
             'registeredModels': len(registered),
             'readyModels': len(ready_models),
             'repositorySelectableModels': len(selectable),
+            'userSelectableModels': len(selectable),
+            'invalidModels': len(invalid_models),
+            'artifactInvalidModels': artifact_invalid,
+            'dependencyUnavailableModels': dependency_unavailable,
+            'disabledModels': len(disabled_models),
+            'incompatibleModels': len(incompatible_models),
             'defaultModelId': default_id,
             'defaultAvailable': default_available,
             'reportOnlyArtifacts': len(page['reports']),
@@ -436,8 +487,16 @@ class ModelCatalog:
         directory = self._directory(key)
         return self.register(self._candidate_id(key), self._manifest_hash(directory), **kwargs)
 
-    def register(self, candidate_id, expected_hash, *, channel='local-cli', request_id=None):
+    def register(self, candidate_id, expected_hash, *, channel='local-cli', request_id=None,
+                 preferred_model_id=None):
         request_id = request_id or str(uuid4())
+        if preferred_model_id is not None:
+            if not isinstance(preferred_model_id, str):
+                raise RequestError('INPUT_INVALID', field='modelId')
+            try:
+                preferred_model_id = str(UUID(preferred_model_id))
+            except ValueError as exc:
+                raise RequestError('INPUT_INVALID', field='modelId') from exc
         # Check storage before expensive verification; never create the catalog implicitly.
         with self.store.connection():
             pass
@@ -486,7 +545,14 @@ class ModelCatalog:
                     db.execute('INSERT INTO experiment_run VALUES (?,?,?,?,?)',
                                (run_id, manifest['runId'], dataset_id, encoded(config), encoded(schema)))
                 model = db.execute('SELECT id FROM model_version WHERE run_id=?', (run_id,)).fetchone()
-                model_id = model['id'] if model else str(uuid4())
+                if model:
+                    model_id = model['id']
+                else:
+                    model_id = preferred_model_id or str(uuid4())
+                    collision = db.execute('SELECT run_id FROM model_version WHERE id=?',
+                                           (model_id,)).fetchone()
+                    if collision is not None:
+                        raise RequestError('CONTEXT_MISMATCH')
                 location = db.execute('SELECT id,run_id FROM run_location WHERE relative_key=?',
                                       (artifact_key,)).fetchone()
                 if location and location['run_id'] != run_id:

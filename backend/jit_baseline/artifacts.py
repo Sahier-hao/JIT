@@ -457,6 +457,11 @@ class Snapshot:
             if (not isinstance(model, Pipeline) or model.n_features_in_ != schema.input_width()
                     or set(model.classes_.tolist()) != {0, 1}):
                 raise ValueError("model shape")
+        except (ModuleNotFoundError, ImportError) as exc:
+            raise BaselineError(
+                "MODEL_DEPENDENCY_UNAVAILABLE",
+                "模型运行依赖不可用，无法加载模型",
+            ) from exc
         except Exception as exc:
             raise BaselineError("MODEL_INVALID", "模型无法加载或类型无效") from exc
         return cls(model, records, summary, manifest, schema)

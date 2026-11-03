@@ -1,0 +1,687 @@
+{
+  "createdUtc": "2026-11-03T11:37:50.756400+00:00",
+  "kind": "jit-model-package",
+  "models": [
+    {
+      "artifactKey": "decision-tree-v1",
+      "artifactRunId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "c0b361b4c66ab9de79d2193b8d019dc781cd27a2fcdf52948e0eabeb39f3f947",
+          "size": 3845
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "35736de76010fd4e0b8b455ceab0d7a05b09b7c9d7fb6ccc80244153542ac38d",
+          "size": 1378
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "cc009164341339288342e5270deecd939cf3c235ae196904d737ac9ea6cfb730",
+          "size": 15507
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "5e4561cf339c325958f0521a8f30ac429611cb2f202bbcc44a0bbb28fc983ec4",
+          "size": 179602
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "4398618d220c8a78df858cca263e461f6cfdfe6072200ac0452198c1494f5b6e",
+          "size": 23356
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "c0b361b4c66ab9de79d2193b8d019dc781cd27a2fcdf52948e0eabeb39f3f947",
+      "method": "decision-tree-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "decision-tree@openstack-six-v1",
+        "name": "决策树 · openstack-six-v1",
+        "sha256": "cc009164341339288342e5270deecd939cf3c235ae196904d737ac9ea6cfb730"
+      },
+      "packagePath": "models/000",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "0dbe0a1a-2dec-48bd-81c1-81efb8c74701",
+      "sourceRunId": "3b26da72-0a8f-4bee-bc53-b971490711a9"
+    },
+    {
+      "artifactKey": "tabular-resnet-v1",
+      "artifactRunId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "torch",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "71637e5eac1404597b2dcf894f67e3fb786a7bab96777fc83424663ed11a5b21",
+          "size": 3953
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "772339d2a0ba0bf64382e7401907f8a300cedc41a16b7548781e4d03039ca50e",
+          "size": 1357
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "59d4372a65dcce70578a9d9ac1a8e9d1b0ffe5fe9209e391f5f88abcaacb06de",
+          "size": 80218
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "aa1592b9bd0a5a31d98853e7934fa4febb52435f6752a78d9967866fc2a7e99c",
+          "size": 183672
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "c71799082e9c31d23ec4de4f809bfa691c0d6a218409bcbb2136047a8104abd5",
+          "size": 23384
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "71637e5eac1404597b2dcf894f67e3fb786a7bab96777fc83424663ed11a5b21",
+      "method": "tabular-resnet-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "torch-tabular-resnet@openstack-six-v1",
+        "name": "深度 · 表格 ResNet · openstack-six-v1",
+        "sha256": "59d4372a65dcce70578a9d9ac1a8e9d1b0ffe5fe9209e391f5f88abcaacb06de"
+      },
+      "packagePath": "models/001",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "4d7bfd4f-6626-4322-8805-586c7e163ccd",
+      "sourceRunId": "6447587b-3e95-49be-b840-6e0284499cbe"
+    },
+    {
+      "artifactKey": "baseline",
+      "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "14d7db6a2ce7f0da0576845bb87a950741b4f125a2c0312cb8b7b88e2192cbf5",
+          "size": 3915
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "b6bf0f952ce15a54a07b47c1b7fc469cc7763eb1738cb47444ccd3f9259322b2",
+          "size": 1377
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "d572e978570d2b2c23de51fadf1bc0ce1de57f191f72af77adcaa780f9d8c573",
+          "size": 1809
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "e0974cd8fab759b212d0aa2a953ac0cc75c1ecc7647412ff10268306f8e45c31",
+          "size": 183413
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "bae5121d0a7f66d7d08cf1567a4953250f6b094be30234a98455059e811556fb",
+          "size": 23384
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "14d7db6a2ce7f0da0576845bb87a950741b4f125a2c0312cb8b7b88e2192cbf5",
+      "method": "logistic-regression-l2-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "logistic-regression-six-v1",
+        "name": "逻辑回归 · 六字段",
+        "sha256": "d572e978570d2b2c23de51fadf1bc0ce1de57f191f72af77adcaa780f9d8c573"
+      },
+      "packagePath": "models/002",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "5b608a1c-c1dc-4b7e-b86e-27994892eef7",
+      "sourceRunId": "e3e994de-9a61-49b3-ba57-0664e53d1a4b"
+    },
+    {
+      "artifactKey": "wide-deep-v1",
+      "artifactRunId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "torch",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "c86c83830636a56cd660c76f447073e1b289509b5753b9c7eaca1d526607deee",
+          "size": 3949
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "b9e1569b2f6b2658618d0926ecce799a17c59a4ae971df19b30796062e26c852",
+          "size": 1365
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "0d514f8c8418aa14357c78942da63fd1469362a943fbfc663d0c3cb2018fe8d9",
+          "size": 16094
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "1e763c447d18621173396c7b1a354ea31d2d04b72639c4cf7e9f57bf1a8bb233",
+          "size": 183583
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "28ceb3ffd57127d23ee9d03c8c7f7b85d0caf1f898469f3665e0d1ac42b0a88e",
+          "size": 23378
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "c86c83830636a56cd660c76f447073e1b289509b5753b9c7eaca1d526607deee",
+      "method": "wide-deep-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "torch-wide-deep@openstack-six-v1",
+        "name": "深度 · Wide&Deep · openstack-six-v1",
+        "sha256": "0d514f8c8418aa14357c78942da63fd1469362a943fbfc663d0c3cb2018fe8d9"
+      },
+      "packagePath": "models/003",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "648db232-2270-4dac-8f79-9813d3d848f3",
+      "sourceRunId": "8d1bf6e9-902c-4deb-8a23-3434dd237341"
+    },
+    {
+      "artifactKey": "gaussian-naive-bayes-v1",
+      "artifactRunId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "cfc1e2be7b65e970f36a799e009b21b33fe28f48d6c8ec38d4ef013fc6b3dd91",
+          "size": 3794
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "2b54c70ecf6d485c8308712a997b6df95a5388fb0f8a62387234da33b44d2494",
+          "size": 1380
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "f9a19bebfe45175a53ea677aaabe3bd260f66747e5367b124f0485cd22d27e3a",
+          "size": 1345
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "d13378a809b079c595c71f1a6766d036120bae7a75a8d919b3d4fd598e0a662d",
+          "size": 184233
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "750517354f6f2fd5c45dce36394cd27689df3adcc7faf433f053504e59fd9534",
+          "size": 23412
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "cfc1e2be7b65e970f36a799e009b21b33fe28f48d6c8ec38d4ef013fc6b3dd91",
+      "method": "gaussian-naive-bayes-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "gaussian-naive-bayes@openstack-six-v1",
+        "name": "高斯朴素贝叶斯 · openstack-six-v1",
+        "sha256": "f9a19bebfe45175a53ea677aaabe3bd260f66747e5367b124f0485cd22d27e3a"
+      },
+      "packagePath": "models/004",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "73d58f06-9639-4d2f-a083-c60d171f89cb",
+      "sourceRunId": "657598ae-5d55-45ea-bd21-7c894d8957a9"
+    },
+    {
+      "artifactKey": "mlp-v1",
+      "artifactRunId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "torch",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "e56ea62e8b0cc75f1ef298e1e518ee4fe1aac9f510f0f3627ffd96523528fe32",
+          "size": 3933
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "674c7c1c06139e00712a464b333e962eaa6991eb35bfad48ae55fa7fd3ded406",
+          "size": 1356
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "f55c6879ceab3eba6f8360c9e104c9d363a3523f933c46486fb61d581af82c67",
+          "size": 15326
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "37e6b902973aed716fa82b5f1e90df944dc8a3883746238da63387d9a9e1edb2",
+          "size": 183583
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "eadd8104ee03e96e9926a4c1750d91b0470cdbedc2861d25dd907286a2c80a91",
+          "size": 23350
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "e56ea62e8b0cc75f1ef298e1e518ee4fe1aac9f510f0f3627ffd96523528fe32",
+      "method": "mlp-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "torch-mlp@openstack-six-v1",
+        "name": "深度 · MLP · openstack-six-v1",
+        "sha256": "f55c6879ceab3eba6f8360c9e104c9d363a3523f933c46486fb61d581af82c67"
+      },
+      "packagePath": "models/005",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "9518d63a-07c7-45d0-8c47-4d2457b34607",
+      "sourceRunId": "b256c5bd-f23e-4f5b-b4ae-18b4691ef908"
+    },
+    {
+      "artifactKey": "random-forest-v1",
+      "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "d37f4c8e66ed464254438bf7f3b85da315e1043c265738d7ea99ded27c7215e9",
+          "size": 3873
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "44ac3100733943cced78dc301df3b0ee03d633019b84a45fc312934e9878ac6c",
+          "size": 1356
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "1f43634c4bd7c104dca8fc7c7d13a2aa8fca3dc087bf9471c4c05d90dc61dfe0",
+          "size": 1541330
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "c845e01f215d4be5cec50b864c60ddcb950efed82b3fd2674d6608429ffb8854",
+          "size": 183514
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "e768e29ca66a30adb9826ce9ce53141e51588f7d86093a2b03e47e03e591f616",
+          "size": 23366
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "d37f4c8e66ed464254438bf7f3b85da315e1043c265738d7ea99ded27c7215e9",
+      "method": "random-forest-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "random-forest@openstack-six-v1",
+        "name": "随机森林 · openstack-six-v1",
+        "sha256": "1f43634c4bd7c104dca8fc7c7d13a2aa8fca3dc087bf9471c4c05d90dc61dfe0"
+      },
+      "packagePath": "models/006",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "a94cbd17-5257-4507-b6fd-92ba9689a4e9",
+      "sourceRunId": "8b2f622a-33f2-49aa-9e73-00c6509a6ccf"
+    },
+    {
+      "artifactKey": "ft-transformer-v1",
+      "artifactRunId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "torch",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "751928be07bff0c3e73574f2b34403567de26d7587be751786b2bde8ba78a279",
+          "size": 3942
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "a7ab90cd52e25c1e604fd9e8eca8eb6e9608f58262c316fd17c55a9526b8fb7c",
+          "size": 1356
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "8ba3163aa89223cb3a34a877f1f642c9544b26916c294c12d852576134965aad",
+          "size": 562842
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "9d3296fc5883d761d193341e8db1a0bbbb242b01b34d8d7c82dc71459de7c0b6",
+          "size": 183647
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "d3e083b6efe3a44d14cae0c1a8f7830779b306d71a2f2fe7e373d3864c027bf7",
+          "size": 23388
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "751928be07bff0c3e73574f2b34403567de26d7587be751786b2bde8ba78a279",
+      "method": "ft-transformer-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "torch-ft-transformer@openstack-six-v1",
+        "name": "深度 · FT-Transformer · openstack-six-v1",
+        "sha256": "8ba3163aa89223cb3a34a877f1f642c9544b26916c294c12d852576134965aad"
+      },
+      "packagePath": "models/007",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "b14cdb11-143d-4207-b582-e356a5380f54",
+      "sourceRunId": "88dab167-2233-4abd-8d96-cc17da9b3223"
+    },
+    {
+      "artifactKey": "gradient-boosting-v1",
+      "artifactRunId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+      "compatibility": "repository-analysis",
+      "compatibilityReason": null,
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "dependencies": [
+        "fastapi",
+        "joblib",
+        "numpy",
+        "scikit-learn",
+        "scipy",
+        "threadpoolctl",
+        "uvicorn"
+      ],
+      "files": [
+        {
+          "path": "manifest.json",
+          "sha256": "1bc46cf586bf24ce605df26e638c1ba267b0b0bcc5f75912ef3c1bd8263e1243",
+          "size": 3886
+        },
+        {
+          "path": "metrics.json",
+          "sha256": "c5d3f7870a95645b32d96e19bfdd6db393c950917fad5190d5c7e6371f5e995c",
+          "size": 1379
+        },
+        {
+          "path": "model.joblib",
+          "sha256": "1dcff2a895d9483b49c146cb5647f8d842f7734b9af0212509d39a5fc6ce1ded",
+          "size": 224289
+        },
+        {
+          "path": "reference-predictions.json",
+          "sha256": "ac25481b89fa5ecdc72ba4906cfa8934e5308e9c13593081a651ee953ff87631",
+          "size": 183426
+        },
+        {
+          "path": "source.json",
+          "sha256": "c837aecd6921c6ea20735ed865b0c03da9ded422ad16ebcb17c9c6401ce759b6",
+          "size": 1848
+        },
+        {
+          "path": "split.json",
+          "sha256": "25966398ecb5832eed5b73d34173b5a41779e16cf02a438f32b85e114479b4a9",
+          "size": 656510
+        },
+        {
+          "path": "summary.json",
+          "sha256": "ad7f036c55706df36eef97500b96abc93acc62338cedfb8107b6647634edfcea",
+          "size": 23397
+        },
+        {
+          "path": "test-input.json",
+          "sha256": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+          "size": 799918
+        },
+        {
+          "path": "test-labels.json",
+          "sha256": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805",
+          "size": 151951
+        }
+      ],
+      "manifestSha256": "1bc46cf586bf24ce605df26e638c1ba267b0b0bcc5f75912ef3c1bd8263e1243",
+      "method": "gradient-boosting-v1",
+      "metricSet": "metric-set-v1",
+      "model": {
+        "id": "gradient-boosting@openstack-six-v1",
+        "name": "梯度提升树 · openstack-six-v1",
+        "sha256": "1dcff2a895d9483b49c146cb5647f8d842f7734b9af0212509d39a5fc6ce1ded"
+      },
+      "packagePath": "models/008",
+      "schema": "openstack-six-v1",
+      "sourceModelId": "e2dcdc89-b2f7-4f5e-aee7-47e5d84d63e6",
+      "sourceRunId": "eecf8406-b49b-4e7a-bca0-c2ad92bc5974"
+    }
+  ],
+  "packageVersion": 1
+}
+
