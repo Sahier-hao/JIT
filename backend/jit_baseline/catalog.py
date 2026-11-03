@@ -1,5 +1,6 @@
 """Register delivered runs without retraining or rewriting their artifacts."""
 import json
+import os
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from uuid import uuid4
@@ -19,6 +20,10 @@ def encoded(value):
 
 
 REPOSITORY_SCHEMAS = ('openstack-six-v1', 'kamei14-git-v1')
+OFFLINE_SCHEMAS = ('kamei14-benchmark-v1',)
+SEMANTIC_SCHEMAS = ('code-semantic-codebert-v1', 'kamei14-semantic-codebert-v1')
+EXPERIMENT_REPORT_NAMES = ('multi-project-report.json',)
+METRIC_KEYS = ('averagePrecision', 'rocAuc', 'recall20Loc', 'popt', 'f1', 'ifa')
 
 
 class ModelCatalog:
@@ -43,8 +48,29 @@ class ModelCatalog:
         return path
 
     def _file(self, directory, name):
-        path = (directory / name).resolve()
+        candidate = directory / name
+        if candidate.is_symlink():
+            raise RequestError('INPUT_INVALID')
+        path = candidate.resolve()
         if not path.is_relative_to(self.root):
+            raise RequestError('INPUT_INVALID')
+        return path
+
+    def _nested_directory(self, key):
+        """Resolve a server-discovered nested artifact without following links."""
+        if not isinstance(key, str) or not key or '\\' in key or ':' in key or key.startswith('/'):
+            raise RequestError('INPUT_INVALID')
+        parts = PurePosixPath(key).parts
+        if (not parts or any(part in ('.', '..') or part.startswith('.') for part in parts)
+                or parts[0] in ('development',)):
+            raise RequestError('INPUT_INVALID')
+        current = self.root
+        for part in parts:
+            current = current / part
+            if current.is_symlink():
+                raise RequestError('INPUT_INVALID')
+        path = current.resolve()
+        if not path.is_relative_to(self.root) or path == self.root:
             raise RequestError('INPUT_INVALID')
         return path
 
@@ -60,6 +86,314 @@ class ModelCatalog:
     @staticmethod
     def _candidate_id(key):
         return identity({'root': 'artifacts', 'key': key})
+
+    @staticmethod
+    def _compatibility(schema):
+        if schema in REPOSITORY_SCHEMAS:
+            return {'state': 'repository-analysis', 'reason': None}
+        if schema in OFFLINE_SCHEMAS:
+            return {'state': 'offline-only', 'reason': '该特征 schema 仅支持离线基准，不接入用户仓库分析。'}
+        if schema in SEMANTIC_SCHEMAS:
+            return {'state': 'input-unsupported', 'reason': '该模型需要离线生成的语义向量，当前用户仓库分析不能现场构造。'}
+        return {'state': 'schema-incompatible', 'reason': f'当前用户仓库分析不支持 schema {schema}。'}
+
+    def _artifact_row(self, key):
+        directory = self._nested_directory(key)
+        row = {
+            'candidateId': self._candidate_id(key),
+            'displayName': key,
+            'artifactKey': key,
+            'candidateKind': 'experiment',
+            'artifactState': 'invalid',
+            'manifestSha256': None,
+            'artifactRunId': None,
+            'runId': None,
+            'modelId': None,
+            'modelState': None,
+            'enabled': None,
+            'isDefault': None,
+            'method': None,
+            'featureSchemaVersion': None,
+            'datasetVersion': None,
+            'metricSet': None,
+            'metrics': {},
+            'trainingSeconds': None,
+            'split': {},
+            'source': {},
+            'limitations': [],
+            'artifactStateReason': None,
+            'serviceCompatibility': 'schema-incompatible',
+            'serviceCompatibilityReason': '运行产物无效，无法判断用户分析兼容性。',
+        }
+        try:
+            manifest_file = self._file(directory, 'manifest.json')
+            if manifest_file.stat().st_size > 1024 * 1024:
+                raise RequestError('ARTIFACT_INVALID')
+            row['manifestSha256'] = sha256(manifest_file.read_bytes())
+            manifest = read_json(manifest_file)
+            config = manifest['config']
+            schema = config.get('schema') or config.get('protocol')
+            if not schema:
+                raise RequestError('ARTIFACT_INVALID')
+            compatibility = self._compatibility(schema)
+            row.update({
+                'artifactRunId': manifest.get('runId'),
+                'method': config.get('algorithmVersion') or 'logistic-regression-l2-v1',
+                'featureSchemaVersion': schema,
+                'datasetVersion': config.get('datasetVersion'),
+                'metricSet': config.get('metricSet'),
+                'serviceCompatibility': compatibility['state'],
+                'serviceCompatibilityReason': compatibility['reason'],
+            })
+            required = (*CORE_FILES, 'summary.json')
+            missing = [name for name in required
+                       if not (directory / name).is_file() or (directory / name).is_symlink()]
+            if missing:
+                row['artifactStateReason'] = f'缺少必要产物：{", ".join(missing)}'
+            else:
+                summary = read_json(self._file(directory, 'summary.json'))
+                metrics = summary.get('metrics')
+                model = summary.get('model') or {}
+                if not isinstance(metrics, dict):
+                    raise RequestError('ARTIFACT_INVALID')
+                row.update({
+                    'artifactState': 'complete',
+                    'name': model.get('name') or config.get('algorithmVersion'),
+                    'datasetVersion': summary.get('datasetVersion') or config.get('datasetVersion'),
+                    'metrics': {key: metrics[key] for key in METRIC_KEYS if key in metrics},
+                    'trainingSeconds': summary.get('trainingSeconds'),
+                    'split': summary.get('split') or {},
+                    'source': summary.get('source') or {},
+                    'limitations': list(summary.get('limitations') or []),
+                })
+        except (BaselineError, KeyError, TypeError, ValueError, OSError) as exc:
+            code = exc.code if isinstance(exc, BaselineError) else 'ARTIFACT_INVALID'
+            row['artifactStateReason'] = MESSAGES.get(code, '运行产物无效，请核验声明和文件')
+        return row
+
+    def _suite_failure_rows(self):
+        rows = []
+        for current, dirs, files in os.walk(self.root, followlinks=False):
+            dirs[:] = sorted(name for name in dirs
+                             if not name.startswith('.') and not (Path(current) == self.root and name == 'development'))
+            if 'suite.json' not in files:
+                continue
+            suite_file = Path(current) / 'suite.json'
+            if suite_file.is_symlink():
+                continue
+            try:
+                suite = read_json(suite_file)
+            except BaselineError:
+                continue
+            suite_key = PurePosixPath(*suite_file.parent.relative_to(self.root).parts).as_posix()
+            schema = suite.get('schemaName')
+            compatibility = self._compatibility(schema)
+            for entry in suite.get('methods') or []:
+                if not isinstance(entry, dict) or entry.get('status') != 'failed':
+                    continue
+                method = entry.get('method')
+                if not isinstance(method, str) or not method:
+                    continue
+                key = f'{suite_key}::{method}'
+                rows.append({
+                    'candidateId': identity({'root': 'artifacts', 'suiteFailure': key}),
+                    'displayName': key,
+                    'artifactKey': None,
+                    'candidateKind': 'experiment',
+                    'artifactState': 'failed',
+                    'artifactStateReason': entry.get('message') or '套件方法训练失败',
+                    'manifestSha256': None,
+                    'artifactRunId': None,
+                    'runId': None,
+                    'modelId': None,
+                    'modelState': None,
+                    'enabled': None,
+                    'isDefault': None,
+                    'method': method,
+                    'name': method,
+                    'featureSchemaVersion': schema,
+                    'datasetVersion': suite.get('version'),
+                    'metricSet': suite.get('metricSet'),
+                    'metrics': {},
+                    'trainingSeconds': None,
+                    'split': {},
+                    'source': {},
+                    'limitations': [],
+                    'serviceCompatibility': compatibility['state'],
+                    'serviceCompatibilityReason': compatibility['reason'],
+                    'promotable': False,
+                })
+        return rows
+
+    def _registered_runs(self):
+        with self.store.connection() as db:
+            rows = db.execute(
+                "SELECT e.artifact_run_id,m.id,m.state,m.payload_json,"
+                "COALESCE(p.enabled,1) AS enabled,d.model_id=m.id AS is_default "
+                "FROM experiment_run e JOIN model_version m ON m.run_id=e.id "
+                "LEFT JOIN model_policy p ON p.model_id=m.id CROSS JOIN model_default d"
+            ).fetchall()
+        result = {}
+        for row in rows:
+            payload = json.loads(row['payload_json'])
+            result[row['artifact_run_id']] = {
+                'modelId': row['id'],
+                'runId': payload.get('runId'),
+                'modelState': row['state'],
+                'enabled': bool(row['enabled']),
+                'isDefault': bool(row['is_default']),
+                'name': payload.get('name'),
+            }
+        return result
+
+    def _experiment_inventory(self):
+        discovered = []
+        if self.root.exists():
+            for current, dirs, files in os.walk(self.root, followlinks=False):
+                dirs[:] = sorted(name for name in dirs
+                                 if not name.startswith('.') and not (Path(current) == self.root and name == 'development'))
+                if 'manifest.json' not in files:
+                    continue
+                directory = Path(current)
+                if directory.is_symlink():
+                    continue
+                key = PurePosixPath(*directory.relative_to(self.root).parts).as_posix()
+                discovered.append(self._artifact_row(key))
+        discovered.extend(self._suite_failure_rows())
+        registered = self._registered_runs()
+        grouped = {}
+        for row in discovered:
+            identity_key = row.get('artifactRunId') or row['candidateId']
+            grouped.setdefault(identity_key, []).append(row)
+        runs = []
+        for locations in grouped.values():
+            complete = [item for item in locations if item['artifactState'] == 'complete']
+            primary = complete[0] if complete else locations[0]
+            primary = dict(primary)
+            primary['locations'] = [{
+                'candidateId': item['candidateId'],
+                'artifactKey': item['artifactKey'],
+                'artifactState': item['artifactState'],
+                'manifestSha256': item['manifestSha256'],
+                'reason': item['artifactStateReason'],
+            } for item in locations]
+            artifact_run_id = primary.get('artifactRunId')
+            model = registered.get(artifact_run_id) if artifact_run_id else None
+            primary['registrationState'] = 'registered' if model else 'unregistered'
+            if model:
+                primary.update(modelId=model['modelId'], runId=model['runId'], modelState=model['modelState'],
+                               enabled=model['enabled'], isDefault=model['isDefault'])
+            primary['promotable'] = primary['artifactState'] == 'complete' and not model
+            runs.append(primary)
+        runs.sort(key=lambda item: (
+            item.get('datasetVersion') or '', item.get('featureSchemaVersion') or '',
+            item.get('method') or '', item.get('artifactRunId') or item['candidateId']))
+        return runs
+
+    def experiment_runs(self, *, registration_state=None, compatibility=None,
+                        artifact_state=None, limit=50, offset=0):
+        runs = self._experiment_inventory()
+        if registration_state:
+            runs = [item for item in runs if item['registrationState'] == registration_state]
+        if compatibility:
+            runs = [item for item in runs if item.get('serviceCompatibility') == compatibility]
+        if artifact_state:
+            runs = [item for item in runs if item['artifactState'] == artifact_state]
+        reports = []
+        if self.root.exists():
+            for current, dirs, files in os.walk(self.root, followlinks=False):
+                dirs[:] = sorted(name for name in dirs if not name.startswith('.'))
+                for name in EXPERIMENT_REPORT_NAMES:
+                    if name in files:
+                        key = PurePosixPath(*((Path(current) / name).relative_to(self.root)).parts).as_posix()
+                        reports.append({'artifactKey': key, 'registrationEligible': False,
+                                        'reason': '聚合报告不含完整模型产物，不能登记为模型。'})
+        reports.sort(key=lambda item: item['artifactKey'])
+        return {'runs': runs[offset:offset + limit], 'reports': reports,
+                'total': len(runs), 'limit': limit, 'offset': offset}
+
+    def experiment_detail(self, candidate_id):
+        for run in self._experiment_inventory():
+            if run['candidateId'] == candidate_id or any(
+                    location['candidateId'] == candidate_id for location in run['locations']):
+                return run
+        raise RequestError('NOT_FOUND')
+
+    def readiness(self, registered=None):
+        registered = self.models() if registered is None else registered
+        page = self.experiment_runs(limit=100000)
+        complete = [run for run in page['runs'] if run['artifactState'] == 'complete']
+        unregistered = sum(run['registrationState'] == 'unregistered' for run in complete)
+        ready_models = [model for model in registered if model.get('state') == 'ready']
+        selectable = [model for model in ready_models if model.get('enabled')
+                      and model.get('featureSchemaVersion') in REPOSITORY_SCHEMAS]
+        with self.store.connection() as db:
+            default_id = db.execute('SELECT model_id FROM model_default WHERE singleton=1').fetchone()[0]
+        default = next((model for model in registered if model['modelId'] == default_id), None)
+        default_available = bool(default and default.get('state') == 'ready' and default.get('enabled'))
+        issues = []
+        if not complete:
+            issues.append({'code': 'NO_COMPLETE_ARTIFACTS',
+                           'message': '没有完整实验运行，先完成训练或检查产物目录。'})
+        if unregistered:
+            issues.append({'code': 'UNREGISTERED_EXPERIMENTS',
+                           'message': f'{unregistered} 个完整实验运行尚未登记。'})
+        if not ready_models:
+            issues.append({'code': 'NO_READY_MODELS',
+                           'message': '模型目录没有可用模型，用户不能选择模型。'})
+        if default_id is None:
+            issues.append({'code': 'DEFAULT_MISSING',
+                           'message': '尚未设置默认模型。'})
+        elif not default_available:
+            issues.append({'code': 'DEFAULT_UNAVAILABLE',
+                           'message': '当前默认模型不可用或已停用。'})
+        if not selectable:
+            issues.append({'code': 'NO_REPOSITORY_MODEL',
+                           'message': '没有可用于当前用户仓库分析的已登记模型。'})
+        return {
+            'ready': bool(ready_models) and default_available and bool(selectable),
+            'completeArtifacts': len(complete),
+            'unregisteredExperiments': unregistered,
+            'registeredModels': len(registered),
+            'readyModels': len(ready_models),
+            'repositorySelectableModels': len(selectable),
+            'defaultModelId': default_id,
+            'defaultAvailable': default_available,
+            'reportOnlyArtifacts': len(page['reports']),
+            'issues': issues,
+        }
+
+    def promote_experiments(self, items, *, request_id=None):
+        results = []
+
+        def item_result(candidate_id, status, *, model_id=None, run_id=None, code=None, message=None):
+            return {'candidateId': candidate_id, 'status': status, 'modelId': model_id,
+                    'runId': run_id, 'code': code, 'message': message}
+
+        for item in items:
+            candidate_id = item['candidateId']
+            expected = item['expectedManifestSha256']
+            try:
+                run = self.experiment_detail(candidate_id)
+                if run['registrationState'] == 'registered':
+                    results.append(item_result(candidate_id, 'already-registered',
+                                               model_id=run['modelId'], run_id=run['runId']))
+                    continue
+                if run['artifactState'] != 'complete':
+                    results.append(item_result(candidate_id, 'failed', code='ARTIFACT_INVALID',
+                                               message=run.get('artifactStateReason') or '运行产物不完整'))
+                    continue
+                result = self.register(candidate_id, expected, channel='experiment-promotion',
+                                       request_id=request_id)
+                results.append(item_result(candidate_id, 'registered' if result['created'] else 'reused',
+                                           model_id=result['model']['modelId'],
+                                           run_id=result['model']['runId']))
+            except BaselineError as exc:
+                results.append(item_result(candidate_id, 'failed', code=exc.code,
+                                           message=MESSAGES.get(exc.code, str(exc))))
+        return {'items': results,
+                'registered': sum(item['status'] in ('registered', 'reused', 'already-registered') for item in results),
+                'failed': sum(item['status'] == 'failed' for item in results)}
 
     def candidates(self):
         if not self.root.exists():
@@ -108,10 +442,18 @@ class ModelCatalog:
         with self.store.connection():
             pass
         try:
-            candidate = next((c for c in self.candidates() if c['candidateId'] == candidate_id), None)
+            candidate = next((c for c in self._experiment_inventory() if any(
+                location['candidateId'] == candidate_id for location in c['locations'])), None)
             if candidate is None:
                 raise RequestError('NOT_FOUND')
-            directory = self._directory(candidate['displayName'])
+            if candidate['artifactState'] != 'complete':
+                raise RequestError('ARTIFACT_INVALID')
+            candidate_location = next(location for location in candidate['locations']
+                                      if location['candidateId'] == candidate_id)
+            artifact_key = candidate_location['artifactKey']
+            if candidate_location['artifactState'] != 'complete' or not artifact_key:
+                raise RequestError('ARTIFACT_INVALID')
+            directory = self._nested_directory(artifact_key)
             if self._manifest_hash(directory) != expected_hash:
                 raise RequestError('CONTEXT_MISMATCH')
             for name in (*CORE_FILES, 'summary.json'):
@@ -146,7 +488,7 @@ class ModelCatalog:
                 model = db.execute('SELECT id FROM model_version WHERE run_id=?', (run_id,)).fetchone()
                 model_id = model['id'] if model else str(uuid4())
                 location = db.execute('SELECT id,run_id FROM run_location WHERE relative_key=?',
-                                      (candidate['displayName'],)).fetchone()
+                                      (artifact_key,)).fetchone()
                 if location and location['run_id'] != run_id:
                     raise RequestError('CONTEXT_MISMATCH')
                 location_id = location['id'] if location else str(uuid4())
@@ -157,7 +499,7 @@ class ModelCatalog:
                                (*values, location_id))
                 else:
                     db.execute('INSERT INTO run_location VALUES (?,?,?,?,?,?,?)',
-                               (location_id, run_id, candidate['displayName'], *values))
+                               (location_id, run_id, artifact_key, *values))
                 payload = {'modelId': model_id, 'runId': run_id, 'datasetVersion': dataset_id,
                            'artifactRunId': manifest['runId'], 'artifactDatasetVersion': config['datasetVersion'],
                            'artifactModelId': artifact_model['id'], 'name': artifact_model['name'],
@@ -181,8 +523,11 @@ class ModelCatalog:
             return {'created': model is None, 'model': dict(payload, state='ready', **self.policy(model_id))}
         except BaselineError as exc:
             if exc.code != 'STORAGE_UNAVAILABLE':
-                with self.store.connection(write=True) as db:
-                    self._event(db, candidate_id, request_id, channel, 'failed', exc.code)
+                try:
+                    with self.store.connection(write=True) as db:
+                        self._event(db, candidate_id, request_id, channel, 'failed', exc.code)
+                except BaselineError:
+                    pass
             raise
 
     def _check_location(self, directory, saved, *, full=False):
@@ -221,7 +566,7 @@ class ModelCatalog:
         if row['state'] != 'ready':
             raise RequestError('MODEL_NOT_READY')
         try:
-            directory = self._directory(row['relative_key'])
+            directory = self._nested_directory(row['relative_key'])
             saved = json.loads(row['manifest_json'])
             self._check_location(directory, saved)
             snapshot = self._snapshot_cache(directory, saved['sha256'])

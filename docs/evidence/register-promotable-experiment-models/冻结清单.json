@@ -1,0 +1,79 @@
+{
+  "copiedFromWorkspace": [
+    "admin-training-browser-results.json",
+    "browser-results.json",
+    "experiment-model-browser-results.json",
+    "experiment-runs.json",
+    "models-readiness.json",
+    "promotion-results.json",
+    "README.md",
+    "screenshots/admin-experiments-1280.png",
+    "screenshots/admin-experiments-1440.png",
+    "screenshots/admin-experiments-390.png",
+    "unit-results.json",
+    "verification.json",
+    "verification.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 13,
+  "files": [
+    {
+      "path": "admin-training-browser-results.json",
+      "sha256": "fc8c9b2058310134e2689d66d4c163fb05059c950116aa2c7b4f8ea3dcb12b13"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "e9b7369974d515d5654235d2458e2666bbdef11d0c1b12540f4a87da0cafd829"
+    },
+    {
+      "path": "experiment-model-browser-results.json",
+      "sha256": "80c63898fe9563575e21af71a22175012e2d98296a022342658dc21f1a0c77f1"
+    },
+    {
+      "path": "experiment-runs.json",
+      "sha256": "b47f4449b3d4337a785c658be55061cb9407ca77583dd4d5bdd1adaa8f7b73bf"
+    },
+    {
+      "path": "models-readiness.json",
+      "sha256": "128a088513f6de23a3e19c9f51a07b842c8afca4d6613bb9420e0e17a15b7cb4"
+    },
+    {
+      "path": "promotion-results.json",
+      "sha256": "d74cd951e96fab1a84c58af9a9a3eb616bb5d6e7b11c3f03a07cabe813daced5"
+    },
+    {
+      "path": "README.md",
+      "sha256": "09c129f481b3ba78dec61326fe8aa482789a7b4b4f5954425256b0421a3837e7"
+    },
+    {
+      "path": "screenshots/admin-experiments-1280.png",
+      "sha256": "6736a35873c97bdf0b08f7e8818e930a4e8ba9d73bd4081c09e8b416b6448095"
+    },
+    {
+      "path": "screenshots/admin-experiments-1440.png",
+      "sha256": "1e8e48e8ccf16170dc72fc5ccf342f91aa57474de9bb31ef1ff8d78e371ba95b"
+    },
+    {
+      "path": "screenshots/admin-experiments-390.png",
+      "sha256": "9b832852274758b27bf9c580db60332dec20ffa87556ae3b2947691b1c1f3192"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "d647eea64d4f69b4dc0292a72974c6c3115b8647d580bbaf6f8c0b8297ae07b6"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "38b21320dbd4c49d0fd3f935ad5d1c10c3d14a4a10df364a84bb9229d7daec60"
+    },
+    {
+      "path": "verification.log",
+      "sha256": "c2d4a61792dae4c4ab4d91019adcd8f87dc0a6b2d810e3f21d7e701e8f1b5134"
+    }
+  ],
+  "frozenUtc": "2026-11-02T02:41:43.288638+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "7278eae143c0dc0a34e4a1d4a242571f1aefac2956b7f0a977737567c1cab581",
+  "workspace": "docs/evidence/_run/register-promotable-experiment-models"
+}

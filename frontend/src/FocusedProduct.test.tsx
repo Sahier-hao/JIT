@@ -45,10 +45,18 @@ it('shows deep methods separately from models that still lack delivered artifact
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
     const body = path.includes('/api/admin/session') ? { authenticated: true, username: 'admin' }
-      : path.endsWith('/api/v1/models') ? { models: [], methods: [
-        { method: 'mlp-v1', name: '多层感知机', category: 'deep', registeredModels: 1, deliveredArtifacts: 1 },
-        { method: 'random-forest-v1', name: '随机森林', category: 'classic', registeredModels: 0, deliveredArtifacts: 0 },
-      ] } : path.includes('model-candidates') ? { candidates: [] } : { repositories: [], total: 0, offset: 0, limit: 100 }
+      : path.endsWith('/api/v1/models') ? {
+        models: [],
+        methods: [
+          { method: 'mlp-v1', name: '多层感知机', category: 'deep', registeredModels: 1, deliveredArtifacts: 1 },
+          { method: 'random-forest-v1', name: '随机森林', category: 'classic', registeredModels: 0, deliveredArtifacts: 0 },
+        ],
+        readiness: {
+          ready: false, completeArtifacts: 0, unregisteredExperiments: 0, registeredModels: 0,
+          readyModels: 0, repositorySelectableModels: 0, defaultModelId: null,
+          defaultAvailable: false, reportOnlyArtifacts: 0, issues: [],
+        },
+      } : path.includes('model-candidates') ? { candidates: [] } : { repositories: [], total: 0, offset: 0, limit: 100 }
     return new Response(JSON.stringify(body), { status: 200 })
   })
   window.history.replaceState({}, '', '/#/admin')

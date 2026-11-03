@@ -1,0 +1,228 @@
+{
+  "kind": "isolated-experiment-promotion",
+  "capturedUtc": "2026-11-02T02:40:37.788717+00:00",
+  "database": "temporary isolated SQLite database outside the evidence archive",
+  "before": {
+    "totalRuns": 4,
+    "reportOnly": [
+      {
+        "artifactKey": "multi-project/e2e/multi-project-report.json",
+        "registrationEligible": false,
+        "reason": "聚合报告不含完整模型产物，不能登记为模型。"
+      }
+    ],
+    "registeredModels": [],
+    "compatibleRun": {
+      "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+      "displayName": "baseline",
+      "artifactState": "complete",
+      "registrationState": "unregistered",
+      "serviceCompatibility": "repository-analysis",
+      "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+      "featureSchemaVersion": "openstack-six-v1",
+      "method": "logistic-regression-l2-v1"
+    },
+    "offlineRun": {
+      "artifactRunId": "02cc6b986d8a04cc72f891d70d8ba4a2f209a8bb24c0aceb964fa346e02daf61",
+      "displayName": "suites/e2e-offline/logistic-regression-l2-v1",
+      "artifactState": "complete",
+      "registrationState": "unregistered",
+      "serviceCompatibility": "offline-only",
+      "datasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "featureSchemaVersion": "kamei14-benchmark-v1",
+      "method": "logistic-regression-l2-v1"
+    },
+    "failedRun": {
+      "displayName": "suites/e2e::decision-tree-v1",
+      "artifactState": "failed",
+      "artifactStateReason": "证据夹具失败方法",
+      "method": "decision-tree-v1"
+    }
+  },
+  "singlePromotionHttpStatus": 200,
+  "singlePromotion": {
+    "items": [
+      {
+        "candidateId": "60d798426642bc57884a60ce50718b49a1157d22723c91a58db39760271cc1a1",
+        "status": "registered",
+        "modelId": "c860b5aa-06ee-4590-b2ac-248bb056547b",
+        "runId": "7d71f379-7051-4263-8ae4-9635b6a8e0dc",
+        "code": null,
+        "message": null
+      }
+    ],
+    "registered": 1,
+    "failed": 0
+  },
+  "mixedPromotionHttpStatus": 200,
+  "mixedPromotion": {
+    "items": [
+      {
+        "candidateId": "1ecf86844f55ff61eb1019a72e645b3539a27317b91c00a00d4f0a9489632d8e",
+        "status": "failed",
+        "modelId": null,
+        "runId": null,
+        "code": "INTEGRITY_ERROR",
+        "message": "运行文件校验不匹配，请核验并重新登记"
+      },
+      {
+        "candidateId": "5f3a8e2b69c5be250f15c4d7d8813899a68b6dce27c8462d017a5395189c5cfc",
+        "status": "registered",
+        "modelId": "892cf21e-4c8d-4fdc-b59c-0c51ab82013e",
+        "runId": "a70cc2b4-f288-4813-a87f-4747ced217c8",
+        "code": null,
+        "message": null
+      }
+    ],
+    "registered": 1,
+    "failed": 1
+  },
+  "after": {
+    "registeredRuns": [
+      {
+        "artifactRunId": "02cc6b986d8a04cc72f891d70d8ba4a2f209a8bb24c0aceb964fa346e02daf61",
+        "modelId": "892cf21e-4c8d-4fdc-b59c-0c51ab82013e",
+        "displayName": "suites/e2e-offline/logistic-regression-l2-v1",
+        "registrationState": "registered",
+        "serviceCompatibility": "offline-only"
+      },
+      {
+        "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+        "modelId": "c860b5aa-06ee-4590-b2ac-248bb056547b",
+        "displayName": "baseline",
+        "registrationState": "registered",
+        "serviceCompatibility": "repository-analysis"
+      }
+    ],
+    "offlineModel": {
+      "modelId": "892cf21e-4c8d-4fdc-b59c-0c51ab82013e",
+      "name": "逻辑回归 · kamei14-benchmark-v1",
+      "runId": "a70cc2b4-f288-4813-a87f-4747ced217c8",
+      "artifactRunId": "02cc6b986d8a04cc72f891d70d8ba4a2f209a8bb24c0aceb964fa346e02daf61",
+      "featureSchemaVersion": "kamei14-benchmark-v1",
+      "artifactDatasetVersion": "jit-fine-kamei14-2001-03-27_2019-04-06",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.12508660370378327
+        },
+        "confusion": {
+          "fn": 143,
+          "fp": 47,
+          "tn": 3640,
+          "tp": 13
+        },
+        "counts": {
+          "negative": 3687,
+          "positive": 156,
+          "records": 3843
+        },
+        "effort": {
+          "budgetLoc": 132919.80000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 51,
+          "totalLoc": 664599,
+          "usedLoc": 132757
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.12037037037037036
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7764319376223549
+        },
+        "poptEffort": {
+          "areaModel": 0.7672004963779769,
+          "areaOracle": 0.9833025059915657,
+          "areaWorst": 0.016697494008436158,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 664599
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.21666666666666667
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.08333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.07692307692307693
+        },
+        "reference": {
+          "allNegative": {
+            "confusion": {
+              "fn": 156,
+              "fp": 0,
+              "tn": 3687,
+              "tp": 0
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.0
+            },
+            "precision": {
+              "reason": "没有预测为正的提交",
+              "value": null
+            },
+            "recall": {
+              "reason": null,
+              "value": 0.0
+            }
+          },
+          "apNoInformation": 0.04059328649492584
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7039355184188382
+        },
+        "threshold": 0.5
+      }
+    },
+    "repositoryModels": [
+      {
+        "modelId": "892cf21e-4c8d-4fdc-b59c-0c51ab82013e",
+        "name": "逻辑回归 · kamei14-benchmark-v1",
+        "method": "logistic-regression-l2-v1",
+        "featureSchemaVersion": "kamei14-benchmark-v1",
+        "state": "ready",
+        "enabled": true,
+        "isDefault": false,
+        "repositoryPredictionSupported": false
+      },
+      {
+        "modelId": "c860b5aa-06ee-4590-b2ac-248bb056547b",
+        "name": "逻辑回归 · 六字段",
+        "method": "logistic-regression-l2-v1",
+        "featureSchemaVersion": "openstack-six-v1",
+        "state": "ready",
+        "enabled": true,
+        "isDefault": true,
+        "repositoryPredictionSupported": true
+      }
+    ],
+    "offlineRepositoryPredictionSupported": [
+      false
+    ]
+  },
+  "assertions": {
+    "emptyCatalogBeforePromotion": true,
+    "singleStatus": "registered",
+    "mixedStatuses": [
+      "failed",
+      "registered"
+    ],
+    "offlineRemainsUnselectable": true,
+    "reportDoesNotProduceCandidate": true
+  }
+}

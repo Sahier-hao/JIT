@@ -2,6 +2,7 @@
 from pathlib import Path
 from contextlib import asynccontextmanager
 import os
+import re
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -49,7 +50,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from .catalog_schema import schema_info
     from .catalog import ModelCatalog
     from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
-    from .catalog_input import read_object, registration_input
+    from .catalog_input import promotion_input, read_object, registration_input
     from .api_errors import RequestError
     from starlette.concurrency import run_in_threadpool
     install_errors(app)
@@ -246,6 +247,36 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def model_candidates():
         return {'candidates': catalog.candidates()}
 
+    @app.get('/api/v1/experiment-runs')
+    def experiment_runs(registrationState: str | None = None, compatibility: str | None = None,
+                        artifactState: str | None = None, limit: int = 50, offset: int = 0):
+        if registrationState not in (None, 'registered', 'unregistered'):
+            raise RequestError('INPUT_INVALID', field='registrationState')
+        if compatibility not in (None, 'repository-analysis', 'offline-only',
+                                 'input-unsupported', 'schema-incompatible'):
+            raise RequestError('INPUT_INVALID', field='compatibility')
+        if artifactState not in (None, 'complete', 'invalid', 'failed'):
+            raise RequestError('INPUT_INVALID', field='artifactState')
+        if not 1 <= limit <= 100 or offset < 0:
+            raise RequestError('INPUT_INVALID', field='limit' if not 1 <= limit <= 100 else 'offset')
+        return catalog.experiment_runs(registration_state=registrationState,
+                                       compatibility=compatibility,
+                                       artifact_state=artifactState,
+                                       limit=limit, offset=offset)
+
+    @app.post('/api/v1/experiment-runs/promote')
+    async def promote_experiments(request: Request):
+        items = promotion_input(await read_object(request))
+        result = await run_in_threadpool(catalog.promote_experiments, items,
+                                         request_id=request.state.request_id)
+        return result
+
+    @app.get('/api/v1/experiment-runs/{candidate_id}')
+    def experiment_run_detail(candidate_id: str):
+        if not re.fullmatch('[0-9a-f]{64}', candidate_id):
+            raise RequestError('INPUT_INVALID', field='candidateId')
+        return catalog.experiment_detail(candidate_id)
+
     @app.post('/api/v1/models/register')
     async def register_model(request: Request):
         data = registration_input(await read_object(request))
@@ -267,7 +298,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                         deliveredArtifacts=sum(candidate.get('method') == key for candidate in candidates))
                    for key, value in ALGORITHMS.items()]
         return {'models': [model for model in registered_models if state is None or model['state'] == state],
-                'methods': methods}
+                'methods': methods, 'readiness': catalog.readiness(registered_models)}
 
     @app.get('/api/v1/models/{model_id}')
     def model_detail(model_id: str):

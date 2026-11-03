@@ -51,6 +51,22 @@ def registration_input(value):
     return value
 
 
+def promotion_input(value):
+    exact_fields(value, ('items',))
+    items = value['items']
+    if not isinstance(items, list) or not 1 <= len(items) <= 50:
+        raise RequestError('INPUT_INVALID', field='items')
+    result = []
+    seen = set()
+    for item in items:
+        checked = registration_input(item)
+        if checked['candidateId'] in seen:
+            raise RequestError('INPUT_INVALID', field='items.candidateId')
+        seen.add(checked['candidateId'])
+        result.append(checked)
+    return result
+
+
 def uuid_text(value, field):
     try:
         if not isinstance(value, str) or str(UUID(value)) != value.lower():

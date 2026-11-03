@@ -73,6 +73,130 @@ def test_admin_model_detail_returns_verified_metrics_and_lineage(settings):
         assert public.get(f"/api/v1/models/{model['modelId']}").status_code == 401
 
 
+def _copy_run(source, target, *, run_id=None, schema=None):
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source, target)
+    if run_id is not None:
+        manifest_path = target / 'manifest.json'
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        manifest['runId'] = run_id
+        if schema:
+            manifest['config']['schema'] = schema
+            manifest['config']['protocol'] = schema
+        manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+        summary_path = target / 'summary.json'
+        summary = json.loads(summary_path.read_text(encoding='utf-8'))
+        summary['runId'] = run_id
+        if schema:
+            summary['featureSchema']['name'] = schema
+        summary_path.write_text(json.dumps(summary), encoding='utf-8')
+    return target
+
+
+def test_experiment_inventory_groups_nested_runs_and_excludes_reports(settings, real_run):
+    from jit_baseline.api import create_app
+
+    root = settings['artifact_root']
+    baseline = json.loads((root / 'baseline/manifest.json').read_text(encoding='utf-8'))['runId']
+    nested = _copy_run(real_run, root / 'suites/demo/logistic-regression-l2-v1')
+    _copy_run(real_run, root / 'semantic/semantic-only/logistic-regression-l2-v1',
+              run_id='a' * 64, schema='code-semantic-codebert-v1')
+    _copy_run(real_run, root / 'suites/benchmark/logistic-regression-l2-v1',
+              run_id='b' * 64, schema='kamei14-benchmark-v1')
+    invalid = _copy_run(real_run, root / 'experiments/invalid', run_id='c' * 64)
+    (invalid / 'model.joblib').unlink()
+    (root / 'multi-project/demo').mkdir(parents=True)
+    (root / 'multi-project/demo/multi-project-report.json').write_text('{}', encoding='utf-8')
+    with TestClient(create_app(**settings)) as client:
+        body = client.get('/api/v1/experiment-runs', params={'limit': 100}).json()
+        assert body['total'] == 4
+        baseline_run = next(item for item in body['runs'] if item['artifactRunId'] == baseline)
+        assert len(baseline_run['locations']) == 2
+        assert {item['artifactKey'] for item in baseline_run['locations']} == {
+            'baseline', 'suites/demo/logistic-regression-l2-v1'}
+        assert baseline_run['registrationState'] == 'unregistered'
+        assert baseline_run['serviceCompatibility'] == 'repository-analysis'
+        assert next(item for item in body['runs'] if item['artifactRunId'] == 'a' * 64)['serviceCompatibility'] == 'input-unsupported'
+        assert next(item for item in body['runs'] if item['artifactRunId'] == 'b' * 64)['serviceCompatibility'] == 'offline-only'
+        assert next(item for item in body['runs'] if item['artifactRunId'] == 'c' * 64)['artifactState'] == 'invalid'
+        assert body['reports'] == [{
+            'artifactKey': 'multi-project/demo/multi-project-report.json',
+            'registrationEligible': False,
+            'reason': '聚合报告不含完整模型产物，不能登记为模型。',
+        }]
+        filtered = client.get('/api/v1/experiment-runs', params={
+            'registrationState': 'unregistered', 'compatibility': 'repository-analysis',
+            'artifactState': 'complete'}).json()
+        assert filtered['total'] == 1
+
+
+def test_experiment_promotion_is_nested_idempotent_and_batch_isolated(settings, real_run):
+    from jit_baseline.api import create_app
+    from fastapi.testclient import TestClient as PublicTestClient
+
+    root = settings['artifact_root']
+    _copy_run(real_run, root / 'suites/demo/logistic-regression-l2-v1')
+    invalid = _copy_run(real_run, root / 'experiments/invalid', run_id='d' * 64)
+    (invalid / 'model.joblib').unlink()
+    with TestClient(create_app(**settings)) as client:
+        runs = client.get('/api/v1/experiment-runs', params={'limit': 100}).json()['runs']
+        baseline = next(item for item in runs if item['artifactRunId'] ==
+                        json.loads((root / 'baseline/manifest.json').read_text(encoding='utf-8'))['runId'])
+        nested_location = next(item for item in baseline['locations']
+                               if item['artifactKey'] == 'suites/demo/logistic-regression-l2-v1')
+        top_location = next(item for item in baseline['locations'] if item['artifactKey'] == 'baseline')
+        broken_location = next(item for item in runs if item['artifactRunId'] == 'd' * 64)['locations'][0]
+        wrong = client.post('/api/v1/experiment-runs/promote', json={'items': [{
+            'candidateId': nested_location['candidateId'],
+            'expectedManifestSha256': '0' * 64,
+        }]}).json()
+        assert wrong['items'][0]['status'] == 'failed'
+        assert wrong['items'][0]['code'] == 'CONTEXT_MISMATCH'
+        response = client.post('/api/v1/experiment-runs/promote', json={'items': [
+            {'candidateId': nested_location['candidateId'],
+             'expectedManifestSha256': nested_location['manifestSha256']},
+            {'candidateId': top_location['candidateId'],
+             'expectedManifestSha256': top_location['manifestSha256']},
+            {'candidateId': broken_location['candidateId'],
+             'expectedManifestSha256': broken_location['manifestSha256']},
+        ]})
+        assert response.status_code == 200
+        results = response.json()['items']
+        assert [item['status'] for item in results] == ['registered', 'already-registered', 'failed'], results
+        model_id = results[0]['modelId']
+        assert model_id == results[1]['modelId']
+        models = client.get('/api/v1/models').json()['models']
+        assert [(item['modelId'], item['state']) for item in models] == [(model_id, 'ready')]
+        assert client.get(f'/api/v1/models/{model_id}').json()['artifactKey'] == 'suites/demo/logistic-regression-l2-v1'
+        assert any(item['registrationState'] == 'registered'
+                   for item in client.get('/api/v1/experiment-runs').json()['runs'])
+    with PublicTestClient(create_app(**settings)) as public:
+        assert public.get('/api/v1/experiment-runs').status_code == 401
+
+
+def test_experiment_paths_reject_traversal_and_links(settings, tmp_path, monkeypatch):
+    from jit_baseline.api_errors import RequestError
+    from jit_baseline.catalog import ModelCatalog
+    from jit_baseline.catalog_storage import CatalogStorage
+
+    catalog = ModelCatalog(CatalogStorage(settings['database']), settings['artifact_root'])
+    for value in ('../outside', '/absolute', 'suites/../../outside', 'suites/.hidden'):
+        with pytest.raises(RequestError) as error:
+            catalog._nested_directory(value)
+        assert error.value.code == 'INPUT_INVALID'
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    link = settings['artifact_root'] / 'linked-experiment'
+    try:
+        link.symlink_to(outside, target_is_directory=True)
+    except OSError:
+        original = Path.is_symlink
+        monkeypatch.setattr(Path, 'is_symlink', lambda path: path.name == 'linked-experiment' or original(path))
+    with pytest.raises(RequestError) as error:
+        catalog._nested_directory('linked-experiment')
+    assert error.value.code == 'INPUT_INVALID'
+
+
 @pytest.mark.parametrize('change,code', [('unknown','NOT_FOUND'), ('changed','CONTEXT_MISMATCH'),
                                       ('path','INPUT_INVALID'), ('broken','INTEGRITY_ERROR')])
 def test_register_errors_never_publish_models(settings, change, code):

@@ -21,6 +21,8 @@ it.each<Route>([
   { name: 'admin', view: 'comparisons', models: ['model-a', 'model-b'] },
   { name: 'admin', view: 'experiments' },
   { name: 'admin', view: 'experiments', resourceId: 'abc123def456' },
+  { name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', compatibility: 'repository-analysis', artifactState: 'complete', offset: 20 },
+  { name: 'admin', view: 'experiment-runs', resourceId: 'a'.repeat(64) },
 ])('round trips the exact object %j', route => expect(parseHash(hashFor(route))).toEqual(route))
 it.each(['#/models', '#/lab/models', '#/predict', '#/lab/predict', '#/predictions/batch-1', '#/lab/results/batch-1', '#/lab/demo/commits', '#/settings/connection'])('explicitly retires %s', hash => expect(parseHash(hash).name).toBe('retired'))
 it('opens projects on first visit and preserves personal reviews', () => { expect(parseHash('')).toEqual({ name: 'repositories' }); expect(parseHash('#/reviews')).toEqual({ name: 'my-reviews' }) })

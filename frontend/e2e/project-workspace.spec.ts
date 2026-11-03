@@ -155,6 +155,8 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await expect(plot).toBeVisible()
   await plot.focus()
   await page.keyboard.press('End')
+  const lastDataIndex = oldView.buckets.findLastIndex(bucket => bucket.commitCount === 27)
+  for (let index = lastDataIndex + 1; index < oldView.buckets.length; index += 1) await page.keyboard.press('ArrowLeft')
   await expect(page.locator('.trend-tooltip').first()).toContainText('27 个已分析提交')
   await page.keyboard.press('ArrowLeft')
   await expect(page.locator('.trend-tooltip').first()).not.toContainText('27 个已分析提交')

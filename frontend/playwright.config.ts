@@ -11,7 +11,12 @@ const servicePort = numberFromEnv('JIT_SERVICE_PORT', DEFAULT_SERVICE_PORT)
 export default defineConfig({
   testDir: './e2e',
   // 专用预览服务与大型仓库闭环各自使用独立数据库/模型状态，不能混入共享默认套件。
-  testIgnore: ['**/admin-training-workbench.spec.ts', '**/project-workspace.spec.ts', '**/admin-experiments.spec.ts'],
+  testIgnore: [
+    '**/admin-training-workbench.spec.ts',
+    '**/project-workspace.spec.ts',
+    '**/admin-experiments.spec.ts',
+    '**/experiment-model-promotion.spec.ts',
+  ],
   outputDir: './test-results/default',
   globalSetup: './e2e/repository-setup.ts',
   fullyParallel: true,

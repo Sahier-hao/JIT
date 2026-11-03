@@ -13,7 +13,7 @@ if not LOGGER.handlers:
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('%(levelname)s jit.catalog %(message)s'))
     LOGGER.addHandler(handler)
-API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register',
+API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register', '/api/v1/experiment-runs',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models',
                 '/api/v1/training-tasks'}
@@ -99,7 +99,7 @@ def managed_path(path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/training-tasks') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'

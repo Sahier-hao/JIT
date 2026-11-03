@@ -29,7 +29,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (16, Path(__file__).parent / 'migrations/016_repository_overview.sql'),
               (17, Path(__file__).parent / 'migrations/017_commit_file_paths.sql'),
               (18, Path(__file__).parent / 'migrations/018_training_tasks.sql'),
-              (19, Path(__file__).parent / 'migrations/019_pr_batches.sql'))
+              (19, Path(__file__).parent / 'migrations/019_pr_batches.sql'),
+              (20, Path(__file__).parent / 'migrations/020_experiment_promotion.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

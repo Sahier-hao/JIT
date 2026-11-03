@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, record } from '../../apiContract'
 import { apiRequest } from '../../apiClient'
-import { fetchAdminModels, type Row } from '../../adminContracts'
+import { fetchAdminModels, type ModelReadiness, type Row } from '../../adminContracts'
 import { Button } from '../../ui/controls'
 import { EmptyState, LoadingNotice } from '../../Feedback'
 import type { Route } from '../../navigation'
@@ -17,6 +17,7 @@ export function AdminModelsPage({ navigate, expired }: {
   const [models, setModels] = useState<Row[]>([])
   const [methods, setMethods] = useState<Row[]>([])
   const [candidates, setCandidates] = useState<Row[]>([])
+  const [readiness, setReadiness] = useState<ModelReadiness | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -31,6 +32,7 @@ export function AdminModelsPage({ navigate, expired }: {
       setModels(result.models as unknown as Row[])
       setMethods(result.methods)
       setCandidates(result.candidates)
+      setReadiness(result.readiness)
       setError('')
     }).catch(failure => {
       if (controller.signal.aborted) return
@@ -91,6 +93,12 @@ export function AdminModelsPage({ navigate, expired }: {
     <AdminPageHeader title="模型管理" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
     {notice ? <p role="status" className="admin-notice">{notice}</p> : null}
+    {readiness && readiness.issues.length ? <section className="admin-readiness" aria-label="模型目录就绪状态">
+      <strong>模型目录需要处理 {readiness.issues.length} 项</strong>
+      <ul>{readiness.issues.map(issue => <li key={issue.code}>{issue.message}</li>)}</ul>
+      <div className="admin-status-line"><span>{readiness.completeArtifacts} 个完整产物</span><span>{readiness.unregisteredExperiments} 个未登记</span><span>{readiness.readyModels} 个可用模型</span><span>{readiness.repositorySelectableModels} 个可用于仓库分析</span></div>
+      {readiness.unregisteredExperiments ? <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })}>查看未登记实验</Button> : null}
+    </section> : null}
     <h2 className="admin-section-title">已登记模型 <span className="admin-count">{models.length}</span></h2>
     <ModelPolicyCards models={models} busy={!!busy} update={updatePolicy} open={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/>
     {!models.length ? <p className="quiet-empty">尚无已登记模型</p> : null}

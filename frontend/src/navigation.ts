@@ -11,7 +11,17 @@ export type Route =
   | { name: 'analysis'; repositoryId: string; viewSyncId: string; view: 'commits' | 'plan'; commitId?: string }
   | { name: 'comparison'; repositoryId: string; baseSyncId: string; targetSyncId: string }
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
-  | { name: 'admin'; view: 'models' | 'datasets' | 'training' | 'comparisons' | 'experiments'; resourceId?: string; version?: string; models?: string[] }
+  | {
+      name: 'admin'
+      view: 'models' | 'datasets' | 'training' | 'comparisons' | 'experiments' | 'experiment-runs'
+      resourceId?: string
+      version?: string
+      models?: string[]
+      registrationState?: 'registered' | 'unregistered'
+      compatibility?: 'repository-analysis' | 'offline-only' | 'input-unsupported' | 'schema-incompatible'
+      artifactState?: 'complete' | 'invalid' | 'failed'
+      offset?: number
+    }
   | { name: 'legacy-sync'; syncId: string; view: 'commits' | 'plan' }
   | { name: 'retired'; hash: string }
   | { name: 'unknown'; hash: string }
@@ -43,8 +53,19 @@ export function parseHash(hash: string): Route {
     if (path === '/admin/training') return { name: 'admin', view: 'training' }
     if (parts[0] === 'admin' && parts[1] === 'training' && parts.length === 3) return { name: 'admin', view: 'training', resourceId: parts[2] }
     if (path === '/admin/comparisons') return { name: 'admin', view: 'comparisons', ...(comparisonModels.length ? { models: comparisonModels } : {}) }
+    if (path === '/admin/experiment-runs') return {
+      name: 'admin', view: 'experiment-runs',
+      ...(['registered', 'unregistered'].includes(params.get('registrationState') ?? '')
+        ? { registrationState: params.get('registrationState') as 'registered' | 'unregistered' } : {}),
+      ...(['repository-analysis', 'offline-only', 'input-unsupported', 'schema-incompatible'].includes(params.get('compatibility') ?? '')
+        ? { compatibility: params.get('compatibility') as 'repository-analysis' | 'offline-only' | 'input-unsupported' | 'schema-incompatible' } : {}),
+      ...(['complete', 'invalid', 'failed'].includes(params.get('artifactState') ?? '')
+        ? { artifactState: params.get('artifactState') as 'complete' | 'invalid' | 'failed' } : {}),
+      ...(Number(params.get('offset')) > 0 ? { offset: Math.floor(Number(params.get('offset'))) } : {}),
+    }
     if (path === '/admin/experiments') return { name: 'admin', view: 'experiments' }
     if (parts[0] === 'admin' && parts[1] === 'experiments' && parts.length === 3) return { name: 'admin', view: 'experiments', resourceId: parts[2] }
+    if (parts[0] === 'admin' && parts[1] === 'experiment-runs' && parts.length === 3) return { name: 'admin', view: 'experiment-runs', resourceId: parts[2] }
     if (path === '/admin/reports') return { name: 'report', view: 'overview' }
     if (parts[0] === 'admin' && parts[1] === 'reports' && parts.length === 4 && ['overview', 'commits', 'trends'].includes(parts[3])) return { name: 'report', runId: parts[2], view: parts[3] as 'overview' | 'commits' | 'trends' }
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
@@ -81,7 +102,16 @@ export function hashFor(route: Route): string {
       if (route.view === 'datasets' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}${route.version ? `/${encodeURIComponent(route.version)}` : ''}`
       if (route.view === 'training' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'experiments' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
+      if (route.view === 'experiment-runs' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'comparisons' && route.models?.length) return `${base}?models=${encodeURIComponent(route.models.join(','))}`
+      if (route.view === 'experiment-runs') {
+        const params = new URLSearchParams()
+        if (route.registrationState) params.set('registrationState', route.registrationState)
+        if (route.compatibility) params.set('compatibility', route.compatibility)
+        if (route.artifactState) params.set('artifactState', route.artifactState)
+        if (route.offset) params.set('offset', String(route.offset))
+        return params.size ? `${base}?${params}` : base
+      }
       return base
     }
     case 'legacy-sync': return `#/legacy/sync/${encodeURIComponent(route.syncId)}/${route.view}`

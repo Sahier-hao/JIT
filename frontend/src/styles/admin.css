@@ -333,7 +333,6 @@
 .admin-facts dt { color: var(--fg-3); font-size: 12.5px; }
 .admin-facts dd { margin: 0; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 .admin-facts code { overflow-wrap: anywhere; font-size: 12px; }
-
 .admin-metric-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
@@ -361,7 +360,6 @@
   border-radius: 12px;
   background: var(--card);
 }
-
 .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .admin-table th, .admin-table td { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: middle; }
 .admin-table thead th { background: var(--sunken); color: var(--fg-3); font-size: 12px; font-weight: 600; }
@@ -518,7 +516,6 @@
 .admin-field-note { margin: -4px 0 0; font-size: 12.5px; color: var(--fg-3); }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-
 /* ---------- 响应式 ---------- */
 
 @media (max-width: 1100px) {
@@ -564,6 +561,59 @@
 
 .report-caveat { margin: -6px 0 16px; font-size: 13px; color: var(--fg-3); }
 
+/* ---------- 实验运行 ---------- */
+
+.admin-experiment-filters { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin: 0 0 20px; }
+.admin-experiment-filters .ui-select { min-width: 190px; }
+.admin-filter-field { display: grid; gap: 6px; min-width: 190px; color: var(--fg-2); font-size: 12.5px; }
+.admin-filter-field select {
+  min-height: 38px;
+  padding: 7px 34px 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+}
+.admin-experiment-table { min-width: 920px; }
+.admin-experiment-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.admin-row-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-promotion-panel, .admin-promotion-results, .admin-report-only, .admin-readiness {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.admin-promotion-panel p, .admin-report-only p, .admin-readiness p { margin: 0; color: var(--fg-2); }
+.admin-promotion-results > div { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.admin-promotion-results > div:first-of-type { border-top: 0; }
+.admin-promotion-results code, .admin-location-list code { overflow-wrap: anywhere; }
+.admin-report-only > div { padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.admin-readiness ul, .admin-readiness li { margin: 0; }
+.admin-readiness ul { padding-left: 20px; color: var(--fg-2); font-size: 13px; line-height: 1.7; }
+.admin-location-list { display: grid; gap: 10px; }
+.admin-location-list > div { display: grid; gap: 4px; min-width: 0; }
+.admin-location-list span { color: var(--fg-3); font-size: 12px; }
+.admin-location-list p { margin: 0; color: var(--fg-2); font-size: 12.5px; }
+
+@media (max-width: 860px) {
+  .admin-experiment-filters { align-items: stretch; flex-direction: column; }
+  .admin-filter-field { width: 100%; min-width: 0; }
+}
+
+@media (max-width: 560px) {
+  .admin-table-wrap { max-width: calc(100vw - 36px); }
+  .admin-experiment-table { min-width: 0; table-layout: fixed; }
+  .admin-experiment-table th:nth-child(1), .admin-experiment-table td:nth-child(1) { width: 34px; padding-inline: 3px; }
+  .admin-experiment-table th:nth-child(3), .admin-experiment-table td:nth-child(3),
+  .admin-experiment-table th:nth-child(5), .admin-experiment-table td:nth-child(5) { display: none; }
+  .admin-experiment-table th:nth-child(4), .admin-experiment-table td:nth-child(4) { width: 42%; }
+  .admin-experiment-table th:nth-child(6), .admin-experiment-table td:nth-child(6) { width: 76px; }
+  .admin-experiment-table td { overflow-wrap: anywhere; }
+}
 /* 多项目实验报告：数据、训练方式与失败记录共用管理区表格，不另造图表口径。 */
 .admin-report-heading { margin: 26px 0 12px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
 .admin-report-protocols { display: grid; gap: 10px; margin-top: 14px; }

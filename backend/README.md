@@ -470,6 +470,18 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 管理接口仍读取默认目录。模型详情只读取通过当前产物校验的运行摘要；产物缺失、损坏、运行或数据身份
 不一致时返回可定位错误，不回退到其他模型或示例指标。
 
+实验运行登记（`register-promotable-experiment-models`）增加了受控递归发现和选择性晋升：
+
+| 方法与路径 | 用途 |
+|---|---|
+| `GET /api/v1/experiment-runs` | 按运行身份盘点完整实验、重复位置、登记状态和用户分析兼容性 |
+| `GET /api/v1/experiment-runs/{candidateId}` | 读取实验运行详情、指标、来源和不可登记原因 |
+| `POST /api/v1/experiment-runs/promote` | 对明确选择的运行逐项校验并登记 |
+
+发现客户端只提交不透明候选身份；登记时重新校验 manifest 哈希和全部模型文件。`suite.json` 新运行
+记录 `artifactPath`、可用的 `artifactKey`、`manifestSha256` 和指标摘要，但不会自动登记。
+目录中的聚合报告不生成模型候选。迁移 `020_experiment_promotion.sql` 扩展登记审计来源。
+
 在 backend 执行：
 
 ```powershell
