@@ -306,6 +306,210 @@
 .method-availability li > div { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
 .method-availability li > div span { font-size: 12.5px; color: var(--fg-3); }
 
+/* ---------- 训练覆盖与模型包 ---------- */
+
+.catalog-empty-state,
+.model-coverage-error,
+.model-coverage-empty,
+.model-package-panel {
+  margin: 18px 0;
+}
+
+.admin-visibility-summary {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.admin-visibility-summary .admin-status-line {
+  margin: 0;
+}
+
+.catalog-empty-state p,
+.model-coverage-error p,
+.model-coverage-empty p,
+.model-package-panel p {
+  margin: 6px 0 12px;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.model-coverage-datasets {
+  display: grid;
+  gap: 14px;
+}
+
+.model-coverage-dataset {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.model-coverage-dataset > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+
+.model-coverage-dataset > header span {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.model-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+  gap: 8px;
+}
+
+.model-coverage-grid > div {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: var(--canvas);
+}
+
+.model-coverage-grid > div > strong {
+  min-height: 2.5em;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.coverage-cell-static small,
+.coverage-cell-button small {
+  margin-top: 4px;
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.coverage-state {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: var(--sunken);
+  color: var(--fg-2);
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+
+.coverage-state[data-state="registered-ready"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.coverage-state[data-state="complete-unregistered"],
+.coverage-state[data-state="registered-unavailable"],
+.coverage-state[data-state="offline-only"],
+.coverage-state[data-state="input-unsupported"] {
+  background: var(--risk-soft);
+  color: var(--risk-fg);
+}
+
+.coverage-state[data-state="failed"],
+.coverage-state[data-state="invalid"],
+.coverage-state[data-state="incompatible"] {
+  background: var(--risk-high);
+  color: var(--card);
+}
+
+.coverage-cell-static,
+.coverage-cell-button {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  width: 100%;
+  min-height: 42px;
+  padding: 2px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.coverage-cell-button {
+  cursor: pointer;
+}
+
+.coverage-cell-button:hover {
+  background: var(--hover);
+}
+
+.coverage-cell-button:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+.model-coverage-note {
+  margin: 7px 0 0;
+  color: var(--fg-3);
+  font-size: 12.5px;
+}
+
+.model-package-panel .admin-section-title {
+  margin-top: 0;
+}
+
+.model-package-panel details {
+  margin-top: 8px;
+}
+
+.model-package-panel summary {
+  color: var(--fg-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.model-package-panel pre {
+  max-width: 100%;
+  margin: 10px 0 0;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--sunken);
+  font: 12px/1.65 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.model-package-failures {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.model-package-failures li {
+  display: grid;
+  gap: 3px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12.5px;
+}
+
+.model-package-failures code {
+  overflow-wrap: anywhere;
+}
+
 /* ---------- 详情 ---------- */
 
 .admin-detail-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }

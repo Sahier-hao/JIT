@@ -152,6 +152,24 @@ def test_experiment_run_contract_and_promotion(settings):
         assert public.get('/api/v1/experiment-runs').status_code == 401
 
 
+def test_model_coverage_contract_requires_admin(settings):
+    from admin_support import AdminTestClient as TestClient
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+
+    app = create_app(**settings)
+    with TestClient(app) as client:
+        page = validate_response(
+            client.get('/api/v1/models/coverage', params={'limit': 10}),
+            '/api/v1/models/coverage',
+        )
+        assert {'datasets', 'total', 'limit', 'offset', 'latestImport'} == set(page)
+        listing = validate_response(client.get('/api/v1/models'), '/api/v1/models')
+        assert listing['readiness']['userSelectableModels'] == listing['readiness']['repositorySelectableModels']
+    with PublicTestClient(app) as public:
+        assert public.get('/api/v1/models/coverage').status_code == 401
+
+
 @pytest.fixture
 def project_api(settings, monkeypatch):
     """复用临时模型副本，禁用后台计时，GitHub与worker均由测试显式推进。"""

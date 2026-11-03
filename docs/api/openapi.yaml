@@ -1256,6 +1256,45 @@ paths:
       description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
       security:
       - AdminSession: []
+  /api/v1/models/coverage:
+    get:
+      operationId: getModelCoverage
+      summary: 数据集版本与方法训练覆盖
+      description: 只读合并套件索引、完整产物与目录登记状态；不自动登记、不设置默认模型，也不按指标择优。
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: datasetVersion
+        in: query
+        required: false
+        schema: {type: string, minLength: 1, maxLength: 200}
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 按数据集版本分组的九种标准方法覆盖与最近一次模型包导入结果。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelCoveragePage'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/predictions:
     post:
       operationId: createPrediction
@@ -7097,9 +7136,17 @@ components:
         ready: {type: boolean}
         completeArtifacts: {type: integer, minimum: 0}
         unregisteredExperiments: {type: integer, minimum: 0}
+        completeUnregisteredExperiments: {type: integer, minimum: 0}
+        invalidArtifacts: {type: integer, minimum: 0}
         registeredModels: {type: integer, minimum: 0}
         readyModels: {type: integer, minimum: 0}
         repositorySelectableModels: {type: integer, minimum: 0}
+        userSelectableModels: {type: integer, minimum: 0}
+        invalidModels: {type: integer, minimum: 0}
+        artifactInvalidModels: {type: integer, minimum: 0}
+        dependencyUnavailableModels: {type: integer, minimum: 0}
+        disabledModels: {type: integer, minimum: 0}
+        incompatibleModels: {type: integer, minimum: 0}
         defaultModelId:
           oneOf:
           - $ref: '#/components/schemas/Uuid'
@@ -7114,9 +7161,17 @@ components:
       - ready
       - completeArtifacts
       - unregisteredExperiments
+      - completeUnregisteredExperiments
+      - invalidArtifacts
       - registeredModels
       - readyModels
       - repositorySelectableModels
+      - userSelectableModels
+      - invalidModels
+      - artifactInvalidModels
+      - dependencyUnavailableModels
+      - disabledModels
+      - incompatibleModels
       - defaultModelId
       - defaultAvailable
       - reportOnlyArtifacts
@@ -7163,6 +7218,154 @@ components:
       - models
       - methods
       - readiness
+      additionalProperties: false
+    ModelCoverageCell:
+      type: object
+      properties:
+        method: {type: string, minLength: 1}
+        name: {type: string, minLength: 1}
+        category: {type: [string, 'null']}
+        state:
+          type: string
+          enum:
+          - missing
+          - failed
+          - invalid
+          - offline-only
+          - input-unsupported
+          - incompatible
+          - complete-unregistered
+          - registered-ready
+          - registered-unavailable
+        reason: {type: [string, 'null']}
+        runId: {type: [string, 'null']}
+        modelId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        modelState: {type: [string, 'null']}
+        enabled: {type: [boolean, 'null']}
+        metrics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ExperimentMetric'
+      required: [method, name, category, state, reason, runId, modelId, modelState, enabled, metrics]
+      additionalProperties: false
+    ModelCoverageDataset:
+      type: object
+      properties:
+        datasetKey: {type: string, minLength: 1}
+        dataset: {type: string, minLength: 1}
+        datasetVersion: {type: string, minLength: 1}
+        schema: {type: string, minLength: 1}
+        metricSet: {type: [string, 'null']}
+        source: {type: string, enum: [suite, artifacts]}
+        suitePath: {type: [string, 'null']}
+        suiteStatus: {type: [string, 'null']}
+        methods:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ModelCoverageCell'
+        counts:
+          type: object
+          additionalProperties: {type: integer, minimum: 0}
+      required:
+      - datasetKey
+      - dataset
+      - datasetVersion
+      - schema
+      - metricSet
+      - source
+      - suitePath
+      - suiteStatus
+      - methods
+      - counts
+      additionalProperties: false
+    ModelPackageImportItem:
+      type: object
+      properties:
+        artifactRunId: {type: [string, 'null']}
+        sourceModelId: {type: [string, 'null']}
+        artifactKey: {type: [string, 'null']}
+        status:
+          type: string
+          enum: [registered, reused, already-registered, conflict, failed]
+        modelId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        runId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        code: {type: [string, 'null']}
+        message: {type: [string, 'null']}
+      required:
+      - artifactRunId
+      - sourceModelId
+      - artifactKey
+      - status
+      - modelId
+      - runId
+      - code
+      - message
+      additionalProperties: false
+    ModelPackageImport:
+      type: object
+      properties:
+        importId:
+          $ref: '#/components/schemas/Uuid'
+        packageSha256:
+          $ref: '#/components/schemas/Hash'
+        packageVersion: {type: integer, minimum: 0}
+        packageName: {type: string, minLength: 1}
+        status: {type: string, enum: [completed, partial, failed]}
+        modelCount: {type: integer, minimum: 0}
+        registeredCount: {type: integer, minimum: 0}
+        reusedCount: {type: integer, minimum: 0}
+        alreadyRegisteredCount: {type: integer, minimum: 0}
+        conflictCount: {type: integer, minimum: 0}
+        failedCount: {type: integer, minimum: 0}
+        code: {type: [string, 'null']}
+        message: {type: [string, 'null']}
+        createdAt: {type: string, format: date-time}
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelPackageImportItem'
+      required:
+      - importId
+      - packageSha256
+      - packageVersion
+      - packageName
+      - status
+      - modelCount
+      - registeredCount
+      - reusedCount
+      - alreadyRegisteredCount
+      - conflictCount
+      - failedCount
+      - code
+      - message
+      - createdAt
+      - items
+      additionalProperties: false
+    ModelCoveragePage:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelCoverageDataset'
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0}
+        latestImport:
+          oneOf:
+          - $ref: '#/components/schemas/ModelPackageImport'
+          - type: 'null'
+      required: [datasets, total, limit, offset, latestImport]
       additionalProperties: false
     FeatureInputRecord:
       type: object

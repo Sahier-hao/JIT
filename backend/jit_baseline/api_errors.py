@@ -42,6 +42,7 @@ MESSAGES = {
     'INTEGRITY_ERROR': '运行文件校验不匹配，请核验并重新登记',
     'ARTIFACT_INVALID': '运行声明或环境无效，请核验产物',
     'MODEL_INVALID': '模型不可加载或结构无效',
+    'MODEL_DEPENDENCY_UNAVAILABLE': '模型运行依赖不可用，请安装依赖后重新校验',
     'MODEL_NOT_READY': '模型不可用，请重新校验登记',
     'MODEL_DISABLED': '所选模型已停用，请刷新模型列表并重新选择；历史结果仍可查看',
     'DEFAULT_MODEL_REQUIRED': '请管理员先设置另一个可用的默认模型；也可明确选择已启用模型',
@@ -84,7 +85,8 @@ STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILA
 STATUS.update({'TRAINING_TIMEOUT': 504, 'TRAINING_INTERRUPTED': 503,
                'TRAINING_WORKER_EXITED': 503, 'TASK_NOT_ACTIVE': 409,
                'TASK_NOT_RETRYABLE': 409, 'TASK_SERVICE_STOPPING': 503,
-               'REPORT_NOT_FOUND': 404, 'REPORT_INVALID': 422})
+               'REPORT_NOT_FOUND': 404, 'REPORT_INVALID': 422,
+               'MODEL_DEPENDENCY_UNAVAILABLE': 503})
 
 
 class RequestError(BaselineError):

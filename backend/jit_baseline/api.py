@@ -300,6 +300,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return {'models': [model for model in registered_models if state is None or model['state'] == state],
                 'methods': methods, 'readiness': catalog.readiness(registered_models)}
 
+    @app.get('/api/v1/models/coverage')
+    def model_coverage_route(datasetVersion: str | None = None, limit: int = 50, offset: int = 0):
+        if not 1 <= limit <= 100 or offset < 0:
+            raise RequestError('INPUT_INVALID', field='limit' if not 1 <= limit <= 100 else 'offset')
+        if datasetVersion is not None and (not datasetVersion.strip() or len(datasetVersion) > 200):
+            raise RequestError('INPUT_INVALID', field='datasetVersion')
+        from .model_coverage import model_coverage
+        return model_coverage(catalog, dataset_version=datasetVersion, limit=limit, offset=offset)
+
     @app.get('/api/v1/models/{model_id}')
     def model_detail(model_id: str):
         return catalog.detail(model_id)
