@@ -104,3 +104,17 @@
 .ui-drawer .pr-backups-head > div:first-child { flex: 1 1 240px; min-width: 0; }
 .ui-drawer .pr-backups-head h3 { font-size: 14px; margin-bottom: 4px; }
 .ui-drawer .pr-backups-head p { margin: 0; font-size: 12.5px; line-height: 1.7; color: var(--fg-2); }
+
+/* 风险概览压成一行：分数、模型和固定分析入口，不再重复列出分析记录。 */
+.pr-risk-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 10px 16px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); font-size: 12.5px; }
+.pr-risk-label { color: var(--fg-3); }
+.pr-risk-value { color: var(--fg); font-variant-numeric: tabular-nums; font-weight: 550; }
+.pr-risk-model { color: var(--fg-3); }
+.pr-risk-link { margin-left: auto; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
+.pr-risk-link:hover { text-decoration: underline; }
+.pr-risk-warn { padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--risk) 12%, transparent); color: var(--risk-strong); font-size: 11px; }
+.pr-risk-error { flex-basis: 100%; }
+.pr-risk-legacy { flex-basis: 100%; margin: 2px 0 0; color: var(--fg-2); font-size: 12px; }
+.pr-risk-legacy summary { cursor: pointer; color: var(--risk-strong); }
+.pr-risk-legacy p { margin: 8px 0 4px; }
+.pr-risk-legacy ul { margin: 4px 0 0; padding-left: 18px; }

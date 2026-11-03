@@ -255,3 +255,10 @@ html[data-theme="charcoal"] {
 .pr-record[data-status='completed'] { border-color: var(--line); }
 .pr-record[data-status='failed'] { border-color: color-mix(in srgb, var(--risk-high) 30%, var(--line)); }
 @media (max-width: 1180px) { .pr-hub-layout { grid-template-columns: 1fr; } .pr-hub-records { position: static; max-height: none; } }
+
+/* 分析进度与批量进度：直接落在项目页，用户不必进入分析记录。 */
+.project-progress { margin: 14px 0 4px; padding: 14px 18px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--sh-3); }
+.record-progress { margin: 8px 0 0; padding-left: 2px; }
+.pr-batch { display: grid; gap: 8px; }
+.event-count { margin-left: 10px; color: var(--fg-3); font-size: 12.5px; }
+.event-kind { display: inline-block; margin-inline-end: 8px; padding: 1px 7px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg-3); font-size: 11px; font-weight: 500; vertical-align: 1px; }

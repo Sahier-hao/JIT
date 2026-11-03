@@ -55,11 +55,6 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   const project = await created.json()
   await page.goto(`/#/projects/${project.repositoryId}`)
   await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
-  await page.getByLabel('起始日期', { exact: true }).fill('2024-01-01')
-  const until = page.getByLabel('结束日期', { exact: true })
-  if (!await until.isVisible()) await page.locator('details.advanced-options summary').click()
-  await until.fill('2024-01-08')
-  await page.getByLabel('提交上限', { exact: true }).fill(info.project.name === 'desktop-1280' ? '431' : '432')
   const modelChoices = await (await page.request.get('/api/v1/repository-models')).json()
   const tree = modelChoices.models.find((model: { method: string }) => model.method === 'decision-tree-v1')
   expect(tree).toBeTruthy()
@@ -99,18 +94,13 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/project-narrow-${info.project.name}.png`, fullPage: true })
 })
 
-test('九种模型都实际用于仓库分析', async ({ page }, info) => {
+test('九种模型都实际用于仓库分析', async ({ page }) => {
   test.setTimeout(180000)
   const response = await page.request.post('/api/v1/repositories', { data: { repositoryUrl: REPOSITORY.replaceAll('\\', '/') } })
   const project = await response.json()
   const choices = await (await page.request.get('/api/v1/repository-models')).json()
   await page.goto(`/#/projects/${project.repositoryId}`)
   await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
-  await page.getByLabel('起始日期', { exact: true }).fill('2024-01-01')
-  const until = page.getByLabel('结束日期', { exact: true })
-  if (!await until.isVisible()) await page.locator('details.advanced-options summary').click()
-  await until.fill('2024-01-08')
-  await page.getByLabel('提交上限', { exact: true }).fill(info.project.name === 'desktop-1280' ? '421' : '422')
   expect(choices.models).toHaveLength(9)
   for (const model of choices.models) {
     expect(model?.repositoryPredictionSupported).toBe(true)

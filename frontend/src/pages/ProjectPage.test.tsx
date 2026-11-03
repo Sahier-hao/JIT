@@ -111,7 +111,7 @@ it('opens a comparison of a historical success against the pinned current result
 
 afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear() })
 
-it('restores normalized dates without widening the cancelled analysis window', async () => {
+it('retries a cancelled analysis with branch and strategy but without a hidden date window', async () => {
   sessionStorage.clear()
   let posted: unknown = null
   const fetch = mockApi({ onPost: value => { posted = value } }); const original = fetch.getMockImplementation()!
@@ -122,10 +122,14 @@ it('restores normalized dates without widening the cancelled analysis window', a
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await openActions(user, SYNC)
   await user.click(await screen.findByRole('menuitem', { name: '用这些参数重试' }))
-  expect(screen.getByLabelText('起始日期')).toHaveValue('2024-01-01')
-  expect(screen.getByLabelText('结束日期')).toHaveValue('2024-01-08')
+  expect(await screen.findByRole('group', { name: '分析选项' })).toBeInTheDocument()
+  expect(screen.queryByLabelText('起始日期')).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: '开始分析' }))
-  await waitFor(() => expect(posted).toMatchObject({ since: '2024-01-01', until: '2024-01-08' }))
+  await waitFor(() => expect(posted).not.toBeNull())
+  expect(posted).toMatchObject({ branch: 'main', strategy: 'auto' })
+  expect(posted).not.toHaveProperty('since')
+  expect(posted).not.toHaveProperty('until')
+  expect(posted).not.toHaveProperty('commitLimit')
 })
 
 it('shows queue position and confirms cancellation while preserving the current result', async () => {
@@ -140,7 +144,7 @@ it('shows queue position and confirms cancellation while preserving the current 
     return original(input, init)
   })
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
-  expect(await screen.findByText('排队第 2 位')).toBeVisible()
+  expect((await screen.findAllByText('排队第 2 位')).length).toBeGreaterThan(0)
   await openActions(user, OTHER)
   await user.click(await screen.findByRole('menuitem', { name: '取消分析' }))
   expect(cancelled).toBe(false)
@@ -204,7 +208,7 @@ it('posts a new analysis with the chosen branch and the default strategy', async
   await user.type(screen.getByRole('textbox', { name: '分支' }), 'release')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(posted).not.toBeNull())
-  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/demo', branch: 'release', commitLimit: 500, strategy: 'auto' })
+  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/demo', branch: 'release', strategy: 'auto' })
 })
 
 it('returns to the project list from the back link', async () => {
@@ -340,7 +344,7 @@ it('explains an old current pointer that came from a PR analysis', async () => {
     return original(input, init)
   })
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
-  expect(await screen.findByText(/此项目当前指针来自旧 PR 分析/)).toBeVisible()
+  expect(await screen.findByText(/当前结果来自旧 PR 分析/)).toBeVisible()
 })
 
 function overviewPayload() {

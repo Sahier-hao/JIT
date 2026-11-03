@@ -12,6 +12,7 @@ import { readWorks, workKey } from '../prReview'
 import type { Route } from '../navigation'
 import { PR_BATCH_CHANGED } from '../projectEvents'
 import { PRTrackingPanel } from './PRTrackingPanel'
+import { ProgressBar } from './JobProgress'
 
 const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', scoring: '评分中' }
@@ -123,7 +124,11 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
         </div>
       </div>
     </>}
-    {batch ? <div className="pr-batch-line" data-status={batch.status}>
+    {batch ? <div className="pr-batch" data-status={batch.status}>
+      <ProgressBar value={batch.discovered ? Math.round(((batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted) / batch.discovered) * 100) : null}
+        state={batch.status === 'failed' ? 'failed' : batch.status === 'completed' && batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted >= batch.discovered ? 'done' : batch.status === 'discovering' ? 'queued' : 'running'}
+        label="批量分析进度"/>
+    <div className="pr-batch-line" data-status={batch.status}>
       <span className="pr-batch-state">批量分析 · {batchLabel[batch.status] ?? batch.status}</span>
       <span>{batch.discoveryComplete ? `范围 ${batch.discovered} 个开放 PR` : `已发现 ${batch.discovered} 个，范围未完整获取`}</span>
       <span>已入队 {batch.submission.submitted} · 复用 {batch.submission.reused} · 失败 {batch.counts.failed} · 待处理 {batch.submission.pending}</span>
@@ -133,11 +138,13 @@ export function ProjectPullRequests({ repositoryId, navigate }: { repositoryId: 
       {batch.error ? <span role="alert">{batch.error.message}</span> : null}
       {batchError ? <span role="alert">{batchError}</span> : null}
       {batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryFailed()}>{batchBusy ? '正在重试…' : '重试失败项'}</Button> : null}
+    </div>
     </div> : null}
     {batchError && !batch ? <div className="pr-hub-alert" role="alert"><span>{batchError}</span><Button size="sm" onClick={() => setAttempt(value => value + 1)}>重试读取</Button></div> : null}
     {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
     {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
     {result && !result.supported ? <EmptyState title="此项目不是公开 GitHub 来源" description="PR 发现和自动分析只读取公开 GitHub；分支分析和风险趋势仍可使用。"/> : null}
+    {busy && result ? <ProgressBar value={null} state="queued" label="正在检查远端 PR"/> : null}
     {result?.supported ? <div className="pr-hub-panel">
       {result.errorCode ? <div className="pr-hub-alert" role="alert"><span>远端检查未完成（{result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。</span><Button size="sm" disabled={busy} onClick={refresh}>重试检查</Button></div> : null}
       {rows.length ? <div className="pr-hub-list">{rows.map(pr => {

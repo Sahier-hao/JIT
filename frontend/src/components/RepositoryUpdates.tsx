@@ -16,7 +16,7 @@ const LABELS: Record<UpdateState['status'], string> = {
 }
 const SHORT: Record<UpdateState['status'], string> = { idle: '未开启', checking: '检查中', analyzing: '检查中', updated: '有新提交', 'up-to-date': '无新提交', error: '未完成' }
 const ERRORS: Record<string, string> = {
-  REPOSITORY_UNAVAILABLE: '无法读取仓库，请检查地址、分支或网络后重试。已有分析记录仍可查看。',
+  REPOSITORY_UNAVAILABLE: '无法读取仓库，请检查地址、分支或网络后重试。',
   REPOSITORY_CHECK_TIMEOUT: '检查远端仓库超时，请重试。',
   CONFLICT_ACTIVE_SYNC: '项目已有进行中的分析，结束后可重试检查。',
   SYNC_INTERRUPTED: '服务停止时检查未完成，请重试。',
@@ -77,12 +77,12 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
   const head = state?.remoteHead?.slice(0, 7)
   const tone = state ? (state.status === 'error' ? 'alert' : state.status === 'checking' || state.status === 'analyzing' || state.status === 'updated' ? 'active' : 'ok') : 'active'
   const detail = state ? {
-    idle: '还没有开启提醒。开启后会定期检查远端分支，发现新提交只写站内提醒，不会自动分析。',
+    idle: '开启后定期检查远端分支，只提醒，不自动分析。',
     checking: `正在读取远端 ${branchLabel} 的最新提交。`,
     analyzing: `正在读取远端 ${branchLabel} 的最新提交。`,
-    updated: `远端 ${branchLabel}${head ? ` 在 ${head}` : ''} 有新提交；不会自动分析，由你决定何时发起。`,
-    'up-to-date': `远端 ${branchLabel}${head ? ` 停在 ${head}` : ''} 与当前分析一致。`,
-    error: '这次检查没有完成，可以重试；已有分析记录仍可查看。',
+    updated: `远端 ${branchLabel}${head ? ` 在 ${head}` : ''} 有新提交。`,
+    'up-to-date': `远端 ${branchLabel}${head ? ` 停在 ${head}` : ''}。`,
+    error: '这次检查没有完成，可以重试。',
   }[state.status] : ''
   return <>
     <button type="button" className="update-entry" data-tone={tone} onClick={() => setOpen(true)} aria-haspopup="dialog">
@@ -121,7 +121,6 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
             <span className="pr-field-label">检查频率</span>
             <Select ariaLabel="仓库检查频率" value={interval ?? state.intervalSeconds} onChange={value => setIntervalValue(Number(value))} disabled={busy || running} options={[...new Set([300, 900, 1800, 3600, state.intervalSeconds])].sort((a, b) => a - b).map(value => ({ value, label: `每 ${value / 60} 分钟` }))}/>
           </div>
-          <p className="form-hint">只检查新提交并提醒。模型、日期范围和提交上限在「发起分析」里选择。</p>
           <div className="update-submit"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
         </form>
       </div>}

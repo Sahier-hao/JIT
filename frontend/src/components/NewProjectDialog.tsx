@@ -8,7 +8,6 @@ export function NewProjectDialog({ open, onOpenChange, navigate }: { open: boole
     open={open}
     onOpenChange={next => { if (!next) onOpenChange(false) }}
     title="新建项目"
-    description="接入一个公开仓库，建立后自动准备首次分析。"
     width={520}
   >
     <NewProjectForm navigate={navigate} onCancel={() => onOpenChange(false)}/>

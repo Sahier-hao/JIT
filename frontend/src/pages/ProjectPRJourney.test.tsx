@@ -50,7 +50,7 @@ it('uses base-project context when starting a fork PR and returns to the project
   const source = snapshot(); source.repositoryId = PROJECT; source.headRepository = 'contributor/fork'
   const fetch = sourceApi(source), navigate = vi.fn(), user = userEvent.setup()
   render(<PullRequestWork owner="example" repositoryName="project" number={12} repositoryId={PROJECT} navigate={navigate}/>)
-  await screen.findByText(/只读预览。先看提交风险排序/)
+  await screen.findByRole('heading', { name: '提交风险排序' })
   expect(readWorks()).toHaveLength(0)
   await user.click(await screen.findByRole('button', { name: '开始审查' }))
   expect(readWorks()).toHaveLength(1)

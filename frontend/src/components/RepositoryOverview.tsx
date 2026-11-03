@@ -93,8 +93,7 @@ function ActivityChart({ activity, coverage, fetchedAt }: { activity: Repository
     {activity.length ? <div className="repo-activity-chart" tabIndex={0} role="group" aria-label={`最近 ${activity.length} 周每周提交量曲线；左右方向键逐周查看，等价数据表在本卡下方`} onKeyDown={keys} onFocus={() => { if (active === null) show(activity.length - 1) }} onBlur={() => { setActive(null); chart.current?.dispatchAction({ type: 'hideTip' }) }}>
       <EChartCanvas option={option} height={220} label={`最近 ${activity.length} 周每周提交量曲线`} onChart={instance => { chart.current = instance }}/>
     </div> : <p className="quiet-empty">GitHub 没有返回周提交统计。</p>}
-    <p className="chart-readout" role="status" aria-live="polite">{current ? `${current.weekStart} 起一周 · ${current.commits.toLocaleString()} 个提交${isPartialWeek(current.weekStart, fetchedAt) ? '（本周进行中）' : ''}` : '悬停曲线或聚焦后用左右方向键查看每周数量；等价数据表提供全部数值。'}</p>
-    <p className="form-hint">{coverage === 'last-52-weeks' ? 'GitHub 默认分支最近 52 周周提交统计，最后一周为读取时仍在进行的本周。' : '按周统计最近 100 条公开提交，不是完整仓库历史。'}</p>
+    <p className="chart-readout" role="status" aria-live="polite">{current ? `${current.weekStart} 起一周 · ${current.commits.toLocaleString()} 个提交${isPartialWeek(current.weekStart, fetchedAt) ? '（本周进行中）' : ''}` : '悬停或聚焦后用左右方向键查看每周数量。'}</p>
     <details className="repo-table-details"><summary>查看等价数据表</summary><table className="trend-data-table"><caption>{tableTitle}提交量</caption><thead><tr><th scope="col">周起始</th><th scope="col">提交数</th></tr></thead><tbody>{activity.map(item => <tr key={item.weekStart}><th scope="row">{item.weekStart}</th><td>{item.commits}</td></tr>)}</tbody></table></details>
   </div>
 }
@@ -212,7 +211,6 @@ export function RepositoryOverviewView({ repositoryId, repository, onStartAnalys
         <section className="repo-chart-card" aria-label="语言构成">
           <div className="section-label"><h2>语言构成</h2><span>GitHub 字节统计</span></div>
           {overview.languages.length ? <LanguageChart languages={overview.languages}/> : <p className="quiet-empty">GitHub 没有返回语言统计。</p>}
-          <p className="form-hint">语言构成是 GitHub 按字节统计，不是代码质量。</p>
         </section>
       </div>
       <section className="repo-commits" aria-label="最近提交">
@@ -220,8 +218,8 @@ export function RepositoryOverviewView({ repositoryId, repository, onStartAnalys
         {overview.recentCommits.length ? <ul>{overview.recentCommits.map(commit => <li key={commit.sha}><a href={commit.url} target="_blank" rel="noreferrer"><code>{commit.sha.slice(0, 7)}</code> {commit.message}</a><span>{commit.author} · {compact(commit.date)}</span></li>)}</ul> : <p className="quiet-empty">GitHub 没有返回最近提交。</p>}
       </section>
       {metadata.topics.length ? <p className="repo-topics">{metadata.topics.map(topic => <span key={topic}>{topic}</span>)}</p> : null}
-      <p className="form-hint">仓库概览读取于 {compact(overview.fetchedAt)}；GitHub 公开数据，不是模型分数或缺陷率。</p>
+      <p className="form-hint">读取于 {compact(overview.fetchedAt)}</p>
     </> : null}
-    {!hasAnalysis ? <div className="repo-callout"><div><strong>还没有分析结果</strong><p>发起分析后，模型分数和提交阅读顺序在「分析」页；这页保持仓库基本信息不变。</p></div><Button variant="primary" onClick={onStartAnalysis}>发起分析</Button></div> : null}
+    {!hasAnalysis ? <div className="repo-callout"><strong>还没有分析结果</strong><Button variant="primary" onClick={onStartAnalysis}>发起分析</Button></div> : null}
   </section>
 }

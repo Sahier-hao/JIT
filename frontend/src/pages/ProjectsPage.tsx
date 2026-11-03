@@ -92,7 +92,7 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
     <header className="page-heading">
       <div>
         <h1>{view === 'reviews' ? '我的审查' : '项目'}</h1>
-        <p className="page-intro">{view === 'reviews' ? '跨项目查看你的个人审查；草稿、问题和进度只保存在当前浏览器。' : '接入一个仓库，从一次分析开始安排下一次审查。'}</p>
+        {view === 'reviews' ? <p className="page-intro">草稿只保存在当前浏览器。</p> : null}
       </div>
       {view === 'projects' ? <Button aria-label="新建项目" variant="primary" icon={<Plus size={15}/>} onClick={() => setCreating(true)}>新建项目</Button> : null}
     </header>
@@ -127,7 +127,6 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
           </div>
           {editing ? <form className="card-editor" onSubmit={event => { event.preventDefault(); void saveName(repo.repositoryId) }}>
             <label>项目显示名<Input aria-label="项目显示名" value={draft} maxLength={80} autoFocus onChange={event => setDraft(event.target.value)}/></label>
-            <p className="card-editor-note">只改显示名；仓库地址与分析历史不变。</p>
             {editorError ? <p className="field-error" role="alert">{editorError}</p> : null}
             <div className="panel-actions">
               <Button variant="primary" type="submit" loading={busy}>{busy ? '正在保存…' : '保存名称'}</Button>

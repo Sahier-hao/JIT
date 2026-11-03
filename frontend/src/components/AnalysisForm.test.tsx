@@ -7,7 +7,7 @@ afterEach(() => vi.restoreAllMocks())
 it('shows a loading state while model metadata is pending without claiming the model is missing', () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}))
   render(<AnalysisForm repositoryUrl="https://github.com/example/pending" initial={{ modelId: 'saved-model' }} onStarted={vi.fn()}/>);
-  expect(screen.getByText(/正在读取模型设置/)).toBeVisible()
+  expect(screen.getByRole('option', { name: '正在核对原选模型…' })).toBeInTheDocument()
   expect(screen.queryByText(/尚未设置默认模型/)).not.toBeInTheDocument()
   expect(screen.queryByText(/原选模型已停用或不可用/)).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
@@ -20,7 +20,7 @@ it('explains the administrator default and blocks a saved disabled selection unt
     { modelId: 'dt', name: '决策树', method: 'dt', state: 'ready', enabled: false, isDefault: false, repositoryPredictionSupported: false },
   ] }), { status: 200 }))
   render(<AnalysisForm repositoryUrl="https://github.com/example/policy" initial={{ modelId: 'dt', strategy: 'generic-model' }} onStarted={vi.fn()}/>);
-  expect(await screen.findByText(/管理员默认模型：逻辑回归/)).toBeVisible()
+  expect(await screen.findByRole('option', { name: '使用默认模型：逻辑回归' })).toBeInTheDocument()
   expect(await screen.findByText(/原选模型已停用或不可用/)).toBeVisible()
   expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
   expect(fetch.mock.calls.every(([, options]) => options?.method !== 'POST')).toBe(true)

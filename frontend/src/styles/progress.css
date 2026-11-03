@@ -1,0 +1,39 @@
+/* 分析作业的阶段进度：轨道、节点与扫光，只表达服务端真实阶段。 */
+.job-progress { display: grid; gap: 8px; min-width: 0; }
+.job-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.job-progress-title { font: 600 13px/1.4 var(--sans); color: var(--fg); }
+.job-progress-meta { font: 11.5px/1.4 var(--mono); color: var(--fg-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.job-progress-track { position: relative; height: 6px; border-radius: 999px; background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line); }
+.job-progress-fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, var(--sunken)), var(--accent)); transition: width .65s cubic-bezier(.22, 1, .36, 1); }
+.job-progress-fill::after { content: ''; position: absolute; top: 50%; right: -4px; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 60%, transparent); animation: job-progress-pulse 1.8s ease-in-out infinite; }
+.job-progress[data-state='queued'] .job-progress-fill { width: 100% !important; background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent) 70%, transparent) 50%, transparent 100%) no-repeat; background-size: 45% 100%; animation: job-progress-sweep 1.7s ease-in-out infinite; }
+.job-progress[data-state='queued'] .job-progress-fill::after { display: none; }
+.job-progress[data-state='failed'] .job-progress-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--risk-high) 45%, var(--sunken)), var(--risk-high)); }
+.job-progress[data-state='failed'] .job-progress-fill::after { background: var(--risk-high); box-shadow: 0 0 0 4px color-mix(in srgb, var(--risk-high) 16%, transparent); animation: none; }
+.job-progress[data-state='stopped'] .job-progress-fill { background: color-mix(in srgb, var(--fg-3) 45%, var(--sunken)); }
+.job-progress[data-state='stopped'] .job-progress-fill::after { display: none; }
+.job-progress-node { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--card); box-shadow: inset 0 0 0 1.5px var(--line-strong, var(--line)); transition: background .3s ease, box-shadow .3s ease; }
+.job-progress-node[data-state='done'] { background: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.job-progress-node[data-state='active'] { background: var(--card); box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); animation: job-progress-pulse 1.8s ease-in-out infinite; }
+.job-progress-node[data-state='failed'] { background: var(--risk-high); box-shadow: inset 0 0 0 1.5px var(--risk-high); }
+.job-progress-legend { display: flex; justify-content: space-between; gap: 4px; font: 11px/1.3 var(--sans); color: var(--fg-3); }
+.job-progress-legend span { flex: 1 1 0; text-align: center; transition: color .3s ease; }
+.job-progress-legend span:first-child { text-align: left; }
+.job-progress-legend span:last-child { text-align: right; }
+.job-progress-legend span[data-state='active'] { color: var(--fg); font-weight: 600; }
+.job-progress-legend span[data-state='done'] { color: var(--fg-2); }
+.job-progress-legend span[data-state='failed'] { color: var(--risk-high); font-weight: 600; }
+.job-progress[data-compact='true'] { gap: 0; }
+.job-progress[data-compact='true'] .job-progress-track { height: 4px; }
+
+.progress-bar { position: relative; height: 4px; overflow: hidden; border-radius: 999px; background: var(--sunken); }
+.progress-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--accent); transition: width .6s cubic-bezier(.22, 1, .36, 1); }
+.progress-bar[data-state='done'] .progress-bar-fill { background: var(--ok, var(--accent)); }
+.progress-bar[data-state='failed'] .progress-bar-fill { background: var(--risk-high); }
+.progress-bar[data-state='queued'] .progress-bar-fill { width: 100% !important; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 70%, transparent), transparent) no-repeat; background-size: 45% 100%; animation: job-progress-sweep 1.7s ease-in-out infinite; }
+
+@keyframes job-progress-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+@keyframes job-progress-sweep { from { background-position: -80% 0; } to { background-position: 180% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .job-progress-fill::after, .job-progress-node[data-state='active'], .job-progress[data-state='queued'] .job-progress-fill, .progress-bar[data-state='queued'] .progress-bar-fill { animation: none; }
+}

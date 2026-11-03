@@ -97,9 +97,10 @@ export interface SyncForm {
   modelId?: string
   repositoryUrl: string
   branch: string
-  since: string
-  until: string
-  commitLimit: string
+  /** 留空表示全部历史；服务端不再按固定 90 天截断。 */
+  since?: string
+  until?: string
+  commitLimit?: string
   strategy: SyncStrategy
 }
 
