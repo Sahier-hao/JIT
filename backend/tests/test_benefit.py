@@ -26,20 +26,25 @@ def test_benefit_evaluation_is_deterministic_and_reports_negative_results(real_r
     first = evaluate_run(real_run, random_runs=30, seed=2026)
     second = evaluate_run(real_run, random_runs=30, seed=2026)
     assert first['kind'] == 'model-benefit-evaluation'
-    assert first['reportVersion'] == 1
+    assert first['reportVersion'] == 2
     assert first['test']['records'] > 0 and first['test']['positives'] > 0
     assert first['strategies']['model']['ordering'] == 'score-desc,time-desc,id-asc'
+    assert first['strategies']['density']['ordering'] == 'risk-per-loc-desc,time-desc,id-asc'
+    assert first['strategies']['loc']['ordering'] == 'loc-asc,time-desc,id-asc'
     assert first['strategies']['time']['ordering'] == 'time-desc,id-asc'
     assert first['strategies']['random']['runs'] == 30
     assert first['strategies']['random']['seed'] == 2026
     assert first['strategies']['random']['recall20Loc']['validRuns'] == 30
+    assert first['strategies']['sensitivity']['model']['budgetRule'] == 'stop-at-first-overflow'
+    assert first['protocol']['strategies'] == ['model', 'density', 'loc', 'time', 'random']
     assert first['strategies'] == second['strategies']
     assert first['conclusion'] == second['conclusion']
     assert first['test'] == second['test']
     assert first['boundary']['defectProbability'] is False
     assert first['boundary']['crossModelRanking'] is False
-    assert first['parameterSelection'].startswith('none;')
+    assert first['parameterSelection'].startswith('strategies,')
     assert '历史标记' in first['conclusion']['sentence']
+    assert '风险/成本密度' in first['conclusion']['sentence']
     assert any('缺陷概率' in item for item in first['limitations'])
     # 基线模型在冻结测试分区上并不优于时间或随机顺序；必须如实显示。
     model = first['strategies']['model']['recall20Loc']['value']
@@ -49,6 +54,8 @@ def test_benefit_evaluation_is_deterministic_and_reports_negative_results(real_r
     assert model < time and model < random
     assert first['comparisons']['modelVsTime']['recall20Loc'] < 0
     assert first['comparisons']['modelVsRandomMean']['recall20Loc'] < 0
+    assert first['comparisons']['modelVsDensity']['recall20LocInterval']['runs'] > 0
+    assert first['comparisons']['modelVsLoc']['recall20LocInterval']['runs'] > 0
 
     output = tmp_path / 'benefit'
     report, path = run_benefit(real_run, output, random_runs=5, seed=7)

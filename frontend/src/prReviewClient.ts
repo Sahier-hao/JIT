@@ -12,6 +12,12 @@ export interface PRSnapshot extends PRItem {
 export interface PRPrepared { snapshot: PRSnapshot; checkedAt: string; remoteState: PRItem['remoteState'] }
 export interface PRList { owner: string; name: string; repositoryId: string; repositoryUrl: string; pullRequests: PRItem[]; page: number; hasMore: boolean; checkedAt: string; state: string }
 export interface PRContext { snapshotId: string; path: string; side: 'base' | 'head'; ref: string; content: string; complete: boolean; absent: boolean; totalLines: number }
+export interface PRCandidate { side: 'base' | 'head'; path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string }
+export interface PRCandidates {
+  snapshotId: string
+  coverage: { analyzed: string[]; skipped: { path: string; reason: string }[]; analyzerVersion: string; side: string; selected: number; totalFiles: number } | null
+  candidates: PRCandidate[]
+}
 const string = (v: unknown) => typeof v === 'string' ? v : contractFailed()
 const integer = (v: unknown) => { const n = finiteNumber(v); if (!Number.isSafeInteger(n) || n < 0) contractFailed(); return n }
 export function parseItem(raw: unknown): PRItem {
@@ -64,4 +70,32 @@ export async function getPRContext(source: PRSnapshot, path: string, side: 'base
   const b = record(await apiRequest({ path: `/api/v1/pr-snapshots/${encodeURIComponent(source.snapshotId)}/context?path=${encodeURIComponent(path)}&side=${side}`, method: 'GET', signal }))
   if (b.snapshotId !== source.snapshotId || b.path !== path || b.side !== side || b.ref !== source[side === 'head' ? 'headSha' : 'baseSha']) contractFailed('代码上下文来源不一致')
   return { snapshotId: source.snapshotId, path, side, ref: text(b.ref), content: string(b.content), complete: flag(b.complete), absent: flag(b.absent), totalLines: integer(b.totalLines) }
+}
+
+function candidates(raw: unknown, snapshotId: string): PRCandidates {
+  const b = record(raw)
+  if (b.snapshotId !== snapshotId) contractFailed('候选位置不属于当前快照')
+  const coverage = b.coverage == null ? null : record(b.coverage)
+  return {
+    snapshotId,
+    coverage: coverage === null ? null : {
+      analyzed: Array.isArray(coverage.analyzed) ? coverage.analyzed.map(value => text(value)) : [],
+      skipped: recordList(coverage.skipped).map(item => ({ path: text(item.path), reason: text(item.reason) })),
+      analyzerVersion: text(coverage.analyzerVersion), side: text(coverage.side),
+      selected: integer(coverage.selected), totalFiles: integer(coverage.totalFiles),
+    },
+    candidates: recordList(b.candidates).map(item => ({
+      side: text(item.side) as PRCandidate['side'], path: text(item.path), line: integer(item.line),
+      ruleId: text(item.ruleId), ruleVersion: text(item.ruleVersion),
+      message: text(item.message), evidence: text(item.evidence),
+    })),
+  }
+}
+
+export async function getPRCandidates(snapshotId: string, signal?: AbortSignal): Promise<PRCandidates> {
+  return candidates(await apiRequest({ path: `/api/v1/pr-snapshots/${encodeURIComponent(snapshotId)}/candidates`, method: 'GET', signal }), snapshotId)
+}
+
+export async function analyzePRCandidates(snapshotId: string, paths: string[], side: 'base' | 'head' = 'head'): Promise<PRCandidates> {
+  return candidates(await apiRequest({ path: `/api/v1/pr-snapshots/${encodeURIComponent(snapshotId)}/candidates`, method: 'POST', body: { paths, side } }), snapshotId)
 }

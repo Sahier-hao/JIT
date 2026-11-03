@@ -30,7 +30,7 @@ export function parseRepositoryExplanation(value: unknown, context: ExplanationC
   if (items.length > 5 || new Set(items.map(item => item.feature)).size !== items.length || items.some((item, index) => index > 0 && Math.abs(item.delta) > Math.abs(items[index - 1].delta))) contractFailed()
   if (status !== 'supported' && items.length) contractFailed()
   const baselineSource = textOrNull(raw.baselineSource)
-  if (status === 'supported' && !['zero', 'mixed', 'model-dataset-mean'].includes(baselineSource ?? '')) contractFailed()
+  if (status === 'supported' && !['zero', 'mixed', 'model-dataset-mean', 'training-partition-mean'].includes(baselineSource ?? '')) contractFailed()
   const method = textOrNull(raw.explanationMethod), summary = textOrNull(raw.explanationSummary)
   if (status === 'supported' && (!method || !summary)) contractFailed()
   return { explanationStatus: status as RepositoryExplanation['explanationStatus'], explanation: items,

@@ -215,6 +215,21 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def pull_request_analyses(snapshot_id: str):
         return pr_review.analyses(snapshot_id)
 
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/candidates')
+    def pull_request_candidates(snapshot_id: str):
+        return pr_review.stored_candidates(snapshot_id)
+
+    @app.post('/api/v1/pr-snapshots/{snapshot_id}/candidates')
+    async def analyze_pull_request_candidates(snapshot_id: str, request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'paths', 'side'}:
+            raise RequestError('INPUT_INVALID')
+        paths = payload.get('paths')
+        if paths is not None and (not isinstance(paths, list) or not all(isinstance(p, str) for p in paths)):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_review.candidates, snapshot_id, paths,
+                                       payload.get('side', 'head'))
+
     @app.post('/api/v1/pr-snapshots/{snapshot_id}/analyses')
     async def analyze_pull_request(snapshot_id: str, request: Request):
         return await run_in_threadpool(pr_review.analyze, snapshot_id, await read_object(request))
@@ -311,7 +326,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                 featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
                                 enabled=item['enabled'], isDefault=item['isDefault'],
                                 repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
-                                ('openstack-six-v1', 'kamei14-git-v1')) for item in catalog.models()]}
+                                ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')) for item in catalog.models()]}
 
     @app.post('/api/v1/training-tasks')
     async def create_training_task(request: Request):
@@ -361,6 +376,36 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/admin/multi-project-reports')
     def list_multi_project_reports():
         return multi_project_reports.list()
+
+    @app.post('/api/admin/curation/preview')
+    async def curation_preview(request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'datasetVersion', 'recipe'}:
+            raise RequestError('INPUT_INVALID')
+        from . import curation
+        return await run_in_threadpool(curation.preview, payload.get('datasetVersion'),
+                                       payload.get('recipe'), dataset_root)
+
+    @app.post('/api/admin/curation/derive')
+    async def curation_derive(request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'datasetVersion', 'recipe'}:
+            raise RequestError('INPUT_INVALID')
+        from . import curation
+        return await run_in_threadpool(curation.derive, payload.get('datasetVersion'),
+                                       payload.get('recipe'), dataset_root)
+
+    @app.get('/api/admin/curation/compare')
+    def curation_compare(source: str, derived: str):
+        from . import curation
+        return curation.compare(source, derived, dataset_root)
+
+    @app.get('/api/admin/curation/export')
+    def curation_export(version: str):
+        from . import curation
+        data = curation.export_bundle(version, dataset_root)
+        return Response(content=data, media_type='application/zip',
+                        headers={'Content-Disposition': f'attachment; filename="{version}.zip"'})
 
     @app.get('/api/admin/multi-project-reports/{report_id}')
     def get_multi_project_report(report_id: str):

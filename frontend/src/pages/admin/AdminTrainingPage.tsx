@@ -131,7 +131,10 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>模型</dt><dd><code>{valueLabel(task.modelId)}</code></dd></div>
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
-    </dl></> : null}
+      {task.classPolicy ? <div><dt>训练分区策略</dt><dd><code>{JSON.stringify(task.classPolicy)}</code></dd></div> : null}
+      {task.classPolicySummary ? <div><dt>策略前后数量</dt><dd><code>{JSON.stringify(task.classPolicySummary)}</code></dd></div> : null}
+    </dl>
+    {task.classPolicy ? <p className="admin-report-meta">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
     <dl className="admin-facts">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
       <div><dt>创建人</dt><dd>{task.createdBy}</dd></div>

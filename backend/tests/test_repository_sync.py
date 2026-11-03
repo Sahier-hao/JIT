@@ -87,7 +87,7 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     assert done["degradeReason"] == "fewRecords"
     assert done["trainRecords"] < 200
     assert done["modelId"] and done["runId"] and done["datasetVersion"]
-    assert done["datasetVersion"].startswith("kamei14-git-v1-")
+    assert done["datasetVersion"].startswith("kamei14-git-v2-")
     assert done["error"] is None
 
     with TestClient(harness["app"]) as client:

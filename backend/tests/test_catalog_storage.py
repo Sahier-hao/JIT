@@ -196,7 +196,7 @@ def test_initialize_cli_uses_same_database_environment_as_http(tmp_path, monkeyp
 
 def _seed_commits(store, version='demo-v1', count=3):
     with store.connection(write=True) as db:
-        db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?)',
+        db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,source_sha256,row_count,created_at) VALUES (?,?,?,?,?,?,?)',
                    (version, 'demo', '{}', 'manifest-sha', 'source-sha', count, '2026-01-01T00:00:00Z'))
         for index in range(count):
             commit_id = f'{index:040x}'
@@ -233,3 +233,35 @@ def test_commits_by_entity_support_pagination(tmp_path):
     assert store.count_by_entity('module', 'nova') == 3
     assert store.commits_by_entity('module', 'absent') == []
     assert store.count_by_entity('module', 'absent') == 0
+
+
+def test_label_evidence_and_status_are_persisted(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    manifest = {
+        'version': 'demo-v1', 'dataset': 'demo', 'file': {'sha256': 'x'},
+        'collection': {
+            'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                      'binarizationRule': 'observed fix => 1', 'observedThrough': 1_705_000_000,
+                      'maturityDays': 90},
+            'labelEvidence': [{'introducedCommit': 'a' * 40, 'fixCommit': 'b' * 40,
+                               'path': 'pkg/a.py', 'fixTime': '2024-01-05T00:00:00Z'}],
+        },
+    }
+    records = [
+        {'id': 'a' * 40, 'time': '2024-01-01T00:00:00Z', 'label': 1, 'metrics': {'ns': 1}},
+        {'id': 'c' * 40, 'time': '2024-01-10T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}},
+    ]
+    store.import_dataset(manifest, records)
+
+    positive = store.commit('demo-v1', 'a' * 40)
+    assert positive['labelOrigin'] == 'simplified-szz'
+    assert positive['labelRuleVersion'] == 'szz-simple-v1'
+    assert positive['binarizationRule'] == 'observed fix => 1'
+    assert positive['labelStatus'] == 'positive'
+    assert positive['evidence'][0]['fixCommit'] == 'b' * 40
+
+    recent = store.commit('demo-v1', 'c' * 40)
+    assert recent['labelStatus'] == 'immature'
+    assert recent['evidence'] == []

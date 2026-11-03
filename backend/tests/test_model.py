@@ -126,3 +126,32 @@ def test_inference_rejects_invalid_feature_vectors(patch):
     invalid[0]["features"] = patch
     with pytest.raises(ValueError):
         predict_risks(model, invalid)
+
+
+def test_class_policy_sample_only_changes_training_records():
+    from jit_baseline.model import apply_class_policy
+    records = [{"id": f"n{index}", "epoch": index, "label": 0,
+                "features": [1, 2, 3, .5, 2, 1]} for index in range(9)]
+    records.append({"id": "p", "epoch": 9, "label": 1, "features": [1, 2, 3, .5, 2, 1]})
+    before = [(record["id"], record["label"]) for record in records]
+    result, weights, summary = apply_class_policy(records, {"kind": "sample", "seed": 7})
+    assert weights is None
+    assert summary["before"] == {"records": 10, "positives": 1}
+    assert summary["after"]["positives"] == 9
+    assert [(record["id"], record["label"]) for record in records] == before
+    again, _, _ = apply_class_policy(records, {"kind": "sample", "seed": 7})
+    assert [(record["id"], record["label"]) for record in again] == [
+        (record["id"], record["label"]) for record in result]
+
+
+def test_class_policy_weights_and_invalid_policy():
+    from jit_baseline.errors import BaselineError
+    from jit_baseline.model import apply_class_policy
+    records = samples(4)
+    _, weights, summary = apply_class_policy(
+        records, {"kind": "weights", "positiveWeight": 3, "negativeWeight": 1})
+    assert weights.tolist() == [1, 3, 1, 3]
+    assert summary["after"] == summary["before"]
+    with pytest.raises(BaselineError) as error:
+        apply_class_policy(records, {"kind": "unknown"})
+    assert error.value.code == "CLASS_POLICY_INVALID"

@@ -97,6 +97,14 @@ function StrategyRow({ name, report }: { name: string; report: BenefitReport['st
   </tr>
 }
 
+function intervalText(label: string, raw: unknown) {
+  const interval = (raw as { recall20LocInterval?: { low?: number | null; high?: number | null; reason?: string | null } } | undefined)?.recall20LocInterval
+  if (!interval || typeof interval.low !== 'number' || typeof interval.high !== 'number') {
+    return `${label}区间未定义${interval?.reason ? `（${interval.reason}）` : ''}`
+  }
+  return `${label} ${(interval.low * 100).toFixed(1)} 到 ${(interval.high * 100).toFixed(1)} 个百分点`
+}
+
 function BenefitSection({ modelId, expired }: { modelId: string; expired: () => void }) {
   const [benefit, setBenefit] = useState<ModelBenefit | null>(null)
   const [loading, setLoading] = useState(true)
@@ -129,6 +137,8 @@ function BenefitSection({ modelId, expired }: { modelId: string; expired: () => 
       <thead><tr><th>策略</th><th>Recall@20%LOC</th><th title="按该策略排序的归一化成本-召回面积；既有密度排序见下方对照">Popt</th><th>IFA</th><th>覆盖正例</th><th>选中提交</th><th>使用行数</th></tr></thead>
       <tbody>
         <StrategyRow name="模型分数" report={report.strategies.model}/>
+        {report.strategies.density ? <StrategyRow name="风险/成本密度" report={report.strategies.density}/> : null}
+        {report.strategies.loc ? <StrategyRow name="改动量升序" report={report.strategies.loc}/> : null}
         <StrategyRow name="时间顺序" report={report.strategies.time}/>
         <tr><th>随机（均值 ± 标准差）</th>
           <td><RandomMetric summary={random.recall20Loc} kind="percent"/></td>
@@ -140,6 +150,7 @@ function BenefitSection({ modelId, expired }: { modelId: string; expired: () => 
         </tr>
       </tbody>
     </table></div>
+    {report.reportVersion >= 2 ? <p className="admin-report-meta">{intervalText('模型相对风险/成本密度', report.comparisons.modelVsDensity)}；{intervalText('模型相对改动量升序', report.comparisons.modelVsLoc)}；{intervalText('模型相对时间顺序', report.comparisons.modelVsTime)}。区间为时间块重采样 95% 区间，不是在线效果。</p> : <p className="admin-report-meta">此报告为旧版本，不含成本感知基线和配对区间。</p>}
     <details className="admin-report-identity"><summary>既有运行指标对照</summary>
       <dl className="admin-facts">
         <div><dt>AP</dt><dd>{existing && metricValue(existing, 'averagePrecision') !== null ? metricValue(existing, 'averagePrecision')!.toFixed(4) : '未提供'}</dd></div>

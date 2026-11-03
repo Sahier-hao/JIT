@@ -71,7 +71,10 @@ class PredictionService:
 
     def _explain(self, snapshot, model, vector, names):
         """计算特征归因；失败或基线不可用时降级为未支持，不改变风险（PEX-05）。"""
-        baseline = attribution.feature_baseline(self.catalog.store, model.get('artifactDatasetVersion'), names)
+        partition_ids = attribution.training_partition_ids(
+            self.catalog.model_directory(model['modelId']))
+        baseline = attribution.feature_baseline(self.catalog.store, model.get('artifactDatasetVersion'),
+                                                names, partition_ids)
         try:
             result = attribution.explain(
                 lambda values: predict_risks(snapshot.model, [{'features': values}], snapshot.schema),

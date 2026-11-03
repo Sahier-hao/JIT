@@ -19,7 +19,7 @@ def encoded(value):
     return json.dumps(value, ensure_ascii=False, allow_nan=False, sort_keys=True)
 
 
-REPOSITORY_SCHEMAS = ('openstack-six-v1', 'kamei14-git-v1')
+REPOSITORY_SCHEMAS = ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')
 OFFLINE_SCHEMAS = ('kamei14-benchmark-v1',)
 SEMANTIC_SCHEMAS = ('code-semantic-codebert-v1', 'kamei14-semantic-codebert-v1')
 EXPERIMENT_REPORT_NAMES = ('multi-project-report.json',)
@@ -582,6 +582,11 @@ class ModelCatalog:
                 db.execute("UPDATE model_version SET state='invalid',error_code=? WHERE id=?", (code, model_id))
             raise RequestError(code) from exc
         return snapshot, dict(payload, state='ready', **self.policy(model_id))
+
+    def model_directory(self, model_id):
+        """Return the verified artifact directory for a registered model."""
+        row = self._row(model_id)
+        return self._nested_directory(row['relative_key'])
 
     def detail(self, model_id):
         """Read-only model details from the verified preferred run location."""

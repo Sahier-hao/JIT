@@ -8,6 +8,6 @@ CREATE TABLE model_default (
 );
 INSERT INTO model_default(singleton,model_id)
 SELECT 1, (SELECT id FROM model_version WHERE state='ready'
-    AND json_extract(payload_json,'$.featureSchemaVersion') IN ('openstack-six-v1','kamei14-git-v1')
+    AND json_extract(payload_json,'$.featureSchemaVersion') IN ('openstack-six-v1','kamei14-git-v1','kamei14-git-v2')
     ORDER BY id LIMIT 1);
 ALTER TABLE repository_sync ADD COLUMN resolved_model_id TEXT;

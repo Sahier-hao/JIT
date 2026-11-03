@@ -112,6 +112,11 @@ _GIT14 = Schema("kamei14-git-v1", (
     Field("sexp", "sexp", transform=LOG1P, integer=True),
 ))
 
+# 祖先链口径：字段与 v1 相同，但历史状态只沿父链推进。
+# 用独立名称避免把旧模型静默套到新口径数据上。
+_GIT14_V2 = Schema("kamei14-git-v2", _GIT14.fields)
+
+
 _SEMANTIC_BLOCK = {
     "model": "microsoft/codebert-base",
     "revision": "3b0952feddeffad0063f274080e3c23d75e7eb39",
@@ -140,7 +145,7 @@ _BENCHMARK14 = Schema("kamei14-benchmark-v1", (
 ))
 
 SCHEMAS = {schema.name: schema
-           for schema in (_SIX, _KAMEI14, _GIT14,
+           for schema in (_SIX, _KAMEI14, _GIT14, _GIT14_V2,
                           _GIT14_SEMANTIC, _SEMANTIC_ONLY, _BENCHMARK14)}
 DEFAULT_SCHEMA = "openstack-six-v1"
 

@@ -595,62 +595,8 @@ def _absolute(path):
 
 
 def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
-    """登记数据集；同名版本已存在但数据不同时追加内容哈希，不覆盖。
-
-    同名版本下 CSV 字节一致、只有采集时间等元信息不同时，按幂等复用既有版本；
-    CSV 内容不同必须成为新版本，不能互相覆盖或让整次同步失败。
-
-    ``after`` 在登记成功后调用（用于按新版本名导入目录库）；它抛出的
-    ``DATASET_EXISTS`` 视为目录库版本冲突，换带哈希的版本名再试一次——否则
-    "描述文件可复用、但目录库里同版本内容已不同"的旧数据会让同步失败。
-    """
-    digest = hashlib.sha256(blob).hexdigest()
-    last = None
-    for name in (version, f"{version}-{digest[:8]}"):
-        path = Path(room) / f"{name}.csv"
-        manifest_path = Path(room) / f"{name}.json"
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if not path.exists():
-                temporary = path.with_name(f'{path.name}.{uuid.uuid4().hex}.tmp')
-                try:
-                    temporary.write_bytes(blob)
-                    try:
-                        os.link(temporary, path)
-                    except FileExistsError:
-                        pass
-                finally:
-                    temporary.unlink(missing_ok=True)
-            if path.read_bytes() != blob:
-                raise BaselineError('DATASET_EXISTS', f'已有 CSV 内容不同，不覆盖：{name}')
-            try:
-                registered = store.register(path, dataset=dataset, version=name, **kwargs)
-            except BaselineError as exc:
-                if exc.code != 'DATASET_EXISTS' or not manifest_path.exists():
-                    raise
-                # 同一版本的 CSV 字节一致，只是采集时间、HEAD 等元信息不同：
-                # 数据本身没有变化，按幂等复用既有描述，不新建版本。
-                entry = {"dataset": dataset, "version": name,
-                         "path": manifest_relative(manifest_path),
-                         "sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
-                         "created": False}
-                if after is not None:
-                    try:
-                        after(entry, path)
-                    except BaselineError as import_exc:
-                        if import_exc.code != 'DATASET_EXISTS':
-                            raise
-                return entry
-            if after is not None:
-                after(registered, path)
-            return registered
-        except BaselineError as exc:
-            if exc.code != "DATASET_EXISTS":
-                raise
-            last = exc
-        except OSError as exc:
-            raise BaselineError('DATASET_UNAVAILABLE', '采集结果写入失败，请检查存储权限') from exc
-    raise last
+    """登记数据集；同名版本已存在但数据不同时追加内容哈希，不覆盖。"""
+    return store.publish_unique(room, dataset, version, blob, after=after, **kwargs)
 
 
 def _day_floor(epoch):
@@ -1162,7 +1108,8 @@ class SyncService:
         parsed, _ = parse_source(collected["blob"], SCHEMA_NAME, cohort)
         if not parsed:
             raise BaselineError("DATASET_INVALID", "采集结果没有可纳入的记录；请确认分支存在且仓库可读")
-        start, end = parsed[0]["time"][:10], parsed[-1]["time"][:10]
+        days = [record["time"][:10] for record in parsed]
+        start, end = min(days), max(days)
         version = f"{dataset}-{start}_{end}"
         room = self.dataset_root / dataset
         try:
@@ -1180,7 +1127,7 @@ class SyncService:
         csv_path = room / f"{registered['version']}.csv"
         manifest_path = _absolute(registered["path"])
         self.sync.update(sync_id, dataset_version=registered["version"])
-        return manifest_path, registered["version"]
+        return manifest_path, registered["version"], parsed
 
     def _run(self, sync_id):
         started = time.monotonic()
@@ -1196,11 +1143,11 @@ class SyncService:
             records = collected["rawRecords"]
 
             self._step(sync_id, "registering", started)
-            manifest_path, version = self._persist(sync_id, item, collected)
+            manifest_path, version, trainable = self._persist(sync_id, item, collected)
 
             self._step(sync_id, "training", started)
-            holdout = _holdout(records)
-            decision = choose_model(records, item["requestedStrategy"], holdout)
+            holdout = _holdout(trainable)
+            decision = choose_model(trainable, item["requestedStrategy"], holdout)
             self.sync.update(sync_id, model_strategy=decision["modelStrategy"],
                              degrade_reason=decision["degradeReason"],
                              train_records=decision["trainRecords"],
@@ -1211,6 +1158,15 @@ class SyncService:
                     output_key=f"repository-sync-{sync_id[:8]}",
                     channel="repository-sync", request_id=item.get("requestId"),
                     holdout=holdout, model_name=training_model_name(item["repositoryUrl"], version))
+                split = artifacts.read_json(self.artifact_root / trained["artifactKey"] / "split.json")
+                partitions = split["partitions"]
+                actual_records = sum(part["count"] for part in partitions.values())
+                actual_positives = sum(part["positiveCount"] for part in partitions.values())
+                if (actual_records != decision["trainRecords"]
+                        or actual_positives != decision["trainPositives"]):
+                    raise BaselineError(
+                        "TRAINING_ADMISSION_MISMATCH",
+                        "训练分区成员与准入统计不一致；已保留数据集，请重新发起分析")
                 model_id = trained["modelId"]
                 snapshot = trained["snapshot"]
                 schema = snapshot.schema

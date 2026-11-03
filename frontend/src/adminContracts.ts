@@ -56,6 +56,8 @@ export interface TrainingTask {
   modelId: string | null
   featureSchemaVersion: string | null
   metrics: Row | null
+  classPolicy: Row | null
+  classPolicySummary: Row | null
   createdAt: string
   updatedAt: string
   startedAt: string | null
@@ -272,6 +274,8 @@ function trainingTask(raw: unknown): TrainingTask {
     modelId: textOrNull(value.modelId),
     featureSchemaVersion: textOrNull(value.featureSchemaVersion),
     metrics: value.metrics === null ? null : record(value.metrics),
+    classPolicy: value.classPolicy == null ? null : record(value.classPolicy),
+    classPolicySummary: value.classPolicySummary == null ? null : record(value.classPolicySummary),
     createdAt: text(value.createdAt),
     updatedAt: text(value.updatedAt),
     startedAt: textOrNull(value.startedAt),
@@ -364,11 +368,12 @@ export async function fetchTrainingTask(taskId: string, signal?: AbortSignal): P
   return trainingTask(await apiRequest({ path: `/api/v1/training-tasks/${encodeURIComponent(taskId)}`, method: 'GET', signal }))
 }
 
-export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string): Promise<TrainingTask> {
+export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string,
+                                          classPolicy?: { kind: 'weights' | 'sample'; seed?: number }): Promise<TrainingTask> {
   return trainingTask(await apiRequest({
     path: '/api/v1/training-tasks',
     method: 'POST',
-    body: { datasetVersion, method, metricSet },
+    body: { datasetVersion, method, metricSet, ...(classPolicy ? { classPolicy } : {}) },
   }))
 }
 

@@ -35,7 +35,7 @@ def _validate(report):
         raise BaselineError('REPORT_INVALID', '收益评估报告根节点必须是对象')
     if report.get('kind') != REPORT_KIND:
         raise BaselineError('REPORT_INVALID', '不是模型收益评估报告')
-    if report.get('reportVersion') != REPORT_VERSION:
+    if report.get('reportVersion') not in (1, REPORT_VERSION):
         raise BaselineError('REPORT_INVALID', '收益评估报告版本不受支持')
     artifact = report.get('artifact')
     if not isinstance(artifact, dict) or not isinstance(artifact.get('runId'), str) or not artifact['runId']:

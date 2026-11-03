@@ -331,3 +331,26 @@ def test_isolated_worker_completes_a_real_task(tmp_path):
         assert completed["metrics"]["averagePrecision"]["value"] is not None
     finally:
         service.close()
+
+
+def test_real_training_with_class_policy_records_summary(tmp_path):
+    storage = CatalogStorage(tmp_path / "catalog.sqlite3")
+    storage.initialize()
+    service = TrainingTaskService(storage, artifact_root=tmp_path / "artifacts", timeout=60)
+    try:
+        task, _ = service.create(
+            {"datasetVersion": DATASET_VERSION, "method": "logistic-regression-l2-v1",
+             "metricSet": "metric-set-v2",
+             "classPolicy": {"kind": "weights", "positiveWeight": 2}},
+            created_by="admin", request_id="class-policy")
+        completed = wait_for(
+            lambda: (lambda item: item if item["status"] in (
+                "succeeded", "failed", "interrupted") else None)(service.get(task["taskId"])),
+            timeout=45,
+        )
+        assert completed["status"] == "succeeded", completed
+        assert completed["classPolicy"] == {"kind": "weights", "positiveWeight": 2}
+        assert completed["classPolicySummary"]["before"]["records"] > 0
+        assert completed["classPolicySummary"]["after"] == completed["classPolicySummary"]["before"]
+    finally:
+        service.close()

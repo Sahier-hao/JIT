@@ -21,6 +21,7 @@ export interface ReviewQuestion {
   originSnapshotId: string; relatedFiles: string[]; evidence: Evidence[]; status: 'open' | 'resolved' | 'deferred' | 'withdrawn'
   judgment: string; reason: string; requiresRecheck: boolean; feedback: '' | 'helpful' | 'irrelevant' | 'more-evidence'; feedbackReason: string
 }
+export type CandidateDecision = { status: 'confirmed' | 'rejected' | 'deferred'; reason: string }
 export interface ReviewRound {
   source: PRSnapshot; progress: Record<string, { state: FileState; originSnapshotId: string }>; questions: ReviewQuestion[]
   currentFile: string; scratch: string; conclusion: { kind: Conclusion; note: string; markdown: string; createdAt: string } | null
@@ -30,6 +31,7 @@ export interface ReviewRound {
   scratchOriginSnapshotId?: string
   selectedQuestionId?: string
   deliveryDraft?: { kind: Conclusion; note: string }
+  candidateDecisions?: Record<string, CandidateDecision>
 }
 export type Conclusion = 'changes' | 'complete' | 'defer'
 export interface PRWork {
@@ -47,7 +49,7 @@ function localSource(source: PRSnapshot): PRSnapshot { return { ...source, files
 function round(source: PRSnapshot): ReviewRound {
   const questions = [question(source, `这次改动在实现和相关测试中是否保持一致？（${source.files.length} 个已加载文件，请补充具体核对目标）`, 'change')]
   if (source.body.trim()) questions.unshift(question(source, `核对作者说明中的目标：${source.body.slice(0, 500)}`, 'author'))
-  return { source: localSource(source), progress: Object.fromEntries(source.files.map(file => [file.path, { state: 'unread', originSnapshotId: source.snapshotId }])), currentFile: source.files[0]?.path ?? '', scratch: '', questions, conclusion: null }
+  return { source: localSource(source), progress: Object.fromEntries(source.files.map(file => [file.path, { state: 'unread', originSnapshotId: source.snapshotId }])), currentFile: source.files[0]?.path ?? '', scratch: '', questions, conclusion: null, candidateDecisions: {} }
 }
 export function createWork(source: PRSnapshot): PRWork {
   return { key: workKey(source.owner, source.name, source.number), owner: source.owner, name: source.name, number: source.number, latestSnapshotId: source.snapshotId, viewedSnapshotId: source.snapshotId,
@@ -110,6 +112,12 @@ function validWork(raw: unknown): PRWork {
     for (const [path, progress] of Object.entries(item.progress)) if (!source.files.some(f => f.path === path) || !['read', 'recheck', 'unread', 'uncovered'].includes(progress.state) || typeof progress.originSnapshotId !== 'string') throw new Error('阅读进度无效')
     if (item.conclusion && (typeof item.conclusion.markdown !== 'string' || typeof item.conclusion.note !== 'string' || !['changes', 'complete', 'defer'].includes(item.conclusion.kind))) throw new Error('结论格式无效')
     if (item.deliveryDraft && (typeof item.deliveryDraft.note !== 'string' || !['changes', 'complete', 'defer'].includes(item.deliveryDraft.kind))) throw new Error('结论草稿格式无效')
+    if (item.candidateDecisions !== undefined) {
+      if (!item.candidateDecisions || typeof item.candidateDecisions !== 'object' || Array.isArray(item.candidateDecisions)) throw new Error('候选判断格式无效')
+      for (const decision of Object.values(item.candidateDecisions)) {
+        if (!decision || !['confirmed', 'rejected', 'deferred'].includes(decision.status) || typeof decision.reason !== 'string') throw new Error('候选判断格式无效')
+      }
+    }
   }
   return work
 }

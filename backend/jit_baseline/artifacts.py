@@ -17,7 +17,7 @@ from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, T
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
-from .model import feature_matrix, fit_model, predict_risks, temporal_split
+from .model import apply_class_policy, feature_matrix, fit_model, predict_risks, temporal_split
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
 
 DEFAULT_RUN = BACKEND / "artifacts/baseline"
@@ -153,7 +153,7 @@ def limitations(schema):
 
 
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
-              holdout=None, embedding_dir=None, model_name=None):
+              holdout=None, embedding_dir=None, model_name=None, class_policy=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
@@ -244,7 +244,9 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
             raise BaselineError("SPLIT_INVALID", "holdout 之前没有可训练记录，无法完成时间切分")
     split, boundaries = temporal_split(trainable)
     started = time.perf_counter()
-    pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version)
+    _, _, class_summary = apply_class_policy(split["train"], class_policy)
+    pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
+                         class_policy=class_policy)
     training_seconds = round(time.perf_counter() - started, 6)
     risks = predict_risks(pipeline, split["test"], schema)
     metrics = evaluate(split["test"], risks, metric_set)
@@ -295,6 +297,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         config["holdout"] = {"epoch": int(holdout), "trainableRecords": len(trainable)}
     if semantic_meta is not None:
         config["semantic"] = semantic_meta
+    if class_policy is not None:
+        config["classPolicy"] = class_policy
     run_id = identity(config)
     label = model_descriptor(schema.name, algorithm_version)
     if model_name is not None:
@@ -314,6 +318,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         summary["holdout"] = {"epoch": int(holdout), "trainableRecords": len(trainable)}
     if semantic_meta is not None:
         summary["semantic"] = semantic_meta
+    if class_summary is not None:
+        summary["classPolicy"] = class_summary
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     command = (f"python -m jit_baseline.cli run --output {output.as_posix()}"

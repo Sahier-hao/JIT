@@ -20,7 +20,8 @@ class TrainingExecutor:
             artifact_root if artifact_root is not None else BACKEND / "artifacts").resolve()
 
     def run(self, dataset_manifest, algorithm, metric_set=None, *, output_key,
-            channel="training-task", request_id=None, holdout=None, model_name=None):
+            channel="training-task", request_id=None, holdout=None, model_name=None,
+            class_policy=None):
         """执行一次训练并登记模型。
 
         `holdout` 是 epoch 截止时间：给出时只有早于该时间的记录参与时间切分、
@@ -43,7 +44,7 @@ class TrainingExecutor:
         built = artifacts.build_run(
             BACKEND / "data/openstack", output, schema=dataset["schemaName"],
             algorithm=algorithm, metric_set=metric_set, dataset_manifest=manifest_path,
-            holdout=holdout, model_name=model_name)
+            holdout=holdout, model_name=model_name, class_policy=class_policy)
         # Catalog registration performs full verification before publishing readiness.
         registered = self.catalog.register_key(
             output_key, channel=channel, request_id=request_id)
@@ -61,5 +62,6 @@ class TrainingExecutor:
             "metricSet": metric_set,
             "metrics": summary["metrics"],
             "trainingSeconds": summary.get("trainingSeconds"),
+            "classPolicy": summary.get("classPolicy"),
             "snapshot": snapshot,
         }

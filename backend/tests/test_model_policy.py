@@ -205,6 +205,12 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         for column in ('started_at', 'deadline_at', 'cancel_requested_at'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
         db.execute('ALTER TABLE repository_commit DROP COLUMN file_paths_json')
+        db.execute('DROP TABLE commit_label_evidence')
+        db.execute('DROP TABLE pr_candidate')
+        db.execute('DROP TABLE pr_candidate_run')
+        for column in ('label_origin', 'label_rule_version', 'label_binarization_rule',
+                       'observed_through', 'maturity_days'):
+            db.execute(f'ALTER TABLE dataset_record DROP COLUMN {column}')
         db.execute('UPDATE schema_migration SET version=7')
         before_rows = db.execute('SELECT * FROM model_version ORDER BY id').fetchall()
         before_events = db.execute('SELECT * FROM registration_event ORDER BY id').fetchall()

@@ -28,7 +28,8 @@ COLUMNS = (
     "metric_set", "status", "stage", "error_code", "error_message", "parent_task_id",
     "created_by", "request_id", "artifact_key", "artifact_run_id", "run_id", "model_id",
     "feature_schema_version", "metrics_json", "created_at", "updated_at", "started_at",
-    "deadline_at", "cancel_requested_at", "completed_at",
+    "deadline_at", "cancel_requested_at", "completed_at", "class_policy_json",
+    "class_policy_summary_json",
 )
 
 
@@ -61,6 +62,9 @@ def _view(row):
         "modelId": item.get("model_id"),
         "featureSchemaVersion": item.get("feature_schema_version"),
         "metrics": metrics,
+        "classPolicy": json.loads(item["class_policy_json"]) if item.get("class_policy_json") else None,
+        "classPolicySummary": (json.loads(item["class_policy_summary_json"])
+                               if item.get("class_policy_summary_json") else None),
         "createdAt": item["created_at"],
         "updatedAt": item["updated_at"],
         "startedAt": item.get("started_at"),
@@ -106,14 +110,14 @@ class TrainingTaskStorage:
         row = self.raw(task_id)
         return _view(row) if row is not None else None
 
-    def find_active(self, dataset_version, algorithm, metric_set):
+    def find_active(self, dataset_version, algorithm, metric_set, class_policy_json=None):
         placeholders = ",".join("?" for _ in ACTIVE)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM training_task WHERE dataset_version=? AND algorithm=? "
-                f"AND metric_set=? AND status IN ({placeholders}) "
+                f"AND metric_set=? AND class_policy_json IS ? AND status IN ({placeholders}) "
                 "ORDER BY created_at DESC, id DESC LIMIT 1",
-                (dataset_version, algorithm, metric_set, *ACTIVE),
+                (dataset_version, algorithm, metric_set, class_policy_json, *ACTIVE),
             ).fetchone()
         return _view(row) if row is not None else None
 
@@ -279,19 +283,27 @@ class TrainingTaskService:
     @staticmethod
     def _payload(payload):
         if not isinstance(payload, dict) or set(payload) - {
-            "datasetVersion", "method", "metricSet"
+            "datasetVersion", "method", "metricSet", "classPolicy"
         }:
-            raise BaselineError("INPUT_INVALID", "训练任务只接受 datasetVersion、method 和 metricSet")
+            raise BaselineError("INPUT_INVALID", "训练任务只接受 datasetVersion、method、metricSet 和 classPolicy")
         dataset_version = payload.get("datasetVersion")
         method = payload.get("method")
         metric_set = payload.get("metricSet") or "metric-set-v2"
+        class_policy = payload.get("classPolicy")
         if not isinstance(dataset_version, str) or not dataset_version.strip():
             raise BaselineError("INPUT_INVALID", "缺少数据集版本")
         if not isinstance(method, str) or not method.strip():
             raise BaselineError("INPUT_INVALID", "缺少训练方法")
         get_algorithm(method)
         get_metric_set(metric_set)
-        return dataset_version.strip(), method, metric_set
+        if class_policy is not None:
+            if not isinstance(class_policy, dict) or class_policy.get("kind") not in ("weights", "sample"):
+                raise BaselineError("INPUT_INVALID", "classPolicy.kind 必须是 weights 或 sample")
+            if class_policy["kind"] == "sample":
+                seed = class_policy.get("seed", 0)
+                if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+                    raise BaselineError("INPUT_INVALID", "采样种子必须是非负整数")
+        return dataset_version.strip(), method, metric_set, class_policy
 
     def _dataset(self, dataset_version):
         try:
@@ -308,12 +320,14 @@ class TrainingTaskService:
         return manifest, path, digest
 
     def _enqueue(self, *, dataset_version, method, metric_set, created_by, request_id,
-                 parent_task_id=None):
+                 parent_task_id=None, class_policy=None):
         dataset, path, digest = self._dataset(dataset_version)
         if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
-                                          "kamei14-git-v1", "kamei14-benchmark-v1"):
+                                          "kamei14-git-v1", "kamei14-git-v2",
+                                          "kamei14-benchmark-v1"):
             raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
-        active = self.tasks.find_active(dataset_version, method, metric_set)
+        class_policy_json = json.dumps(class_policy, ensure_ascii=False, sort_keys=True) if class_policy else None
+        active = self.tasks.find_active(dataset_version, method, metric_set, class_policy_json)
         if active is not None:
             return self.get(active["taskId"]), False
         task_id = str(uuid.uuid4())
@@ -333,12 +347,13 @@ class TrainingTaskService:
             "artifact_key": f"training-task-{task_id[:8]}",
             "created_at": now,
             "updated_at": now,
+            "class_policy_json": class_policy_json,
         })
         self._executor.submit(self._execute, task_id)
         return self.get(task_id), True
 
     def create(self, payload, request_id=None, *, created_by):
-        dataset_version, method, metric_set = self._payload(payload)
+        dataset_version, method, metric_set, class_policy = self._payload(payload)
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
@@ -348,6 +363,7 @@ class TrainingTaskService:
                 metric_set=metric_set,
                 created_by=created_by,
                 request_id=request_id,
+                class_policy=class_policy,
             )
 
     def retry(self, task_id, request_id=None, *, created_by):
@@ -362,6 +378,7 @@ class TrainingTaskService:
                 created_by=created_by,
                 request_id=request_id,
                 parent_task_id=task_id,
+                class_policy=source.get("classPolicy"),
             )
 
     def cancel(self, task_id):
@@ -376,6 +393,9 @@ class TrainingTaskService:
         manifest_path = manifest_path if manifest_path.is_absolute() else BACKEND / manifest_path
         try:
             runner = self._runner or self.training.run
+            extra = {}
+            if item["class_policy_json"]:
+                extra["class_policy"] = json.loads(item["class_policy_json"])
             result = runner(
                 manifest_path,
                 item["algorithm"],
@@ -383,9 +403,13 @@ class TrainingTaskService:
                 output_key=item["artifact_key"],
                 channel="training-task",
                 request_id=item["request_id"],
+                **extra,
             )
             result = dict(result)
             result.pop("snapshot", None)
+            if result.get("classPolicy") is not None:
+                self.tasks.update(task_id, class_policy_summary_json=json.dumps(
+                    result["classPolicy"], ensure_ascii=False, sort_keys=True))
             self.tasks.finish(
                 task_id,
                 "succeeded",

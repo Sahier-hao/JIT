@@ -40,7 +40,7 @@ it('reads without inferring and generates a pinned model explanation only after 
   expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
   expect(screen.getByText('新增行数（la）')).toBeVisible()
   expect(screen.getByText('+0.120000')).toBeVisible()
-  expect(screen.getByText('零基线：原模型绑定数据集的均值不可用。')).toBeVisible()
+  expect(screen.getByText('零基线：训练分区背景不可用。')).toBeVisible()
   expect(fetch.mock.calls[1][1]?.method).toBe('POST')
   expect(data.records[0].risk).toBe(.4)
 })

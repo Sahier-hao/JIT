@@ -7,6 +7,7 @@ tune parameters on the test partition, or turn risk scores into defect
 probabilities.
 """
 import hashlib
+import random
 import statistics
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,17 +19,22 @@ from .metrics import normalized_effort_area
 from .model import predict_risks
 
 REPORT_KIND = "model-benefit-evaluation"
-REPORT_VERSION = 1
+REPORT_VERSION = 2
 BENEFIT_FILE = "benefit-report.json"
 DEFAULT_RANDOM_RUNS = 200
 DEFAULT_SEED = 2026
 BUDGET_FRACTION = 0.2
+BOOTSTRAP_RUNS = 1000
+BUDGET_RULE = "continue-whole-commit"
+SENSITIVITY_RULE = "stop-at-first-overflow"
+STRATEGIES = ("model", "density", "loc", "time", "random")
 LIMITATIONS = (
     "这是冻结测试分区上的回顾性评估，不代表在线效果或缺陷概率。",
     "标签来自发布者历史观测或简化 SZZ；未观测到缺陷引入不等于已证实无缺陷。",
     "只比较同一测试分区、同一预算和同一标签口径下的检查顺序，不据此宣布最佳模型。",
-    "模型分数策略按原始风险降序，不按风险/成本密度；既有密度排序 Popt 仅作对照。",
+    "模型分数策略按原始风险降序；风险/成本密度和按改动量升序作为简单基线并列。",
     "模型、阈值和策略在评估前已固定；没有使用测试分区调参。",
+    "配对区间来自时间块重采样，不是在线效果或因果结论。",
 )
 
 
@@ -84,6 +90,17 @@ def _model_order(records):
                   key=lambda i: (-records[i]['risk'], -records[i]['epoch'], records[i]['id']))
 
 
+def _density_order(records):
+    return sorted(range(len(records)),
+                  key=lambda i: (-(records[i]['risk'] / max(records[i]['cost'], 1)),
+                                 -records[i]['epoch'], records[i]['id']))
+
+
+def _loc_order(records):
+    return sorted(range(len(records)),
+                  key=lambda i: (records[i]['cost'], -records[i]['epoch'], records[i]['id']))
+
+
 def _time_order(records):
     return sorted(range(len(records)),
                   key=lambda i: (-records[i]['epoch'], records[i]['id']))
@@ -94,7 +111,7 @@ def _random_order(records, seed, run):
                   key=lambda i: hashlib.sha256(f'{seed}:{run}:{records[i]["id"]}'.encode()).digest())
 
 
-def _recall20(records, order, *, total, budget, positives):
+def _recall20(records, order, *, total, budget, positives, skip_overflow=True):
     if total <= 0:
         return _metric(reason='总工作量为零'), {'selectedCount': 0, 'usedLoc': 0,
                                                'issuesCovered': 0, 'precisionAtBudget': None}
@@ -106,6 +123,8 @@ def _recall20(records, order, *, total, budget, positives):
     for index in order:
         cost = records[index]['cost']
         if used + cost > budget:
+            if skip_overflow:
+                continue
             break
         selected += 1
         used += cost
@@ -116,8 +135,9 @@ def _recall20(records, order, *, total, budget, positives):
                                           'precisionAtBudget': precision}
 
 
-def _strategy(records, order, *, ordering, total, budget, positives):
-    recall, coverage = _recall20(records, order, total=total, budget=budget, positives=positives)
+def _strategy(records, order, *, ordering, total, budget, positives, skip_overflow=True):
+    recall, coverage = _recall20(records, order, total=total, budget=budget,
+                                 positives=positives, skip_overflow=skip_overflow)
     first_positive = next((position for position, index in enumerate(order)
                            if records[index]['label'] == 1), None)
     ifa = (_metric(reason='没有正标签提交') if first_positive is None
@@ -125,6 +145,7 @@ def _strategy(records, order, *, ordering, total, budget, positives):
     popt, detail = normalized_effort_area(records, order, ordering=ordering)
     return {
         'ordering': ordering,
+        'budgetRule': BUDGET_RULE if skip_overflow else SENSITIVITY_RULE,
         'recall20Loc': recall,
         'ifa': ifa,
         'popt': popt,
@@ -179,20 +200,59 @@ def _delta(a, b):
     return a - b
 
 
-def _sentence(model, time, random, *, budget, total, positives):
-    model_recall, time_recall = model['recall20Loc'], time['recall20Loc']
-    random_recall = random['recall20Loc']
-    if None in (model_recall.get('value'), time_recall.get('value'), random_recall.get('mean')):
-        return '测试分区缺少可用正例或工作量，无法比较三种检查顺序。'
-    def part(result):
-        return (f"{result['value'] * 100:.1f}%"
-                f"（{result['value'] * positives:.1f}/{positives} 个历史标记）")
-    random_mean = random_recall['mean']
+def _bootstrap_delta(records, model_order, baseline_order, *, budget_fraction=BUDGET_FRACTION,
+                     seed=DEFAULT_SEED, runs=BOOTSTRAP_RUNS):
+    """按自然周时间块有放回重采样，给出模型相对基线的 Recall@20%LOC 配对区间。"""
+    blocks = {}
+    for index, record in enumerate(records):
+        blocks.setdefault(record['epoch'] // (7 * 86400), []).append(index)
+    block_ids = sorted(blocks)
+    if len(block_ids) < 2:
+        return {'low': None, 'high': None, 'runs': 0, 'reason': '时间块不足'}
+    rng = random.Random(seed)
+    deltas = []
+    for _ in range(runs):
+        sampled = []
+        for _ in range(len(block_ids)):
+            sampled.extend(blocks[rng.choice(block_ids)])
+        indices = sorted(set(sampled))
+        subset = [records[index] for index in indices]
+        total = sum(record['cost'] for record in subset)
+        positives = sum(record['label'] for record in subset)
+        if total <= 0 or positives <= 0:
+            continue
+        position = {original: new for new, original in enumerate(indices)}
+        model_sub = [position[index] for index in model_order if index in position]
+        base_sub = [position[index] for index in baseline_order if index in position]
+        model_recall = _recall20(subset, model_sub, total=total,
+                                 budget=budget_fraction * total, positives=positives)[0]['value']
+        base_recall = _recall20(subset, base_sub, total=total,
+                                budget=budget_fraction * total, positives=positives)[0]['value']
+        if model_recall is not None and base_recall is not None:
+            deltas.append(model_recall - base_recall)
+    if not deltas:
+        return {'low': None, 'high': None, 'runs': 0, 'reason': '没有可用的重采样结果'}
+    deltas.sort()
+    return {'low': deltas[int(0.025 * len(deltas))],
+            'high': deltas[min(len(deltas) - 1, int(0.975 * len(deltas)))],
+            'runs': len(deltas), 'seed': seed, 'unit': 'recall20Loc-difference'}
+
+
+def _sentence(model, density, loc, time, random, *, budget, total, positives):
+    values = {
+        '模型排序': model['recall20Loc'].get('value'),
+        '风险/成本密度': density['recall20Loc'].get('value'),
+        '改动量升序': loc['recall20Loc'].get('value'),
+        '时间顺序': time['recall20Loc'].get('value'),
+        '随机平均': random['recall20Loc'].get('mean'),
+    }
+    if any(value is None for value in values.values()):
+        return '测试分区缺少可用正例或工作量，无法比较五种检查顺序。'
+    parts = [f"{name}覆盖 {value * 100:.1f}%"
+             f"（{value * positives:.1f}/{positives} 个历史标记）"
+             for name, value in values.items()]
     return (f"同样检查 20% 代码改动量（预算 {budget:g} 行，共 {total:g} 行）："
-            f"模型排序覆盖 {part(model_recall)}，"
-            f"时间顺序覆盖 {part(time_recall)}，"
-            f"随机平均覆盖 {random_mean * 100:.1f}%"
-            f"（约 {random_mean * positives:.1f}/{positives} 个历史标记）。")
+            + '；'.join(parts) + '。')
 
 
 def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED):
@@ -203,16 +263,64 @@ def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED)
         raise BaselineError('INPUT_INVALID', '随机种子必须是非负整数')
     snapshot, records, positives, total = _load(run_dir)
     budget = BUDGET_FRACTION * total
-    model = _strategy(records, _model_order(records), ordering='score-desc,time-desc,id-asc',
-                      total=total, budget=budget, positives=positives)
-    time = _strategy(records, _time_order(records), ordering='time-desc,id-asc',
-                     total=total, budget=budget, positives=positives)
+    orders = {
+        'model': _model_order(records),
+        'density': _density_order(records),
+        'loc': _loc_order(records),
+        'time': _time_order(records),
+        'random': _random_order(records, seed, 0),
+    }
+    ordering_labels = {
+        'model': 'score-desc,time-desc,id-asc',
+        'density': 'risk-per-loc-desc,time-desc,id-asc',
+        'loc': 'loc-asc,time-desc,id-asc',
+        'time': 'time-desc,id-asc',
+    }
+    primary = {
+        key: _strategy(records, orders[key], ordering=ordering_labels[key],
+                       total=total, budget=budget, positives=positives, skip_overflow=True)
+        for key in ordering_labels
+    }
+    sensitivity = {
+        key: _strategy(records, orders[key], ordering=ordering_labels[key],
+                       total=total, budget=budget, positives=positives, skip_overflow=False)
+        for key in ordering_labels
+    }
     random_results = [
         _strategy(records, _random_order(records, seed, run), ordering=f'random(seed={seed},run={run})',
-                  total=total, budget=budget, positives=positives)
+                  total=total, budget=budget, positives=positives, skip_overflow=True)
         for run in range(random_runs)
     ]
     random = _random_summary(random_results, random_runs, seed)
+    random_sensitivity = _random_summary([
+        _strategy(records, _random_order(records, seed, run), ordering=f'random(seed={seed},run={run})',
+                  total=total, budget=budget, positives=positives, skip_overflow=False)
+        for run in range(random_runs)
+    ], random_runs, seed)
+    strategies = {
+        'model': primary['model'],
+        'density': primary['density'],
+        'loc': primary['loc'],
+        'time': primary['time'],
+        'random': random,
+        'sensitivity': {**sensitivity, 'random': random_sensitivity},
+    }
+    comparisons = {}
+    for key, label in (('density', 'modelVsDensity'), ('loc', 'modelVsLoc'), ('time', 'modelVsTime')):
+        comparisons[label] = {
+            'recall20Loc': _delta(primary['model']['recall20Loc'].get('value'),
+                                  primary[key]['recall20Loc'].get('value')),
+            'ifa': _delta(primary['model']['ifa'].get('value'), primary[key]['ifa'].get('value')),
+            'popt': _delta(primary['model']['popt'].get('value'), primary[key]['popt'].get('value')),
+            'recall20LocInterval': _bootstrap_delta(records, orders['model'], orders[key], seed=seed),
+        }
+    comparisons['modelVsRandomMean'] = {
+        'recall20Loc': _delta(primary['model']['recall20Loc'].get('value'),
+                              random['recall20Loc'].get('mean')),
+        'ifa': _delta(primary['model']['ifa'].get('value'), random['ifa'].get('mean')),
+        'popt': _delta(primary['model']['popt'].get('value'), random['popt'].get('mean')),
+        'recall20LocInterval': _bootstrap_delta(records, orders['model'], orders['random'], seed=seed),
+    }
     summary = snapshot.summary
     manifest = snapshot.manifest
     source = summary.get('source') or {}
@@ -250,31 +358,40 @@ def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED)
             'source': {key: source.get(key) for key in
                        ('publisher', 'url', 'revision', 'labelRule', 'quality')},
         },
-        'strategies': {'model': model, 'time': time, 'random': random},
-        'comparisons': {
-            'modelVsTime': {
-                'recall20Loc': _delta(model['recall20Loc'].get('value'), time['recall20Loc'].get('value')),
-                'ifa': _delta(model['ifa'].get('value'), time['ifa'].get('value')),
-                'popt': _delta(model['popt'].get('value'), time['popt'].get('value')),
-            },
-            'modelVsRandomMean': {
-                'recall20Loc': _delta(model['recall20Loc'].get('value'), random['recall20Loc'].get('mean')),
-                'ifa': _delta(model['ifa'].get('value'), random['ifa'].get('mean')),
-                'popt': _delta(model['popt'].get('value'), random['popt'].get('mean')),
-            },
+        'protocol': {
+            'strategies': list(STRATEGIES),
+            'budgetRule': BUDGET_RULE,
+            'sensitivityRule': SENSITIVITY_RULE,
+            'bootstrapRuns': BOOTSTRAP_RUNS,
+            'bootstrapSeed': seed,
         },
+        'strategies': strategies,
+        'comparisons': comparisons,
         'conclusion': {
-            'sentence': _sentence(model, time, random, budget=budget, total=total, positives=positives),
+            'sentence': _sentence(primary['model'], primary['density'], primary['loc'],
+                                  primary['time'], random, budget=budget, total=total,
+                                  positives=positives),
             'recall20': {
-                'model': model['recall20Loc'],
-                'time': time['recall20Loc'],
+                'model': primary['model']['recall20Loc'],
+                'density': primary['density']['recall20Loc'],
+                'loc': primary['loc']['recall20Loc'],
+                'time': primary['time']['recall20Loc'],
                 'randomMean': random['recall20Loc'],
-                'modelVsTime': _delta(model['recall20Loc'].get('value'), time['recall20Loc'].get('value')),
-                'modelVsRandomMean': _delta(model['recall20Loc'].get('value'), random['recall20Loc'].get('mean')),
+                'modelVsDensity': comparisons['modelVsDensity']['recall20Loc'],
+                'modelVsLoc': comparisons['modelVsLoc']['recall20Loc'],
+                'modelVsTime': comparisons['modelVsTime']['recall20Loc'],
+                'modelVsRandomMean': comparisons['modelVsRandomMean']['recall20Loc'],
+            },
+            'uncertainty': {
+                'modelVsDensity': comparisons['modelVsDensity']['recall20LocInterval'],
+                'modelVsLoc': comparisons['modelVsLoc']['recall20LocInterval'],
+                'modelVsTime': comparisons['modelVsTime']['recall20LocInterval'],
+                'modelVsRandomMean': comparisons['modelVsRandomMean']['recall20LocInterval'],
             },
         },
         'existingMetrics': summary.get('metrics'),
-        'parameterSelection': 'none; frozen artifact; test partition used only for evaluation',
+        'parameterSelection': ('strategies, budget rule and bootstrap settings fixed before reading '
+                               'test labels; no tuning'),
         'limitations': list(LIMITATIONS) + [
             item for item in (summary.get('limitations') or []) if item not in LIMITATIONS
         ],
@@ -286,6 +403,8 @@ def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED)
             'randomSeed': seed,
             'randomRuns': random_runs,
             'budgetFraction': BUDGET_FRACTION,
+            'budgetRule': BUDGET_RULE,
+            'sensitivityRule': SENSITIVITY_RULE,
         },
         'sourceHashes': {name: sha256((Path(run_dir) / name).read_bytes()) for name in files},
     }

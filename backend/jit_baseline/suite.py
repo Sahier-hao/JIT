@@ -47,7 +47,7 @@ def label_semantics(dataset):
                 "rule": declared_label.get("rule", "declared"),
                 "limitations": list(declared_label.get("limitations") or [])}
     collection = dataset.get("collection") or {}
-    if collection.get("kind") == "git-repository" or dataset["schemaName"] == "kamei14-git-v1":
+    if collection.get("kind") == "git-repository" or dataset["schemaName"] in ("kamei14-git-v1", "kamei14-git-v2"):
         rule = (collection.get("szz") or {}).get("rule") or "szz-simple-v1"
         limitations = tuple(collection.get("limitations") or SZZ_LABEL_LIMITATIONS)
         return {"kind": "simplified-szz", "rule": rule, "limitations": list(limitations)}

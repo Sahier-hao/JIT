@@ -6,6 +6,9 @@ CMP-01..06。这里只做编排：描述文件读写交给 `datasets.py`，事�
 """
 from datetime import datetime, timezone
 from pathlib import Path
+import hashlib
+import os
+import uuid
 
 from . import datasets
 from .config import BACKEND
@@ -26,6 +29,61 @@ def register(csv_path, schema=None, dataset=None, version=None, root=None, cohor
              extra=None):
     return datasets.register(csv_path, schema=schema, dataset=dataset, version=version, root=root,
                              cohort=cohort, provenance=provenance, extra=extra)
+
+
+def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
+    """把 CSV 以不可覆盖方式发布到数据集目录，再登记描述文件。
+
+    目标已存在且字节相同即复用；字节不同时追加内容哈希作为新版本，仍冲突则失败。
+    命令行和服务端同步共用这条路径，避免先替换旧文件再登记。
+    """
+    digest = hashlib.sha256(blob).hexdigest()
+    last = None
+    for name in (version, f"{version}-{digest[:8]}"):
+        path = Path(room) / f"{name}.csv"
+        manifest_path = Path(room) / f"{name}.json"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if not path.exists():
+                temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+                try:
+                    temporary.write_bytes(blob)
+                    try:
+                        os.link(temporary, path)
+                    except FileExistsError:
+                        pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            if path.read_bytes() != blob:
+                raise BaselineError("DATASET_EXISTS", f"已有 CSV 内容不同，不覆盖：{name}")
+            try:
+                registered = register(path, dataset=dataset, version=name, **kwargs)
+            except BaselineError as exc:
+                if exc.code != "DATASET_EXISTS" or not manifest_path.exists():
+                    raise
+                entry = {"dataset": dataset, "version": name,
+                         "path": datasets.manifest_relative(manifest_path),
+                         "csvPath": datasets.manifest_relative(path),
+                         "sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                         "created": False}
+                if after is not None:
+                    try:
+                        after(entry, path)
+                    except BaselineError as import_exc:
+                        if import_exc.code != "DATASET_EXISTS":
+                            raise
+                return entry
+            registered["csvPath"] = datasets.manifest_relative(path)
+            if after is not None:
+                after(registered, path)
+            return registered
+        except BaselineError as exc:
+            if exc.code != "DATASET_EXISTS":
+                raise
+            last = exc
+        except OSError as exc:
+            raise BaselineError("DATASET_UNAVAILABLE", "采集结果写入失败，请检查存储权限") from exc
+    raise last
 
 
 def dataset_list(registered):

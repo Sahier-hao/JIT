@@ -7361,9 +7361,34 @@ components:
           type: [string, 'null']
           description: 生成失败的领域原因；不包含内部路径和异常详情。
         baselineSource:
-          enum: [zero, mixed, model-dataset-mean, null]
+          enum: [zero, mixed, model-dataset-mean, training-partition-mean, null]
         baselineDatasetVersion:
           type: [string, 'null']
+        baselineHash:
+          type: [string, 'null']
+        trainingPartitionSize:
+          type: integer
+          minimum: 0
+        stability:
+          type: [object, 'null']
+          additionalProperties: false
+          properties:
+            status:
+              enum: [stable, unstable]
+            rounds:
+              type: integer
+              minimum: 1
+            topFeatures:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+            baseOrder:
+              type: array
+              items:
+                type: string
+          required: [status, rounds, topFeatures, baseOrder]
         missingBaselineFeatures:
           type: array
           items:

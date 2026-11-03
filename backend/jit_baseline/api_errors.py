@@ -97,7 +97,7 @@ def managed_path(path):
     if path == '/api/v1/project-events' or re.fullmatch(
             r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/(?:refresh|analyze|\d+/analyze))?|pull-request-batches(?:/(?:latest|[^/]+(?:/retry)?))?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?)', path):
         return True
-    if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
+    if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
     return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'

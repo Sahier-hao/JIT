@@ -89,7 +89,7 @@ def test_feature_baseline_without_version_or_names_is_empty():
 
 def _seed(store, version='demo-v1'):
     with store.connection(write=True) as db:
-        db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?)',
+        db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,source_sha256,row_count,created_at) VALUES (?,?,?,?,?,?,?)',
                    (version, 'demo', '{}', 'manifest-sha', 'source-sha', 3, '2026-01-01T00:00:00Z'))
         for index, values in enumerate([{'ns': 1, 'nd': 2}, {'ns': 3, 'nd': 4}, {'ns': 5}]):
             commit_id = f'{index:040x}'
