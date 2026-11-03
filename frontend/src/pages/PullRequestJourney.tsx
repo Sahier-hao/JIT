@@ -11,6 +11,7 @@ import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ContractError } from '../apiContract'
 import { PRModelClues } from '../components/PRModelClues'
+import { ProgressBar } from '../components/JobProgress'
 import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
 import { displayTime } from '../domain'
@@ -65,7 +66,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   return <section className="pr-fixed-preview">
     <ui.Button variant="ghost" size="sm" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
     <header className="page-heading"><div><h1>固定快照 · PR #{number}</h1><p>{owner}/{repositoryName} · 版本 {snapshotId}</p></div></header>
-    <div className="pr-update-note"><strong>历史 / 固定来源只读预览</strong><p>此提醒绑定保存时的快照，不承诺是远端最新版本。不会新建个人工作单，也不会改变正在阅读的轮次、笔记或模型选择。</p>{existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}</div>
+    <div className="pr-update-note"><strong>固定来源只读预览</strong><p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>{existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}</div>
     {personal.error ? <p className="field-error" role="alert">{personal.error}；现有存储未清空。</p> : null}
     {error ? <FailureNotice error={error} onRetry={() => setAttempt(v => v + 1)}/> : null}
     {!source && !error ? <LoadingNotice label="读取提醒绑定的固定快照"/> : null}
@@ -159,7 +160,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   if (!work) {
     const failed = Boolean(readError || initial.error)
     if (!failed && source) return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={begin}/>
-    const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 的文件与固定代码版本。首次接入要逐个取文件，通常需要 20 到 30 秒。'
+    const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 文件与固定代码版本。'
     const back = () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })
     return <Dialog
       open
@@ -171,7 +172,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
         {failed ? <Button variant="primary" onClick={() => { setReadError(null); setAttempt(v => v + 1) }}>重试读取</Button> : null}
         <Button variant={failed ? undefined : 'primary'} onClick={back}>返回{repositoryId ? '项目 PR 审查' : '我的审查'}</Button>
       </>}
-    >{null}</Dialog>
+    >{failed ? null : <ProgressBar value={null} state="queued" label="正在读取 PR"/>}</Dialog>
   }
   const round = work.rounds[version], live = source?.snapshotId === version ? source : round.source
   const path = round.currentFile, file = live.files.find(f => f.path === path)
@@ -386,7 +387,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
               <Select size="sm" className="wb-mark" value={round.progress[path]?.state ?? 'unread'} onChange={value => commit(setFileState(current.current!, version, path, value as FileState, readable))} options={[{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]} aria-label="文件阅读状态"/>
             </div>
           </div>
-          <p className="wb-code-hint">{file.patchComplete ? '真实 GitHub Diff，已核对增删行数。点击行号把该位置关联到右侧当前问题。' : 'Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。'}</p>
+          {file.patchComplete ? null : <p className="wb-code-hint">Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。</p>}
           <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
           <details className="wb-author">
             <summary>作者原始说明</summary>

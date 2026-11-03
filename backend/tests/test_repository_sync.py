@@ -143,7 +143,7 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     ({"repositoryUrl": "ssh://git@example.com/x.git"}, "REPOSITORY_UNAVAILABLE"),
     ({"repositoryUrl": "http://127.0.0.1/x.git"}, "REPOSITORY_UNAVAILABLE"),
     ({"commitLimit": 0}, "INPUT_INVALID"),
-    ({"commitLimit": 5001}, "INPUT_INVALID"),
+    ({"commitLimit": 50001}, "INPUT_INVALID"),
     ({"strategy": "train-maybe"}, "INPUT_INVALID"),
     ({"since": "2025-02-01", "until": "2025-01-01"}, "INPUT_INVALID"),
 ])
@@ -242,8 +242,8 @@ def test_same_day_range_is_one_day():
     since, until = _window({"since": "2026-10-18", "until": "2026-10-18"})
     assert (since, until) == ("2026-10-18T00:00:00+00:00", "2026-10-19T00:00:00+00:00")
 
-def test_register_unique_keeps_both_versions_when_metadata_changes(tmp_path):
-    """同一天窗口下采集元信息变了要成为新版本，不能覆盖已有版本或让整次同步失败。"""
+def test_register_unique_reuses_same_rows_and_versions_new_content(tmp_path):
+    """同一 CSV 只是采集元信息不同时按幂等复用；CSV 内容变化才成为新版本。"""
     from jit_baseline import collect as collector
     from jit_baseline.sync import _register_unique
 
@@ -261,9 +261,24 @@ def test_register_unique_keeps_both_versions_when_metadata_changes(tmp_path):
     second = _register_unique(room, dataset, version, collected["csv"],
                               extra={"collection": {"window": {"since": UNTIL}}}, **kwargs)
     assert first["version"] == version
-    assert second["version"].startswith(version + "-")
+    assert second["version"] == version
+    assert len(list(room.glob("*.json"))) == 1
+    third = _register_unique(room, dataset, version, collected["csv"] + b"\n",
+                             extra={"collection": {"window": {"since": SINCE}}}, **kwargs)
+    assert third["version"].startswith(version + "-")
     assert (room / f"{first['version']}.json").exists()
-    assert (room / f"{second['version']}.json").exists()
+    assert (room / f"{third['version']}.json").exists()
+
+
+def test_training_model_name_includes_repository_and_range():
+    """本仓库训练出的模型名要能看出仓库与数据范围，便于在模型列表里区分。"""
+    from jit_baseline.sync import training_model_name
+
+    name = training_model_name(
+        "https://github.com/example/cc-switch.git",
+        "kamei14-git-v1-cc-switch-2025-08-04_2026-10-31-ada0b43a")
+    assert name.startswith("cc-switch · ")
+    assert "2025-08-04→2026-10-31" in name
 
 
 def test_dataset_version_accepts_hash_suffix():

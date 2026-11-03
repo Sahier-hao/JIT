@@ -77,7 +77,7 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   }, { timeout: 120_000 }).toBe('completed')
 
   await page.getByRole('button', { name: '查看 PR', exact: true }).click()
-  await expect(page.getByText(/只读预览。先看提交风险排序/)).toBeVisible()
+  await expect(page.locator('.pr-risk-line')).toBeVisible()
   await page.screenshot({ path: `${evidence}/${info.project.name}-pr-preview.png`, fullPage: true })
   expect(await page.evaluate(key => localStorage.getItem(key), workKey)).toBeNull()
   await page.getByRole('button', { name: '开始审查', exact: true }).click()

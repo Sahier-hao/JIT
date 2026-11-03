@@ -310,18 +310,20 @@ def test_real_updates_remind_without_analyzing(tmp_path, real_run):  # noqa: F81
         watcher.enroll(repository_id)
         assert settle(watcher, repository_id)['status'] == 'updated'
         assert service.repository_syncs(repository_id)['total'] == 0
-        assert json.loads(events(service, repository_id)[0]['payload_json'])['head'] == first_head
+        branch_notes = [note for note in events(service, repository_id) if note['kind'] == 'branch-updated']
+        assert json.loads(branch_notes[0]['payload_json'])['head'] == first_head
         job, _ = service.create({'repositoryUrl': str(source), 'branch': 'main', 'strategy': 'generic-model',
                                  'modelId': model_id, 'commitLimit': 500,
                                  'since': (now - timedelta(days=90)).date().isoformat()})
         finished = wait_job(job['syncId'])
         assert finished['status'] == 'completed'
+        assert any(note['kind'] == 'analysis-completed' for note in events(service, repository_id))
         old = service.repository_commits(repository_id, view_sync_id=job['syncId'])
         assert old['total'] == 2
         _commit(source, 'add service', {'pkg/service.py': 'service = True\n' * 20}, now.isoformat())
         watcher.request(repository_id)
         assert settle(watcher, repository_id)['status'] == 'updated'
-        notes = events(service, repository_id)
+        notes = [note for note in events(service, repository_id) if note['kind'] == 'branch-updated']
         assert len(notes) == 2
         assert json.loads(notes[1]['payload_json'])['previousHead'] == first_head
         assert service.repository_syncs(repository_id)['total'] == 1

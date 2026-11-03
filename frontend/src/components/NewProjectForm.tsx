@@ -4,6 +4,7 @@ import { Button, Input } from '../ui/controls'
 import { FailureNotice } from '../Feedback'
 import type { Route } from '../navigation'
 import { createRepository } from '../projectClient'
+import { ProgressBar } from './JobProgress'
 
 interface NewProjectValues { url: string }
 
@@ -29,9 +30,9 @@ export function NewProjectForm({ navigate, onCancel }: { navigate: (route: Route
       placeholder="https://github.com/owner/repository"
       {...register('url', { validate: value => /^https?:\/\//i.test(value.trim()) || '请填写公开仓库的 HTTP(S) 地址，例如 https://github.com/owner/repository。' })}
     /></label>
-    <p className="form-hint">支持公开 HTTP(S) Git 仓库，同一地址只建立一个项目。建立后自动准备首次分析，之后可在项目页调整跟踪分支、模型与更新频率。</p>
     {errors.url ? <p className="field-error" role="alert">{errors.url.message}</p> : null}
     {error ? <FailureNotice error={error}/> : null}
+    {isSubmitting ? <ProgressBar value={null} state="queued" label="正在建立项目"/> : null}
     <div className="form-actions">
       {onCancel ? <Button type="button" onClick={onCancel}>取消</Button> : null}
       <Button type="submit" variant="primary" loading={isSubmitting}>{isSubmitting ? '正在建立…' : '建立项目'}</Button>

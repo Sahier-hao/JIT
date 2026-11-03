@@ -19,6 +19,7 @@ import { AnalysisLauncher } from '../components/AnalysisLauncher'
 import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { RepositoryOverviewView } from '../components/RepositoryOverview'
 import { ProjectPullRequests } from '../components/ProjectPullRequests'
+import { JobProgress } from '../components/JobProgress'
 import { ProjectTrends } from '../components/ProjectTrends'
 import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
@@ -30,14 +31,6 @@ import { useRepository } from '../repositoryWorkspace'
 import { displayTime } from '../domain'
 
 type ProjectTab = 'overview' | 'prs' | 'trends' | 'analyses'
-
-function retryDate(value: string | null, exclusiveEnd = false): string {
-  if (!value) return ''
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
-  // Stored windows use UTC midnight and an exclusive upper bound; date inputs use inclusive days.
-  const epoch = Date.parse(value)
-  return Number.isFinite(epoch) ? new Date(epoch - (exclusiveEnd ? 86400000 : 0)).toISOString().slice(0, 10) : ''
-}
 
 export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositoryId: string; tab?: ProjectTab; viewId?: string; navigate: (route: Route, replace?: boolean) => void }) {
   // 风险趋势不再是独立页签：地址仍保留 /trends[/viewId] 以支持旧链接，界面并入「分析」。
@@ -56,7 +49,8 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       const list = await repositoryModels()
       const usable = list.filter(model => model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
       setModelChoices(usable)
-      setSelectedModel(usable.find(model => model.isDefault)?.modelId ?? usable[0]?.modelId ?? '')
+      const current = usable.find(model => model.modelId === detail.repository?.viewContext?.modelId)
+      setSelectedModel(current?.modelId ?? usable.find(model => model.isDefault)?.modelId ?? usable[0]?.modelId ?? '')
       setPrDialog(true)
     } catch (failure) {
       setPrAnalysisError(failure instanceof Error ? failure.message : '读取模型失败')
@@ -113,6 +107,13 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const latest = records.syncs[0] ?? repository.latestSync
   const status = projectStatus(repository, latest)
   const context = repository.viewContext
+  const currentBatchModel = modelChoices.find(model => model.modelId === repository.viewContext?.modelId)
+  const defaultBatchModel = modelChoices.find(model => model.isDefault)
+  const prModelOptions = [
+    ...(currentBatchModel ? [{ value: currentBatchModel.modelId, label: `当前项目模型 · ${currentBatchModel.name}` }] : []),
+    ...(defaultBatchModel && defaultBatchModel.modelId !== currentBatchModel?.modelId ? [{ value: defaultBatchModel.modelId, label: `默认模型 · ${defaultBatchModel.name}` }] : []),
+    ...modelChoices.filter(model => model.modelId !== currentBatchModel?.modelId && model.modelId !== defaultBatchModel?.modelId).map(model => ({ value: model.modelId, label: model.name })),
+  ]
 
   async function makeCurrent(job: SyncView) {
     if (selectingId !== '') return
@@ -163,9 +164,6 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     setRetryDraft(previous => ({ key: (previous?.key ?? 0) + 1, form: {
       repositoryUrl: repository.url,
       branch: job.branch,
-      since: retryDate(job.since),
-      until: retryDate(job.until, true),
-      commitLimit: String(job.commitLimit),
       strategy: job.requestedStrategy,
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
@@ -201,6 +199,9 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       </div>
       {prAnalysisError ? <p className="field-error" role="alert">{prAnalysisError}</p> : null}
     </header>
+    {latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? <section className="project-progress" aria-label="当前分析进度">
+      <JobProgress status={latest.status} stage={latest.stage} queuePosition={latest.queuePosition} startedAt={latest.startedAt}/>
+    </section> : null}
 
     <nav className="project-tabs" aria-label="项目工作台视图">
       {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: value })}>{label}</Button>)}
@@ -215,7 +216,6 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <Button size="sm" variant={trendMode ? 'primary' : 'ghost'} aria-current={trendMode ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
     </nav>
     {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate}/> : <>
-    {retryDraft ? <p role="status" className="form-hint">已恢复这次分析的原参数，可以修改后重新发起；原记录会保留。</p> : null}
     <div className="project-workspace">
       <aside className="pw-rail" aria-label="分析记录">
         <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
@@ -229,7 +229,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
           <h2>当前分析结果</h2>
           <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
-        {context && context.sourceKind === 'pr' ? <p className="status-note">此项目当前指针来自旧 PR 分析，不代表分支主线趋势。原结果仍可打开；请在分析记录明确选择已有分支结果，或发起新的分支分析。</p> : null}
+        {context && context.sourceKind === 'pr' ? <p className="status-note">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}
         {context ? <div className="pw-result">
           <div className="result-hero">
             <div className="result-total">
@@ -274,7 +274,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
     <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={440}
       footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
-      <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={modelChoices.map(model => ({ value: model.modelId, label: model.name }))}/>
+      <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={prModelOptions}/>
     </Dialog>
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
       {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
@@ -341,6 +341,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
       </div>}
       <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
+    {active ? <div className="record-progress"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}
     {job.error ? <p className="record-error" title={job.error.message}><AlertTriangle size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
     </div>
   </article>
@@ -349,7 +350,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
 /** 记录详情：放进浮层，避免在列表里向下展开把卡片撑长。 */
 function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
   return <dl className="record-details">
-    <div><dt>范围</dt><dd>{job.since ?? '不限'} — {job.until ?? '不限'}，最多 {job.commitLimit} 条</dd></div>
+    <div><dt>范围</dt><dd>{fullHistory(job.since) ? '全部历史' : `${job.since ?? '不限'} — ${job.until ?? '不限'}`}</dd></div>
     <div><dt>分支</dt><dd>{job.branch}</dd></div>
     {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
     {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
@@ -400,12 +401,12 @@ function RecordMenu({ job, pendingCancel, onOpen, openLabel = '打开结果', op
 
 /** 失败原因：常见错误给一句人话，原始信息留在详情里。 */
 const FAILURE_TEXT: Record<string, string> = {
-  DATASET_EXISTS: '这个日期区间的数据版本已登记且内容不同，换起始日期或先删除旧版本',
+  DATASET_EXISTS: '同一数据版本已有不同内容，未覆盖；请重试，仍失败请联系维护者',
   REPOSITORY_UNAVAILABLE: '无法读取仓库，检查网络或地址后重试',
   REPOSITORY_CHECK_TIMEOUT: '检查远端仓库超时，可以重试',
   CONFLICT_ACTIVE_SYNC: '已有进行中的分析，结束后再试',
   DATASET_INVALID: '这个范围内没有可分析的提交，调整日期后重试',
-  SYNC_TIMEOUT: '分析超过时限，缩小范围后重试',
+  SYNC_TIMEOUT: '分析超过时限，可稍后重试',
   SYNC_INTERRUPTED: '服务停止时分析中断，可以重试',
   SYNC_CANCELLED: '这次分析已取消，可以重试',
 }
@@ -417,7 +418,15 @@ function failureText(error: SyncError) {
 }
 /** 记录的时间跨度：用采集区间，保持一行可读。 */
 function syncSpan(job: SyncView) {
+  if (fullHistory(job.since)) return '全部历史'
   return `${shortDay(job.since)} → ${shortDay(job.until)}`
+}
+
+/** 起点是 1970-01-01 表示未指定起点，即采集全部历史。 */
+function fullHistory(value?: string | null) {
+  if (!value) return false
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) && date.getUTCFullYear() <= 1970
 }
 
 function shortDay(value?: string | null) {

@@ -268,17 +268,17 @@ export function syncBody(form: {
   modelId?: string
   repositoryUrl: string
   branch: string
-  since: string
-  until: string
-  commitLimit: string
+  since?: string
+  until?: string
+  commitLimit?: string
   strategy: SyncStrategy
 }): Record<string, unknown> {
   const body: Record<string, unknown> = { repositoryUrl: form.repositoryUrl.trim(), strategy: form.strategy }
   if (form.modelId) body.modelId = form.modelId
   if (form.branch.trim() !== '') body.branch = form.branch.trim()
-  if (form.since.trim() !== '') body.since = form.since.trim()
-  if (form.until.trim() !== '') body.until = form.until.trim()
-  if (form.commitLimit.trim() !== '') body.commitLimit = Number(form.commitLimit.trim())
+  if (form.since?.trim()) body.since = form.since.trim()
+  if (form.until?.trim()) body.until = form.until.trim()
+  if (form.commitLimit?.trim()) body.commitLimit = Number(form.commitLimit.trim())
   return body
 }
 
@@ -302,19 +302,19 @@ export function failHint(error: SyncError | null): FailureHint | null {
     case 'REPOSITORY_UNAVAILABLE':
       return { title: '仓库打不开或分支不存在', next: '确认地址是公开的 HTTP(S) 仓库、分支名拼写正确，或换一个仓库再试。' }
     case 'DATASET_INVALID':
-      return { title: '这个范围内采不到可用的提交', next: '把日期范围放宽、把提交上限调大，或确认仓库在这个期间确实有提交。' }
+      return { title: '这个范围内采不到可用的提交', next: '确认分支存在且仓库可读，或换一个分支后重试。' }
     case 'SPLIT_INVALID':
       return { title: '数据无法按时间切分', next: '改用「只用现成模型」，或换成提交历史更长的仓库。' }
     case 'MODEL_NOT_READY':
       return { title: '没有可用的现成模型', next: '改用「自动」或「强制用本仓库数据训练」，或者先在模型中心登记一个六字段模型。' }
     case 'SYNC_TIMEOUT':
-      return { title: '同步超时，已停止', next: '缩小日期范围或把提交上限调小，然后重新同步。' }
+      return { title: '同步超时，已停止', next: '稍后重试；仓库历史过大时执行时限会停止本次分析。' }
     case 'SYNC_INTERRUPTED':
       return { title: '服务重启打断了这次同步', next: '重新同步即可；已经登记的数据集不会因此丢失。' }
     case 'DATASET_UNAVAILABLE':
       return { title: '数据集读写失败', next: '确认后端数据目录可写，然后重新同步。' }
     case 'INPUT_INVALID':
-      return { title: '输入有误', next: '按提示修正仓库地址、日期范围或提交上限后重试。' }
+      return { title: '输入有误', next: '按提示修正仓库地址或分支后重试。' }
     case 'UNAUTHORIZED':
     case 'FORBIDDEN':
       return { title: '凭据无效或权限不足', next: '在左侧重新填入团队访问凭据。' }
