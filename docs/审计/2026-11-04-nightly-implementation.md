@@ -34,3 +34,4 @@
 - 收益评估的未来窗口验收数据未生成；已作为独立研究计划放在 `evaluate-review-ordering` 的 Workflow follow-up，当前只有冻结测试分区上的 v2 报告逻辑与测试。
 - 迁移 021–023 只在测试库和隔离目录验证，未对开发库执行升级；升级前仍需备份 `catalog.sqlite3`。
 - 旧解释的 `baselineHash` 为空时前端只显示背景未知，未做批量回填。
+- 实现已提交并推送到 `fix/restore-streamline-review-flows`；GitHub PR 创建被当前 auto mode 权限拦截，尚未创建 PR。
