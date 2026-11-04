@@ -20,7 +20,7 @@ it('opens fixed views via GET only, leaves new sources unapplied, and renders nu
   expect(screen.getAllByText('未知').length).toBeGreaterThan(0)
   expect(screen.getAllByText(/已评分样本不足 20/).length).toBeGreaterThan(0)
   expect(screen.getAllByRole('group', { name: /方向键/ })).toHaveLength(2)
-  expect(document.querySelectorAll('.ui-chart svg')).toHaveLength(2)
+  await waitFor(() => expect(document.querySelectorAll('.ui-chart svg')).toHaveLength(2))
   const strokes = Array.from(document.querySelectorAll('.ui-chart svg path')).map(path => path.getAttribute('stroke')).filter(Boolean)
   expect(strokes).toContain('#2a78d6')
   expect(fetch.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true)

@@ -1,0 +1,182 @@
+{
+  "baseModelIds": [
+    "0f191bbd-ed2d-4f75-b6d8-8eca89f6468a",
+    "cee2819b-69bd-4591-9fce-0e979de13c13",
+    "ca17adf4-f024-4732-8ea4-2be75059892b",
+    "d8c61cbc-6756-48e4-a6b1-59fbc0c66402",
+    "ec806e75-a5af-4575-83f6-67b34e563a54",
+    "dc2cfde0-4d8b-4d68-a91d-f4050d924d0c",
+    "f9c64c90-a386-49c2-8182-8b66a45e5db7",
+    "c95ed51a-2aa2-40b6-bdd6-d0e3028cfd97",
+    "d2d12439-6030-4a71-858c-e91c68dffbb1"
+  ],
+  "baseArtifactRunIds": [
+    "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+    "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+    "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+    "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+    "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+    "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+    "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+    "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+    "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c"
+  ],
+  "basePackageSha256": "0004c6ddbd31ab3091735d111d2eeb67209b11c256e6783ee37df05689dd0166",
+  "mixedPackageSha256": "29cca2f548956dc139d2a4cc6b0b7e7f9fa74e19e288afa3631598e473900f0f",
+  "recovered": {
+    "importId": "57907a9b-415c-4b1f-9221-ca334885d0a5",
+    "packageSha256": "0004c6ddbd31ab3091735d111d2eeb67209b11c256e6783ee37df05689dd0166",
+    "packageVersion": 1,
+    "packageName": "jit-nine-models.zip",
+    "status": "completed",
+    "modelCount": 9,
+    "registeredCount": 9,
+    "reusedCount": 0,
+    "alreadyRegisteredCount": 0,
+    "conflictCount": 0,
+    "failedCount": 0,
+    "code": null,
+    "message": null,
+    "createdAt": "2026-11-03T12:16:57.606929Z",
+    "items": [
+      {
+        "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+        "sourceModelId": "0f191bbd-ed2d-4f75-b6d8-8eca89f6468a",
+        "artifactKey": "baseline",
+        "status": "registered",
+        "modelId": "0f191bbd-ed2d-4f75-b6d8-8eca89f6468a",
+        "runId": "f0dc952f-ad3a-46b6-b829-c9a2f8de6239",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+        "sourceModelId": "cee2819b-69bd-4591-9fce-0e979de13c13",
+        "artifactKey": "decision-tree-v1",
+        "status": "registered",
+        "modelId": "cee2819b-69bd-4591-9fce-0e979de13c13",
+        "runId": "38362f16-63f5-4220-8844-5cc9aed4cd34",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+        "sourceModelId": "ca17adf4-f024-4732-8ea4-2be75059892b",
+        "artifactKey": "random-forest-v1",
+        "status": "registered",
+        "modelId": "ca17adf4-f024-4732-8ea4-2be75059892b",
+        "runId": "d255ce72-a9e8-4f10-ab00-931abf87b6c9",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+        "sourceModelId": "d8c61cbc-6756-48e4-a6b1-59fbc0c66402",
+        "artifactKey": "gaussian-naive-bayes-v1",
+        "status": "registered",
+        "modelId": "d8c61cbc-6756-48e4-a6b1-59fbc0c66402",
+        "runId": "69161b4b-b75b-47e9-bf9e-a781ac4b0e2a",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+        "sourceModelId": "ec806e75-a5af-4575-83f6-67b34e563a54",
+        "artifactKey": "gradient-boosting-v1",
+        "status": "registered",
+        "modelId": "ec806e75-a5af-4575-83f6-67b34e563a54",
+        "runId": "ddba90be-ea72-4232-a9a2-ac4e4c3a6b02",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+        "sourceModelId": "dc2cfde0-4d8b-4d68-a91d-f4050d924d0c",
+        "artifactKey": "mlp-v1",
+        "status": "registered",
+        "modelId": "dc2cfde0-4d8b-4d68-a91d-f4050d924d0c",
+        "runId": "c6d84366-9d53-4682-90ef-f7124cfc3075",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+        "sourceModelId": "f9c64c90-a386-49c2-8182-8b66a45e5db7",
+        "artifactKey": "tabular-resnet-v1",
+        "status": "registered",
+        "modelId": "f9c64c90-a386-49c2-8182-8b66a45e5db7",
+        "runId": "e8df9599-d0c3-4c8a-b253-fae1c72a1778",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+        "sourceModelId": "c95ed51a-2aa2-40b6-bdd6-d0e3028cfd97",
+        "artifactKey": "ft-transformer-v1",
+        "status": "registered",
+        "modelId": "c95ed51a-2aa2-40b6-bdd6-d0e3028cfd97",
+        "runId": "f2fe8032-1988-430b-8a7b-297b77ccaced",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+        "sourceModelId": "d2d12439-6030-4a71-858c-e91c68dffbb1",
+        "artifactKey": "wide-deep-v1",
+        "status": "registered",
+        "modelId": "d2d12439-6030-4a71-858c-e91c68dffbb1",
+        "runId": "4d95a531-c23d-4275-b0ae-28205c10a991",
+        "code": null,
+        "message": null
+      }
+    ]
+  },
+  "mixed": {
+    "importId": "9e42fad7-6f3a-484d-a5c3-e01f72f94264",
+    "packageSha256": "29cca2f548956dc139d2a4cc6b0b7e7f9fa74e19e288afa3631598e473900f0f",
+    "packageVersion": 1,
+    "packageName": "jit-partial-package.zip",
+    "status": "partial",
+    "modelCount": 3,
+    "registeredCount": 1,
+    "reusedCount": 0,
+    "alreadyRegisteredCount": 0,
+    "conflictCount": 1,
+    "failedCount": 1,
+    "code": null,
+    "message": null,
+    "createdAt": "2026-11-03T12:16:58.676915Z",
+    "items": [
+      {
+        "artifactRunId": "ebf5736d6e12b279fc1aec405b15613d891492932b66f01b9a67c874e3bb4766",
+        "sourceModelId": "421664e2-c5c1-471d-bf2a-7898e5c485a5",
+        "artifactKey": "package-extra",
+        "status": "registered",
+        "modelId": "421664e2-c5c1-471d-bf2a-7898e5c485a5",
+        "runId": "5a60570c-dd6c-49a5-bed1-8b66abdd337e",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+        "sourceModelId": "ca17adf4-f024-4732-8ea4-2be75059892b",
+        "artifactKey": "decision-tree-v1",
+        "status": "conflict",
+        "modelId": null,
+        "runId": null,
+        "code": "CONTEXT_MISMATCH",
+        "message": "目标环境已有相同运行身份但内容不同"
+      },
+      {
+        "artifactRunId": "9322bea82efee2521df28f5221060bcf416c364bf6a2a9fc7f2e28d8ef0b384d",
+        "sourceModelId": "696c26e5-d60d-4ed0-a8f3-53360514903f",
+        "artifactKey": "package-corrupt",
+        "status": "failed",
+        "modelId": null,
+        "runId": null,
+        "code": "INTEGRITY_ERROR",
+        "message": "产物校验不匹配：model.joblib"
+      }
+    ]
+  }
+}

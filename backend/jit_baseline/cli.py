@@ -113,6 +113,15 @@ def main():
     register.add_argument('--run-key', required=True)
     register.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     register.add_argument('--artifact-root', type=Path, default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    export_models = commands.add_parser('export-models')
+    export_models.add_argument('model_ids', nargs='+', help='明确选择的已登记模型 ID')
+    export_models.add_argument('--output', type=Path, required=True, help='模型包 ZIP 输出路径')
+    export_models.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    export_models.add_argument('--artifact-root', type=Path, default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    import_models = commands.add_parser('import-models')
+    import_models.add_argument('package', type=Path, help='模型包 ZIP')
+    import_models.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    import_models.add_argument('--artifact-root', type=Path, default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
     dataset_register = commands.add_parser('register-dataset')
     dataset_register.add_argument('--csv', type=Path, default=BACKEND / 'data/openstack/openstack.csv')
     dataset_register.add_argument('--schema', default=None, help='具名特征 schema；默认 openstack-six-v1')
@@ -158,6 +167,23 @@ def main():
             from .catalog import ModelCatalog
             from .catalog_storage import CatalogStorage
             result = ModelCatalog(CatalogStorage(args.database), args.artifact_root).register_key(args.run_key)
+        elif args.command == 'export-models':
+            from .catalog import ModelCatalog
+            from .catalog_storage import CatalogStorage
+            from .model_packages import export_model_package
+            result = export_model_package(
+                ModelCatalog(CatalogStorage(args.database), args.artifact_root),
+                args.model_ids, args.output,
+            )
+        elif args.command == 'import-models':
+            from .catalog import ModelCatalog
+            from .catalog_storage import CatalogStorage
+            from .model_packages import import_model_package
+            storage = CatalogStorage(args.database)
+            storage.initialize()
+            result = import_model_package(
+                ModelCatalog(storage, args.artifact_root), args.package,
+            )
         elif args.command == 'register-dataset':
             from . import store
             result = dict(store.register(args.csv, schema=args.schema, dataset=args.dataset,

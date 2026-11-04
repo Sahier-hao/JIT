@@ -1,0 +1,89 @@
+{
+  "copiedFromWorkspace": [
+    "admin-training-browser-results.json",
+    "default-browser-results.json",
+    "experiment-browser-results.json",
+    "frontend-unit-results.json",
+    "jit-nine-models.zip.sha256",
+    "model-package-browser-results.json",
+    "model-package-import-results.json",
+    "model-package-manifest.json",
+    "model-visibility-and-coverage.json",
+    "preview-browser-results.json",
+    "README.md",
+    "screenshots/model-package-recovery-1280.png",
+    "screenshots/model-package-recovery-1440.png",
+    "screenshots/model-package-recovery-390.png",
+    "verification.md"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 15,
+  "files": [
+    {
+      "path": "admin-training-browser-results.json",
+      "sha256": "3e26111859ed458abbcb25f356083f410bdafb2d3cf17f977f6eb9ec8c73167b"
+    },
+    {
+      "path": "default-browser-results.json",
+      "sha256": "192b1d07f58c315e1f8505f9045865c624da495582e8f2cf32dde2576c074e4b"
+    },
+    {
+      "path": "experiment-browser-results.json",
+      "sha256": "6f6fe462a467f75c4f76289fa2e588207c49c915ef3505d6300e7513373fbdca"
+    },
+    {
+      "path": "frontend-unit-results.json",
+      "sha256": "4e859ca939627ffb68ac461d2ede7870ff643b4db223b9a1b7d6ac3a8e6c831d"
+    },
+    {
+      "path": "jit-nine-models.zip.sha256",
+      "sha256": "828e2ed21277109923d23f59ac31152ba34db91c77897a8af293a3ae938e6abe"
+    },
+    {
+      "path": "model-package-browser-results.json",
+      "sha256": "e6e4d0bd96676a52ef0c9be803465543241757ee126730599214a6981ba0727b"
+    },
+    {
+      "path": "model-package-import-results.json",
+      "sha256": "9832d367e83fbe223e6780de0d415568d4bf4e17e1547a0a8388483cd739fee7"
+    },
+    {
+      "path": "model-package-manifest.json",
+      "sha256": "f843d0caef2a09ef6d630ebfa56ed3a8ebcde0f67e27a4b70dc8e5b4d9621ade"
+    },
+    {
+      "path": "model-visibility-and-coverage.json",
+      "sha256": "a34cd984b6111913a625e4ffcf270f0646592cd9d370c01fced10dc89de038f5"
+    },
+    {
+      "path": "preview-browser-results.json",
+      "sha256": "218867461967f5e8ec3ebf979c8d7a8b2d35b49c8c36bd336f2a820dedff663b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "ea55f8045a2d01d0617169886b1d9af77af15c486cfc28cf320a70c3e625ba76"
+    },
+    {
+      "path": "screenshots/model-package-recovery-1280.png",
+      "sha256": "e066f47b1304a6bc0dd02f7240c2e00f39d944e375b32fb1ae240640dc9a3180"
+    },
+    {
+      "path": "screenshots/model-package-recovery-1440.png",
+      "sha256": "ff0ee1c59496c2b0a630d31118301fcb6c66100c3c5d0621e8009b03f8462068"
+    },
+    {
+      "path": "screenshots/model-package-recovery-390.png",
+      "sha256": "a1c4b538e5f301651c71677be901c340a386a67a5f02964e264248f8119a1212"
+    },
+    {
+      "path": "verification.md",
+      "sha256": "63a2bc1d4daed51f9b048526d01dc5bb159575d6102d20ce2af98dcc11e5c049"
+    }
+  ],
+  "frozenUtc": "2026-11-03T12:43:45.632779+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "084913517fe13119b9892cb875f07c041ea8ff4d105c671bb05e470395c3056b",
+  "workspace": "docs/evidence/_run/publish-trained-models-and-explain-coverage"
+}

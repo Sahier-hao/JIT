@@ -31,9 +31,10 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (18, Path(__file__).parent / 'migrations/018_training_tasks.sql'),
               (19, Path(__file__).parent / 'migrations/019_pr_batches.sql'),
               (20, Path(__file__).parent / 'migrations/020_experiment_promotion.sql'),
-              (21, Path(__file__).parent / 'migrations/021_label_evidence.sql'),
-              (22, Path(__file__).parent / 'migrations/022_training_class_policy.sql'),
-              (23, Path(__file__).parent / 'migrations/023_pr_candidates.sql'))
+              (21, Path(__file__).parent / 'migrations/021_model_package_imports.sql'),
+              (22, Path(__file__).parent / 'migrations/022_label_evidence.sql'),
+              (23, Path(__file__).parent / 'migrations/023_training_class_policy.sql'),
+              (24, Path(__file__).parent / 'migrations/024_pr_candidates.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -355,6 +356,66 @@ class CatalogStorage:
             rows = db.execute('SELECT * FROM import_run WHERE dataset_version=? ORDER BY started_at',
                               (version,)).fetchall()
         return [dict(row) for row in rows]
+
+    def record_model_package_import(self, report):
+        """Persist one model-package import and its per-item outcomes atomically."""
+        with self.connection(write=True) as db:
+            db.execute(
+                'INSERT INTO model_package_import VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                (report['importId'], report['packageSha256'], report['packageVersion'],
+                 report['packageName'], report['status'], report['modelCount'],
+                 report['registeredCount'], report['reusedCount'],
+                 report['alreadyRegisteredCount'], report['conflictCount'],
+                 report['failedCount'], report.get('code'), report.get('message'),
+                 report['createdAt']),
+            )
+            for ordinal, item in enumerate(report['items']):
+                db.execute(
+                    'INSERT INTO model_package_import_item VALUES (?,?,?,?,?,?,?,?,?,?)',
+                    (report['importId'], ordinal, item.get('artifactRunId'),
+                     item.get('sourceModelId'), item.get('artifactKey'), item['status'],
+                     item.get('modelId'), item.get('runId'), item.get('code'),
+                     item.get('message')),
+                )
+        return self.latest_model_package_import()
+
+    def latest_model_package_import(self):
+        with self.connection() as db:
+            row = db.execute(
+                'SELECT * FROM model_package_import ORDER BY created_at DESC, id DESC LIMIT 1'
+            ).fetchone()
+            if row is None:
+                return None
+            items = db.execute(
+                'SELECT * FROM model_package_import_item WHERE import_id=? ORDER BY ordinal',
+                (row['id'],),
+            ).fetchall()
+        return {
+            'importId': row['id'],
+            'packageSha256': row['package_sha256'],
+            'packageVersion': row['package_version'],
+            'packageName': row['package_name'],
+            'status': row['status'],
+            'modelCount': row['model_count'],
+            'registeredCount': row['registered_count'],
+            'reusedCount': row['reused_count'],
+            'alreadyRegisteredCount': row['already_registered_count'],
+            'conflictCount': row['conflict_count'],
+            'failedCount': row['failed_count'],
+            'code': row['error_code'],
+            'message': row['error_message'],
+            'createdAt': row['created_at'],
+            'items': [{
+                'artifactRunId': item['artifact_run_id'],
+                'sourceModelId': item['source_model_id'],
+                'artifactKey': item['artifact_key'],
+                'status': item['status'],
+                'modelId': item['model_id'],
+                'runId': item['run_id'],
+                'code': item['code'],
+                'message': item['message'],
+            } for item in items],
+        }
 
     def feature_means(self, version, fields, commit_ids=None):
         """按数据集版本取字段均值，作为特征归因的基线（PEX-02）。

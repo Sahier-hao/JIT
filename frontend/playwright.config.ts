@@ -16,6 +16,7 @@ export default defineConfig({
     '**/project-workspace.spec.ts',
     '**/admin-experiments.spec.ts',
     '**/experiment-model-promotion.spec.ts',
+    '**/model-package-recovery.spec.ts',
   ],
   outputDir: './test-results/default',
   globalSetup: './e2e/repository-setup.ts',

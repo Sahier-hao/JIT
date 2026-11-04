@@ -40,7 +40,10 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
     return [...values.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [datasets])
 
-  if (loading) return <LoadingNotice label="正在读取数据集版本"/>
+  if (loading) return <section>
+    <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
+    <LoadingNotice label="正在读取数据集版本"/>
+  </section>
   if (error && !datasets.length) return <EmptyState title="数据集不可用" description={error}><Button onClick={() => setRevision(value => value + 1)}>重试</Button></EmptyState>
   if (dataset) {
     const versions = datasets.filter(item => item.dataset === dataset)
