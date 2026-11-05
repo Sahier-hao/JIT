@@ -37,7 +37,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (24, Path(__file__).parent / 'migrations/024_pr_candidates.sql'),
               (25, Path(__file__).parent / 'migrations/025_pr_batch_scope.sql'),
               (26, Path(__file__).parent / 'migrations/026_sync_feature_source.sql'),
-              (27, Path(__file__).parent / 'migrations/027_dataset_source.sql'))
+              (27, Path(__file__).parent / 'migrations/027_dataset_source.sql'),
+              (28, Path(__file__).parent / 'migrations/028_sync_algorithm.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

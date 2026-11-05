@@ -95,6 +95,7 @@ export async function apiRequestWithStatus(request: ApiRequest): Promise<{ body:
 
 export interface SyncForm {
   modelId?: string
+  algorithm?: string
   repositoryUrl: string
   branch: string
   /** 留空表示全部历史；服务端不再按固定 90 天截断。 */

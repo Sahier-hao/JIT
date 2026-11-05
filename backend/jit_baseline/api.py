@@ -327,6 +327,17 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         request.state.business_ids = (result['model']['modelId'], result['model']['runId'], None)
         return JSONResponse(result, status_code=201 if result['created'] else 200)
 
+    @app.get('/api/v1/training-methods')
+    def training_methods(schema: str | None = None):
+        from .algorithms import method_catalog
+        from . import collect
+        from .schemas import resolve
+        try:
+            name = resolve(schema or collect.SCHEMA_NAME).name
+        except BaselineError:
+            raise RequestError('INPUT_INVALID', field='schema')
+        return {'schema': name, 'methods': method_catalog(name)}
+
     @app.get('/api/v1/models')
     def models(state: str | None = None):
         if state not in (None, 'ready', 'invalid'):

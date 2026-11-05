@@ -177,6 +177,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       repositoryUrl: repository.url,
       branch: job.branch,
       strategy: job.requestedStrategy,
+      algorithm: job.algorithm ?? undefined,
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
   }
@@ -379,6 +380,7 @@ function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
   return <dl className="record-details">
     <div><dt>范围</dt><dd>{fullHistory(job.since) ? '全部历史' : `${job.since ?? '不限'} — ${job.until ?? '不限'}`}</dd></div>
     <div><dt>分支</dt><dd>{job.branch}</dd></div>
+    {job.algorithmName ? <div><dt>训练方法</dt><dd>{job.algorithmName}</dd></div> : null}
     {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
     {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
     <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>

@@ -289,7 +289,7 @@ def test_training_task_migration_preserves_old_rows_and_is_idempotent(tmp_path):
     storage.initialize()
     storage.initialize()
     with storage.connection() as db:
-        assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before + (None,)
+        assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before + (None, 'logistic-regression-l2-v1')
         assert db.execute("SELECT COUNT(*) FROM training_task").fetchone()[0] == 0
         assert db.execute("SELECT version FROM schema_migration").fetchone()[0] == MIGRATIONS[-1][0]
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []

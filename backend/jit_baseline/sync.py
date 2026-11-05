@@ -19,7 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
-from .algorithms import get_algorithm
+from .algorithms import DEFAULT_ALGORITHM, check_method, get_algorithm
 from .artifacts import Snapshot
 from .catalog import ModelCatalog
 from .catalog_storage import CatalogStorage, utc_now
@@ -62,7 +62,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
-           "origin", "feature_schema_version", "distribution_rule", "feature_source_json")
+           "origin", "feature_schema_version", "distribution_rule", "feature_source_json", "algorithm")
 
 
 def worker_command():
@@ -127,9 +127,12 @@ def display_name_for(url):
     return name or "repository"
 
 
-def training_model_name(url, version):
-    """本仓库训练出的模型显示名：仓库 + 方法 + 数据范围，便于在模型列表里区分。"""
-    name = f'{display_name_for(url)} · {get_algorithm("logistic-regression-l2-v1")["name"]}'
+def training_model_name(url, version, algorithm=DEFAULT_ALGORITHM, schema_name=SCHEMA_NAME, field_count=0):
+    """本仓库训练出的模型显示名：仓库、方法、特征口径与数据范围。"""
+    entry = get_algorithm(algorithm)
+    fields = (f' · {schema_name}（{field_count} 字段）' if schema_name and field_count
+              else f' · {schema_name}' if schema_name else '')
+    name = f'{display_name_for(url)} · {entry["name"]}{fields}'
     match = re.search(r"(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})(?:-[0-9a-f]{8})?$", version)
     return f"{name} · {match.group(1)}→{match.group(2)}" if match else name
 
@@ -185,6 +188,8 @@ def _view(row):
             "sourceKind": item.get('source_kind', 'unknown'), "sourceSnapshotId": item.get('source_snapshot_id'),
             "origin": item.get('origin', 'manual'), "featureSchemaVersion": item.get('feature_schema_version'),
             "featureSource": json.loads(item['feature_source_json']) if item.get('feature_source_json') else None,
+            "algorithm": item.get('algorithm'),
+            "algorithmName": get_algorithm(item['algorithm'])['name'] if item.get('algorithm') else None,
             "distributionRule": item.get('distribution_rule')}
 
 
@@ -284,14 +289,16 @@ class SyncStorage:
             db.execute('UPDATE repository_sync SET status=?,stage=?,updated_at=? WHERE id=?',
                        (stage, stage, utc_now(), sync_id))
 
-    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None):
+    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None, algorithm=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM repository_sync WHERE repository_url=? AND branch=? AND since IS ? "
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
-                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
-                (repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id, resolved_model_id, *PROGRESS)).fetchone()
+                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND algorithm IS ? "
+                f"AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
+                (repository_url, branch, since, until, commit_limit, requested_strategy,
+                 requested_model_id, resolved_model_id, algorithm, *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
     def pages(self, limit=20, offset=0):
@@ -643,7 +650,7 @@ def _window(payload, now=None):
 
 def sync_input(payload, *, allow_local=False):
     """校验创建作业的输入；返回可直接落库的请求快照。"""
-    if not isinstance(payload, dict) or set(payload) - {'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy', 'modelId'}:
+    if not isinstance(payload, dict) or set(payload) - {'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy', 'modelId', 'algorithm'}:
         raise BaselineError("INPUT_INVALID", "请求体必须只包含公开分析参数")
     url = payload.get("repositoryUrl")
     if not isinstance(url, str) or not url.strip():
@@ -658,9 +665,19 @@ def sync_input(payload, *, allow_local=False):
     strategy = payload.get("strategy") or "auto"
     if strategy not in STRATEGIES:
         raise BaselineError("INPUT_INVALID", "打分模型来源只能是 auto、generic-model 或 force-train")
+    algorithm = payload.get("algorithm")
+    if algorithm is None and strategy != "generic-model":
+        algorithm = DEFAULT_ALGORITHM
+    if algorithm is not None:
+        if not isinstance(algorithm, str) or not algorithm.strip():
+            raise BaselineError("INPUT_INVALID", "训练方法必须是非空名称")
+        if strategy == "generic-model":
+            raise BaselineError("INPUT_INVALID", "使用现成模型时不能指定训练方法")
+        algorithm = algorithm.strip()
+        check_method(algorithm, SCHEMA_NAME)
     since, until = _window(payload)
     return {"repositoryUrl": url, "branch": branch.strip(), "since": since, "until": until,
-            "commitLimit": limit, "requestedStrategy": strategy}
+            "commitLimit": limit, "requestedStrategy": strategy, "algorithm": algorithm}
 
 
 class SyncService:
@@ -670,9 +687,9 @@ class SyncService:
                  allow_local=False, timeout=SYNC_TIMEOUT, collect_fn=None,
                  training_executor=None):
         self.sync = SyncStorage(storage)
-        self.catalog = catalog or ModelCatalog(self.sync.storage)
-        self.dataset_root = Path(dataset_root) if dataset_root is not None else DATASETS
         self.artifact_root = Path(artifact_root) if artifact_root is not None else BACKEND / "artifacts"
+        self.catalog = catalog or ModelCatalog(self.sync.storage, self.artifact_root)
+        self.dataset_root = Path(dataset_root) if dataset_root is not None else DATASETS
         self.allow_local = allow_local
         self.timeout = timeout
         self.collect = collect_fn or collect.collect_repository
@@ -810,7 +827,7 @@ class SyncService:
                                                  since=data["since"], until=data["until"],
                                                  commit_limit=data["commitLimit"],
                                                  requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
-                                                 resolved_model_id=resolved_model_id)
+                                                 resolved_model_id=resolved_model_id, algorithm=data.get("algorithm"))
                 if existing is not None:
                     return self.get(existing['syncId']), False
                 repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
@@ -821,7 +838,7 @@ class SyncService:
                               "commit_limit": data["commitLimit"],
                               "requested_strategy": data["requestedStrategy"], "status": "queued",
                               "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
-                              "resolved_model_id": resolved_model_id,
+                              "resolved_model_id": resolved_model_id, "algorithm": data.get("algorithm"),
                               "source_kind": 'pr' if _pr_source is not None else 'branch',
                               "source_snapshot_id": _pr_source['snapshotId'] if _pr_source is not None else None,
                               "origin": 'automatic' if _automatic else 'manual',
@@ -1241,11 +1258,15 @@ class SyncService:
                              train_records=decision["trainRecords"],
                              train_positives=decision["trainPositives"])
             if decision["modelStrategy"] == TRAINED:
+                method = item.get('algorithm') or DEFAULT_ALGORITHM
+                dataset_schema = resolve(SCHEMA_NAME)
                 trained = self.training.run(
-                    manifest_path, "logistic-regression-l2-v1", None,
+                    manifest_path, method, None,
                     output_key=f"repository-sync-{sync_id[:8]}",
                     channel="repository-sync", request_id=item.get("requestId"),
-                    holdout=holdout, model_name=training_model_name(item["repositoryUrl"], version))
+                    holdout=holdout,
+                    model_name=training_model_name(item["repositoryUrl"], version, method,
+                                                   dataset_schema.name, len(dataset_schema.in_model_names())))
                 split = artifacts.read_json(self.artifact_root / trained["artifactKey"] / "split.json")
                 partitions = split["partitions"]
                 actual_records = sum(part["count"] for part in partitions.values())

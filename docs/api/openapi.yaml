@@ -1316,6 +1316,29 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/training-methods:
+    get:
+      operationId: listTrainingMethods
+      summary: 项目分析可选的训练方法
+      description: 返回已注册方法的名称、类别、依赖、当前 schema 支持性与真实可用状态；未注册方法不会出现。
+      tags:
+      - 目标共享产品
+      security: []
+      parameters:
+      - name: schema
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 方法目录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingMethodCatalog'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
   /api/v1/models:
     get:
       operationId: listModels
@@ -5756,6 +5779,31 @@ components:
       - featureMissing
       - excluded
       additionalProperties: false
+    TrainingMethodCatalog:
+      type: object
+      additionalProperties: false
+      required: [schema, methods]
+      properties:
+        schema:
+          type: string
+        methods:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [method, name, label, category, requires, available, supportedSchema, reason]
+            properties:
+              method: {type: string}
+              name: {type: string}
+              label: {type: string}
+              category: {type: string}
+              requires:
+                type: array
+                items: {type: string}
+              available: {type: boolean}
+              supportedSchema: {type: boolean}
+              reason:
+                type: [string, 'null']
     RepositorySyncCreate:
       type: object
       properties:
@@ -5791,6 +5839,10 @@ components:
           type: string
           format: uuid
           description: Explicit registered compatible model; requires generic-model strategy.
+        algorithm:
+          type: string
+          minLength: 1
+          description: 训练方法；只在 auto 或 force-train 时可用，缺省为 logistic-regression-l2-v1。
       required:
       - repositoryUrl
       additionalProperties: false
@@ -5811,6 +5863,12 @@ components:
         featureSchemaVersion:
           type: [string, 'null']
           description: 创建或成功完成时冻结的真实模型特征口径。
+        algorithm:
+          type: [string, 'null']
+          description: 请求的训练方法；使用现成模型时为空。
+        algorithmName:
+          type: [string, 'null']
+          description: 方法显示名，供记录与详情展示。
         distributionRule:
           type: [string, 'null']
           description: 成功分析冻结的风险分档规则；旧记录可能缺失。

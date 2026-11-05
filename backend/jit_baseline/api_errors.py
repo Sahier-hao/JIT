@@ -16,7 +16,7 @@ if not LOGGER.handlers:
 API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register', '/api/v1/experiment-runs',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models',
-                '/api/v1/training-tasks'}
+                '/api/v1/training-tasks', '/api/v1/training-methods'}
 MESSAGES = {
     'TREND_SOURCE_CONFLICT': '同一提交的保存观测存在冲突，不能直接拼接；请选择单次固定分析',
     'TREND_SOURCE_UNAVAILABLE': '固定趋势来源已删除或内容发生变化，原视图不可用；请明确重新生成',
@@ -29,6 +29,8 @@ MESSAGES = {
     'INPUT_INVALID': '请求格式或字段值无效',
     'INPUT_SCHEMA_MISMATCH': '输入与所选模型的 schema 不匹配或未支持',
     'ALGORITHM_UNKNOWN': '训练方法未注册',
+    'METHOD_DEPENDENCY_UNAVAILABLE': '所选训练方法缺少运行依赖，请安装后重试',
+    'METHOD_SCHEMA_MISMATCH': '所选训练方法与当前特征 schema 不兼容',
     'METRIC_SET_UNKNOWN': '指标集未注册',
     'MODEL_NOT_CONVERGED': '训练方法未收敛',
     'INPUT_LIMIT_EXCEEDED': '单条 JSON 请求超过 64 KiB 上限',
@@ -75,7 +77,8 @@ STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILA
           'PR_SOURCE_TOO_LARGE': 413, 'PR_CONTENT_UNAVAILABLE': 422,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
-          'ALGORITHM_UNKNOWN': 404, 'METRIC_SET_UNKNOWN': 404,
+          'ALGORITHM_UNKNOWN': 404, 'METHOD_DEPENDENCY_UNAVAILABLE': 503,
+          'METHOD_SCHEMA_MISMATCH': 422, 'METRIC_SET_UNKNOWN': 404,
           'REPOSITORY_ANALYSIS_UNKNOWN': 404, 'REPOSITORY_ANALYSIS_UNAVAILABLE': 409,
           'INPUT_INVALID': 422, 'INPUT_SCHEMA_MISMATCH': 422,
           'DATASET_INVALID': 422, 'MODEL_NOT_CONVERGED': 422,
