@@ -31,6 +31,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def lifespan(app):
         app.state.updates.start()
         app.state.pr_updates.start()
+        if os.environ.get('JIT_PR_DATASET_AUTO_PRUNE', '').strip().lower() in ('1', 'true', 'yes'):
+            try:
+                registry = dataset_module.load_all(registry_root)
+                for row in store.prunable_datasets(
+                        storage, registry, int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))):
+                    store.delete_dataset_version(storage, row['manifest'])
+            except Exception:
+                pass
         try:
             yield
         finally:
@@ -122,6 +130,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
         return pr_updates.list_prs(repository_id, state=state, page=page)
 
+    @app.get('/api/v1/repositories/{repository_id}/pull-requests/count')
+    def count_repository_pull_requests(repository_id: str):
+        return pr_updates.open_count(repository_id)
+
     @app.post('/api/v1/repositories/{repository_id}/pull-requests/refresh')
     def refresh_repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
         return pr_updates.refresh_list(repository_id, state=state, page=page)
@@ -130,11 +142,13 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def analyze_all_repository_pull_requests(repository_id: str, request: Request):
         body = await request.body()
         payload = await read_object(request) if body else {}
-        if set(payload) - {'modelId'} or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip()):
+        if (set(payload) - {'modelId', 'scope'}
+                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())):
             raise RequestError('INPUT_INVALID')
         result = await run_in_threadpool(pr_updates.analyze_all_prs, repository_id,
                                          payload.get('modelId'),
-                                         getattr(request.state, 'request_id', None))
+                                         getattr(request.state, 'request_id', None),
+                                         payload.get('scope'))
         return JSONResponse(result, status_code=202)
 
     @app.get('/api/v1/repositories/{repository_id}/pull-request-batches/latest')
@@ -148,19 +162,32 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/retry')
     async def retry_pull_request_batch(repository_id: str, batch_id: str, request: Request):
         body = await request.body()
-        if body:
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'kind'} or 'kind' in payload and payload['kind'] not in ('failed', 'interrupted'):
             raise RequestError('INPUT_INVALID')
         result = await run_in_threadpool(pr_updates.retry_batch, repository_id, batch_id,
-                                         getattr(request.state, 'request_id', None))
+                                         getattr(request.state, 'request_id', None),
+                                         payload.get('kind', 'failed'))
+        return JSONResponse(result, status_code=202)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/cancel')
+    async def cancel_pull_request_batch(repository_id: str, batch_id: str, request: Request):
+        body = await request.body()
+        if body:
+            raise RequestError('INPUT_INVALID')
+        result = await run_in_threadpool(pr_updates.cancel_batch, repository_id, batch_id)
         return JSONResponse(result, status_code=202)
 
     @app.post('/api/v1/repositories/{repository_id}/pull-requests/{number}/analyze')
     async def analyze_repository_pull_request(repository_id: str, number: int, request: Request):
         body = await request.body()
         payload = await read_object(request) if body else {}
-        if set(payload) - {'modelId'} or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip()):
+        if (set(payload) - {'modelId', 'retry'}
+                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())
+                or 'retry' in payload and type(payload['retry']) is not bool):
             raise RequestError('INPUT_INVALID')
-        return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number, payload.get('modelId'))
+        return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number,
+                                       payload.get('modelId'), bool(payload.get('retry', False)))
 
     @app.get('/api/v1/repositories/{repository_id}/pr-tracking')
     def pr_tracking(repository_id: str):
@@ -214,6 +241,21 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/pr-snapshots/{snapshot_id}/analyses')
     def pull_request_analyses(snapshot_id: str):
         return pr_review.analyses(snapshot_id)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/candidates')
+    def pull_request_candidates(snapshot_id: str):
+        return pr_review.stored_candidates(snapshot_id)
+
+    @app.post('/api/v1/pr-snapshots/{snapshot_id}/candidates')
+    async def analyze_pull_request_candidates(snapshot_id: str, request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'paths', 'side'}:
+            raise RequestError('INPUT_INVALID')
+        paths = payload.get('paths')
+        if paths is not None and (not isinstance(paths, list) or not all(isinstance(p, str) for p in paths)):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_review.candidates, snapshot_id, paths,
+                                       payload.get('side', 'head'))
 
     @app.post('/api/v1/pr-snapshots/{snapshot_id}/analyses')
     async def analyze_pull_request(snapshot_id: str, request: Request):
@@ -285,6 +327,17 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         request.state.business_ids = (result['model']['modelId'], result['model']['runId'], None)
         return JSONResponse(result, status_code=201 if result['created'] else 200)
 
+    @app.get('/api/v1/training-methods')
+    def training_methods(schema: str | None = None):
+        from .algorithms import method_catalog
+        from . import collect
+        from .schemas import resolve
+        try:
+            name = resolve(schema or collect.SCHEMA_NAME).name
+        except BaselineError:
+            raise RequestError('INPUT_INVALID', field='schema')
+        return {'schema': name, 'methods': method_catalog(name)}
+
     @app.get('/api/v1/models')
     def models(state: str | None = None):
         if state not in (None, 'ready', 'invalid'):
@@ -320,7 +373,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                 featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
                                 enabled=item['enabled'], isDefault=item['isDefault'],
                                 repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
-                                ('openstack-six-v1', 'kamei14-git-v1')) for item in catalog.models()]}
+                                ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')) for item in catalog.models()]}
 
     @app.post('/api/v1/training-tasks')
     async def create_training_task(request: Request):
@@ -371,6 +424,36 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def list_multi_project_reports():
         return multi_project_reports.list()
 
+    @app.post('/api/admin/curation/preview')
+    async def curation_preview(request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'datasetVersion', 'recipe'}:
+            raise RequestError('INPUT_INVALID')
+        from . import curation
+        return await run_in_threadpool(curation.preview, payload.get('datasetVersion'),
+                                       payload.get('recipe'), dataset_root)
+
+    @app.post('/api/admin/curation/derive')
+    async def curation_derive(request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'datasetVersion', 'recipe'}:
+            raise RequestError('INPUT_INVALID')
+        from . import curation
+        return await run_in_threadpool(curation.derive, payload.get('datasetVersion'),
+                                       payload.get('recipe'), dataset_root)
+
+    @app.get('/api/admin/curation/compare')
+    def curation_compare(source: str, derived: str):
+        from . import curation
+        return curation.compare(source, derived, dataset_root)
+
+    @app.get('/api/admin/curation/export')
+    def curation_export(version: str):
+        from . import curation
+        data = curation.export_bundle(version, dataset_root)
+        return Response(content=data, media_type='application/zip',
+                        headers={'Content-Disposition': f'attachment; filename="{version}.zip"'})
+
     @app.get('/api/admin/multi-project-reports/{report_id}')
     def get_multi_project_report(report_id: str):
         return multi_project_reports.get(report_id)
@@ -383,15 +466,53 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def feature_schema(version: str):
         return schema_info(version)
 
+    @app.get('/api/admin/datasets/prunable')
+    def dataset_prunable(keep: int | None = None):
+        registered = dataset_module.load_all(registry_root)
+        retain = keep if keep is not None else int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))
+        rows = store.prunable_datasets(storage, registered, retain)
+        return {'keep': retain,
+                'versions': [{key: value for key, value in row.items() if key != 'manifest'}
+                             for row in rows]}
+
+    @app.post('/api/admin/datasets/prune')
+    async def dataset_prune(request: Request):
+        payload = await read_object(request)
+        versions = payload.get('versions') if isinstance(payload, dict) else None
+        keep = payload.get('keep') if isinstance(payload, dict) else None
+        if (not isinstance(versions, list) or not versions
+                or any(not isinstance(version, str) or not version.strip() for version in versions)
+                or keep is not None and (type(keep) is not int or keep < 0)):
+            raise RequestError('INPUT_INVALID')
+        registered = dataset_module.load_all(registry_root)
+        retain = keep if keep is not None else int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))
+        eligible = {row['version']: row for row in store.prunable_datasets(
+            storage, registered, retain)}
+        deleted, skipped = [], []
+        for version in dict.fromkeys(versions):
+            row = eligible.get(version)
+            if row is None:
+                skipped.append({'version': version, 'reason': 'not_prunable'})
+                continue
+            result = await run_in_threadpool(store.delete_dataset_version, storage, row['manifest'])
+            deleted.append(result)
+        return {'deleted': deleted, 'skipped': skipped}
+
     @app.get('/api/v1/datasets')
     def dataset_versions_all():
-        return {'datasets': store.dataset_list(dataset_module.load_all(registry_root))}
+        datasets = store.dataset_list(dataset_module.load_all(registry_root))
+        for dataset in datasets:
+            for version in dataset['versions']:
+                version['references'] = store.dataset_references(storage, version['version'])
+        return {'datasets': datasets}
 
     @app.get('/api/v1/datasets/{name}/versions')
     def dataset_versions(name: str):
         view = store.version_view(dataset_module.load_all(registry_root), name)
         if view is None:
             raise RequestError('NOT_FOUND')
+        for version in view['versions']:
+            version['references'] = store.dataset_references(storage, version['version'])
         return view
 
     @app.get('/api/v1/commits')

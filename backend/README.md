@@ -123,7 +123,7 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 
 | 参数 | 说明 |
 | --- | --- |
-| `--repo` | 本地路径直接读；`http(s)` 地址会 `git clone --bare` 到临时目录，采集后删除 |
+| `--repo` | 本地路径直接读；`http(s)` 地址优先复用本地裸克隆缓存，失配时重新获取 |
 | `--since` / `--until` | 提交作者时间窗口，`YYYY-MM-DD` 或 ISO；范围外提交只用于回溯，不进样本 |
 | `--branch` | 分支或提交；默认 `HEAD` |
 | `--limit` | 窗口内提交数上限；超过直接拒绝，避免一次拉爆内存 |
@@ -138,6 +138,13 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 报错，并分别带上每条通道的最后一行输出。完全没有代理时提示设置 `JIT_GIT_PROXY`。
 传输速度持续低于 1 KiB/s 达 60 秒即按停滞失败，可用 `JIT_GIT_STALL_SECONDS` 调整秒数；
 慢速但存活的链路设 `0` 关闭判定。
+
+公开仓库默认缓存在 `backend/.cache/repositories`：同一地址按哈希复用裸克隆，超过有效期先
+`git fetch` 再确认目标提交存在；损坏、来源不匹配或缺少目标分支时重建或明确失败，不使用其他
+仓库副本。缓存只影响准备仓库的成本，不改变 CSV、特征和来源证据。可配置
+`JIT_REPO_CACHE_DIR`（目录）、`JIT_REPO_CACHE_LIMIT_MB`（默认 4096）、
+`JIT_REPO_CACHE_TTL_SECONDS`（默认 900）、`JIT_REPO_CACHE=0`（关闭）；淘汰按最久未使用，
+被活动分析租用的副本不会被删除。
 
 产物是 CSV（`commit_id`、`author_date`、14 维特征）与描述文件；描述文件多一个 `collection`
 段，记录仓库路径、HEAD、分支、窗口、git 版本、合并/空提交/范围外/二进制计数、SZZ 规则版本
@@ -472,6 +479,11 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 管理接口仍读取默认目录。模型详情只读取通过当前产物校验的运行摘要；产物缺失、损坏、运行或数据身份
 不一致时返回可定位错误，不回退到其他模型或示例指标。
 
+PR 来源数据集默认保留最近 `JIT_PR_DATASET_KEEP`（默认 10）个版本，被模型、分析或趋势引用的版本
+不会被列出或删除；分支数据集不参与清理。自动清理默认关闭，只有设置
+`JIT_PR_DATASET_AUTO_PRUNE=1` 时才在服务启动时执行。管理员也可在数据集详情显式预览并清理，
+删除不可恢复，文件删除失败时返回未完成结果而不是成功。
+
 实验运行登记（`register-promotable-experiment-models`）增加了受控递归发现和选择性晋升：
 
 | 方法与路径 | 用途 |
@@ -525,6 +537,10 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 | `GET /api/v1/project-events` | 跨项目公开事件分页 |
 | `GET /api/v1/repositories/{id}/events` | 单项目公开事件分页 |
 | `GET /api/v1/repositories/{id}/overview` | 公开 GitHub 仓库概览与缓存状态 |
+
+概览默认缓存 6 小时（`JIT_OVERVIEW_CACHE_SECONDS` 可调）；有效期内直接读取 `repository_overview`，
+不访问 GitHub。过期后重新读取，失败时返回上次缓存并标记 stale。浏览器另保留最近一次成功概览，
+进入页面先显示本地快照，再按需刷新。
 | `GET /api/v1/repositories/{id}/pull-requests` | 读取持久 PR 清单缓存（不访问远端） |
 | `POST /api/v1/repositories/{id}/pull-requests/refresh` | 显式刷新 PR 清单 |
 | `GET/PATCH /api/v1/repositories/{id}/pr-tracking` | 读取/修改项目自动跟踪 |

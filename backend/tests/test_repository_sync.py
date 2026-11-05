@@ -87,7 +87,7 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     assert done["degradeReason"] == "fewRecords"
     assert done["trainRecords"] < 200
     assert done["modelId"] and done["runId"] and done["datasetVersion"]
-    assert done["datasetVersion"].startswith("kamei14-git-v1-")
+    assert done["datasetVersion"].startswith("kamei14-git-v2-")
     assert done["error"] is None
 
     with TestClient(harness["app"]) as client:
@@ -158,13 +158,54 @@ def test_invalid_input_never_creates_a_job(harness, override, code):
         assert client.get("/api/v1/repository-syncs", headers=HEADERS).json()["total"] == 0
 
 
+def test_sync_input_validates_and_defaults_training_method():
+    from jit_baseline.errors import BaselineError
+    from jit_baseline.sync import sync_input
+
+    base = {"repositoryUrl": "https://example.com/x.git", "strategy": "force-train"}
+    assert sync_input({**base, "algorithm": "decision-tree-v1"})["algorithm"] == "decision-tree-v1"
+    assert sync_input(base)["algorithm"] == "logistic-regression-l2-v1"
+    with pytest.raises(BaselineError) as unknown:
+        sync_input({**base, "algorithm": "missing-method"})
+    assert unknown.value.code == "ALGORITHM_UNKNOWN"
+    with pytest.raises(BaselineError) as generic:
+        sync_input({"repositoryUrl": "https://example.com/x.git", "strategy": "generic-model",
+                    "algorithm": "decision-tree-v1"})
+    assert generic.value.code == "INPUT_INVALID"
+
+
+def test_sync_input_rejects_method_with_missing_dependency(monkeypatch):
+    from jit_baseline import algorithms
+    from jit_baseline.errors import BaselineError
+    from jit_baseline.sync import sync_input
+
+    monkeypatch.setattr(algorithms, 'method_missing_dependencies', lambda name: ['torch'])
+    with pytest.raises(BaselineError) as raised:
+        sync_input({"repositoryUrl": "https://example.com/x.git", "strategy": "auto",
+                    "algorithm": "decision-tree-v1"})
+    assert raised.value.code == "METHOD_DEPENDENCY_UNAVAILABLE"
+    catalog = {item['method']: item for item in algorithms.method_catalog('kamei14-git-v2')}
+    assert catalog['decision-tree-v1']['available'] is False
+    assert 'torch' in catalog['decision-tree-v1']['reason']
+
+
+def test_training_model_name_includes_method_schema_and_field_count():
+    from jit_baseline.sync import training_model_name
+    name = training_model_name("https://github.com/example/project",
+                               "kamei14-git-v2-project-2025-01-01_2025-02-01",
+                               "decision-tree-v1", "kamei14-git-v2", 14)
+    assert "决策树" in name and "kamei14-git-v2" in name and "14 字段" in name
+    assert "2025-01-01→2025-02-01" in name
+
+
 def test_same_parameters_reuse_an_active_job(harness):
     from jit_baseline.sync import _window
 
     since, until = _window({"since": SINCE, "until": UNTIL})
     rows = [{"id": "sync-in-flight", "repository_url": "https://example.com/x.git",
              "branch": "HEAD", "since": since, "until": until, "commit_limit": 500,
-             "requested_strategy": "auto", "status": "collecting", "stage": "collecting",
+             "requested_strategy": "auto", "algorithm": "logistic-regression-l2-v1",
+             "status": "collecting", "stage": "collecting",
              "resolved_model_id": harness['catalog'].default_model_id(),
              "created_at": "2026-01-01T00:00:00+00:00", "updated_at": "2026-01-01T00:00:00+00:00"}]
     harness["service"].sync.create(rows[0])

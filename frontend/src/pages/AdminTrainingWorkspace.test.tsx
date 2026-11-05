@@ -164,6 +164,46 @@ it('shows an error state and keeps its recovery action keyboard focusable', asyn
   expect(retry).not.toHaveFocus()
 })
 
+it('filters datasets by branch or PR origin', async () => {
+  const branch = { ...DATASET, dataset: 'branch-set', versions: [{ ...DATASET.versions[0], usage: 'branch' }] }
+  const pr = { ...DATASET, versions: [{ ...DATASET.versions[0], usage: 'pr', sourceSyncId: 'sync-1' }] }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [branch, pr] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    return Response.json({})
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets' }} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('heading', { name: 'branch-set' })).toBeVisible()
+  expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+  await userEvent.setup().click(screen.getByText('PR 分析'))
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'branch-set' })).not.toBeInTheDocument())
+  expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+})
+
+it('previews and confirms PR dataset cleanup', async () => {
+  const datasets = { ...DATASET, versions: [{ ...DATASET.versions[0], usage: 'pr', sourceSyncId: 'sync-1' }] }
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [datasets] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (String(path).includes('/api/admin/datasets/prunable')) return Response.json({ keep: 10, versions: [{ dataset: 'mp-scikit-learn', version: 'old-pr', createdAt: NOW, references: [] }] })
+    if (String(path).endsWith('/api/admin/datasets/prune') && options?.method === 'POST') return Response.json({ deleted: [{ version: 'old-pr' }], skipped: [] })
+    return Response.json({})
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: TASK.datasetVersion }} navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '预览可清理版本' }))
+  await screen.findByText(/old-pr/)
+  await user.click(screen.getByRole('button', { name: '清理 1 个版本' }))
+  await user.click(screen.getByRole('button', { name: '确认清理' }))
+  await waitFor(() => expect(fetch.mock.calls.some(([path, init]) => String(path).endsWith('/api/admin/datasets/prune') && init?.method === 'POST')).toBe(true))
+})
+
 it('creates a training task from a dataset detail page', async () => {
   const navigate = vi.fn()
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {

@@ -289,7 +289,7 @@ def test_training_task_migration_preserves_old_rows_and_is_idempotent(tmp_path):
     storage.initialize()
     storage.initialize()
     with storage.connection() as db:
-        assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before
+        assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before + (None, 'logistic-regression-l2-v1')
         assert db.execute("SELECT COUNT(*) FROM training_task").fetchone()[0] == 0
         assert db.execute("SELECT version FROM schema_migration").fetchone()[0] == MIGRATIONS[-1][0]
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
@@ -329,5 +329,28 @@ def test_isolated_worker_completes_a_real_task(tmp_path):
         assert completed["status"] == "succeeded", completed
         assert completed["runId"] and completed["artifactRunId"] and completed["modelId"]
         assert completed["metrics"]["averagePrecision"]["value"] is not None
+    finally:
+        service.close()
+
+
+def test_real_training_with_class_policy_records_summary(tmp_path):
+    storage = CatalogStorage(tmp_path / "catalog.sqlite3")
+    storage.initialize()
+    service = TrainingTaskService(storage, artifact_root=tmp_path / "artifacts", timeout=60)
+    try:
+        task, _ = service.create(
+            {"datasetVersion": DATASET_VERSION, "method": "logistic-regression-l2-v1",
+             "metricSet": "metric-set-v2",
+             "classPolicy": {"kind": "weights", "positiveWeight": 2}},
+            created_by="admin", request_id="class-policy")
+        completed = wait_for(
+            lambda: (lambda item: item if item["status"] in (
+                "succeeded", "failed", "interrupted") else None)(service.get(task["taskId"])),
+            timeout=45,
+        )
+        assert completed["status"] == "succeeded", completed
+        assert completed["classPolicy"] == {"kind": "weights", "positiveWeight": 2}
+        assert completed["classPolicySummary"]["before"]["records"] > 0
+        assert completed["classPolicySummary"]["after"] == completed["classPolicySummary"]["before"]
     finally:
         service.close()

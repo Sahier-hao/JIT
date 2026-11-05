@@ -3,6 +3,7 @@ import { ApiError } from '../../apiContract'
 import { fetchAdminDatasets, fetchAdminModels, formatDate, type AdminDatasetVersion, type Row } from '../../adminContracts'
 import { EmptyState, LoadingNotice } from '../../Feedback'
 import { Button } from '../../ui/controls'
+import { Segmented } from '../../ui/segmented'
 import type { Route } from '../../navigation'
 import { AdminDatasetDetailPage } from './AdminDatasetDetailPage'
 import { AdminPageHeader, ErrorNotice } from './AdminShared'
@@ -18,6 +19,7 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
+  const [usageFilter, setUsageFilter] = useState<'all' | 'branch' | 'pr'>('all')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -36,9 +38,10 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
 
   const grouped = useMemo(() => {
     const values = new Map<string, AdminDatasetVersion[]>()
-    datasets.forEach(item => values.set(item.dataset, [...(values.get(item.dataset) ?? []), item]))
+    datasets.filter(item => usageFilter === 'all' || item.usage === usageFilter)
+      .forEach(item => values.set(item.dataset, [...(values.get(item.dataset) ?? []), item]))
     return [...values.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [datasets])
+  }, [datasets, usageFilter])
 
   if (loading) return <section>
     <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
@@ -53,8 +56,11 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
   return <section>
     <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
+    <div className="admin-dataset-filters"><Segmented aria-label="数据集来源" value={usageFilter} onChange={value => setUsageFilter(value as 'all' | 'branch' | 'pr')} options={[
+      { label: '全部', value: 'all' }, { label: '分支分析', value: 'branch' }, { label: 'PR 分析', value: 'pr' },
+    ]}/></div>
     {!grouped.length ? <p className="quiet-empty">尚无已登记数据集</p> : <div className="admin-dataset-list">{grouped.map(([name, versions]) => <article className="admin-dataset-card" key={name}>
-      <div className="admin-dataset-main"><h2>{name}</h2><p>{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="admin-card-meta">最新数据 {versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'}</p></div>
+      <div className="admin-dataset-main"><h2>{name}</h2><p>{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="admin-card-meta">最新数据 {versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'} · {versions.filter(item => item.usage === 'pr').length} 个 PR 版本</p></div>
       <Button onClick={() => navigate({ name: 'admin', view: 'datasets', resourceId: name, version: versions.at(-1)?.version })}>查看详情</Button>
     </article>)}</div>}
   </section>

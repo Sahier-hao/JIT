@@ -107,6 +107,9 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=Non
         if key in REQUIRED:
             raise BaselineError("DATASET_INVALID", f"附加证据不能覆盖必需字段：{key}")
         manifest[key] = value
+    usage = manifest.setdefault("usage", "branch")
+    if usage not in ("branch", "pr"):
+        raise BaselineError("DATASET_INVALID", f"数据集来源类型无效：{usage}")
     return manifest
 
 
@@ -153,6 +156,9 @@ def validate_manifest(manifest):
         raise BaselineError("DATASET_INVALID", "版本名时间范围与描述的时间范围不一致")
     if not isinstance(manifest["samples"], list) or not manifest["samples"]:
         raise BaselineError("DATASET_INVALID", "描述文件缺少样本")
+    manifest.setdefault("usage", "branch")
+    if manifest["usage"] not in ("branch", "pr"):
+        raise BaselineError("DATASET_INVALID", f"数据集来源类型无效：{manifest['usage']}")
     return manifest
 
 
@@ -175,6 +181,20 @@ def manifest_relative(path):
         return path.as_posix()
 
 
+def _same_manifest(existing, candidate):
+    """来源标记不改变数据集身份：旧描述缺少 usage/source 时仍视为同一版本。"""
+    if existing == candidate:
+        return True
+    try:
+        left, right = json.loads(existing), json.loads(candidate)
+    except (TypeError, ValueError):
+        return False
+    for value in (left, right):
+        value.pop("usage", None)
+        value.pop("sourceSyncId", None)
+    return left == right
+
+
 def register(csv_path, schema=None, dataset=None, version=None, root=None, cohort=None, provenance=None,
              extra=None):
     """登记数据集：写 `<root>/<dataset>/<version>.json`；同内容重复登记幂等。"""
@@ -188,9 +208,9 @@ def register(csv_path, schema=None, dataset=None, version=None, root=None, cohor
             existing = target.read_text(encoding="utf-8")
         except OSError as exc:
             raise BaselineError("DATASET_UNAVAILABLE", f"描述文件不可读：{target.name}") from exc
-        if existing == text:
+        if _same_manifest(existing, text):
             return {"dataset": manifest["dataset"], "version": manifest["version"],
-                    "path": manifest_relative(target), "sha256": sha256(text.encode("utf-8")), "created": False}
+                    "path": manifest_relative(target), "sha256": sha256(existing.encode("utf-8")), "created": False}
         raise BaselineError("DATASET_EXISTS", f"版本已登记且内容不同，不覆盖：{manifest['version']}")
     target.parent.mkdir(parents=True, exist_ok=True)
     temp = target.with_name(target.name + ".tmp")

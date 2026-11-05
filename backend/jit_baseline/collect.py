@@ -14,6 +14,10 @@ import re
 import shutil
 import subprocess
 import tempfile
+import threading
+import time
+import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from ipaddress import ip_address
 from pathlib import Path
@@ -22,7 +26,8 @@ from urllib.parse import urlparse
 from .errors import BaselineError
 from .schemas import resolve
 
-SCHEMA_NAME = "kamei14-git-v1"
+SCHEMA_NAME = "kamei14-git-v2"
+LEGACY_SCHEMA_NAME = "kamei14-git-v1"
 SZZ_RULE = "szz-simple-v1"
 SZZ_PATTERN = r"(?i)\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\b"
 RECENT_DAYS = 90
@@ -33,8 +38,17 @@ TEXT_MAX_BYTES_PER_COMMIT = 8192
 LIMITATIONS = (
     "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
     "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。",
+    "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。",
 )
 MAX_EPOCH = 2_147_483_647
+CACHE_DIR_ENV = "JIT_REPO_CACHE_DIR"
+CACHE_LIMIT_ENV = "JIT_REPO_CACHE_LIMIT_MB"
+CACHE_TTL_ENV = "JIT_REPO_CACHE_TTL_SECONDS"
+CACHE_ENABLED_ENV = "JIT_REPO_CACHE"
+DEFAULT_CACHE_LIMIT_MB = 4096
+DEFAULT_CACHE_TTL = 900
+_CACHE_LOCK = threading.RLock()
+_CACHE_LEASES = {}
 # git 自身不读 Windows 系统代理：浏览器能打开 GitHub 时克隆仍会直连并长时间卡住。
 # 显式环境变量优先，其次系统代理设置；两者都没有时保持直连。
 PROXY_ENV = ("JIT_GIT_PROXY", "HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy")
@@ -181,8 +195,11 @@ def _inside(epoch, start, end):
 
 
 def _entries(repo, branch):
-    """一次 `git log` 取回提交、作者、作者时间与 numstat；返回提交与无法解析行数。"""
-    text = _run(repo, ["log", branch, "--reverse", "--no-merges", "--no-renames", "--numstat",
+    """一次 `git log` 取回提交、父提交、作者、作者时间与 numstat。
+
+    使用拓扑顺序（父先子后）；保留合并提交用于推进第一父历史，但采集记录会跳过它们。
+    """
+    text = _run(repo, ["log", branch, "--topo-order", "--reverse", "--no-renames", "--numstat",
                        "--format=%x01%H%x02%P%x02%an%x02%ae%x02%aI%x02%s"]).stdout
     commits, unparsed = [], 0
     current = None
@@ -315,7 +332,7 @@ def _jsonl_bytes(entries):
 
 
 class _History:
-    """单遍历史索引：文件与作者的既往状态，随遍历推进。"""
+    """单条父链上的历史状态；分支点按需复制，线性历史原地推进。"""
 
     def __init__(self):
         self.file_lines = {}
@@ -324,6 +341,16 @@ class _History:
         self.file_count = {}
         self.author_epochs = {}
         self.author_dirs = {}
+
+    def clone(self):
+        copy = _History()
+        copy.file_lines = dict(self.file_lines)
+        copy.file_last = dict(self.file_last)
+        copy.file_authors = {key: set(value) for key, value in self.file_authors.items()}
+        copy.file_count = dict(self.file_count)
+        copy.author_epochs = {key: list(value) for key, value in self.author_epochs.items()}
+        copy.author_dirs = dict(self.author_dirs)
+        return copy
 
     def advance(self, commit):
         paths = [item["path"] for item in commit["files"]]
@@ -351,7 +378,12 @@ class _History:
         entropy = 0.0
         if total > 0:
             entropy = -sum((value / total) * math.log(value / total) for value in churn if value > 0)
-        ages = [(commit["epoch"] - self.file_last[path][1]) / 86400 for path in paths if path in self.file_last]
+        raw_ages = [(commit["epoch"] - self.file_last[path][1]) / 86400
+                    for path in paths if path in self.file_last]
+        # 作者日期可被 rebase/cherry-pick 改写，可能早于第一父链上文件的上次修改时间。
+        # 文件年龄物理上不能为负，按 0 处理，并把被钳制的文件数写入采集证据。
+        negative_ages = sum(1 for value in raw_ages if value < 0)
+        ages = [max(0.0, value) for value in raw_ages]
         author_epochs = self.author_epochs.get(commit["email"], [])
         recent = commit["epoch"] - RECENT_DAYS * 86400
         return {
@@ -369,6 +401,7 @@ class _History:
             "exp": len(author_epochs),
             "rexp": sum(1 for epoch in author_epochs if epoch >= recent),
             "sexp": sum(self.author_dirs.get((commit["email"], subsystem), 0) for subsystem in subsystems),
+            "_negativeFileAges": negative_ages,
         }
 
 
@@ -379,12 +412,12 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     if start is not None and end is not None and start >= end:
         raise BaselineError("INPUT_INVALID", "起始时间必须早于结束时间")
     entries, unparsed = _entries(repo, branch)
-    entries.sort(key=lambda commit: (commit["epoch"], commit["id"]))
-    merges = _merge_epochs(repo, branch)
-    excluded = {"merges": sum(1 for epoch in merges if _inside(epoch, start, end)),
+    non_merge = [commit for commit in entries if len(commit["parents"]) <= 1]
+    excluded = {"merges": sum(1 for commit in entries
+                              if len(commit["parents"]) > 1 and _inside(commit["epoch"], start, end)),
                 "empty": 0, "outsideWindow": 0, "unparsed": unparsed}
-    window = [commit for commit in entries if _inside(commit["epoch"], start, end)]
-    excluded["outsideWindow"] = len(entries) - len(window)
+    window = [commit for commit in non_merge if _inside(commit["epoch"], start, end)]
+    excluded["outsideWindow"] = len(non_merge) - len(window)
     if not window:
         raise BaselineError("DATASET_INVALID",
                             "采集范围内没有提交，请调整起始日期、结束日期或分支")
@@ -392,43 +425,76 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         raise BaselineError("DATASET_INVALID",
                             f"范围内提交数 {len(window)} 超过上限 {limit}，请缩小范围")
 
-    history = _History()
-    pending, records = [], []
-    skipped = {"noEarlierChange": 0, "outsideWindow": 0}
+    # 每个提交只沿第一父链取得状态；分支点复制状态，线性历史原地推进。
+    remaining = {commit["id"]: 0 for commit in entries}
     for commit in entries:
-        if _inside(commit["epoch"], start, end):
-            break
-        history.advance(commit)
+        if commit["parents"]:
+            parent = commit["parents"][0]
+            if parent in remaining:
+                remaining[parent] += 1
+    states = {}
 
-    labels = set()
+    def take(parent):
+        if parent not in states:
+            return _History()
+        if remaining[parent] > 1:
+            remaining[parent] -= 1
+            return states[parent].clone()
+        remaining[parent] -= 1
+        return states.pop(parent)
+
+    labels, evidence, records = set(), [], []
+    skipped = {"noEarlierChange": 0, "outsideWindow": 0}
+    negative_file_ages = 0
     fix_commits = 0
-    for commit in window:
-        if not commit["files"]:
-            excluded["empty"] += 1
+    for commit in entries:
+        parent = commit["parents"][0] if commit["parents"] else None
+        state = take(parent) if parent is not None else _History()
+        if len(commit["parents"]) > 1:
+            # 合并提交不进入记录，也不把两个父的状态相加；只把第一父状态交给后续提交。
+            states[commit["id"]] = state
+            if remaining[commit["id"]] == 0:
+                states.pop(commit["id"], None)
             continue
-        metrics = history.features(commit)
-        if metrics["fix"]:
-            fix_commits += 1
-            for item in commit["files"]:
-                previous = history.file_last.get(item["path"])
-                if previous is None:
-                    skipped["noEarlierChange"] += 1
-                    continue
-                identity, epoch = previous
-                if start is not None and epoch < start:
-                    skipped["outsideWindow"] += 1
-                    continue
-                labels.add(identity)
-        records.append({"id": commit["id"], "epoch": commit["epoch"],
-                        "time": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z"),
-                        "subject": commit["subject"], "authorName": commit["author"],
-                        "filePaths": [item["path"] for item in commit["files"]], "metrics": metrics})
-        history.advance(commit)
+        if _inside(commit["epoch"], start, end):
+            if not commit["files"]:
+                excluded["empty"] += 1
+            else:
+                metrics = state.features(commit)
+                negative_file_ages += metrics.pop("_negativeFileAges", 0)
+                if metrics["fix"]:
+                    fix_commits += 1
+                    for item in commit["files"]:
+                        previous = state.file_last.get(item["path"])
+                        if previous is None:
+                            skipped["noEarlierChange"] += 1
+                            continue
+                        identity, epoch = previous
+                        if start is not None and epoch < start:
+                            skipped["outsideWindow"] += 1
+                            continue
+                        labels.add(identity)
+                        evidence.append({"introducedCommit": identity,
+                                         "fixCommit": commit["id"],
+                                         "path": item["path"],
+                                         "fixTime": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z")})
+                records.append({"id": commit["id"], "epoch": commit["epoch"],
+                                "time": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z"),
+                                "subject": commit["subject"], "authorName": commit["author"],
+                                "filePaths": [item["path"] for item in commit["files"]], "metrics": metrics})
+        state.advance(commit)
+        states[commit["id"]] = state
+        if remaining[commit["id"]] == 0:
+            states.pop(commit["id"], None)
 
+    observed_through = end if end is not None else max(commit["epoch"] for commit in window)
     names = resolve(SCHEMA_NAME).in_model_names()
     for record in records:
         record["label"] = 1 if record["id"] in labels else 0
         record["labelRule"] = SZZ_RULE if record["label"] else None
+        record["labelStatus"] = ("positive" if record["label"] else
+                                 "immature" if observed_through - record["epoch"] < RECENT_DAYS * 86400
+                                 else "unobserved")
         record["labelNote"] = (None if record["label"]
                                else "未观测到缺陷引入（简化 SZZ），不等于已证实无缺陷")
         record["features"] = [record["metrics"][name] for name in names]
@@ -440,10 +506,15 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                        "resolvedBranch": _run(repo, ['rev-parse', '--abbrev-ref', branch]).stdout.strip()},
         "window": {"since": since, "until": until, "startEpoch": start, "endEpoch": end},
         "gitVersion": git_version(),
+        "label": {"kind": "simplified-szz", "rule": SZZ_RULE, "version": SZZ_RULE,
+                  "observedThrough": observed_through, "maturityDays": RECENT_DAYS,
+                  "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0"},
+        "labelEvidence": evidence,
         "szz": {"rule": SZZ_RULE, "pattern": SZZ_PATTERN, "fixCommits": fix_commits,
                 "labeledCommits": len(labels), "unresolved": dict(skipped)},
         "counts": {"commitsInWindow": len(window), "records": len(records),
                    "excluded": excluded,
+                   "negativeFileAgeFiles": negative_file_ages,
                    "binaryFiles": sum(1 for commit in window for item in commit["files"]
                                       if item["binary"])},
         "limitations": list(LIMITATIONS),
@@ -455,7 +526,8 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                 "truncated": sum(1 for entry in entries if entry["truncated"]),
                 "skippedFiles": sum(len(entry["skippedFiles"]) for entry in entries)}
     return {"records": records, "csv": blob, "collection": collection, "excluded": excluded,
-            "skipped": skipped, "fixCommits": fix_commits, "labeled": len(labels), "text": text}
+            "skipped": skipped, "fixCommits": fix_commits, "labeled": len(labels), "text": text,
+            "labelEvidence": evidence}
 
 
 def _csv_bytes(records, names):
@@ -562,7 +634,7 @@ def _clone_bare(repo, clone):
     attempts.append(("direct", False))
     failures = []
     for name, use_proxy in attempts:
-        shutil.rmtree(clone, ignore_errors=True)
+        _remove_tree(clone)
         args = ["clone", "--bare", "--quiet", "--no-tags", str(repo), str(clone)]
         result = _run(Path(tempfile.gettempdir()), args, check=False, use_proxy=use_proxy)
         if result.returncode == 0:
@@ -576,6 +648,188 @@ def _clone_bare(repo, clone):
     raise BaselineError("REPOSITORY_UNAVAILABLE", f"仓库克隆失败，可重试（{detail}）{hint}")
 
 
+def _remove_tree(path):
+    """Windows 上 git 对象常为只读；删除前恢复写权限，避免缓存淘汰静默失败。"""
+    def onerror(function, name, _exc):
+        try:
+            os.chmod(name, 0o666)
+            function(name)
+        except OSError:
+            pass
+    if not os.path.exists(path):
+        return
+    try:
+        shutil.rmtree(path, onerror=onerror)
+    except FileNotFoundError:
+        pass
+
+
+def _cache_enabled():
+    return str(os.environ.get(CACHE_ENABLED_ENV, "1")).strip().lower() not in ("0", "false", "no")
+
+
+def _cache_root():
+    configured = str(os.environ.get(CACHE_DIR_ENV, "")).strip()
+    return Path(configured) if configured else Path(__file__).resolve().parents[1] / ".cache" / "repositories"
+
+
+def _cache_limit_bytes():
+    try:
+        megabytes = int(os.environ.get(CACHE_LIMIT_ENV, DEFAULT_CACHE_LIMIT_MB))
+    except (TypeError, ValueError):
+        megabytes = DEFAULT_CACHE_LIMIT_MB
+    return max(0, megabytes) * 1024 * 1024
+
+
+def _cache_ttl():
+    try:
+        return max(0, int(os.environ.get(CACHE_TTL_ENV, DEFAULT_CACHE_TTL)))
+    except (TypeError, ValueError):
+        return DEFAULT_CACHE_TTL
+
+
+def _cache_key(url):
+    return hashlib.sha256(str(url).strip().rstrip("/").lower().encode("utf-8")).hexdigest()[:16]
+
+
+def _cache_valid(target, url):
+    result = _run(target, ["rev-parse", "--is-bare-repository"], check=False)
+    if result.returncode != 0 or result.stdout.strip() != "true":
+        return False
+    remote = _run(target, ["config", "--get", "remote.origin.url"], check=False)
+    return remote.returncode == 0 and remote.stdout.strip().rstrip("/").lower() == str(url).rstrip("/").lower()
+
+
+def _cache_has(target, branch):
+    result = _run(target, ["rev-parse", "--verify", f"{branch}^{{commit}}"], check=False)
+    return result.returncode == 0
+
+
+def _cache_fetch(target):
+    attempts = [True, False] if proxy_url() else [False]
+    for use_proxy in attempts:
+        result = _run(target, ["fetch", "--prune", "--quiet", "origin",
+                               "+refs/heads/*:refs/heads/*"], check=False, use_proxy=use_proxy)
+        if result.returncode == 0:
+            try:
+                os.utime(target, None)
+            except OSError:
+                pass
+            return True
+    return False
+
+
+def _cache_stale(target):
+    try:
+        return time.time() - target.stat().st_mtime > _cache_ttl()
+    except OSError:
+        return True
+
+
+def _cache_ensure(url, target, branch):
+    """准备缓存副本；返回是否命中已有副本。损坏或来源不匹配时重建。"""
+    hit = target.exists()
+    if hit and not _cache_valid(target, url):
+        _remove_tree(target)
+        hit = False
+    if target.exists():
+        if _cache_stale(target) or not _cache_has(target, branch):
+            _cache_fetch(target)
+        if not _cache_has(target, branch):
+            raise BaselineError("REPOSITORY_UNAVAILABLE", "仓库缓存无法读取指定提交，请稍后重试")
+        return hit
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(f"{target.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        _clone_bare(url, temporary)
+        try:
+            os.replace(temporary, target)
+        except OSError:
+            if not target.exists():
+                raise
+    finally:
+        _remove_tree(temporary)
+    if not _cache_has(target, branch):
+        _remove_tree(target)
+        raise BaselineError("REPOSITORY_UNAVAILABLE", "仓库缓存无法读取指定提交，请稍后重试")
+    return False
+
+
+def _cache_size(path):
+    total = 0
+    for root, _, files in os.walk(path):
+        for name in files:
+            try:
+                total += (Path(root) / name).stat().st_size
+            except OSError:
+                continue
+    return total
+
+
+def _cache_evict(root):
+    limit = _cache_limit_bytes()
+    if limit <= 0:
+        return
+    entries = []
+    for path in root.glob("*.git"):
+        if not path.is_dir():
+            continue
+        entries.append((path.stat().st_mtime, path))
+    if sum(_cache_size(path) for _, path in entries) <= limit:
+        return
+    with _CACHE_LOCK:
+        leased = {key for key, count in _CACHE_LEASES.items() if count > 0}
+        for _, path in sorted(entries):
+            if path.stem in leased:
+                continue
+            _remove_tree(path)
+            if sum(_cache_size(item) for _, item in entries if item.exists()) <= limit:
+                return
+
+
+@contextmanager
+def _cache_lease(url, branch):
+    """按公开仓库地址租用本地裸克隆；结束时释放并做容量淘汰。"""
+    root = _cache_root()
+    root.mkdir(parents=True, exist_ok=True)
+    key = _cache_key(url)
+    with _CACHE_LOCK:
+        _CACHE_LEASES[key] = _CACHE_LEASES.get(key, 0) + 1
+    try:
+        target = root / f"{key}.git"
+        hit = _cache_ensure(url, target, branch)
+        yield {"path": target, "hit": hit}
+    finally:
+        with _CACHE_LOCK:
+            remaining = _CACHE_LEASES.get(key, 1) - 1
+            if remaining > 0:
+                _CACHE_LEASES[key] = remaining
+            else:
+                _CACHE_LEASES.pop(key, None)
+        try:
+            _cache_evict(root)
+        except OSError:
+            pass
+
+
+def _publish_output(path, blob):
+    """把 CSV 写到指定路径；已存在且内容不同时改用带哈希的相邻路径，不覆盖旧文件。"""
+    digest = hashlib.sha256(blob).hexdigest()
+    candidates = [path, path.with_name(f"{path.stem}-{digest[:8]}{path.suffix}")]
+    for candidate in candidates:
+        if candidate.exists():
+            if candidate.read_bytes() == blob:
+                return candidate
+            continue
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        temporary = candidate.with_name(candidate.name + ".tmp")
+        temporary.write_bytes(blob)
+        temporary.replace(candidate)
+        return candidate
+    raise BaselineError("DATASET_EXISTS", f"目标文件已存在且内容不同，不覆盖：{path.name}")
+
+
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
                        allow_local=True, return_blob=False, with_text=False):
@@ -586,32 +840,52 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
     """
     repo = validate_source(repo, allow_local=allow_local)
     temporary = None
+    lease = None
+    cache_hit = False
     try:
         target = repo
         if _is_remote(repo):
-            temporary = tempfile.mkdtemp(prefix="jit-collect-")
-            clone = Path(temporary) / "repository.git"
-            _clone_bare(repo, clone)
-            target = clone
+            if _cache_enabled():
+                lease = _cache_lease(repo, branch)
+                cached = lease.__enter__()
+                target, cache_hit = cached["path"], cached["hit"]
+            else:
+                temporary = tempfile.mkdtemp(prefix="jit-collect-")
+                clone = Path(temporary) / "repository.git"
+                _clone_bare(repo, clone)
+                target = clone
         collected = collect(target, since, until, branch, limit, with_text=with_text)
         if not collected["records"]:
             raise BaselineError("DATASET_INVALID", "采集范围内没有可纳入的提交")
         blob = collected["csv"]
         path = Path(output) if output is not None else None
+        dataset_name_value = dataset or dataset_name(repo)
+        days = [record["time"][:10] for record in collected["records"]]
+        version = f"{dataset_name_value}-{min(days)}_{max(days)}"
+        if path is not None and not register:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists() and path.read_bytes() != blob:
+                raise BaselineError("DATASET_EXISTS", f"目标文件已存在且内容不同，不覆盖：{path.name}")
+            if not path.exists():
+                temporary_csv = path.with_name(path.name + ".tmp")
+                temporary_csv.write_bytes(blob)
+                temporary_csv.replace(path)
         if path is not None:
             path.parent.mkdir(parents=True, exist_ok=True)
-            temporary_csv = path.with_name(path.name + ".tmp")
-            temporary_csv.write_bytes(blob)
-            temporary_csv.replace(path)
+        if register and path is not None:
+            path = _publish_output(path, blob)
         text_meta = None
         if with_text:
             if path is None:
                 raise BaselineError("INPUT_INVALID", "文本采集需要 --output 指定 CSV 路径")
             text_path = path.with_name(path.stem + ".text.jsonl")
             text_bytes = collected["text"]["bytes"]
-            temporary_text = text_path.with_name(text_path.name + ".tmp")
-            temporary_text.write_bytes(text_bytes)
-            temporary_text.replace(text_path)
+            if text_path.exists() and text_path.read_bytes() != text_bytes:
+                raise BaselineError("DATASET_EXISTS", f"文本文件已存在且内容不同，不覆盖：{text_path.name}")
+            if not text_path.exists():
+                temporary_text = text_path.with_name(text_path.name + ".tmp")
+                temporary_text.write_bytes(text_bytes)
+                temporary_text.replace(text_path)
             from .config import BACKEND
             resolved = text_path.resolve()
             relative = (resolved.relative_to(BACKEND.resolve()).as_posix()
@@ -621,11 +895,30 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                          "records": len(collected["text"]["records"]),
                          "truncated": collected["text"]["truncated"],
                          "skippedFiles": collected["text"]["skippedFiles"]}
+        evidence_meta = None
+        evidence = collected.get("labelEvidence") or []
+        if evidence and path is not None:
+            evidence_path = path.with_name(path.stem + ".label-evidence.jsonl")
+            evidence_bytes = _jsonl_bytes(evidence)
+            if evidence_path.exists() and evidence_path.read_bytes() != evidence_bytes:
+                raise BaselineError("DATASET_EXISTS", f"标签证据文件已存在且内容不同，不覆盖：{evidence_path.name}")
+            if not evidence_path.exists():
+                temporary_evidence = evidence_path.with_name(evidence_path.name + ".tmp")
+                temporary_evidence.write_bytes(evidence_bytes)
+                temporary_evidence.replace(evidence_path)
+            from .config import BACKEND
+            resolved_evidence = evidence_path.resolve()
+            relative_evidence = (resolved_evidence.relative_to(BACKEND.resolve()).as_posix()
+                                 if resolved_evidence.is_relative_to(BACKEND.resolve())
+                                 else resolved_evidence.as_posix())
+            evidence_meta = {"path": relative_evidence,
+                             "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
+                             "records": len(evidence), "rule": SZZ_RULE}
         result = {"kind": "repository-collected", "repository": str(repo),
                   "records": len(collected["records"]), "fixCommits": collected["fixCommits"],
                   "labeled": collected["labeled"], "skipped": collected["skipped"],
                   "excluded": collected["excluded"], "collection": collected["collection"],
-                  "text": text_meta}
+                  "cacheHit": cache_hit, "text": text_meta}
         if return_blob:
             result["blob"] = blob
             result["rawRecords"] = collected["records"]
@@ -635,16 +928,29 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             from . import store
             if path is None:
                 raise BaselineError("INPUT_INVALID", "登记需要 --output 指定 CSV 路径")
-            result["dataset"] = store.register(path, schema=SCHEMA_NAME,
-                                               dataset=dataset or dataset_name(repo),
-                                               cohort=cohort(since, until), root=root,
-                                               extra={"collection": collected["collection"],
-                                                      **({"text": text_meta} if text_meta else {})},
-                                               provenance={"publisher": "collected",
-                                                           "revision": collected["collection"]["repository"]["head"],
-                                                           "url": str(repo),
-                                                           "citation": "由本地 Git 仓库采集生成"})
+            register_kwargs = dict(
+                schema=SCHEMA_NAME, dataset=dataset_name_value,
+                cohort=cohort(since, until), root=root,
+                extra={"collection": collected["collection"],
+                       **({"text": text_meta} if text_meta else {}),
+                       **({"labelEvidenceFile": evidence_meta} if evidence_meta else {})},
+                provenance={"publisher": "collected",
+                            "revision": collected["collection"]["repository"]["head"],
+                            "url": str(repo),
+                            "citation": "由本地 Git 仓库采集生成"})
+            try:
+                published = store.register(path, version=version, **register_kwargs)
+            except BaselineError as exc:
+                if exc.code != "DATASET_EXISTS":
+                    raise
+                published = store.register(
+                    path, version=f"{version}-{hashlib.sha256(blob).hexdigest()[:8]}",
+                    **register_kwargs)
+            result["dataset"] = published
+            result["csv"] = {"path": str(path.resolve()), "bytes": len(blob)}
         return result
     finally:
+        if lease is not None:
+            lease.__exit__(None, None, None)
         if temporary is not None:
-            shutil.rmtree(temporary, ignore_errors=True)
+            _remove_tree(temporary)

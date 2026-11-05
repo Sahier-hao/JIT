@@ -68,7 +68,15 @@ export interface BenefitReport {
     labelRule: string | null
     split: Row | null
   }
-  strategies: { model: BenefitStrategy; time: BenefitStrategy; random: BenefitRandom }
+  strategies: {
+    model: BenefitStrategy
+    time: BenefitStrategy
+    density: BenefitStrategy | null
+    loc: BenefitStrategy | null
+    random: BenefitRandom
+    sensitivity: Row | null
+  }
+  protocol: Row | null
   comparisons: Row
   conclusion: { sentence: string; recall20: Row }
   existingMetrics: Row | null
@@ -156,8 +164,14 @@ export function parseBenefitReport(raw: unknown): BenefitReport {
       labelRule: typeof test.source === 'object' && test.source !== null ? textOrNull(record(test.source).labelRule) : null,
       split: test.split === null || test.split === undefined ? null : record(test.split),
     },
-    strategies: { model: strategy(strategies.model), time: strategy(strategies.time),
-      random: random(strategies.random) },
+    strategies: {
+      model: strategy(strategies.model), time: strategy(strategies.time),
+      density: strategies.density == null ? null : strategy(strategies.density),
+      loc: strategies.loc == null ? null : strategy(strategies.loc),
+      random: random(strategies.random),
+      sensitivity: strategies.sensitivity == null ? null : record(strategies.sensitivity),
+    },
+    protocol: value.protocol == null ? null : record(value.protocol),
     comparisons: record(value.comparisons),
     conclusion: { sentence: text(conclusion.sentence), recall20: record(conclusion.recall20 ?? {}) },
     existingMetrics: value.existingMetrics == null ? null : record(value.existingMetrics),

@@ -19,7 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
-from .algorithms import get_algorithm
+from .algorithms import DEFAULT_ALGORITHM, check_method, get_algorithm
 from .artifacts import Snapshot
 from .catalog import ModelCatalog
 from .catalog_storage import CatalogStorage, utc_now
@@ -62,7 +62,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
-           "origin", "feature_schema_version", "distribution_rule")
+           "origin", "feature_schema_version", "distribution_rule", "feature_source_json", "algorithm")
 
 
 def worker_command():
@@ -127,9 +127,12 @@ def display_name_for(url):
     return name or "repository"
 
 
-def training_model_name(url, version):
-    """本仓库训练出的模型显示名：仓库 + 方法 + 数据范围，便于在模型列表里区分。"""
-    name = f'{display_name_for(url)} · {get_algorithm("logistic-regression-l2-v1")["name"]}'
+def training_model_name(url, version, algorithm=DEFAULT_ALGORITHM, schema_name=SCHEMA_NAME, field_count=0):
+    """本仓库训练出的模型显示名：仓库、方法、特征口径与数据范围。"""
+    entry = get_algorithm(algorithm)
+    fields = (f' · {schema_name}（{field_count} 字段）' if schema_name and field_count
+              else f' · {schema_name}' if schema_name else '')
+    name = f'{display_name_for(url)} · {entry["name"]}{fields}'
     match = re.search(r"(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})(?:-[0-9a-f]{8})?$", version)
     return f"{name} · {match.group(1)}→{match.group(2)}" if match else name
 
@@ -184,6 +187,9 @@ def _view(row):
             "requestId": item["request_id"], "error": error,
             "sourceKind": item.get('source_kind', 'unknown'), "sourceSnapshotId": item.get('source_snapshot_id'),
             "origin": item.get('origin', 'manual'), "featureSchemaVersion": item.get('feature_schema_version'),
+            "featureSource": json.loads(item['feature_source_json']) if item.get('feature_source_json') else None,
+            "algorithm": item.get('algorithm'),
+            "algorithmName": get_algorithm(item['algorithm'])['name'] if item.get('algorithm') else None,
             "distributionRule": item.get('distribution_rule')}
 
 
@@ -283,14 +289,16 @@ class SyncStorage:
             db.execute('UPDATE repository_sync SET status=?,stage=?,updated_at=? WHERE id=?',
                        (stage, stage, utc_now(), sync_id))
 
-    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None):
+    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None, algorithm=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM repository_sync WHERE repository_url=? AND branch=? AND since IS ? "
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
-                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
-                (repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id, resolved_model_id, *PROGRESS)).fetchone()
+                f"AND requested_model_id IS ? AND resolved_model_id IS ? AND algorithm IS ? "
+                f"AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
+                (repository_url, branch, since, until, commit_limit, requested_strategy,
+                 requested_model_id, resolved_model_id, algorithm, *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
     def pages(self, limit=20, offset=0):
@@ -328,7 +336,7 @@ class SyncStorage:
                   int(row["label"]), row.get("labelNote"), row.get("subject"), row.get("authorName")) for row in rows])
 
     def complete(self, sync_id, repository_id, rows, *, head_commit, dataset_version, run_id, model_id,
-                 analysis_branch=None, feature_schema_version=None):
+                 analysis_branch=None, feature_schema_version=None, feature_source_json=None):
         """原子发布结果，只有分支分析能推进项目当前结果。"""
         counts, now = distribution_of([row['risk'] for row in rows]), utc_now()
         with self.storage.connection(write=True) as db:
@@ -337,9 +345,10 @@ class SyncStorage:
             self.write_commits(sync_id, rows, connection=db)
             db.execute("UPDATE repository_sync SET status='completed',stage='completed',completed_at=?,"
                        "updated_at=?,head_commit=?,dataset_version=?,run_id=?,model_id=?,analysis_branch=?,"
-                       "feature_schema_version=COALESCE(?,feature_schema_version),distribution_rule=? WHERE id=?",
+                       "feature_schema_version=COALESCE(?,feature_schema_version),distribution_rule=?,"
+                       "feature_source_json=COALESCE(?,feature_source_json) WHERE id=?",
                        (now, now, head_commit, dataset_version, run_id, model_id, analysis_branch,
-                        feature_schema_version, DISTRIBUTION_RULE, sync_id))
+                        feature_schema_version, DISTRIBUTION_RULE, feature_source_json, sync_id))
             if repository_id and source['repository_id'] == repository_id and source['source_kind'] == 'branch':
                 db.execute("UPDATE repository SET view_sync_id=?,head_commit=?,commit_count=?,high_count=?,"
                            "medium_count=?,low_count=?,unknown_count=?,distribution_rule=?,updated_at=? WHERE id=?",
@@ -595,62 +604,8 @@ def _absolute(path):
 
 
 def _register_unique(room, dataset, version, blob, *, after=None, **kwargs):
-    """登记数据集；同名版本已存在但数据不同时追加内容哈希，不覆盖。
-
-    同名版本下 CSV 字节一致、只有采集时间等元信息不同时，按幂等复用既有版本；
-    CSV 内容不同必须成为新版本，不能互相覆盖或让整次同步失败。
-
-    ``after`` 在登记成功后调用（用于按新版本名导入目录库）；它抛出的
-    ``DATASET_EXISTS`` 视为目录库版本冲突，换带哈希的版本名再试一次——否则
-    "描述文件可复用、但目录库里同版本内容已不同"的旧数据会让同步失败。
-    """
-    digest = hashlib.sha256(blob).hexdigest()
-    last = None
-    for name in (version, f"{version}-{digest[:8]}"):
-        path = Path(room) / f"{name}.csv"
-        manifest_path = Path(room) / f"{name}.json"
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if not path.exists():
-                temporary = path.with_name(f'{path.name}.{uuid.uuid4().hex}.tmp')
-                try:
-                    temporary.write_bytes(blob)
-                    try:
-                        os.link(temporary, path)
-                    except FileExistsError:
-                        pass
-                finally:
-                    temporary.unlink(missing_ok=True)
-            if path.read_bytes() != blob:
-                raise BaselineError('DATASET_EXISTS', f'已有 CSV 内容不同，不覆盖：{name}')
-            try:
-                registered = store.register(path, dataset=dataset, version=name, **kwargs)
-            except BaselineError as exc:
-                if exc.code != 'DATASET_EXISTS' or not manifest_path.exists():
-                    raise
-                # 同一版本的 CSV 字节一致，只是采集时间、HEAD 等元信息不同：
-                # 数据本身没有变化，按幂等复用既有描述，不新建版本。
-                entry = {"dataset": dataset, "version": name,
-                         "path": manifest_relative(manifest_path),
-                         "sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
-                         "created": False}
-                if after is not None:
-                    try:
-                        after(entry, path)
-                    except BaselineError as import_exc:
-                        if import_exc.code != 'DATASET_EXISTS':
-                            raise
-                return entry
-            if after is not None:
-                after(registered, path)
-            return registered
-        except BaselineError as exc:
-            if exc.code != "DATASET_EXISTS":
-                raise
-            last = exc
-        except OSError as exc:
-            raise BaselineError('DATASET_UNAVAILABLE', '采集结果写入失败，请检查存储权限') from exc
-    raise last
+    """登记数据集；同名版本已存在但数据不同时追加内容哈希，不覆盖。"""
+    return store.publish_unique(room, dataset, version, blob, after=after, **kwargs)
 
 
 def _day_floor(epoch):
@@ -695,7 +650,7 @@ def _window(payload, now=None):
 
 def sync_input(payload, *, allow_local=False):
     """校验创建作业的输入；返回可直接落库的请求快照。"""
-    if not isinstance(payload, dict) or set(payload) - {'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy', 'modelId'}:
+    if not isinstance(payload, dict) or set(payload) - {'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy', 'modelId', 'algorithm'}:
         raise BaselineError("INPUT_INVALID", "请求体必须只包含公开分析参数")
     url = payload.get("repositoryUrl")
     if not isinstance(url, str) or not url.strip():
@@ -710,9 +665,19 @@ def sync_input(payload, *, allow_local=False):
     strategy = payload.get("strategy") or "auto"
     if strategy not in STRATEGIES:
         raise BaselineError("INPUT_INVALID", "打分模型来源只能是 auto、generic-model 或 force-train")
+    algorithm = payload.get("algorithm")
+    if algorithm is None and strategy != "generic-model":
+        algorithm = DEFAULT_ALGORITHM
+    if algorithm is not None:
+        if not isinstance(algorithm, str) or not algorithm.strip():
+            raise BaselineError("INPUT_INVALID", "训练方法必须是非空名称")
+        if strategy == "generic-model":
+            raise BaselineError("INPUT_INVALID", "使用现成模型时不能指定训练方法")
+        algorithm = algorithm.strip()
+        check_method(algorithm, SCHEMA_NAME)
     since, until = _window(payload)
     return {"repositoryUrl": url, "branch": branch.strip(), "since": since, "until": until,
-            "commitLimit": limit, "requestedStrategy": strategy}
+            "commitLimit": limit, "requestedStrategy": strategy, "algorithm": algorithm}
 
 
 class SyncService:
@@ -722,9 +687,9 @@ class SyncService:
                  allow_local=False, timeout=SYNC_TIMEOUT, collect_fn=None,
                  training_executor=None):
         self.sync = SyncStorage(storage)
-        self.catalog = catalog or ModelCatalog(self.sync.storage)
-        self.dataset_root = Path(dataset_root) if dataset_root is not None else DATASETS
         self.artifact_root = Path(artifact_root) if artifact_root is not None else BACKEND / "artifacts"
+        self.catalog = catalog or ModelCatalog(self.sync.storage, self.artifact_root)
+        self.dataset_root = Path(dataset_root) if dataset_root is not None else DATASETS
         self.allow_local = allow_local
         self.timeout = timeout
         self.collect = collect_fn or collect.collect_repository
@@ -862,7 +827,7 @@ class SyncService:
                                                  since=data["since"], until=data["until"],
                                                  commit_limit=data["commitLimit"],
                                                  requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
-                                                 resolved_model_id=resolved_model_id)
+                                                 resolved_model_id=resolved_model_id, algorithm=data.get("algorithm"))
                 if existing is not None:
                     return self.get(existing['syncId']), False
                 repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
@@ -873,7 +838,7 @@ class SyncService:
                               "commit_limit": data["commitLimit"],
                               "requested_strategy": data["requestedStrategy"], "status": "queued",
                               "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
-                              "resolved_model_id": resolved_model_id,
+                              "resolved_model_id": resolved_model_id, "algorithm": data.get("algorithm"),
                               "source_kind": 'pr' if _pr_source is not None else 'branch',
                               "source_snapshot_id": _pr_source['snapshotId'] if _pr_source is not None else None,
                               "origin": 'automatic' if _automatic else 'manual',
@@ -1142,6 +1107,61 @@ class SyncService:
                                 f"同步超过 {self.timeout} 秒未完成，请稍后重试")
         self.sync.advance(sync_id, stage)
 
+    def _reuse_pr_features(self, item):
+        """为 PR 任务读取同仓库、同 schema 已保存的特征；任一提交缺失即不复用。"""
+        if item.get('sourceKind') != 'pr' or not item.get('sourceSnapshotId'):
+            return None
+        with self.sync.storage.connection() as db:
+            snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?',
+                                  (item['sourceSnapshotId'],)).fetchone()
+        if snapshot is None:
+            return None
+        commits = json.loads(snapshot['payload_json']).get('commits') or []
+        shas = list(dict.fromkeys(commit['sha'] for commit in commits if commit.get('sha')))
+        if not shas:
+            return None
+        schema = resolve(SCHEMA_NAME)
+        names = schema.in_model_names()
+        marks = ','.join('?' for _ in shas)
+        with self.sync.storage.connection() as db:
+            rows = db.execute(
+                'SELECT rc.commit_id,rc.epoch,rc.features_json,rc.label,rc.label_note,rc.subject,'
+                'rc.author_name,rc.file_paths_json,s.id AS source_sync_id,s.dataset_version '
+                'FROM repository_commit rc JOIN repository_sync s ON s.id=rc.sync_id '
+                'WHERE s.repository_id=? AND s.status=? AND s.feature_schema_version=? '
+                f'AND rc.commit_id IN ({marks}) ORDER BY s.completed_at DESC, s.rowid DESC',
+                (item['repositoryId'], 'completed', SCHEMA_NAME, *shas)).fetchall()
+        found, sources = {}, []
+        for row in rows:
+            if row['commit_id'] in found:
+                continue
+            try:
+                metrics = json.loads(row['features_json'])
+            except (TypeError, ValueError):
+                continue
+            if set(metrics) != set(names):
+                continue
+            found[row['commit_id']] = row
+            if row['source_sync_id'] not in {source['syncId'] for source in sources}:
+                sources.append({'syncId': row['source_sync_id'],
+                                'datasetVersion': row['dataset_version']})
+        if len(found) != len(shas):
+            return None
+        records = []
+        for sha in shas:
+            row = found[sha]
+            epoch = int(row['epoch'])
+            metrics = json.loads(row['features_json'])
+            records.append({
+                'id': sha, 'epoch': epoch,
+                'time': datetime.fromtimestamp(epoch, timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z'),
+                'metrics': metrics, 'features': [metrics[name] for name in names],
+                'label': row['label'], 'labelNote': row['label_note'],
+                'subject': row['subject'], 'authorName': row['author_name'],
+                'filePaths': json.loads(row['file_paths_json']) if row['file_paths_json'] else [],
+            })
+        return {'records': records, 'sources': sources, 'schema': SCHEMA_NAME}
+
     def _generic_model(self, model_id=None):
         model_id = model_id or self.catalog.default_model_id()
         if not model_id:
@@ -1162,7 +1182,8 @@ class SyncService:
         parsed, _ = parse_source(collected["blob"], SCHEMA_NAME, cohort)
         if not parsed:
             raise BaselineError("DATASET_INVALID", "采集结果没有可纳入的记录；请确认分支存在且仓库可读")
-        start, end = parsed[0]["time"][:10], parsed[-1]["time"][:10]
+        days = [record["time"][:10] for record in parsed]
+        start, end = min(days), max(days)
         version = f"{dataset}-{start}_{end}"
         room = self.dataset_root / dataset
         try:
@@ -1172,7 +1193,9 @@ class SyncService:
         registered = _register_unique(
             room, dataset, version, collected["blob"], schema=SCHEMA_NAME,
             cohort=cohort, root=self.dataset_root,
-            extra={"collection": collected["collection"]},
+            extra={"collection": collected["collection"],
+                   "usage": "pr" if item.get('sourceKind') == 'pr' else 'branch',
+                   "sourceSyncId": sync_id},
             provenance={"publisher": "collected", "revision": collected["collection"]["repository"]["head"],
                         "url": item["repositoryUrl"], "citation": "由仓库同步采集生成（简化 SZZ）"},
             after=lambda entry, csv: store.import_dataset(
@@ -1180,7 +1203,7 @@ class SyncService:
         csv_path = room / f"{registered['version']}.csv"
         manifest_path = _absolute(registered["path"])
         self.sync.update(sync_id, dataset_version=registered["version"])
-        return manifest_path, registered["version"]
+        return manifest_path, registered["version"], parsed
 
     def _run(self, sync_id):
         started = time.monotonic()
@@ -1189,6 +1212,35 @@ class SyncService:
             return
         decision, version, run_id = None, None, None
         try:
+            reused = self._reuse_pr_features(item)
+            if reused is not None:
+                self._step(sync_id, "scoring", started)
+                model_choice = item.get('resolvedModelId') or item.get('requestedModelId')
+                if not model_choice:
+                    raise BaselineError('DEFAULT_MODEL_REQUIRED', '提交任务时没有默认模型，请重新发起分析')
+                snapshot, payload = self._generic_model(model_choice)
+                model_id = payload["modelId"]
+                schema = resolve(payload.get('featureSchemaVersion', GENERIC_SCHEMA))
+                fields = schema.in_model_names()
+                records = reused['records']
+                inputs = (generic_inputs(records, fields) if schema.name == GENERIC_SCHEMA
+                          else [{"features": record["features"]} for record in records])
+                run_id = payload.get("runId")
+                risks = predict_risks(snapshot.model, inputs, schema)
+                feature_source = json.dumps(
+                    {"kind": "repository-features", "schema": reused['schema'], "sources": reused['sources']},
+                    ensure_ascii=False, sort_keys=True)
+                self.sync.complete(sync_id, item.get('repositoryId'), [
+                    {"id": record["id"], "epoch": record["epoch"], "risk": risk,
+                     "addedLines": record["metrics"]["la"], "deletedLines": record["metrics"]["ld"],
+                     "files": record["metrics"]["nf"], "features": record["metrics"],
+                     "filePaths": record.get("filePaths") or [],
+                     "label": record["label"], "labelNote": record.get("labelNote"),
+                     "subject": record.get("subject"), "authorName": record.get('authorName')}
+                    for record, risk in zip(records, risks, strict=True)],
+                    head_commit=item['branch'], dataset_version=None, run_id=run_id, model_id=model_id,
+                    feature_schema_version=schema.name, feature_source_json=feature_source)
+                return
             self._step(sync_id, "collecting", started)
             collected = self.collect(item["repositoryUrl"], since=item["since"], until=item["until"],
                                      branch=item["branch"], limit=item["commitLimit"],
@@ -1196,21 +1248,34 @@ class SyncService:
             records = collected["rawRecords"]
 
             self._step(sync_id, "registering", started)
-            manifest_path, version = self._persist(sync_id, item, collected)
+            manifest_path, version, trainable = self._persist(sync_id, item, collected)
 
             self._step(sync_id, "training", started)
-            holdout = _holdout(records)
-            decision = choose_model(records, item["requestedStrategy"], holdout)
+            holdout = _holdout(trainable)
+            decision = choose_model(trainable, item["requestedStrategy"], holdout)
             self.sync.update(sync_id, model_strategy=decision["modelStrategy"],
                              degrade_reason=decision["degradeReason"],
                              train_records=decision["trainRecords"],
                              train_positives=decision["trainPositives"])
             if decision["modelStrategy"] == TRAINED:
+                method = item.get('algorithm') or DEFAULT_ALGORITHM
+                dataset_schema = resolve(SCHEMA_NAME)
                 trained = self.training.run(
-                    manifest_path, "logistic-regression-l2-v1", None,
+                    manifest_path, method, None,
                     output_key=f"repository-sync-{sync_id[:8]}",
                     channel="repository-sync", request_id=item.get("requestId"),
-                    holdout=holdout, model_name=training_model_name(item["repositoryUrl"], version))
+                    holdout=holdout,
+                    model_name=training_model_name(item["repositoryUrl"], version, method,
+                                                   dataset_schema.name, len(dataset_schema.in_model_names())))
+                split = artifacts.read_json(self.artifact_root / trained["artifactKey"] / "split.json")
+                partitions = split["partitions"]
+                actual_records = sum(part["count"] for part in partitions.values())
+                actual_positives = sum(part["positiveCount"] for part in partitions.values())
+                if (actual_records != decision["trainRecords"]
+                        or actual_positives != decision["trainPositives"]):
+                    raise BaselineError(
+                        "TRAINING_ADMISSION_MISMATCH",
+                        "训练分区成员与准入统计不一致；已保留数据集，请重新发起分析")
                 model_id = trained["modelId"]
                 snapshot = trained["snapshot"]
                 schema = snapshot.schema

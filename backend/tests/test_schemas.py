@@ -7,7 +7,7 @@ import pytest
 
 def test_two_schemas_are_registered_with_declared_order():
     from jit_baseline.schemas import SCHEMAS, get_schema
-    assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1", "kamei14-git-v1",
+    assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1", "kamei14-git-v1", "kamei14-git-v2",
                             "kamei14-semantic-codebert-v1", "code-semantic-codebert-v1",
                             "kamei14-benchmark-v1"}
     assert get_schema("openstack-six-v1").in_model_names() == ("ns", "nd", "nf", "ent", "la", "ld")

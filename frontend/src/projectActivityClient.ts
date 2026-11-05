@@ -7,19 +7,26 @@ const count = (v: unknown) => { const n = finiteNumber(v); if (!Number.isSafeInt
 const optionalCount = (v: unknown) => v == null ? null : count(v)
 const identity = (raw: unknown, id: string) => { const b = record(raw); if (b.repositoryId !== id) contractFailed('返回内容不属于当前项目'); return b }
 export type PRState = 'open' | 'closed' | 'all'
-export interface ProjectPR extends PRItem { draft: boolean; snapshotId: string | null; analysisStatus: string | null; modelId: string | null; syncId: string | null; maxRisk: number | null; scoredCommits: number | null }
+export interface ProjectPR extends PRItem { draft: boolean; snapshotId: string | null; analysisStatus: string | null; modelId: string | null; syncId: string | null; maxRisk: number | null; scoredCommits: number | null; featureSource: Record<string, unknown> | null }
 export interface ProjectPRPage { repositoryId: string; supported: boolean; owner: string | null; name: string | null; pullRequests: ProjectPR[]; page: number; hasMore: boolean; checkedAt: string | null; errorCode: string | null }
 export function parseProjectPRs(raw: unknown, id: string): ProjectPRPage {
   const b = identity(raw, id)
-  return { repositoryId: id, supported: flag(b.supported), owner: textOrNull(b.owner), name: textOrNull(b.name), pullRequests: recordList(b.pullRequests).map(p => ({ ...parseItem(p), draft: flag(p.draft), snapshotId: textOrNull(p.snapshotId), analysisStatus: textOrNull(p.analysisStatus), modelId: textOrNull(p.modelId), syncId: textOrNull(p.syncId), maxRisk: p.maxRisk == null ? null : riskNumber(p.maxRisk), scoredCommits: p.scoredCommits == null ? null : count(p.scoredCommits) })), page: count(b.page), hasMore: flag(b.hasMore), checkedAt: textOrNull(b.checkedAt), errorCode: textOrNull(b.errorCode) }
+  return { repositoryId: id, supported: flag(b.supported), owner: textOrNull(b.owner), name: textOrNull(b.name), pullRequests: recordList(b.pullRequests).map(p => ({ ...parseItem(p), draft: flag(p.draft), snapshotId: textOrNull(p.snapshotId), analysisStatus: textOrNull(p.analysisStatus), modelId: textOrNull(p.modelId), syncId: textOrNull(p.syncId), maxRisk: p.maxRisk == null ? null : riskNumber(p.maxRisk), scoredCommits: p.scoredCommits == null ? null : count(p.scoredCommits), featureSource: p.featureSource == null ? null : record(p.featureSource) })), page: count(b.page), hasMore: flag(b.hasMore), checkedAt: textOrNull(b.checkedAt), errorCode: textOrNull(b.errorCode) }
 }
-/** 为当前所有开放 PR 创建或复用一次可追踪批次；进度通过批次接口读取。 */
-export async function analyzeAllProjectPRs(repositoryId: string, modelId?: string) {
-  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-requests/analyze`, method: 'POST', body: modelId ? { modelId } : {} }), repositoryId)
+/** 为当前开放 PR 创建或复用一次可追踪批次；进度通过批次接口读取。 */
+export async function analyzeAllProjectPRs(repositoryId: string, modelId?: string, scope: PRBatchScope = { kind: 'all' }) {
+  const body: Record<string, unknown> = { scope }
+  if (modelId) body.modelId = modelId
+  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-requests/analyze`, method: 'POST', body }), repositoryId)
 }
 
-export type PRBatchStatus = 'discovering' | 'running' | 'completed' | 'partial' | 'failed' | 'interrupted'
+export type PRBatchStatus = 'discovering' | 'running' | 'completed' | 'partial' | 'failed' | 'interrupted' | 'cancelled'
 export type PRBatchItemStatus = 'pending' | 'submitted' | 'reused' | 'failed' | 'skipped'
+export type PRBatchScope =
+  | { kind: 'all' }
+  | { kind: 'limit'; limit: number }
+  | { kind: 'page'; page: number }
+  | { kind: 'retry'; count: number }
 export interface PRBatchItem {
   number: number
   status: PRBatchItemStatus
@@ -39,6 +46,9 @@ export interface PRBatch {
   discoveryComplete: boolean
   discovered: number
   retryOf: string | null
+  scope: PRBatchScope
+  cancelRequested: boolean
+  cancelledAt: string | null
   createdAt: string
   updatedAt: string
   completedAt: string | null
@@ -47,11 +57,19 @@ export interface PRBatch {
   submission: Record<string, number>
   items: PRBatchItem[]
 }
-const BATCH_STATUSES: PRBatchStatus[] = ['discovering', 'running', 'completed', 'partial', 'failed', 'interrupted']
+const BATCH_STATUSES: PRBatchStatus[] = ['discovering', 'running', 'completed', 'partial', 'failed', 'interrupted', 'cancelled']
 const ITEM_STATUSES: PRBatchItemStatus[] = ['pending', 'submitted', 'reused', 'failed', 'skipped']
 const counter = (raw: unknown, keys: string[]) => {
   const value = record(raw)
   return Object.fromEntries(keys.map(key => [key, count(value[key])]))
+}
+const parseScope = (raw: unknown): PRBatchScope => {
+  const scope = record(raw)
+  if (scope.kind === 'all') return { kind: 'all' }
+  if (scope.kind === 'limit') return { kind: 'limit', limit: count(scope.limit) }
+  if (scope.kind === 'page') return { kind: 'page', page: count(scope.page) }
+  if (scope.kind === 'retry') return { kind: 'retry', count: count(scope.count) }
+  return contractFailed('批次范围未登记')
 }
 export function parsePRBatch(raw: unknown, id: string): PRBatch {
   const b = identity(raw, id)
@@ -60,6 +78,7 @@ export function parsePRBatch(raw: unknown, id: string): PRBatch {
     batchId: text(b.batchId), repositoryId: id, modelId: text(b.modelId),
     status: b.status as PRBatchStatus, discoveryComplete: flag(b.discoveryComplete),
     discovered: count(b.discovered), retryOf: textOrNull(b.retryOf),
+    scope: parseScope(b.scope), cancelRequested: flag(b.cancelRequested), cancelledAt: textOrNull(b.cancelledAt),
     createdAt: text(b.createdAt), updatedAt: text(b.updatedAt), completedAt: textOrNull(b.completedAt),
     error: b.error == null ? null : { code: text(record(b.error).code), message: text(record(b.error).message) },
     counts: counter(b.counts, ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted', 'skipped']),
@@ -83,13 +102,24 @@ export async function latestProjectPRBatch(repositoryId: string, signal?: AbortS
 export async function getProjectPRBatch(repositoryId: string, batchId: string, signal?: AbortSignal) {
   return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/${encodeURIComponent(batchId)}`, method: 'GET', signal }), repositoryId)
 }
-export async function retryProjectPRBatch(repositoryId: string, batchId: string) {
-  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/${encodeURIComponent(batchId)}/retry`, method: 'POST' }), repositoryId)
+export async function retryProjectPRBatch(repositoryId: string, batchId: string, kind: 'failed' | 'interrupted' = 'failed') {
+  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/${encodeURIComponent(batchId)}/retry`, method: 'POST', body: { kind } }), repositoryId)
+}
+export async function cancelProjectPRBatch(repositoryId: string, batchId: string) {
+  return parsePRBatch(await apiRequest({ path: `${root(repositoryId)}/pull-request-batches/${encodeURIComponent(batchId)}/cancel`, method: 'POST' }), repositoryId)
 }
 
-/** 为项目 PR 读取固定快照并创建一次默认模型分析；列表页可直接调用。 */
-export async function analyzeProjectPR(repositoryId: string, number: number, signal?: AbortSignal) {
-  return apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}/pull-requests/${number}/analyze`, method: 'POST', body: {}, signal })
+/** 为项目 PR 读取固定快照并创建一次分析；不指定模型时由服务端使用默认模型。 */
+export async function analyzeProjectPR(repositoryId: string, number: number, modelId?: string, retry = false, signal?: AbortSignal) {
+  const body: Record<string, unknown> = {}
+  if (modelId) body.modelId = modelId
+  if (retry) body.retry = true
+  return apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}/pull-requests/${number}/analyze`, method: 'POST', body, signal })
+}
+
+export async function projectPROpenCount(repositoryId: string, signal?: AbortSignal) {
+  const raw = record(await apiRequest({ path: `${root(repositoryId)}/pull-requests/count`, method: 'GET', signal }))
+  return count(raw.count)
 }
 
 export async function projectPRs(id: string, state: PRState, page: number, refresh = false, signal?: AbortSignal) {

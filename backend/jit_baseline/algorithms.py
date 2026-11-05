@@ -7,6 +7,8 @@
 from .config import MODEL_CONFIG
 from .errors import BaselineError
 
+import importlib.util
+
 CLASSIC = "classic"
 DEEP = "deep"
 
@@ -181,3 +183,42 @@ def model_descriptor(schema_name, algorithm_version=None):
         return dict(known)
     entry = get_algorithm(resolved)
     return {"id": f"{entry['estimator']}@{schema_name}", "name": f"{entry['label']} · {schema_name}"}
+
+
+def method_missing_dependencies(name):
+    entry = get_algorithm(name)
+    return [dependency for dependency in entry['requires']
+            if importlib.util.find_spec(dependency) is None]
+
+
+def method_catalog(schema):
+    """项目分析可选方法：真实依赖是否可用，以及能否读取当前 schema。"""
+    from .schemas import resolve
+    resolved = resolve(schema)
+    supported = not resolved.semantic_only and resolved.input_width() > 0
+    result = []
+    for name, entry in ALGORITHMS.items():
+        missing = method_missing_dependencies(name)
+        result.append({
+            'method': name, 'name': entry['name'], 'label': entry['label'],
+            'category': entry['category'], 'requires': list(entry['requires']),
+            'available': not missing and supported,
+            'supportedSchema': supported,
+            'reason': ('缺少依赖：' + '、'.join(missing)) if missing
+                      else (None if supported else '当前特征 schema 不支持该方法'),
+        })
+    return result
+
+
+def check_method(name, schema):
+    """创建分析前校验方法；未注册、依赖缺失或 schema 不支持时拒绝。"""
+    entry = get_algorithm(name)
+    missing = method_missing_dependencies(name)
+    if missing:
+        raise BaselineError('METHOD_DEPENDENCY_UNAVAILABLE',
+                            f'{entry["name"]} 缺少运行依赖：{"、".join(missing)}')
+    from .schemas import resolve
+    resolved = resolve(schema)
+    if resolved.semantic_only or resolved.input_width() <= 0:
+        raise BaselineError('METHOD_SCHEMA_MISMATCH', '当前特征 schema 不支持所选训练方法')
+    return entry

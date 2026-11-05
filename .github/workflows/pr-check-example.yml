@@ -1,0 +1,27 @@
+name: PR check report example
+
+# 示例：在已导出的离线分析包上生成报告并上传为构建产物。
+# 不访问本机后端、不评论 PR、不阻断合并；不要把分析包提交到源码仓库。
+on:
+  workflow_dispatch:
+    inputs:
+      bundle:
+        description: 工作区中的 pr-check-export 分析包路径
+        required: true
+        default: pr-check-bundle.json
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r backend/requirements.txt
+      - run: python -m jit_baseline.cli pr-check-report --bundle "${{ inputs.bundle }}" --format markdown --output pr-check.md
+        working-directory: backend
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr-check-report
+          path: backend/pr-check.md

@@ -280,7 +280,7 @@ def test_persisted_commit_with_incomplete_features_is_rejected(settings):
     from jit_baseline.catalog_storage import CatalogStorage
     store = CatalogStorage(settings['database'])
     with store.connection(write=True) as db:
-        db.execute("INSERT INTO dataset_record VALUES ('broken-v1','demo','{}','m','s',1,'2026-01-01T00:00:00Z')")
+        db.execute("INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,source_sha256,row_count,created_at) VALUES ('broken-v1','demo','{}','m','s',1,'2026-01-01T00:00:00Z')")
         db.execute('INSERT INTO commit_record VALUES (?,?,?,?,?)',
                    ('broken-v1', PARTIAL_COMMIT, '2012-01-01T00:00:00Z', 0, 'r'))
         db.execute('INSERT INTO feature_record VALUES (?,?,?,?)', ('broken-v1', PARTIAL_COMMIT, 'ns', '1'))

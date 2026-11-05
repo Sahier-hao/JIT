@@ -15,7 +15,7 @@ import { ProgressBar } from '../components/JobProgress'
 import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
 import { displayTime } from '../domain'
-import { getPRContext, getPRSnapshot, refreshPR, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
+import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
 import { reviewStatusLabels, adoptVersion, conclusionLabels, createWork, downloadText, exportReview, question, readWorks, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
 
 
@@ -114,9 +114,12 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [reviewView, setReviewView] = useState<'commits' | 'files'>('commits')
   const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
   const [diffView, setDiffView] = useState<'unified' | 'split'>('unified')
+  const [candidates, setCandidates] = useState<PRCandidate[]>([])
+  const [candidateBusy, setCandidateBusy] = useState(false)
+  const [candidateError, setCandidateError] = useState('')
   const version = work?.viewedSnapshotId ?? ''
   useEffect(() => {
-    setSelectedCommit(null); setCommitRisks({}); setFileRisks({})
+    setSelectedCommit(null); setCommitRisks({}); setFileRisks({}); setCandidates([]); setCandidateError('')
     if (evidenceJump.current) { evidenceJump.current = false; setReviewView('files') }
     else setReviewView('commits')
   }, [version])
@@ -383,12 +386,36 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
             <div className="wb-code-actions">
               <Segmented size="sm" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
               <Tooltip title="读取基准与目标的完整文件内容"><Button size="sm" loading={contextBusy} onClick={() => void loadContext()}>完整上下文</Button></Tooltip>
+              <Button size="sm" loading={candidateBusy} onClick={() => { if (!file) return; setCandidateBusy(true); setCandidateError(''); void analyzePRCandidates(live.snapshotId, [file.path], 'head').then(result => setCandidates(result.candidates)).catch(error => setCandidateError(message(error))).finally(() => setCandidateBusy(false)) }}>分析代码候选</Button>
               <Button size="sm" variant={round.progress[path]?.state === 'read' ? 'secondary' : 'primary'} disabled={!readable} onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))}>标记已阅读</Button>
               <Select size="sm" className="wb-mark" value={round.progress[path]?.state ?? 'unread'} onChange={value => commit(setFileState(current.current!, version, path, value as FileState, readable))} options={[{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]} aria-label="文件阅读状态"/>
             </div>
           </div>
           {file.patchComplete ? null : <p className="wb-code-hint">Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。</p>}
           <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
+          {candidateError ? <Alert type="error" showIcon title={candidateError}/> : null}
+          {candidates.length ? <section className="wb-candidates" aria-label="代码候选">
+            <h3>代码候选</h3>
+            <p className="wb-code-hint">候选只作线索，不是缺陷概率或行级缺陷结论。</p>
+            {candidates.filter(item => item.path === file.path).map((item, index) => {
+              const key = `${item.side}:${item.path}:${item.line}:${item.ruleId}:${item.ruleVersion}`
+              const decision = round.candidateDecisions?.[key]
+              const set = (status: 'confirmed' | 'rejected' | 'deferred') => {
+                const reason = decision?.reason ?? ''
+                if (status !== 'confirmed' && !reason.trim()) { setCandidateError('先填写候选处理理由'); return }
+                setCandidateError('')
+                changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status, reason } } }))
+              }
+              return <div key={`${key}:${index}`} className="wb-candidate">
+                <code>{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
+                {item.evidence ? <pre>{item.evidence}</pre> : null}
+                <Space>
+                  {(['confirmed', 'rejected', 'deferred'] as const).map(status => <Button key={status} size="sm" variant={decision?.status === status ? 'primary' : 'secondary'} onClick={() => set(status)}>{status === 'confirmed' ? '确认' : status === 'rejected' ? '驳回' : '暂缓'}</Button>)}
+                  <input aria-label="候选处理理由" value={decision?.reason ?? ''} onChange={event => changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status: decision?.status ?? 'deferred', reason: event.target.value } } }))} placeholder="处理理由"/>
+                </Space>
+              </div>
+            })}
+          </section> : null}
           <details className="wb-author">
             <summary>作者原始说明</summary>
             <div className="wb-author-inner">

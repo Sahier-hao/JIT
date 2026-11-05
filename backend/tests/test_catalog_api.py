@@ -21,6 +21,18 @@ def settings(tmp_path, real_run):
     return {'directory': real_run, 'database': store.path, 'artifact_root': root,}
 
 
+def test_training_method_catalog_exposes_schema_and_dependency_status(settings):
+    from jit_baseline.api import create_app
+    with TestClient(create_app(**settings)) as client:
+        body = client.get('/api/v1/training-methods', headers=HEADERS).json()
+        assert body['schema'] == 'kamei14-git-v2'
+        methods = {item['method']: item for item in body['methods']}
+        assert {'logistic-regression-l2-v1', 'decision-tree-v1'} <= set(methods)
+        assert methods['logistic-regression-l2-v1']['available'] is True
+        assert {'category', 'requires', 'supportedSchema', 'reason'} <= set(methods['decision-tree-v1'])
+        assert client.get('/api/v1/training-methods?schema=missing', headers=HEADERS).status_code == 422
+
+
 def test_admin_register_member_list_and_cli_share_identity(settings, monkeypatch, capsys, caplog):
     from jit_baseline.api import create_app
     from jit_baseline.cli import main

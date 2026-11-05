@@ -32,7 +32,7 @@ html[data-theme="charcoal"] {
 .pr-fixed-preview > label select { max-width: 100%; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--card); color: var(--fg); font: inherit; }
 
 /* PR 审查：工具栏 + 单卡片列表，所有条目共用一条分隔线，不再散落小字说明。 */
-.pr-hub { display: grid; gap: 14px; }
+.pr-hub { display: grid; gap: 20px; }
 .pr-hub-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .pr-hub-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pr-hub-actions { display: flex; align-items: center; gap: 10px; }
@@ -121,6 +121,7 @@ html[data-theme="charcoal"] {
   .pr-hub-toolbar { align-items: stretch; flex-direction: column; }
   .pr-hub-actions { justify-content: flex-end; }
   .pr-row { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .pr-row-actions { width: 100%; justify-content: flex-end; }
   .pr-row > .ui-btn { align-self: flex-end; }
   .pr-hub-alert { align-items: flex-start; flex-direction: column; }
   .pr-track-scope { align-items: flex-start; flex-direction: column; }
@@ -140,6 +141,7 @@ html[data-theme="charcoal"] {
 .repo-overview { display: grid; gap: 20px; }
 .repo-overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; min-width: 0; }
 .repo-overview-head > div { min-width: 0; max-width: 100%; }
+.repo-overview-actions { display: flex; align-items: center; gap: 8px; flex: none; }
 .repo-overview-head .page-intro { margin: 0 0 8px; }
 .repo-overview-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--fg-3); font-size: 13px; min-width: 0; }
 .repo-overview-meta > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
@@ -238,7 +240,14 @@ html[data-theme="charcoal"] {
   background: var(--card);
   box-shadow: var(--sh-3);
 }
-.pr-row-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.pr-row-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.pr-row-actions .ui-btn { justify-content: center; min-width: 84px; }
+
+.batch-dialog { display: grid; gap: 14px; }
+.batch-dialog-field { display: grid; gap: 6px; }
+.batch-dialog-field > span { color: var(--fg-2); font-size: 13px; font-weight: 550; }
+.batch-dialog-summary { margin: 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--fg-3); font-size: 13px; }
+.batch-dialog-summary b { color: var(--fg); font-variant-numeric: tabular-nums; }
 .pr-hub-summary { margin: 2px 0 0; color: var(--fg-3); font-size: 13px; }
 
 /* PR 审查：左侧列表 + 右侧分析记录，与分析页同构。 */

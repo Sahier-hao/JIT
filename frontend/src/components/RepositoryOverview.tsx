@@ -168,13 +168,18 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
 
 export function RepositoryOverviewView({ repositoryId, repository, onStartAnalysis, onOpenAnalysis }: { repositoryId: string; repository: RepositoryView; onStartAnalysis: () => void; onOpenAnalysis: () => void }) {
   const cache = cacheKey('overview-v2', repositoryId)
-  const [overview, setOverview] = useState<RepositoryOverview | null>(() => readCache<RepositoryOverview>(cache, 30 * 60_000))
+  const [overview, setOverview] = useState<RepositoryOverview | null>(() => readCache<RepositoryOverview>(cache, 7 * 24 * 60 * 60_000))
   const [error, setError] = useState<unknown>(null)
   const [attempt, setAttempt] = useState(0)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     const controller = new AbortController()
-    setLoading(true); setError(null)
+    setError(null)
+    if (attempt === 0) {
+      const fresh = readCache<RepositoryOverview>(cache, 10 * 60_000)
+      if (fresh) { setOverview(fresh); setLoading(false); return }
+    }
+    setLoading(true)
     getRepositoryOverview(repositoryId, attempt > 0, controller.signal).then(value => { if (!controller.signal.aborted) { setOverview(value); if (value.supported && !value.errorCode) writeCache(cache, value) } })
       .catch(failure => { if (!controller.signal.aborted) setError(failure) })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
@@ -188,7 +193,10 @@ export function RepositoryOverviewView({ repositoryId, repository, onStartAnalys
         <p className="page-intro">{metadata?.description || '公开仓库概览。这里只展示仓库事实，不是模型分数或缺陷率。'}</p>
         {metadata ? <p className="repo-overview-meta"><span>{metadata.fullName}</span><span>{metadata.defaultBranch ? `默认分支 ${metadata.defaultBranch}` : '默认分支未知'}</span><span>{metadata.private ? '私有' : '公开'}</span>{metadata.license ? <span>{metadata.license}</span> : null}<a href={metadata.htmlUrl} target="_blank" rel="noreferrer">在 GitHub 打开</a></p> : <p className="repo-overview-meta"><span>{repository.url}</span><a href={repository.url} target="_blank" rel="noreferrer">在 GitHub 打开</a></p>}
       </div>
-      <Button variant={hasAnalysis ? 'secondary' : 'primary'} onClick={hasAnalysis ? onOpenAnalysis : onStartAnalysis}>{hasAnalysis ? '查看分析结果' : '发起第一次分析'}</Button>
+      <div className="repo-overview-actions">
+        {overview ? <Button size="sm" onClick={() => setAttempt(value => value + 1)}>刷新</Button> : null}
+        <Button variant={hasAnalysis ? 'secondary' : 'primary'} onClick={hasAnalysis ? onOpenAnalysis : onStartAnalysis}>{hasAnalysis ? '查看分析结果' : '发起第一次分析'}</Button>
+      </div>
     </div>
     {loading && !overview ? <LoadingNotice label="正在读取仓库概览"/> : null}
     {error ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}

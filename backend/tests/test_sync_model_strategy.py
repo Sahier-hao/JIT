@@ -90,3 +90,19 @@ def test_projection_maps_entropy_to_ent_and_keeps_other_names():
     assert inputs[0]["features"] == [1, 2, 3, 0.5, 4, 5]
     assert GENERIC_PROJECTION == {"ent": "entropy"}
     assert fields.index("ent") == 3
+
+
+def test_generic_model_rejects_legacy_v1_for_v2():
+    from jit_baseline.sync import SyncService
+    class Catalog:
+        def default_model_id(self):
+            return "model-1"
+        def policy(self, model_id):
+            return {"enabled": True}
+        def load_model(self, model_id):
+            return object(), {"featureSchemaVersion": "kamei14-git-v1"}
+    service = SyncService.__new__(SyncService)
+    service.catalog = Catalog()
+    with pytest.raises(BaselineError) as error:
+        service._generic_model("model-1")
+    assert error.value.code == "INPUT_SCHEMA_MISMATCH"

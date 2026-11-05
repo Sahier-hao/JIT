@@ -6,6 +6,9 @@ CMP-01..06。这里只做编排：描述文件读写交给 `datasets.py`，事�
 """
 from datetime import datetime, timezone
 from pathlib import Path
+import hashlib
+import os
+import uuid
 
 from . import datasets
 from .config import BACKEND
@@ -28,6 +31,127 @@ def register(csv_path, schema=None, dataset=None, version=None, root=None, cohor
                              cohort=cohort, provenance=provenance, extra=extra)
 
 
+def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
+    """把 CSV 以不可覆盖方式发布到数据集目录，再登记描述文件。
+
+    目标已存在且字节相同即复用；字节不同时追加内容哈希作为新版本，仍冲突则失败。
+    命令行和服务端同步共用这条路径，避免先替换旧文件再登记。
+    """
+    digest = hashlib.sha256(blob).hexdigest()
+    last = None
+    for name in (version, f"{version}-{digest[:8]}"):
+        path = Path(room) / f"{name}.csv"
+        manifest_path = Path(room) / f"{name}.json"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if not path.exists():
+                temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+                try:
+                    temporary.write_bytes(blob)
+                    try:
+                        os.link(temporary, path)
+                    except FileExistsError:
+                        pass
+                finally:
+                    temporary.unlink(missing_ok=True)
+            if path.read_bytes() != blob:
+                raise BaselineError("DATASET_EXISTS", f"已有 CSV 内容不同，不覆盖：{name}")
+            try:
+                registered = register(path, dataset=dataset, version=name, **kwargs)
+            except BaselineError as exc:
+                if exc.code != "DATASET_EXISTS" or not manifest_path.exists():
+                    raise
+                entry = {"dataset": dataset, "version": name,
+                         "path": datasets.manifest_relative(manifest_path),
+                         "csvPath": datasets.manifest_relative(path),
+                         "sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                         "created": False}
+                if after is not None:
+                    try:
+                        after(entry, path)
+                    except BaselineError as import_exc:
+                        if import_exc.code != "DATASET_EXISTS":
+                            raise
+                return entry
+            registered["csvPath"] = datasets.manifest_relative(path)
+            if after is not None:
+                after(registered, path)
+            return registered
+        except BaselineError as exc:
+            if exc.code != "DATASET_EXISTS":
+                raise
+            last = exc
+        except OSError as exc:
+            raise BaselineError("DATASET_UNAVAILABLE", "采集结果写入失败，请检查存储权限") from exc
+    raise last
+
+
+def dataset_references(storage, version):
+    """被分析、模型或导入过程引用的数据集版本不可清理。"""
+    references = []
+    with storage.connection() as db:
+        if db.execute('SELECT 1 FROM repository_sync WHERE dataset_version=? LIMIT 1', (version,)).fetchone():
+            references.append('analysis')
+        if db.execute("SELECT 1 FROM model_version WHERE json_extract(payload_json, '$.datasetVersion')=? "
+                      'LIMIT 1', (version,)).fetchone():
+            references.append('model')
+        if db.execute("SELECT 1 FROM model_version WHERE json_extract(payload_json, "
+                      "'$.artifactDatasetVersion')=? LIMIT 1", (version,)).fetchone():
+            if 'model' not in references:
+                references.append('model')
+    return references
+
+
+def prunable_datasets(storage, registered, keep=10):
+    """列出超出保留数量且无引用的 PR 数据集版本；分支数据集不参与。"""
+    keep = max(0, int(keep))
+    with storage.connection() as db:
+        rows = db.execute('SELECT dataset_version,dataset_name,usage,created_at FROM dataset_record '
+                          'ORDER BY created_at DESC, dataset_version DESC').fetchall()
+    grouped = {}
+    for row in rows:
+        if row['usage'] != 'pr':
+            continue
+        grouped.setdefault(row['dataset_name'], []).append(row)
+    result = []
+    for name, items in grouped.items():
+        for index, row in enumerate(items):
+            if index < keep:
+                continue
+            references = dataset_references(storage, row['dataset_version'])
+            if references:
+                continue
+            manifest = registered.get(row['dataset_version'])
+            if manifest is None:
+                continue
+            result.append({'dataset': name, 'version': row['dataset_version'],
+                           'createdAt': row['created_at'], 'references': references,
+                           'manifest': manifest})
+    return result
+
+
+def delete_dataset_version(storage, manifest):
+    """两阶段删除数据集：先移除登记与提交记录，再删除描述、CSV 与旁注文件。"""
+    version = manifest['version']
+    files = []
+    for entry in (manifest.get('file'), manifest.get('text'), manifest.get('labelEvidenceFile')):
+        if isinstance(entry, dict) and entry.get('path'):
+            path = Path(entry['path'])
+            files.append(path if path.is_absolute() else BACKEND / path)
+    tables = ('commit_label_evidence', 'feature_record', 'modified_entity',
+              'commit_record', 'import_run', 'dataset_record')
+    with storage.connection(write=True) as db:
+        for table in tables:
+            db.execute(f'DELETE FROM {table} WHERE dataset_version=?', (version,))
+    errors = []
+    for path in files:
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as exc:
+            errors.append({'path': path.name, 'message': str(exc)})
+    return {'version': version, 'deleted': not errors, 'fileErrors': errors}
+
+
 def dataset_list(registered):
     """按数据集名分组，返回名称、版本与来源摘要（DSR-07）。"""
     grouped = {}
@@ -37,6 +161,7 @@ def dataset_list(registered):
             "timeRange": manifest["timeRange"], "quality": manifest["quality"],
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
+            "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
             for name, versions in sorted(grouped.items())]
@@ -52,6 +177,7 @@ def version_view(registered, name):
                           "timeRange": manifest["timeRange"], "quality": manifest["quality"],
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
+                          "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}
 

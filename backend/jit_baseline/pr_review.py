@@ -14,6 +14,7 @@ from email.utils import parsedate_to_datetime
 
 from .catalog_storage import utc_now
 from .errors import BaselineError
+from . import candidate
 
 NAME = re.compile(r'^[A-Za-z0-9_.-]{1,100}$')
 SHA = re.compile(r'^[a-f0-9]{40,64}$')
@@ -116,6 +117,21 @@ class PullRequestReview:
         if number:
             raise BaselineError('INPUT_INVALID', '项目来源不是仓库地址')
         return self._list(owner.lower(), name.lower(), state, page, repository)
+
+    def count_open(self, repository_id):
+        """用搜索接口读取开放 PR 真实总数，不读取快照或改写列表缓存。"""
+        repository = self.sync.sync.repository_get(repository_id)
+        if repository is None:
+            raise BaselineError('REPOSITORY_UNKNOWN', '项目不存在')
+        owner, name, number = github_source(repository['url'])
+        if number:
+            raise BaselineError('INPUT_INVALID', '项目来源不是仓库地址')
+        query = quote(f'repo:{owner.lower()}/{name.lower()} type:pr state:open')
+        result = self.request(f'/search/issues?q={query}&per_page=1')
+        total = result.get('total_count') if isinstance(result, dict) else None
+        if type(total) is not int or total < 0:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '无法读取开放 PR 总数')
+        return {'count': total}
 
     def intake(self, payload):
         if not isinstance(payload, dict) or set(payload) - {'url', 'state', 'page'}:
@@ -297,6 +313,63 @@ class PullRequestReview:
                                 coverageComplete=bool(valid and source['commitsComplete'] and len(scores) == source['totalCommits']),
                                 scoredCommits=len(scores), totalCommits=source['totalCommits']))
         return dict(snapshotId=snapshot_id, analyses=records)
+
+    def candidates(self, snapshot_id, paths=None, side='head'):
+        """按固定快照的完整文件内容生成静态候选；只返回候选，不生成模型分数。"""
+        if side not in ('base', 'head'):
+            raise BaselineError('INPUT_INVALID', '版本侧无效')
+        source = self.get(snapshot_id)
+        files = source['files']
+        wanted = set(paths) if paths is not None else None
+        selected = [item for item in files if wanted is None or item['path'] in wanted]
+        selected = selected[:20]
+        analyzed, skipped, results = [], [], []
+        for file in selected:
+            if not file['path'].endswith(candidate.SUPPORTED_SUFFIXES):
+                skipped.append({'path': file['path'], 'reason': 'unsupported-language'})
+                continue
+            try:
+                context = self.context(snapshot_id, file['path'], side)
+            except BaselineError as exc:
+                skipped.append({'path': file['path'], 'reason': exc.code})
+                continue
+            if context.get('absent'):
+                skipped.append({'path': file['path'], 'reason': 'absent'})
+                continue
+            items, error = candidate.analyze(file['path'], side, context['content'])
+            if error:
+                skipped.append({'path': file['path'], 'reason': error})
+                continue
+            analyzed.append(file['path'])
+            results.extend(items)
+        coverage = {'analyzerVersion': candidate.ANALYZER_VERSION, 'side': side,
+                    'analyzed': analyzed, 'skipped': skipped,
+                    'selected': len(selected), 'totalFiles': len(files)}
+        with self.storage.connection(write=True) as db:
+            db.execute('INSERT INTO pr_candidate_run VALUES (?,?,?,?,?) '
+                       'ON CONFLICT(snapshot_id,analyzer_version) DO UPDATE SET '
+                       'status=excluded.status,coverage_json=excluded.coverage_json,created_at=excluded.created_at',
+                       (snapshot_id, candidate.ANALYZER_VERSION, 'complete',
+                        json.dumps(coverage, ensure_ascii=False), utc_now()))
+            for item in results:
+                db.execute('INSERT OR IGNORE INTO pr_candidate VALUES (?,?,?,?,?,?,?,?,?)',
+                           (snapshot_id, candidate.ANALYZER_VERSION, item['side'], item['path'],
+                            item['line'], item['ruleId'], item['ruleVersion'], item['message'],
+                            item['evidence']))
+        return {'snapshotId': snapshot_id, 'coverage': coverage, 'candidates': results}
+
+    def stored_candidates(self, snapshot_id):
+        self.get(snapshot_id)
+        with self.storage.connection() as db:
+            run = db.execute('SELECT * FROM pr_candidate_run WHERE snapshot_id=?', (snapshot_id,)).fetchone()
+            rows = db.execute('SELECT * FROM pr_candidate WHERE snapshot_id=? ORDER BY path, line, rule_id',
+                              (snapshot_id,)).fetchall()
+        return {'snapshotId': snapshot_id,
+                'coverage': json.loads(run['coverage_json']) if run else None,
+                'candidates': [{'side': row['side'], 'path': row['path'], 'line': row['line'],
+                                'ruleId': row['rule_id'], 'ruleVersion': row['rule_version'],
+                                'message': row['message'], 'evidence': row['evidence']}
+                               for row in rows]}
 
     def context(self, snapshot_id, path, side):
         source = self.get(snapshot_id)

@@ -92,6 +92,15 @@ def main():
     benefit.add_argument("--random-runs", type=int, default=DEFAULT_RANDOM_RUNS,
                          help=f"随机重复次数，默认 {DEFAULT_RANDOM_RUNS}")
     benefit.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"随机种子，默认 {DEFAULT_SEED}")
+    pr_export = commands.add_parser("pr-check-export", help="从固定 PR 分析导出离线检查包")
+    pr_export.add_argument("--database", type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', None))
+    pr_export.add_argument("--snapshot", required=True, help="PR 快照标识")
+    pr_export.add_argument("--analysis", required=True, help="固定分析标识")
+    pr_export.add_argument("--output", type=Path, required=True, help="分析包输出路径")
+    pr_report = commands.add_parser("pr-check-report", help="从离线检查包生成 JSON 或 Markdown 报告")
+    pr_report.add_argument("--bundle", type=Path, required=True, help="pr-check-export 生成的分析包")
+    pr_report.add_argument("--format", choices=("json", "markdown"), default="json")
+    pr_report.add_argument("--output", type=Path, required=True, help="报告输出路径")
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -238,6 +247,20 @@ def main():
                       "artifact": report["artifact"]["artifactPath"],
                       "test": report["test"], "conclusion": report["conclusion"],
                       "reportPath": str(path)}
+        elif args.command == "pr-check-export":
+            from . import pr_check
+            from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
+            bundle = pr_check.export_bundle(CatalogStorage(args.database or DEFAULT_DATABASE),
+                                            args.snapshot, args.analysis)
+            write_json(args.output, bundle)
+            result = {"kind": bundle["format"], "output": str(args.output),
+                      "commits": len(bundle["commits"])}
+        elif args.command == "pr-check-report":
+            from . import pr_check
+            bundle = json.loads(args.bundle.read_text(encoding="utf-8"))
+            report, path = pr_check.write_report(bundle, args.output, args.format)
+            result = {"kind": report["format"], "output": str(path),
+                      "commits": len(report["commits"])}
         elif args.command == "build-embeddings":
             from .semantic import build_embeddings
             options = {"batch_size": args.batch_size}
@@ -276,7 +299,7 @@ def main():
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (BaselineError, OSError) as exc:
         print(json.dumps({"error": getattr(exc, "code", "IO_ERROR"), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
-        sys.exit(1)
+        sys.exit(getattr(exc, "exit_code", 1))
 
 
 if __name__ == "__main__":

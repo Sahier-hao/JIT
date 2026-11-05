@@ -50,6 +50,8 @@ export interface SyncError {
 }
 
 export interface SyncView {
+  algorithm?: string | null
+  algorithmName?: string | null
   sourceKind?: string | null
   featureSchemaVersion?: string | null
   distributionRule?: string | null
@@ -168,6 +170,8 @@ export function parseSync(value: unknown): SyncView {
   if (queuePosition === 0) contractFailed()
   const timestampOrNull = (value: unknown) => value == null ? null : utcTimestamp(value)
   return {
+    algorithm: textOrNull(raw.algorithm),
+    algorithmName: textOrNull(raw.algorithmName),
     sourceKind: textOrNull(raw.sourceKind),
     featureSchemaVersion: textOrNull(raw.featureSchemaVersion),
     distributionRule: textOrNull(raw.distributionRule),
@@ -266,6 +270,7 @@ export function parseSyncCommitPage(value: unknown): SyncCommitPage {
 /** 请求体：留空的字段不提交，由服务端取默认值（D5）。 */
 export function syncBody(form: {
   modelId?: string
+  algorithm?: string
   repositoryUrl: string
   branch: string
   since?: string
@@ -275,6 +280,7 @@ export function syncBody(form: {
 }): Record<string, unknown> {
   const body: Record<string, unknown> = { repositoryUrl: form.repositoryUrl.trim(), strategy: form.strategy }
   if (form.modelId) body.modelId = form.modelId
+  if (form.algorithm) body.algorithm = form.algorithm
   if (form.branch.trim() !== '') body.branch = form.branch.trim()
   if (form.since?.trim()) body.since = form.since.trim()
   if (form.until?.trim()) body.until = form.until.trim()

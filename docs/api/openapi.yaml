@@ -65,6 +65,30 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-requests/count:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    get:
+      operationId: countRepositoryPullRequests
+      summary: 读取开放 PR 的真实总数
+      description: 使用 GitHub 搜索接口读取 total_count，只返回数量；不读取快照、不改写列表缓存，非 GitHub 来源返回 null。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 开放 PR 数量
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PROpenCount'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '502':
+          $ref: '#/components/responses/ModelUnavailable'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/pull-requests/refresh:
     parameters:
     - $ref: '#/components/parameters/ProjectRepositoryId'
@@ -90,8 +114,8 @@ paths:
     - $ref: '#/components/parameters/ProjectRepositoryId'
     post:
       operationId: analyzeRepositoryPullRequests
-      summary: 创建或复用一次可追踪的「分析全部 PR」批次
-      description: 批次开始时解析并固定真实兼容模型，从远端分页获取完整开放 PR 范围，再逐条刷新快照：同快照同模型在途任务复用任务、已成功任务复用结果、快照变化创建新分析、此前失败或取消仅在用户本次主动发起时重试。返回批次标识，进度通过批次接口读取。已有进行中的同模型批次直接返回原批次；不同模型返回 409。
+      summary: 创建或复用一次可追踪的批量分析
+      description: 批次开始时解析并固定真实兼容模型与范围（全部、前 N 个或当前页），按范围获取开放 PR 条目，再逐条刷新快照：同快照同模型在途任务复用任务、已成功任务复用结果、快照变化创建新分析、此前失败或取消仅在用户本次主动发起时重试。返回批次标识，进度通过批次接口读取。已有进行中的同模型批次直接返回原批次；不同模型返回 409；范围参数非法时不创建任何条目。
       security: []
       tags: [目标共享产品]
       requestBody:
@@ -177,13 +201,48 @@ paths:
         type: string
     post:
       operationId: retryRepositoryPullRequestBatch
-      summary: 只重试上一批次的失败项
-      description: 以原批次固定的模型创建新批次，只复制有效状态为 failed 的条目；模型不可用时失败，不替换模型。批次仍在处理或没有失败项时返回冲突。
+      summary: 按状态重试上一批次的条目
+      description: 以原批次固定的模型创建新批次。kind=failed 只复制失败项（含单个 PR 分析被取消的条目，不含批次取消产生的条目），kind=interrupted 只复制中断项；默认 failed。模型不可用时失败，不替换模型。批次仍在处理或没有对应条目时返回冲突。
+      security: []
+      tags: [目标共享产品]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PRBatchRetryRequest'
+      responses:
+        '202':
+          description: 新的重试批次
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRBatchAnalyze'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/cancel:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: batchId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: cancelRepositoryPullRequestBatch
+      summary: 取消进行中的批量分析
+      description: 停止发现和提交后续条目，尚未提交的条目标记为已取消；已入队的单 PR 任务继续执行并保留各自状态。重复取消返回当前批次；已完成、已取消或已中断批次返回 409，不改变既有结果。取消后批次不会自动恢复。
       security: []
       tags: [目标共享产品]
       responses:
         '202':
-          description: 新的重试批次
+          description: 取消请求已接受或批次已取消
           content:
             application/json:
               schema:
@@ -208,7 +267,7 @@ paths:
     post:
       operationId: analyzeRepositoryPullRequest
       summary: 为单个项目 PR 读取固定快照并创建模型分析
-      description: 返回该快照的模型任务与已有分数；旧任务与新任务的来源边界按 PRAnalyses 说明。
+      description: 返回该快照的模型任务与已有分数；同一快照同一模型已有完成结果时复用，不重复执行；显式选择不同兼容模型可重新分析并保留旧结果。旧任务与新任务的来源边界按 PRAnalyses 说明。
       security: []
       tags: [目标共享产品]
       requestBody:
@@ -216,7 +275,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PRBatchAnalyzeRequest'
+              $ref: '#/components/schemas/PRSingleAnalyzeRequest'
       responses:
         '200':
           description: 当前响应
@@ -904,6 +963,59 @@ paths:
       description: 未知提交或未知版本返回 404，不返回空对象。
       security:
       - AdminSession: []
+  /api/admin/datasets/prunable:
+    get:
+      operationId: listPrunableDatasets
+      summary: 列出可清理的 PR 数据集版本
+      description: 只返回来源为 PR、超过保留数量且未被分析或模型引用的版本；分支分析数据集不参与。
+      security:
+      - AdminSession: []
+      tags: [管理工作区]
+      parameters:
+      - name: keep
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '200':
+          description: 可清理版本
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrunableDatasets'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/admin/datasets/prune:
+    post:
+      operationId: pruneDatasets
+      summary: 删除选定的 PR 数据集版本
+      description: 只删除仍满足可清理条件的版本；删除登记、提交与特征记录及文件，结果列出删除与跳过项。
+      security:
+      - AdminSession: []
+      tags: [管理工作区]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PruneDatasetsRequest'
+      responses:
+        '200':
+          description: 清理结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PruneDatasetsResult'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/datasets:
     get:
       operationId: listDatasets
@@ -1204,6 +1316,29 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/training-methods:
+    get:
+      operationId: listTrainingMethods
+      summary: 项目分析可选的训练方法
+      description: 返回已注册方法的名称、类别、依赖、当前 schema 支持性与真实可用状态；未注册方法不会出现。
+      tags:
+      - 目标共享产品
+      security: []
+      parameters:
+      - name: schema
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 方法目录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingMethodCatalog'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
   /api/v1/models:
     get:
       operationId: listModels
@@ -3296,6 +3431,9 @@ components:
           type: [string, 'null']
         featureSchemaVersion:
           type: [string, 'null']
+        featureSource:
+          type: [object, 'null']
+          description: 复用已保存特征时的来源说明；未复用时为 null。
         distributionRule:
           type: [string, 'null']
       required: [syncId, sourceKind, branch, since, until, commitLimit, createdAt, completedAt, headCommit, datasetVersion, modelId, runId, featureSchemaVersion, distributionRule]
@@ -3807,10 +3945,62 @@ components:
         modelId:
           type: string
           minLength: 1
+        scope:
+          $ref: '#/components/schemas/PRBatchScope'
+    PRSingleAnalyzeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        modelId:
+          type: string
+          minLength: 1
+          description: 选择与当前结果不同的兼容模型即重新分析；同一模型复用现有结果。
+        retry:
+          type: boolean
+          description: 仅对失败、取消或中断的任务显式重试时使用。
+    PRBatchRetryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum: [failed, interrupted]
+          default: failed
+    PRBatchScope:
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [all, limit, page, retry]
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: kind=limit 时必须提供，表示按远端顺序处理前 N 个开放 PR。
+        page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: kind=page 时必须提供，只处理该页开放 PR。
+        count:
+          type: integer
+          minimum: 1
+          description: kind=retry 时表示复制的条目数。
+    PROpenCount:
+      type: object
+      additionalProperties: false
+      required: [count]
+      properties:
+        count:
+          type: [integer, 'null']
+          minimum: 0
+          description: 开放 PR 真实总数；非 GitHub 来源为 null。
     PRBatchAnalyze:
       type: object
       additionalProperties: false
-      required: [batchId, repositoryId, modelId, status, discoveryComplete, discovered, retryOf, createdAt, updatedAt, completedAt, error, counts, submission, items]
+      required: [batchId, repositoryId, modelId, status, discoveryComplete, discovered, retryOf, scope, cancelRequested, cancelledAt, createdAt, updatedAt, completedAt, error, counts, submission, items]
       properties:
         batchId:
           type: string
@@ -3821,7 +4011,7 @@ components:
           description: 批次开始时解析并固定的真实兼容模型；执行或重试时不替换。
         status:
           type: string
-          enum: [discovering, running, completed, partial, failed, interrupted]
+          enum: [discovering, running, completed, partial, failed, interrupted, cancelled]
         discoveryComplete:
           type: boolean
           description: false 表示开放 PR 范围未完整获取，不能宣称全部完成。
@@ -3831,6 +4021,14 @@ components:
         retryOf:
           type: [string, 'null']
           description: 仅重试批次指向的原批次标识。
+        scope:
+          $ref: '#/components/schemas/PRBatchScope'
+        cancelRequested:
+          type: boolean
+          description: 已收到取消请求；未提交条目将收敛为已取消。
+        cancelledAt:
+          type: [string, 'null']
+          format: date-time
         createdAt:
           type: string
           format: date-time
@@ -5343,6 +5541,55 @@ components:
       - labelRule
       - features
       additionalProperties: false
+    PrunableDatasets:
+      type: object
+      additionalProperties: false
+      required: [keep, versions]
+      properties:
+        keep:
+          type: integer
+          minimum: 0
+        versions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [dataset, version, createdAt, references]
+            properties:
+              dataset: {type: string}
+              version: {type: string}
+              createdAt: {type: string, format: date-time}
+              references:
+                type: array
+                items: {type: string}
+    PruneDatasetsRequest:
+      type: object
+      additionalProperties: false
+      required: [versions]
+      properties:
+        versions:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+        keep:
+          type: integer
+          minimum: 0
+          description: 与预览使用相同的保留数量；省略时使用服务端默认。
+    PruneDatasetsResult:
+      type: object
+      additionalProperties: false
+      required: [deleted, skipped]
+      properties:
+        deleted:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        skipped:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
     DatasetRegistry:
       type: object
       properties:
@@ -5452,6 +5699,17 @@ components:
           additionalProperties: false
         labelRule:
           type: [string, 'null']
+        usage:
+          type: string
+          enum: [branch, pr]
+          description: 数据集来源类型；旧记录缺少该字段时按 branch 返回。
+        sourceSyncId:
+          type: [string, 'null']
+          description: 产生该数据集的仓库同步标识。
+        references:
+          type: array
+          items: {type: string}
+          description: 引用类型，如 analysis、model；非空版本不可清理。
         limitations:
           type: array
           items: {type: string}
@@ -5464,6 +5722,9 @@ components:
       - source
       - labelRule
       - limitations
+      - usage
+      - sourceSyncId
+      - references
       additionalProperties: false
     DatasetQuality:
       type: object
@@ -5518,6 +5779,31 @@ components:
       - featureMissing
       - excluded
       additionalProperties: false
+    TrainingMethodCatalog:
+      type: object
+      additionalProperties: false
+      required: [schema, methods]
+      properties:
+        schema:
+          type: string
+        methods:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [method, name, label, category, requires, available, supportedSchema, reason]
+            properties:
+              method: {type: string}
+              name: {type: string}
+              label: {type: string}
+              category: {type: string}
+              requires:
+                type: array
+                items: {type: string}
+              available: {type: boolean}
+              supportedSchema: {type: boolean}
+              reason:
+                type: [string, 'null']
     RepositorySyncCreate:
       type: object
       properties:
@@ -5553,6 +5839,10 @@ components:
           type: string
           format: uuid
           description: Explicit registered compatible model; requires generic-model strategy.
+        algorithm:
+          type: string
+          minLength: 1
+          description: 训练方法；只在 auto 或 force-train 时可用，缺省为 logistic-regression-l2-v1。
       required:
       - repositoryUrl
       additionalProperties: false
@@ -5573,9 +5863,18 @@ components:
         featureSchemaVersion:
           type: [string, 'null']
           description: 创建或成功完成时冻结的真实模型特征口径。
+        algorithm:
+          type: [string, 'null']
+          description: 请求的训练方法；使用现成模型时为空。
+        algorithmName:
+          type: [string, 'null']
+          description: 方法显示名，供记录与详情展示。
         distributionRule:
           type: [string, 'null']
           description: 成功分析冻结的风险分档规则；旧记录可能缺失。
+        featureSource:
+          type: [object, 'null']
+          description: 复用已保存特征时的来源说明；未复用时为 null。
         queuePosition:
           type: [integer, 'null']
           minimum: 1
@@ -7564,9 +7863,34 @@ components:
           type: [string, 'null']
           description: 生成失败的领域原因；不包含内部路径和异常详情。
         baselineSource:
-          enum: [zero, mixed, model-dataset-mean, null]
+          enum: [zero, mixed, model-dataset-mean, training-partition-mean, null]
         baselineDatasetVersion:
           type: [string, 'null']
+        baselineHash:
+          type: [string, 'null']
+        trainingPartitionSize:
+          type: integer
+          minimum: 0
+        stability:
+          type: [object, 'null']
+          additionalProperties: false
+          properties:
+            status:
+              enum: [stable, unstable]
+            rounds:
+              type: integer
+              minimum: 1
+            topFeatures:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+            baseOrder:
+              type: array
+              items:
+                type: string
+          required: [status, rounds, topFeatures, baseOrder]
         missingBaselineFeatures:
           type: array
           items:

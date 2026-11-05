@@ -67,7 +67,7 @@ class RepositoryExplanationService:
                 snapshot, model = self.catalog.load_model(context['modelId'])
                 if context['runId'] not in (model['runId'], model['artifactRunId']):
                     raise BaselineError('MODEL_CONTEXT_MISMATCH', '原分析与模型运行身份不一致，未生成解释')
-                if snapshot.schema.name not in ('openstack-six-v1', 'kamei14-git-v1'):
+                if snapshot.schema.name not in ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2'):
                     raise BaselineError('INPUT_SCHEMA_MISMATCH', '原模型的输入口径不支持仓库解释')
                 names = snapshot.schema.in_model_names()
                 values = []
@@ -81,9 +81,13 @@ class RepositoryExplanationService:
                 current = predict(values)[0]
                 if not math.isclose(current, context['risk'], rel_tol=1e-7, abs_tol=1e-8):
                     raise BaselineError('SCORE_MISMATCH', '原模型重算与保存分数不一致，保留旧分数且未生成解释')
-                baseline = attribution.feature_baseline(self.storage, model['artifactDatasetVersion'], names)
+                partition_ids = attribution.training_partition_ids(
+                    self.catalog.model_directory(context['modelId']))
+                baseline = attribution.feature_baseline(self.storage, model['artifactDatasetVersion'],
+                                                        names, partition_ids)
                 missing = [name for name in names if name not in baseline]
                 explained = attribution.explain(predict, values, baseline, names)
+                stable = attribution.stability(predict, values, baseline, names)
                 items = [item for item in explained['items'] if item['delta'] != 0]
                 summary = '本次没有达到显示精度的单特征影响，不表示该提交不存在缺陷。'
                 if items:
@@ -93,10 +97,18 @@ class RepositoryExplanationService:
                 result.update(explanationStatus='supported', explanation=items,
                     explanationMethod=explained['method'], explanationSummary=summary,
                     featureSchemaVersion=snapshot.schema.name, modelSha256=model['sha256'],
-                    baselineSource='zero' if len(missing) == len(names) else 'mixed' if missing else 'model-dataset-mean',
-                    baselineDatasetVersion=model['artifactDatasetVersion'], missingBaselineFeatures=missing)
+                    baselineSource=('training-partition-mean' if partition_ids and not missing
+                                    else 'zero' if len(missing) == len(names) else 'mixed'),
+                    baselineDatasetVersion=model['artifactDatasetVersion'], missingBaselineFeatures=missing,
+                    baselineHash=attribution.baseline_hash(baseline),
+                    trainingPartitionSize=len(partition_ids) if partition_ids else 0,
+                    stability=stable)
                 if missing:
-                    result['limitations'].append('模型绑定数据集的部分字段均值不可用，所列缺失字段明确使用零基线。')
+                    result['limitations'].append('训练分区背景的部分字段均值不可用，所列缺失字段明确使用零基线。')
+                if not partition_ids:
+                    result['limitations'].append('训练分区背景不可用，本次归因按零基线计算。')
+                if stable['status'] != 'stable':
+                    result['limitations'].append('合法扰动下主要贡献特征排序不稳定，不把该解释表述为稳健原因。')
             except BaselineError as exc:
                 result.update(explanationStatus='not-supported', explanationReason=self._reason(exc), reasonCode=exc.code)
             except Exception:

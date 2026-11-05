@@ -4,22 +4,46 @@
 选择遮挡法而非 SHAP/LIME：九种方法共用同一口径、无新增依赖、无采样不稳定性，
 单条预测只多「特征数」次前向。归因只描述模型对单特征的敏感度，不是因果分解。
 """
+import hashlib
+import json
 import math
+from pathlib import Path
 
 METHOD = 'occlusion-mean-v1'
 TOP_K = 5
 _ZERO = 1e-12
 
 
-def feature_baseline(storage, dataset_version, names):
-    """按数据集版本取各字段均值作为基线。
+def training_partition_ids(directory):
+    """读取训练运行 split.json 的训练分区标识；缺失或为空时返回 None。"""
+    if not directory:
+        return None
+    try:
+        split = json.loads((Path(directory) / 'split.json').read_text(encoding='utf-8'))
+        ids = split['partitions']['train']['ids']
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return list(dict.fromkeys(ids)) if isinstance(ids, list) and ids else None
+
+
+def baseline_hash(means):
+    payload = json.dumps({name: means[name] for name in sorted(means)},
+                         ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+
+def feature_baseline(storage, dataset_version, names, commit_ids=None):
+    """按训练分区（或整个数据集版本）取各字段均值作为基线。
 
     数据集版本未知或某字段缺失时只返回可用的部分，由调用方决定降级；
     这里不补零、不猜测，避免把查询失败伪装成合法基线。
     """
     if not dataset_version or not names:
         return {}
-    means = storage.feature_means(dataset_version, tuple(names))
+    if commit_ids is None:
+        means = storage.feature_means(dataset_version, tuple(names))
+    else:
+        means = storage.feature_means(dataset_version, tuple(names), commit_ids)
     return {name: means[name] for name in names if name in means}
 
 
@@ -71,3 +95,23 @@ def _summary(items, base_risk):
     tail = f'，另有 {rest} 个特征有可测影响' if rest else ''
     return (f'本次预测风险为 {base_risk:.3f}，影响最大的是 {lead["feature"]}'
             f'（{verb} {abs(lead["delta"]):.3f}）{tail}。归因来自模型推理，不是缺陷结论。')
+
+
+def stability(predict_fn, features, baseline, names, rounds=3):
+    """对数值字段做小幅合法扰动，检查主要贡献特征的排序是否稳定。"""
+    base = explain(predict_fn, features, baseline, names)['items']
+    base_order = [item['feature'] for item in base[:3]]
+    orders = []
+    for index in range(rounds):
+        factor = 0.9 if index % 2 == 0 else 1.1
+        perturbed = []
+        for value in features:
+            changed = float(value) * factor
+            if changed < 0:
+                changed = 0.0
+            perturbed.append(changed)
+        items = explain(predict_fn, perturbed, baseline, names)['items']
+        orders.append([item['feature'] for item in items[:3]])
+    stable = all(order == base_order for order in orders)
+    return {'status': 'stable' if stable else 'unstable',
+            'rounds': rounds, 'topFeatures': orders, 'baseOrder': base_order}

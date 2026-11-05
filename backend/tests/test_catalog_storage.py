@@ -196,7 +196,7 @@ def test_initialize_cli_uses_same_database_environment_as_http(tmp_path, monkeyp
 
 def _seed_commits(store, version='demo-v1', count=3):
     with store.connection(write=True) as db:
-        db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?)',
+        db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,source_sha256,row_count,created_at) VALUES (?,?,?,?,?,?,?)',
                    (version, 'demo', '{}', 'manifest-sha', 'source-sha', count, '2026-01-01T00:00:00Z'))
         for index in range(count):
             commit_id = f'{index:040x}'
@@ -233,3 +233,159 @@ def test_commits_by_entity_support_pagination(tmp_path):
     assert store.count_by_entity('module', 'nova') == 3
     assert store.commits_by_entity('module', 'absent') == []
     assert store.count_by_entity('module', 'absent') == 0
+
+
+def test_upgrade_adds_batch_scope_and_cancel_columns_without_changing_old_rows(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage, MIGRATIONS
+    database = tmp_path / 'batches.sqlite3'
+    with sqlite3.connect(database) as db:
+        db.execute('PRAGMA foreign_keys=ON')
+        for number, path in MIGRATIONS:
+            if number <= 24:
+                db.executescript(path.read_text(encoding='utf-8'))
+        db.execute("INSERT INTO schema_migration VALUES (24,'fixture')")
+        db.execute("INSERT INTO pr_batch(id,repository_id,model_id,status,discovery_complete,discovered,created_at,updated_at) "
+                   "VALUES ('old-batch','project','model','completed',1,2,'fixture','fixture')")
+
+    store = CatalogStorage(database)
+    store.initialize()
+
+    assert len(list(tmp_path.glob('batches.sqlite3.before-v24-*.sqlite3'))) == 1
+    with store.connection() as db:
+        row = db.execute('SELECT scope_kind,scope_limit,scope_page,cancel_requested_at,cancelled_at '
+                         'FROM pr_batch WHERE id=?', ('old-batch',)).fetchone()
+        assert row[:] == ('all', None, None, None, None)
+        assert db.execute('PRAGMA foreign_key_check').fetchall() == []
+
+
+def test_dataset_source_marks_and_pr_scoped_cleanup(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    csv = tmp_path / 'demo.csv'
+    csv.write_text('demo', encoding='utf-8')
+    manifest = {
+        'version': 'demo-pr-v1', 'dataset': 'demo',
+        'file': {'sha256': 'x', 'path': str(csv)},
+        'usage': 'pr', 'sourceSyncId': 'sync-1',
+        'collection': {'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                                  'binarizationRule': 'observed fix => 1', 'observedThrough': 1,
+                                  'maturityDays': 90}},
+    }
+    storage.import_dataset(manifest, [
+        {'id': 'a' * 40, 'time': '2024-01-01T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}}])
+    with storage.connection() as db:
+        assert db.execute("SELECT usage,source_sync_id FROM dataset_record WHERE dataset_version='demo-pr-v1'").fetchone()[:] == ('pr', 'sync-1')
+
+    registered = {'demo-pr-v1': manifest}
+    assert store_module.prunable_datasets(storage, registered, keep=1) == []
+    candidates = store_module.prunable_datasets(storage, registered, keep=0)
+    assert [row['version'] for row in candidates] == ['demo-pr-v1']
+
+    result = store_module.delete_dataset_version(storage, manifest)
+    assert result['deleted'] is True and result['fileErrors'] == []
+    assert not csv.exists()
+    with storage.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM dataset_record').fetchone()[0] == 0
+        assert db.execute('SELECT COUNT(*) FROM commit_record').fetchone()[0] == 0
+
+
+def test_prunable_skips_referenced_and_branch_datasets(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    now = '2026-11-05T00:00:00Z'
+    with storage.connection(write=True) as db:
+        for version, usage in (('branch-v1', 'branch'), ('pr-free', 'pr'), ('pr-used', 'pr')):
+            db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,'
+                       'manifest_sha256,source_sha256,row_count,created_at,usage) '
+                       'VALUES (?,?,?,?,?,?,?,?)',
+                       (version, 'demo', '{}', version, 'x', 1, now, usage))
+        db.execute("INSERT INTO repository_sync(id,repository_url,branch,requested_strategy,status,"
+                   "stage,dataset_version,created_at,updated_at) VALUES "
+                   "('used-sync','https://example.com/repo','HEAD','auto','completed','completed',"
+                   "'pr-used','2026-11-05T00:00:00Z','2026-11-05T00:00:00Z')")
+    registered = {version: {'version': version, 'dataset': 'demo', 'file': {'sha256': 'x'}}
+                  for version in ('branch-v1', 'pr-free', 'pr-used')}
+    assert [row['version'] for row in store_module.prunable_datasets(storage, registered, keep=0)] == ['pr-free']
+
+
+def test_dataset_cleanup_reports_file_failure_without_claiming_success(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    csv = tmp_path / 'locked.csv'
+    csv.write_text('demo', encoding='utf-8')
+    manifest = {
+        'version': 'demo-pr-v1', 'dataset': 'demo',
+        'file': {'sha256': 'x', 'path': str(csv)}, 'usage': 'pr',
+        'collection': {'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                                  'binarizationRule': 'observed fix => 1', 'observedThrough': 1,
+                                  'maturityDays': 90}},
+    }
+    storage.import_dataset(manifest, [
+        {'id': 'a' * 40, 'time': '2024-01-01T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}}])
+    csv.chmod(0o400)
+
+    result = store_module.delete_dataset_version(storage, manifest)
+
+    assert result['deleted'] is False
+    assert result['fileErrors'] and result['fileErrors'][0]['path'] == 'locked.csv'
+    assert csv.exists()
+    csv.chmod(0o666)
+
+
+def test_label_evidence_and_status_are_persisted(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    manifest = {
+        'version': 'demo-v1', 'dataset': 'demo', 'file': {'sha256': 'x'},
+        'collection': {
+            'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                      'binarizationRule': 'observed fix => 1', 'observedThrough': 1_705_000_000,
+                      'maturityDays': 90},
+            'labelEvidence': [{'introducedCommit': 'a' * 40, 'fixCommit': 'b' * 40,
+                               'path': 'pkg/a.py', 'fixTime': '2024-01-05T00:00:00Z'}],
+        },
+    }
+    records = [
+        {'id': 'a' * 40, 'time': '2024-01-01T00:00:00Z', 'label': 1, 'metrics': {'ns': 1}},
+        {'id': 'c' * 40, 'time': '2024-01-10T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}},
+    ]
+    store.import_dataset(manifest, records)
+
+    positive = store.commit('demo-v1', 'a' * 40)
+    assert positive['labelOrigin'] == 'simplified-szz'
+    assert positive['labelRuleVersion'] == 'szz-simple-v1'
+    assert positive['binarizationRule'] == 'observed fix => 1'
+    assert positive['labelStatus'] == 'positive'
+    assert positive['evidence'][0]['fixCommit'] == 'b' * 40
+
+    recent = store.commit('demo-v1', 'c' * 40)
+    assert recent['labelStatus'] == 'immature'
+    assert recent['evidence'] == []
+
+
+def test_label_evidence_outside_included_commits_is_skipped(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    manifest = {
+        'version': 'demo-v1', 'dataset': 'demo', 'file': {'sha256': 'x'},
+        'collection': {
+            'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                      'binarizationRule': 'observed fix => 1', 'observedThrough': 1_705_000_000,
+                      'maturityDays': 90},
+            'labelEvidence': [{'introducedCommit': 'a' * 40, 'fixCommit': 'b' * 40,
+                               'path': 'pkg/a.py', 'fixTime': '2024-01-05T00:00:00Z'}],
+        },
+    }
+    records = [
+        {'id': 'c' * 40, 'time': '2024-01-10T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}},
+    ]
+
+    assert store.import_dataset(manifest, records)['commits'] == 1

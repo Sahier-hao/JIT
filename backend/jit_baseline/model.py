@@ -172,15 +172,57 @@ def build_estimator(entry):
     return factory(**entry["kwargs"])
 
 
-def fit_model(train_records, *, schema=None, algorithm=None):
+def apply_class_policy(records, policy):
+    """只对训练记录应用类别加权或采样；返回记录、样本权重与前后统计。"""
+    before = {'records': len(records), 'positives': sum(1 for r in records if r['label'] == 1)}
+    if not policy:
+        return records, None, None
+    kind = policy.get('kind')
+    if kind == 'weights':
+        positive = policy.get('positiveWeight', 2.0)
+        negative = policy.get('negativeWeight', 1.0)
+        if (isinstance(positive, bool) or isinstance(negative, bool)
+                or not isinstance(positive, (int, float)) or not isinstance(negative, (int, float))
+                or positive <= 0 or negative <= 0):
+            raise BaselineError("CLASS_POLICY_INVALID", "类别权重必须是正数")
+        weights = np.asarray([positive if r['label'] == 1 else negative for r in records],
+                             dtype=np.float64)
+        summary = {'kind': kind, 'positiveWeight': positive, 'negativeWeight': negative,
+                   'before': before, 'after': dict(before)}
+        return records, weights, summary
+    if kind == 'sample':
+        seed = policy.get('seed', 0)
+        if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+            raise BaselineError("CLASS_POLICY_INVALID", "采样种子必须是非负整数")
+        positives = [r for r in records if r['label'] == 1]
+        negatives = [r for r in records if r['label'] == 0]
+        if not positives or not negatives:
+            raise BaselineError("CLASS_POLICY_INVALID", "采样需要两类标签")
+        rng = np.random.default_rng(seed)
+        result = list(records)
+        if len(positives) < len(negatives):
+            chosen = rng.choice(len(positives), size=len(negatives) - len(positives), replace=True)
+            result.extend(positives[int(index)] for index in chosen)
+        elif len(negatives) < len(positives):
+            chosen = rng.choice(len(negatives), size=len(positives) - len(negatives), replace=True)
+            result.extend(negatives[int(index)] for index in chosen)
+        after = {'records': len(result), 'positives': sum(1 for r in result if r['label'] == 1)}
+        summary = {'kind': kind, 'seed': seed, 'before': before, 'after': after}
+        return result, None, summary
+    raise BaselineError("CLASS_POLICY_INVALID", "未知的类别处理策略")
+
+
+def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None):
     """按 schema 的变换与方法的声明构造流水线。
 
     `counts` 由 schema 决定、方法不得覆盖；是否标准化与估计器由方法声明。
+    `class_policy` 只作用于传入的训练记录，调用方负责只传训练分区。
     """
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
     entry = get_algorithm(algorithm if algorithm else DEFAULT_ALGORITHM)
-    matrix = feature_matrix(train_records, schema)
-    labels = np.asarray([r["label"] for r in train_records])
+    records, sample_weight, _ = apply_class_policy(train_records, class_policy)
+    matrix = feature_matrix(records, schema)
+    labels = np.asarray([r["label"] for r in records])
     if set(labels.tolist()) != {0, 1}:
         raise BaselineError("MODEL_INVALID", "训练需要两类发布标签")
     steps = []
@@ -192,12 +234,18 @@ def fit_model(train_records, *, schema=None, algorithm=None):
             if schema.semantic else StandardScaler()))
     steps.append(("model", build_estimator(entry)))
     pipeline = Pipeline(steps)
+    fit_kwargs = {"model__sample_weight": sample_weight} if sample_weight is not None else {}
     try:
         with threadpool_limits(limits=1), warnings.catch_warnings():
             warnings.simplefilter("error", ConvergenceWarning)
-            pipeline.fit(matrix, labels)
+            pipeline.fit(matrix, labels, **fit_kwargs)
     except ConvergenceWarning as exc:
         raise BaselineError("MODEL_NOT_CONVERGED", "方法按自身声明未收敛，不能发布有效产物") from exc
+    except (TypeError, ValueError) as exc:
+        if sample_weight is not None:
+            raise BaselineError("CLASS_POLICY_UNSUPPORTED",
+                                "所选方法不支持类别加权，请更换方法或取消策略") from exc
+        raise
     return pipeline
 
 

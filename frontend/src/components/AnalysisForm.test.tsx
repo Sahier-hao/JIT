@@ -28,6 +28,31 @@ it('explains the administrator default and blocks a saved disabled selection unt
   expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled()
 })
 
+it('offers available training methods and sends the selected algorithm', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    if (options?.method === 'POST') return new Response('{}', { status: 422 })
+    if (String(path).includes('/training-methods')) return new Response(JSON.stringify({
+      schema: 'kamei14-git-v2',
+      methods: [
+        { method: 'logistic-regression-l2-v1', name: '逻辑回归 · L2', label: '逻辑回归', category: 'classic', available: true, supportedSchema: true, requires: [], reason: null },
+        { method: 'mlp-v1', name: 'MLP', label: 'MLP', category: 'deep', available: false, supportedSchema: true, requires: ['torch'], reason: '缺少依赖：torch' },
+      ],
+    }), { status: 200 })
+    return new Response(JSON.stringify({ models: [
+      { modelId: 'lr', name: '逻辑回归', method: 'logistic-regression-l2-v1', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
+    ] }), { status: 200 })
+  })
+  render(<AnalysisForm repositoryUrl="https://github.com/example/method" onStarted={vi.fn()}/>)
+  const user = userEvent.setup()
+  const select = await screen.findByLabelText('训练方法')
+  expect(select).toHaveValue('logistic-regression-l2-v1')
+  expect(screen.getByRole('option', { name: /MLP（缺少依赖：torch）/ })).toBeDisabled()
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
+  const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!
+  expect(JSON.parse(String(call[1]?.body))).toMatchObject({ strategy: 'auto', algorithm: 'logistic-regression-l2-v1' })
+})
+
 it('offers real registered models and sends the explicitly selected model', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) => {
     if (options?.method === 'POST') return new Response('{}', { status: 422 })
@@ -38,6 +63,7 @@ it('offers real registered models and sends the explicitly selected model', asyn
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/repo" onStarted={vi.fn()}/>); const user = userEvent.setup()
   await user.selectOptions(await screen.findByLabelText('模型来源'), 'dt')
+  expect(screen.queryByLabelText('训练方法')).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
   const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!

@@ -31,7 +31,14 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (18, Path(__file__).parent / 'migrations/018_training_tasks.sql'),
               (19, Path(__file__).parent / 'migrations/019_pr_batches.sql'),
               (20, Path(__file__).parent / 'migrations/020_experiment_promotion.sql'),
-              (21, Path(__file__).parent / 'migrations/021_model_package_imports.sql'))
+              (21, Path(__file__).parent / 'migrations/021_model_package_imports.sql'),
+              (22, Path(__file__).parent / 'migrations/022_label_evidence.sql'),
+              (23, Path(__file__).parent / 'migrations/023_training_class_policy.sql'),
+              (24, Path(__file__).parent / 'migrations/024_pr_candidates.sql'),
+              (25, Path(__file__).parent / 'migrations/025_pr_batch_scope.sql'),
+              (26, Path(__file__).parent / 'migrations/026_sync_feature_source.sql'),
+              (27, Path(__file__).parent / 'migrations/027_dataset_source.sql'),
+              (28, Path(__file__).parent / 'migrations/028_sync_algorithm.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -155,6 +162,14 @@ class CatalogStorage:
         text = self._manifest_dump(manifest)
         digest = sha256(text.encode('utf-8'))
         started = utc_now()
+        collection = manifest.get('collection') or {}
+        label = collection.get('label') or manifest.get('label') or {}
+        szz = collection.get('szz') or {}
+        label_origin = label.get('kind') or szz.get('rule') or manifest.get('labelRule') or LABEL_RULE
+        label_version = label.get('version') or szz.get('rule') or manifest.get('labelRule')
+        label_binarization = label.get('binarizationRule') or LABEL_RULE
+        observed_through = label.get('observedThrough')
+        maturity_days = label.get('maturityDays')
         with self.connection(write=True) as db:
             row = db.execute('SELECT manifest_sha256 FROM dataset_record WHERE dataset_version=?',
                              (version,)).fetchone()
@@ -164,15 +179,29 @@ class CatalogStorage:
                 return {'datasetVersion': version, 'created': False,
                         'commits': db.execute('SELECT COUNT(*) FROM commit_record WHERE dataset_version=?',
                                               (version,)).fetchone()[0]}
-            db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?)',
+            db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,'
+                       'manifest_sha256,source_sha256,row_count,created_at,label_origin,'
+                       'label_rule_version,label_binarization_rule,observed_through,maturity_days,'
+                       'usage,source_sync_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                        (version, manifest['dataset'], text, digest, manifest['file']['sha256'],
-                        len(records), started))
+                        len(records), started, label_origin, label_version, label_binarization,
+                        observed_through, maturity_days, manifest.get('usage') or 'branch',
+                        manifest.get('sourceSyncId')))
             db.executemany('INSERT INTO commit_record VALUES (?,?,?,?,?)',
                            [(version, record['id'], record['time'], record['label'], LABEL_RULE)
                             for record in records])
             db.executemany('INSERT INTO feature_record VALUES (?,?,?,?)',
                            [(version, record['id'], field, json.dumps(value, allow_nan=False))
                             for record in records for field, value in sorted(record['metrics'].items())])
+            # 证据只能指向本版本实际纳入的提交；采集窗口内的修复提交可能因纳入规则
+            #（如无新增行）没有进入数据集，这类证据不写入，避免外键失败整批导入。
+            included = {record['id'] for record in records}
+            evidence = [item for item in (collection.get('labelEvidence') or [])
+                        if item.get('introducedCommit') in included
+                        and item.get('fixCommit') and item.get('path')]
+            db.executemany('INSERT OR IGNORE INTO commit_label_evidence VALUES (?,?,?,?,?,?)',
+                           [(version, item['introducedCommit'], item['fixCommit'], item['path'],
+                             item['fixTime'], label_version or LABEL_RULE) for item in evidence])
             db.execute('INSERT INTO import_run VALUES (?,?,?,?,?,?,?)',
                        (uuid.uuid4().hex, version, 'success', len(records), None, started, utc_now()))
         return {'datasetVersion': version, 'created': True, 'commits': len(records)}
@@ -198,10 +227,44 @@ class CatalogStorage:
         return collected
 
     @staticmethod
-    def _commit_row(row, features):
+    def _label_meta(db, version):
+        row = db.execute('SELECT label_origin, label_rule_version, label_binarization_rule, '
+                         'observed_through, maturity_days FROM dataset_record WHERE dataset_version=?',
+                         (version,)).fetchone()
+        return dict(row) if row is not None else None
+
+    @staticmethod
+    def _label_status(label, author_time, meta):
+        if label == 1:
+            return 'positive'
+        if not meta or meta.get('observed_through') is None or meta.get('maturity_days') is None:
+            return 'unknown'
+        try:
+            epoch = int(datetime.fromisoformat(author_time.replace('Z', '+00:00')).timestamp())
+        except (ValueError, TypeError):
+            return 'unknown'
+        if int(meta['observed_through']) - epoch < int(meta['maturity_days']) * 86400:
+            return 'immature'
+        return 'unobserved'
+
+    @classmethod
+    def _commit_row(cls, row, features, meta=None, evidence=None):
         return {'commitId': row['commit_id'], 'datasetVersion': row['dataset_version'],
                 'authorTime': row['author_time'], 'label': row['label'],
-                'labelRule': row['label_rule'], 'features': features}
+                'labelRule': row['label_rule'],
+                'labelOrigin': (meta or {}).get('label_origin'),
+                'labelRuleVersion': (meta or {}).get('label_rule_version'),
+                'binarizationRule': (meta or {}).get('label_binarization_rule'),
+                'labelStatus': cls._label_status(row['label'], row['author_time'], meta),
+                'evidence': evidence or [], 'features': features}
+
+    @staticmethod
+    def _evidence(db, version, commit_id):
+        rows = db.execute('SELECT fix_commit_id, path, fix_time, rule_version FROM commit_label_evidence '
+                          'WHERE dataset_version=? AND commit_id=? ORDER BY fix_time, fix_commit_id, path',
+                          (version, commit_id)).fetchall()
+        return [{'fixCommit': row['fix_commit_id'], 'path': row['path'],
+                 'fixTime': row['fix_time'], 'ruleVersion': row['rule_version']} for row in rows]
 
     @staticmethod
     def _summary_row(row, module):
@@ -253,7 +316,8 @@ class CatalogStorage:
                 modules = self._modules(db, version, [row['commit_id'] for row in rows])
                 return [self._summary_row(row, modules.get(row['commit_id'])) for row in rows]
             features = self._features(db, version, [row['commit_id'] for row in rows])
-        return [self._commit_row(row, features[row['commit_id']]) for row in rows]
+            meta = self._label_meta(db, version)
+        return [self._commit_row(row, features[row['commit_id']], meta) for row in rows]
 
     def count_commits(self, version):
         with self.connection() as db:
@@ -269,7 +333,9 @@ class CatalogStorage:
             if row is None:
                 return None
             features = self._features(db, version, [commit_id])
-        return self._commit_row(row, features[commit_id])
+            meta = self._label_meta(db, version)
+            evidence = self._evidence(db, version, commit_id)
+        return self._commit_row(row, features[commit_id], meta, evidence)
 
     def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False):
         """按已经持久化的文件或模块引用查提交（CMP-03）；测试用查询入口。"""
@@ -286,7 +352,8 @@ class CatalogStorage:
                 modules = self._modules(db, rows[0]['dataset_version'], [row['commit_id'] for row in rows])
                 return [self._summary_row(row, modules.get(row['commit_id'])) for row in rows]
             features = self._features(db, rows[0]['dataset_version'], [row['commit_id'] for row in rows]) if rows else {}
-        return [self._commit_row(row, features[row['commit_id']]) for row in rows]
+            meta = self._label_meta(db, rows[0]['dataset_version']) if rows else None
+        return [self._commit_row(row, features[row['commit_id']], meta) for row in rows]
 
     def count_by_entity(self, entity_type, entity_value):
         with self.connection() as db:
@@ -362,18 +429,37 @@ class CatalogStorage:
             } for item in items],
         }
 
-    def feature_means(self, version, fields):
+    def feature_means(self, version, fields, commit_ids=None):
         """按数据集版本取字段均值，作为特征归因的基线（PEX-02）。
 
-        只返回真实存在的字段；缺字段不补零，由调用方降级并披露。
+        传入 `commit_ids` 时只统计这些提交（训练分区）；缺字段不补零，由调用方降级并披露。
         """
         fields = tuple(fields)
         if not fields:
             return {}
         placeholders = ','.join('?' for _ in fields)
         with self.connection() as db:
-            rows = db.execute(
-                f'SELECT field, AVG(CAST(value_json AS REAL)) AS mean FROM feature_record '
-                f'WHERE dataset_version=? AND field IN ({placeholders}) GROUP BY field',
-                (version, *fields)).fetchall()
-        return {row['field']: row['mean'] for row in rows if row['mean'] is not None}
+            if commit_ids is None:
+                rows = db.execute(
+                    f'SELECT field, AVG(CAST(value_json AS REAL)) AS mean FROM feature_record '
+                    f'WHERE dataset_version=? AND field IN ({placeholders}) GROUP BY field',
+                    (version, *fields)).fetchall()
+                return {row['field']: row['mean'] for row in rows if row['mean'] is not None}
+            ids = tuple(dict.fromkeys(commit_ids))
+            if not ids:
+                return {}
+            totals = {field: 0.0 for field in fields}
+            counts = {field: 0 for field in fields}
+            for start in range(0, len(ids), 500):
+                chunk = ids[start:start + 500]
+                id_placeholders = ','.join('?' for _ in chunk)
+                rows = db.execute(
+                    f'SELECT field, SUM(CAST(value_json AS REAL)) AS total, COUNT(*) AS n '
+                    f'FROM feature_record WHERE dataset_version=? AND field IN ({placeholders}) '
+                    f'AND commit_id IN ({id_placeholders}) GROUP BY field',
+                    (version, *fields, *chunk)).fetchall()
+                for row in rows:
+                    if row['field'] in totals and row['total'] is not None:
+                        totals[row['field']] += float(row['total'])
+                        counts[row['field']] += int(row['n'])
+            return {field: totals[field] / counts[field] for field in fields if counts[field]}

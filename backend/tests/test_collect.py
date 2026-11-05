@@ -13,7 +13,8 @@ import pytest
 
 from jit_baseline import datasets
 from jit_baseline import errors
-from jit_baseline.collect import collect, collect_repository
+from jit_baseline.collect import cohort, collect, collect_repository
+from jit_baseline.data import parse_source
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="系统缺少 git 命令")
 
@@ -139,7 +140,7 @@ def test_collect_registers_manifest_with_evidence(tmp_path):
     manifest_path = result["dataset"]["path"]
     manifest = json.loads(open(manifest_path, encoding="utf-8").read())
     datasets.validate_manifest(manifest)
-    assert manifest["schemaName"] == "kamei14-git-v1"
+    assert manifest["schemaName"] == "kamei14-git-v2"
     assert manifest["dataset"] == "demo"
     assert manifest["collection"]["kind"] == "git-repository"
     assert manifest["collection"]["window"]["since"] == "2024-01-01"
@@ -369,3 +370,157 @@ def test_collect_repository_writes_text_sidecar_and_registers_it(tmp_path):
     manifest = json.loads(manifests[0].read_text(encoding="utf-8"))
     assert manifest["text"]["sha256"] == result["text"]["sha256"]
     assert manifest["text"]["path"].endswith(".text.jsonl")
+
+
+def test_parallel_branches_use_their_own_parent_history(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "base", {"a.py": LINES}, "2024-01-01T00:00:00+00:00")
+    _git(repo, "checkout", "-q", "-b", "feature")
+    feature = _commit(repo, "feature shrink", {"a.py": "line 0\n"}, "2024-01-03T00:00:00+00:00")
+    _git(repo, "checkout", "-q", "main")
+    main = _commit(repo, "main grow", {"a.py": LINES + "extra\n"}, "2024-01-02T00:00:00+00:00")
+
+    feature_metrics = {record["id"]: record["metrics"]
+                       for record in collect(repo, branch="feature",
+                                             since="2024-01-01", until="2024-01-05")["records"]}
+    main_metrics = {record["id"]: record["metrics"]
+                    for record in collect(repo, branch="main",
+                                          since="2024-01-01", until="2024-01-05")["records"]}
+
+    assert feature_metrics[feature]["lt"] == 100
+    assert main_metrics[main]["lt"] == 100
+
+
+def test_merge_uses_first_parent_history_and_discloses_limit(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "base", {"a.py": LINES}, "2024-01-01T00:00:00+00:00")
+    _git(repo, "checkout", "-q", "-b", "feature")
+    _commit(repo, "feature add", {"b.py": "b\n"}, "2024-01-02T00:00:00+00:00")
+    _git(repo, "checkout", "-q", "main")
+    _commit(repo, "main grow", {"a.py": LINES + "extra\n"}, "2024-01-03T00:00:00+00:00")
+    _merge(repo, "feature", "2024-01-04T00:00:00+00:00")
+    after = _commit(repo, "post merge", {"a.py": LINES + "extra2\n"}, "2024-01-05T00:00:00+00:00")
+
+    collected = collect(repo, branch="main", since="2024-01-01", until="2024-01-06")
+    metrics = {record["id"]: record["metrics"] for record in collected["records"]}
+
+    assert metrics[after]["lt"] == 101
+    assert any("合并提交" in item for item in collected["collection"]["limitations"])
+
+
+def test_negative_file_age_is_clamped_and_counted(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "add module", {"a.py": LINES}, "2024-01-02T00:00:00+00:00")
+    rewritten = _commit(repo, "rewritten date", {"a.py": "line 0 fixed\n" + LINES.split("\n", 1)[1]},
+                        "2024-01-01T00:00:00+00:00")
+
+    collected = collect(repo, since="2024-01-01", until="2024-01-05")
+    by_id = {record["id"]: record for record in collected["records"]}
+
+    assert by_id[rewritten]["metrics"]["age"] == 0.0
+    assert collected["collection"]["counts"]["negativeFileAgeFiles"] == 1
+    records, _ = parse_source(collected["csv"], "kamei14-git-v2",
+                              cohort("2024-01-01", "2024-01-05"))
+    assert {record["id"] for record in records} == set(by_id)
+
+
+def test_repository_cache_reuses_clone_and_fetches_new_commits(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    first = _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(tmp_path / "cache"))
+    monkeypatch.setenv(module.CACHE_TTL_ENV, "0")
+
+    with module._cache_lease(repo, "main") as first_lease:
+        assert first_lease["hit"] is False
+        with module._cache_lease(repo, "main") as second_lease:
+            assert second_lease["hit"] is True
+            assert second_lease["path"] == first_lease["path"]
+        assert module._run(first_lease["path"], ["rev-parse", "main"], check=False).stdout.strip() == first
+
+    second = _commit(repo, "two", {"b.py": "b\n"}, "2024-01-02T00:00:00+00:00")
+    with module._cache_lease(repo, "main") as refreshed:
+        assert module._run(refreshed["path"], ["rev-parse", "main"], check=False).stdout.strip() == second
+
+
+def test_repository_cache_rebuilds_corrupted_clone(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(tmp_path / "cache"))
+
+    with module._cache_lease(repo, "main") as first:
+        (first["path"] / "HEAD").unlink()
+    with module._cache_lease(repo, "main") as rebuilt:
+        assert rebuilt["hit"] is False
+        assert module._run(rebuilt["path"], ["rev-parse", "main"], check=False).returncode == 0
+
+
+def test_repository_cache_eviction_skips_leased_clone(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    first_repo = _make_repo(tmp_path / "first")
+    _commit(first_repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    second_repo = _make_repo(tmp_path / "second")
+    _commit(second_repo, "one", {"b.py": "b\n"}, "2024-01-01T00:00:00+00:00")
+    cache = tmp_path / "cache"
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(cache))
+    monkeypatch.setenv(module.CACHE_LIMIT_ENV, "1")
+
+    with module._cache_lease(first_repo, "main") as first:
+        with module._cache_lease(second_repo, "main") as second:
+            pass
+        for lease in (first, second):
+            (lease["path"] / "blob.bin").write_bytes(b"x" * 700_000)
+        module._cache_evict(cache)
+        assert first["path"].exists()
+        assert not second["path"].exists()
+
+
+def test_local_repository_is_not_written_to_cache(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    cache = tmp_path / "cache"
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(cache))
+
+    collect_repository(repo, since="2024-01-01", until="2024-01-05")
+
+    assert not cache.exists() or not list(cache.glob("*.git"))
+
+
+def test_repository_cache_rejects_missing_branch_without_other_source(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(tmp_path / "cache"))
+
+    with pytest.raises(errors.BaselineError) as raised:
+        with module._cache_lease(repo, "missing"):
+            pass
+
+    assert raised.value.code == "REPOSITORY_UNAVAILABLE"
+
+
+def test_recent_unobserved_commit_is_immature(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "add module", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+
+    record = collect(repo, since="2024-01-01", until="2024-01-02")["records"][0]
+
+    assert record["label"] == 0
+    assert record["labelStatus"] == "immature"
+
+
+def test_collect_repository_does_not_overwrite_existing_output(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    output = tmp_path / "repo.csv"
+    collect_repository(repo, since="2024-01-01", until="2024-01-05", output=output)
+    original = output.read_bytes()
+
+    _commit(repo, "two", {"b.py": "b\n"}, "2024-01-02T00:00:00+00:00")
+    with pytest.raises(errors.BaselineError) as raised:
+        collect_repository(repo, since="2024-01-01", until="2024-01-05", output=output)
+
+    assert raised.value.code == "DATASET_EXISTS"
+    assert output.read_bytes() == original

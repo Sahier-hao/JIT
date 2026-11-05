@@ -14,6 +14,9 @@ export interface AdminDatasetVersion {
   source: Row
   labelRule: string | null
   limitations: string[]
+  usage: 'branch' | 'pr'
+  sourceSyncId: string | null
+  references: string[]
 }
 
 export interface AdminModel {
@@ -56,6 +59,8 @@ export interface TrainingTask {
   modelId: string | null
   featureSchemaVersion: string | null
   metrics: Row | null
+  classPolicy: Row | null
+  classPolicySummary: Row | null
   createdAt: string
   updatedAt: string
   startedAt: string | null
@@ -258,6 +263,9 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     source: record(value.source),
     labelRule: textOrNull(value.labelRule),
     limitations: textList(value.limitations),
+    usage: value.usage === 'pr' ? 'pr' : 'branch',
+    sourceSyncId: textOrNull(value.sourceSyncId),
+    references: Array.isArray(value.references) ? textList(value.references) : [],
   }
 }
 
@@ -268,6 +276,23 @@ export async function fetchAdminDatasets(signal?: AbortSignal): Promise<AdminDat
     const dataset = text(value.dataset)
     return recordList(value.versions).map(version => datasetVersion(version, dataset))
   })
+}
+
+export interface PrunableDatasetVersion {
+  dataset: string
+  version: string
+  createdAt: string
+}
+
+export async function fetchPrunableDatasets(keep: number, signal?: AbortSignal): Promise<PrunableDatasetVersion[]> {
+  const body = record(await apiRequest({ path: `/api/admin/datasets/prunable?keep=${encodeURIComponent(String(keep))}`, method: 'GET', signal }))
+  return recordList(body.versions).map(item => ({
+    dataset: text(item.dataset), version: text(item.version), createdAt: text(item.createdAt),
+  }))
+}
+
+export async function pruneDatasets(versions: string[], keep: number) {
+  return record(await apiRequest({ path: '/api/admin/datasets/prune', method: 'POST', body: { versions, keep } }))
 }
 
 export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: AdminModel[]; methods: Row[]; candidates: Row[]; readiness: ModelReadiness }> {
@@ -347,6 +372,8 @@ function trainingTask(raw: unknown): TrainingTask {
     modelId: textOrNull(value.modelId),
     featureSchemaVersion: textOrNull(value.featureSchemaVersion),
     metrics: value.metrics === null ? null : record(value.metrics),
+    classPolicy: value.classPolicy == null ? null : record(value.classPolicy),
+    classPolicySummary: value.classPolicySummary == null ? null : record(value.classPolicySummary),
     createdAt: text(value.createdAt),
     updatedAt: text(value.updatedAt),
     startedAt: textOrNull(value.startedAt),
@@ -544,11 +571,12 @@ export async function fetchTrainingTask(taskId: string, signal?: AbortSignal): P
   return trainingTask(await apiRequest({ path: `/api/v1/training-tasks/${encodeURIComponent(taskId)}`, method: 'GET', signal }))
 }
 
-export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string): Promise<TrainingTask> {
+export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string,
+                                          classPolicy?: { kind: 'weights' | 'sample'; seed?: number }): Promise<TrainingTask> {
   return trainingTask(await apiRequest({
     path: '/api/v1/training-tasks',
     method: 'POST',
-    body: { datasetVersion, method, metricSet },
+    body: { datasetVersion, method, metricSet, ...(classPolicy ? { classPolicy } : {}) },
   }))
 }
 

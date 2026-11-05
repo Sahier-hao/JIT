@@ -152,11 +152,13 @@ def test_incomplete_features_and_wrong_run_never_generate_substitute_explanation
     assert c['client'].post(c['path'], params=c['params']).json()['reasonCode'] == reason
 
 
-def test_partial_model_dataset_baseline_is_declared_and_disabled_model_history_still_works(context):
+def test_partial_model_dataset_baseline_is_declared_and_disabled_model_history_still_works(context, monkeypatch):
     c = context
+    from jit_baseline import attribution
+    monkeypatch.setattr(attribution, 'training_partition_ids', lambda directory: None)
     version = c['model']['artifactDatasetVersion']
     with c['storage'].connection(write=True) as db:
-        db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?)', (version, 'fixture', '{}', 'fixture', 'fixture', 1, utc_now()))
+        db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,source_sha256,row_count,created_at) VALUES (?,?,?,?,?,?,?)', (version, 'fixture', '{}', 'fixture', 'fixture', 1, utc_now()))
         db.execute('INSERT INTO commit_record VALUES (?,?,?,?,?)', (version, 'baseline-fixture', utc_now(), 0, 'fixture'))
         db.execute('INSERT INTO feature_record VALUES (?,?,?,?)', (version, 'baseline-fixture', 'ns', '2'))
         db.execute('UPDATE model_policy SET enabled=0 WHERE model_id=?', (c['model']['modelId'],))
@@ -208,4 +210,4 @@ def test_real_registered_fourteen_field_model_uses_its_own_dataset_baseline(cont
     body = c['client'].post(c['path'], params=c['params']).json()
     assert body['explanationStatus'] == 'supported', body
     assert body['featureSchemaVersion'] == schema.name and body['modelId'] == model['modelId']
-    assert body['baselineSource'] == 'model-dataset-mean' and body['missingBaselineFeatures'] == []
+    assert body['baselineSource'] == 'training-partition-mean' and body['missingBaselineFeatures'] == []
