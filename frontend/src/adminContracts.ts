@@ -291,8 +291,8 @@ export async function fetchPrunableDatasets(keep: number, signal?: AbortSignal):
   }))
 }
 
-export async function pruneDatasets(versions: string[]) {
-  return record(await apiRequest({ path: '/api/admin/datasets/prune', method: 'POST', body: { versions } }))
+export async function pruneDatasets(versions: string[], keep: number) {
+  return record(await apiRequest({ path: '/api/admin/datasets/prune', method: 'POST', body: { versions, keep } }))
 }
 
 export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: AdminModel[]; methods: Row[]; candidates: Row[]; readiness: ModelReadiness }> {

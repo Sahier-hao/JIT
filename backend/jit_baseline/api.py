@@ -468,12 +468,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def dataset_prune(request: Request):
         payload = await read_object(request)
         versions = payload.get('versions') if isinstance(payload, dict) else None
+        keep = payload.get('keep') if isinstance(payload, dict) else None
         if (not isinstance(versions, list) or not versions
-                or any(not isinstance(version, str) or not version.strip() for version in versions)):
+                or any(not isinstance(version, str) or not version.strip() for version in versions)
+                or keep is not None and (type(keep) is not int or keep < 0)):
             raise RequestError('INPUT_INVALID')
         registered = dataset_module.load_all(registry_root)
+        retain = keep if keep is not None else int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))
         eligible = {row['version']: row for row in store.prunable_datasets(
-            storage, registered, int(os.environ.get('JIT_PR_DATASET_KEEP', '10')))}
+            storage, registered, retain)}
         deleted, skipped = [], []
         for version in dict.fromkeys(versions):
             row = eligible.get(version)

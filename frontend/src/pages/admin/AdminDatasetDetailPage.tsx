@@ -86,7 +86,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     if (!prunable?.length) return
     setCleanupBusy(true); setCleanupError('')
     try {
-      const result = await pruneDatasets(prunable.map(item => item.version))
+      const result = await pruneDatasets(prunable.map(item => item.version), Number(keep))
       const deleted = Array.isArray(result.deleted) ? result.deleted.length : 0
       const skipped = Array.isArray(result.skipped) ? result.skipped.length : 0
       setCleanupResult(`已删除 ${deleted} 个版本，跳过 ${skipped} 个`)
