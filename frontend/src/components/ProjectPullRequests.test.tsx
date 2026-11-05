@@ -96,6 +96,15 @@ it('submits a single unanalyzed PR with the project model', async () => {
   const call = fetch.mock.calls.find(([path]) => String(path).endsWith('/pull-requests/12/analyze'))
   expect(JSON.parse(String(call?.[1]?.body))).toEqual({ modelId: 'model-current' })
 })
+it('marks a PR that reused saved features', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    if (String(path).includes('pull-request-batches')) return response(null)
+    if (String(path).includes('/repository-models')) return response({ models: modelChoices })
+    return response(prPage({ pullRequests: [{ ...prPage().pullRequests[0], featureSource: { kind: 'repository-features' } }] }))
+  })
+  render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
+  expect(await screen.findByText(/复用已保存特征/)).toBeVisible()
+})
 it('cancels a running batch only after confirmation', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path) => {
     if (String(path).endsWith('/cancel')) return response(prBatch({ status: 'cancelled', cancelledAt: '2026-10-29T00:00:00Z', cancelRequested: true }))

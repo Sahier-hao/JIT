@@ -149,7 +149,7 @@ def delete_dataset_version(storage, manifest):
             path.unlink(missing_ok=True)
         except OSError as exc:
             errors.append({'path': path.name, 'message': str(exc)})
-    return {'version': version, 'deleted': True, 'fileErrors': errors}
+    return {'version': version, 'deleted': not errors, 'fileErrors': errors}
 
 
 def dataset_list(registered):

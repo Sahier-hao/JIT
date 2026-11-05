@@ -312,6 +312,32 @@ def test_prunable_skips_referenced_and_branch_datasets(tmp_path):
     assert [row['version'] for row in store_module.prunable_datasets(storage, registered, keep=0)] == ['pr-free']
 
 
+def test_dataset_cleanup_reports_file_failure_without_claiming_success(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    csv = tmp_path / 'locked.csv'
+    csv.write_text('demo', encoding='utf-8')
+    manifest = {
+        'version': 'demo-pr-v1', 'dataset': 'demo',
+        'file': {'sha256': 'x', 'path': str(csv)}, 'usage': 'pr',
+        'collection': {'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                                  'binarizationRule': 'observed fix => 1', 'observedThrough': 1,
+                                  'maturityDays': 90}},
+    }
+    storage.import_dataset(manifest, [
+        {'id': 'a' * 40, 'time': '2024-01-01T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}}])
+    csv.chmod(0o400)
+
+    result = store_module.delete_dataset_version(storage, manifest)
+
+    assert result['deleted'] is False
+    assert result['fileErrors'] and result['fileErrors'][0]['path'] == 'locked.csv'
+    assert csv.exists()
+    csv.chmod(0o666)
+
+
 def test_label_evidence_and_status_are_persisted(tmp_path):
     from jit_baseline.catalog_storage import CatalogStorage
     store = CatalogStorage(tmp_path / 'catalog.sqlite3')
