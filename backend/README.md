@@ -537,6 +537,10 @@ PR 来源数据集默认保留最近 `JIT_PR_DATASET_KEEP`（默认 10）个版�
 | `GET /api/v1/project-events` | 跨项目公开事件分页 |
 | `GET /api/v1/repositories/{id}/events` | 单项目公开事件分页 |
 | `GET /api/v1/repositories/{id}/overview` | 公开 GitHub 仓库概览与缓存状态 |
+
+概览默认缓存 6 小时（`JIT_OVERVIEW_CACHE_SECONDS` 可调）；有效期内直接读取 `repository_overview`，
+不访问 GitHub。过期后重新读取，失败时返回上次缓存并标记 stale。浏览器另保留最近一次成功概览，
+进入页面先显示本地快照，再按需刷新。
 | `GET /api/v1/repositories/{id}/pull-requests` | 读取持久 PR 清单缓存（不访问远端） |
 | `POST /api/v1/repositories/{id}/pull-requests/refresh` | 显式刷新 PR 清单 |
 | `GET/PATCH /api/v1/repositories/{id}/pr-tracking` | 读取/修改项目自动跟踪 |

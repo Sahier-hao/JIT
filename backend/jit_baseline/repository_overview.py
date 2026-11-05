@@ -4,6 +4,7 @@ This is repository activity, not model output and not a defect rate. It never
 reads labels, runs a model or changes the project's current analysis.
 """
 import json
+import os
 from datetime import datetime, timedelta, timezone
 
 from .catalog_storage import utc_now
@@ -11,7 +12,8 @@ from .errors import BaselineError
 from .pr_review import github_request, github_source
 
 FORMAT = 'repository-overview-v4'
-CACHE_SECONDS = 600
+DEFAULT_CACHE_SECONDS = 21600
+CACHE_SECONDS = DEFAULT_CACHE_SECONDS
 WEEKS = 12
 ACTIVITY_WEEKS = 52
 RECENT = 10
@@ -55,6 +57,12 @@ class RepositoryOverview:
         self.request = request or github_request
         self.clock = clock or (lambda: datetime.now(timezone.utc))
 
+    def _cache_seconds(self):
+        try:
+            return max(0, int(os.environ.get('JIT_OVERVIEW_CACHE_SECONDS', DEFAULT_CACHE_SECONDS)))
+        except (TypeError, ValueError):
+            return DEFAULT_CACHE_SECONDS
+
     def _cached(self, db, repository_id):
         row = db.execute('SELECT * FROM repository_overview WHERE repository_id=?', (repository_id,)).fetchone()
         if row is None:
@@ -81,7 +89,7 @@ class RepositoryOverview:
         if cached and not refresh:
             payload, fetched_at = cached
             fetched = datetime.fromisoformat(fetched_at.replace('Z', '+00:00'))
-            if (now - fetched).total_seconds() < CACHE_SECONDS:
+            if (now - fetched).total_seconds() < self._cache_seconds():
                 return payload
         try:
             payload = self._fetch(repository_id, repository, owner, name, now)
