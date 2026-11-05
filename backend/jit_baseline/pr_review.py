@@ -118,6 +118,21 @@ class PullRequestReview:
             raise BaselineError('INPUT_INVALID', '项目来源不是仓库地址')
         return self._list(owner.lower(), name.lower(), state, page, repository)
 
+    def count_open(self, repository_id):
+        """用搜索接口读取开放 PR 真实总数，不读取快照或改写列表缓存。"""
+        repository = self.sync.sync.repository_get(repository_id)
+        if repository is None:
+            raise BaselineError('REPOSITORY_UNKNOWN', '项目不存在')
+        owner, name, number = github_source(repository['url'])
+        if number:
+            raise BaselineError('INPUT_INVALID', '项目来源不是仓库地址')
+        query = quote(f'repo:{owner.lower()}/{name.lower()} type:pr state:open')
+        result = self.request(f'/search/issues?q={query}&per_page=1')
+        total = result.get('total_count') if isinstance(result, dict) else None
+        if type(total) is not int or total < 0:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '无法读取开放 PR 总数')
+        return {'count': total}
+
     def intake(self, payload):
         if not isinstance(payload, dict) or set(payload) - {'url', 'state', 'page'}:
             raise BaselineError('INPUT_INVALID', '请求无效')

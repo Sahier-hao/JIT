@@ -122,6 +122,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
         return pr_updates.list_prs(repository_id, state=state, page=page)
 
+    @app.get('/api/v1/repositories/{repository_id}/pull-requests/count')
+    def count_repository_pull_requests(repository_id: str):
+        return pr_updates.open_count(repository_id)
+
     @app.post('/api/v1/repositories/{repository_id}/pull-requests/refresh')
     def refresh_repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
         return pr_updates.refresh_list(repository_id, state=state, page=page)
@@ -130,11 +134,13 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def analyze_all_repository_pull_requests(repository_id: str, request: Request):
         body = await request.body()
         payload = await read_object(request) if body else {}
-        if set(payload) - {'modelId'} or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip()):
+        if (set(payload) - {'modelId', 'scope'}
+                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())):
             raise RequestError('INPUT_INVALID')
         result = await run_in_threadpool(pr_updates.analyze_all_prs, repository_id,
                                          payload.get('modelId'),
-                                         getattr(request.state, 'request_id', None))
+                                         getattr(request.state, 'request_id', None),
+                                         payload.get('scope'))
         return JSONResponse(result, status_code=202)
 
     @app.get('/api/v1/repositories/{repository_id}/pull-request-batches/latest')
@@ -148,19 +154,32 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/retry')
     async def retry_pull_request_batch(repository_id: str, batch_id: str, request: Request):
         body = await request.body()
-        if body:
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'kind'} or 'kind' in payload and payload['kind'] not in ('failed', 'interrupted'):
             raise RequestError('INPUT_INVALID')
         result = await run_in_threadpool(pr_updates.retry_batch, repository_id, batch_id,
-                                         getattr(request.state, 'request_id', None))
+                                         getattr(request.state, 'request_id', None),
+                                         payload.get('kind', 'failed'))
+        return JSONResponse(result, status_code=202)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/cancel')
+    async def cancel_pull_request_batch(repository_id: str, batch_id: str, request: Request):
+        body = await request.body()
+        if body:
+            raise RequestError('INPUT_INVALID')
+        result = await run_in_threadpool(pr_updates.cancel_batch, repository_id, batch_id)
         return JSONResponse(result, status_code=202)
 
     @app.post('/api/v1/repositories/{repository_id}/pull-requests/{number}/analyze')
     async def analyze_repository_pull_request(repository_id: str, number: int, request: Request):
         body = await request.body()
         payload = await read_object(request) if body else {}
-        if set(payload) - {'modelId'} or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip()):
+        if (set(payload) - {'modelId', 'retry'}
+                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())
+                or 'retry' in payload and type(payload['retry']) is not bool):
             raise RequestError('INPUT_INVALID')
-        return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number, payload.get('modelId'))
+        return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number,
+                                       payload.get('modelId'), bool(payload.get('retry', False)))
 
     @app.get('/api/v1/repositories/{repository_id}/pr-tracking')
     def pr_tracking(repository_id: str):

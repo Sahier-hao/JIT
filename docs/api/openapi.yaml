@@ -65,6 +65,30 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-requests/count:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    get:
+      operationId: countRepositoryPullRequests
+      summary: 读取开放 PR 的真实总数
+      description: 使用 GitHub 搜索接口读取 total_count，只返回数量；不读取快照、不改写列表缓存，非 GitHub 来源返回 null。
+      security: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 开放 PR 数量
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PROpenCount'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '502':
+          $ref: '#/components/responses/ModelUnavailable'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/pull-requests/refresh:
     parameters:
     - $ref: '#/components/parameters/ProjectRepositoryId'
@@ -90,8 +114,8 @@ paths:
     - $ref: '#/components/parameters/ProjectRepositoryId'
     post:
       operationId: analyzeRepositoryPullRequests
-      summary: 创建或复用一次可追踪的「分析全部 PR」批次
-      description: 批次开始时解析并固定真实兼容模型，从远端分页获取完整开放 PR 范围，再逐条刷新快照：同快照同模型在途任务复用任务、已成功任务复用结果、快照变化创建新分析、此前失败或取消仅在用户本次主动发起时重试。返回批次标识，进度通过批次接口读取。已有进行中的同模型批次直接返回原批次；不同模型返回 409。
+      summary: 创建或复用一次可追踪的批量分析
+      description: 批次开始时解析并固定真实兼容模型与范围（全部、前 N 个或当前页），按范围获取开放 PR 条目，再逐条刷新快照：同快照同模型在途任务复用任务、已成功任务复用结果、快照变化创建新分析、此前失败或取消仅在用户本次主动发起时重试。返回批次标识，进度通过批次接口读取。已有进行中的同模型批次直接返回原批次；不同模型返回 409；范围参数非法时不创建任何条目。
       security: []
       tags: [目标共享产品]
       requestBody:
@@ -177,13 +201,48 @@ paths:
         type: string
     post:
       operationId: retryRepositoryPullRequestBatch
-      summary: 只重试上一批次的失败项
-      description: 以原批次固定的模型创建新批次，只复制有效状态为 failed 的条目；模型不可用时失败，不替换模型。批次仍在处理或没有失败项时返回冲突。
+      summary: 按状态重试上一批次的条目
+      description: 以原批次固定的模型创建新批次。kind=failed 只复制失败项（含单个 PR 分析被取消的条目，不含批次取消产生的条目），kind=interrupted 只复制中断项；默认 failed。模型不可用时失败，不替换模型。批次仍在处理或没有对应条目时返回冲突。
+      security: []
+      tags: [目标共享产品]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PRBatchRetryRequest'
+      responses:
+        '202':
+          description: 新的重试批次
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PRBatchAnalyze'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ProjectConflict'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/cancel:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: batchId
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      operationId: cancelRepositoryPullRequestBatch
+      summary: 取消进行中的批量分析
+      description: 停止发现和提交后续条目，尚未提交的条目标记为已取消；已入队的单 PR 任务继续执行并保留各自状态。重复取消返回当前批次；已完成、已取消或已中断批次返回 409，不改变既有结果。取消后批次不会自动恢复。
       security: []
       tags: [目标共享产品]
       responses:
         '202':
-          description: 新的重试批次
+          description: 取消请求已接受或批次已取消
           content:
             application/json:
               schema:
@@ -208,7 +267,7 @@ paths:
     post:
       operationId: analyzeRepositoryPullRequest
       summary: 为单个项目 PR 读取固定快照并创建模型分析
-      description: 返回该快照的模型任务与已有分数；旧任务与新任务的来源边界按 PRAnalyses 说明。
+      description: 返回该快照的模型任务与已有分数；同一快照同一模型已有完成结果时复用，不重复执行；显式选择不同兼容模型可重新分析并保留旧结果。旧任务与新任务的来源边界按 PRAnalyses 说明。
       security: []
       tags: [目标共享产品]
       requestBody:
@@ -216,7 +275,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PRBatchAnalyzeRequest'
+              $ref: '#/components/schemas/PRSingleAnalyzeRequest'
       responses:
         '200':
           description: 当前响应
@@ -3807,10 +3866,62 @@ components:
         modelId:
           type: string
           minLength: 1
+        scope:
+          $ref: '#/components/schemas/PRBatchScope'
+    PRSingleAnalyzeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        modelId:
+          type: string
+          minLength: 1
+          description: 选择与当前结果不同的兼容模型即重新分析；同一模型复用现有结果。
+        retry:
+          type: boolean
+          description: 仅对失败、取消或中断的任务显式重试时使用。
+    PRBatchRetryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum: [failed, interrupted]
+          default: failed
+    PRBatchScope:
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [all, limit, page, retry]
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: kind=limit 时必须提供，表示按远端顺序处理前 N 个开放 PR。
+        page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: kind=page 时必须提供，只处理该页开放 PR。
+        count:
+          type: integer
+          minimum: 1
+          description: kind=retry 时表示复制的条目数。
+    PROpenCount:
+      type: object
+      additionalProperties: false
+      required: [count]
+      properties:
+        count:
+          type: [integer, 'null']
+          minimum: 0
+          description: 开放 PR 真实总数；非 GitHub 来源为 null。
     PRBatchAnalyze:
       type: object
       additionalProperties: false
-      required: [batchId, repositoryId, modelId, status, discoveryComplete, discovered, retryOf, createdAt, updatedAt, completedAt, error, counts, submission, items]
+      required: [batchId, repositoryId, modelId, status, discoveryComplete, discovered, retryOf, scope, cancelRequested, cancelledAt, createdAt, updatedAt, completedAt, error, counts, submission, items]
       properties:
         batchId:
           type: string
@@ -3821,7 +3932,7 @@ components:
           description: 批次开始时解析并固定的真实兼容模型；执行或重试时不替换。
         status:
           type: string
-          enum: [discovering, running, completed, partial, failed, interrupted]
+          enum: [discovering, running, completed, partial, failed, interrupted, cancelled]
         discoveryComplete:
           type: boolean
           description: false 表示开放 PR 范围未完整获取，不能宣称全部完成。
@@ -3831,6 +3942,14 @@ components:
         retryOf:
           type: [string, 'null']
           description: 仅重试批次指向的原批次标识。
+        scope:
+          $ref: '#/components/schemas/PRBatchScope'
+        cancelRequested:
+          type: boolean
+          description: 已收到取消请求；未提交条目将收敛为已取消。
+        cancelledAt:
+          type: [string, 'null']
+          format: date-time
         createdAt:
           type: string
           format: date-time

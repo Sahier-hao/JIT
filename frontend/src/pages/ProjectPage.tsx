@@ -7,14 +7,14 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
-import { Button, IconButton, Select } from '../ui/controls'
+import { Button, IconButton, NumberInput, Select } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
 import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
 import type { SyncCommit } from '../repositoryContract'
 import { prBatchChanged, projectsChanged } from '../projectEvents'
 import { repositoryModels, useModelName, type ModelChoice } from '../modelClient'
-import { analyzeAllProjectPRs } from '../projectActivityClient'
+import { analyzeAllProjectPRs, projectPROpenCount, type PRBatchScope } from '../projectActivityClient'
 import { AnalysisLauncher } from '../components/AnalysisLauncher'
 import { RepositoryUpdates } from '../components/RepositoryUpdates'
 import { RepositoryOverviewView } from '../components/RepositoryOverview'
@@ -43,10 +43,18 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const [prDialog, setPrDialog] = useState(false)
   const [modelChoices, setModelChoices] = useState<ModelChoice[]>([])
   const [selectedModel, setSelectedModel] = useState('')
+  const [prScopeKind, setPrScopeKind] = useState<'all' | 'limit' | 'page'>('all')
+  const [prScopeLimit, setPrScopeLimit] = useState('50')
+  const [prOpenCount, setPrOpenCount] = useState<number | null>(null)
+  const [prPage, setPrPage] = useState(1)
   async function openPrAnalysis() {
     setPrAnalysisError('')
     try {
-      const list = await repositoryModels()
+      const [list, openCount] = await Promise.all([
+        repositoryModels(),
+        projectPROpenCount(repositoryId).catch(() => null),
+      ])
+      setPrOpenCount(openCount)
       const usable = list.filter(model => model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
       setModelChoices(usable)
       const current = usable.find(model => model.modelId === detail.repository?.viewContext?.modelId)
@@ -56,10 +64,14 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       setPrAnalysisError(failure instanceof Error ? failure.message : '读取模型失败')
     }
   }
+  const prScope: PRBatchScope = prScopeKind === 'all' ? { kind: 'all' }
+    : prScopeKind === 'limit' ? { kind: 'limit', limit: Number(prScopeLimit) }
+    : { kind: 'page', page: prPage }
+  const prScopeValid = prScopeKind !== 'limit' || (Number.isInteger(Number(prScopeLimit)) && Number(prScopeLimit) >= 1 && Number(prScopeLimit) <= 500)
   async function analyzeAllPRs() {
     setPrAnalyzing(true); setPrAnalysisError('')
     try {
-      await analyzeAllProjectPRs(repositoryId, selectedModel || undefined)
+      await analyzeAllProjectPRs(repositoryId, selectedModel || undefined, prScope)
       setPrDialog(false)
       prBatchChanged()
       navigate({ name: 'repository', repositoryId, tab: 'prs' })
@@ -270,11 +282,26 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     </div>
     </>}
     </> : null}
-    {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} navigate={navigate}/> : null}
+    {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} modelId={repository.modelId ?? undefined} onPageChange={setPrPage} navigate={navigate}/> : null}
 
-    <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={440}
-      footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
-      <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={prModelOptions}/>
+    <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={520}
+      footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel || !prScopeValid} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
+      <div className="batch-dialog">
+        <label className="batch-dialog-field"><span>模型</span>
+          <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={prModelOptions}/>
+        </label>
+        <label className="batch-dialog-field"><span>范围</span>
+          <Select ariaLabel="批量分析范围" value={prScopeKind} onChange={value => setPrScopeKind(value as 'all' | 'limit' | 'page')} options={[
+            { value: 'all', label: '全部开放 PR' },
+            { value: 'limit', label: '前 N 个' },
+            { value: 'page', label: `当前页（第 ${prPage} 页）` },
+          ]}/>
+        </label>
+        {prScopeKind === 'limit' ? <label className="batch-dialog-field"><span>数量</span>
+          <NumberInput aria-label="批量分析数量" min={1} max={500} value={prScopeLimit} onChange={event => setPrScopeLimit(event.target.value)}/>
+        </label> : null}
+        <p className="batch-dialog-summary">开放 PR <b>{prOpenCount == null ? '—' : prOpenCount}</b> 个</p>
+      </div>
     </Dialog>
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
       {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}

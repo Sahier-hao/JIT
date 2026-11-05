@@ -20,6 +20,9 @@ SCORING_CONTRACT = 'pr-commits-v1:' + DISTRIBUTION_RULE
 DEEP_LIMIT = 20
 QUEUE_LIMIT = 2
 LEASE_SECONDS = 600
+BATCH_LIMIT_MAX = 500
+BATCH_CANCELLED = 'PR_BATCH_CANCELLED'
+BATCH_CANCELLED_MESSAGE = '批次已取消，未提交的条目不再处理'
 
 
 def _dump(value):
@@ -94,12 +97,17 @@ class PullRequestUpdates:
                 (self._now(),)).rowcount
 
     def _recover_batches(self):
-        """服务重启时未完成批次如实标为中断，不冒充成功，也不自动重跑。"""
+        """服务重启时未完成批次如实标为中断；已请求取消的批次标为已取消。"""
         now = self._now()
         with self.storage.connection(write=True) as db:
-            return db.execute("UPDATE pr_batch SET status='interrupted',error_code='SYNC_INTERRUPTED',"
+            count = db.execute("UPDATE pr_batch SET status='interrupted',error_code='SYNC_INTERRUPTED',"
                 'error_message=?,updated_at=?,completed_at=? WHERE status IN (\'discovering\',\'running\')',
                 ('服务重启时批量分析未完成，请重试失败项', now, now)).rowcount
+            db.execute("UPDATE pr_batch SET cancelled_at=?,error_code=?,error_message=? "
+                       'WHERE cancelled_at IS NULL AND cancel_requested_at IS NOT NULL '
+                       "AND status IN ('discovering','running','interrupted')",
+                       (now, BATCH_CANCELLED, '服务重启时批次取消未完成，已停止未提交条目'))
+        return count
 
     def get(self, repository_id):
         _, _, _, supported = self._repository(repository_id)
@@ -158,26 +166,43 @@ class PullRequestUpdates:
         if state not in ('open', 'closed', 'all') or type(page) is not int or not 1 <= page <= 100:
             raise BaselineError('INPUT_INVALID', 'PR 列表参数无效')
 
-    def analyze_pr(self, repository_id, number, model_id=None):
-        """为项目 PR 读取固定快照并创建分析；列表页可直接调用。"""
-        _, owner, name, supported = self._repository(repository_id)
-        if not supported:
-            raise BaselineError('PR_SOURCE_UNAVAILABLE', '该项目不是公开 GitHub 来源')
-        prepared = self.review.refresh(owner, name, number, repository_id)
-        snapshot_id = prepared['snapshot']['snapshotId']
-        payload = {'modelId': model_id} if model_id else {}
-        return self.review.analyze(snapshot_id, payload)
+    @staticmethod
+    def _batch_scope(payload):
+        """校验批量范围；省略时保持全部开放 PR。"""
+        if payload is None:
+            return {'kind': 'all', 'limit': None, 'page': None}
+        if not isinstance(payload, dict) or set(payload) - {'kind', 'limit', 'page'}:
+            raise BaselineError('INPUT_INVALID', '批量范围参数无效')
+        kind = payload.get('kind', 'all')
+        if kind == 'all':
+            return {'kind': 'all', 'limit': None, 'page': None}
+        if kind == 'limit':
+            limit = payload.get('limit')
+            if type(limit) is not int or not 1 <= limit <= BATCH_LIMIT_MAX:
+                raise BaselineError('INPUT_INVALID', f'批量数量必须是 1 到 {BATCH_LIMIT_MAX} 之间的整数')
+            return {'kind': 'limit', 'limit': limit, 'page': None}
+        if kind == 'page':
+            page = payload.get('page')
+            if type(page) is not int or not 1 <= page <= 100:
+                raise BaselineError('INPUT_INVALID', '批量页码必须是 1 到 100 之间的整数')
+            return {'kind': 'page', 'limit': None, 'page': page}
+        raise BaselineError('INPUT_INVALID', '批量范围只能是全部、前 N 个或当前页')
 
-    def analyze_all_prs(self, repository_id, model_id=None, request_id=None):
+    def open_count(self, repository_id):
+        _, _, _, supported = self._repository(repository_id)
+        return self.review.count_open(repository_id) if supported else {'count': None}
+
+    def analyze_all_prs(self, repository_id, model_id=None, request_id=None, scope=None):
         """创建或复用一次「分析全部 PR」持久批次。
 
-        批次在开始时固定真实兼容模型，随后从远端分页获取完整开放 PR 范围，
+        批次在开始时固定真实兼容模型与范围，随后按范围获取开放 PR 条目，
         再逐条刷新快照并复用/入队分析。返回批次进度，而不是候选数量回执。
         """
         _, _, _, supported = self._repository(repository_id)
         if not supported:
             raise BaselineError('PR_SOURCE_UNAVAILABLE', '该项目不是公开 GitHub 来源')
         fixed_model = self._fixed_model(model_id)
+        fixed_scope = self._batch_scope(scope)
         with self.lock:
             row = self._active_batch_row(repository_id)
             if row is not None:
@@ -189,16 +214,29 @@ class PullRequestUpdates:
             now = self._now()
             with self.storage.connection(write=True) as db:
                 db.execute('INSERT INTO pr_batch(id,repository_id,model_id,status,discovery_complete,'
-                           'discovered,request_id,created_at,updated_at) '
-                           'VALUES (?,?,?,?,0,0,?,?,?)',
-                           (batch_id, repository_id, fixed_model, 'discovering', request_id, now, now))
+                           'discovered,request_id,scope_kind,scope_limit,scope_page,created_at,updated_at) '
+                           'VALUES (?,?,?,?,0,0,?,?,?,?,?,?)',
+                           (batch_id, repository_id, fixed_model, 'discovering', request_id,
+                            fixed_scope['kind'], fixed_scope['limit'], fixed_scope['page'], now, now))
             try:
-                self.executor.submit(self._run_batch, batch_id, repository_id, fixed_model)
+                self.executor.submit(self._run_batch, batch_id, repository_id, fixed_model, fixed_scope)
             except RuntimeError as exc:
                 self._finish_batch(batch_id, 'interrupted', 'SYNC_SERVICE_STOPPING',
                                    'PR 批量分析服务正在停止，请稍后重试')
                 raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止') from exc
         return self.batch(repository_id, batch_id)
+
+    def analyze_pr(self, repository_id, number, model_id=None, retry=False):
+        """为项目 PR 读取固定快照并创建分析；列表页可直接调用。"""
+        _, owner, name, supported = self._repository(repository_id)
+        if not supported:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '该项目不是公开 GitHub 来源')
+        prepared = self.review.refresh(owner, name, number, repository_id)
+        snapshot_id = prepared['snapshot']['snapshotId']
+        payload = {'modelId': model_id} if model_id else {}
+        if retry:
+            payload['retry'] = True
+        return self.review.analyze(snapshot_id, payload)
 
     def _fixed_model(self, model_id=None):
         """批次开始时解析并固定模型；未选择时固定当时默认模型。"""
@@ -232,20 +270,65 @@ class PullRequestUpdates:
                        (batch_id, number, status, snapshot_id, sync_id, model_id,
                         error_code, error_message, self._now()))
 
-    def _run_batch(self, batch_id, repository_id, model_id):
-        """发现完整范围后逐条刷新快照、复用或入队；失败逐条记录，不吞掉批次状态。"""
+    def _cancel_requested(self, batch_id):
+        with self.storage.connection() as db:
+            row = db.execute('SELECT cancel_requested_at,cancelled_at FROM pr_batch WHERE id=?',
+                             (batch_id,)).fetchone()
+        return bool(row and (row['cancel_requested_at'] or row['cancelled_at']))
+
+    def _converge_cancel(self, batch_id):
+        """把未提交条目标记为取消，并结束批次；已入队任务保持原状态。"""
+        now = self._now()
+        with self.storage.connection(write=True) as db:
+            db.execute("UPDATE pr_batch_item SET status='failed',error_code=?,error_message=?,updated_at=? "
+                       "WHERE batch_id=? AND status='pending'",
+                       (BATCH_CANCELLED, BATCH_CANCELLED_MESSAGE, now, batch_id))
+            db.execute('UPDATE pr_batch SET status=?,cancelled_at=?,error_code=?,error_message=?,'
+                       'updated_at=?,completed_at=? WHERE id=?',
+                       ('interrupted', now, BATCH_CANCELLED, BATCH_CANCELLED_MESSAGE, now, now, batch_id))
+
+    def cancel_batch(self, repository_id, batch_id):
+        """请求取消批次；重复取消幂等，已结束批次返回冲突。"""
+        self._repository(repository_id)
+        with self.lock:
+            with self.storage.connection() as db:
+                row = db.execute('SELECT * FROM pr_batch WHERE id=? AND repository_id=?',
+                                 (batch_id, repository_id)).fetchone()
+            if row is None:
+                raise BaselineError('NOT_FOUND', 'PR 批量分析批次不存在')
+            if row['cancelled_at']:
+                return self.batch(repository_id, batch_id)
+            if row['status'] not in ('discovering', 'running'):
+                raise BaselineError('PR_BATCH_NOT_CANCELLABLE', '该批次已经结束，无法取消')
+            if row['cancel_requested_at'] is None:
+                with self.storage.connection(write=True) as db:
+                    db.execute('UPDATE pr_batch SET cancel_requested_at=?,updated_at=? WHERE id=?',
+                               (self._now(), self._now(), batch_id))
+        return self.batch(repository_id, batch_id)
+
+    def _run_batch(self, batch_id, repository_id, model_id, scope):
+        """按范围发现条目后逐条刷新快照、复用或入队；失败逐条记录，不吞掉批次状态。"""
         discovered, discovery_error = [], None
         try:
             _, owner, name, _ = self._repository(repository_id)
-            for page in range(1, 101):
-                if self.stop.is_set():
-                    raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
-                result = self._refresh_list(repository_id, 'open', page)
+            if scope['kind'] == 'page':
+                result = self._refresh_list(repository_id, 'open', scope['page'])
                 discovered.extend((item['number'], item) for item in result['pullRequests'])
-                if not result['hasMore']:
-                    break
-                if page == 100:
-                    raise BaselineError('PR_SOURCE_TOO_LARGE', '开放 PR 超过可读取分页上限，范围可能不完整')
+            else:
+                for page in range(1, 101):
+                    if self.stop.is_set():
+                        raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
+                    if self._cancel_requested(batch_id):
+                        self._converge_cancel(batch_id)
+                        return
+                    result = self._refresh_list(repository_id, 'open', page)
+                    discovered.extend((item['number'], item) for item in result['pullRequests'])
+                    if scope['kind'] == 'limit' and len({number for number, _ in discovered}) >= scope['limit']:
+                        break
+                    if not result['hasMore']:
+                        break
+                    if page == 100:
+                        raise BaselineError('PR_SOURCE_TOO_LARGE', '开放 PR 超过可读取分页上限，范围可能不完整')
         except BaselineError as exc:
             discovery_error = exc
         except Exception:
@@ -257,6 +340,8 @@ class PullRequestUpdates:
             if number not in seen:
                 seen.add(number)
                 numbers.append(number)
+        if scope['kind'] == 'limit':
+            numbers = numbers[:scope['limit']]
         for number in numbers:
             self._item(batch_id, number, 'pending', model_id=model_id)
         with self.storage.connection(write=True) as db:
@@ -266,11 +351,18 @@ class PullRequestUpdates:
                         discovery_error.code if discovery_error else None,
                         str(discovery_error) if discovery_error else None, batch_id))
 
+        if self._cancel_requested(batch_id):
+            self._converge_cancel(batch_id)
+            return
+
         failures = successes = 0
         try:
             for number in numbers:
                 if self.stop.is_set():
                     raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
+                if self._cancel_requested(batch_id):
+                    self._converge_cancel(batch_id)
+                    return
                 try:
                     self._submit_item(batch_id, repository_id, owner, name, number, model_id)
                     successes += 1
@@ -358,15 +450,24 @@ class PullRequestUpdates:
                              'ORDER BY created_at DESC, id DESC LIMIT 1', (repository_id,)).fetchone()
         return self.batch(repository_id, row['id']) if row else None
 
-    def retry_batch(self, repository_id, batch_id, request_id=None):
-        """只把失败或终态失败的条目复制到新批次，固定原模型，不复活原批次。"""
+    def retry_batch(self, repository_id, batch_id, request_id=None, kind='failed'):
+        """把指定状态（失败或中断）的条目复制到新批次，固定原模型，不复活原批次。"""
+        if kind not in ('failed', 'interrupted'):
+            raise BaselineError('INPUT_INVALID', '重试范围只能是失败项或中断项')
         original = self.batch(repository_id, batch_id)
         if original['status'] in ('discovering', 'running'):
             raise BaselineError('CONFLICT_ACTIVE_SYNC', '批次仍在处理，请等待完成后再重试失败项')
-        failed = [item['number'] for item in original['items']
-                  if item['effectiveStatus'] in ('failed', 'cancelled', 'interrupted')]
+        def wanted(item):
+            # 单个 PR 分析被取消仍属可重试的失败工作；批次取消产生的条目不跟着重试。
+            if kind == 'failed':
+                return (item['effectiveStatus'] == 'failed'
+                        or (item['effectiveStatus'] == 'cancelled' and item['errorCode'] != BATCH_CANCELLED))
+            return item['effectiveStatus'] == 'interrupted'
+
+        failed = [item['number'] for item in original['items'] if wanted(item)]
         if not failed:
-            raise BaselineError('TASK_NOT_RETRYABLE', '该批次没有可重试的失败、取消或中断项')
+            label = '失败' if kind == 'failed' else '中断'
+            raise BaselineError('TASK_NOT_RETRYABLE', f'该批次没有可重试的{label}项')
         fixed_model = self._fixed_model(original['modelId'])
         with self.lock:
             active = self._active_batch_row(repository_id)
@@ -377,9 +478,10 @@ class PullRequestUpdates:
             new_id, now = str(uuid.uuid4()), self._now()
             with self.storage.connection(write=True) as db:
                 db.execute('INSERT INTO pr_batch(id,repository_id,model_id,status,discovery_complete,'
-                           'discovered,retry_of,request_id,created_at,updated_at) VALUES (?,?,?,?,0,?,?,?,?,?)',
+                           'discovered,retry_of,request_id,scope_kind,scope_limit,created_at,updated_at) '
+                           'VALUES (?,?,?,?,0,?,?,?,?,?,?,?)',
                            (new_id, repository_id, fixed_model, 'discovering', len(failed),
-                            batch_id, request_id, now, now))
+                            batch_id, request_id, 'retry', len(failed), now, now))
                 for number in failed:
                     db.execute('INSERT INTO pr_batch_item(batch_id,number,status,model_id,updated_at) '
                                'VALUES (?,?,?,?,?)', (new_id, number, 'pending', fixed_model, now))
@@ -402,6 +504,9 @@ class PullRequestUpdates:
             for number in numbers:
                 if self.stop.is_set():
                     raise BaselineError('SYNC_SERVICE_STOPPING', 'PR 批量分析服务正在停止')
+                if self._cancel_requested(batch_id):
+                    self._converge_cancel(batch_id)
+                    return
                 try:
                     self._submit_item(batch_id, repository_id, owner, name, number, model_id)
                     successes += 1
@@ -431,7 +536,7 @@ class PullRequestUpdates:
             if item['status'] == 'reused':
                 effective = 'completed'
             elif item['status'] == 'failed':
-                effective = 'failed'
+                effective = 'cancelled' if item['error_code'] == BATCH_CANCELLED else 'failed'
             elif item['status'] == 'skipped':
                 effective = 'skipped'
             elif item['status'] == 'pending':
@@ -446,9 +551,20 @@ class PullRequestUpdates:
                                snapshotId=item['snapshot_id'], syncId=item['sync_id'],
                                modelId=item['model_id'], errorCode=item['error_code'],
                                errorMessage=item['error_message'], updatedAt=item['updated_at']))
+        scope_kind = row.get('scope_kind') or 'all'
+        scope = {'kind': scope_kind}
+        if scope_kind == 'limit':
+            scope['limit'] = row.get('scope_limit')
+        elif scope_kind == 'page':
+            scope['page'] = row.get('scope_page')
+        elif scope_kind == 'retry':
+            scope['count'] = row.get('scope_limit')
         return dict(batchId=row['id'], repositoryId=row['repository_id'], modelId=row['model_id'],
-                    status=row['status'], discoveryComplete=bool(row['discovery_complete']),
-                    discovered=row['discovered'], retryOf=row['retry_of'],
+                    status='cancelled' if row.get('cancelled_at') else row['status'],
+                    discoveryComplete=bool(row['discovery_complete']),
+                    discovered=row['discovered'], retryOf=row['retry_of'], scope=scope,
+                    cancelRequested=bool(row.get('cancel_requested_at')),
+                    cancelledAt=row.get('cancelled_at'),
                     createdAt=row['created_at'], updatedAt=row['updated_at'],
                     completedAt=row['completed_at'],
                     error=({'code': row['error_code'], 'message': row['error_message']}
@@ -481,8 +597,10 @@ class PullRequestUpdates:
                 snapshot_id = row['snapshot_id']
                 if snapshot_id is None:
                     # 用户手动查看后保存的快照在 pr_latest；列表也要能关联它的分析。
+                    # 比较前统一小写：仓库 URL 中的 owner 大小写与 pr_latest 保存值可能不同。
                     latest = db.execute('SELECT snapshot_id FROM pr_latest WHERE repository_id=? AND lower(owner)=? '
-                                        'AND lower(name)=? AND number=?', (repository_id, owner, name, number)).fetchone()
+                                        'AND lower(name)=? AND number=?',
+                                        (repository_id, owner.lower(), name.lower(), number)).fetchone()
                     snapshot_id = latest['snapshot_id'] if latest else None
                 if snapshot_id:
                     item['snapshotId'] = snapshot_id

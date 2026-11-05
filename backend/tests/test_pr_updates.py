@@ -69,6 +69,8 @@ class GitHub:
             raise self.failure
         url = urlparse(path)
         parts = url.path.strip('/').split('/')
+        if parts[0] == 'search':
+            return {'total_count': sum(1 for prs in self.repos.values() for pr in prs.values() if pr['state'] == 'open')}
         name = parts[2]
         if len(parts) == 3:
             return {'private': self.private}
@@ -812,3 +814,151 @@ def test_batch_reads_every_remote_page_without_local_cache(env):
     assert view['submission']['submitted'] == 31
     assert {item['number'] for item in view['items']} == set(range(1, 32))
     assert env.service.repository_syncs(repo, limit=100)['total'] == 31
+    assert view['scope'] == {'kind': 'all'}
+
+
+def test_open_count_reads_real_total_without_touching_pr_cache(env):
+    repo = env.repository()
+    for number in range(1, 4):
+        env.github.add(number=number)
+    assert env.watcher.open_count(repo) == {'count': 3}
+    assert env.github.calls[-1].startswith('/search/issues')
+    assert env.watcher.list_prs(repo)['pullRequests'] == []
+
+
+def test_batch_scope_limit_and_page_fix_numbers_at_creation(env):
+    repo = env.repository()
+    for number in range(1, 41):
+        env.github.add(number=number)
+    limited = env.watcher.analyze_all_prs(repo, 'fixed-model', scope={'kind': 'limit', 'limit': 5})
+    env.worker.run()
+    view = env.watcher.batch(repo, limited['batchId'])
+    assert view['scope'] == {'kind': 'limit', 'limit': 5}
+    assert view['discovered'] == 5
+    assert [item['number'] for item in view['items']] == [1, 2, 3, 4, 5]
+
+    paged = env.watcher.analyze_all_prs(repo, 'fixed-model', scope={'kind': 'page', 'page': 2})
+    env.worker.run()
+    page_view = env.watcher.batch(repo, paged['batchId'])
+    assert page_view['scope'] == {'kind': 'page', 'page': 2}
+    assert [item['number'] for item in page_view['items']] == list(range(31, 41))
+
+
+def test_batch_scope_rejects_invalid_values_without_creating_batch(env):
+    repo = env.repository()
+    env.github.add()
+    for scope in ({'kind': 'limit', 'limit': 0}, {'kind': 'limit', 'limit': 501},
+                  {'kind': 'page', 'page': 0}, {'kind': 'page', 'page': 101},
+                  {'kind': 'unknown'}, {'kind': 'all', 'extra': 1}):
+        with pytest.raises(BaselineError) as error:
+            env.watcher.analyze_all_prs(repo, 'fixed-model', scope=scope)
+        assert error.value.code == 'INPUT_INVALID'
+    with env.watcher.storage.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM pr_batch').fetchone()[0] == 0
+
+
+def _seed_running_batch(env, repo, batch_id, items):
+    now = env.watcher._now()
+    with env.watcher.storage.connection(write=True) as db:
+        db.execute('INSERT INTO pr_batch(id,repository_id,model_id,status,discovery_complete,'
+                   'discovered,scope_kind,created_at,updated_at) VALUES (?,?,?,?,1,?,?,?,?)',
+                   (batch_id, repo, 'fixed-model', 'running', len(items), 'all', now, now))
+        for number, status, sync_id in items:
+            db.execute('INSERT INTO pr_batch_item(batch_id,number,status,sync_id,model_id,updated_at) '
+                       'VALUES (?,?,?,?,?,?)', (batch_id, number, status, sync_id, 'fixed-model', now))
+
+
+def test_cancel_batch_marks_pending_and_keeps_submitted(env):
+    repo = env.repository()
+    batch_id = 'batch-cancel'
+    _seed_running_batch(env, repo, batch_id, [(1, 'submitted', 'running-sync'), (2, 'pending', None)])
+
+    requested = env.watcher.cancel_batch(repo, batch_id)
+    assert requested['cancelRequested'] is True and requested['status'] == 'running'
+
+    env.watcher._converge_cancel(batch_id)
+    view = env.watcher.batch(repo, batch_id)
+    assert view['status'] == 'cancelled'
+    assert view['cancelRequested'] is True and view['cancelledAt']
+    assert view['counts']['cancelled'] == 1
+    by_number = {item['number']: item for item in view['items']}
+    assert by_number[1]['status'] == 'submitted'
+    assert by_number[2]['effectiveStatus'] == 'cancelled'
+    assert env.watcher.cancel_batch(repo, batch_id)['status'] == 'cancelled'
+
+
+def test_cancel_finished_batch_is_rejected(env):
+    repo = env.repository()
+    batch_id = 'batch-done'
+    _seed_running_batch(env, repo, batch_id, [(1, 'reused', 'done-sync')])
+    with env.watcher.storage.connection(write=True) as db:
+        db.execute("UPDATE pr_batch SET status='completed' WHERE id=?", (batch_id,))
+    with pytest.raises(BaselineError) as error:
+        env.watcher.cancel_batch(repo, batch_id)
+    assert error.value.code == 'PR_BATCH_NOT_CANCELLABLE'
+
+
+def test_retry_batch_separates_failed_and_interrupted(env):
+    repo = env.repository()
+    env.github.add(number=1)
+    env.github.add(number=2)
+    batch = env.watcher.analyze_all_prs(repo, 'fixed-model')
+    env.worker.run()
+    first, second = sorted(env.jobs(repo), key=lambda job: job['createdAt'])
+    env.fail(first)
+    env.fail(second, status='interrupted')
+    view = env.watcher.batch(repo, batch['batchId'])
+    assert view['counts']['failed'] == 1 and view['counts']['interrupted'] == 1
+
+    failed_retry = env.watcher.retry_batch(repo, batch['batchId'])
+    assert [item['number'] for item in failed_retry['items']] == [1]
+    env.worker.run()
+
+    interrupted_retry = env.watcher.retry_batch(repo, batch['batchId'], kind='interrupted')
+    assert [item['number'] for item in interrupted_retry['items']] == [2]
+
+
+def test_completed_pr_can_be_reanalyzed_with_a_different_model(env):
+    repo = env.repository()
+    env.github.add()
+    snapshot = env.review.refresh('example', 'project', 1, repository_id=repo)['snapshot']
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'fixed-model'})
+    env.complete(env.jobs(repo)[0], .1)
+
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'fixed-model'})
+    assert len(env.jobs(repo)) == 1
+
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'second-model'})
+    assert len(env.jobs(repo)) == 2
+    assert {job['resolvedModelId'] for job in env.jobs(repo)} == {'fixed-model', 'second-model'}
+
+
+def test_list_links_analysis_when_repository_owner_case_differs(env):
+    repo = env.repository()
+    env.github.add()
+    env.watcher.refresh_list(repo)
+    snapshot = env.review.refresh('example', 'project', 1, repository_id=repo)['snapshot']
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'fixed-model'})
+    manual = env.jobs(repo)[0]
+    env.complete(manual, .2)
+    with env.watcher.storage.connection(write=True) as db:
+        db.execute('UPDATE repository SET url=? WHERE id=?',
+                   ('https://github.com/Example/project', repo))
+
+    item = env.watcher.list_prs(repo)['pullRequests'][0]
+    assert item['analysisStatus'] == 'completed'
+    assert item['syncId'] == manual['syncId']
+
+
+def test_analyze_pr_retry_flag_recreates_failed_job(env):
+    repo = env.repository()
+    env.github.add()
+    env.watcher.analyze_pr(repo, 1, 'fixed-model')
+    first = env.jobs(repo)[0]
+    env.fail(first)
+
+    env.watcher.analyze_pr(repo, 1, 'fixed-model')
+    assert len(env.jobs(repo)) == 1
+    env.watcher.analyze_pr(repo, 1, 'fixed-model', retry=True)
+    assert len(env.jobs(repo)) == 2
+    assert env.jobs(repo)[0]['syncId'] != first['syncId']

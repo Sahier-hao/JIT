@@ -545,19 +545,29 @@ def test_project_error_responses_validate_request_ids_and_standard_envelope(proj
 def test_pr_batch_contract_documents_fixed_model_and_real_progress():
     document_ = document()
     schema = document_['components']['schemas']['PRBatchAnalyze']
-    assert {'batchId', 'modelId', 'status', 'discoveryComplete', 'counts', 'submission', 'items'} <= set(schema['properties'])
-    assert schema['properties']['status']['enum'] == ['discovering', 'running', 'completed', 'partial', 'failed', 'interrupted']
+    assert {'batchId', 'modelId', 'status', 'discoveryComplete', 'counts', 'submission', 'items',
+            'scope', 'cancelRequested', 'cancelledAt'} <= set(schema['properties'])
+    assert schema['properties']['status']['enum'] == ['discovering', 'running', 'completed', 'partial', 'failed', 'interrupted', 'cancelled']
     assert set(schema['properties']['counts']['required']) == {
         'pending', 'queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted', 'skipped'}
     assert set(schema['properties']['submission']['required']) == {
         'pending', 'submitted', 'reused', 'failed', 'skipped'}
+    scope = document_['components']['schemas']['PRBatchScope']
+    assert scope['properties']['kind']['enum'] == ['all', 'limit', 'page', 'retry']
     paths = document_['paths']
-    assert '202' in paths['/api/v1/repositories/{repositoryId}/pull-requests/analyze']['post']['responses']
+    analyze = paths['/api/v1/repositories/{repositoryId}/pull-requests/analyze']['post']
+    assert '202' in analyze['responses']
+    assert 'scope' in document_['components']['schemas']['PRBatchAnalyzeRequest']['properties']
     for path in ('/api/v1/repositories/{repositoryId}/pull-request-batches/latest',
-                 '/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}'):
+                 '/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}',
+                 '/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/cancel',
+                 '/api/v1/repositories/{repositoryId}/pull-requests/count'):
         assert path in paths
     retry = paths['/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/retry']['post']
     assert '202' in retry['responses']
+    assert document_['components']['schemas']['PRBatchRetryRequest']['properties']['kind']['enum'] == ['failed', 'interrupted']
+    single = document_['components']['schemas']['PRSingleAnalyzeRequest']['properties']
+    assert {'modelId', 'retry'} <= set(single)
 
 
 def test_multi_project_report_contract_requires_admin_and_controlled_ids():
