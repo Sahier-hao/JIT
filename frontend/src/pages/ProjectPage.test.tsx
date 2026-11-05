@@ -380,3 +380,33 @@ it('lands on the repository overview before any analysis and starts analysis exp
   await user.click(screen.getByRole('button', { name: '发起第一次分析' }))
   expect(await screen.findByRole('dialog')).toHaveTextContent('发起分析')
 })
+it('renders the 52-week activity curve, the language donut, and aggregates extra languages', async () => {
+  localStorage.clear()
+  const start = Date.parse('2025-11-03T00:00:00Z')
+  const activity = Array.from({ length: 52 }, (_, index) => ({
+    weekStart: new Date(start + index * 7 * 86_400_000).toISOString().slice(0, 10),
+    commits: index === 51 ? 3 : index % 4,
+  }))
+  const languages = ['Python', 'TypeScript', 'Go', 'SQL', 'Rust', 'YAML', 'Shell', 'Dockerfile']
+    .map((name, index) => ({ name, bytes: 800 - index * 50, percent: 20 - index * 1.5 }))
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === `/api/v1/repositories/${REPO}/overview`) {
+      return response({ ...overviewPayload(), activity, activityCoverage: 'last-52-weeks', languages })
+    }
+    if (url.pathname === `/api/v1/repositories/${REPO}/updates`) return response(updateState())
+    if (url.pathname === `/api/v1/repositories/${REPO}/syncs`) return response({ repositoryId: REPO, syncs: [], total: 0, limit: 10, offset: 0 })
+    if (url.pathname === `/api/v1/repositories/${REPO}`) return response({ ...detail(), viewSyncId: null, latestSync: null, latestSyncAt: null, viewContext: null, commitCount: 0, distribution: { high: 0, medium: 0, low: 0, unknown: 0 } })
+    return response({})
+  })
+  const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('img', { name: '最近 52 周每周提交量曲线' })).toBeVisible()
+  expect(screen.getByText('近一年 · 按周')).toBeVisible()
+  expect(await screen.findByRole('img', { name: /语言构成环形图/ })).toBeVisible()
+  const legend = document.querySelector('.repo-language-legend') as HTMLElement
+  expect(within(legend).getByText('其他')).toBeVisible()
+  await user.click(screen.getAllByText('查看等价数据表')[0])
+  const table = screen.getByRole('table', { name: '最近 52 周提交量' })
+  expect(within(table).getAllByRole('row')).toHaveLength(53)
+})
