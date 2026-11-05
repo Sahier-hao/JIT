@@ -479,6 +479,11 @@ $environment = Get-Content "$base/environment.json" | ConvertFrom-Json
 管理接口仍读取默认目录。模型详情只读取通过当前产物校验的运行摘要；产物缺失、损坏、运行或数据身份
 不一致时返回可定位错误，不回退到其他模型或示例指标。
 
+PR 来源数据集默认保留最近 `JIT_PR_DATASET_KEEP`（默认 10）个版本，被模型、分析或趋势引用的版本
+不会被列出或删除；分支数据集不参与清理。自动清理默认关闭，只有设置
+`JIT_PR_DATASET_AUTO_PRUNE=1` 时才在服务启动时执行。管理员也可在数据集详情显式预览并清理，
+删除不可恢复，文件删除失败时返回未完成结果而不是成功。
+
 实验运行登记（`register-promotable-experiment-models`）增加了受控递归发现和选择性晋升：
 
 | 方法与路径 | 用途 |
