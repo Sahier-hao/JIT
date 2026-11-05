@@ -5,9 +5,11 @@ import math
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 
 from .errors import BaselineError
+from . import collect
 from .pr_review import github_source
 from .sync import DISTRIBUTION_RULE, PROGRESS, distribution_of
 
@@ -306,7 +308,22 @@ class PullRequestUpdates:
                                (self._now(), self._now(), batch_id))
         return self.batch(repository_id, batch_id)
 
+    def _repository_cache(self, repository_id):
+        repository = self.service.sync.repository_get(repository_id)
+        if (repository is None or not collect._is_remote(repository['url'])
+                or not collect._cache_enabled()):
+            return nullcontext()
+        cached = collect._cache_root() / f"{collect._cache_key(repository['url'])}.git"
+        if not cached.exists():
+            # 首次批次由各分析作业按需填充缓存；已有副本时整批持有租约，避免边分析边被淘汰。
+            return nullcontext()
+        return collect._cache_lease(repository['url'], 'HEAD')
+
     def _run_batch(self, batch_id, repository_id, model_id, scope):
+        with self._repository_cache(repository_id):
+            self._run_batch_inner(batch_id, repository_id, model_id, scope)
+
+    def _run_batch_inner(self, batch_id, repository_id, model_id, scope):
         """按范围发现条目后逐条刷新快照、复用或入队；失败逐条记录，不吞掉批次状态。"""
         discovered, discovery_error = [], None
         try:
@@ -494,6 +511,10 @@ class PullRequestUpdates:
         return self.batch(repository_id, new_id)
 
     def _run_batch_items(self, batch_id, repository_id, model_id, numbers):
+        with self._repository_cache(repository_id):
+            self._run_batch_items_inner(batch_id, repository_id, model_id, numbers)
+
+    def _run_batch_items_inner(self, batch_id, repository_id, model_id, numbers):
         """重试批次不重新发现范围；只处理复制过来的失败条目。"""
         _, owner, name, _ = self._repository(repository_id)
         with self.storage.connection(write=True) as db:
@@ -618,7 +639,8 @@ class PullRequestUpdates:
                     analysis_sync = intent['sync_id'] if intent and intent['sync_id'] else None
                     if analysis_sync is None:
                         manual = db.execute('SELECT s.id AS sync_id, s.status AS status, s.model_id, '
-                                            's.resolved_model_id, s.requested_model_id FROM pr_analysis a '
+                                            's.resolved_model_id, s.requested_model_id, s.feature_source_json '
+                                            'FROM pr_analysis a '
                                             'JOIN repository_sync s ON s.id=a.sync_id WHERE a.snapshot_id=? '
                                             'ORDER BY a.created_at DESC, s.rowid DESC LIMIT 1',
                                             (snapshot_id,)).fetchone()
@@ -629,6 +651,8 @@ class PullRequestUpdates:
                                       else state if state in ('failed', 'cancelled', 'interrupted') else 'running')
                             item.update(analysisStatus=mapped, syncId=analysis_sync,
                                         modelId=manual['model_id'] or manual['resolved_model_id'] or manual['requested_model_id'])
+                            if manual['feature_source_json']:
+                                item['featureSource'] = json.loads(manual['feature_source_json'])
                     if analysis_sync and item.get('analysisStatus') == 'completed':
                         snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?', (snapshot_id,)).fetchone()
                         shas = [commit.get('sha') for commit in (json.loads(snapshot['payload_json']).get('commits', []) if snapshot else []) if commit.get('sha')]

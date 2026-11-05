@@ -192,7 +192,8 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
             db.execute(f'DROP TABLE {table}')
         db.execute('DROP INDEX repository_sync_source')
         db.execute('DROP INDEX repository_sync_pr_source')
-        for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version', 'distribution_rule'):
+        for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version',
+                       'distribution_rule', 'feature_source_json'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
         db.execute('DROP TABLE model_policy')
         db.execute('DROP TABLE model_default')
@@ -211,7 +212,7 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         db.execute('DROP TABLE pr_candidate')
         db.execute('DROP TABLE pr_candidate_run')
         for column in ('label_origin', 'label_rule_version', 'label_binarization_rule',
-                       'observed_through', 'maturity_days'):
+                       'observed_through', 'maturity_days', 'usage', 'source_sync_id'):
             db.execute(f'ALTER TABLE dataset_record DROP COLUMN {column}')
         db.execute('UPDATE schema_migration SET version=7')
         before_rows = db.execute('SELECT * FROM model_version ORDER BY id').fetchall()

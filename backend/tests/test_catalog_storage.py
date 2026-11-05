@@ -258,6 +258,60 @@ def test_upgrade_adds_batch_scope_and_cancel_columns_without_changing_old_rows(t
         assert db.execute('PRAGMA foreign_key_check').fetchall() == []
 
 
+def test_dataset_source_marks_and_pr_scoped_cleanup(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    csv = tmp_path / 'demo.csv'
+    csv.write_text('demo', encoding='utf-8')
+    manifest = {
+        'version': 'demo-pr-v1', 'dataset': 'demo',
+        'file': {'sha256': 'x', 'path': str(csv)},
+        'usage': 'pr', 'sourceSyncId': 'sync-1',
+        'collection': {'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+                                  'binarizationRule': 'observed fix => 1', 'observedThrough': 1,
+                                  'maturityDays': 90}},
+    }
+    storage.import_dataset(manifest, [
+        {'id': 'a' * 40, 'time': '2024-01-01T00:00:00Z', 'label': 0, 'metrics': {'ns': 1}}])
+    with storage.connection() as db:
+        assert db.execute("SELECT usage,source_sync_id FROM dataset_record WHERE dataset_version='demo-pr-v1'").fetchone()[:] == ('pr', 'sync-1')
+
+    registered = {'demo-pr-v1': manifest}
+    assert store_module.prunable_datasets(storage, registered, keep=1) == []
+    candidates = store_module.prunable_datasets(storage, registered, keep=0)
+    assert [row['version'] for row in candidates] == ['demo-pr-v1']
+
+    result = store_module.delete_dataset_version(storage, manifest)
+    assert result['deleted'] is True and result['fileErrors'] == []
+    assert not csv.exists()
+    with storage.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM dataset_record').fetchone()[0] == 0
+        assert db.execute('SELECT COUNT(*) FROM commit_record').fetchone()[0] == 0
+
+
+def test_prunable_skips_referenced_and_branch_datasets(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    now = '2026-11-05T00:00:00Z'
+    with storage.connection(write=True) as db:
+        for version, usage in (('branch-v1', 'branch'), ('pr-free', 'pr'), ('pr-used', 'pr')):
+            db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,'
+                       'manifest_sha256,source_sha256,row_count,created_at,usage) '
+                       'VALUES (?,?,?,?,?,?,?,?)',
+                       (version, 'demo', '{}', version, 'x', 1, now, usage))
+        db.execute("INSERT INTO repository_sync(id,repository_url,branch,requested_strategy,status,"
+                   "stage,dataset_version,created_at,updated_at) VALUES "
+                   "('used-sync','https://example.com/repo','HEAD','auto','completed','completed',"
+                   "'pr-used','2026-11-05T00:00:00Z','2026-11-05T00:00:00Z')")
+    registered = {version: {'version': version, 'dataset': 'demo', 'file': {'sha256': 'x'}}
+                  for version in ('branch-v1', 'pr-free', 'pr-used')}
+    assert [row['version'] for row in store_module.prunable_datasets(storage, registered, keep=0)] == ['pr-free']
+
+
 def test_label_evidence_and_status_are_persisted(tmp_path):
     from jit_baseline.catalog_storage import CatalogStorage
     store = CatalogStorage(tmp_path / 'catalog.sqlite3')

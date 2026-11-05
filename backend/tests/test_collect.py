@@ -424,6 +424,83 @@ def test_negative_file_age_is_clamped_and_counted(tmp_path):
     assert {record["id"] for record in records} == set(by_id)
 
 
+def test_repository_cache_reuses_clone_and_fetches_new_commits(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    first = _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(tmp_path / "cache"))
+    monkeypatch.setenv(module.CACHE_TTL_ENV, "0")
+
+    with module._cache_lease(repo, "main") as first_lease:
+        assert first_lease["hit"] is False
+        with module._cache_lease(repo, "main") as second_lease:
+            assert second_lease["hit"] is True
+            assert second_lease["path"] == first_lease["path"]
+        assert module._run(first_lease["path"], ["rev-parse", "main"], check=False).stdout.strip() == first
+
+    second = _commit(repo, "two", {"b.py": "b\n"}, "2024-01-02T00:00:00+00:00")
+    with module._cache_lease(repo, "main") as refreshed:
+        assert module._run(refreshed["path"], ["rev-parse", "main"], check=False).stdout.strip() == second
+
+
+def test_repository_cache_rebuilds_corrupted_clone(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(tmp_path / "cache"))
+
+    with module._cache_lease(repo, "main") as first:
+        (first["path"] / "HEAD").unlink()
+    with module._cache_lease(repo, "main") as rebuilt:
+        assert rebuilt["hit"] is False
+        assert module._run(rebuilt["path"], ["rev-parse", "main"], check=False).returncode == 0
+
+
+def test_repository_cache_eviction_skips_leased_clone(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    first_repo = _make_repo(tmp_path / "first")
+    _commit(first_repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    second_repo = _make_repo(tmp_path / "second")
+    _commit(second_repo, "one", {"b.py": "b\n"}, "2024-01-01T00:00:00+00:00")
+    cache = tmp_path / "cache"
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(cache))
+    monkeypatch.setenv(module.CACHE_LIMIT_ENV, "1")
+
+    with module._cache_lease(first_repo, "main") as first:
+        with module._cache_lease(second_repo, "main") as second:
+            pass
+        for lease in (first, second):
+            (lease["path"] / "blob.bin").write_bytes(b"x" * 700_000)
+        module._cache_evict(cache)
+        assert first["path"].exists()
+        assert not second["path"].exists()
+
+
+def test_local_repository_is_not_written_to_cache(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    cache = tmp_path / "cache"
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(cache))
+
+    collect_repository(repo, since="2024-01-01", until="2024-01-05")
+
+    assert not cache.exists() or not list(cache.glob("*.git"))
+
+
+def test_repository_cache_rejects_missing_branch_without_other_source(tmp_path, monkeypatch):
+    from jit_baseline import collect as module
+    repo = _make_repo(tmp_path / "source")
+    _commit(repo, "one", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
+    monkeypatch.setenv(module.CACHE_DIR_ENV, str(tmp_path / "cache"))
+
+    with pytest.raises(errors.BaselineError) as raised:
+        with module._cache_lease(repo, "missing"):
+            pass
+
+    assert raised.value.code == "REPOSITORY_UNAVAILABLE"
+
+
 def test_recent_unobserved_commit_is_immature(tmp_path):
     repo = _make_repo(tmp_path / "repo")
     _commit(repo, "add module", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")

@@ -1,6 +1,7 @@
 """隔离目录库、可控检查 worker 和 GitHub 夹具覆盖 PR 自动跟踪状态迁移。"""
 from concurrent.futures import Future, ThreadPoolExecutor
 from copy import deepcopy
+import json
 from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
 
@@ -896,6 +897,79 @@ def test_cancel_finished_batch_is_rejected(env):
     with pytest.raises(BaselineError) as error:
         env.watcher.cancel_batch(repo, batch_id)
     assert error.value.code == 'PR_BATCH_NOT_CANCELLABLE'
+
+
+def test_pr_features_are_reused_only_when_every_commit_is_saved(env, monkeypatch):
+    from types import SimpleNamespace
+    from jit_baseline import sync as sync_module
+    from jit_baseline.schemas import resolve
+
+    repo = env.repository()
+    env.github.add()
+    snapshot = env.review.refresh('example', 'project', 1, repository_id=repo)['snapshot']
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'fixed-model'})
+    job = env.jobs(repo)[0]
+    metrics = {name: 1 for name in resolve('kamei14-git-v2').in_model_names()}
+    env.service.sync.write_commits(job['syncId'], [
+        dict(id=snapshot['headSha'], epoch=1793232000, risk=.1, addedLines=1, deletedLines=1,
+             files=1, features=metrics, label=0)])
+    env.service.sync.update(job['syncId'], status='completed', stage='completed',
+                            model_id='fixed-model', resolved_model_id='fixed-model',
+                            feature_schema_version='kamei14-git-v2', head_commit=snapshot['headSha'])
+    item = {'sourceKind': 'pr', 'sourceSnapshotId': snapshot['snapshotId'], 'repositoryId': repo}
+
+    reused = env.service._reuse_pr_features(item)
+    assert reused is not None
+    assert [record['id'] for record in reused['records']] == [snapshot['headSha']]
+    assert reused['sources'][0]['syncId'] == job['syncId']
+
+    monkeypatch.setattr(env.service, '_generic_model', lambda model_id: (
+        SimpleNamespace(model=None), {'modelId': model_id, 'featureSchemaVersion': 'kamei14-git-v2'}))
+    monkeypatch.setattr(sync_module, 'predict_risks', lambda model, inputs, schema: [0.25] * len(inputs))
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'second-model'})
+    second = max(env.jobs(repo), key=lambda job: job['createdAt'])
+    env.service._run(second['syncId'])
+    completed = env.service.get(second['syncId'])
+    assert completed['status'] == 'completed'
+    assert completed['datasetVersion'] is None
+    assert completed['featureSource']['sources'][0]['syncId'] == job['syncId']
+
+    env.service.sync.write_commits(job['syncId'], [])
+    env.github.add(number=2)
+    other = env.review.refresh('example', 'project', 2, repository_id=repo)['snapshot']
+    assert env.service._reuse_pr_features(
+        {'sourceKind': 'pr', 'sourceSnapshotId': other['snapshotId'], 'repositoryId': repo}) is None
+
+
+def test_reuse_requires_every_commit_and_the_same_schema(env):
+    from jit_baseline.schemas import resolve
+    repo = env.repository()
+    env.github.add()
+    snapshot = env.review.refresh('example', 'project', 1, repository_id=repo)['snapshot']
+    env.review.analyze(snapshot['snapshotId'], {'modelId': 'fixed-model'})
+    job = env.jobs(repo)[0]
+    second = 'f' * 40
+    payload = dict(snapshot, commits=[{'sha': snapshot['headSha'], 'message': 'one'},
+                                      {'sha': second, 'message': 'two'}])
+    with env.watcher.storage.connection(write=True) as db:
+        db.execute('INSERT INTO pr_snapshot VALUES (?,?,?,?,?,?,?,?,?)',
+                   ('two-commits', repo, 'example', 'project', 99, snapshot['baseSha'],
+                    snapshot['headSha'], json.dumps(payload), '2026-10-29T00:00:00Z'))
+    metrics = {name: 1 for name in resolve('kamei14-git-v2').in_model_names()}
+    env.service.sync.write_commits(job['syncId'], [
+        dict(id=snapshot['headSha'], epoch=1793232000, risk=.1, addedLines=1, deletedLines=1,
+             files=1, features=metrics, label=0)])
+    env.service.sync.update(job['syncId'], status='completed', feature_schema_version='kamei14-git-v2')
+    item = {'sourceKind': 'pr', 'sourceSnapshotId': 'two-commits', 'repositoryId': repo}
+    assert env.service._reuse_pr_features(item) is None
+
+    env.service.sync.write_commits(job['syncId'], [
+        dict(id=sha, epoch=1793232000, risk=.1, addedLines=1, deletedLines=1,
+             files=1, features=metrics, label=0) for sha in (snapshot['headSha'], second)])
+    assert env.service._reuse_pr_features(item) is not None
+
+    env.service.sync.update(job['syncId'], feature_schema_version='openstack-six-v1')
+    assert env.service._reuse_pr_features(item) is None
 
 
 def test_retry_batch_separates_failed_and_interrupted(env):

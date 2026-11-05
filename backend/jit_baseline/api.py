@@ -31,6 +31,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def lifespan(app):
         app.state.updates.start()
         app.state.pr_updates.start()
+        if os.environ.get('JIT_PR_DATASET_AUTO_PRUNE', '').strip().lower() in ('1', 'true', 'yes'):
+            try:
+                registry = dataset_module.load_all(registry_root)
+                for row in store.prunable_datasets(
+                        storage, registry, int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))):
+                    store.delete_dataset_version(storage, row['manifest'])
+            except Exception:
+                pass
         try:
             yield
         finally:
@@ -447,15 +455,50 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def feature_schema(version: str):
         return schema_info(version)
 
+    @app.get('/api/admin/datasets/prunable')
+    def dataset_prunable(keep: int | None = None):
+        registered = dataset_module.load_all(registry_root)
+        retain = keep if keep is not None else int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))
+        rows = store.prunable_datasets(storage, registered, retain)
+        return {'keep': retain,
+                'versions': [{key: value for key, value in row.items() if key != 'manifest'}
+                             for row in rows]}
+
+    @app.post('/api/admin/datasets/prune')
+    async def dataset_prune(request: Request):
+        payload = await read_object(request)
+        versions = payload.get('versions') if isinstance(payload, dict) else None
+        if (not isinstance(versions, list) or not versions
+                or any(not isinstance(version, str) or not version.strip() for version in versions)):
+            raise RequestError('INPUT_INVALID')
+        registered = dataset_module.load_all(registry_root)
+        eligible = {row['version']: row for row in store.prunable_datasets(
+            storage, registered, int(os.environ.get('JIT_PR_DATASET_KEEP', '10')))}
+        deleted, skipped = [], []
+        for version in dict.fromkeys(versions):
+            row = eligible.get(version)
+            if row is None:
+                skipped.append({'version': version, 'reason': 'not_prunable'})
+                continue
+            result = await run_in_threadpool(store.delete_dataset_version, storage, row['manifest'])
+            deleted.append(result)
+        return {'deleted': deleted, 'skipped': skipped}
+
     @app.get('/api/v1/datasets')
     def dataset_versions_all():
-        return {'datasets': store.dataset_list(dataset_module.load_all(registry_root))}
+        datasets = store.dataset_list(dataset_module.load_all(registry_root))
+        for dataset in datasets:
+            for version in dataset['versions']:
+                version['references'] = store.dataset_references(storage, version['version'])
+        return {'datasets': datasets}
 
     @app.get('/api/v1/datasets/{name}/versions')
     def dataset_versions(name: str):
         view = store.version_view(dataset_module.load_all(registry_root), name)
         if view is None:
             raise RequestError('NOT_FOUND')
+        for version in view['versions']:
+            version['references'] = store.dataset_references(storage, version['version'])
         return view
 
     @app.get('/api/v1/commits')

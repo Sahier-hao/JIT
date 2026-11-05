@@ -86,6 +86,72 @@ def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
     raise last
 
 
+def dataset_references(storage, version):
+    """被分析、模型或导入过程引用的数据集版本不可清理。"""
+    references = []
+    with storage.connection() as db:
+        if db.execute('SELECT 1 FROM repository_sync WHERE dataset_version=? LIMIT 1', (version,)).fetchone():
+            references.append('analysis')
+        if db.execute("SELECT 1 FROM model_version WHERE json_extract(payload_json, '$.datasetVersion')=? "
+                      'LIMIT 1', (version,)).fetchone():
+            references.append('model')
+        if db.execute("SELECT 1 FROM model_version WHERE json_extract(payload_json, "
+                      "'$.artifactDatasetVersion')=? LIMIT 1", (version,)).fetchone():
+            if 'model' not in references:
+                references.append('model')
+    return references
+
+
+def prunable_datasets(storage, registered, keep=10):
+    """列出超出保留数量且无引用的 PR 数据集版本；分支数据集不参与。"""
+    keep = max(0, int(keep))
+    with storage.connection() as db:
+        rows = db.execute('SELECT dataset_version,dataset_name,usage,created_at FROM dataset_record '
+                          'ORDER BY created_at DESC, dataset_version DESC').fetchall()
+    grouped = {}
+    for row in rows:
+        if row['usage'] != 'pr':
+            continue
+        grouped.setdefault(row['dataset_name'], []).append(row)
+    result = []
+    for name, items in grouped.items():
+        for index, row in enumerate(items):
+            if index < keep:
+                continue
+            references = dataset_references(storage, row['dataset_version'])
+            if references:
+                continue
+            manifest = registered.get(row['dataset_version'])
+            if manifest is None:
+                continue
+            result.append({'dataset': name, 'version': row['dataset_version'],
+                           'createdAt': row['created_at'], 'references': references,
+                           'manifest': manifest})
+    return result
+
+
+def delete_dataset_version(storage, manifest):
+    """两阶段删除数据集：先移除登记与提交记录，再删除描述、CSV 与旁注文件。"""
+    version = manifest['version']
+    files = []
+    for entry in (manifest.get('file'), manifest.get('text'), manifest.get('labelEvidenceFile')):
+        if isinstance(entry, dict) and entry.get('path'):
+            path = Path(entry['path'])
+            files.append(path if path.is_absolute() else BACKEND / path)
+    tables = ('commit_label_evidence', 'feature_record', 'modified_entity',
+              'commit_record', 'import_run', 'dataset_record')
+    with storage.connection(write=True) as db:
+        for table in tables:
+            db.execute(f'DELETE FROM {table} WHERE dataset_version=?', (version,))
+    errors = []
+    for path in files:
+        try:
+            path.unlink(missing_ok=True)
+        except OSError as exc:
+            errors.append({'path': path.name, 'message': str(exc)})
+    return {'version': version, 'deleted': True, 'fileErrors': errors}
+
+
 def dataset_list(registered):
     """按数据集名分组，返回名称、版本与来源摘要（DSR-07）。"""
     grouped = {}
@@ -95,6 +161,7 @@ def dataset_list(registered):
             "timeRange": manifest["timeRange"], "quality": manifest["quality"],
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
+            "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
             for name, versions in sorted(grouped.items())]
@@ -110,6 +177,7 @@ def version_view(registered, name):
                           "timeRange": manifest["timeRange"], "quality": manifest["quality"],
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
+                          "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}
 

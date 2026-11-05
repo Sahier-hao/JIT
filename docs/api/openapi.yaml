@@ -963,6 +963,59 @@ paths:
       description: 未知提交或未知版本返回 404，不返回空对象。
       security:
       - AdminSession: []
+  /api/admin/datasets/prunable:
+    get:
+      operationId: listPrunableDatasets
+      summary: 列出可清理的 PR 数据集版本
+      description: 只返回来源为 PR、超过保留数量且未被分析或模型引用的版本；分支分析数据集不参与。
+      security:
+      - AdminSession: []
+      tags: [管理工作区]
+      parameters:
+      - name: keep
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '200':
+          description: 可清理版本
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrunableDatasets'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/admin/datasets/prune:
+    post:
+      operationId: pruneDatasets
+      summary: 删除选定的 PR 数据集版本
+      description: 只删除仍满足可清理条件的版本；删除登记、提交与特征记录及文件，结果列出删除与跳过项。
+      security:
+      - AdminSession: []
+      tags: [管理工作区]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PruneDatasetsRequest'
+      responses:
+        '200':
+          description: 清理结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PruneDatasetsResult'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/datasets:
     get:
       operationId: listDatasets
@@ -3355,6 +3408,9 @@ components:
           type: [string, 'null']
         featureSchemaVersion:
           type: [string, 'null']
+        featureSource:
+          type: [object, 'null']
+          description: 复用已保存特征时的来源说明；未复用时为 null。
         distributionRule:
           type: [string, 'null']
       required: [syncId, sourceKind, branch, since, until, commitLimit, createdAt, completedAt, headCommit, datasetVersion, modelId, runId, featureSchemaVersion, distributionRule]
@@ -5462,6 +5518,51 @@ components:
       - labelRule
       - features
       additionalProperties: false
+    PrunableDatasets:
+      type: object
+      additionalProperties: false
+      required: [keep, versions]
+      properties:
+        keep:
+          type: integer
+          minimum: 0
+        versions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [dataset, version, createdAt, references]
+            properties:
+              dataset: {type: string}
+              version: {type: string}
+              createdAt: {type: string, format: date-time}
+              references:
+                type: array
+                items: {type: string}
+    PruneDatasetsRequest:
+      type: object
+      additionalProperties: false
+      required: [versions]
+      properties:
+        versions:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+    PruneDatasetsResult:
+      type: object
+      additionalProperties: false
+      required: [deleted, skipped]
+      properties:
+        deleted:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        skipped:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
     DatasetRegistry:
       type: object
       properties:
@@ -5571,6 +5672,17 @@ components:
           additionalProperties: false
         labelRule:
           type: [string, 'null']
+        usage:
+          type: string
+          enum: [branch, pr]
+          description: 数据集来源类型；旧记录缺少该字段时按 branch 返回。
+        sourceSyncId:
+          type: [string, 'null']
+          description: 产生该数据集的仓库同步标识。
+        references:
+          type: array
+          items: {type: string}
+          description: 引用类型，如 analysis、model；非空版本不可清理。
         limitations:
           type: array
           items: {type: string}
@@ -5583,6 +5695,9 @@ components:
       - source
       - labelRule
       - limitations
+      - usage
+      - sourceSyncId
+      - references
       additionalProperties: false
     DatasetQuality:
       type: object
@@ -5695,6 +5810,9 @@ components:
         distributionRule:
           type: [string, 'null']
           description: 成功分析冻结的风险分档规则；旧记录可能缺失。
+        featureSource:
+          type: [object, 'null']
+          description: 复用已保存特征时的来源说明；未复用时为 null。
         queuePosition:
           type: [integer, 'null']
           minimum: 1

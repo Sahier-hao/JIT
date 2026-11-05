@@ -35,7 +35,9 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (22, Path(__file__).parent / 'migrations/022_label_evidence.sql'),
               (23, Path(__file__).parent / 'migrations/023_training_class_policy.sql'),
               (24, Path(__file__).parent / 'migrations/024_pr_candidates.sql'),
-              (25, Path(__file__).parent / 'migrations/025_pr_batch_scope.sql'))
+              (25, Path(__file__).parent / 'migrations/025_pr_batch_scope.sql'),
+              (26, Path(__file__).parent / 'migrations/026_sync_feature_source.sql'),
+              (27, Path(__file__).parent / 'migrations/027_dataset_source.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -176,10 +178,14 @@ class CatalogStorage:
                 return {'datasetVersion': version, 'created': False,
                         'commits': db.execute('SELECT COUNT(*) FROM commit_record WHERE dataset_version=?',
                                               (version,)).fetchone()[0]}
-            db.execute('INSERT INTO dataset_record VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            db.execute('INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,'
+                       'manifest_sha256,source_sha256,row_count,created_at,label_origin,'
+                       'label_rule_version,label_binarization_rule,observed_through,maturity_days,'
+                       'usage,source_sync_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                        (version, manifest['dataset'], text, digest, manifest['file']['sha256'],
                         len(records), started, label_origin, label_version, label_binarization,
-                        observed_through, maturity_days))
+                        observed_through, maturity_days, manifest.get('usage') or 'branch',
+                        manifest.get('sourceSyncId')))
             db.executemany('INSERT INTO commit_record VALUES (?,?,?,?,?)',
                            [(version, record['id'], record['time'], record['label'], LABEL_RULE)
                             for record in records])

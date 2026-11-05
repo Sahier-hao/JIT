@@ -62,7 +62,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "train_records", "train_positives", "request_id", "created_at", "updated_at",
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
-           "origin", "feature_schema_version", "distribution_rule")
+           "origin", "feature_schema_version", "distribution_rule", "feature_source_json")
 
 
 def worker_command():
@@ -184,6 +184,7 @@ def _view(row):
             "requestId": item["request_id"], "error": error,
             "sourceKind": item.get('source_kind', 'unknown'), "sourceSnapshotId": item.get('source_snapshot_id'),
             "origin": item.get('origin', 'manual'), "featureSchemaVersion": item.get('feature_schema_version'),
+            "featureSource": json.loads(item['feature_source_json']) if item.get('feature_source_json') else None,
             "distributionRule": item.get('distribution_rule')}
 
 
@@ -328,7 +329,7 @@ class SyncStorage:
                   int(row["label"]), row.get("labelNote"), row.get("subject"), row.get("authorName")) for row in rows])
 
     def complete(self, sync_id, repository_id, rows, *, head_commit, dataset_version, run_id, model_id,
-                 analysis_branch=None, feature_schema_version=None):
+                 analysis_branch=None, feature_schema_version=None, feature_source_json=None):
         """原子发布结果，只有分支分析能推进项目当前结果。"""
         counts, now = distribution_of([row['risk'] for row in rows]), utc_now()
         with self.storage.connection(write=True) as db:
@@ -337,9 +338,10 @@ class SyncStorage:
             self.write_commits(sync_id, rows, connection=db)
             db.execute("UPDATE repository_sync SET status='completed',stage='completed',completed_at=?,"
                        "updated_at=?,head_commit=?,dataset_version=?,run_id=?,model_id=?,analysis_branch=?,"
-                       "feature_schema_version=COALESCE(?,feature_schema_version),distribution_rule=? WHERE id=?",
+                       "feature_schema_version=COALESCE(?,feature_schema_version),distribution_rule=?,"
+                       "feature_source_json=COALESCE(?,feature_source_json) WHERE id=?",
                        (now, now, head_commit, dataset_version, run_id, model_id, analysis_branch,
-                        feature_schema_version, DISTRIBUTION_RULE, sync_id))
+                        feature_schema_version, DISTRIBUTION_RULE, feature_source_json, sync_id))
             if repository_id and source['repository_id'] == repository_id and source['source_kind'] == 'branch':
                 db.execute("UPDATE repository SET view_sync_id=?,head_commit=?,commit_count=?,high_count=?,"
                            "medium_count=?,low_count=?,unknown_count=?,distribution_rule=?,updated_at=? WHERE id=?",
@@ -1088,6 +1090,61 @@ class SyncService:
                                 f"同步超过 {self.timeout} 秒未完成，请稍后重试")
         self.sync.advance(sync_id, stage)
 
+    def _reuse_pr_features(self, item):
+        """为 PR 任务读取同仓库、同 schema 已保存的特征；任一提交缺失即不复用。"""
+        if item.get('sourceKind') != 'pr' or not item.get('sourceSnapshotId'):
+            return None
+        with self.sync.storage.connection() as db:
+            snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?',
+                                  (item['sourceSnapshotId'],)).fetchone()
+        if snapshot is None:
+            return None
+        commits = json.loads(snapshot['payload_json']).get('commits') or []
+        shas = list(dict.fromkeys(commit['sha'] for commit in commits if commit.get('sha')))
+        if not shas:
+            return None
+        schema = resolve(SCHEMA_NAME)
+        names = schema.in_model_names()
+        marks = ','.join('?' for _ in shas)
+        with self.sync.storage.connection() as db:
+            rows = db.execute(
+                'SELECT rc.commit_id,rc.epoch,rc.features_json,rc.label,rc.label_note,rc.subject,'
+                'rc.author_name,rc.file_paths_json,s.id AS source_sync_id,s.dataset_version '
+                'FROM repository_commit rc JOIN repository_sync s ON s.id=rc.sync_id '
+                'WHERE s.repository_id=? AND s.status=? AND s.feature_schema_version=? '
+                f'AND rc.commit_id IN ({marks}) ORDER BY s.completed_at DESC, s.rowid DESC',
+                (item['repositoryId'], 'completed', SCHEMA_NAME, *shas)).fetchall()
+        found, sources = {}, []
+        for row in rows:
+            if row['commit_id'] in found:
+                continue
+            try:
+                metrics = json.loads(row['features_json'])
+            except (TypeError, ValueError):
+                continue
+            if set(metrics) != set(names):
+                continue
+            found[row['commit_id']] = row
+            if row['source_sync_id'] not in {source['syncId'] for source in sources}:
+                sources.append({'syncId': row['source_sync_id'],
+                                'datasetVersion': row['dataset_version']})
+        if len(found) != len(shas):
+            return None
+        records = []
+        for sha in shas:
+            row = found[sha]
+            epoch = int(row['epoch'])
+            metrics = json.loads(row['features_json'])
+            records.append({
+                'id': sha, 'epoch': epoch,
+                'time': datetime.fromtimestamp(epoch, timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z'),
+                'metrics': metrics, 'features': [metrics[name] for name in names],
+                'label': row['label'], 'labelNote': row['label_note'],
+                'subject': row['subject'], 'authorName': row['author_name'],
+                'filePaths': json.loads(row['file_paths_json']) if row['file_paths_json'] else [],
+            })
+        return {'records': records, 'sources': sources, 'schema': SCHEMA_NAME}
+
     def _generic_model(self, model_id=None):
         model_id = model_id or self.catalog.default_model_id()
         if not model_id:
@@ -1119,7 +1176,9 @@ class SyncService:
         registered = _register_unique(
             room, dataset, version, collected["blob"], schema=SCHEMA_NAME,
             cohort=cohort, root=self.dataset_root,
-            extra={"collection": collected["collection"]},
+            extra={"collection": collected["collection"],
+                   "usage": "pr" if item.get('sourceKind') == 'pr' else 'branch',
+                   "sourceSyncId": sync_id},
             provenance={"publisher": "collected", "revision": collected["collection"]["repository"]["head"],
                         "url": item["repositoryUrl"], "citation": "由仓库同步采集生成（简化 SZZ）"},
             after=lambda entry, csv: store.import_dataset(
@@ -1136,6 +1195,35 @@ class SyncService:
             return
         decision, version, run_id = None, None, None
         try:
+            reused = self._reuse_pr_features(item)
+            if reused is not None:
+                self._step(sync_id, "scoring", started)
+                model_choice = item.get('resolvedModelId') or item.get('requestedModelId')
+                if not model_choice:
+                    raise BaselineError('DEFAULT_MODEL_REQUIRED', '提交任务时没有默认模型，请重新发起分析')
+                snapshot, payload = self._generic_model(model_choice)
+                model_id = payload["modelId"]
+                schema = resolve(payload.get('featureSchemaVersion', GENERIC_SCHEMA))
+                fields = schema.in_model_names()
+                records = reused['records']
+                inputs = (generic_inputs(records, fields) if schema.name == GENERIC_SCHEMA
+                          else [{"features": record["features"]} for record in records])
+                run_id = payload.get("runId")
+                risks = predict_risks(snapshot.model, inputs, schema)
+                feature_source = json.dumps(
+                    {"kind": "repository-features", "schema": reused['schema'], "sources": reused['sources']},
+                    ensure_ascii=False, sort_keys=True)
+                self.sync.complete(sync_id, item.get('repositoryId'), [
+                    {"id": record["id"], "epoch": record["epoch"], "risk": risk,
+                     "addedLines": record["metrics"]["la"], "deletedLines": record["metrics"]["ld"],
+                     "files": record["metrics"]["nf"], "features": record["metrics"],
+                     "filePaths": record.get("filePaths") or [],
+                     "label": record["label"], "labelNote": record.get("labelNote"),
+                     "subject": record.get("subject"), "authorName": record.get('authorName')}
+                    for record, risk in zip(records, risks, strict=True)],
+                    head_commit=item['branch'], dataset_version=None, run_id=run_id, model_id=model_id,
+                    feature_schema_version=schema.name, feature_source_json=feature_source)
+                return
             self._step(sync_id, "collecting", started)
             collected = self.collect(item["repositoryUrl"], since=item["since"], until=item["until"],
                                      branch=item["branch"], limit=item["commitLimit"],

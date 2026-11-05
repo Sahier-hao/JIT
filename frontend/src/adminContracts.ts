@@ -14,6 +14,9 @@ export interface AdminDatasetVersion {
   source: Row
   labelRule: string | null
   limitations: string[]
+  usage: 'branch' | 'pr'
+  sourceSyncId: string | null
+  references: string[]
 }
 
 export interface AdminModel {
@@ -260,6 +263,9 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     source: record(value.source),
     labelRule: textOrNull(value.labelRule),
     limitations: textList(value.limitations),
+    usage: value.usage === 'pr' ? 'pr' : 'branch',
+    sourceSyncId: textOrNull(value.sourceSyncId),
+    references: Array.isArray(value.references) ? textList(value.references) : [],
   }
 }
 
@@ -270,6 +276,23 @@ export async function fetchAdminDatasets(signal?: AbortSignal): Promise<AdminDat
     const dataset = text(value.dataset)
     return recordList(value.versions).map(version => datasetVersion(version, dataset))
   })
+}
+
+export interface PrunableDatasetVersion {
+  dataset: string
+  version: string
+  createdAt: string
+}
+
+export async function fetchPrunableDatasets(keep: number, signal?: AbortSignal): Promise<PrunableDatasetVersion[]> {
+  const body = record(await apiRequest({ path: `/api/admin/datasets/prunable?keep=${encodeURIComponent(String(keep))}`, method: 'GET', signal }))
+  return recordList(body.versions).map(item => ({
+    dataset: text(item.dataset), version: text(item.version), createdAt: text(item.createdAt),
+  }))
+}
+
+export async function pruneDatasets(versions: string[]) {
+  return record(await apiRequest({ path: '/api/admin/datasets/prune', method: 'POST', body: { versions } }))
 }
 
 export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: AdminModel[]; methods: Row[]; candidates: Row[]; readiness: ModelReadiness }> {

@@ -14,6 +14,10 @@ import re
 import shutil
 import subprocess
 import tempfile
+import threading
+import time
+import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from ipaddress import ip_address
 from pathlib import Path
@@ -37,6 +41,14 @@ LIMITATIONS = (
     "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。",
 )
 MAX_EPOCH = 2_147_483_647
+CACHE_DIR_ENV = "JIT_REPO_CACHE_DIR"
+CACHE_LIMIT_ENV = "JIT_REPO_CACHE_LIMIT_MB"
+CACHE_TTL_ENV = "JIT_REPO_CACHE_TTL_SECONDS"
+CACHE_ENABLED_ENV = "JIT_REPO_CACHE"
+DEFAULT_CACHE_LIMIT_MB = 4096
+DEFAULT_CACHE_TTL = 900
+_CACHE_LOCK = threading.RLock()
+_CACHE_LEASES = {}
 # git 自身不读 Windows 系统代理：浏览器能打开 GitHub 时克隆仍会直连并长时间卡住。
 # 显式环境变量优先，其次系统代理设置；两者都没有时保持直连。
 PROXY_ENV = ("JIT_GIT_PROXY", "HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy")
@@ -622,7 +634,7 @@ def _clone_bare(repo, clone):
     attempts.append(("direct", False))
     failures = []
     for name, use_proxy in attempts:
-        shutil.rmtree(clone, ignore_errors=True)
+        _remove_tree(clone)
         args = ["clone", "--bare", "--quiet", "--no-tags", str(repo), str(clone)]
         result = _run(Path(tempfile.gettempdir()), args, check=False, use_proxy=use_proxy)
         if result.returncode == 0:
@@ -634,6 +646,171 @@ def _clone_bare(repo, clone):
                       for name, last in failures)
     hint = "" if proxy_url() else "；如网络需要代理请设置 JIT_GIT_PROXY"
     raise BaselineError("REPOSITORY_UNAVAILABLE", f"仓库克隆失败，可重试（{detail}）{hint}")
+
+
+def _remove_tree(path):
+    """Windows 上 git 对象常为只读；删除前恢复写权限，避免缓存淘汰静默失败。"""
+    def onerror(function, name, _exc):
+        try:
+            os.chmod(name, 0o666)
+            function(name)
+        except OSError:
+            pass
+    if not os.path.exists(path):
+        return
+    try:
+        shutil.rmtree(path, onerror=onerror)
+    except FileNotFoundError:
+        pass
+
+
+def _cache_enabled():
+    return str(os.environ.get(CACHE_ENABLED_ENV, "1")).strip().lower() not in ("0", "false", "no")
+
+
+def _cache_root():
+    configured = str(os.environ.get(CACHE_DIR_ENV, "")).strip()
+    return Path(configured) if configured else Path(__file__).resolve().parents[1] / ".cache" / "repositories"
+
+
+def _cache_limit_bytes():
+    try:
+        megabytes = int(os.environ.get(CACHE_LIMIT_ENV, DEFAULT_CACHE_LIMIT_MB))
+    except (TypeError, ValueError):
+        megabytes = DEFAULT_CACHE_LIMIT_MB
+    return max(0, megabytes) * 1024 * 1024
+
+
+def _cache_ttl():
+    try:
+        return max(0, int(os.environ.get(CACHE_TTL_ENV, DEFAULT_CACHE_TTL)))
+    except (TypeError, ValueError):
+        return DEFAULT_CACHE_TTL
+
+
+def _cache_key(url):
+    return hashlib.sha256(str(url).strip().rstrip("/").lower().encode("utf-8")).hexdigest()[:16]
+
+
+def _cache_valid(target, url):
+    result = _run(target, ["rev-parse", "--is-bare-repository"], check=False)
+    if result.returncode != 0 or result.stdout.strip() != "true":
+        return False
+    remote = _run(target, ["config", "--get", "remote.origin.url"], check=False)
+    return remote.returncode == 0 and remote.stdout.strip().rstrip("/").lower() == str(url).rstrip("/").lower()
+
+
+def _cache_has(target, branch):
+    result = _run(target, ["rev-parse", "--verify", f"{branch}^{{commit}}"], check=False)
+    return result.returncode == 0
+
+
+def _cache_fetch(target):
+    attempts = [True, False] if proxy_url() else [False]
+    for use_proxy in attempts:
+        result = _run(target, ["fetch", "--prune", "--quiet", "origin",
+                               "+refs/heads/*:refs/heads/*"], check=False, use_proxy=use_proxy)
+        if result.returncode == 0:
+            try:
+                os.utime(target, None)
+            except OSError:
+                pass
+            return True
+    return False
+
+
+def _cache_stale(target):
+    try:
+        return time.time() - target.stat().st_mtime > _cache_ttl()
+    except OSError:
+        return True
+
+
+def _cache_ensure(url, target, branch):
+    """准备缓存副本；返回是否命中已有副本。损坏或来源不匹配时重建。"""
+    hit = target.exists()
+    if hit and not _cache_valid(target, url):
+        _remove_tree(target)
+        hit = False
+    if target.exists():
+        if _cache_stale(target) or not _cache_has(target, branch):
+            _cache_fetch(target)
+        if not _cache_has(target, branch):
+            raise BaselineError("REPOSITORY_UNAVAILABLE", "仓库缓存无法读取指定提交，请稍后重试")
+        return hit
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(f"{target.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        _clone_bare(url, temporary)
+        try:
+            os.replace(temporary, target)
+        except OSError:
+            if not target.exists():
+                raise
+    finally:
+        _remove_tree(temporary)
+    if not _cache_has(target, branch):
+        _remove_tree(target)
+        raise BaselineError("REPOSITORY_UNAVAILABLE", "仓库缓存无法读取指定提交，请稍后重试")
+    return False
+
+
+def _cache_size(path):
+    total = 0
+    for root, _, files in os.walk(path):
+        for name in files:
+            try:
+                total += (Path(root) / name).stat().st_size
+            except OSError:
+                continue
+    return total
+
+
+def _cache_evict(root):
+    limit = _cache_limit_bytes()
+    if limit <= 0:
+        return
+    entries = []
+    for path in root.glob("*.git"):
+        if not path.is_dir():
+            continue
+        entries.append((path.stat().st_mtime, path))
+    if sum(_cache_size(path) for _, path in entries) <= limit:
+        return
+    with _CACHE_LOCK:
+        leased = {key for key, count in _CACHE_LEASES.items() if count > 0}
+        for _, path in sorted(entries):
+            if path.stem in leased:
+                continue
+            _remove_tree(path)
+            if sum(_cache_size(item) for _, item in entries if item.exists()) <= limit:
+                return
+
+
+@contextmanager
+def _cache_lease(url, branch):
+    """按公开仓库地址租用本地裸克隆；结束时释放并做容量淘汰。"""
+    root = _cache_root()
+    root.mkdir(parents=True, exist_ok=True)
+    key = _cache_key(url)
+    with _CACHE_LOCK:
+        _CACHE_LEASES[key] = _CACHE_LEASES.get(key, 0) + 1
+    try:
+        target = root / f"{key}.git"
+        hit = _cache_ensure(url, target, branch)
+        yield {"path": target, "hit": hit}
+    finally:
+        with _CACHE_LOCK:
+            remaining = _CACHE_LEASES.get(key, 1) - 1
+            if remaining > 0:
+                _CACHE_LEASES[key] = remaining
+            else:
+                _CACHE_LEASES.pop(key, None)
+        try:
+            _cache_evict(root)
+        except OSError:
+            pass
 
 
 def _publish_output(path, blob):
@@ -663,13 +840,20 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
     """
     repo = validate_source(repo, allow_local=allow_local)
     temporary = None
+    lease = None
+    cache_hit = False
     try:
         target = repo
         if _is_remote(repo):
-            temporary = tempfile.mkdtemp(prefix="jit-collect-")
-            clone = Path(temporary) / "repository.git"
-            _clone_bare(repo, clone)
-            target = clone
+            if _cache_enabled():
+                lease = _cache_lease(repo, branch)
+                cached = lease.__enter__()
+                target, cache_hit = cached["path"], cached["hit"]
+            else:
+                temporary = tempfile.mkdtemp(prefix="jit-collect-")
+                clone = Path(temporary) / "repository.git"
+                _clone_bare(repo, clone)
+                target = clone
         collected = collect(target, since, until, branch, limit, with_text=with_text)
         if not collected["records"]:
             raise BaselineError("DATASET_INVALID", "采集范围内没有可纳入的提交")
@@ -734,7 +918,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                   "records": len(collected["records"]), "fixCommits": collected["fixCommits"],
                   "labeled": collected["labeled"], "skipped": collected["skipped"],
                   "excluded": collected["excluded"], "collection": collected["collection"],
-                  "text": text_meta}
+                  "cacheHit": cache_hit, "text": text_meta}
         if return_blob:
             result["blob"] = blob
             result["rawRecords"] = collected["records"]
@@ -766,5 +950,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             result["csv"] = {"path": str(path.resolve()), "bytes": len(blob)}
         return result
     finally:
+        if lease is not None:
+            lease.__exit__(None, None, None)
         if temporary is not None:
-            shutil.rmtree(temporary, ignore_errors=True)
+            _remove_tree(temporary)
