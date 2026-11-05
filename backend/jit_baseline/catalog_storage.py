@@ -34,7 +34,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (21, Path(__file__).parent / 'migrations/021_model_package_imports.sql'),
               (22, Path(__file__).parent / 'migrations/022_label_evidence.sql'),
               (23, Path(__file__).parent / 'migrations/023_training_class_policy.sql'),
-              (24, Path(__file__).parent / 'migrations/024_pr_candidates.sql'))
+              (24, Path(__file__).parent / 'migrations/024_pr_candidates.sql'),
+              (25, Path(__file__).parent / 'migrations/025_pr_batch_scope.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -185,11 +186,15 @@ class CatalogStorage:
             db.executemany('INSERT INTO feature_record VALUES (?,?,?,?)',
                            [(version, record['id'], field, json.dumps(value, allow_nan=False))
                             for record in records for field, value in sorted(record['metrics'].items())])
-            evidence = collection.get('labelEvidence') or []
+            # 证据只能指向本版本实际纳入的提交；采集窗口内的修复提交可能因纳入规则
+            #（如无新增行）没有进入数据集，这类证据不写入，避免外键失败整批导入。
+            included = {record['id'] for record in records}
+            evidence = [item for item in (collection.get('labelEvidence') or [])
+                        if item.get('introducedCommit') in included
+                        and item.get('fixCommit') and item.get('path')]
             db.executemany('INSERT OR IGNORE INTO commit_label_evidence VALUES (?,?,?,?,?,?)',
                            [(version, item['introducedCommit'], item['fixCommit'], item['path'],
-                             item['fixTime'], label_version or LABEL_RULE) for item in evidence
-                            if item.get('introducedCommit') and item.get('fixCommit') and item.get('path')])
+                             item['fixTime'], label_version or LABEL_RULE) for item in evidence])
             db.execute('INSERT INTO import_run VALUES (?,?,?,?,?,?,?)',
                        (uuid.uuid4().hex, version, 'success', len(records), None, started, utc_now()))
         return {'datasetVersion': version, 'created': True, 'commits': len(records)}

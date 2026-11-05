@@ -13,7 +13,8 @@ import pytest
 
 from jit_baseline import datasets
 from jit_baseline import errors
-from jit_baseline.collect import collect, collect_repository
+from jit_baseline.collect import cohort, collect, collect_repository
+from jit_baseline.data import parse_source
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="系统缺少 git 命令")
 
@@ -405,6 +406,22 @@ def test_merge_uses_first_parent_history_and_discloses_limit(tmp_path):
 
     assert metrics[after]["lt"] == 101
     assert any("合并提交" in item for item in collected["collection"]["limitations"])
+
+
+def test_negative_file_age_is_clamped_and_counted(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    _commit(repo, "add module", {"a.py": LINES}, "2024-01-02T00:00:00+00:00")
+    rewritten = _commit(repo, "rewritten date", {"a.py": "line 0 fixed\n" + LINES.split("\n", 1)[1]},
+                        "2024-01-01T00:00:00+00:00")
+
+    collected = collect(repo, since="2024-01-01", until="2024-01-05")
+    by_id = {record["id"]: record for record in collected["records"]}
+
+    assert by_id[rewritten]["metrics"]["age"] == 0.0
+    assert collected["collection"]["counts"]["negativeFileAgeFiles"] == 1
+    records, _ = parse_source(collected["csv"], "kamei14-git-v2",
+                              cohort("2024-01-01", "2024-01-05"))
+    assert {record["id"] for record in records} == set(by_id)
 
 
 def test_recent_unobserved_commit_is_immature(tmp_path):

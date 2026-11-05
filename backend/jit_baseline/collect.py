@@ -366,7 +366,12 @@ class _History:
         entropy = 0.0
         if total > 0:
             entropy = -sum((value / total) * math.log(value / total) for value in churn if value > 0)
-        ages = [(commit["epoch"] - self.file_last[path][1]) / 86400 for path in paths if path in self.file_last]
+        raw_ages = [(commit["epoch"] - self.file_last[path][1]) / 86400
+                    for path in paths if path in self.file_last]
+        # 作者日期可被 rebase/cherry-pick 改写，可能早于第一父链上文件的上次修改时间。
+        # 文件年龄物理上不能为负，按 0 处理，并把被钳制的文件数写入采集证据。
+        negative_ages = sum(1 for value in raw_ages if value < 0)
+        ages = [max(0.0, value) for value in raw_ages]
         author_epochs = self.author_epochs.get(commit["email"], [])
         recent = commit["epoch"] - RECENT_DAYS * 86400
         return {
@@ -384,6 +389,7 @@ class _History:
             "exp": len(author_epochs),
             "rexp": sum(1 for epoch in author_epochs if epoch >= recent),
             "sexp": sum(self.author_dirs.get((commit["email"], subsystem), 0) for subsystem in subsystems),
+            "_negativeFileAges": negative_ages,
         }
 
 
@@ -427,6 +433,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
 
     labels, evidence, records = set(), [], []
     skipped = {"noEarlierChange": 0, "outsideWindow": 0}
+    negative_file_ages = 0
     fix_commits = 0
     for commit in entries:
         parent = commit["parents"][0] if commit["parents"] else None
@@ -442,6 +449,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                 excluded["empty"] += 1
             else:
                 metrics = state.features(commit)
+                negative_file_ages += metrics.pop("_negativeFileAges", 0)
                 if metrics["fix"]:
                     fix_commits += 1
                     for item in commit["files"]:
@@ -494,6 +502,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                 "labeledCommits": len(labels), "unresolved": dict(skipped)},
         "counts": {"commitsInWindow": len(window), "records": len(records),
                    "excluded": excluded,
+                   "negativeFileAgeFiles": negative_file_ages,
                    "binaryFiles": sum(1 for commit in window for item in commit["files"]
                                       if item["binary"])},
         "limitations": list(LIMITATIONS),
