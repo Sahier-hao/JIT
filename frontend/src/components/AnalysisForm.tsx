@@ -98,7 +98,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
         repositoryUrl,
         branch,
         strategy,
-        ...(explicitModel ? { modelId: choice } : { algorithm }),
+        ...(explicitModel ? { modelId: choice } : choice === 'default' ? {} : { algorithm }),
       })
       projectsChanged()
       onStarted(job)

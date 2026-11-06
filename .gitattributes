@@ -6,3 +6,6 @@ docs/evidence/register-existing-models-and-predict-json/** -text whitespace=cr-a
 
 docs/evidence/add-repository-workspace-closeout-20261019/** -text whitespace=-blank-at-eof,cr-at-eol
 docs/evidence/restyle-review-workbench-closeout-20261019/** -text whitespace=-blank-at-eof,cr-at-eol
+
+# Versioned model releases are reviewed binary assets, never line-normalized.
+backend/model-packages/*.zip binary

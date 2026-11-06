@@ -69,3 +69,28 @@ it('offers real registered models and sends the explicitly selected model', asyn
   const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!
   expect(JSON.parse(String(call[1]?.body))).toMatchObject({ modelId: 'dt', strategy: 'generic-model' })
 })
+
+it('uses the administrator default without sending a training algorithm', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    if (options?.method === 'POST') return new Response('{}', { status: 202 })
+    if (String(path).includes('/training-methods')) return new Response(JSON.stringify({
+      schema: 'kamei14-git-v2',
+      methods: [
+        { method: 'decision-tree-v1', name: '决策树', label: '决策树', category: 'classic', available: true, supportedSchema: true, requires: [], reason: null },
+      ],
+    }), { status: 200 })
+    return new Response(JSON.stringify({ models: [
+      { modelId: 'dt', name: '决策树', method: 'decision-tree-v1', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
+    ] }), { status: 200 })
+  })
+  render(<AnalysisForm repositoryUrl="https://github.com/example/default" onStarted={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.selectOptions(await screen.findByLabelText('模型来源'), 'default')
+  await user.click(screen.getByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
+  const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!
+  const body = JSON.parse(String(call[1]?.body))
+  expect(body).toMatchObject({ strategy: 'generic-model' })
+  expect(body).not.toHaveProperty('algorithm')
+  expect(body).not.toHaveProperty('modelId')
+})

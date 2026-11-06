@@ -1,0 +1,16 @@
+{
+  "kind": "bundled-model-package-inspection",
+  "packageName": "jit-nine-models-v1.zip",
+  "packageVersion": 1,
+  "packageSha256": "3c15b7d9453291ba5c106e09b93403e234c0c1c67c0413b2d3654820f3377d76",
+  "sidecarMatches": true,
+  "modelCount": 9,
+  "modelFileCount": 81,
+  "zipEntryCount": 82,
+  "compressedBytes": 6213040,
+  "expandedBytes": 18881077,
+  "storage": "ordinary-git",
+  "gitLfsRequired": false,
+  "rawArtifactsCommitted": false,
+  "sqliteCommitted": false
+}

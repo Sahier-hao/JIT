@@ -391,17 +391,12 @@ class CatalogStorage:
                 )
         return self.latest_model_package_import()
 
-    def latest_model_package_import(self):
-        with self.connection() as db:
-            row = db.execute(
-                'SELECT * FROM model_package_import ORDER BY created_at DESC, id DESC LIMIT 1'
-            ).fetchone()
-            if row is None:
-                return None
-            items = db.execute(
-                'SELECT * FROM model_package_import_item WHERE import_id=? ORDER BY ordinal',
-                (row['id'],),
-            ).fetchall()
+    @staticmethod
+    def _model_package_import(db, row):
+        items = db.execute(
+            'SELECT * FROM model_package_import_item WHERE import_id=? ORDER BY ordinal',
+            (row['id'],),
+        ).fetchall()
         return {
             'importId': row['id'],
             'packageSha256': row['package_sha256'],
@@ -428,6 +423,23 @@ class CatalogStorage:
                 'message': item['message'],
             } for item in items],
         }
+
+    def latest_model_package_import(self):
+        with self.connection() as db:
+            row = db.execute(
+                'SELECT * FROM model_package_import ORDER BY created_at DESC, id DESC LIMIT 1'
+            ).fetchone()
+            return self._model_package_import(db, row) if row is not None else None
+
+    def model_package_import_by_sha(self, package_sha256):
+        """Return the latest successful import of one exact package."""
+        with self.connection() as db:
+            row = db.execute(
+                "SELECT * FROM model_package_import WHERE package_sha256=? AND status='completed' "
+                "ORDER BY created_at DESC, id DESC LIMIT 1",
+                (package_sha256,),
+            ).fetchone()
+            return self._model_package_import(db, row) if row is not None else None
 
     def feature_means(self, version, fields, commit_ids=None):
         """按数据集版本取字段均值，作为特征归因的基线（PEX-02）。

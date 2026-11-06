@@ -80,10 +80,15 @@ def test_initialize_cli_is_explicit(tmp_path, monkeypatch, capsys):
     import json
     from jit_baseline.cli import main
     database = tmp_path / 'catalog.sqlite3'
-    monkeypatch.setattr('sys.argv', ['jit', 'catalog-init', '--database', str(database)])
+    monkeypatch.setattr('sys.argv', ['jit', 'catalog-init', '--database', str(database),
+                                     '--skip-bundled-models'])
     main()
     result = json.loads(capsys.readouterr().out)
-    assert result == {'kind': 'catalog-initialized', 'version': VERSION}
+    assert result['kind'] == 'catalog-initialized'
+    assert result['version'] == VERSION
+    assert result['bundledPackage'] == {
+        'status': 'skipped', 'reason': 'disabled-by-option', 'skipped': True,
+    }
     assert database.exists()
 
 
@@ -188,7 +193,7 @@ def test_initialize_cli_uses_same_database_environment_as_http(tmp_path, monkeyp
     from jit_baseline.cli import main
     database = tmp_path / 'environment.sqlite3'
     monkeypatch.setenv('JIT_CATALOG_DATABASE', str(database))
-    monkeypatch.setattr('sys.argv', ['jit', 'catalog-init'])
+    monkeypatch.setattr('sys.argv', ['jit', 'catalog-init', '--skip-bundled-models'])
     main()
     capsys.readouterr()
     assert database.exists()

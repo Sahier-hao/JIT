@@ -14,7 +14,7 @@
 
 ## 运行
 
-首次安装执行 `npm ci`。后端先备份并运行 `catalog-init` 升级目录库，再分别启动：
+首次安装执行 `npm ci`。后端先备份并运行 `catalog-init` 升级目录库；该命令同时恢复仓库内置九模型包，再分别启动：
 
 ```powershell
 cd backend

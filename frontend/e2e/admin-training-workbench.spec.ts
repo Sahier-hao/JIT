@@ -52,7 +52,7 @@ test('大型仓库完成现成模型、自动训练、强制训练和管理员�
   expect(forcedDone.modelStrategy).toBe('repository-trained')
   expect(forcedDone.modelId).toBeTruthy()
 
-  const datasetResponse = await page.request.get('/api/v1/datasets/kamei14-git-v1-e2e-large-repo/versions')
+  const datasetResponse = await page.request.get('/api/v1/datasets/kamei14-git-v2-e2e-large-repo/versions')
   expect(datasetResponse.ok()).toBe(true)
   const largeDataset = (await datasetResponse.json()).versions.find((item: { version: string }) => item.version === automaticDone.datasetVersion)
   expect(largeDataset).toBeTruthy()
@@ -71,7 +71,7 @@ test('大型仓库完成现成模型、自动训练、强制训练和管理员�
   expect(detail.artifactDatasetVersion).toBe(automaticDone.datasetVersion)
   expect(detail.split.test.positiveCount).toBeGreaterThanOrEqual(3)
 
-  await page.goto(`/#/admin/datasets/kamei14-git-v1-e2e-large-repo/${automaticDone.datasetVersion}`)
+  await page.goto(`/#/admin/datasets/kamei14-git-v2-e2e-large-repo/${automaticDone.datasetVersion}`)
   await expect(page.getByText('提交级聚合', { exact: false }).first()).toBeVisible({ timeout: 30000 })
   const trainingResponse = page.waitForResponse(item => item.url().endsWith('/api/v1/training-tasks') && item.request().method() === 'POST')
   await page.getByRole('button', { name: '创建训练任务', exact: true }).click()

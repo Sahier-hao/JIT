@@ -1,0 +1,75 @@
+{
+  "kind": "bundle-trained-models-verification",
+  "date": "2026-11-06",
+  "package": {
+    "name": "jit-nine-models-v1.zip",
+    "sha256": "3c15b7d9453291ba5c106e09b93403e234c0c1c67c0413b2d3654820f3377d76",
+    "modelCount": 9,
+    "status": "completed",
+    "registeredCount": 9,
+    "readyCount": 9,
+    "userSelectableCount": 9,
+    "failureCount": 0
+  },
+  "backend": {
+    "passed": 732,
+    "skipped": 1,
+    "failed": 0
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "lint": "passed-with-existing-warnings",
+    "unitTests": {
+      "passed": 353,
+      "failed": 0,
+      "files": 45
+    },
+    "build": "passed-with-existing-chunk-warnings"
+  },
+  "playwright": {
+    "default": {
+      "passed": 16,
+      "skipped": 0,
+      "failed": 0
+    },
+    "adminTraining": {
+      "passed": 1,
+      "skipped": 1,
+      "failed": 0
+    },
+    "experiments": {
+      "passed": 1,
+      "skipped": 1,
+      "failed": 0
+    },
+    "modelPackage": {
+      "passed": 1,
+      "skipped": 1,
+      "failed": 0
+    },
+    "bundledModels": {
+      "passed": 1,
+      "skipped": 1,
+      "failed": 0
+    },
+    "preview": {
+      "passed": 4,
+      "skipped": 2,
+      "failed": 0
+    }
+  },
+  "openspec": {
+    "strictValidation": "passed"
+  },
+  "repository": {
+    "gitDiffCheck": "passed",
+    "compressedPackageCommitted": true,
+    "rawArtifactsCommitted": false,
+    "sqliteCommitted": false
+  },
+  "scope": {
+    "automaticallySelectedBestModel": false,
+    "targetDefaultPolicyOverwritten": false,
+    "gitLfsRequired": false
+  }
+}

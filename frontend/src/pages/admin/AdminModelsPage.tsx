@@ -240,6 +240,7 @@ function ModelPackageDelivery({ latest }: { latest: ModelPackageImport | null })
         <span>{latest.packageName}</span><span>{latest.status === 'completed' ? '导入完成' : latest.status === 'partial' ? '部分导入' : '导入失败'}</span>
         <span>新建 {latest.registeredCount}</span><span>复用 {latest.reusedCount}</span><span>已存在 {latest.alreadyRegisteredCount}</span>
       </div>
+      <div className="model-package-identity"><span>SHA-256</span><code>{latest.packageSha256}</code></div>
       {latest.message ? <p>{latest.message}</p> : null}
       {failures.length ? <ul className="model-package-failures">{failures.map((item, index) =>
         <li key={`${item.artifactRunId ?? item.artifactKey ?? 'item'}-${index}`}><code>{item.artifactKey ?? item.artifactRunId ?? '未知条目'}</code><span>{item.message ?? item.code ?? '导入失败'}</span></li>)}</ul> : null}

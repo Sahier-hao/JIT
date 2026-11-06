@@ -1,0 +1,12 @@
+Command:
+  .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp=.pytest-tmp-bundle-final-2
+
+Result:
+  732 passed, 1 skipped, 2 warnings in 637.80s (0:10:37)
+
+Skipped:
+  tests/test_catalog_api.py:332 - 真实数据集尚未导入
+
+Warnings:
+  Transformer encoder nested-tensor notice
+  Intentional duplicate-entry warning from the archive-control rejection test

@@ -106,6 +106,14 @@ def main():
     from .catalog_storage import DEFAULT_DATABASE
     initialize = commands.add_parser('catalog-init')
     initialize.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
+    initialize.add_argument('--artifact-root', type=Path,
+                            default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'),
+                            help='内置模型包的本地解包与登记根目录')
+    bundled = initialize.add_mutually_exclusive_group()
+    bundled.add_argument('--bundled-package', type=Path, default=None,
+                         help='覆盖默认仓库内置模型包路径')
+    bundled.add_argument('--skip-bundled-models', action='store_true',
+                         help='只初始化目录库，不导入仓库内置模型包')
     reset_admin = commands.add_parser('admin-reset-password', help='在本机重置管理员密码并撤销其全部会话')
     reset_admin.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     reset_admin.add_argument('--username', required=True)
@@ -149,11 +157,29 @@ def main():
     check = commands.add_parser("check-evidence")
     check.add_argument("target", type=Path)
     args = parser.parse_args()
+    exit_code = 0
     try:
         if args.command == 'catalog-init':
+            from .catalog import ModelCatalog
             from .catalog_storage import CatalogStorage, VERSION
-            CatalogStorage(args.database).initialize()
+            from .model_packages import BUNDLED_PACKAGE_PATH, import_bundled_model_package
+            storage = CatalogStorage(args.database)
+            storage.initialize()
             result = {'kind': 'catalog-initialized', 'version': VERSION}
+            if args.skip_bundled_models:
+                result['bundledPackage'] = {
+                    'status': 'skipped',
+                    'reason': 'disabled-by-option',
+                    'skipped': True,
+                }
+            else:
+                bundled_result = import_bundled_model_package(
+                    ModelCatalog(storage, args.artifact_root),
+                    args.bundled_package or BUNDLED_PACKAGE_PATH,
+                )
+                result['bundledPackage'] = bundled_result
+                if bundled_result['status'] != 'completed':
+                    exit_code = 1
         elif args.command == 'admin-reset-password':
             from getpass import getpass
             from .catalog_storage import CatalogStorage
@@ -297,6 +323,8 @@ def main():
             uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=args.port, workers=1)
             return
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        if exit_code:
+            sys.exit(exit_code)
     except (BaselineError, OSError) as exc:
         print(json.dumps({"error": getattr(exc, "code", "IO_ERROR"), "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
         sys.exit(getattr(exc, "exit_code", 1))

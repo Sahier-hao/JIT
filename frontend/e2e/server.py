@@ -29,6 +29,7 @@ MODELS = (
 )
 EXPERIMENT_MODE = os.environ.get("JIT_E2E_EXPERIMENT_MODE") == "1"
 PACKAGE_MODE = os.environ.get("JIT_E2E_MODEL_PACKAGE_MODE") == "1"
+BUNDLED_MODEL_MODE = os.environ.get("JIT_E2E_BUNDLED_MODEL_MODE") == "1"
 
 
 def _rewrite_run_identity(directory, marker):
@@ -132,7 +133,7 @@ def _package_recovery_setup():
                         else corrupt_bytes if info.filename == corrupt_model_path
                         else original.read(info.filename))
                 target.writestr(info, data)
-    changed.replace(mixed_package)
+    mixed_package = changed
     mixed_sha = hashlib.sha256(mixed_package.read_bytes()).hexdigest()
     mixed_package.with_name(mixed_package.name + ".sha256").write_text(
         f"{mixed_sha}  {mixed_package.name}\n", encoding="ascii")
@@ -152,12 +153,63 @@ def _package_recovery_setup():
         json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _bundled_model_setup():
+    """Initialize the real application data solely from the committed bundle."""
+    from jit_baseline.catalog import ModelCatalog
+    from jit_baseline.catalog_storage import CatalogStorage
+    from jit_baseline.model_packages import (
+        BUNDLED_PACKAGE_PATH,
+        import_bundled_model_package,
+        inspect_bundled_model_package,
+    )
+
+    inspected = inspect_bundled_model_package(BUNDLED_PACKAGE_PATH)
+    storage = CatalogStorage(DATABASE)
+    storage.initialize()
+    catalog = ModelCatalog(storage, ARTIFACT_ROOT)
+    imported = import_bundled_model_package(catalog)
+    if imported["status"] != "completed":
+        raise RuntimeError(f"仓库内置模型包初始化失败：{imported}")
+    suite = ARTIFACT_ROOT / "suites" / "jit-bundled"
+    suite.mkdir(parents=True)
+    (suite / "suite.json").write_text(json.dumps({
+        "kind": "multi-dataset-suite",
+        "dataset": "仓库内置九模型",
+        "version": "jit-bundled-v1",
+        "schemaName": "openstack-six-v1",
+        "metricSet": "metric-set-v2",
+        "status": "complete",
+        "methods": [{
+            "method": item["method"],
+            "status": "succeeded",
+            "runId": item["artifactRunId"],
+            "artifactKey": item["artifactKey"],
+        } for item in inspected["models"]],
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    evidence = {
+        "packageName": inspected["packageName"],
+        "packageSha256": inspected["packageSha256"],
+        "models": [{
+            "sourceModelId": item["sourceModelId"],
+            "artifactRunId": item["artifactRunId"],
+            "method": item["method"],
+        } for item in inspected["models"]],
+        "import": imported,
+    }
+    (DATABASE.parent / "bundled-model-bootstrap.json").write_text(
+        json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def main():
     DATABASE.unlink(missing_ok=True)
     shutil.rmtree(ARTIFACT_ROOT, ignore_errors=True)
     shutil.rmtree(DATASET_ROOT, ignore_errors=True)
     ARTIFACT_ROOT.mkdir(parents=True, exist_ok=True)
     shutil.copytree(BACKEND / "data" / "datasets", DATASET_ROOT)
+    if BUNDLED_MODEL_MODE:
+        _bundled_model_setup()
+        uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=int(sys.argv[1]), workers=1)
+        return
     for name in MODELS:
         shutil.copytree(BACKEND / "artifacts" / name, ARTIFACT_ROOT / name)
     if EXPERIMENT_MODE:

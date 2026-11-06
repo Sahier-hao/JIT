@@ -16,7 +16,7 @@ interface TrendView {
   mode: 'group' | 'single'
   sourceSyncIds: string[]
   summary: { commitCount: number | null }
-  buckets: { commitCount: number | null; highRate: number | null }[]
+  buckets: { start: string; end: string; commitCount: number | null; highRate: number | null }[]
 }
 
 const api = 'http://127.0.0.1:18769'
@@ -140,7 +140,7 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await page.screenshot({ path: `${evidence}/${info.project.name}-old-evidence.png`, fullPage: true })
 
   await page.getByRole('button', { name: '返回项目 PR 审查', exact: true }).click()
-  await page.getByRole('button', { name: '分析', exact: true }).click()
+  await page.getByRole('navigation', { name: '项目工作台视图' }).getByRole('button', { name: '分析', exact: true }).click()
   await page.getByRole('button', { name: '风险趋势', exact: true }).click()
   await expect(page.locator('.project-trends .ui-chart svg path[stroke="#2a78d6"]').first()).toBeAttached()
   await expect(page.getByRole('table', { name: '趋势等价数据表：风险分为模型估计，高分占比不是缺陷率' })).toBeVisible()
@@ -155,14 +155,24 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await expect(plot).toBeVisible()
   await plot.focus()
   await page.keyboard.press('End')
-  const lastDataIndex = oldView.buckets.findLastIndex(bucket => bucket.commitCount === 27)
-  for (let index = lastDataIndex + 1; index < oldView.buckets.length; index += 1) await page.keyboard.press('ArrowLeft')
-  await expect(page.locator('.trend-tooltip').first()).toContainText('27 个已分析提交')
+  const lastDataIndex = oldView.buckets.findLastIndex(bucket => bucket.commitCount != null)
+  expect(lastDataIndex).toBeGreaterThan(0)
+  const lastDataCount = oldView.buckets[lastDataIndex].commitCount!
+  const previousDataCount = oldView.buckets[lastDataIndex - 1].commitCount!
+  expect(lastDataCount).toBeGreaterThan(0)
+  expect(previousDataCount).toBeGreaterThan(0)
+  for (let index = oldView.buckets.length - 1; index > lastDataIndex; index -= 1) {
+    await page.keyboard.press('ArrowLeft')
+    await expect(page.locator('.trend-tooltip').first()).toContainText(oldView.buckets[index - 1].start.slice(0, 10))
+  }
+  await expect(page.locator('.trend-tooltip').first()).toContainText(`${lastDataCount} 个已分析提交`)
   await page.keyboard.press('ArrowLeft')
-  await expect(page.locator('.trend-tooltip').first()).not.toContainText('27 个已分析提交')
+  await expect(page.locator('.trend-tooltip').first()).toContainText(oldView.buckets[lastDataIndex - 1].start.slice(0, 10))
+  await expect(page.locator('.trend-tooltip').first()).toContainText(`${previousDataCount} 个已分析提交`)
   await page.keyboard.press('ArrowRight')
+  await expect(page.locator('.trend-tooltip').first()).toContainText(`${lastDataCount} 个已分析提交`)
   await page.keyboard.press('Enter')
-  const drill = page.locator('.trend-drilldown').filter({ hasText: '共 27 条' })
+  const drill = page.locator('.trend-drilldown').filter({ hasText: `共 ${lastDataCount} 条` })
   await expect(drill).toBeVisible()
   await drill.getByRole('button', { name: /调整审查示例/ }).first().click()
   await expect(page).toHaveURL(new RegExp(`/analyses/${oldView.sourceSyncIds[0]}/commits/`))
