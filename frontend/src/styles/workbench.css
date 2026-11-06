@@ -616,16 +616,8 @@
 .wb-code .diff-line { background: var(--card); }
 .wb-code .diff-line:hover .diff-code { background: var(--hover); }
 
-.wb-code .diff-code-insert,
-.wb-code .diff-gutter-insert { background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
-.wb-code .diff-gutter-insert { color: var(--accent); }
-
-.wb-code .diff-code-delete,
-.wb-code .diff-gutter-delete { background: color-mix(in srgb, var(--risk-high) 7%, var(--card)); }
-.wb-code .diff-gutter-delete { color: var(--risk-high); }
-
-.wb-code .diff-line.is-focused .diff-code { background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
-.wb-code .diff-line.is-focused .diff-gutter { background: var(--accent-soft); color: var(--fg); }
+/* 增删底色、行号底色与聚焦态统一由 workbench-modern.css 的 GitHub（Primer）变量负责，
+ * 这一层不再用 color-mix 自绘，否则会把 #e6ffec / #ffebe9 冲淡成灰绿灰红。 */
 
 .wb-code .diff-hunk-header-content { white-space: pre-wrap; }
 

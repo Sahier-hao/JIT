@@ -27,7 +27,7 @@ it('retries failed discovery and paginates closed and all ranges explicitly', as
   await screen.findByText('远端暂不可用'); failed = false
   await user.click(screen.getByRole('button', { name: '重新加载' }))
   await screen.findByRole('heading', { name: '#12 修复边界' })
-  await user.click(screen.getByText('已关闭 / 合并'))
+  await user.click(screen.getByText('已结束'))
   await waitFor(() => expect(fetch.mock.calls.some(([path]) => String(path).endsWith('state=closed&page=1'))).toBe(true))
   await user.click(screen.getByRole('button', { name: '下一页' }))
   await waitFor(() => expect(fetch.mock.calls.some(([path]) => String(path).endsWith('state=closed&page=2'))).toBe(true))

@@ -35,7 +35,7 @@ export function LoadingNotice({
   prefix?: boolean
 }) {
   return (
-    <div className="notice notice-loading" role="status">
+    <div className="notice notice-loading" role="status" aria-busy="true" aria-live="polite">
       <Icon name="info" size={16} />
       <div>
         {prefix ? <strong>正在读取</strong> : null}

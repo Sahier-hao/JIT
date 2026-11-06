@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { Empty } from '../ui/feedback'
 import { Segmented } from '../ui/segmented'
 import { Button, Select } from '../ui/controls'
+import { Dropdown } from '../ui/dropdown'
 import { Dialog } from '../ui/dialog'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
@@ -162,9 +164,23 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
     {result?.supported === false ? null : <>
       <div className="pr-hub-toolbar">
         <div className="pr-hub-filters">
-          <Segmented aria-label="PR 范围" value={state} onChange={value => { setState(value as PRState); setPage(1) }} options={[{ label: '开放', value: 'open' }, { label: '已关闭 / 合并', value: 'closed' }, { label: '全部', value: 'all' }]}/>
-          <Segmented aria-label="PR 排序" value={sortBy} onChange={value => setSortBy(value as 'updated' | 'risk')} options={[{ label: '按更新', value: 'updated' }, { label: '按风险', value: 'risk' }]}/>
+          <Segmented aria-label="PR 范围" value={state} onChange={value => { setState(value as PRState); setPage(1) }} options={[{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]}/>
         </div>
+        <span className="pr-hub-sort">
+          <Dropdown
+            items={[{ key: 'updated', label: '按最近更新' }, { key: 'risk', label: '按风险最高' }]}
+            onClick={key => setSortBy(key as 'updated' | 'risk')}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="pr-hub-sort-btn"
+              aria-haspopup="menu"
+              aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`}
+              trailing={<ChevronDown size={13} aria-hidden/>}
+            >排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}</Button>
+          </Dropdown>
+        </span>
         <div className="pr-hub-actions">
           {tracking?.supported === false ? null : <Button icon={<span className="pr-auto-dot" data-on={tracking?.enabled ? 'true' : undefined} aria-hidden="true"/>} onClick={() => setTrackingOpen(true)}>{tracking?.enabled ? '自动分析已开启' : '自动分析'}</Button>}
           <Button variant="primary" disabled={busy} onClick={refresh}>{busy ? '正在检查…' : '检查远端 PR'}</Button>
@@ -217,7 +233,7 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
         </article>
       })}</div> : <div className="pr-hub-empty"><Empty description="当前范围没有 PR"/></div>}
       <div className="pr-hub-foot">
-        <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}</span>
+        <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}{state === 'closed' ? ' · 已结束含已合并' : ''}</span>
         {page > 1 || result.hasMore ? <nav className="pr-hub-pager" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)}>上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)}>下一页</Button></nav> : null}
       </div>
     </div> : null}
@@ -251,3 +267,4 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
     </Dialog>
   </section>
 }
+

@@ -24,13 +24,10 @@ const message = (error: unknown) => error instanceof Error ? error.message : '�
 const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const changeLabels: Record<string, string> = { added: '新增', removed: '删除', modified: '修改', renamed: '重命名', copied: '复制', changed: '内容变化', unchanged: '未变化' }
 const fileLabel: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
-/** 侧栏窄，只留尾部两段路径：文件名和它所在的目录比仓库顶层目录更有用。 */
-function shortPath(path: string) {
-  const parts = path.split('/')
-  if (path.length <= 34 || parts.length < 3) return path
-  const tail = parts.slice(-2).join('/')
-  const head = parts[0]
-  return head.length + tail.length + 3 <= 34 ? `${head}/…/${tail}` : `…/${tail}`
+/** 文件行把路径拆成"目录 + 文件名"：目录可以被省略号吃掉，文件名必须始终完整。 */
+function splitPath(path: string) {
+  const index = path.lastIndexOf('/')
+  return index < 0 ? { dir: '', name: path } : { dir: path.slice(0, index + 1), name: path.slice(index + 1) }
 }
 function backup(work: PRWork) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, JSON.stringify({ format: 'jit-pr-review-v1', work }, null, 2), 'application/json') }
 
@@ -366,10 +363,11 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
         <div className="wb-file-list" role="listbox" aria-label="改动文件">
           {visibleFiles.map(f => {
             const state = round.progress[f.path]?.state ?? 'unread'
+            const { dir, name } = splitPath(f.path)
             return <button key={f.path} role="option" aria-selected={path === f.path} className={`wb-file${path === f.path ? ' is-active' : ''}`} onClick={() => chooseFile(f.path)}>
               <span className={`wb-file-flag is-${f.status}`} aria-hidden="true"/>
-              <span className="wb-file-path" title={f.path}>{shortPath(f.path)}</span>
-              <span className="wb-file-meta"><em className="wb-add">+{f.additions}</em><em className="wb-del">−{f.deletions}</em>{fileRisks[f.path] != null ? <em className="wb-file-risk" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[f.path].toFixed(3)}</em> : null}<span className={`wb-file-state is-${state}`}>{fileLabel[state]}</span></span>
+              <span className="wb-file-path" title={f.path}><span className="wb-file-path-name">{name}</span><span className="wb-file-path-dir">{dir}</span></span>
+              <span className="wb-file-meta">{f.additions ? <em className="wb-add">+{f.additions}</em> : null}{f.deletions ? <em className="wb-del">−{f.deletions}</em> : null}{fileRisks[f.path] != null ? <em className="wb-file-risk" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[f.path].toFixed(3)}</em> : null}<span className={`wb-file-state is-${state}`}>{fileLabel[state]}</span></span>
             </button>
           })}
           {!visibleFiles.length ? <p className="wb-pane-empty">没有匹配的文件。</p> : null}

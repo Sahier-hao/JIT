@@ -1,0 +1,341 @@
+/**
+ * 信息密度层：按 ui-ux-pro-max 的 Data-Dense Dashboard 规范收紧 JIT 的工作面。
+ *
+ * 依据（skill 搜索结果，逐条落在下面的规则里）：
+ * - styles.csv → data-dense-dashboard：12 列栅格、8px 栅格间距、12px 卡片内边距、
+ *   12–14px 正文、36px 表格行高、sticky 表头、行 hover 高亮、紧凑但不拥挤。
+ * - products.csv → Developer Tool / IDE：Minimalism & Swiss Style 打底，代码面保持深色。
+ * - ux-guidelines.csv：状态不只靠颜色、空状态必须给出下一步、焦点环始终可见、
+ *   长表用滚动而不是撑破布局、进度要有可感知的指示。
+ *
+ * 字体不动：展示字仍是 tokens.css 的衬线，正文 Inter，代码/数字等宽并启用 tabular-nums。
+ * 这一层在 index.css 中最后导入，只覆盖尺寸、栅格与密度，不引入新颜色。
+ */
+
+:root {
+  --grid-gap: 8px;
+  --card-padding: 12px;
+  --fs-small: 12px;
+  --row-h: 36px;
+  --sidebar-w: 240px;
+  --header-h: 56px;
+  --workspace-sidebar: var(--sidebar-w);
+}
+
+/* 等宽数字：让编号、行号、时间、分数在同一列里竖着对齐 */
+.mr-row-number,
+.mr-row-time,
+.wb-gutter-number,
+.wb-facts,
+table td,
+table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 外壳：更窄的侧栏、更矮的顶栏、更宽的正文 ---------- */
+.workspace-sidebar { padding: 16px 12px 14px; }
+.workspace-brand { padding-bottom: 14px; }
+.workspace-topbar { height: var(--header-h); }
+.workspace-main {
+  max-width: 1440px;
+  padding: 22px 28px 56px;
+}
+.page-heading { margin-bottom: 20px; }
+.page-heading h1 { font-size: 30px; line-height: 1.15; }
+.page-intro { margin-top: 6px; font-size: 13px; line-height: 1.5; }
+
+/* ---------- 我的审查：KPI 条 + 表格式行 ---------- */
+.mr-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 18px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.mr-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 9px 14px 10px;
+  border: 0;
+  border-left: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+.mr-kpi:nth-child(6n + 1) { padding-left: 0; border-left: 0; }
+.mr-kpi-label {
+  overflow: hidden;
+  color: var(--fg-4);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-kpi-value {
+  font-family: var(--display);
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -.015em;
+  color: var(--fg);
+}
+.mr-kpi-total { background: transparent; }
+
+.mr-toolbar { margin: 0 0 14px; padding: 0 0 8px; }
+
+.mr-group { margin: 0 0 26px; }
+.mr-group-head { margin: 0 0 6px; }
+
+.mr-list { border-top: 1px solid var(--line); }
+
+/* 表头与行共用同一套列宽，滚动时表头吸附在容器顶部 */
+.mr-cols,
+.mr-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 208px 112px 88px;
+  align-items: center;
+  gap: 14px;
+}
+.mr-cols {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--canvas);
+  color: var(--fg-4);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.mr-row {
+  min-height: 46px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+.mr-row:hover { background: var(--soft); }
+.mr-row h3 {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-row-meta {
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-row-number { font-size: 11.5px; }
+.mr-row-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11.5px;
+  text-align: left;
+}
+.mr-row-progress > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mr-bar {
+  width: 120px;
+  max-width: 120px;
+  height: 2px;
+  min-height: 2px;
+  margin-top: 4px;
+  border-radius: 999px;
+}
+.mr-bar i { height: 100%; min-height: 2px; }
+.mr-row-time { font-size: 11px; }
+.mr-row-action.ui-btn--secondary {
+  justify-content: flex-end;
+  font-size: 12px;
+  text-decoration-color: transparent;
+}
+.mr-row:hover .mr-row-action.ui-btn--secondary {
+  color: var(--accent) !important;
+  text-decoration-color: currentColor;
+}
+
+/* 空状态：给下一步，而不是只留一句"没有数据" */
+.mr-empty {
+  padding: 26px 12px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.mr-empty h2 { font-size: 15px; font-weight: 500; }
+.mr-empty p { margin-top: 4px; color: var(--fg-3); font-size: 12.5px; }
+
+/* 项目卡：12px 内边距、8px 栅格间距 */
+.project-grid { gap: var(--grid-gap); }
+.project-card { padding: 14px; }
+.project-card h2 { font-size: 16px; }
+
+/* ---------- PR 审查工作单的表格沿用密度层；面板与代码区由 workbench-modern.css 接管 ---------- */
+
+.wb-commit-table table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+  color: var(--fg-4);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.wb-commit-table table tbody td {
+  height: var(--row-h);
+  padding: 6px 10px;
+  font-size: 12.5px;
+}
+.wb-commit-table table tbody tr:hover { background: var(--soft); }
+
+
+
+/* ---------- 交互与可达性 ---------- */
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 1240px) {
+  .mr-cols,
+  .mr-row { grid-template-columns: minmax(0, 1fr) 172px 88px; }
+  .mr-cols span:nth-child(3),
+  .mr-row-time { display: none; }
+  .mr-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .workspace-main { padding: 16px 18px 40px; }
+  .mr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mr-cols { display: none; }
+  .mr-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+  }
+  .mr-row-time { display: block; }
+}
+
+/* 侧栏激活项：瑞士式左侧墨蓝竖线，不用胶囊/描边，保持导航像目录。
+ * 注意：当前外壳只有一个「项目」入口，且它对多数路由都会标记 aria-current；
+ * 单入口时左侧竖线会变成孤零零一道蓝痕，所以只在确实存在两个以上入口时启用。 */
+.main-navigation:has(button:nth-child(2)) [aria-current="page"],
+.sidebar-project[aria-current="page"] {
+  background: transparent !important;
+  color: var(--fg) !important;
+  box-shadow: inset 2px 0 0 var(--accent) !important;
+  border-radius: 0 !important;
+  font-weight: 500;
+  padding-left: 10px !important;
+}
+.sidebar-project[aria-current="page"] .project-dot { background: var(--accent); }
+
+
+/* ---- skill: Touch & Interaction（min 44px 触控目标、8px 间距、可见焦点） ---- */
+/* 行内动作保持文字链外观，命中区抬到 32px；窄屏按触控标准放到 44px */
+.mr-row-action,
+.mr-toolbar button {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 32px;
+  padding-block: 6px !important;
+  margin-block: -6px !important;
+}
+.mr-row-action:focus-visible,
+.mr-toolbar button:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (max-width: 768px) {
+  .mr-row-action,
+  .mr-toolbar button {
+    min-height: 44px;
+    padding-block: 12px !important;
+    margin-block: -12px !important;
+  }
+}
+
+/* skill: Typography — 正文不小于 12px，标签类小字只留在表头与元数据标签 */
+.mr-row-meta,
+.mr-row-progress { font-size: 12px !important; }
+
+/* ---- skill: Responsive（375/768 也要可用；窄屏行改堆叠，不再挤四列） ---- */
+@media (max-width: 900px) {
+  .mr-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "main main"
+      "progress time"
+      "action action";
+    row-gap: 6px;
+    padding: 12px;
+  }
+  .mr-row-main { grid-area: main; }
+  .mr-row-progress { grid-area: progress; }
+  .mr-row-time { grid-area: time; justify-self: end; align-self: center; }
+  .mr-row-action { grid-area: action; justify-self: start; }
+  .mr-kpi { padding: 8px 12px; }
+  .mr-kpi-value { font-size: 22px; }
+}
+
+@media (max-width: 900px) {
+  .mr-row {
+    grid-template-areas:
+      "main main"
+      "progress progress"
+      "time action";
+  }
+  .mr-row-time { grid-area: time; align-self: center; justify-self: start; }
+  .mr-row-action { grid-area: action; justify-self: end; padding-inline: 10px !important; }
+}
+
+/* KPI 条换成多行后，每行首格不再需要分隔线（否则左侧会多出半截竖线） */
+@media (max-width: 1240px) {
+  .mr-kpi:nth-child(3n + 1) { padding-left: 0; border-left: 0; }
+}
+@media (max-width: 900px) {
+  .mr-kpi:nth-child(2n + 1) { padding-left: 0; border-left: 0; }
+}
+
+/* 窄屏时进度条会紧贴上一行文字、看着像下划线：拉开距离并给出可见轨道 */
+@media (max-width: 900px) {
+  .mr-row-progress { gap: 4px 8px; }
+  .mr-bar {
+    margin-top: 8px;
+    background: var(--line-soft) !important;
+    border-radius: 999px;
+  }
+}
+
+/* 工作单的控件尺寸统一由 workbench-modern.css 定义（分段控件 28px、代码正文 12px、
+ * 文件栏按钮 26px），这里不再覆盖，避免两层互相顶。 */

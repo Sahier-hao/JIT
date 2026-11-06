@@ -1,0 +1,1163 @@
+/**
+ * PR 审查工作单的现代改造层。
+ *
+ * 目标（对应 m03560 的反馈）：把"三块浮起来的卡片 + 表格条纹"改成一块带发丝线的工作台，
+ * 让代码区成为真正的编辑器表面，而不是深色表格。
+ *
+ * 约定：
+ * - 只改这一层的视觉，不动 DOM 与交互；旧层的 `.wb-*` 规则已从 dashboard.css 移除，
+ *   本文件在 index.css 里最后导入，靠顺序胜出，不写多余的 !important。
+ * - 代码区是深色面（--dark），其余两栏是纸面（--card / --canvas）。
+ * - 分段控件（按风险/按路径、统一/并排）统一成 28px 高的"轨道 + 白色药丸"，
+ *   Mantine 的 indicator 是 JS 量偏移后绝对定位的，隐藏它、直接给 control 上底色。
+ */
+
+/* ============ 1. 整体骨架：一块面板，靠发丝线分区 ============ */
+.wb {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.wb:has(.wb-body) {
+  height: calc(100vh - 116px);
+  min-height: 620px;
+}
+.wb:not(:has(.wb-body)) {
+  height: auto;
+  min-height: 0;
+}
+/* 折叠态只显示提交表：旧规则的 540px 最小高度会把空面板拉满一屏。 */
+.wb:not(:has(.wb-body)) .wb-commit-table {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* ============ 2. 页头：一行标题 + 一串事实，不再是一张卡 ============ */
+.wb-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 20px;
+  padding: 16px 18px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.wb-head-main {
+  display: flex;
+  flex: 1 1 520px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 24px;
+  min-width: 0;
+}
+.wb-head-text { flex: 1 1 420px; min-width: 0; }
+.wb-crumb {
+  display: flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 8px;
+  color: var(--fg-4);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+.wb-crumb .wb-sep { margin: 0 6px; color: var(--line-strong); }
+.wb-back {
+  margin-right: 8px;
+  color: var(--fg-3);
+  font-size: 12px;
+}
+.wb-back:hover { color: var(--fg); }
+.wb-state {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  color: var(--fg-3);
+  font-size: 10.5px;
+  letter-spacing: .02em;
+}
+.wb-title {
+  margin: 6px 0 0;
+  color: var(--fg);
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -.015em;
+  line-height: 1.3;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+.wb-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 8px;
+  color: var(--fg-4);
+  font-size: 11.5px;
+}
+.wb-facts b { color: var(--fg-2); font-weight: 500; }
+.wb-save { color: var(--fg-4); font-size: 11px; }
+.wb-save.is-error { color: var(--risk-fg); }
+.wb-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+.wb-head-actions .ui-select { width: 108px; }
+.wb-head-actions .ui-select .mantine-Select-input,
+.wb-head-actions .ui-select .mantine-Input-input {
+  height: 30px;
+  min-height: 30px;
+  padding: 0 8px 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.wb-head-actions .ui-btn { height: 30px; font-size: 12px; }
+.wb-head-actions .ui-btn--primary { height: 30px; font-size: 12px; }
+/* 阅读进度：贴着页头底边的一条 2px 线，不占纵向空间 */
+.wb-meter {
+  flex: 0 0 100%;
+  height: 2px;
+  margin: 14px -18px 0;
+  background: var(--line-soft);
+}
+.wb-meter span { display: block; height: 100%; background: var(--accent); }
+
+/* ============ 3. 线索带：一行元信息，不是卡片 ============ */
+.wb-clues {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  padding: 5px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.wb-clues p { margin: 0; color: var(--fg-3); font-size: 11.5px; line-height: 1.45; }
+.wb-clues .ui-btn--link { font-size: 11.5px; }
+.pr-risk-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.pr-risk-label {
+  color: var(--fg-4);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.pr-risk-value { color: var(--fg-2); font-size: 12px; font-weight: 500; }
+
+/* ============ 4. 三栏：一栏一条发丝线，不做卡片 ============ */
+.wb-body {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 248px minmax(0, 1fr) 316px;
+  min-height: 0;
+  border: 0;
+}
+.wb-files,
+.wb-code,
+.wb-notes {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: auto;
+}
+.wb-files { background: var(--card); border-right: 1px solid var(--line); }
+.wb-notes { background: var(--card); border-left: 1px solid var(--line); font-size: 12.5px; }
+
+/* 栏头：40px，标题变成小号大写标签，右侧是计数 */
+.wb-pane-head,
+.wb-files .wb-pane-head,
+.wb-notes .wb-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.wb-pane-head h2 {
+  margin: 0;
+  color: var(--fg-3);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.wb-pane-head .ui-btn { height: 26px; padding: 0 8px; font-size: 11.5px; }
+.wb-count {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-4);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ 5. 文件栏 ============ */
+.wb-file-scope {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 0;
+}
+.wb-file-scope .ui-btn { flex: 0 0 auto; height: 26px; padding: 0 9px; border: 0; background: transparent; color: var(--fg-2); border-radius: 6px; font-size: 11.5px; }
+.wb-file-scope .ui-btn:hover { background: var(--soft); color: var(--fg); }
+.wb-file-scope .ui-btn:last-child { margin-left: auto; }
+.wb-file-scope code {
+  order: 3;
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 2px 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  background: var(--canvas);
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+.wb-file-scope > span { color: var(--fg-4); font-size: 11.5px; }
+.wb-file-scope .ui-btn svg,
+.wb-pane-head .ui-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.wb-pane-note {
+  margin: 6px 10px 0;
+  padding-left: 8px;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 2px solid var(--amber);
+  color: var(--fg-4);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.wb-files .ui-input,
+.wb-files .ui-input.mantine-InputWrapper-root {
+  margin: 8px 10px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.wb-files .ui-input input {
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--card);
+  font-size: 12px;
+}
+.wb-files .ui-input input:focus { border-color: var(--accent); }
+
+/* 分段控件：两个并排的文字按钮共用一圈描边，选中项只换底色。
+   不用"灰轨道 + 白药丸"——那种画法在浅色面上像被压扁的按钮，在深色面上又像贴了块白纸。 */
+.wb-files .ui-segmented,
+.wb-code-head .ui-segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  height: 26px;
+  margin: 8px 10px 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+}
+.wb-code-head .ui-segmented { margin: 0; }
+.wb-files .mantine-SegmentedControl-indicator,
+.wb-code-head .mantine-SegmentedControl-indicator { display: none !important; }
+.wb-files .mantine-SegmentedControl-control,
+.wb-code-head .mantine-SegmentedControl-control {
+  flex: 0 0 auto;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.wb-files .mantine-SegmentedControl-control + .mantine-SegmentedControl-control,
+.wb-code-head .mantine-SegmentedControl-control + .mantine-SegmentedControl-control {
+  border-left: 1px solid var(--line) !important;
+}
+.wb-files .mantine-SegmentedControl-control::before,
+.wb-files .mantine-SegmentedControl-control::after,
+.wb-code-head .mantine-SegmentedControl-control::before,
+.wb-code-head .mantine-SegmentedControl-control::after { display: none !important; }
+.wb-files .mantine-SegmentedControl-label,
+.wb-code-head .mantine-SegmentedControl-label {
+  height: 24px;
+  padding: 0 10px;
+  color: var(--fg-3);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 24px;
+}
+.wb-files .mantine-SegmentedControl-control[data-active="true"],
+.wb-code-head .mantine-SegmentedControl-control[data-active="true"] {
+  background: var(--soft) !important;
+  box-shadow: none !important;
+}
+.wb-files .mantine-SegmentedControl-control[data-active="true"] .mantine-SegmentedControl-label,
+.wb-code-head .mantine-SegmentedControl-control[data-active="true"] .mantine-SegmentedControl-label {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* 文件行：30px 一条，无边框，靠底色与 2px 左条标选中 */
+.wb-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 6px 12px;
+}
+.wb-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.wb-file:hover { background: var(--soft); }
+.wb-file.is-active {
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.wb-file-flag {
+  flex: 0 0 auto;
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+.wb-file-flag.is-modified { background: var(--amber); }
+.wb-file-flag.is-added { background: var(--teal); }
+.wb-file-flag.is-deleted { background: var(--rose); }
+.wb-file-flag.is-renamed { background: var(--violet); }
+/* 路径 = 目录 + 文件名：目录可被省略号吃掉，文件名始终完整（代码审阅里文件名最要紧） */
+.wb-file-path {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+/* 目录只是补充信息：空间不够时从左缘渐隐（而不是留一截被裁断的字，看着像竖线） */
+.wb-file-path-dir {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  margin-left: 6px;
+  color: var(--fg-3);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 26px);
+  mask-image: linear-gradient(90deg, transparent 0, #000 26px);
+}
+.wb-file-path-name { flex: 0 0 auto; color: var(--fg-2); }
+.wb-file.is-active .wb-file-path-name { color: var(--fg); }
+.wb-file.is-active .wb-file-path { color: var(--fg); }
+.wb-file-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 104px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--fg-4);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.wb-file-meta em { font-style: normal; }
+.wb-file-meta .wb-add,
+.wb-file-meta .wb-del { min-width: 28px; text-align: right; }
+.wb-add { color: var(--teal-deep); }
+.wb-del { color: var(--rose-deep); }
+.wb-file-risk { color: var(--fg-4); }
+.wb-file-state { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; min-width: 38px; text-align: right; color: var(--fg-4); font-size: 10px; }
+/* 「未阅读」是默认态，74 行都重复一遍只是噪声；只在偏离默认态时才占位 */
+.wb-file-state.is-unread { visibility: hidden; }
+.wb-file-state.is-read { color: var(--teal-deep); }
+.wb-file-state.is-recheck { color: var(--amber-deep); }
+.wb-file-state.is-uncovered { color: var(--rose-deep); }
+.wb-pane-empty { margin: 10px 12px; color: var(--fg-4); font-size: 11.5px; }
+
+/* ============ 6. 代码区：直接使用 react-diff-view 自带的 GitHub 风表格，
+   只把它的 CSS 变量设成 Primer 的浅色值；增删底色、行号底色、选中高亮都由
+   那份样式表负责，这里不再自己画行底色和色条。 ============ */
+.wb-code {
+  /* GitHub 浅色（Primer）：白底、灰表头、绿色新增、红色删除 */
+  --gh-canvas: #ffffff;
+  --gh-subtle: #f6f8fa;
+  --gh-border: #d0d7de;
+  --gh-border-muted: #d8dee4;
+  --gh-fg: #1f2328;
+  --gh-fg-muted: #59636e;
+  --gh-accent: #0969da;
+
+  --diff-background-color: var(--gh-canvas);
+  --diff-text-color: var(--gh-fg);
+  --diff-font-family: var(--mono);
+  --diff-selection-background-color: #b6d7ff;
+  --diff-selection-text-color: var(--gh-fg);
+  --diff-gutter-insert-background-color: #ccffd8;
+  --diff-gutter-insert-text-color: #1a7f37;
+  --diff-gutter-delete-background-color: #ffd7d5;
+  --diff-gutter-delete-text-color: #cf222e;
+  --diff-gutter-selected-background-color: #fff8c5;
+  --diff-code-insert-background-color: #e6ffec;
+  --diff-code-delete-background-color: #ffebe9;
+  --diff-code-insert-edit-background-color: #abf2bc;
+  --diff-code-delete-edit-background-color: rgba(255, 129, 130, .4);
+  --diff-code-selected-background-color: #fff8c5;
+  --diff-omit-gutter-line-color: var(--gh-accent);
+
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--gh-canvas);
+  color: var(--gh-fg);
+}
+
+/* 代码栏头部：GitHub 的文件头——灰底、发丝线、等宽文件名 */
+.wb-code-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--gh-border);
+  background: var(--gh-subtle);
+}
+.wb-code-title { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: baseline; gap: 8px; min-width: 0; font-family: var(--mono); }
+.wb-code-title code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gh-fg);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-code-meta { display: flex; align-items: center; gap: 8px; color: var(--gh-fg-muted); font-size: 11px; }
+.wb-code-meta .wb-add { color: #1a7f37; }
+.wb-code-meta .wb-del { color: #cf222e; }
+.wb-code-actions { display: flex; flex-direction: row; align-items: center; gap: 6px; margin-left: auto; flex: 0 0 auto; }
+.wb-code-actions .ui-segmented { margin-right: 4px; }
+.wb-code-actions .ui-btn {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-fg-muted);
+  font-size: 12px;
+}
+.wb-code-actions .ui-btn:hover { background: #eaeef2; color: var(--gh-fg); }
+.wb-code-actions .ui-btn--primary { border-color: var(--gh-border); background: #f6f8fa; color: var(--gh-fg); }
+.wb-code-actions .ui-btn--primary:hover { background: #eaeef2; }
+.wb-code-actions .ui-select { width: 96px; }
+.wb-code-actions .ui-select input,
+.wb-code-actions .mantine-Input-input {
+  height: 26px;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--gh-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--gh-fg);
+  font-size: 12px;
+}
+.wb-code-actions .mantine-Input-section { color: var(--gh-fg-muted); }
+
+.wb-code-hint {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--gh-border-muted);
+  background: var(--gh-canvas);
+  color: var(--gh-fg-muted);
+  font-size: 11.5px;
+}
+.wb-code-hint .ui-btn--link { color: var(--gh-accent); }
+
+/* 滚动容器：白底，横向滚动交给它，面板不跟着撑 */
+.wb-diff-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; background: var(--gh-canvas); }
+
+/* hunk 头：GitHub 的 @@ 那条灰带 */
+.wb-hunk { border: 0; }
+.wb-hunk + .wb-hunk { border-top: 1px solid var(--gh-border); }
+.wb-hunk-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  padding: 3px 12px;
+  border-bottom: 1px solid var(--gh-border-muted);
+  background: var(--gh-subtle);
+  color: var(--gh-fg-muted);
+  font-size: 11px;
+}
+.wb-hunk-head code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gh-fg-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-hunk-head span { margin-left: auto; flex: 0 0 auto; color: #6e7781; font-size: 10.5px; }
+
+/* 表格本身保持 react-diff-view 的布局，只收紧间距 */
+.wb-diff-scroll table,
+.wb-diff-scroll .diff,
+.wb-diff-scroll tbody { width: 100%; border-collapse: collapse; border-spacing: 0; }
+.wb-diff-scroll tr,
+.wb-diff-scroll td,
+.wb-diff-scroll th { border: 0; background-clip: padding-box; }
+.wb-diff-scroll td { padding: 0; vertical-align: top; }
+.wb-diff-scroll td.diff-gutter {
+  width: 44px;
+  min-width: 44px;
+  padding: 0 8px 0 0;
+  color: var(--gh-fg-muted);
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 20px;
+  user-select: none;
+}
+.wb-diff-scroll td.diff-code {
+  padding: 0 12px 0 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.wb-diff-scroll td.diff-code * { font-size: inherit; line-height: inherit; }
+
+/* GitHub 的 +/- 记号：放在代码列左缘，不占行号列 */
+.wb-diff-scroll td.diff-code-insert::before,
+.wb-diff-scroll td.diff-code-delete::before {
+  display: inline-block;
+  width: 8px;
+  margin-left: -8px;
+  color: #6e7781;
+}
+.wb-diff-scroll td.diff-code-insert::before { content: "+"; color: #1a7f37; }
+.wb-diff-scroll td.diff-code-delete::before { content: "−"; color: #cf222e; }
+
+/* 行号按钮：悬停才显形，不做方块 */
+.wb-gutter-number {
+  padding: 0 2px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.wb-gutter-number:hover,
+.wb-gutter-number[data-focused="true"] { color: var(--gh-accent); text-decoration: underline; }
+.wb-diff-scroll .diff-code ins,
+.wb-diff-scroll .diff-code del { text-decoration: none; }
+.wb-diff-scroll tr.is-focused td { box-shadow: inset 0 0 0 999px rgba(9, 105, 218, .06); }
+
+/* 语法高亮：Primer 的 token 取色（refractor 负责分词，这里只给颜色） */
+.wb-diff-scroll .token.comment,
+.wb-diff-scroll .token.prolog,
+.wb-diff-scroll .token.doctype,
+.wb-diff-scroll .token.cdata { color: #6e7781; font-style: italic; }
+.wb-diff-scroll .token.punctuation { color: #1f2328; }
+.wb-diff-scroll .token.keyword,
+.wb-diff-scroll .token.atrule,
+.wb-diff-scroll .token.important,
+.wb-diff-scroll .token.tag { color: #cf222e; }
+.wb-diff-scroll .token.string,
+.wb-diff-scroll .token.char,
+.wb-diff-scroll .token.attr-value,
+.wb-diff-scroll .token.regex { color: #0a3069; }
+.wb-diff-scroll .token.number,
+.wb-diff-scroll .token.boolean,
+.wb-diff-scroll .token.constant,
+.wb-diff-scroll .token.symbol { color: #0550ae; }
+.wb-diff-scroll .token.function,
+.wb-diff-scroll .token.class-name { color: #8250df; }
+.wb-diff-scroll .token.builtin,
+.wb-diff-scroll .token.variable,
+.wb-diff-scroll .token.attr-name { color: #953800; }
+.wb-diff-scroll .token.operator,
+.wb-diff-scroll .token.entity,
+.wb-diff-scroll .token.url { color: #0550ae; }
+.wb-diff-scroll .token.decorator,
+.wb-diff-scroll .token.annotation { color: #8250df; }
+
+.wb-diff-empty {
+  margin: 0;
+  padding: 22px 16px;
+  color: var(--gh-fg-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.wb-code-empty { padding: 24px 16px; color: var(--gh-fg-muted); font-size: 12px; }
+
+
+
+/* ============ 7. 笔记栏 ============ */
+.wb-notes { overflow-x: hidden; }
+/* grid 的隐式列是 auto，会被按钮的 max-content 撑破面板；显式收成 1fr 才不溢出 */
+.wb-question-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  max-height: 42%;
+  padding: 6px;
+}
+.wb-question {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.wb-question:hover { background: var(--soft); }
+.wb-question.is-active { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.wb-question-body,
+.wb-question-meta {
+  display: block;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.wb-question-body { font-size: 12.5px; line-height: 1.45; }
+.wb-question-meta { margin-top: 2px; color: var(--fg-4); font-size: 11px; }
+.wb-question-detail {
+  min-width: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line-soft);
+  overflow-wrap: anywhere;
+}
+.wb-question-detail * { min-width: 0; }
+.wb-note {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--fg-3);
+  font-size: 12px;
+}
+.wb-note textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* ============ 8. 提交表（折叠态）保持同一套发丝线语言 ============ */
+.wb-commit-table { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.wb-commit-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px 6px;
+}
+.wb-commit-table-head h2 { margin: 0; color: var(--fg-3); font-size: 10.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+.wb-commit-head-actions { display: flex; align-items: center; gap: 10px; color: var(--fg-4); font-size: 11px; }
+.wb-commit-table table { width: 100%; border-collapse: collapse; }
+.wb-commit-table tbody tr { cursor: pointer; }
+.wb-commit-table tbody tr:hover { background: var(--soft); }
+
+/* ============ 9. 窄屏：三栏压成单栏 ============ */
+@media (max-width: 1280px) {
+  .wb-body { grid-template-columns: 236px minmax(0, 1fr) 300px; }
+}
+@media (max-width: 1080px) {
+  .wb-body { grid-template-columns: 220px minmax(0, 1fr); }
+  .wb-notes { display: none; }
+}
+@media (max-width: 860px) {
+  .wb:has(.wb-body) { height: auto; min-height: 0; }
+  .wb-body { grid-template-columns: minmax(0, 1fr); }
+  .wb-files { border-right: 0; border-bottom: 1px solid var(--line); max-height: 260px; }
+  .wb-code { min-height: 460px; }
+}
+
+
+/* ============ 10. 文件栏收紧：一行一条路径，控件缩到 24–28px ============
+   GitHub 的文件栏是"路径 + 计数"两列，控件都压在 28px 一线，避免这里比正文还高。 */
+.wb-files .wb-pane-head { height: 36px; padding: 0 10px; }
+.wb-files .wb-file-scope { gap: 6px; padding: 8px 10px 6px; }
+.wb-files .wb-file-scope .ui-btn {
+  height: 22px;
+  min-height: 22px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--gh-fg-muted, var(--fg-3));
+  font-size: 11.5px;
+}
+.wb-files .wb-file-scope .ui-btn:hover { background: var(--sunken); color: var(--fg); }
+.wb-files .wb-file-scope code {
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--fg-3);
+  font-size: 10.5px;
+  line-height: 18px;
+}
+.wb-files .wb-pane-note {
+  margin: 0 10px 6px;
+  padding: 0 0 0 8px;
+  border-left: 2px solid var(--amber);
+  color: var(--amber-deep);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+.wb-files .ui-input,
+.wb-files .mantine-Input-input { height: 28px; font-size: 11.5px; }
+.wb-files .mantine-TextInput-wrapper { border: 0; background: transparent; padding: 0; }
+.wb-files .mantine-Input-input { padding-left: 26px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+.wb-files .mantine-Input-section { width: 26px; }
+.wb-files .mantine-Input-section svg { width: 13px; height: 13px; }
+.wb-files .ui-segmented { height: 24px; padding: 2px; border-radius: 6px; }
+.wb-files .mantine-SegmentedControl-label { height: 20px; padding: 0 8px; font-size: 11.5px; }
+.wb-files .wb-file-list { padding: 4px 0 8px; }
+.wb-files .wb-file { min-height: 28px; padding: 2px 10px 2px 8px; gap: 8px; }
+.wb-files .wb-file-path { gap: 6px; font-size: 12px; }
+.wb-files .wb-file-path-dir { font-size: 10.5px; }
+.wb-files .wb-file-meta { gap: 10px; min-width: 96px; font-size: 11px; }
+.wb-files .wb-file-meta .wb-add,
+.wb-files .wb-file-meta .wb-del { min-width: 26px; font-variant-numeric: tabular-nums; }
+.wb-files .wb-file-state { min-width: 34px; font-size: 10px; }
+.wb-files .mantine-Input-input,
+.wb-files .ui-input input { height: 28px !important; min-height: 28px !important; }
+.wb-files .mantine-TextInput-wrapper { min-height: 0; }
+
+/* 文件名不截断、目录让位：审阅时代码文件名是唯一的定位锚点 */
+.wb-files .wb-file-path-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-files .wb-file-path-dir { flex: 0 1 auto; min-width: 0; max-width: 52%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-files .wb-file-meta { min-width: 84px; }
+/* 说明行压到两行以内，不把整条文件列表往下推 */
+.wb-files .wb-pane-note { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wb-files .wb-file-path-name { flex: 0 0 auto; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.wb-files .wb-file-path-dir { flex: 1 1 0; min-width: 0; max-width: none; }
+.wb-files .wb-file-meta { min-width: 72px; gap: 8px; }
+
+
+/* ============ 11. 白底上的独立卡片（对齐 GitHub PR 页面） ============
+   GitHub 的 Files changed 没有灰色工作台：页面是白的，文件树与每个 diff 各自是一张
+   1px 描边的圆角卡片，卡片之间靠留白分开。这里照做：
+   - 页面与三栏容器都不再铺底色，灰色只出现在卡片内部该出现的地方（hunk 头、页头）；
+   - 文件栏 / 代码区 / 笔记栏各自是一张卡，12px 缝隙里透出页面本身的白；
+   - 代码卡整块 overflow:hidden，圆角由卡片负责，页头不再自己画上圆角。 */
+.wb { background: transparent; border: 0; border-radius: 0; overflow: visible; }
+.wb-body {
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+}
+.wb-files,
+.wb-notes,
+.wb-code {
+  border: 1px solid var(--gh-border);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: none;
+  overflow: hidden;
+}
+.wb-files { border-right: 1px solid var(--gh-border); }
+.wb-code { background: var(--gh-canvas); }
+.wb-code-head,
+.pr-preview-code-head { border-radius: 0; }
+
+/* 作者原始说明：正文级信息，跟着卡片的浅色走，不再是深色条 */
+.wb-code .wb-author {
+  border-top: 1px solid var(--gh-border);
+  background: var(--gh-subtle);
+  color: var(--gh-fg);
+}
+.wb-code .wb-author summary,
+.wb-code .wb-author summary * { color: var(--gh-fg); font-size: 11.5px; }
+.wb-code .wb-author-body,
+.wb-code .wb-author-body * { color: var(--gh-fg-muted); }
+
+/* 行悬停与定位行：GitHub 用很淡的一层底色与一条左竖条 */
+.wb-diff-scroll tbody tr:hover td.diff-code { background-color: #f6f8fa; }
+.wb-diff-scroll tbody tr:hover td.diff-code-insert { background-color: #dafbe1; }
+.wb-diff-scroll tbody tr:hover td.diff-code-delete { background-color: #ffebe9; }
+.wb-diff-scroll tr.is-focused td { box-shadow: inset 0 0 0 999px rgba(9, 105, 218, .05); }
+.wb-diff-scroll tr.is-focused td.diff-gutter { box-shadow: inset 2px 0 0 #0969da, inset 0 0 0 999px rgba(9, 105, 218, .05); }
+
+/* 行号列与代码列之间的分隔竖线：画在代码列左边界，hunk 头处断开 */
+.wb-diff-scroll td.diff-code {
+  position: relative;
+  border-left: 1px solid var(--gh-border);
+  padding: 0 10px 0 5px !important;
+  line-height: 20px;
+}
+.wb-diff-scroll td.diff-code::after { display: none; }
+.wb-diff-scroll td.diff-hunk-header-content { border-left: 0; }
+.wb-diff-scroll tr { height: 20px; }
+.wb-diff-scroll td.diff-gutter { background-color: transparent; padding: 0 8px 0 0 !important; line-height: 20px; }
+.wb-diff-scroll td.diff-gutter-insert {
+  background-color: var(--diff-gutter-insert-background-color);
+  color: var(--diff-gutter-insert-text-color);
+}
+.wb-diff-scroll td.diff-gutter-delete {
+  background-color: var(--diff-gutter-delete-background-color);
+  color: var(--diff-gutter-delete-text-color);
+}
+.wb-diff-scroll td.diff-gutter-insert .wb-gutter-number { color: var(--diff-gutter-insert-text-color); }
+.wb-diff-scroll td.diff-gutter-delete .wb-gutter-number { color: var(--diff-gutter-delete-text-color); }
+
+/* +/- 记号留在代码列内侧，不要压到分隔线上 */
+.wb-diff-scroll td.diff-code-insert::before,
+.wb-diff-scroll td.diff-code-delete::before {
+  display: inline-block;
+  width: 12px;
+  margin: 0 1px 0 0;
+  text-align: center;
+}
+.wb-diff-scroll td.diff-code-insert::before { content: "+"; color: #1a7f37; }
+.wb-diff-scroll td.diff-code-delete::before { content: "−"; color: #cf222e; }
+.wb-diff-scroll .diff-code-insert-edit,
+.wb-diff-scroll .diff-code-delete-edit { padding-left: 0; }
+
+/* 分屏视图撑满代码卡，两半等宽 */
+.wb-diff-scroll table.diff-split { width: 100%; }
+.wb-diff-scroll table.diff-split col.diff-code-col { width: auto; }
+
+/* hunk 头：20px 灰带，只有 @@ 本身 */
+.wb-hunk-head {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 10px;
+  border-top: 1px solid var(--gh-border);
+  border-bottom: 1px solid var(--gh-border);
+  background: var(--gh-subtle);
+  line-height: 20px;
+}
+.wb-hunk-head code {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--gh-fg-muted);
+  font-size: 11.5px;
+}
+
+/* ============ 12. 只读预览页（PullRequestPreview）用同一套语言 ============
+   这一页是"还没开始审查"时的只读视图，DOM 是 .pr-preview-*；
+   代码区同样用 CodeDiff（内部就是 .wb-diff-scroll），所以这里只补容器。 */
+.pr-preview { display: grid; gap: 16px; }
+.pr-preview-grid {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: 12px;
+  padding: 0;
+  height: min(72vh, 720px);
+  min-height: 420px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.pr-preview-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--gh-border);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  overflow: hidden;
+}
+.pr-preview-pane-head { height: 40px; padding: 0 10px; border-bottom: 1px solid var(--gh-border); }
+.pr-preview-pane-head h2 { color: var(--fg-3); font-size: 10.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+.pr-preview-files .ui-segmented { flex: 0 0 auto; margin: 8px 10px 0; align-self: flex-start; height: 24px; }
+.pr-preview-files .ui-input {
+  flex: 0 0 auto;
+  margin: 8px 10px 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.pr-preview-files .mantine-Input-input {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  height: 28px;
+  border: 1px solid var(--gh-border);
+  border-radius: 6px;
+  background: var(--card);
+  font-size: 11.5px;
+}
+.pr-preview-files .mantine-Input-input:focus {
+  border-color: var(--gh-fg-muted);
+  box-shadow: 0 0 0 3px rgba(31, 35, 40, .10);
+}
+.pr-preview-pane-head { order: 0; }
+.pr-preview-files .ui-segmented { order: 1; }
+.pr-preview-files .ui-input { order: 2; }
+.pr-preview-warning { order: 3; }
+.pr-preview-file-list { order: 4; }
+.pr-preview-file-list { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 1px; padding: 6px; overflow-y: auto; }
+.pr-preview-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  min-height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+}
+.pr-preview-file-path { flex: 1 1 auto; min-width: 0; font-family: var(--mono); font-size: 11.5px; }
+.pr-preview-file-meta { flex: 0 0 auto; display: inline-flex; gap: 8px; min-width: 84px; justify-content: flex-end; font-family: var(--mono); font-size: 10px; font-variant-numeric: tabular-nums; }
+.pr-preview-file.is-active { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); color: var(--fg); }
+.pr-preview-code {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--gh-border);
+  border-radius: var(--r-lg);
+  background: var(--gh-canvas);
+  overflow: hidden;
+}
+.pr-preview-code-head {
+  min-height: 40px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--gh-border);
+  background: var(--gh-subtle);
+}
+.pr-preview-code-head code { color: var(--gh-fg); font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.pr-preview-code-head span { color: var(--gh-fg-muted); }
+.pr-preview-code .wb-diff-scroll { flex: 1 1 auto; min-height: 0; }
+.pr-preview-details { padding: 12px 16px; border: 1px solid var(--gh-border); border-radius: var(--r-lg); background: var(--card); }
+
+/* Primer 变量挂在滚动容器上：预览页与工作单页共用同一个 CodeDiff */
+.wb-diff-scroll,
+.wb-code,
+.wb-files,
+.wb-notes,
+.pr-preview-files,
+.pr-preview-code {
+  --gh-canvas: #ffffff;
+  --gh-subtle: #f6f8fa;
+  --gh-border: #d0d7de;
+  --gh-border-muted: #d8dee4;
+  --gh-fg: #1f2328;
+  --gh-fg-muted: #59636e;
+  --gh-accent: #0969da;
+  --diff-background-color: #ffffff;
+  --diff-text-color: #1f2328;
+  --diff-font-family: var(--mono);
+  --diff-gutter-insert-background-color: #ccffd8;
+  --diff-gutter-insert-text-color: #1a7f37;
+  --diff-gutter-delete-background-color: #ffd7d5;
+  --diff-gutter-delete-text-color: #cf222e;
+  --diff-gutter-selected-background-color: #fff8c5;
+  --diff-code-insert-background-color: #e6ffec;
+  --diff-code-delete-background-color: #ffebe9;
+  --diff-code-insert-edit-background-color: #abf2bc;
+  --diff-code-delete-edit-background-color: rgba(255, 129, 130, .4);
+  --diff-code-selected-background-color: #fff8c5;
+}
+/* 文件栏的阅读顺序：标题 → 筛选 → 排序 → 提示 → 列表（DOM 顺序不便改，用 order 排） */
+.pr-preview-files > .pr-preview-warning {
+  margin: 0 10px 6px;
+  padding: 6px 8px;
+  border: 1px solid #d4a72c;
+  border-radius: 6px;
+  background: #fff8c5;
+  color: #7d4e00;
+  font-size: 11px;
+  line-height: 1.45;
+}
+/* 文件名在前、目录在后：同类路径的前缀不再把文件名挤掉 */
+.pr-preview-file-path { display: flex; align-items: baseline; gap: 6px; }
+.pr-preview-file-name { flex: 0 0 auto; color: var(--fg-2); font-size: 11.5px; }
+.pr-preview-file-dir {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--fg-4);
+  font-size: 10.5px;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 26px);
+}
+.pr-preview-file.is-active .pr-preview-file-name { color: var(--fg); }
+.pr-preview-file.is-active .pr-preview-file-dir { color: var(--fg-3); }
+/* 文件栏头部与控件尺寸锁死，避免标签溢出卡片 */
+.pr-preview-pane-head { display: flex; align-items: center; justify-content: space-between; height: 38px; min-height: 38px; padding: 0 10px; }
+.pr-preview-files .ui-segmented { height: 24px; margin: 0 10px 8px; align-self: flex-start; }
+.pr-preview-files .mantine-SegmentedControl-label { height: 20px; padding: 0 8px; font-size: 11.5px; }
+.pr-preview-files .mantine-SegmentedControl-indicator { display: none !important; }
+.pr-preview-files .mantine-SegmentedControl-control[data-active="true"] { background: var(--soft); }
+.pr-preview-files .ui-input { margin: 0 10px 8px; }
+/* Mantine 输入框默认 44px，会把下面一行顶住；压到 28px 并去掉外层的框 */
+.pr-preview-files .mantine-InputWrapper-root { border: 0; background: transparent; padding: 0; }
+.pr-preview-files .mantine-Input-input,
+.pr-preview-files .ui-input input { height: 28px !important; min-height: 28px !important; font-size: 11.5px; }
+.pr-preview-files { border-color: var(--gh-border); }
+.pr-preview-file-meta { min-width: 78px; }
+/* 目录名统一用尾部省略号：遮罩会让它看起来从中间开始 */
+.pr-preview-file-dir {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  -webkit-mask-image: none;
+  color: var(--fg-4);
+  font-size: 10.5px;
+}
+.wb-file-path-dir { -webkit-mask-image: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ============ 13. 卡片表面：白底上"浮起"的纸片 ============
+   外层网格（.wb / .pr-preview-grid）只是布局容器，绝不能带边框、底色或投影——
+   project-workspace.css 的"统一卡片表面"选择器里有 .pr-preview-grid，
+   它会用 --sh-3 在两张卡外面画一个方角的影子，看起来就像还有一张没圆角的大卡。 */
+.wb,
+.pr-preview-grid {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.wb-files,
+.wb-notes,
+.wb-code,
+.pr-preview-files,
+.pr-preview-code,
+.pr-preview-details {
+  border: 1px solid #d8dee4;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  /* 近距贴边 1px + 远距扩散 16px，收窄到不填满两卡之间的白缝 */
+  box-shadow: 0 1px 2px rgba(31, 35, 40, .05), 0 6px 16px -12px rgba(31, 35, 40, .30);
+}
+
+/* 面板不是可点目标：鼠标移入不改变投影，避免大面积闪动 */
+.wb-files:hover,
+.wb-notes:hover,
+.wb-code:hover,
+.pr-preview-files:hover,
+.pr-preview-code:hover,
+.pr-preview-details:hover {
+  border-color: #d8dee4;
+  box-shadow: 0 1px 2px rgba(31, 35, 40, .05), 0 6px 16px -12px rgba(31, 35, 40, .30);
+}
+
+.wb-body,
+.pr-preview-grid { gap: 16px; }
+
+/* 卡片底边必须落在视口内，否则圆角与投影会被窗口裁掉，看起来像两块粘住 */
+.wb:has(.wb-body) { height: calc(100vh - 236px); min-height: 560px; }
+.pr-preview-grid { height: clamp(520px, calc(100vh - 330px), 860px); min-height: 520px; }
+
+/* 窄屏：两栏叠成单列，高度交给内容 */
+@media (max-width: 900px) {
+  .wb-body,
+  .pr-preview-grid { gap: 12px; height: auto; grid-template-columns: minmax(0, 1fr); }
+  .wb:has(.wb-body) { height: auto; min-height: 0; }
+  .wb-code,
+  .pr-preview-code { min-height: 460px; }
+}
+
+/* 文件名与目录之间留 6px，目录再窄也要有省略号 */
+.pr-preview-file-path { display: flex; align-items: baseline; gap: 6px; }
+.pr-preview-file-name { flex: 0 0 auto; }
+.pr-preview-file { min-height: 30px; }
+
+/* 窄栏里一行放不下"文件名 + 目录"：改成两行，目录缩到 10px，两行都按省略号截断 */
+.pr-preview-file { min-height: 34px; align-items: center; }
+.pr-preview-file-path { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; min-width: 0; }
+.pr-preview-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
+.pr-preview-file-dir { flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-4); font-size: 10px; }
+.pr-preview-file.is-active .pr-preview-file-dir { color: var(--fg-3); }
+
+/* 目录只在换目录时出现：空的那一行不占高度，行高随之收紧 */
+.pr-preview-file { min-height: 28px; padding: 5px 8px; }
+.pr-preview-file-dir:empty { display: none; }
+
+/* 范围说明：没有文件映射时不摆一个按了没反应的按钮，改成一句状态文字 */
+.pr-preview-scope { color: var(--fg-3); font-size: 12.5px; }

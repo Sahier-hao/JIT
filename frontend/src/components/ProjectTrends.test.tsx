@@ -21,10 +21,11 @@ it('opens fixed views via GET only, leaves new sources unapplied, and renders nu
   expect(screen.getAllByText(/已评分样本不足 20/).length).toBeGreaterThan(0)
   expect(screen.getAllByRole('group', { name: /方向键/ })).toHaveLength(2)
   await waitFor(() => expect(document.querySelectorAll('.ui-chart svg')).toHaveLength(2))
-  const strokes = Array.from(document.querySelectorAll('.ui-chart svg path')).map(path => path.getAttribute('stroke')).filter(Boolean)
-  expect(strokes).toContain('#2a78d6')
+  const strokes = Array.from(document.querySelectorAll('.ui-chart svg path')).map(path => path.getAttribute('stroke')).filter((value): value is string => Boolean(value))
+  // jsdom 取不到 CSS 变量，颜色来自 ui/chart.tsx 的 fallback（常量是大写十六进制）
+  expect(strokes.map(value => value.toLowerCase())).toContain('#1f5d4c')
   expect(fetch.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true)
-  const option = trendOption(trendView().buckets, 'risk', { series: '#2a78d6', seriesInk: '#104281', grid: '#e3e7ee', axis: '#cdd4df', text: '#4a5464', textStrong: '#111827', surface: '#ffffff', border: '#cdd4df', categorical: [], other: '#8a8a83' })
+  const option = trendOption(trendView().buckets, 'risk', { series: '#1f5d4c', seriesInk: '#164537', grid: '#e4e7e5', axis: '#bdc4c1', text: '#5f6865', textStrong: '#101413', surface: '#ffffff', border: '#cdd4df', categorical: [], other: '#88908d' })
   const series = option.series as { data: unknown[]; connectNulls?: boolean }[]
   expect(series[0].data).toEqual([.42, null, .55])
   expect(series[0].connectNulls).toBe(false)

@@ -4,11 +4,11 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { LineChart, PieChart, type LineSeriesOption, type PieSeriesOption } from 'echarts/charts'
-import { AxisPointerComponent, GridComponent, TooltipComponent, type AxisPointerComponentOption, type GridComponentOption, type TooltipComponentOption } from 'echarts/components'
+import { AxisPointerComponent, GridComponent, MarkAreaComponent, TooltipComponent, type AxisPointerComponentOption, type GridComponentOption, type TooltipComponentOption } from 'echarts/components'
 import { init, use as registerCharts, type ComposeOption, type ECharts } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
 
-registerCharts([LineChart, PieChart, GridComponent, TooltipComponent, AxisPointerComponent, SVGRenderer])
+registerCharts([LineChart, PieChart, GridComponent, TooltipComponent, AxisPointerComponent, MarkAreaComponent, SVGRenderer])
 
 export type ChartOption = ComposeOption<LineSeriesOption | PieSeriesOption | GridComponentOption | TooltipComponentOption | AxisPointerComponentOption>
 
@@ -26,10 +26,10 @@ export interface ChartColors {
 }
 
 // 分类色来自数据可视化规范的已验证顺序；浅色下部分色相低于 3:1，由可见图例与等价表格提供补偿。
-const LIGHT_CATEGORICAL = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300']
-const DARK_CATEGORICAL = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300']
-const LIGHT: ChartColors = { series: '#2a78d6', seriesInk: '#104281', grid: '#e3e7ee', axis: '#cdd4df', text: '#4a5464', textStrong: '#111827', surface: '#ffffff', border: '#cdd4df', categorical: LIGHT_CATEGORICAL, other: '#8a8a83' }
-const DARK: ChartColors = { series: '#3987e5', seriesInk: '#93b4fa', grid: '#263149', axis: '#36425d', text: '#95a5bc', textStrong: '#e6edf7', surface: '#111827', border: '#36425d', categorical: DARK_CATEGORICAL, other: '#5a5a55' }
+const LIGHT_CATEGORICAL = ['#1F5D4C', '#8A6524', '#5E7A39', '#9E4550', '#414946', '#88908D']
+const DARK_CATEGORICAL = ['#86C4AD', '#D8B071', '#B5C889', '#E79398', '#A9B4B0', '#A0A9A6']
+const LIGHT: ChartColors = { series: '#1F5D4C', seriesInk: '#164537', grid: '#E4E7E5', axis: '#BDC4C1', text: '#5F6865', textStrong: '#101413', surface: '#FFFFFF', border: '#BDC4C1', categorical: LIGHT_CATEGORICAL, other: '#88908D' }
+const DARK: ChartColors = { series: '#86C4AD', seriesInk: '#B7DFD0', grid: '#232927', axis: '#323A38', text: '#A0A9A6', textStrong: '#EDF1EF', surface: '#0E1211', border: '#323A38', categorical: DARK_CATEGORICAL, other: '#A0A9A6' }
 
 function readColors(): ChartColors {
   const fallback = document.documentElement.dataset.theme === 'charcoal' ? DARK : LIGHT

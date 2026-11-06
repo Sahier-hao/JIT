@@ -1,180 +1,261 @@
 /**
  * 设计令牌：全部主题差异只在这一个文件里。
  *
- * 规则（restyle-review-workbench design D1）：
+ * 规则：
+ * - 结构沿用 Claude DESIGN.md 的"纸面叠层 + 稀缺强调色"：画布是纸面，卡片比纸面更白，
+ *   `--soft` / `--strong` 再压两级；深色面只承载代码与终端；强调色分族、每族只有一个 soft 底色。
+ * - 色相：全站不使用蓝色。中性面是冷灰（近石墨，带极轻的青灰倾向），
+ *   强调色是"松"（deep pine）；状态分族为 松 / 苔 / 赭 / 砖 / 墨。
+ *   键名 `--blue*` 是历史命名，现在承载主色族（松），改动集中在值上，避免全仓改引用。
  * - 组件样式只引用变量，不写具体色值；`IP-09` 的禁用清单里包含硬编码色值。
- * - 风险色阶（--risk*）跨主题保持暖琥珀→橙→红方向，深色主题只提亮不换色相（IP-06）。
  * - 字体随仓库打包：Latin 用 `Inter var`（`base.css` 里的 @font-face），中文落到系统字族；
- *   运行时不请求任何外部地址（IP-04）。
- * - 默认主题（冷灰）定义在 :root，未设置 data-theme 时即为它，避免首帧缺变量。
+ *   展示字用系统衬线（Georgia / Noto Serif SC / SimSun），运行时不请求任何外部地址（IP-04）。
+ * - 默认主题（冷灰纸面）定义在 :root，未设置 data-theme 时即为它，避免首帧缺变量。
  * - 遮罩（--scrim）是唯一必须"跨主题都往暗走"的键：面板与抽屉背后的那一层不能把页面提亮。
- * - 蓝色只用于选中态、链接与焦点环；主按钮走近黑的 --btn。
+ * - 主按钮走近黑的 --btn，强调色只用于选中态、链接、焦点环与数据编码。
  */
 
 :root, html[data-theme="concrete"] {
   /* ---------- 字体（3） ---------- */
   --sans: 'Inter var', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI',
     'Microsoft YaHei', sans-serif;
-  --display: 'Inter var', 'Inter', 'Segoe UI Variable Display', 'Segoe UI', 'Microsoft YaHei UI',
-    'Microsoft YaHei', sans-serif;
-  --mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+  --display: 'Georgia', 'Noto Serif SC', 'Songti SC', 'SimSun', 'Source Han Serif SC', serif;
+  --mono: 'JetBrains Mono', 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
 
-  /* ---------- 圆角（2）与阴影（2） ---------- */
-  --r: 4px;
-  --r-lg: 8px;
-  --r-xs: 6px;
-  --r-md: 12px;
-  --r-xl: 18px;
-  --sh-1: 0 1px 2px rgba(14, 21, 36, .05);
-  --sh-2: 0 2px 8px -2px rgba(14, 21, 36, .08), 0 12px 28px -14px rgba(14, 21, 36, .18);
-  --sh-3: 0 1px 2px rgba(14, 21, 36, .04), 0 10px 30px -12px rgba(14, 21, 36, .16);
+  /* ---------- 圆角（5）与阴影（3） ---------- */
+  --r: 6px;
+  --r-xs: 8px;
+  --r-lg: 12px;
+  --r-md: 16px;
+  --r-xl: 20px;
+  /* 深度几乎不用：靠发丝线与表面分层，而不是投影 */
+  --sh-1: 0 1px 2px rgba(14, 19, 18, .05);
+  --sh-2: 0 1px 2px rgba(14, 19, 18, .05), 0 8px 24px -18px rgba(14, 19, 18, .22);
+  --sh-3: 0 1px 2px rgba(14, 19, 18, .06), 0 12px 30px -20px rgba(14, 19, 18, .24);
 
-  /* ---------- 表面（4） ---------- */
-  --canvas: #F7F8FA;
+  /* ---------- 表面（6）：纸面叠层 ---------- */
+  --canvas: #FFFFFF;
   --rail: #FFFFFF;
-  --sunken: #EDF1F6;
+  --sunken: #F6F8FA;
   --card: #FFFFFF;
+  --soft: #F6F8FA;
+  --strong: #EAEEF2;
 
-  /* ---------- 文字（4） ---------- */
-  --fg: #0E1524;
-  --fg-2: #2C3644;
-  --fg-3: #4A5464;
+  /* ---------- 文字（5） ---------- */
+  --fg: #1F2328;
+  --fg-2: #424A53;
+  --fg-3: #59636E;
+  --fg-4: #6E7781;
   --fg-inv: #FFFFFF;
 
   /* ---------- 线（3） ---------- */
-  --line: #E3E7EE;
-  --line-strong: #CDD4DF;
-  --line-soft: #EFF2F6;
+  --line: #D0D7DE;
+  --line-strong: #AFB8C1;
+  --line-soft: #D8DEE4;
 
-  /* ---------- 语义（4）：蓝色只做选中、链接与焦点环 ---------- */
-  --accent: #277452;
-  --accent-hover: #1D5A3F;
-  --accent-soft: #EAF3ED;
-  --accent-ring: rgba(39, 116, 82, .22);
+  /* ---------- 强调（4）：松色只做选中、链接与焦点环 ---------- */
+  --accent: #1F5D4C;
+  --accent-hover: #164537;
+  --accent-soft: #E2EFEA;
+  --accent-ring: rgba(31, 93, 76, .18);
 
-  /* ---------- 主行动（2）：近黑，与蓝色区分开 ---------- */
-  --btn: #0E1524;
-  --btn-hover: #1B2434;
+  /* ---------- 色族（5×3）：soft 只当底、base 当填充、deep 才当文字 ---------- */
+  --blue: #1F5D4C;          /* 主色族（松）：键名沿用 --blue，值不再是蓝 */
+  --blue-soft: #E2EFEA;
+  --blue-deep: #164537;
+  --teal: #5E7A39;          /* 苔 */
+  --teal-soft: #EBF0E0;
+  --teal-deep: #4A6229;
+  --amber: #8A6524;         /* 赭 */
+  --amber-soft: #F5EDDC;
+  --amber-deep: #6C4E1A;
+  --rose: #9E4550;          /* 砖 */
+  --rose-soft: #F7E8EA;
+  --rose-deep: #7E343E;
+  --violet: #414946;        /* 墨：键名沿用 --violet，值不再是紫 */
+  --violet-soft: #E8EBE9;
+  --violet-deep: #2E3533;
+
+  /* ---------- 深色面（5）：只给代码、终端与模型输出 ---------- */
+  --dark: #0E1211;
+  --dark-elevated: #151A19;
+  --dark-soft: #1C2220;
+  --on-dark: #EDF1EF;
+  --on-dark-soft: #9AA3A0;
+
+  /* ---------- 主行动（2）：近黑，与强调色区分开 ---------- */
+  --btn: #101413;
+  --btn-hover: #222927;
   --btn-fg: #FFFFFF;
-  --shadow-ink: #0E1524;
+  --shadow-ink: #101413;
 
   /* ---------- 风险（7）：语义色，不随主题换色相 ---------- */
-  --risk: #B7791F;
-  --risk-mid: #B54708;
-  --risk-high: #B42318;
-  --risk-strong: #8A2A12;
-  --risk-fg: #8A2A12;
-  --risk-track: #E6E2DA;
-  --risk-soft: #FBF3E4;
+  --risk: #8A6524;
+  --risk-mid: #B05314;
+  --risk-high: #9E4550;
+  --risk-strong: #7E343E;
+  --risk-fg: #7E343E;
+  --risk-track: #E0E3E1;
+  --risk-soft: #F7E8EA;
 
   /* ---------- 图表（4） ---------- */
-  --chart-obs: #277452;
-  --chart-est: #B54708;
-  --chart-bar: #DDE3EC;
-  --chart-hatch: #E7EBF1;
+  --chart-obs: #1F5D4C;
+  --chart-est: #8A6524;
+  --chart-bar: #D6DAD8;
+  --chart-hatch: #E2EFEA;
 
   /* ---------- 交互底色 ---------- */
-  --hover: #F1F4F8;
+  --hover: #E8EBE9;
 
   /* ---------- 遮罩（面板/抽屉后面那一层） ----------
    * 必须是"压暗"的方向，且跨主题都成立：浅色主题用近黑的 --fg，深色主题必须单独给近黑，
    * 否则拿 --fg 当遮罩会把深色页面提亮（实测踩到）。
    */
-  --scrim: #0E1524;
+  --scrim: #101413;
 
   color-scheme: light;
 }
 
-/* ---------- 钢青：冷灰偏蓝，与默认主题同结构 ---------- */
+/* ---------- 石墨：更冷更灰的一档，与默认主题同结构 ---------- */
 html[data-theme="steel"] {
-  --sh-1: 0 1px 2px rgba(15, 24, 33, .05);
-  --sh-2: 0 2px 8px -2px rgba(15, 24, 33, .08), 0 12px 28px -14px rgba(15, 24, 33, .18);
+  --sh-1: 0 1px 2px rgba(12, 16, 15, .05);
+  --sh-2: 0 1px 2px rgba(12, 16, 15, .06), 0 8px 24px -18px rgba(12, 16, 15, .22);
 
-  --canvas: #F5F7FA;
-  --rail: #FFFFFF;
-  --sunken: #EEF3F9;
+  --canvas: #EDEFEE;
+  --rail: #F7F9F8;
+  --sunken: #E2E5E3;
   --card: #FFFFFF;
+  --soft: #E9ECEA;
+  --strong: #D7DBD9;
 
-  --fg: #0F1821;
-  --fg-2: #2F3D4A;
-  --fg-3: #46535F;
+  --fg: #0E1211;
+  --fg-2: #333A38;
+  --fg-3: #5A6360;
+  --fg-4: #828A87;
   --fg-inv: #FFFFFF;
 
-  --line: #DDE5EE;
-  --line-strong: #C3CFDB;
-  --line-soft: #F1F5F9;
+  --line: #D2D6D4;
+  --line-strong: #B9C0BD;
+  --line-soft: #E0E4E2;
 
-  --accent: #277452;
-  --accent-hover: #1E3FA8;
-  --accent-soft: #E6EDFB;
-  --accent-ring: rgba(39, 116, 82, .22);
+  --accent: #17503F;
+  --accent-hover: #0F3B2E;
+  --accent-soft: #DEEBE6;
+  --accent-ring: rgba(23, 80, 63, .18);
 
-  --btn: #0F1821;
-  --btn-hover: #1C2A36;
+  --blue: #17503F;
+  --blue-soft: #DEEBE6;
+  --blue-deep: #0F3B2E;
+  --teal: #54703A;
+  --teal-soft: #E7EEDC;
+  --teal-deep: #415A2A;
+  --amber: #7E5C20;
+  --amber-soft: #F3EBD9;
+  --amber-deep: #634617;
+  --rose: #95404B;
+  --rose-soft: #F6E5E7;
+  --rose-deep: #762F39;
+  --violet: #3C4341;
+  --violet-soft: #E5E8E6;
+  --violet-deep: #2A302E;
+
+  --dark: #0B0F0E;
+  --dark-elevated: #121716;
+  --dark-soft: #191F1D;
+  --on-dark: #ECF0EE;
+  --on-dark-soft: #98A19E;
+
+  --btn: #0E1211;
+  --btn-hover: #1F2624;
   --btn-fg: #FFFFFF;
-  --shadow-ink: #0F1821;
+  --shadow-ink: #0E1211;
 
-  --risk: #B7791F;
-  --risk-mid: #B54708;
-  --risk-high: #B42318;
-  --risk-strong: #8A2A12;
-  --risk-fg: #8A2A12;
-  --risk-track: #E3E7EC;
-  --risk-soft: #FBF3E4;
+  --risk: #7E5C20;
+  --risk-mid: #A84C12;
+  --risk-high: #95404B;
+  --risk-strong: #762F39;
+  --risk-fg: #762F39;
+  --risk-track: #DCDFDD;
+  --risk-soft: #F6E5E7;
 
-  --chart-obs: #277452;
-  --chart-est: #B54708;
-  --chart-bar: #D9E2EC;
-  --chart-hatch: #E3EAF2;
+  --chart-obs: #17503F;
+  --chart-est: #7E5C20;
+  --chart-bar: #D2D6D4;
+  --chart-hatch: #DEEBE6;
 
-  --hover: #EEF3F9;
-  --scrim: #0F1821;
+  --hover: #E4E7E5;
+  --scrim: #0E1211;
 }
 
-/* ---------- 炭黑：深色（只提亮色相，不换色相） ---------- */
+/* ---------- 炭黑：深色（只提亮，不换色相） ---------- */
 html[data-theme="charcoal"] {
   --sh-1: 0 1px 2px rgba(0, 0, 0, .40);
   --sh-2: 0 6px 16px -4px rgba(0, 0, 0, .60), 0 16px 40px -12px rgba(0, 0, 0, .70);
   --sh-3: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 30px -12px rgba(0, 0, 0, .60);
 
-  --canvas: #0B1120;
-  --rail: #070C16;
-  --sunken: #121A2A;
-  --card: #111827;
+  --canvas: #0B0E0D;
+  --rail: #070908;
+  --sunken: #141817;
+  --card: #101413;
+  --soft: #151A19;
+  --strong: #202624;
 
-  --fg: #E8EEF6;
-  --fg-2: #C6D0DF;
-  --fg-3: #95A5BC;
-  --fg-inv: #0B1120;
+  --fg: #EDF1EF;
+  --fg-2: #C6CECB;
+  --fg-3: #A0A9A6;
+  --fg-4: #78817E;
+  --fg-inv: #0B0E0D;
 
-  --line: #263149;
-  --line-strong: #36425D;
-  --line-soft: #151D2C;
+  --line: #232927;
+  --line-strong: #323A38;
+  --line-soft: #171C1B;
 
-  --accent: #7BA3F7;
-  --accent-hover: #93B4FA;
-  --accent-soft: #16233C;
-  --accent-ring: rgba(123, 163, 247, .30);
+  --accent: #86C4AD;
+  --accent-hover: #A6D8C4;
+  --accent-soft: #14251F;
+  --accent-ring: rgba(134, 196, 173, .28);
 
-  --btn: #E4EAF5;
-  --btn-hover: #F2F6FF;
-  --btn-fg: #10182B;
+  --blue: #86C4AD;
+  --blue-soft: #14251F;
+  --blue-deep: #B7DFD0;
+  --teal: #B5C889;
+  --teal-soft: #1E2417;
+  --teal-deep: #CFDDAA;
+  --amber: #D8B071;
+  --amber-soft: #272115;
+  --amber-deep: #EBCD9C;
+  --rose: #E79398;
+  --rose-soft: #2A1A1C;
+  --rose-deep: #F2B4B8;
+  --violet: #A9B4B0;
+  --violet-soft: #1B201E;
+  --violet-deep: #C8D1CE;
+
+  --dark: #070908;
+  --dark-elevated: #0E1211;
+  --dark-soft: #151A19;
+  --on-dark: #EDF1EF;
+  --on-dark-soft: #A0A9A6;
+
+  --btn: #E9EDEA;
+  --btn-hover: #F5F8F6;
+  --btn-fg: #101413;
   --shadow-ink: #000000;
 
-  --risk: #D9A23F;
-  --risk-mid: #E5743B;
-  --risk-high: #F0736A;
-  --risk-strong: #F58F86;
-  --risk-fg: #F58F86;
-  --risk-track: #232C3D;
-  --risk-soft: #2A2118;
+  --risk: #D8B071;
+  --risk-mid: #E2833F;
+  --risk-high: #E79398;
+  --risk-strong: #F2B4B8;
+  --risk-fg: #F2B4B8;
+  --risk-track: #202624;
+  --risk-soft: #2A1A1C;
 
-  --chart-obs: #7BA3F7;
-  --chart-est: #E5743B;
-  --chart-bar: #24304A;
-  --chart-hatch: #1B2436;
+  --chart-obs: #86C4AD;
+  --chart-est: #D8B071;
+  --chart-bar: #232927;
+  --chart-hatch: #14251F;
 
-  --hover: #16203A;
+  --hover: #121716;
 
   /* 深色主题的遮罩必须是真正的黑：拿 --fg（近白）当遮罩会把页面提亮。 */
   --scrim: #000000;
@@ -182,48 +263,73 @@ html[data-theme="charcoal"] {
   color-scheme: dark;
 }
 
-/* ---------- 纸墨：中性灰（单色观感，风险色仍保留暖色方向） ---------- */
+/* ---------- 纸墨：单色观感，风险色仍保留暖色方向 ---------- */
 html[data-theme="paper"] {
-  --sh-1: 0 1px 2px rgba(20, 20, 20, .05);
-  --sh-2: 0 2px 8px -2px rgba(20, 20, 20, .07), 0 12px 28px -14px rgba(20, 20, 20, .16);
+  --sh-1: 0 1px 2px rgba(14, 18, 17, .05);
+  --sh-2: 0 1px 2px rgba(14, 18, 17, .05), 0 8px 24px -18px rgba(14, 18, 17, .18);
 
-  --canvas: #FAFAFA;
+  --canvas: #F2F3F2;
   --rail: #FFFFFF;
-  --sunken: #F2F2F2;
+  --sunken: #E6E8E6;
   --card: #FFFFFF;
+  --soft: #EDEFED;
+  --strong: #DADDD9;
 
-  --fg: #141414;
-  --fg-2: #3F3F3F;
-  --fg-3: #565656;
+  --fg: #101413;
+  --fg-2: #363D3A;
+  --fg-3: #5B6461;
+  --fg-4: #848C89;
   --fg-inv: #FFFFFF;
 
-  --line: #E2E2E2;
-  --line-strong: #D6D6D6;
-  --line-soft: #F4F4F4;
+  --line: #D5D9D6;
+  --line-strong: #BCC3C0;
+  --line-soft: #E3E6E4;
 
-  --accent: #333333;
-  --accent-hover: #111111;
-  --accent-soft: #EDEDED;
-  --accent-ring: rgba(51, 51, 51, .20);
+  --accent: #343A39;
+  --accent-hover: #1E2423;
+  --accent-soft: #E8EBEA;
+  --accent-ring: rgba(52, 58, 57, .18);
 
-  --btn: #141414;
-  --btn-hover: #2B2B2B;
+  --blue: #343A39;
+  --blue-soft: #E8EBEA;
+  --blue-deep: #1E2423;
+  --teal: #5E7A39;
+  --teal-soft: #EAF0DF;
+  --teal-deep: #4A6229;
+  --amber: #86621F;
+  --amber-soft: #F4ECDA;
+  --amber-deep: #684B16;
+  --rose: #9A424D;
+  --rose-soft: #F6E7E9;
+  --rose-deep: #7A313B;
+  --violet: #3F4644;
+  --violet-soft: #E6E9E7;
+  --violet-deep: #2C3230;
+
+  --dark: #0D1110;
+  --dark-elevated: #141918;
+  --dark-soft: #1B201F;
+  --on-dark: #ECEFF0;
+  --on-dark-soft: #98A09E;
+
+  --btn: #101413;
+  --btn-hover: #222927;
   --btn-fg: #FFFFFF;
-  --shadow-ink: #141414;
+  --shadow-ink: #101413;
 
-  --risk: #B7791F;
-  --risk-mid: #B54708;
-  --risk-high: #B42318;
-  --risk-strong: #8A2A12;
-  --risk-fg: #8A2A12;
-  --risk-track: #E5E5E5;
-  --risk-soft: #FBF3E4;
+  --risk: #86621F;
+  --risk-mid: #B05314;
+  --risk-high: #9A424D;
+  --risk-strong: #7A313B;
+  --risk-fg: #7A313B;
+  --risk-track: #DFE2E0;
+  --risk-soft: #F6E7E9;
 
-  --chart-obs: #333333;
-  --chart-est: #B54708;
-  --chart-bar: #E2E2E2;
-  --chart-hatch: #EAEAEA;
+  --chart-obs: #343A39;
+  --chart-est: #86621F;
+  --chart-bar: #D5D9D6;
+  --chart-hatch: #E8EBEA;
 
-  --hover: #F2F2F2;
-  --scrim: #141414;
+  --hover: #E7EAE8;
+  --scrim: #101413;
 }

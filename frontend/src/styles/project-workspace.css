@@ -1,13 +1,13 @@
 /* 项目工作台沿用现有控件、文字与表面令牌，图表颜色按主题单独验证。 */
 :root {
-  --project-series: #2a78d6;
+  --project-series: #1F5D4C;
   --project-chart-surface: #ffffff;
-  --project-series-ink: #184f95;
+  --project-series-ink: #164537;
 }
 html[data-theme="charcoal"] {
-  --project-series: #3987e5;
-  --project-chart-surface: #111827;
-  --project-series-ink: #104281;
+  --project-series: #86C4AD;
+  --project-chart-surface: #0E1211;
+  --project-series-ink: #B7DFD0;
 }
 .project-tabs { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--line-strong); margin: 20px 0 24px; padding-bottom: 12px; }
 .project-tabs .ui-btn[aria-current="page"] { color: var(--fg); background: var(--sunken); border-color: var(--line-strong); font-weight: 650; }

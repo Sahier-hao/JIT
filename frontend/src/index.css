@@ -24,6 +24,14 @@
 @import './styles/project-workspace.css';
 @import './styles/progress.css';
 
+/* Claude 骨架层：同权重下由它决定外壳、列表行与工作单的形状。 */
+@import './styles/claude.css';
+
+/* 信息密度层最后加载：按 Data-Dense Dashboard 规范收紧栅格、行高与表头。 */
+@import './styles/dashboard.css';
+@import './styles/project-redesign.css';
+@import './styles/workbench-modern.css';
+
 /*
  * 把现有设计令牌映射为 Tailwind 语义色，让新组件与旧页面共用同一套变量。
  * 主题切换仍由 html[data-theme] 决定，Tailwind 不自己保存颜色。

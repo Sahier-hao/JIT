@@ -10,24 +10,43 @@ import { describe, expect, it } from 'vitest'
 
 const css = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8')
 
-/** 根层必须定义的全部 26 个语义键（另有 1 个 --scrim 在四套主题里逐个声明，见 THEME_COLOR_KEYS）。 */
+/** 根层必须定义的语义键（另有逐主题声明的键，见 THEME_COLOR_KEYS）。 */
 const REQUIRED_KEYS = [
   'sans', 'display', 'mono',
-  'r', 'r-lg', 'sh-1', 'sh-2',
-  'canvas', 'rail', 'sunken', 'card',
-  'fg', 'fg-2', 'fg-3', 'fg-inv',
+  'r', 'r-xs', 'r-lg', 'r-md', 'r-xl',
+  'sh-1', 'sh-2', 'sh-3',
+  'canvas', 'rail', 'sunken', 'card', 'soft', 'strong',
+  'fg', 'fg-2', 'fg-3', 'fg-4', 'fg-inv',
   'line', 'line-strong', 'line-soft',
   'accent', 'accent-hover', 'accent-soft', 'accent-ring',
-  'risk', 'risk-strong', 'risk-fg', 'risk-track',
+  // 色族：soft 当底、base 当填充、deep 才当文字。
+  'blue', 'blue-soft', 'blue-deep',
+  'teal', 'teal-soft', 'teal-deep',
+  'amber', 'amber-soft', 'amber-deep',
+  'rose', 'rose-soft', 'rose-deep',
+  'violet', 'violet-soft', 'violet-deep',
+  // 深色面只给代码与终端。
+  'dark', 'dark-elevated', 'dark-soft', 'on-dark', 'on-dark-soft',
+  'btn', 'btn-hover', 'btn-fg', 'shadow-ink',
+  'risk', 'risk-mid', 'risk-high', 'risk-strong', 'risk-fg', 'risk-track', 'risk-soft',
+  'chart-obs', 'chart-est', 'chart-bar', 'chart-hatch',
+  'hover', 'scrim',
 ]
 
 /** 每套主题都必须覆盖的颜色键（字体与圆角跨主题共享）。 */
 const THEME_COLOR_KEYS = [
-  'canvas', 'rail', 'sunken', 'card',
-  'fg', 'fg-2', 'fg-3', 'fg-inv',
+  'canvas', 'rail', 'sunken', 'card', 'soft', 'strong',
+  'fg', 'fg-2', 'fg-3', 'fg-4', 'fg-inv',
   'line', 'line-strong', 'line-soft',
-  'accent', 'accent-soft',
-  'risk', 'risk-strong', 'risk-fg', 'risk-track',
+  'accent', 'accent-hover', 'accent-soft', 'accent-ring',
+  'blue', 'blue-soft', 'blue-deep',
+  'teal', 'teal-soft', 'teal-deep',
+  'amber', 'amber-soft', 'amber-deep',
+  'rose', 'rose-soft', 'rose-deep',
+  'violet', 'violet-soft', 'violet-deep',
+  'dark', 'dark-elevated', 'dark-soft', 'on-dark', 'on-dark-soft',
+  'btn', 'btn-hover', 'btn-fg',
+  'risk', 'risk-mid', 'risk-high', 'risk-strong', 'risk-fg', 'risk-track', 'risk-soft',
   'hover',
   // 图表色必须逐主题声明：柱色贴近底色、纹理线与网格线在深色主题下要反过来变暗。
   'chart-obs', 'chart-est', 'chart-bar', 'chart-hatch',
@@ -65,7 +84,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 const root = declarations(block(':root'))
 
 describe('令牌层', () => {
-  it('根层定义了全部 26 个语义键', () => {
+  it('根层定义了全部语义键', () => {
     const missing = REQUIRED_KEYS.filter((key) => !root.has(key))
     expect(missing).toEqual([])
     expect(root.size).toBeGreaterThanOrEqual(REQUIRED_KEYS.length)
@@ -77,10 +96,14 @@ describe('令牌层', () => {
     expect(missing).toEqual([])
   })
 
-  it('字体栈只使用系统字族并带回退链', () => {
+  it('字体栈只使用系统字族并以通用字族收尾', () => {
+    // 展示字是衬线（Claude 的标题层），因此通用字族不能只认 sans-serif / monospace。
+    const generic = /^(sans-serif|monospace|serif|cursive|fantasy|system-ui)$/
     for (const key of ['sans', 'display', 'mono']) {
       const stack = root.get(key) ?? ''
-      expect(stack).toMatch(/sans-serif|monospace/)
+      const families = stack.split(',').map((part) => part.trim().replace(/^['"]|['"]$/g, ''))
+      expect(families.length).toBeGreaterThan(1)
+      expect(families[families.length - 1]).toMatch(generic)
       expect(stack).not.toMatch(/@import|url\(/)
     }
   })
