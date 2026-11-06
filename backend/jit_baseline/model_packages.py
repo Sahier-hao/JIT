@@ -16,6 +16,7 @@ from .api_errors import RequestError
 from .artifacts import CORE_FILES, Snapshot
 from .catalog import ModelCatalog, REPOSITORY_SCHEMAS
 from .catalog_storage import utc_now
+from .config import BACKEND
 from .data import sha256
 from .errors import BaselineError
 
@@ -34,6 +35,8 @@ ITEM_KEYS = {
 }
 FILE_KEYS = {"path", "sha256", "size"}
 MODEL_KEYS = {"id", "name", "sha256"}
+BUNDLED_PACKAGE_PATH = BACKEND / "model-packages" / "jit-nine-models-v1.zip"
+BUNDLED_MODEL_COUNT = 9
 
 
 def _hash_file(path):
@@ -238,6 +241,37 @@ def inspect_model_package(path):
         "uncompressedBytes": sum(names[name].file_size for name in declared if name in names),
         "models": manifest["models"],
     }
+
+
+def inspect_bundled_model_package(package=BUNDLED_PACKAGE_PATH, *,
+                                  expected_model_count=BUNDLED_MODEL_COUNT):
+    """Validate a repository-managed package against its checksum sidecar."""
+    package = Path(package)
+    checksum = package.with_name(package.name + ".sha256")
+    try:
+        fields = checksum.read_text(encoding="ascii").split()
+    except (OSError, UnicodeError) as exc:
+        raise BaselineError(
+            "PACKAGE_INVALID", f"模型包校验文件不可用：{checksum.name}",
+        ) from exc
+    if len(fields) != 2:
+        raise BaselineError("PACKAGE_INVALID", "模型包校验文件格式无效")
+    expected_sha, expected_name = fields
+    _hash_text(expected_sha, field="packageSha256")
+    if expected_name != package.name:
+        raise BaselineError("PACKAGE_INVALID", "模型包校验文件名不一致")
+    try:
+        actual_sha = _hash_file(package)
+    except OSError as exc:
+        raise BaselineError("PACKAGE_INVALID", f"模型包不可用：{package.name}") from exc
+    if actual_sha != expected_sha:
+        raise BaselineError("PACKAGE_INVALID", "模型包 SHA-256 不匹配")
+    inspected = inspect_model_package(package)
+    if inspected["modelCount"] != expected_model_count:
+        raise BaselineError(
+            "PACKAGE_INVALID", f"仓库内置模型包必须包含 {expected_model_count} 个模型",
+        )
+    return inspected
 
 
 def _write_zip(path, manifest, directories):
@@ -557,6 +591,67 @@ def import_model_package(catalog: ModelCatalog, package):
                           package_sha=inspected["packageSha256"],
                           version=inspected["packageVersion"],
                           package_name=package_name, items=results)
+
+
+def _package_is_ready(catalog: ModelCatalog, inspected):
+    previous = catalog.store.model_package_import_by_sha(inspected["packageSha256"])
+    if previous is None:
+        return None
+    registered = catalog._registered_runs()
+    for item in inspected["models"]:
+        model = registered.get(item["artifactRunId"])
+        if model is None:
+            return None
+        try:
+            catalog.load_model(model["modelId"])
+        except BaselineError:
+            return None
+    return previous
+
+
+def import_bundled_model_package(catalog: ModelCatalog, package=BUNDLED_PACKAGE_PATH,
+                                 *, expected_model_count=BUNDLED_MODEL_COUNT):
+    """Apply a repository-managed package once when its runs are ready."""
+    package = Path(package)
+    try:
+        inspected = inspect_bundled_model_package(
+            package, expected_model_count=expected_model_count,
+        )
+    except BaselineError as exc:
+        try:
+            actual_sha = _hash_file(package)
+        except OSError:
+            return {
+                "packageName": package.name,
+                "packageSha256": None,
+                "packageVersion": 0,
+                "status": "failed",
+                "modelCount": 0,
+                "registeredCount": 0,
+                "reusedCount": 0,
+                "alreadyRegisteredCount": 0,
+                "conflictCount": 0,
+                "failedCount": 0,
+                "code": exc.code,
+                "message": str(exc),
+                "createdAt": utc_now(),
+                "items": [],
+                "skipped": False,
+            }
+        return dict(_record_import(
+            catalog.store,
+            import_id=str(uuid4()),
+            package_sha=actual_sha,
+            version=0,
+            package_name=package.name,
+            items=[],
+            code=exc.code,
+            message=str(exc),
+        ), skipped=False)
+    previous = _package_is_ready(catalog, inspected)
+    if previous is not None:
+        return dict(previous, skipped=True)
+    return dict(import_model_package(catalog, package), skipped=False)
 
 
 def latest_model_package_import(storage):

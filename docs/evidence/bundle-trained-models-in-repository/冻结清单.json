@@ -1,0 +1,119 @@
+{
+  "copiedFromWorkspace": [
+    "bootstrap/coverage.json",
+    "bootstrap/initialization.json",
+    "browser/admin-training-results.json",
+    "browser/bundled-model-results.json",
+    "browser/default-results.json",
+    "browser/experiment-results.json",
+    "browser/package-recovery-results.json",
+    "browser/preview-results.json",
+    "package/inspection.json",
+    "package/jit-nine-models-v1.zip.sha256",
+    "package/model-package.json",
+    "README.md",
+    "screenshots/admin-large-repository-training-1280.png",
+    "screenshots/admin-large-repository-training-1440.png",
+    "screenshots/admin-large-repository-training-390.png",
+    "screenshots/bundled-model-bootstrap-1280.png",
+    "screenshots/bundled-model-bootstrap-1440.png",
+    "screenshots/bundled-model-bootstrap-390.png",
+    "verification/backend-tests.txt",
+    "verification/checks.json",
+    "verification/frontend-vitest.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 21,
+  "files": [
+    {
+      "path": "bootstrap/coverage.json",
+      "sha256": "275a7f10809680efe6ef033650e25842f6248564abdbb5710e144afcae384a2b"
+    },
+    {
+      "path": "bootstrap/initialization.json",
+      "sha256": "03893e43b62ac604e842d4655e721c83205374d3f425284d5d6cc5e5e4a918bc"
+    },
+    {
+      "path": "browser/admin-training-results.json",
+      "sha256": "1230f28a65a5f011931020ab25a91f7bb78da74fb6d3ff0d9dcaecc90df8c0ca"
+    },
+    {
+      "path": "browser/bundled-model-results.json",
+      "sha256": "45f1238b79ad2e24591ea163949472e87c97590368be5c02dde8b9fc74a77a72"
+    },
+    {
+      "path": "browser/default-results.json",
+      "sha256": "1cd62fa95e29f2ea4360efd6d15dcd19fad5528472b60ec7aea67c473a8811ac"
+    },
+    {
+      "path": "browser/experiment-results.json",
+      "sha256": "546b7622cf2f5be9c95422e35a17d88ef197cf7c51a196c296df46da5c5468f1"
+    },
+    {
+      "path": "browser/package-recovery-results.json",
+      "sha256": "7b9c201da89ed39775493fcd7e2e8b208673d9cf37466bd84991c589b46ccb4a"
+    },
+    {
+      "path": "browser/preview-results.json",
+      "sha256": "92f3b34a0e6ed4cd6468b94bf75781d78617badac8f10f23d1001dbc40697e75"
+    },
+    {
+      "path": "package/inspection.json",
+      "sha256": "4dc319c8ea87fb8ca392a695763e8029fa314f1d59fdea3080c8c4c7fe35e49e"
+    },
+    {
+      "path": "package/jit-nine-models-v1.zip.sha256",
+      "sha256": "8943bc1286e2f3f54a9e5f73d605e2b9cb55ab2633094aa0eaaaf65c9f1b83d4"
+    },
+    {
+      "path": "package/model-package.json",
+      "sha256": "a9fe685cd88ca465d06bba203b0c99b105b3a812bd7441f266659d6afec8bfbb"
+    },
+    {
+      "path": "README.md",
+      "sha256": "7515dd86f7b4bb69bc7fc42ad63370f461f6e8f14003f9c182f909959472b0ea"
+    },
+    {
+      "path": "screenshots/admin-large-repository-training-1280.png",
+      "sha256": "5b22c41f8939ce27c57187d9fd3005df6433fe5aab0c1fc6da9a6315772a92e2"
+    },
+    {
+      "path": "screenshots/admin-large-repository-training-1440.png",
+      "sha256": "5d7e8e801436c95aed8a8299438eada1b1c4ed5888a8bb90f74dc52a29a8ed40"
+    },
+    {
+      "path": "screenshots/admin-large-repository-training-390.png",
+      "sha256": "9423e7f01cb3996262b4c15ebe21a4d4a9175c3992fc7c6a3359838142ad2250"
+    },
+    {
+      "path": "screenshots/bundled-model-bootstrap-1280.png",
+      "sha256": "4ca6de2486af5bf809186657efdba4340555397788f37fff83667e2d2544b64d"
+    },
+    {
+      "path": "screenshots/bundled-model-bootstrap-1440.png",
+      "sha256": "01f9b8681b1c9809c6e6498a00ed31490133304de0b432f73f77a965f92194a5"
+    },
+    {
+      "path": "screenshots/bundled-model-bootstrap-390.png",
+      "sha256": "ad857950fbadf051687263c4c7f8555b39b435c95fc587af5bfcb31d31131f5f"
+    },
+    {
+      "path": "verification/backend-tests.txt",
+      "sha256": "21b79c61442cb39df266bdc990dd21c1c914669f53f5707dccb86d3f3d8710f6"
+    },
+    {
+      "path": "verification/checks.json",
+      "sha256": "563e141c22c404d6784ea0660c741a29d678683bded07d7083cb3e0967450f88"
+    },
+    {
+      "path": "verification/frontend-vitest.json",
+      "sha256": "0270dcbdcdc79ec39027833266bc85015e5e1fb2d48ca90910d2341da7b636ba"
+    }
+  ],
+  "frozenUtc": "2026-11-06T10:51:19.657412+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "e436d7f5debc55115976c4a32ce9654a896dd459e489e3b02c2a15e9f6ffb5d2",
+  "workspace": "docs/evidence/_run/bundle-trained-models-in-repository"
+}

@@ -127,6 +127,7 @@ it('shows package import failures and maintenance commands', async () => {
   const panel = await screen.findByLabelText('模型包交付')
   expect(within(panel).getByText('jit-models.zip')).toBeVisible()
   expect(within(panel).getByText('部分导入')).toBeVisible()
+  expect(within(panel).getByText('a'.repeat(64))).toBeVisible()
   expect(within(panel).getByText('目标位置已有不同运行')).toBeVisible()
   expect(within(panel).getByText('维护命令')).toBeVisible()
   await userEvent.setup().click(within(panel).getByText('维护命令'))

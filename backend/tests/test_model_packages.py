@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 
 from jit_baseline.algorithms import ALGORITHMS
+from jit_baseline.config import BACKEND
+from jit_baseline.data import sha256
 from test_artifacts import _resync, real_run, rewrite_manifest  # noqa: F401
 
 
@@ -61,6 +63,235 @@ def _rewrite_zip(source, target, replacements):
 def _manifest(archive):
     with zipfile.ZipFile(archive) as bundle:
         return json.loads(bundle.read("model-package.json"))
+
+
+def _write_checksum(package, *, digest=None, name=None):
+    package = Path(package)
+    digest = digest or sha256(package.read_bytes())
+    package.with_name(package.name + ".sha256").write_text(
+        f"{digest}  {name or package.name}\n", encoding="ascii",
+    )
+
+
+def test_repository_bundle_is_present_and_exactly_nine_models():
+    from jit_baseline.model_packages import inspect_bundled_model_package
+    package = BACKEND / "model-packages" / "jit-nine-models-v1.zip"
+    inspected = inspect_bundled_model_package(package)
+    assert inspected["packageSha256"] == "3c15b7d9453291ba5c106e09b93403e234c0c1c67c0413b2d3654820f3377d76"
+    assert inspected["packageVersion"] == 1
+    assert inspected["modelCount"] == 9
+    assert inspected["fileCount"] == 81
+    assert len({item["artifactRunId"] for item in inspected["models"]}) == 9
+
+
+def test_bundled_inspection_rejects_missing_checksum_name_mismatch_and_wrong_count(
+        tmp_path, real_run):
+    from jit_baseline.errors import BaselineError
+    from jit_baseline.model_packages import inspect_bundled_model_package
+
+    _, _, package, _ = _package(tmp_path, real_run)
+    assert inspect_bundled_model_package(package, expected_model_count=1)["modelCount"] == 1
+
+    checksum = package.with_name(package.name + ".sha256")
+    checksum.unlink()
+    with pytest.raises(BaselineError) as error:
+        inspect_bundled_model_package(package, expected_model_count=1)
+    assert "校验文件" in str(error.value)
+
+    _write_checksum(package, name="different.zip")
+    with pytest.raises(BaselineError) as error:
+        inspect_bundled_model_package(package, expected_model_count=1)
+    assert "文件名" in str(error.value)
+
+    _write_checksum(package, digest="f" * 64)
+    with pytest.raises(BaselineError) as error:
+        inspect_bundled_model_package(package, expected_model_count=1)
+    assert "SHA-256" in str(error.value)
+
+    _write_checksum(package)
+    with pytest.raises(BaselineError) as error:
+        inspect_bundled_model_package(package, expected_model_count=9)
+    assert "必须包含 9 个模型" in str(error.value)
+
+
+def test_bundled_inspection_rejects_unknown_package_version(tmp_path, real_run):
+    from jit_baseline.errors import BaselineError
+    from jit_baseline.model_packages import inspect_bundled_model_package
+
+    _, _, package, _ = _package(tmp_path, real_run)
+    manifest = _manifest(package)
+    manifest["packageVersion"] = 99
+    changed = tmp_path / "future.zip"
+    with zipfile.ZipFile(package) as original, zipfile.ZipFile(changed, "w") as target:
+        for info in original.infolist():
+            data = (json.dumps(manifest).encode("utf-8")
+                    if info.filename == "model-package.json" else original.read(info.filename))
+            target.writestr(info, data)
+    _write_checksum(changed)
+    with pytest.raises(BaselineError) as error:
+        inspect_bundled_model_package(changed, expected_model_count=1)
+    assert error.value.code == "PACKAGE_VERSION_UNSUPPORTED"
+
+
+def test_catalog_init_bootstraps_repository_bundle_and_skips_second_time(tmp_path):
+    from jit_baseline.model_packages import (
+        inspect_bundled_model_package,
+        import_bundled_model_package,
+    )
+
+    package = BACKEND / "model-packages" / "jit-nine-models-v1.zip"
+    inspected = inspect_bundled_model_package(package)
+    target = _catalog(tmp_path, "target")
+    first = import_bundled_model_package(target)
+    assert first["status"] == "completed"
+    assert first["registeredCount"] == 9
+    assert first["skipped"] is False
+    assert str(tmp_path) not in json.dumps(first, ensure_ascii=False)
+    models = target.models()
+    assert {item["modelId"] for item in models} == {
+        item["sourceModelId"] for item in inspected["models"]
+    }
+    assert {item["artifactRunId"] for item in models} == {
+        item["artifactRunId"] for item in inspected["models"]
+    }
+    assert sum(item["isDefault"] for item in models) == 1
+
+    second = import_bundled_model_package(target)
+    assert second["status"] == "completed"
+    assert second["skipped"] is True
+    assert len(target.models()) == 9
+    with target.store.connection() as db:
+        assert db.execute('SELECT count(*) FROM model_version').fetchone()[0] == 9
+
+
+def test_repository_bundle_preserves_existing_policy_when_revalidated(tmp_path, monkeypatch):
+    from jit_baseline.model_packages import import_bundled_model_package
+
+    target = _catalog(tmp_path, "target")
+    import_bundled_model_package(target)
+    models = target.models()
+    current_default = next(item for item in models if item["isDefault"])
+    replacement = next(item for item in models if not item["isDefault"])
+    target.update_policy(replacement["modelId"], {"isDefault": True})
+    target.update_policy(current_default["modelId"], {"enabled": False})
+    expected = {
+        item["modelId"]: (item["enabled"], item["isDefault"])
+        for item in target.models()
+    }
+
+    monkeypatch.setattr(target.store, "model_package_import_by_sha", lambda _sha: None)
+    result = import_bundled_model_package(target)
+    assert result["status"] == "completed"
+    assert result["alreadyRegisteredCount"] == 9
+    assert result["skipped"] is False
+    assert {
+        item["modelId"]: (item["enabled"], item["isDefault"])
+        for item in target.models()
+    } == expected
+    assert sum(item["isDefault"] for item in target.models()) == 1
+
+
+def test_newer_bundle_adds_only_its_new_model_and_keeps_policy(
+        tmp_path, real_run, monkeypatch):
+    from jit_baseline.catalog import ModelCatalog
+    from jit_baseline.model_packages import export_model_package, import_bundled_model_package
+
+    target = _catalog(tmp_path, "target")
+    import_bundled_model_package(target)
+    base_models = target.models()
+    current_default = next(item for item in base_models if item["isDefault"])
+    disabled = next(item for item in base_models if not item["isDefault"])
+    target.update_policy(disabled["modelId"], {"enabled": False})
+
+    source = _catalog(tmp_path, "source-v2")
+    extra = source.root / "extra-model"
+    shutil.copytree(real_run, extra)
+    rewrite_manifest(
+        extra,
+        lambda config: config.setdefault("sourceCode", {}).__setitem__(
+            "bundled-extra.py", "a" * 64,
+        ),
+    )
+    _resync(extra, ())
+    extra_model = source.register_key("extra-model")["model"]
+    package = tmp_path / "release" / "jit-nine-models-v2.zip"
+    export_model_package(source, [extra_model["modelId"]], package)
+
+    monkeypatch.setattr(target.store, "model_package_import_by_sha", lambda _sha: None)
+    result = import_bundled_model_package(target, package, expected_model_count=1)
+    assert result["status"] == "completed"
+    assert result["registeredCount"] == 1
+    models = target.models()
+    assert len(models) == 10
+    assert extra_model["modelId"] in {item["modelId"] for item in models}
+    assert next(item for item in models if item["modelId"] == current_default["modelId"])["isDefault"] is True
+    assert next(item for item in models if item["modelId"] == disabled["modelId"])["enabled"] is False
+
+
+def test_bundled_partial_failure_keeps_successful_models(tmp_path, real_run, monkeypatch):
+    from jit_baseline.catalog import ModelCatalog
+    from jit_baseline.errors import BaselineError
+    from jit_baseline.model_packages import import_bundled_model_package
+
+    _, _, package, _ = _package(tmp_path, real_run, count=2)
+    target = _catalog(tmp_path, "target")
+    failing = ModelCatalog._candidate_id(list(ALGORITHMS)[1])
+    original = target.register
+
+    def register(candidate_id, expected_hash, **kwargs):
+        if candidate_id == failing:
+            raise BaselineError("MODEL_INVALID", "注入的模型加载失败")
+        return original(candidate_id, expected_hash, **kwargs)
+
+    monkeypatch.setattr(target, "register", register)
+    result = import_bundled_model_package(target, package, expected_model_count=2)
+    assert result["status"] == "partial"
+    assert result["registeredCount"] == 1
+    assert result["failedCount"] == 1
+    assert len(target.models()) == 1
+
+
+def test_catalog_init_cli_imports_repository_bundle(tmp_path, monkeypatch, capsys):
+    from jit_baseline.cli import main
+    from jit_baseline.catalog import ModelCatalog
+    from jit_baseline.catalog_storage import CatalogStorage
+
+    database = tmp_path / "catalog.sqlite3"
+    artifacts = tmp_path / "artifacts"
+    monkeypatch.setattr("sys.argv", [
+        "jit", "catalog-init", "--database", str(database),
+        "--artifact-root", str(artifacts),
+    ])
+    main()
+    result = json.loads(capsys.readouterr().out)
+    assert result["kind"] == "catalog-initialized"
+    assert result["bundledPackage"]["status"] == "completed"
+    assert result["bundledPackage"]["registeredCount"] == 9
+    assert result["bundledPackage"]["skipped"] is False
+    assert str(tmp_path) not in json.dumps(result, ensure_ascii=False)
+    catalog = ModelCatalog(CatalogStorage(database), artifacts)
+    assert len(catalog.models()) == 9
+
+
+def test_catalog_init_cli_returns_nonzero_for_wrong_bundle(
+        tmp_path, real_run, monkeypatch, capsys):
+    from jit_baseline.cli import main
+
+    _, _, package, _ = _package(tmp_path, real_run)
+    database = tmp_path / "catalog.sqlite3"
+    artifacts = tmp_path / "artifacts"
+    monkeypatch.setattr("sys.argv", [
+        "jit", "catalog-init", "--database", str(database),
+        "--artifact-root", str(artifacts), "--bundled-package", str(package),
+    ])
+    with pytest.raises(SystemExit) as stopped:
+        main()
+    assert stopped.value.code == 1
+    result = json.loads(capsys.readouterr().out)
+    assert result["bundledPackage"]["status"] == "failed"
+    assert result["bundledPackage"]["code"] == "PACKAGE_INVALID"
+    assert "必须包含 9 个模型" in result["bundledPackage"]["message"]
+    assert not artifacts.exists()
 
 
 def test_package_format_is_stable_and_unknown_version_is_rejected(tmp_path, real_run):

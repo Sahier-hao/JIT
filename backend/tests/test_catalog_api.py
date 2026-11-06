@@ -297,6 +297,26 @@ def test_dataset_and_commit_queries_share_one_registry(settings):
         assert client.get('/api/v1/datasets', headers={'Authorization': 'Bearer wrong'}).status_code == 200
 
 
+def test_dataset_queries_include_versions_registered_after_startup(settings, tmp_path):
+    from jit_baseline import datasets
+    from jit_baseline.api import create_app
+    from jit_baseline.config import BACKEND
+
+    registry = tmp_path / 'datasets'
+    shutil.copytree(BACKEND / 'data' / 'datasets', registry)
+    with TestClient(create_app(**settings, dataset_root=registry)) as client:
+        registered = datasets.register(
+            BACKEND / 'data' / 'openstack' / 'openstack.csv',
+            dataset='dynamic-six-v1',
+            root=registry,
+        )
+        versions = client.get('/api/v1/datasets/dynamic-six-v1/versions', headers=HEADERS)
+        assert versions.status_code == 200
+        assert [item['version'] for item in versions.json()['versions']] == [registered['version']]
+        listing = client.get('/api/v1/datasets', headers=HEADERS)
+        assert any(item['dataset'] == 'dynamic-six-v1' for item in listing.json()['datasets'])
+
+
 REAL_DATABASE = Path(__file__).resolve().parents[1] / 'storage' / 'catalog.sqlite3'
 REAL_VERSION = 'openstack-six-v1-2011-11-29_2014-02-28'
 

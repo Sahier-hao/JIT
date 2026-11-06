@@ -472,6 +472,25 @@
   margin-top: 8px;
 }
 
+.model-package-identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.model-package-identity span {
+  color: var(--fg-3);
+}
+
+.model-package-identity code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--fg-2);
+}
+
 .model-package-panel summary {
   color: var(--fg-2);
   font-size: 13px;

@@ -22,7 +22,7 @@ $env:PYTHONIOENCODING='utf-8'
 & .venv/Scripts/python.exe -m jit_baseline.cli compare artifacts/baseline artifacts/reproduction --report ../docs/evidence/_run/reproduction-comparison.json
 ```
 
-`fetch` 只访问三份固定发布者文件，全部通过 SHA-256 后才保存；已有文件必须重新核验。`run` 按选定方案处理、训练和评价，接受 `--schema`（具名特征 schema，默认 `openstack-six-v1`）与 `--algorithm`（具名方法，默认 `logistic-regression-l2-v1`）两个参数；不带参数时仍产出六字段逻辑回归运行。已存在的运行目录会拒绝覆盖；再次独立复现可指定新的输出目录，例如 `artifacts/reproduction-2`。正式模型和源文件不入 Git，使用命令重新取得。`verify` 检查所有文件哈希、关联、真实模型风险与指标。验证集不参与重拟合；测试不用于选阈值、参数或字段。
+`fetch` 只访问三份固定发布者文件，全部通过 SHA-256 后才保存；已有文件必须重新核验。`run` 按选定方案处理、训练和评价，接受 `--schema`（具名特征 schema，默认 `openstack-six-v1`）与 `--algorithm`（具名方法，默认 `logistic-regression-l2-v1`）两个参数；不带参数时仍产出六字段逻辑回归运行。已存在的运行目录会拒绝覆盖；再次独立复现可指定新的输出目录，例如 `artifacts/reproduction-2`。原始运行目录和源文件不入 Git；已校验的压缩模型发布包从 `model-packages/` 交付。`verify` 检查所有文件哈希、关联、真实模型风险与指标。验证集不参与重拟合；测试不用于选阈值、参数或字段。
 
 已登记的方法见 [PROTOCOL.md](PROTOCOL.md)：`logistic-regression-l2-v1`、`decision-tree-v1`、`random-forest-v1`、`gaussian-naive-bayes-v1`、`gradient-boosting-v1` 五种经典方法，以及 `mlp-v1`、`tabular-resnet-v1`、`ft-transformer-v1`、`wide-deep-v1` 四种深度方法。方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按每个运行**自身声明**的方法、依赖与指标集进行，因此新增方法、新增依赖或新增指标都不会作废既有运行。未注册的方法名以 `ALGORITHM_UNKNOWN` 拒绝，不退回默认方法。
 
@@ -75,7 +75,7 @@ $env:PYTHONIOENCODING='utf-8'
 备份时停止服务，保存数据库及所有被引用的运行目录；恢复后先核对版本，并重新校验登记的产物。
 回滚停用新接口并保留数据库与产物，禁止以删除成功结果代替回滚。
 
-训练模型跨环境交付使用版本化模型包，不复制 SQLite。导出只接受明确选择的已登记模型并生成 SHA-256 校验文件；导入在同一次维护操作中逐项校验运行身份、文件哈希、依赖和模型加载，失败项与成功项分别记录。生成、发布、升级和回滚步骤见[模型包部署](../docs/模型包部署.md)。
+训练模型跨环境交付使用版本化模型包，不复制 SQLite。当前九模型包位于 `model-packages/jit-nine-models-v1.zip` 并随 Git 交付；`catalog-init` 在迁移后自动校验 sidecar 和包内容，并逐项检查运行身份、文件哈希、依赖及模型加载。已完整应用且模型 ready 时重复初始化为幂等跳过；失败项与成功项分别记录。原始 `artifacts/`、SQLite 和运行期证据仍不进入 Git。生成、发布、升级和回滚步骤见[模型包部署](../docs/模型包部署.md)。
 
 2026-10-19 精简重构后，所有本机业务接口直接访问，不需要团队凭证、成员/管理员角色或认证头。服务仅监听 `127.0.0.1`；模型、输入、来源和持久化校验照常执行，错误带 requestId。HTTP 登记与 CLI 使用同一模型准入规则。历史登记事件中的 `http-admin` 是保留的旧记录，新 HTTP 事件记录为 `http-local`，不表示角色。
 

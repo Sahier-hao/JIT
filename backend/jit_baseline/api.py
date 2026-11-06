@@ -500,7 +500,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/datasets')
     def dataset_versions_all():
-        datasets = store.dataset_list(dataset_module.load_all(registry_root))
+        registered = dataset_module.load_all(registry_root)
+        datasets = store.dataset_list(registered)
         for dataset in datasets:
             for version in dataset['versions']:
                 version['references'] = store.dataset_references(storage, version['version'])
@@ -508,7 +509,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/datasets/{name}/versions')
     def dataset_versions(name: str):
-        view = store.version_view(dataset_module.load_all(registry_root), name)
+        registered = dataset_module.load_all(registry_root)
+        view = store.version_view(registered, name)
         if view is None:
             raise RequestError('NOT_FOUND')
         for version in view['versions']:

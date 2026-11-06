@@ -14,6 +14,7 @@
     "test:e2e:admin-training": "playwright test --config=playwright.admin-training.config.ts",
     "test:e2e:experiments": "playwright test --config=playwright.experiment-models.config.ts",
     "test:e2e:model-package": "playwright test --config=playwright.model-package.config.ts",
+    "test:e2e:bundled-models": "playwright test --config=playwright.bundled-models.config.ts",
     "test:e2e:acceptance": "playwright test"
   },
   "dependencies": {

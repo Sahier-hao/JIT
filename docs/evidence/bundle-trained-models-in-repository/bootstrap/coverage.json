@@ -1,0 +1,399 @@
+{
+  "datasets": [
+    {
+      "datasetKey": "5f7c9eeaadf48d03984b1c5d",
+      "dataset": "仓库内置九模型",
+      "datasetVersion": "jit-bundled-v1",
+      "schema": "openstack-six-v1",
+      "metricSet": "metric-set-v2",
+      "source": "suite",
+      "suitePath": "suites/jit-bundled",
+      "suiteStatus": "complete",
+      "methods": [
+        {
+          "method": "logistic-regression-l2-v1",
+          "name": "逻辑回归 · L2",
+          "category": "classic",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+          "modelId": "5b608a1c-c1dc-4b7e-b86e-27994892eef7",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.38293951606100585
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7709845993189962
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.04195804195804196
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.066006600660066
+            }
+          }
+        },
+        {
+          "method": "decision-tree-v1",
+          "name": "决策树 · CART",
+          "category": "classic",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+          "modelId": "0dbe0a1a-2dec-48bd-81c1-81efb8c74701",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.3288404735927449
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7433059920296679
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.1258741258741259
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.0761904761904762
+            }
+          }
+        },
+        {
+          "method": "random-forest-v1",
+          "name": "随机森林 · 200 棵 CART",
+          "category": "classic",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+          "modelId": "a94cbd17-5257-4507-b6fd-92ba9689a4e9",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.3879739107216317
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7644981055957445
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.08391608391608392
+            },
+            "f1": {
+              "reason": null,
+              "value": 0
+            }
+          }
+        },
+        {
+          "method": "gaussian-naive-bayes-v1",
+          "name": "高斯朴素贝叶斯 · 高斯假设",
+          "category": "classic",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+          "modelId": "73d58f06-9639-4d2f-a083-c60d171f89cb",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.3295193428697234
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7375190221393157
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.05944055944055944
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.3626943005181347
+            }
+          }
+        },
+        {
+          "method": "gradient-boosting-v1",
+          "name": "梯度提升树 · 200 棵小树",
+          "category": "classic",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+          "modelId": "e2dcdc89-b2f7-4f5e-aee7-47e5d84d63e6",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.38988382369182484
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7637628803870029
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.11538461538461539
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.09061488673139159
+            }
+          }
+        },
+        {
+          "method": "mlp-v1",
+          "name": "多层感知机（2 隐层）",
+          "category": "deep",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+          "modelId": "9518d63a-07c7-45d0-8c47-4d2457b34607",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.3812939371886064
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7701099156108728
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.05244755244755245
+            },
+            "f1": {
+              "reason": null,
+              "value": 0
+            }
+          }
+        },
+        {
+          "method": "tabular-resnet-v1",
+          "name": "表格残差网络（2 个残差块）",
+          "category": "deep",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+          "modelId": "4d7bfd4f-6626-4322-8805-586c7e163ccd",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.37849128439155655
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7656126579228046
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.06993006993006994
+            },
+            "f1": {
+              "reason": null,
+              "value": 0
+            }
+          }
+        },
+        {
+          "method": "ft-transformer-v1",
+          "name": "特征 token 化 Transformer（每字段一个 token）",
+          "category": "deep",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+          "modelId": "b14cdb11-143d-4207-b582-e356a5380f54",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.3810518489930118
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7640317563738113
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.06643356643356643
+            },
+            "f1": {
+              "reason": null,
+              "value": 0
+            }
+          }
+        },
+        {
+          "method": "wide-deep-v1",
+          "name": "宽深双塔（线性分量 + MLP 分量并联）",
+          "category": "deep",
+          "state": "registered-ready",
+          "reason": null,
+          "runId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+          "modelId": "648db232-2270-4dac-8f79-9813d3d848f3",
+          "modelState": "ready",
+          "enabled": true,
+          "metrics": {
+            "averagePrecision": {
+              "reason": null,
+              "value": 0.3847734924108716
+            },
+            "rocAuc": {
+              "reason": null,
+              "value": 0.7688715241363614
+            },
+            "recall20Loc": {
+              "reason": null,
+              "value": 0.06993006993006994
+            },
+            "f1": {
+              "reason": null,
+              "value": 0.006968641114982578
+            }
+          }
+        }
+      ],
+      "counts": {
+        "missing": 0,
+        "failed": 0,
+        "invalid": 0,
+        "offline-only": 0,
+        "input-unsupported": 0,
+        "incompatible": 0,
+        "complete-unregistered": 0,
+        "registered-ready": 9,
+        "registered-unavailable": 0
+      }
+    }
+  ],
+  "total": 1,
+  "limit": 100,
+  "offset": 0,
+  "latestImport": {
+    "importId": "29c47a1c-2ba7-4d48-8ccd-a6746786122b",
+    "packageSha256": "3c15b7d9453291ba5c106e09b93403e234c0c1c67c0413b2d3654820f3377d76",
+    "packageVersion": 1,
+    "packageName": "jit-nine-models-v1.zip",
+    "status": "completed",
+    "modelCount": 9,
+    "registeredCount": 9,
+    "reusedCount": 0,
+    "alreadyRegisteredCount": 0,
+    "conflictCount": 0,
+    "failedCount": 0,
+    "code": null,
+    "message": null,
+    "createdAt": "2026-11-06T10:42:17.865250Z",
+    "items": [
+      {
+        "artifactRunId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+        "sourceModelId": "0dbe0a1a-2dec-48bd-81c1-81efb8c74701",
+        "artifactKey": "decision-tree-v1",
+        "status": "registered",
+        "modelId": "0dbe0a1a-2dec-48bd-81c1-81efb8c74701",
+        "runId": "e9cd3865-75c4-4b82-bb71-4b211cf2f860",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+        "sourceModelId": "4d7bfd4f-6626-4322-8805-586c7e163ccd",
+        "artifactKey": "tabular-resnet-v1",
+        "status": "registered",
+        "modelId": "4d7bfd4f-6626-4322-8805-586c7e163ccd",
+        "runId": "f83972e7-bd81-4b85-9ca5-d71eef22e4a8",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+        "sourceModelId": "5b608a1c-c1dc-4b7e-b86e-27994892eef7",
+        "artifactKey": "baseline",
+        "status": "registered",
+        "modelId": "5b608a1c-c1dc-4b7e-b86e-27994892eef7",
+        "runId": "f0a0e241-0c87-4a52-9034-4ef4b4e306e2",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+        "sourceModelId": "648db232-2270-4dac-8f79-9813d3d848f3",
+        "artifactKey": "wide-deep-v1",
+        "status": "registered",
+        "modelId": "648db232-2270-4dac-8f79-9813d3d848f3",
+        "runId": "227e660c-bb0f-4573-a9a7-c36eb570bfb3",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+        "sourceModelId": "73d58f06-9639-4d2f-a083-c60d171f89cb",
+        "artifactKey": "gaussian-naive-bayes-v1",
+        "status": "registered",
+        "modelId": "73d58f06-9639-4d2f-a083-c60d171f89cb",
+        "runId": "5844ce9a-2f0d-4a98-aaf1-dfc6b809abe1",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+        "sourceModelId": "9518d63a-07c7-45d0-8c47-4d2457b34607",
+        "artifactKey": "mlp-v1",
+        "status": "registered",
+        "modelId": "9518d63a-07c7-45d0-8c47-4d2457b34607",
+        "runId": "3c27a9a2-32ef-41e4-94d4-954470f94497",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+        "sourceModelId": "a94cbd17-5257-4507-b6fd-92ba9689a4e9",
+        "artifactKey": "random-forest-v1",
+        "status": "registered",
+        "modelId": "a94cbd17-5257-4507-b6fd-92ba9689a4e9",
+        "runId": "9952ae15-cfba-4a9e-a92a-8e946dbc9191",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+        "sourceModelId": "b14cdb11-143d-4207-b582-e356a5380f54",
+        "artifactKey": "ft-transformer-v1",
+        "status": "registered",
+        "modelId": "b14cdb11-143d-4207-b582-e356a5380f54",
+        "runId": "fd1f6f95-d431-40a4-98bc-94dca0a99dc5",
+        "code": null,
+        "message": null
+      },
+      {
+        "artifactRunId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+        "sourceModelId": "e2dcdc89-b2f7-4f5e-aee7-47e5d84d63e6",
+        "artifactKey": "gradient-boosting-v1",
+        "status": "registered",
+        "modelId": "e2dcdc89-b2f7-4f5e-aee7-47e5d84d63e6",
+        "runId": "75c5b86d-bf09-40c9-8860-ebdd436b95e6",
+        "code": null,
+        "message": null
+      }
+    ]
+  }
+}
