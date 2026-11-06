@@ -1,0 +1,512 @@
+/**
+ * 项目页的信息架构与版式层。
+ *
+ * 目的：把「概览 / 分析 / PR 审查」这一层做成唯一的顶层视图切换，二级视图收进一个
+ * 轻量分段控件；标题、元信息、动作、指标、图与数据表按阅读顺序排，而不是把数据平台的
+ * 内部标识（视图 id、模型 id、原始 JSON）直接铺在正文里。
+ *
+ * 只引用 tokens.css 的语义变量；本文件在 index.css 里最后导入，用于收敛既有样式。
+ */
+
+/* ---------- 页面骨架 ---------- */
+.project-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 4px 0 64px;
+}
+
+/* ---------- 页头：标题 + 元信息 + 动作 ---------- */
+.project-page .project-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin: 0;
+  padding-bottom: 18px;
+}
+.project-head-text { min-width: 0; }
+
+.project-page .project-back.ui-btn {
+  height: auto;
+  margin: 0 0 14px -6px;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: 450;
+}
+.project-page .project-back.ui-btn:hover { background: transparent; color: var(--fg); }
+
+.project-page .project-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.project-page .project-title-row h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -.015em;
+  color: var(--fg);
+}
+
+.project-page .project-title-row .status-line {
+  margin: 0;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  line-height: 1.4;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.project-page .project-heading .status-line::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--fg-4);
+  vertical-align: 1px;
+}
+.project-page .project-heading .status-line.tone-active::before,
+.project-page .project-heading .status-line.tone-ok::before { background: var(--teal); }
+.project-page .project-heading .status-line.tone-alert::before { background: var(--risk-high); }
+.project-page .project-heading .status-line.tone-active,
+.project-page .project-heading .status-line.tone-ok { color: var(--fg-2); }
+
+.project-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+.project-meta-sep { color: var(--line-strong); }
+.project-meta .project-repo {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+  padding-bottom: 1px;
+}
+.project-meta .project-repo:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* 分支提醒入口：在元信息行里是一枚安静的文字胶囊，不再是标题行里的第二颗按钮。 */
+.project-meta .update-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  max-width: 100%;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--fg-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.project-meta .update-entry:hover { background: var(--soft); color: var(--fg); border-color: var(--line-strong); }
+.project-meta .update-entry .update-entry-icon { display: inline-flex; color: var(--fg-4); }
+.project-meta .update-entry .update-entry-icon svg { width: 12px; height: 12px; }
+.project-meta .update-entry .update-entry-text {
+  display: inline-flex;
+  flex-direction: row !important;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+.project-meta .update-entry .update-entry-text b { font: 500 11.5px var(--sans); color: var(--fg-2); }
+.project-meta .update-entry .update-entry-text span { color: var(--fg-4); max-width: none; overflow: visible; }
+.project-meta .update-entry .update-entry-chevron { display: none; }
+
+.project-page .project-heading .page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+/* ---------- 顶层视图切换：下划线式标签 ---------- */
+.project-page .project-tabs {
+  display: flex;
+  gap: 26px;
+  margin: 6px 0 24px;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.project-page .project-tabs .ui-btn {
+  height: auto;
+  padding: 0 0 11px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--fg-3);
+  font-size: 13.5px;
+  font-weight: 450;
+  letter-spacing: 0;
+}
+.project-page .project-tabs .ui-btn:hover { background: transparent; color: var(--fg); }
+.project-page .project-tabs .ui-btn[aria-current="page"] {
+  color: var(--fg);
+  font-weight: 550;
+  box-shadow: inset 0 -2px 0 var(--fg);
+}
+.project-page .project-tabs .ui-btn[aria-current="page"]:hover { background: transparent; }
+
+/* ---------- 二级视图切换：分段控件 ---------- */
+.analysis-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+}
+.analysis-bar-label {
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+.analysis-view-switch {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--sunken);
+}
+.analysis-view-switch .ui-btn {
+  height: 26px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--fg-3);
+  font-size: 12.5px;
+  font-weight: 450;
+}
+.analysis-view-switch .ui-btn:hover { background: transparent; color: var(--fg); }
+.analysis-view-switch .ui-btn[aria-current="page"] {
+  background: var(--card);
+  color: var(--fg);
+  font-weight: 550;
+  box-shadow: var(--sh-1);
+}
+
+/* ---------- 风险走势 ---------- */
+.project-trends { margin: 0; }
+.trend-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+.trend-head h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+}
+.trend-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0 0;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.trend-meta-sep { color: var(--line-strong); }
+.trend-view-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; padding-top: 4px; }
+.trend-view-actions .analysis-view-switch { flex: 0 0 auto; }
+
+/* 指标：一条带竖向分隔的读数行，而不是五张等重卡片 */
+.trend-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 22px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.trend-kpis > div {
+  padding: 15px 20px 14px;
+  border-left: 1px solid var(--line-soft);
+}
+.trend-kpis > div:first-child { border-left: 0; padding-left: 0; }
+.trend-kpis dt {
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--fg-3);
+}
+.trend-kpis dd {
+  margin: 7px 0 5px;
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.trend-kpis small { font-size: 11.5px; line-height: 1.5; color: var(--fg-4); }
+
+/* 覆盖条：先用一条 14 格的条带说明"哪些时间段真的有已评分提交"，
+ * 再进图。空桶是"未知"，不是 0，这条带比空白折线更诚实，也更容易读。 */
+.trend-coverage-wrap { margin: 0 0 14px; }
+.trend-coverage { display: flex; gap: 3px; height: 8px; }
+.trend-coverage span {
+  flex: 1 1 0;
+  border-radius: 2px;
+  background: var(--line-soft);
+}
+.trend-coverage span[data-state="scored"] { background: var(--chart-obs); }
+.trend-coverage-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--fg-4); }
+
+/* 两张图并排：主图宽、比例图窄；窄屏回落成单列 */
+.trend-figures {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.project-trend-figure {
+  margin: 0;
+  padding: 16px 18px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+.project-trend-figure figcaption h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+.project-trend-figure figcaption p {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-4);
+}
+.project-trend-figure .trend-plot { margin: 10px -4px 0; }
+.project-trend-figure .trend-plot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.project-trend-figure .trend-tooltip {
+  min-height: 34px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+.project-trend-figure .trend-tooltip strong { color: var(--fg-2); font-weight: 550; }
+
+/* 数据表与口径：默认收起，需要时展开，不占据首屏 */
+.trend-data,
+.trend-sources,
+.trend-notes {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+.trend-data > summary,
+.trend-sources > summary,
+.trend-notes > summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-2);
+  list-style: none;
+}
+.trend-data > summary::-webkit-details-marker,
+.trend-sources > summary::-webkit-details-marker,
+.trend-notes > summary::-webkit-details-marker { display: none; }
+.trend-data > summary::before,
+.trend-sources > summary::before,
+.trend-notes > summary::before {
+  content: "+";
+  display: inline-block;
+  width: 14px;
+  font-family: var(--mono);
+  color: var(--fg-4);
+}
+.trend-data[open] > summary::before,
+.trend-sources[open] > summary::before,
+.trend-notes[open] > summary::before { content: "−"; }
+.trend-data .trend-table-wrap { margin-top: 12px; max-height: none; }
+.trend-sources dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 24px; margin: 14px 0 0; }
+.trend-sources dt { font-size: 11px; color: var(--fg-4); }
+.trend-sources dd { margin: 3px 0 0; font-family: var(--mono); font-size: 11.5px; color: var(--fg-2); overflow-wrap: anywhere; }
+.trend-sources ul { margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.trend-notes p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; color: var(--fg-3); }
+
+/* 筛选面板：六个字段排成两列网格，主按钮单独一行 */
+.project-trends .trend-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px 18px;
+  align-items: end;
+  margin: 0 0 22px;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--soft);
+}
+.project-trends .trend-filters label { font-size: 11px; color: var(--fg-3); }
+.project-trends .trend-filters label > .ui-input,
+.project-trends .trend-filters label > select { margin-top: 5px; width: 100%; }
+
+@media (max-width: 1100px) {
+  .trend-figures { grid-template-columns: minmax(0, 1fr); }
+  .project-page .project-title-row h1 { font-size: 32px; }
+}
+@media (max-width: 860px) {
+  .project-page .project-heading { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .project-page .project-heading .page-actions { justify-content: flex-start; }
+  .trend-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trend-kpis > div:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .trend-kpis > div:nth-child(n+3) { border-top: 1px solid var(--line-soft); }
+  .trend-head { flex-direction: column; gap: 12px; }
+}
+
+
+
+/* ---------- PR 审查：把两排胶囊收成"一条控制 + 一行元信息" ---------- */
+/* 原来：开放 | 已关闭 / 合并 | 全部  +  按更新 | 按风险，四个胶囊并排，
+   中文标签过长、状态用竖线分隔，整排读起来像五个同级按钮，还紧贴列表卡。
+   现在：范围 = 单个灰色轨道内的白色药丸（读作一个控件）；排序 = 更小更淡的
+   文字，靠一条 1px 竖线与范围分开；"含已合并"下沉到列表页脚，不再挤在这排。
+   整排与卡片之间 20px。 */
+.pr-hub-toolbar {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px 14px;
+  margin: 0 0 20px;
+  padding: 0;
+}
+.pr-hub-filters { align-items: center; }
+.pr-hub-actions { margin-left: auto; }
+.pr-hub-sort { display: inline-flex; align-items: center; }
+
+/* Mantine SegmentedControl 的结构是 root(flex) > control(div) > label，
+   没有中间的 controls 层；indicator 是 JS 量取偏移后绝对定位的药丸，
+   这里换成给当前 control 上底色，避免改了内边距之后指示器错位。 */
+.pr-hub-filters .ui-segmented {
+  background: var(--sunken) !important;
+  border-radius: 9px !important;
+  padding: 3px !important;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-indicator { display: none !important; }
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-control {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+}
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-control[data-active="true"] {
+  background: var(--card) !important;
+  box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(20, 19, 15, .10);
+}
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-label {
+  min-height: 0 !important;
+  height: 26px;
+  padding: 0 13px !important;
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--fg-3);
+  border-radius: 6px !important;
+}
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-label[data-active="true"] {
+  color: var(--fg);
+  font-weight: 500;
+}
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-label:hover { color: var(--fg-2); }
+
+/* 排序：收成一个"菜单按钮"，用折叠箭头表明可点，不再是一排浮着的文字 */
+.pr-hub-sort-btn.ui-btn.ui-btn--ghost {
+  height: 30px;
+  padding: 0 8px 0 10px;
+  border-radius: 6px;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--fg-2);
+  background: transparent;
+  box-shadow: none;
+}
+.pr-hub-sort-btn.ui-btn.ui-btn--ghost:hover {
+  color: var(--fg);
+  background: var(--hover);
+}
+.pr-hub-sort-btn.ui-btn.ui-btn--ghost svg { opacity: .55; }
+/* Mantine 的 items-borders 用伪元素画竖线，这里三种控件都不需要 */
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-control::before,
+.pr-hub-filters .ui-segmented .mantine-SegmentedControl-control::after,
+
+@media (max-width: 860px) {
+  /* 窄屏：范围 + 排序仍在一行（584px 放得下），动作按钮整行右对齐落到第二行 */
+  .pr-hub-toolbar { flex-wrap: wrap; align-items: center; row-gap: 10px; }
+  .pr-hub-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+}
+
+
+
+/* PR 行：标题单行截断，状态胶囊固定在标题右侧，否则长标题会把胶囊挤到第二行、
+   行高忽高忽低（列表看起来就是"糙"）。完整标题在 hover 时用 title 提示。
+   `.pr-row-main` 是 flex 项、默认按内容撑宽，一旦内容比可分配宽度大，标题就会连同
+   右侧状态胶囊一起溢出到动作按钮下面（观感是按钮压住了"开放"）。所以主列必须可伸缩
+   且允许收缩，标题里的 h3 才是真正被省略的那个元素。 */
+.pr-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pr-row-title {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pr-row-title h3 {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pr-row-meta {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.pr-row-state,
+.pr-row-draft {
+  flex: 0 0 auto;
+  align-self: center;
+}
+/* .pr-hub-list 是单列 grid，列的 auto 宽度会被"标题不换行"的行撑到 875px，
+   超出 818px 的面板后由 overflow:hidden 裁掉右侧按钮。列宽必须可收缩。 */
+.pr-hub-list { grid-template-columns: minmax(0, 1fr); }
+.pr-row { min-width: 0; }

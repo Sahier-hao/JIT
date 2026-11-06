@@ -1,0 +1,647 @@
+/**
+ * Claude 骨架层：把 Claude DESIGN.md 的结构规则落到 JIT 的产品页面上。
+ *
+ * 这里只负责"形状"，颜色一律取 `tokens.css` 的变量：
+ * - 展示字用系统衬线且固定 400 字重（Claude 的 Do/Don't：衬线不加粗、配负字距）。
+ * - 层级靠字号、发丝线与表面分层，几乎不用投影。
+ * - 深色面（--dark）只承载代码与终端，不整页反色。
+ * - 强调色分族，每族只带一个 soft 底色：蓝＝链接/焦点/进度，青＝通过/新增，
+ *   琥珀＝待复核/改动，玫＝风险/删除，紫＝模型线索。
+ *
+ * 这个文件在 `index.css` 里最后导入：同权重规则以它为准；
+ * 与 Mantine 运行时注入的样式冲突处保留 `!important`。
+ */
+
+/* ---------- 展示字：衬线只在标题层出现 ---------- */
+h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: -.015em;
+}
+
+/* ---------- 外壳 ---------- */
+.app-frame { background: var(--canvas); }
+
+.workspace-sidebar {
+  background: var(--rail);
+  border-right: 1px solid var(--line);
+  padding: 22px 15px 16px;
+}
+
+.workspace-brand {
+  gap: 10px;
+  padding: 0 6px 20px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--fg);
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -.01em;
+}
+.workspace-brand .brand-glyph {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--fg-inv);
+  box-shadow: none;
+}
+.workspace-brand .brand-glyph svg { width: 15px; height: 15px; }
+.workspace-brand .brand-caption {
+  margin-top: 2px;
+  color: var(--fg-4);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .16em;
+}
+
+/* 侧栏导航：JIT 默认用强调色标记当前项，这里收敛成墨字 + 浅底 */
+.workspace-sidebar nav button,
+.workspace-sidebar .sidebar-nav button,
+.workspace-sidebar .sidebar-nav a {
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r);
+  color: var(--fg-2);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 450;
+}
+.workspace-sidebar nav button:hover,
+.workspace-sidebar .sidebar-nav button:hover { background: var(--hover); color: var(--fg); }
+.workspace-sidebar nav button[aria-current="page"],
+.workspace-sidebar [aria-current="page"] {
+  background: var(--sunken);
+  color: var(--fg);
+  font-weight: 500;
+}
+.workspace-sidebar svg { opacity: .55; }
+.workspace-sidebar [aria-current="page"] svg { opacity: .9; }
+
+.sidebar-projects { margin-top: 26px; }
+.sidebar-projects > span,
+.sidebar-projects > .sidebar-label,
+.workspace-sidebar > .sidebar-section-title {
+  padding: 0 10px 8px;
+  color: var(--fg-4);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.sidebar-project {
+  padding: 0 10px;
+  height: 32px;
+  border-radius: var(--r);
+  color: var(--fg-2);
+  font-size: 13px;
+}
+.sidebar-project:hover { background: var(--hover); color: var(--fg); }
+.sidebar-project[aria-current] { background: var(--sunken); color: var(--fg); font-weight: 500; }
+.sidebar-project .project-dot { background: var(--fg-4); }
+.sidebar-project[aria-current] .project-dot { background: var(--accent); }
+
+.sidebar-bottom { border-top: 1px solid var(--line-soft); margin-top: auto; padding: 14px 9px 0; }
+.sidebar-bottom > button,
+.sidebar-bottom > .text-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 13px;
+  font-weight: 450;
+}
+.sidebar-bottom > button:hover { background: var(--hover); color: var(--fg); }
+
+/* 顶栏：发丝线 + 等宽大写面包屑，不要卡片感 */
+.workspace-topbar {
+  height: 52px;
+  padding: 0 32px;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.breadcrumb { font-size: 11px; color: var(--fg-4); gap: 10px; letter-spacing: .1em; }
+.breadcrumb > span { opacity: .55; }
+.breadcrumb b { color: var(--fg); font-weight: 500; }
+
+.workspace-main { max-width: 1320px; padding: 34px 40px 72px; }
+
+/* ---------- 页头 ---------- */
+.page-heading { align-items: flex-end; gap: 18px; margin: 6px 0 22px; }
+.page-heading h1 {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  color: var(--fg);
+}
+.page-intro {
+  margin: 10px 0 0;
+  max-width: 62ch;
+  color: var(--fg-3);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+/* 二级切换：下划线，不用胶囊；JIT 用 aria-current 标记当前项。
+ * 按钮底色来自 JIT 的 .ui-btn 与 Mantine，这里必须显式压掉，否则当前项会带一块灰底。 */
+.project-tabs {
+  display: flex;
+  gap: 18px;
+  margin: 18px 0 22px;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+}
+.project-tabs .ui-btn,
+.project-tabs button {
+  height: 36px;
+  margin-bottom: -1px;
+  padding: 0 2px;
+  border: 0 !important;
+  border-bottom: 1.5px solid transparent !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--fg-3);
+  font-size: 13px;
+  font-weight: 450;
+}
+.project-tabs .ui-btn:hover { color: var(--fg); background: transparent !important; }
+.project-tabs .ui-btn[aria-current="page"],
+.project-tabs button[aria-current="page"] {
+  color: var(--fg);
+  font-weight: 500;
+  border-bottom-color: var(--fg) !important;
+}
+
+/* ---------- 通用控件 ---------- */
+.ui-btn,
+.ui-btn--md {
+  height: 36px;
+  padding: 0 15px;
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  box-shadow: none;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.ui-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.ui-btn--primary,
+.ui-btn.ui-btn--primary {
+  background: var(--btn);
+  border-color: var(--btn);
+  color: var(--btn-fg);
+}
+.ui-btn--primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); }
+
+.ui-btn--secondary,
+.ui-btn.ui-btn--secondary {
+  background: var(--card);
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.ui-btn--md.ui-btn--secondary { background: var(--card); }
+.ui-btn--secondary:hover,
+.ui-btn--md.ui-btn--secondary:hover {
+  background: var(--hover);
+  border-color: var(--fg-4);
+  color: var(--fg);
+}
+
+.ui-btn--ghost,
+.ui-btn.ui-btn--ghost { background: transparent; border: 0; color: var(--accent); }
+.ui-btn--link,
+.ui-btn.ui-btn--link {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.ui-btn--link:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+
+.ui-input,
+input.ui-input,
+textarea.ui-input,
+.mantine-Input-input {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  box-shadow: none;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 450;
+}
+textarea.ui-input { height: auto; padding: 9px 12px; line-height: 1.6; }
+.ui-input:focus,
+.mantine-Input-input:focus,
+.ui-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+/* Mantine 会在 wrapper 上再画一层边框，形成"双层框"（实测踩到） */
+.ui-input.mantine-InputWrapper-root,
+.mantine-InputWrapper-root,
+.mantine-TextInput-wrapper {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.ui-tag,
+.ui-badge {
+  height: 22px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: var(--soft);
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.notice {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--soft);
+  color: var(--fg-2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ui-alert { border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--card); }
+.ui-alert--error { border-color: var(--risk-high); background: var(--risk-soft); }
+.ui-alert--warning { border-color: var(--risk); background: var(--amber-soft); }
+.ui-alert--info { border-color: var(--line); background: var(--soft); }
+
+/* ---------- 我的审查：工具条 / 分组 / 行 ----------
+ * 这一页的骨架按 Claude 的"编辑式列表"处理：没有卡片框，只有发丝线分栏，
+ * 分组带编号，行动入口是文字链而不是按钮盒子——信息一行不少，但密度和节奏变了。 */
+.mr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 4px 0 30px;
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.mr-toolbar::before {
+  content: "全部关注中的工作 · 按最近检查时间排序";
+  color: var(--fg-4);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.mr-toolbar > .ui-btn {
+  height: auto;
+  margin-left: auto;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.mr-toolbar > .ui-btn:hover { color: var(--accent); }
+
+.mr-group { counter-increment: mr-group; margin: 0 0 34px; }
+.mr-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 2px;
+  padding: 0;
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.mr-group-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.mr-group-head span {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .14em;
+}
+/* 分组编号 + 条数：「01 / 3」 */
+.mr-group-head span::before {
+  content: counter(mr-group, decimal-leading-zero) " / ";
+  color: var(--fg-4);
+}
+/* 分组色刻度：待复核＝琥珀、继续审查＝蓝、等待作者处理＝青、历史与暂停＝紫 */
+.mr-group:nth-of-type(1) .mr-group-head span { color: var(--amber-deep); }
+.mr-group:nth-of-type(1) .mr-group-head::before {
+  content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--amber); flex: none;
+}
+.mr-group:nth-of-type(2) .mr-group-head span { color: var(--blue-deep); }
+.mr-group:nth-of-type(2) .mr-group-head::before {
+  content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--blue); flex: none;
+}
+.mr-group:nth-of-type(3) .mr-group-head span { color: var(--teal-deep); }
+.mr-group:nth-of-type(3) .mr-group-head::before {
+  content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--teal); flex: none;
+}
+.mr-group:nth-of-type(4) .mr-group-head span { color: var(--violet-deep); }
+.mr-group:nth-of-type(4) .mr-group-head::before {
+  content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--violet); flex: none;
+}
+
+.mr-list {
+  overflow: visible;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.mr-row {
+  gap: 4px;
+  margin: 0 -14px;
+  padding: 18px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  background: transparent;
+}
+.mr-row:last-child { border-bottom: 1px solid var(--line-soft); }
+.mr-row:hover { background: var(--soft); }
+.mr-row h3 {
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -.005em;
+}
+.mr-row h3:hover { color: var(--accent); }
+.mr-row-number { color: var(--blue); font-family: var(--mono); font-size: 12px; letter-spacing: .02em; }
+.mr-row-meta { color: var(--fg-3); font-size: 12px; line-height: 1.5; }
+.mr-row-time { color: var(--fg-4); font-family: var(--mono); font-size: 11.5px; }
+.mr-row-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--fg-3);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.mr-bar {
+  display: block;
+  flex-basis: 100%;
+  width: 100%;
+  max-width: 180px;
+  min-height: 3px;
+  height: 3px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: var(--line);
+}
+.mr-bar i { display: block; height: 100%; min-height: 3px; border-radius: 999px; background: var(--blue); }
+.mr-row-action.ui-btn--secondary {
+  height: auto;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--fg) !important;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+/* 行内动作是文字链：Mantine 的 Button 是 flex 容器，伪元素箭头会被挤到第二行，
+ * 所以这里不加箭头，只用下划线表达"可点"。 */
+.mr-row-action.ui-btn--secondary:hover {
+  color: var(--accent) !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: transparent !important;
+}
+.mr-restore { color: var(--fg-3); font-size: 12.5px; }
+.mr-restore input { accent-color: var(--accent); }
+
+/* ---------- PR 审查工作单 ---------- */
+.wb-head {
+  padding: 18px 22px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: none;
+}
+.wb-crumb { color: var(--fg-4); font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; }
+.wb-crumb .wb-sep { color: var(--line-strong); }
+.wb-back { color: var(--fg-3); }
+.wb-back:hover { color: var(--fg); }
+.wb-state {
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--fg-2);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .06em;
+}
+.wb-title {
+  margin: 6px 0 8px;
+  color: var(--fg);
+  font-family: var(--display);
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.wb-facts { color: var(--fg-3); font-size: 12px; }
+.wb-facts b { color: var(--fg-2); font-weight: 500; }
+.wb-save { color: var(--fg-4); font-size: 11.5px; }
+.wb-save.is-error { color: var(--risk-fg); }
+.wb-head-actions { gap: 8px; }
+.wb-meter { height: 3px; margin-top: 14px; background: var(--line); }
+.wb-meter span { background: var(--blue); }
+
+/* 风险概览：全页唯一的整块浅色面，做成一条窄带，别让空状态占掉半屏 */
+.wb-clues {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 0;
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r);
+  background: var(--accent-soft);
+  color: var(--fg-2);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+.wb-clues p { margin: 0 0 4px; }
+.wb-clues p:last-child { margin-bottom: 0; }
+.wb-clues .ui-btn--link { font-size: 11.5px; }
+
+/* 工作单是"整屏三栏"：JIT 把 .wb 做成弹性列，.wb-body 带 flex:1 1 0% + 固定 height，
+ * 两者打架后 diff 一长就把页面撑到上万像素。这里让 .wb 锁视口高度，由 .wb-body 吸收剩余空间。 */
+.workspace-main:has(> .wb) { padding-bottom: 24px; }
+.wb {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 110px);
+  min-height: 560px;
+}
+.wb-body {
+  grid-template-columns: 268px minmax(0, 1fr) 336px;
+  flex: 1 1 auto !important;
+  height: auto !important;
+  min-height: 0;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: none;
+  overflow: hidden;
+}
+.wb-files, .wb-code, .wb-notes { border: 0; border-radius: 0; box-shadow: none; overflow: auto; }
+.wb-files { border-right: 1px solid var(--line); }
+.wb-notes { border-left: 1px solid var(--line); }
+.wb-files, .wb-notes { background: var(--card); }
+
+.wb-pane-head { padding: 12px 14px 10px; border-bottom: 1px solid var(--line-soft); }
+.wb-pane-head h2 {
+  color: var(--fg-3);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.wb-count {
+  height: 20px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+.wb-pane-note { padding: 10px 14px; border-top: 1px solid var(--line-soft); color: var(--fg-3); font-size: 12px; line-height: 1.55; }
+
+/* 提交范围：三个控件挤在一行会互相压住，改成两行 */
+.wb-file-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 14px 4px;
+}
+.wb-file-scope .ui-btn { height: 26px; padding: 0 8px; border-radius: var(--r); font-size: 11.5px; }
+.wb-file-scope > code {
+  padding: 4px 6px;
+  border-radius: var(--r);
+  background: var(--soft);
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+.wb-file-scope > .ui-btn:last-child { margin-left: auto; }
+
+.wb-files .mantine-Input-input { height: 34px; padding-left: 38px; }
+.wb-files .mantine-Input-section { background: transparent; }
+/* 文件栏的「按风险 / 按路径」：Mantine 默认给选中项一块灰底白字，这里改成白底墨字 */
+.wb-files .mantine-SegmentedControl-root { background: var(--soft); border: 0; }
+.wb-files .mantine-SegmentedControl-indicator {
+  background: var(--card) !important;
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-1) !important;
+}
+.wb-files .mantine-SegmentedControl-label { height: 100%; color: var(--fg-3); font-size: 12px; }
+.wb-files .mantine-SegmentedControl-label[data-active="true"] { color: var(--fg); font-weight: 500; }
+.wb-file-list { padding: 6px 0; }
+.wb-file {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.wb-file:hover { background: var(--hover); }
+.wb-file.is-active { background: var(--blue-soft) !important; box-shadow: inset 2px 0 0 var(--blue); }
+.wb-file.is-active .wb-file-path { color: var(--blue-deep); }
+.wb-file-flag { width: 2px; border-radius: 999px; }
+.wb-file-flag.is-modified { background: var(--amber); }
+.wb-file-flag.is-added { background: var(--teal); }
+.wb-file-flag.is-removed { background: var(--rose); }
+.wb-file-state { color: var(--fg-4); font-family: var(--mono); font-size: 10px; letter-spacing: .06em; }
+
+
+/* 代码面（GitHub 式浅色 diff）与工作单骨架由 workbench-modern.css 接管，
+ * 这里不再写深色底，避免两层样式互相 !important。 */
+.wb-author { border-top: 1px solid var(--dark-soft); background: var(--dark-elevated); color: var(--on-dark-soft); }
+
+/* 右侧问题栏 */
+.wb-notes-head { padding: 12px 14px 10px; border-bottom: 1px solid var(--line-soft); }
+.wb-question {
+  margin: 10px 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--blue);
+  border-radius: var(--r);
+  background: var(--soft);
+}
+.wb-question:nth-of-type(2n) { border-left-color: var(--amber); }
+.wb-question p { color: var(--fg-2); font-size: 12.5px; line-height: 1.6; }
+.wb-notes .ui-input, .wb-notes textarea { font-size: 12.5px; }
+.wb-notes .mantine-Input-input { background: var(--card); }
+
+/* ---------- 收尾修正（后声明，压过前面的同权重规则） ---------- */
+/* 工作单标题允许换行：PR 标题是页面主信息，截断会丢语义 */
+.wb-head-text { flex: 1 1 auto; min-width: 0; }
+/* 页面唯一的彩色面（模型线索带）里不再嵌第二层白卡，避免"卡中卡" */
+.wb-clues .pr-model-clues {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 2px 0 !important;
+}
+/* 强调色留给动作与当前项，编号退回次级墨色 */
+.mr-row-number { color: var(--fg-3); }
