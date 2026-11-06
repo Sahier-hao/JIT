@@ -21,6 +21,7 @@ import { RepositoryOverviewView } from '../components/RepositoryOverview'
 import { ProjectPullRequests } from '../components/ProjectPullRequests'
 import { JobProgress } from '../components/JobProgress'
 import { ProjectTrends } from '../components/ProjectTrends'
+import { ProjectDatasetDialog } from '../components/ProjectDatasetDialog'
 import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
@@ -94,7 +95,10 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const [retryDraft, setRetryDraft] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
   const [analysisSeed, setAnalysisSeed] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
   const [openingPR, setOpeningPR] = useState(false)
+  const [datasetOpen, setDatasetOpen] = useState(false)
   const openPRLock = useRef(false)
+  const currentSyncId = detail.repository?.viewContext?.syncId
+  useEffect(() => { setDatasetOpen(false) }, [currentSyncId])
   const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
   const share = (count: number) => Math.round((count / riskTotal) * 100)
   const latestStatus = detail.repository?.latestSync?.status
@@ -284,7 +288,10 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
           <div className="result-bottom">
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
           <div className="result-foot">
-            <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
+            <div className="result-data-actions">
+              <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
+              <Button variant="ghost" size="sm" className="result-data-button" onClick={() => setDatasetOpen(true)}>数据来源</Button>
+            </div>
             <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交明细</Button>
           </div>
           </div>
@@ -341,6 +348,8 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         <Button variant="danger" loading={cancelBusy} onClick={() => { if (cancelJob) void cancelRecord(cancelJob).then(() => setCancelJob(null)) }}>确认取消分析</Button>
       </>}
     >{null}</Dialog>
+    {context ? <ProjectDatasetDialog key={context.syncId} repositoryId={repositoryId} syncId={context.syncId}
+      open={datasetOpen} onOpenChange={setDatasetOpen}/> : null}
   </section>
 }
 

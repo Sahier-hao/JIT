@@ -2,6 +2,8 @@
 
 .project-page .page-actions { display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: none; box-shadow: none; }
 .page-actions .analysis-launcher { display: inline-flex; padding: 0; border: 0; border-radius: 0; background: none; }
+.project-head-text,
+.project-meta { min-width: 0; max-width: 100%; }
 
 .project-workspace {
   display: grid;
@@ -299,6 +301,7 @@
 .result-bottom { display: flex; flex-direction: column; gap: 12px; margin-top: auto; padding-top: 18px; }
 .result-bottom .result-note { margin: 0; font: 12px/1.6 var(--sans); color: var(--fg-3); }
 .result-bottom .result-foot { margin: 0; padding-top: 13px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.result-data-actions { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
 /* 当前结果用「钉住」表达，而不是单选圈 */
 .record-pin { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 7px; background: color-mix(in srgb, var(--accent) 11%, var(--card)); border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent); color: var(--accent); box-shadow: 0 1px 1px color-mix(in srgb, var(--accent) 14%, transparent), inset 0 1px 0 rgba(255,255,255,.6); }
 .pw-timeline .analysis-job.is-current { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--card)), var(--card)); box-shadow: inset 2px 0 0 var(--accent), 0 1px 2px rgba(16, 24, 40, .05), 0 10px 24px -18px rgba(16, 24, 40, .35); }
@@ -306,3 +309,30 @@
 .record-pick.is-clickable:hover .record-title { color: var(--accent); }
 .record-pick.is-clickable:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 3px; border-radius: 6px; }
 .record-pick.is-clickable:disabled { cursor: progress; }
+
+.project-dataset { display: grid; gap: 18px; }
+.project-dataset-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.project-dataset-heading h3, .project-dataset h3 { margin: 0; font-size: 16px; }
+.project-dataset-heading p { margin: 5px 0 0; color: var(--fg-3); font-size: 12px; overflow-wrap: anywhere; }
+.project-dataset-heading > span { border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; font-size: 12px; color: var(--fg-2); }
+.project-dataset-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); }
+.project-dataset-facts > div { min-width: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.project-dataset-facts > div:nth-child(odd) { padding-right: 18px; }
+.project-dataset-facts dt { color: var(--fg-3); font-size: 12px; margin-bottom: 5px; }
+.project-dataset-facts dd { margin: 0; color: var(--fg); font-size: 13px; overflow-wrap: anywhere; }
+.project-dataset-facts code { overflow-wrap: anywhere; }
+.project-dataset-wide { grid-column: 1 / -1; }
+.project-dataset-source { margin: -6px 0 0; font-size: 13px; }
+.project-dataset ul { margin: 8px 0 0; padding-left: 20px; color: var(--fg-2); font-size: 13px; }
+.project-dataset-download { border-top: 1px solid var(--line); padding-top: 16px; }
+.project-dataset-download > p { margin: 6px 0 12px; color: var(--fg-3); font-size: 12px; }
+.project-dataset-download > div { display: flex; gap: 10px; flex-wrap: wrap; }
+.project-dataset-download .notice { margin-top: 12px; }
+.result-data-button { white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .project-dataset-heading { flex-direction: column; }
+  .project-dataset-facts { grid-template-columns: 1fr; }
+  .project-dataset-facts > div:nth-child(odd) { padding-right: 0; }
+  .project-dataset-wide { grid-column: auto; }
+}

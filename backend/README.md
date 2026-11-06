@@ -110,6 +110,17 @@ success；失败写 failed 与错误码，库内容不变）。重复导入同�
 `module` 查询参数只在来源提供模块引用时可用；OpenStack 数据没有文件路径列，因此不推导模块，
 按模块查不到记录属于数据事实，不是缺陷。
 
+  项目成功分支分析还提供普通用户可读取的单版本投影：
+
+  | 路径 | 说明 |
+  | --- | --- |
+  | `GET /api/v1/repositories/{repositoryId}/analyses/{syncId}/dataset` | 从成功分析解析其绑定数据集，返回安全摘要和 CSV 哈希 |
+  | `GET /api/v1/repositories/{repositoryId}/analyses/{syncId}/dataset/export/zip` | CSV、可移植 manifest 与 `SHA256SUMS` 权威包 |
+  | `GET /api/v1/repositories/{repositoryId}/analyses/{syncId}/dataset/export/xlsx` | data/metadata 两工作表便捷导出 |
+
+  项目路由不接受客户端指定数据集路径或版本，也不能枚举其他项目。导出前重新校验所有已声明源文件和旁车；
+  单文件上限 64 MiB，XLSX 上限 100,000 行。ZIP 是权威格式，XLSX 仅用于查看和表格处理。
+
 ### 从 Git 仓库采集提交（add-git-repository-collection）
 
 `collect-repository` 直接把一个 Git 仓库转换成 `kamei14-git-v1` 数据集：遍历提交、计算

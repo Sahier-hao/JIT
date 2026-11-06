@@ -1,0 +1,16 @@
+{
+  "specsStrict": {
+    "passed": 31,
+    "failed": 0
+  },
+  "targetArchivedValidation": {
+    "id": "2026-11-06-expose-project-datasets",
+    "valid": true,
+    "issues": []
+  },
+  "repositoryArchivedScan": {
+    "passed": 83,
+    "failed": 3,
+    "note": "Three pre-existing historical changes have incomplete tasks and are unrelated to this change."
+  }
+}

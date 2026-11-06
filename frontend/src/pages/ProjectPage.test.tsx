@@ -196,6 +196,34 @@ it('shows the current result and opens the pinned review', async () => {
   expect(navigate).toHaveBeenCalledWith({ name: 'analysis', repositoryId: REPO, viewSyncId: SYNC, view: 'commits' })
 })
 
+it('opens the current analysis dataset without leaving the pinned result', async () => {
+  const fetch = mockApi(), original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === `/api/v1/repositories/${REPO}/analyses/${SYNC}/dataset`) {
+      return response({
+        syncId: SYNC, datasetId: 'demo-project', version: 'demo-project-2024-01-01_2024-12-31',
+        schema: 'kamei14-git-v2', timeRange: { start: '2024-01-01T00:00:00Z', end: '2024-12-31T00:00:00Z' },
+        quality: { rawRows: 120, includedRows: 100, positiveLabels: 20 },
+        file: { name: 'demo.csv', sha256: 'a'.repeat(64), bytes: 2048 },
+        source: { publisher: 'fixture', url: 'https://example.com/repo', revision: 'b'.repeat(40), citation: null, branch: 'main', head: 'c'.repeat(40), window: null },
+        labelRule: '简化 SZZ', limitations: ['提交级聚合'],
+      })
+    }
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '数据来源' }))
+  const dialog = await screen.findByRole('dialog')
+  expect(within(dialog).getByText('demo-project-2024-01-01_2024-12-31')).toBeVisible()
+  expect(within(dialog).getByText('a'.repeat(64))).toBeVisible()
+  expect(within(dialog).getByRole('button', { name: '下载 CSV 包' })).toBeVisible()
+  expect(within(dialog).getByRole('button', { name: '下载 XLSX' })).toBeVisible()
+  await user.click(within(dialog).getByRole('button', { name: '返回结果' }))
+  expect(screen.getByRole('button', { name: '查看提交明细' })).toBeVisible()
+})
+
 it('posts a new analysis with the chosen branch and the default strategy', async () => {
   let posted: unknown = null
   mockApi({ onPost: body => { posted = body } })
