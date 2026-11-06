@@ -28,6 +28,15 @@ def test_two_schemas_are_registered_with_declared_order():
     assert benchmark.log1p_indices() == (0, 1, 2, 4, 5, 6, 8, 10, 11, 12, 13)
 
 
+def test_schema_identity_ignores_default_extension_declarations():
+    from jit_baseline.catalog_schema import schema_info
+    # 该哈希早于 semantic/semantic_only 声明就被写进产物；新增可选声明不得改变既有身份。
+    assert schema_info("openstack-six-v1")["schemaSha256"] == (
+        "259ee768907e64c70f5e3c649805a000f8b20bc4597ac4b09fb08439653792b9")
+    # 真正的语义声明仍必须改变身份，否则融合模型与纯专家模型会被当成同一个 schema。
+    assert schema_info("kamei14-semantic-codebert-v1")["schemaSha256"] != schema_info("kamei14-git-v1")["schemaSha256"]
+
+
 def test_unknown_schema_is_rejected_not_defaulted():
     from jit_baseline.data import BaselineError
     from jit_baseline.schemas import get_schema

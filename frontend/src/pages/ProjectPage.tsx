@@ -197,14 +197,20 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   }
 
   return <section className="project-page">
-    <Button aria-label="全部项目" variant="ghost" size="sm" icon={<ArrowLeft size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
     <header className="page-heading project-heading">
-      <div>
+      <div className="project-head-text">
+        <Button className="project-back" aria-label="全部项目" variant="ghost" size="sm" icon={<ArrowLeft size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
         <div className="project-title-row">
           <h1 title={repository.url}>{repository.displayName}</h1>
           <p className={`status-line tone-${status.tone}`} role="status">{status.label}</p>
-          <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onAnalyze={branch => analyzeBranch(branch)} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
         </div>
+        <p className="project-meta">
+          <a className="project-repo" href={repository.url} target="_blank" rel="noreferrer">{repository.url.replace(/^https?:\/\/github\.com\//i, '')}</a>
+          <span className="project-meta-sep" aria-hidden="true">·</span>
+          <span>默认分支 {repository.defaultBranch ?? '未登记'}</span>
+          <span className="project-meta-sep" aria-hidden="true">·</span>
+          <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onAnalyze={branch => analyzeBranch(branch)} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+        </p>
       </div>
       <div className="page-actions">
         <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
@@ -224,11 +230,17 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onStartAnalysis={() => analyzeBranch(repository.defaultBranch ?? '')} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
     </> : null}
     {activeTab === 'analyses' ? <>
-    <nav className="analysis-view-switch" aria-label="分析视图">
-      <Button size="sm" variant={trendMode ? 'ghost' : 'primary'} aria-current={trendMode ? undefined : 'page'} onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
-      <Button size="sm" variant={trendMode ? 'primary' : 'ghost'} aria-current={trendMode ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
-    </nav>
-    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate}/> : <>
+    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={<nav className="analysis-view-switch" aria-label="分析视图">
+      <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
+      <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+    </nav>}/> : <>
+    <div className="analysis-bar">
+      <span className="analysis-bar-label">最近一次成功分析的结果</span>
+      <nav className="analysis-view-switch" aria-label="分析视图">
+        <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
+        <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+      </nav>
+    </div>
     <div className="project-workspace">
       <aside className="pw-rail" aria-label="分析记录">
         <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>

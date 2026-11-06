@@ -94,7 +94,9 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
     </> : <>
       <div className="pr-preview-files-bar">
         <Button size="sm" icon={<ArrowLeft size={14}/>} onClick={backToCommits}>提交列表</Button>
-        {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code><Button size="sm" variant="ghost" onClick={() => setSelectedCommit('')}>全部文件</Button></> : <span>全部文件</span>}
+        {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code>{commitRisks[selectedCommit]?.files.length
+          ? <Button size="sm" variant="ghost" title="退出这次提交的范围，看整个 PR" onClick={() => setSelectedCommit('')}>全部 {source.files.length} 个文件</Button>
+          : <span className="pr-preview-scope" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="pr-preview-scope">全部 {source.files.length} 个文件</span>}
       </div>
       <div className="pr-preview-grid">
         <aside className="pr-preview-files" aria-label="PR 文件">
@@ -103,9 +105,9 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="pr-preview-warning">{scoredCommitCount === 0 ? '此版本尚未分析，无法按提交筛选文件；显示全部文件。' : '这条提交没有文件映射（旧分析），显示全部文件。'}</p> : null}
           <Input placeholder="筛选路径" aria-label="筛选 PR 文件路径" value={filter} onChange={event => setFilter(event.target.value)}/>
           <div className="pr-preview-file-list" role="listbox" aria-label="PR 文件列表">
-            {files.map(item => <button key={item.path} type="button" role="option" aria-selected={path === item.path} className={`pr-preview-file${path === item.path ? ' is-active' : ''}`} onClick={() => setPath(item.path)}>
-              <span className="pr-preview-file-path" title={item.path}>{item.path}</span>
-              <span className="pr-preview-file-meta"><em className="pr-file-add">+{item.additions}</em><em className="pr-file-del">−{item.deletions}</em>{fileRisks[item.path] != null ? <em className="pr-file-risk" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[item.path].toFixed(3)}</em> : null}</span>
+            {files.map((item, index) => <button key={item.path} type="button" role="option" aria-selected={path === item.path} className={`pr-preview-file${path === item.path ? ' is-active' : ''}`} onClick={() => setPath(item.path)}>
+              <span className="pr-preview-file-path" title={item.path}><span className="pr-preview-file-name">{item.path.slice(item.path.lastIndexOf('/') + 1)}</span><span className="pr-preview-file-dir">{files[index - 1]?.path.slice(0, files[index - 1].path.lastIndexOf('/')) === item.path.slice(0, item.path.lastIndexOf('/')) ? '' : item.path.slice(0, item.path.lastIndexOf('/'))}</span></span>
+              <span className="pr-preview-file-meta"><em className="pr-file-add">+{item.additions}</em>{item.deletions ? <em className="pr-file-del">−{item.deletions}</em> : null}{fileRisks[item.path] != null ? <em className="pr-file-risk" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[item.path].toFixed(3)}</em> : null}</span>
             </button>)}
             {!files.length ? <p className="quiet-empty">没有匹配的文件。</p> : null}
           </div>

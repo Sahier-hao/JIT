@@ -61,18 +61,35 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
     if (round.conclusion) return '等待作者处理'
     return Object.values(round.progress).some(p => p.state === 'read') || round.scratch || round.questions.some(q => q.judgment || q.evidence.length) ? '继续审查' : '新关注的工作'
   }
+  const groups = ['作者更新待复核', '继续审查', '新关注的工作', '等待作者处理', '历史与暂停']
+  const counts = groups.map(group => personal.works.filter(work => status(work) === group).length)
+  const total = personal.works.length
   return <section className="mr personal-works" aria-label="我的审查">
     <div className="mr-toolbar">
       <Button variant="secondary" icon={<RefreshCw size={14}/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
     </div>
+    <div className="mr-kpis" aria-label="审查队列概览">
+      {groups.map((group, index) => <div key={group} className="mr-kpi">
+        <span className="mr-kpi-label">{group}</span>
+        <span className="mr-kpi-value">{counts[index]}</span>
+      </div>)}
+      <div className="mr-kpi mr-kpi-total">
+        <span className="mr-kpi-label">关注中的工作</span>
+        <span className="mr-kpi-value">{total}</span>
+      </div>
+    </div>
     {error ? <FailureNotice error={error}/> : null}
     {personal.error ? <p role="alert" className="field-error">{personal.error}。现有存储未被清空。</p> : null}
-    {['作者更新待复核', '继续审查', '新关注的工作', '等待作者处理', '历史与暂停'].map(group => {
+    {groups.map(group => {
       const items = personal.works.filter(work => status(work) === group)
       if (!items.length) return null
       return <section key={group} className="mr-group">
         <h2 className="mr-group-head">{group}<span>{items.length}</span></h2>
-        <div className="mr-list">{items.map(work => {
+        <div className="mr-list">
+          <div className="mr-cols" aria-hidden="true">
+            <span>工作</span><span>进度</span><span>检查</span><span>动作</span>
+          </div>
+          {items.map(work => {
           const round = work.rounds[work.latestSnapshotId]
           const read = Object.values(round.progress).filter(p => p.state === 'read').length
           const total = round.source.totalFiles

@@ -2,8 +2,17 @@ import { useMemo } from 'react'
 import { Diff, parseDiff, tokenize } from 'react-diff-view'
 import 'react-diff-view/style/index.css'
 import { refractor } from 'refractor'
+import jsx from 'refractor/jsx'
+import tsx from 'refractor/tsx'
+import docker from 'refractor/docker'
 import type { ChangeData, GutterOptions } from 'react-diff-view'
 import type { PRFile } from '../prReviewClient'
+
+/* refractor 默认只注册基础语言集，tsx / jsx / docker 这类要显式登记，
+ * 否则 languageOf 会退回 markup，代码就变成单色。 */
+for (const language of [jsx, tsx, docker]) {
+  if (!refractor.registered(language.displayName)) refractor.register(language)
+}
 
 type Side = 'base' | 'head'
 
@@ -20,6 +29,17 @@ function languageOf(path: string) {
   const language = LANGUAGES[extension] ?? 'markup'
   return refractor.registered(language) ? language : 'markup'
 }
+
+/**
+ * react-diff-view 的 tokenize 期望 `refractor.highlight()` 直接返回节点数组，
+ * 而 refractor 5 返回的是 `{type: 'root', children}` 的 Root 节点，两者拼在一起会
+ * 在 `for...of` 上抛 “Invalid attempt to iterate non-iterable instance”。
+ * 这里只做一层适配，分词仍然交给 refractor（100+ 语言、Prism 语法）。
+ */
+const REFRACTOR_NODES = {
+  highlight: (value: string, language: string) =>
+    (refractor.highlight(value, language) as unknown as { children: unknown[] }).children,
+} as unknown as typeof refractor
 
 function diffText(file: PRFile) {
   const previous = file.previousPath ?? file.path
@@ -68,7 +88,12 @@ export function CodeDiff({ file, view, onAnchor, location }: {
   const tokens = useMemo(() => {
     if (!parsed) return null
     try {
-      return tokenize(parsed.hunks, { highlight: true, refractor, language: languageOf(file.path) })
+      // 语法着色交给 refractor（100+ 语言），行内增删由 react-diff-view 自带样式负责。
+      return tokenize(parsed.hunks, {
+        highlight: true,
+        refractor: REFRACTOR_NODES,
+        language: languageOf(file.path),
+      })
     } catch {
       return null
     }
@@ -97,7 +122,6 @@ export function CodeDiff({ file, view, onAnchor, location }: {
     {parsed.hunks.map((hunk, index) => <div className="wb-hunk" key={`${hunk.oldStart}-${hunk.newStart}-${index}`}>
       <div className="wb-hunk-head">
         <code>{hunk.content.trim() || `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`}</code>
-        <span>{hunk.oldLines} 行基准 · {hunk.newLines} 行目标</span>
       </div>
       <Diff
         viewType={view}
