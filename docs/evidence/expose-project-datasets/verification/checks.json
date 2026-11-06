@@ -1,0 +1,46 @@
+{
+  "kind": "expose-project-datasets-verification",
+  "date": "2026-11-06",
+  "baseCommit": "eb4550e",
+  "backend": {
+    "passed": 741,
+    "skipped": 1,
+    "failed": 0
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "lint": "passed-with-existing-warnings",
+    "unitTests": {
+      "passed": 358,
+      "failed": 0,
+      "files": 46
+    },
+    "build": "passed-with-existing-chunk-warnings"
+  },
+  "playwright": {
+    "default": {
+      "passed": 17,
+      "skipped": 1,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "projectDataset": {
+      "passed": 1,
+      "desktopSkip": 1,
+      "failed": 0
+    }
+  },
+  "openspec": {
+    "specsStrict": "passed",
+    "targetArchivedValidation": "passed"
+  },
+  "repository": {
+    "gitDiffCheck": "passed"
+  },
+  "scope": {
+    "adminDatasetWorkspaceChanged": false,
+    "globalDatasetNavigationAdded": false,
+    "clientSelectableDatasetVersion": false,
+    "partialDownloadOnValidationFailure": false
+  }
+}

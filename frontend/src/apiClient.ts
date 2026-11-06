@@ -93,6 +93,20 @@ export async function apiRequestWithStatus(request: ApiRequest): Promise<{ body:
   return { body: await bodyOf(response), status: response.status }
 }
 
+function downloadName(response: Response): string {
+  const disposition = response.headers.get('Content-Disposition') ?? ''
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  if (encoded) {
+    try { return decodeURIComponent(encoded) } catch { /* Fall through to filename. */ }
+  }
+  return disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? 'download'
+}
+
+export async function apiDownload(path: string, signal?: AbortSignal): Promise<{ blob: Blob; filename: string }> {
+  const response = await send({ path, method: 'GET', signal })
+  return { blob: await response.blob(), filename: downloadName(response) }
+}
+
 export interface SyncForm {
   modelId?: string
   algorithm?: string

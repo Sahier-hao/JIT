@@ -39,6 +39,8 @@ MESSAGES = {
     'DATASET_UNAVAILABLE': '数据集文件不可用',
     'DATASET_EXISTS': '数据集版本已存在且内容不同，不覆盖',
     'DATASET_REGISTRY_EMPTY': '没有已登记的数据集描述文件',
+    'DATASET_INTEGRITY_ERROR': '数据集文件校验不匹配，请恢复登记文件后重试',
+    'DATASET_EXPORT_LIMIT_EXCEEDED': '数据集超过导出大小或行数上限',
     'STORAGE_UNAVAILABLE': '目录存储不可用，请检查初始化、版本或存储权限',
     'ARTIFACT_UNAVAILABLE': '运行必要文件不可用，请恢复并重新登记',
     'INTEGRITY_ERROR': '运行文件校验不匹配，请核验并重新登记',
@@ -75,6 +77,7 @@ MESSAGES = {
 STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,
           'PR_SOURCE_UNAVAILABLE': 502, 'PR_RATE_LIMITED': 429, 'PR_VERSION_CHANGED': 409,
           'PR_SOURCE_TOO_LARGE': 413, 'PR_CONTENT_UNAVAILABLE': 422,
+          'DATASET_INTEGRITY_ERROR': 503, 'DATASET_EXPORT_LIMIT_EXCEEDED': 413,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
           'ALGORITHM_UNKNOWN': 404, 'METHOD_DEPENDENCY_UNAVAILABLE': 503,
@@ -109,7 +112,7 @@ def managed_path(path):
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|comparison))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|comparison|analyses/[^/]+/dataset(?:/export/[^/]+)?))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

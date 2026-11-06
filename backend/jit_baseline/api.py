@@ -619,6 +619,31 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def repository_syncs(repository_id: str, limit: int = 20, offset: int = 0):
         return sync_service.repository_syncs(repository_id, limit, offset, exclude_pr=True)
 
+    @app.get('/api/v1/repositories/{repository_id}/analyses/{sync_id}/dataset')
+    def project_analysis_dataset(repository_id: str, sync_id: str):
+        from . import project_datasets
+        resolved = project_datasets.resolve_project_dataset(
+            repository_id, sync_id, sync_service, registry_root)
+        return project_datasets.public_view(resolved)
+
+    @app.get('/api/v1/repositories/{repository_id}/analyses/{sync_id}/dataset/export/{format}')
+    def project_analysis_dataset_export(repository_id: str, sync_id: str, format: str):
+        from fastapi.responses import FileResponse
+        from starlette.background import BackgroundTask
+        from . import project_datasets
+        if format not in ("zip", "xlsx"):
+            raise RequestError('INPUT_INVALID', field='format')
+        resolved = project_datasets.resolve_project_dataset(
+            repository_id, sync_id, sync_service, registry_root)
+        if format == "zip":
+            path, filename = project_datasets.export_zip(resolved)
+            media_type = "application/zip"
+        else:
+            path, filename = project_datasets.export_xlsx(resolved)
+            media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        return FileResponse(path, media_type=media_type, filename=filename,
+                            background=BackgroundTask(path.unlink, missing_ok=True))
+
     @app.get('/api/v1/repositories/{repository_id}')
     def repository_detail(repository_id: str, viewSyncId: str | None = None):
         return sync_service.repository(repository_id, view_sync_id=viewSyncId)

@@ -1,0 +1,63 @@
+{
+  "copiedFromWorkspace": [
+    "browser-results.json",
+    "frontend-vitest.json",
+    "screenshots/project-dataset-1280.png",
+    "screenshots/project-dataset-1440.png",
+    "screenshots/project-dataset-390.png"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 11,
+  "files": [
+    {
+      "path": "browser-results.json",
+      "sha256": "ce872b32a2602b559fff82c5562ac9fd269190b8d1be56477abbb4d0b6a225be"
+    },
+    {
+      "path": "frontend-vitest.json",
+      "sha256": "eb97bf72566498f34252dc7d029966846aab982e4606b38da10e59baa44bedd1"
+    },
+    {
+      "path": "README.md",
+      "sha256": "c9f36f7aa61b804a9ff31cbb6043a79c67f34afc9747339ad6903f02b4bf0dfa"
+    },
+    {
+      "path": "screenshots/project-dataset-1280.png",
+      "sha256": "8212f8121ba8ed5f9ec977b0a86c4911d535cc4fa61b5b4a7fc55a29f1a7ca8b"
+    },
+    {
+      "path": "screenshots/project-dataset-1440.png",
+      "sha256": "5df686a6d16f0133e549e4642b56ebd57c20967c6491d369a3e134a77a44acc3"
+    },
+    {
+      "path": "screenshots/project-dataset-390.png",
+      "sha256": "5108fa116c9debce795023b727e14f83ef6df311acb3bd05c05bb8ffbaacdc15"
+    },
+    {
+      "path": "verification/backend-tests.txt",
+      "sha256": "066936e34c64d1b283ae1bb1877401ae80b8c57b14963cf296e6b995378a943b"
+    },
+    {
+      "path": "verification/browser-results.json",
+      "sha256": "ce872b32a2602b559fff82c5562ac9fd269190b8d1be56477abbb4d0b6a225be"
+    },
+    {
+      "path": "verification/checks.json",
+      "sha256": "ced06b0652530fe114a40d1ebe55f2e9e41badde3d44b2a3a0f7e13f9b189cb1"
+    },
+    {
+      "path": "verification/frontend-vitest.json",
+      "sha256": "eb97bf72566498f34252dc7d029966846aab982e4606b38da10e59baa44bedd1"
+    },
+    {
+      "path": "verification/openspec-validation.json",
+      "sha256": "108e6b84eed463b507b17c33c3fdcb90b048c1a10d23292690415e12b13e562c"
+    }
+  ],
+  "frozenUtc": "2026-11-06T15:44:56.992903+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "06d415443bf1188c6d90d8826f0604577af5e1a012256ab030df29ce5ef0cf3d",
+  "workspace": "docs/evidence/_run/expose-project-datasets"
+}
