@@ -52,7 +52,7 @@ it('uses base-project context when starting a fork PR and returns to the project
   render(<PullRequestWork owner="example" repositoryName="project" number={12} repositoryId={PROJECT} navigate={navigate}/>)
   await screen.findByRole('heading', { name: '提交风险排序' })
   expect(readWorks()).toHaveLength(0)
-  await user.click(await screen.findByRole('button', { name: '开始审查' }))
+  await user.click(await screen.findByRole('button', { name: '创建审查工作单' }))
   expect(readWorks()).toHaveLength(1)
   await user.click(await screen.findByRole('button', { name: '返回项目 PR 审查' }))
   expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'POST')?.[1]?.body))).toEqual({ repositoryId: PROJECT })

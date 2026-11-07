@@ -226,6 +226,8 @@ html[data-theme="charcoal"] {
 .pr-preview-crumb, .pr-preview-meta { margin: 0; color: var(--fg-3); font-size: 13px; }
 .pr-preview-crumb span, .pr-preview-meta span { margin: 0 6px; }
 .pr-preview-state { padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg-2); font-size: 12px; }
+.pr-preview-mode { margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--fg-3); font-size: 12px; }
+.wb-work { margin-left: 6px; background: var(--sunken); }
 .pr-preview-note { margin: 0; padding: 10px 14px; border-inline-start: 3px solid var(--accent); background: var(--sunken); color: var(--fg-2); font-size: 13px; border-radius: var(--r); }
 .pr-preview-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 0; height: min(70vh, 680px); min-height: 420px; border: 1px solid var(--line-strong); border-radius: var(--r-lg); overflow: hidden; background: var(--card); }
 .pr-preview-files { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px; border-right: 1px solid var(--line); background: var(--card); }
@@ -249,16 +251,44 @@ html[data-theme="charcoal"] {
 .pr-preview-empty { padding: 20px 14px; color: var(--fg-3); }
 .pr-preview-details { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--card); }
 .pr-preview-details summary { cursor: pointer; color: var(--fg-2); font-size: 13px; }
-.pr-preview-body { max-height: 260px; margin: 10px 0 0; overflow: auto; color: var(--fg-2); font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
+.pr-preview-body { max-height: 420px; margin: 12px 0 0; overflow: auto; padding-right: 4px; }
+.pr-preview-no-body { margin: 10px 0 0; color: var(--fg-3); font-size: 13px; }
 .pr-preview-details ul { margin: 10px 0 0; padding: 0; list-style: none; }
 .pr-preview-details li { padding: 5px 0; border-bottom: 1px solid var(--line); color: var(--fg-2); font-size: 12px; }
 .pr-preview-details li:last-child { border-bottom: 0; }
+
+/* 提交区：标题、计数与两个控件各归其位；搜索与排序都是 30px 的次级控件。 */
+.wb-commit-table.is-preview { border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--card); overflow: hidden; }
+.pr-commit-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.pr-commit-heading { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.pr-commit-heading h2 { margin: 0; color: var(--fg-3); font-size: 10.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+.pr-commit-count { padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.pr-commit-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.pr-commit-search { display: flex; align-items: center; width: 232px; }
+.pr-commit-search.ui-input,
+.pr-commit-search.mantine-InputWrapper-root { height: 30px; min-height: 30px; }
+.pr-commit-search .mantine-Input-input { height: 30px; min-height: 30px; padding-inline: 30px; font-size: 12.5px; }
+.pr-commit-sort.ui-btn { height: 30px; padding: 0 8px; color: var(--fg-3); font-size: 12px; }
+.pr-commit-sort.ui-btn:hover { background: var(--soft); color: var(--fg); }
+.pr-commit-hint { margin: 0; padding: 10px 16px 12px; border-top: 1px solid var(--line); color: var(--fg-4); font-size: 12px; }
+.wb-commit-table.is-preview > .pr-preview-hint { margin: 0; padding: 16px 16px 18px; }
+.wb-commit-table.is-preview table thead th { font-size: 10.5px; }
+@media (max-width: 640px) {
+  .pr-commit-toolbar { align-items: stretch; }
+  .pr-commit-controls { width: 100%; margin-left: 0; }
+  .pr-commit-search { flex: 1; width: auto; }
+  .wb-commit-table.is-preview table th:nth-child(3),
+  .wb-commit-table.is-preview table td:nth-child(3),
+  .wb-commit-table.is-preview table th:nth-child(4),
+  .wb-commit-table.is-preview table td:nth-child(4) { display: none; }
+  .wb-commit-table.is-preview .wb-commit-title { flex-direction: column; gap: 2px; }
+  .wb-commit-table.is-preview .wb-commit-title > span:first-child { overflow: visible; text-overflow: clip; white-space: normal; }
+}
 @media (max-width: 900px) { .pr-preview-grid { grid-template-columns: 1fr; height: auto; } .pr-preview-code .wb-diff-scroll { max-height: 70vh; } .pr-preview-files { max-height: 230px; border-right: 0; border-bottom: 1px solid var(--line); } .pr-preview-top { align-items: flex-start; flex-direction: column; } }
 .pr-preview-hint { margin: 0 18px 12px; color: var(--fg-3); font-size: 12.5px; line-height: 1.6; }
 .pr-preview-files-bar { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
 .pr-preview-files-bar code { padding: 2px 6px; border: 1px solid var(--line); border-radius: var(--r); background: var(--sunken); font-size: 12px; }
 .pr-preview-files-bar span { color: var(--fg-3); font-size: 13px; }
-.pr-preview-empty-state { margin: 0; padding: 28px 18px; border: 1px dashed var(--line-strong); border-radius: var(--r-lg); color: var(--fg-3); font-size: 13px; text-align: center; }
 .wb-commit-head-actions { display: flex; align-items: center; gap: 12px; }
 
 /* 统一卡片表面：项目、分析、PR 与报告使用同一组边框、圆角与阴影。 */

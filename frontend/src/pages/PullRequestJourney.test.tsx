@@ -66,7 +66,7 @@ it('uses current remote state when directly opening a cached code version', asyn
     return options?.method === 'POST' ? response({ snapshot: source, checkedAt, remoteState: 'merged' }) : response(source)
   })
   render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '开始审查' }))
+  await user.click(await screen.findByRole('button', { name: '创建审查工作单' }))
   expect(await screen.findByText(/远端 PR 已合并，当前为历史审查/)).toBeVisible()
   expect(readWorks()[0]).toMatchObject({ remoteState: 'merged', checkedAt })
 })

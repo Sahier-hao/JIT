@@ -11,6 +11,8 @@ import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ContractError } from '../apiContract'
 import { PRModelClues } from '../components/PRModelClues'
+import { Markdown } from '../components/Markdown'
+import { useSnapshotAnalyses } from '../useSnapshotAnalyses'
 import { ProgressBar } from '../components/JobProgress'
 import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
@@ -38,6 +40,7 @@ function validateProjectSource(source: PRSnapshot, owner: string, name: string, 
 /** 提醒只读打开固定快照，进入工作必须由用户明确执行。 */
 export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, snapshotId, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId: string; navigate: Navigate }) {
   const [source, setSource] = useState<PRSnapshot | null>(null), [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0), [fileIndex, setFileIndex] = useState(0)
+  const analysis = useSnapshotAnalyses(snapshotId)
   const [personal] = useState(() => { try { return { works: readWorks(), error: '' } } catch (failure) { return { works: [], error: message(failure) } } })
   const existing = personal.works.find(w => w.key === workKey(owner, repositoryName, number))
   useEffect(() => {
@@ -75,7 +78,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
         {existing ? <ui.Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })}>返回原阅读轮次</ui.Button> : null}
         <a href={source.url} target="_blank" rel="noreferrer">核对远端 PR</a>
       </div>
-      <PRModelClues source={source} navigate={navigate}/>
+      <PRModelClues analysis={analysis}/>
       <label>预览文件<select aria-label="固定快照预览文件" value={fileIndex} onChange={e => setFileIndex(Number(e.target.value))}>{source.files.map((f, i) => <option key={f.path} value={i}>{f.path}</option>)}</select></label>
       {file?.patch ? <CodeDiff file={file} view="unified" onAnchor={() => {}}/> : <p>没有可展示的完整 Diff，未视作空文件。可以进入此轮次后读取固定上下文。</p>}
       {!source.filesComplete ? <p className="field-error">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
@@ -104,9 +107,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [delivery, setDelivery] = useState<{ kind: Conclusion; note: string; preview: string; checked: boolean; oldConfirmed: boolean } | null>(null)
   const [drawer, setDrawer] = useState<'source' | 'delivery' | 'backup' | null>(null)
   const [filter, setFilter] = useState('')
-  const [fileRisks, setFileRisks] = useState<Record<string, number>>({})
   const [fileOrder, setFileOrder] = useState<'risk' | 'path'>('risk')
-  const [commitRisks, setCommitRisks] = useState<Record<string, { risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }>>({})
   const [selectedCommit, setSelectedCommit] = useState<string | null>(null)
   const [reviewView, setReviewView] = useState<'commits' | 'files'>('commits')
   const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
@@ -115,8 +116,10 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [candidateBusy, setCandidateBusy] = useState(false)
   const [candidateError, setCandidateError] = useState('')
   const version = work?.viewedSnapshotId ?? ''
+  const analysis = useSnapshotAnalyses(version)
+  const { fileRisks, commitRisks } = analysis
   useEffect(() => {
-    setSelectedCommit(null); setCommitRisks({}); setFileRisks({}); setCandidates([]); setCandidateError('')
+    setSelectedCommit(null); setCandidates([]); setCandidateError('')
     if (evidenceJump.current) { evidenceJump.current = false; setReviewView('files') }
     else setReviewView('commits')
   }, [version])
@@ -280,6 +283,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
             <span className="wb-sep">·</span>
             <span>#{number}</span>
             <Tag className="wb-state">{remoteLabel[work.remoteState]}</Tag>
+            <Tag className="wb-state wb-work">个人工作单</Tag>
           </div>
           <h1 className="wb-title" title={round.source.title}>{round.source.title}</h1>
           <div className="wb-facts">
@@ -318,7 +322,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
       {round.historyNotice ? <Alert type="info" showIcon title={round.historyNotice}/> : null}
     </div> : null}
     <div className="wb-clues">
-      <PRModelClues key={`model:${version}`} source={live} navigate={navigate} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
+      <PRModelClues key={`model:${version}`} analysis={analysis}/>
     </div>
     {reviewView === 'commits' ? <section className="wb-commit-table" aria-label="PR 提交风险排序">
       <div className="wb-commit-table-head">
@@ -489,7 +493,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
             <Button size="sm" onClick={() => downloadText(`review-${number}-${live.headSha.slice(0, 8)}.md`, round.conclusion!.markdown, 'text/markdown')}>下载 Markdown 意见</Button>
             <Button size="sm" onClick={() => navigator.clipboard.writeText(round.conclusion!.markdown).catch(error => setReadError(error))}>复制审查意见</Button>
           </Space>
-          <details><summary>查看已保存意见</summary><pre>{round.conclusion.markdown}</pre></details>
+          <details><summary>查看已保存意见</summary><Markdown>{round.conclusion.markdown}</Markdown></details>
         </div> : null}
       </div>
     </Drawer>
