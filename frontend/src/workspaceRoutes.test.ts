@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { analysisRoute, hashFor, parseHash, type Route } from './navigation'
+import { analysisRoute, hashFor, parseHash, repositoryRoute, type Route } from './navigation'
 it.each<Route>([
   { name: 'repositories' }, { name: 'sources' }, { name: 'repository', repositoryId: 'repo-B' },
   { name: 'my-reviews' }, { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12 },
@@ -34,4 +34,9 @@ it('builds analysis routes with optional commit and plan view', () => {
   expect(analysisRoute('repo-B', 'analysis-1')).toEqual({ name: 'analysis', repositoryId: 'repo-B', viewSyncId: 'analysis-1', view: 'commits' })
   expect(analysisRoute('repo-B', 'analysis-1', { commitId: 'a'.repeat(40) })).toMatchObject({ commitId: 'a'.repeat(40), view: 'commits' })
   expect(analysisRoute('repo-B', 'analysis-1', { view: 'plan' })).toMatchObject({ view: 'plan' })
+})
+it('builds repository routes with tab and frozen trend view', () => {
+  expect(repositoryRoute('repo-B')).toEqual({ name: 'repository', repositoryId: 'repo-B' })
+  expect(repositoryRoute('repo-B', 'prs')).toEqual({ name: 'repository', repositoryId: 'repo-B', tab: 'prs' })
+  expect(repositoryRoute('repo-B', 'trends', 'frozen-view')).toEqual({ name: 'repository', repositoryId: 'repo-B', tab: 'trends', viewId: 'frozen-view' })
 })

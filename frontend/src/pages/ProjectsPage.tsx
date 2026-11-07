@@ -10,7 +10,7 @@ import { Dropdown } from '../ui/dropdown'
 import { Plus, Settings } from 'lucide-react'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import { Icon } from '../Icon'
-import type { Route } from '../navigation'
+import { repositoryRoute, type Route } from '../navigation'
 import { deleteRepository, renameRepository } from '../projectClient'
 import { projectStatus } from '../projectStatus'
 import { useRepositories } from '../repositoryWorkspace'
@@ -109,7 +109,7 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
         const editing = renamingId === repo.repositoryId
         const confirming = confirmingId === repo.repositoryId
         return <article className={`project-card${editing || confirming ? ' is-editing' : ''}`} key={repo.repositoryId}>
-          <button className="project-card-open" onClick={() => navigate({ name: 'repository', repositoryId: repo.repositoryId })} aria-label={`打开项目 ${repo.displayName}`}>
+          <button className="project-card-open" onClick={() => navigate(repositoryRoute(repo.repositoryId))} aria-label={`打开项目 ${repo.displayName}`}>
             <div className="project-card-top"><span className="project-card-icon"><Icon name="project" size={23}/></span><span className={`project-card-status tone-${status.tone}`}>{status.label}</span></div>
             <h2>{repo.displayName}</h2>
             <p>{repo.url}</p>

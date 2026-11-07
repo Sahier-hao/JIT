@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button, Input } from '../ui/controls'
 import { FailureNotice } from '../Feedback'
-import type { Route } from '../navigation'
+import { repositoryRoute, type Route } from '../navigation'
 import { createRepository } from '../projectClient'
 import { ProgressBar } from './JobProgress'
 
@@ -17,7 +17,7 @@ export function NewProjectForm({ navigate, onCancel }: { navigate: (route: Route
     setError(null)
     try {
       const result = await createRepository(values.url.trim())
-      navigate({ name: 'repository', repositoryId: result.repository.repositoryId }, true)
+      navigate(repositoryRoute(result.repository.repositoryId), true)
     } catch (failure) {
       setError(failure)
     }

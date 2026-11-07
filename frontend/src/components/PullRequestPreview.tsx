@@ -10,7 +10,7 @@ import { RepositoryExplanation } from './RepositoryExplanation'
 import { useSnapshotAnalyses } from '../useSnapshotAnalyses'
 import { displayTime } from '../domain'
 import type { PRSnapshot } from '../prReviewClient'
-import type { Route } from '../navigation'
+import { repositoryRoute, type Route } from '../navigation'
 
 const stateLabels: Record<string, string> = { open: '开放中', closed: '已关闭', merged: '已合并' }
 
@@ -59,7 +59,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
   const file = source.files.find(item => item.path === path)
   return <section className="pr-preview" aria-label="PR 只读详情">
     <div className="pr-preview-top">
-      <Button variant="ghost" size="sm" onClick={back ? back.onClick : () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })}>{back ? back.label : `返回${repositoryId ? '项目 PR 审查' : '我的审查'}`}</Button>
+      <Button variant="ghost" size="sm" onClick={back ? back.onClick : () => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{back ? back.label : `返回${repositoryId ? '项目 PR 审查' : '我的审查'}`}</Button>
       <div className="pr-preview-actions">
         <Button variant="primary" onClick={onStart} title="创建工作单后可标记阅读进度、记录问题并导出意见">{startLabel}</Button>
         <a href={source.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>

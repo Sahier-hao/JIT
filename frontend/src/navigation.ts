@@ -35,6 +35,10 @@ export function analysisRoute(repositoryId: string, viewSyncId: string, options:
   return { name: 'analysis', repositoryId, viewSyncId, view: options.view ?? 'commits', ...(options.commitId ? { commitId: options.commitId } : {}) }
 }
 
+export function repositoryRoute(repositoryId: string, tab?: 'overview' | 'prs' | 'trends' | 'analyses', viewId?: string): Route {
+  return { name: 'repository', repositoryId, ...(tab ? { tab } : {}), ...(tab === 'trends' && viewId ? { viewId } : {}) }
+}
+
 export function parseHash(hash: string): Route {
   try {
     const [rawPath, query = ''] = hash.replace(/^#/, '').split('?')

@@ -6,7 +6,7 @@ import { Dialog } from './ui/dialog'
 import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
 import { Button, Input } from './ui/controls'
-import { analysisRoute, type Route } from './navigation'
+import { analysisRoute, repositoryRoute, type Route } from './navigation'
 import { useRepository, useRepositoryCommits, useRepositoryCommitRecords, type RepositoryDetail } from './repositoryWorkspace'
 import { toCommit } from './domain'
 import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
@@ -213,12 +213,12 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
 
   return (
     <div className="review">
-      <Button variant="ghost" size="sm" className="back-link" onClick={() => navigate({ name: 'repository', repositoryId })} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} icon={<Icon name="collapse" size={16}/>}>返回项目</Button>
+      <Button variant="ghost" size="sm" className="back-link" onClick={() => navigate(repositoryRoute(repositoryId))} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} icon={<Icon name="collapse" size={16}/>}>返回项目</Button>
       <RepositoryHead repository={repo} total={repo.commitCount} />
       <details className="analysis-source"><summary><span className="source-chip">仓库分析 · {repo.viewContext?.branch ?? '分支未提供'}</span><span>分析来源 <Icon name="chevron" size={13}/></span></summary>      <div className="analysis-context"><span>分析 <code>{viewSyncId}</code></span><span>HEAD <code>{repo.viewContext?.headCommit ?? '旧记录未提供'}</code></span><span>数据 <code>{repo.datasetVersion ?? '未提供'}</code></span><span>模型 <code>{repo.modelId ?? '未提供'}</code></span><span>运行 <code>{repo.runId ?? '未提供'}</code></span><span>{repo.modelStrategy === 'generic-model' ? '通用模型' : repo.modelStrategy === 'repository-trained' ? '仓库模型' : '模型来源未提供'}{repo.degradeReason ? ` · ${DEGRADE_LABELS[repo.degradeReason] ?? repo.degradeReason}` : ''}</span></div>
 </details>
       {repo.latestSync?.syncId !== viewSyncId ? <p className="status-note">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。
-        {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate({ name: 'repository', repositoryId })}>检查最新成功分析</Button>}
+        {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate(repositoryRoute(repositoryId))}>检查最新成功分析</Button>}
       </p> : null}
       <p className="muted">{modelName ? `分析模型 ${modelName}。` : ''}分数只用于排序参考，未经仓库概率校准，不代表已确认缺陷。</p>
       <div className="review-body">

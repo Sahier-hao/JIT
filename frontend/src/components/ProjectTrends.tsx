@@ -5,7 +5,7 @@ import { Button, Input } from '../ui/controls'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ApiError } from '../apiContract'
 import { createTrendView, getTrendView, trendCommits, trendGroups, type TrendBucket, type TrendCommit, type TrendGroup, type TrendPartitionCounts, type TrendPartitionCoverage, type TrendView } from '../projectActivityClient'
-import { analysisRoute, type Route } from '../navigation'
+import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 import { displayTime } from '../domain'
 
 const number = (v: number | null) => v == null ? '未知' : v.toLocaleString()
@@ -39,7 +39,7 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
     setGroupId(preferred.groupId ?? ''); setSourceId('')
     setPreparing(true); setError(null)
     createTrendView(repositoryId, { ...(preferred.groupId ? { groupId: preferred.groupId } : {}), grain: 'week' })
-      .then(next => { if (alive.current) { setView(next); navigate({ name: 'repository', repositoryId, tab: 'trends', viewId: next.viewId }, true) } })
+      .then(next => { if (alive.current) { setView(next); navigate(repositoryRoute(repositoryId, 'trends', next.viewId), true) } })
       .catch(e => { if (alive.current) setError(e) })
       .finally(() => { if (alive.current) setPreparing(false) })
   }, [viewId, groupsReady, groupsError, groups, currentSyncId, repositoryId, navigate])
@@ -54,7 +54,7 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
     lock.current = true; setBusy(true); setError(null)
     try {
       const next = await createTrendView(repositoryId, { ...(sourceId ? { sourceSyncId: sourceId } : { groupId }), ...(start ? { start } : {}), ...(end ? { end } : {}), grain })
-      setView(next); setBucket(null); setFiltersOpen(false); navigate({ name: 'repository', repositoryId, tab: 'trends', viewId: next.viewId })
+      setView(next); setBucket(null); setFiltersOpen(false); navigate(repositoryRoute(repositoryId, 'trends', next.viewId))
     } catch (e) { setError(e) } finally { lock.current = false; setBusy(false) }
   }
   const selected = groups.find(g => g.groupId === groupId) ?? (view?.group.groupId === groupId ? view.group : null)

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Icon } from './Icon'
-import type { Route } from './navigation'
+import { repositoryRoute, type Route } from './navigation'
 import type { RepositoryView } from './repositoryWorkspace'
 import { NotificationEntry } from './components/ProjectActivity'
 import { AppearanceControl } from './components/AppearanceControl'
@@ -15,7 +15,7 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
       <nav className="main-navigation" aria-label="主导航">
         <button aria-current={route.name !== 'notifications' && (route.name !== 'pr-work' || route.repositoryId) ? 'page' : undefined} onClick={() => navigate({ name: 'repositories' })}><Icon name="project" size={18}/>项目</button>
       </nav>
-      {repositories.length ? <div className="sidebar-projects"><p className="sidebar-caption">最近项目</p>{repositories.map(repo => <button key={repo.repositoryId} className="sidebar-project" aria-current={('repositoryId' in route && route.repositoryId === repo.repositoryId) ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId: repo.repositoryId })}><span className="project-dot"/>{repo.displayName}</button>)}</div> : null}
+      {repositories.length ? <div className="sidebar-projects"><p className="sidebar-caption">最近项目</p>{repositories.map(repo => <button key={repo.repositoryId} className="sidebar-project" aria-current={('repositoryId' in route && route.repositoryId === repo.repositoryId) ? 'page' : undefined} onClick={() => navigate(repositoryRoute(repo.repositoryId))}><span className="project-dot"/>{repo.displayName}</button>)}</div> : null}
       <div className="sidebar-bottom"><Button variant="ghost" size="sm" onClick={() => navigate({ name: 'admin', view: 'models' })}><Icon name="sliders"/>管理工作区</Button></div>
     </aside>
     <div className="workspace-content">

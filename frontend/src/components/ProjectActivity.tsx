@@ -3,7 +3,7 @@ import { Button } from '../ui/controls'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { projectEvents, type EventPage, type ProjectEvent } from '../projectActivityClient'
-import { analysisRoute, type Route } from '../navigation'
+import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 
 export const EVENT_READ_KEY = 'jit:project-events:read:v1'
 const KIND_LABELS: Record<string, string> = {
@@ -23,7 +23,7 @@ function readEventIds(): Set<string> { const raw = JSON.parse(localStorage.getIt
 export function eventRoute(event: ProjectEvent): Route {
   if (event.snapshotId && event.owner && event.name && event.number) return { name: 'pr-work', repositoryId: event.repositoryId, owner: event.owner, repositoryName: event.name, number: event.number, snapshotId: event.snapshotId }
   if (event.syncId) return analysisRoute(event.repositoryId, event.syncId)
-  return { name: 'repository', repositoryId: event.repositoryId, tab: event.number ? 'prs' : 'overview' }
+  return repositoryRoute(event.repositoryId, event.number ? 'prs' : 'overview')
 }
 export function NotificationEntry({ navigate }: { navigate: (r: Route) => void }) {
   const [unread, setUnread] = useState(0)

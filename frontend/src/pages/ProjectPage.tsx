@@ -25,7 +25,7 @@ import { ProjectDatasetDialog } from '../components/ProjectDatasetDialog'
 import { DatasetBuildDialog } from '../components/DatasetBuildDialog'
 import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
-import { analysisRoute, type Route } from '../navigation'
+import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
 import { projectStatus } from '../projectStatus'
 import { ACTIVE_STATUSES, DEGRADE_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
@@ -76,7 +76,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       await analyzeAllProjectPRs(repositoryId, selectedModel || undefined, prScope)
       setPrDialog(false)
       prBatchChanged()
-      navigate({ name: 'repository', repositoryId, tab: 'prs' })
+      navigate(repositoryRoute(repositoryId, 'prs'))
     } catch (failure) {
       setPrAnalysisError(failure instanceof Error ? failure.message : '提交 PR 分析失败')
     } finally { setPrAnalyzing(false) }
@@ -231,7 +231,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <div className="page-actions">
         <Button icon={<Database size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
         <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
-        <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate({ name: 'repository', repositoryId, tab: 'analyses' }) }}/>
+        <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
       </div>
       {prAnalysisError ? <p className="field-error" role="alert">{prAnalysisError}</p> : null}
     </header>
@@ -240,22 +240,22 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     </section> : null}
 
     <nav className="project-tabs" aria-label="项目工作台视图">
-      {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: value })}>{label}</Button>)}
+      {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate(repositoryRoute(repositoryId, value))}>{label}</Button>)}
     </nav>
 
     {activeTab === 'overview' ? <>
-      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
+      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate(repositoryRoute(repositoryId, 'analyses'))}/>
     </> : null}
     {activeTab === 'analyses' ? <>
     {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={<nav className="analysis-view-switch" aria-label="分析视图">
-      <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
-      <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+      <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
+      <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
     </nav>}/> : <>
     <div className="analysis-bar">
       <span className="analysis-bar-label">当前审查所用结果</span>
       <nav className="analysis-view-switch" aria-label="分析视图">
-        <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
-        <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+        <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
+        <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
       </nav>
     </div>
     <div className="project-workspace">

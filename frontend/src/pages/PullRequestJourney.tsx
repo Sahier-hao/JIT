@@ -6,7 +6,7 @@ import { Dialog } from '../ui/dialog'
 import { Segmented } from '../ui/segmented'
 import * as ui from '../ui/controls'
 import { ArrowLeft, ExternalLink, Eye, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
-import type { Route } from '../navigation'
+import { repositoryRoute, type Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ContractError } from '../apiContract'
@@ -62,7 +62,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   }
   const file = source?.files[fileIndex]
   return <section className="pr-fixed-preview">
-    <ui.Button variant="ghost" size="sm" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
+    <ui.Button variant="ghost" size="sm" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
     <header className="page-heading"><div><h1>固定快照 · PR #{number}</h1><p>{owner}/{repositoryName} · 版本 {snapshotId}</p></div></header>
     <div className="pr-update-note"><strong>固定来源只读预览</strong><p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>{existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}</div>
     {personal.error ? <p className="field-error" role="alert">{personal.error}；现有存储未清空。</p> : null}
@@ -165,7 +165,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={work ? toWork : begin} startLabel={work ? '进入工作单' : undefined} back={work ? { label: '返回工作单', onClick: toWork } : undefined}/>
     }
     const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 文件与固定代码版本。'
-    const back = () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })
+    const back = () => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })
     return <Dialog
       open
       onOpenChange={next => { if (!next) back() }}
@@ -278,7 +278,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       <div className="wb-head-main">
         <div className="wb-head-text">
           <div className="wb-crumb">
-            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
+            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
             <span className="wb-sep">/</span>
             <span>{owner}/{repositoryName}</span>
             <span className="wb-sep">·</span>
@@ -470,7 +470,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
         </details>
         <div className="wb-drawer-links">
           <Button size="sm" icon={<ExternalLink/>} href={live.url} target="_blank" aria-label="在 GitHub 核对 PR">在 GitHub 核对 PR</Button>
-          <Button size="sm" onClick={() => navigate({ name: 'repository', repositoryId: live.repositoryId })}>项目分析与模型线索</Button>
+          <Button size="sm" onClick={() => navigate(repositoryRoute(live.repositoryId))}>项目分析与模型线索</Button>
           <Button size="sm" icon={<Save/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
         </div>
       </div>
