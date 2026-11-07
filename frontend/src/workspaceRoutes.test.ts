@@ -3,6 +3,7 @@ import { hashFor, parseHash, type Route } from './navigation'
 it.each<Route>([
   { name: 'repositories' }, { name: 'sources' }, { name: 'repository', repositoryId: 'repo-B' },
   { name: 'my-reviews' }, { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12 },
+  { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12, mode: 'preview' },
   { name: 'analysis', repositoryId: 'repo-B', viewSyncId: 'analysis-1', view: 'commits', commitId: 'a'.repeat(40) },
   { name: 'analysis', repositoryId: 'repo-B', viewSyncId: 'analysis-1', view: 'plan' },
   { name: 'report', runId: 'run-1', view: 'trends' }, { name: 'report', runId: 'run-1', view: 'commits' },
@@ -12,6 +13,7 @@ it.each<Route>([
   { name: 'repository', repositoryId: 'repo-B', tab: 'analyses' },
   { name: 'repository', repositoryId: 'repo-B', tab: 'trends', viewId: 'frozen-view' },
   { name: 'pr-work', repositoryId: 'repo-B', owner: 'EXample', repositoryName: 'Project', number: 12, snapshotId: 'fixed-v2' },
+  { name: 'pr-work', repositoryId: 'repo-B', owner: 'example', repositoryName: 'project', number: 12, mode: 'preview' },
   { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12, snapshotId: 'fixed-v1' },
   { name: 'legacy-sync', syncId: 'analysis-1', view: 'plan' },
   { name: 'admin', view: 'models' },

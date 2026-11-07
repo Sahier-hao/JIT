@@ -29,6 +29,7 @@
 /* 左：当前分析结果 */
 .pw-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
 .pw-detail-head h2 { margin: 0; font: 600 15px/1.4 var(--sans); letter-spacing: -.01em; color: var(--fg); }
+.pw-detail-head h2 .source-chip { margin-left: 8px; font: 500 10.5px/1 var(--sans); color: var(--fg-3); vertical-align: middle; }
 .pw-detail-head span { font: 11.5px var(--mono); color: var(--fg-3); white-space: nowrap; }
 
 .result-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }

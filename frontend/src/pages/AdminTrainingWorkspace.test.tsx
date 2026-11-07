@@ -71,11 +71,17 @@ function session(path: string) {
 
 it('loads a successful training task with metrics and lineage', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => session(String(path)) ?? Response.json(TASK))
-  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  const navigate = vi.fn()
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
   expect(screen.getByText('0.4200')).toBeVisible()
   expect(screen.getByText(TASK.runId)).toBeVisible()
   expect(screen.getByText(TASK.modelId)).toBeVisible()
+  const user = userEvent.setup()
+  await user.click(screen.getByRole('button', { name: '查看实验登记' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })
+  await user.click(screen.getByRole('button', { name: '查看模型' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'models', resourceId: TASK.modelId })
 })
 
 it('retries a failed task through the management API', async () => {

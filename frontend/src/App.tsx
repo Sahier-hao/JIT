@@ -48,7 +48,7 @@ function Workspace() {
   }
   let content
   if (route.name === 'my-reviews') content = <ProjectsPage navigate={navigate} view="reviews"/>
-  else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} navigate={navigate}/>
+  else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>

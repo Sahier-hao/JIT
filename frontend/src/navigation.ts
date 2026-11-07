@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 export type Route =
   | { name: 'my-reviews' }
-  | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string }
+  | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string; mode?: 'preview' }
   | { name: 'notifications' }
   | { name: 'repositories' }
   | { name: 'sources' }
@@ -36,13 +36,14 @@ export function parseHash(hash: string): Route {
     const [rawPath, query = ''] = hash.replace(/^#/, '').split('?')
     const params = new URLSearchParams(query)
     const snapshotId = params.get('snapshotId') || undefined
+    const mode = params.get('mode') === 'preview' ? 'preview' as const : undefined
     const path = rawPath.replace(/\/+$/, '')
     const parts = path.replace(/^\//, '').split('/').map(decodeURIComponent)
     if (parts.some(part => part.includes('/') || part.includes('\\'))) return { name: 'unknown', hash }
     if (!path || path === '/') return { name: 'repositories' }
     if (path === '/reviews') return { name: 'my-reviews' }
     if (path === '/notifications') return { name: 'notifications' }
-    if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]), ...(snapshotId ? { snapshotId } : {}) }
+    if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]), ...(snapshotId ? { snapshotId } : {}), ...(mode ? { mode } : {}) }
     if (['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
     if (['/projects/new', '/connect', '/sources'].includes(path)) return { name: 'sources' }
     const comparisonModels = (params.get('models') ?? '').split(',').map(value => value.trim()).filter(Boolean)
@@ -70,7 +71,7 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'admin' && parts[1] === 'reports' && parts.length === 4 && ['overview', 'commits', 'trends'].includes(parts[3])) return { name: 'report', runId: parts[2], view: parts[3] as 'overview' | 'commits' | 'trends' }
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
     const projectRoot = parts[0] === 'projects' || parts[0] === 'repositories'
-    if (projectRoot && parts[2] === 'prs' && parts.length === 6 && /^[A-Za-z0-9_.-]+$/.test(parts[3]) && /^[A-Za-z0-9_.-]+$/.test(parts[4]) && /^[1-9]\d*$/.test(parts[5])) return { name: 'pr-work', repositoryId: parts[1], owner: parts[3], repositoryName: parts[4], number: Number(parts[5]), ...(snapshotId ? { snapshotId } : {}) }
+    if (projectRoot && parts[2] === 'prs' && parts.length === 6 && /^[A-Za-z0-9_.-]+$/.test(parts[3]) && /^[A-Za-z0-9_.-]+$/.test(parts[4]) && /^[1-9]\d*$/.test(parts[5])) return { name: 'pr-work', repositoryId: parts[1], owner: parts[3], repositoryName: parts[4], number: Number(parts[5]), ...(snapshotId ? { snapshotId } : {}), ...(mode ? { mode } : {}) }
     if (projectRoot && parts.length === 3 && ['overview', 'prs', 'trends', 'analyses'].includes(parts[2])) return { name: 'repository', repositoryId: parts[1], tab: parts[2] as 'overview' | 'prs' | 'trends' | 'analyses' }
     if (projectRoot && parts.length === 4 && parts[2] === 'trends') return { name: 'repository', repositoryId: parts[1], tab: 'trends', viewId: parts[3] }
     if (projectRoot && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
@@ -88,7 +89,13 @@ export function parseHash(hash: string): Route {
 export function hashFor(route: Route): string {
   switch (route.name) {
     case 'my-reviews': return '#/reviews'
-    case 'pr-work': return `${route.repositoryId ? `#/projects/${encodeURIComponent(route.repositoryId)}/prs` : '#/reviews'}/${encodeURIComponent(route.owner)}/${encodeURIComponent(route.repositoryName)}/${route.number}${route.snapshotId ? `?snapshotId=${encodeURIComponent(route.snapshotId)}` : ''}`
+    case 'pr-work': {
+      const base = `${route.repositoryId ? `#/projects/${encodeURIComponent(route.repositoryId)}/prs` : '#/reviews'}/${encodeURIComponent(route.owner)}/${encodeURIComponent(route.repositoryName)}/${route.number}`
+      const query = new URLSearchParams()
+      if (route.snapshotId) query.set('snapshotId', route.snapshotId)
+      if (route.mode) query.set('mode', route.mode)
+      return query.size ? `${base}?${query}` : base
+    }
     case 'notifications': return '#/notifications'
     case 'repositories': return '#/projects'
     case 'sources': return '#/projects/new'

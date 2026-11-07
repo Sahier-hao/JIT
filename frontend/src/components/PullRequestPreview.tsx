@@ -15,7 +15,7 @@ import type { Route } from '../navigation'
 const stateLabels: Record<string, string> = { open: '开放中', closed: '已关闭', merged: '已合并' }
 
 /** 只读 PR 详情：先看提交，点开某条提交才显示它触及的文件与代码；不写入个人草稿。 */
-export function PullRequestPreview({ source, remoteState, repositoryId, navigate, onStart }: { source: PRSnapshot; remoteState?: PRSnapshot['remoteState'] | null; repositoryId?: string; navigate: (route: Route) => void; onStart: () => void }) {
+export function PullRequestPreview({ source, remoteState, repositoryId, navigate, onStart, startLabel = '创建审查工作单', back }: { source: PRSnapshot; remoteState?: PRSnapshot['remoteState'] | null; repositoryId?: string; navigate: (route: Route) => void; onStart: () => void; startLabel?: string; back?: { label: string; onClick: () => void } }) {
   const state = remoteState ?? source.remoteState
   const [filter, setFilter] = useState('')
   const [commitFilter, setCommitFilter] = useState('')
@@ -59,9 +59,9 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
   const file = source.files.find(item => item.path === path)
   return <section className="pr-preview" aria-label="PR 只读详情">
     <div className="pr-preview-top">
-      <Button variant="ghost" size="sm" onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })}>返回{repositoryId ? '项目 PR 审查' : '我的审查'}</Button>
+      <Button variant="ghost" size="sm" onClick={back ? back.onClick : () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })}>{back ? back.label : `返回${repositoryId ? '项目 PR 审查' : '我的审查'}`}</Button>
       <div className="pr-preview-actions">
-        <Button variant="primary" onClick={onStart} title="创建工作单后可标记阅读进度、记录问题并导出意见">创建审查工作单</Button>
+        <Button variant="primary" onClick={onStart} title="创建工作单后可标记阅读进度、记录问题并导出意见">{startLabel}</Button>
         <a href={source.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>
       </div>
     </div>

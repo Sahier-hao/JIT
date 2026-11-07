@@ -131,6 +131,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const latest = records.syncs[0] ?? repository.latestSync
   const status = projectStatus(repository, latest)
   const context = repository.viewContext
+  const latestCompletedId = records.syncs.find(job => job.status === 'completed')?.syncId ?? null
   const currentBatchModel = modelChoices.find(model => model.modelId === repository.viewContext?.modelId)
   const defaultBatchModel = modelChoices.find(model => model.isDefault)
   const prModelOptions = [
@@ -251,7 +252,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
     </nav>}/> : <>
     <div className="analysis-bar">
-      <span className="analysis-bar-label">最近一次成功分析的结果</span>
+      <span className="analysis-bar-label">当前审查所用结果</span>
       <nav className="analysis-view-switch" aria-label="分析视图">
         <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
         <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
@@ -268,7 +269,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
       <div className="pw-detail">
         <div className="pw-detail-head">
-          <h2>当前分析结果</h2>
+          <h2>当前分析结果{context && latestCompletedId && context.syncId !== latestCompletedId ? <span className="source-chip">历史固定结果</span> : null}</h2>
           <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
         {context && context.sourceKind === 'pr' ? <p className="status-note">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}

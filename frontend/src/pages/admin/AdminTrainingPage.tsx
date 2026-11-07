@@ -85,7 +85,7 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   if (loading) return <LoadingNotice label="正在读取训练任务"/>
   if (error && !taskId && !tasks.length) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button></EmptyState>
   if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })}>返回任务列表</Button></EmptyState>
-  if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })}/>
+  if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })} openRuns={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/>
   return <section>
     <AdminPageHeader title="训练任务" onRefresh={retryLoad}/>
     <ErrorNotice>{error}</ErrorNotice>
@@ -108,20 +108,22 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   </section>
 }
 
-function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
+function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, openModel }: {
   task: TrainingTask
   error: string
   busy: string
   act: (id: string, action: 'cancel' | 'retry') => Promise<void>
   retry: () => void
   back: () => void
+  openRuns: () => void
+  openModel: (modelId: string) => void
 }) {
   const active = ACTIVE_TASK_STATUSES.includes(task.status)
   const retryable = ['failed', 'cancelled', 'interrupted'].includes(task.status)
   return <section>
     <AdminPageHeader title="训练任务详情" meta={`${task.datasetVersion} · ${task.method}`}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
+    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{task.status === 'succeeded' ? <><Button onClick={openRuns}>查看实验登记</Button>{task.modelId ? <Button onClick={() => openModel(task.modelId!)}>查看模型</Button> : null}</> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
     <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>
     {task.error ? <div className="admin-error-box" role="alert"><strong>{task.error.code}</strong><p>{task.error.message}</p></div> : null}
     {task.status === 'succeeded' ? <><MetricGrid metrics={task.metrics}/><dl className="admin-facts">

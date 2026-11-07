@@ -155,8 +155,8 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
     else acc.none += 1
     return acc
   }, { completed: 0, running: 0, failed: 0, none: 0 })
-  const statusRank = (status?: string | null) => ['running', 'queued', 'checking'].includes(status ?? '') ? 0 : status === 'completed' ? 1 : ['failed', 'cancelled', 'interrupted'].includes(status ?? '') ? 2 : 3
-  const recordRows = [...rows].sort((a, b) => statusRank(a.analysisStatus) - statusRank(b.analysisStatus) || (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt))
+  const statusRank = (status?: string | null) => ['running', 'queued', 'checking'].includes(status ?? '') ? 0 : ['failed', 'cancelled', 'interrupted'].includes(status ?? '') ? 1 : 2
+  const pendingRows = rows.filter(pr => pr.analysisStatus !== 'completed').sort((a, b) => statusRank(a.analysisStatus) - statusRank(b.analysisStatus) || (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt))
   return <section className="pr-hub" aria-label="项目 PR 审查">
     <h2 className="sr-only">PR 审查</h2>
     <div className="pr-hub-layout">
@@ -238,11 +238,11 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
       </div>
     </div> : null}
     </div>
-    {result?.supported ? <aside className="pr-hub-records" aria-label="PR 分析记录">
-      <div className="pw-rail-head"><h2>PR 分析记录</h2><span>{rows.length} 个</span></div>
-      <p className="pr-hub-records-summary">已分析 {summary.completed} · 分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
+    {result?.supported ? <aside className="pr-hub-records" aria-label="待处理 PR">
+      <div className="pw-rail-head"><h2>待处理 PR</h2><span>{pendingRows.length} 个</span></div>
+      <p className="pr-hub-records-summary">分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
       <div className="pr-record-list">
-        {recordRows.map(pr => <button key={pr.number} type="button" className="pr-record" data-status={pr.analysisStatus ?? 'none'} onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
+        {pendingRows.length === 0 ? <p className="quiet-empty">没有待处理 PR</p> : pendingRows.map(pr => <button key={pr.number} type="button" className="pr-record" data-status={pr.analysisStatus ?? 'none'} onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
           <span className="pr-record-title"><b>#{pr.number}</b> {pr.title}</span>
           <span className="pr-record-meta">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
         </button>)}

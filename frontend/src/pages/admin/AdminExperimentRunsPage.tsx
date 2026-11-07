@@ -195,13 +195,13 @@ function ExperimentList({ filters, navigate, expired }: {
           <td>{metricSummary(run.metrics)}</td>
           <td><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</td>
           <td><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></td>
-          <td><div className="admin-row-actions"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })}>查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }}>登记</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型</Button> : null}</div></td>
+          <td><div className="admin-row-actions"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })}>查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }}>登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型</Button> : null}</div></td>
         </tr>
       })}</tbody>
     </table></div> : null}
     {selected.length ? <section className="admin-promotion-panel" aria-label="登记所选实验">
       <strong>已选择 {selected.length} 个运行</strong>
-      {confirming ? <><p>确认后会重新校验产物并按运行身份登记；不会自动设置默认模型。</p><div className="admin-detail-actions"><Button variant="primary" loading={busy} onClick={() => void promote()}>确认登记</Button><Button disabled={busy} onClick={() => setConfirming(false)}>取消</Button></div></> : <Button onClick={() => setConfirming(true)}>登记所选</Button>}
+      {confirming ? <><p>确认后会重新校验产物并按运行身份登记；不会自动设置默认模型。</p><div className="admin-detail-actions"><Button variant="primary" loading={busy} onClick={() => void promote()}>确认登记实验运行</Button><Button disabled={busy} onClick={() => setConfirming(false)}>取消</Button></div></> : <Button onClick={() => setConfirming(true)}>登记所选实验运行</Button>}
     </section> : null}
     {results.length ? <section className="admin-promotion-results" aria-label="登记结果"><h2>登记结果</h2>{results.map(result => <div key={result.candidateId} data-status={result.status}><span className="source-chip">{STATUS_LABELS[result.status] ?? result.status}</span><code>{result.candidateId}</code>{result.message ? <p>{result.message}</p> : null}{result.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: result.modelId! })}>查看模型</Button> : null}</div>)}</section> : null}
     {page?.reports.length ? <section className="admin-report-only"><h2>不可登记报告</h2><p>聚合报告不包含完整模型产物，只能用于比较。</p>{page.reports.map(report => <div key={report.artifactKey}><code>{report.artifactKey}</code><p>{report.reason}</p></div>)}</section> : null}

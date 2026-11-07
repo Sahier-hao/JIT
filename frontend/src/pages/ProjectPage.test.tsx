@@ -261,6 +261,7 @@ it('switches the current result from an older completed record', async () => {
   expect(selected).toEqual({ viewSyncId: OTHER })
   await waitFor(() => expect(screen.getAllByText('当前结果').length).toBeGreaterThan(0))
   expect(await screen.findByText(/当前结果已切换为/)).toBeVisible()
+  expect(await screen.findByText('历史固定结果')).toBeVisible()
 })
 
 it('deletes an ended analysis record from the list', async () => {

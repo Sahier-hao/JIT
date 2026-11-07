@@ -5,7 +5,7 @@ import { Drawer } from '../ui/drawer'
 import { Dialog } from '../ui/dialog'
 import { Segmented } from '../ui/segmented'
 import * as ui from '../ui/controls'
-import { ArrowLeft, ExternalLink, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Eye, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
 import type { Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice, LoadingNotice } from '../Feedback'
@@ -86,7 +86,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   </section>
 }
 
-export function PullRequestWork({ owner, repositoryName, number, repositoryId, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; navigate: Navigate }) {
+export function PullRequestWork({ owner, repositoryName, number, repositoryId, preview = false, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; preview?: boolean; navigate: Navigate }) {
   const [initial] = useState(() => { try { const work = readWorks().find(w => w.key === workKey(owner, repositoryName, number)) ?? null; if (work) validateProjectSource(work.rounds[work.viewedSnapshotId].source, owner, repositoryName, number, repositoryId); return { work, error: '' } } catch (error) { return { work: null, error: message(error) } } })
   const [work, setWork] = useState<PRWork | null>(initial.work)
   const current = useRef(work)
@@ -160,9 +160,12 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
     commit({ ...createWork(source), remoteState: remoteState ?? source.remoteState, checkedAt: remoteCheckedAt ?? source.capturedAt })
     setReadError(null)
   }
-  if (!work) {
+  if (preview || !work) {
     const failed = Boolean(readError || initial.error)
-    if (!failed && source) return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={begin}/>
+    if (!failed && source) {
+      const toWork = () => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })
+      return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={work ? toWork : begin} startLabel={work ? '进入工作单' : undefined} back={work ? { label: '返回工作单', onClick: toWork } : undefined}/>
+    }
     const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 文件与固定代码版本。'
     const back = () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })
     return <Dialog
@@ -299,6 +302,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
           </div>
         </div>
         <div className="wb-head-actions">
+          <Button icon={<Eye/>} onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本">查看只读版本</Button>
           <Button icon={<RefreshCw/>} loading={busy} onClick={() => void check()} aria-label="检查 PR 更新">检查 PR 更新</Button>
           <Select
             className="wb-interest"
