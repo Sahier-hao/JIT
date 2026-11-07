@@ -117,6 +117,7 @@ export interface SyncForm {
   until?: string
   commitLimit?: string
   strategy: SyncStrategy
+  splitPreset?: string
 }
 
 export function createRepositorySync(

@@ -17,7 +17,7 @@ import { ModelCardDialog } from './ModelCardDialog'
 /** 模型来源把「用哪个现成模型」和「要不要训练」合成一个决定；其余值都是具体模型 ID。 */
 const SOURCES = ['auto', 'default', 'train'] as const
 type ModelSource = (typeof SOURCES)[number]
-type Draft = { branch?: string; choice?: string; algorithm?: string }
+type Draft = { branch?: string; choice?: string; algorithm?: string; splitPreset?: string }
 
 function choiceOf(form: { strategy?: SyncStrategy; modelId?: string }): string {
   if (form.modelId) return form.modelId
@@ -43,12 +43,13 @@ export interface AnalysisFormProps {
 export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel, initial }: AnalysisFormProps) {
   const draftKey = `jit:analysis-draft:${repositoryUrl}`
   const [saved] = useState<Draft>(() => {
-    if (initial) return { branch: initial.branch, choice: choiceOf(initial), algorithm: initial.algorithm }
+    if (initial) return { branch: initial.branch, choice: choiceOf(initial), algorithm: initial.algorithm, splitPreset: initial.splitPreset }
     try { return JSON.parse(sessionStorage.getItem(draftKey) ?? '{}') } catch { return {} }
   })
   const [branch, setBranch] = useState(saved.branch ?? '')
   const [choice, setChoice] = useState(saved.choice ?? 'auto')
   const [algorithm, setAlgorithm] = useState(saved.algorithm ?? '')
+  const [splitPreset, setSplitPreset] = useState(saved.splitPreset ?? 'temporal-70-15-15')
   const [methods, setMethods] = useState<MethodChoice[]>([])
   const [methodsLoaded, setMethodsLoaded] = useState(false)
   const [methodsError, setMethodsError] = useState('')
@@ -65,7 +66,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     repositoryModels(controller.signal).then(items => { if (!controller.signal.aborted) { setModels(items); setModelsLoaded(true); setModelError('') } }).catch(failure => { if (!controller.signal.aborted) setModelError(failure instanceof Error ? failure.message : '模型读取失败') })
     return () => controller.abort()
   }, [modelRevision])
-  useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice, algorithm })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, choice, algorithm])
+  useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice, algorithm, splitPreset })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, choice, algorithm, splitPreset])
   useEffect(() => { setModelCardOpen(false) }, [choice])
   useEffect(() => {
     const controller = new AbortController()
@@ -101,6 +102,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
         repositoryUrl,
         branch,
         strategy,
+        ...(!explicitModel ? { splitPreset } : {}),
         ...(explicitModel ? { modelId: choice } : choice === 'default' ? {} : { algorithm }),
       })
       projectsChanged()
@@ -130,6 +132,11 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
         </div>
         {!explicitModel ? <label>训练方法<select aria-label="训练方法" value={algorithm} onChange={event => setAlgorithm(event.target.value)}>
           {methods.map(item => <option key={item.method} value={item.method} disabled={!item.available}>{item.name}{item.available ? '' : `（${item.reason ?? '不可用'}）`}</option>)}
+        </select></label> : null}
+        {!explicitModel ? <label>时间切分<select aria-label="时间切分预设" value={splitPreset} onChange={event => setSplitPreset(event.target.value)}>
+          <option value="temporal-70-15-15">70 / 15 / 15（默认）</option>
+          <option value="temporal-80-10-10">80 / 10 / 10</option>
+          <option value="temporal-60-20-20">60 / 20 / 20</option>
         </select></label> : null}
         {modelError ? <p className="field-error wide-field" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>重新读取</Button></p> : null}
         {methodsError ? <p className="field-error wide-field" role="alert">训练方法列表暂时不可用：{methodsError}</p> : null}

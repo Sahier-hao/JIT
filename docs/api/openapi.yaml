@@ -462,6 +462,152 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/dataset-builds:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    post:
+      operationId: createProjectDatasetBuild
+      summary: 从当前项目公开仓库构建只采集、登记的数据集
+      description: 只接受当前项目已绑定仓库、分支和可选范围；拒绝上传 CSV、服务器路径或替换仓库地址。任务完成只返回冻结数据集，不训练、不评分、不修改项目当前结果。
+      security: []
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetBuildTaskCreate'
+      responses:
+        '202':
+          description: 新建数据集构建任务。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetBuildTaskView'
+        '200':
+          description: 相同参数已有活动任务，复用该任务。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetBuildTaskView'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+    get:
+      operationId: listProjectDatasetBuilds
+      summary: 当前项目的数据集构建任务
+      security: []
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      parameters:
+      - name: limit
+        in: query
+        schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+      - $ref: '#/components/parameters/ProjectOffset'
+      responses:
+        '200':
+          description: 最近任务，按创建时间倒序。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetBuildTaskPage'
+        '404':
+          $ref: '#/components/responses/RepositoryUnknown'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/repositories/{repositoryId}/dataset-builds/{taskId}:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: taskId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Uuid'}
+    get:
+      operationId: getProjectDatasetBuild
+      summary: 读取一次数据集构建任务及冻结结果
+      security: []
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      responses:
+        '200':
+          description: 任务状态、失败阶段与原因，或已完成的数据集版本和质量摘要。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetBuildTaskView'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/repositories/{repositoryId}/dataset-builds/{taskId}/cancel:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: taskId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Uuid'}
+    post:
+      operationId: cancelProjectDatasetBuild
+      summary: 取消排队或执行中的数据集构建
+      security: []
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      responses:
+        '200':
+          description: 排队任务已直接取消。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DatasetBuildTaskView'}
+        '202':
+          description: 执行中的工作进程已收到取消请求。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DatasetBuildTaskView'}
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 任务已结束，不再接受取消。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SharedError'}
+  /api/v1/repositories/{repositoryId}/dataset-builds/{taskId}/retry:
+    parameters:
+    - $ref: '#/components/parameters/ProjectRepositoryId'
+    - name: taskId
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/Uuid'}
+    post:
+      operationId: retryProjectDatasetBuild
+      summary: 按原仓库、分支、范围重试已失败的数据集构建
+      security: []
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: member-or-admin
+      responses:
+        '202':
+          description: 已创建带 parentTaskId 的新任务。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DatasetBuildTaskView'}
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 任务不属于可重试终态。
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SharedError'}
   /api/v1/review-sources:
     post:
       operationId: preparePublicPRSource
@@ -1077,6 +1223,39 @@ paths:
         '401':
           description: Administrator session required; no maintenance data is returned.
       description: 当前后端操作；本机使用，无需凭据。数据集名取 `/api/v1/datasets` 返回的 `dataset` 字段。
+      security:
+      - AdminSession: []
+  /api/admin/datasets/{datasetVersion}/split-preview:
+    get:
+      operationId: previewDatasetSplit
+      summary: 只读预览已登记数据集的注册时间切分
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      parameters:
+      - name: datasetVersion
+        in: path
+        required: true
+        schema: {type: string, minLength: 1}
+      - name: preset
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/SplitPreset'
+      responses:
+        '200':
+          description: 可用时返回三个分区；不可用时 available=false 并给出具体原因。预览不创建任务、运行或模型。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitPreview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
       security:
       - AdminSession: []
   /api/v1/datasets/import:
@@ -3385,6 +3564,9 @@ components:
           type: [string, 'null']
         runId:
           type: [string, 'null']
+        modelStrategy:
+          type: [string, 'null']
+          enum: [repository-trained, generic-model, null]
         featureSchemaVersion:
           type: [string, 'null']
         distributionRule:
@@ -3455,6 +3637,9 @@ components:
           type: [string, 'null']
         runId:
           type: [string, 'null']
+        modelStrategy:
+          type: [string, 'null']
+          enum: [repository-trained, generic-model, null]
         featureSchemaVersion:
           type: [string, 'null']
         featureSource:
@@ -3462,7 +3647,7 @@ components:
           description: 复用已保存特征时的来源说明；未复用时为 null。
         distributionRule:
           type: [string, 'null']
-      required: [syncId, sourceKind, branch, since, until, commitLimit, createdAt, completedAt, headCommit, datasetVersion, modelId, runId, featureSchemaVersion, distributionRule]
+      required: [syncId, sourceKind, branch, since, until, commitLimit, createdAt, completedAt, headCommit, datasetVersion, modelId, runId, modelStrategy, featureSchemaVersion, distributionRule]
     ProjectTrendSummary:
       type: object
       additionalProperties: false
@@ -3535,7 +3720,9 @@ components:
         coverage:
           type: string
           enum: [observed, unknown]
-      required: [start, end, commitCount, scoredCount, unknownCount, highCount, highRate, riskMean, rateReason, coverage]
+        partitions:
+          $ref: '#/components/schemas/ProjectTrendPartitionCounts'
+      required: [start, end, commitCount, scoredCount, unknownCount, highCount, highRate, riskMean, rateReason, coverage, partitions]
       allOf:
       - if:
           properties:
@@ -3617,6 +3804,8 @@ components:
           type: boolean
         summary:
           $ref: '#/components/schemas/ProjectTrendSummary'
+        partitionCoverage:
+          $ref: '#/components/schemas/ProjectPartitionCoverage'
         buckets:
           type: array
           minItems: 1
@@ -3632,7 +3821,51 @@ components:
           type: array
           items:
             type: string
-      required: [repositoryId, viewId, mode, group, sourceSyncIds, createdAt, start, end, grain, timezone, minSample, hasNewSources, summary, buckets, sources, limitations]
+      required: [repositoryId, viewId, mode, group, sourceSyncIds, createdAt, start, end, grain, timezone, minSample, hasNewSources, summary, partitionCoverage, buckets, sources, limitations]
+    ProjectTrendPartitionCounts:
+      type: object
+      additionalProperties: false
+      properties:
+        train: {type: integer, minimum: 0}
+        validation: {type: integer, minimum: 0}
+        test: {type: integer, minimum: 0}
+        recentUnseen: {type: integer, minimum: 0}
+        unknown: {type: integer, minimum: 0}
+      required: [train, validation, test, recentUnseen, unknown]
+    ProjectPartitionCoverage:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [verified, external, unknown]
+        reason: {type: [string, 'null']}
+        preset: {type: [string, 'null']}
+        timezone: {type: [string, 'null']}
+        boundaries:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              epoch: {type: integer}
+              time: {type: string, minLength: 1}
+            required: [epoch, time]
+        partitions:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: true
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        recentUnseenFrom:
+          type: string
+          minLength: 1
+      required: [status, reason, preset, timezone, boundaries, partitions, modelId, runId, datasetVersion]
     ProjectTrendCommitPage:
       type: object
       additionalProperties: false
@@ -3669,7 +3902,10 @@ components:
                 type: [string, 'null']
               sourceSyncId:
                 type: string
-            required: [commitId, epoch, risk, subject, sourceSyncId]
+              partition:
+                type: string
+                enum: [train, validation, test, recent-unseen, unknown]
+            required: [commitId, epoch, risk, subject, sourceSyncId, partition]
       required: [repositoryId, viewId, total, limit, offset, commits]
     PRSummary:
       type: object
@@ -5869,6 +6105,8 @@ components:
           type: string
           minLength: 1
           description: 训练方法；只在 auto 或 force-train 时可用，缺省为 logistic-regression-l2-v1。
+        splitPreset:
+          $ref: '#/components/schemas/SplitPreset'
       required:
       - repositoryUrl
       additionalProperties: false
@@ -5898,6 +6136,12 @@ components:
         distributionRule:
           type: [string, 'null']
           description: 成功分析冻结的风险分档规则；旧记录可能缺失。
+        splitPreset:
+          $ref: '#/components/schemas/SplitPreset'
+        splitPolicy:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/SplitPolicy'
         featureSource:
           type: [object, 'null']
           description: 复用已保存特征时的来源说明；未复用时为 null。
@@ -8395,6 +8639,203 @@ components:
       - attempts
       - limitations
       additionalProperties: false
+    SplitPreset:
+      type: string
+      enum:
+      - temporal-70-15-15
+      - temporal-80-10-10
+      - temporal-60-20-20
+      default: temporal-70-15-15
+    SplitPolicy:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/SplitPreset'
+        ratios:
+          type: object
+          properties:
+            train: {type: integer, minimum: 1, maximum: 99}
+            validation: {type: integer, minimum: 1, maximum: 99}
+            test: {type: integer, minimum: 1, maximum: 99}
+          required: [train, validation, test]
+          additionalProperties: false
+        timezone: {type: string, enum: [UTC]}
+        boundaries:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: object
+            properties:
+              epoch: {type: integer}
+              time: {type: string, minLength: 1}
+            required: [epoch, time]
+            additionalProperties: false
+        partitionCounts:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              records: {type: integer, minimum: 1}
+              positives: {type: integer, minimum: 0}
+              start: {type: string, minLength: 1}
+              end: {type: string, minLength: 1}
+            required: [records, positives, start, end]
+            additionalProperties: false
+        memberSha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+      required: [id, ratios, timezone, boundaries, partitionCounts, memberSha256]
+      additionalProperties: false
+    SplitPreview:
+      type: object
+      properties:
+        datasetVersion: {type: string, minLength: 1}
+        schemaName: {type: string, minLength: 1}
+        preset:
+          type: object
+          properties:
+            id: {$ref: '#/components/schemas/SplitPreset'}
+            ratios:
+              type: object
+              properties:
+                train: {type: integer}
+                validation: {type: integer}
+                test: {type: integer}
+              required: [train, validation, test]
+            timezone: {type: string}
+          required: [id, ratios, timezone]
+          additionalProperties: false
+        timezone: {type: string, enum: [UTC]}
+        datasetRecords: {type: integer, minimum: 1}
+        available: {type: boolean}
+        reason:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              code: {type: string, minLength: 1}
+              message: {type: string, minLength: 1}
+            required: [code, message]
+            additionalProperties: false
+        policy:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/SplitPolicy'
+        partitions:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              train: {$ref: '#/components/schemas/SplitPreviewPartition'}
+              validation: {$ref: '#/components/schemas/SplitPreviewPartition'}
+              test: {$ref: '#/components/schemas/SplitPreviewPartition'}
+            required: [train, validation, test]
+            additionalProperties: false
+      required: [datasetVersion, schemaName, preset, timezone, datasetRecords,
+                 available, reason, partitions]
+      additionalProperties: false
+    SplitPreviewPartition:
+      type: object
+      properties:
+        records: {type: integer, minimum: 1}
+        positives: {type: integer, minimum: 0}
+        start: {type: string, minLength: 1}
+        end: {type: string, minLength: 1}
+      required: [records, positives, start, end]
+      additionalProperties: false
+    DatasetBuildTaskCreate:
+      type: object
+      properties:
+        branch: {type: string, minLength: 1, default: HEAD}
+        since: {type: string, minLength: 1}
+        until: {type: string, minLength: 1}
+        commitLimit: {type: integer, minimum: 1, maximum: 50000, default: 50000}
+      additionalProperties: false
+    DatasetBuildTaskView:
+      type: object
+      properties:
+        taskId: {$ref: '#/components/schemas/Uuid'}
+        repositoryId: {$ref: '#/components/schemas/Uuid'}
+        repositoryUrl: {type: string, minLength: 1}
+        branch: {type: string, minLength: 1}
+        since: {type: [string, 'null']}
+        until: {type: [string, 'null']}
+        commitLimit: {type: integer, minimum: 1}
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled, interrupted]
+        stage:
+          type: string
+          enum: [queued, collecting, registering, completed, failed, cancelled, interrupted]
+        error:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              code: {type: string, minLength: 1}
+              message: {type: string, minLength: 1}
+            required: [code, message]
+            additionalProperties: false
+        parentTaskId: {type: [string, 'null'], format: uuid}
+        createdBy: {type: string, minLength: 1}
+        requestId: {type: [string, 'null']}
+        datasetName: {type: [string, 'null']}
+        datasetVersion: {type: [string, 'null']}
+        datasetManifest: {type: [string, 'null']}
+        manifestSha256: {type: [string, 'null'], pattern: '^[a-f0-9]{64}$'}
+        quality: {type: [object, 'null']}
+        collection: {type: [object, 'null']}
+        reused: {type: boolean}
+        headCommit: {type: [string, 'null']}
+        createdAt: {type: string, minLength: 1}
+        updatedAt: {type: string, minLength: 1}
+        startedAt: {type: [string, 'null']}
+        deadlineAt: {type: [string, 'null']}
+        cancelRequestedAt: {type: [string, 'null']}
+        completedAt: {type: [string, 'null']}
+        queuePosition: {type: [integer, 'null'], minimum: 1}
+      required:
+      - taskId
+      - repositoryId
+      - repositoryUrl
+      - branch
+      - since
+      - until
+      - commitLimit
+      - status
+      - stage
+      - error
+      - parentTaskId
+      - createdBy
+      - requestId
+      - datasetName
+      - datasetVersion
+      - datasetManifest
+      - manifestSha256
+      - quality
+      - collection
+      - reused
+      - headCommit
+      - createdAt
+      - updatedAt
+      - startedAt
+      - deadlineAt
+      - cancelRequestedAt
+      - completedAt
+      - queuePosition
+      additionalProperties: false
+    DatasetBuildTaskPage:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items: {$ref: '#/components/schemas/DatasetBuildTaskView'}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0}
+      required: [tasks, total, limit, offset]
+      additionalProperties: false
     TrainingTaskCreate:
       type: object
       properties:
@@ -8417,6 +8858,8 @@ components:
           type: string
           enum: [metric-set-v1, metric-set-v2]
           default: metric-set-v2
+        splitPreset:
+          $ref: '#/components/schemas/SplitPreset'
       required: [datasetVersion, method]
       additionalProperties: false
     TrainingTaskView:
@@ -8477,6 +8920,12 @@ components:
           type: [object, 'null']
         splitRule:
           type: [string, 'null']
+        splitPreset:
+          $ref: '#/components/schemas/SplitPreset'
+        splitPolicy:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/SplitPolicy'
         dataScale:
           type: [object, 'null']
         trainingPerformance:
@@ -8509,6 +8958,8 @@ components:
       - metrics
       - metricsByPartition
       - split
+      - splitPreset
+      - splitPolicy
       - splitRule
       - dataScale
       - trainingPerformance

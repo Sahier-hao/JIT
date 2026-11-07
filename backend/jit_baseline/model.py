@@ -1,5 +1,4 @@
 """Train-only fixed pipeline and chronological partitioning."""
-import math
 import warnings
 
 import numpy as np
@@ -15,6 +14,7 @@ from threadpoolctl import threadpool_limits
 from .algorithms import DEFAULT_ALGORITHM, get_algorithm
 from .data import BaselineError
 from .schemas import DEFAULT_SCHEMA, resolve
+from .splits import split_records
 
 
 def _deep_estimator(name):
@@ -106,24 +106,8 @@ def log_counts(matrix):
     return result
 
 
-def temporal_split(records):
-    if not records or len({r["id"] for r in records}) != len(records):
-        raise BaselineError("SPLIT_INVALID", "分区为空或提交身份重复")
-    if any(not isinstance(r["epoch"], int) or isinstance(r["epoch"], bool) for r in records):
-        raise BaselineError("SPLIT_INVALID", "分区时间无效")
-    ordered = sorted(records, key=lambda r: (r["epoch"], r["id"]))
-    times = sorted({r["epoch"] for r in ordered})
-    if len(times) < 3:
-        raise BaselineError("SPLIT_INVALID", "时间组不足，不能形成三个非空分区")
-    boundaries = [times[math.floor(.70 * len(times))], times[math.floor(.85 * len(times))]]
-    split = {"train": [], "validation": [], "test": []}
-    for r in ordered:
-        partition = "train" if r["epoch"] < boundaries[0] else "validation" if r["epoch"] < boundaries[1] else "test"
-        split[partition].append(r)
-    if any(not part for part in split.values()):
-        raise BaselineError("SPLIT_INVALID", "时间分区包含空集合")
-    if any({r["label"] for r in split[k]} != {0, 1} for k in ["train", "test"]):
-        raise BaselineError("SPLIT_INVALID", "训练与测试必须包含两类发布标签")
+def temporal_split(records, preset=None):
+    split, boundaries, _ = split_records(records, preset)
     return split, boundaries
 
 

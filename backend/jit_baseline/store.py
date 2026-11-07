@@ -92,6 +92,9 @@ def dataset_references(storage, version):
     with storage.connection() as db:
         if db.execute('SELECT 1 FROM repository_sync WHERE dataset_version=? LIMIT 1', (version,)).fetchone():
             references.append('analysis')
+        if db.execute('SELECT 1 FROM dataset_build_task WHERE dataset_version=? LIMIT 1',
+                      (version,)).fetchone():
+            references.append('dataset-build')
         if db.execute("SELECT 1 FROM model_version WHERE json_extract(payload_json, '$.datasetVersion')=? "
                       'LIMIT 1', (version,)).fetchone():
             references.append('model')

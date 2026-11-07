@@ -4,7 +4,7 @@ import { EChartCanvas, chartTooltip, escapeHtml, useChartColors, type ChartColor
 import { Button, Input } from '../ui/controls'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ApiError } from '../apiContract'
-import { createTrendView, getTrendView, trendCommits, trendGroups, type TrendBucket, type TrendCommit, type TrendGroup, type TrendView } from '../projectActivityClient'
+import { createTrendView, getTrendView, trendCommits, trendGroups, type TrendBucket, type TrendCommit, type TrendGroup, type TrendPartitionCounts, type TrendPartitionCoverage, type TrendView } from '../projectActivityClient'
 import type { Route } from '../navigation'
 import { displayTime } from '../domain'
 
@@ -12,6 +12,13 @@ const number = (v: number | null) => v == null ? '未知' : v.toLocaleString()
 const percent = (v: number | null) => v == null ? '不展示' : `${(v * 100).toFixed(1)}%`
 const score = (v: number | null) => v == null ? '—' : v.toFixed(2)
 const GRAIN_LABELS: Record<TrendView['grain'], string> = { day: '按日', week: '按周', month: '按月' }
+const PARTITION_LABELS = { train: '训练', validation: '验证', test: '测试', recentUnseen: '近期未训练', unknown: '分区未知' } as const
+const COMMIT_PARTITION_LABELS = { train: '训练', validation: '验证', test: '测试', 'recent-unseen': '近期，未参与训练', unknown: '分区未知' } as const
+export function partitionCountsText(counts: TrendPartitionCounts | null): string {
+  if (!counts) return '未提供'
+  return (Object.keys(PARTITION_LABELS) as Array<keyof typeof PARTITION_LABELS>)
+    .filter(key => counts[key] > 0).map(key => `${PARTITION_LABELS[key]} ${counts[key]}`).join(' · ') || '无提交'
+}
 export function rateReason(reason: string | null): string { return reason ? ({ insufficient_sample: '已评分样本不足 20', small_sample: '已评分样本不足 20', no_scored_commits: '无已评分提交', uncovered: '未覆盖', no_commits: '无提交', insufficientSample: '已评分样本不足 20', noScoredCommits: '无已评分提交' }[reason] ?? reason) : '比例不可用' }
 export function coverageLabel(value: unknown): string { if (value == null) return '未知覆盖'; if (typeof value === 'string') return ({ complete: '完整覆盖', partial: '部分覆盖', unknown: '未知覆盖', uncovered: '未覆盖', observed: '仅已保存观测' }[value] ?? value); return JSON.stringify(value) }
 export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, switchSlot }: { repositoryId: string; viewId?: string; currentSyncId?: string; navigate: (r: Route, replace?: boolean) => void; switchSlot?: React.ReactNode }) {
@@ -83,14 +90,15 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
         <div><dt>高分提交</dt><dd>{number(view.summary.highCount)}</dd><small>已评分 {number(view.summary.scoredCount)} / 未知 {number(view.summary.unknownCount)}</small></div>
         <div><dt>高分占比</dt><dd>{percent(view.summary.highRate)}</dd><small>{view.summary.highRate == null ? rateReason(view.summary.rateReason) : '占已评分提交'}</small></div>
       </dl>
+      <PartitionCoverage coverage={view.partitionCoverage}/>
       {view.buckets.length ? <div className="trend-coverage-wrap">
         <div className="trend-coverage" aria-hidden="true">
           {view.buckets.map(b => <span key={b.start} data-state={(b.scoredCount ?? 0) > 0 ? 'scored' : 'unknown'} title={`${b.start.slice(0, 10)} 至 ${b.end.slice(0, 10)}：${(b.scoredCount ?? 0) > 0 ? `已评分 ${b.scoredCount} 条` : '无已评分提交'}`}/>) }
         </div>
         <p className="trend-coverage-note">{view.buckets.filter(b => (b.scoredCount ?? 0) > 0).length} 个时间段有已评分提交；其余 {view.buckets.filter(b => (b.scoredCount ?? 0) === 0).length} 个未证明覆盖，按未知处理，不画成 0。</p>
       </div> : null}
-      {view.buckets.length ? <div className="trend-figures"><TrendPlot key={`risk:${view.viewId}`} buckets={view.buckets} kind="risk" onBucket={setBucket}/><TrendPlot key={`rate:${view.viewId}`} buckets={view.buckets} kind="rate" onBucket={setBucket}/></div> : <p className="quiet-empty">此固定范围没有可展示的时间桶；未推断为零。</p>}
-      <details className="trend-data"><summary>逐周数据（{view.buckets.length} 行）</summary><div className="trend-table-wrap"><table className="trend-data-table"><caption>趋势等价数据表：风险分为模型估计，高分占比不是缺陷率</caption><thead><tr><th scope="col">时间段（结束不含）</th><th scope="col">已分析</th><th scope="col">已评分</th><th scope="col">未知分数</th><th scope="col">高分</th><th scope="col">高分占比</th><th scope="col">平均风险分</th><th scope="col">覆盖 / 比例说明</th><th scope="col">固定来源下钻</th></tr></thead><tbody>{view.buckets.map(b => <tr key={b.start}><th scope="row">{b.start.slice(0, 10)} 至 {b.end.slice(0, 10)}</th><td>{number(b.commitCount)}</td><td>{number(b.scoredCount)}</td><td>{number(b.unknownCount)}</td><td>{number(b.highCount)}</td><td>{percent(b.highRate)}</td><td>{score(b.riskMean)}</td><td>{coverageLabel(b.coverage)}{b.highRate == null ? `；${rateReason(b.rateReason)}` : ''}</td><td><Button type="button" onClick={() => setBucket(b)}>查看提交</Button></td></tr>)}</tbody></table></div></details>
+      {view.buckets.length ? <div className="trend-figures"><TrendPlot key={`risk:${view.viewId}`} buckets={view.buckets} kind="risk" coverage={view.partitionCoverage} onBucket={setBucket}/><TrendPlot key={`rate:${view.viewId}`} buckets={view.buckets} kind="rate" coverage={view.partitionCoverage} onBucket={setBucket}/></div> : <p className="quiet-empty">此固定范围没有可展示的时间桶；未推断为零。</p>}
+      <details className="trend-data"><summary>逐周数据（{view.buckets.length} 行）</summary><div className="trend-table-wrap"><table className="trend-data-table"><caption>趋势等价数据表：风险分为模型估计，高分占比不是缺陷率；分区计数只表示模型训练成员覆盖</caption><thead><tr><th scope="col">时间段（结束不含）</th><th scope="col">已分析</th><th scope="col">已评分</th><th scope="col">未知分数</th><th scope="col">高分</th><th scope="col">高分占比</th><th scope="col">平均风险分</th><th scope="col">训练分区覆盖</th><th scope="col">覆盖 / 比例说明</th><th scope="col">固定来源下钻</th></tr></thead><tbody>{view.buckets.map(b => <tr key={b.start}><th scope="row">{b.start.slice(0, 10)} 至 {b.end.slice(0, 10)}</th><td>{number(b.commitCount)}</td><td>{number(b.scoredCount)}</td><td>{number(b.unknownCount)}</td><td>{number(b.highCount)}</td><td>{percent(b.highRate)}</td><td>{score(b.riskMean)}</td><td>{partitionCountsText(b.partitions)}</td><td>{coverageLabel(b.coverage)}{b.highRate == null ? `；${rateReason(b.rateReason)}` : ''}</td><td><Button type="button" onClick={() => setBucket(b)}>查看提交</Button></td></tr>)}</tbody></table></div></details>
       {bucket ? <TrendDrilldown key={`${view.viewId}:${bucket.start}`} repositoryId={repositoryId} view={view} bucket={bucket} navigate={navigate} onClose={() => setBucket(null)}/> : null}
       <details className="trend-sources"><summary>口径与来源（{view.sourceSyncIds.length} 次分析）</summary><dl><div><dt>分支 / 固定模型</dt><dd>{view.group.branch} / {view.group.modelId ?? '未登记'}</dd></div><div><dt>训练运行</dt><dd>{view.group.runId ?? '未登记'}</dd></div><div><dt>特征 schema / 分档</dt><dd>{view.group.featureSchemaVersion} / {view.group.distributionRule}</dd></div><div><dt>固定视图</dt><dd>{view.viewId}</dd></div><div><dt>视图建立</dt><dd>{displayTime(view.createdAt)}</dd></div></dl><ul>{view.sourceSyncIds.map(id => <li key={id}><Button type="button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: id, view: 'commits' })}>打开原分析 {id}</Button></li>)}</ul></details>
     </div> : null}
@@ -106,18 +114,42 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
 }
 const PLOT_TITLES = { risk: '平均模型风险分', rate: '高分提交占已评分提交比例' } as const
 
+function PartitionCoverage({ coverage }: { coverage: TrendPartitionCoverage }) {
+  if (coverage.status !== 'verified') {
+    return <section className="trend-partition-coverage" aria-label="训练分区覆盖">
+      <strong>{coverage.status === 'external' ? '外部模型，无本项目切分标签' : '训练分区未知'}</strong>
+      <p>{coverage.reason ?? '缺少可核对的模型运行、数据版本或成员谱系，不从日期或模型名称猜测。'}</p>
+    </section>
+  }
+  const rows = [
+    ['train', '训练'], ['validation', '验证'], ['test', '测试'],
+  ] as const
+  return <section className="trend-partition-coverage" aria-label="训练分区覆盖">
+    <div className="trend-partition-head"><strong>训练分区覆盖</strong><span>{coverage.preset} · {coverage.timezone}</span></div>
+    <ul className="trend-partition-legend">
+      {rows.map(([key, label]) => {
+        const part = coverage.partitions[key] ?? {}
+        return <li key={key} data-partition={key}><i aria-hidden="true"/><span>{label}</span><small>{typeof part.start === 'string' ? displayTime(part.start) : '开始未知'} — {typeof part.end === 'string' ? displayTime(part.end) : '结束未知'} · {typeof part.records === 'number' ? part.records : '未知'} 条</small></li>
+      })}
+      <li data-partition="recent-unseen"><i aria-hidden="true"/><span>近期未训练</span><small>{coverage.recentUnseenFrom ? `${displayTime(coverage.recentUnseenFrom)} 之后` : '未记录训练截止时间'} · 不属于测试分区</small></li>
+    </ul>
+    <p>这些是训练运行的真实成员覆盖，不改变风险分数，也不是新的缺陷概率。边界来自冻结切分策略。</p>
+  </section>
+}
+
 function plotValue(bucket: TrendBucket, kind: 'risk' | 'rate'): number | null {
   return kind === 'risk' ? bucket.riskMean : bucket.highRate
 }
 
 function plotTooltip(bucket: TrendBucket, kind: 'risk' | 'rate'): string {
   const range = `<strong>${escapeHtml(bucket.start.slice(0, 10))} 至 ${escapeHtml(bucket.end.slice(0, 10))}（不含）</strong>`
-  if (kind === 'risk') return `${range}<br/>平均风险 ${score(bucket.riskMean)}；${number(bucket.commitCount)} 个已分析提交；已评分 ${number(bucket.scoredCount)} / 未知 ${number(bucket.unknownCount)}；${escapeHtml(coverageLabel(bucket.coverage))}`
+  const partition = `；训练分区：${escapeHtml(partitionCountsText(bucket.partitions))}`
+  if (kind === 'risk') return `${range}<br/>平均风险 ${score(bucket.riskMean)}；${number(bucket.commitCount)} 个已分析提交；已评分 ${number(bucket.scoredCount)} / 未知 ${number(bucket.unknownCount)}；${escapeHtml(coverageLabel(bucket.coverage))}${partition}`
   const missing = bucket.highRate == null ? `：${escapeHtml(rateReason(bucket.rateReason))}` : ''
-  return `${range}<br/>${percent(bucket.highRate)} 高分占比${missing}；已评分 ${number(bucket.scoredCount)} / 未知 ${number(bucket.unknownCount)}；${escapeHtml(coverageLabel(bucket.coverage))}`
+  return `${range}<br/>${percent(bucket.highRate)} 高分占比${missing}；已评分 ${number(bucket.scoredCount)} / 未知 ${number(bucket.unknownCount)}；${escapeHtml(coverageLabel(bucket.coverage))}${partition}`
 }
 
-export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', colors: ChartColors): ChartOption {
+export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', colors: ChartColors, coverage?: TrendPartitionCoverage): ChartOption {
   const values = buckets.map(bucket => plotValue(bucket, kind)).filter((value): value is number => value != null)
   // 固定 0–1 会让常见的小比例挤在底部；仍从 0 起，只把上限收到数据上方的整齐刻度。
   const axisMax = Math.max(0.25, Math.ceil((values.length ? Math.max(...values) : 0) / 0.25) * 0.25)
@@ -129,6 +161,19 @@ export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', color
     else if (edge != null) { missing.push([edge, index - 1]); edge = null }
   })
   if (edge != null) missing.push([edge, buckets.length - 1])
+  const boundaries = coverage?.status === 'verified' ? [
+    ...coverage.boundaries.map((boundary, index) => ({
+      time: boundary.time.slice(0, 10),
+      label: index === 0 ? '验证开始' : '测试开始',
+    })),
+    ...(coverage.recentUnseenFrom ? [{
+      time: coverage.recentUnseenFrom.slice(0, 10), label: '近期未训练开始',
+    }] : []),
+  ].map(boundary => {
+    const index = buckets.findIndex(bucket => boundary.time >= bucket.start.slice(0, 10)
+      && boundary.time < bucket.end.slice(0, 10))
+    return { ...boundary, index }
+  }).filter(boundary => boundary.index >= 0) : []
   return {
     animationDuration: 360,
     grid: { left: 46, right: 18, top: 16, bottom: 30 },
@@ -159,6 +204,19 @@ export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', color
       itemStyle: { color: colors.series, borderColor: colors.surface, borderWidth: 2 },
       areaStyle: { color: colors.series, opacity: 0.08 },
       emphasis: { focus: 'series' },
+      ...(boundaries.length ? {
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          lineStyle: { color: colors.axis, type: 'dashed' as const, width: 1 },
+          label: { color: colors.text, fontSize: 10 },
+          data: boundaries.map(boundary => ({
+            xAxis: boundary.index,
+            name: boundary.label,
+            label: { formatter: boundary.label, position: 'insideEndTop' as const },
+          })),
+        },
+      } : {}),
       ...(missing.length ? {
         markArea: {
           silent: true,
@@ -171,13 +229,13 @@ export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', color
   }
 }
 
-function TrendPlot({ buckets, kind, onBucket }: { buckets: TrendBucket[]; kind: 'risk' | 'rate'; onBucket: (b: TrendBucket) => void }) {
+function TrendPlot({ buckets, kind, coverage, onBucket }: { buckets: TrendBucket[]; kind: 'risk' | 'rate'; coverage: TrendPartitionCoverage; onBucket: (b: TrendBucket) => void }) {
   const colors = useChartColors()
   const chart = useRef<ECharts | null>(null)
   const [active, setActive] = useState<number | null>(null)
   const data = useRef({ buckets, onBucket })
   useEffect(() => { data.current = { buckets, onBucket } }, [buckets, onBucket])
-  const option = useMemo(() => trendOption(buckets, kind, colors), [buckets, kind, colors])
+  const option = useMemo(() => trendOption(buckets, kind, colors, coverage), [buckets, kind, colors, coverage])
   const title = PLOT_TITLES[kind]
   const current = active == null ? null : buckets[active]
   function show(index: number) {
@@ -212,6 +270,6 @@ function TrendPlot({ buckets, kind, onBucket }: { buckets: TrendBucket[]; kind: 
 function TrendDrilldown({ repositoryId, view, bucket, navigate, onClose }: { repositoryId: string; view: TrendView; bucket: TrendBucket; navigate: (r: Route) => void; onClose: () => void }) {
   const [items, setItems] = useState<TrendCommit[]>([]), [offset, setOffset] = useState(0), [total, setTotal] = useState(0), [busy, setBusy] = useState(true), [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0)
   useEffect(() => { const controller = new AbortController(); setBusy(true); setError(null); trendCommits(repositoryId, view, bucket, offset, controller.signal).then(p => { if (!controller.signal.aborted) { setItems(p.commits); setTotal(p.total) } }).catch(e => { if (!controller.signal.aborted) setError(e) }).finally(() => { if (!controller.signal.aborted) setBusy(false) }); return () => controller.abort() }, [repositoryId, view, bucket, offset, attempt])
-  return <section className="trend-drilldown" aria-label="趋势固定来源提交"><div className="section-label"><h3>{bucket.start.slice(0, 10)} 至 {bucket.end.slice(0, 10)} 的提交</h3><Button type="button" onClick={onClose}>关闭提交下钻</Button></div>{error ? <FailureNotice error={error} onRetry={() => setAttempt(v => v + 1)}/> : busy ? <LoadingNotice label="读取固定视图提交"/> : <><p>共 {total} 条；打开结果保持每条提交的原 sourceSyncId。</p><ul>{items.map(c => <li key={c.commitId}><Button type="button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: c.sourceSyncId, commitId: c.commitId, view: 'commits' })}><code>{c.commitId.slice(0, 12)}</code> {c.subject ?? '无标题'} · {c.risk == null ? '分数未知' : c.risk.toFixed(4)}</Button></li>)}</ul></>}<nav className="pager" aria-label="趋势提交分页"><Button disabled={busy || !offset} onClick={() => setOffset(v => v - 50)}>上一页</Button><span>第 {offset / 50 + 1} 页</span><Button disabled={busy || offset + 50 >= total} onClick={() => setOffset(v => v + 50)}>下一页</Button></nav></section>
+  return <section className="trend-drilldown" aria-label="趋势固定来源提交"><div className="section-label"><h3>{bucket.start.slice(0, 10)} 至 {bucket.end.slice(0, 10)} 的提交</h3><Button type="button" onClick={onClose}>关闭提交下钻</Button></div>{error ? <FailureNotice error={error} onRetry={() => setAttempt(v => v + 1)}/> : busy ? <LoadingNotice label="读取固定视图提交"/> : <><p>共 {total} 条；打开结果保持每条提交的原 sourceSyncId。分区标签只来自固定模型运行的成员谱系。</p><ul>{items.map(c => <li key={c.commitId}><Button type="button" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: c.sourceSyncId, commitId: c.commitId, view: 'commits' })}><code>{c.commitId.slice(0, 12)}</code> {c.subject ?? '无标题'} · {COMMIT_PARTITION_LABELS[c.partition]} · {c.risk == null ? '分数未知' : c.risk.toFixed(4)}</Button></li>)}</ul></>}<nav className="pager" aria-label="趋势提交分页"><Button disabled={busy || !offset} onClick={() => setOffset(v => v - 50)}>上一页</Button><span>第 {offset / 50 + 1} 页</span><Button disabled={busy || offset + 50 >= total} onClick={() => setOffset(v => v + 50)}>下一页</Button></nav></section>
 }
 

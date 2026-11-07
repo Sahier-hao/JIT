@@ -211,6 +211,29 @@ def read_labels(run):
     return json.loads((run / "test-labels.json").read_text(encoding="utf-8"))
 
 
+def test_switching_split_preset_changes_run_identity_and_frozen_members(real_run, tmp_path):
+    from jit_baseline.artifacts import build_run
+
+    first_summary = json.loads((real_run / "summary.json").read_text(encoding="utf-8"))
+    first_split = json.loads((real_run / "split.json").read_text(encoding="utf-8"))
+    assert first_summary["splitPolicy"]["id"] == "temporal-70-15-15"
+    target = tmp_path / "split-80"
+    manifest = build_run(
+        BACKEND / "data/openstack", target,
+        schema=first_summary["featureSchema"]["name"],
+        algorithm=first_summary["algorithmVersion"],
+        metric_set=first_summary["metricSet"],
+        split_preset="temporal-80-10-10",
+    )
+    second_summary = json.loads((target / "summary.json").read_text(encoding="utf-8"))
+    second_split = json.loads((target / "split.json").read_text(encoding="utf-8"))
+    assert manifest["runId"] != first_summary["runId"]
+    assert second_summary["splitPolicy"]["id"] == "temporal-80-10-10"
+    assert second_summary["splitPolicy"]["memberSha256"] != first_summary["splitPolicy"]["memberSha256"]
+    assert second_split["policy"] == second_summary["splitPolicy"]
+    assert second_split["boundaries"] != first_split["boundaries"]
+
+
 def test_frozen_legacy_baseline_artifacts_still_load_and_reproduce():
     """仓库内冻结的旧六字段产物必须在当前代码下可加载（joblib 兼容入口，见 model.log_counts）。"""
     from jit_baseline.artifacts import Snapshot

@@ -47,9 +47,9 @@ it('creates a fixed trend query and drills down only through its frozen source l
   expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({ sourceSyncId: 's1', grain: 'week', start: '2026-10-01', end: '2026-10-29' })
   await getTrendView(PROJECT, view.viewId)
   expect(fetch.mock.calls[1][1]?.method).toBe('GET')
-  fetch.mockResolvedValue(response({ repositoryId: PROJECT, viewId: view.viewId, total: 1, limit: 50, offset: 0, commits: [{ commitId: 'abc', epoch: 1, risk: null, subject: '标题', sourceSyncId: 's2' }] }))
+  fetch.mockResolvedValue(response({ repositoryId: PROJECT, viewId: view.viewId, total: 1, limit: 50, offset: 0, commits: [{ commitId: 'abc', epoch: 1, risk: null, subject: '标题', sourceSyncId: 's2', partition: 'unknown' }] }))
   expect((await trendCommits(PROJECT, view, view.buckets[0])).commits[0].sourceSyncId).toBe('s2')
-  fetch.mockResolvedValue(response({ repositoryId: PROJECT, viewId: view.viewId, total: 1, limit: 50, offset: 0, commits: [{ commitId: 'abc', epoch: 1, risk: .2, subject: '标题', sourceSyncId: 'not-pinned' }] }))
+  fetch.mockResolvedValue(response({ repositoryId: PROJECT, viewId: view.viewId, total: 1, limit: 50, offset: 0, commits: [{ commitId: 'abc', epoch: 1, risk: .2, subject: '标题', sourceSyncId: 'not-pinned', partition: 'unknown' }] }))
   await expect(trendCommits(PROJECT, view, view.buckets[0])).rejects.toThrow('不在固定趋势')
 })
 it('allows old source metadata only as an explicit single-analysis fixed view', () => {

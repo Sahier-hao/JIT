@@ -193,8 +193,10 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         db.execute('DROP INDEX repository_sync_source')
         db.execute('DROP INDEX repository_sync_pr_source')
         for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version',
-                       'distribution_rule', 'feature_source_json', 'algorithm'):
+                       'distribution_rule', 'feature_source_json', 'algorithm',
+                       'split_preset', 'split_policy_json'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
+        db.execute('DROP TABLE dataset_build_task')
         db.execute('DROP TABLE model_policy')
         db.execute('DROP TABLE model_default')
         db.execute('ALTER TABLE repository_sync DROP COLUMN resolved_model_id')
