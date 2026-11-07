@@ -1,5 +1,6 @@
 import { apiRequest } from './apiClient'
 import { finiteNumber, record, recordList, text, textList, textOrNull } from './apiContract'
+import { parseModelCard, type ModelCard } from './modelCardClient'
 
 export type Row = Record<string, unknown>
 
@@ -38,6 +39,7 @@ export interface AdminModel {
   source?: Row
   split?: Row
   limitations?: string[]
+  card?: ModelCard
 }
 
 export interface TrainingTask {
@@ -59,6 +61,11 @@ export interface TrainingTask {
   modelId: string | null
   featureSchemaVersion: string | null
   metrics: Row | null
+  metricsByPartition: Row | null
+  split: Row | null
+  splitRule: string | null
+  dataScale: Row | null
+  trainingPerformance: Row | null
   classPolicy: Row | null
   classPolicySummary: Row | null
   createdAt: string
@@ -345,6 +352,7 @@ export async function fetchAdminModel(modelId: string, signal?: AbortSignal): Pr
     source: record(body.source),
     split: record(body.split),
     limitations: textList(body.limitations),
+    card: body.card == null ? undefined : parseModelCard(body.card),
   }
 }
 
@@ -372,6 +380,11 @@ function trainingTask(raw: unknown): TrainingTask {
     modelId: textOrNull(value.modelId),
     featureSchemaVersion: textOrNull(value.featureSchemaVersion),
     metrics: value.metrics === null ? null : record(value.metrics),
+    metricsByPartition: value.metricsByPartition == null ? null : record(value.metricsByPartition),
+    split: value.split == null ? null : record(value.split),
+    splitRule: textOrNull(value.splitRule),
+    dataScale: value.dataScale == null ? null : record(value.dataScale),
+    trainingPerformance: value.trainingPerformance == null ? null : record(value.trainingPerformance),
     classPolicy: value.classPolicy == null ? null : record(value.classPolicy),
     classPolicySummary: value.classPolicySummary == null ? null : record(value.classPolicySummary),
     createdAt: text(value.createdAt),

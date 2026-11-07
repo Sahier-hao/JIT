@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '../test-utils'
+import { render, screen, waitFor, within } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { AnalysisForm } from './AnalysisForm'
@@ -93,4 +93,41 @@ it('uses the administrator default without sending a training algorithm', async 
   expect(body).toMatchObject({ strategy: 'generic-model' })
   expect(body).not.toHaveProperty('algorithm')
   expect(body).not.toHaveProperty('modelId')
+})
+
+it('opens a read-only model card without changing the selected model or draft', async () => {
+  sessionStorage.clear()
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    if (String(path).includes('/api/v1/model-cards/dt')) return Response.json({
+      available: true, modelId: 'dt', name: '决策树', method: 'decision-tree-v1',
+      featureSchemaVersion: 'kamei14-git-v1', datasetVersion: 'data-v1',
+      metricSet: 'metric-set-v2', threshold: 0.5, splitRule: '时间切分',
+      dataScale: { records: 30, featureWidth: 14 },
+      trainingPerformance: { durationSeconds: 1.2, recordsPerSecond: 20 },
+      source: { publisher: 'collected', revision: 'abc' },
+      partitions: { train: { records: 20, positives: 3 }, validation: { records: 5, positives: 1 }, test: { records: 5, positives: 1 } },
+      metricsByPartition: {
+        train: { available: true, label: '拟合诊断', source: 'artifact', metrics: { averagePrecision: { value: 0.8, reason: null } } },
+        validation: { available: true, label: '模型选择背景', source: 'artifact', metrics: { averagePrecision: { value: 0.6, reason: null } } },
+        test: { available: true, label: '冻结泛化评价', source: 'artifact', metrics: { averagePrecision: { value: 0.5, reason: null } } },
+      },
+      benefit: { available: false, reason: '尚无收益报告' }, limitations: ['测试限制'],
+    })
+    if (String(path).includes('/api/v1/repository-models')) return Response.json({ models: [
+      { modelId: 'dt', name: '决策树', method: 'decision-tree-v1', state: 'ready', enabled: true, isDefault: false, repositoryPredictionSupported: true },
+    ] })
+    return Response.json({ schema: 'kamei14-git-v2', methods: [] })
+  })
+  render(<AnalysisForm repositoryUrl="https://github.com/example/card" initial={{ branch: 'develop' }} onStarted={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.selectOptions(await screen.findByLabelText('模型来源'), 'dt')
+  await user.type(screen.getByLabelText('分支'), '-draft')
+  await user.click(screen.getByRole('button', { name: '查看模型卡' }))
+  const cardDialog = await screen.findByRole('dialog', { name: '模型卡' })
+  expect(cardDialog).toBeVisible()
+  expect(screen.getByRole('heading', { name: '拟合诊断' })).toBeVisible()
+  expect(screen.getByRole('heading', { name: '冻结泛化评价' })).toBeVisible()
+  await user.click(within(cardDialog).getAllByRole('button', { name: '关闭' }).at(-1)!)
+  expect(screen.getByLabelText('模型来源')).toHaveValue('dt')
+  expect(screen.getByLabelText('分支')).toHaveValue('develop-draft')
 })

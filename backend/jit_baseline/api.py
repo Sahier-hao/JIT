@@ -98,6 +98,12 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from .benefit_reports import BenefitReportService
     benefit_reports = BenefitReportService()
     app.state.benefit_reports = benefit_reports
+    from .model_diagnostics import DiagnosticReportService
+    diagnostics = DiagnosticReportService()
+    app.state.model_diagnostics = diagnostics
+    from .model_cards import ModelCardService
+    model_cards = ModelCardService(catalog, diagnostics, benefit_reports)
+    app.state.model_cards = model_cards
     from .repository_updates import RepositoryUpdates
     updates = RepositoryUpdates(sync_service)
     app.state.updates = updates
@@ -364,7 +370,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/models/{model_id}')
     def model_detail(model_id: str):
-        return catalog.detail(model_id)
+        return dict(catalog.detail(model_id), card=model_cards.get(model_id))
+
+    @app.get('/api/v1/model-cards/{model_id}')
+    def model_card(model_id: str):
+        return model_cards.get(model_id)
 
     @app.get('/api/v1/repository-models')
     def repository_models():

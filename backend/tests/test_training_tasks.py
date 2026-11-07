@@ -43,6 +43,15 @@ def successful_runner(manifest, algorithm, metric_set, **kwargs):
         "featureSchemaVersion": "openstack-six-v1",
         "metricSet": metric_set,
         "metrics": {"averagePrecision": {"value": 0.42, "reason": None}},
+        "metricsByPartition": {
+            "train": {"counts": {"records": 3}},
+            "validation": {"counts": {"records": 2}},
+            "test": {"counts": {"records": 1}},
+        },
+        "split": {"train": {"count": 3}, "validation": {"count": 2}, "test": {"count": 1}},
+        "splitRule": "UTC distinct timestamps, floor(0.70G), floor(0.85G)",
+        "dataScale": {"records": 6, "featureWidth": 6},
+        "trainingPerformance": {"durationSeconds": 0.01, "trainingRecords": 3},
         "trainingSeconds": 0.01,
     }
 
@@ -104,6 +113,10 @@ def test_success_returns_real_metrics_and_lineage(service):
     assert completed["runId"] and completed["modelId"]
     assert completed["featureSchemaVersion"] == "openstack-six-v1"
     assert completed["metrics"]["averagePrecision"]["value"] == 0.42
+    assert completed["metricsByPartition"]["train"]["counts"]["records"] == 3
+    assert completed["splitRule"].startswith("UTC distinct timestamps")
+    assert completed["dataScale"]["records"] == 6
+    assert completed["trainingPerformance"]["trainingRecords"] == 3
     assert completed["error"] is None
 
 

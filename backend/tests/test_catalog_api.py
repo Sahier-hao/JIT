@@ -85,6 +85,117 @@ def test_admin_model_detail_returns_verified_metrics_and_lineage(settings):
         assert public.get(f"/api/v1/models/{model['modelId']}").status_code == 401
 
 
+def test_public_model_card_reuses_diagnostics_and_hides_admin_artifacts(settings):
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+
+    with TestClient(create_app(**settings)) as client:
+        candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
+        registered = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        }).json()
+        model = registered['model']
+    with PublicTestClient(create_app(**settings)) as public:
+        response = public.get(f"/api/v1/model-cards/{model['modelId']}")
+        assert response.status_code == 200
+        card = response.json()
+        assert card['available'] is True
+        assert card['modelId'] == model['modelId']
+        assert card['artifactRunId'] == model['artifactRunId']
+        assert card['dataScale']['records'] > 0
+        assert set(card['metricsByPartition']) == {'train', 'validation', 'test'}
+        assert card['metricsByPartition']['train']['available'] is True
+        assert card['metricsByPartition']['test']['metrics']['counts']['records'] > 0
+        assert card['benefit']['available'] is False
+        assert 'artifactKey' not in card
+        assert 'modelSha256' in card and 'datasetSha256' in card
+        assert str(settings['artifact_root']) not in response.text
+        assert 'sqlite' not in response.text.lower()
+
+
+def test_old_model_without_supplement_marks_train_and_validation_not_recorded(
+        tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+    from jit_baseline.catalog_storage import CatalogStorage
+    from jit_baseline.config import BACKEND
+
+    root = tmp_path / 'artifacts'
+    shutil.copytree(BACKEND / 'artifacts/baseline', root / 'baseline')
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    monkeypatch.setenv('JIT_MODEL_DIAGNOSTICS_ROOT', str(tmp_path / 'no-diagnostics'))
+    settings = {'directory': BACKEND / 'artifacts/baseline',
+                'database': store.path, 'artifact_root': root}
+    with TestClient(create_app(**settings)) as client:
+        candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
+        model = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        }).json()['model']
+    with PublicTestClient(create_app(**settings)) as public:
+        card = public.get(f"/api/v1/model-cards/{model['modelId']}").json()
+    assert card['metricsByPartition']['train']['available'] is False
+    assert card['metricsByPartition']['validation']['available'] is False
+    assert '未记录' in card['metricsByPartition']['train']['reason']
+    assert card['metricsByPartition']['test']['available'] is True
+
+
+def test_old_model_reads_matching_frozen_diagnostic_and_benefit_without_admin_fields(
+        tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+    from jit_baseline.catalog_storage import CatalogStorage
+    from jit_baseline.config import BACKEND
+    from jit_baseline.data import sha256
+
+    root = tmp_path / 'artifacts'
+    shutil.copytree(BACKEND / 'artifacts/baseline', root / 'baseline')
+    model_hash = sha256((root / 'baseline/model.joblib').read_bytes())
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    settings = {'directory': BACKEND / 'artifacts/baseline',
+                'database': store.path, 'artifact_root': root}
+    with TestClient(create_app(**settings)) as client:
+        candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
+        model = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        }).json()['model']
+    with PublicTestClient(create_app(**settings)) as public:
+        response = public.get(f"/api/v1/model-cards/{model['modelId']}")
+        assert response.status_code == 200
+        card = response.json()
+    assert card['metricsByPartition']['train']['source'] == 'frozen-diagnostic'
+    assert card['diagnostics']['available'] is True
+    assert card['benefit']['available'] is True
+    assert card['benefit']['conclusion']['sentence']
+    assert card['modelSha256'] == model_hash
+    assert 'artifactKey' not in card and 'artifactPath' not in json.dumps(card)
+    assert sha256((root / 'baseline/model.joblib').read_bytes()) == model_hash
+
+
+def test_public_model_card_marks_broken_artifact_without_fallback(settings):
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+
+    with TestClient(create_app(**settings)) as client:
+        candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
+        model = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        }).json()['model']
+    (settings['artifact_root'] / 'baseline/model.joblib').unlink()
+    with PublicTestClient(create_app(**settings)) as public:
+        response = public.get(f"/api/v1/model-cards/{model['modelId']}")
+        card = response.json()
+    assert response.status_code == 200
+    assert card['available'] is False
+    assert card['reason']
+    assert 'metricsByPartition' not in card
+
+
 def _copy_run(source, target, *, run_id=None, schema=None):
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source, target)

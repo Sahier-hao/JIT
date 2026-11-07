@@ -1,0 +1,15 @@
+Command:
+  .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp=.pytest-tmp-model-card-final
+
+Working directory:
+  backend
+
+Result:
+  750 passed, 1 skipped, 2 warnings in 590.58s (0:09:50)
+
+Skipped:
+  tests/test_catalog_api.py - 真实数据集尚未导入
+
+Warnings:
+  Transformer encoder nested-tensor notice
+  Intentional duplicate-entry warning from the archive-control rejection test

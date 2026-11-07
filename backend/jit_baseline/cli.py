@@ -92,6 +92,10 @@ def main():
     benefit.add_argument("--random-runs", type=int, default=DEFAULT_RANDOM_RUNS,
                          help=f"随机重复次数，默认 {DEFAULT_RANDOM_RUNS}")
     benefit.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"随机种子，默认 {DEFAULT_SEED}")
+    diagnose = commands.add_parser("diagnose-model", help="从既有产物生成三档冻结诊断报告")
+    diagnose.add_argument("--run", type=Path, required=True, help="已校验的模型产物目录")
+    diagnose.add_argument("--output", type=Path, required=True, help="报告文件或目录")
+    diagnose.add_argument("--dataset-root", type=Path, default=None, help="数据集描述文件根目录")
     pr_export = commands.add_parser("pr-check-export", help="从固定 PR 分析导出离线检查包")
     pr_export.add_argument("--database", type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', None))
     pr_export.add_argument("--snapshot", required=True, help="PR 快照标识")
@@ -273,6 +277,17 @@ def main():
                       "artifact": report["artifact"]["artifactPath"],
                       "test": report["test"], "conclusion": report["conclusion"],
                       "reportPath": str(path)}
+        elif args.command == "diagnose-model":
+            from .model_diagnostics import generate_report, write_report
+            report = generate_report(args.run, dataset_root=args.dataset_root)
+            report, path, created = write_report(report, args.output)
+            result = {
+                "kind": report["kind"],
+                "artifactRunId": report["artifactRunId"],
+                "created": created,
+                "reportPath": str(path),
+                "metricsByPartition": report["metricsByPartition"],
+            }
         elif args.command == "pr-check-export":
             from . import pr_check
             from .catalog_storage import CatalogStorage, DEFAULT_DATABASE

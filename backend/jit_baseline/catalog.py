@@ -627,6 +627,16 @@ class ModelCatalog:
             raise RequestError('ARTIFACT_INVALID')
         return value
 
+    def identity(self, model_id):
+        """Safe registered identity for an unavailable model; no artifact path."""
+        row = self._row(model_id)
+        payload = json.loads(row['payload_json'])
+        return dict(
+            payload,
+            state=row['state'],
+            **self.policy(model_id),
+        )
+
     def load_model(self, model_id):
         row = self._row(model_id)
         if row['state'] != 'ready':

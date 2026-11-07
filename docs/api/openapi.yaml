@@ -3067,6 +3067,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelChoiceList'
+  /api/v1/model-cards/{modelId}:
+    get:
+      operationId: getPublicModelCard
+      summary: 读取普通用户可访问的只读模型卡
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: read
+      security: []
+      parameters:
+      - name: modelId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 模型身份、数据规模、三档诊断、限制和审查收益；不可用时给出原因。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelCard'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
 components:
   schemas:
     ProjectEvent:
@@ -7132,6 +7158,73 @@ components:
       - reproducibility
       - origin
       additionalProperties: false
+    ModelCard:
+      type: object
+      properties:
+        available:
+          type: boolean
+        reason:
+          type: [string, 'null']
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+          minLength: 1
+        method:
+          type: [string, 'null']
+        featureSchemaVersion:
+          type: [string, 'null']
+        enabled:
+          type: boolean
+        isDefault:
+          type: boolean
+        runId:
+          type: [string, 'null']
+        artifactRunId:
+          type: [string, 'null']
+        modelSha256:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        datasetSha256:
+          type: [string, 'null']
+        metricSet:
+          type: [string, 'null']
+        threshold:
+          type: [number, 'null']
+        splitRule:
+          type: [string, 'null']
+        source:
+          type: object
+        partitions:
+          type: object
+        metricsByPartition:
+          type: object
+        diagnostics:
+          type: object
+        dataScale:
+          type: object
+        trainingPerformance:
+          type: object
+        limitations:
+          type: array
+          items:
+            type: string
+        benefit:
+          type: object
+        compatibility:
+          type: object
+      required:
+      - available
+      - reason
+      - modelId
+      - name
+      - method
+      - featureSchemaVersion
+      - enabled
+      - isDefault
+      - limitations
+      additionalProperties: false
     ModelDetail:
       type: object
       properties:
@@ -7208,6 +7301,8 @@ components:
         metricSet: {type: [string, 'null']}
         split: {type: object}
         source: {type: object}
+        card:
+          $ref: '#/components/schemas/ModelCard'
       required:
       - enabled
       - isDefault
@@ -7228,6 +7323,7 @@ components:
       - trainingEnvironment
       - verificationEnvironment
       - reproducibility
+      - card
       - origin
       - artifactKey
       - metrics
@@ -8375,6 +8471,16 @@ components:
           type: [string, 'null']
         metrics:
           type: [object, 'null']
+        metricsByPartition:
+          type: [object, 'null']
+        split:
+          type: [object, 'null']
+        splitRule:
+          type: [string, 'null']
+        dataScale:
+          type: [object, 'null']
+        trainingPerformance:
+          type: [object, 'null']
         createdAt: {type: string, minLength: 1}
         updatedAt: {type: string, minLength: 1}
         startedAt: {type: [string, 'null']}
@@ -8401,6 +8507,11 @@ components:
       - modelId
       - featureSchemaVersion
       - metrics
+      - metricsByPartition
+      - split
+      - splitRule
+      - dataScale
+      - trainingPerformance
       - createdAt
       - updatedAt
       - startedAt

@@ -21,6 +21,8 @@ from .model import apply_class_policy, feature_matrix, fit_model, predict_risks,
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
 
 DEFAULT_RUN = BACKEND / "artifacts/baseline"
+PARTITION_DIAGNOSTICS_VERSION = "partition-diagnostics-v1"
+PARTITIONS = ("train", "validation", "test")
 CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json", "model.joblib", "reference-predictions.json", "metrics.json")
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
@@ -152,6 +154,44 @@ def limitations(schema):
     return [first, *LIMITATIONS]
 
 
+def partition_diagnostics(pipeline, split, schema, metric_set):
+    """按原始唯一分区成员评价；训练采样副本不进入分母。"""
+    result = {}
+    for name in PARTITIONS:
+        records = split[name]
+        risks = predict_risks(pipeline, records, schema)
+        result[name] = evaluate(records, risks, metric_set)
+    return result
+
+
+def data_scale(summary_split, schema, *, total_records, trainable_records):
+    return {
+        "records": total_records,
+        "trainableRecords": trainable_records,
+        "featureWidth": schema.input_width(),
+        "expertFeatureWidth": len(schema.in_model_names()),
+        "semanticFeatureWidth": schema.semantic_dim() if schema.semantic else 0,
+        "partitions": {
+            name: {
+                "records": summary_split[name]["count"],
+                "positives": summary_split[name]["positiveCount"],
+                "negatives": summary_split[name]["count"] - summary_split[name]["positiveCount"],
+            }
+            for name in PARTITIONS
+        },
+    }
+
+
+def training_performance(duration_seconds, split):
+    duration = max(float(duration_seconds), 0.0)
+    records = len(split["train"])
+    return {
+        "durationSeconds": duration,
+        "trainingRecords": records,
+        "recordsPerSecond": round(records / duration, 6) if duration > 0 else None,
+    }
+
+
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
               holdout=None, embedding_dir=None, model_name=None, class_policy=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
@@ -248,14 +288,20 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
                          class_policy=class_policy)
     training_seconds = round(time.perf_counter() - started, 6)
+    partitioned_metrics = partition_diagnostics(pipeline, split, schema, metric_set)
     risks = predict_risks(pipeline, split["test"], schema)
-    metrics = evaluate(split["test"], risks, metric_set)
+    metrics = partitioned_metrics["test"]
     # 时间桶聚合在离线产生（design D1/D10）：产物里只有聚合值，服务不必读测试标签。
     trend = trends.build_trend_buckets(split, risks)
     cohort = dict(dataset["cohort"]) if dataset else dict(COHORT)
     stats = {key: {"count": len(part), "positiveCount": sum(r["label"] for r in part),
                    "start": part[0]["time"], "end": part[-1]["time"], "ids": [r["id"] for r in part]}
              for key, part in split.items()}
+    summary_split = {key: {k: v for k, v in stat.items() if k != "ids"}
+                     for key, stat in stats.items()}
+    scale = data_scale(summary_split, schema, total_records=len(records),
+                       trainable_records=len(trainable))
+    performance = training_performance(training_seconds, split)
     if dataset_manifest is not None:
         label_rule = dataset.get("labelRule") or "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"
         source = {"publisher": dataset["publisher"], "revision": dataset["revision"],
@@ -288,6 +334,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": algorithm_version,
               "metricSet": metric_set,
               "datasetVersion": dataset_version, "features": fields, "cohort": cohort,
+              "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
               "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     if declared:
@@ -307,8 +354,11 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         label = {"id": label["id"], "name": model_name.strip()}
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
-               "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},
-               "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": schema.name,
+               "split": summary_split, "splitRule": split_rule,
+               "metrics": metrics, "metricsByPartition": partitioned_metrics,
+               "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
+               "dataScale": scale, "trainingPerformance": performance,
+               "threshold": THRESHOLD, "protocolVersion": schema.name,
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
                "model": {"id": label["id"], "name": label["name"]},
                "trainingSeconds": training_seconds,

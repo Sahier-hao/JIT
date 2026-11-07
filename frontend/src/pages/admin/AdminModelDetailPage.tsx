@@ -5,6 +5,7 @@ import { fetchModelBenefit, type BenefitMetric, type BenefitReport, type ModelBe
 import { EmptyState, LoadingNotice } from '../../Feedback'
 import { Button } from '../../ui/controls'
 import type { Route } from '../../navigation'
+import { ModelCardView } from '../../components/ModelCardView'
 import { AdminPageHeader, MetricGrid } from './AdminShared'
 
 export function AdminModelDetailPage({ modelId, navigate, expired }: {
@@ -30,8 +31,7 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
     <AdminPageHeader title={model.name} meta={model.method}/>
     <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'models' })}>返回模型列表</Button><Button onClick={() => navigate({ name: 'admin', view: 'comparisons', models: [model.modelId] })}>加入比较</Button></div>
     <div className="admin-status-line"><span className="source-chip">{model.state === 'ready' ? '已校验' : '不可用'}</span><span>{model.enabled ? '已启用' : '已停用'}</span>{model.isDefault ? <strong>默认模型</strong> : null}</div>
-    <MetricGrid metrics={model.metrics}/>
-    <BenefitSection modelId={modelId} expired={expired}/>
+    {model.card ? <ModelCardView card={model.card}/> : <><MetricGrid metrics={model.metrics}/><BenefitSection modelId={modelId} expired={expired}/></>}
     <div className="admin-detail-grid">
       <section><h2>身份与能力</h2><dl className="admin-facts">
         <div><dt>模型</dt><dd><code>{model.modelId}</code></dd></div>
@@ -51,11 +51,11 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
         <div><dt>阈值</dt><dd>{model.threshold ?? '未提供'}</dd></div>
       </dl></section>
     </div>
-    {model.split ? <section><h2>数据切分</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>分区</th><th>样本</th><th>正例</th><th>开始</th><th>结束</th></tr></thead><tbody>{Object.entries(model.split).map(([name, raw]) => {
+    {!model.card && model.split ? <section><h2>数据切分</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>分区</th><th>样本</th><th>正例</th><th>开始</th><th>结束</th></tr></thead><tbody>{Object.entries(model.split).map(([name, raw]) => {
       const part = raw as Record<string, unknown>
       return <tr key={name}><th>{name}</th><td>{valueLabel(part.count)}</td><td>{valueLabel(part.positiveCount)}</td><td>{formatDate(part.start)}</td><td>{formatDate(part.end)}</td></tr>
     })}</tbody></table></div></section> : null}
-    <section><h2>限制</h2><ul className="admin-limitations">{(model.limitations ?? []).map((item, index) => <li key={index}>{item}</li>)}</ul></section>
+    {!model.card ? <section><h2>限制</h2><ul className="admin-limitations">{(model.limitations ?? []).map((item, index) => <li key={index}>{item}</li>)}</ul></section> : null}
   </section>
 }
 

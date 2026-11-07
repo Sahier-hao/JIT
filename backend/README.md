@@ -360,6 +360,22 @@ CLI 与 HTTP 复用完整 verify 准入，失败不登记模型，正常失败�
 伪指标。`runId`、`artifactRunId`、`modelId`、`datasetVersion`、`featureSchemaVersion` 和
 `artifactKey` 共同构成谱系。全部训练任务接口要求管理员会话，普通项目分析接口不能读取或控制它们。
 
+### 模型卡与分区诊断（add-model-card-and-diagnostics）
+
+普通用户通过 `GET /api/v1/model-cards/{modelId}` 读取只读模型卡，不要求管理员会话。响应只包含模型/方法/schema、数据版本与规模、切分、三档指标、限制、收益结论和安全身份字段；不包含本机路径、SQLite、候选运行、登记审计或维护动作。管理员 `GET /api/v1/models/{modelId}` 返回原有谱系字段，并嵌入同一份 `card`。
+
+新运行的 `summary.json` 增加 `metricsByPartition`、`splitRule`、`dataScale` 和 `trainingPerformance`。三档评价均从原始 `split.json` 的唯一成员重算，训练类别策略产生的重复采样副本不进入评价计数。`diagnosticsVersion=partition-diagnostics-v1` 进入运行配置和摘要，旧摘要仍可读取。
+
+早期产物没有训练/验证预测时，可生成独立冻结报告：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli diagnose-model `
+  --run artifacts/baseline `
+  --output ../docs/evidence/model-diagnostics
+```
+
+报告按 `artifactRunId`、模型 SHA-256、数据 SHA-256、schema、指标集和 split 摘要校验；重复生成不覆盖不同内容。读取根目录默认包含 `artifacts/model-diagnostics` 与 `docs/evidence/model-diagnostics`，可用 `JIT_MODEL_DIAGNOSTICS_ROOT` 覆盖。收益报告仍由 `evaluate-benefit` 生成，按运行身份读取；当前九模型的匹配报告保存在 `docs/evidence/model-card-benefits/`，历史报告不冒充当前模型。
+
 管理员任务和用户仓库强制训练共用 `TrainingExecutor`，但分别保存为 `training_task` 与
 `repository_sync`。共享执行器只负责建跑、校验和登记，不替调用方选择权限、状态机或结果归属。
 

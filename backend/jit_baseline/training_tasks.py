@@ -29,7 +29,8 @@ COLUMNS = (
     "created_by", "request_id", "artifact_key", "artifact_run_id", "run_id", "model_id",
     "feature_schema_version", "metrics_json", "created_at", "updated_at", "started_at",
     "deadline_at", "cancel_requested_at", "completed_at", "class_policy_json",
-    "class_policy_summary_json",
+    "class_policy_summary_json", "metrics_by_partition_json", "split_json", "split_rule",
+    "data_scale_json", "training_performance_json",
 )
 
 
@@ -43,6 +44,12 @@ def _view(row):
     if item["error_code"]:
         error = {"code": item["error_code"], "message": item["error_message"]}
     metrics = json.loads(item["metrics_json"]) if item.get("metrics_json") else None
+    metrics_by_partition = (json.loads(item["metrics_by_partition_json"])
+                            if item.get("metrics_by_partition_json") else None)
+    split = json.loads(item["split_json"]) if item.get("split_json") else None
+    data_scale = json.loads(item["data_scale_json"]) if item.get("data_scale_json") else None
+    training_performance = (json.loads(item["training_performance_json"])
+                            if item.get("training_performance_json") else None)
     return {
         "taskId": item["id"],
         "datasetVersion": item["dataset_version"],
@@ -62,6 +69,11 @@ def _view(row):
         "modelId": item.get("model_id"),
         "featureSchemaVersion": item.get("feature_schema_version"),
         "metrics": metrics,
+        "metricsByPartition": metrics_by_partition,
+        "split": split,
+        "splitRule": item.get("split_rule"),
+        "dataScale": data_scale,
+        "trainingPerformance": training_performance,
         "classPolicy": json.loads(item["class_policy_json"]) if item.get("class_policy_json") else None,
         "classPolicySummary": (json.loads(item["class_policy_summary_json"])
                                if item.get("class_policy_summary_json") else None),
@@ -423,6 +435,18 @@ class TrainingTaskService:
                 metrics_json=json.dumps(
                     result["metrics"], ensure_ascii=False, sort_keys=True, allow_nan=False
                 ),
+                metrics_by_partition_json=json.dumps(
+                    result.get("metricsByPartition"), ensure_ascii=False,
+                    sort_keys=True, allow_nan=False),
+                split_json=json.dumps(
+                    result.get("split"), ensure_ascii=False, sort_keys=True, allow_nan=False),
+                split_rule=result.get("splitRule"),
+                data_scale_json=json.dumps(
+                    result.get("dataScale"), ensure_ascii=False,
+                    sort_keys=True, allow_nan=False),
+                training_performance_json=json.dumps(
+                    result.get("trainingPerformance"), ensure_ascii=False,
+                    sort_keys=True, allow_nan=False),
             )
         except BaselineError as exc:
             self.tasks.finish(task_id, "failed", exc.code, str(exc))

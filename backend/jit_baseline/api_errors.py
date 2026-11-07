@@ -16,7 +16,7 @@ if not LOGGER.handlers:
 API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register', '/api/v1/experiment-runs',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models',
-                '/api/v1/training-tasks', '/api/v1/training-methods'}
+                '/api/v1/model-cards', '/api/v1/training-tasks', '/api/v1/training-methods'}
 MESSAGES = {
     'TREND_SOURCE_CONFLICT': '同一提交的保存观测存在冲突，不能直接拼接；请选择单次固定分析',
     'TREND_SOURCE_UNAVAILABLE': '固定趋势来源已删除或内容发生变化，原视图不可用；请明确重新生成',
@@ -108,7 +108,7 @@ def managed_path(path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
