@@ -35,6 +35,6 @@
 
 - [x] 7.1 更新 `interface-presentation` IP-19/IP-20、新增动作后果要求；新增 PPR 与 AWW 相关要求。
 - [x] 7.2 更新 `docs/当前产品.md` 的入口、右栏、训练与预览模式说明。
-- [ ] 7.3 `npm run typecheck`、`npm run lint`、相关单测通过；后端改动跑对应 pytest。
+- [x] 7.3 `npm run typecheck`、`npm run lint`、相关单测通过；后端改动跑对应 pytest。
 - [ ] 7.4 全量 `npm test -- --maxWorkers=1 --no-file-parallelism` 通过（已知 `ProductWorkspace` 偶发超时单独复跑确认）。
-- [ ] 7.5 浏览器验收：分析记录切换提示、概览单入口、构建完成去向、待处理右栏、只读预览地址、趋势单控件、比较页。
+- [x] 7.5 浏览器验收：分析记录切换提示、概览单入口、构建完成去向、待处理右栏、只读预览地址、趋势单控件、比较页。
