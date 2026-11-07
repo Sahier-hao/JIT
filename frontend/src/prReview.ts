@@ -2,6 +2,7 @@ import { parseSnapshot, type PRSnapshot } from './prReviewClient'
 
 export type FileState = 'unread' | 'read' | 'recheck' | 'uncovered'
 export const readStatusLabels: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
+export const remoteStateLabels = { open: '开放中', closed: '已关闭', merged: '已合并' }
 export const reviewStatusLabels = { open: '待核对', resolved: '人工标记已解决', deferred: '暂不处理', withdrawn: '已撤回' }
 export function parsePatchLines(patch: string): { text: string; side: 'base' | 'head'; line: number | null; kind: 'hunk' | 'add' | 'delete' | 'context' }[] {
   let old = 0, next = 0

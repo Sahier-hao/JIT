@@ -18,14 +18,12 @@ import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
 import { displayTime } from '../domain'
 import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
-import { reviewStatusLabels, adoptVersion, conclusionLabels, createWork, downloadText, exportReview, question, readWorks, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { reviewStatusLabels, adoptVersion, conclusionLabels, createWork, downloadText, exportReview, question, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
 
 
 type Navigate = (route: Route) => void
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
-const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const changeLabels: Record<string, string> = { added: '新增', removed: '删除', modified: '修改', renamed: '重命名', copied: '复制', changed: '内容变化', unchanged: '未变化' }
-const fileLabel: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
 /** 文件行把路径拆成"目录 + 文件名"：目录可以被省略号吃掉，文件名必须始终完整。 */
 function splitPath(path: string) {
   const index = path.lastIndexOf('/')

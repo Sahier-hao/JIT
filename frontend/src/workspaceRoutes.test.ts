@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { hashFor, parseHash, type Route } from './navigation'
+import { analysisRoute, hashFor, parseHash, type Route } from './navigation'
 it.each<Route>([
   { name: 'repositories' }, { name: 'sources' }, { name: 'repository', repositoryId: 'repo-B' },
   { name: 'my-reviews' }, { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12 },
@@ -30,3 +30,8 @@ it.each(['#/models', '#/lab/models', '#/predict', '#/lab/predict', '#/prediction
 it('opens projects on first visit and preserves personal reviews', () => { expect(parseHash('')).toEqual({ name: 'repositories' }); expect(parseHash('#/reviews')).toEqual({ name: 'my-reviews' }) })
 it('keeps old historical sources attached to the named run', () => expect(parseHash('#/lab/history/run-1/commits')).toEqual({ name: 'report', runId: 'run-1', view: 'commits' }))
 it.each(['#/missing', '#/repositories/%ZZ', '#/repositories/a%2Fb'])('does not guess malformed identities %s', hash => expect(parseHash(hash).name).toBe('unknown'))
+it('builds analysis routes with optional commit and plan view', () => {
+  expect(analysisRoute('repo-B', 'analysis-1')).toEqual({ name: 'analysis', repositoryId: 'repo-B', viewSyncId: 'analysis-1', view: 'commits' })
+  expect(analysisRoute('repo-B', 'analysis-1', { commitId: 'a'.repeat(40) })).toMatchObject({ commitId: 'a'.repeat(40), view: 'commits' })
+  expect(analysisRoute('repo-B', 'analysis-1', { view: 'plan' })).toMatchObject({ view: 'plan' })
+})

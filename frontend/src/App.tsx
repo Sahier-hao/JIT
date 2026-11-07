@@ -7,7 +7,7 @@ import { queryClient } from './lib/queryClient'
 import { AppShell } from './AppShell'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Button } from './ui/controls'
-import { useRoute, type Route } from './navigation'
+import { analysisRoute, useRoute, type Route } from './navigation'
 import { useRepositories } from './repositoryWorkspace'
 import { LoadingNotice, EmptyState } from './Feedback'
 import { apiRequest } from './apiClient'
@@ -67,7 +67,7 @@ function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy
     apiRequest({ path: `/api/v1/repository-syncs/${encodeURIComponent(route.syncId)}`, method: 'GET', signal: controller.signal }).then(parseSync).then(job => {
       if (controller.signal.aborted) return
       if (job.syncId !== route.syncId || !job.repositoryId || job.status !== 'completed') throw new Error('该作业尚无成功分析结果。')
-      navigate({ name: 'analysis', repositoryId: job.repositoryId, viewSyncId: job.syncId, view: route.view }, true)
+      navigate(analysisRoute(job.repositoryId, job.syncId, { view: route.view }), true)
     }).catch(error => { if (!controller.signal.aborted) setError(error instanceof Error ? error.message : '分析读取失败') })
     return () => controller.abort()
   }, [route.syncId, route.view, navigate])

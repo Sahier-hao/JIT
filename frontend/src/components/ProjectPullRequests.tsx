@@ -10,13 +10,12 @@ import { displayTime } from '../domain'
 import { repositoryModels, type ModelChoice } from '../modelClient'
 import { analyzeProjectPR, cancelProjectPRBatch, getTracking, latestProjectPRBatch, projectPRs, retryProjectPRBatch, type PRBatch, type PRState, type PRTracking, type ProjectPR, type ProjectPRPage } from '../projectActivityClient'
 import { cacheKey, readCache, writeCache } from '../lib/localCache'
-import { readWorks, workKey } from '../prReview'
+import { readWorks, remoteStateLabels as remoteLabel, workKey } from '../prReview'
 import type { Route } from '../navigation'
 import { PR_BATCH_CHANGED } from '../projectEvents'
 import { PRTrackingPanel } from './PRTrackingPanel'
 import { ProgressBar } from './JobProgress'
 
-const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', scoring: '评分中' }
 const batchLabel: Record<string, string> = { discovering: '正在获取 PR 范围', running: '正在提交分析', completed: '提交完成', partial: '部分完成', failed: '未能开始', interrupted: '已中断', cancelled: '已取消' }
 

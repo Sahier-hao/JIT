@@ -6,7 +6,7 @@ import { Dialog } from './ui/dialog'
 import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
 import { Button, Input } from './ui/controls'
-import type { Route } from './navigation'
+import { analysisRoute, type Route } from './navigation'
 import { useRepository, useRepositoryCommits, useRepositoryCommitRecords, type RepositoryDetail } from './repositoryWorkspace'
 import { toCommit } from './domain'
 import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
@@ -139,7 +139,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   const [offset, setOffset] = useState(() => reviewDrafts.get(stateKey)?.offset ?? 0)
   const selected = commitId ?? null
   const setSelected = useCallback((id: string | null) => {
-    navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits', ...(id ? { commitId: id } : {}) })
+    navigate(analysisRoute(repositoryId, viewSyncId, id ? { commitId: id } : {}))
   }, [navigate, repositoryId, viewSyncId])
   const page = useRepositoryCommits(repository.repository ? repositoryId : '', queryState.applied, offset, PAGE_SIZE, viewSyncId)
   const detailRecords = useRepositoryCommitRecords(repositoryId, selected ? [selected] : [], viewSyncId)

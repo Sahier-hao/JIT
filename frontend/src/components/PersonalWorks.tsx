@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { RefreshCw, Upload } from 'lucide-react'
 import { Button } from '../ui/controls'
 import { FailureNotice } from '../Feedback'
-import { adoptVersion, parseBackup, readWorks, saveWork, type PRWork } from '../prReview'
+import { adoptVersion, parseBackup, readWorks, remoteStateLabels as remoteLabel, saveWork, type PRWork } from '../prReview'
 import { refreshPR, verifyBackupSources } from '../prReviewClient'
 import type { Route } from '../navigation'
 
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
 const routeFor = (work: PRWork): Route => ({ name: 'pr-work', owner: work.owner, repositoryName: work.name, number: work.number })
-const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const shortTime = (value: string) => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value

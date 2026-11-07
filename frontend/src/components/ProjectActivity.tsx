@@ -3,7 +3,7 @@ import { Button } from '../ui/controls'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { projectEvents, type EventPage, type ProjectEvent } from '../projectActivityClient'
-import type { Route } from '../navigation'
+import { analysisRoute, type Route } from '../navigation'
 
 export const EVENT_READ_KEY = 'jit:project-events:read:v1'
 const KIND_LABELS: Record<string, string> = {
@@ -22,7 +22,7 @@ const KIND_LABELS: Record<string, string> = {
 function readEventIds(): Set<string> { const raw = JSON.parse(localStorage.getItem(EVENT_READ_KEY) ?? '[]'); if (!Array.isArray(raw) || !raw.every(v => typeof v === 'string')) throw new Error('提醒已读记录不可读，原数据未修改'); return new Set(raw) }
 export function eventRoute(event: ProjectEvent): Route {
   if (event.snapshotId && event.owner && event.name && event.number) return { name: 'pr-work', repositoryId: event.repositoryId, owner: event.owner, repositoryName: event.name, number: event.number, snapshotId: event.snapshotId }
-  if (event.syncId) return { name: 'analysis', repositoryId: event.repositoryId, viewSyncId: event.syncId, view: 'commits' }
+  if (event.syncId) return analysisRoute(event.repositoryId, event.syncId)
   return { name: 'repository', repositoryId: event.repositoryId, tab: event.number ? 'prs' : 'overview' }
 }
 export function NotificationEntry({ navigate }: { navigate: (r: Route) => void }) {

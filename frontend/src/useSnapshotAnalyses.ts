@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { apiRequest } from './apiClient'
 import { contractFailed, finiteNumber, flag, record, recordList, riskNumber, text, textList } from './apiContract'
 import { ACTIVE_STATUSES, parseSync, type SyncView } from './repositoryContract'
-import { repositoryModels } from './modelClient'
+import { useRepositoryModels } from './modelClient'
 
 export type BindingKind = 'snapshot-model-v1' | 'legacy-head-v1'
 export interface CommitRisk { risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }
@@ -77,11 +77,7 @@ export function useSnapshotAnalyses(snapshotId: string, fallbackTotalCommits = 0
     enabled: snapshotId !== '',
     refetchInterval: query => (isRunning(query.state.data) ? 2000 : false),
   })
-  const modelsQuery = useQuery({
-    queryKey: ['repository-models'],
-    queryFn: ({ signal }) => repositoryModels(signal),
-    staleTime: 60_000,
-  })
+  const modelsQuery = useRepositoryModels()
   const analyses = analysesQuery.data ?? []
   // 只取一条已完成且来源有效的分析；没有就如实说明，不把未分析当作低风险。
   const primary = analyses.find(item => item.contextValid && item.sync.status === 'completed' && item.scores.length) ?? null

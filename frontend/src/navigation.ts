@@ -31,6 +31,10 @@ export type Route =
  * `#/projects/:id/analyses/:syncId/(commits|plan)`。旧的 `#/repositories/...` 与
  * `#/connect` 继续可解析，已有书签不会断。
  */
+export function analysisRoute(repositoryId: string, viewSyncId: string, options: { commitId?: string; view?: 'commits' | 'plan' } = {}): Route {
+  return { name: 'analysis', repositoryId, viewSyncId, view: options.view ?? 'commits', ...(options.commitId ? { commitId: options.commitId } : {}) }
+}
+
 export function parseHash(hash: string): Route {
   try {
     const [rawPath, query = ''] = hash.replace(/^#/, '').split('?')
