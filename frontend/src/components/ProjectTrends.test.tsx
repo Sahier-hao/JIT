@@ -7,7 +7,7 @@ afterEach(() => vi.restoreAllMocks())
 function api(overrides: { conflict?: boolean; commitsSource?: string } = {}) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, init) => {
     if (String(path).endsWith('/trend-groups')) return response({ repositoryId: PROJECT, groups: [GROUP], limitations: [] })
-    if (String(path).includes('/commits?')) return response({ repositoryId: PROJECT, viewId: 'view-fixed', total: 1, limit: 50, offset: 0, commits: [{ commitId: 'a'.repeat(40), epoch: 1, risk: .8, subject: '原分析提交', sourceSyncId: overrides.commitsSource ?? 's2' }] })
+    if (String(path).includes('/commits?')) return response({ repositoryId: PROJECT, viewId: 'view-fixed', total: 1, limit: 50, offset: 0, commits: [{ commitId: 'a'.repeat(40), epoch: 1, risk: .8, subject: '原分析提交', sourceSyncId: overrides.commitsSource ?? 's2', partition: 'test' }] })
     if (init?.method === 'POST' && overrides.conflict) return response({ error: { code: 'TREND_SOURCE_CONFLICT', message: '相同提交来源冲突', requestId: 'r', details: [{ field: 'sourceSyncIds', reason: '保存观测不一致', commitId: 'conflict-sha', sourceSyncIds: ['s1', 's2'], conflictingFields: ['epoch', 'risk'] }] } }, 409)
     return response(trendView({ hasNewSources: true }))
   })
@@ -87,4 +87,36 @@ it('does not offer a foreign source when a drilldown response violates the froze
   await user.click((await screen.findAllByRole('button', { name: '查看提交' }))[0])
   expect(await screen.findByText('提交来源不在固定趋势中')).toBeVisible()
   expect(screen.queryByRole('button', { name: /原分析提交/ })).not.toBeInTheDocument()
+})
+
+it('shows verified partition boundaries as text in the chart legend and equivalent table', async () => {
+  const payload = trendView({
+    partitionCoverage: {
+      status: 'verified', reason: null, preset: 'temporal-70-15-15', timezone: 'UTC',
+      boundaries: [
+        { epoch: 1, time: '2026-10-08T00:00:00Z' },
+        { epoch: 2, time: '2026-10-22T00:00:00Z' },
+      ],
+      partitions: {
+        train: { records: 22, positives: 4, start: '2026-10-01T00:00:00Z', end: '2026-10-07T00:00:00Z' },
+        validation: { records: 20, positives: 2, start: '2026-10-08T00:00:00Z', end: '2026-10-21T00:00:00Z' },
+        test: { records: 20, positives: 3, start: '2026-10-22T00:00:00Z', end: '2026-10-29T00:00:00Z' },
+      },
+    },
+    buckets: [
+      { start: '2026-10-01', end: '2026-10-08', commitCount: 22, scoredCount: 22, unknownCount: 0, highCount: 2, highRate: 2 / 22, riskMean: .4, rateReason: null, coverage: 'observed', partitions: { train: 22, validation: 0, test: 0, recentUnseen: 0, unknown: 0 } },
+      { start: '2026-10-08', end: '2026-10-22', commitCount: 20, scoredCount: 20, unknownCount: 0, highCount: 2, highRate: .1, riskMean: .3, rateReason: null, coverage: 'observed', partitions: { train: 0, validation: 20, test: 0, recentUnseen: 0, unknown: 0 } },
+      { start: '2026-10-22', end: '2026-10-29', commitCount: 20, scoredCount: 20, unknownCount: 0, highCount: 2, highRate: .1, riskMean: .5, rateReason: null, coverage: 'observed', partitions: { train: 0, validation: 0, test: 20, recentUnseen: 0, unknown: 0 } },
+    ],
+  })
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/trend-groups') ? response({ repositoryId: PROJECT, groups: [GROUP], limitations: [] }) : response(payload))
+  render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={vi.fn()}/>)
+  const legend = await screen.findByRole('region', { name: '训练分区覆盖' })
+  expect(legend).toHaveTextContent('训练')
+  expect(legend).toHaveTextContent('验证')
+  expect(legend).toHaveTextContent('测试')
+  expect(legend).toHaveTextContent('近期未训练')
+  expect(screen.getAllByText('训练 22')).toHaveLength(1)
+  expect(screen.getAllByText('验证 20')).toHaveLength(1)
+  expect(screen.getAllByText('测试 20')).toHaveLength(1)
 })

@@ -1,0 +1,57 @@
+{
+  "change": "add-split-presets-and-dataset-collection",
+  "verifiedOn": "2026-11-07",
+  "branch": "feature/add-split-presets-and-dataset-collection",
+  "head": "e8a2c03",
+  "checks": [
+    {
+      "command": ".venv\\Scripts\\python.exe -m pytest",
+      "exitCode": 0,
+      "result": "766 passed, 1 skipped"
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "result": "48 files passed, 364 tests passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "result": "passed with existing warnings"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "result": "production build passed; Vite reported large chunk warnings"
+    },
+    {
+      "command": "npm run test:e2e",
+      "exitCode": 0,
+      "result": "19 passed, 3 skipped"
+    },
+    {
+      "command": "playwright test e2e/split-dataset-trend.spec.ts",
+      "exitCode": 0,
+      "result": "1 passed, 1 skipped"
+    },
+    {
+      "command": "openspec validate add-split-presets-and-dataset-collection --type change --strict",
+      "exitCode": 0,
+      "result": "valid"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "result": "passed"
+    }
+  ],
+  "notes": [
+    "The backend full suite requires running outside the Windows filesystem sandbox because pytest must access and clean its system temporary directory.",
+    "The screenshots use controlled evidence fixtures and do not contain credentials, full Authorization headers, model binaries, or repository payloads."
+  ]
+}

@@ -1,0 +1,743 @@
+{
+  "artifact": {
+    "artifactKey": "ft-transformer-v1",
+    "artifactPath": "artifacts/ft-transformer-v1",
+    "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+    "evaluationEnvironment": {
+      "packages": {
+        "fastapi": "0.143.0",
+        "joblib": "1.6.0",
+        "numpy": "2.5.3",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1",
+        "threadpoolctl": "3.7.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.12.4"
+    },
+    "metricSet": "metric-set-v1",
+    "model": {
+      "id": "torch-ft-transformer@openstack-six-v1",
+      "name": "深度 · FT-Transformer · openstack-six-v1"
+    },
+    "modelSha256": "8ba3163aa89223cb3a34a877f1f642c9544b26916c294c12d852576134965aad",
+    "referencePredictionsVerified": true,
+    "runId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+    "schema": "openstack-six-v1",
+    "threshold": 0.5,
+    "trainingEnvironment": {
+      "packages": {
+        "fastapi": "0.143.0",
+        "joblib": "1.6.0",
+        "numpy": "2.5.3",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1",
+        "threadpoolctl": "3.7.0",
+        "torch": "2.14.1",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.12.4"
+    }
+  },
+  "boundary": {
+    "budgetFraction": 0.2,
+    "budgetRule": "continue-whole-commit",
+    "crossModelRanking": false,
+    "defaultModelChanged": false,
+    "defectProbability": false,
+    "randomRuns": 200,
+    "randomSeed": 2026,
+    "retrospective": true,
+    "sensitivityRule": "stop-at-first-overflow"
+  },
+  "comparisons": {
+    "modelVsDensity": {
+      "ifa": 0,
+      "popt": -0.48466126034784324,
+      "recall20Loc": -0.4475524475524475,
+      "recall20LocInterval": {
+        "high": -0.36363636363636365,
+        "low": -0.4952380952380953,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      }
+    },
+    "modelVsLoc": {
+      "ifa": 0,
+      "popt": -0.4805995863467338,
+      "recall20Loc": -0.45104895104895104,
+      "recall20LocInterval": {
+        "high": -0.36645962732919257,
+        "low": -0.5027322404371585,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      }
+    },
+    "modelVsRandomMean": {
+      "ifa": -3.4699999999999998,
+      "popt": -0.20196605068208479,
+      "recall20Loc": -0.13837412587412587,
+      "recall20LocInterval": {
+        "high": -0.09580838323353293,
+        "low": -0.20253164556962025,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      }
+    },
+    "modelVsTime": {
+      "ifa": -15,
+      "popt": -0.1655279022921346,
+      "recall20Loc": -0.10839160839160839,
+      "recall20LocInterval": {
+        "high": -0.05945945945945946,
+        "low": -0.18407960199004975,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      }
+    }
+  },
+  "conclusion": {
+    "recall20": {
+      "density": {
+        "reason": null,
+        "value": 0.513986013986014
+      },
+      "loc": {
+        "reason": null,
+        "value": 0.5174825174825175
+      },
+      "model": {
+        "reason": null,
+        "value": 0.06643356643356643
+      },
+      "modelVsDensity": -0.4475524475524475,
+      "modelVsLoc": -0.45104895104895104,
+      "modelVsRandomMean": -0.13837412587412587,
+      "modelVsTime": -0.10839160839160839,
+      "randomMean": {
+        "max": 0.2902097902097902,
+        "mean": 0.2048076923076923,
+        "min": 0.12937062937062938,
+        "reason": null,
+        "std": 0.028780785225910044,
+        "validRuns": 200
+      },
+      "time": {
+        "reason": null,
+        "value": 0.17482517482517482
+      }
+    },
+    "sentence": "同样检查 20% 代码改动量（预算 42048.4 行，共 210242 行）：模型排序覆盖 6.6%（19.0/286 个历史标记）；风险/成本密度覆盖 51.4%（147.0/286 个历史标记）；改动量升序覆盖 51.7%（148.0/286 个历史标记）；时间顺序覆盖 17.5%（50.0/286 个历史标记）；随机平均覆盖 20.5%（58.6/286 个历史标记）。",
+    "uncertainty": {
+      "modelVsDensity": {
+        "high": -0.36363636363636365,
+        "low": -0.4952380952380953,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      },
+      "modelVsLoc": {
+        "high": -0.36645962732919257,
+        "low": -0.5027322404371585,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      },
+      "modelVsRandomMean": {
+        "high": -0.09580838323353293,
+        "low": -0.20253164556962025,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      },
+      "modelVsTime": {
+        "high": -0.05945945945945946,
+        "low": -0.18407960199004975,
+        "runs": 1000,
+        "seed": 2026,
+        "unit": "recall20Loc-difference"
+      }
+    }
+  },
+  "existingMetrics": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.3810518489930118
+    },
+    "confusion": {
+      "fn": 286,
+      "fp": 0,
+      "tn": 1567,
+      "tp": 0
+    },
+    "counts": {
+      "negative": 1567,
+      "positive": 286,
+      "records": 1853
+    },
+    "effort": {
+      "budgetLoc": 42048.4,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 33,
+      "totalLoc": 210242,
+      "usedLoc": 41899
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.0
+    },
+    "precision": {
+      "reason": "没有预测为正的提交",
+      "value": null
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.0
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.06643356643356643
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 286,
+          "fp": 0,
+          "tn": 1567,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.15434430652995143
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.7640317563738113
+    },
+    "threshold": 0.5
+  },
+  "generatedUtc": "2026-11-07T01:22:14.023499+00:00",
+  "kind": "model-benefit-evaluation",
+  "limitations": [
+    "这是冻结测试分区上的回顾性评估，不代表在线效果或缺陷概率。",
+    "标签来自发布者历史观测或简化 SZZ；未观测到缺陷引入不等于已证实无缺陷。",
+    "只比较同一测试分区、同一预算和同一标签口径下的检查顺序，不据此宣布最佳模型。",
+    "模型分数策略按原始风险降序；风险/成本密度和按改动量升序作为简单基线并列。",
+    "模型、阈值和策略在评估前已固定；没有使用测试分区调参。",
+    "配对区间来自时间块重采样，不是在线效果或因果结论。",
+    "特征为具名 schema openstack-six-v1（ns、nd、nf、ent、la、ld），尚非完整 Kamei14；预测解释未提供。",
+    "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+    "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+    "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+    "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+    "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+  ],
+  "parameterSelection": "strategies, budget rule and bootstrap settings fixed before reading test labels; no tuning",
+  "protocol": {
+    "bootstrapRuns": 1000,
+    "bootstrapSeed": 2026,
+    "budgetRule": "continue-whole-commit",
+    "sensitivityRule": "stop-at-first-overflow",
+    "strategies": [
+      "model",
+      "density",
+      "loc",
+      "time",
+      "random"
+    ]
+  },
+  "reportVersion": 2,
+  "sourceHashes": {
+    "manifest.json": "751928be07bff0c3e73574f2b34403567de26d7587be751786b2bde8ba78a279",
+    "metrics.json": "a7ab90cd52e25c1e604fd9e8eca8eb6e9608f58262c316fd17c55a9526b8fb7c",
+    "reference-predictions.json": "9d3296fc5883d761d193341e8db1a0bbbb242b01b34d8d7c82dc71459de7c0b6",
+    "summary.json": "d3e083b6efe3a44d14cae0c1a8f7830779b306d71a2f2fe7e373d3864c027bf7",
+    "test-input.json": "c51fc524943b7d550d06d8ebeb7ead60f83582ecea648e643d06795bfe849e8e",
+    "test-labels.json": "ba9dbb7f72736c3c3533e0983f04eded8070b9c6d7864ad3a1dbf4996cee8805"
+  },
+  "strategies": {
+    "density": {
+      "budgetRule": "continue-whole-commit",
+      "coverage": {
+        "budgetLoc": 42048.4,
+        "issuesCovered": 147,
+        "positives": 286,
+        "precisionAtBudget": {
+          "reason": null,
+          "value": 0.11247130833970925
+        },
+        "selectedCount": 1307,
+        "totalLoc": 210242,
+        "usedLoc": 42041
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "ordering": "risk-per-loc-desc,time-desc,id-asc",
+      "popt": {
+        "reason": null,
+        "value": 0.7825984316986306
+      },
+      "poptEffort": {
+        "areaModel": 0.7473649247224455,
+        "areaOracle": 0.9376615313036164,
+        "areaWorst": 0.06233846869638033,
+        "name": "Popt (normalized cost-recall area)",
+        "ordering": "risk-per-loc-desc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 210242
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.513986013986014
+      }
+    },
+    "loc": {
+      "budgetRule": "continue-whole-commit",
+      "coverage": {
+        "budgetLoc": 42048.4,
+        "issuesCovered": 148,
+        "positives": 286,
+        "precisionAtBudget": {
+          "reason": null,
+          "value": 0.10102389078498293
+        },
+        "selectedCount": 1465,
+        "totalLoc": 210242,
+        "usedLoc": 42023
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "ordering": "loc-asc,time-desc,id-asc",
+      "popt": {
+        "reason": null,
+        "value": 0.7785367576975212
+      },
+      "poptEffort": {
+        "areaModel": 0.7438096477964823,
+        "areaOracle": 0.9376615313036164,
+        "areaWorst": 0.06233846869638033,
+        "name": "Popt (normalized cost-recall area)",
+        "ordering": "loc-asc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 210242
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.5174825174825175
+      }
+    },
+    "model": {
+      "budgetRule": "continue-whole-commit",
+      "coverage": {
+        "budgetLoc": 42048.4,
+        "issuesCovered": 19,
+        "positives": 286,
+        "precisionAtBudget": {
+          "reason": null,
+          "value": 0.5428571428571428
+        },
+        "selectedCount": 35,
+        "totalLoc": 210242,
+        "usedLoc": 42048
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "ordering": "score-desc,time-desc,id-asc",
+      "popt": {
+        "reason": null,
+        "value": 0.2979371713507874
+      },
+      "poptEffort": {
+        "areaModel": 0.3231297459876884,
+        "areaOracle": 0.9376615313036164,
+        "areaWorst": 0.06233846869638033,
+        "name": "Popt (normalized cost-recall area)",
+        "ordering": "score-desc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 210242
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.06643356643356643
+      }
+    },
+    "random": {
+      "coverage": {
+        "issuesCovered": {
+          "max": 83,
+          "mean": 58.575,
+          "min": 37,
+          "reason": null,
+          "std": 8.231304574610272,
+          "validRuns": 200
+        },
+        "selectedCount": {
+          "max": 496,
+          "mean": 383.29,
+          "min": 244,
+          "reason": null,
+          "std": 46.42354898109364,
+          "validRuns": 200
+        },
+        "usedLoc": {
+          "max": 42048,
+          "mean": 42048.0,
+          "min": 42048,
+          "reason": null,
+          "std": 0.0,
+          "validRuns": 200
+        }
+      },
+      "ifa": {
+        "max": 39,
+        "mean": 5.47,
+        "min": 0,
+        "reason": null,
+        "std": 5.7531817284003814,
+        "validRuns": 200
+      },
+      "popt": {
+        "max": 0.5550900445781729,
+        "mean": 0.4999032220328722,
+        "min": 0.42757370419478274,
+        "reason": null,
+        "std": 0.023775170978501042,
+        "validRuns": 200
+      },
+      "precisionAtBudget": {
+        "max": 0.1931216931216931,
+        "mean": 0.15336395164754724,
+        "min": 0.10662824207492795,
+        "reason": null,
+        "std": 0.016509051447644345,
+        "validRuns": 200
+      },
+      "recall20Loc": {
+        "max": 0.2902097902097902,
+        "mean": 0.2048076923076923,
+        "min": 0.12937062937062938,
+        "reason": null,
+        "std": 0.028780785225910044,
+        "validRuns": 200
+      },
+      "runs": 200,
+      "seed": 2026
+    },
+    "sensitivity": {
+      "density": {
+        "budgetRule": "stop-at-first-overflow",
+        "coverage": {
+          "budgetLoc": 42048.4,
+          "issuesCovered": 147,
+          "positives": 286,
+          "precisionAtBudget": {
+            "reason": null,
+            "value": 0.11264367816091954
+          },
+          "selectedCount": 1305,
+          "totalLoc": 210242,
+          "usedLoc": 42008
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "ordering": "risk-per-loc-desc,time-desc,id-asc",
+        "popt": {
+          "reason": null,
+          "value": 0.7825984316986306
+        },
+        "poptEffort": {
+          "areaModel": 0.7473649247224455,
+          "areaOracle": 0.9376615313036164,
+          "areaWorst": 0.06233846869638033,
+          "name": "Popt (normalized cost-recall area)",
+          "ordering": "risk-per-loc-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 210242
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.513986013986014
+        }
+      },
+      "loc": {
+        "budgetRule": "stop-at-first-overflow",
+        "coverage": {
+          "budgetLoc": 42048.4,
+          "issuesCovered": 148,
+          "positives": 286,
+          "precisionAtBudget": {
+            "reason": null,
+            "value": 0.10102389078498293
+          },
+          "selectedCount": 1465,
+          "totalLoc": 210242,
+          "usedLoc": 42023
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "ordering": "loc-asc,time-desc,id-asc",
+        "popt": {
+          "reason": null,
+          "value": 0.7785367576975212
+        },
+        "poptEffort": {
+          "areaModel": 0.7438096477964823,
+          "areaOracle": 0.9376615313036164,
+          "areaWorst": 0.06233846869638033,
+          "name": "Popt (normalized cost-recall area)",
+          "ordering": "loc-asc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 210242
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.5174825174825175
+        }
+      },
+      "model": {
+        "budgetRule": "stop-at-first-overflow",
+        "coverage": {
+          "budgetLoc": 42048.4,
+          "issuesCovered": 19,
+          "positives": 286,
+          "precisionAtBudget": {
+            "reason": null,
+            "value": 0.5757575757575758
+          },
+          "selectedCount": 33,
+          "totalLoc": 210242,
+          "usedLoc": 41899
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "ordering": "score-desc,time-desc,id-asc",
+        "popt": {
+          "reason": null,
+          "value": 0.2979371713507874
+        },
+        "poptEffort": {
+          "areaModel": 0.3231297459876884,
+          "areaOracle": 0.9376615313036164,
+          "areaWorst": 0.06233846869638033,
+          "name": "Popt (normalized cost-recall area)",
+          "ordering": "score-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 210242
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.06643356643356643
+        }
+      },
+      "random": {
+        "coverage": {
+          "issuesCovered": {
+            "max": 82,
+            "mean": 57.33,
+            "min": 36,
+            "reason": null,
+            "std": 8.133332650273195,
+            "validRuns": 200
+          },
+          "selectedCount": {
+            "max": 493,
+            "mean": 371.045,
+            "min": 239,
+            "reason": null,
+            "std": 46.680863049005424,
+            "validRuns": 200
+          },
+          "usedLoc": {
+            "max": 42047,
+            "mean": 41599.58,
+            "min": 38982,
+            "reason": null,
+            "std": 592.4137013945575,
+            "validRuns": 200
+          }
+        },
+        "ifa": {
+          "max": 39,
+          "mean": 5.47,
+          "min": 0,
+          "reason": null,
+          "std": 5.7531817284003814,
+          "validRuns": 200
+        },
+        "popt": {
+          "max": 0.5550900445781729,
+          "mean": 0.4999032220328722,
+          "min": 0.42757370419478274,
+          "reason": null,
+          "std": 0.023775170978501042,
+          "validRuns": 200
+        },
+        "precisionAtBudget": {
+          "max": 0.193717277486911,
+          "mean": 0.1551154855549186,
+          "min": 0.11612903225806452,
+          "reason": null,
+          "std": 0.01659298795367566,
+          "validRuns": 200
+        },
+        "recall20Loc": {
+          "max": 0.2867132867132867,
+          "mean": 0.20045454545454547,
+          "min": 0.1258741258741259,
+          "reason": null,
+          "std": 0.028438226049906278,
+          "validRuns": 200
+        },
+        "runs": 200,
+        "seed": 2026
+      },
+      "time": {
+        "budgetRule": "stop-at-first-overflow",
+        "coverage": {
+          "budgetLoc": 42048.4,
+          "issuesCovered": 49,
+          "positives": 286,
+          "precisionAtBudget": {
+            "reason": null,
+            "value": 0.15605095541401273
+          },
+          "selectedCount": 314,
+          "totalLoc": 210242,
+          "usedLoc": 42007
+        },
+        "ifa": {
+          "reason": null,
+          "value": 17
+        },
+        "ordering": "time-desc,id-asc",
+        "popt": {
+          "reason": null,
+          "value": 0.463465073642922
+        },
+        "poptEffort": {
+          "areaModel": 0.468020136368991,
+          "areaOracle": 0.9376615313036164,
+          "areaWorst": 0.06233846869638033,
+          "name": "Popt (normalized cost-recall area)",
+          "ordering": "time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 210242
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.17132867132867133
+        }
+      }
+    },
+    "time": {
+      "budgetRule": "continue-whole-commit",
+      "coverage": {
+        "budgetLoc": 42048.4,
+        "issuesCovered": 50,
+        "positives": 286,
+        "precisionAtBudget": {
+          "reason": null,
+          "value": 0.15772870662460567
+        },
+        "selectedCount": 317,
+        "totalLoc": 210242,
+        "usedLoc": 42048
+      },
+      "ifa": {
+        "reason": null,
+        "value": 17
+      },
+      "ordering": "time-desc,id-asc",
+      "popt": {
+        "reason": null,
+        "value": 0.463465073642922
+      },
+      "poptEffort": {
+        "areaModel": 0.468020136368991,
+        "areaOracle": 0.9376615313036164,
+        "areaWorst": 0.06233846869638033,
+        "name": "Popt (normalized cost-recall area)",
+        "ordering": "time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 210242
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.17482517482517482
+      }
+    }
+  },
+  "test": {
+    "budgetLoc": 42048.4,
+    "endEpoch": 1393590699,
+    "negatives": 1567,
+    "positives": 286,
+    "records": 1853,
+    "source": {
+      "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。",
+      "publisher": "software-rebels/JITMovingTarget",
+      "quality": {
+        "blankLabels": 9812,
+        "excluded": {
+          "missingRequiredField": 0,
+          "noAddedLines": 812,
+          "outsideWindow": 13646,
+          "tooManyFiles": 20,
+          "tooMuchChurn": 3
+        },
+        "featureMissing": {
+          "ent": 0,
+          "la": 0,
+          "ld": 0,
+          "nd": 0,
+          "nf": 0,
+          "ns": 0
+        },
+        "includedRows": 12374,
+        "positiveLabels": 1616,
+        "rawRows": 26855
+      },
+      "revision": "184403ad3734894c8417cbec72fdef3da5edc0b9",
+      "url": "https://github.com/software-rebels/JITMovingTarget/tree/184403ad3734894c8417cbec72fdef3da5edc0b9"
+    },
+    "split": {
+      "count": 1853,
+      "end": "2014-02-28T12:31:39Z",
+      "positiveCount": 286,
+      "start": "2013-11-11T08:29:48Z"
+    },
+    "startEpoch": 1384158588,
+    "totalLoc": 210242
+  }
+}

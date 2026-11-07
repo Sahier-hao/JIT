@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import { createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '../../adminContracts'
 import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '../../curationClient'
 import { Button, NumberInput, Select, TextArea } from '../../ui/controls'
 import { Dialog } from '../../ui/dialog'
 import type { Route } from '../../navigation'
+import { previewDatasetSplit, SPLIT_PRESETS, type SplitPreview } from '../../splitClient'
 import { AdminPageHeader, ErrorNotice } from './AdminShared'
 
 const DEFAULT_RECIPE = '{\n  "version": 1,\n  "rules": [\n    { "id": "max-value", "field": "la", "value": 10000 }\n  ]\n}'
@@ -21,6 +22,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [method, setMethod] = useState(methods[0]?.method ? valueLabel(methods[0].method, '') : '')
   const [metricSet, setMetricSet] = useState('metric-set-v2')
   const [classPolicy, setClassPolicy] = useState<'none' | 'weights' | 'sample'>('none')
+  const [splitPreset, setSplitPreset] = useState('temporal-70-15-15')
+  const [splitPreview, setSplitPreview] = useState<SplitPreview | null>(null)
+  const [splitPreviewError, setSplitPreviewError] = useState('')
+  const [splitPreviewBusy, setSplitPreviewBusy] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [recipeText, setRecipeText] = useState(DEFAULT_RECIPE)
@@ -38,6 +43,16 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [cleanupResult, setCleanupResult] = useState('')
   const [confirmCleanup, setConfirmCleanup] = useState(false)
   const selected = versions.find(item => item.version === version) ?? versions.at(-1)
+  useEffect(() => {
+    if (!selected) return
+    const controller = new AbortController()
+    setSplitPreviewBusy(true); setSplitPreviewError(''); setSplitPreview(null)
+    previewDatasetSplit(selected.version, splitPreset, controller.signal)
+      .then(value => { if (!controller.signal.aborted) setSplitPreview(value) })
+      .catch(failure => { if (!controller.signal.aborted) setSplitPreviewError(failure instanceof Error ? failure.message : '切分预览失败') })
+      .finally(() => { if (!controller.signal.aborted) setSplitPreviewBusy(false) })
+    return () => controller.abort()
+  }, [selected?.version, splitPreset])
   if (!selected) return null
   const quality = selected.quality
   const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
@@ -45,7 +60,8 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     setBusy(true); setError('')
     try {
       const task = await createTrainingTask(selected!.version, selectedMethod, metricSet,
-                                            classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 })
+                                            classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
+                                            splitPreset)
       navigate({ name: 'admin', view: 'training', resourceId: task.taskId })
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) expired()
@@ -159,8 +175,24 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       <Select ariaLabel="训练方法" value={selectedMethod} onChange={setMethod} options={methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))}/>
       <Select ariaLabel="指标集" value={metricSet} onChange={setMetricSet} options={[{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]}/>
       <Select ariaLabel="训练分区类别策略" value={classPolicy} onChange={value => setClassPolicy(value as 'none' | 'weights' | 'sample')} options={[{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]}/>
-      <Button variant="primary" loading={busy} disabled={!selectedMethod || !version} onClick={() => void train()}>创建训练任务</Button>
+      <Select ariaLabel="时间切分预设" value={splitPreset} onChange={setSplitPreset} options={[...SPLIT_PRESETS]}/>
+      <Button variant="primary" loading={busy} disabled={!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available} onClick={() => void train()}>创建训练任务</Button>
     </div></section>
+    <section className="admin-train-panel"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
+      {splitPreviewBusy ? <p className="admin-report-meta">正在按原始唯一成员计算三档边界…</p> : splitPreview ? <>
+        {!splitPreview.available ? <div className="admin-error-box" role="alert"><strong>{splitPreview.reason?.code ?? 'SPLIT_INVALID'}</strong><p>{splitPreview.reason?.message ?? '该预设不可用'}</p></div> : <div className="admin-detail-grid">
+          {(['train', 'validation', 'test'] as const).map(name => {
+            const part = splitPreview.partitions?.[name]
+            return <section key={name}><h2>{{ train: '训练', validation: '验证', test: '测试' }[name]}</h2><dl className="admin-facts">
+              <div><dt>样本 / 正例</dt><dd>{part?.records ?? '—'} / {part?.positives ?? '—'}</dd></div>
+              <div><dt>开始</dt><dd>{part?.start ? formatDate(part.start) : '—'}</dd></div>
+              <div><dt>结束</dt><dd>{part?.end ? formatDate(part.end) : '—'}</dd></div>
+            </dl></section>
+          })}
+        </div>}
+        <p className="admin-report-meta">时区 {splitPreview.timezone}；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
+      </> : null}
+    </section>
     <Dialog open={confirmCleanup} onOpenChange={setConfirmCleanup} title="确认清理 PR 数据集？" width={460}
       description="将删除选中的数据集登记、提交记录与文件；此操作不可恢复，被模型、分析或趋势引用的版本不会出现在列表中。"
       footer={<><Button onClick={() => setConfirmCleanup(false)}>取消</Button><Button variant="danger" loading={cleanupBusy} onClick={() => void runCleanup()}>确认清理</Button></>}>

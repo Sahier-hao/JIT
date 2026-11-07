@@ -852,3 +852,55 @@
 .admin-benefit h2 { margin: 0 0 12px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
 .admin-report-meta { margin: 8px 0 12px; color: var(--fg-3); font-size: 12.5px; line-height: 1.6; }
 .admin-benefit-table td:first-child, .admin-benefit-table th:first-child { white-space: nowrap; }
+
+/* 只读模型卡：项目选择器与管理详情复用同一字段结构与分区语义。 */
+.model-card { display: grid; gap: 22px; min-width: 0; }
+.model-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.model-card-head > div { min-width: 0; }
+.model-card-head h2 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.025em; }
+.model-card-head p { margin: 5px 0 0; color: var(--fg-3); font-size: 12.5px; overflow-wrap: anywhere; }
+.model-card-head > span { flex: none; max-width: 42%; padding: 4px 9px; border-radius: 999px; background: var(--sunken); color: var(--fg-3); font-size: 12px; text-align: right; }
+.model-card-head > span[data-available="true"] { background: var(--accent-soft); color: var(--accent); }
+.model-card-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 0; border-top: 1px solid var(--line); }
+.model-card-facts > div { min-width: 0; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.model-card-facts > div:nth-child(odd) { padding-right: 20px; }
+.model-card-facts dt { margin-bottom: 5px; color: var(--fg-3); font-size: 11.5px; }
+.model-card-facts dd { margin: 0; color: var(--fg); font-size: 13px; overflow-wrap: anywhere; }
+.model-card-facts code { overflow-wrap: anywhere; font-size: 11.5px; }
+.model-card-section { min-width: 0; }
+.model-card-section h2 { margin: 0 0 12px; font-size: 15px; font-weight: 650; }
+.model-partition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.model-partition-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+.model-partition-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.model-partition-card > header > div { min-width: 0; }
+.model-partition-card h3 { margin: 0; font-size: 13px; font-weight: 650; }
+.model-partition-card header p { margin: 4px 0 0; color: var(--fg-3); font-size: 11.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.model-partition-card header > span { flex: none; color: var(--fg-3); font-size: 11px; }
+.model-partition-metrics { display: grid; gap: 0; margin: 12px 0 0; }
+.model-partition-metrics > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line-soft); }
+.model-partition-metrics dt { color: var(--fg-3); font-size: 11.5px; }
+.model-partition-metrics dd { margin: 0; min-width: 0; color: var(--fg); font: 600 12px var(--mono); text-align: right; }
+.model-partition-metrics small { display: block; margin-top: 3px; color: var(--risk-fg); font: 10.5px/1.4 var(--sans); }
+.model-card-callout { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; line-height: 1.65; }
+.model-card-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.model-card-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 12.5px; }
+.model-card-table th, .model-card-table td { padding: 9px 11px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+.model-card-table thead th { background: var(--sunken); color: var(--fg-3); font-size: 11.5px; }
+.model-card-table tbody tr:last-child > * { border-bottom: 0; }
+.model-card-table small { display: block; margin-top: 2px; color: var(--fg-3); }
+.model-card-note { margin: 8px 0 0; color: var(--fg-3); font-size: 11.5px; line-height: 1.6; }
+.model-card-limitations { margin: 0; padding-left: 19px; color: var(--fg-2); font-size: 12.5px; line-height: 1.7; }
+.model-card-unavailable { padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--risk-high) 38%, var(--line)); border-radius: 10px; background: var(--card); }
+.model-card-unavailable p { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 0; color: var(--risk-fg); font-size: 12.5px; line-height: 1.6; }
+.model-source-field { display: grid; align-content: start; gap: 7px; min-width: 0; }
+.model-source-field > label { display: grid; gap: 7px; }
+.model-source-field select { width: 100%; min-width: 0; max-width: 100%; }
+.model-source-field > .ui-btn { justify-self: start; }
+
+@media (max-width: 760px) {
+  .model-card-head { flex-direction: column; }
+  .model-card-head > span { max-width: 100%; text-align: left; }
+  .model-card-facts { grid-template-columns: minmax(0, 1fr); }
+  .model-card-facts > div:nth-child(odd) { padding-right: 0; }
+  .model-partition-grid { grid-template-columns: minmax(0, 1fr); }
+}

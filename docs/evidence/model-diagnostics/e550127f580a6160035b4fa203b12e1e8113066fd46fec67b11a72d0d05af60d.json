@@ -1,0 +1,257 @@
+{
+  "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+  "datasetVersion": "openstack-8479e68886f0cfbcbc7cbdb1a6a565ccb02b96e97066cce9f6c0789b518bc48c",
+  "diagnosticsVersion": "partition-diagnostics-v1",
+  "generatedUtc": "2026-11-07T01:12:04.611313+00:00",
+  "generationCommand": "python -m jit_baseline.cli diagnose-model --run artifacts/random-forest-v1 --output docs/evidence/model-diagnostics",
+  "kind": "model-partition-diagnostics",
+  "metricSet": "metric-set-v1",
+  "metricsByPartition": {
+    "test": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.3879739107216317
+      },
+      "confusion": {
+        "fn": 286,
+        "fp": 0,
+        "tn": 1567,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 1567,
+        "positive": 286,
+        "records": 1853
+      },
+      "effort": {
+        "budgetLoc": 42048.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 44,
+        "totalLoc": 210242,
+        "usedLoc": 41661
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.0
+      },
+      "precision": {
+        "reason": "没有预测为正的提交",
+        "value": null
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.08391608391608392
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 286,
+            "fp": 0,
+            "tn": 1567,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.15434430652995143
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7644981055957445
+      },
+      "threshold": 0.5
+    },
+    "train": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.3595832864780326
+      },
+      "confusion": {
+        "fn": 959,
+        "fp": 0,
+        "tn": 7710,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 7710,
+        "positive": 959,
+        "records": 8669
+      },
+      "effort": {
+        "budgetLoc": 192508.40000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 219,
+        "totalLoc": 962542,
+        "usedLoc": 192333
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.0
+      },
+      "precision": {
+        "reason": "没有预测为正的提交",
+        "value": null
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.12408759124087591
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 959,
+            "fp": 0,
+            "tn": 7710,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.11062406275233591
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.80379651306687
+      },
+      "threshold": 0.5
+    },
+    "validation": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.41766885886820426
+      },
+      "confusion": {
+        "fn": 371,
+        "fp": 0,
+        "tn": 1481,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 1481,
+        "positive": 371,
+        "records": 1852
+      },
+      "effort": {
+        "budgetLoc": 38628.200000000004,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 37,
+        "totalLoc": 193141,
+        "usedLoc": 36855
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.0
+      },
+      "precision": {
+        "reason": "没有预测为正的提交",
+        "value": null
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.05660377358490566
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 371,
+            "fp": 0,
+            "tn": 1481,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.20032397408207345
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7537305419409557
+      },
+      "threshold": 0.5
+    }
+  },
+  "modelSha256": "1f43634c4bd7c104dca8fc7c7d13a2aa8fca3dc087bf9471c4c05d90dc61dfe0",
+  "partitions": {
+    "test": {
+      "count": 1853,
+      "end": "2014-02-28T12:31:39Z",
+      "idsDigest": "dde1a4d26eb53d77e226767f07977cbb5a745de8868681c223b4f45279e573de",
+      "label": "冻结泛化评价",
+      "negatives": 1567,
+      "positives": 286,
+      "start": "2013-11-11T08:29:48Z"
+    },
+    "train": {
+      "count": 8669,
+      "end": "2013-08-10T06:42:45Z",
+      "idsDigest": "351485aff3cd488833c1a106d6c9fd8f7db22c21059e46d5302e2fc2a5e3dec1",
+      "label": "拟合诊断",
+      "negatives": 7710,
+      "positives": 959,
+      "start": "2011-11-29T20:43:04Z"
+    },
+    "validation": {
+      "count": 1852,
+      "end": "2013-11-11T06:49:17Z",
+      "idsDigest": "a81bb7ad4bb8abd4408772262bd1ec287a2ed9cf6489b1212686ce32799f2509",
+      "label": "模型选择背景",
+      "negatives": 1481,
+      "positives": 371,
+      "start": "2013-08-10T20:12:59Z"
+    }
+  },
+  "reportVersion": 1,
+  "schema": "openstack-six-v1",
+  "sourceSha256": "2b1d2128bee82e905b0233d6646c3fa88eed033e440482e2f89272a3dd436505",
+  "splitDigest": "1f5b306d2b0c256a5b70e1cb8211bb30031f05f680fd1b85c60c3418f8e395ad",
+  "splitRule": "UTC distinct timestamps, floor(0.70G), floor(0.85G)",
+  "threshold": 0.5
+}

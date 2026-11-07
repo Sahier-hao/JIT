@@ -236,7 +236,7 @@ it('posts a new analysis with the chosen branch and the default strategy', async
   await user.type(screen.getByRole('textbox', { name: '分支' }), 'release')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(posted).not.toBeNull())
-  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/demo', branch: 'release', strategy: 'auto' })
+  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/demo', branch: 'release', strategy: 'auto', splitPreset: 'temporal-70-15-15' })
 })
 
 it('returns to the project list from the back link', async () => {

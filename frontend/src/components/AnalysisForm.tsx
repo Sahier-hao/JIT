@@ -12,11 +12,12 @@ import { repositoryModels, trainingMethods, type MethodChoice, type ModelChoice 
 import { projectsChanged } from '../projectEvents'
 import { FailureNotice } from '../Feedback'
 import type { SyncStrategy, SyncView } from '../repositoryContract'
+import { ModelCardDialog } from './ModelCardDialog'
 
 /** 模型来源把「用哪个现成模型」和「要不要训练」合成一个决定；其余值都是具体模型 ID。 */
 const SOURCES = ['auto', 'default', 'train'] as const
 type ModelSource = (typeof SOURCES)[number]
-type Draft = { branch?: string; choice?: string; algorithm?: string }
+type Draft = { branch?: string; choice?: string; algorithm?: string; splitPreset?: string }
 
 function choiceOf(form: { strategy?: SyncStrategy; modelId?: string }): string {
   if (form.modelId) return form.modelId
@@ -42,12 +43,13 @@ export interface AnalysisFormProps {
 export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel, initial }: AnalysisFormProps) {
   const draftKey = `jit:analysis-draft:${repositoryUrl}`
   const [saved] = useState<Draft>(() => {
-    if (initial) return { branch: initial.branch, choice: choiceOf(initial), algorithm: initial.algorithm }
+    if (initial) return { branch: initial.branch, choice: choiceOf(initial), algorithm: initial.algorithm, splitPreset: initial.splitPreset }
     try { return JSON.parse(sessionStorage.getItem(draftKey) ?? '{}') } catch { return {} }
   })
   const [branch, setBranch] = useState(saved.branch ?? '')
   const [choice, setChoice] = useState(saved.choice ?? 'auto')
   const [algorithm, setAlgorithm] = useState(saved.algorithm ?? '')
+  const [splitPreset, setSplitPreset] = useState(saved.splitPreset ?? 'temporal-70-15-15')
   const [methods, setMethods] = useState<MethodChoice[]>([])
   const [methodsLoaded, setMethodsLoaded] = useState(false)
   const [methodsError, setMethodsError] = useState('')
@@ -55,6 +57,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
   const [modelsLoaded, setModelsLoaded] = useState(false)
   const [modelError, setModelError] = useState('')
   const [modelRevision, setModelRevision] = useState(0)
+  const [modelCardOpen, setModelCardOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const locked = useRef(false)
   const [error, setError] = useState<unknown>(null)
@@ -63,7 +66,8 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     repositoryModels(controller.signal).then(items => { if (!controller.signal.aborted) { setModels(items); setModelsLoaded(true); setModelError('') } }).catch(failure => { if (!controller.signal.aborted) setModelError(failure instanceof Error ? failure.message : '模型读取失败') })
     return () => controller.abort()
   }, [modelRevision])
-  useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice, algorithm })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, choice, algorithm])
+  useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice, algorithm, splitPreset })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, choice, algorithm, splitPreset])
+  useEffect(() => { setModelCardOpen(false) }, [choice])
   useEffect(() => {
     const controller = new AbortController()
     trainingMethods(undefined, controller.signal).then(result => {
@@ -98,6 +102,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
         repositoryUrl,
         branch,
         strategy,
+        ...(!explicitModel ? { splitPreset } : {}),
         ...(explicitModel ? { modelId: choice } : choice === 'default' ? {} : { algorithm }),
       })
       projectsChanged()
@@ -110,20 +115,28 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     }
   }
 
-  return <form className="analysis-form" onSubmit={submit}>
+  return <><form className="analysis-form" onSubmit={submit}>
     <fieldset className="analysis-options" aria-label="分析选项">
       <div className="form-grid">
         <label>分支<Input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/></label>
-        <label>模型来源<select aria-label="模型来源" value={choice} onChange={event => setChoice(event.target.value)}>
-          <option value="auto">自动：数据足够就训练</option>
-          <option value="default" disabled={modelsLoaded && !modelError && !defaultUsable}>使用默认模型{defaultModel ? `：${defaultModel.name}` : ''}</option>
-          <option value="train">训练新模型</option>
-          {explicitModel && !modelsLoaded && !modelError ? <option value={choice} disabled>正在核对原选模型…</option> : null}
-          {explicitModel && modelsLoaded && !selected ? <option value={choice} disabled>原选模型（已不存在）</option> : null}
-          {models.length ? <optgroup label="指定已有模型">{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!model.repositoryPredictionSupported}>{model.name}{!model.enabled ? '（已停用）' : !model.repositoryPredictionSupported ? '（不可用）' : model.isDefault ? '（默认）' : ''}</option>)}</optgroup> : null}
-        </select></label>
+        <div className="model-source-field">
+          <label>模型来源<select aria-label="模型来源" value={choice} onChange={event => setChoice(event.target.value)}>
+            <option value="auto">自动：数据足够就训练</option>
+            <option value="default" disabled={modelsLoaded && !modelError && !defaultUsable}>使用默认模型{defaultModel ? `：${defaultModel.name}` : ''}</option>
+            <option value="train">训练新模型</option>
+            {explicitModel && !modelsLoaded && !modelError ? <option value={choice} disabled>正在核对原选模型…</option> : null}
+            {explicitModel && modelsLoaded && !selected ? <option value={choice} disabled>原选模型（已不存在）</option> : null}
+            {models.length ? <optgroup label="指定已有模型">{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!model.repositoryPredictionSupported}>{model.name}{!model.enabled ? '（已停用）' : !model.repositoryPredictionSupported ? '（不可用）' : model.isDefault ? '（默认）' : ''}</option>)}</optgroup> : null}
+          </select></label>
+          {explicitModel && selected ? <Button type="button" size="sm" onClick={() => setModelCardOpen(true)}>查看模型卡</Button> : null}
+        </div>
         {!explicitModel ? <label>训练方法<select aria-label="训练方法" value={algorithm} onChange={event => setAlgorithm(event.target.value)}>
           {methods.map(item => <option key={item.method} value={item.method} disabled={!item.available}>{item.name}{item.available ? '' : `（${item.reason ?? '不可用'}）`}</option>)}
+        </select></label> : null}
+        {!explicitModel ? <label>时间切分<select aria-label="时间切分预设" value={splitPreset} onChange={event => setSplitPreset(event.target.value)}>
+          <option value="temporal-70-15-15">70 / 15 / 15（默认）</option>
+          <option value="temporal-80-10-10">80 / 10 / 10</option>
+          <option value="temporal-60-20-20">60 / 20 / 20</option>
         </select></label> : null}
         {modelError ? <p className="field-error wide-field" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>重新读取</Button></p> : null}
         {methodsError ? <p className="field-error wide-field" role="alert">训练方法列表暂时不可用：{methodsError}</p> : null}
@@ -139,4 +152,6 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
       </div>
     </div>
   </form>
+  {explicitModel && selected ? <ModelCardDialog modelId={selected.modelId} open={modelCardOpen} onOpenChange={setModelCardOpen}/> : null}
+  </>
 }

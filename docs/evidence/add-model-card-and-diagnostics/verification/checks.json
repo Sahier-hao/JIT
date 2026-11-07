@@ -1,0 +1,49 @@
+{
+  "kind": "add-model-card-and-diagnostics-verification",
+  "date": "2026-11-07",
+  "baseCommit": "1948ec4",
+  "backend": {
+    "passed": 750,
+    "skipped": 1,
+    "failed": 0
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "lint": "passed-with-warnings",
+    "unitTests": {
+      "passed": 361,
+      "failed": 0,
+      "files": 47
+    },
+    "build": "passed-with-existing-chunk-warnings"
+  },
+  "playwright": {
+    "default": {
+      "passed": 18,
+      "skipped": 2,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "modelCardFocused": {
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "openspec": {
+    "changeStrict": "passed",
+    "allSpecsStrict": {
+      "passed": 31,
+      "failed": 0
+    }
+  },
+  "repository": {
+    "gitDiffCheck": "passed"
+  },
+  "modelEvidence": {
+    "packagedModels": 9,
+    "diagnosticReports": 9,
+    "currentBenefitReports": 9,
+    "identityMismatches": 0,
+    "originalModelArtifactsModified": false
+  }
+}

@@ -16,7 +16,7 @@ if not LOGGER.handlers:
 API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register', '/api/v1/experiment-runs',
                 '/api/v1/models', '/api/v1/predictions', '/api/v1/datasets', '/api/v1/commits',
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models',
-                '/api/v1/training-tasks', '/api/v1/training-methods'}
+                '/api/v1/model-cards', '/api/v1/training-tasks', '/api/v1/training-methods'}
 MESSAGES = {
     'TREND_SOURCE_CONFLICT': '同一提交的保存观测存在冲突，不能直接拼接；请选择单次固定分析',
     'TREND_SOURCE_UNAVAILABLE': '固定趋势来源已删除或内容发生变化，原视图不可用；请明确重新生成',
@@ -56,6 +56,7 @@ MESSAGES = {
     'SYNC_TIMEOUT': '同步超时，请缩小时间范围或提交上限后重试',
     'SYNC_INTERRUPTED': '服务重启时同步未完成，请重新同步',
     'SPLIT_INVALID': '数据无法完成时间切分，请调整时间范围或改用现成模型',
+    'SPLIT_POLICY_INVALID': '第一版只支持三个注册的时间切分预设',
     'OUTPUT_EXISTS': '同步产物目录已存在，请稍后重试',
     'REPOSITORY_UNKNOWN': '仓库不存在，请刷新仓库列表后重试',
     'REPOSITORY_ANALYSIS_UNKNOWN': '指定分析不属于该仓库或不存在',
@@ -71,6 +72,10 @@ MESSAGES = {
     'TASK_NOT_RETRYABLE': '只有失败、取消或中断的训练任务可以重试',
     'PR_BATCH_NOT_CANCELLABLE': '该批次已经结束，无法取消；已完成结果保持不变',
     'TASK_SERVICE_STOPPING': '训练服务正在停止，请稍后重试',
+    'DATASET_BUILD_TIMEOUT': '数据集构建超过执行时限，任务已停止',
+    'DATASET_BUILD_INTERRUPTED': '服务重启时数据集构建未完成，请显式重试',
+    'DATASET_BUILD_WORKER_EXITED': '数据集构建进程意外退出，请重试',
+    'DATASET_BUILD_CANCELLED': '数据集构建任务已取消',
     'REPORT_NOT_FOUND': '多项目实验报告不存在或已移除',
     'REPORT_INVALID': '多项目实验报告结构无效，无法展示',
 }
@@ -87,13 +92,16 @@ STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILA
           'DATASET_INVALID': 422, 'MODEL_NOT_CONVERGED': 422,
           'INPUT_LIMIT_EXCEEDED': 413, 'CONTEXT_MISMATCH': 409, 'INFERENCE_ERROR': 500,
           'REPOSITORY_UNAVAILABLE': 502, 'REPOSITORY_CHECK_TIMEOUT': 504, 'SYNC_TIMEOUT': 504, 'SYNC_INTERRUPTED': 503,
-          'SPLIT_INVALID': 422, 'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
+          'SPLIT_INVALID': 422, 'SPLIT_POLICY_INVALID': 422,
+          'OUTPUT_EXISTS': 409, 'CONFLICT_ACTIVE_SYNC': 409,
           'SYNC_NOT_ACTIVE': 409, 'SYNC_SERVICE_STOPPING': 503}
 STATUS.update({'TRAINING_TIMEOUT': 504, 'TRAINING_INTERRUPTED': 503,
                'TRAINING_WORKER_EXITED': 503, 'TASK_NOT_ACTIVE': 409,
                'TASK_NOT_RETRYABLE': 409, 'PR_BATCH_NOT_CANCELLABLE': 409, 'TASK_SERVICE_STOPPING': 503,
                'REPORT_NOT_FOUND': 404, 'REPORT_INVALID': 422,
-               'MODEL_DEPENDENCY_UNAVAILABLE': 503})
+               'MODEL_DEPENDENCY_UNAVAILABLE': 503,
+               'DATASET_BUILD_TIMEOUT': 504, 'DATASET_BUILD_INTERRUPTED': 503,
+               'DATASET_BUILD_WORKER_EXITED': 503, 'DATASET_BUILD_CANCELLED': 409})
 
 
 class RequestError(BaselineError):
@@ -104,13 +112,13 @@ class RequestError(BaselineError):
 
 def managed_path(path):
     if path == '/api/v1/project-events' or re.fullmatch(
-            r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/(?:refresh|analyze|count|\d+/analyze))?|pull-request-batches(?:/(?:latest|[^/]+(?:/(?:retry|cancel))?))?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?)', path):
+            r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/(?:refresh|analyze|count|\d+/analyze))?|pull-request-batches(?:/(?:latest|[^/]+(?:/(?:retry|cancel))?))?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?|dataset-builds(?:/[^/]+(?:/(?:cancel|retry))?)?)', path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
-        r'|/api/v1/datasets(?:/[^/]+(?:/versions)?)?'
+        r'|/api/v1/datasets(?:/[^/]+(?:/versions|/split-preview)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
         r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|comparison|analyses/[^/]+/dataset(?:/export/[^/]+)?))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))

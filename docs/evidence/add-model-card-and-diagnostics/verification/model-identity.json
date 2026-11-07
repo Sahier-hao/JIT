@@ -1,0 +1,65 @@
+[
+  {
+    "artifactKey": "baseline",
+    "artifactRunId": "2afd691e06462a8815e6a5b75e785977897063b074ec5f04346dc39d1aa30967",
+    "modelSha256": "d572e978570d2b2c23de51fadf1bc0ce1de57f191f72af77adcaa780f9d8c573",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "decision-tree-v1",
+    "artifactRunId": "1f1b88004aba163b72d435d658a87f6a75983f07a1495d4f18f2cbe3422429a5",
+    "modelSha256": "cc009164341339288342e5270deecd939cf3c235ae196904d737ac9ea6cfb730",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "random-forest-v1",
+    "artifactRunId": "e550127f580a6160035b4fa203b12e1e8113066fd46fec67b11a72d0d05af60d",
+    "modelSha256": "1f43634c4bd7c104dca8fc7c7d13a2aa8fca3dc087bf9471c4c05d90dc61dfe0",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "gaussian-naive-bayes-v1",
+    "artifactRunId": "ce0be0dae2b3a4a4addb84fea48e624bce1493876c5f6423f13dbb375dc8e311",
+    "modelSha256": "f9a19bebfe45175a53ea677aaabe3bd260f66747e5367b124f0485cd22d27e3a",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "gradient-boosting-v1",
+    "artifactRunId": "1f4becb109f9935a2fb61195eec053c873160380b4cb5c9d0691f7ae68b4c6b4",
+    "modelSha256": "1dcff2a895d9483b49c146cb5647f8d842f7734b9af0212509d39a5fc6ce1ded",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "mlp-v1",
+    "artifactRunId": "8424e86fa9fe03b414b3c0d71b5409d3eb9889299223278f81c2ca141dd1145f",
+    "modelSha256": "f55c6879ceab3eba6f8360c9e104c9d363a3523f933c46486fb61d581af82c67",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "tabular-resnet-v1",
+    "artifactRunId": "552262abd377fd9d7fc3b73a41568fa1c33b820c183edeb6e02c2011585e938a",
+    "modelSha256": "59d4372a65dcce70578a9d9ac1a8e9d1b0ffe5fe9209e391f5f88abcaacb06de",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "ft-transformer-v1",
+    "artifactRunId": "b088f8691af44eb2e00df3deaad7bb8b18a87f7045b0fb8fa51cf322a5043ed5",
+    "modelSha256": "8ba3163aa89223cb3a34a877f1f642c9544b26916c294c12d852576134965aad",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  },
+  {
+    "artifactKey": "wide-deep-v1",
+    "artifactRunId": "a316189b925d20ac584d53ceec097ba8c79ad187db5919cbf87bfa89c32e0e5c",
+    "modelSha256": "0d514f8c8418aa14357c78942da63fd1469362a943fbfc663d0c3cb2018fe8d9",
+    "diagnosticMatches": true,
+    "benefitMatches": true
+  }
+]

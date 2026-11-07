@@ -1,0 +1,12 @@
+{
+  "change": {
+    "id": "add-model-card-and-diagnostics",
+    "valid": true,
+    "issues": []
+  },
+  "specsStrict": {
+    "passed": 31,
+    "failed": 0
+  },
+  "version": "1.0"
+}

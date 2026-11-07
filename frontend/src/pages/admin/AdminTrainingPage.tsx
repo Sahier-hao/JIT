@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import {
   ACTIVE_TASK_STATUSES, cancelTrainingTask, fetchTrainingTask, fetchTrainingTasks,
-  retryTrainingTask, formatDate, valueLabel, type TrainingTask,
+  retryTrainingTask, formatDate, valueLabel, type Row, type TrainingTask,
 } from '../../adminContracts'
 import { EmptyState, LoadingNotice } from '../../Feedback'
 import { Button } from '../../ui/controls'
@@ -130,10 +130,15 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>原产物运行</dt><dd><code>{valueLabel(task.artifactRunId)}</code></dd></div>
       <div><dt>模型</dt><dd><code>{valueLabel(task.modelId)}</code></dd></div>
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
+      <div><dt>时间切分预设</dt><dd><code>{task.splitPreset}</code></dd></div>
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
+      {task.splitRule ? <div><dt>切分规则</dt><dd>{task.splitRule}</dd></div> : null}
+      {task.dataScale ? <div><dt>数据规模</dt><dd>{valueLabel(task.dataScale.records)} 条 · {valueLabel(task.dataScale.featureWidth)} 维</dd></div> : null}
+      {task.trainingPerformance ? <div><dt>训练性能</dt><dd>{typeof task.trainingPerformance.durationSeconds === 'number' ? `${task.trainingPerformance.durationSeconds.toFixed(2)} 秒` : '耗时未记录'} · {typeof task.trainingPerformance.recordsPerSecond === 'number' ? `${task.trainingPerformance.recordsPerSecond.toFixed(1)} 条/秒` : '吞吐未记录'}</dd></div> : null}
       {task.classPolicy ? <div><dt>训练分区策略</dt><dd><code>{JSON.stringify(task.classPolicy)}</code></dd></div> : null}
       {task.classPolicySummary ? <div><dt>策略前后数量</dt><dd><code>{JSON.stringify(task.classPolicySummary)}</code></dd></div> : null}
     </dl>
+    {task.metricsByPartition ? <TrainingPartitions metrics={task.metricsByPartition}/> : null}
     {task.classPolicy ? <p className="admin-report-meta">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
     <dl className="admin-facts">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
@@ -143,4 +148,18 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>完成时间</dt><dd>{formatDate(task.completedAt)}</dd></div>
     </dl>
   </section>
+}
+
+function TrainingPartitions({ metrics }: { metrics: Row }) {
+  const partitions = [
+    ['train', '拟合诊断'],
+    ['validation', '模型选择背景'],
+    ['test', '冻结泛化评价'],
+  ] as const
+  return <section className="admin-training-partitions"><h2>分区指标</h2><div className="admin-detail-grid">
+    {partitions.map(([name, label]) => {
+      const part = metrics[name]
+      return <section key={name}><h2>{label}</h2>{part && typeof part === 'object' ? <MetricGrid metrics={part as Row}/> : <p className="quiet-empty">未记录</p>}</section>
+    })}
+  </div></section>
 }

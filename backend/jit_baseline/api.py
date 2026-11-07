@@ -22,10 +22,12 @@ def _supplied_directory():
 
 
 def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
-               sync_service=None, dataset_root=None, training_service=None):
+               sync_service=None, dataset_root=None, training_service=None,
+               dataset_build_service=None):
     directory = Path(directory) if directory is not None else _supplied_directory()
     owns_sync = sync_service is None
     owns_training = training_service is None
+    owns_dataset_builds = dataset_build_service is None
 
     @asynccontextmanager
     async def lifespan(app):
@@ -49,6 +51,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                 await run_in_threadpool(app.state.sync.close)
             if owns_training:
                 await run_in_threadpool(app.state.training.close)
+            if owns_dataset_builds:
+                await run_in_threadpool(app.state.dataset_builds.close)
 
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     @app.get('/api/health')
@@ -79,9 +83,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from .prediction import PredictionService
     prediction_service = PredictionService(catalog)
     from .sync import SyncService
+    allow_local = (bool(getattr(sync_service, 'allow_local', False))
+                   if sync_service is not None
+                   else os.environ.get('JIT_SYNC_ALLOW_LOCAL') == '1')
     if sync_service is None:
         # 本地仓库只用于验收与测试；默认只接受公开 HTTP(S) 地址。
-        allow_local = os.environ.get('JIT_SYNC_ALLOW_LOCAL') == '1'
         sync_service = SyncService(storage, catalog, artifact_root=catalog.root,
                                    dataset_root=registry_root, allow_local=allow_local)
     sync_service.recover()
@@ -92,12 +98,24 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             storage, catalog, artifact_root=catalog.root, dataset_root=registry_root)
     training_service.recover()
     app.state.training = training_service
+    from .dataset_builds import DatasetBuildService
+    if dataset_build_service is None:
+        dataset_build_service = DatasetBuildService(
+            storage, registry_root, allow_local=allow_local)
+    dataset_build_service.recover()
+    app.state.dataset_builds = dataset_build_service
     from .multi_project_reports import MultiProjectReportService
     multi_project_reports = MultiProjectReportService()
     app.state.multi_project_reports = multi_project_reports
     from .benefit_reports import BenefitReportService
     benefit_reports = BenefitReportService()
     app.state.benefit_reports = benefit_reports
+    from .model_diagnostics import DiagnosticReportService
+    diagnostics = DiagnosticReportService()
+    app.state.model_diagnostics = diagnostics
+    from .model_cards import ModelCardService
+    model_cards = ModelCardService(catalog, diagnostics, benefit_reports)
+    app.state.model_cards = model_cards
     from .repository_updates import RepositoryUpdates
     updates = RepositoryUpdates(sync_service)
     app.state.updates = updates
@@ -364,7 +382,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/models/{model_id}')
     def model_detail(model_id: str):
-        return catalog.detail(model_id)
+        return dict(catalog.detail(model_id), card=model_cards.get(model_id))
+
+    @app.get('/api/v1/model-cards/{model_id}')
+    def model_card(model_id: str):
+        return model_cards.get(model_id)
 
     @app.get('/api/v1/repository-models')
     def repository_models():
@@ -517,6 +539,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             version['references'] = store.dataset_references(storage, version['version'])
         return view
 
+    @app.get('/api/admin/datasets/{dataset_version}/split-preview')
+    def dataset_split_preview_route(dataset_version: str, preset: str | None = None):
+        from .split_preview import dataset_split_preview
+        return dataset_split_preview(registry_root, dataset_version, preset)
+
     @app.get('/api/v1/commits')
     def commit_list(version: str, module: str | None = None, limit: int = 100, offset: int = 0):
         if storage.dataset(version) is None:
@@ -618,6 +645,45 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repositories/{repository_id}/syncs')
     def repository_syncs(repository_id: str, limit: int = 20, offset: int = 0):
         return sync_service.repository_syncs(repository_id, limit, offset, exclude_pr=True)
+
+    @app.post('/api/v1/repositories/{repository_id}/dataset-builds')
+    async def create_dataset_build(repository_id: str, request: Request):
+        result, created = await run_in_threadpool(
+            dataset_build_service.create,
+            repository_id,
+            await read_object(request),
+            request.state.request_id,
+            created_by=getattr(request.state, 'admin_username', None) or 'project',
+        )
+        request.state.business_ids = (None, None, result.get('datasetVersion'))
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/repositories/{repository_id}/dataset-builds')
+    def dataset_builds(repository_id: str, limit: int = 20, offset: int = 0):
+        return dataset_build_service.pages(repository_id, limit, offset)
+
+    @app.get('/api/v1/repositories/{repository_id}/dataset-builds/{task_id}')
+    def dataset_build(repository_id: str, task_id: str):
+        return dataset_build_service.get(repository_id, task_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/dataset-builds/{task_id}/cancel')
+    def cancel_dataset_build(repository_id: str, task_id: str):
+        result = dataset_build_service.cancel(repository_id, task_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
+
+    @app.post('/api/v1/repositories/{repository_id}/dataset-builds/{task_id}/retry')
+    async def retry_dataset_build(repository_id: str, task_id: str, request: Request):
+        body = await request.body()
+        if body and await read_object(request):
+            raise RequestError('INPUT_INVALID')
+        result, created = await run_in_threadpool(
+            dataset_build_service.retry,
+            repository_id,
+            task_id,
+            request.state.request_id,
+            created_by=getattr(request.state, 'admin_username', None) or 'project',
+        )
+        return JSONResponse(result, status_code=202 if created else 200)
 
     @app.get('/api/v1/repositories/{repository_id}/analyses/{sync_id}/dataset')
     def project_analysis_dataset(repository_id: str, sync_id: str):

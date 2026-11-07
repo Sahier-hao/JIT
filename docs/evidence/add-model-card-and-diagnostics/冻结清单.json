@@ -1,0 +1,68 @@
+{
+  "copiedFromWorkspace": [
+    "browser-results.json",
+    "frontend-vitest.json",
+    "screenshots/model-card-admin-1440.png",
+    "screenshots/model-card-admin-390.png",
+    "screenshots/model-card-project-1280.png",
+    "verification/browser-results.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 12,
+  "files": [
+    {
+      "path": "browser-results.json",
+      "sha256": "558641d1aa2ed54ccf64b5e34cfc99d233036eb1c16899f312737d71f10ac00a"
+    },
+    {
+      "path": "frontend-vitest.json",
+      "sha256": "abbcf47638115900f57faa76dd7566912cfafbc5a2f2237af43d72c4356ae15d"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f368c6cc3b8e0dfe762b7afbe9eb4d4fd00e752e5b32b1e6348aa10fca0b7b9b"
+    },
+    {
+      "path": "screenshots/model-card-admin-1440.png",
+      "sha256": "e6c29d2a0d55e8eba16a0111507030b339e4d31042d948fa0d875a06b62bc683"
+    },
+    {
+      "path": "screenshots/model-card-admin-390.png",
+      "sha256": "6250a0c3383df5aae12fff2d3f5a92c568d6bf91e2544394f4bf5245bdc4948d"
+    },
+    {
+      "path": "screenshots/model-card-project-1280.png",
+      "sha256": "6caeaad3c0a8f24fce12f00bed315a3bd3bf62e4d7fa158ed7a52ceaf043a775"
+    },
+    {
+      "path": "verification/backend-tests.txt",
+      "sha256": "a0bb245da07af4e49e02b201e7a6302e9ab9c841b0cfc48f2f5b02903d94171c"
+    },
+    {
+      "path": "verification/browser-results.json",
+      "sha256": "558641d1aa2ed54ccf64b5e34cfc99d233036eb1c16899f312737d71f10ac00a"
+    },
+    {
+      "path": "verification/checks.json",
+      "sha256": "aa0fd54db641a12f7ea785ae69a4544e75ac221324b37e6478075658a08d56d3"
+    },
+    {
+      "path": "verification/frontend-vitest.json",
+      "sha256": "abbcf47638115900f57faa76dd7566912cfafbc5a2f2237af43d72c4356ae15d"
+    },
+    {
+      "path": "verification/model-identity.json",
+      "sha256": "17acd9d123c663376c46ba1eb6c3990fbb94ae219f61fe6282ae2817dc206b03"
+    },
+    {
+      "path": "verification/openspec-validation.json",
+      "sha256": "0870f1487b09f7802d0592ec11b6885b52b355a779a11dde7376485313d718c0"
+    }
+  ],
+  "frozenUtc": "2026-11-07T02:01:18.569524+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "dbae6ce9a23c5457c1106a64c25f9b2174c30db2be04203fc587a6e61dcce289",
+  "workspace": "docs/evidence/_run/add-model-card-and-diagnostics"
+}

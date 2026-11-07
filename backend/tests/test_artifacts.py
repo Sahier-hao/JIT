@@ -168,6 +168,72 @@ def test_real_manifest_snapshot_and_reference_are_one_context(real_run):
     assert manifest["config"]["features"] == ["ns", "nd", "nf", "ent", "la", "ld"]
 
 
+def test_new_run_records_partition_diagnostics_data_scale_and_stable_metrics(real_run):
+    from jit_baseline.artifacts import (PARTITION_DIAGNOSTICS_VERSION, Snapshot,
+                                       partition_diagnostics)
+    from jit_baseline.metrics import evaluate
+    from jit_baseline.model import predict_risks
+    summary = json.loads((real_run / "summary.json").read_text(encoding="utf-8"))
+    manifest = json.loads((real_run / "manifest.json").read_text(encoding="utf-8"))
+    assert summary["diagnosticsVersion"] == PARTITION_DIAGNOSTICS_VERSION
+    assert manifest["config"]["diagnosticsVersion"] == PARTITION_DIAGNOSTICS_VERSION
+    assert set(summary["metricsByPartition"]) == {"train", "validation", "test"}
+    assert summary["metricsByPartition"]["test"] == summary["metrics"]
+    assert summary["dataScale"]["records"] == sum(part["count"] for part in summary["split"].values())
+    assert summary["dataScale"]["featureWidth"] == 6
+    assert summary["trainingPerformance"]["trainingRecords"] == summary["split"]["train"]["count"]
+    assert summary["trainingPerformance"]["durationSeconds"] >= 0
+    for name in ("train", "validation", "test"):
+        assert summary["metricsByPartition"][name]["counts"]["records"] == summary["split"][name]["count"]
+
+    snapshot = Snapshot.load(real_run)
+    split = json.loads((real_run / "split.json").read_text(encoding="utf-8"))["partitions"]
+    labels = {row["id"]: row["label"] for row in read_labels(real_run)}
+    labeled_records = [dict(row, label=labels[row["id"]]) for row in snapshot.records]
+    # 诊断按分区原始唯一成员计数；重复采样不是另一份样本。
+    first = partition_diagnostics(snapshot.model, {"train": labeled_records,
+                                                   "validation": labeled_records,
+                                                   "test": labeled_records},
+                                  snapshot.schema, "metric-set-v1")
+    second = partition_diagnostics(snapshot.model, {"train": labeled_records,
+                                                    "validation": labeled_records,
+                                                    "test": labeled_records},
+                                   snapshot.schema, "metric-set-v1")
+    assert first == second
+    assert all(part["counts"]["records"] == len(labeled_records) for part in first.values())
+
+    assert evaluate(labeled_records, predict_risks(snapshot.model, labeled_records, snapshot.schema),
+                    "metric-set-v1") == summary["metricsByPartition"]["test"]
+    assert len(split["test"]["ids"]) == summary["split"]["test"]["count"]
+
+
+def read_labels(run):
+    return json.loads((run / "test-labels.json").read_text(encoding="utf-8"))
+
+
+def test_switching_split_preset_changes_run_identity_and_frozen_members(real_run, tmp_path):
+    from jit_baseline.artifacts import build_run
+
+    first_summary = json.loads((real_run / "summary.json").read_text(encoding="utf-8"))
+    first_split = json.loads((real_run / "split.json").read_text(encoding="utf-8"))
+    assert first_summary["splitPolicy"]["id"] == "temporal-70-15-15"
+    target = tmp_path / "split-80"
+    manifest = build_run(
+        BACKEND / "data/openstack", target,
+        schema=first_summary["featureSchema"]["name"],
+        algorithm=first_summary["algorithmVersion"],
+        metric_set=first_summary["metricSet"],
+        split_preset="temporal-80-10-10",
+    )
+    second_summary = json.loads((target / "summary.json").read_text(encoding="utf-8"))
+    second_split = json.loads((target / "split.json").read_text(encoding="utf-8"))
+    assert manifest["runId"] != first_summary["runId"]
+    assert second_summary["splitPolicy"]["id"] == "temporal-80-10-10"
+    assert second_summary["splitPolicy"]["memberSha256"] != first_summary["splitPolicy"]["memberSha256"]
+    assert second_split["policy"] == second_summary["splitPolicy"]
+    assert second_split["boundaries"] != first_split["boundaries"]
+
+
 def test_frozen_legacy_baseline_artifacts_still_load_and_reproduce():
     """仓库内冻结的旧六字段产物必须在当前代码下可加载（joblib 兼容入口，见 model.log_counts）。"""
     from jit_baseline.artifacts import Snapshot

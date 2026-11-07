@@ -212,6 +212,16 @@ it('creates a training task from a dataset detail page', async () => {
     if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [DATASET] })
     if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [{ method: 'logistic-regression-l2-v1', name: '逻辑回归' }], readiness: READINESS })
     if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (String(path).includes('/split-preview?')) return Response.json({
+      datasetVersion: TASK.datasetVersion, schemaName: DATASET.versions[0].schema,
+      preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },
+      timezone: 'UTC', datasetRecords: 4210, available: true, reason: null,
+      partitions: {
+        train: { records: 2947, positives: 900, start: '2024-01-01T00:00:00Z', end: '2024-08-01T00:00:00Z' },
+        validation: { records: 632, positives: 200, start: '2024-08-01T00:00:00Z', end: '2024-10-01T00:00:00Z' },
+        test: { records: 631, positives: 201, start: '2024-10-01T00:00:00Z', end: '2024-12-31T00:00:00Z' },
+      },
+    })
     if (String(path).endsWith('/api/v1/training-tasks') && options?.method === 'POST') {
       return Response.json({ ...TASK, status: 'queued', stage: 'queued', metrics: null, runId: null, modelId: null, artifactRunId: null })
     }

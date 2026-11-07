@@ -17,14 +17,18 @@ from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, T
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
-from .model import apply_class_policy, feature_matrix, fit_model, predict_risks, temporal_split
+from .model import apply_class_policy, feature_matrix, fit_model, predict_risks
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
+from .splits import DEFAULT_PRESET, resolve_preset, rule_text, split_records
 
 DEFAULT_RUN = BACKEND / "artifacts/baseline"
+PARTITION_DIAGNOSTICS_VERSION = "partition-diagnostics-v1"
+PARTITIONS = ("train", "validation", "test")
 CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json", "model.joblib", "reference-predictions.json", "metrics.json")
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
-                 "schemas.py", "algorithms.py", "errors.py", "deep.py", "trends.py")
+                 "schemas.py", "algorithms.py", "errors.py", "deep.py", "trends.py",
+                 "splits.py")
 KAMEI14_FIELDS = ("ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix",
                   "ndev", "age", "nuc", "exp", "rexp", "sexp")
 # 每个运行都记录的基础依赖；方法可在其声明里追加自己需要的包（PDB-11）。
@@ -152,8 +156,47 @@ def limitations(schema):
     return [first, *LIMITATIONS]
 
 
+def partition_diagnostics(pipeline, split, schema, metric_set):
+    """按原始唯一分区成员评价；训练采样副本不进入分母。"""
+    result = {}
+    for name in PARTITIONS:
+        records = split[name]
+        risks = predict_risks(pipeline, records, schema)
+        result[name] = evaluate(records, risks, metric_set)
+    return result
+
+
+def data_scale(summary_split, schema, *, total_records, trainable_records):
+    return {
+        "records": total_records,
+        "trainableRecords": trainable_records,
+        "featureWidth": schema.input_width(),
+        "expertFeatureWidth": len(schema.in_model_names()),
+        "semanticFeatureWidth": schema.semantic_dim() if schema.semantic else 0,
+        "partitions": {
+            name: {
+                "records": summary_split[name]["count"],
+                "positives": summary_split[name]["positiveCount"],
+                "negatives": summary_split[name]["count"] - summary_split[name]["positiveCount"],
+            }
+            for name in PARTITIONS
+        },
+    }
+
+
+def training_performance(duration_seconds, split):
+    duration = max(float(duration_seconds), 0.0)
+    records = len(split["train"])
+    return {
+        "durationSeconds": duration,
+        "trainingRecords": records,
+        "recordsPerSecond": round(records / duration, 6) if duration > 0 else None,
+    }
+
+
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
-              holdout=None, embedding_dir=None, model_name=None, class_policy=None):
+              holdout=None, embedding_dir=None, model_name=None, class_policy=None,
+              split_preset=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
@@ -242,20 +285,27 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         trainable = [record for record in records if record["epoch"] < cutoff]
         if not trainable:
             raise BaselineError("SPLIT_INVALID", "holdout 之前没有可训练记录，无法完成时间切分")
-    split, boundaries = temporal_split(trainable)
+    split_preset = resolve_preset(split_preset)
+    split, boundaries, split_policy = split_records(trainable, split_preset)
     started = time.perf_counter()
     _, _, class_summary = apply_class_policy(split["train"], class_policy)
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
                          class_policy=class_policy)
     training_seconds = round(time.perf_counter() - started, 6)
+    partitioned_metrics = partition_diagnostics(pipeline, split, schema, metric_set)
     risks = predict_risks(pipeline, split["test"], schema)
-    metrics = evaluate(split["test"], risks, metric_set)
+    metrics = partitioned_metrics["test"]
     # 时间桶聚合在离线产生（design D1/D10）：产物里只有聚合值，服务不必读测试标签。
     trend = trends.build_trend_buckets(split, risks)
     cohort = dict(dataset["cohort"]) if dataset else dict(COHORT)
     stats = {key: {"count": len(part), "positiveCount": sum(r["label"] for r in part),
                    "start": part[0]["time"], "end": part[-1]["time"], "ids": [r["id"] for r in part]}
              for key, part in split.items()}
+    summary_split = {key: {k: v for k, v in stat.items() if k != "ids"}
+                     for key, stat in stats.items()}
+    scale = data_scale(summary_split, schema, total_records=len(records),
+                       trainable_records=len(trainable))
+    performance = training_performance(training_seconds, split)
     if dataset_manifest is not None:
         label_rule = dataset.get("labelRule") or "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。"
         source = {"publisher": dataset["publisher"], "revision": dataset["revision"],
@@ -271,10 +321,15 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     # No usable manifest exists until every artifact is written and checked.
     output.mkdir(parents=True)
     write_json(output / "source.json", source)
-    split_rule = "UTC distinct timestamps, floor(0.70G), floor(0.85G)"
+    split_rule = rule_text(split_preset)
     if holdout is not None:
         split_rule += f"; only records with epoch < {int(holdout)}"
-    write_json(output / "split.json", {"boundaries": boundaries, "rule": split_rule, "partitions": stats})
+    write_json(output / "split.json", {
+        "boundaries": boundaries,
+        "rule": split_rule,
+        "policy": split_policy,
+        "partitions": stats,
+    })
     keys = ["id", "time", "epoch", "sourceRow", "metrics", "features"]
     if schema.semantic:
         keys.append("semantic")
@@ -288,7 +343,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": algorithm_version,
               "metricSet": metric_set,
               "datasetVersion": dataset_version, "features": fields, "cohort": cohort,
+              "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
               "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
+              "splitPolicy": split_policy,
+              "splitPreset": split_preset,
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     if declared:
         config["datasetManifest"] = {"path": manifest_relative(manifest_file),
@@ -307,8 +365,11 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         label = {"id": label["id"], "name": model_name.strip()}
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
-               "split": {key: {k: v for k, v in stat.items() if k != "ids"} for key, stat in stats.items()},
-               "metrics": metrics, "threshold": THRESHOLD, "protocolVersion": schema.name,
+               "split": summary_split, "splitPolicy": split_policy, "splitRule": split_rule,
+               "metrics": metrics, "metricsByPartition": partitioned_metrics,
+               "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
+               "dataScale": scale, "trainingPerformance": performance,
+               "threshold": THRESHOLD, "protocolVersion": schema.name,
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
                "model": {"id": label["id"], "name": label["name"]},
                "trainingSeconds": training_seconds,
@@ -328,6 +389,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         command += f" --dataset-manifest {Path(dataset_manifest).as_posix()}"
     if holdout is not None:
         command += f" --holdout {int(holdout)}"
+    if split_preset != DEFAULT_PRESET:
+        command += f" --split-preset {split_preset}"
     if embedding_dir is not None:
         command += f" --embedding-dir {Path(embedding_dir).as_posix()}"
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
@@ -444,6 +507,13 @@ class Snapshot:
                 raise BaselineError("ARTIFACT_INVALID", "摘要来源不匹配")
             if metrics != summary["metrics"] or summary["runId"] != manifest["runId"] or summary["datasetVersion"] != manifest["config"]["datasetVersion"] or summary["modelSha256"] != manifest["config"]["modelSha256"]:
                 raise BaselineError("ARTIFACT_INVALID", "摘要与运行身份不匹配")
+            if config.get("splitPolicy") is not None:
+                recorded_policy = partitions.get("policy")
+                if (summary.get("splitPolicy") != config["splitPolicy"]
+                        or recorded_policy != config["splitPolicy"]
+                        or config.get("splitPreset") != config["splitPolicy"].get("id")
+                        or summary.get("splitRule") != partitions.get("rule")):
+                    raise BaselineError("ARTIFACT_INVALID", "切分策略与运行身份不匹配")
             records = inputs["records"]
             expected_ids = partitions["partitions"]["test"]["ids"]
             if not records or [r["id"] for r in records] != expected_ids or len(set(expected_ids)) != len(expected_ids) or len(records) != summary["split"]["test"]["count"] or len(records) != metrics["counts"]["records"]:
