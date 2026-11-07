@@ -340,13 +340,17 @@ class CatalogStorage:
             evidence = self._evidence(db, version, commit_id)
         return self._commit_row(row, features[commit_id], meta, evidence)
 
-    def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False):
+    def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False, version=None):
         """按已经持久化的文件或模块引用查提交（CMP-03）；测试用查询入口。"""
         with self.connection() as db:
             query = ('SELECT c.* FROM commit_record c JOIN modified_entity e '
                      'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
-                     'WHERE e.entity_type=? AND e.entity_value=? ORDER BY c.author_time, c.commit_id')
+                     'WHERE e.entity_type=? AND e.entity_value=?')
             params = [entity_type, entity_value]
+            if version is not None:
+                query += ' AND c.dataset_version=?'
+                params.append(version)
+            query += ' ORDER BY c.author_time, c.commit_id'
             if limit is not None:
                 query += ' LIMIT ? OFFSET ?'
                 params.extend((limit, offset))
@@ -358,13 +362,16 @@ class CatalogStorage:
             meta = self._label_meta(db, rows[0]['dataset_version']) if rows else None
         return [self._commit_row(row, features[row['commit_id']], meta) for row in rows]
 
-    def count_by_entity(self, entity_type, entity_value):
+    def count_by_entity(self, entity_type, entity_value, version=None):
         with self.connection() as db:
-            return db.execute(
-                'SELECT COUNT(*) FROM commit_record c JOIN modified_entity e '
-                'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
-                'WHERE e.entity_type=? AND e.entity_value=?',
-                (entity_type, entity_value)).fetchone()[0]
+            query = ('SELECT COUNT(*) FROM commit_record c JOIN modified_entity e '
+                     'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
+                     'WHERE e.entity_type=? AND e.entity_value=?')
+            params = [entity_type, entity_value]
+            if version is not None:
+                query += ' AND c.dataset_version=?'
+                params.append(version)
+            return db.execute(query, params).fetchone()[0]
 
     def import_runs(self, version):
         with self.connection() as db:

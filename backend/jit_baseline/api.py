@@ -553,8 +553,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         if offset < 0:
             raise RequestError('INPUT_INVALID', field='offset')
         if module:
-            total = storage.count_by_entity('module', module)
-            records = storage.commits_by_entity('module', module, limit, offset, summary=True)
+            total = storage.count_by_entity('module', module, version=version)
+            records = storage.commits_by_entity('module', module, limit, offset, summary=True, version=version)
         else:
             total = storage.count_commits(version)
             records = storage.commits(version, limit, offset, summary=True)

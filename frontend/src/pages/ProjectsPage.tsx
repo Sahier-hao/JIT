@@ -117,7 +117,7 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
               <span><b>{repo.commitCount.toLocaleString()}</b> 个已分析提交</span>
               {repo.viewSyncId ? <span><b>{repo.distribution.high.toLocaleString()}</b> 个高风险</span> : null}
             </div>
-            <div className="project-card-bottom"><span>{repo.viewSyncId ? '打开项目' : '开始分析'}</span><Icon name="arrow"/></div>
+            <div className="project-card-bottom"><span>打开项目</span><Icon name="arrow"/></div>
             <small>最近请求 · {repo.latestSyncAt ? displayTime(repo.latestSyncAt) : '尚未分析'}</small>
           </button>
           <div className="project-card-tools">

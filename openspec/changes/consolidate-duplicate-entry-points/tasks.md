@@ -2,18 +2,18 @@
 
 ## 1. 分析记录与创建入口
 
-- [ ] 1.1 非当前完成记录的可见标题改为「设为当前结果」，状态移到元信息；切换成功后显示 `role=status` 提示；更新 `ProjectPage` 测试。
-- [ ] 1.2 概览删除「发起第一次分析」和底部 callout，只保留已有结果时的「查看分析结果」；更新 `RepositoryOverview` 相关测试。
-- [ ] 1.3 项目卡片无结果时的文案改为「打开项目」，与点击去向一致；更新 `ProjectsPage` 测试。
+- [x] 1.1 非当前完成记录的可见标题改为「设为当前结果」，状态移到元信息；切换成功后显示 `role=status` 提示；更新 `ProjectPage` 测试。
+- [x] 1.2 概览删除「发起第一次分析」和底部 callout，只保留已有结果时的「查看分析结果」；更新 `RepositoryOverview` 相关测试。
+- [x] 1.3 项目卡片无结果时的文案改为「打开项目」，与点击去向一致；更新 `ProjectsPage` 测试。
 
 ## 2. 构建数据集与轮询
 
-- [ ] 2.1 完成态按钮改为「进入管理工作区查看并训练」，加一行「需要管理员会话；不会自动训练」；更新 `DatasetBuildDialog` 测试。
-- [ ] 2.2 `RepositoryUpdates` 轮询改为固定 15 秒，不再在分析进行时使用 1.5 秒；验证分析进度仍由项目页轮询刷新。
+- [x] 2.1 完成态按钮改为「进入管理工作区查看并训练」，加一行「需要管理员会话；不会自动训练」；更新 `DatasetBuildDialog` 测试。
+- [x] 2.2 `RepositoryUpdates` 轮询改为固定 15 秒，不再在分析进行时使用 1.5 秒；验证分析进度仍由项目页轮询刷新。
 
 ## 3. 提交查询版本条件
 
-- [ ] 3.1 `count_by_entity` / `commits_by_entity` 接受可选 `dataset_version`，`/api/v1/commits` 始终传入版本；补后端测试覆盖同名模块跨版本。
+- [x] 3.1 `count_by_entity` / `commits_by_entity` 接受可选 `dataset_version`，`/api/v1/commits` 始终传入版本；补后端测试覆盖同名模块跨版本。
 
 ## 4. PR 审查
 

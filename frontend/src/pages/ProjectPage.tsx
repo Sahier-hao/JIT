@@ -86,10 +86,16 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const refreshRecords = records.retry
   const [recordError, setRecordError] = useState('')
   const [selectingId, setSelectingId] = useState('')
+  const [currentNotice, setCurrentNotice] = useState('')
   const [cancelBusy, setCancelBusy] = useState(false)
   const cancelLock = useRef(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const deleteLock = useRef(false)
+  useEffect(() => {
+    if (!currentNotice) return
+    const timer = window.setTimeout(() => setCurrentNotice(''), 6000)
+    return () => window.clearTimeout(timer)
+  }, [currentNotice])
   const [detailJob, setDetailJob] = useState<SyncView | null>(null)
   const [deleteJob, setDeleteJob] = useState<SyncView | null>(null)
   const [cancelJob, setCancelJob] = useState<SyncView | null>(null)
@@ -141,7 +147,9 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       await selectRepositoryView(repositoryId, job.syncId)
       detail.retry()
       records.retry()
+      setCurrentNotice(`当前结果已切换为 ${job.syncId.slice(0, 7)}`)
     } catch (failure) {
+      setCurrentNotice('')
       setRecordError(failure instanceof Error ? failure.message : '设置当前结果失败')
     } finally {
       setSelectingId('')
@@ -235,7 +243,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     </nav>
 
     {activeTab === 'overview' ? <>
-      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onStartAnalysis={() => analyzeBranch(repository.defaultBranch ?? '')} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
+      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
     </> : null}
     {activeTab === 'analyses' ? <>
     {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={<nav className="analysis-view-switch" aria-label="分析视图">
@@ -252,6 +260,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     <div className="project-workspace">
       <aside className="pw-rail" aria-label="分析记录">
         <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
+        {currentNotice ? <p className="record-notice" role="status">{currentNotice}</p> : null}
         {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
         {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
         {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
@@ -369,8 +378,9 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
   const completed = job.status === 'completed'
   const isPR = job.sourceKind === 'pr'
   const pendingCancel = active && Boolean(job.cancelRequestedAt)
-  const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
-  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}${isPR ? ' · PR 固定版本' : ''}`
+  const switchable = completed && !current && !isPR
+  const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : switchable ? '设为当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
+  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}${switchable ? ' · 已完成' : ''}${isPR ? ' · PR 固定版本' : ''}`
   const shortId = job.syncId.slice(0, 7)
   return <article className={`analysis-job ${current ? 'is-current' : ''}`} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
     <span className="record-marker" aria-hidden="true"/>

@@ -240,6 +240,24 @@ def test_commits_by_entity_support_pagination(tmp_path):
     assert store.count_by_entity('module', 'absent') == 0
 
 
+def test_commits_by_entity_isolates_dataset_version(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+    store = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    store.initialize()
+    _seed_commits(store, version='demo-v1')
+    _seed_commits(store, version='demo-v2', count=2)
+    with store.connection(write=True) as db:
+        for version, count in (('demo-v1', 3), ('demo-v2', 2)):
+            for index in range(count):
+                db.execute('INSERT INTO modified_entity (dataset_version, commit_id, entity_type, entity_value) '
+                           'VALUES (?,?,?,?)', (version, f'{index:040x}', 'module', 'nova'))
+    assert store.count_by_entity('module', 'nova') == 5
+    assert store.count_by_entity('module', 'nova', version='demo-v1') == 3
+    records = store.commits_by_entity('module', 'nova', version='demo-v2')
+    assert len(records) == 2
+    assert {row['datasetVersion'] for row in records} == {'demo-v2'}
+
+
 def test_upgrade_adds_batch_scope_and_cancel_columns_without_changing_old_rows(tmp_path):
     from jit_baseline.catalog_storage import CatalogStorage, MIGRATIONS
     database = tmp_path / 'batches.sqlite3'

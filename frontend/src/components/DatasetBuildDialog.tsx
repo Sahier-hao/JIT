@@ -111,7 +111,7 @@ export function DatasetBuildDialog({
       {task && active ? <Button danger loading={busy} onClick={() => void cancel()}>取消任务</Button> : null}
       {task && ['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button loading={busy} onClick={() => void retry()}>按原参数重试</Button> : null}
       {task?.status === 'completed' && task.datasetName && task.datasetVersion ? <>
-        <Button onClick={openDataset}>查看数据集并选择训练</Button>
+        <Button onClick={openDataset}>进入管理工作区查看并训练</Button>
       </> : <Button variant="primary" loading={busy} disabled={!branch.trim() || active} onClick={() => void submit()}>{task ? '用当前参数重新构建' : '开始构建'}</Button>}
     </>}
   >
@@ -138,7 +138,7 @@ export function DatasetBuildDialog({
             {task.quality ? <div><dt>纳入 / 正例</dt><dd>{String(task.quality.includedRows ?? '未知')} / {String(task.quality.positiveLabels ?? '未知')}</dd></div> : null}
             <div><dt>来源版本</dt><dd><code>{task.headCommit?.slice(0, 12) ?? '未记录'}</code></dd></div>
           </dl>
-          <p className="status-note">数据集已冻结。是否训练由你在数据集详情中明确选择；系统不会自动训练或替换当前模型。</p>
+          <p className="status-note">数据集已冻结。查看数据集详情并选择训练需要管理员会话；系统不会自动训练或替换当前模型。</p>
         </> : null}
       </section> : null}
       <details>

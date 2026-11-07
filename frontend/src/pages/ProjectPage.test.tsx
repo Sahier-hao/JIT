@@ -260,6 +260,7 @@ it('switches the current result from an older completed record', async () => {
   await waitFor(() => expect(selected).not.toBeNull())
   expect(selected).toEqual({ viewSyncId: OTHER })
   await waitFor(() => expect(screen.getAllByText('当前结果').length).toBeGreaterThan(0))
+  expect(await screen.findByText(/当前结果已切换为/)).toBeVisible()
 })
 
 it('deletes an ended analysis record from the list', async () => {
@@ -405,7 +406,8 @@ it('lands on the repository overview before any analysis and starts analysis exp
   expect(await screen.findByText('仓库活跃度')).toBeVisible()
   expect(await screen.findByText('语言构成')).toBeVisible()
   expect(screen.queryByText('分析记录')).not.toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: '发起第一次分析' }))
+  expect(screen.queryByRole('button', { name: '发起第一次分析' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: '发起分析' }))
   expect(await screen.findByRole('dialog')).toHaveTextContent('发起分析')
 })
 it('renders the 52-week activity curve, the language donut, and aggregates extra languages', async () => {
