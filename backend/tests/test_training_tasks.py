@@ -53,6 +53,14 @@ def successful_runner(manifest, algorithm, metric_set, **kwargs):
         "dataScale": {"records": 6, "featureWidth": 6},
         "trainingPerformance": {"durationSeconds": 0.01, "trainingRecords": 3},
         "trainingSeconds": 0.01,
+        "splitPolicy": {
+            "id": kwargs.get("split_preset", "temporal-70-15-15"),
+            "ratios": {"train": 70, "validation": 15, "test": 15},
+            "timezone": "UTC",
+            "boundaries": [],
+            "partitionCounts": {},
+            "memberSha256": "c" * 64,
+        },
     }
 
 
@@ -104,6 +112,20 @@ def test_duplicate_active_task_is_reused(service):
         release.set()
 
 
+def test_split_preset_is_part_of_active_reuse_identity(service):
+    release = threading.Event()
+    service._executor.submit(release.wait)
+    try:
+        first, first_created = service.create(
+            dict(payload(), splitPreset="temporal-70-15-15"), created_by="admin")
+        second, second_created = service.create(
+            dict(payload(), splitPreset="temporal-80-10-10"), created_by="admin")
+        assert first_created and second_created
+        assert first["taskId"] != second["taskId"]
+    finally:
+        release.set()
+
+
 def test_success_returns_real_metrics_and_lineage(service):
     task, created = service.create(payload(), created_by="admin")
     assert created
@@ -115,19 +137,25 @@ def test_success_returns_real_metrics_and_lineage(service):
     assert completed["metrics"]["averagePrecision"]["value"] == 0.42
     assert completed["metricsByPartition"]["train"]["counts"]["records"] == 3
     assert completed["splitRule"].startswith("UTC distinct timestamps")
+    assert completed["splitPreset"] == "temporal-70-15-15"
+    assert completed["splitPolicy"]["id"] == "temporal-70-15-15"
     assert completed["dataScale"]["records"] == 6
     assert completed["trainingPerformance"]["trainingRecords"] == 3
     assert completed["error"] is None
 
 
 def test_failure_is_recorded_and_retry_creates_parented_task(tmp_path, storage):
+    seen = []
+
     def failing(*args, **kwargs):
+        seen.append(kwargs.get("split_preset"))
         raise BaselineError("MODEL_NOT_CONVERGED", "注入训练失败")
 
     service = TrainingTaskService(
         storage, artifact_root=tmp_path / "artifacts", timeout=10, runner=failing)
     try:
-        first, _ = service.create(payload(), created_by="admin")
+        first, _ = service.create(
+            dict(payload(), splitPreset="temporal-60-20-20"), created_by="admin")
         failed = wait_for(lambda: (lambda item: item if item["status"] == "failed" else None)(
             service.get(first["taskId"])))
         assert failed["error"] == {"code": "MODEL_NOT_CONVERGED", "message": "注入训练失败"}
@@ -137,6 +165,8 @@ def test_failure_is_recorded_and_retry_creates_parented_task(tmp_path, storage):
         assert retried["parentTaskId"] == first["taskId"]
         assert retried["datasetVersion"] == first["datasetVersion"]
         assert retried["method"] == first["method"]
+        assert retried["splitPreset"] == "temporal-60-20-20"
+        assert seen == ["temporal-60-20-20", "temporal-60-20-20"]
     finally:
         service.close()
 
@@ -302,7 +332,8 @@ def test_training_task_migration_preserves_old_rows_and_is_idempotent(tmp_path):
     storage.initialize()
     storage.initialize()
     with storage.connection() as db:
-        assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before + (None, 'logistic-regression-l2-v1')
+        assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before + (
+            None, 'logistic-regression-l2-v1', None, None)
         assert db.execute("SELECT COUNT(*) FROM training_task").fetchone()[0] == 0
         assert db.execute("SELECT version FROM schema_migration").fetchone()[0] == MIGRATIONS[-1][0]
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []

@@ -17,6 +17,8 @@ from .datasets import load_all, load_manifest, manifest_relative
 from .metrics import get_metric_set
 from .task_process import OwnedProcess
 from .training import TrainingExecutor
+from .splits import resolve_preset
+from .split_preview import validate_dataset_split
 
 ACTIVE = ("queued", "running")
 TERMINAL = ("succeeded", "failed", "cancelled", "interrupted")
@@ -30,7 +32,7 @@ COLUMNS = (
     "feature_schema_version", "metrics_json", "created_at", "updated_at", "started_at",
     "deadline_at", "cancel_requested_at", "completed_at", "class_policy_json",
     "class_policy_summary_json", "metrics_by_partition_json", "split_json", "split_rule",
-    "data_scale_json", "training_performance_json",
+    "data_scale_json", "training_performance_json", "split_preset", "split_policy_json",
 )
 
 
@@ -47,6 +49,8 @@ def _view(row):
     metrics_by_partition = (json.loads(item["metrics_by_partition_json"])
                             if item.get("metrics_by_partition_json") else None)
     split = json.loads(item["split_json"]) if item.get("split_json") else None
+    split_policy = (json.loads(item["split_policy_json"])
+                    if item.get("split_policy_json") else None)
     data_scale = json.loads(item["data_scale_json"]) if item.get("data_scale_json") else None
     training_performance = (json.loads(item["training_performance_json"])
                             if item.get("training_performance_json") else None)
@@ -71,6 +75,8 @@ def _view(row):
         "metrics": metrics,
         "metricsByPartition": metrics_by_partition,
         "split": split,
+        "splitPreset": item.get("split_preset") or "temporal-70-15-15",
+        "splitPolicy": split_policy,
         "splitRule": item.get("split_rule"),
         "dataScale": data_scale,
         "trainingPerformance": training_performance,
@@ -122,14 +128,17 @@ class TrainingTaskStorage:
         row = self.raw(task_id)
         return _view(row) if row is not None else None
 
-    def find_active(self, dataset_version, algorithm, metric_set, class_policy_json=None):
+    def find_active(self, dataset_version, algorithm, metric_set, class_policy_json=None,
+                    split_preset=None):
         placeholders = ",".join("?" for _ in ACTIVE)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM training_task WHERE dataset_version=? AND algorithm=? "
-                f"AND metric_set=? AND class_policy_json IS ? AND status IN ({placeholders}) "
+                f"AND metric_set=? AND class_policy_json IS ? "
+                "AND COALESCE(split_preset,'temporal-70-15-15') IS ? "
+                f"AND status IN ({placeholders}) "
                 "ORDER BY created_at DESC, id DESC LIMIT 1",
-                (dataset_version, algorithm, metric_set, class_policy_json, *ACTIVE),
+                (dataset_version, algorithm, metric_set, class_policy_json, split_preset, *ACTIVE),
             ).fetchone()
         return _view(row) if row is not None else None
 
@@ -295,13 +304,14 @@ class TrainingTaskService:
     @staticmethod
     def _payload(payload):
         if not isinstance(payload, dict) or set(payload) - {
-            "datasetVersion", "method", "metricSet", "classPolicy"
+            "datasetVersion", "method", "metricSet", "classPolicy", "splitPreset"
         }:
-            raise BaselineError("INPUT_INVALID", "训练任务只接受 datasetVersion、method、metricSet 和 classPolicy")
+            raise BaselineError("INPUT_INVALID", "训练任务只接受 datasetVersion、method、metricSet、classPolicy 和 splitPreset")
         dataset_version = payload.get("datasetVersion")
         method = payload.get("method")
         metric_set = payload.get("metricSet") or "metric-set-v2"
         class_policy = payload.get("classPolicy")
+        split_preset = resolve_preset(payload.get("splitPreset"))
         if not isinstance(dataset_version, str) or not dataset_version.strip():
             raise BaselineError("INPUT_INVALID", "缺少数据集版本")
         if not isinstance(method, str) or not method.strip():
@@ -315,7 +325,7 @@ class TrainingTaskService:
                 seed = class_policy.get("seed", 0)
                 if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
                     raise BaselineError("INPUT_INVALID", "采样种子必须是非负整数")
-        return dataset_version.strip(), method, metric_set, class_policy
+        return dataset_version.strip(), method, metric_set, class_policy, split_preset
 
     def _dataset(self, dataset_version):
         try:
@@ -332,14 +342,17 @@ class TrainingTaskService:
         return manifest, path, digest
 
     def _enqueue(self, *, dataset_version, method, metric_set, created_by, request_id,
-                 parent_task_id=None, class_policy=None):
+                 parent_task_id=None, class_policy=None, split_preset=None):
         dataset, path, digest = self._dataset(dataset_version)
         if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
                                           "kamei14-git-v1", "kamei14-git-v2",
                                           "kamei14-benchmark-v1"):
             raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
+        validate_dataset_split(self.dataset_root, dataset_version, split_preset)
         class_policy_json = json.dumps(class_policy, ensure_ascii=False, sort_keys=True) if class_policy else None
-        active = self.tasks.find_active(dataset_version, method, metric_set, class_policy_json)
+        split_preset = resolve_preset(split_preset)
+        active = self.tasks.find_active(dataset_version, method, metric_set, class_policy_json,
+                                        split_preset)
         if active is not None:
             return self.get(active["taskId"]), False
         task_id = str(uuid.uuid4())
@@ -360,12 +373,13 @@ class TrainingTaskService:
             "created_at": now,
             "updated_at": now,
             "class_policy_json": class_policy_json,
+            "split_preset": split_preset,
         })
         self._executor.submit(self._execute, task_id)
         return self.get(task_id), True
 
     def create(self, payload, request_id=None, *, created_by):
-        dataset_version, method, metric_set, class_policy = self._payload(payload)
+        dataset_version, method, metric_set, class_policy, split_preset = self._payload(payload)
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
@@ -376,6 +390,7 @@ class TrainingTaskService:
                 created_by=created_by,
                 request_id=request_id,
                 class_policy=class_policy,
+                split_preset=split_preset,
             )
 
     def retry(self, task_id, request_id=None, *, created_by):
@@ -391,6 +406,7 @@ class TrainingTaskService:
                 request_id=request_id,
                 parent_task_id=task_id,
                 class_policy=source.get("classPolicy"),
+                split_preset=source.get("splitPreset"),
             )
 
     def cancel(self, task_id):
@@ -408,6 +424,7 @@ class TrainingTaskService:
             extra = {}
             if item["class_policy_json"]:
                 extra["class_policy"] = json.loads(item["class_policy_json"])
+            extra["split_preset"] = item["split_preset"] or "temporal-70-15-15"
             result = runner(
                 manifest_path,
                 item["algorithm"],
@@ -422,6 +439,10 @@ class TrainingTaskService:
             if result.get("classPolicy") is not None:
                 self.tasks.update(task_id, class_policy_summary_json=json.dumps(
                     result["classPolicy"], ensure_ascii=False, sort_keys=True))
+            split_policy_json = (
+                json.dumps(result["splitPolicy"], ensure_ascii=False, sort_keys=True)
+                if result.get("splitPolicy") is not None else None
+            )
             self.tasks.finish(
                 task_id,
                 "succeeded",
@@ -447,6 +468,7 @@ class TrainingTaskService:
                 training_performance_json=json.dumps(
                     result.get("trainingPerformance"), ensure_ascii=False,
                     sort_keys=True, allow_nan=False),
+                split_policy_json=split_policy_json,
             )
         except BaselineError as exc:
             self.tasks.finish(task_id, "failed", exc.code, str(exc))

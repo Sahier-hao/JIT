@@ -92,6 +92,25 @@ html[data-theme="charcoal"] {
 .project-trends .trend-summary dt { font-size: 13px; color: var(--fg-2); }
 .project-trends .trend-summary dd { margin: 8px 0 2px; font-size: 26px; font-weight: 600; }
 .project-trends .trend-summary small { color: var(--fg-3); }
+.project-trends .trend-partition-coverage {
+  margin: 16px 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.project-trends .trend-partition-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.project-trends .trend-partition-head span { color: var(--fg-3); font-size: 12px; overflow-wrap: anywhere; }
+.project-trends .trend-partition-legend { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 12px 0 0; list-style: none; }
+.project-trends .trend-partition-legend li { min-width: 0; display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 4px 8px; align-items: center; }
+.project-trends .trend-partition-legend i { width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--line-strong); }
+.project-trends .trend-partition-legend [data-partition="train"] i { background: color-mix(in srgb, var(--chart-obs) 28%, transparent); }
+.project-trends .trend-partition-legend [data-partition="validation"] i { background: color-mix(in srgb, var(--chart-obs) 52%, transparent); }
+.project-trends .trend-partition-legend [data-partition="test"] i { background: color-mix(in srgb, var(--chart-obs) 78%, transparent); }
+.project-trends .trend-partition-legend [data-partition="recent-unseen"] i { background: repeating-linear-gradient(135deg, var(--chart-obs) 0 2px, transparent 2px 5px); }
+.project-trends .trend-partition-legend span { font-size: 12.5px; font-weight: 600; }
+.project-trends .trend-partition-legend small { grid-column: 2; color: var(--fg-3); font-size: 11.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.project-trends .trend-partition-coverage > p { margin: 10px 0 0; color: var(--fg-3); font-size: 12px; line-height: 1.6; }
 .project-trends .project-trend-figure { margin: 22px 0; padding: 20px 18px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--project-chart-surface); }
 .project-trends .project-trend-figure h3 { font-size: 15px; margin: 0; }
 .project-trends .project-trend-figure figcaption p { margin: 6px 0 12px; color: var(--fg-3); font-size: 12px; }
@@ -111,6 +130,19 @@ html[data-theme="charcoal"] {
 .project-trends .trend-sources pre { max-width: 100%; overflow: auto; font-size: 12px; }
 .project-trends .trend-sources dd, .project-trends .field-error { overflow-wrap: anywhere; }
 .project-trends .trend-content[aria-busy="true"] { opacity: .55; }
+.dataset-build-dialog { display: grid; gap: 14px; }
+.dataset-build-dialog > label,
+.dataset-build-range label { display: grid; gap: 6px; color: var(--fg-3); font-size: 12px; }
+.dataset-build-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dataset-build-dialog details { color: var(--fg-3); font-size: 12px; line-height: 1.65; }
+.dataset-build-dialog details summary { cursor: pointer; color: var(--fg-2); }
+.dataset-build-task { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--sunken); }
+.dataset-build-status { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.dataset-build-status span { color: var(--fg-3); font-size: 12px; }
+.dataset-build-task dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.dataset-build-task dl div { min-width: 0; }
+.dataset-build-task dt { color: var(--fg-3); font-size: 11.5px; }
+.dataset-build-task dd { margin: 4px 0 0; overflow-wrap: anywhere; font-size: 12.5px; }
 @media (max-width: 680px) {
   .project-event { flex-direction: column; gap: 10px; }
   .project-events { padding: 16px; }
@@ -130,6 +162,8 @@ html[data-theme="charcoal"] {
   .project-trends .project-trend-figure { padding-inline: 10px; }
   .project-trends .trend-summary { gap: 18px; }
   .project-trends .trend-summary > div { flex: 1 1 120px; }
+  .project-trends .trend-partition-legend { grid-template-columns: 1fr; }
+  .dataset-build-range, .dataset-build-task dl { grid-template-columns: 1fr; }
   .pr-fixed-preview .page-heading p { overflow-wrap: anywhere; }
 }
 

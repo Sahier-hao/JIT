@@ -130,6 +130,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>原产物运行</dt><dd><code>{valueLabel(task.artifactRunId)}</code></dd></div>
       <div><dt>模型</dt><dd><code>{valueLabel(task.modelId)}</code></dd></div>
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
+      <div><dt>时间切分预设</dt><dd><code>{task.splitPreset}</code></dd></div>
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
       {task.splitRule ? <div><dt>切分规则</dt><dd>{task.splitRule}</dd></div> : null}
       {task.dataScale ? <div><dt>数据规模</dt><dd>{valueLabel(task.dataScale.records)} 条 · {valueLabel(task.dataScale.featureWidth)} 维</dd></div> : null}

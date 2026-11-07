@@ -1,0 +1,1037 @@
+{
+  "config": {
+    "argv": [
+      "D:\\Node\\node.exe",
+      "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test"
+    ],
+    "configFile": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\playwright.config.ts",
+    "rootDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\repository-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop-1280",
+        "name": "desktop-1280",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [
+          "**/admin-training-workbench.spec.ts",
+          "**/project-workspace.spec.ts",
+          "**/admin-experiments.spec.ts",
+          "**/experiment-model-promotion.spec.ts",
+          "**/model-package-recovery.spec.ts",
+          "**/bundled-model-bootstrap.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop-1440",
+        "name": "desktop-1440",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [
+          "**/admin-training-workbench.spec.ts",
+          "**/project-workspace.spec.ts",
+          "**/admin-experiments.spec.ts",
+          "**/experiment-model-promotion.spec.ts",
+          "**/model-package-recovery.spec.ts",
+          "**/bundled-model-bootstrap.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\test-results\\default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "desktop-1280",
+        "testDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "snapshotDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "testIgnore": [
+          "**/admin-training-workbench.spec.ts",
+          "**/project-workspace.spec.ts",
+          "**/admin-experiments.spec.ts",
+          "**/experiment-model-promotion.spec.ts",
+          "**/model-package-recovery.spec.ts",
+          "**/bundled-model-bootstrap.spec.ts"
+        ],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "browserName": "chromium",
+          "channel": "msedge",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop-1280"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\test-results\\default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "desktop-1440",
+        "testDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "snapshotDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "testIgnore": [
+          "**/admin-training-workbench.spec.ts",
+          "**/project-workspace.spec.ts",
+          "**/admin-experiments.spec.ts",
+          "**/experiment-model-promotion.spec.ts",
+          "**/model-package-recovery.spec.ts",
+          "**/bundled-model-bootstrap.spec.ts"
+        ],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4173",
+          "browserName": "chromium",
+          "channel": "msedge",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop-1440"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "../docs/evidence/_run/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "admin-training-pagination.spec.ts",
+      "file": "admin-training-pagination.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "管理训练分页、返回列表清理与失败恢复可连续使用",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2525,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:36:42.172Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fb2b45cf0a66f8e72fb7-8397b5f6a3b07acaf69b",
+          "file": "admin-training-pagination.spec.ts",
+          "line": 42,
+          "column": 1
+        },
+        {
+          "title": "管理训练分页、返回列表清理与失败恢复可连续使用",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2667,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:38.227Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fb2b45cf0a66f8e72fb7-5a1973d768ea41193afe",
+          "file": "admin-training-pagination.spec.ts",
+          "line": 42,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "focused-review.spec.ts",
+      "file": "focused-review.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "普通工作区只显示项目，管理接口拒绝未登录访问",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1661,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:36:45.458Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-a8408fd133d69071ddbe",
+          "file": "focused-review.spec.ts",
+          "line": 24,
+          "column": 1
+        },
+        {
+          "title": "建立项目只登记地址，不产生分析",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2548,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:36:47.139Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-479cb963b1df0196307f",
+          "file": "focused-review.spec.ts",
+          "line": 35,
+          "column": 1
+        },
+        {
+          "title": "真实本地 Git：选择决策树、等待完成、打开提交详情和刷新",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12382,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:36:49.708Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-3b52726b55cd50e78d2a",
+          "file": "focused-review.spec.ts",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "九种模型都实际用于仓库分析",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 65203,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:37:02.112Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-ad24fee0d746ac3d37d2",
+          "file": "focused-review.spec.ts",
+          "line": 97,
+          "column": 1
+        },
+        {
+          "title": "管理员登录、模型产物登记、验证报告和退出权限",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11117,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:38:07.338Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-c580830b3a35dd8409f9",
+          "file": "focused-review.spec.ts",
+          "line": 122,
+          "column": 1
+        },
+        {
+          "title": "旧工具链接明确退役，旧报告链接进入管理员登录",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2112,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:38:18.479Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-4a49b33ea69d36c641d6",
+          "file": "focused-review.spec.ts",
+          "line": 153,
+          "column": 1
+        },
+        {
+          "title": "普通工作区只显示项目，管理接口拒绝未登录访问",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1588,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:41.674Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-66f7bf2d6d01dc8a8332",
+          "file": "focused-review.spec.ts",
+          "line": 24,
+          "column": 1
+        },
+        {
+          "title": "建立项目只登记地址，不产生分析",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2582,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:43.287Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-48d01efbb976b84e9398",
+          "file": "focused-review.spec.ts",
+          "line": 35,
+          "column": 1
+        },
+        {
+          "title": "真实本地 Git：选择决策树、等待完成、打开提交详情和刷新",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11348,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:45.887Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-89109090473cf136d5e6",
+          "file": "focused-review.spec.ts",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "九种模型都实际用于仓库分析",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 67519,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:57.253Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-bf9175fa7355ca945d37",
+          "file": "focused-review.spec.ts",
+          "line": 97,
+          "column": 1
+        },
+        {
+          "title": "管理员登录、模型产物登记、验证报告和退出权限",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11721,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:41:04.793Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-f8340b9b78dcb2ab3a46",
+          "file": "focused-review.spec.ts",
+          "line": 122,
+          "column": 1
+        },
+        {
+          "title": "旧工具链接明确退役，旧报告链接进入管理员登录",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1782,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:41:16.534Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "48eaa76987bb4e5f90ce-2cb41dbc30102955557a",
+          "file": "focused-review.spec.ts",
+          "line": 153,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "model-card.spec.ts",
+      "file": "model-card.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "项目与管理端复用只读模型卡并保持分析草稿",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12518,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:38:20.635Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "24c80ac7a8c4413e6fc8-bda2097adc1a20c9557d",
+          "file": "model-card.spec.ts",
+          "line": 7,
+          "column": 1
+        },
+        {
+          "title": "项目与管理端复用只读模型卡并保持分析草稿",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "模型卡闭环只跑一个浏览器项目",
+                  "location": {
+                    "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\model-card.spec.ts",
+                    "line": 8,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 255,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:41:18.350Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "模型卡闭环只跑一个浏览器项目",
+                      "location": {
+                        "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\model-card.spec.ts",
+                        "line": 8,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "24c80ac7a8c4413e6fc8-257b436e7123a32c27ba",
+          "file": "model-card.spec.ts",
+          "line": 7,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "model-policy.spec.ts",
+      "file": "model-policy.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "管理员设置默认、用户指定优先、停用拦截及历史保留",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 29158,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:38:33.196Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7f123e072ef7d864db99-3c5a8cf8dd948073a374",
+          "file": "model-policy.spec.ts",
+          "line": 31,
+          "column": 1
+        },
+        {
+          "title": "管理员设置默认、用户指定优先、停用拦截及历史保留",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 34078,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:41:18.644Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7f123e072ef7d864db99-c3d904008f64a5db6458",
+          "file": "model-policy.spec.ts",
+          "line": 31,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "project-dataset.spec.ts",
+      "file": "project-dataset.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "当前成功分析可核对并下载绑定数据集",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9298,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:02.387Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "83e0fca11ea023abb9e6-f268bd50914a41c3f3a5",
+          "file": "project-dataset.spec.ts",
+          "line": 24,
+          "column": 1
+        },
+        {
+          "title": "当前成功分析可核对并下载绑定数据集",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "项目数据集闭环只跑一个浏览器项目",
+                  "location": {
+                    "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\project-dataset.spec.ts",
+                    "line": 25,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 250,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:41:52.752Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "项目数据集闭环只跑一个浏览器项目",
+                      "location": {
+                        "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\project-dataset.spec.ts",
+                        "line": 25,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "83e0fca11ea023abb9e6-df34e0f2e936f46ddd6e",
+          "file": "project-dataset.spec.ts",
+          "line": 24,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "split-dataset-trend.spec.ts",
+      "file": "split-dataset-trend.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "large repository builds a dataset, trains with a preset, and renders verified trend partitions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 420000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 24252,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:39:11.724Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b3c74c1b092c7049affb-37eac2cbce0c9b3ea18b",
+          "file": "split-dataset-trend.spec.ts",
+          "line": 54,
+          "column": 1
+        },
+        {
+          "title": "large repository builds a dataset, trains with a preset, and renders verified trend partitions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "数据集与趋势闭环只跑一个浏览器项目",
+                  "location": {
+                    "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\split-dataset-trend.spec.ts",
+                    "line": 55,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 253,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-07T03:41:53.034Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "数据集与趋势闭环只跑一个浏览器项目",
+                      "location": {
+                        "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\split-dataset-trend.spec.ts",
+                        "line": 55,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "b3c74c1b092c7049affb-175a03929c2a1a2da06a",
+          "file": "split-dataset-trend.spec.ts",
+          "line": 54,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-07T03:34:59.709Z",
+    "duration": 415751.012,
+    "expected": 19,
+    "skipped": 3,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

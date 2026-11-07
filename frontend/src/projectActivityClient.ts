@@ -148,27 +148,48 @@ export interface TrendGroup { groupId: string | null; branch: string | null; mod
 function parseGroup(raw: unknown): TrendGroup { const g = record(raw); return { groupId: textOrNull(g.groupId), branch: textOrNull(g.branch), modelId: textOrNull(g.modelId), runId: textOrNull(g.runId), featureSchemaVersion: textOrNull(g.featureSchemaVersion), distributionRule: textOrNull(g.distributionRule), sourceSyncIds: textList(g.sourceSyncIds) } }
 export async function trendGroups(id: string, signal?: AbortSignal) { const b = identity(await apiRequest({ path: `${root(id)}/trend-groups`, method: 'GET', signal }), id); return { groups: recordList(b.groups).map(parseGroup), limitations: textList(b.limitations) } }
 export interface TrendMeasures { commitCount: number | null; scoredCount: number | null; unknownCount: number | null; highCount: number | null; highRate: number | null; riskMean: number | null; rateReason: string | null }
-export interface TrendBucket extends TrendMeasures { start: string; end: string; coverage: unknown }
-export interface TrendView { repositoryId: string; viewId: string; mode: 'group' | 'single'; group: TrendGroup; sourceSyncIds: string[]; createdAt: string; start: string; end: string; grain: 'day' | 'week' | 'month'; timezone: string; minSample: number; hasNewSources: boolean; summary: TrendMeasures; buckets: TrendBucket[]; sources: Record<string, unknown>[]; limitations: string[] }
+export interface TrendPartitionCounts { train: number; validation: number; test: number; recentUnseen: number; unknown: number }
+export interface TrendPartitionCoverage { status: 'verified' | 'external' | 'unknown'; reason: string | null; preset: string | null; timezone: string | null; boundaries: Array<{ epoch: number; time: string }>; partitions: Record<string, Record<string, unknown>>; recentUnseenFrom?: string }
+export interface TrendBucket extends TrendMeasures { start: string; end: string; coverage: unknown; partitions: TrendPartitionCounts | null }
+export interface TrendView { repositoryId: string; viewId: string; mode: 'group' | 'single'; group: TrendGroup; sourceSyncIds: string[]; createdAt: string; start: string; end: string; grain: 'day' | 'week' | 'month'; timezone: string; minSample: number; hasNewSources: boolean; summary: TrendMeasures; buckets: TrendBucket[]; partitionCoverage: TrendPartitionCoverage; sources: Record<string, unknown>[]; limitations: string[] }
 function measures(raw: unknown): TrendMeasures { const b = record(raw); const m = { commitCount: optionalCount(b.commitCount), scoredCount: optionalCount(b.scoredCount), unknownCount: optionalCount(b.unknownCount), highCount: optionalCount(b.highCount), highRate: b.highRate == null ? null : riskNumber(b.highRate), riskMean: b.riskMean == null ? null : riskNumber(b.riskMean), rateReason: textOrNull(b.rateReason) }; if (m.highCount != null && m.scoredCount != null && m.highCount > m.scoredCount || m.commitCount != null && m.scoredCount != null && m.unknownCount != null && m.scoredCount + m.unknownCount > m.commitCount) contractFailed('趋势计数不一致'); if (m.riskMean != null && (m.scoredCount == null || m.scoredCount < 1)) contractFailed('无已评分提交时不应提供平均风险'); return m }
+function partitionCounts(raw: unknown): TrendPartitionCounts | null {
+  if (raw == null) return null
+  const value = record(raw)
+  return { train: count(value.train), validation: count(value.validation), test: count(value.test), recentUnseen: count(value.recentUnseen), unknown: count(value.unknown) }
+}
+function partitionCoverage(raw: unknown): TrendPartitionCoverage {
+  if (raw == null) return { status: 'unknown', reason: '旧趋势来源未提供分区谱系', preset: null, timezone: null, boundaries: [], partitions: {} }
+  const value = record(raw)
+  const status = text(value.status)
+  if (!['verified', 'external', 'unknown'].includes(status)) contractFailed('趋势分区状态未登记')
+  return {
+    status: status as TrendPartitionCoverage['status'], reason: textOrNull(value.reason),
+    preset: textOrNull(value.preset), timezone: textOrNull(value.timezone),
+    boundaries: Array.isArray(value.boundaries) ? value.boundaries.map(item => {
+      const boundary = record(item); return { epoch: finiteNumber(boundary.epoch), time: text(boundary.time) }
+    }) : [], partitions: value.partitions == null ? {} : Object.fromEntries(Object.entries(record(value.partitions)).map(([key, item]) => [key, record(item)])),
+    ...(value.recentUnseenFrom == null ? {} : { recentUnseenFrom: text(value.recentUnseenFrom) }),
+  }
+}
 export function parseTrendView(raw: unknown, id: string, viewId?: string): TrendView {
   const b = identity(raw, id)
   if (viewId && b.viewId !== viewId) contractFailed('趋势固定来源不一致')
   if (!['day', 'week', 'month'].includes(String(b.grain))) contractFailed()
-  const minSample = count(b.minSample), summary = measures(b.summary), buckets = recordList(b.buckets).map(v => ({ ...measures(v), start: text(v.start), end: text(v.end), coverage: v.coverage }))
+  const minSample = count(b.minSample), summary = measures(b.summary), buckets = recordList(b.buckets).map(v => ({ ...measures(v), start: text(v.start), end: text(v.end), coverage: v.coverage, partitions: partitionCounts(v.partitions) }))
   if ([summary, ...buckets].some(m => m.highRate != null && (m.scoredCount == null || m.scoredCount < Math.max(20, minSample)))) contractFailed('小样本比例不应作为有效趋势展示')
   if (!['group', 'single'].includes(String(b.mode))) contractFailed('趋势来源模式未登记')
-  return { repositoryId: id, viewId: text(b.viewId), mode: b.mode as TrendView['mode'], group: parseGroup(b.group), sourceSyncIds: textList(b.sourceSyncIds), createdAt: text(b.createdAt), start: text(b.start), end: text(b.end), grain: b.grain as TrendView['grain'], timezone: text(b.timezone), minSample, hasNewSources: flag(b.hasNewSources), summary, buckets, sources: recordList(b.sources), limitations: textList(b.limitations) }
+  return { repositoryId: id, viewId: text(b.viewId), mode: b.mode as TrendView['mode'], group: parseGroup(b.group), sourceSyncIds: textList(b.sourceSyncIds), createdAt: text(b.createdAt), start: text(b.start), end: text(b.end), grain: b.grain as TrendView['grain'], timezone: text(b.timezone), minSample, hasNewSources: flag(b.hasNewSources), summary, buckets, partitionCoverage: partitionCoverage(b.partitionCoverage), sources: recordList(b.sources), limitations: textList(b.limitations) }
 }
 export type TrendQuery = { groupId?: string; sourceSyncId?: string; start?: string; end?: string; grain?: TrendView['grain'] }
 export async function createTrendView(id: string, query: TrendQuery) { return parseTrendView(await apiRequest({ path: `${root(id)}/trend-views`, method: 'POST', body: query }), id) }
 export async function getTrendView(id: string, viewId: string, signal?: AbortSignal) { return parseTrendView(await apiRequest({ path: `${root(id)}/trend-views/${encodeURIComponent(viewId)}`, method: 'GET', signal }), id, viewId) }
-export interface TrendCommit { commitId: string; epoch: number; risk: number | null; subject: string | null; sourceSyncId: string }
+export interface TrendCommit { commitId: string; epoch: number; risk: number | null; subject: string | null; sourceSyncId: string; partition: 'train' | 'validation' | 'test' | 'recent-unseen' | 'unknown' }
 export async function trendCommits(id: string, view: TrendView, bucket: Pick<TrendBucket, 'start' | 'end'>, offset = 0, signal?: AbortSignal) {
   const query = new URLSearchParams({ start: bucket.start, end: bucket.end, limit: '50', offset: String(offset) })
   const b = identity(await apiRequest({ path: `${root(id)}/trend-views/${encodeURIComponent(view.viewId)}/commits?${query}`, method: 'GET', signal }), id)
   if (b.viewId !== view.viewId || b.offset !== offset) contractFailed('趋势下钻来源不一致')
-  const commits = recordList(b.commits).map(c => ({ commitId: text(c.commitId), epoch: finiteNumber(c.epoch), risk: c.risk == null ? null : riskNumber(c.risk), subject: textOrNull(c.subject), sourceSyncId: text(c.sourceSyncId) }))
+  const commits = recordList(b.commits).map(c => ({ commitId: text(c.commitId), epoch: finiteNumber(c.epoch), risk: c.risk == null ? null : riskNumber(c.risk), subject: textOrNull(c.subject), sourceSyncId: text(c.sourceSyncId), partition: (() => { const value = text(c.partition); if (!['train', 'validation', 'test', 'recent-unseen', 'unknown'].includes(value)) contractFailed('趋势提交分区未登记'); return value as TrendCommit['partition'] })() }))
   if (commits.some(c => !view.sourceSyncIds.includes(c.sourceSyncId))) contractFailed('提交来源不在固定趋势中')
   return { commits, total: count(b.total), offset: count(b.offset), limit: count(b.limit) }
 }

@@ -19,6 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
+from .repository_datasets import persist_collected_dataset
 from .algorithms import DEFAULT_ALGORITHM, check_method, get_algorithm
 from .artifacts import Snapshot
 from .catalog import ModelCatalog
@@ -29,6 +30,7 @@ from .datasets import DATASETS, manifest_relative
 from .errors import BaselineError
 from .model import predict_risks, temporal_split
 from .schemas import resolve
+from .splits import resolve_preset, split_records
 from .task_process import OwnedProcess
 from .training import TrainingExecutor
 
@@ -63,6 +65,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
            "origin", "feature_schema_version", "distribution_rule", "feature_source_json", "algorithm")
+COLUMNS = (*COLUMNS, "split_preset", "split_policy_json")
 
 
 def worker_command():
@@ -190,7 +193,10 @@ def _view(row):
             "featureSource": json.loads(item['feature_source_json']) if item.get('feature_source_json') else None,
             "algorithm": item.get('algorithm'),
             "algorithmName": get_algorithm(item['algorithm'])['name'] if item.get('algorithm') else None,
-            "distributionRule": item.get('distribution_rule')}
+            "distributionRule": item.get('distribution_rule'),
+            "splitPreset": item.get('split_preset') or 'temporal-70-15-15',
+            "splitPolicy": (json.loads(item['split_policy_json'])
+                            if item.get('split_policy_json') else None)}
 
 
 class SyncStorage:
@@ -289,16 +295,20 @@ class SyncStorage:
             db.execute('UPDATE repository_sync SET status=?,stage=?,updated_at=? WHERE id=?',
                        (stage, stage, utc_now(), sync_id))
 
-    def find_active(self, *, repository_url, branch, since, until, commit_limit, requested_strategy, requested_model_id=None, resolved_model_id=None, algorithm=None):
+    def find_active(self, *, repository_url, branch, since, until, commit_limit,
+                    requested_strategy, requested_model_id=None, resolved_model_id=None,
+                    algorithm=None, split_preset=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM repository_sync WHERE repository_url=? AND branch=? AND since IS ? "
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
                 f"AND requested_model_id IS ? AND resolved_model_id IS ? AND algorithm IS ? "
+                "AND COALESCE(split_preset,'temporal-70-15-15') IS ? "
                 f"AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
                 (repository_url, branch, since, until, commit_limit, requested_strategy,
-                 requested_model_id, resolved_model_id, algorithm, *PROGRESS)).fetchone()
+                 requested_model_id, resolved_model_id, algorithm, split_preset,
+                 *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
     def pages(self, limit=20, offset=0):
@@ -336,7 +346,8 @@ class SyncStorage:
                   int(row["label"]), row.get("labelNote"), row.get("subject"), row.get("authorName")) for row in rows])
 
     def complete(self, sync_id, repository_id, rows, *, head_commit, dataset_version, run_id, model_id,
-                 analysis_branch=None, feature_schema_version=None, feature_source_json=None):
+                 analysis_branch=None, feature_schema_version=None, feature_source_json=None,
+                 split_policy_json=None):
         """原子发布结果，只有分支分析能推进项目当前结果。"""
         counts, now = distribution_of([row['risk'] for row in rows]), utc_now()
         with self.storage.connection(write=True) as db:
@@ -346,9 +357,11 @@ class SyncStorage:
             db.execute("UPDATE repository_sync SET status='completed',stage='completed',completed_at=?,"
                        "updated_at=?,head_commit=?,dataset_version=?,run_id=?,model_id=?,analysis_branch=?,"
                        "feature_schema_version=COALESCE(?,feature_schema_version),distribution_rule=?,"
-                       "feature_source_json=COALESCE(?,feature_source_json) WHERE id=?",
+                       "feature_source_json=COALESCE(?,feature_source_json),"
+                       "split_policy_json=COALESCE(?,split_policy_json) WHERE id=?",
                        (now, now, head_commit, dataset_version, run_id, model_id, analysis_branch,
-                        feature_schema_version, DISTRIBUTION_RULE, feature_source_json, sync_id))
+                        feature_schema_version, DISTRIBUTION_RULE, feature_source_json,
+                        split_policy_json, sync_id))
             if repository_id and source['repository_id'] == repository_id and source['source_kind'] == 'branch':
                 db.execute("UPDATE repository SET view_sync_id=?,head_commit=?,commit_count=?,high_count=?,"
                            "medium_count=?,low_count=?,unknown_count=?,distribution_rule=?,updated_at=? WHERE id=?",
@@ -549,13 +562,13 @@ def _holdout(records):
     return max(record["epoch"] for record in records) - HOLDOUT_DAYS * 86400
 
 
-def _sample_counts(records, holdout):
+def _sample_counts(records, holdout, split_preset=None):
     """按 holdout 切出训练段并试算时间切分，返回样本量与切分错误。"""
     trainable = [record for record in records if record["epoch"] < holdout]
     positives = sum(1 for record in trainable if record["label"] == 1)
     test_positives, error = None, None
     try:
-        split, _ = temporal_split(trainable)
+        split, _, _ = split_records(trainable, split_preset)
         test_positives = sum(1 for record in split["test"] if record["label"] == 1)
     except BaselineError as exc:
         error = exc
@@ -563,13 +576,13 @@ def _sample_counts(records, holdout):
             "testPositives": test_positives, "splitError": error}
 
 
-def choose_model(records, strategy, holdout):
+def choose_model(records, strategy, holdout, split_preset=None):
     """按用户选择与样本量决定训练还是复用现成模型（D3）。
 
     `auto` 按软门槛给建议：任一条不满足就降级；`force-train` 只受时间切分的物理约束；
     `generic-model` 不训练。降级与失败原因写入 `degradeReason`。
     """
-    counts = _sample_counts(records, holdout)
+    counts = _sample_counts(records, holdout, split_preset)
     base = {"holdout": holdout, "trainRecords": counts["trainRecords"],
             "trainPositives": counts["trainPositives"]}
     if strategy == "generic-model":
@@ -650,7 +663,10 @@ def _window(payload, now=None):
 
 def sync_input(payload, *, allow_local=False):
     """校验创建作业的输入；返回可直接落库的请求快照。"""
-    if not isinstance(payload, dict) or set(payload) - {'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy', 'modelId', 'algorithm'}:
+    if not isinstance(payload, dict) or set(payload) - {
+        'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy',
+        'modelId', 'algorithm', 'splitPreset',
+    }:
         raise BaselineError("INPUT_INVALID", "请求体必须只包含公开分析参数")
     url = payload.get("repositoryUrl")
     if not isinstance(url, str) or not url.strip():
@@ -675,9 +691,11 @@ def sync_input(payload, *, allow_local=False):
             raise BaselineError("INPUT_INVALID", "使用现成模型时不能指定训练方法")
         algorithm = algorithm.strip()
         check_method(algorithm, SCHEMA_NAME)
+    split_preset = resolve_preset(payload.get('splitPreset'))
     since, until = _window(payload)
     return {"repositoryUrl": url, "branch": branch.strip(), "since": since, "until": until,
-            "commitLimit": limit, "requestedStrategy": strategy, "algorithm": algorithm}
+            "commitLimit": limit, "requestedStrategy": strategy, "algorithm": algorithm,
+            "splitPreset": split_preset}
 
 
 class SyncService:
@@ -827,7 +845,9 @@ class SyncService:
                                                  since=data["since"], until=data["until"],
                                                  commit_limit=data["commitLimit"],
                                                  requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
-                                                 resolved_model_id=resolved_model_id, algorithm=data.get("algorithm"))
+                                                 resolved_model_id=resolved_model_id,
+                                                 algorithm=data.get("algorithm"),
+                                                 split_preset=data["splitPreset"])
                 if existing is not None:
                     return self.get(existing['syncId']), False
                 repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
@@ -839,6 +859,7 @@ class SyncService:
                               "requested_strategy": data["requestedStrategy"], "status": "queued",
                               "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
                               "resolved_model_id": resolved_model_id, "algorithm": data.get("algorithm"),
+                              "split_preset": data["splitPreset"],
                               "source_kind": 'pr' if _pr_source is not None else 'branch',
                               "source_snapshot_id": _pr_source['snapshotId'] if _pr_source is not None else None,
                               "origin": 'automatic' if _automatic else 'manual',
@@ -967,8 +988,11 @@ class SyncService:
         with self.sync.storage.connection() as db:
             checking = db.execute("SELECT 1 FROM repository_watch WHERE repository_id=? AND status='checking'", (repository_id,)).fetchone()
             pr_checking = db.execute("SELECT 1 FROM pr_watch WHERE repository_id=? AND status='checking'", (repository_id,)).fetchone()
-        if self.sync.repository_active(repository_id) or checking or pr_checking:
-            raise BaselineError("CONFLICT_ACTIVE_SYNC", "该项目还有进行中的分析，请等待结束后再删除")
+            dataset_building = db.execute(
+                "SELECT 1 FROM dataset_build_task WHERE repository_id=? "
+                "AND status IN ('queued','running')", (repository_id,)).fetchone()
+        if self.sync.repository_active(repository_id) or checking or pr_checking or dataset_building:
+            raise BaselineError("CONFLICT_ACTIVE_SYNC", "该项目还有进行中的分析或数据集构建，请等待结束后再删除")
         return self.sync.repository_delete(repository_id)
 
     def repository_syncs(self, repository_id, limit=20, offset=0, *, exclude_pr=False):
@@ -1175,35 +1199,15 @@ class SyncService:
 
     def _persist(self, sync_id, item, collected):
         """写 CSV、登记数据集并入库；返回描述文件绝对路径与版本名（RCL-08）。"""
-        records = collected["rawRecords"]
-        # 同一仓库共用数据集名，版本由实际时间范围决定，重复同步同窗口即幂等复用。
-        dataset = f"{SCHEMA_NAME}-{collect.dataset_name(item['repositoryUrl'])}"
-        cohort = collect.cohort(item["since"], item["until"])
-        parsed, _ = parse_source(collected["blob"], SCHEMA_NAME, cohort)
-        if not parsed:
-            raise BaselineError("DATASET_INVALID", "采集结果没有可纳入的记录；请确认分支存在且仓库可读")
-        days = [record["time"][:10] for record in parsed]
-        start, end = min(days), max(days)
-        version = f"{dataset}-{start}_{end}"
-        room = self.dataset_root / dataset
-        try:
-            room.mkdir(parents=True, exist_ok=True)
-        except OSError as exc:
-            raise BaselineError("DATASET_UNAVAILABLE", "数据集目录不可写，请检查存储权限") from exc
-        registered = _register_unique(
-            room, dataset, version, collected["blob"], schema=SCHEMA_NAME,
-            cohort=cohort, root=self.dataset_root,
-            extra={"collection": collected["collection"],
-                   "usage": "pr" if item.get('sourceKind') == 'pr' else 'branch',
-                   "sourceSyncId": sync_id},
-            provenance={"publisher": "collected", "revision": collected["collection"]["repository"]["head"],
-                        "url": item["repositoryUrl"], "citation": "由仓库同步采集生成（简化 SZZ）"},
-            after=lambda entry, csv: store.import_dataset(
-                csv, _absolute(entry["path"]), self.sync.storage))
-        csv_path = room / f"{registered['version']}.csv"
-        manifest_path = _absolute(registered["path"])
-        self.sync.update(sync_id, dataset_version=registered["version"])
-        return manifest_path, registered["version"], parsed
+        manifest_path, version, parsed, _ = persist_collected_dataset(
+            self.sync.storage, self.dataset_root,
+            repository_url=item["repositoryUrl"], since=item["since"], until=item["until"],
+            collected=collected,
+            usage="pr" if item.get("sourceKind") == "pr" else "branch",
+            source_id=sync_id,
+        )
+        self.sync.update(sync_id, dataset_version=version)
+        return manifest_path, version, parsed
 
     def _run(self, sync_id):
         started = time.monotonic()
@@ -1252,7 +1256,8 @@ class SyncService:
 
             self._step(sync_id, "training", started)
             holdout = _holdout(trainable)
-            decision = choose_model(trainable, item["requestedStrategy"], holdout)
+            decision = choose_model(trainable, item["requestedStrategy"], holdout,
+                                    item["splitPreset"])
             self.sync.update(sync_id, model_strategy=decision["modelStrategy"],
                              degrade_reason=decision["degradeReason"],
                              train_records=decision["trainRecords"],
@@ -1265,6 +1270,7 @@ class SyncService:
                     output_key=f"repository-sync-{sync_id[:8]}",
                     channel="repository-sync", request_id=item.get("requestId"),
                     holdout=holdout,
+                    split_preset=item["splitPreset"],
                     model_name=training_model_name(item["repositoryUrl"], version, method,
                                                    dataset_schema.name, len(dataset_schema.in_model_names())))
                 split = artifacts.read_json(self.artifact_root / trained["artifactKey"] / "split.json")
@@ -1281,6 +1287,8 @@ class SyncService:
                 schema = snapshot.schema
                 inputs = [{"features": record["features"]} for record in records]
                 run_id = trained["runId"]
+                split_policy_json = json.dumps(
+                    trained["splitPolicy"], ensure_ascii=False, sort_keys=True)
             else:
                 model_choice = item.get('resolvedModelId') or item.get('requestedModelId')
                 if not model_choice:
@@ -1291,6 +1299,7 @@ class SyncService:
                 fields = schema.in_model_names()
                 inputs = generic_inputs(records, fields) if schema.name == GENERIC_SCHEMA else [{"features": record["features"]} for record in records]
                 run_id = payload.get("runId")
+                split_policy_json = None
             self.sync.update(sync_id, model_id=model_id, run_id=run_id)
 
             self._step(sync_id, "scoring", started)
@@ -1305,7 +1314,8 @@ class SyncService:
                 for record, risk in zip(records, risks, strict=True)],
                 head_commit=collected['collection']['repository']['head'],
                 analysis_branch=collected['collection']['repository'].get('resolvedBranch'),
-                dataset_version=version, run_id=run_id, model_id=model_id, feature_schema_version=schema.name)
+                dataset_version=version, run_id=run_id, model_id=model_id,
+                feature_schema_version=schema.name, split_policy_json=split_policy_json)
             self._event(sync_id, 'analysis-completed', '分析完成',
                         f'{item["branch"]} · {len(records)} 个提交已评分', model_id=model_id)
         except BaselineError as exc:

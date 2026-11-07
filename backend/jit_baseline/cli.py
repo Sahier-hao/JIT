@@ -38,6 +38,8 @@ def main():
                      help="数据集描述文件；给定后改读该数据集而不是 OpenStack 快照")
     run.add_argument("--holdout", type=int, default=None,
                      help="epoch 截止时间；只把早于它的记录用于切分与训练")
+    run.add_argument("--split-preset", default=None,
+                     help="时间切分预设：temporal-70-15-15、temporal-80-10-10 或 temporal-60-20-20")
     run.add_argument("--embedding-dir", type=Path, default=None,
                      help="语义 schema 使用的嵌入表目录")
     verify = commands.add_parser("verify")
@@ -237,7 +239,8 @@ def main():
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
                                  metric_set=args.metric_set,
                                  dataset_manifest=args.dataset_manifest, holdout=args.holdout,
-                                 embedding_dir=args.embedding_dir)
+                                 embedding_dir=args.embedding_dir,
+                                 split_preset=args.split_preset)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)

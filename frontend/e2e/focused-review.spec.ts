@@ -99,10 +99,12 @@ test('九种模型都实际用于仓库分析', async ({ page }) => {
   const response = await page.request.post('/api/v1/repositories', { data: { repositoryUrl: REPOSITORY.replaceAll('\\', '/') } })
   const project = await response.json()
   const choices = await (await page.request.get('/api/v1/repository-models')).json()
+  const baselineModels = choices.models.filter((model: { featureSchemaVersion: string }) =>
+    model.featureSchemaVersion === 'openstack-six-v1')
   await page.goto(`/#/projects/${project.repositoryId}`)
   await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
-  expect(choices.models).toHaveLength(9)
-  for (const model of choices.models) {
+  expect(baselineModels).toHaveLength(9)
+  for (const model of baselineModels) {
     expect(model?.repositoryPredictionSupported).toBe(true)
     const modelSelect = page.getByLabel('模型来源', { exact: true })
     if (!await modelSelect.isVisible()) await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
@@ -126,7 +128,8 @@ test('管理员登录、模型产物登记、验证报告和退出权限', async
   await page.getByLabel('管理员密码', { exact: true }).fill(account.password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await expect(page.getByRole('heading', { name: '模型管理', exact: true })).toBeVisible()
-  await expect(page.locator('.admin-model-card')).toHaveCount(9, { timeout: catalogTimeout })
+  await expect.poll(() => page.locator('.admin-model-card').count(), { timeout: catalogTimeout })
+    .toBeGreaterThanOrEqual(9)
   await page.getByRole('button', { name: '校验并登记', exact: true }).first().click()
   await expect(page.getByRole('status').filter({ hasText: '产物校验通过' })).toBeVisible()
   await page.evaluate(() => window.scrollTo(0, 0))

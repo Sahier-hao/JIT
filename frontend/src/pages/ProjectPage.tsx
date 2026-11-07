@@ -6,7 +6,7 @@
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, Database, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
 import { Button, IconButton, NumberInput, Select } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
@@ -22,6 +22,7 @@ import { ProjectPullRequests } from '../components/ProjectPullRequests'
 import { JobProgress } from '../components/JobProgress'
 import { ProjectTrends } from '../components/ProjectTrends'
 import { ProjectDatasetDialog } from '../components/ProjectDatasetDialog'
+import { DatasetBuildDialog } from '../components/DatasetBuildDialog'
 import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
@@ -96,6 +97,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const [analysisSeed, setAnalysisSeed] = useState<{ key: number; form: Partial<SyncForm> } | null>(null)
   const [openingPR, setOpeningPR] = useState(false)
   const [datasetOpen, setDatasetOpen] = useState(false)
+  const [datasetBuildOpen, setDatasetBuildOpen] = useState(false)
   const openPRLock = useRef(false)
   const currentSyncId = detail.repository?.viewContext?.syncId
   useEffect(() => { setDatasetOpen(false) }, [currentSyncId])
@@ -182,6 +184,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       branch: job.branch,
       strategy: job.requestedStrategy,
       algorithm: job.algorithm ?? undefined,
+      splitPreset: job.splitPreset ?? undefined,
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
   }
@@ -217,6 +220,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         </p>
       </div>
       <div className="page-actions">
+        <Button icon={<Database size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
         <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
         <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate({ name: 'repository', repositoryId, tab: 'analyses' }) }}/>
       </div>
@@ -323,6 +327,13 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         <p className="batch-dialog-summary">开放 PR <b>{prOpenCount == null ? '—' : prOpenCount}</b> 个</p>
       </div>
     </Dialog>
+    <DatasetBuildDialog
+      repositoryId={repositoryId}
+      defaultBranch={repository.defaultBranch}
+      open={datasetBuildOpen}
+      onOpenChange={setDatasetBuildOpen}
+      navigate={navigate}
+    />
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
       {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
     </Dialog>

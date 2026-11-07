@@ -16,9 +16,9 @@ export function tracking(overrides: Record<string, unknown> = {}) { return { rep
 export function trendView(overrides: Partial<TrendView> = {}): TrendView { return { repositoryId: PROJECT, viewId: 'view-fixed', mode: 'group', group: GROUP, sourceSyncIds: ['s1', 's2'], createdAt: NOW, start: '2026-10-01', end: '2026-10-29', grain: 'week', timezone: 'UTC+08:00', minSample: 20, hasNewSources: false,
   summary: { commitCount: 30, scoredCount: 26, unknownCount: 4, highCount: 4, highRate: 4 / 26, riskMean: .37, rateReason: null },
   buckets: [
-    { start: '2026-10-01', end: '2026-10-08', commitCount: 24, scoredCount: 22, unknownCount: 2, highCount: 3, highRate: 3 / 22, riskMean: .42, rateReason: null, coverage: 'observed' },
-    { start: '2026-10-08', end: '2026-10-15', commitCount: null, scoredCount: null, unknownCount: null, highCount: null, highRate: null, riskMean: null, rateReason: '未证明覆盖', coverage: 'unknown' },
-    { start: '2026-10-15', end: '2026-10-29', commitCount: 6, scoredCount: 4, unknownCount: 2, highCount: 1, highRate: null, riskMean: .55, rateReason: '已评分样本不足 20', coverage: 'observed' },
-  ], sources: [{ syncId: 's1', datasetVersion: 'data-1' }, { syncId: 's2', datasetVersion: 'data-2' }], limitations: ['仅代表已保存观测'], ...overrides } }
+    { start: '2026-10-01', end: '2026-10-08', commitCount: 24, scoredCount: 22, unknownCount: 2, highCount: 3, highRate: 3 / 22, riskMean: .42, rateReason: null, coverage: 'observed', partitions: null },
+    { start: '2026-10-08', end: '2026-10-15', commitCount: null, scoredCount: null, unknownCount: null, highCount: null, highRate: null, riskMean: null, rateReason: '未证明覆盖', coverage: 'unknown', partitions: null },
+    { start: '2026-10-15', end: '2026-10-29', commitCount: 6, scoredCount: 4, unknownCount: 2, highCount: 1, highRate: null, riskMean: .55, rateReason: '已评分样本不足 20', coverage: 'observed', partitions: null },
+  ], partitionCoverage: { status: 'unknown', reason: 'fixture 未提供分区谱系', preset: null, timezone: null, boundaries: [], partitions: {} }, sources: [{ syncId: 's1', datasetVersion: 'data-1' }, { syncId: 's2', datasetVersion: 'data-2' }], limitations: ['仅代表已保存观测'], ...overrides } }
 export function event(overrides: Partial<ProjectEvent> = {}): ProjectEvent { return { eventId: 'event-1', repositoryId: PROJECT, kind: 'analysis-ready', createdAt: NOW, number: 12, snapshotId: 'v2', syncId: 's2', modelId: 'model-original', title: '新版本分析就绪', message: '固定版本结果可供核对，未知分数不计为低风险。', owner: 'example', name: 'project', ...overrides } }
 export const response = (body: unknown, status = 200) => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })

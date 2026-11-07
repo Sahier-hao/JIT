@@ -1,0 +1,59 @@
+{
+  "copiedFromWorkspace": [
+    "browser-results.json",
+    "README.md",
+    "screenshots/dataset-build-complete-1280.png",
+    "screenshots/trend-external-1280.png",
+    "screenshots/trend-legacy-unknown-1280.png",
+    "screenshots/trend-partitions-1280.png",
+    "screenshots/trend-partitions-merged-1280.png",
+    "unit-results.json",
+    "verification.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 9,
+  "files": [
+    {
+      "path": "browser-results.json",
+      "sha256": "0023ab2ad53e389ebe068a55f9fc2f2cf5038dce5cd78b0ff70a1027b1730ec9"
+    },
+    {
+      "path": "README.md",
+      "sha256": "482a2d8abd647710895beac6578e68bde240826c58d3cfd3f98584bf3b230272"
+    },
+    {
+      "path": "screenshots/dataset-build-complete-1280.png",
+      "sha256": "fc951e2dce24608cb80adb0e51087ed4ab17a9434b2fa3f624b343c340953c1e"
+    },
+    {
+      "path": "screenshots/trend-external-1280.png",
+      "sha256": "d45f4e103e2ea78924018ba60f93cb6fc8b770f48db1e84787277965f97137de"
+    },
+    {
+      "path": "screenshots/trend-legacy-unknown-1280.png",
+      "sha256": "01a5a59f0341f619409b020bd58244ab2186e2343ff913c0df0de160998dc113"
+    },
+    {
+      "path": "screenshots/trend-partitions-1280.png",
+      "sha256": "a790b4924791e278f607c0f4a5c148e77a7244dcb8bb2850d868cb1758685b08"
+    },
+    {
+      "path": "screenshots/trend-partitions-merged-1280.png",
+      "sha256": "d699268309a3d95fb42e5117c0cf6a6323c7fc6cee7ea42b1782643c092dd753"
+    },
+    {
+      "path": "unit-results.json",
+      "sha256": "c15adead436019d0ce40b0197aa7043255be13487aff15b1cb12b96b8a3bc028"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "971675868a1611cd26a72ea402d4f0f293487a27b67404c133f7509da4ce948b"
+    }
+  ],
+  "frozenUtc": "2026-11-07T03:59:25.020178+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "0e53898e94db3659fa6accef55676d5c3f04bee8ba2e66279d5b00ac7166070a",
+  "workspace": "docs/evidence/_run/add-split-presets-and-dataset-collection"
+}

@@ -55,6 +55,8 @@ export interface SyncView {
   sourceKind?: string | null
   featureSchemaVersion?: string | null
   distributionRule?: string | null
+  splitPreset?: string | null
+  splitPolicy?: Record<string, unknown> | null
   sourceSnapshotId?: string | null
   origin?: string | null
   queuePosition?: number | null
@@ -175,6 +177,8 @@ export function parseSync(value: unknown): SyncView {
     sourceKind: textOrNull(raw.sourceKind),
     featureSchemaVersion: textOrNull(raw.featureSchemaVersion),
     distributionRule: textOrNull(raw.distributionRule),
+    splitPreset: textOrNull(raw.splitPreset),
+    splitPolicy: raw.splitPolicy == null ? null : record(raw.splitPolicy),
     sourceSnapshotId: textOrNull(raw.sourceSnapshotId),
     origin: textOrNull(raw.origin),
     queuePosition,
@@ -277,6 +281,7 @@ export function syncBody(form: {
   until?: string
   commitLimit?: string
   strategy: SyncStrategy
+  splitPreset?: string
 }): Record<string, unknown> {
   const body: Record<string, unknown> = { repositoryUrl: form.repositoryUrl.trim(), strategy: form.strategy }
   if (form.modelId) body.modelId = form.modelId
@@ -285,6 +290,7 @@ export function syncBody(form: {
   if (form.since?.trim()) body.since = form.since.trim()
   if (form.until?.trim()) body.until = form.until.trim()
   if (form.commitLimit?.trim()) body.commitLimit = Number(form.commitLimit.trim())
+  if (form.splitPreset?.trim()) body.splitPreset = form.splitPreset.trim()
   return body
 }
 

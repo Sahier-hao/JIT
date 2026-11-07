@@ -63,6 +63,8 @@ export interface TrainingTask {
   metrics: Row | null
   metricsByPartition: Row | null
   split: Row | null
+  splitPreset: string
+  splitPolicy: Row | null
   splitRule: string | null
   dataScale: Row | null
   trainingPerformance: Row | null
@@ -382,6 +384,8 @@ function trainingTask(raw: unknown): TrainingTask {
     metrics: value.metrics === null ? null : record(value.metrics),
     metricsByPartition: value.metricsByPartition == null ? null : record(value.metricsByPartition),
     split: value.split == null ? null : record(value.split),
+    splitPreset: textOrNull(value.splitPreset) ?? 'temporal-70-15-15',
+    splitPolicy: value.splitPolicy == null ? null : record(value.splitPolicy),
     splitRule: textOrNull(value.splitRule),
     dataScale: value.dataScale == null ? null : record(value.dataScale),
     trainingPerformance: value.trainingPerformance == null ? null : record(value.trainingPerformance),
@@ -585,11 +589,12 @@ export async function fetchTrainingTask(taskId: string, signal?: AbortSignal): P
 }
 
 export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string,
-                                          classPolicy?: { kind: 'weights' | 'sample'; seed?: number }): Promise<TrainingTask> {
+                                          classPolicy?: { kind: 'weights' | 'sample'; seed?: number },
+                                          splitPreset = 'temporal-70-15-15'): Promise<TrainingTask> {
   return trainingTask(await apiRequest({
     path: '/api/v1/training-tasks',
     method: 'POST',
-    body: { datasetVersion, method, metricSet, ...(classPolicy ? { classPolicy } : {}) },
+    body: { datasetVersion, method, metricSet, splitPreset, ...(classPolicy ? { classPolicy } : {}) },
   }))
 }
 
