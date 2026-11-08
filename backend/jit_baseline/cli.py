@@ -176,6 +176,12 @@ def main():
     line_dataset.add_argument("--negatives-per-positive", type=int, default=3)
     line_dataset.add_argument("--context", type=int, default=3)
     line_dataset.add_argument("--seed", type=int, default=42)
+    line_train = commands.add_parser("line-train")
+    line_train.add_argument("--input", action="append", type=Path, required=True, help="可重复：line-szz-v1 JSONL")
+    line_train.add_argument("--test-repo", default=None, help="留出整个仓库做跨项目测试")
+    line_train.add_argument("--output", type=Path, required=True, help="指标报告 JSON")
+    line_train.add_argument("--seed", type=int, default=42)
+    line_train.add_argument("--model-output", type=Path, default=None, help="可选：另存 joblib 基线")
     args = parser.parse_args()
     exit_code = 0
     try:
@@ -264,6 +270,14 @@ def main():
                 context=args.context, seed=args.seed,
             )
             result = {'kind': 'line-dataset', **summary, 'output': str(args.output)}
+        elif args.command == 'line-train':
+            from . import line_train as train_module
+            report = train_module.train_line_baseline(
+                args.input, args.output, test_repo=args.test_repo, seed=args.seed,
+                model_output=args.model_output,
+            )
+            result = {'kind': 'line-model-report', 'samples': report['samples'],
+                      'metrics': report['metrics'], 'output': str(args.output)}
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":

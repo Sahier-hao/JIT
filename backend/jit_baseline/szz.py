@@ -45,7 +45,7 @@ MAX_FIX_COMMITS = 2000
 MAX_RANGES_PER_FILE = 50
 MAX_LINES_PER_COMMIT = 2000
 # 单次采集的行的回溯时间预算；超出即停止并标记截断，避免拖垮分析作业。
-MAX_SECONDS = 120
+MAX_SECONDS = int(os.environ.get("JIT_SZZ_MAX_SECONDS", "120") or 120)
 ISSUE_LOOKUP_SECONDS = 5
 SZZ_LINE_LIMITATIONS = (
     "标签由行级 SZZ 生成：按修复关键词与 issue 引用识别修复提交，删除/修改行用 git blame 回溯到引入提交。",
