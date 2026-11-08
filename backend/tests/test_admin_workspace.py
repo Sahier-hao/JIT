@@ -124,3 +124,13 @@ def test_explicit_model_is_selected_and_incompatible_models_rejected(tmp_path):
             assert 'requested_model_id' in columns
     finally:
         service._executor.shutdown(wait=True)
+
+
+def test_training_experiment_routes_are_admin_protected_and_managed():
+    from jit_baseline.admin import protected
+    from jit_baseline.api_errors import managed_path
+    for path in ('/api/v1/training-experiments',
+                 '/api/v1/training-experiments/abc',
+                 '/api/v1/training-experiments/abc/comparison'):
+        assert protected(path) is True, path
+        assert managed_path(path) is True, path

@@ -699,6 +699,8 @@ class TrainingTaskService:
                                             json.loads(item["params_json"]))
                 if overrides:
                     extra["params"] = overrides
+            # 多方法实验只产出并校验运行；显式登记由管理员在实验登记页完成。
+            extra["register"] = item["experiment_id"] is None
             result = runner(
                 manifest_path,
                 item["algorithm"],

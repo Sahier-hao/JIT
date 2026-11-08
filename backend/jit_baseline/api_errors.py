@@ -116,7 +116,7 @@ def managed_path(path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/training-experiments') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions|/split-preview)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
@@ -140,6 +140,8 @@ def install_errors(app):
                 error['details'] = exc.details
             response = JSONResponse({'error': error}, status_code=STATUS.get(code, 503))
         except Exception:
+            LOGGER.exception('unhandled request failure requestId=%s path=%s',
+                             request.state.request_id, request.url.path)
             response = JSONResponse({'error': {'code': 'INFERENCE_ERROR',
                 'message': MESSAGES['INFERENCE_ERROR'], 'requestId': request.state.request_id}}, status_code=500)
         request.state.request_id = response.headers.get('X-Request-Id', request.state.request_id)

@@ -61,7 +61,7 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'admin' && parts[1] === 'datasets' && [3, 4].includes(parts.length)) return { name: 'admin', view: 'datasets', resourceId: parts[2], ...(parts[3] ? { version: parts[3] } : {}) }
     if (path === '/admin/training') return { name: 'admin', view: 'training' }
     if (parts[0] === 'admin' && parts[1] === 'training' && parts.length === 3) return { name: 'admin', view: 'training', resourceId: parts[2] }
-    if (parts[0] === 'admin' && parts[1] === 'training-experiments' && parts.length === 3) return { name: 'admin', view: 'training-experiment', resourceId: parts[2] }
+    if (parts[0] === 'admin' && parts[1] === 'training-experiment' && parts.length === 3) return { name: 'admin', view: 'training-experiment', resourceId: parts[2] }
     if (path === '/admin/comparisons') return { name: 'admin', view: 'comparisons', ...(comparisonModels.length ? { models: comparisonModels } : {}) }
     if (path === '/admin/experiment-runs') return {
       name: 'admin', view: 'experiment-runs',
