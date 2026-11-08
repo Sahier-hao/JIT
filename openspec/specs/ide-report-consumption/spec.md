@@ -1,7 +1,7 @@
 # ide-report-consumption Specification
 
 ## Purpose
-TBD - created by archiving change nightly-multi-method-and-location-loop. Update Purpose after archive.
+让 IDE 只读消费已生成的提交分析报告，在核对仓库与提交身份后展示风险、候选和建议，并拒绝在过期版本上定位。
 
 ## Requirements
 

@@ -1,7 +1,7 @@
 # line-level-prediction Specification
 
 ## Purpose
-TBD - created by archiving change train-line-level-baseline. Update Purpose after archive.
+用可复现的离线实验评估行级样本、特征与跨仓库泛化能力，明确定位指标与产品化边界，不把研究分数冒充可用行级概率。
 
 ## Requirements
 

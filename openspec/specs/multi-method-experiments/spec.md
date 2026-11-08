@@ -1,7 +1,7 @@
 # multi-method-experiments Specification
 
 ## Purpose
-TBD - created by archiving change nightly-multi-method-and-location-loop. Update Purpose after archive.
+在同一冻结数据版本与切分上一次运行多个训练方法，保留各自真实训练过程与结果，并提供口径一致、可导出的比较；训练成功不自动成为可用模型。
 
 ## Requirements
 

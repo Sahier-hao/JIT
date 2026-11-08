@@ -1,7 +1,7 @@
 # commit-triggered-analysis Specification
 
 ## Purpose
-TBD - created by archiving change nightly-multi-method-and-location-loop. Update Purpose after archive.
+从明确的本地 Git 提交范围执行真实特征采集、模型推理与报告生成，让提交事件得到可核验的分析结果，同时默认不阻断合并、不评论 PR。
 
 ## Requirements
 

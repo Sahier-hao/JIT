@@ -1,7 +1,7 @@
 # configurable-training-parameters Specification
 
 ## Purpose
-TBD - created by archiving change nightly-multi-method-and-location-loop. Update Purpose after archive.
+让训练方法的少量关键参数可由管理员在受控白名单与范围内配置，同时保持默认运行、旧产物和加载校验的冻结身份不变，参数从请求一直贯通到模型卡。
 
 ## Requirements
 
