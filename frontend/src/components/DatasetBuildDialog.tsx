@@ -143,7 +143,7 @@ export function DatasetBuildDialog({
       </section> : null}
       <details>
         <summary>范围与标签限制</summary>
-        <p>简化 SZZ 未处理重命名、跨文件传播和 issue 关联。空范围或无法登记的来源会失败，不生成空数据集。命令不接受上传 CSV 或服务器文件路径。</p>
+        <p>标签使用行级 SZZ（修复关键词与 issue 引用，删除行回溯到引入提交）；未关联 issue 的修复、纯新增修复与改写历史仍可能漏标。空范围或无法登记的来源会失败，不生成空数据集。命令不接受上传 CSV 或服务器文件路径。</p>
       </details>
     </div>
   </Dialog>

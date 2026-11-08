@@ -163,7 +163,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       degradeReason: repository.repository.degradeReason ?? null,
       trainRecords: null,
       trainPositives: null,
-      labelNote: '标签由简化 SZZ 从后续修复提交倒推',
+      labelNote: '标签由行级 SZZ 从后续修复提交倒推',
     } : undefined,
   }), [repository.repository, repositoryId, viewSyncId])
   useEffect(() => { reviewDrafts.set(stateKey, { ...queryState, offset }) }, [stateKey, queryState, offset, reviewDrafts])

@@ -55,6 +55,8 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   }, [selected?.version, splitPreset])
   if (!selected) return null
   const quality = selected.quality
+  const szz = selected.szz, label = selected.label
+  const szzNumber = (key: string) => szz[key] ?? (szz.unresolved as Row | undefined)?.[key] ?? '—'
   const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
   async function train() {
     setBusy(true); setError('')
@@ -127,6 +129,18 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
       </dl></section>
+      <section><h2>标签与 SZZ</h2><dl className="admin-facts">
+        <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
+        <div><dt>被标为引入</dt><dd>{valueLabel(szzNumber('labeledCommits'))}</dd></div>
+        <div><dt>证据对数</dt><dd>{valueLabel(szzNumber('evidencePairs'))}</dd></div>
+        <div><dt>未回溯行区间</dt><dd>{valueLabel(szzNumber('unresolvedRanges'))}</dd></div>
+        <div><dt>跳过文件</dt><dd>{valueLabel(szzNumber('skippedFiles'))}</dd></div>
+        <div><dt>窗口外引入</dt><dd>{valueLabel(szzNumber('outsideWindow'))}</dd></div>
+        <div><dt>成熟期</dt><dd>{label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
+        {szz.truncated === true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
+      </dl></section>
+    </div>
+    <div className="admin-detail-grid">
       <section><h2>来源</h2><dl className="admin-facts">
         <div><dt>发布者</dt><dd>{valueLabel(selected.source.publisher)}</dd></div>
         <div><dt>地址</dt><dd>{valueLabel(selected.source.url)}</dd></div>

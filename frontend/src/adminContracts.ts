@@ -14,6 +14,8 @@ export interface AdminDatasetVersion {
   manifestPath: string | null
   source: Row
   labelRule: string | null
+  label: Row
+  szz: Row
   limitations: string[]
   usage: 'branch' | 'pr'
   sourceSyncId: string | null
@@ -271,6 +273,8 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     manifestPath: textOrNull(value.manifestPath),
     source: record(value.source),
     labelRule: textOrNull(value.labelRule),
+    label: value.label === undefined ? {} : record(value.label),
+    szz: value.szz === undefined ? {} : record(value.szz),
     limitations: textList(value.limitations),
     usage: value.usage === 'pr' ? 'pr' : 'branch',
     sourceSyncId: textOrNull(value.sourceSyncId),

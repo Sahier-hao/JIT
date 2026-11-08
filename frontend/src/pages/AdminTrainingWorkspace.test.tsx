@@ -60,8 +60,10 @@ const DATASET = {
     file: { name: 'mp-scikit-learn.csv', path: 'data/collected/mp-scikit-learn.csv', sha256: 'c'.repeat(64), bytes: 509179 },
     manifestPath: 'data/datasets/mp-scikit-learn/manifest.json',
     source: { publisher: 'collected', url: 'https://github.com/scikit-learn/scikit-learn', revision: 'd'.repeat(40), citation: 'git', branch: 'main', head: 'e'.repeat(40), window: null },
-    labelRule: 'szz-simple-v1',
-    limitations: ['特征为提交级聚合', '标签为简化 SZZ'],
+    labelRule: 'szz-line-v1',
+    label: { kind: 'szz-line', rule: 'szz-line-v1', maturityDays: 90 },
+    szz: { rule: 'szz-line-v1', fixCommits: 12, labeledCommits: 9, evidencePairs: 15, unresolvedRanges: 2, skippedFiles: 3, outsideWindow: 4 },
+    limitations: ['特征为提交级聚合', '标签为行级 SZZ'],
   }],
 }
 
@@ -237,6 +239,9 @@ it('creates a training task from a dataset detail page', async () => {
   expect(await screen.findByText('4300 / 4210', {}, { timeout: 3000 })).toBeVisible()
   expect(screen.getByText('1301')).toBeVisible()
   expect(screen.getByText('特征为提交级聚合')).toBeVisible()
+  expect(screen.getByRole('heading', { name: '标签与 SZZ' })).toBeVisible()
+  expect(screen.getByText('修复提交')).toBeVisible()
+  expect(screen.getByText('证据对数')).toBeVisible()
   await userEvent.setup().click(screen.getByRole('button', { name: '创建训练任务' }))
   await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'training', resourceId: TASK.taskId }))
 })
