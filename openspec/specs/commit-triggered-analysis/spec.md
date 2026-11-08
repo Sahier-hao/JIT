@@ -1,0 +1,48 @@
+# commit-triggered-analysis Specification
+
+## Purpose
+TBD - created by archiving change nightly-multi-method-and-location-loop. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: CTA-01 从明确提交范围触发真实分析
+
+系统 SHALL 提供从本地 Git 仓库的明确 base 与 head 提交触发真实特征采集、模型推理与报告生成的命令。命令 MUST 记录仓库路径或来源、base/head SHA、模型标识与运行身份、特征 schema、逐提交结果、候选覆盖和失败状态。MUST NOT 使用预制分数、mock 或历史报告代替本次采集与推理。
+
+#### Scenario: 本地提交范围
+
+- **WHEN** 对本地仓库给出存在的 base 与 head
+- **THEN** 命令采集该范围提交与改动文件，执行真实特征提取与模型推理，生成报告
+
+#### Scenario: 缺少模型或 schema 不匹配
+
+- **WHEN** 所选模型不可加载或其 schema 与本次特征不兼容
+- **THEN** 命令明确失败并给出原因，不替换模型或伪造分数
+
+### Requirement: CTA-02 幂等与边界行为
+
+同一仓库、同一 base/head 与同一模型的内容 MUST 幂等：重复执行复用相同输入身份并产生一致结果标识。无变更、远端限流、输入无效和取消 MUST 有明确行为与退出码；命令 MUST NOT 要求普通用户传入服务端任意路径或凭据。
+
+#### Scenario: 重复执行
+
+- **WHEN** 对同一提交范围与模型重复执行
+- **THEN** 报告身份与内容一致，不产生重复分析记录
+
+#### Scenario: 无变更
+
+- **WHEN** base 与 head 相同或范围内没有可分析提交
+- **THEN** 命令以明确状态结束并说明无变更，不生成空报告冒充成功
+
+### Requirement: CTA-03 CI 示例与非阻断边界
+
+系统 SHALL 提供从真实提交触发的 CI 示例，说明检出、模型来源、命令、输出与退出码。示例 MUST 默认只生成报告，MUST NOT 阻断合并、自动评论 PR 或修改远端配置；模型 MUST 从受控来源读取并校验哈希，MUST NOT 上传本机 SQLite、凭据或个人草稿。
+
+#### Scenario: 本地完整链路
+
+- **WHEN** 在本地仓库执行示例命令
+- **THEN** 生成报告并返回可区分成功与失败的退出码，不访问本机回环服务
+
+#### Scenario: 远端未运行
+
+- **WHEN** 当前环境没有远端执行权限或资源
+- **THEN** 记录“本地链路已验证、远端尚未运行”，不宣称远端旅程通过
