@@ -35,6 +35,7 @@ REVERT_PATTERN = re.compile(r"(?i)^revert\b")
 EXCLUDED_MESSAGE = re.compile(r"(?i)^(?:merge|chore|docs?|style|format(?:ting)?|refactor|test|build|ci|lint)\b")
 FORMAT_WORDS = re.compile(r"(?i)\b(?:typo|whitespace|format(?:ting)?|lint|style)\b")
 BUG_LABEL = re.compile(r"(?i)\b(bug|defect|regression|crash)\b")
+METADATA_LINE = re.compile(r'''(?i)^\s*(?:"version"|'version'|version|__version__|versioncode|versionname)\s*[:=]''')
 # 文档、测试与二进制不作为缺陷引入行；修复可以同时改源码和测试，只回溯源码路径。
 SKIP_PATH = re.compile(
     r"(?i)(^|/)(docs?|documentation|examples?|samples?|fixtures?|testdata|test-data|tests?|specs?)(/|$)"
@@ -79,6 +80,7 @@ class LineSzzResult:
     skipped_files: int = 0
     skipped_excluded: int = 0
     skipped_whitespace: int = 0
+    skipped_noise_lines: int = 0
     skipped_docs_only: int = 0
     outside_window: int = 0
     truncated: bool = False
@@ -97,6 +99,7 @@ class LineSzzResult:
             "skippedFiles": self.skipped_files,
             "skippedExcluded": self.skipped_excluded,
             "skippedWhitespace": self.skipped_whitespace,
+            "skippedNoiseLines": self.skipped_noise_lines,
             "skippedDocsOnly": self.skipped_docs_only,
             "outsideWindow": self.outside_window,
             "truncated": self.truncated,
@@ -327,6 +330,39 @@ def _blame(repo, parent, path, start, end):
     return blamed
 
 
+def _file_lines(repo, commit, path, cache):
+    key = (commit, path)
+    if key not in cache:
+        text = _git(repo, ["show", f"{commit}:{path}"])
+        cache[key] = text.splitlines() if text is not None else None
+    return cache[key]
+
+
+def _noise_line(text):
+    stripped = (text or "").strip()
+    return not stripped or bool(METADATA_LINE.match(stripped))
+
+
+def _substantive_ranges(lines, start, end):
+    ranges, current = [], None
+    for line_no in range(start, end + 1):
+        text = lines[line_no - 1] if 1 <= line_no <= len(lines) else ""
+        if _noise_line(text):
+            if current:
+                ranges.append(current)
+                current = None
+            continue
+        if current and line_no == current[1] + 1:
+            current[1] = line_no
+        else:
+            if current:
+                ranges.append(current)
+            current = [line_no, line_no]
+    if current:
+        ranges.append(current)
+    return ranges
+
+
 def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=None):
     """计算一个修复提交的引入提交与原始行号证据。"""
     parents = commit.get("parents") or []
@@ -350,6 +386,7 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
     pairs, ranges_done = {}, 0
     filtered_files = 0
     capped = False
+    content_cache = {}
     for item in _parse_hunks(diff_text):
         if item["binary"]:
             result.skipped_files += 1
@@ -366,24 +403,32 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
         if len(merged_ranges) > MAX_RANGES_PER_FILE:
             result.truncated = True
         for start, end in merged_ranges[:MAX_RANGES_PER_FILE]:
-            if ranges_done >= MAX_LINES_PER_COMMIT:
-                result.truncated = True
-                capped = True
-                break
-            remaining = MAX_LINES_PER_COMMIT - ranges_done
-            if end - start + 1 > remaining:
-                end = start + remaining - 1
-                result.truncated = True
-            blamed = _blame(repo, parent, item["old"], start, end)
-            if blamed is None:
-                result.unresolved_ranges += 1
+            parent_lines = _file_lines(repo, parent, item["old"], content_cache)
+            parts = _substantive_ranges(parent_lines, start, end) if parent_lines is not None else [[start, end]]
+            if parent_lines is not None and not parts:
+                result.skipped_noise_lines += 1
                 continue
-            ranges_done += end - start + 1
-            old_path = item["old"] if item["old"] != item["new"] else None
-            for identity, orig, final in blamed:
-                if identity == commit["id"]:
+            for sub_start, sub_end in parts:
+                if ranges_done >= MAX_LINES_PER_COMMIT:
+                    result.truncated = True
+                    capped = True
+                    break
+                remaining = MAX_LINES_PER_COMMIT - ranges_done
+                if sub_end - sub_start + 1 > remaining:
+                    sub_end = sub_start + remaining - 1
+                    result.truncated = True
+                blamed = _blame(repo, parent, item["old"], sub_start, sub_end)
+                if blamed is None:
+                    result.unresolved_ranges += 1
                     continue
-                pairs.setdefault((identity, path, old_path), []).append((orig, final))
+                ranges_done += sub_end - sub_start + 1
+                old_path = item["old"] if item["old"] != item["new"] else None
+                for identity, orig, final in blamed:
+                    if identity == commit["id"]:
+                        continue
+                    pairs.setdefault((identity, path, old_path), []).append((orig, final))
+            if capped:
+                break
         if capped:
             break
     evidence = []

@@ -133,3 +133,15 @@ def test_sample_export_keeps_verdict_for_human_review(tmp_path):
     with target.open(encoding="utf-8") as handle:
         reader = list(csv.DictReader(handle))
     assert reader[0]["path"] == "pkg/a.py" and reader[0]["verdict"] == ""
+
+
+def test_full_szz_ignores_version_metadata_lines(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    first = _commit(repo, "release 2.0.0", {"package.json": '{\n  "version": "2.0.0"\n}\n'},
+                    "2024-01-01T00:00:00+00:00")
+    _commit(repo, "fix: align app icon", {"package.json": '{\n  "version": "2.0.1"\n}\n'},
+            "2024-01-02T00:00:00+00:00")
+
+    result = _full(repo)
+    assert first not in result.labels
+    assert result.skipped_noise_lines >= 1
