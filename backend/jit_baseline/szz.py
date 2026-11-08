@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +31,8 @@ SKIP_PATH = re.compile(
 MAX_FIX_COMMITS = 2000
 MAX_RANGES_PER_FILE = 50
 MAX_LINES_PER_COMMIT = 2000
+# 单次采集的行级回溯时间预算；超出即停止并标记截断，避免拖垮分析作业。
+MAX_SECONDS = 120
 SZZ_LINE_LIMITATIONS = (
     "标签由行级 SZZ 生成：按修复关键词与 issue 引用识别修复提交，删除/修改行用 git blame 回溯到引入提交。",
     "未关联 issue 的修复、纯新增式修复、强制推送改写历史与跨仓库搬运仍可能漏标；被过滤的文档/测试不作为引入行。",
@@ -239,7 +242,11 @@ def label_repository(repo, entries, window_ids, start=None, end=None):
         result.truncated = True
         fix_commits = fix_commits[:MAX_FIX_COMMITS]
     result.fix_commits = len(fix_commits)
+    deadline = time.monotonic() + MAX_SECONDS
     for commit in fix_commits:
+        if time.monotonic() > deadline:
+            result.truncated = True
+            break
         for item in commit_evidence(repo, commit, result=result):
             if item["introducedCommit"] not in window_ids:
                 result.outside_window += 1
