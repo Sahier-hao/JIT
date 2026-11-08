@@ -175,6 +175,17 @@ Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回
   --limit 50 --output ..\.dsh-tmp\szz-review.csv
 ```
 
+
+行级训练样本（`line-szz-v1`）可从同一描述导出，正例来自行号证据，负例来自 `label=0` 提交的新增行：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli line-dataset `
+  data/datasets/<数据集>/<版本>.json --repo .cache/repositories/<缓存>.git `
+  --output ..\.dsh-tmp\line-dataset.jsonl --negatives-per-positive 3 --context 3
+```
+
+输出 JSONL 与同名 `.summary.json`；摘要记录正负例、提交/文件数、缺失行、跳过文件、截断与负例不足。导出不写回数据集、目录库或模型。
+
 采到的数据集可以直接训练，训练时用描述文件指定它：
 
 ```powershell

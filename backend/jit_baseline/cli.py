@@ -169,6 +169,13 @@ def main():
     sample.add_argument("--repo", default=None, help="可选：本地仓库路径，用于补全提交标题")
     sample.add_argument("--limit", type=int, default=100)
     sample.add_argument("--output", type=Path, required=True, help="复核表 CSV 输出路径")
+    line_dataset = commands.add_parser("line-dataset")
+    line_dataset.add_argument("manifest", type=Path)
+    line_dataset.add_argument("--repo", default=None, help="本地仓库或缓存裸克隆；缺省读取数据集描述中的路径")
+    line_dataset.add_argument("--output", type=Path, required=True, help="行级样本 JSONL 输出路径")
+    line_dataset.add_argument("--negatives-per-positive", type=int, default=3)
+    line_dataset.add_argument("--context", type=int, default=3)
+    line_dataset.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     exit_code = 0
     try:
@@ -247,6 +254,16 @@ def main():
             rows = szz_module.sample_evidence(manifest, repo=args.repo, limit=args.limit)
             target = szz_module.write_sample_csv(rows, args.output)
             result = {'kind': 'szz-sample', 'rows': len(rows), 'output': str(target)}
+        elif args.command == 'line-dataset':
+            import json as json_module
+            from . import line_dataset as line_module
+            manifest = json_module.loads(Path(args.manifest).read_text(encoding='utf-8'))
+            summary = line_module.build_line_dataset(
+                manifest, args.output, repo=args.repo,
+                negatives_per_positive=args.negatives_per_positive,
+                context=args.context, seed=args.seed,
+            )
+            result = {'kind': 'line-dataset', **summary, 'output': str(args.output)}
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
