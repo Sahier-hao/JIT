@@ -29,7 +29,7 @@
 
 - [x] 5.1 合成仓库：行号回溯、文档/测试过滤、回滚、纯新增、重命名、删除文件、纯空白、issue 关联、重构排除。
 - [x] 5.2 `test_szz.py`、`test_szz_full.py`、`test_collect.py`、`test_suite.py`、`test_multi_project.py`、`test_dataset_builds.py`、`test_catalog_storage.py` 通过。
-- [x] 5.3 真实仓库冒烟：claude-scholar 窗口 177 条、17 正例、101 条证据；修复信号 30 个关键词、27 个排除、86 个跳过文件、8 个仅文档。
+- [x] 5.3 真实仓库冒烟：claude-scholar 窗口 177 条、14 个纳入正例、29 条唯一证据；修复信号 30 个关键词、23 个排除、86 个跳过文件、8 个仅文档；已登记并导入 `kamei14-git-v2-claude-scholar-full` 数据集，正例与证据数与目录库一致。
 - [x] 5.4 前端类型检查通过；全量 49 个文件 / 373 个用例通过。
 - [x] 5.5 数据集读数由组件测试覆盖（管理区需登录，未做浏览器截图验收）。
 

@@ -499,7 +499,11 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     line_result = None
     if szz in ("full", "line"):
         resolver = build_resolver(repo) if szz == "full" else None
-        line_result = label_repository_lines(repo, entries, {record["id"] for record in records},
+        included = {record["id"] for record in records
+                    if record["metrics"]["la"] > 0
+                    and record["metrics"]["la"] + record["metrics"]["ld"] <= 10000
+                    and record["metrics"]["nf"] <= 100}
+        line_result = label_repository_lines(repo, entries, included,
                                              start, end, mode=szz, resolver=resolver)
         labels = line_result.labels
         evidence = line_result.evidence

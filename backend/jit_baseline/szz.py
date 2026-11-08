@@ -347,8 +347,9 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
     if diff_text is None:
         result.unresolved_ranges += 1
         return []
-    evidence, ranges_done = [], 0
+    pairs, ranges_done = {}, 0
     filtered_files = 0
+    capped = False
     for item in _parse_hunks(diff_text):
         if item["binary"]:
             result.skipped_files += 1
@@ -367,7 +368,8 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
         for start, end in merged_ranges[:MAX_RANGES_PER_FILE]:
             if ranges_done >= MAX_LINES_PER_COMMIT:
                 result.truncated = True
-                return evidence
+                capped = True
+                break
             remaining = MAX_LINES_PER_COMMIT - ranges_done
             if end - start + 1 > remaining:
                 end = start + remaining - 1
@@ -377,27 +379,34 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
                 result.unresolved_ranges += 1
                 continue
             ranges_done += end - start + 1
-            by_commit = {}
+            old_path = item["old"] if item["old"] != item["new"] else None
             for identity, orig, final in blamed:
                 if identity == commit["id"]:
                     continue
-                by_commit.setdefault(identity, []).append((orig, final))
-            for identity, lines in by_commit.items():
-                line_ranges = _merge_ranges([[line, line] for line, _final in sorted(set(lines))])
-                parent_ranges = _merge_ranges([[final, final] for _line, final in sorted(set(lines))])
-                entry = {
-                    "introducedCommit": identity,
-                    "fixCommit": commit["id"],
-                    "path": path,
-                    "oldPath": item["old"] if item["old"] != item["new"] else None,
-                    "lineRanges": line_ranges,
-                    "parentRanges": parent_ranges,
-                    "fixTime": _iso(commit.get("time")),
-                }
-                if info is not None:
-                    entry["fixSource"] = info.source
-                    entry["issueRefs"] = info.refs
-                evidence.append(entry)
+                pairs.setdefault((identity, path, old_path), []).append((orig, final))
+        if capped:
+            break
+    evidence = []
+    for (identity, path, old_path), lines in sorted(pairs.items()):
+        line_ranges = _merge_ranges([[line, line] for line, _final in sorted(set(lines))])
+        parent_ranges = _merge_ranges([[final, final] for _line, final in sorted(set(lines))])
+        if len(line_ranges) > MAX_RANGES_PER_FILE:
+            line_ranges = line_ranges[:MAX_RANGES_PER_FILE]
+            parent_ranges = parent_ranges[:MAX_RANGES_PER_FILE]
+            result.truncated = True
+        entry = {
+            "introducedCommit": identity,
+            "fixCommit": commit["id"],
+            "path": path,
+            "oldPath": old_path,
+            "lineRanges": line_ranges,
+            "parentRanges": parent_ranges,
+            "fixTime": _iso(commit.get("time")),
+        }
+        if info is not None:
+            entry["fixSource"] = info.source
+            entry["issueRefs"] = info.refs
+        evidence.append(entry)
     if not evidence and filtered_files and ranges_done == 0:
         result.skipped_docs_only += 1
     return evidence
