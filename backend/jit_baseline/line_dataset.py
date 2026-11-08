@@ -19,6 +19,7 @@ from .szz import _is_source_path
 SCHEMA = "line-szz-v1"
 MAX_POSITIVES = 20000
 MAX_NEGATIVES_PER_COMMIT = 50
+MAX_NEGATIVE_COMMITS = 300
 LANGUAGE = {
     ".py": "python", ".js": "javascript", ".mjs": "javascript", ".cjs": "javascript",
     ".ts": "typescript", ".tsx": "typescript", ".jsx": "javascript", ".java": "java",
@@ -175,38 +176,38 @@ def _added_ranges(diff_text):
     return result
 
 
-def _negative_candidates(manifest, repo, features, content_cache, summary):
+def _negative_candidates(manifest, repo, features, content_cache, summary, *, limit=5000, seed=42):
     version = manifest.get("version") or (manifest.get("dataset") or "")
     csv_path = _csv_path(manifest)
     with csv_path.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
-        negatives = []
-        for row in reader:
-            if row.get("bugcount") not in (None, "", "0", "0.0"):
+        zero = [row for row in reader if row.get("bugcount") in (None, "", "0", "0.0") and row.get("commit_id")]
+    random.Random(seed).shuffle(zero)
+    negatives = []
+    for row in zero[:MAX_NEGATIVE_COMMITS]:
+        if len(negatives) >= limit:
+            break
+        commit = row["commit_id"]
+        diff = _git(repo, ["show", "--format=", "--unified=0", "--find-renames=50%", commit, "--"])
+        if diff is None:
+            summary["missingDiffs"] += 1
+            continue
+        taken = 0
+        for path, start, end in _added_ranges(diff):
+            if not _is_source_path(path):
+                summary["skippedFiles"] += 1
                 continue
-            commit = row.get("commit_id")
-            if not commit:
+            content = _content(repo, commit, path, content_cache)
+            if content is None:
+                summary["missingLines"] += 1
                 continue
-            diff = _git(repo, ["show", "--format=", "--unified=0", "--find-renames=50%", commit, "--"])
-            if diff is None:
-                summary["missingDiffs"] += 1
-                continue
-            taken = 0
-            for path, start, end in _added_ranges(diff):
-                if not _is_source_path(path):
-                    summary["skippedFiles"] += 1
-                    continue
-                content = _content(repo, commit, path, content_cache)
-                if content is None:
-                    summary["missingLines"] += 1
-                    continue
-                for line_no in range(start, end + 1):
-                    if taken >= MAX_NEGATIVES_PER_COMMIT or not 1 <= line_no <= len(content):
-                        break
-                    negatives.append((commit, path, line_no, content[line_no - 1]))
-                    taken += 1
-                if taken >= MAX_NEGATIVES_PER_COMMIT:
+            for line_no in range(start, end + 1):
+                if taken >= MAX_NEGATIVES_PER_COMMIT or len(negatives) >= limit or not 1 <= line_no <= len(content):
                     break
+                negatives.append((commit, path, line_no, content[line_no - 1]))
+                taken += 1
+            if taken >= MAX_NEGATIVES_PER_COMMIT or len(negatives) >= limit:
+                break
     return negatives
 
 
@@ -226,7 +227,9 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
     summary["positiveCommits"] = len({row["commitId"] for row in positives})
     negatives = []
     if positives and negatives_per_positive > 0:
-        candidates = _negative_candidates(manifest, repo_path, features, cache, summary)
+        target = len(positives) * negatives_per_positive
+        candidates = _negative_candidates(manifest, repo_path, features, cache, summary,
+                                          limit=max(target * 3, 200), seed=seed)
         positive_keys = {(row["commitId"], row["path"], row["line"]) for row in positives}
         candidates = [item for item in candidates if (item[0], item[1], item[2]) not in positive_keys]
         target = min(len(candidates), len(positives) * negatives_per_positive)
@@ -246,6 +249,9 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
     summary["negatives"] = len(negatives)
     summary["negativeCommits"] = len({row["commitId"] for row in negatives})
     rows = positives + negatives
+    repo_name = manifest.get("dataset") or summary.get("datasetVersion")
+    for row in rows:
+        row["repo"] = repo_name
     rows.sort(key=lambda row: (-row["label"], row["commitId"], row["path"], row["line"]))
     summary["files"] = len({row["path"] for row in rows})
     target = Path(output)
