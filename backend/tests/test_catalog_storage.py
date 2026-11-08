@@ -368,11 +368,12 @@ def test_label_evidence_and_status_are_persisted(tmp_path):
     manifest = {
         'version': 'demo-v1', 'dataset': 'demo', 'file': {'sha256': 'x'},
         'collection': {
-            'label': {'kind': 'simplified-szz', 'version': 'szz-simple-v1',
+            'label': {'kind': 'szz-line', 'version': 'szz-line-v1',
                       'binarizationRule': 'observed fix => 1', 'observedThrough': 1_705_000_000,
                       'maturityDays': 90},
             'labelEvidence': [{'introducedCommit': 'a' * 40, 'fixCommit': 'b' * 40,
-                               'path': 'pkg/a.py', 'fixTime': '2024-01-05T00:00:00Z'}],
+                               'path': 'pkg/a.py', 'fixTime': '2024-01-05T00:00:00Z',
+                               'lineRanges': [[3, 4]], 'parentRanges': [[9, 10]]}],
         },
     }
     records = [
@@ -382,11 +383,13 @@ def test_label_evidence_and_status_are_persisted(tmp_path):
     store.import_dataset(manifest, records)
 
     positive = store.commit('demo-v1', 'a' * 40)
-    assert positive['labelOrigin'] == 'simplified-szz'
-    assert positive['labelRuleVersion'] == 'szz-simple-v1'
+    assert positive['labelOrigin'] == 'szz-line'
+    assert positive['labelRuleVersion'] == 'szz-line-v1'
     assert positive['binarizationRule'] == 'observed fix => 1'
     assert positive['labelStatus'] == 'positive'
     assert positive['evidence'][0]['fixCommit'] == 'b' * 40
+    assert positive['evidence'][0]['lineRanges'] == [[3, 4]]
+    assert positive['evidence'][0]['parentRanges'] == [[9, 10]]
 
     recent = store.commit('demo-v1', 'c' * 40)
     assert recent['labelStatus'] == 'immature'

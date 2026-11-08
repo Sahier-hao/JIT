@@ -156,6 +156,8 @@ def main():
     collect.add_argument('--output', type=Path, default=None, help='采集 CSV 输出路径')
     collect.add_argument('--register', action='store_true', help='采集后直接登记数据集')
     collect.add_argument('--with-text', action='store_true', help='同时产出有界 diff 文本 sidecar')
+    collect.add_argument('--szz', choices=['line', 'simple'], default='line',
+                         help='标签规则：line 行级回溯（默认），simple 文件级兼容规则')
     collect.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
@@ -232,7 +234,7 @@ def main():
                                                   branch=args.branch, output=args.output,
                                                   dataset=args.dataset, register=args.register,
                                                   limit=args.limit, root=args.root,
-                                                  with_text=args.with_text)
+                                                  with_text=args.with_text, szz=args.szz)
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":

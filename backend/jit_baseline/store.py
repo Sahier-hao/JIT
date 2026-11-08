@@ -164,6 +164,7 @@ def dataset_list(registered):
             "timeRange": manifest["timeRange"], "quality": manifest["quality"],
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
+            "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
             "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
@@ -180,6 +181,7 @@ def version_view(registered, name):
                           "timeRange": manifest["timeRange"], "quality": manifest["quality"],
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
+                          "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
                           "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}

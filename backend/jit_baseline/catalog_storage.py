@@ -41,7 +41,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (28, Path(__file__).parent / 'migrations/028_sync_algorithm.sql'),
               (29, Path(__file__).parent / 'migrations/029_training_partition_diagnostics.sql'),
               (30, Path(__file__).parent / 'migrations/030_split_presets.sql'),
-              (31, Path(__file__).parent / 'migrations/031_dataset_build_tasks.sql'))
+              (31, Path(__file__).parent / 'migrations/031_dataset_build_tasks.sql'),
+              (32, Path(__file__).parent / 'migrations/032_label_evidence_lines.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -202,9 +203,14 @@ class CatalogStorage:
             evidence = [item for item in (collection.get('labelEvidence') or [])
                         if item.get('introducedCommit') in included
                         and item.get('fixCommit') and item.get('path')]
-            db.executemany('INSERT OR IGNORE INTO commit_label_evidence VALUES (?,?,?,?,?,?)',
+            db.executemany('INSERT OR IGNORE INTO commit_label_evidence '
+                           '(dataset_version, commit_id, fix_commit_id, path, fix_time, rule_version, '
+                           'line_ranges_json, parent_ranges_json) VALUES (?,?,?,?,?,?,?,?)',
                            [(version, item['introducedCommit'], item['fixCommit'], item['path'],
-                             item['fixTime'], label_version or LABEL_RULE) for item in evidence])
+                             item['fixTime'], label_version or LABEL_RULE,
+                             json.dumps(item['lineRanges']) if item.get('lineRanges') else None,
+                             json.dumps(item['parentRanges']) if item.get('parentRanges') else None)
+                            for item in evidence])
             db.execute('INSERT INTO import_run VALUES (?,?,?,?,?,?,?)',
                        (uuid.uuid4().hex, version, 'success', len(records), None, started, utc_now()))
         return {'datasetVersion': version, 'created': True, 'commits': len(records)}
@@ -263,11 +269,15 @@ class CatalogStorage:
 
     @staticmethod
     def _evidence(db, version, commit_id):
-        rows = db.execute('SELECT fix_commit_id, path, fix_time, rule_version FROM commit_label_evidence '
+        rows = db.execute('SELECT fix_commit_id, path, fix_time, rule_version, '
+                          'line_ranges_json, parent_ranges_json FROM commit_label_evidence '
                           'WHERE dataset_version=? AND commit_id=? ORDER BY fix_time, fix_commit_id, path',
                           (version, commit_id)).fetchall()
         return [{'fixCommit': row['fix_commit_id'], 'path': row['path'],
-                 'fixTime': row['fix_time'], 'ruleVersion': row['rule_version']} for row in rows]
+                 'fixTime': row['fix_time'], 'ruleVersion': row['rule_version'],
+                 'lineRanges': json.loads(row['line_ranges_json']) if row['line_ranges_json'] else None,
+                 'parentRanges': json.loads(row['parent_ranges_json']) if row['parent_ranges_json'] else None}
+                for row in rows]
 
     @staticmethod
     def _summary_row(row, module):
