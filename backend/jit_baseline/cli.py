@@ -175,6 +175,7 @@ def main():
     line_dataset.add_argument("--output", type=Path, required=True, help="行级样本 JSONL 输出路径")
     line_dataset.add_argument("--negatives-per-positive", type=int, default=3)
     line_dataset.add_argument("--context", type=int, default=3)
+    line_dataset.add_argument("--negative-mode", choices=["added-line", "same-file"], default="added-line")
     line_dataset.add_argument("--seed", type=int, default=42)
     line_train = commands.add_parser("line-train")
     line_train.add_argument("--input", action="append", type=Path, required=True, help="可重复：line-szz-v1 JSONL")
@@ -182,6 +183,8 @@ def main():
     line_train.add_argument("--output", type=Path, required=True, help="指标报告 JSON")
     line_train.add_argument("--seed", type=int, default=42)
     line_train.add_argument("--model-output", type=Path, default=None, help="可选：另存 joblib 基线")
+    line_train.add_argument("--include-commit-features", action="store_true", help="加入提交级 Kamei 特征（默认关闭以避免泄漏）")
+    line_train.add_argument("--no-repo-balance", action="store_true", help="按原始样本量训练，不按仓库平衡")
     args = parser.parse_args()
     exit_code = 0
     try:
@@ -267,7 +270,7 @@ def main():
             summary = line_module.build_line_dataset(
                 manifest, args.output, repo=args.repo,
                 negatives_per_positive=args.negatives_per_positive,
-                context=args.context, seed=args.seed,
+                context=args.context, seed=args.seed, negative_mode=args.negative_mode,
             )
             result = {'kind': 'line-dataset', **summary, 'output': str(args.output)}
         elif args.command == 'line-train':
@@ -275,6 +278,8 @@ def main():
             report = train_module.train_line_baseline(
                 args.input, args.output, test_repo=args.test_repo, seed=args.seed,
                 model_output=args.model_output,
+                include_commit_features=args.include_commit_features,
+                repo_balance=not args.no_repo_balance,
             )
             result = {'kind': 'line-model-report', 'samples': report['samples'],
                       'metrics': report['metrics'], 'output': str(args.output)}

@@ -54,15 +54,36 @@ def _text(row):
     return "\n".join(parts)
 
 
-def _numeric(row):
-    values = [len(str(row.get("text") or "")), float(row.get("indent") or 0),
+STRUCT_KEYS = ["if", "for", "while", "return", "try", "catch", "assign", "compare",
+               "call", "member", "index", "identifier", "digit"]
+
+
+def _structure(text):
+    return {
+        "if": text.count("if "), "for": text.count("for "), "while": text.count("while "),
+        "return": text.count("return "), "try": text.count("try"), "catch": text.count("catch"),
+        "assign": text.count("=") - text.count("==") - text.count("!=") - text.count(">=") - text.count("<="),
+        "compare": text.count("==") + text.count("!=") + text.count(">=") + text.count("<="),
+        "call": text.count("("), "member": text.count("."), "index": text.count("["),
+        "identifier": sum(1 for token in text.replace("(", " ").replace(")", " ").split()
+                          if token and (token[0].isalpha() or token[0] == "_")),
+        "digit": sum(1 for ch in text if ch.isdigit()),
+    }
+
+
+def _numeric(row, include_commit=True):
+    text = str(row.get("text") or "")
+    structure = _structure(text)
+    values = [len(text), float(row.get("indent") or 0),
               1.0 if row.get("blank") else 0.0, 1.0 if row.get("comment") else 0.0]
-    features = row.get("commitFeatures") or {}
-    for name in FEATURE_NAMES:
-        try:
-            values.append(float(features.get(name) or 0.0))
-        except (TypeError, ValueError):
-            values.append(0.0)
+    values.extend(float(structure[key]) for key in STRUCT_KEYS)
+    if include_commit:
+        features = row.get("commitFeatures") or {}
+        for name in FEATURE_NAMES:
+            try:
+                values.append(float(features.get(name) or 0.0))
+            except (TypeError, ValueError):
+                values.append(0.0)
     return values
 
 
@@ -81,7 +102,8 @@ def _metrics(y_true, probability):
             "falseNegative": int(fn), "truePositive": int(tp)}
 
 
-def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output=None):
+def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output=None,
+                        include_commit_features=False, repo_balance=True):
     rows = load_rows(inputs)
     labels = np.array([int(row["label"]) for row in rows], dtype=int)
     commits = np.array([str(row["commitId"]) for row in rows])
@@ -108,13 +130,18 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
     encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=True)
     x_lang_train = encoder.fit_transform(np.array([[row.get("language") or "other"] for row in train_rows]))
     x_lang_test = encoder.transform(np.array([[row.get("language") or "other"] for row in test_rows]))
-    x_num_train = csr_matrix(np.array([_numeric(row) for row in train_rows], dtype=float))
-    x_num_test = csr_matrix(np.array([_numeric(row) for row in test_rows], dtype=float))
+    x_num_train = csr_matrix(np.array([_numeric(row, include_commit_features) for row in train_rows], dtype=float))
+    x_num_test = csr_matrix(np.array([_numeric(row, include_commit_features) for row in test_rows], dtype=float))
     x_train = hstack([x_text_train, x_lang_train, x_num_train]).tocsr()
     x_test = hstack([x_text_test, x_lang_test, x_num_test]).tocsr()
     model = LogisticRegression(class_weight="balanced", solver="liblinear",
                                max_iter=2000, random_state=seed)
-    model.fit(x_train, y_train)
+    if repo_balance:
+        counts = {repo: repos[train_index].tolist().count(repo) for repo in set(repos[train_index])}
+        weights = np.array([len(train_index) / (len(counts) * counts[repo]) for repo in repos[train_index]], dtype=float)
+    else:
+        weights = None
+    model.fit(x_train, y_train, sample_weight=weights)
     probability = model.predict_proba(x_test)[:, 1]
     metrics = _metrics(y_test.tolist(), probability.tolist())
     report = {
@@ -129,10 +156,12 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
                     "positives": int(labels.sum()), "negatives": int(len(labels) - labels.sum()),
                     "trainPositives": int(y_train.sum()), "testPositives": int(y_test.sum())},
         "features": {"dimension": int(x_train.shape[1]), "text": TEXT_PARAMS,
-                     "numeric": ["lineLength", "indent", "blank", "comment"] + FEATURE_NAMES,
+                     "numeric": (["lineLength", "indent", "blank", "comment"] + STRUCT_KEYS +
+                                 (FEATURE_NAMES if include_commit_features else [])),
                      "languages": [str(value) for value in encoder.categories_[0]]},
         "model": {"type": "logistic-regression", "classWeight": "balanced",
-                  "solver": "liblinear", "maxIter": 2000, "threshold": 0.5},
+                  "solver": "liblinear", "maxIter": 2000, "threshold": 0.5,
+                  "includeCommitFeatures": include_commit_features, "repoBalance": repo_balance},
         "metrics": metrics,
     }
     target = Path(output)

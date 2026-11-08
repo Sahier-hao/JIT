@@ -14,12 +14,13 @@ from pathlib import Path
 
 from .config import BACKEND
 from .errors import BaselineError
-from .szz import _is_source_path
+from .szz import _is_source_path, _noise_line
 
 SCHEMA = "line-szz-v1"
 MAX_POSITIVES = 20000
 MAX_NEGATIVES_PER_COMMIT = 50
 MAX_NEGATIVE_COMMITS = 300
+MAX_NEGATIVES_PER_FILE = 100
 LANGUAGE = {
     ".py": "python", ".js": "javascript", ".mjs": "javascript", ".cjs": "javascript",
     ".ts": "typescript", ".tsx": "typescript", ".jsx": "javascript", ".java": "java",
@@ -211,14 +212,38 @@ def _negative_candidates(manifest, repo, features, content_cache, summary, *, li
     return negatives
 
 
-def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3, context=3, seed=42):
+def _same_file_candidates(positives, repo, cache, summary, *, limit=5000):
+    """同一提交、同一文件中的未标记行；去掉提交类型这条捷径。"""
+    groups = {}
+    for row in positives:
+        groups.setdefault((row["commitId"], row["path"]), set()).add(row["line"])
+    candidates = []
+    for (commit, path), positive_lines in groups.items():
+        content = _content(repo, commit, path, cache)
+        if content is None:
+            summary["missingLines"] += 1
+            continue
+        taken = 0
+        for line_no, text in enumerate(content, 1):
+            if line_no in positive_lines or _noise_line(text):
+                continue
+            candidates.append((commit, path, line_no, text))
+            taken += 1
+            if taken >= MAX_NEGATIVES_PER_FILE or len(candidates) >= limit:
+                break
+        if len(candidates) >= limit:
+            break
+    return candidates
+
+
+def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3, context=3, seed=42, negative_mode="added-line"):
     """导出 line-szz-v1 JSONL 与摘要；返回摘要。"""
     repo_path = _repo_path(manifest, repo)
     features = _features_by_commit(manifest)
     summary = {"schema": SCHEMA, "datasetVersion": manifest.get("version") or manifest.get("dataset"),
                "positives": 0, "negatives": 0, "positiveCommits": 0, "negativeCommits": 0,
                "files": 0, "contextLines": context, "seed": seed,
-               "negativesPerPositive": negatives_per_positive,
+               "negativesPerPositive": negatives_per_positive, "negativeMode": negative_mode,
                "missingLines": 0, "missingDiffs": 0, "skippedFiles": 0,
                "truncated": False, "negativeShortfall": 0}
     cache = {}
@@ -228,8 +253,12 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
     negatives = []
     if positives and negatives_per_positive > 0:
         target = len(positives) * negatives_per_positive
-        candidates = _negative_candidates(manifest, repo_path, features, cache, summary,
-                                          limit=max(target * 3, 200), seed=seed)
+        if negative_mode == "same-file":
+            candidates = _same_file_candidates(positives, repo_path, cache, summary,
+                                               limit=max(target * 3, 200))
+        else:
+            candidates = _negative_candidates(manifest, repo_path, features, cache, summary,
+                                              limit=max(target * 3, 200), seed=seed)
         positive_keys = {(row["commitId"], row["path"], row["line"]) for row in positives}
         candidates = [item for item in candidates if (item[0], item[1], item[2]) not in positive_keys]
         target = min(len(candidates), len(positives) * negatives_per_positive)
@@ -243,7 +272,8 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
                 dataset_version=version, commit=commit, path=path, line_no=line_no, text=text,
                 before=content[max(0, offset - context):offset],
                 after=content[line_no:line_no + context],
-                features=features.get(commit, {}), label=0, source="added-line-negative",
+                features=features.get(commit, {}), label=0,
+                source="same-file-negative" if negative_mode == "same-file" else "added-line-negative",
             ))
         summary["negativeShortfall"] = max(0, len(positives) * negatives_per_positive - len(negatives))
     summary["negatives"] = len(negatives)

@@ -6,6 +6,7 @@
 - [x] 1.2 按仓库留出或按提交分组切分；禁止同一提交跨训练/测试。
 - [x] 1.3 训练逻辑回归基线，报告 ROC-AUC、PR-AUC、Brier、固定阈值精确率/召回率。
 - [x] 1.4 CLI `line-train --input ... --test-repo --output --seed`。
+- [x] 1.5 行级样本支持 `--negative-mode same-file`（同一提交/文件的未标记行）；训练默认关闭提交级特征、加入结构特征、按仓库平衡。
 
 ## 2. 测试
 
@@ -14,7 +15,7 @@
 
 ## 3. 真实数据报告
 
-- [x] 3.1 真实报告：cc-switch 仓库内按提交切分 ROC-AUC 0.982 / PR-AUC 0.987；跨仓库测试 JIT ROC-AUC 0.584 / PR-AUC 0.536，claude-scholar ROC-AUC 0.579 / PR-AUC 0.270，均接近随机。
+- [x] 3.1 真实报告：新增行负例下仓库内 ROC-AUC 0.982、跨仓库 JIT 0.584；同文件负例 + 代码特征后 JIT ROC-AUC 0.622 / PR-AUC 0.663，claude-scholar 仍约 0.55 / 0.56。提交级特征反而使 JIT ROC-AUC 降到 0.461，确认泄漏。
 - [x] 3.2 报告中写明样本规模、正负比例、仓库分布与限制。
 
 ## 4. 文档与规格

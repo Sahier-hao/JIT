@@ -93,3 +93,22 @@ def test_line_dataset_rejects_missing_csv(tmp_path):
     manifest = {"version": "demo", "file": {"path": str(tmp_path / "missing.csv")}, "collection": {"labelEvidence": []}}
     with pytest.raises(Exception):
         build_line_dataset(manifest, tmp_path / "out.jsonl", repo=repo)
+
+
+def test_same_file_negatives_come_from_positive_commits(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    first = _commit(repo, "add module", {"pkg/a.py": LINES}, "2024-01-01T00:00:00+00:00")
+    _commit(repo, "fix: correct second line", {"pkg/a.py": LINES.replace("line 2", "line 2 fixed")},
+            "2024-01-02T00:00:00+00:00")
+    manifest = _manifest(tmp_path, repo)
+    output = tmp_path / "same.jsonl"
+    summary = build_line_dataset(manifest, output, repo=repo, negatives_per_positive=2,
+                                 context=1, negative_mode="same-file")
+    rows = [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()]
+    positives = [row for row in rows if row["label"] == 1]
+    negatives = [row for row in rows if row["label"] == 0]
+    assert summary["negativeMode"] == "same-file"
+    assert negatives and all(row["source"] == "same-file-negative" for row in negatives)
+    assert {row["commitId"] for row in negatives} <= {row["commitId"] for row in positives}
+    assert not ({(row["path"], row["line"]) for row in positives} &
+                {(row["path"], row["line"]) for row in negatives})

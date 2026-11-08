@@ -181,10 +181,10 @@ Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回
 ```powershell
 & .venv/Scripts/python.exe -m jit_baseline.cli line-dataset `
   data/datasets/<数据集>/<版本>.json --repo .cache/repositories/<缓存>.git `
-  --output ..\.dsh-tmp\line-dataset.jsonl --negatives-per-positive 3 --context 3
+  --output ..\.dsh-tmp\line-dataset.jsonl --negatives-per-positive 3 --context 3 --negative-mode same-file
 ```
 
-输出 JSONL 与同名 `.summary.json`；摘要记录正负例、提交/文件数、缺失行、跳过文件、截断与负例不足。导出不写回数据集、目录库或模型。
+`--negative-mode same-file` 从正例所在提交/文件的未标记行取负例，避免“提交类型”成为捷径；默认 `added-line` 保留原分布。输出 JSONL 与同名 `.summary.json`。导出不写回数据集、目录库或模型。
 
 行级基线训练（逻辑回归）可把一个或多个 JSONL 合并训练，并按仓库留出或按提交分组评估：
 
@@ -193,6 +193,8 @@ Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回
   --input ..\.dsh-tmp\cc-switch.jsonl --input ..\.dsh-tmp\sub2api.jsonl `
   --test-repo JIT --output ..\.dsh-tmp\line-model-report.json
 ```
+
+默认只使用代码文本、结构与语言特征，不把提交级 Kamei 特征作为默认输入，避免用提交类型泄漏标签；需要对照时加 `--include-commit-features`。默认按仓库平衡样本权重，`--no-repo-balance` 关闭。
 
 报告记录切分方式、样本/提交/仓库数、特征维度、正负例和 ROC-AUC/PR-AUC/Brier。训练只输出报告，不登记模型、不改默认模型、不接产品。
 
