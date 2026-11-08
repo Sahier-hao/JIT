@@ -18,7 +18,7 @@ import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
 import { displayTime } from '../domain'
 import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
-import { reviewStatusLabels, adoptVersion, conclusionLabels, createWork, downloadText, exportReview, question, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { reviewStatusLabels, adoptVersion, candidateQuestion, conclusionLabels, createWork, downloadText, exportReview, question, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
 
 
 type Navigate = (route: Route) => void
@@ -413,9 +413,22 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
               return <div key={`${key}:${index}`} className="wb-candidate">
                 <code>{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
                 {item.evidence ? <pre>{item.evidence}</pre> : null}
+                {item.suggestion ? <div className="wb-candidate-suggestion">
+                  <strong>{item.suggestion.title}</strong>
+                  <p>{item.suggestion.rationale}</p>
+                  {item.suggestion.manualChecks.length ? <ul>{item.suggestion.manualChecks.map(check => <li key={check}>{check}</li>)}</ul> : null}
+                  {item.suggestion.example ? <pre>{`${item.suggestion.example.before}\n→\n${item.suggestion.example.after}`}</pre> : null}
+                </div> : null}
                 <Space>
                   {(['confirmed', 'rejected', 'deferred'] as const).map(status => <Button key={status} size="sm" variant={decision?.status === status ? 'primary' : 'secondary'} onClick={() => set(status)}>{status === 'confirmed' ? '确认' : status === 'rejected' ? '驳回' : '暂缓'}</Button>)}
                   <input aria-label="候选处理理由" value={decision?.reason ?? ''} onChange={event => changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status: decision?.status ?? 'deferred', reason: event.target.value } } }))} placeholder="处理理由"/>
+                  <Button size="sm" onClick={() => {
+                    const exists = round.questions.some(item2 => item2.kind === 'suggestion' && item2.relatedFiles[0] === item.path && item2.body.includes(`${item.ruleId}@${item.ruleVersion}`) && item2.body.includes(`${item.path}:${item.line}`))
+                    if (exists) { setCandidateError('该候选建议已在问题草稿中'); return }
+                    const created = candidateQuestion(live, item)
+                    changeRound(r => ({ ...r, questions: [...r.questions, created], selectedQuestionId: created.id }))
+                    setSelectedId(created.id); setCandidateError('')
+                  }}>加入问题草稿</Button>
                 </Space>
               </div>
             })}

@@ -46,6 +46,26 @@ const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 export function question(source: PRSnapshot, body = '', origin: ReviewQuestion['source'] = 'manual'): ReviewQuestion {
   return { id: crypto.randomUUID(), body, source: origin, kind: 'question', originSnapshotId: source.snapshotId, relatedFiles: [], evidence: [], status: 'open', judgment: '', reason: '', requiresRecheck: false, feedback: '', feedbackReason: '' }
 }
+
+export function candidateQuestion(source: PRSnapshot, candidate: {
+  path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string
+  suggestion?: { title: string; rationale: string; manualChecks: string[]; example: { before: string; after: string } | null } | null
+}): ReviewQuestion {
+  const suggestion = candidate.suggestion
+  const parts = [
+    suggestion?.title ?? `处理候选 ${candidate.ruleId}`,
+    `位置：${candidate.path}:${candidate.line}（规则 ${candidate.ruleId}@${candidate.ruleVersion}）`,
+    suggestion?.rationale ?? candidate.message,
+    candidate.evidence ? `证据：${candidate.evidence}` : '',
+    suggestion?.manualChecks.length ? `人工确认：${suggestion.manualChecks.join('；')}` : '',
+    suggestion?.example ? `示例（不自动应用）：\n${suggestion.example.before}\n→\n${suggestion.example.after}` : '',
+  ].filter(Boolean)
+  const created = question(source, parts.join('\n\n'), 'manual')
+  created.kind = 'suggestion'
+  created.relatedFiles = [candidate.path]
+  return created
+}
+
 function localSource(source: PRSnapshot): PRSnapshot { return { ...source, files: source.files.map(file => ({ ...file, patch: null, patchComplete: false })) } }
 function round(source: PRSnapshot): ReviewRound {
   const questions = [question(source, `这次改动在实现和相关测试中是否保持一致？（${source.files.length} 个已加载文件，请补充具体核对目标）`, 'change')]
