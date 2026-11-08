@@ -416,15 +416,15 @@ def label_repository(repo, entries, window_ids, start=None, end=None, mode="line
     result = LineSzzResult(mode=mode, rule=SZZ_FULL_RULE if mode == "full" else SZZ_LINE_RULE)
     candidates = []
     for commit in entries:
+        if start is not None and commit["epoch"] < start:
+            continue
+        if end is not None and commit["epoch"] >= end:
+            continue
         if len(commit.get("parents") or []) > 1:
             if mode == "full":
                 result.skipped_excluded += 1
             continue
         if not commit.get("files"):
-            continue
-        if start is not None and commit["epoch"] < start:
-            continue
-        if end is not None and commit["epoch"] >= end:
             continue
         candidates.append(commit)
     if mode == "full" and resolver is None:
@@ -458,7 +458,8 @@ def label_repository(repo, entries, window_ids, start=None, end=None, mode="line
                         snapshots.append(snapshot)
             info = classify_message(commit.get("subject"), body, snapshots)
             if not info.is_fix:
-                result.skipped_excluded += 1
+                if info.reason in ("excluded", "format"):
+                    result.skipped_excluded += 1
                 continue
         result.fix_signals[info.source or "keyword"] = result.fix_signals.get(info.source or "keyword", 0) + 1
         if mode == "full":
