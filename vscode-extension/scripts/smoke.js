@@ -11,5 +11,6 @@ runTests({
   extensionTestsPath,
   launchArgs: ['--no-sandbox', '--disable-gpu',
     `--user-data-dir=${process.env.JIT_SMOKE_USER || path.resolve(__dirname, '.smoke-user')}`,
-    `--extensions-dir=${process.env.JIT_SMOKE_EXT || path.resolve(__dirname, '.smoke-ext')}`],
+    `--extensions-dir=${process.env.JIT_SMOKE_EXT || path.resolve(__dirname, '.smoke-ext')}`,
+    ...(process.env.JIT_SMOKE_WORKSPACE ? [process.env.JIT_SMOKE_WORKSPACE] : [])],
 }).then(() => console.log('SMOKE OK'), error => { console.error('SMOKE FAILED', error); process.exit(1) })

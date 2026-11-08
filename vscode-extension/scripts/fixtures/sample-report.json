@@ -1,0 +1,119 @@
+{
+  "format": "jit-commit-analysis-v1",
+  "generatedAt": "2026-11-08T17:50:36.856575Z",
+  "analysisId": "0d8a1e962113c07c",
+  "contentSha256": "353a2124934bfe5e38a325440351292471ed745537d2227971558f391cb78fd1",
+  "repository": {
+    "path": "D:\\tmp\\jit-ext-fixture",
+    "baseSha": "f7ee55cc733b9c785a8cb9424a0e014e6470cc6c",
+    "headSha": "401ebb85795245953f328299ad708821d3e33e58",
+    "commitsInRange": 1
+  },
+  "model": {
+    "modelId": "1ebe4e6c-6615-4937-8fc5-5dd1f7b8dbd7",
+    "name": "逻辑回归 · kamei14-git-v2",
+    "runId": "0830377b4c3af85c963eafa2f20575ca135b8235ac7f9a6898aec77bd1defeb5",
+    "method": "logistic-regression-l2-v1",
+    "featureSchema": "kamei14-git-v2",
+    "parameters": {
+      "C": 1.0,
+      "class_weight": null,
+      "max_iter": 1000,
+      "regularization": "L2",
+      "seed": 2026,
+      "solver": "lbfgs",
+      "threads": 1,
+      "tol": 0.0001
+    },
+    "modelSha256": "f6a4f6abbb383eb965c7c849e66b50544681e1a7f67d168626903499a9afdba7"
+  },
+  "coverage": {
+    "commitsTotal": 1,
+    "commitsScored": 1,
+    "commitsWithoutChanges": 0,
+    "unparsedHistory": 0,
+    "candidateFiles": 1,
+    "candidates": [
+      "app.py"
+    ],
+    "candidatesSkipped": []
+  },
+  "commits": [
+    {
+      "commitId": "401ebb85795245953f328299ad708821d3e33e58",
+      "epoch": 1794160227,
+      "time": "2026-11-08T17:50:27Z",
+      "subject": "fix: unsafe handler",
+      "authorName": "Fixture",
+      "risk": 0.08679911506139958,
+      "addedLines": 4,
+      "deletedLines": 1,
+      "files": 1,
+      "filePaths": [
+        "app.py"
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "side": "head",
+      "path": "app.py",
+      "line": 4,
+      "ruleId": "py-bare-except",
+      "ruleVersion": "1",
+      "message": "裸 except 会吞掉所有异常",
+      "evidence": "except:",
+      "suggestion": {
+        "ruleId": "py-bare-except",
+        "ruleVersion": "1",
+        "title": "指明需要捕获的异常类型",
+        "rationale": "裸 except 会吞掉 KeyboardInterrupt、SystemExit 和编程错误，使失败难以发现。",
+        "location": {
+          "path": "app.py",
+          "line": 4,
+          "side": "head"
+        },
+        "manualChecks": [
+          "确认哪些异常可以安全处理",
+          "确认无法处理时继续向上抛出"
+        ],
+        "example": {
+          "before": "try:\n    run()\nexcept:\n    pass",
+          "after": "try:\n    run()\nexcept ValueError as error:\n    logger.warning('输入无效: %s', error)"
+        }
+      }
+    },
+    {
+      "side": "head",
+      "path": "app.py",
+      "line": 3,
+      "ruleId": "py-eval-exec",
+      "ruleVersion": "1",
+      "message": "动态执行字符串，需确认输入来源",
+      "evidence": "return eval(value)",
+      "suggestion": {
+        "ruleId": "py-eval-exec",
+        "ruleVersion": "1",
+        "title": "核对动态执行的输入来源并改为显式解析",
+        "rationale": "eval/exec 会执行任意字符串；替代方案取决于输入格式，不能统一替换成另一个动态执行函数。",
+        "location": {
+          "path": "app.py",
+          "line": 3,
+          "side": "head"
+        },
+        "manualChecks": [
+          "确认输入是否来自不可信来源",
+          "确认是否只需解析字面量（可用 ast.literal_eval）",
+          "确认是否需要完整的表达式求值"
+        ],
+        "example": null
+      }
+    }
+  ],
+  "limitations": [
+    "分数是提交级模型估计，不是缺陷概率，也不是行级定位。",
+    "候选位置来自静态规则，与模型分数分属不同依据，不换算成行级概率。",
+    "历史特征依赖第一父链；合并提交不进入评分。",
+    "报告默认不评论 PR、不阻断合并、不修改远端配置。"
+  ]
+}

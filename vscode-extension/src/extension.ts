@@ -151,18 +151,29 @@ async function openAt(relativePath: string, line: number | null): Promise<void> 
   }
 }
 
-export function activate(context: vscode.ExtensionContext): void {
+async function importReport(pathValue?: string): Promise<void> {
+  let target = pathValue
+  if (!target) {
+    const picked = await vscode.window.showOpenDialog({
+      canSelectMany: false, filters: { 'JIT 报告': ['json'] }, title: '选择提交分析报告',
+    })
+    if (!picked?.length) return
+    target = picked[0].fsPath
+  }
+  try { await load(target) }
+  catch (error) { vscode.window.showErrorMessage(`导入失败：${error instanceof Error ? error.message : String(error)}`) }
+}
+
+export function activate(context: vscode.ExtensionContext): {
+  importReport: (path: string) => Promise<void>
+  getState: () => object
+} {
   extensionContext = context
   tree = new ReportTree()
   context.subscriptions.push(vscode.window.registerTreeDataProvider('jitReport.view', tree))
   context.subscriptions.push(
-    vscode.commands.registerCommand('jitReport.import', async () => {
-      const picked = await vscode.window.showOpenDialog({
-        canSelectMany: false, filters: { 'JIT 报告': ['json'] }, title: '选择提交分析报告',
-      })
-      if (!picked?.length) return
-      try { await load(picked[0].fsPath) }
-      catch (error) { vscode.window.showErrorMessage(`导入失败：${error instanceof Error ? error.message : String(error)}`) }
+    vscode.commands.registerCommand('jitReport.import', async (uri?: vscode.Uri) => {
+      await importReport(uri?.fsPath)
     }),
     vscode.commands.registerCommand('jitReport.refresh', async () => {
       await recomputeIdentity()
@@ -184,6 +195,15 @@ export function activate(context: vscode.ExtensionContext): void {
   )
   const saved = context.workspaceState.get<string>(REPORT_KEY)
   if (saved) void load(saved).catch(() => { /* 旧路径失效时保持空视图 */ })
+  return {
+    importReport: (pathValue: string) => load(pathValue),
+    getState: () => ({
+      reportPath: tree.reportPath,
+      commits: tree.report?.commits.length ?? 0,
+      candidates: tree.report?.candidates.length ?? 0,
+      identity: tree.identity,
+    }),
+  }
 }
 
 export function deactivate(): void { /* 无后台资源 */ }
