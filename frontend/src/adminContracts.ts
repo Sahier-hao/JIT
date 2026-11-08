@@ -634,7 +634,7 @@ export async function retryTrainingTask(taskId: string): Promise<TrainingTask> {
   return trainingTask(await apiRequest({ path: `/api/v1/training-tasks/${encodeURIComponent(taskId)}/retry`, method: 'POST', body: {} }))
 }
 
-export type TrainingExperimentStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'partial' | 'empty'
+export type TrainingExperimentStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted' | 'partial' | 'empty'
 
 export interface TrainingExperiment {
   experimentId: string

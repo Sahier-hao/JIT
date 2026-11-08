@@ -555,7 +555,8 @@ class TrainingTaskService:
         elif counts["succeeded"] == len(tasks):
             status = "succeeded"
         elif counts["succeeded"] == 0:
-            status = "failed" if counts["failed"] else "cancelled"
+            status = ("failed" if counts["failed"] else
+                      "interrupted" if counts["interrupted"] else "cancelled")
         else:
             status = "partial"
         return {

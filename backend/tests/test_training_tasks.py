@@ -519,3 +519,24 @@ def test_experiment_comparison_reports_identity_and_parameters(tmp_path, storage
                    for row in comparison["methods"])
     finally:
         service.close()
+
+
+def test_experiment_status_marks_interrupted_when_no_task_finished(tmp_path, storage):
+    release = threading.Event()
+    service = TrainingTaskService(
+        storage, artifact_root=tmp_path / "artifacts", timeout=10,
+        runner=successful_runner)
+    service._executor.submit(release.wait)
+    try:
+        view, _ = service.create_experiment({
+            "datasetVersion": DATASET_VERSION,
+            "methods": [{"method": "logistic-regression-l2-v1"},
+                        {"method": "decision-tree-v1"}],
+        }, created_by="admin")
+        service.recover()
+        recovered = service.get_experiment(view["experimentId"])
+        assert recovered["status"] == "interrupted"
+        assert recovered["statusCounts"]["interrupted"] == 2
+    finally:
+        release.set()
+        service.close()

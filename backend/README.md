@@ -196,7 +196,20 @@ Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回
 
 默认只使用代码文本、结构与语言特征，不把提交级 Kamei 特征作为默认输入，避免用提交类型泄漏标签；需要对照时加 `--include-commit-features`。默认按仓库平衡样本权重，`--no-repo-balance` 关闭；可加 `--language javascript --language typescript` 只训练/评估同一语言，跨语言混训会把项目差异当成信号。
 
-报告记录切分方式、样本/提交/仓库数、特征维度、正负例和 ROC-AUC/PR-AUC/Brier。训练只输出报告，不登记模型、不改默认模型、不接产品。
+报告记录切分方式、样本/提交/仓库数、特征维度、正负例、随机基线（测试正例率）、分仓库/分语言指标、ROC-AUC/PR-AUC/Brier 与定位代理指标（Top-k 命中、20% 行预算召回、IFA）。同时生成同名 `.manifest.json`，记录输入 SHA-256/行数/采样摘要、切分成员哈希、环境与复现命令。`--no-text`、`--no-position-features`、`--include-commit-features`、`--no-repo-balance` 用于消融对照。定位指标来自抽样负例，是上限代理，不能当作实际审查收益。训练只输出报告，不登记模型、不改默认模型、不接产品。本轮固定实验与结果见 `docs/审计/2026-11-09-line-experiment-reproducible.md`。
+
+### 提交范围触发分析（pr-check-analyze）
+
+从本地 Git 仓库的明确 base/head 执行真实特征采集、模型推理和报告生成；不要求先做分支同步，也不访问远端：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli pr-check-analyze `
+  --repo .. --base <base-sha> --head <head-sha> `
+  --model-id <已登记模型 ID> --database storage/catalog.sqlite3 --artifact-root artifacts `
+  --output ..\.dsh-tmp\commit-analysis.json --markdown ..\.dsh-tmp\commit-analysis.md
+```
+
+报告 `jit-commit-analysis-v1` 记录仓库与 base/head、模型运行与参数、逐提交分数、覆盖与未解析历史、静态候选与修复建议；同一范围与模型重复执行得到相同 `analysisId` 与内容哈希。没有变更返回 `NO_CHANGES`（退出码 2），基准不是祖先或身份不一致返回 3，输入无效返回 4，模型特征 schema 无法由提交采集生成返回 5。默认只写报告，不评论 PR、不阻断合并。CI 示例见 `.github/workflows/commit-analysis-example.yml`（远端尚未实际运行）。
 
 采到的数据集可以直接训练，训练时用描述文件指定它：
 
