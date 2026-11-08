@@ -1,10 +1,15 @@
 """行级缺陷预测基线：读取 line-szz-v1，按仓库或提交分组训练并报告指标。"""
 from __future__ import annotations
 
+import hashlib
 import json
+import math
+import platform
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+import sklearn
 from scipy.sparse import csr_matrix, hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -104,9 +109,138 @@ def _metrics(y_true, probability):
             "falseNegative": int(fn), "truePositive": int(tp)}
 
 
+def _localization(test_rows, y_test, probability):
+    """按提交分组的定位代理指标；抽样负例不是完整候选集。"""
+    groups = {}
+    for row, label, score in zip(test_rows, y_test, probability):
+        groups.setdefault(str(row["commitId"]), []).append((float(score), int(label)))
+    top = {key: 0 for key in (1, 3, 5, 10)}
+    commits = positives = budget_positives = 0
+    ifas, recalls = [], []
+    for items in groups.values():
+        items.sort(key=lambda pair: pair[0], reverse=True)
+        if not any(label for _, label in items):
+            continue
+        commits += 1
+        positives += sum(label for _, label in items)
+        for key in top:
+            top[key] += 1 if any(label for _, label in items[:key]) else 0
+        first = next(index for index, (_, label) in enumerate(items) if label)
+        ifas.append(first)
+        budget = max(1, math.ceil(len(items) * 0.2))
+        captured = sum(label for _, label in items[:budget])
+        budget_positives += captured
+        recalls.append(captured / max(1, sum(label for _, label in items)))
+    return {
+        "proxy": True,
+        "reason": ("评估集是正负抽样列表，不是完整文件或 PR 候选集合；"
+                   "IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。"),
+        "commitsWithPositives": commits,
+        "candidateLines": len(test_rows),
+        "positives": positives,
+        "topKHit": {f"top{key}": (top[key] / commits if commits else None) for key in top},
+        "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+        "recallAt20PercentLines": (budget_positives / positives if positives else None),
+        "recallAt20PercentPerCommitMean": float(np.mean(recalls)) if recalls else None,
+        "ifaMean": float(np.mean(ifas)) if ifas else None,
+        "ifaMedian": float(np.median(ifas)) if ifas else None,
+    }
+
+
+def _group_metrics(test_rows, y_test, probability, key):
+    groups = {}
+    for row, label, score in zip(test_rows, y_test, probability):
+        groups.setdefault(str(row.get(key) or "unknown"), []).append((int(label), float(score)))
+    result = {}
+    for name, pairs in sorted(groups.items()):
+        labels = [label for label, _ in pairs]
+        if len(set(labels)) < 2:
+            result[name] = {"samples": len(pairs), "positives": sum(labels),
+                            "reason": "单一类别，无法计算排序指标"}
+            continue
+        metrics = _metrics(labels, [score for _, score in pairs])
+        result[name] = {"samples": len(pairs), "positives": sum(labels), **metrics}
+    return result
+
+
+def _digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def _input_record(path):
+    path = Path(path)
+    blob = path.read_bytes()
+    sidecar = Path(str(path) + ".summary.json")
+    sampling = json.loads(sidecar.read_text(encoding="utf-8")) if sidecar.exists() else None
+    rows = [json.loads(line) for line in blob.decode("utf-8").splitlines() if line.strip()]
+    return {
+        "path": str(path),
+        "sha256": hashlib.sha256(blob).hexdigest(),
+        "bytes": len(blob),
+        "rows": len(rows),
+        "datasetVersions": sorted({str(row.get("datasetVersion")) for row in rows if row.get("datasetVersion")}),
+        "repos": sorted({str(row.get("repo")) for row in rows if row.get("repo")}),
+        "languages": sorted({str(row.get("language") or "other") for row in rows}),
+        "sampling": sampling,
+    }
+
+
+def _manifest(inputs, report, *, seed, test_repo, include_commit_features,
+              repo_balance, position_features, languages, train_commits, test_commits):
+    split = report["split"]
+    members = {
+        "train": {"commits": len(train_commits), "memberSha256": _digest(sorted(train_commits))},
+        "test": {"commits": len(test_commits), "memberSha256": _digest(sorted(test_commits))},
+    }
+    command = ["python", "-m", "jit_baseline.cli", "line-train"]
+    for path in inputs:
+        command.extend(["--input", str(path)])
+    command.extend(["--output", "<report>.json", "--seed", str(seed)])
+    if test_repo:
+        command.extend(["--test-repo", test_repo])
+    if include_commit_features:
+        command.append("--include-commit-features")
+    if not repo_balance:
+        command.append("--no-repo-balance")
+    if not position_features:
+        command.append("--no-position-features")
+    for language in languages or []:
+        command.extend(["--language", language])
+    sampling = [entry["sampling"] for entry in report["inputFiles"]
+                if isinstance(entry.get("sampling"), dict)]
+    negative_modes = sorted({str(item.get("negativeMode")) for item in sampling if item.get("negativeMode")})
+    negative_seeds = sorted({int(item.get("seed")) for item in sampling if isinstance(item.get("seed"), int)})
+    return {
+        "schema": "line-experiment-manifest-v1",
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "inputs": report["inputFiles"],
+        "split": {
+            "kind": split["kind"], "seed": seed, "testRepo": test_repo,
+            "trainCommits": split.get("trainCommits"), "testCommits": split.get("testCommits"),
+            "trainRepos": split.get("trainRepos"), "testRepos": split.get("testRepos"),
+            "memberSha256": {name: value["memberSha256"] for name, value in members.items()},
+        },
+        "sampling": {
+            "negativeMode": negative_modes[0] if len(negative_modes) == 1 else negative_modes or None,
+            "datasetSeed": negative_seeds[0] if len(negative_seeds) == 1 else negative_seeds or None,
+            "source": [entry.get("path") for entry in report["inputFiles"]],
+        },
+        "features": report["features"],
+        "model": report["model"],
+        "environment": {"python": platform.python_version(), "sklearn": sklearn.__version__,
+                        "numpy": np.__version__},
+        "command": " ".join(command),
+        "limitations": [
+            "历史 SZZ 弱标签，正例不是人工确认的真值；未观测行不等于无缺陷。",
+            "负例来自抽样列表，定位指标是代理值，不能代表完整候选集上的审查收益。",
+            "大型原始 JSONL 不入版本库，复现需按 inputs 的 sha256 与获取说明准备同一份数据。",
+        ],
+    }
+
+
 def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output=None,
                         include_commit_features=False, repo_balance=True, position_features=True,
-                        languages=None):
+                        languages=None, manifest_output=None, text_features=True):
     rows = load_rows(inputs)
     if languages:
         selected = {value.lower() for value in languages}
@@ -133,8 +267,13 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
     test_rows = [rows[index] for index in test_index]
     y_train, y_test = labels[train_index], labels[test_index]
     vectorizer = TfidfVectorizer(**TEXT_PARAMS)
-    x_text_train = vectorizer.fit_transform([_text(row) for row in train_rows])
-    x_text_test = vectorizer.transform([_text(row) for row in test_rows])
+    if text_features:
+        x_text_train = vectorizer.fit_transform([_text(row) for row in train_rows])
+        x_text_test = vectorizer.transform([_text(row) for row in test_rows])
+    else:
+        from scipy.sparse import csr_matrix as _empty
+        x_text_train = _empty((len(train_rows), 0))
+        x_text_test = _empty((len(test_rows), 0))
     encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=True)
     x_lang_train = encoder.fit_transform(np.array([[row.get("language") or "other"] for row in train_rows]))
     x_lang_test = encoder.transform(np.array([[row.get("language") or "other"] for row in test_rows]))
@@ -152,9 +291,12 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
     model.fit(x_train, y_train, sample_weight=weights)
     probability = model.predict_proba(x_test)[:, 1]
     metrics = _metrics(y_test.tolist(), probability.tolist())
+    localization = _localization(test_rows, y_test.tolist(), probability.tolist())
+    input_files = [_input_record(path) for path in inputs]
     report = {
-        "schema": "line-model-report-v1",
+        "schema": "line-model-report-v2",
         "inputs": [str(path) for path in inputs],
+        "inputFiles": input_files,
         "split": {**split, "seed": seed,
                   "trainCommits": int(len(set(commits[train_index]))),
                   "testCommits": int(len(set(commits[test_index]))),
@@ -171,12 +313,30 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
         "model": {"type": "logistic-regression", "classWeight": "balanced",
                   "solver": "liblinear", "maxIter": 2000, "threshold": 0.5,
                   "includeCommitFeatures": include_commit_features, "repoBalance": repo_balance,
-                  "positionFeatures": position_features},
+                  "positionFeatures": position_features, "textFeatures": text_features},
         "metrics": metrics,
+        "referenceBaselines": {
+            "randomPrAuc": (y_test.sum() / len(y_test)) if len(y_test) else None,
+            "note": "PR-AUC 的随机基线等于测试集正例率；排序模型必须明显高于它才有意义。",
+        },
+        "localization": localization,
+        "byRepo": _group_metrics(test_rows, y_test, probability, "repo"),
+        "byLanguage": _group_metrics(test_rows, y_test, probability, "language"),
     }
+    manifest = _manifest(
+        inputs, report, seed=seed, test_repo=test_repo,
+        include_commit_features=include_commit_features, repo_balance=repo_balance,
+        position_features=position_features, languages=languages,
+        train_commits=sorted(set(commits[train_index].tolist())),
+        test_commits=sorted(set(commits[test_index].tolist())))
+    report["manifest"] = manifest
     target = Path(output)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    sidecar = (Path(manifest_output) if manifest_output
+               else target.with_suffix(".manifest.json"))
+    sidecar.parent.mkdir(parents=True, exist_ok=True)
+    sidecar.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     if model_output:
         import joblib
         joblib.dump({"vectorizer": vectorizer, "encoder": encoder, "model": model,

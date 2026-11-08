@@ -1,0 +1,94 @@
+{
+  "kind": "line-model-report",
+  "samples": {
+    "total": 8254,
+    "train": 6102,
+    "test": 2152,
+    "positives": 3560,
+    "negatives": 4694,
+    "trainPositives": 2435,
+    "testPositives": 1125
+  },
+  "metrics": {
+    "rocAuc": 0.6737297414259439,
+    "prAuc": 0.683133978764019,
+    "brier": 0.23150237860981251,
+    "threshold": 0.5,
+    "precision": 0.6715083798882682,
+    "recall": 0.5342222222222223,
+    "f1": 0.595049504950495,
+    "trueNegative": 733,
+    "falsePositive": 294,
+    "falseNegative": 524,
+    "truePositive": 601
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 120,
+    "candidateLines": 2152,
+    "positives": 1125,
+    "topKHit": {
+      "top1": 0.9,
+      "top3": 0.9416666666666667,
+      "top5": 0.9583333333333334,
+      "top10": 0.975
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.29244444444444445,
+    "recallAt20PercentPerCommitMean": 0.5167457131428322,
+    "ifaMean": 0.6166666666666667,
+    "ifaMedian": 0.0
+  },
+  "byRepo": {
+    "axios": {
+      "samples": 2152,
+      "positives": 1125,
+      "rocAuc": 0.6737297414259439,
+      "prAuc": 0.683133978764019,
+      "brier": 0.23150237860981251,
+      "threshold": 0.5,
+      "precision": 0.6715083798882682,
+      "recall": 0.5342222222222223,
+      "f1": 0.595049504950495,
+      "trueNegative": 733,
+      "falsePositive": 294,
+      "falseNegative": 524,
+      "truePositive": 601
+    }
+  },
+  "byLanguage": {
+    "javascript": {
+      "samples": 1970,
+      "positives": 1088,
+      "rocAuc": 0.6527459942310258,
+      "prAuc": 0.6899332336680707,
+      "brier": 0.23764427088513207,
+      "threshold": 0.5,
+      "precision": 0.671201814058957,
+      "recall": 0.5441176470588235,
+      "f1": 0.601015228426396,
+      "trueNegative": 592,
+      "falsePositive": 290,
+      "falseNegative": 496,
+      "truePositive": 592
+    },
+    "typescript": {
+      "samples": 182,
+      "positives": 37,
+      "rocAuc": 0.6089468779123951,
+      "prAuc": 0.3851783477548322,
+      "brier": 0.16502145672860608,
+      "threshold": 0.5,
+      "precision": 0.6923076923076923,
+      "recall": 0.24324324324324326,
+      "f1": 0.36,
+      "trueNegative": 141,
+      "falsePositive": 4,
+      "falseNegative": 28,
+      "truePositive": 9
+    }
+  },
+  "manifest": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E2-cc-jit-to-axios.manifest.json",
+  "output": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E2-cc-jit-to-axios.json"
+}

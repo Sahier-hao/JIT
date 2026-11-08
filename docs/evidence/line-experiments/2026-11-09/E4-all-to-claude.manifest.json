@@ -1,0 +1,249 @@
+{
+  "schema": "line-experiment-manifest-v1",
+  "generatedAt": "2026-11-08T16:41:09.487877+00:00",
+  "inputs": [
+    {
+      "path": "D:\\tmp\\measure\\cc-switch-same.jsonl",
+      "sha256": "5a9a5a4ce441d36e6c19610f5054d0413a74904112fdc8919239aa2951264a17",
+      "bytes": 12054892,
+      "rows": 11718,
+      "datasetVersions": [
+        "measure-cc-switch"
+      ],
+      "repos": [
+        "cc-switch"
+      ],
+      "languages": [
+        "css",
+        "json",
+        "other",
+        "rust",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-cc-switch",
+        "positives": 5859,
+        "negatives": 5859,
+        "positiveCommits": 352,
+        "negativeCommits": 350,
+        "files": 198,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 74,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "path": "D:\\tmp\\measure\\axios.jsonl",
+      "sha256": "1036a9fd8a55f7455924a04516ddc21b975a237696b3dfcee7857b5b25f3520c",
+      "bytes": 3061426,
+      "rows": 3166,
+      "datasetVersions": [
+        "measure-axios"
+      ],
+      "repos": [
+        "axios"
+      ],
+      "languages": [
+        "html",
+        "javascript",
+        "json",
+        "other",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-axios",
+        "positives": 1583,
+        "negatives": 1583,
+        "positiveCommits": 150,
+        "negativeCommits": 40,
+        "files": 53,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 2,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "path": "D:\\tmp\\measure\\JIT-same.jsonl",
+      "sha256": "3a76ca056bfe9288dada81d1fa1b28eec8f1cc428199baa6b40bb8456fc27c64",
+      "bytes": 356318,
+      "rows": 304,
+      "datasetVersions": [
+        "measure-JIT"
+      ],
+      "repos": [
+        "JIT"
+      ],
+      "languages": [
+        "css",
+        "python",
+        "typescript"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-JIT",
+        "positives": 152,
+        "negatives": 152,
+        "positiveCommits": 17,
+        "negativeCommits": 17,
+        "files": 15,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 0,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "path": "D:\\tmp\\measure\\claude-scholar-same.jsonl",
+      "sha256": "12310e5da95657385900c754ac989ffea5c74bc00abc1e63e9d43488c41e0bf6",
+      "bytes": 271766,
+      "rows": 272,
+      "datasetVersions": [
+        "kamei14-git-v2-claude-scholar-full-2026-01-25_2026-10-17"
+      ],
+      "repos": [
+        "kamei14-git-v2-claude-scholar-full"
+      ],
+      "languages": [
+        "javascript",
+        "json",
+        "python",
+        "shell",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "kamei14-git-v2-claude-scholar-full-2026-01-25_2026-10-17",
+        "positives": 136,
+        "negatives": 136,
+        "positiveCommits": 14,
+        "negativeCommits": 14,
+        "files": 21,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 3,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    }
+  ],
+  "split": {
+    "kind": "repo",
+    "seed": 42,
+    "testRepo": "kamei14-git-v2-claude-scholar-full",
+    "trainCommits": 369,
+    "testCommits": 6,
+    "trainRepos": [
+      "JIT",
+      "axios",
+      "cc-switch"
+    ],
+    "testRepos": [
+      "kamei14-git-v2-claude-scholar-full"
+    ],
+    "memberSha256": {
+      "train": "162bee1a5f3aba84d68aa7f407f91383abf8efb47834d5db9663ab2cc84e2f4a",
+      "test": "8a27795e67470189ab58ac99bcb9716d7870fdc95621ff5e54b2e05292db3e5f"
+    }
+  },
+  "sampling": {
+    "negativeMode": "same-file",
+    "datasetSeed": 42,
+    "source": [
+      "D:\\tmp\\measure\\cc-switch-same.jsonl",
+      "D:\\tmp\\measure\\axios.jsonl",
+      "D:\\tmp\\measure\\JIT-same.jsonl",
+      "D:\\tmp\\measure\\claude-scholar-same.jsonl"
+    ]
+  },
+  "features": {
+    "dimension": 30021,
+    "text": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "max_features": 30000,
+      "sublinear_tf": true
+    },
+    "numeric": [
+      "lineLength",
+      "indent",
+      "blank",
+      "comment",
+      "fileLines",
+      "lineRatio",
+      "if",
+      "for",
+      "while",
+      "return",
+      "try",
+      "catch",
+      "assign",
+      "compare",
+      "call",
+      "member",
+      "index",
+      "identifier",
+      "digit"
+    ],
+    "languages": [
+      "javascript",
+      "typescript"
+    ]
+  },
+  "model": {
+    "type": "logistic-regression",
+    "classWeight": "balanced",
+    "solver": "liblinear",
+    "maxIter": 2000,
+    "threshold": 0.5,
+    "includeCommitFeatures": false,
+    "repoBalance": true,
+    "positionFeatures": true,
+    "textFeatures": true
+  },
+  "environment": {
+    "python": "3.14.2",
+    "sklearn": "1.9.1",
+    "numpy": "2.5.3"
+  },
+  "command": "python -m jit_baseline.cli line-train --input D:\\tmp\\measure\\cc-switch-same.jsonl --input D:\\tmp\\measure\\axios.jsonl --input D:\\tmp\\measure\\JIT-same.jsonl --input D:\\tmp\\measure\\claude-scholar-same.jsonl --output <report>.json --seed 42 --test-repo kamei14-git-v2-claude-scholar-full --language typescript --language javascript",
+  "limitations": [
+    "历史 SZZ 弱标签，正例不是人工确认的真值；未观测行不等于无缺陷。",
+    "负例来自抽样列表，定位指标是代理值，不能代表完整候选集上的审查收益。",
+    "大型原始 JSONL 不入版本库，复现需按 inputs 的 sha256 与获取说明准备同一份数据。"
+  ]
+}

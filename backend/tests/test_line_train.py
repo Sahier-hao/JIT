@@ -71,3 +71,25 @@ def test_language_filter_keeps_only_requested_rows(tmp_path):
     report = train_line_baseline([source], tmp_path / "report.json", test_repo="beta", languages=["python"])
     assert report["languages"] == ["python"]
     assert report["samples"]["total"] == 4
+
+
+def test_report_includes_portable_manifest_and_localization_metrics(tmp_path):
+    import hashlib
+    rows = []
+    for index in range(6):
+        rows.append(_row(f"a{index}", "alpha", index % 2, f"value = {index}\n" + "x" * index))
+        rows.append(_row(f"b{index}", "beta", index % 2, f"other = {index}\n" + "y" * index))
+    source = _write(tmp_path / "rows.jsonl", rows)
+    report = train_line_baseline([source], tmp_path / "report.json", test_repo="beta")
+    assert report["schema"] == "line-model-report-v2"
+    manifest = json.loads((tmp_path / "report.manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema"] == "line-experiment-manifest-v1"
+    assert manifest["inputs"][0]["sha256"] == hashlib.sha256(source.read_bytes()).hexdigest()
+    assert manifest["inputs"][0]["rows"] == 12
+    assert manifest["split"]["memberSha256"]["train"] and manifest["split"]["memberSha256"]["test"]
+    assert "line-train" in manifest["command"]
+    assert report["localization"]["proxy"] is True
+    assert report["localization"]["topKHit"]["top5"] is not None
+    assert report["byRepo"]["beta"]["samples"] == 6
+    expected = report["samples"]["testPositives"] / report["samples"]["test"]
+    assert report["referenceBaselines"]["randomPrAuc"] == expected

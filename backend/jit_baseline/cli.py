@@ -189,6 +189,9 @@ def main():
     line_train.add_argument("--no-repo-balance", action="store_true", help="按原始样本量训练，不按仓库平衡")
     line_train.add_argument("--no-position-features", action="store_true", help="不把文件长度与行位置作为特征")
     line_train.add_argument("--language", action="append", default=None, help="只训练/评估这些语言，可重复")
+    line_train.add_argument("--no-text", action="store_true", help="只用数值与语言特征，做文本特征消融")
+    line_train.add_argument("--manifest", type=Path, default=None,
+                            help="可移植实验 manifest 输出路径；默认与报告同名 .manifest.json")
     args = parser.parse_args()
     exit_code = 0
     try:
@@ -286,9 +289,14 @@ def main():
                 repo_balance=not args.no_repo_balance,
                 position_features=not args.no_position_features,
                 languages=args.language,
+                manifest_output=args.manifest,
+                text_features=not args.no_text,
             )
             result = {'kind': 'line-model-report', 'samples': report['samples'],
-                      'metrics': report['metrics'], 'output': str(args.output)}
+                      'metrics': report['metrics'], 'localization': report['localization'],
+                      'byRepo': report['byRepo'], 'byLanguage': report['byLanguage'],
+                      'manifest': str(args.manifest or Path(args.output).with_suffix('.manifest.json')),
+                      'output': str(args.output)}
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":

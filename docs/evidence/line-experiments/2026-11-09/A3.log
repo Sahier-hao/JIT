@@ -1,0 +1,94 @@
+{
+  "kind": "line-model-report",
+  "samples": {
+    "total": 8254,
+    "train": 6102,
+    "test": 2152,
+    "positives": 3560,
+    "negatives": 4694,
+    "trainPositives": 2435,
+    "testPositives": 1125
+  },
+  "metrics": {
+    "rocAuc": 0.6951418370658877,
+    "prAuc": 0.7062483848923018,
+    "brier": 0.22106221960098602,
+    "threshold": 0.5,
+    "precision": 0.6353383458646616,
+    "recall": 0.7511111111111111,
+    "f1": 0.6883910386965377,
+    "trueNegative": 542,
+    "falsePositive": 485,
+    "falseNegative": 280,
+    "truePositive": 845
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 120,
+    "candidateLines": 2152,
+    "positives": 1125,
+    "topKHit": {
+      "top1": 0.8916666666666667,
+      "top3": 0.9583333333333334,
+      "top5": 0.9583333333333334,
+      "top10": 0.9833333333333333
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.288,
+    "recallAt20PercentPerCommitMean": 0.5283025981218484,
+    "ifaMean": 0.425,
+    "ifaMedian": 0.0
+  },
+  "byRepo": {
+    "axios": {
+      "samples": 2152,
+      "positives": 1125,
+      "rocAuc": 0.6951418370658877,
+      "prAuc": 0.7062483848923018,
+      "brier": 0.22106221960098602,
+      "threshold": 0.5,
+      "precision": 0.6353383458646616,
+      "recall": 0.7511111111111111,
+      "f1": 0.6883910386965377,
+      "trueNegative": 542,
+      "falsePositive": 485,
+      "falseNegative": 280,
+      "truePositive": 845
+    }
+  },
+  "byLanguage": {
+    "javascript": {
+      "samples": 1970,
+      "positives": 1088,
+      "rocAuc": 0.6605074321395225,
+      "prAuc": 0.7076881725947526,
+      "brier": 0.22822906059243384,
+      "threshold": 0.5,
+      "precision": 0.6325757575757576,
+      "recall": 0.7674632352941176,
+      "f1": 0.6935215946843853,
+      "trueNegative": 397,
+      "falsePositive": 485,
+      "falseNegative": 253,
+      "truePositive": 835
+    },
+    "typescript": {
+      "samples": 182,
+      "positives": 37,
+      "rocAuc": 0.7917986952469711,
+      "prAuc": 0.7250513426008094,
+      "brier": 0.14348707260564375,
+      "threshold": 0.5,
+      "precision": 1.0,
+      "recall": 0.2702702702702703,
+      "f1": 0.425531914893617,
+      "trueNegative": 145,
+      "falsePositive": 0,
+      "falseNegative": 27,
+      "truePositive": 10
+    }
+  },
+  "manifest": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\A3-no-text.manifest.json",
+  "output": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\A3-no-text.json"
+}
