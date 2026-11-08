@@ -61,3 +61,13 @@ def test_rows_without_repo_are_rejected_or_derived(tmp_path):
     report = train_line_baseline([source], tmp_path / "report.json", test_repo="alpha")
     assert report["split"]["testRepos"] == ["alpha"]
     assert report["split"]["trainRepos"] == ["beta"]
+
+
+def test_language_filter_keeps_only_requested_rows(tmp_path):
+    rows = [_row("a1", "alpha", 0, "x = 1", "python"), _row("a2", "alpha", 1, "y = 2", "python"),
+            _row("a3", "alpha", 0, "let x = 1", "javascript"), _row("a4", "alpha", 1, "let y = 2", "javascript"),
+            _row("b1", "beta", 0, "p = 1", "python"), _row("b2", "beta", 1, "q = 2", "python")]
+    source = _write(tmp_path / "rows.jsonl", rows)
+    report = train_line_baseline([source], tmp_path / "report.json", test_repo="beta", languages=["python"])
+    assert report["languages"] == ["python"]
+    assert report["samples"]["total"] == 4

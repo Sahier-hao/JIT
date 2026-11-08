@@ -24,10 +24,11 @@
 2. **负例**：行级样本支持 `same-file` 负例——从正例所在提交、同一文件的未标记行抽样，使正负例共享提交与文件，去掉“提交类型/文件类型”捷径；默认 `added-line` 保留原分布。
 3. **特征**：`TfidfVectorizer(analyzer="char_wb", ngram_range=(3,5), min_df=2, max_features=30000)` 作用于行文本 + 前后文；数值特征含行长、缩进、空行/注释标记与结构计数（条件/循环/返回/调用/赋值/比较）；语言 one-hot。提交级 14 维特征默认不纳入，只有 `--include-commit-features` 时加入；缺失按 0 处理并在报告中说明。
 4. **切分**：`--test-repo` 时按仓库留出（训练其他仓库、测试该仓库）；否则按 `commitId` 分组 80/20，报告训练/测试的提交与仓库数。禁止按行随机切分。
-5. **模型**：`LogisticRegression(class_weight="balanced", solver="liblinear", max_iter=2000, random_state=seed)`；默认按仓库平衡样本权重（`--no-repo-balance` 关闭）；不调阈值，固定 0.5 报告精确率/召回率，同时给出 PR-AUC 与 Brier。
-6. **报告**：JSON 含输入文件、样本/提交/仓库数、切分方式、特征维度、正负例、指标与限制；单类测试集时指标写 `null` 并说明原因。
-7. **可复现**：固定种子；报告记录特征参数、模型参数与 scikit-learn 版本。
-8. **不写回**：不修改 JSONL、数据集、目录库或模型目录；模型只保存在内存，可选 `--model-output` 另存 joblib。
+5. **语言**：评估按 `--language` 过滤；跨语言混训会把语言/项目差异当成信号，报告必须按语言分别呈现。
+6. **模型**：`LogisticRegression(class_weight="balanced", solver="liblinear", max_iter=2000, random_state=seed)`；默认按仓库平衡样本权重（`--no-repo-balance` 关闭）；不调阈值，固定 0.5 报告精确率/召回率，同时给出 PR-AUC 与 Brier。
+7. **报告**：JSON 含输入文件、样本/提交/仓库数、切分方式、特征维度、正负例、指标与限制；单类测试集时指标写 `null` 并说明原因。
+8. **可复现**：固定种子；报告记录特征参数、模型参数与 scikit-learn 版本。
+9. **不写回**：不修改 JSONL、数据集、目录库或模型目录；模型只保存在内存，可选 `--model-output` 另存 joblib。
 
 ## Risks / Trade-offs
 

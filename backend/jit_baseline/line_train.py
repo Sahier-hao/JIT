@@ -71,11 +71,13 @@ def _structure(text):
     }
 
 
-def _numeric(row, include_commit=True):
+def _numeric(row, include_commit=True, position_features=True):
     text = str(row.get("text") or "")
     structure = _structure(text)
     values = [len(text), float(row.get("indent") or 0),
               1.0 if row.get("blank") else 0.0, 1.0 if row.get("comment") else 0.0]
+    if position_features:
+        values.extend([float(row.get("fileLines") or 0), float(row.get("lineRatio") or 0.0)])
     values.extend(float(structure[key]) for key in STRUCT_KEYS)
     if include_commit:
         features = row.get("commitFeatures") or {}
@@ -103,8 +105,14 @@ def _metrics(y_true, probability):
 
 
 def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output=None,
-                        include_commit_features=False, repo_balance=True):
+                        include_commit_features=False, repo_balance=True, position_features=True,
+                        languages=None):
     rows = load_rows(inputs)
+    if languages:
+        selected = {value.lower() for value in languages}
+        rows = [row for row in rows if str(row.get("language") or "").lower() in selected]
+        if not rows:
+            raise ValueError(f"没有匹配语言的行级样本：{sorted(selected)}")
     labels = np.array([int(row["label"]) for row in rows], dtype=int)
     commits = np.array([str(row["commitId"]) for row in rows])
     repos = np.array([row["repo"] for row in rows])
@@ -130,8 +138,8 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
     encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=True)
     x_lang_train = encoder.fit_transform(np.array([[row.get("language") or "other"] for row in train_rows]))
     x_lang_test = encoder.transform(np.array([[row.get("language") or "other"] for row in test_rows]))
-    x_num_train = csr_matrix(np.array([_numeric(row, include_commit_features) for row in train_rows], dtype=float))
-    x_num_test = csr_matrix(np.array([_numeric(row, include_commit_features) for row in test_rows], dtype=float))
+    x_num_train = csr_matrix(np.array([_numeric(row, include_commit_features, position_features) for row in train_rows], dtype=float))
+    x_num_test = csr_matrix(np.array([_numeric(row, include_commit_features, position_features) for row in test_rows], dtype=float))
     x_train = hstack([x_text_train, x_lang_train, x_num_train]).tocsr()
     x_test = hstack([x_text_test, x_lang_test, x_num_test]).tocsr()
     model = LogisticRegression(class_weight="balanced", solver="liblinear",
@@ -152,16 +160,18 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
                   "testCommits": int(len(set(commits[test_index]))),
                   "trainRepos": sorted(set(repos[train_index].tolist())),
                   "testRepos": sorted(set(repos[test_index].tolist()))},
+        "languages": sorted({str(row.get("language") or "other") for row in rows}),
         "samples": {"total": len(rows), "train": len(train_rows), "test": len(test_rows),
                     "positives": int(labels.sum()), "negatives": int(len(labels) - labels.sum()),
                     "trainPositives": int(y_train.sum()), "testPositives": int(y_test.sum())},
         "features": {"dimension": int(x_train.shape[1]), "text": TEXT_PARAMS,
-                     "numeric": (["lineLength", "indent", "blank", "comment"] + STRUCT_KEYS +
+                     "numeric": (["lineLength", "indent", "blank", "comment"] + (["fileLines", "lineRatio"] if position_features else []) + STRUCT_KEYS +
                                  (FEATURE_NAMES if include_commit_features else [])),
                      "languages": [str(value) for value in encoder.categories_[0]]},
         "model": {"type": "logistic-regression", "classWeight": "balanced",
                   "solver": "liblinear", "maxIter": 2000, "threshold": 0.5,
-                  "includeCommitFeatures": include_commit_features, "repoBalance": repo_balance},
+                  "includeCommitFeatures": include_commit_features, "repoBalance": repo_balance,
+                  "positionFeatures": position_features},
         "metrics": metrics,
     }
     target = Path(output)

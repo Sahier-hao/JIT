@@ -92,7 +92,7 @@ def _content(repo, commit, path, cache):
 
 
 def _line_row(*, dataset_version, commit, path, line_no, text, before, after, features,
-              label, source, fix_commit=None, evidence_ranges=None):
+              label, source, file_lines=0, fix_commit=None, evidence_ranges=None):
     stripped = text.strip()
     suffix = Path(path).suffix.lower()
     return {
@@ -109,6 +109,8 @@ def _line_row(*, dataset_version, commit, path, line_no, text, before, after, fe
         "language": LANGUAGE.get(suffix, "other"),
         "lineLength": len(text),
         "indent": len(text) - len(text.lstrip()),
+        "fileLines": file_lines,
+        "lineRatio": (line_no / file_lines) if file_lines else 0.0,
         "blank": not stripped,
         "comment": stripped.startswith(("#", "//", "/*", "*", "--", ";", "<!--")),
         "commitFeatures": features,
@@ -150,7 +152,7 @@ def _positive_rows(manifest, repo, features, context, content_cache, summary):
                     before=content[max(0, line_no - 1 - context):line_no - 1],
                     after=content[line_no:line_no + context],
                     features=features.get(commit, {}), label=1, source="szz-positive",
-                    fix_commit=item.get("fixCommit"), evidence_ranges=ranges,
+                    file_lines=len(content), fix_commit=item.get("fixCommit"), evidence_ranges=ranges,
                 ))
                 if len(rows) >= MAX_POSITIVES:
                     summary["truncated"] = True
@@ -212,27 +214,24 @@ def _negative_candidates(manifest, repo, features, content_cache, summary, *, li
     return negatives
 
 
-def _same_file_candidates(positives, repo, cache, summary, *, limit=5000):
-    """同一提交、同一文件中的未标记行；去掉提交类型这条捷径。"""
+def _same_file_candidates(positives, repo, cache, summary, *, limit=5000, seed=42):
+    """同一提交、同一文件中的未标记行；每个文件内随机取样，避免行位置偏差。"""
     groups = {}
     for row in positives:
         groups.setdefault((row["commitId"], row["path"]), set()).add(row["line"])
+    rng = random.Random(seed)
     candidates = []
     for (commit, path), positive_lines in groups.items():
         content = _content(repo, commit, path, cache)
         if content is None:
             summary["missingLines"] += 1
             continue
-        taken = 0
-        for line_no, text in enumerate(content, 1):
-            if line_no in positive_lines or _noise_line(text):
-                continue
-            candidates.append((commit, path, line_no, text))
-            taken += 1
-            if taken >= MAX_NEGATIVES_PER_FILE or len(candidates) >= limit:
-                break
-        if len(candidates) >= limit:
-            break
+        available = [(line_no, text) for line_no, text in enumerate(content, 1)
+                     if line_no not in positive_lines and not _noise_line(text)]
+        picked = rng.sample(available, min(len(available), MAX_NEGATIVES_PER_FILE))
+        candidates.extend((commit, path, line_no, text) for line_no, text in picked)
+    if len(candidates) > limit:
+        candidates = rng.sample(candidates, limit)
     return candidates
 
 
@@ -245,7 +244,7 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
                "files": 0, "contextLines": context, "seed": seed,
                "negativesPerPositive": negatives_per_positive, "negativeMode": negative_mode,
                "missingLines": 0, "missingDiffs": 0, "skippedFiles": 0,
-               "truncated": False, "negativeShortfall": 0}
+               "truncated": False, "negativeShortfall": 0, "negativeFallback": 0}
     cache = {}
     positives = _positive_rows(manifest, repo_path, features, context, cache, summary)
     summary["positives"] = len(positives)
@@ -253,9 +252,18 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
     negatives = []
     if positives and negatives_per_positive > 0:
         target = len(positives) * negatives_per_positive
+        same_keys = set()
         if negative_mode == "same-file":
             candidates = _same_file_candidates(positives, repo_path, cache, summary,
-                                               limit=max(target * 3, 200))
+                                               limit=max(target * 3, 200), seed=seed)
+            same_keys = {(item[0], item[1], item[2]) for item in candidates}
+            if len(candidates) < target:
+                extra = _negative_candidates(manifest, repo_path, features, cache, summary,
+                                             limit=max((target - len(candidates)) * 2, 100), seed=seed)
+                for item in extra:
+                    key = (item[0], item[1], item[2])
+                    if key not in same_keys and all(key != (row[0], row[1], row[2]) for row in candidates):
+                        candidates.append(item)
         else:
             candidates = _negative_candidates(manifest, repo_path, features, cache, summary,
                                               limit=max(target * 3, 200), seed=seed)
@@ -272,9 +280,12 @@ def build_line_dataset(manifest, output, *, repo=None, negatives_per_positive=3,
                 dataset_version=version, commit=commit, path=path, line_no=line_no, text=text,
                 before=content[max(0, offset - context):offset],
                 after=content[line_no:line_no + context],
-                features=features.get(commit, {}), label=0,
-                source="same-file-negative" if negative_mode == "same-file" else "added-line-negative",
+                features=features.get(commit, {}), label=0, file_lines=len(content),
+                source=("same-file-negative" if (commit, path, line_no) in same_keys
+                        else "added-line-negative"),
             ))
+            if (commit, path, line_no) not in same_keys:
+                summary["negativeFallback"] += 1
         summary["negativeShortfall"] = max(0, len(positives) * negatives_per_positive - len(negatives))
     summary["negatives"] = len(negatives)
     summary["negativeCommits"] = len({row["commitId"] for row in negatives})

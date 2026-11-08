@@ -194,7 +194,7 @@ Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回
   --test-repo JIT --output ..\.dsh-tmp\line-model-report.json
 ```
 
-默认只使用代码文本、结构与语言特征，不把提交级 Kamei 特征作为默认输入，避免用提交类型泄漏标签；需要对照时加 `--include-commit-features`。默认按仓库平衡样本权重，`--no-repo-balance` 关闭。
+默认只使用代码文本、结构与语言特征，不把提交级 Kamei 特征作为默认输入，避免用提交类型泄漏标签；需要对照时加 `--include-commit-features`。默认按仓库平衡样本权重，`--no-repo-balance` 关闭；可加 `--language javascript --language typescript` 只训练/评估同一语言，跨语言混训会把项目差异当成信号。
 
 报告记录切分方式、样本/提交/仓库数、特征维度、正负例和 ROC-AUC/PR-AUC/Brier。训练只输出报告，不登记模型、不改默认模型、不接产品。
 
