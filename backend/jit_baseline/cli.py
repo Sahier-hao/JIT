@@ -109,6 +109,17 @@ def main():
     pr_report.add_argument("--bundle", type=Path, required=True, help="pr-check-export 生成的分析包")
     pr_report.add_argument("--format", choices=("json", "markdown"), default="json")
     pr_report.add_argument("--output", type=Path, required=True, help="报告输出路径")
+    pr_analyze = commands.add_parser("pr-check-analyze", help="从本地 Git 提交范围执行采集、推理与报告")
+    pr_analyze.add_argument("--repo", type=Path, required=True, help="本地 Git 仓库路径")
+    pr_analyze.add_argument("--base", required=True, help="基准提交 SHA 或引用")
+    pr_analyze.add_argument("--head", default="HEAD", help="目标提交 SHA 或引用；默认 HEAD")
+    pr_analyze.add_argument("--model-id", required=True, help="目录库中明确选择的已登记模型 ID")
+    pr_analyze.add_argument("--output", type=Path, required=True, help="JSON 报告输出路径")
+    pr_analyze.add_argument("--markdown", type=Path, default=None, help="可选：同时写出 Markdown 报告")
+    pr_analyze.add_argument("--database", type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', None))
+    pr_analyze.add_argument("--artifact-root", type=Path,
+                            default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    pr_analyze.add_argument("--max-commits", type=int, default=200, help="范围内提交数上限")
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -375,6 +386,21 @@ def main():
             report, path = pr_check.write_report(bundle, args.output, args.format)
             result = {"kind": report["format"], "output": str(path),
                       "commits": len(report["commits"])}
+        elif args.command == "pr-check-analyze":
+            from . import commit_analysis
+            from .catalog import ModelCatalog
+            from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
+            catalog = ModelCatalog(CatalogStorage(args.database or DEFAULT_DATABASE),
+                                   args.artifact_root)
+            report = commit_analysis.analyze(
+                args.repo, args.base, args.head, catalog, args.model_id,
+                max_commits=args.max_commits)
+            commit_analysis.write_report(report, args.output, args.markdown)
+            result = {"kind": report["format"], "analysisId": report["analysisId"],
+                      "contentSha256": report["contentSha256"],
+                      "commits": len(report["commits"]),
+                      "candidates": len(report["candidates"]),
+                      "output": str(args.output)}
         elif args.command == "build-embeddings":
             from .semantic import build_embeddings
             options = {"batch_size": args.batch_size}
