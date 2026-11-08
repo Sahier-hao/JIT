@@ -344,3 +344,63 @@ it('reissues a real request when a task read fails and the user retries', async 
   expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
   expect(detailCalls).toBe(2)
 })
+
+const METHODS = {
+  schema: 'kamei14-git-v1',
+  methods: [
+    { method: 'logistic-regression-l2-v1', name: '逻辑回归 · L2', label: '逻辑回归', category: 'classic',
+      available: true, supportedSchema: true, reason: null, requires: [],
+      params: [{ name: 'C', type: 'float', min: 0.01, max: 100, default: 1 }] },
+    { method: 'decision-tree-v1', name: '决策树 · CART', label: '决策树', category: 'classic',
+      available: true, supportedSchema: true, reason: null, requires: [],
+      params: [{ name: 'max_depth', type: 'int', min: 1, max: 32, default: 8 }] },
+  ],
+}
+
+const SPLIT = {
+  datasetVersion: TASK.datasetVersion, schemaName: 'kamei14-git-v1', timezone: 'UTC', datasetRecords: 4210,
+  preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },
+  available: true, reason: null,
+  partitions: {
+    train: { records: 2947, positives: 900, start: '2022-01-02T00:00:00Z', end: '2024-03-01T00:00:00Z' },
+    validation: { records: 631, positives: 200, start: '2024-03-02T00:00:00Z', end: '2024-08-01T00:00:00Z' },
+    test: { records: 632, positives: 201, start: '2024-08-02T00:00:00Z', end: '2024-12-30T00:00:00Z' },
+  },
+}
+
+it('creates a multi-method experiment with per-method parameters', async () => {
+  const navigate = vi.fn()
+  const experiment = {
+    experimentId: '55555555-5555-4555-8555-555555555555', datasetVersion: TASK.datasetVersion,
+    datasetManifest: 'data/datasets/mp-scikit-learn/manifest.json', manifestSha256: 'a'.repeat(64),
+    metricSet: 'metric-set-v2', splitPreset: 'temporal-70-15-15', classPolicy: null, seed: 2026,
+    requestId: 'request-1', createdBy: 'admin', createdAt: NOW, status: 'queued',
+    statusCounts: { queued: 2, running: 0, succeeded: 0, failed: 0, cancelled: 0, interrupted: 0 }, tasks: [],
+  }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    const auth = session(String(path))
+    if (auth) return auth
+    const value = String(path)
+    if (value.endsWith('/api/v1/datasets')) return Response.json({ datasets: [DATASET] })
+    if (value.endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (value.endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (value.includes('/training-methods')) return Response.json(METHODS)
+    if (value.includes('/split-preview')) return Response.json(SPLIT)
+    if (value.endsWith('/api/v1/training-experiments') && options?.method === 'POST') return Response.json(experiment)
+    return Response.json({})
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: DATASET.dataset, version: TASK.datasetVersion }} navigate={navigate}/>)
+  const panel = (await screen.findByText('多方法实验')).closest('section') as HTMLElement
+  const user = userEvent.setup()
+  await waitFor(() => expect(screen.getByRole('checkbox', { name: /逻辑回归/ })).toBeEnabled())
+  await user.click(screen.getByRole('checkbox', { name: /逻辑回归/ }))
+  await user.click(screen.getByRole('checkbox', { name: /决策树/ }))
+  const cInput = await screen.findByLabelText('逻辑回归 · L2 C')
+  await user.clear(cInput)
+  await user.type(cInput, '0.5')
+  await user.click(screen.getByRole('button', { name: '创建实验（2 个方法）' }))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith({
+    name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId,
+  }))
+  expect(panel).toBeTruthy()
+})

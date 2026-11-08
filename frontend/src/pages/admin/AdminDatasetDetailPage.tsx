@@ -224,7 +224,19 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <Button loading={curationBusy} onClick={() => void previewCurationAction()}>预览清洗</Button>
         <Button loading={curationBusy} onClick={() => void deriveCurationAction()}>生成派生版本</Button>
       </div>
-      {curationPreview ? <pre className="admin-report-meta">{JSON.stringify(curationPreview.stats, null, 2)}</pre> : null}
+      {curationPreview ? <div className="admin-detail-grid">
+        <section><h2>清洗前后</h2><dl className="admin-facts">
+          <div><dt>原始 / 纳入 / 排除</dt><dd>{valueLabel(curationPreview.stats.rawRows)} / {valueLabel(curationPreview.stats.includedRows)} / {valueLabel(curationPreview.stats.excludedRows)}</dd></div>
+          <div><dt>正例</dt><dd>{valueLabel(curationPreview.stats.positiveLabels)}{typeof curationPreview.stats.includedRows === 'number' && typeof curationPreview.stats.positiveLabels === 'number' && curationPreview.stats.includedRows > 0 ? ` · ${(Number(curationPreview.stats.positiveLabels) / Number(curationPreview.stats.includedRows) * 100).toFixed(1)}%` : ''}</dd></div>
+          <div><dt>时间范围</dt><dd>{curationPreview.stats.timeRange ? `${formatDate((curationPreview.stats.timeRange as Row).start)} — ${formatDate((curationPreview.stats.timeRange as Row).end)}` : '—'}</dd></div>
+          <div><dt>配方哈希</dt><dd><code>{curationPreview.recipeSha256}</code></dd></div>
+        </dl></section>
+        <section><h2>排除原因</h2><dl className="admin-facts">
+          {Object.entries((curationPreview.stats.excluded as Row | undefined) ?? {}).map(([reason, count]) =>
+            <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}
+          {!Object.keys((curationPreview.stats.excluded as Row | undefined) ?? {}).length ? <div><dt>无</dt><dd>没有记录被排除</dd></div> : null}
+        </dl></section>
+      </div> : null}
       {derivedVersion ? <p className="admin-report-meta">已生成派生版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
     </section>
     <section className="admin-train-panel"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
@@ -233,7 +245,20 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <Button disabled={!compareVersion} onClick={() => void compareAction()}>对比版本</Button>
         <Button onClick={() => void exportCuration(selected.version)}>导出当前版本</Button>
       </div>
-      {comparison ? <pre className="admin-report-meta">{JSON.stringify(comparison, null, 2)}</pre> : null}
+      {comparison ? <div className="admin-detail-grid">
+        {(['source', 'derived'] as const).map(key => {
+          const side = comparison[key] as Row | undefined
+          if (!side) return null
+          const quality = (side.quality ?? {}) as Row
+          const range = (side.timeRange ?? {}) as Row
+          return <section key={key}><h2>{key === 'source' ? '来源版本' : '派生版本'}</h2><dl className="admin-facts">
+            <div><dt>版本</dt><dd><code>{valueLabel(side.version)}</code></dd></div>
+            <div><dt>纳入行</dt><dd>{valueLabel(quality.includedRows)}</dd></div>
+            <div><dt>正例行</dt><dd>{valueLabel(quality.positiveLabels)}</dd></div>
+            <div><dt>时间范围</dt><dd>{range.start ? `${formatDate(range.start)} — ${formatDate(range.end)}` : '—'}</dd></div>
+          </dl></section>
+        })}
+      </div> : null}
     </section>
     <section className="admin-train-panel"><h2>PR 数据集清理</h2><ErrorNotice>{cleanupError}</ErrorNotice>
       <div className="admin-train-form">
