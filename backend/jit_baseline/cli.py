@@ -156,14 +156,19 @@ def main():
     collect.add_argument('--output', type=Path, default=None, help='采集 CSV 输出路径')
     collect.add_argument('--register', action='store_true', help='采集后直接登记数据集')
     collect.add_argument('--with-text', action='store_true', help='同时产出有界 diff 文本 sidecar')
-    collect.add_argument('--szz', choices=['line', 'simple'], default='line',
-                         help='标签规则：line 行级回溯（默认），simple 文件级兼容规则')
+    collect.add_argument('--szz', choices=['full', 'line', 'simple'], default='full',
+                         help='标签规则：full 完整流程（默认），line 行级兼容，simple 文件级兼容')
     collect.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
     check = commands.add_parser("check-evidence")
     check.add_argument("target", type=Path)
+    sample = commands.add_parser("szz-sample")
+    sample.add_argument("manifest", type=Path)
+    sample.add_argument("--repo", default=None, help="可选：本地仓库路径，用于补全提交标题")
+    sample.add_argument("--limit", type=int, default=100)
+    sample.add_argument("--output", type=Path, required=True, help="复核表 CSV 输出路径")
     args = parser.parse_args()
     exit_code = 0
     try:
@@ -235,6 +240,13 @@ def main():
                                                   dataset=args.dataset, register=args.register,
                                                   limit=args.limit, root=args.root,
                                                   with_text=args.with_text, szz=args.szz)
+        elif args.command == 'szz-sample':
+            import json as json_module
+            from . import szz as szz_module
+            manifest = json_module.loads(Path(args.manifest).read_text(encoding='utf-8'))
+            rows = szz_module.sample_evidence(manifest, repo=args.repo, limit=args.limit)
+            target = szz_module.write_sample_csv(rows, args.output)
+            result = {'kind': 'szz-sample', 'rows': len(rows), 'output': str(target)}
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":

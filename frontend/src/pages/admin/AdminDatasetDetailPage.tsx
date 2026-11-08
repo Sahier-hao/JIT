@@ -56,6 +56,8 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   if (!selected) return null
   const quality = selected.quality
   const szz = selected.szz, label = selected.label
+  const signals = szz.fixSignals as Row | undefined
+  const lookup = szz.issueLookup as Row | undefined
   const szzNumber = (key: string) => szz[key] ?? (szz.unresolved as Row | undefined)?.[key] ?? '—'
   const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
   async function train() {
@@ -133,8 +135,11 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
         <div><dt>被标为引入</dt><dd>{valueLabel(szzNumber('labeledCommits'))}</dd></div>
         <div><dt>证据对数</dt><dd>{valueLabel(szzNumber('evidencePairs'))}</dd></div>
+        {signals ? <div><dt>修复信号</dt><dd>issue {valueLabel(signals.issue)} · 关键词 {valueLabel(signals.keyword)}</dd></div> : null}
+        {lookup ? <div><dt>Issue 查询</dt><dd>成功 {valueLabel(lookup.succeeded)} · 失败 {valueLabel(lookup.failed)} · 不可用 {valueLabel(lookup.unavailable)}</dd></div> : null}
         <div><dt>未回溯行区间</dt><dd>{valueLabel(szzNumber('unresolvedRanges'))}</dd></div>
         <div><dt>跳过文件</dt><dd>{valueLabel(szzNumber('skippedFiles'))}</dd></div>
+        {szz.mode ? <div><dt>跳过</dt><dd>排除 {valueLabel(szzNumber('skippedExcluded'))} · 空白 {valueLabel(szzNumber('skippedWhitespace'))} · 仅文档 {valueLabel(szzNumber('skippedDocsOnly'))}</dd></div> : null}
         <div><dt>窗口外引入</dt><dd>{valueLabel(szzNumber('outsideWindow'))}</dd></div>
         <div><dt>成熟期</dt><dd>{label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
         {szz.truncated === true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}

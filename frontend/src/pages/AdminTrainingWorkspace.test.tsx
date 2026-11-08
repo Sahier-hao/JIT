@@ -60,9 +60,9 @@ const DATASET = {
     file: { name: 'mp-scikit-learn.csv', path: 'data/collected/mp-scikit-learn.csv', sha256: 'c'.repeat(64), bytes: 509179 },
     manifestPath: 'data/datasets/mp-scikit-learn/manifest.json',
     source: { publisher: 'collected', url: 'https://github.com/scikit-learn/scikit-learn', revision: 'd'.repeat(40), citation: 'git', branch: 'main', head: 'e'.repeat(40), window: null },
-    labelRule: 'szz-line-v1',
-    label: { kind: 'szz-line', rule: 'szz-line-v1', maturityDays: 90 },
-    szz: { rule: 'szz-line-v1', fixCommits: 12, labeledCommits: 9, evidencePairs: 15, unresolvedRanges: 2, skippedFiles: 3, outsideWindow: 4 },
+    labelRule: 'szz-full-v1',
+    label: { kind: 'szz-full', rule: 'szz-full-v1', maturityDays: 90 },
+    szz: { rule: 'szz-full-v1', mode: 'full', fixCommits: 12, labeledCommits: 9, evidencePairs: 15, unresolvedRanges: 2, skippedFiles: 3, skippedExcluded: 4, skippedWhitespace: 1, skippedDocsOnly: 2, outsideWindow: 4, fixSignals: { issue: 5, issueRef: 2, keyword: 5 }, issueLookup: { attempted: 7, succeeded: 7, failed: 0, unavailable: 0 } },
     limitations: ['特征为提交级聚合', '标签为行级 SZZ'],
   }],
 }
@@ -242,6 +242,8 @@ it('creates a training task from a dataset detail page', async () => {
   expect(screen.getByRole('heading', { name: '标签与 SZZ' })).toBeVisible()
   expect(screen.getByText('修复提交')).toBeVisible()
   expect(screen.getByText('证据对数')).toBeVisible()
+  expect(screen.getByText('修复信号')).toBeVisible()
+  expect(screen.getByText('Issue 查询')).toBeVisible()
   await userEvent.setup().click(screen.getByRole('button', { name: '创建训练任务' }))
   await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'training', resourceId: TASK.taskId }))
 })

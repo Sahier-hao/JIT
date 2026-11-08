@@ -50,7 +50,7 @@ def label_semantics(dataset):
     if collection.get("kind") == "git-repository" or dataset["schemaName"] in ("kamei14-git-v1", "kamei14-git-v2"):
         rule = (collection.get("szz") or {}).get("rule") or "szz-simple-v1"
         limitations = tuple(collection.get("limitations") or SZZ_LABEL_LIMITATIONS)
-        kind = "szz-line" if rule.startswith("szz-line") else "simplified-szz"
+        kind = "szz-full" if rule.startswith("szz-full") else "szz-line" if rule.startswith("szz-line") else "simplified-szz"
         return {"kind": kind, "rule": rule, "limitations": list(limitations)}
     return {"kind": "publisher-labels", "rule": "bugcount > 0",
             "limitations": list(PUBLISHER_LABEL_LIMITATIONS)}

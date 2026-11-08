@@ -26,7 +26,8 @@ from urllib.parse import urlparse
 
 from .errors import BaselineError
 from .schemas import resolve
-from .szz import SZZ_LINE_LIMITATIONS, SZZ_LINE_RULE, label_repository as label_repository_lines
+from .szz import (SZZ_FULL_LIMITATIONS, SZZ_FULL_RULE, SZZ_LINE_LIMITATIONS, SZZ_LINE_RULE,
+                   build_resolver, label_repository as label_repository_lines)
 
 SCHEMA_NAME = "kamei14-git-v2"
 LEGACY_SCHEMA_NAME = "kamei14-git-v1"
@@ -407,13 +408,13 @@ class _History:
         }
 
 
-def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=False, szz="line"):
+def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=False, szz="full"):
     """采集一个仓库的提交窗口；返回记录、标签统计、采集证据与 CSV 字节。
 
-    `szz="line"` 使用行级回溯（szz-line-v1）；`szz="simple"` 保留文件级兼容规则。
+    `szz="full"` 使用完整流程（szz-full-v1）；`szz="line"` 行级兼容；`szz="simple"` 文件级兼容。
     """
-    if szz not in ("line", "simple"):
-        raise BaselineError("INPUT_INVALID", "标签规则必须是 line 或 simple")
+    if szz not in ("full", "line", "simple"):
+        raise BaselineError("INPUT_INVALID", "标签规则必须是 full、line 或 simple")
     repo = repository(repo)
     start, end = parse_time(since), parse_time(until)
     if start is not None and end is not None and start >= end:
@@ -496,15 +497,20 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
 
     observed_through = end if end is not None else max(commit["epoch"] for commit in window)
     line_result = None
-    if szz == "line":
-        line_result = label_repository_lines(repo, entries, {record["id"] for record in records}, start, end)
+    if szz in ("full", "line"):
+        resolver = build_resolver(repo) if szz == "full" else None
+        line_result = label_repository_lines(repo, entries, {record["id"] for record in records},
+                                             start, end, mode=szz, resolver=resolver)
         labels = line_result.labels
         evidence = line_result.evidence
         fix_commits = line_result.fix_commits
         skipped = {"noEarlierChange": 0, "outsideWindow": line_result.outside_window,
                    "unresolvedRanges": line_result.unresolved_ranges,
-                   "skippedFiles": line_result.skipped_files}
-    rule = SZZ_LINE_RULE if line_result is not None else SZZ_RULE
+                   "skippedFiles": line_result.skipped_files,
+                   "skippedExcluded": line_result.skipped_excluded,
+                   "skippedWhitespace": line_result.skipped_whitespace}
+    rule = (SZZ_FULL_RULE if line_result is not None and szz == "full" else
+            SZZ_LINE_RULE if line_result is not None else SZZ_RULE)
     names = resolve(SCHEMA_NAME).in_model_names()
     for record in records:
         record["label"] = 1 if record["id"] in labels else 0
@@ -513,14 +519,19 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                                  "immature" if observed_through - record["epoch"] < RECENT_DAYS * 86400
                                  else "unobserved")
         record["labelNote"] = (None if record["label"]
-                               else ("未观测到缺陷引入（行级 SZZ），不等于已证实无缺陷"
+                               else ("未观测到缺陷引入（完整 SZZ），不等于已证实无缺陷"
+                                     if line_result is not None and szz == "full" else
+                                     "未观测到缺陷引入（行级 SZZ），不等于已证实无缺陷"
                                      if line_result is not None
                                      else "未观测到缺陷引入（简化 SZZ），不等于已证实无缺陷"))
         record["features"] = [record["metrics"][name] for name in names]
 
     blob = _csv_bytes(records, names)
-    label_kind = "szz-line" if line_result is not None else "simplified-szz"
-    limitations = (list((LIMITATIONS[0], *SZZ_LINE_LIMITATIONS, LIMITATIONS[2]))
+    label_kind = ("szz-full" if line_result is not None and szz == "full" else
+                  "szz-line" if line_result is not None else "simplified-szz")
+    limitations = (list((LIMITATIONS[0], *SZZ_FULL_LIMITATIONS, LIMITATIONS[2]))
+                   if line_result is not None and szz == "full" else
+                   list((LIMITATIONS[0], *SZZ_LINE_LIMITATIONS, LIMITATIONS[2]))
                    if line_result is not None else list(LIMITATIONS))
     szz_info = (line_result.stats() if line_result is not None else
                 {"rule": SZZ_RULE, "pattern": SZZ_PATTERN, "fixCommits": fix_commits,
@@ -536,6 +547,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                   "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0",
                   "limitations": limitations},
         "labelEvidence": evidence,
+        "fixSignals": (line_result.fix_signal_evidence[:500] if line_result is not None else []),
         "szz": szz_info,
         "counts": {"commitsInWindow": len(window), "records": len(records),
                    "excluded": excluded,
@@ -857,7 +869,7 @@ def _publish_output(path, blob):
 
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
-                       allow_local=True, return_blob=False, with_text=False, szz="line"):
+                       allow_local=True, return_blob=False, with_text=False, szz="full"):
     """采集 → 写 CSV → 可选登记；远程来源克隆到临时目录并在结束时清理。
 
     `allow_local=False` 时只接受公开 HTTP(S) 地址（同步接口使用）；

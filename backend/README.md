@@ -124,7 +124,7 @@ success；失败写 failed 与错误码，库内容不变）。重复导入同�
 ### 从 Git 仓库采集提交（add-git-repository-collection）
 
 `collect-repository` 直接把一个 Git 仓库转换成 `kamei14-git-v1` 数据集：遍历提交、计算
-Kamei 14 维特征、默认用行级 SZZ 打标签（`--szz simple` 保留文件级兼容规则），再走既有的登记与入库链路。
+Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回溯；离线退化为关键词），再走既有的登记与入库链路。
 
 ```powershell
 & .venv/Scripts/python.exe -m jit_baseline.cli collect-repository --repo https://github.com/apache/activemq `
@@ -140,7 +140,7 @@ Kamei 14 维特征、默认用行级 SZZ 打标签（`--szz simple` 保留文件
 | `--limit` | 窗口内提交数上限；超过直接拒绝，避免一次拉爆内存 |
 | `--dataset` / `--output` | 数据集名与 CSV 输出位置；数据集名默认由仓库名派生 |
 | `--register` / `--root` | 采集后立即登记；默认写入 `data/datasets/<数据集>/` |
-| `--szz` | 标签规则：`line` 行级回溯（默认），`simple` 文件级兼容规则；旧数据集不迁移 |
+| `--szz` | 标签规则：`full` 完整流程（默认），`line` 行级兼容，`simple` 文件级兼容；旧数据集不迁移 |
 
 克隆子进程显式带代理与停滞阈值：代理优先取 `JIT_GIT_PROXY`，其次 `HTTPS_PROXY` / `HTTP_PROXY`，
 都未设置时读取当前用户的 Windows 系统代理。git 自己不读系统代理，浏览器能打开 GitHub 时克隆
@@ -163,9 +163,19 @@ Kamei 14 维特征、默认用行级 SZZ 打标签（`--szz simple` 保留文件
 与两条限制。同一范围重跑幂等，内容不同以 `DATASET_EXISTS` 拒绝覆盖。
 
 两条限制随产物记录，不被静默忽略：特征是**提交级聚合**（Kamei 论文的样本单位是文件级）；
-标签默认是**行级 SZZ**（`szz-line-v1`）：修复提交按关键词与 issue 引用识别，删除/修改行用
-`git blame -M -C` 回溯到引入提交，保留引入提交中的原始行号；文档/测试路径与回滚提交不参与。
-未关联 issue 的修复、纯新增式修复与改写历史仍可能漏标；`--szz simple` 只回溯最近一次文件级变更。采到的数据集可以直接训练，训练时用描述文件指定它：
+标签默认是**完整 SZZ**（`szz-full-v1`）：修复提交优先用 issue/PR 关联确认，关键词兜底；删除/修改
+行用 `git blame -M -C` 回溯到引入提交，保留原始行号与 issue 快照。排除回滚、重构、纯空白、
+文档/测试路径；离线或没有 `JIT_GITHUB_TOKEN` 时退化为关键词识别，并在统计中记录。未关联 issue
+的修复、纯新增式修复与改写历史仍可能漏标；`--szz line` 保留行级兼容，`--szz simple` 保留文件级。
+
+可用 `szz-sample` 从数据集描述导出人工复核表（`verdict`/`note` 留空，由人填写）：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli szz-sample data/datasets/<数据集>/<版本>.json `
+  --limit 50 --output ..\.dsh-tmp\szz-review.csv
+```
+
+采到的数据集可以直接训练，训练时用描述文件指定它：
 
 ```powershell
 & .venv/Scripts/python.exe -m jit_baseline.cli run --output ..\.dsh-tmp\run-activemq `
