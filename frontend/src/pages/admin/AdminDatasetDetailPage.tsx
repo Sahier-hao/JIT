@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
-import { createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '../../adminContracts'
+import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '../../adminContracts'
 import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '../../curationClient'
-import { Button, NumberInput, Select, TextArea } from '../../ui/controls'
+import { trainingMethods, type MethodChoice } from '../../modelClient'
+import { Button, Checkbox, NumberInput, Select, TextArea } from '../../ui/controls'
 import { Dialog } from '../../ui/dialog'
 import type { Route } from '../../navigation'
 import { previewDatasetSplit, SPLIT_PRESETS, type SplitPreview } from '../../splitClient'
@@ -42,7 +43,20 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [cleanupError, setCleanupError] = useState('')
   const [cleanupResult, setCleanupResult] = useState('')
   const [confirmCleanup, setConfirmCleanup] = useState(false)
+  const [experimentMethods, setExperimentMethods] = useState<MethodChoice[]>([])
+  const [selectedMethods, setSelectedMethods] = useState<string[]>([])
+  const [paramValues, setParamValues] = useState<Record<string, Record<string, string>>>({})
+  const [experimentBusy, setExperimentBusy] = useState(false)
+  const [experimentError, setExperimentError] = useState('')
   const selected = versions.find(item => item.version === version) ?? versions.at(-1)
+  useEffect(() => {
+    if (!selected) return
+    const controller = new AbortController()
+    trainingMethods(selected.schema, controller.signal)
+      .then(value => { if (!controller.signal.aborted) setExperimentMethods(value.methods.filter(item => item.supportedSchema)) })
+      .catch(failure => { if (!controller.signal.aborted) setExperimentError(failure instanceof Error ? failure.message : '训练方法读取失败') })
+    return () => controller.abort()
+  }, [selected?.schema])
   useEffect(() => {
     if (!selected) return
     const controller = new AbortController()
@@ -71,6 +85,48 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       if (failure instanceof ApiError && failure.status === 401) expired()
       else setError(failure instanceof Error ? failure.message : '训练任务创建失败')
     } finally { setBusy(false) }
+  }
+  function toggleMethod(method: string) {
+    setSelectedMethods(current => {
+      if (current.includes(method)) return current.filter(item => item !== method)
+      const choice = experimentMethods.find(item => item.method === method)
+      setParamValues(values => values[method] ? values : {
+        ...values,
+        [method]: Object.fromEntries((choice?.params ?? []).map(param => [param.name, param.default == null ? '' : String(param.default)])),
+      })
+      return [...current, method]
+    })
+  }
+  function setParam(method: string, name: string, value: string) {
+    setParamValues(values => ({ ...values, [method]: { ...(values[method] ?? {}), [name]: value } }))
+  }
+  async function runExperiment() {
+    setExperimentBusy(true); setExperimentError('')
+    try {
+      const methods = selectedMethods.map(method => {
+        const choice = experimentMethods.find(item => item.method === method)
+        const params: Row = {}
+        for (const spec of choice?.params ?? []) {
+          const raw = paramValues[method]?.[spec.name]
+          if (raw == null || raw.trim() === '') continue
+          const numeric = Number(raw)
+          if (!Number.isFinite(numeric)) throw new Error(`${choice?.name ?? method} 的参数 ${spec.name} 不是数值`)
+          if (spec.type === 'int' && !Number.isInteger(numeric)) throw new Error(`${choice?.name ?? method} 的参数 ${spec.name} 必须是整数`)
+          params[spec.name] = numeric
+        }
+        return { method, params }
+      })
+      if (!methods.length) throw new Error('至少选择一个训练方法')
+      const experiment = await createTrainingExperiment({
+        datasetVersion: selected!.version, methods, metricSet,
+        classPolicy: classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
+        splitPreset,
+      })
+      navigate({ name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId })
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) expired()
+      else setExperimentError(failure instanceof Error ? failure.message : '实验创建失败')
+    } finally { setExperimentBusy(false) }
   }
   function recipe() {
     try { return JSON.parse(recipeText) } catch { throw new Error('清洗配方不是合法 JSON') }
@@ -189,6 +245,32 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <Button variant="danger" onClick={() => setConfirmCleanup(true)}>清理 {prunable.length} 个版本</Button>
       </> : <p className="admin-report-meta">没有超出保留数量且无引用的 PR 版本。</p>}
       {cleanupResult ? <p className="admin-report-meta">{cleanupResult}</p> : null}
+    </section>
+    <section className="admin-train-panel"><h2>多方法实验</h2><ErrorNotice>{experimentError}</ErrorNotice>
+      <div className="admin-method-picker">
+        {experimentMethods.map(choice => {
+          const checked = selectedMethods.includes(choice.method)
+          const blocked = !choice.available || splitPreviewBusy || !splitPreview?.available
+          return <div key={choice.method} className="admin-method-option">
+            <Checkbox checked={checked} disabled={blocked} onCheckedChange={() => toggleMethod(choice.method)}>
+              {choice.name} · <code>{choice.method}</code>{choice.reason ? ` · ${choice.reason}` : ''}
+            </Checkbox>
+            {checked && choice.params.length ? <div className="admin-method-params">
+              {choice.params.map(spec => <label key={spec.name}>{spec.name}（{spec.type} {spec.min}–{spec.max}）
+                <NumberInput aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any"
+                  value={paramValues[choice.method]?.[spec.name] ?? ''}
+                  onChange={event => setParam(choice.method, spec.name, event.target.value)}/>
+              </label>)}
+            </div> : null}
+          </div>
+        })}
+      </div>
+      <div className="admin-train-form">
+        <Button variant="primary" loading={experimentBusy}
+          disabled={!selectedMethods.length || splitPreviewBusy || !splitPreview?.available}
+          onClick={() => void runExperiment()}>创建实验（{selectedMethods.length} 个方法）</Button>
+      </div>
+      {!splitPreview?.available && splitPreview ? <p className="admin-report-meta">当前切分预设不可用，不能创建实验。</p> : null}
     </section>
     <section className="admin-train-panel"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="admin-train-form">
       <Select ariaLabel="训练方法" value={selectedMethod} onChange={setMethod} options={methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))}/>

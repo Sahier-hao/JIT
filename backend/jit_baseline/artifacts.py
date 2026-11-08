@@ -12,7 +12,9 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 
 from . import trends
-from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
+from .algorithms import (DEFAULT_ALGORITHM, PARAMETER_CONTRACT, get_algorithm,
+                         model_descriptor, params_display, resolve_params,
+                         validate_declared_params)
 from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
@@ -196,17 +198,19 @@ def training_performance(duration_seconds, split):
 
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
               holdout=None, embedding_dir=None, model_name=None, class_policy=None,
-              split_preset=None):
+              split_preset=None, params=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
     评估，质量统计与文件校验仍按全量；默认 `None` 保持既有行为。
     `model_name` 覆盖产物里的模型显示名，用于区分同一方法在不同仓库或范围上训练出的模型；
     模型身份仍由 runId 与产物内容确定。
+    `params` 是显式参数覆盖；为空时使用方法冻结声明，运行配置与旧运行完全一致。
     """
     output, source_dir = Path(output), Path(source_dir)
     algorithm_version = algorithm if algorithm else DEFAULT_ALGORITHM
     entry = get_algorithm(algorithm_version)
+    resolved_params, params_explicit = resolve_params(algorithm_version, params)
     metric_set = metric_set if metric_set else DEFAULT_METRIC_SET
     declared_metric_set(metric_set)
     if dataset_manifest is None and schema is not None and resolve(schema).semantic:
@@ -290,8 +294,13 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     started = time.perf_counter()
     _, _, class_summary = apply_class_policy(split["train"], class_policy)
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
-                         class_policy=class_policy)
+                         class_policy=class_policy, params=resolved_params)
     training_seconds = round(time.perf_counter() - started, 6)
+    estimator = pipeline.named_steps.get("model") if hasattr(pipeline, "named_steps") else None
+    training_history = getattr(estimator, "training_history_", None)
+    if training_history is not None:
+        training_history = dict(training_history)
+        training_history["method"] = algorithm_version
     partitioned_metrics = partition_diagnostics(pipeline, split, schema, metric_set)
     risks = predict_risks(pipeline, split["test"], schema)
     metrics = partitioned_metrics["test"]
@@ -339,15 +348,21 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     joblib.dump(pipeline, output / "model.joblib")
     write_json(output / "reference-predictions.json", [{"id": r["id"], "risk": p} for r, p in zip(split["test"], risks, strict=True)])
     write_json(output / "metrics.json", metrics)
-    files = {name: sha256((output / name).read_bytes()) for name in CORE_FILES}
+    artifact_names = list(CORE_FILES)
+    if training_history is not None:
+        write_json(output / "training-history.json", training_history)
+        artifact_names.append("training-history.json")
+    files = {name: sha256((output / name).read_bytes()) for name in artifact_names}
     config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": algorithm_version,
               "metricSet": metric_set,
               "datasetVersion": dataset_version, "features": fields, "cohort": cohort,
               "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
-              "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
+              "threshold": THRESHOLD, "model": resolved_params, "modelSha256": files["model.joblib"], "coreFiles": files,
               "splitPolicy": split_policy,
               "splitPreset": split_preset,
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
+    if params_explicit:
+        config["parameterContract"] = PARAMETER_CONTRACT
     if declared:
         config["datasetManifest"] = {"path": manifest_relative(manifest_file),
                                      "sha256": sha256(Path(manifest_file).read_bytes())}
@@ -363,6 +378,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         if not isinstance(model_name, str) or not model_name.strip():
             raise BaselineError("INPUT_INVALID", "模型显示名必须是非空字符串")
         label = {"id": label["id"], "name": model_name.strip()}
+    if params_explicit:
+        suffix = params_display(resolved_params, algorithm_version)
+        if suffix:
+            label = {"id": label["id"], "name": f"{label['name']}（{suffix}）"}
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
                "split": summary_split, "splitPolicy": split_policy, "splitRule": split_rule,
@@ -372,6 +391,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
                "threshold": THRESHOLD, "protocolVersion": schema.name,
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
                "model": {"id": label["id"], "name": label["name"]},
+               "parameters": resolved_params,
                "trainingSeconds": training_seconds,
                trends.TREND_KEY: trend,
                "limitations": limitations(schema)}
@@ -381,6 +401,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         summary["semantic"] = semantic_meta
     if class_summary is not None:
         summary["classPolicy"] = class_summary
+    if params_explicit:
+        summary["parameterContract"] = PARAMETER_CONTRACT
+    if training_history is not None:
+        summary["trainingHistory"] = training_history
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     command = (f"python -m jit_baseline.cli run --output {output.as_posix()}"
@@ -421,8 +445,14 @@ def check_files(directory, names):
         # 未注册的方法名在这里以 ALGORITHM_UNKNOWN 被拒绝。
         algorithm_version = config.get("algorithmVersion") or DEFAULT_ALGORITHM
         entry = get_algorithm(algorithm_version)
-        if config["model"] != entry["params"]:
-            raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
+        if config.get("parameterContract") is None:
+            # 旧运行与默认运行：参数必须与注册表冻结声明完全相等。
+            if config["model"] != entry["params"]:
+                raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
+        else:
+            if config["parameterContract"] != PARAMETER_CONTRACT:
+                raise BaselineError("ARTIFACT_INVALID", "运行声明的参数契约版本未知")
+            validate_declared_params(algorithm_version, config["model"])
         if config["threshold"] != THRESHOLD:
             raise BaselineError("ARTIFACT_INVALID", "阈值不匹配")
         if schema.semantic:

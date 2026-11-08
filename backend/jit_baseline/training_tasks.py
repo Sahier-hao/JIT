@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from .algorithms import get_algorithm
+from .algorithms import get_algorithm, param_specs, resolve_params
 from .catalog import ModelCatalog
 from .catalog_storage import CatalogStorage, utc_now
 from .config import BACKEND
@@ -33,7 +33,16 @@ COLUMNS = (
     "deadline_at", "cancel_requested_at", "completed_at", "class_policy_json",
     "class_policy_summary_json", "metrics_by_partition_json", "split_json", "split_rule",
     "data_scale_json", "training_performance_json", "split_preset", "split_policy_json",
+    "experiment_id", "params_json", "history_json",
 )
+
+EXPERIMENT_COLUMNS = (
+    "id", "dataset_version", "dataset_manifest", "manifest_sha256", "metric_set",
+    "split_preset", "class_policy_json", "seed", "signature", "request_id",
+    "created_by", "created_at",
+)
+
+DEFAULT_EXPERIMENT_SEED = 2026
 
 
 def worker_command():
@@ -54,6 +63,9 @@ def _view(row):
     data_scale = json.loads(item["data_scale_json"]) if item.get("data_scale_json") else None
     training_performance = (json.loads(item["training_performance_json"])
                             if item.get("training_performance_json") else None)
+    parameters = json.loads(item["params_json"]) if item.get("params_json") else None
+    training_history = (json.loads(item["history_json"])
+                        if item.get("history_json") else None)
     return {
         "taskId": item["id"],
         "datasetVersion": item["dataset_version"],
@@ -80,6 +92,9 @@ def _view(row):
         "splitRule": item.get("split_rule"),
         "dataScale": data_scale,
         "trainingPerformance": training_performance,
+        "experimentId": item.get("experiment_id"),
+        "parameters": parameters,
+        "trainingHistory": training_history,
         "classPolicy": json.loads(item["class_policy_json"]) if item.get("class_policy_json") else None,
         "classPolicySummary": (json.loads(item["class_policy_summary_json"])
                                if item.get("class_policy_summary_json") else None),
@@ -129,18 +144,60 @@ class TrainingTaskStorage:
         return _view(row) if row is not None else None
 
     def find_active(self, dataset_version, algorithm, metric_set, class_policy_json=None,
-                    split_preset=None):
+                    split_preset=None, params_json=None):
         placeholders = ",".join("?" for _ in ACTIVE)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM training_task WHERE dataset_version=? AND algorithm=? "
                 f"AND metric_set=? AND class_policy_json IS ? "
                 "AND COALESCE(split_preset,'temporal-70-15-15') IS ? "
+                "AND params_json IS ? "
                 f"AND status IN ({placeholders}) "
                 "ORDER BY created_at DESC, id DESC LIMIT 1",
-                (dataset_version, algorithm, metric_set, class_policy_json, split_preset, *ACTIVE),
+                (dataset_version, algorithm, metric_set, class_policy_json, split_preset,
+                 params_json, *ACTIVE),
             ).fetchone()
         return _view(row) if row is not None else None
+
+    def experiment_create(self, row):
+        unknown = set(row) - set(EXPERIMENT_COLUMNS)
+        if unknown:
+            raise ValueError(f"未知实验字段：{sorted(unknown)}")
+        with self.storage.connection(write=True) as db:
+            db.execute(
+                f"INSERT INTO training_experiment ({','.join(EXPERIMENT_COLUMNS)}) "
+                f"VALUES ({','.join('?' for _ in EXPERIMENT_COLUMNS)})",
+                tuple(row.get(name) for name in EXPERIMENT_COLUMNS),
+            )
+
+    def experiment_get(self, experiment_id):
+        with self.storage.connection() as db:
+            row = db.execute("SELECT * FROM training_experiment WHERE id=?",
+                             (experiment_id,)).fetchone()
+        return dict(row) if row is not None else None
+
+    def experiment_find_signature(self, signature):
+        with self.storage.connection() as db:
+            return db.execute(
+                "SELECT * FROM training_experiment WHERE signature=? "
+                "ORDER BY created_at DESC LIMIT 1", (signature,)).fetchone()
+
+    def experiment_link(self, experiment_id, task_id, created_at):
+        with self.storage.connection(write=True) as db:
+            db.execute(
+                "INSERT OR IGNORE INTO training_experiment_task "
+                "(experiment_id, task_id, created_at) VALUES (?, ?, ?)",
+                (experiment_id, task_id, created_at),
+            )
+
+    def experiment_tasks(self, experiment_id):
+        with self.storage.connection() as db:
+            rows = db.execute(
+                "SELECT t.* FROM training_experiment_task e "
+                "JOIN training_task t ON t.id=e.task_id "
+                "WHERE e.experiment_id=? ORDER BY e.created_at, t.rowid", (experiment_id,)
+            ).fetchall()
+        return [_view(row) for row in rows]
 
     def pages(self, limit=20, offset=0):
         with self.storage.connection() as db:
@@ -304,9 +361,9 @@ class TrainingTaskService:
     @staticmethod
     def _payload(payload):
         if not isinstance(payload, dict) or set(payload) - {
-            "datasetVersion", "method", "metricSet", "classPolicy", "splitPreset"
+            "datasetVersion", "method", "metricSet", "classPolicy", "splitPreset", "params"
         }:
-            raise BaselineError("INPUT_INVALID", "训练任务只接受 datasetVersion、method、metricSet、classPolicy 和 splitPreset")
+            raise BaselineError("INPUT_INVALID", "训练任务只接受 datasetVersion、method、metricSet、classPolicy、splitPreset 和 params")
         dataset_version = payload.get("datasetVersion")
         method = payload.get("method")
         metric_set = payload.get("metricSet") or "metric-set-v2"
@@ -318,6 +375,12 @@ class TrainingTaskService:
             raise BaselineError("INPUT_INVALID", "缺少训练方法")
         get_algorithm(method)
         get_metric_set(metric_set)
+        class_policy = TrainingTaskService._class_policy(class_policy)
+        resolved, _ = resolve_params(method, payload.get("params"))
+        return dataset_version.strip(), method, metric_set, class_policy, split_preset, resolved
+
+    @staticmethod
+    def _class_policy(class_policy):
         if class_policy is not None:
             if not isinstance(class_policy, dict) or class_policy.get("kind") not in ("weights", "sample"):
                 raise BaselineError("INPUT_INVALID", "classPolicy.kind 必须是 weights 或 sample")
@@ -325,7 +388,7 @@ class TrainingTaskService:
                 seed = class_policy.get("seed", 0)
                 if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
                     raise BaselineError("INPUT_INVALID", "采样种子必须是非负整数")
-        return dataset_version.strip(), method, metric_set, class_policy, split_preset
+        return class_policy
 
     def _dataset(self, dataset_version):
         try:
@@ -341,8 +404,17 @@ class TrainingTaskService:
         digest = sha256(path.read_bytes())
         return manifest, path, digest
 
+    @staticmethod
+    def _overrides(method, params):
+        """只保留与冻结声明不同、且受契约声明的参数键。"""
+        defaults = get_algorithm(method)["params"]
+        specs = param_specs(method)
+        return {key: value for key, value in (params or {}).items()
+                if key in specs and defaults.get(key) != value}
+
     def _enqueue(self, *, dataset_version, method, metric_set, created_by, request_id,
-                 parent_task_id=None, class_policy=None, split_preset=None):
+                 parent_task_id=None, class_policy=None, split_preset=None, params=None,
+                 experiment_id=None):
         dataset, path, digest = self._dataset(dataset_version)
         if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
                                           "kamei14-git-v1", "kamei14-git-v2",
@@ -351,8 +423,11 @@ class TrainingTaskService:
         validate_dataset_split(self.dataset_root, dataset_version, split_preset)
         class_policy_json = json.dumps(class_policy, ensure_ascii=False, sort_keys=True) if class_policy else None
         split_preset = resolve_preset(split_preset)
+        overrides = self._overrides(method, params)
+        params_json = (json.dumps(params, ensure_ascii=False, sort_keys=True)
+                       if overrides else None)
         active = self.tasks.find_active(dataset_version, method, metric_set, class_policy_json,
-                                        split_preset)
+                                        split_preset, params_json)
         if active is not None:
             return self.get(active["taskId"]), False
         task_id = str(uuid.uuid4())
@@ -374,12 +449,14 @@ class TrainingTaskService:
             "updated_at": now,
             "class_policy_json": class_policy_json,
             "split_preset": split_preset,
+            "experiment_id": experiment_id,
+            "params_json": params_json,
         })
         self._executor.submit(self._execute, task_id)
         return self.get(task_id), True
 
     def create(self, payload, request_id=None, *, created_by):
-        dataset_version, method, metric_set, class_policy, split_preset = self._payload(payload)
+        dataset_version, method, metric_set, class_policy, split_preset, params = self._payload(payload)
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
@@ -391,6 +468,7 @@ class TrainingTaskService:
                 request_id=request_id,
                 class_policy=class_policy,
                 split_preset=split_preset,
+                params=params,
             )
 
     def retry(self, task_id, request_id=None, *, created_by):
@@ -407,11 +485,202 @@ class TrainingTaskService:
                 parent_task_id=task_id,
                 class_policy=source.get("classPolicy"),
                 split_preset=source.get("splitPreset"),
+                params=source.get("parameters"),
+                experiment_id=source.get("experimentId"),
             )
 
     def cancel(self, task_id):
         self.tasks.cancel(task_id)
         return self.get(task_id)
+
+    MAX_EXPERIMENT_METHODS = 8
+
+    @staticmethod
+    def _experiment_payload(payload):
+        allowed = {"datasetVersion", "metricSet", "classPolicy", "splitPreset", "methods"}
+        if not isinstance(payload, dict) or set(payload) - allowed:
+            raise BaselineError(
+                "INPUT_INVALID",
+                "实验只接受 datasetVersion、metricSet、classPolicy、splitPreset 和 methods")
+        dataset_version = payload.get("datasetVersion")
+        if not isinstance(dataset_version, str) or not dataset_version.strip():
+            raise BaselineError("INPUT_INVALID", "缺少数据集版本")
+        metric_set = payload.get("metricSet") or "metric-set-v2"
+        get_metric_set(metric_set)
+        class_policy = TrainingTaskService._class_policy(payload.get("classPolicy"))
+        split_preset = resolve_preset(payload.get("splitPreset"))
+        methods = payload.get("methods")
+        if not isinstance(methods, list) or not methods:
+            raise BaselineError("INPUT_INVALID", "实验至少需要一个训练方法")
+        if len(methods) > TrainingTaskService.MAX_EXPERIMENT_METHODS:
+            raise BaselineError("INPUT_INVALID", f"一次实验最多 {TrainingTaskService.MAX_EXPERIMENT_METHODS} 个方法")
+        items, seen = [], set()
+        for entry in methods:
+            if not isinstance(entry, dict) or set(entry) - {"method", "params"}:
+                raise BaselineError("INPUT_INVALID", "每个方法只接受 method 和 params")
+            method = entry.get("method")
+            if not isinstance(method, str) or not method.strip():
+                raise BaselineError("INPUT_INVALID", "缺少训练方法")
+            if method in seen:
+                raise BaselineError("INPUT_INVALID", f"方法重复：{method}")
+            seen.add(method)
+            get_algorithm(method)
+            resolved, _ = resolve_params(method, entry.get("params"))
+            items.append({"method": method, "params": resolved})
+        return dataset_version.strip(), metric_set, class_policy, split_preset, items
+
+    def _experiment_signature(self, dataset_version, digest, metric_set, class_policy,
+                              split_preset, items):
+        record = {
+            "datasetVersion": dataset_version,
+            "manifestSha256": digest,
+            "metricSet": metric_set,
+            "splitPreset": split_preset,
+            "classPolicy": class_policy,
+            "methods": [{"method": item["method"], "params": item["params"]} for item in items],
+        }
+        return sha256(json.dumps(record, sort_keys=True, ensure_ascii=False,
+                                 separators=(",", ":")).encode("utf-8"))
+
+    def _experiment_view(self, row):
+        tasks = self._positions(self.tasks.experiment_tasks(row["id"]))
+        counts = {status: 0 for status in ("queued", "running", "succeeded", "failed",
+                                           "cancelled", "interrupted")}
+        for task in tasks:
+            counts[task["status"]] = counts.get(task["status"], 0) + 1
+        if any(task["status"] in ACTIVE for task in tasks):
+            status = "running" if any(task["status"] == "running" for task in tasks) else "queued"
+        elif not tasks:
+            status = "empty"
+        elif counts["succeeded"] == len(tasks):
+            status = "succeeded"
+        elif counts["succeeded"] == 0:
+            status = "failed" if counts["failed"] else "cancelled"
+        else:
+            status = "partial"
+        return {
+            "experimentId": row["id"],
+            "datasetVersion": row["dataset_version"],
+            "datasetManifest": row["dataset_manifest"],
+            "manifestSha256": row["manifest_sha256"],
+            "metricSet": row["metric_set"],
+            "splitPreset": row["split_preset"],
+            "classPolicy": json.loads(row["class_policy_json"]) if row["class_policy_json"] else None,
+            "seed": row["seed"],
+            "requestId": row["request_id"],
+            "createdBy": row["created_by"],
+            "createdAt": row["created_at"],
+            "status": status,
+            "statusCounts": counts,
+            "tasks": tasks,
+        }
+
+    def create_experiment(self, payload, request_id=None, *, created_by):
+        dataset_version, metric_set, class_policy, split_preset, items = (
+            self._experiment_payload(payload))
+        with self._lock:
+            if self._closing.is_set():
+                raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
+            dataset, path, digest = self._dataset(dataset_version)
+            if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
+                                              "kamei14-git-v1", "kamei14-git-v2",
+                                              "kamei14-benchmark-v1"):
+                raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
+            validate_dataset_split(self.dataset_root, dataset_version, split_preset)
+            signature = self._experiment_signature(dataset_version, digest, metric_set,
+                                                   class_policy, split_preset, items)
+            existing = self.tasks.experiment_find_signature(signature)
+            if existing is not None:
+                view = self._experiment_view(existing)
+                if view["tasks"] and all(task["status"] in ACTIVE for task in view["tasks"]):
+                    return view, False
+            experiment_id = str(uuid.uuid4())
+            now = utc_now()
+            self.tasks.experiment_create({
+                "id": experiment_id,
+                "dataset_version": dataset_version,
+                "dataset_manifest": manifest_relative(path),
+                "manifest_sha256": digest,
+                "metric_set": metric_set,
+                "split_preset": split_preset,
+                "class_policy_json": (json.dumps(class_policy, ensure_ascii=False, sort_keys=True)
+                                      if class_policy else None),
+                "seed": DEFAULT_EXPERIMENT_SEED,
+                "signature": signature,
+                "request_id": request_id,
+                "created_by": created_by,
+                "created_at": now,
+            })
+            created = False
+            for item in items:
+                task, is_new = self._enqueue(
+                    dataset_version=dataset_version,
+                    method=item["method"],
+                    metric_set=metric_set,
+                    created_by=created_by,
+                    request_id=request_id,
+                    class_policy=class_policy,
+                    split_preset=split_preset,
+                    params=item["params"],
+                    experiment_id=experiment_id,
+                )
+                created = created or is_new
+                self.tasks.experiment_link(experiment_id, task["taskId"], utc_now())
+            return self._experiment_view(self.tasks.experiment_get(experiment_id)), created
+
+    def get_experiment(self, experiment_id):
+        row = self.tasks.experiment_get(experiment_id)
+        if row is None:
+            raise BaselineError("NOT_FOUND", "训练实验不存在")
+        return self._experiment_view(row)
+
+    def compare_experiment(self, experiment_id):
+        view = self.get_experiment(experiment_id)
+        rows = []
+        for task in view["tasks"]:
+            performance = task.get("trainingPerformance") or {}
+            rows.append({
+                "taskId": task["taskId"],
+                "method": task["method"],
+                "methodName": get_algorithm(task["method"])["name"],
+                "category": get_algorithm(task["method"])["category"],
+                "parameters": task.get("parameters"),
+                "status": task["status"],
+                "stage": task["stage"],
+                "error": task.get("error"),
+                "metrics": task.get("metrics"),
+                "metricsByPartition": task.get("metricsByPartition"),
+                "trainingSeconds": performance.get("durationSeconds"),
+                "runId": task.get("runId"),
+                "modelId": task.get("modelId"),
+                "manifestSha256": task["manifestSha256"],
+                "splitPreset": task.get("splitPreset"),
+                "classPolicy": task.get("classPolicy"),
+                "metricSet": task["metricSet"],
+            })
+        successful = [row for row in rows if row["status"] == "succeeded"]
+        fingerprints = {(row["manifestSha256"], row["splitPreset"], row["metricSet"],
+                         json.dumps(row["classPolicy"], sort_keys=True)) for row in successful}
+        comparable = len(fingerprints) <= 1
+        notes = []
+        if len(successful) < 2:
+            notes.append("成功子任务少于两个，比较表仅作状态记录")
+        if not comparable:
+            notes.append("成功子任务的数据或切分身份不同，不可直接比较")
+        return {
+            "format": "training-experiment-comparison-v1",
+            "experimentId": view["experimentId"],
+            "datasetVersion": view["datasetVersion"],
+            "manifestSha256": view["manifestSha256"],
+            "metricSet": view["metricSet"],
+            "splitPreset": view["splitPreset"],
+            "classPolicy": view["classPolicy"],
+            "seed": view["seed"],
+            "status": view["status"],
+            "comparable": comparable,
+            "notes": notes,
+            "methods": rows,
+        }
 
     def _run(self, task_id):
         item = self.tasks.raw(task_id)
@@ -425,6 +694,11 @@ class TrainingTaskService:
             if item["class_policy_json"]:
                 extra["class_policy"] = json.loads(item["class_policy_json"])
             extra["split_preset"] = item["split_preset"] or "temporal-70-15-15"
+            if item["params_json"]:
+                overrides = self._overrides(item["algorithm"],
+                                            json.loads(item["params_json"]))
+                if overrides:
+                    extra["params"] = overrides
             result = runner(
                 manifest_path,
                 item["algorithm"],
@@ -469,6 +743,9 @@ class TrainingTaskService:
                     result.get("trainingPerformance"), ensure_ascii=False,
                     sort_keys=True, allow_nan=False),
                 split_policy_json=split_policy_json,
+                history_json=(json.dumps(result["trainingHistory"], ensure_ascii=False,
+                                         sort_keys=True, allow_nan=False)
+                              if result.get("trainingHistory") is not None else None),
             )
         except BaselineError as exc:
             self.tasks.finish(task_id, "failed", exc.code, str(exc))

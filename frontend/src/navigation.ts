@@ -13,7 +13,7 @@ export type Route =
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
   | {
       name: 'admin'
-      view: 'models' | 'datasets' | 'training' | 'comparisons' | 'experiments' | 'experiment-runs'
+      view: 'models' | 'datasets' | 'training' | 'training-experiment' | 'comparisons' | 'experiments' | 'experiment-runs'
       resourceId?: string
       version?: string
       models?: string[]
@@ -61,6 +61,7 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'admin' && parts[1] === 'datasets' && [3, 4].includes(parts.length)) return { name: 'admin', view: 'datasets', resourceId: parts[2], ...(parts[3] ? { version: parts[3] } : {}) }
     if (path === '/admin/training') return { name: 'admin', view: 'training' }
     if (parts[0] === 'admin' && parts[1] === 'training' && parts.length === 3) return { name: 'admin', view: 'training', resourceId: parts[2] }
+    if (parts[0] === 'admin' && parts[1] === 'training-experiments' && parts.length === 3) return { name: 'admin', view: 'training-experiment', resourceId: parts[2] }
     if (path === '/admin/comparisons') return { name: 'admin', view: 'comparisons', ...(comparisonModels.length ? { models: comparisonModels } : {}) }
     if (path === '/admin/experiment-runs') return {
       name: 'admin', view: 'experiment-runs',
@@ -116,6 +117,7 @@ export function hashFor(route: Route): string {
       if (route.view === 'models' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'datasets' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}${route.version ? `/${encodeURIComponent(route.version)}` : ''}`
       if (route.view === 'training' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
+      if (route.view === 'training-experiment' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'experiments' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'experiment-runs' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'comparisons' && route.models?.length) return `${base}?models=${encodeURIComponent(route.models.join(','))}`

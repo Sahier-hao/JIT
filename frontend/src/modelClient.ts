@@ -3,7 +3,8 @@ import { record, recordList, text } from './apiContract'
 import { useQuery } from '@tanstack/react-query'
 
 export interface ModelChoice { modelId: string; name: string; method: string; state: string; featureSchemaVersion?: string; repositoryPredictionSupported: boolean; enabled: boolean; isDefault: boolean }
-export interface MethodChoice { method: string; name: string; label: string; category: string; available: boolean; supportedSchema: boolean; reason: string | null; requires: string[] }
+export interface MethodParam { name: string; type: 'int' | 'float'; min: number; max: number; default: number | null }
+export interface MethodChoice { method: string; name: string; label: string; category: string; available: boolean; supportedSchema: boolean; reason: string | null; requires: string[]; params: MethodParam[] }
 export async function trainingMethods(schema?: string, signal?: AbortSignal): Promise<{ schema: string; methods: MethodChoice[] }> {
   const query = schema ? `?schema=${encodeURIComponent(schema)}` : ''
   const body = record(await apiRequest({ path: `/api/v1/training-methods${query}`, method: 'GET', signal }))
@@ -14,6 +15,12 @@ export async function trainingMethods(schema?: string, signal?: AbortSignal): Pr
       available: raw.available === true, supportedSchema: raw.supportedSchema === true,
       reason: raw.reason == null ? null : text(raw.reason),
       requires: Array.isArray(raw.requires) ? raw.requires.map(item => text(item)) : [],
+      params: Array.isArray(raw.params) ? recordList(raw.params).map(param => ({
+        name: text(param.name),
+        type: text(param.type) === 'int' ? 'int' : 'float',
+        min: Number(param.min), max: Number(param.max),
+        default: typeof param.default === 'number' ? param.default : null,
+      })) : [],
     })),
   }
 }

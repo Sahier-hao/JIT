@@ -398,3 +398,124 @@ def test_real_training_with_class_policy_records_summary(tmp_path):
         assert completed["classPolicySummary"]["after"] == completed["classPolicySummary"]["before"]
     finally:
         service.close()
+
+
+def test_parameter_overrides_are_validated_and_part_of_reuse_identity(service):
+    release = threading.Event()
+    service._executor.submit(release.wait)
+    try:
+        first, first_created = service.create(
+            dict(payload(), params={"C": 0.5}), created_by="admin")
+        again, again_created = service.create(
+            dict(payload(), params={"C": 0.5}), created_by="admin")
+        other, other_created = service.create(
+            dict(payload(), params={"C": 2.0}), created_by="admin")
+        default, default_created = service.create(payload(), created_by="admin")
+        assert first_created and not again_created and other_created and default_created
+        assert first["taskId"] == again["taskId"]
+        assert len({first["taskId"], other["taskId"], default["taskId"]}) == 3
+        assert first["parameters"]["C"] == 0.5
+        assert first["parameters"]["max_iter"] == 1000
+        assert default["parameters"] is None
+    finally:
+        release.set()
+
+
+def test_parameter_overrides_reject_unknown_and_out_of_range(service):
+    for params in ({"C": 0}, {"C": "x"}, {"unknown": 1}, {"n_estimators": 100}):
+        with pytest.raises(BaselineError) as info:
+            service.create(dict(payload(), params=params), created_by="admin")
+        assert info.value.code in ("INPUT_INVALID",)
+
+
+def test_retry_keeps_parameters_and_split(tmp_path, storage):
+    seen = []
+
+    def failing(*args, **kwargs):
+        seen.append((kwargs.get("params"), kwargs.get("split_preset")))
+        raise BaselineError("MODEL_NOT_CONVERGED", "注入训练失败")
+
+    service = TrainingTaskService(
+        storage, artifact_root=tmp_path / "artifacts", timeout=10, runner=failing)
+    try:
+        first, _ = service.create(
+            dict(payload(), splitPreset="temporal-80-10-10", params={"C": 0.25}),
+            created_by="admin")
+        wait_for(lambda: (lambda item: item if item["status"] == "failed" else None)(
+            service.get(first["taskId"])))
+        retried, created = service.retry(first["taskId"], created_by="admin")
+        assert created
+        wait_for(lambda: (lambda item: item if item["status"] == "failed" else None)(
+            service.get(retried["taskId"])))
+        assert retried["parameters"]["C"] == 0.25
+        assert seen == [({"C": 0.25}, "temporal-80-10-10"),
+                        ({"C": 0.25}, "temporal-80-10-10")]
+    finally:
+        service.close()
+
+
+def test_experiment_groups_same_identity_tasks_and_reuses_active(service):
+    release = threading.Event()
+    service._executor.submit(release.wait)
+    try:
+        request = {
+            "datasetVersion": DATASET_VERSION,
+            "metricSet": "metric-set-v2",
+            "splitPreset": "temporal-70-15-15",
+            "methods": [
+                {"method": "logistic-regression-l2-v1", "params": {"C": 0.5}},
+                {"method": "decision-tree-v1"},
+            ],
+        }
+        view, created = service.create_experiment(request, created_by="admin")
+        again, again_created = service.create_experiment(request, created_by="admin")
+        assert created and not again_created
+        assert view["experimentId"] == again["experimentId"]
+        assert len(view["tasks"]) == 2
+        assert {task["method"] for task in view["tasks"]} == {
+            "logistic-regression-l2-v1", "decision-tree-v1"}
+        assert {task["datasetVersion"] for task in view["tasks"]} == {DATASET_VERSION}
+        assert {task["splitPreset"] for task in view["tasks"]} == {"temporal-70-15-15"}
+        assert service.pages()["total"] == 2
+    finally:
+        release.set()
+
+
+def test_experiment_rejects_duplicate_or_unknown_methods(service):
+    base = {"datasetVersion": DATASET_VERSION,
+            "methods": [{"method": "logistic-regression-l2-v1"},
+                        {"method": "logistic-regression-l2-v1"}]}
+    with pytest.raises(BaselineError) as info:
+        service.create_experiment(base, created_by="admin")
+    assert info.value.code == "INPUT_INVALID"
+    with pytest.raises(BaselineError) as info:
+        service.create_experiment(
+            {"datasetVersion": DATASET_VERSION, "methods": [{"method": "missing"}]},
+            created_by="admin")
+    assert info.value.code == "ALGORITHM_UNKNOWN"
+
+
+def test_experiment_comparison_reports_identity_and_parameters(tmp_path, storage):
+    service = TrainingTaskService(
+        storage, artifact_root=tmp_path / "artifacts", timeout=10,
+        runner=successful_runner)
+    try:
+        view, _ = service.create_experiment({
+            "datasetVersion": DATASET_VERSION,
+            "methods": [
+                {"method": "logistic-regression-l2-v1", "params": {"C": 0.5}},
+                {"method": "decision-tree-v1", "params": {"max_depth": 4}},
+            ],
+        }, created_by="admin")
+        wait_for(lambda: all(task["status"] == "succeeded"
+                             for task in service.get_experiment(view["experimentId"])["tasks"]))
+        comparison = service.compare_experiment(view["experimentId"])
+        assert comparison["format"] == "training-experiment-comparison-v1"
+        assert comparison["comparable"] is True
+        assert len(comparison["methods"]) == 2
+        assert {row["parameters"]["C"] if row["method"].startswith("logistic") else
+                row["parameters"]["max_depth"] for row in comparison["methods"]} == {0.5, 4}
+        assert all(row["metrics"]["averagePrecision"]["value"] == 0.42
+                   for row in comparison["methods"])
+    finally:
+        service.close()

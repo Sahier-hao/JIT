@@ -347,14 +347,21 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/training-methods')
     def training_methods(schema: str | None = None):
-        from .algorithms import method_catalog
+        from .algorithms import ALGORITHMS, method_catalog, param_specs
         from . import collect
         from .schemas import resolve
         try:
             name = resolve(schema or collect.SCHEMA_NAME).name
         except BaselineError:
             raise RequestError('INPUT_INVALID', field='schema')
-        return {'schema': name, 'methods': method_catalog(name)}
+        methods = method_catalog(name)
+        for item in methods:
+            defaults = ALGORITHMS[item['method']]['params']
+            item['params'] = [
+                {'name': key, **declaration, 'default': defaults.get(key)}
+                for key, declaration in param_specs(item['method']).items()
+            ]
+        return {'schema': name, 'methods': methods}
 
     @app.get('/api/v1/models')
     def models(state: str | None = None):
@@ -404,6 +411,22 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             created_by=request.state.admin_username)
         request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
         return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.post('/api/v1/training-experiments')
+    async def create_training_experiment(request: Request):
+        result, created = await run_in_threadpool(
+            training_service.create_experiment, await read_object(request),
+            request.state.request_id, created_by=request.state.admin_username)
+        request.state.business_ids = (None, None, result.get('experimentId'))
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/training-experiments/{experiment_id}')
+    def training_experiment_detail(experiment_id: str):
+        return training_service.get_experiment(experiment_id)
+
+    @app.get('/api/v1/training-experiments/{experiment_id}/comparison')
+    def training_experiment_comparison(experiment_id: str):
+        return training_service.compare_experiment(experiment_id)
 
     @app.get('/api/v1/training-tasks')
     def training_task_list(limit: int = 20, offset: int = 0):

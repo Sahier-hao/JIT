@@ -42,6 +42,8 @@ def main():
                      help="时间切分预设：temporal-70-15-15、temporal-80-10-10 或 temporal-60-20-20")
     run.add_argument("--embedding-dir", type=Path, default=None,
                      help="语义 schema 使用的嵌入表目录")
+    run.add_argument("--params", default=None,
+                     help="受控参数覆盖 JSON，例如 {\"C\": 0.5}；默认使用方法冻结参数")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -290,11 +292,17 @@ def main():
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
+            params = None
+            if args.params:
+                try:
+                    params = json.loads(args.params)
+                except json.JSONDecodeError as exc:
+                    raise BaselineError("INPUT_INVALID", "参数覆盖不是合法 JSON") from exc
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
                                  metric_set=args.metric_set,
                                  dataset_manifest=args.dataset_manifest, holdout=args.holdout,
                                  embedding_dir=args.embedding_dir,
-                                 split_preset=args.split_preset)
+                                 split_preset=args.split_preset, params=params)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)

@@ -21,12 +21,12 @@ class TrainingExecutor:
 
     def run(self, dataset_manifest, algorithm, metric_set=None, *, output_key,
             channel="training-task", request_id=None, holdout=None, model_name=None,
-            class_policy=None, split_preset=None):
+            class_policy=None, split_preset=None, params=None):
         """执行一次训练并登记模型。
 
         `holdout` 是 epoch 截止时间：给出时只有早于该时间的记录参与时间切分、
         训练与验证，近期记录仍可由调用方用于评分。管理员普通训练不传，保持
-        既有全量切分行为。
+        既有全量切分行为。`params` 是显式参数覆盖，默认保持方法冻结声明。
         """
         manifest_path = Path(dataset_manifest).resolve()
         dataset = load_manifest(manifest_path)
@@ -45,7 +45,7 @@ class TrainingExecutor:
             BACKEND / "data/openstack", output, schema=dataset["schemaName"],
             algorithm=algorithm, metric_set=metric_set, dataset_manifest=manifest_path,
             holdout=holdout, model_name=model_name, class_policy=class_policy,
-            split_preset=split_preset)
+            split_preset=split_preset, params=params)
         # Catalog registration performs full verification before publishing readiness.
         registered = self.catalog.register_key(
             output_key, channel=channel, request_id=request_id)
@@ -68,6 +68,9 @@ class TrainingExecutor:
             "dataScale": summary.get("dataScale"),
             "trainingPerformance": summary.get("trainingPerformance"),
             "trainingSeconds": summary.get("trainingSeconds"),
+            "parameters": summary.get("parameters"),
+            "parameterContract": summary.get("parameterContract"),
+            "trainingHistory": summary.get("trainingHistory"),
             "classPolicy": summary.get("classPolicy"),
             "splitPolicy": summary.get("splitPolicy"),
             "snapshot": snapshot,

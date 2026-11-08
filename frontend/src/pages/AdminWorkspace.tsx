@@ -16,6 +16,7 @@ import { AdminExperimentRunsPage } from './admin/AdminExperimentRunsPage'
 import { AdminModelDetailPage } from './admin/AdminModelDetailPage'
 import { AdminModelsPage } from './admin/AdminModelsPage'
 import { AdminTrainingPage } from './admin/AdminTrainingPage'
+import { AdminTrainingExperimentPage } from './admin/AdminTrainingExperimentPage'
 
 interface Session { authenticated: boolean; setupRequired: boolean; username: string | null }
 
@@ -32,8 +33,8 @@ const NAV: { view: 'models' | 'datasets' | 'training' | 'experiment-runs' | 'com
   { view: 'experiments', label: '多项目实验', icon: 'trend' },
 ]
 
-const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'experiment-runs' | 'comparisons' | 'experiments', string> = {
-  models: '模型管理', datasets: '数据集', training: '训练任务', 'experiment-runs': '实验登记', comparisons: '模型比较', experiments: '多项目实验',
+const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'training-experiment' | 'experiment-runs' | 'comparisons' | 'experiments', string> = {
+  models: '模型管理', datasets: '数据集', training: '训练任务', 'training-experiment': '训练实验', 'experiment-runs': '实验登记', comparisons: '模型比较', experiments: '多项目实验',
 }
 
 export function AdminWorkspace({ route, navigate }: {
@@ -84,6 +85,7 @@ export function AdminWorkspace({ route, navigate }: {
   else if (route.view === 'models') content = <AdminModelsPage navigate={navigate} expired={expired}/>
   else if (route.view === 'datasets') content = <AdminDatasetsPage dataset={route.resourceId} version={route.version} navigate={navigate} expired={expired}/>
   else if (route.view === 'training') content = <AdminTrainingPage taskId={route.resourceId} navigate={navigate} expired={expired}/>
+  else if (route.view === 'training-experiment' && route.resourceId) content = <AdminTrainingExperimentPage experimentId={route.resourceId} navigate={navigate} expired={expired}/>
   else if (route.view === 'experiment-runs') content = <AdminExperimentRunsPage candidateId={route.resourceId} filters={{
     registrationState: route.registrationState,
     compatibility: route.compatibility,
