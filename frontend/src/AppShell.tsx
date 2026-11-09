@@ -22,11 +22,9 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
       <p className="sidebar-caption">工作空间</p>
       <nav className="main-navigation" aria-label="主导航">
         <button aria-current={route.name !== 'notifications' && (route.name !== 'pr-work' || route.repositoryId) ? 'page' : undefined} onClick={() => navigate({ name: 'repositories' })}><Icon name="project" size={18}/>项目</button>
-        {session?.authenticated ? <>
-          <button aria-current={route.name === 'my-data' ? 'page' : undefined} onClick={() => navigate({ name: 'my-data' })}><Icon name="list" size={18}/>我的数据</button>
-          <button aria-current={route.name === 'my-training' ? 'page' : undefined} onClick={() => navigate({ name: 'my-training' })}><Icon name="trend" size={18}/>我的训练</button>
-          <button aria-current={route.name === 'my-models' ? 'page' : undefined} onClick={() => navigate({ name: 'my-models' })}><Icon name="sliders" size={18}/>我的模型</button>
-        </> : null}
+        <button aria-current={route.name === 'my-data' ? 'page' : undefined} onClick={() => navigate({ name: 'my-data' })}><Icon name="list" size={18}/>我的数据</button>
+        <button aria-current={route.name === 'my-training' ? 'page' : undefined} onClick={() => navigate({ name: 'my-training' })}><Icon name="trend" size={18}/>我的训练</button>
+        <button aria-current={route.name === 'my-models' ? 'page' : undefined} onClick={() => navigate({ name: 'my-models' })}><Icon name="sliders" size={18}/>我的模型</button>
       </nav>
       {repositories.length ? <div className="sidebar-projects"><p className="sidebar-caption">最近项目</p>{repositories.map(repo => <button key={repo.repositoryId} className="sidebar-project" aria-current={('repositoryId' in route && route.repositoryId === repo.repositoryId) ? 'page' : undefined} onClick={() => navigate(repositoryRoute(repo.repositoryId))}><span className="project-dot"/>{repo.displayName}</button>)}</div> : null}
       <div className="sidebar-bottom"><Button variant="ghost" size="sm" onClick={() => navigate({ name: 'admin', view: 'models' })}><Icon name="sliders"/>管理工作区</Button></div>
