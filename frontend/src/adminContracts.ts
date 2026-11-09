@@ -383,7 +383,7 @@ function trainingHistory(raw: unknown): TrainingTask['trainingHistory'] {
   }
 }
 
-function trainingTask(raw: unknown): TrainingTask {
+export function trainingTask(raw: unknown): TrainingTask {
   const value = record(raw)
   const status = text(value.status)
   if (!(TASK_STATUSES as readonly string[]).includes(status)) throw new Error('训练任务状态无效')
@@ -688,7 +688,7 @@ export interface TrainingExperimentComparison {
   methods: TrainingExperimentMethodResult[]
 }
 
-function trainingExperiment(raw: unknown): TrainingExperiment {
+export function trainingExperiment(raw: unknown): TrainingExperiment {
   const value = record(raw)
   const status = text(value.status)
   const statusCounts: Record<string, number> = {}
@@ -715,7 +715,7 @@ function trainingExperiment(raw: unknown): TrainingExperiment {
   }
 }
 
-function experimentMethodResult(raw: unknown): TrainingExperimentMethodResult {
+export function experimentMethodResult(raw: unknown): TrainingExperimentMethodResult {
   const value = record(raw)
   const error = value.error == null ? null : record(value.error)
   return {

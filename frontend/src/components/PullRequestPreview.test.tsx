@@ -59,3 +59,34 @@ it('searches commits and explains one commit without leaving the read-only detai
   expect(screen.getByText('sidebar follows order')).toBeVisible()
   expect(screen.getByText('appOrder')).toBeVisible()
 })
+
+it('analyzes static candidates directly in the read-only preview', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
+    const path = String(input)
+    if (path.endsWith('/repository-models')) return response({ models: modelChoices })
+    if (path.includes('/candidates') && options?.method === 'POST') {
+      return response({
+        snapshotId: 'v1',
+        coverage: { analyzed: ['src/token.py'], skipped: [], analyzerVersion: 'python-ast-v1', side: 'head', selected: 1, totalFiles: 1 },
+        candidates: [{ side: 'head', path: 'src/token.py', line: 3, ruleId: 'py-bare-except', ruleVersion: '1',
+          message: '裸 except 会吞掉所有异常', evidence: 'except:',
+          suggestion: { ruleId: 'py-bare-except', ruleVersion: '1', title: '指明需要捕获的异常类型', rationale: '吞掉异常',
+            location: { path: 'src/token.py', line: 3, side: 'head' }, manualChecks: ['确认范围'], example: null } }],
+      })
+    }
+    return response(analyses())
+  })
+  const navigate = vi.fn()
+  render(<PullRequestPreview source={source} repositoryId={PROJECT} navigate={navigate} onStart={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByText('handle expiry'))
+  await user.click(screen.getByRole('button', { name: '分析代码候选' }))
+  expect(await screen.findByText(/裸 except 会吞掉所有异常/)).toBeVisible()
+  expect(screen.getByText('指明需要捕获的异常类型')).toBeVisible()
+  expect(screen.getByText(/候选只作线索/)).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '加入问题草稿' }))
+  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ name: 'pr-work', snapshotId: 'v1', number: 12 }))
+  const saved = JSON.parse(localStorage.getItem('jit:pr-review:works:v1') ?? '{}')
+  const work = Object.values(saved)[0] as { rounds: Record<string, { questions: { kind: string }[] }> }
+  expect(work.rounds.v1.questions.some(item => item.kind === 'suggestion')).toBe(true)
+})

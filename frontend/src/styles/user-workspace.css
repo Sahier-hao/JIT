@@ -1,0 +1,39 @@
+.user-workspace { display: grid; gap: 18px; padding: 22px 26px 40px; max-width: 1180px; }
+.user-page-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; }
+.user-page-head h1 { margin: 0; font-size: 22px; }
+.user-page-head span, .user-page-head nav { color: var(--fg-3); font-size: 12.5px; }
+.user-page-head nav { display: flex; gap: 4px; }
+.user-data-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+.user-data-list { display: grid; gap: 8px; }
+.user-data-card { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); text-align: left; cursor: pointer; }
+.user-data-card.is-active { border-color: var(--accent, var(--line-strong)); box-shadow: 0 0 0 1px var(--accent, var(--line-strong)) inset; }
+.user-data-card strong { font-size: 14px; }
+.user-data-card span { color: var(--fg-3); font-size: 12px; }
+.user-data-card code { color: var(--fg-3); font-size: 11px; overflow-wrap: anywhere; }
+.user-data-detail { display: grid; gap: 16px; min-width: 0; }
+.user-data-actions, .user-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.user-panel { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); display: grid; gap: 12px; }
+.user-panel h2 { margin: 0; font-size: 15px; }
+.user-split-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.user-split-grid > div { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; }
+.user-split-grid span { color: var(--fg-3); }
+.user-methods { display: grid; gap: 8px; }
+.user-method { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.user-json { max-height: 260px; overflow: auto; padding: 10px; border-radius: 8px; background: var(--surface-2, var(--card)); font-size: 11px; }
+.user-experiment-list, .user-model-list { display: grid; gap: 10px; }
+.user-experiment-card, .user-model-card { display: grid; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); text-align: left; }
+.user-experiment-card { cursor: pointer; }
+.user-experiment-card span, .user-model-card span { color: var(--fg-3); font-size: 12.5px; }
+.user-experiment-card code, .user-model-card code { color: var(--fg-3); font-size: 11px; overflow-wrap: anywhere; }
+.user-task { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.user-task:first-of-type { border-top: 0; }
+.user-task > div:first-child { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.user-task code { color: var(--fg-3); font-size: 11px; }
+.user-metrics { margin: 0; font-size: 12.5px; }
+.user-table-scroll { overflow-x: auto; }
+.user-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.user-table th, .user-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.user-table th { color: var(--fg-3); font-weight: 600; }
+.user-empty { display: grid; gap: 12px; justify-items: start; padding: 24px; border: 1px dashed var(--line); border-radius: 12px; }
+.user-auth-form { display: grid; gap: 12px; }
+@media (max-width: 900px) { .user-data-layout { grid-template-columns: 1fr; } .user-split-grid { grid-template-columns: 1fr; } }

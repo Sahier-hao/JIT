@@ -125,3 +125,12 @@
 .wb-candidate-suggestion { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
 .wb-candidate-suggestion p { margin: 6px 0; }
 .wb-candidate-suggestion ul { margin: 6px 0; padding-left: 20px; }
+
+.pr-preview-code-actions { display: flex; align-items: center; gap: 8px; }
+.pr-preview-candidates { padding: 12px 16px 16px; border-top: 1px solid var(--line); }
+.pr-preview-candidates h3 { margin: 0 0 6px; font-size: 13px; }
+.pr-preview-candidate { padding: 10px 0; border-top: 1px solid var(--line); }
+.pr-preview-candidate pre { margin: 6px 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2, var(--card)); overflow-x: auto; font-size: 12px; }
+.pr-candidate-suggestion { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.pr-candidate-suggestion p { margin: 6px 0; }
+.pr-candidate-suggestion ul { margin: 6px 0; padding-left: 20px; }

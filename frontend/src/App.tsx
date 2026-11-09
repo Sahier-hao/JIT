@@ -13,6 +13,7 @@ import { LoadingNotice, EmptyState } from './Feedback'
 import { apiRequest } from './apiClient'
 import { parseSync } from './repositoryContract'
 import type { ReviewDraft } from './ReviewWorkbench'
+import { requestLogin } from './components/UserAccount'
 
 // 页面按路由拆包：首屏只加载项目列表与外壳，其余工作台按需下载。
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(module => ({ default: module.ProjectsPage })))
@@ -23,6 +24,9 @@ const AnalysisComparison = lazy(() => import('./pages/AnalysisComparison').then(
 const PullRequestWork = lazy(() => import('./pages/PullRequestJourney').then(module => ({ default: module.PullRequestWork })))
 const FixedPRSnapshot = lazy(() => import('./pages/PullRequestJourney').then(module => ({ default: module.FixedPRSnapshot })))
 const ProjectEvents = lazy(() => import('./components/ProjectActivity').then(module => ({ default: module.ProjectEvents })))
+const MyDataPage = lazy(() => import('./pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
+const MyTrainingPage = lazy(() => import('./pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
+const MyModelsPage = lazy(() => import('./pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
@@ -50,6 +54,9 @@ function Workspace() {
   if (route.name === 'my-reviews') content = <ProjectsPage navigate={navigate} view="reviews"/>
   else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
+  else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-training') content = <MyTrainingPage key={route.experimentId ?? 'list'} experimentId={route.experimentId} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>

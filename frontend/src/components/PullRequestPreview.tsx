@@ -8,6 +8,8 @@ import { Dialog } from '../ui/dialog'
 import { PRModelClues } from './PRModelClues'
 import { Markdown } from './Markdown'
 import { RepositoryExplanation } from './RepositoryExplanation'
+import { analyzePRCandidates, type PRCandidate } from '../prReviewClient'
+import { adoptVersion, candidateQuestion, createWork, readWorks, saveWork } from '../prReview'
 import { useSnapshotAnalyses } from '../useSnapshotAnalyses'
 import { displayTime } from '../domain'
 import type { PRSnapshot } from '../prReviewClient'
@@ -27,9 +29,46 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
   const [filesOpen, setFilesOpen] = useState(false)
   const [explanationOpen, setExplanationOpen] = useState(false)
   const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
+  const [candidates, setCandidates] = useState<PRCandidate[]>([])
+  const [candidateBusy, setCandidateBusy] = useState(false)
+  const [candidateError, setCandidateError] = useState('')
+  const [candidateCoverage, setCandidateCoverage] = useState<{ analyzed: string[]; skipped: { path: string; reason: string }[] } | null>(null)
   const analysis = useSnapshotAnalyses(source.snapshotId, source.totalCommits)
   const { fileRisks, commitRisks } = analysis
-  useEffect(() => { setSelectedCommit(''); setFilesOpen(false); setExplanationOpen(false); setCommitFilter('') }, [source.snapshotId])
+  useEffect(() => { setSelectedCommit(''); setFilesOpen(false); setExplanationOpen(false); setCommitFilter(''); setCandidates([]); setCandidateCoverage(null); setCandidateError('') }, [source.snapshotId])
+  function addCandidateQuestion(item: PRCandidate) {
+    try {
+      const works = readWorks()
+      let work = works.find(value => value.key === `${source.owner.toLowerCase()}/${source.name.toLowerCase()}#${source.number}`)
+        ?? createWork(source)
+      if (!work.rounds[source.snapshotId]) work = adoptVersion(work, source)
+      const round = work.rounds[source.snapshotId]
+      const exists = round.questions.some(question => question.kind === 'suggestion'
+        && question.relatedFiles[0] === item.path
+        && question.body.includes(`${item.ruleId}@${item.ruleVersion}`)
+        && question.body.includes(`${item.path}:${item.line}`))
+      if (!exists) {
+        const created = candidateQuestion(source, item)
+        work = { ...work, rounds: { ...work.rounds, [source.snapshotId]: { ...round, questions: [...round.questions, created], selectedQuestionId: created.id } } }
+      }
+      saveWork(work)
+      navigate({ name: 'pr-work', repositoryId, owner: source.owner, repositoryName: source.name, number: source.number, snapshotId: source.snapshotId })
+    } catch (failure) {
+      setCandidateError(failure instanceof Error ? failure.message : '创建工作单失败')
+    }
+  }
+
+  async function analyzeCandidates() {
+    if (!file) return
+    setCandidateBusy(true); setCandidateError('')
+    try {
+      const result = await analyzePRCandidates(source.snapshotId, [file.path], 'head')
+      setCandidates(result.candidates)
+      setCandidateCoverage(result.coverage ? { analyzed: result.coverage.analyzed, skipped: result.coverage.skipped } : null)
+    } catch (failure) {
+      setCandidateError(failure instanceof Error ? failure.message : '候选分析失败')
+    } finally { setCandidateBusy(false) }
+  }
   const needle = filter.trim().toLowerCase()
   const commitNeedle = commitFilter.trim().toLowerCase()
   const matchedCommits = commitNeedle
@@ -153,9 +192,33 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           {file ? <>
             <div className="pr-preview-code-head">
               <div><code>{file.path}</code><span>{file.previousPath ? `重命名自 ${file.previousPath}` : ''}</span></div>
-              <Segmented size="sm" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
+              <div className="pr-preview-code-actions">
+                <Button size="sm" variant="ghost" loading={candidateBusy} onClick={() => void analyzeCandidates()}>分析代码候选</Button>
+                <Segmented size="sm" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
+              </div>
             </div>
             {file.patch ? <CodeDiff file={file} view={diffView} onAnchor={() => {}}/> : <p className="pr-preview-empty">没有可展示的完整 Diff，不能视作空文件。创建工作单后可读取固定上下文。</p>}
+            {candidateError ? <p className="field-error" role="alert">{candidateError}</p> : null}
+            {candidateCoverage ? <section className="pr-preview-candidates" aria-label="代码候选">
+              <h3>代码候选</h3>
+              <p className="quiet-empty">候选只作线索，不是缺陷概率或行级缺陷结论；确认或加入问题请在工作单中完成。</p>
+              {candidates.filter(item => item.path === file.path).map((item, index) => <div key={`${item.path}:${item.line}:${item.ruleId}:${index}`} className="pr-preview-candidate">
+                <code>{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
+                {item.evidence ? <pre>{item.evidence}</pre> : null}
+                {item.suggestion ? <div className="pr-candidate-suggestion">
+                  <strong>{item.suggestion.title}</strong>
+                  <p>{item.suggestion.rationale}</p>
+                  {item.suggestion.manualChecks.length ? <ul>{item.suggestion.manualChecks.map(check => <li key={check}>{check}</li>)}</ul> : null}
+                  {item.suggestion.example ? <pre>{`${item.suggestion.example.before}
+→
+${item.suggestion.example.after}`}</pre> : null}
+                </div> : null}
+                <Button size="sm" onClick={() => addCandidateQuestion(item)}>加入问题草稿</Button>
+              </div>)}
+              {!candidates.filter(item => item.path === file.path).length ? <p className="quiet-empty">
+                {candidateCoverage.analyzed.includes(file.path) ? '该文件没有命中当前规则，不代表没有缺陷。' : `未分析：${candidateCoverage.skipped.find(item => item.path === file.path)?.reason ?? '不支持的文件'}`}
+              </p> : null}
+            </section> : null}
           </> : <p className="pr-preview-empty">这个 PR 没有可展示的文件。</p>}
         </main>
       </div>
