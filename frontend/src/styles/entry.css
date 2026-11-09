@@ -25,6 +25,11 @@
 .entry-steps b { color: var(--fg-3); font-size: 11px; letter-spacing: .14em; }
 .entry-steps span { font-size: 14px; font-weight: 600; }
 .entry-steps p { margin: 0; color: var(--fg-3); font-size: 12.5px; line-height: 1.65; }
+.entry-research { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.entry-research > div { display: grid; gap: 5px; }
+.entry-research h2 { margin: 0; font-size: 16px; }
+.entry-research p { margin: 0; color: var(--fg-3); font-size: 12.5px; }
+.entry-research-badge { color: var(--fg-3); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
 .entry-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 18px 40px; border-top: 1px solid var(--line); color: var(--fg-3); font-size: 12px; }
 .entry-login-page { background: var(--bg); }
 .entry-login-main { flex: 1; width: min(1040px, 100%); margin: 0 auto; padding: 54px 32px; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 64px; align-items: center; }

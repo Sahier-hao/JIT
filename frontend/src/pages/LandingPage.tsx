@@ -45,6 +45,14 @@ export function LandingPage({ navigate, session }: {
         <article><h2>PR 审查</h2><p>固定 PR 快照后按提交查看风险，生成模型解释；静态候选绑定到具体行，并给出针对规则的修复建议。</p></article>
         <article><h2>提交与 IDE</h2><p>从明确的 base/head 触发真实采集、推理和报告；在 VS Code 中只读导入报告，核对提交身份后跳转到代码行。</p></article>
       </section>
+      <section className="entry-research" aria-label="研究预览">
+        <div>
+          <span className="entry-research-badge">研究预览</span>
+          <h2>行级模型</h2>
+          <p>TypeScript / JavaScript · 按行排序分数</p>
+        </div>
+        <Button onClick={() => navigate({ name: 'research-line' })}>进入研究预览</Button>
+      </section>
       <section className="entry-steps" aria-label="使用流程">
         <div><b>01</b><span>登录账户</span><p>用户账户管理自己的数据与模型；管理员维护全局目录和默认模型。</p></div>
         <div><b>02</b><span>采集并训练</span><p>在项目里构建数据集，预览切分，选择方法与参数发起训练。</p></div>

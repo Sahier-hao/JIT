@@ -15,6 +15,8 @@ it('shows the product introduction and routes to each login role', async () => {
   expect(navigate).toHaveBeenCalledWith({ name: 'login', role: 'user' })
   await user.click(screen.getByRole('button', { name: '管理员登录' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'login', role: 'admin' })
+  await user.click(screen.getByRole('button', { name: '进入研究预览' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'research-line' })
 })
 
 it('logs a user in and continues to the requested page', async () => {

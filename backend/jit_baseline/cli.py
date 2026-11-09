@@ -201,6 +201,8 @@ def main():
     line_train.add_argument("--no-position-features", action="store_true", help="不把文件长度与行位置作为特征")
     line_train.add_argument("--language", action="append", default=None, help="只训练/评估这些语言，可重复")
     line_train.add_argument("--no-text", action="store_true", help="只用数值与语言特征，做文本特征消融")
+    line_train.add_argument("--preview-model-output", type=Path, default=None,
+                            help="导出可移植系数模型供研究预览；需配合 --no-text，且不含提交级特征")
     line_train.add_argument("--manifest", type=Path, default=None,
                             help="可移植实验 manifest 输出路径；默认与报告同名 .manifest.json")
     args = parser.parse_args()
@@ -302,6 +304,7 @@ def main():
                 languages=args.language,
                 manifest_output=args.manifest,
                 text_features=not args.no_text,
+                preview_output=args.preview_model_output,
             )
             result = {'kind': 'line-model-report', 'samples': report['samples'],
                       'metrics': report['metrics'], 'localization': report['localization'],

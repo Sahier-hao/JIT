@@ -31,6 +31,7 @@ const MyModelsPage = lazy(() => import('./pages/MyModelsPage').then(module => ({
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
 const LandingPage = lazy(() => import('./pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })))
+const LineResearchPage = lazy(() => import('./pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
@@ -56,6 +57,10 @@ function Workspace() {
   }
   if (route.name === 'login') {
     return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LoginPage route={route} session={session} navigate={navigate} onUser={setSession}/></Suspense></ErrorBoundary>
+  }
+  // 研究预览是公开的独立页面，不属于用户工作区，也不参与项目分析。
+  if (route.name === 'research-line') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LineResearchPage navigate={navigate}/></Suspense></ErrorBoundary>
   }
   // 管理工作区是独立外壳：管理员会话由管理工作区自行校验，未登录时返回登录页。
   if (route.name === 'admin' || route.name === 'report') {

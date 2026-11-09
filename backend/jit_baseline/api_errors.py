@@ -86,6 +86,10 @@ MESSAGES = {
     'DATASET_BUILD_CANCELLED': '数据集构建任务已取消',
     'REPORT_NOT_FOUND': '多项目实验报告不存在或已移除',
     'REPORT_INVALID': '多项目实验报告结构无效，无法展示',
+    'LINE_PREVIEW_UNAVAILABLE': '行级研究预览模型不可用，请核验研究产物后重启服务',
+    'LINE_PREVIEW_LANGUAGE': '该语言不在行级研究模型覆盖范围内',
+    'LINE_PREVIEW_TOO_LARGE': '提交的代码超过研究预览的行数或字符上限',
+    'LINE_PREVIEW_EMPTY': '没有可分析的非空代码行',
 }
 STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,
           'AUTH_INVALID': 401, 'AUTH_REQUIRED': 401, 'RATE_LIMITED': 429, 'USERNAME_TAKEN': 409,
@@ -110,6 +114,8 @@ STATUS.update({'TRAINING_TIMEOUT': 504, 'TRAINING_INTERRUPTED': 503,
                'TRAINING_WORKER_EXITED': 503, 'TASK_NOT_ACTIVE': 409,
                'TASK_NOT_RETRYABLE': 409, 'PR_BATCH_NOT_CANCELLABLE': 409, 'TASK_SERVICE_STOPPING': 503,
                'REPORT_NOT_FOUND': 404, 'REPORT_INVALID': 422,
+          'LINE_PREVIEW_UNAVAILABLE': 503, 'LINE_PREVIEW_LANGUAGE': 422,
+          'LINE_PREVIEW_TOO_LARGE': 413, 'LINE_PREVIEW_EMPTY': 422,
                'MODEL_DEPENDENCY_UNAVAILABLE': 503,
                'DATASET_BUILD_TIMEOUT': 504, 'DATASET_BUILD_INTERRUPTED': 503,
                'DATASET_BUILD_WORKER_EXITED': 503, 'DATASET_BUILD_CANCELLED': 409})
@@ -127,7 +133,7 @@ def managed_path(path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/user') or path.startswith('/api/v1/user') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/training-experiments') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/user') or path.startswith('/api/v1/user') or path.startswith('/api/v1/research/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/training-experiments') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions|/split-preview)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'

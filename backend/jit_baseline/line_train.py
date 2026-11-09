@@ -18,10 +18,9 @@ from sklearn.metrics import (average_precision_score, brier_score_loss, confusio
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.preprocessing import OneHotEncoder
 
-FEATURE_NAMES = ["ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix", "ndev",
-                 "age", "nuc", "exp", "rexp", "sexp"]
-TEXT_PARAMS = dict(analyzer="char_wb", ngram_range=(3, 5), min_df=2, max_features=30000,
-                   sublinear_tf=True)
+from .line_artifact import PREVIEW_SCHEMA, preview_digest
+from .line_features import (FEATURE_NAMES, STRUCT_KEYS, TEXT_PARAMS,
+                            numeric_feature_names, numeric_values)
 
 
 def _repo(row):
@@ -59,39 +58,10 @@ def _text(row):
     return "\n".join(parts)
 
 
-STRUCT_KEYS = ["if", "for", "while", "return", "try", "catch", "assign", "compare",
-               "call", "member", "index", "identifier", "digit"]
-
-
-def _structure(text):
-    return {
-        "if": text.count("if "), "for": text.count("for "), "while": text.count("while "),
-        "return": text.count("return "), "try": text.count("try"), "catch": text.count("catch"),
-        "assign": text.count("=") - text.count("==") - text.count("!=") - text.count(">=") - text.count("<="),
-        "compare": text.count("==") + text.count("!=") + text.count(">=") + text.count("<="),
-        "call": text.count("("), "member": text.count("."), "index": text.count("["),
-        "identifier": sum(1 for token in text.replace("(", " ").replace(")", " ").split()
-                          if token and (token[0].isalpha() or token[0] == "_")),
-        "digit": sum(1 for ch in text if ch.isdigit()),
-    }
-
-
 def _numeric(row, include_commit=True, position_features=True):
-    text = str(row.get("text") or "")
-    structure = _structure(text)
-    values = [len(text), float(row.get("indent") or 0),
-              1.0 if row.get("blank") else 0.0, 1.0 if row.get("comment") else 0.0]
-    if position_features:
-        values.extend([float(row.get("fileLines") or 0), float(row.get("lineRatio") or 0.0)])
-    values.extend(float(structure[key]) for key in STRUCT_KEYS)
-    if include_commit:
-        features = row.get("commitFeatures") or {}
-        for name in FEATURE_NAMES:
-            try:
-                values.append(float(features.get(name) or 0.0))
-            except (TypeError, ValueError):
-                values.append(0.0)
-    return values
+    return numeric_values(row, include_commit=include_commit,
+                          position_features=position_features)
+
 
 
 def _metrics(y_true, probability):
@@ -240,7 +210,8 @@ def _manifest(inputs, report, *, seed, test_repo, include_commit_features,
 
 def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output=None,
                         include_commit_features=False, repo_balance=True, position_features=True,
-                        languages=None, manifest_output=None, text_features=True):
+                        languages=None, manifest_output=None, text_features=True,
+                        preview_output=None):
     rows = load_rows(inputs)
     if languages:
         selected = {value.lower() for value in languages}
@@ -341,4 +312,54 @@ def train_line_baseline(inputs, output, *, test_repo=None, seed=42, model_output
         import joblib
         joblib.dump({"vectorizer": vectorizer, "encoder": encoder, "model": model,
                      "features": FEATURE_NAMES}, model_output)
+    if preview_output:
+        if text_features:
+            raise ValueError("研究预览模型只支持关闭字符 n-gram 的紧凑配置")
+        if include_commit_features:
+            raise ValueError("研究预览模型不支持提交级特征")
+        language_names = [f"language:{value}" for value in encoder.categories_[0]]
+        numeric_names = numeric_feature_names(include_commit=False,
+                                              position_features=position_features)
+        names = language_names + numeric_names
+        weights = model.coef_[0].tolist()
+        if len(names) != len(weights):
+            raise ValueError("系数与特征名数量不一致，不能导出研究预览模型")
+        covered = [str(value) for value in encoder.categories_[0]]
+        supported = sorted({str(row.get("language") or "other") for row in rows})
+        preview = {
+            "schema": PREVIEW_SCHEMA,
+            "generatedAt": datetime.now(timezone.utc).isoformat(),
+            "sourceReport": {"name": target.name,
+                             "sha256": hashlib.sha256(target.read_bytes()).hexdigest()},
+            "inputs": [{"name": Path(entry["path"]).name, "sha256": entry["sha256"],
+                        "rows": entry["rows"], "repos": entry["repos"],
+                        "languages": entry["languages"], "sampling": entry.get("sampling")}
+                       for entry in input_files],
+            "split": report["split"],
+            "samples": report["samples"],
+            "metrics": metrics,
+            "referenceBaselines": report["referenceBaselines"],
+            "localization": localization,
+            "model": {"type": "logistic-regression", "classWeight": "balanced",
+                      "threshold": 0.5, "repoBalance": repo_balance,
+                      "positionFeatures": position_features, "textFeatures": False,
+                      "includeCommitFeatures": False},
+            "features": {"language": covered, "supported": supported,
+                         "numeric": numeric_names},
+            "intercept": float(model.intercept_[0]),
+            "coefficients": {name: float(weight) for name, weight in zip(names, weights)},
+            "limitations": [
+                "历史 SZZ 弱标签，正例不是人工确认的真值。",
+                "训练使用正负 1:1 同文件抽样，分数未做概率校准，不能解释为缺陷概率。",
+                "定位指标来自抽样列表，是上限代理，不代表完整文件或 PR 上的审查收益。",
+                "评估覆盖 " + "、".join(supported) + "；语言特征只在 "
+                + "、".join(covered) + " 上拟合，其他语言使用零语言向量。",
+                "预览只做请求内打分，不写目录库、不登记模型、不参与项目分析。",
+            ],
+        }
+        preview["artifactSha256"] = preview_digest(preview)
+        preview_target = Path(preview_output)
+        preview_target.parent.mkdir(parents=True, exist_ok=True)
+        preview_target.write_text(json.dumps(preview, ensure_ascii=False, indent=2),
+                                  encoding="utf-8")
     return report

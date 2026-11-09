@@ -1,8 +1,10 @@
 """行级基线训练与切分测试。"""
+import hashlib
 import json
 
 import pytest
 
+from jit_baseline.line_artifact import preview_digest
 from jit_baseline.line_train import train_line_baseline
 
 
@@ -74,7 +76,6 @@ def test_language_filter_keeps_only_requested_rows(tmp_path):
 
 
 def test_report_includes_portable_manifest_and_localization_metrics(tmp_path):
-    import hashlib
     rows = []
     for index in range(6):
         rows.append(_row(f"a{index}", "alpha", index % 2, f"value = {index}\n" + "x" * index))
@@ -93,3 +94,36 @@ def test_report_includes_portable_manifest_and_localization_metrics(tmp_path):
     assert report["byRepo"]["beta"]["samples"] == 6
     expected = report["samples"]["testPositives"] / report["samples"]["test"]
     assert report["referenceBaselines"]["randomPrAuc"] == expected
+
+
+def test_exports_portable_preview_model_for_compact_configuration(tmp_path):
+    rows = []
+    for index in range(6):
+        rows.append(_row(f"a{index}", "alpha", index % 2, f"value = {index}\n" + "x" * index))
+        rows.append(_row(f"b{index}", "beta", index % 2, f"other = {index}\n" + "y" * index))
+    source = _write(tmp_path / "rows.jsonl", rows)
+    preview_path = tmp_path / "preview.json"
+    train_line_baseline([source], tmp_path / "report.json", test_repo="beta",
+                        text_features=False, position_features=False,
+                        preview_output=preview_path)
+    preview = json.loads(preview_path.read_text(encoding="utf-8"))
+    assert preview["schema"] == "line-preview-model-v1"
+    assert preview["model"]["textFeatures"] is False
+    assert preview["model"]["positionFeatures"] is False
+    assert preview["artifactSha256"] == preview_digest(preview)
+    names = ([f"language:{value}" for value in preview["features"]["language"]]
+             + preview["features"]["numeric"])
+    assert set(names) == set(preview["coefficients"])
+    assert preview["sourceReport"]["sha256"] == hashlib.sha256(
+        (tmp_path / "report.json").read_bytes()).hexdigest()
+
+
+def test_preview_export_requires_compact_features(tmp_path):
+    rows = []
+    for index in range(6):
+        rows.append(_row(f"a{index}", "alpha", index % 2, f"value_{index} = compute({index})"))
+        rows.append(_row(f"b{index}", "beta", index % 2, f"other_{index} = handle({index})"))
+    source = _write(tmp_path / "rows.jsonl", rows)
+    with pytest.raises(ValueError, match="紧凑配置"):
+        train_line_baseline([source], tmp_path / "report.json", test_repo="beta",
+                            preview_output=tmp_path / "preview.json")

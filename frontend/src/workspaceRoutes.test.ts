@@ -2,6 +2,7 @@ import { expect, it } from 'vitest'
 import { analysisRoute, hashFor, parseHash, repositoryRoute, type Route } from './navigation'
 it.each<Route>([
   { name: 'landing' },
+  { name: 'research-line' },
   { name: 'login', role: 'admin', next: '#/admin/models' },
   { name: 'repositories' }, { name: 'sources' }, { name: 'repository', repositoryId: 'repo-B' },
   { name: 'my-reviews' }, { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12 },
