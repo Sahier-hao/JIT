@@ -13,6 +13,7 @@ from .catalog_input import read_object
 from .config import BACKEND
 from .data import BaselineError, sha256
 from .split_preview import dataset_split_preview
+from .store import dataset_references
 from .users import current_user
 
 MAX_EXPORT_BYTES = 64 * 1024 * 1024
@@ -121,6 +122,68 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
                 continue
             result.append(_view(manifest, version, _owners(storage, version), username))
         return {'datasets': result, 'limit': 5}
+
+    @app.delete('/api/v1/user/datasets/{version}')
+    def user_delete_dataset(version: str, request: Request):
+        username = _user(request)
+        registry = _registry(root)
+        manifest, owners = _visible(storage, version, username, registry)
+        if not owners:
+            raise BaselineError('DATASET_FORBIDDEN', '共享数据不可删除')
+        references = [item for item in dataset_references(storage, version)
+                      if item != 'dataset-build']
+        if references:
+            raise BaselineError(
+                'DATASET_IN_USE',
+                f'该版本仍被{("、".join(references))}引用，不能删除')
+        declared = []
+        for entry in (manifest.get('file'), manifest.get('text'), manifest.get('labelEvidenceFile')):
+            if isinstance(entry, dict) and entry.get('path'):
+                declared.append(entry['path'])
+        decisions = ((manifest.get('curation') or {}).get('decisionsFile') or {}).get('path')
+        if decisions:
+            declared.append(decisions)
+        with storage.connection(write=True) as db:
+            db.execute('UPDATE dataset_build_task SET parent_task_id=NULL '
+                       'WHERE parent_task_id IN (SELECT id FROM dataset_build_task WHERE dataset_version=?)',
+                       (version,))
+            db.execute('DELETE FROM dataset_build_task WHERE dataset_version=?', (version,))
+            db.execute('DELETE FROM import_run WHERE dataset_version=?', (version,))
+            db.execute('DELETE FROM feature_record WHERE dataset_version=?', (version,))
+            db.execute('DELETE FROM commit_record WHERE dataset_version=?', (version,))
+            db.execute('DELETE FROM dataset_owner WHERE dataset_version=?', (version,))
+            db.execute('DELETE FROM dataset_record WHERE dataset_version=?', (version,))
+            db.execute('DELETE FROM dataset_version WHERE artifact_version=?', (version,))
+        allowed_root = (root or datasets.DATASETS).resolve()
+        for value in declared:
+            path = Path(value)
+            path = path if path.is_absolute() else BACKEND / path
+            try:
+                resolved = path.resolve()
+            except OSError:
+                continue
+            if not resolved.is_relative_to(allowed_root):
+                # 共享源文件（如公开数据集原始 CSV）不属于该用户版本，不能删除。
+                continue
+            try:
+                if resolved.is_file():
+                    resolved.unlink()
+            except OSError:
+                pass
+        manifest_path = Path(registry[version].get('manifestPath') or '')
+        if manifest_path:
+            manifest_path = manifest_path if manifest_path.is_absolute() else BACKEND / manifest_path
+            try:
+                resolved = manifest_path.resolve()
+            except OSError:
+                resolved = None
+            if resolved is not None and resolved.is_relative_to(allowed_root):
+                try:
+                    if resolved.is_file():
+                        resolved.unlink()
+                except OSError:
+                    pass
+        return {'deleted': version}
 
     @app.get('/api/v1/user/datasets/{version}')
     def user_dataset(version: str, request: Request):

@@ -134,6 +134,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
         <div><dt>类别策略</dt><dd>{experiment.classPolicy ? valueLabel(experiment.classPolicy.kind) : '不处理'}</dd></div>
         <div><dt>种子</dt><dd>{experiment.seed}</dd></div>
         <div><dt>创建</dt><dd>{formatDate(experiment.createdAt)}</dd></div>
+        <div><dt>训练用户</dt><dd>{experiment.ownerUserId ?? '管理员'}</dd></div>
       </dl></section>
       <section><h2>子任务</h2><dl className="admin-facts">
         <div><dt>状态</dt><dd>{valueLabel(experiment.status)}</dd></div>

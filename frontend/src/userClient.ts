@@ -79,6 +79,10 @@ export async function userModels(signal?: AbortSignal): Promise<UserModel[]> {
   })
 }
 
+export async function deleteUserDataset(version: string) {
+  return record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}`, method: 'DELETE', expectEmpty: false }))
+}
+
 export function exportDataset(version: string): void {
   window.location.href = `/api/v1/user/datasets/${encodeURIComponent(version)}/export`
 }

@@ -45,6 +45,7 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
         <div><dt>模型</dt><dd><code>{model.modelId}</code></dd></div>
         <div><dt>方法</dt><dd>{model.method}</dd></div>
         <div><dt>实际参数</dt><dd>{parameterText(model.parameters)}</dd></div>
+        <div><dt>所有者</dt><dd>{model.ownerUserId ? model.ownerUserId : '共享'}</dd></div>
         <div><dt>特征 schema</dt><dd>{model.featureSchemaVersion}</dd></div>
         <div><dt>业务运行</dt><dd><code>{model.runId}</code></dd></div>
         <div><dt>原产物运行</dt><dd><code>{model.artifactRunId}</code></dd></div>

@@ -558,6 +558,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         for dataset in datasets:
             for version in dataset['versions']:
                 version['references'] = store.dataset_references(storage, version['version'])
+                version['owners'] = storage.dataset_owners(version['version'])
         return {'datasets': datasets}
 
     @app.get('/api/v1/datasets/{name}/versions')
@@ -568,6 +569,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             raise RequestError('NOT_FOUND')
         for version in view['versions']:
             version['references'] = store.dataset_references(storage, version['version'])
+            version['owners'] = storage.dataset_owners(version['version'])
         return view
 
     @app.get('/api/admin/datasets/{dataset_version}/split-preview')

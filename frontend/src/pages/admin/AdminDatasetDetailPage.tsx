@@ -211,6 +211,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>来源类型</dt><dd>{selected.usage === 'pr' ? 'PR 分析' : '分支分析'}</dd></div>
         <div><dt>来源分析</dt><dd><code>{selected.sourceSyncId ?? '未记录'}</code></dd></div>
         <div><dt>引用</dt><dd>{selected.references.length ? selected.references.join('、') : '无'}</dd></div>
+        <div><dt>所有者</dt><dd>{selected.owners.length ? selected.owners.join('、') : '共享'}</dd></div>
       </dl></section>
     </div>
     <div className="admin-detail-grid">

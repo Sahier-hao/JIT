@@ -3,6 +3,7 @@ import { ApiError } from '../apiContract'
 import { userModels, useUserRevision, type UserModel } from '../userClient'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import { Button } from '../ui/controls'
+import { ModelCardDialog } from '../components/ModelCardDialog'
 import type { Route } from '../navigation'
 import '../styles/user-workspace.css'
 
@@ -18,6 +19,7 @@ export function MyModelsPage({ navigate, onLoginRequired }: {
 }) {
   const [models, setModels] = useState<UserModel[] | null>(null)
   const [error, setError] = useState('')
+  const [cardId, setCardId] = useState('')
   const userRevision = useUserRevision()
   useEffect(() => {
     const controller = new AbortController()
@@ -40,8 +42,9 @@ export function MyModelsPage({ navigate, onLoginRequired }: {
     </EmptyState> : <div className="user-model-list">{models.map(model => <article key={model.modelId} className="user-model-card">
       <div><strong>{model.name}</strong><span>{model.method} · {model.featureSchemaVersion}</span></div>
       <code>{paramsText(model.parameters)}</code>
-      <div className="user-inline"><span className="source-chip">{model.state === 'ready' ? '已校验' : '不可用'}</span><span className="source-chip">{model.enabled ? '已启用' : '已停用'}</span></div>
+      <div className="user-inline"><span className="source-chip">{model.state === 'ready' ? '已校验' : '不可用'}</span><span className="source-chip">{model.enabled ? '已启用' : '已停用'}</span><Button size="sm" variant="ghost" onClick={() => setCardId(model.modelId)}>查看模型卡</Button></div>
       {model.datasetVersion ? <p className="quiet-empty">训练数据：{model.datasetVersion}</p> : null}
     </article>)}</div>}
+    <ModelCardDialog modelId={cardId} open={Boolean(cardId)} onOpenChange={open => { if (!open) setCardId('') }}/>
   </section>
 }

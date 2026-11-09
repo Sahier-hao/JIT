@@ -3,10 +3,11 @@ import { ApiError } from '../apiContract'
 import { trainingMethods, type MethodChoice } from '../modelClient'
 import { SPLIT_PRESETS } from '../splitClient'
 import {
-  createUserExperiment, deriveCuration, exportDataset, previewCuration, splitPreview,
+  createUserExperiment, deleteUserDataset, deriveCuration, exportDataset, previewCuration, splitPreview,
   userDatasets, useUserRevision, type UserDataset,
 } from '../userClient'
 import { Button, Checkbox, NumberInput, Select, TextArea } from '../ui/controls'
+import { Dialog } from '../ui/dialog'
 import { formatDate, valueLabel } from '../adminContracts'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
@@ -30,6 +31,7 @@ export function MyDataPage({ navigate, onLoginRequired }: {
   const userRevision = useUserRevision()
   const [recipe, setRecipe] = useState(RECIPE)
   const [curation, setCuration] = useState<Record<string, unknown> | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -107,6 +109,23 @@ export function MyDataPage({ navigate, onLoginRequired }: {
     } finally { setBusy(false) }
   }
 
+  async function removeVersion() {
+    if (!current) return
+    setBusy(true); setError(''); setConfirmDelete(false)
+    try {
+      await deleteUserDataset(current.version)
+      setDatasets(values => {
+        const next = (values ?? []).filter(item => item.version !== current.version)
+        setSelected(next[0]?.version ?? '')
+        return next
+      })
+      setCuration(null); setPreview(null)
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
+      else setError(failure instanceof Error ? failure.message : '删除失败')
+    } finally { setBusy(false) }
+  }
+
   if (datasets === null) return <section className="user-workspace">
     {error ? <div className="user-empty"><p className="field-error" role="alert">{error}</p><Button onClick={onLoginRequired}>登录后重试</Button></div>
       : <LoadingNotice label="正在读取我的数据"/>}
@@ -142,6 +161,7 @@ export function MyDataPage({ navigate, onLoginRequired }: {
           <div className="user-data-actions">
             <Button onClick={() => exportDataset(current.version)}>导出 CSV 包</Button>
             <Button onClick={() => setSelected(current.version)}>刷新版本</Button>
+            {current.mine ? <Button variant="danger" loading={busy} onClick={() => setConfirmDelete(true)}>删除此版本</Button> : null}
           </div>
           <section className="user-panel"><h2>时间切分</h2>
             <div className="user-inline"><Select ariaLabel="时间切分预设" value={preset} onChange={setPreset} options={[...SPLIT_PRESETS]}/></div>
@@ -182,5 +202,10 @@ export function MyDataPage({ navigate, onLoginRequired }: {
         </> : null}
       </div>
     </div>
+    <Dialog open={confirmDelete} onOpenChange={setConfirmDelete} title="删除这个数据版本？" width={460}
+      description="会删除该版本的登记、提交特征和文件，无法恢复；被模型或分析引用的版本会被拒绝。"
+      footer={<><Button onClick={() => setConfirmDelete(false)}>取消</Button><Button variant="danger" loading={busy} onClick={() => void removeVersion()}>确认删除</Button></>}>
+      {null}
+    </Dialog>
   </section>
 }

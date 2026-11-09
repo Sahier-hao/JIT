@@ -95,3 +95,33 @@ def test_user_training_quota_and_owner(storage, tmp_path):
     finally:
         release.set()
         service.close()
+
+
+def test_user_can_delete_own_dataset_but_not_shared(monkeypatch, tmp_path):
+    from jit_baseline import datasets
+    from jit_baseline.config import BACKEND
+    csv = BACKEND / 'data/openstack/openstack.csv'
+    if not csv.exists():
+        pytest.skip('开放数据集未取得')
+    registry = tmp_path / 'registry'
+    registry.mkdir()
+    copied = registry / 'openstack.csv'
+    copied.write_bytes(csv.read_bytes())
+    registered = datasets.register(copied, root=registry)
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    with TestClient(create_app(tmp_path / 'missing', database=storage.path,
+                               artifact_root=tmp_path / 'artifacts', dataset_root=registry)) as client:
+        assert client.post('/api/user/register', json=ACCOUNT).status_code == 201
+        shared = client.delete(f"/api/v1/user/datasets/{registered['version']}")
+        assert shared.status_code == 403
+        assert shared.json()['error']['code'] == 'DATASET_FORBIDDEN'
+        storage.add_dataset_owner(registered['version'], 'reader')
+        deleted = client.delete(f"/api/v1/user/datasets/{registered['version']}")
+        assert deleted.status_code == 200, deleted.text
+        assert deleted.json()['deleted'] == registered['version']
+        assert storage.dataset(registered['version']) is None
+        assert storage.dataset_owners(registered['version']) == []
+        assert not (registry / registered['dataset'] / (registered['version'] + '.json')).exists()
+        assert not copied.exists()
+        assert csv.exists()

@@ -20,6 +20,7 @@ export interface AdminDatasetVersion {
   usage: 'branch' | 'pr'
   sourceSyncId: string | null
   references: string[]
+  owners: string[]
 }
 
 export interface AdminModel {
@@ -37,6 +38,7 @@ export interface AdminModel {
   metrics?: Row
   parameters?: Row | null
   parameterContract?: string | null
+  ownerUserId?: string | null
   trainingSeconds?: number | null
   metricSet?: string | null
   threshold?: number
@@ -73,6 +75,7 @@ export interface TrainingTask {
   dataScale: Row | null
   trainingPerformance: Row | null
   experimentId: string | null
+  ownerUserId?: string | null
   parameters: Row | null
   trainingHistory: { unit: string; epochs: number; complete: boolean; method?: string | null; entries: { epoch: number; trainLoss: number | null; seconds: number }[] } | null
   classPolicy: Row | null
@@ -284,6 +287,7 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     usage: value.usage === 'pr' ? 'pr' : 'branch',
     sourceSyncId: textOrNull(value.sourceSyncId),
     references: Array.isArray(value.references) ? textList(value.references) : [],
+    owners: Array.isArray(value.owners) ? textList(value.owners) : [],
   }
 }
 
@@ -359,6 +363,7 @@ export async function fetchAdminModel(modelId: string, signal?: AbortSignal): Pr
     metrics: record(body.metrics),
     parameters: body.parameters == null ? null : record(body.parameters),
     parameterContract: textOrNull(body.parameterContract),
+    ownerUserId: textOrNull(body.ownerUserId),
     trainingSeconds: typeof body.trainingSeconds === 'number' ? finiteNumber(body.trainingSeconds) : null,
     metricSet: textOrNull(body.metricSet),
     threshold: finiteNumber(body.threshold),
@@ -415,6 +420,7 @@ export function trainingTask(raw: unknown): TrainingTask {
     dataScale: value.dataScale == null ? null : record(value.dataScale),
     trainingPerformance: value.trainingPerformance == null ? null : record(value.trainingPerformance),
     experimentId: textOrNull(value.experimentId),
+    ownerUserId: textOrNull(value.ownerUserId),
     parameters: value.parameters == null ? null : record(value.parameters),
     trainingHistory: trainingHistory(value.trainingHistory),
     classPolicy: value.classPolicy == null ? null : record(value.classPolicy),
@@ -647,6 +653,7 @@ export interface TrainingExperiment {
   seed: number
   requestId: string | null
   createdBy: string
+  ownerUserId: string | null
   createdAt: string
   status: TrainingExperimentStatus
   statusCounts: Record<string, number>
@@ -708,6 +715,7 @@ export function trainingExperiment(raw: unknown): TrainingExperiment {
     seed: finiteNumber(value.seed),
     requestId: textOrNull(value.requestId),
     createdBy: text(value.createdBy),
+    ownerUserId: textOrNull(value.ownerUserId),
     createdAt: text(value.createdAt),
     status: status as TrainingExperimentStatus,
     statusCounts,

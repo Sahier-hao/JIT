@@ -159,6 +159,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
     <dl className="admin-facts">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
       <div><dt>创建人</dt><dd>{task.createdBy}</dd></div>
+      <div><dt>训练用户</dt><dd>{task.ownerUserId ?? '管理员'}</dd></div>
       <div><dt>创建时间</dt><dd>{formatDate(task.createdAt)}</dd></div>
       <div><dt>开始时间</dt><dd>{formatDate(task.startedAt)}</dd></div>
       <div><dt>完成时间</dt><dd>{formatDate(task.completedAt)}</dd></div>
