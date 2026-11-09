@@ -18,6 +18,7 @@ function mockApi() {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const url = new URL(String(input), 'http://localhost')
     if (url.pathname === '/api/admin/session') return response({ authenticated: true, setupRequired: false, username: 'maintainer' })
+    if (url.pathname === '/api/user/session') return response({ authenticated: true, username: 'reader' })
     if (url.pathname === '/api/v1/repositories') return response({ repositories: [repo(REPO_A), repo(REPO_B)], total: 2, offset: 0, limit: 100 })
     if (url.pathname === '/api/v1/repository-syncs') return response({ syncs: [], total: 0, offset: 0, limit: 50 })
     const id = url.pathname.split('/')[4] ?? REPO_B
@@ -28,7 +29,7 @@ function mockApi() {
   })
 }
 async function connect() { return userEvent.setup() }
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/') })
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/#/projects') })
 afterEach(() => vi.restoreAllMocks())
 it('offers the new successful result and comparison while preserving the open analysis', async () => {
   const newer = '44444444-4444-4444-8444-444444444444'

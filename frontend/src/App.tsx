@@ -7,7 +7,8 @@ import { queryClient } from './lib/queryClient'
 import { AppShell } from './AppShell'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Button } from './ui/controls'
-import { analysisRoute, useRoute, type Route } from './navigation'
+import { analysisRoute, hashFor, useRoute, type Route } from './navigation'
+import { useUserSession } from './userClient'
 import { useRepositories } from './repositoryWorkspace'
 import { LoadingNotice, EmptyState } from './Feedback'
 import { apiRequest } from './apiClient'
@@ -27,6 +28,8 @@ const ProjectEvents = lazy(() => import('./components/ProjectActivity').then(mod
 const MyDataPage = lazy(() => import('./pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
 const MyTrainingPage = lazy(() => import('./pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
 const MyModelsPage = lazy(() => import('./pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
+const LandingPage = lazy(() => import('./pages/LandingPage').then(module => ({ default: module.LandingPage })))
+const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })))
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
@@ -44,11 +47,24 @@ export default function App() {
 function Workspace() {
   const { route, navigate } = useRoute()
   const repositories = useRepositories()
+  const { session, setSession } = useUserSession()
   const [drafts] = useState(() => new Map<string, ReviewDraft>())
   const stateKey = route.name === 'analysis' ? `${route.repositoryId}:${route.viewSyncId}` : ''
-  // 管理工作区是独立外壳：不显示用户项目导航，也不依赖项目侧栏。
+  if (route.name === 'landing') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LandingPage navigate={navigate} session={session}/></Suspense></ErrorBoundary>
+  }
+  if (route.name === 'login') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LoginPage route={route} session={session} navigate={navigate} onUser={setSession}/></Suspense></ErrorBoundary>
+  }
+  // 管理工作区是独立外壳：管理员会话由管理工作区自行校验，未登录时返回登录页。
   if (route.name === 'admin' || route.name === 'report') {
     return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><AdminWorkspace route={route} navigate={navigate}/></Suspense></ErrorBoundary>
+  }
+  if (session === null) return <div className="workspace-boot"><LoadingNotice label="正在确认登录状态"/></div>
+  if (!session.authenticated) {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>
+      <LoginPage route={{ name: 'login', role: 'user', next: hashFor(route) }} session={session} navigate={navigate} onUser={setSession}/>
+    </Suspense></ErrorBoundary>
   }
   let content
   if (route.name === 'my-reviews') content = <ProjectsPage navigate={navigate} view="reviews"/>
@@ -64,7 +80,7 @@ function Workspace() {
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>
   else if (route.name === 'retired' || route.name === 'unknown') content = <EmptyState title={route.name === 'retired' ? '这个入口已移除' : '没有找到这个页面'} description={route.name === 'retired' ? '独立工具页面已撤下。请从项目开始分析；已保存的数据仍然保留。' : '请核对地址，或返回项目继续。'}><Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>返回项目</Button></EmptyState>
   else content = <ProjectsPage navigate={navigate}/>
-  return <AppShell route={route} navigate={navigate} repositories={repositories.items}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell>
+  return <AppShell route={route} navigate={navigate} repositories={repositories.items} session={session} onSession={setSession}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell>
 }
 
 function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy-sync' }>; navigate: (route: Route, replace?: boolean) => void }) {

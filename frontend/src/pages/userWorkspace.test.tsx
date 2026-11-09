@@ -25,24 +25,12 @@ const SPLIT = {
 }
 const METHODS = { schema: 'kamei14-git-v2', methods: [{ method: 'logistic-regression-l2-v1', name: '逻辑回归 · L2', label: '逻辑回归', category: 'classic', available: true, supportedSchema: true, reason: null, requires: [], params: [{ name: 'C', type: 'float', min: 0.01, max: 100, default: 1 }] }] }
 
-it('registers a user from the account dialog and enters my data', async () => {
+it('sends a logged-out visitor to the login page', async () => {
   const navigate = vi.fn()
-  const onChange = vi.fn()
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
-    if (String(input).endsWith('/api/user/register') && options?.method === 'POST') {
-      return Response.json({ authenticated: true, username: 'reader' })
-    }
-    return Response.json({ authenticated: false, username: null })
-  })
-  render(<UserAccount session={null} onChange={onChange} navigate={navigate}/>)
+  render(<UserAccount session={null} onChange={vi.fn()} navigate={navigate}/>)
   const user = userEvent.setup()
   await user.click(screen.getByRole('button', { name: '登录 / 注册' }))
-  await user.click(screen.getByRole('radio', { name: '注册' }))
-  await user.type(screen.getByLabelText('用户账户名'), 'reader')
-  await user.type(screen.getByLabelText('用户密码'), 'reader-pass-1')
-  await user.click(screen.getByRole('button', { name: '注册并进入' }))
-  await waitFor(() => expect(onChange).toHaveBeenCalledWith({ authenticated: true, username: 'reader' }))
-  expect(navigate).toHaveBeenCalledWith({ name: 'my-data' })
+  expect(navigate).toHaveBeenCalledWith({ name: 'login', role: 'user' })
 })
 
 it('shows own data, split preview and starts a user experiment', async () => {

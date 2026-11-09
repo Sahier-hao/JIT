@@ -1,7 +1,9 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 export type Route =
+  | { name: 'landing' }
+  | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
   | { name: 'my-data' }
   | { name: 'my-training'; experimentId?: string }
@@ -51,7 +53,13 @@ export function parseHash(hash: string): Route {
     const path = rawPath.replace(/\/+$/, '')
     const parts = path.replace(/^\//, '').split('/').map(decodeURIComponent)
     if (parts.some(part => part.includes('/') || part.includes('\\'))) return { name: 'unknown', hash }
-    if (!path || path === '/') return { name: 'repositories' }
+    if (!path || path === '/') return { name: 'landing' }
+    if (path === '/login') {
+      const role = params.get('role') === 'admin' ? 'admin' as const : params.get('role') === 'user' ? 'user' as const : undefined
+      const next = params.get('next') || undefined
+      return { name: 'login', ...(role ? { role } : {}), ...(next ? { next } : {}) }
+    }
+    if (path === '/welcome') return { name: 'landing' }
     if (path === '/reviews') return { name: 'my-reviews' }
     if (path === '/my-data') return { name: 'my-data' }
     if (path === '/my-training') return { name: 'my-training' }
@@ -104,6 +112,13 @@ export function parseHash(hash: string): Route {
 }
 export function hashFor(route: Route): string {
   switch (route.name) {
+    case 'landing': return '#/'
+    case 'login': {
+      const params = new URLSearchParams()
+      if (route.role) params.set('role', route.role)
+      if (route.next) params.set('next', route.next)
+      return params.size ? `#/login?${params}` : '#/login'
+    }
     case 'my-reviews': return '#/reviews'
     case 'my-data': return '#/my-data'
     case 'my-training': return route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
@@ -150,9 +165,6 @@ export function useRoute() {
   const navigate = useNavigate()
   // HashRouter 把 `#/projects/...` 解析为 pathname；解析器仍以带 `#` 的地址工作，旧解析逻辑不变。
   const route = parseHash(`#${location.pathname}${location.search}`)
-  useEffect(() => {
-    if (location.pathname === '/' && !location.search) navigate(hashFor({ name: 'repositories' }).replace(/^#/, ''), { replace: true })
-  }, [location.pathname, location.search, navigate])
   const go = useCallback((next: Route, replace = false) => {
     navigate(hashFor(next).replace(/^#/, ''), { replace })
   }, [navigate])

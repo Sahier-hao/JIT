@@ -1,0 +1,36 @@
+.entry-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg); }
+.entry-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; padding: 0 36px; border-bottom: 1px solid var(--line); background: var(--card); }
+.entry-brand { display: inline-flex; align-items: center; gap: 10px; border: 0; background: none; color: inherit; font-size: 20px; font-weight: 650; cursor: pointer; }
+.entry-brand .brand-caption { margin-left: 6px; color: var(--fg-3); font-size: 9px; letter-spacing: .18em; }
+.entry-nav { display: flex; gap: 6px; }
+.entry-main { flex: 1; width: min(1080px, 100%); margin: 0 auto; padding: 56px 28px 40px; display: grid; gap: 46px; }
+.entry-hero { max-width: 760px; display: grid; gap: 16px; }
+.entry-eyebrow { margin: 0; color: var(--accent-ink, var(--fg-3)); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+.entry-hero h1 { margin: 0; font-size: clamp(32px, 5vw, 50px); line-height: 1.16; letter-spacing: -.02em; }
+.entry-lede { margin: 0; max-width: 680px; color: var(--fg-2); font-size: 15px; line-height: 1.8; }
+.entry-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.entry-grid article { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); display: grid; gap: 8px; }
+.entry-grid h2 { margin: 0; font-size: 16px; }
+.entry-grid p { margin: 0; color: var(--fg-3); font-size: 13px; line-height: 1.7; }
+.entry-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-top: 8px; border-top: 1px solid var(--line); }
+.entry-steps > div { display: grid; gap: 6px; padding-top: 14px; }
+.entry-steps b { color: var(--accent-ink, var(--fg-3)); font-size: 12px; letter-spacing: .12em; }
+.entry-steps span { font-size: 15px; font-weight: 600; }
+.entry-steps p { margin: 0; color: var(--fg-3); font-size: 12.5px; line-height: 1.65; }
+.entry-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 18px 36px; border-top: 1px solid var(--line); color: var(--fg-3); font-size: 12px; }
+.entry-login-page { background: linear-gradient(160deg, var(--bg), var(--surface-2, var(--bg))); }
+.entry-login-main { flex: 1; width: min(1000px, 100%); margin: 0 auto; padding: 48px 28px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 48px; align-items: center; }
+.entry-login-aside { display: grid; gap: 16px; max-width: 460px; }
+.entry-login-aside h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.2; }
+.entry-login-aside p { margin: 0; color: var(--fg-2); font-size: 14px; line-height: 1.8; }
+.entry-login-card { display: grid; gap: 14px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: 0 18px 50px rgb(0 0 0 / 8%); }
+.entry-login-form { display: grid; gap: 12px; }
+.entry-form-note { margin: 0; color: var(--fg-3); font-size: 12.5px; }
+.entry-login-done { display: grid; gap: 12px; justify-items: start; }
+.entry-login-done p { margin: 0; color: var(--fg-2); font-size: 13px; }
+@media (max-width: 900px) {
+  .entry-grid, .entry-steps { grid-template-columns: 1fr; }
+  .entry-login-main { grid-template-columns: 1fr; gap: 28px; padding-top: 28px; }
+  .entry-hero h1 { font-size: 30px; }
+}

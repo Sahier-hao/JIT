@@ -2,14 +2,13 @@ import type { ReactNode } from 'react'
 import { Icon } from './Icon'
 import { repositoryRoute, type Route } from './navigation'
 import type { RepositoryView } from './repositoryWorkspace'
+import type { UserSession } from './userClient'
 import { NotificationEntry } from './components/ProjectActivity'
 import { AppearanceControl } from './components/AppearanceControl'
 import { Button } from './ui/controls'
 import { UserAccount } from './components/UserAccount'
-import { useUserSession } from './userClient'
 
-export function AppShell({ route, navigate, repositories, children }: { route: Route; navigate: (route: Route) => void; repositories: RepositoryView[]; children: ReactNode }) {
-  const { session, setSession } = useUserSession()
+export function AppShell({ route, navigate, repositories, session, onSession, children }: { route: Route; navigate: (route: Route) => void; repositories: RepositoryView[]; session: UserSession | null; onSession: (session: UserSession) => void; children: ReactNode }) {
   const label = route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查'
     : route.name === 'my-data' ? '我的数据' : route.name === 'my-training' ? '我的训练'
     : route.name === 'my-models' ? '我的模型' : route.name === 'pr-work' ? 'PR 审查'
@@ -30,7 +29,7 @@ export function AppShell({ route, navigate, repositories, children }: { route: R
       <div className="sidebar-bottom"><Button variant="ghost" size="sm" onClick={() => navigate({ name: 'admin', view: 'models' })}><Icon name="sliders"/>管理工作区</Button></div>
     </aside>
     <div className="workspace-content">
-      <header className="workspace-topbar"><span className="breadcrumb">工作空间 <span>/</span> <b>{label}</b></span><div className="appearance-anchor"><UserAccount session={session} onChange={setSession} navigate={navigate}/><NotificationEntry navigate={navigate}/><AppearanceControl/></div></header>
+      <header className="workspace-topbar"><span className="breadcrumb">工作空间 <span>/</span> <b>{label}</b></span><div className="appearance-anchor"><UserAccount session={session} onChange={onSession} navigate={navigate}/><NotificationEntry navigate={navigate}/><AppearanceControl/></div></header>
       <main id="product-main" className="workspace-main" tabIndex={-1}>{children}</main>
     </div>
   </div>

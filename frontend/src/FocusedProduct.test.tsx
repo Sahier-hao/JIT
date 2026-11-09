@@ -6,7 +6,12 @@ import App from './App'
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/#/projects') })
 afterEach(() => vi.restoreAllMocks())
 function emptyApi() {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ repositories: [], total: 0, offset: 0, limit: 100 }), { status: 200 }))
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    if (String(input).includes('/api/user/session')) {
+      return new Response(JSON.stringify({ authenticated: true, username: 'reader' }), { status: 200 })
+    }
+    return new Response(JSON.stringify({ repositories: [], total: 0, offset: 0, limit: 100 }), { status: 200 })
+  })
 }
 it('opens projects immediately without a credential or role step', async () => {
   const fetch = emptyApi(); render(<App />)
@@ -32,12 +37,16 @@ it('starts a repository analysis without a connection detour', async () => {
 })
 
 it('opens administrator sign-in instead of showing maintenance data to visitors', async () => {
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => new Response(JSON.stringify(String(input).includes('/api/admin/session')
-    ? { authenticated: false, setupRequired: false, username: null }
-    : { repositories: [], total: 0, offset: 0, limit: 100 }), { status: 200 }))
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const path = String(input)
+    if (path.includes('/api/admin/session')) return new Response(JSON.stringify({ authenticated: false, setupRequired: false, username: null }), { status: 200 })
+    if (path.includes('/api/user/session')) return new Response(JSON.stringify({ authenticated: true, username: 'reader' }), { status: 200 })
+    return new Response(JSON.stringify({ repositories: [], total: 0, offset: 0, limit: 100 }), { status: 200 })
+  })
   window.history.replaceState({}, '', '/#/admin')
   render(<App/>)
-  expect(await screen.findByRole('heading', { name: '管理员登录' }, { timeout: 5000 })).toBeVisible()
+  expect(await screen.findByRole('heading', { name: '登录后进入你的工作区' }, { timeout: 5000 })).toBeVisible()
+  expect(screen.getByLabelText('管理员账户名')).toBeVisible()
   expect(screen.queryByRole('heading', { name: '验证报告' })).not.toBeInTheDocument()
 })
 
