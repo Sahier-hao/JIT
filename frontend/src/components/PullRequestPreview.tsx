@@ -4,6 +4,7 @@ import { Segmented } from '../ui/segmented'
 import { Button, Input } from '../ui/controls'
 import { Dropdown } from '../ui/dropdown'
 import { CodeDiff } from '../ui/CodeDiff'
+import { Dialog } from '../ui/dialog'
 import { PRModelClues } from './PRModelClues'
 import { Markdown } from './Markdown'
 import { RepositoryExplanation } from './RepositoryExplanation'
@@ -117,19 +118,22 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
         {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code>{commitRisks[selectedCommit]?.files.length
           ? <Button size="sm" variant="ghost" title="退出这次提交的范围，看整个 PR" onClick={() => setSelectedCommit('')}>全部 {source.files.length} 个文件</Button>
           : <span className="pr-preview-scope" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="pr-preview-scope">全部 {source.files.length} 个文件</span>}
-        {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(value => !value)}>{explanationOpen ? '收起模型解释' : '模型解释'}</Button> : null}
+        {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)}>模型解释</Button> : null}
       </div>
-      {explanationOpen && selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <div className="pr-preview-explanation">
-        <RepositoryExplanation context={{
-          repositoryId: explanationRepository,
-          viewSyncId: analysis.primary.sync.syncId,
-          commitId: selectedCommit,
-          risk: explanationRisk,
-          modelId: analysis.primary.sync.modelId,
-          runId: analysis.primary.sync.runId,
-          datasetVersion: analysis.primary.sync.datasetVersion,
-        }}/>
-      </div> : null}
+      <Dialog open={explanationOpen && Boolean(selectedCommit && explanationRepository && explanationRisk != null && analysis.primary)}
+        onOpenChange={setExplanationOpen} title="模型解释" width={560}>
+        {selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <div className="pr-preview-explanation">
+          <RepositoryExplanation heading={false} context={{
+            repositoryId: explanationRepository,
+            viewSyncId: analysis.primary.sync.syncId,
+            commitId: selectedCommit,
+            risk: explanationRisk,
+            modelId: analysis.primary.sync.modelId,
+            runId: analysis.primary.sync.runId,
+            datasetVersion: analysis.primary.sync.datasetVersion,
+          }}/>
+        </div> : null}
+      </Dialog>
       <div className="pr-preview-grid">
         <aside className="pr-preview-files" aria-label="PR 文件">
           <div className="pr-preview-pane-head"><h2>文件</h2><span>{source.files.length}/{source.totalFiles}</span></div>

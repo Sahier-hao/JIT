@@ -6,3 +6,5 @@
 .explanation-table th, .explanation-table td { padding: 9px 4px; text-align: left; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .explanation-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .explanation-table td span { display: block; color: var(--fg-3); margin-top: 3px; }
+.pr-preview-explanation .repository-explanation { margin: 0; padding: 0; border: 0; }
+.pr-preview-explanation .repository-explanation p { font-size: 12.5px; }

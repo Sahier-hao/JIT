@@ -45,6 +45,7 @@ it('searches commits and explains one commit without leaving the read-only detai
 
   await user.click(screen.getByText('handle expiry'))
   await user.click(screen.getByRole('button', { name: '模型解释' }))
+  expect(await screen.findByRole('dialog')).toBeVisible()
   expect(await screen.findByText(/尚未生成该提交的模型解释/)).toBeVisible()
   expect(fetch.mock.calls.some(([path]) => String(path).includes(`/commits/${SHA_A}/explanation?viewSyncId=${SYNC}`))).toBe(true)
 
