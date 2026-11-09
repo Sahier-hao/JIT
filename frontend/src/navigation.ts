@@ -8,6 +8,7 @@ export type Route =
   | { name: 'my-data' }
   | { name: 'my-training'; experimentId?: string }
   | { name: 'my-models' }
+  | { name: 'profile' }
   | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string; mode?: 'preview' }
   | { name: 'notifications' }
   | { name: 'repositories' }
@@ -65,6 +66,7 @@ export function parseHash(hash: string): Route {
     if (path === '/my-training') return { name: 'my-training' }
     if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
     if (path === '/my-models') return { name: 'my-models' }
+    if (path === '/profile') return { name: 'profile' }
     if (path === '/notifications') return { name: 'notifications' }
     if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]), ...(snapshotId ? { snapshotId } : {}), ...(mode ? { mode } : {}) }
     if (['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
@@ -123,6 +125,7 @@ export function hashFor(route: Route): string {
     case 'my-data': return '#/my-data'
     case 'my-training': return route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
     case 'my-models': return '#/my-models'
+    case 'profile': return '#/profile'
     case 'pr-work': {
       const base = `${route.repositoryId ? `#/projects/${encodeURIComponent(route.repositoryId)}/prs` : '#/reviews'}/${encodeURIComponent(route.owner)}/${encodeURIComponent(route.repositoryName)}/${route.number}`
       const query = new URLSearchParams()

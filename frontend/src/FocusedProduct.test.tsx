@@ -21,7 +21,7 @@ it('opens projects immediately without a credential or role step', async () => {
   expect(screen.queryByText('设置团队连接')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '实验室' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '验证报告' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '管理工作区' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '我的数据' })).toBeVisible()
   for (const [, options] of fetch.mock.calls) expect(new Headers(options?.headers).has('Authorization')).toBe(false)
 })
 it.each(['#/models', '#/predict', '#/predictions/11111111-1111-4111-8111-111111111111', '#/lab/demo/commits', '#/settings/connection'])('retires the old tool at %s', async hash => {
@@ -45,7 +45,7 @@ it('opens administrator sign-in instead of showing maintenance data to visitors'
   })
   window.history.replaceState({}, '', '/#/admin')
   render(<App/>)
-  expect(await screen.findByRole('heading', { name: '登录后进入你的工作区' }, { timeout: 5000 })).toBeVisible()
+  expect(await screen.findByRole('heading', { name: '进入管理工作区' }, { timeout: 5000 })).toBeVisible()
   expect(screen.getByLabelText('管理员账户名')).toBeVisible()
   expect(screen.queryByRole('heading', { name: '验证报告' })).not.toBeInTheDocument()
 })

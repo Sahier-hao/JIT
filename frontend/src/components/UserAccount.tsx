@@ -29,11 +29,13 @@ export function UserAccount({ session, onChange, navigate }: {
       { key: 'data', label: '我的数据' },
       { key: 'training', label: '我的训练' },
       { key: 'models', label: '我的模型' },
+      { key: 'profile', label: '个人空间' },
       { key: 'logout', label: '退出登录', danger: true },
     ]} onClick={key => {
       if (key === 'data') navigate({ name: 'my-data' })
       else if (key === 'training') navigate({ name: 'my-training' })
       else if (key === 'models') navigate({ name: 'my-models' })
+      else if (key === 'profile') navigate({ name: 'profile' })
       else void logout()
     }}>
       <Button variant="ghost" size="sm">{session.username}</Button>

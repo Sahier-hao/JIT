@@ -85,6 +85,36 @@ def _portable_manifest(manifest, version):
 def install_user_routes(app, storage, dataset_root, training_service, catalog):
     root = Path(dataset_root) if dataset_root is not None else None
 
+    @app.get('/api/v1/user/profile')
+    def user_profile(request: Request):
+        username = _user(request)
+        with storage.connection() as db:
+            row = db.execute('SELECT username,display_name,created_at FROM user_account WHERE username=?',
+                             (username,)).fetchone()
+            datasets = db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?',
+                                  (username,)).fetchone()[0]
+            models = db.execute('SELECT COUNT(*) FROM model_version WHERE owner_user_id=?',
+                                (username,)).fetchone()[0]
+            experiments = db.execute('SELECT COUNT(*) FROM training_experiment WHERE owner_user_id=?',
+                                     (username,)).fetchone()[0]
+        if row is None:
+            raise BaselineError('NOT_FOUND', '用户账户不存在')
+        return {'username': row[0], 'displayName': row[1], 'createdAt': row[2],
+                'datasetCount': datasets, 'modelCount': models, 'experimentCount': experiments}
+
+    @app.patch('/api/v1/user/profile')
+    async def update_user_profile(request: Request):
+        username = _user(request)
+        data = await read_object(request)
+        display = data.get('displayName')
+        if display is not None and (not isinstance(display, str) or len(display.strip()) > 40):
+            raise BaselineError('INPUT_INVALID', '显示名称最多 40 个字符')
+        normalized = display.strip() if isinstance(display, str) and display.strip() else None
+        with storage.connection(write=True) as db:
+            db.execute('UPDATE user_account SET display_name=? WHERE username=?',
+                       (normalized, username))
+        return {'username': username, 'displayName': normalized}
+
     @app.get('/api/v1/user/datasets')
     def user_datasets(request: Request, scope: str = 'usable'):
         username = _user(request)

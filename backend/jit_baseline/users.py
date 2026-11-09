@@ -122,7 +122,7 @@ def install_users(app, storage):
             with storage.connection(write=True) as db:
                 if db.execute('SELECT 1 FROM user_account WHERE username=?', (username,)).fetchone():
                     raise BaselineError('USERNAME_TAKEN', '账户名已被使用')
-                db.execute('INSERT INTO user_account VALUES (?,?,?,?)',
+                db.execute('INSERT INTO user_account (username,salt,password_hash,created_at) VALUES (?,?,?,?)',
                            (username, salt, digest, time.time()))
         except BaselineError:
             raise
@@ -155,6 +155,37 @@ def install_users(app, storage):
         with attempt_lock:
             attempts.pop(key, None)
         return await run_in_threadpool(issue, username.strip(), 200, request.url.scheme == 'https')
+
+    @app.post('/api/user/password')
+    async def change_password(request: Request):
+        username = current_user(request)
+        if not username:
+            raise BaselineError('AUTH_REQUIRED', '请先登录用户账户')
+        data = await read_object(request)
+        current, new = data.get('currentPassword'), data.get('newPassword')
+        if not isinstance(new, str) or not PASSWORD_MIN <= len(new) <= PASSWORD_MAX:
+            raise BaselineError('INPUT_INVALID', f'新密码须为 {PASSWORD_MIN}–{PASSWORD_MAX} 位')
+        if not isinstance(current, str):
+            raise BaselineError('AUTH_INVALID', '当前密码不正确')
+
+        def verify_and_update():
+            with storage.connection() as db:
+                row = db.execute('SELECT * FROM user_account WHERE username=?', (username,)).fetchone()
+            if row is None:
+                return False
+            digest = _hash(current, row['salt'])
+            if not hmac.compare_digest(row['password_hash'], digest):
+                return False
+            salt = secrets.token_hex(16)
+            with storage.connection(write=True) as db:
+                db.execute('UPDATE user_account SET salt=?,password_hash=? WHERE username=?',
+                           (salt, _hash(new, salt), username))
+                db.execute('DELETE FROM user_session WHERE username=?', (username,))
+            return True
+
+        if not await run_in_threadpool(verify_and_update):
+            raise BaselineError('AUTH_INVALID', '当前密码不正确')
+        return await run_in_threadpool(issue, username, 200, request.url.scheme == 'https')
 
     @app.post('/api/user/logout')
     def logout(request: Request):

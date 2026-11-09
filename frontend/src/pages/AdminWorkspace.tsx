@@ -109,7 +109,6 @@ export function AdminWorkspace({ route, navigate }: {
         <div className="admin-account"><span className="admin-account-name">{label(session.username, '管理员')}</span><span className="admin-account-role">管理员</span></div>
         <div className="admin-rail-actions">
           <Button variant="ghost" size="sm" onClick={() => void logout()}>退出管理</Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</Button>
         </div>
       </div>
     </aside>

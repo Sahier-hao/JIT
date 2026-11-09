@@ -125,3 +125,22 @@ def test_user_can_delete_own_dataset_but_not_shared(monkeypatch, tmp_path):
         assert not (registry / registered['dataset'] / (registered['version'] + '.json')).exists()
         assert not copied.exists()
         assert csv.exists()
+
+
+def test_user_profile_and_password_change(client):
+    assert client.post('/api/user/register', json=ACCOUNT).status_code == 201
+    profile = client.get('/api/v1/user/profile')
+    assert profile.status_code == 200
+    body = profile.json()
+    assert body['username'] == 'reader' and body['displayName'] is None
+    assert (body['datasetCount'], body['modelCount'], body['experimentCount']) == (0, 0, 0)
+    saved = client.patch('/api/v1/user/profile', json={'displayName': '审阅者'})
+    assert saved.json()['displayName'] == '审阅者'
+    assert client.get('/api/v1/user/profile').json()['displayName'] == '审阅者'
+    wrong = client.post('/api/user/password', json={'currentPassword': 'bad-password', 'newPassword': 'new-reader-pass'})
+    assert wrong.status_code == 401
+    changed = client.post('/api/user/password', json={'currentPassword': ACCOUNT['password'], 'newPassword': 'new-reader-pass'})
+    assert changed.status_code == 200
+    client.post('/api/user/logout')
+    assert client.post('/api/user/login', json=ACCOUNT).status_code == 401
+    assert client.post('/api/user/login', json={**ACCOUNT, 'password': 'new-reader-pass'}).status_code == 200

@@ -44,7 +44,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (31, Path(__file__).parent / 'migrations/031_dataset_build_tasks.sql'),
               (32, Path(__file__).parent / 'migrations/032_label_evidence_lines.sql'),
               (33, Path(__file__).parent / 'migrations/033_training_experiments.sql'),
-              (34, Path(__file__).parent / 'migrations/034_user_accounts_and_ownership.sql'))
+              (34, Path(__file__).parent / 'migrations/034_user_accounts_and_ownership.sql'),
+              (35, Path(__file__).parent / 'migrations/035_user_profile.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

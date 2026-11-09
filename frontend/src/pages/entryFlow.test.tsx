@@ -11,7 +11,7 @@ it('shows the product introduction and routes to each login role', async () => {
   render(<LandingPage navigate={navigate} session={null}/>)
   expect(screen.getByRole('heading', { name: /把提交数据变成/ })).toBeVisible()
   const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: '用户登录' }))
+  await user.click(screen.getByRole('button', { name: '登录 / 注册' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'login', role: 'user' })
   await user.click(screen.getByRole('button', { name: '管理员登录' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'login', role: 'admin' })

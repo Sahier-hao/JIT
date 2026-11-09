@@ -28,6 +28,7 @@ const ProjectEvents = lazy(() => import('./components/ProjectActivity').then(mod
 const MyDataPage = lazy(() => import('./pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
 const MyTrainingPage = lazy(() => import('./pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
 const MyModelsPage = lazy(() => import('./pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
 const LandingPage = lazy(() => import('./pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })))
 
@@ -73,6 +74,7 @@ function Workspace() {
   else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={route.experimentId ?? 'list'} experimentId={route.experimentId} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'profile') content = <ProfilePage navigate={navigate} onLoginRequired={requestLogin} onSessionCleared={() => setSession({ authenticated: false, username: null })}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>

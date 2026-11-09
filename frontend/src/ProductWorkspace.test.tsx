@@ -58,9 +58,9 @@ it('keeps repository B and its fixed analysis when visiting a report and returni
   expect(screen.getByRole('heading', { name: '项目 B' })).toBeVisible()
   expect(screen.getByText('0.81')).toBeVisible()
   expect(screen.getByText('main 分支', { exact: false })).toBeVisible()
-  await user.click(screen.getByRole('button', { name: '管理工作区' }))
+  window.location.hash = '#/admin/models'
   await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
-  await user.click(await screen.findByRole('button', { name: '返回用户工作区' }, { timeout: 15000 }))
+  window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
   await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
@@ -130,9 +130,9 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByText('0.81')
-  await user.click(screen.getByRole('button', { name: '管理工作区' }))
+  window.location.hash = '#/admin/models'
   await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
-  await user.click(await screen.findByRole('button', { name: '返回用户工作区' }, { timeout: 15000 }))
+  window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
   await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))

@@ -4,7 +4,7 @@ import { Icon } from '../Icon'
 import { Button } from '../ui/controls'
 import '../styles/entry.css'
 
-/** 产品介绍首页：用户与管理员从这里进入各自工作区。 */
+/** 产品介绍首页：通过两个角色入口进入各自工作区。 */
 export function LandingPage({ navigate, session }: {
   navigate: (route: Route) => void
   session: UserSession | null
@@ -16,21 +16,28 @@ export function LandingPage({ navigate, session }: {
         <span className="brand-glyph"><Icon name="logo" size={22}/></span>
         <span>JIT<span className="brand-caption">REVIEW</span></span>
       </button>
-      <nav className="entry-nav" aria-label="账户入口">
-        <Button variant="ghost" onClick={() => navigate({ name: 'login', role: 'user' })}>用户登录</Button>
-        <Button variant="ghost" onClick={() => navigate({ name: 'login', role: 'admin' })}>管理员登录</Button>
-      </nav>
+      <span className="entry-header-note">提交级风险 · 静态行级线索 · 可复核实验</span>
     </header>
     <main className="entry-main">
       <section className="entry-hero">
-        <p className="entry-eyebrow">JIT 缺陷预测与审查工作台</p>
-        <h1>把提交数据变成可训练、可复核、可定位的审查线索</h1>
-        <p className="entry-lede">从公开仓库采集提交与 SZZ 标签，按时间切分数据，一次训练多种方法，再把模型分数用在项目分析和 PR 审查中。分数是模型估计，不是缺陷结论。</p>
-        <div className="entry-actions">
-          {loggedIn
-            ? <Button variant="primary" size="lg" onClick={() => navigate({ name: 'repositories' })}>继续进入项目 · {session?.username}</Button>
-            : <Button variant="primary" size="lg" onClick={() => navigate({ name: 'login', role: 'user' })}>进入用户工作区</Button>}
-          <Button size="lg" onClick={() => navigate({ name: 'login', role: 'admin' })}>管理员入口</Button>
+        <div className="entry-hero-copy">
+          <p className="entry-eyebrow">JIT 缺陷预测与审查工作台</p>
+          <h1>把提交数据变成可训练、可复核、可定位的审查线索</h1>
+          <p className="entry-lede">从公开仓库采集提交与 SZZ 标签，按时间切分数据，一次训练多种方法，再把模型分数用在项目分析和 PR 审查中。分数是模型估计，不是缺陷结论。</p>
+        </div>
+        <div className="entry-portals" aria-label="选择工作区">
+          <article className="entry-portal">
+            <div className="entry-portal-head"><Icon name="user" size={18}/><h2>用户工作区</h2></div>
+            <p>管理自己的数据集、训练实验与模型，进入项目和 PR 审查。</p>
+            <Button variant="primary" block onClick={() => navigate(loggedIn ? { name: 'repositories' } : { name: 'login', role: 'user' })}>
+              {loggedIn ? `继续进入项目 · ${session?.username}` : '登录 / 注册'}
+            </Button>
+          </article>
+          <article className="entry-portal">
+            <div className="entry-portal-head"><Icon name="sliders" size={18}/><h2>管理工作区</h2></div>
+            <p>维护全局数据集、模型目录、默认模型和验证记录。</p>
+            <Button block onClick={() => navigate({ name: 'login', role: 'admin' })}>管理员登录</Button>
+          </article>
         </div>
       </section>
       <section className="entry-grid" aria-label="产品能力">
@@ -44,6 +51,6 @@ export function LandingPage({ navigate, session }: {
         <div><b>03</b><span>登记并审查</span><p>显式登记模型后在项目中选用，回到 PR 工作单记录判断和结论。</p></div>
       </section>
     </main>
-    <footer className="entry-footer"><span>本机部署 · 仅监听回环地址</span><span>模型分数未经当前仓库概率校准</span></footer>
+    <footer className="entry-footer"><span>模型分数未经当前仓库概率校准，不是缺陷概率。</span><span>行级线索来自静态规则，不是逐行概率。</span></footer>
   </div>
 }

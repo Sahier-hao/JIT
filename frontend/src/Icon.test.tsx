@@ -10,7 +10,7 @@ describe('图标材料', () => {
     const required = [
       'logo', 'list', 'project', 'search', 'arrow',
       'chevron', 'check', 'plus', 'close', 'info', 'trend',
-      'sliders', 'copy', 'external', 'warning', 'collapse', 'filter', 'sort', 'download',
+      'sliders', 'copy', 'external', 'warning', 'collapse', 'filter', 'sort', 'download', 'user',
     ]
     expect(ICON_NAMES).toEqual(expect.arrayContaining(required))
     expect(ICON_NAMES).toHaveLength(required.length)
