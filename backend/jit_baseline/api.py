@@ -70,6 +70,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     storage = CatalogStorage(database)
     from .admin import install_admin
     install_admin(app, storage)
+    from .users import install_users
+    install_users(app, storage)
     catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
     app.state.catalog = catalog
     app.state.storage = storage
@@ -396,13 +398,19 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return model_cards.get(model_id)
 
     @app.get('/api/v1/repository-models')
-    def repository_models():
+    def repository_models(request: Request):
         # Public selection metadata only: no training evidence, paths or verification reports.
+        from .users import current_admin, current_user
+        viewer = current_user(request)
+        admin_view = current_admin(request) is not None
+        visible = [item for item in catalog.models()
+                   if admin_view or item.get('ownerUserId') in (None, viewer)]
         return {'models': [dict(modelId=item['modelId'], name=item['name'], method=item['method'],
                                 featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
                                 enabled=item['enabled'], isDefault=item['isDefault'],
+                                mine=bool(viewer and item.get('ownerUserId') == viewer),
                                 repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
-                                ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')) for item in catalog.models()]}
+                                ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')) for item in visible]}
 
     @app.post('/api/v1/training-tasks')
     async def create_training_task(request: Request):
@@ -593,7 +601,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.post('/api/v1/repository-syncs')
     async def create_sync(request: Request):
-        result, created = await run_in_threadpool(sync_service.create, await read_object(request),
+        payload = await read_object(request)
+        from .users import current_admin, current_user
+        viewer = current_user(request)
+        if payload.get('modelId') and current_admin(request) is None:
+            owner = catalog.model_owner(payload['modelId'])
+            if owner is not None and owner != viewer:
+                raise RequestError('MODEL_FORBIDDEN')
+        result, created = await run_in_threadpool(sync_service.create, payload,
                                                   request.state.request_id)
         request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
         return JSONResponse(result, status_code=202 if created else 200)
@@ -671,12 +686,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.post('/api/v1/repositories/{repository_id}/dataset-builds')
     async def create_dataset_build(repository_id: str, request: Request):
+        from .users import current_admin, current_user
+        viewer = current_user(request)
         result, created = await run_in_threadpool(
             dataset_build_service.create,
             repository_id,
             await read_object(request),
             request.state.request_id,
-            created_by=getattr(request.state, 'admin_username', None) or 'project',
+            created_by=current_admin(request) or viewer or 'project',
+            owner_user_id=viewer,
         )
         request.state.business_ids = (None, None, result.get('datasetVersion'))
         return JSONResponse(result, status_code=202 if created else 200)
@@ -699,12 +717,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         body = await request.body()
         if body and await read_object(request):
             raise RequestError('INPUT_INVALID')
+        from .users import current_admin, current_user
+        viewer = current_user(request)
         result, created = await run_in_threadpool(
             dataset_build_service.retry,
             repository_id,
             task_id,
             request.state.request_id,
-            created_by=getattr(request.state, 'admin_username', None) or 'project',
+            created_by=current_admin(request) or viewer or 'project',
+            owner_user_id=viewer,
         )
         return JSONResponse(result, status_code=202 if created else 200)
 
@@ -764,6 +785,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repositories/{repository_id}/summary')
     def repository_summary(repository_id: str, viewSyncId: str | None = None):
         return sync_service.repository_summary(repository_id, view_sync_id=viewSyncId)
+    from .user_api import install_user_routes
+    install_user_routes(app, storage, registry_root, training_service, catalog)
     app.state.snapshot, app.state.error = None, None
     try:
         app.state.snapshot = Snapshot.load(directory)

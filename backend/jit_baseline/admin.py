@@ -51,18 +51,23 @@ def error(code, message, status):
                         status_code=status, headers={'X-Request-Id': request_id, 'Cache-Control': 'no-store'})
 
 
+def session_username(storage, token):
+    """解析管理员会话；未登录、过期或 token 无效返回 None。"""
+    if not token or len(token) > 256:
+        return None
+    with storage.connection() as db:
+        row = db.execute('SELECT username FROM admin_session WHERE token_hash=? AND expires_at>?',
+                         (hashlib.sha256(token.encode()).hexdigest(), time.time())).fetchone()
+    return row['username'] if row else None
+
+
 def install_admin(app, storage):
     setup_lock = threading.Lock()
     attempt_lock = threading.Lock()
     attempts = {}
 
     def username_for(token):
-        if not token or len(token) > 256:
-            return None
-        with storage.connection() as db:
-            row = db.execute('SELECT username FROM admin_session WHERE token_hash=? AND expires_at>?',
-                             (hashlib.sha256(token.encode()).hexdigest(), time.time())).fetchone()
-        return row['username'] if row else None
+        return session_username(storage, token)
 
     def configured():
         with storage.connection() as db:

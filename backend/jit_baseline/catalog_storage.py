@@ -43,7 +43,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (30, Path(__file__).parent / 'migrations/030_split_presets.sql'),
               (31, Path(__file__).parent / 'migrations/031_dataset_build_tasks.sql'),
               (32, Path(__file__).parent / 'migrations/032_label_evidence_lines.sql'),
-              (33, Path(__file__).parent / 'migrations/033_training_experiments.sql'))
+              (33, Path(__file__).parent / 'migrations/033_training_experiments.sql'),
+              (34, Path(__file__).parent / 'migrations/034_user_accounts_and_ownership.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -304,6 +305,44 @@ class CatalogStorage:
                  'manifest': json.loads(row['manifest_json']), 'manifestSha256': row['manifest_sha256'],
                  'sourceSha256': row['source_sha256'], 'rowCount': row['row_count'],
                  'importedAt': row['created_at']} for row in rows]
+
+    def add_dataset_owner(self, version, username, *, limit=None):
+        """记录数据集所有者；全局共享版本没有所有者行。"""
+        if not isinstance(username, str) or not username:
+            raise BaselineError('INPUT_INVALID', '缺少数据集所有者')
+        now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        with self.connection(write=True) as db:
+            exists = db.execute(
+                'SELECT 1 FROM dataset_owner WHERE dataset_version=? AND username=?',
+                (version, username)).fetchone()
+            if exists:
+                return False
+            if limit is not None:
+                count = db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?',
+                                   (username,)).fetchone()[0]
+                if count >= limit:
+                    raise BaselineError(
+                        'QUOTA_EXCEEDED',
+                        f'每人最多保留 {limit} 个数据版本，请先清理不再使用的版本')
+            db.execute('INSERT INTO dataset_owner VALUES (?,?,?)', (version, username, now))
+        return True
+
+    def dataset_owners(self, version):
+        with self.connection() as db:
+            return [row[0] for row in db.execute(
+                'SELECT username FROM dataset_owner WHERE dataset_version=? ORDER BY username',
+                (version,))]
+
+    def dataset_owner_count(self, username):
+        with self.connection() as db:
+            return db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?',
+                              (username,)).fetchone()[0]
+
+    def user_datasets(self, username):
+        with self.connection() as db:
+            return [row[0] for row in db.execute(
+                'SELECT dataset_version FROM dataset_owner WHERE username=? ORDER BY created_at DESC',
+                (username,))]
 
     def dataset(self, version):
         with self.connection() as db:

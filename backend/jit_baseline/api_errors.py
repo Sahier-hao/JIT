@@ -18,6 +18,13 @@ API_PATHS = {'/api/v1/model-candidates', '/api/v1/models/register', '/api/v1/exp
                 '/api/v1/repository-syncs', '/api/v1/repositories', '/api/v1/repository-models',
                 '/api/v1/model-cards', '/api/v1/training-tasks', '/api/v1/training-methods'}
 MESSAGES = {
+    'AUTH_INVALID': '账户名或密码不正确',
+    'AUTH_REQUIRED': '请先登录用户账户',
+    'RATE_LIMITED': '尝试过于频繁，请稍后重试',
+    'USERNAME_TAKEN': '账户名已被使用',
+    'QUOTA_EXCEEDED': '超出允许的使用配额，请清理或等待当前任务结束',
+    'MODEL_FORBIDDEN': '该模型属于其他用户，不能使用',
+    'DATASET_FORBIDDEN': '该数据版本属于其他用户，不能访问',
     'TREND_SOURCE_CONFLICT': '同一提交的保存观测存在冲突，不能直接拼接；请选择单次固定分析',
     'TREND_SOURCE_UNAVAILABLE': '固定趋势来源已删除或内容发生变化，原视图不可用；请明确重新生成',
     'PR_SOURCE_UNAVAILABLE': '无法读取公开 GitHub PR 或原版本，请检查来源和网络后重试；已有草稿仍可保留',
@@ -80,6 +87,8 @@ MESSAGES = {
     'REPORT_INVALID': '多项目实验报告结构无效，无法展示',
 }
 STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,
+          'AUTH_INVALID': 401, 'AUTH_REQUIRED': 401, 'RATE_LIMITED': 429, 'USERNAME_TAKEN': 409,
+          'QUOTA_EXCEEDED': 429, 'MODEL_FORBIDDEN': 403, 'DATASET_FORBIDDEN': 403,
           'PR_SOURCE_UNAVAILABLE': 502, 'PR_RATE_LIMITED': 429, 'PR_VERSION_CHANGED': 409,
           'PR_SOURCE_TOO_LARGE': 413, 'PR_CONTENT_UNAVAILABLE': 422,
           'DATASET_INTEGRITY_ERROR': 503, 'DATASET_EXPORT_LIMIT_EXCEEDED': 413,
@@ -116,7 +125,7 @@ def managed_path(path):
         return True
     if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
-    return path.startswith('/api/admin/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/training-experiments') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
+    return path.startswith('/api/admin/') or path.startswith('/api/user') or path.startswith('/api/v1/user') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/training-experiments') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions|/split-preview)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'

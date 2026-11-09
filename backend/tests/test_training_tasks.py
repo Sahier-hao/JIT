@@ -166,6 +166,7 @@ def test_failure_is_recorded_and_retry_creates_parented_task(tmp_path, storage):
         assert retried["datasetVersion"] == first["datasetVersion"]
         assert retried["method"] == first["method"]
         assert retried["splitPreset"] == "temporal-60-20-20"
+        wait_for(lambda: len(seen) == 2)
         assert seen == ["temporal-60-20-20", "temporal-60-20-20"]
     finally:
         service.close()

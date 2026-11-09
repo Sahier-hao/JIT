@@ -33,13 +33,13 @@ COLUMNS = (
     "deadline_at", "cancel_requested_at", "completed_at", "class_policy_json",
     "class_policy_summary_json", "metrics_by_partition_json", "split_json", "split_rule",
     "data_scale_json", "training_performance_json", "split_preset", "split_policy_json",
-    "experiment_id", "params_json", "history_json",
+    "experiment_id", "params_json", "history_json", "owner_user_id",
 )
 
 EXPERIMENT_COLUMNS = (
     "id", "dataset_version", "dataset_manifest", "manifest_sha256", "metric_set",
     "split_preset", "class_policy_json", "seed", "signature", "request_id",
-    "created_by", "created_at",
+    "created_by", "created_at", "owner_user_id",
 )
 
 DEFAULT_EXPERIMENT_SEED = 2026
@@ -93,6 +93,7 @@ def _view(row):
         "dataScale": data_scale,
         "trainingPerformance": training_performance,
         "experimentId": item.get("experiment_id"),
+        "ownerUserId": item.get("owner_user_id"),
         "parameters": parameters,
         "trainingHistory": training_history,
         "classPolicy": json.loads(item["class_policy_json"]) if item.get("class_policy_json") else None,
@@ -144,18 +145,18 @@ class TrainingTaskStorage:
         return _view(row) if row is not None else None
 
     def find_active(self, dataset_version, algorithm, metric_set, class_policy_json=None,
-                    split_preset=None, params_json=None):
+                    split_preset=None, params_json=None, owner_user_id=None):
         placeholders = ",".join("?" for _ in ACTIVE)
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM training_task WHERE dataset_version=? AND algorithm=? "
                 f"AND metric_set=? AND class_policy_json IS ? "
                 "AND COALESCE(split_preset,'temporal-70-15-15') IS ? "
-                "AND params_json IS ? "
+                "AND params_json IS ? AND owner_user_id IS ? "
                 f"AND status IN ({placeholders}) "
                 "ORDER BY created_at DESC, id DESC LIMIT 1",
                 (dataset_version, algorithm, metric_set, class_policy_json, split_preset,
-                 params_json, *ACTIVE),
+                 params_json, owner_user_id, *ACTIVE),
             ).fetchone()
         return _view(row) if row is not None else None
 
@@ -181,6 +182,17 @@ class TrainingTaskStorage:
             return db.execute(
                 "SELECT * FROM training_experiment WHERE signature=? "
                 "ORDER BY created_at DESC LIMIT 1", (signature,)).fetchone()
+
+    def experiment_pages(self, owner_user_id, limit=20, offset=0):
+        with self.storage.connection() as db:
+            rows = db.execute(
+                "SELECT * FROM training_experiment WHERE owner_user_id=? "
+                "ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+                (owner_user_id, limit, offset)).fetchall()
+            total = db.execute(
+                "SELECT COUNT(*) FROM training_experiment WHERE owner_user_id=?",
+                (owner_user_id,)).fetchone()[0]
+        return [dict(row) for row in rows], total
 
     def experiment_link(self, experiment_id, task_id, created_at):
         with self.storage.connection(write=True) as db:
@@ -414,7 +426,7 @@ class TrainingTaskService:
 
     def _enqueue(self, *, dataset_version, method, metric_set, created_by, request_id,
                  parent_task_id=None, class_policy=None, split_preset=None, params=None,
-                 experiment_id=None):
+                 experiment_id=None, owner_user_id=None):
         dataset, path, digest = self._dataset(dataset_version)
         if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
                                           "kamei14-git-v1", "kamei14-git-v2",
@@ -427,7 +439,7 @@ class TrainingTaskService:
         params_json = (json.dumps(params, ensure_ascii=False, sort_keys=True)
                        if overrides else None)
         active = self.tasks.find_active(dataset_version, method, metric_set, class_policy_json,
-                                        split_preset, params_json)
+                                        split_preset, params_json, owner_user_id)
         if active is not None:
             return self.get(active["taskId"]), False
         task_id = str(uuid.uuid4())
@@ -451,11 +463,12 @@ class TrainingTaskService:
             "split_preset": split_preset,
             "experiment_id": experiment_id,
             "params_json": params_json,
+            "owner_user_id": owner_user_id,
         })
         self._executor.submit(self._execute, task_id)
         return self.get(task_id), True
 
-    def create(self, payload, request_id=None, *, created_by):
+    def create(self, payload, request_id=None, *, created_by, owner_user_id=None):
         dataset_version, method, metric_set, class_policy, split_preset, params = self._payload(payload)
         with self._lock:
             if self._closing.is_set():
@@ -469,6 +482,7 @@ class TrainingTaskService:
                 class_policy=class_policy,
                 split_preset=split_preset,
                 params=params,
+                owner_user_id=owner_user_id,
             )
 
     def retry(self, task_id, request_id=None, *, created_by):
@@ -487,6 +501,7 @@ class TrainingTaskService:
                 split_preset=source.get("splitPreset"),
                 params=source.get("parameters"),
                 experiment_id=source.get("experimentId"),
+                owner_user_id=source.get("ownerUserId"),
             )
 
     def cancel(self, task_id):
@@ -530,13 +545,14 @@ class TrainingTaskService:
         return dataset_version.strip(), metric_set, class_policy, split_preset, items
 
     def _experiment_signature(self, dataset_version, digest, metric_set, class_policy,
-                              split_preset, items):
+                              split_preset, items, owner_user_id=None):
         record = {
             "datasetVersion": dataset_version,
             "manifestSha256": digest,
             "metricSet": metric_set,
             "splitPreset": split_preset,
             "classPolicy": class_policy,
+            "ownerUserId": owner_user_id,
             "methods": [{"method": item["method"], "params": item["params"]} for item in items],
         }
         return sha256(json.dumps(record, sort_keys=True, ensure_ascii=False,
@@ -570,13 +586,48 @@ class TrainingTaskService:
             "seed": row["seed"],
             "requestId": row["request_id"],
             "createdBy": row["created_by"],
+            "ownerUserId": row["owner_user_id"] if "owner_user_id" in row.keys() else None,
             "createdAt": row["created_at"],
             "status": status,
             "statusCounts": counts,
             "tasks": tasks,
         }
 
-    def create_experiment(self, payload, request_id=None, *, created_by):
+    MAX_USER_METHODS = 4
+    MAX_USER_EPOCHS = 50
+    MAX_USER_TREES = 300
+    MAX_USER_ITER = 3000
+    MAX_USER_DEPTH = 16
+
+    def _check_user_limits(self, owner_user_id, items):
+        if not owner_user_id:
+            return
+        if len(items) > self.MAX_USER_METHODS:
+            raise BaselineError("QUOTA_EXCEEDED",
+                                f"普通用户一次最多 {self.MAX_USER_METHODS} 个方法")
+        for item in items:
+            params = item["params"]
+            if params.get("epochs", 0) > self.MAX_USER_EPOCHS:
+                raise BaselineError("QUOTA_EXCEEDED",
+                                    f"普通用户 epochs 不能超过 {self.MAX_USER_EPOCHS}")
+            if params.get("n_estimators", 0) > self.MAX_USER_TREES:
+                raise BaselineError("QUOTA_EXCEEDED",
+                                    f"普通用户树的数量不能超过 {self.MAX_USER_TREES}")
+            if params.get("max_iter", 0) > self.MAX_USER_ITER:
+                raise BaselineError("QUOTA_EXCEEDED",
+                                    f"普通用户 max_iter 不能超过 {self.MAX_USER_ITER}")
+            if params.get("max_depth", 0) > self.MAX_USER_DEPTH:
+                raise BaselineError("QUOTA_EXCEEDED",
+                                    f"普通用户树深度不能超过 {self.MAX_USER_DEPTH}")
+        with self.storage.connection() as db:
+            active = db.execute(
+                "SELECT COUNT(DISTINCT experiment_id) FROM training_task "
+                "WHERE owner_user_id=? AND experiment_id IS NOT NULL "
+                "AND status IN ('queued','running')", (owner_user_id,)).fetchone()[0]
+        if active >= 1:
+            raise BaselineError("QUOTA_EXCEEDED", "同一时间只能运行一个实验，请等待当前实验结束")
+
+    def create_experiment(self, payload, request_id=None, *, created_by, owner_user_id=None):
         dataset_version, metric_set, class_policy, split_preset, items = (
             self._experiment_payload(payload))
         with self._lock:
@@ -589,12 +640,14 @@ class TrainingTaskService:
                 raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
             validate_dataset_split(self.dataset_root, dataset_version, split_preset)
             signature = self._experiment_signature(dataset_version, digest, metric_set,
-                                                   class_policy, split_preset, items)
+                                                   class_policy, split_preset, items,
+                                                   owner_user_id)
             existing = self.tasks.experiment_find_signature(signature)
             if existing is not None:
                 view = self._experiment_view(existing)
                 if view["tasks"] and all(task["status"] in ACTIVE for task in view["tasks"]):
                     return view, False
+            self._check_user_limits(owner_user_id, items)
             experiment_id = str(uuid.uuid4())
             now = utc_now()
             self.tasks.experiment_create({
@@ -611,6 +664,7 @@ class TrainingTaskService:
                 "request_id": request_id,
                 "created_by": created_by,
                 "created_at": now,
+                "owner_user_id": owner_user_id,
             })
             created = False
             for item in items:
@@ -624,6 +678,7 @@ class TrainingTaskService:
                     split_preset=split_preset,
                     params=item["params"],
                     experiment_id=experiment_id,
+                    owner_user_id=owner_user_id,
                 )
                 created = created or is_new
                 self.tasks.experiment_link(experiment_id, task["taskId"], utc_now())
@@ -634,6 +689,15 @@ class TrainingTaskService:
         if row is None:
             raise BaselineError("NOT_FOUND", "训练实验不存在")
         return self._experiment_view(row)
+
+    def experiments(self, owner_user_id, limit=20, offset=0):
+        if not 1 <= limit <= 100:
+            raise BaselineError("INPUT_INVALID", "limit 必须在 1 到 100 之间")
+        if offset < 0:
+            raise BaselineError("INPUT_INVALID", "offset 不能为负")
+        rows, total = self.tasks.experiment_pages(owner_user_id, limit, offset)
+        return {"experiments": [self._experiment_view(row) for row in rows],
+                "total": total, "limit": limit, "offset": offset}
 
     def compare_experiment(self, experiment_id):
         view = self.get_experiment(experiment_id)
