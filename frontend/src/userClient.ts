@@ -177,3 +177,30 @@ export function useUserRevision() {
   }, [])
   return revision
 }
+
+export interface UserProfile {
+  username: string
+  displayName: string | null
+  createdAt: number
+  datasetCount: number
+  modelCount: number
+  experimentCount: number
+}
+
+export async function userProfile(signal?: AbortSignal): Promise<UserProfile> {
+  const body = record(await apiRequest({ path: '/api/v1/user/profile', method: 'GET', signal }))
+  return {
+    username: text(body.username), displayName: textOrNull(body.displayName),
+    createdAt: finiteNumber(body.createdAt), datasetCount: finiteNumber(body.datasetCount),
+    modelCount: finiteNumber(body.modelCount), experimentCount: finiteNumber(body.experimentCount),
+  }
+}
+
+export async function updateUserProfile(displayName: string): Promise<{ displayName: string | null }> {
+  const body = record(await apiRequest({ path: '/api/v1/user/profile', method: 'PATCH', body: { displayName } }))
+  return { displayName: textOrNull(body.displayName) }
+}
+
+export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiRequest({ path: '/api/user/password', method: 'POST', body: { currentPassword, newPassword } })
+}
