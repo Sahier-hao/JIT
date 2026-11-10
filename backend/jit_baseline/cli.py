@@ -258,7 +258,8 @@ def main():
                     args.bundled_package or BUNDLED_PACKAGE_PATH,
                 )
                 result['bundledPackage'] = bundled_result
-                if bundled_result['status'] != 'completed':
+                # 冲突只表示本地产物优先、包内运行未被覆盖；只有加载失败或包级错误才以非零退出。
+                if bundled_result['status'] == 'failed' or bundled_result.get('failedCount'):
                     exit_code = 1
         elif args.command == 'admin-reset-password':
             from getpass import getpass

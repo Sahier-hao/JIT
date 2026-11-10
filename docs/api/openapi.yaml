@@ -1448,6 +1448,53 @@ paths:
         schema:
           $ref: '#/components/schemas/Uuid'
       security: []
+  /api/admin/evaluation-evidence:
+    get:
+      operationId: listEvaluationEvidence
+      summary: 列出固定目录中的评价矩阵与候选集证据
+      description: 只读取固定证据目录，按内容哈希标识；引用数据版本已变化时标为陈旧。必须管理员会话。
+      security:
+      - AdminSession: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 证据摘要列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationEvidenceList'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/admin/evaluation-evidence/{evidenceId}:
+    parameters:
+    - name: evidenceId
+      in: path
+      required: true
+      schema:
+        type: string
+        description: 证据内容哈希前缀；不接受文件路径。
+    get:
+      operationId: getEvaluationEvidence
+      summary: 读取指定评价证据
+      description: 返回冻结报告与摘要；证据未知或格式不受支持时返回结构化错误。
+      security:
+      - AdminSession: []
+      tags: [目标共享产品]
+      responses:
+        '200':
+          description: 证据详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationEvidenceEntry'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/admin/multi-project-reports:
     get:
       operationId: listMultiProjectReports
@@ -3832,6 +3879,35 @@ components:
         recentUnseen: {type: integer, minimum: 0}
         unknown: {type: integer, minimum: 0}
       required: [train, validation, test, recentUnseen, unknown]
+    EvaluationEvidenceEntry:
+      type: object
+      additionalProperties: false
+      properties:
+        evidenceId: {type: string, minLength: 8}
+        kind:
+          enum: [evaluation-matrix, line-candidate-evaluation, line-candidates, invalid]
+        status: {enum: [available, stale, invalid]}
+        reason: {type: [string, 'null']}
+        source: {type: string, minLength: 1}
+        sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        generatedUtc: {type: [string, 'null']}
+        summary:
+          type: [object, 'null']
+          additionalProperties: true
+        report:
+          type: object
+          additionalProperties: true
+      required: [evidenceId, kind, status, source, sha256, summary]
+    EvaluationEvidenceList:
+      type: object
+      additionalProperties: false
+      properties:
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvaluationEvidenceEntry'
+        total: {type: integer, minimum: 0}
+      required: [evidence, total]
     ProjectPartitionCoverage:
       type: object
       additionalProperties: false

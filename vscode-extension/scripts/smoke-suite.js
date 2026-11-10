@@ -1,5 +1,6 @@
 const cp = require('child_process')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 const vscode = require('vscode')
 
@@ -25,7 +26,7 @@ exports.run = async function run() {
   const head = cp.execSync('git rev-parse HEAD', { cwd: folder.uri.fsPath }).toString().trim()
   const data = JSON.parse(fs.readFileSync(fixture, 'utf8'))
   data.repository.headSha = head
-  const matched = path.join(folder.uri.fsPath, '.smoke-report.json')
+  const matched = path.join(os.tmpdir(), 'jit-smoke-matched.json')
   fs.writeFileSync(matched, JSON.stringify(data))
   await api.importReport(matched)
   state = api.getState()
@@ -33,7 +34,27 @@ exports.run = async function run() {
 
   await api.importReport(fixture)
   if (api.getState().identity.state !== 'stale') throw new Error('不同提交报告未标记过期')
-  const bad = path.join(folder.uri.fsPath, '.smoke-bad.json')
+
+  // 真实命令入口导入：不经过测试 API。
+  await vscode.commands.executeCommand('jitReport.import', vscode.Uri.file(matched))
+  if (api.getState().identity.state !== 'match') throw new Error('真实命令导入后身份应为一致')
+
+  // 工作树改动后必须降级为 dirty，而不是仍标一致。
+  const readme = path.join(folder.uri.fsPath, 'SMOKE_DIRTY.txt')
+  fs.writeFileSync(readme, 'dirty')
+  await vscode.commands.executeCommand('jitReport.refresh')
+  if (api.getState().identity.state !== 'dirty') throw new Error('工作树改动后未标记 dirty：' + JSON.stringify(api.getState().identity))
+
+  const external = process.env.JIT_SMOKE_REPORT
+  if (external) {
+    await vscode.commands.executeCommand('jitReport.import', vscode.Uri.file(external))
+    const state2 = api.getState()
+    if (state2.identity.state !== 'match' && state2.identity.state !== 'dirty') {
+      throw new Error('真实报告导入后身份不符：' + JSON.stringify(state2.identity))
+    }
+  }
+
+  const bad = path.join(os.tmpdir(), 'jit-smoke-bad.json')
   fs.writeFileSync(bad, '{"format":"other"}')
   let rejected = false
   try { await api.importReport(bad) } catch { rejected = true }

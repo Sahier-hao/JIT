@@ -173,6 +173,7 @@ def dataset_list(registered):
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
             "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
+            "labelObservations": _observations(manifest),
             "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
@@ -190,9 +191,30 @@ def version_view(registered, name):
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
                           "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
+                          "labelObservations": _observations(manifest),
                           "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}
+
+
+def _observations(manifest):
+    """标签观察窗口事实：观察终点、成熟期、二值化规则与证据截断。"""
+    collection = manifest.get("collection") or {}
+    label = collection.get("label") or {}
+    szz = collection.get("szz") or {}
+    observed = label.get("observedThrough") or szz.get("observedThrough")
+    facts = {
+        "rule": label.get("rule") or szz.get("rule"),
+        "version": label.get("version") or szz.get("version"),
+        "observedThrough": observed,
+        "observedThroughIso": (datetime.fromtimestamp(observed, timezone.utc)
+                               .isoformat(timespec="seconds") if isinstance(observed, (int, float))
+                               else None),
+        "maturityDays": label.get("maturityDays") or szz.get("maturityDays"),
+        "binarizationRule": label.get("binarizationRule") or szz.get("binarizationRule"),
+        "truncated": bool(szz.get("truncated") or label.get("truncated")),
+    }
+    return facts if any(value not in (None, False) for value in facts.values()) else None
 
 
 def _source(manifest):

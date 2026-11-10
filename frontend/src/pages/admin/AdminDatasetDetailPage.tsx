@@ -73,6 +73,9 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const signals = szz.fixSignals as Row | undefined
   const lookup = szz.issueLookup as Row | undefined
   const szzNumber = (key: string) => szz[key] ?? (szz.unresolved as Row | undefined)?.[key] ?? '—'
+  const observations = selected.labelObservations
+  const observedThrough = typeof observations?.observedThroughIso === 'string'
+    ? observations.observedThroughIso.slice(0, 10) : null
   const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
   async function train() {
     setBusy(true); setError('')
@@ -197,8 +200,11 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>跳过文件</dt><dd>{valueLabel(szzNumber('skippedFiles'))}</dd></div>
         {szz.mode ? <div><dt>跳过</dt><dd>排除 {valueLabel(szzNumber('skippedExcluded'))} · 空白 {valueLabel(szzNumber('skippedWhitespace'))} · 仅文档 {valueLabel(szzNumber('skippedDocsOnly'))} · 元数据行 {valueLabel(szzNumber('skippedNoiseLines'))}</dd></div> : null}
         <div><dt>窗口外引入</dt><dd>{valueLabel(szzNumber('outsideWindow'))}</dd></div>
-        <div><dt>成熟期</dt><dd>{label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
-        {szz.truncated === true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
+        <div><dt>成熟期</dt><dd>{observations?.maturityDays ? `${valueLabel(observations.maturityDays)} 天` : label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
+        <div><dt>观察终点</dt><dd>{observedThrough ?? '—'}</dd></div>
+        <div><dt>标签版本</dt><dd>{valueLabel(observations?.version ?? label.rule ?? selected.labelRule)}</dd></div>
+        {observations?.truncated === true ? <div><dt>证据截断</dt><dd>是（回溯时间预算用尽，正例只覆盖部分历史）</dd></div> : null}
+        {szz.truncated === true && observations?.truncated !== true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
       </dl></section>
     </div>
     <div className="admin-detail-grid">

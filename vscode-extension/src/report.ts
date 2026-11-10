@@ -36,7 +36,7 @@ export interface CommitAnalysisReport {
 }
 
 export interface IdentityResult {
-  state: 'match' | 'stale' | 'unknown'
+  state: 'match' | 'dirty' | 'stale' | 'unknown'
   message: string
 }
 
@@ -147,12 +147,13 @@ export function identity(report: CommitAnalysisReport, currentHead: string | nul
       message: `报告对应提交 ${report.repository.headSha.slice(0, 12)}，当前 HEAD 为 ${currentHead.slice(0, 12)}；只读展示，不在当前代码上标注。`,
     }
   }
-  return {
-    state: 'match',
-    message: dirty
-      ? '报告提交与当前 HEAD 一致，但工作区有未提交改动；行号可能已变化。'
-      : '报告提交与当前 HEAD 一致。',
+  if (dirty) {
+    return {
+      state: 'dirty',
+      message: '报告提交与当前 HEAD 一致，但工作区有未提交改动；定位前按文件核对，改动文件不跳到报告行号。',
+    }
   }
+  return { state: 'match', message: '报告提交与当前 HEAD 一致。' }
 }
 
 /** 行号必须在文档范围内才允许跳转。 */

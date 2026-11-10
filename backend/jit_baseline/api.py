@@ -477,6 +477,17 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def list_multi_project_reports():
         return multi_project_reports.list()
 
+    from .evaluation_evidence import EvaluationEvidence
+    evaluation_evidence = EvaluationEvidence(registry_root=registry_root)
+
+    @app.get('/api/admin/evaluation-evidence')
+    def list_evaluation_evidence():
+        return evaluation_evidence.list()
+
+    @app.get('/api/admin/evaluation-evidence/{evidence_id}')
+    def get_evaluation_evidence(evidence_id: str):
+        return evaluation_evidence.get(evidence_id)
+
     @app.post('/api/admin/curation/preview')
     async def curation_preview(request: Request):
         payload = await read_object(request)
