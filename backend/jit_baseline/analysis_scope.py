@@ -1,6 +1,13 @@
-"""项目分析口径：模型、数据集、时间切分与每条提交所在的评估分区。
+"""项目分析口径：模型、数据集、冻结成员分区与每条提交所在分区。
 
-只读取已保存的同步记录、数据集投影和训练产物，不重新训练、不改写分析结果。
+只读取已保存的同步记录、数据集投影和模型运行产物，不重新训练、不改写分析结果。
+
+分区来自模型运行保存的冻结成员（见 :mod:`model_lineage`），不是时间边界推断：
+- 成员内的提交才是训练/验证/测试；
+- 成员外、满足纳入规则但未进入本次训练 → ``notIncluded``；
+- 成员外、位于训练截止之后 → ``holdout``（显式时间视图，不是测试集）；
+- 不满足数据集纳入规则 → ``excluded``；
+- 现成模型 → ``scored``；没有可核对谱系 → ``unknown``。
 """
 from __future__ import annotations
 
@@ -9,10 +16,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from . import project_datasets
+from . import model_lineage, project_datasets
 
 TRAINED = "repository-trained"
-PARTITIONS = ("train", "validation", "test", "holdout")
+PARTITIONS = ("train", "validation", "test", "holdout", "excluded", "notIncluded",
+              "unassigned", "scored", "unknown")
 HIGH = 0.25
 MEDIUM = 0.10
 REQUIRED_FEATURES = ("ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix",
@@ -128,30 +136,33 @@ def _model(service, item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _split(service, sync_id: str, rows: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int | None]:
-    artifact = service.artifact_root / f"repository-sync-{sync_id[:8]}"
-    split = _read_json(artifact / "split.json")
-    summary = _read_json(artifact / "summary.json")
-    metrics = _read_json(artifact / "metrics.json")
-    holdout_epoch = (summary or {}).get("holdout", {}).get("epoch")
-    holdout_epoch = _epoch(holdout_epoch)
-    if split is None:
-        return None, metrics, holdout_epoch
-    parts = split.get("partitions") if isinstance(split.get("partitions"), dict) else {}
-    result = {"preset": None, "holdout": {"count": 0, "positives": 0,
-                                          "startEpoch": holdout_epoch, "start": _iso(holdout_epoch)}}
+def _split(service, item: dict[str, Any], rows: list[dict[str, Any]],
+           lineage: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """切分摘要只来自可核对的模型运行，缺谱系时返回空而不是时间推断。"""
+    if lineage.get("status") != model_lineage.VERIFIED:
+        return None, None
+    model_id = item.get("modelId")
+    try:
+        directory = Path(service.catalog.model_directory(model_id))
+    except Exception:
+        return None, None
+    summary = _read_json(directory / "summary.json")
+    if summary is None:
+        return None, None
+    cutoff = lineage.get("holdoutCutoffEpoch")
+    result = {"preset": item.get("splitPreset") or lineage.get("preset"),
+              "holdout": {"count": 0, "positives": 0,
+                          "startEpoch": cutoff, "start": _iso(cutoff),
+                          "kind": "time-view"}}
     for name in ("train", "validation", "test"):
-        value = parts.get(name) or {}
+        value = (lineage.get("partitions") or {}).get(name) or {}
         result[name] = {
-            "count": value.get("count"),
+            "count": value.get("records"),
+            "positives": value.get("positives"),
             "end": value.get("end"),
             "endEpoch": _epoch(value.get("end")),
         }
-    if holdout_epoch is not None:
-        hold = [row for row in rows if isinstance(row.get("epoch"), (int, float)) and row["epoch"] >= holdout_epoch]
-        result["holdout"]["count"] = len(hold)
-        result["holdout"]["positives"] = sum(1 for row in hold if row.get("label") == 1)
-    return result, metrics, holdout_epoch
+    return result, _metrics(summary.get("metrics"))
 
 
 def _metrics(value: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -171,7 +182,8 @@ def _metrics(value: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
-def build_scope(service, item: dict[str, Any]) -> dict[str, Any]:
+def build_scope(service, item: dict[str, Any], *, lineage: dict[str, Any] | None = None,
+                labels: dict[str, str] | None = None) -> dict[str, Any]:
     """构造一次分析的可展示口径；任何补充材料缺失都不伪造数字。"""
     sync_id = item["syncId"]
     strategy = item.get("modelStrategy")
@@ -182,15 +194,23 @@ def build_scope(service, item: dict[str, Any]) -> dict[str, Any]:
             "strategy": strategy, "model": model, "dataset": None,
             "datasetError": "PR 固定分析没有分支训练切分", "split": None, "metrics": None,
             "excludedCommitIds": [], "limitations": [],
+            "partitionCoverage": model_lineage.unknown_coverage("PR 固定分析没有分支训练切分"),
             "distributions": {"all": _distribution(rows)},
         }
     dataset, dataset_error = (None, "该分析未训练本项目模型")
+    if lineage is None:
+        lineage = model_lineage.unknown_coverage("该分析没有绑定项目自训模型")
+    labels = labels or {}
     if strategy == TRAINED:
-        dataset, dataset_error = _dataset(service, item)
-    split, raw_metrics, holdout_epoch = (_split(service, sync_id, rows)
-                                         if strategy == TRAINED else (None, None, None))
-    if split is not None:
-        split["preset"] = item.get("splitPreset")
+        if lineage.get("status") == model_lineage.UNKNOWN and lineage.get("modelId") is None:
+            dataset, dataset_error = _dataset(service, item)
+            lineage, labels = model_lineage.verified_membership(
+                getattr(service, "catalog", None), item.get("modelId"),
+                item.get("datasetVersion"))
+        else:
+            dataset, dataset_error = _dataset(service, item)
+    split, metrics = (_split(service, item, rows, lineage) if strategy == TRAINED
+                      else (None, None))
     excluded = ([row["commit_id"] for row in rows if not _included(row)]
                 if strategy == TRAINED else [])
     scope = {
@@ -199,46 +219,50 @@ def build_scope(service, item: dict[str, Any]) -> dict[str, Any]:
         "dataset": dataset,
         "datasetError": dataset_error,
         "split": split,
-        "metrics": _metrics(raw_metrics),
+        "metrics": metrics,
         "excludedCommitIds": excluded,
+        "partitionCoverage": lineage,
         "limitations": [value for value in (dataset or {}).get("limitations") or []
                         if isinstance(value, str)],
     }
-    groups: dict[str, list[dict[str, Any]]] = {name: [] for name in (*PARTITIONS, "excluded", "unassigned", "scored")}
+    groups: dict[str, list[dict[str, Any]]] = {name: [] for name in PARTITIONS}
     for row in rows:
-        groups[partition_for(scope, row["commit_id"], row.get("epoch"))].append(row)
+        groups[partition_for(scope, row["commit_id"], row.get("epoch"), labels)].append(row)
+    if split is not None:
+        # 留出是时间视图；数量来自与分区标签相同的总体（排除已清洗的提交）。
+        split["holdout"]["count"] = len(groups["holdout"])
+        split["holdout"]["positives"] = sum(1 for row in groups["holdout"]
+                                            if row.get("label") == 1)
     scope["distributions"] = {
         "all": _distribution(rows),
         "trainable": _distribution(groups["train"] + groups["validation"] + groups["test"]),
-        **{name: _distribution(groups[name]) for name in (*PARTITIONS, "excluded")},
+        **{name: _distribution(groups[name]) for name in PARTITIONS},
     }
     return scope
 
 
-def partition_for(scope: dict[str, Any] | None, commit_id: str, epoch: Any) -> str:
-    """按时间边界与数据集纳入范围判定提交所属分区。"""
+def partition_for(scope: dict[str, Any] | None, commit_id: str, epoch: Any,
+                  labels: dict[str, str] | None = None) -> str:
+    """按冻结成员判定分区；没有可核对成员时返回未知，不用时间边界补标签。"""
     if not scope:
         return "unassigned"
     if scope.get("strategy") != TRAINED:
         return "scored"
-    if commit_id in set(scope.get("excludedCommitIds") or []):
+    excluded = set(scope.get("excludedCommitIds") or [])
+    coverage = scope.get("partitionCoverage") or {}
+    if coverage.get("status") == model_lineage.VERIFIED:
+        member = (labels or {}).get(commit_id)
+        if member:
+            return member
+        if commit_id in excluded:
+            return "excluded"
+        cutoff = coverage.get("holdoutCutoffEpoch")
+        if cutoff is not None and isinstance(epoch, (int, float)) and not isinstance(epoch, bool) \
+                and epoch >= cutoff:
+            return "holdout"
+        if not isinstance(epoch, (int, float)) or isinstance(epoch, bool):
+            return "unassigned"
+        return "notIncluded"
+    if commit_id in excluded:
         return "excluded"
-    split = scope.get("split") or {}
-    holdout = split.get("holdout") or {}
-    value = epoch if isinstance(epoch, (int, float)) and not isinstance(epoch, bool) else None
-    if value is None:
-        return "unassigned"
-    if holdout.get("startEpoch") is not None and value >= holdout["startEpoch"]:
-        return "holdout"
-    test = split.get("test") or {}
-    if test.get("endEpoch") is not None and value > test["endEpoch"]:
-        return "unassigned"
-    if test.get("endEpoch") is not None and value <= test["endEpoch"]:
-        validation = split.get("validation") or {}
-        if validation.get("endEpoch") is not None and value <= validation["endEpoch"]:
-            train = split.get("train") or {}
-            if train.get("endEpoch") is not None and value <= train["endEpoch"]:
-                return "train"
-            return "validation"
-        return "test"
-    return "unassigned"
+    return "unknown"

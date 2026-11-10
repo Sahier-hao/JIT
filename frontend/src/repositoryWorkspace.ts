@@ -69,6 +69,17 @@ export interface ScopePartition {
   endEpoch: number | null
   positives: number | null
   start: string | null
+  /** 留出是时间视图（训练截止之后），不是模型成员分区。 */
+  kind?: string | null
+}
+
+/** 分区是否来自可核对的冻结训练成员；unknown 时提交分区不可推断。 */
+export interface PartitionCoverage {
+  status: 'verified' | 'external' | 'unknown'
+  reason: string | null
+  preset: string | null
+  holdoutFrom: string | null
+  holdoutCutoffEpoch: number | null
 }
 
 export interface AnalysisScope {
@@ -93,6 +104,7 @@ export interface AnalysisScope {
     f1: number | null; referenceAp: number | null
   } | null
   distributions: Record<string, RepositoryDistribution>
+  partitionCoverage: PartitionCoverage | null
   excludedCommitIds: string[]
   limitations: string[]
 }
@@ -139,7 +151,8 @@ function analysisScope(value: unknown): AnalysisScope | null {
   const metricsRaw = raw.metrics == null ? null : record(raw.metrics)
   const distributionsRaw = raw.distributions == null ? {} : record(raw.distributions)
   const parsedDistributions: Record<string, RepositoryDistribution> = {}
-  for (const key of ['all', 'trainable', 'train', 'validation', 'test', 'holdout', 'excluded']) {
+  for (const key of ['all', 'trainable', 'train', 'validation', 'test', 'holdout', 'excluded',
+    'notIncluded', 'unassigned', 'scored', 'unknown']) {
     if (distributionsRaw[key] != null) parsedDistributions[key] = distribution(distributionsRaw[key])
   }
   return {
@@ -171,8 +184,22 @@ function analysisScope(value: unknown): AnalysisScope | null {
       f1: optionalNumber(metricsRaw.f1), referenceAp: optionalNumber(metricsRaw.referenceAp),
     } : null,
     distributions: parsedDistributions,
+    partitionCoverage: partitionCoverage(raw.partitionCoverage),
     excludedCommitIds: raw.excludedCommitIds == null ? [] : textList(raw.excludedCommitIds),
     limitations: raw.limitations == null ? [] : textList(raw.limitations),
+  }
+}
+
+function partitionCoverage(value: unknown): PartitionCoverage | null {
+  if (value == null) return null
+  const raw = record(value)
+  const status = raw.status === 'verified' || raw.status === 'external' ? raw.status : 'unknown'
+  return {
+    status,
+    reason: textOrNull(raw.reason),
+    preset: textOrNull(raw.preset),
+    holdoutFrom: textOrNull(raw.holdoutFrom),
+    holdoutCutoffEpoch: optionalCount(raw.holdoutCutoffEpoch),
   }
 }
 

@@ -184,7 +184,9 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
     before_models = catalog.models()
     with sqlite3.connect(catalog.store.path) as db:
         # 先移除当前版本新增结构，再重建真实 v7 结构。
-        for table in ('model_package_import_item', 'model_package_import',
+        for table in ('training_experiment_task', 'training_experiment',
+                      'user_session', 'dataset_owner', 'model_package_import_item',
+                      'model_package_import',
                       'pr_batch_item', 'pr_batch', 'training_task', 'pr_auto_attempt',
                       'pr_auto_intent', 'project_event', 'pr_list_page', 'pr_cache', 'pr_watch',
                       'project_trend_view', 'pr_analysis_intent', 'pr_legacy_analysis_binding',
@@ -192,6 +194,9 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
             db.execute(f'DROP TABLE {table}')
         db.execute('DROP INDEX repository_sync_source')
         db.execute('DROP INDEX repository_sync_pr_source')
+        db.execute('DROP INDEX model_version_owner')
+        db.execute('ALTER TABLE model_version DROP COLUMN owner_user_id')
+        db.execute('DROP TABLE user_account')
         for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version',
                        'distribution_rule', 'feature_source_json', 'algorithm',
                        'split_preset', 'split_policy_json'):
@@ -216,8 +221,12 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         for column in ('label_origin', 'label_rule_version', 'label_binarization_rule',
                        'observed_through', 'maturity_days', 'usage', 'source_sync_id'):
             db.execute(f'ALTER TABLE dataset_record DROP COLUMN {column}')
+        # v7 的 model_version 只有这些列；升级新增的列（如 owner_user_id）由迁移补齐，
+        # 但既有行的内容本身不得改变。
+        model_columns = [entry[1] for entry in db.execute('PRAGMA table_info(model_version)')]
+        selected = ', '.join(model_columns)
         db.execute('UPDATE schema_migration SET version=7')
-        before_rows = db.execute('SELECT * FROM model_version ORDER BY id').fetchall()
+        before_rows = db.execute(f'SELECT {selected} FROM model_version ORDER BY id').fetchall()
         before_events = db.execute('SELECT * FROM registration_event ORDER BY id').fetchall()
         db.execute("INSERT INTO admin_account VALUES ('keep-admin','salt','hash',1)")
     catalog.store.initialize()
@@ -225,7 +234,10 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
     assert catalog.default_model_id() == min(first, second)
     assert len(catalog.models()) == len(before_models)
     with catalog.store.connection() as db:
-        assert [tuple(row) for row in db.execute('SELECT * FROM model_version ORDER BY id')] == before_rows
+        # 既有行的内容不变；迁移新增的列补齐为空值，属于升级预期。
+        assert [tuple(row) for row in db.execute(f'SELECT {selected} FROM model_version ORDER BY id')] == [
+            tuple(row) for row in before_rows]
+        assert all(row[0] is None for row in db.execute('SELECT owner_user_id FROM model_version'))
         assert [tuple(row) for row in db.execute('SELECT * FROM registration_event ORDER BY id')] == before_events
         assert db.execute('SELECT username FROM admin_account').fetchone()[0] == 'keep-admin'
         assert db.execute("SELECT model_id,status FROM repository_sync WHERE id='historical'").fetchone()[:] == (first, 'completed')

@@ -4631,7 +4631,9 @@ components:
                 type: boolean
               repositoryPredictionSupported:
                 type: boolean
-            required: [modelId, name, method, state, featureSchemaVersion, enabled, isDefault, repositoryPredictionSupported]
+              mine:
+                type: boolean
+            required: [modelId, name, method, state, featureSchemaVersion, enabled, isDefault, repositoryPredictionSupported, mine]
             additionalProperties: false
       required: [models]
       additionalProperties: false
@@ -6688,7 +6690,7 @@ components:
       additionalProperties: false
     CommitPartition:
       type: string
-      enum: [train, validation, test, holdout, excluded, unassigned, scored]
+      enum: [train, validation, test, holdout, excluded, notIncluded, unassigned, scored, unknown]
     AnalysisScope:
       type: object
       additionalProperties: false
@@ -6722,11 +6724,40 @@ components:
           type: array
           items:
             type: string
+        partitionCoverage:
+          $ref: '#/components/schemas/AnalysisPartitionCoverage'
         limitations:
           type: array
           items:
             type: string
-      required: [strategy, model, dataset, datasetError, split, metrics, distributions, excludedCommitIds, limitations]
+      required: [strategy, model, dataset, datasetError, split, metrics, distributions, excludedCommitIds, partitionCoverage, limitations]
+    AnalysisPartitionCoverage:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [verified, external, unknown]
+        reason: {type: [string, 'null']}
+        preset: {type: [string, 'null']}
+        timezone: {type: [string, 'null']}
+        boundaries:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        partitions:
+          type: object
+          additionalProperties: true
+        modelId: {type: [string, 'null']}
+        runId: {type: [string, 'null']}
+        datasetVersion: {type: [string, 'null']}
+        holdoutCutoffEpoch: {type: [integer, 'null']}
+        holdoutFrom: {type: [string, 'null']}
+        memberVerification:
+          type: string
+          enum: [digest, counts]
+      required: [status, reason, preset, timezone, boundaries, partitions, modelId, runId, datasetVersion]
     RepositoryOverview:
       type: object
       additionalProperties: false
@@ -7420,6 +7451,18 @@ components:
           enum:
           - local
           - external
+        parameters:
+          type:
+          - object
+          - 'null'
+        parameterContract:
+          type:
+          - object
+          - 'null'
+        ownerUserId:
+          type:
+          - string
+          - 'null'
         error:
           type: object
           properties:
@@ -7578,6 +7621,18 @@ components:
           enum:
           - local
           - external
+        parameters:
+          type:
+          - object
+          - 'null'
+        parameterContract:
+          type:
+          - object
+          - 'null'
+        ownerUserId:
+          type:
+          - string
+          - 'null'
         error:
           type: object
           properties:

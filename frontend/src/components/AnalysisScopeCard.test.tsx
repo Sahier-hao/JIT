@@ -28,6 +28,10 @@ const scope: AnalysisScope = {
     precision: 0.6, recall: 0.6, f1: 0.6, referenceAp: 0.217,
   },
   distributions: { all: { high: 56, medium: 37, low: 85, unknown: 0 } },
+  partitionCoverage: {
+    status: 'verified', reason: null, preset: 'temporal-70-15-15',
+    holdoutFrom: '2026-07-21T10:05:33+08:00', holdoutCutoffEpoch: 1782966387,
+  },
   excludedCommitIds: [],
   limitations: [],
 }
@@ -52,6 +56,18 @@ it('does not invent a dataset for a generic model', () => {
   }} onOpenDataset={vi.fn()}/>)
   expect(screen.getByText('现成模型')).toBeVisible()
   expect(screen.getByText(/没有在本项目训练/)).toBeVisible()
+})
+
+it('shows why partitions are unknown instead of guessing them from time', () => {
+  render(<AnalysisScopeCard scope={{
+    ...scope, split: null, metrics: null,
+    partitionCoverage: {
+      status: 'unknown', reason: '模型数据版本或切分成员与本项目分析不一致',
+      preset: null, holdoutFrom: null, holdoutCutoffEpoch: null,
+    },
+  }} onOpenDataset={vi.fn()}/>)
+  expect(document.querySelector('.scope-note')).toHaveTextContent('训练成员无法核对')
+  expect(document.querySelector('.scope-note')).toHaveTextContent('模型数据版本或切分成员与本项目分析不一致')
 })
 
 it('parses the analysis scope without dropping the split', () => {
@@ -79,6 +95,7 @@ it('parses the analysis scope without dropping the split', () => {
           test: { count: 1 }, holdout: { count: 2, positives: 1 },
         },
         distributions: { holdout: { high: 1, medium: 1, low: 0, unknown: 0 } },
+        partitionCoverage: { status: 'verified', reason: null, preset: 'temporal-70-15-15' },
         excludedCommitIds: [], limitations: [],
       },
     },

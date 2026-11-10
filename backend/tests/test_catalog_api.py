@@ -150,8 +150,22 @@ def test_old_model_reads_matching_frozen_diagnostic_and_benefit_without_admin_fi
     from jit_baseline.config import BACKEND
     from jit_baseline.data import sha256
 
+    # 冻结诊断与收益报告绑定仓库内置包里的原运行身份；本机 artifacts 目录可能
+    # 已被重建，模型哈希与数据版本都不同，不能拿它冒充“旧模型”。
+    import zipfile
+    from jit_baseline.model_packages import inspect_model_package
+
     root = tmp_path / 'artifacts'
-    shutil.copytree(BACKEND / 'artifacts/baseline', root / 'baseline')
+    package = BACKEND / 'model-packages/jit-nine-models-v1.zip'
+    inspected = inspect_model_package(package)
+    item = next(entry for entry in inspected['models'] if entry['artifactKey'] == 'baseline')
+    with zipfile.ZipFile(package) as archive:
+        prefix = item['packagePath'] + '/'
+        for info in archive.infolist():
+            if info.filename.startswith(prefix) and not info.is_dir():
+                target = root / 'baseline' / info.filename[len(prefix):]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(archive.read(info))
     model_hash = sha256((root / 'baseline/model.joblib').read_bytes())
     store = CatalogStorage(tmp_path / 'catalog.sqlite3')
     store.initialize()

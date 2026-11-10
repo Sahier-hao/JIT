@@ -365,6 +365,7 @@
 .partition-chip { flex: none; padding: 1px 6px; border-radius: 4px; background: var(--sunken); color: var(--fg-3); font: 11px var(--sans); overflow: visible; }
 .partition-chip.is-holdout { background: color-mix(in srgb, var(--accent) 10%, var(--card)); color: var(--accent); }
 .partition-chip.is-excluded { color: var(--risk-mid); }
+.partition-chip.is-unknown { color: var(--fg-3); border: 1px dashed var(--line); }
 .result-priority .priority-subject { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .result-priority .priority-subject-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .result-priority-note { margin: 6px 0 0; color: var(--fg-3); font: 11px/1.6 var(--sans); }
