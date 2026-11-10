@@ -19,6 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
+from .analysis_scope import build_scope, partition_for
 from .repository_datasets import persist_collected_dataset
 from .algorithms import DEFAULT_ALGORITHM, check_method, get_algorithm
 from .artifacts import Snapshot
@@ -716,6 +717,25 @@ class SyncService:
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._lock = threading.RLock()
         self._closing = threading.Event()
+        self._scope_cache: dict[tuple, dict] = {}
+
+    def analysis_scope(self, sync_id: str):
+        """已保存分析的模型、数据集、切分与分区口径；只读并缓存。"""
+        item = self.get(sync_id)
+        if item is None:
+            return None
+        cache = getattr(self, '_scope_cache', None)
+        if cache is None:
+            cache = self._scope_cache = {}
+        key = (sync_id, item.get('completedAt'), item.get('modelId'), item.get('datasetVersion'))
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        scope = build_scope(self, item)
+        if len(cache) >= 64:
+            cache.clear()
+        cache[key] = scope
+        return scope
 
     def close(self):
         with self._lock:
@@ -900,6 +920,9 @@ class SyncService:
             raise BaselineError("INPUT_INVALID", "起始日期必须早于或等于结束日期")
         rows, total = self.sync.commits(sync_id, limit, offset, search=text or None,
                                         start=since, end=until, sort=sort)
+        scope = self.analysis_scope(sync_id)
+        for row in rows:
+            row["partition"] = partition_for(scope, row["commitId"], row.get("epoch"))
         return {"syncId": sync_id, "status": item["status"], "total": total, "limit": limit,
                 "offset": offset, "search": text or None, "start": start, "end": end,
                 "sort": sort, "commits": rows}
@@ -909,6 +932,8 @@ class SyncService:
         record = self.sync.commit(sync_id, commit_id)
         if record is None:
             raise BaselineError("NOT_FOUND", "该同步作业里没有这个提交")
+        scope = self.analysis_scope(sync_id)
+        record["partition"] = partition_for(scope, record["commitId"], record.get("epoch"))
         return record
 
     def repositories(self, limit=50, offset=0):
@@ -1051,6 +1076,7 @@ class SyncService:
                        'sourceKind', 'sourceSnapshotId', 'featureSchemaVersion')}
             context.update(distributionRule=DISTRIBUTION_RULE, limitations=list(REPOSITORY_LIMITATIONS),
                            missingMetadata=[key for key in ('completedAt', 'headCommit') if not source.get(key)])
+            context['scope'] = self.analysis_scope(selected)
             context['branch'] = source.get('analysisBranch') or source['branch']
             repo = dict(repo, viewSyncId=selected, headCommit=source.get('headCommit'),
                         commitCount=len(risks), distribution=counts, distributionRule=DISTRIBUTION_RULE)
@@ -1089,8 +1115,10 @@ class SyncService:
 
     @staticmethod
     def _display_commit(repo, record):
+        scope = (repo.get('viewContext') or {}).get('scope')
         return dict(record, repositoryId=repo['repositoryId'], viewSyncId=repo['viewSyncId'],
                     originalCommitUrl=original_commit_url(repo['url'], record['commitId']),
+                    partition=partition_for(scope, record['commitId'], record.get('epoch')),
                     explanationStatus='not-supported', explanationReason='仓库分析未提供逐条模型归因')
 
     def repository_commit(self, repository_id, commit_id, *, view_sync_id=None):

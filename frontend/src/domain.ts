@@ -2,7 +2,7 @@ import type { BaselineSummary, Mode } from './historicalContract'
 import { parseSync, parseSyncCommitPage, repositoryName, type SyncCommit } from './repositoryContract'
 export { parseHistorical } from './historicalContract'
 export type { BaselineSummary, Mode, Score } from './historicalContract'
-export interface Commit { id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string; authorName?: string | null; originalCommitUrl?: string | null; metrics?: Record<string, number>; explanation?: string[] }
+export interface Commit { id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string; authorName?: string | null; originalCommitUrl?: string | null; metrics?: Record<string, number>; explanation?: string[]; partition?: string | null }
 /** 仓库来源的上下文：同步作业身份与它实际采用的打分模型，供界面如实标注来源（RCL-08/09）。 */
 export interface RepositoryMeta {
   modelId?: string | null
@@ -125,6 +125,7 @@ export function toCommit(commit: SyncCommit): Commit {
     authorName: commit.authorName,
     originalCommitUrl: commit.originalCommitUrl,
     metrics: commit.metrics,
+    partition: commit.partition,
   }
 }
 

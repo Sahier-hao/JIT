@@ -6390,6 +6390,8 @@ components:
           type:
           - string
           - 'null'
+        partition:
+          $ref: '#/components/schemas/CommitPartition'
       required:
       - commitId
       - epoch
@@ -6401,6 +6403,7 @@ components:
       - label
       - labelNote
       - subject
+      - partition
       additionalProperties: false
       description: 仓库采集出的提交。`label` 由简化 SZZ 倒推：1 表示后来有修复提交指认它引入缺陷，0 只表示未观测到，不等于已证实无缺陷。`subject` 是提交标题的首行，旧数据为空。
     RepositorySyncCommitPage:
@@ -6660,6 +6663,10 @@ components:
             enum:
             - completedAt
             - headCommit
+        scope:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/AnalysisScope'
       required:
       - repositoryId
       - syncId
@@ -6677,7 +6684,49 @@ components:
       - distributionRule
       - limitations
       - missingMetadata
+      - scope
       additionalProperties: false
+    CommitPartition:
+      type: string
+      enum: [train, validation, test, holdout, excluded, unassigned, scored]
+    AnalysisScope:
+      type: object
+      additionalProperties: false
+      properties:
+        strategy:
+          type: [string, 'null']
+        model:
+          type: object
+          additionalProperties: true
+        dataset:
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: true
+        datasetError:
+          type: [string, 'null']
+        split:
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: true
+        metrics:
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: true
+        distributions:
+          type: object
+          additionalProperties: true
+        excludedCommitIds:
+          type: array
+          items:
+            type: string
+        limitations:
+          type: array
+          items:
+            type: string
+      required: [strategy, model, dataset, datasetError, split, metrics, distributions, excludedCommitIds, limitations]
     RepositoryOverview:
       type: object
       additionalProperties: false
@@ -6984,6 +7033,8 @@ components:
           type:
           - string
           - 'null'
+        partition:
+          $ref: '#/components/schemas/CommitPartition'
       required:
       - commitId
       - subject
@@ -6995,6 +7046,7 @@ components:
       - features
       - label
       - labelNote
+      - partition
       additionalProperties: false
     RepositoryCommitPage:
       type: object

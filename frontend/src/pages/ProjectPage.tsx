@@ -28,8 +28,9 @@ import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
 import { projectStatus } from '../projectStatus'
-import { ACTIVE_STATUSES, DEGRADE_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
+import { ACTIVE_STATUSES, DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
 import { useRepository } from '../repositoryWorkspace'
+import { AnalysisScopeCard } from '../components/AnalysisScopeCard'
 import { displayTime } from '../domain'
 
 type ProjectTab = 'overview' | 'prs' | 'trends' | 'analyses'
@@ -104,11 +105,13 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const [openingPR, setOpeningPR] = useState(false)
   const [datasetOpen, setDatasetOpen] = useState(false)
   const [datasetBuildOpen, setDatasetBuildOpen] = useState(false)
+  const [scopeView, setScopeView] = useState<'holdout' | 'test' | 'all'>('holdout')
   const openPRLock = useRef(false)
   const currentSyncId = detail.repository?.viewContext?.syncId
   useEffect(() => { setDatasetOpen(false) }, [currentSyncId])
-  const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
-  const share = (count: number) => Math.round((count / riskTotal) * 100)
+  useEffect(() => {
+    setScopeView(detail.repository?.viewContext?.scope?.split?.holdout.count ? 'holdout' : 'all')
+  }, [currentSyncId, detail.repository?.viewContext?.scope?.split?.holdout.count])
   const latestStatus = detail.repository?.latestSync?.status
   const latestId = detail.repository?.latestSync?.syncId
   const previousJob = useRef('')
@@ -120,7 +123,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
   }, [latestStatus, latestId, refreshRecords])
   useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
-  const priority = usePriorityCommits(detail.repository?.viewContext?.syncId)
+  const priority = useAnalysisCommits(detail.repository?.viewContext?.syncId)
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
   if (detail.state === 'error' || !detail.repository) {
@@ -131,6 +134,17 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const latest = records.syncs[0] ?? repository.latestSync
   const status = projectStatus(repository, latest)
   const context = repository.viewContext
+  const scope = context?.scope ?? null
+  const activeView = scope?.split ? scopeView : 'all'
+  const shownDistribution = scope?.distributions[activeView] ?? repository.distribution
+  const shownTotal = shownDistribution.high + shownDistribution.medium + shownDistribution.low + shownDistribution.unknown
+  const shownShare = (count: number) => shownTotal ? Math.round((count / shownTotal) * 100) : 0
+  const priorityCommits = priority
+    .filter(commit => activeView === 'all' || commit.partition === activeView)
+    .sort((left, right) => right.risk - left.risk)
+    .slice(0, 3)
+  const viewTitle = activeView === 'holdout' ? '留出集里先看这三条'
+    : activeView === 'test' ? '测试集里先看这三条' : '全部分析里先看这三条'
   const latestCompletedId = records.syncs.find(job => job.status === 'completed')?.syncId ?? null
   const currentBatchModel = modelChoices.find(model => model.modelId === repository.viewContext?.modelId)
   const defaultBatchModel = modelChoices.find(model => model.isDefault)
@@ -274,30 +288,48 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         </div>
         {context && context.sourceKind === 'pr' ? <p className="status-note">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}
         {context ? <div className="pw-result">
+          {scope ? <AnalysisScopeCard scope={scope} onOpenDataset={() => setDatasetOpen(true)}/> : null}
+          {scope?.split ? <div className="scope-view-switch" role="group" aria-label="查看提交范围">
+            <Button size="sm" variant={activeView === 'holdout' ? 'primary' : 'ghost'} aria-pressed={activeView === 'holdout'} onClick={() => setScopeView('holdout')}>留出 {scope.split.holdout.count ?? 0}</Button>
+            <Button size="sm" variant={activeView === 'test' ? 'primary' : 'ghost'} aria-pressed={activeView === 'test'} onClick={() => setScopeView('test')}>测试 {scope.split.test.count ?? 0}</Button>
+            <Button size="sm" variant={activeView === 'all' ? 'primary' : 'ghost'} aria-pressed={activeView === 'all'} onClick={() => setScopeView('all')}>全部 {repository.commitCount}</Button>
+            <span>{activeView === 'all' ? '含训练、验证、测试、留出与未纳入数据集的提交' : '模型没见过的提交'}</span>
+          </div> : null}
           <div className="result-hero">
             <div className="result-total">
-              <b>{repository.commitCount.toLocaleString()}</b>
-              <span>已分析提交</span>
+              <b>{shownTotal.toLocaleString()}</b>
+              <span>{activeView === 'holdout' ? '模型没见过的提交' : activeView === 'test' ? '测试集提交' : '已分析提交'}</span>
             </div>
-            <ul className="result-bars" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
-              <li className="is-high"><span className="bar-label">高风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.high)}%` }}/></span><span className="bar-value"><b>{repository.distribution.high.toLocaleString()}</b><em>{share(repository.distribution.high)}%</em></span></li>
-              <li className="is-mid"><span className="bar-label">中风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.medium)}%` }}/></span><span className="bar-value"><b>{repository.distribution.medium.toLocaleString()}</b><em>{share(repository.distribution.medium)}%</em></span></li>
-              <li className="is-low"><span className="bar-label">低风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.low)}%` }}/></span><span className="bar-value"><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></span></li>
-            </ul>
+            <div className="result-distribution">
+              <p className="result-bars-title">模型分数分布（未校准）</p>
+              <ul className="result-bars" aria-label={`模型分数分布：≥0.25 ${shownDistribution.high} 条、0.10 到 0.25 ${shownDistribution.medium} 条、小于 0.10 ${shownDistribution.low} 条`}>
+                <li className="is-high"><span className="bar-label">≥ 0.25</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.high)}%` }}/></span><span className="bar-value"><b>{shownDistribution.high.toLocaleString()}</b><em>{shownShare(shownDistribution.high)}%</em></span></li>
+                <li className="is-mid"><span className="bar-label">0.10–0.25</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.medium)}%` }}/></span><span className="bar-value"><b>{shownDistribution.medium.toLocaleString()}</b><em>{shownShare(shownDistribution.medium)}%</em></span></li>
+                <li className="is-low"><span className="bar-label">&lt; 0.10</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.low)}%` }}/></span><span className="bar-value"><b>{shownDistribution.low.toLocaleString()}</b><em>{shownShare(shownDistribution.low)}%</em></span></li>
+              </ul>
+            </div>
           </div>
-          {priority.length ? <div className="result-priority">
-            <p className="result-priority-title">最该先看的提交</p>
+          {priorityCommits.length ? <div className="result-priority">
+            <p className="result-priority-title">{viewTitle}</p>
             <ol>
-              {priority.map((commit, index) => <li key={commit.commitId}>
+              {priorityCommits.map((commit, index) => <li key={commit.commitId}>
                 <span className="priority-rank" aria-hidden="true">{index + 1}</span>
                 <code className="priority-sha">{commit.commitId.slice(0, 7)}</code>
-                <span className="priority-subject" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                <span className="priority-subject">
+                  {commit.partition ? <span className={`partition-chip is-${commit.partition}`}>{PARTITION_LABELS[commit.partition]}</span> : null}
+                  <span className="priority-subject-text" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                  <span className={`label-chip ${commit.label === 1 ? 'is-positive' : ''}`} title={commit.labelNote ?? ''}>
+                    {commit.label === 1 ? '有证据' : '未观测'}
+                  </span>
+                </span>
                 <span className="priority-score">
                   <span className="priority-meter" aria-hidden="true"><span style={{ width: `${Math.round(commit.risk * 100)}%` }}/></span>
                   <b>{commit.risk.toFixed(2)}</b>
                 </span>
               </li>)}
             </ol>
+            {activeView === 'all' ? <p className="result-priority-note">包含模型训练或调参时见过的提交，分数只反映拟合程度。</p> : null}
+            <p className="result-priority-note">分数是未校准的排序值，不是概率。</p>
           </div> : null}
           <div className="result-bottom">
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
@@ -516,14 +548,14 @@ function shortTime(value?: string | null) {
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-/** 本次分析里分数最高的三条提交：告诉用户下一步先看什么。 */
-function usePriorityCommits(syncId?: string) {
+/** 读取本次分析最多 200 条提交，由页面按分区筛选后再取前三。 */
+function useAnalysisCommits(syncId?: string) {
   const [items, setItems] = useState<SyncCommit[]>([])
   useEffect(() => {
     if (!syncId) { setItems([]); return }
     const controller = new AbortController()
-    fetchRepositorySyncCommits(syncId, 60, 0, controller.signal)
-      .then(page => setItems([...page.commits].sort((a, b) => b.risk - a.risk).slice(0, 3)))
+    fetchRepositorySyncCommits(syncId, 200, 0, controller.signal)
+      .then(page => setItems(page.commits))
       .catch(() => setItems([]))
     return () => controller.abort()
   }, [syncId])

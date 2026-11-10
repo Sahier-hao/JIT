@@ -101,7 +101,8 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
         assert risks == sorted(risks, reverse=True)
         first = commits["commits"][0]
         assert set(first) == {"commitId", "epoch", "risk", "addedLines", "deletedLines",
-                                  "files", "features", "label", "labelNote", "subject", "authorName"}
+                                  "files", "features", "label", "labelNote", "subject", "authorName",
+                                  "partition"}
         assert len(first["features"]) == 14
         assert first["subject"]
         detail = client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits/"

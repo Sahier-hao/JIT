@@ -9,7 +9,7 @@ import { Button, Input } from './ui/controls'
 import { analysisRoute, repositoryRoute, type Route } from './navigation'
 import { useRepository, useRepositoryCommits, useRepositoryCommitRecords, type RepositoryDetail } from './repositoryWorkspace'
 import { toCommit } from './domain'
-import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
+import { DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type CommitPartition } from './repositoryContract'
 import { useModelName } from './modelClient'
 
 const PAGE_SIZE = 20
@@ -100,6 +100,8 @@ function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: stri
                     <span className="commit-title">{commit.title || '未提供标题'}</span><code>{commit.id.slice(0, 8)}</code>
                   </button>
                   <span className="commit-meta">
+                    {commit.partition && PARTITION_LABELS[commit.partition as CommitPartition]
+                      ? <span className={`partition-chip is-${commit.partition}`}>{PARTITION_LABELS[commit.partition as CommitPartition]}</span> : null}
                     <span>{commit.authorName || '作者未提供'} · </span>
                     <time dateTime={commit.time}>{displayTime(commit.time).slice(0, 16)}</time>
                   </span>
@@ -208,6 +210,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   }
 
   const repo = repository.repository
+  const scope = repo.viewContext?.scope ?? null
   const first = page.total === 0 ? 0 : offset + 1
   const last = Math.min(offset + PAGE_SIZE, page.total)
 
@@ -220,7 +223,9 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       {repo.latestSync?.syncId !== viewSyncId ? <p className="status-note">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。
         {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate(repositoryRoute(repositoryId))}>检查最新成功分析</Button>}
       </p> : null}
-      <p className="muted">{modelName ? `分析模型 ${modelName}。` : ''}分数只用于排序参考，未经仓库概率校准，不代表已确认缺陷。</p>
+      <p className="muted">{modelName ? `分析模型 ${modelName}。` : ''}{scope?.dataset && scope.split
+        ? `数据集 ${scope.dataset.quality.includedRows ?? '—'} / ${scope.dataset.quality.rawRows ?? '—'} 条纳入，训练 ${scope.split.train.count ?? '—'} / 验证 ${scope.split.validation.count ?? '—'} / 测试 ${scope.split.test.count ?? '—'}，留出 ${scope.split.holdout.count ?? '—'} 条只打分。`
+        : ''}分数只用于排序参考，未经仓库概率校准，不代表已确认缺陷。</p>
       <div className="review-body">
         <section className="review-main" aria-label="已分析提交">
           <div className="review-toolbar" role="search" aria-label="提交筛选">

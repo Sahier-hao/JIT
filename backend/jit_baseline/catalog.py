@@ -670,6 +670,16 @@ class ModelCatalog:
         row = self._row(model_id)
         return self._nested_directory(row['relative_key'])
 
+    def describe(self, model_id):
+        """模型身份摘要：只读登记 payload，不加载模型产物。"""
+        row = self._row(model_id)
+        payload = json.loads(row['payload_json'])
+        return {
+            "name": payload.get("name"),
+            "limitations": [value for value in payload.get("limitations") or []
+                            if isinstance(value, str)],
+        }
+
     def detail(self, model_id):
         """Read-only model details from the verified preferred run location."""
         snapshot, payload = self.load_model(model_id)

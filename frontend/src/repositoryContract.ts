@@ -109,6 +109,15 @@ export interface SyncCommit {
   authorName?: string | null
   originalCommitUrl?: string | null
   metrics: Record<string, number>
+  /** 项目分析分区；旧接口没有时为 null。 */
+  partition: CommitPartition | null
+}
+
+export const COMMIT_PARTITIONS = ['train', 'validation', 'test', 'holdout', 'excluded', 'unassigned', 'scored'] as const
+export type CommitPartition = (typeof COMMIT_PARTITIONS)[number]
+export const PARTITION_LABELS: Record<CommitPartition, string> = {
+  train: '训练', validation: '验证', test: '测试', holdout: '留出',
+  excluded: '未纳入', unassigned: '未分段', scored: '已打分',
 }
 
 export interface SyncCommitPage {
@@ -256,6 +265,7 @@ export function parseSyncCommit(value: unknown): SyncCommit {
     authorName: textOrNull(raw.authorName),
     originalCommitUrl: textOrNull(raw.originalCommitUrl),
     metrics: measures(raw.features),
+    partition: raw.partition == null ? null : oneOf(raw.partition, COMMIT_PARTITIONS),
   }
 }
 
