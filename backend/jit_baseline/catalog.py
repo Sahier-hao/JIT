@@ -414,7 +414,7 @@ class ModelCatalog:
             'issues': issues,
         }
 
-    def promote_experiments(self, items, *, request_id=None):
+    def promote_experiments(self, items, *, request_id=None, owner_user_id=None):
         results = []
 
         def item_result(candidate_id, status, *, model_id=None, run_id=None, code=None, message=None):
@@ -435,7 +435,7 @@ class ModelCatalog:
                                                message=run.get('artifactStateReason') or '运行产物不完整'))
                     continue
                 result = self.register(candidate_id, expected, channel='experiment-promotion',
-                                       request_id=request_id)
+                                       request_id=request_id, owner_user_id=owner_user_id)
                 results.append(item_result(candidate_id, 'registered' if result['created'] else 'reused',
                                            model_id=result['model']['modelId'],
                                            run_id=result['model']['runId']))
@@ -488,7 +488,7 @@ class ModelCatalog:
         return self.register(self._candidate_id(key), self._manifest_hash(directory), **kwargs)
 
     def register(self, candidate_id, expected_hash, *, channel='local-cli', request_id=None,
-                 preferred_model_id=None):
+                 preferred_model_id=None, owner_user_id=None):
         request_id = request_id or str(uuid4())
         if preferred_model_id is not None:
             if not isinstance(preferred_model_id, str):
@@ -570,17 +570,21 @@ class ModelCatalog:
                            'artifactRunId': manifest['runId'], 'artifactDatasetVersion': config['datasetVersion'],
                            'artifactModelId': artifact_model['id'], 'name': artifact_model['name'],
                            'method': method,
+                           'parameters': summary.get('parameters'),
+                           'parameterContract': summary.get('parameterContract'),
+                           'ownerUserId': owner_user_id,
                            'sha256': config['modelSha256'], 'featureSchemaVersion': snapshot.schema.name,
                            'featureSchema': schema, 'jsonPredictionSupported': schema['jsonPredictionSupported'],
                            'trainingEnvironment': config.get('trainingEnvironment') or config.get('environment'),
                            'origin': verification['origin'], 'verificationEnvironment': verification['verificationEnvironment'],
                            'reproducibility': verification['reproducibility'], 'limitations': summary['limitations']}
                 if model is None:
-                    db.execute('INSERT INTO model_version VALUES (?,?,?,?,?,?)',
-                               (model_id, run_id, location_id, 'ready', None, encoded(payload)))
+                    db.execute('INSERT INTO model_version (id,run_id,preferred_location_id,state,error_code,payload_json,owner_user_id) VALUES (?,?,?,?,?,?,?)',
+                               (model_id, run_id, location_id, 'ready', None, encoded(payload),
+                                owner_user_id))
                 else:
-                    db.execute("UPDATE model_version SET preferred_location_id=?,state='ready',error_code=NULL,payload_json=? WHERE id=?",
-                               (location_id, encoded(payload), model_id))
+                    db.execute("UPDATE model_version SET preferred_location_id=?,state='ready',error_code=NULL,payload_json=?,owner_user_id=COALESCE(owner_user_id,?) WHERE id=?",
+                               (location_id, encoded(payload), owner_user_id, model_id))
                 if snapshot.schema.name in REPOSITORY_SCHEMAS:
                     db.execute('UPDATE model_default SET model_id=? WHERE singleton=1 AND model_id IS NULL',
                                (model_id,))
@@ -657,12 +661,24 @@ class ModelCatalog:
             with self.store.connection(write=True) as db:
                 db.execute("UPDATE model_version SET state='invalid',error_code=? WHERE id=?", (code, model_id))
             raise RequestError(code) from exc
-        return snapshot, dict(payload, state='ready', **self.policy(model_id))
+        row = self._row(model_id)
+        return snapshot, dict(payload, state='ready', ownerUserId=row['owner_user_id'],
+                              **self.policy(model_id))
 
     def model_directory(self, model_id):
         """Return the verified artifact directory for a registered model."""
         row = self._row(model_id)
         return self._nested_directory(row['relative_key'])
+
+    def describe(self, model_id):
+        """模型身份摘要：只读登记 payload，不加载模型产物。"""
+        row = self._row(model_id)
+        payload = json.loads(row['payload_json'])
+        return {
+            "name": payload.get("name"),
+            "limitations": [value for value in payload.get("limitations") or []
+                            if isinstance(value, str)],
+        }
 
     def detail(self, model_id):
         """Read-only model details from the verified preferred run location."""
@@ -681,6 +697,8 @@ class ModelCatalog:
             artifactDatasetVersion=dataset_version,
             metrics=metrics,
             trainingSeconds=summary.get('trainingSeconds'),
+            parameters=summary.get('parameters'),
+            parameterContract=summary.get('parameterContract'),
             threshold=summary.get('threshold'),
             metricSet=manifest['config'].get('metricSet'),
             split=summary.get('split'),
@@ -735,6 +753,11 @@ class ModelCatalog:
                       'isDefault': bool(changes.get('isDefault') or default_id == model_id)}
         return result
 
+    def model_owner(self, model_id):
+        """模型所有者；共享模型返回 None，模型不存在时抛 NOT_FOUND。"""
+        row = self._row(model_id)
+        return row['owner_user_id']
+
     def models(self, state=None):
         with self.store.connection() as db:
             ids = [r['id'] for r in db.execute('SELECT id FROM model_version ORDER BY id')]
@@ -747,7 +770,7 @@ class ModelCatalog:
                     raise
                 row = self._row(model_id)
                 payload = dict(json.loads(row['payload_json']), state='invalid',
-                               **self.policy(model_id),
+                               ownerUserId=row['owner_user_id'], **self.policy(model_id),
                                error={'code': row['error_code'], 'message': MESSAGES.get(row['error_code'], '运行不可用')})
             if state is None or payload['state'] == state:
                 result.append(payload)

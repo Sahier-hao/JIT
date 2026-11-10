@@ -111,7 +111,7 @@ export function DatasetBuildDialog({
       {task && active ? <Button danger loading={busy} onClick={() => void cancel()}>取消任务</Button> : null}
       {task && ['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button loading={busy} onClick={() => void retry()}>按原参数重试</Button> : null}
       {task?.status === 'completed' && task.datasetName && task.datasetVersion ? <>
-        <Button onClick={openDataset}>查看数据集并选择训练</Button>
+        <Button onClick={openDataset}>进入管理工作区查看并训练</Button>
       </> : <Button variant="primary" loading={busy} disabled={!branch.trim() || active} onClick={() => void submit()}>{task ? '用当前参数重新构建' : '开始构建'}</Button>}
     </>}
   >
@@ -138,12 +138,12 @@ export function DatasetBuildDialog({
             {task.quality ? <div><dt>纳入 / 正例</dt><dd>{String(task.quality.includedRows ?? '未知')} / {String(task.quality.positiveLabels ?? '未知')}</dd></div> : null}
             <div><dt>来源版本</dt><dd><code>{task.headCommit?.slice(0, 12) ?? '未记录'}</code></dd></div>
           </dl>
-          <p className="status-note">数据集已冻结。是否训练由你在数据集详情中明确选择；系统不会自动训练或替换当前模型。</p>
+          <p className="status-note">数据集已冻结。查看数据集详情并选择训练需要管理员会话；系统不会自动训练或替换当前模型。</p>
         </> : null}
       </section> : null}
       <details>
         <summary>范围与标签限制</summary>
-        <p>简化 SZZ 未处理重命名、跨文件传播和 issue 关联。空范围或无法登记的来源会失败，不生成空数据集。命令不接受上传 CSV 或服务器文件路径。</p>
+        <p>标签使用完整 SZZ（优先 issue/PR 关联，关键词兜底，删除行回溯到引入提交）；未关联 issue、纯新增修复与改写历史仍可能漏标。空范围或无法登记的来源会失败，不生成空数据集。命令不接受上传 CSV 或服务器文件路径。</p>
       </details>
     </div>
   </Dialog>

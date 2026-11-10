@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
-import { createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '../../adminContracts'
+import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '../../adminContracts'
 import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '../../curationClient'
-import { Button, NumberInput, Select, TextArea } from '../../ui/controls'
+import { trainingMethods, type MethodChoice } from '../../modelClient'
+import { Button, Checkbox, NumberInput, Select, TextArea } from '../../ui/controls'
 import { Dialog } from '../../ui/dialog'
 import type { Route } from '../../navigation'
 import { previewDatasetSplit, SPLIT_PRESETS, type SplitPreview } from '../../splitClient'
@@ -42,7 +43,20 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [cleanupError, setCleanupError] = useState('')
   const [cleanupResult, setCleanupResult] = useState('')
   const [confirmCleanup, setConfirmCleanup] = useState(false)
+  const [experimentMethods, setExperimentMethods] = useState<MethodChoice[]>([])
+  const [selectedMethods, setSelectedMethods] = useState<string[]>([])
+  const [paramValues, setParamValues] = useState<Record<string, Record<string, string>>>({})
+  const [experimentBusy, setExperimentBusy] = useState(false)
+  const [experimentError, setExperimentError] = useState('')
   const selected = versions.find(item => item.version === version) ?? versions.at(-1)
+  useEffect(() => {
+    if (!selected) return
+    const controller = new AbortController()
+    trainingMethods(selected.schema, controller.signal)
+      .then(value => { if (!controller.signal.aborted) setExperimentMethods(value.methods.filter(item => item.supportedSchema)) })
+      .catch(failure => { if (!controller.signal.aborted) setExperimentError(failure instanceof Error ? failure.message : '训练方法读取失败') })
+    return () => controller.abort()
+  }, [selected?.schema])
   useEffect(() => {
     if (!selected) return
     const controller = new AbortController()
@@ -55,6 +69,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   }, [selected?.version, splitPreset])
   if (!selected) return null
   const quality = selected.quality
+  const szz = selected.szz, label = selected.label
+  const signals = szz.fixSignals as Row | undefined
+  const lookup = szz.issueLookup as Row | undefined
+  const szzNumber = (key: string) => szz[key] ?? (szz.unresolved as Row | undefined)?.[key] ?? '—'
   const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
   async function train() {
     setBusy(true); setError('')
@@ -67,6 +85,48 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       if (failure instanceof ApiError && failure.status === 401) expired()
       else setError(failure instanceof Error ? failure.message : '训练任务创建失败')
     } finally { setBusy(false) }
+  }
+  function toggleMethod(method: string) {
+    setSelectedMethods(current => {
+      if (current.includes(method)) return current.filter(item => item !== method)
+      const choice = experimentMethods.find(item => item.method === method)
+      setParamValues(values => values[method] ? values : {
+        ...values,
+        [method]: Object.fromEntries((choice?.params ?? []).map(param => [param.name, param.default == null ? '' : String(param.default)])),
+      })
+      return [...current, method]
+    })
+  }
+  function setParam(method: string, name: string, value: string) {
+    setParamValues(values => ({ ...values, [method]: { ...(values[method] ?? {}), [name]: value } }))
+  }
+  async function runExperiment() {
+    setExperimentBusy(true); setExperimentError('')
+    try {
+      const methods = selectedMethods.map(method => {
+        const choice = experimentMethods.find(item => item.method === method)
+        const params: Row = {}
+        for (const spec of choice?.params ?? []) {
+          const raw = paramValues[method]?.[spec.name]
+          if (raw == null || raw.trim() === '') continue
+          const numeric = Number(raw)
+          if (!Number.isFinite(numeric)) throw new Error(`${choice?.name ?? method} 的参数 ${spec.name} 不是数值`)
+          if (spec.type === 'int' && !Number.isInteger(numeric)) throw new Error(`${choice?.name ?? method} 的参数 ${spec.name} 必须是整数`)
+          params[spec.name] = numeric
+        }
+        return { method, params }
+      })
+      if (!methods.length) throw new Error('至少选择一个训练方法')
+      const experiment = await createTrainingExperiment({
+        datasetVersion: selected!.version, methods, metricSet,
+        classPolicy: classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
+        splitPreset,
+      })
+      navigate({ name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId })
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) expired()
+      else setExperimentError(failure instanceof Error ? failure.message : '实验创建失败')
+    } finally { setExperimentBusy(false) }
   }
   function recipe() {
     try { return JSON.parse(recipeText) } catch { throw new Error('清洗配方不是合法 JSON') }
@@ -127,6 +187,21 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
       </dl></section>
+      <section><h2>标签与 SZZ</h2><dl className="admin-facts">
+        <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
+        <div><dt>被标为引入</dt><dd>{valueLabel(szzNumber('labeledCommits'))}</dd></div>
+        <div><dt>证据对数</dt><dd>{valueLabel(szzNumber('evidencePairs'))}</dd></div>
+        {signals ? <div><dt>修复信号</dt><dd>issue {valueLabel(signals.issue)} · 关键词 {valueLabel(signals.keyword)}</dd></div> : null}
+        {lookup ? <div><dt>Issue 查询</dt><dd>成功 {valueLabel(lookup.succeeded)} · 失败 {valueLabel(lookup.failed)} · 不可用 {valueLabel(lookup.unavailable)}</dd></div> : null}
+        <div><dt>未回溯行区间</dt><dd>{valueLabel(szzNumber('unresolvedRanges'))}</dd></div>
+        <div><dt>跳过文件</dt><dd>{valueLabel(szzNumber('skippedFiles'))}</dd></div>
+        {szz.mode ? <div><dt>跳过</dt><dd>排除 {valueLabel(szzNumber('skippedExcluded'))} · 空白 {valueLabel(szzNumber('skippedWhitespace'))} · 仅文档 {valueLabel(szzNumber('skippedDocsOnly'))} · 元数据行 {valueLabel(szzNumber('skippedNoiseLines'))}</dd></div> : null}
+        <div><dt>窗口外引入</dt><dd>{valueLabel(szzNumber('outsideWindow'))}</dd></div>
+        <div><dt>成熟期</dt><dd>{label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
+        {szz.truncated === true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
+      </dl></section>
+    </div>
+    <div className="admin-detail-grid">
       <section><h2>来源</h2><dl className="admin-facts">
         <div><dt>发布者</dt><dd>{valueLabel(selected.source.publisher)}</dd></div>
         <div><dt>地址</dt><dd>{valueLabel(selected.source.url)}</dd></div>
@@ -136,6 +211,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>来源类型</dt><dd>{selected.usage === 'pr' ? 'PR 分析' : '分支分析'}</dd></div>
         <div><dt>来源分析</dt><dd><code>{selected.sourceSyncId ?? '未记录'}</code></dd></div>
         <div><dt>引用</dt><dd>{selected.references.length ? selected.references.join('、') : '无'}</dd></div>
+        <div><dt>所有者</dt><dd>{selected.owners.length ? selected.owners.join('、') : '共享'}</dd></div>
       </dl></section>
     </div>
     <div className="admin-detail-grid">
@@ -149,7 +225,19 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <Button loading={curationBusy} onClick={() => void previewCurationAction()}>预览清洗</Button>
         <Button loading={curationBusy} onClick={() => void deriveCurationAction()}>生成派生版本</Button>
       </div>
-      {curationPreview ? <pre className="admin-report-meta">{JSON.stringify(curationPreview.stats, null, 2)}</pre> : null}
+      {curationPreview ? <div className="admin-detail-grid">
+        <section><h2>清洗前后</h2><dl className="admin-facts">
+          <div><dt>原始 / 纳入 / 排除</dt><dd>{valueLabel(curationPreview.stats.rawRows)} / {valueLabel(curationPreview.stats.includedRows)} / {valueLabel(curationPreview.stats.excludedRows)}</dd></div>
+          <div><dt>正例</dt><dd>{valueLabel(curationPreview.stats.positiveLabels)}{typeof curationPreview.stats.includedRows === 'number' && typeof curationPreview.stats.positiveLabels === 'number' && curationPreview.stats.includedRows > 0 ? ` · ${(Number(curationPreview.stats.positiveLabels) / Number(curationPreview.stats.includedRows) * 100).toFixed(1)}%` : ''}</dd></div>
+          <div><dt>时间范围</dt><dd>{curationPreview.stats.timeRange ? `${formatDate((curationPreview.stats.timeRange as Row).start)} — ${formatDate((curationPreview.stats.timeRange as Row).end)}` : '—'}</dd></div>
+          <div><dt>配方哈希</dt><dd><code>{curationPreview.recipeSha256}</code></dd></div>
+        </dl></section>
+        <section><h2>排除原因</h2><dl className="admin-facts">
+          {Object.entries((curationPreview.stats.excluded as Row | undefined) ?? {}).map(([reason, count]) =>
+            <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}
+          {!Object.keys((curationPreview.stats.excluded as Row | undefined) ?? {}).length ? <div><dt>无</dt><dd>没有记录被排除</dd></div> : null}
+        </dl></section>
+      </div> : null}
       {derivedVersion ? <p className="admin-report-meta">已生成派生版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
     </section>
     <section className="admin-train-panel"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
@@ -158,7 +246,20 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <Button disabled={!compareVersion} onClick={() => void compareAction()}>对比版本</Button>
         <Button onClick={() => void exportCuration(selected.version)}>导出当前版本</Button>
       </div>
-      {comparison ? <pre className="admin-report-meta">{JSON.stringify(comparison, null, 2)}</pre> : null}
+      {comparison ? <div className="admin-detail-grid">
+        {(['source', 'derived'] as const).map(key => {
+          const side = comparison[key] as Row | undefined
+          if (!side) return null
+          const quality = (side.quality ?? {}) as Row
+          const range = (side.timeRange ?? {}) as Row
+          return <section key={key}><h2>{key === 'source' ? '来源版本' : '派生版本'}</h2><dl className="admin-facts">
+            <div><dt>版本</dt><dd><code>{valueLabel(side.version)}</code></dd></div>
+            <div><dt>纳入行</dt><dd>{valueLabel(quality.includedRows)}</dd></div>
+            <div><dt>正例行</dt><dd>{valueLabel(quality.positiveLabels)}</dd></div>
+            <div><dt>时间范围</dt><dd>{range.start ? `${formatDate(range.start)} — ${formatDate(range.end)}` : '—'}</dd></div>
+          </dl></section>
+        })}
+      </div> : null}
     </section>
     <section className="admin-train-panel"><h2>PR 数据集清理</h2><ErrorNotice>{cleanupError}</ErrorNotice>
       <div className="admin-train-form">
@@ -170,6 +271,32 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <Button variant="danger" onClick={() => setConfirmCleanup(true)}>清理 {prunable.length} 个版本</Button>
       </> : <p className="admin-report-meta">没有超出保留数量且无引用的 PR 版本。</p>}
       {cleanupResult ? <p className="admin-report-meta">{cleanupResult}</p> : null}
+    </section>
+    <section className="admin-train-panel"><h2>多方法实验</h2><ErrorNotice>{experimentError}</ErrorNotice>
+      <div className="admin-method-picker">
+        {experimentMethods.map(choice => {
+          const checked = selectedMethods.includes(choice.method)
+          const blocked = !choice.available || splitPreviewBusy || !splitPreview?.available
+          return <div key={choice.method} className="admin-method-option">
+            <Checkbox checked={checked} disabled={blocked} onCheckedChange={() => toggleMethod(choice.method)}>
+              {choice.name} · <code>{choice.method}</code>{choice.reason ? ` · ${choice.reason}` : ''}
+            </Checkbox>
+            {checked && choice.params.length ? <div className="admin-method-params">
+              {choice.params.map(spec => <label key={spec.name}>{spec.name}（{spec.type} {spec.min}–{spec.max}）
+                <NumberInput aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any"
+                  value={paramValues[choice.method]?.[spec.name] ?? ''}
+                  onChange={event => setParam(choice.method, spec.name, event.target.value)}/>
+              </label>)}
+            </div> : null}
+          </div>
+        })}
+      </div>
+      <div className="admin-train-form">
+        <Button variant="primary" loading={experimentBusy}
+          disabled={!selectedMethods.length || splitPreviewBusy || !splitPreview?.available}
+          onClick={() => void runExperiment()}>创建实验（{selectedMethods.length} 个方法）</Button>
+      </div>
+      {!splitPreview?.available && splitPreview ? <p className="admin-report-meta">当前切分预设不可用，不能创建实验。</p> : null}
     </section>
     <section className="admin-train-panel"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="admin-train-form">
       <Select ariaLabel="训练方法" value={selectedMethod} onChange={setMethod} options={methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))}/>

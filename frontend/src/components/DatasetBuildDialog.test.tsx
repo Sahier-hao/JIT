@@ -42,7 +42,7 @@ it('builds only a dataset, keeps project analysis untouched, and offers explicit
   expect(screen.getByText('kamei14-git-v2-project-2024-01-01_2024-12-31')).toBeVisible()
   expect(screen.getByText(/不会自动训练或替换当前模型/)).toBeVisible()
   expect(fetch.mock.calls.some(([path]) => String(path).includes('/training-tasks'))).toBe(false)
-  await user.click(screen.getByRole('button', { name: '查看数据集并选择训练' }))
+  await user.click(screen.getByRole('button', { name: '进入管理工作区查看并训练' }))
   expect(navigate).toHaveBeenCalledWith({
     name: 'admin', view: 'datasets', resourceId: 'kamei14-git-v2-project',
     version: 'kamei14-git-v2-project-2024-01-01_2024-12-31',

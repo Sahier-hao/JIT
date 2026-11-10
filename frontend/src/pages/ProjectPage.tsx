@@ -25,11 +25,12 @@ import { ProjectDatasetDialog } from '../components/ProjectDatasetDialog'
 import { DatasetBuildDialog } from '../components/DatasetBuildDialog'
 import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
-import type { Route } from '../navigation'
+import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
 import { projectStatus } from '../projectStatus'
-import { ACTIVE_STATUSES, DEGRADE_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
+import { ACTIVE_STATUSES, DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
 import { useRepository } from '../repositoryWorkspace'
+import { AnalysisScopeCard } from '../components/AnalysisScopeCard'
 import { displayTime } from '../domain'
 
 type ProjectTab = 'overview' | 'prs' | 'trends' | 'analyses'
@@ -76,7 +77,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       await analyzeAllProjectPRs(repositoryId, selectedModel || undefined, prScope)
       setPrDialog(false)
       prBatchChanged()
-      navigate({ name: 'repository', repositoryId, tab: 'prs' })
+      navigate(repositoryRoute(repositoryId, 'prs'))
     } catch (failure) {
       setPrAnalysisError(failure instanceof Error ? failure.message : '提交 PR 分析失败')
     } finally { setPrAnalyzing(false) }
@@ -86,10 +87,16 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const refreshRecords = records.retry
   const [recordError, setRecordError] = useState('')
   const [selectingId, setSelectingId] = useState('')
+  const [currentNotice, setCurrentNotice] = useState('')
   const [cancelBusy, setCancelBusy] = useState(false)
   const cancelLock = useRef(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const deleteLock = useRef(false)
+  useEffect(() => {
+    if (!currentNotice) return
+    const timer = window.setTimeout(() => setCurrentNotice(''), 6000)
+    return () => window.clearTimeout(timer)
+  }, [currentNotice])
   const [detailJob, setDetailJob] = useState<SyncView | null>(null)
   const [deleteJob, setDeleteJob] = useState<SyncView | null>(null)
   const [cancelJob, setCancelJob] = useState<SyncView | null>(null)
@@ -98,11 +105,13 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const [openingPR, setOpeningPR] = useState(false)
   const [datasetOpen, setDatasetOpen] = useState(false)
   const [datasetBuildOpen, setDatasetBuildOpen] = useState(false)
+  const [scopeView, setScopeView] = useState<'holdout' | 'test' | 'all'>('holdout')
   const openPRLock = useRef(false)
   const currentSyncId = detail.repository?.viewContext?.syncId
   useEffect(() => { setDatasetOpen(false) }, [currentSyncId])
-  const riskTotal = Math.max(1, detail.repository ? detail.repository.distribution.high + detail.repository.distribution.medium + detail.repository.distribution.low : 1)
-  const share = (count: number) => Math.round((count / riskTotal) * 100)
+  useEffect(() => {
+    setScopeView(detail.repository?.viewContext?.scope?.split?.holdout.count ? 'holdout' : 'all')
+  }, [currentSyncId, detail.repository?.viewContext?.scope?.split?.holdout.count])
   const latestStatus = detail.repository?.latestSync?.status
   const latestId = detail.repository?.latestSync?.syncId
   const previousJob = useRef('')
@@ -114,7 +123,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
   }, [latestStatus, latestId, refreshRecords])
   useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
-  const priority = usePriorityCommits(detail.repository?.viewContext?.syncId)
+  const priority = useAnalysisCommits(detail.repository?.viewContext?.syncId)
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
   if (detail.state === 'error' || !detail.repository) {
@@ -125,6 +134,18 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const latest = records.syncs[0] ?? repository.latestSync
   const status = projectStatus(repository, latest)
   const context = repository.viewContext
+  const scope = context?.scope ?? null
+  const activeView = scope?.split ? scopeView : 'all'
+  const shownDistribution = scope?.distributions[activeView] ?? repository.distribution
+  const shownTotal = shownDistribution.high + shownDistribution.medium + shownDistribution.low + shownDistribution.unknown
+  const shownShare = (count: number) => shownTotal ? Math.round((count / shownTotal) * 100) : 0
+  const priorityCommits = priority
+    .filter(commit => activeView === 'all' || commit.partition === activeView)
+    .sort((left, right) => right.risk - left.risk)
+    .slice(0, 3)
+  const viewTitle = activeView === 'holdout' ? '留出集里先看这三条'
+    : activeView === 'test' ? '测试集里先看这三条' : '全部分析里先看这三条'
+  const latestCompletedId = records.syncs.find(job => job.status === 'completed')?.syncId ?? null
   const currentBatchModel = modelChoices.find(model => model.modelId === repository.viewContext?.modelId)
   const defaultBatchModel = modelChoices.find(model => model.isDefault)
   const prModelOptions = [
@@ -141,7 +162,9 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       await selectRepositoryView(repositoryId, job.syncId)
       detail.retry()
       records.retry()
+      setCurrentNotice(`当前结果已切换为 ${job.syncId.slice(0, 7)}`)
     } catch (failure) {
+      setCurrentNotice('')
       setRecordError(failure instanceof Error ? failure.message : '设置当前结果失败')
     } finally {
       setSelectingId('')
@@ -222,7 +245,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <div className="page-actions">
         <Button icon={<Database size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
         <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
-        <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate({ name: 'repository', repositoryId, tab: 'analyses' }) }}/>
+        <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
       </div>
       {prAnalysisError ? <p className="field-error" role="alert">{prAnalysisError}</p> : null}
     </header>
@@ -231,63 +254,82 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     </section> : null}
 
     <nav className="project-tabs" aria-label="项目工作台视图">
-      {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate({ name: 'repository', repositoryId, tab: value })}>{label}</Button>)}
+      {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate(repositoryRoute(repositoryId, value))}>{label}</Button>)}
     </nav>
 
     {activeTab === 'overview' ? <>
-      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onStartAnalysis={() => analyzeBranch(repository.defaultBranch ?? '')} onOpenAnalysis={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}/>
+      <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate(repositoryRoute(repositoryId, 'analyses'))}/>
     </> : null}
     {activeTab === 'analyses' ? <>
     {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={<nav className="analysis-view-switch" aria-label="分析视图">
-      <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
-      <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+      <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
+      <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
     </nav>}/> : <>
     <div className="analysis-bar">
-      <span className="analysis-bar-label">最近一次成功分析的结果</span>
+      <span className="analysis-bar-label">当前审查所用结果</span>
       <nav className="analysis-view-switch" aria-label="分析视图">
-        <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'analyses' })}>分析结果</Button>
-        <Button size="sm" variant="ghost" onClick={() => navigate({ name: 'repository', repositoryId, tab: 'trends' })}>风险趋势</Button>
+        <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
+        <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
       </nav>
     </div>
     <div className="project-workspace">
       <aside className="pw-rail" aria-label="分析记录">
         <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
+        {currentNotice ? <p className="record-notice" role="status">{currentNotice}</p> : null}
         {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate({ name: 'analysis', repositoryId, viewSyncId: job.syncId, view: 'commits' })} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
+        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
         {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
       </aside>
 
       <div className="pw-detail">
         <div className="pw-detail-head">
-          <h2>当前分析结果</h2>
+          <h2>当前分析结果{context && latestCompletedId && context.syncId !== latestCompletedId ? <span className="source-chip">历史固定结果</span> : null}</h2>
           <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
         {context && context.sourceKind === 'pr' ? <p className="status-note">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}
         {context ? <div className="pw-result">
+          {scope ? <AnalysisScopeCard scope={scope} onOpenDataset={() => setDatasetOpen(true)}/> : null}
+          {scope?.split ? <div className="scope-view-switch" role="group" aria-label="查看提交范围">
+            <Button size="sm" variant={activeView === 'holdout' ? 'primary' : 'ghost'} aria-pressed={activeView === 'holdout'} onClick={() => setScopeView('holdout')}>留出 {scope.split.holdout.count ?? 0}</Button>
+            <Button size="sm" variant={activeView === 'test' ? 'primary' : 'ghost'} aria-pressed={activeView === 'test'} onClick={() => setScopeView('test')}>测试 {scope.split.test.count ?? 0}</Button>
+            <Button size="sm" variant={activeView === 'all' ? 'primary' : 'ghost'} aria-pressed={activeView === 'all'} onClick={() => setScopeView('all')}>全部 {repository.commitCount}</Button>
+            <span>{activeView === 'all' ? '含训练、验证、测试、留出与未纳入数据集的提交' : '模型没见过的提交'}</span>
+          </div> : null}
           <div className="result-hero">
             <div className="result-total">
-              <b>{repository.commitCount.toLocaleString()}</b>
-              <span>已分析提交</span>
+              <b>{shownTotal.toLocaleString()}</b>
+              <span>{activeView === 'holdout' ? '模型没见过的提交' : activeView === 'test' ? '测试集提交' : '已分析提交'}</span>
             </div>
-            <ul className="result-bars" aria-label={`风险分布：高 ${repository.distribution.high} 条、中 ${repository.distribution.medium} 条、低 ${repository.distribution.low} 条`}>
-              <li className="is-high"><span className="bar-label">高风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.high)}%` }}/></span><span className="bar-value"><b>{repository.distribution.high.toLocaleString()}</b><em>{share(repository.distribution.high)}%</em></span></li>
-              <li className="is-mid"><span className="bar-label">中风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.medium)}%` }}/></span><span className="bar-value"><b>{repository.distribution.medium.toLocaleString()}</b><em>{share(repository.distribution.medium)}%</em></span></li>
-              <li className="is-low"><span className="bar-label">低风险</span><span className="bar-track"><span style={{ width: `${share(repository.distribution.low)}%` }}/></span><span className="bar-value"><b>{repository.distribution.low.toLocaleString()}</b><em>{share(repository.distribution.low)}%</em></span></li>
-            </ul>
+            <div className="result-distribution">
+              <p className="result-bars-title">模型分数分布（未校准）</p>
+              <ul className="result-bars" aria-label={`模型分数分布：≥0.25 ${shownDistribution.high} 条、0.10 到 0.25 ${shownDistribution.medium} 条、小于 0.10 ${shownDistribution.low} 条`}>
+                <li className="is-high"><span className="bar-label">≥ 0.25</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.high)}%` }}/></span><span className="bar-value"><b>{shownDistribution.high.toLocaleString()}</b><em>{shownShare(shownDistribution.high)}%</em></span></li>
+                <li className="is-mid"><span className="bar-label">0.10–0.25</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.medium)}%` }}/></span><span className="bar-value"><b>{shownDistribution.medium.toLocaleString()}</b><em>{shownShare(shownDistribution.medium)}%</em></span></li>
+                <li className="is-low"><span className="bar-label">&lt; 0.10</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.low)}%` }}/></span><span className="bar-value"><b>{shownDistribution.low.toLocaleString()}</b><em>{shownShare(shownDistribution.low)}%</em></span></li>
+              </ul>
+            </div>
           </div>
-          {priority.length ? <div className="result-priority">
-            <p className="result-priority-title">最该先看的提交</p>
+          {priorityCommits.length ? <div className="result-priority">
+            <p className="result-priority-title">{viewTitle}</p>
             <ol>
-              {priority.map((commit, index) => <li key={commit.commitId}>
+              {priorityCommits.map((commit, index) => <li key={commit.commitId}>
                 <span className="priority-rank" aria-hidden="true">{index + 1}</span>
                 <code className="priority-sha">{commit.commitId.slice(0, 7)}</code>
-                <span className="priority-subject" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                <span className="priority-subject">
+                  {commit.partition ? <span className={`partition-chip is-${commit.partition}`}>{PARTITION_LABELS[commit.partition]}</span> : null}
+                  <span className="priority-subject-text" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                  <span className={`label-chip ${commit.label === 1 ? 'is-positive' : ''}`} title={commit.labelNote ?? ''}>
+                    {commit.label === 1 ? '有证据' : '未观测'}
+                  </span>
+                </span>
                 <span className="priority-score">
                   <span className="priority-meter" aria-hidden="true"><span style={{ width: `${Math.round(commit.risk * 100)}%` }}/></span>
                   <b>{commit.risk.toFixed(2)}</b>
                 </span>
               </li>)}
             </ol>
+            {activeView === 'all' ? <p className="result-priority-note">包含模型训练或调参时见过的提交，分数只反映拟合程度。</p> : null}
+            <p className="result-priority-note">分数是未校准的排序值，不是概率。</p>
           </div> : null}
           <div className="result-bottom">
           {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
@@ -296,7 +338,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
               <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
               <Button variant="ghost" size="sm" className="result-data-button" onClick={() => setDatasetOpen(true)}>数据来源</Button>
             </div>
-            <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: context.syncId, view: 'commits' })} trailing={<ArrowRight size={15}/>}>查看提交明细</Button>
+            <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} trailing={<ArrowRight size={15}/>}>查看提交明细</Button>
           </div>
           </div>
         </div> : <div className="result-empty">
@@ -369,8 +411,9 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
   const completed = job.status === 'completed'
   const isPR = job.sourceKind === 'pr'
   const pendingCancel = active && Boolean(job.cancelRequestedAt)
-  const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
-  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}${isPR ? ' · PR 固定版本' : ''}`
+  const switchable = completed && !current && !isPR
+  const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : switchable ? '设为当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
+  const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}${switchable ? ' · 已完成' : ''}${isPR ? ' · PR 固定版本' : ''}`
   const shortId = job.syncId.slice(0, 7)
   return <article className={`analysis-job ${current ? 'is-current' : ''}`} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
     <span className="record-marker" aria-hidden="true"/>
@@ -505,14 +548,14 @@ function shortTime(value?: string | null) {
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-/** 本次分析里分数最高的三条提交：告诉用户下一步先看什么。 */
-function usePriorityCommits(syncId?: string) {
+/** 读取本次分析最多 200 条提交，由页面按分区筛选后再取前三。 */
+function useAnalysisCommits(syncId?: string) {
   const [items, setItems] = useState<SyncCommit[]>([])
   useEffect(() => {
     if (!syncId) { setItems([]); return }
     const controller = new AbortController()
-    fetchRepositorySyncCommits(syncId, 60, 0, controller.signal)
-      .then(page => setItems([...page.commits].sort((a, b) => b.risk - a.risk).slice(0, 3)))
+    fetchRepositorySyncCommits(syncId, 200, 0, controller.signal)
+      .then(page => setItems(page.commits))
       .catch(() => setItems([]))
     return () => controller.abort()
   }, [syncId])

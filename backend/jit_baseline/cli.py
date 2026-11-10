@@ -42,6 +42,8 @@ def main():
                      help="时间切分预设：temporal-70-15-15、temporal-80-10-10 或 temporal-60-20-20")
     run.add_argument("--embedding-dir", type=Path, default=None,
                      help="语义 schema 使用的嵌入表目录")
+    run.add_argument("--params", default=None,
+                     help="受控参数覆盖 JSON，例如 {\"C\": 0.5}；默认使用方法冻结参数")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -107,6 +109,17 @@ def main():
     pr_report.add_argument("--bundle", type=Path, required=True, help="pr-check-export 生成的分析包")
     pr_report.add_argument("--format", choices=("json", "markdown"), default="json")
     pr_report.add_argument("--output", type=Path, required=True, help="报告输出路径")
+    pr_analyze = commands.add_parser("pr-check-analyze", help="从本地 Git 提交范围执行采集、推理与报告")
+    pr_analyze.add_argument("--repo", type=Path, required=True, help="本地 Git 仓库路径")
+    pr_analyze.add_argument("--base", required=True, help="基准提交 SHA 或引用")
+    pr_analyze.add_argument("--head", default="HEAD", help="目标提交 SHA 或引用；默认 HEAD")
+    pr_analyze.add_argument("--model-id", required=True, help="目录库中明确选择的已登记模型 ID")
+    pr_analyze.add_argument("--output", type=Path, required=True, help="JSON 报告输出路径")
+    pr_analyze.add_argument("--markdown", type=Path, default=None, help="可选：同时写出 Markdown 报告")
+    pr_analyze.add_argument("--database", type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', None))
+    pr_analyze.add_argument("--artifact-root", type=Path,
+                            default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    pr_analyze.add_argument("--max-commits", type=int, default=200, help="范围内提交数上限")
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -156,12 +169,42 @@ def main():
     collect.add_argument('--output', type=Path, default=None, help='采集 CSV 输出路径')
     collect.add_argument('--register', action='store_true', help='采集后直接登记数据集')
     collect.add_argument('--with-text', action='store_true', help='同时产出有界 diff 文本 sidecar')
+    collect.add_argument('--szz', choices=['full', 'line', 'simple'], default='full',
+                         help='标签规则：full 完整流程（默认），line 行级兼容，simple 文件级兼容')
     collect.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
     check = commands.add_parser("check-evidence")
     check.add_argument("target", type=Path)
+    sample = commands.add_parser("szz-sample")
+    sample.add_argument("manifest", type=Path)
+    sample.add_argument("--repo", default=None, help="可选：本地仓库路径，用于补全提交标题")
+    sample.add_argument("--limit", type=int, default=100)
+    sample.add_argument("--output", type=Path, required=True, help="复核表 CSV 输出路径")
+    line_dataset = commands.add_parser("line-dataset")
+    line_dataset.add_argument("manifest", type=Path)
+    line_dataset.add_argument("--repo", default=None, help="本地仓库或缓存裸克隆；缺省读取数据集描述中的路径")
+    line_dataset.add_argument("--output", type=Path, required=True, help="行级样本 JSONL 输出路径")
+    line_dataset.add_argument("--negatives-per-positive", type=int, default=3)
+    line_dataset.add_argument("--context", type=int, default=3)
+    line_dataset.add_argument("--negative-mode", choices=["added-line", "same-file"], default="added-line")
+    line_dataset.add_argument("--seed", type=int, default=42)
+    line_train = commands.add_parser("line-train")
+    line_train.add_argument("--input", action="append", type=Path, required=True, help="可重复：line-szz-v1 JSONL")
+    line_train.add_argument("--test-repo", default=None, help="留出整个仓库做跨项目测试")
+    line_train.add_argument("--output", type=Path, required=True, help="指标报告 JSON")
+    line_train.add_argument("--seed", type=int, default=42)
+    line_train.add_argument("--model-output", type=Path, default=None, help="可选：另存 joblib 基线")
+    line_train.add_argument("--include-commit-features", action="store_true", help="加入提交级 Kamei 特征（默认关闭以避免泄漏）")
+    line_train.add_argument("--no-repo-balance", action="store_true", help="按原始样本量训练，不按仓库平衡")
+    line_train.add_argument("--no-position-features", action="store_true", help="不把文件长度与行位置作为特征")
+    line_train.add_argument("--language", action="append", default=None, help="只训练/评估这些语言，可重复")
+    line_train.add_argument("--no-text", action="store_true", help="只用数值与语言特征，做文本特征消融")
+    line_train.add_argument("--preview-model-output", type=Path, default=None,
+                            help="导出可移植系数模型供研究预览；需配合 --no-text，且不含提交级特征")
+    line_train.add_argument("--manifest", type=Path, default=None,
+                            help="可移植实验 manifest 输出路径；默认与报告同名 .manifest.json")
     args = parser.parse_args()
     exit_code = 0
     try:
@@ -232,15 +275,56 @@ def main():
                                                   branch=args.branch, output=args.output,
                                                   dataset=args.dataset, register=args.register,
                                                   limit=args.limit, root=args.root,
-                                                  with_text=args.with_text)
+                                                  with_text=args.with_text, szz=args.szz)
+        elif args.command == 'szz-sample':
+            import json as json_module
+            from . import szz as szz_module
+            manifest = json_module.loads(Path(args.manifest).read_text(encoding='utf-8'))
+            rows = szz_module.sample_evidence(manifest, repo=args.repo, limit=args.limit)
+            target = szz_module.write_sample_csv(rows, args.output)
+            result = {'kind': 'szz-sample', 'rows': len(rows), 'output': str(target)}
+        elif args.command == 'line-dataset':
+            import json as json_module
+            from . import line_dataset as line_module
+            manifest = json_module.loads(Path(args.manifest).read_text(encoding='utf-8'))
+            summary = line_module.build_line_dataset(
+                manifest, args.output, repo=args.repo,
+                negatives_per_positive=args.negatives_per_positive,
+                context=args.context, seed=args.seed, negative_mode=args.negative_mode,
+            )
+            result = {'kind': 'line-dataset', **summary, 'output': str(args.output)}
+        elif args.command == 'line-train':
+            from . import line_train as train_module
+            report = train_module.train_line_baseline(
+                args.input, args.output, test_repo=args.test_repo, seed=args.seed,
+                model_output=args.model_output,
+                include_commit_features=args.include_commit_features,
+                repo_balance=not args.no_repo_balance,
+                position_features=not args.no_position_features,
+                languages=args.language,
+                manifest_output=args.manifest,
+                text_features=not args.no_text,
+                preview_output=args.preview_model_output,
+            )
+            result = {'kind': 'line-model-report', 'samples': report['samples'],
+                      'metrics': report['metrics'], 'localization': report['localization'],
+                      'byRepo': report['byRepo'], 'byLanguage': report['byLanguage'],
+                      'manifest': str(args.manifest or Path(args.output).with_suffix('.manifest.json')),
+                      'output': str(args.output)}
         elif args.command == "fetch":
             result = fetch_sources(BACKEND / "data/openstack")
         elif args.command == "run":
+            params = None
+            if args.params:
+                try:
+                    params = json.loads(args.params)
+                except json.JSONDecodeError as exc:
+                    raise BaselineError("INPUT_INVALID", "参数覆盖不是合法 JSON") from exc
             manifest = build_run(BACKEND / "data/openstack", args.output, args.schema, args.algorithm,
                                  metric_set=args.metric_set,
                                  dataset_manifest=args.dataset_manifest, holdout=args.holdout,
                                  embedding_dir=args.embedding_dir,
-                                 split_preset=args.split_preset)
+                                 split_preset=args.split_preset, params=params)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)
@@ -305,6 +389,21 @@ def main():
             report, path = pr_check.write_report(bundle, args.output, args.format)
             result = {"kind": report["format"], "output": str(path),
                       "commits": len(report["commits"])}
+        elif args.command == "pr-check-analyze":
+            from . import commit_analysis
+            from .catalog import ModelCatalog
+            from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
+            catalog = ModelCatalog(CatalogStorage(args.database or DEFAULT_DATABASE),
+                                   args.artifact_root)
+            report = commit_analysis.analyze(
+                args.repo, args.base, args.head, catalog, args.model_id,
+                max_commits=args.max_commits)
+            commit_analysis.write_report(report, args.output, args.markdown)
+            result = {"kind": report["format"], "analysisId": report["analysisId"],
+                      "contentSha256": report["contentSha256"],
+                      "commits": len(report["commits"]),
+                      "candidates": len(report["candidates"]),
+                      "output": str(args.output)}
         elif args.command == "build-embeddings":
             from .semantic import build_embeddings
             options = {"batch_size": args.batch_size}

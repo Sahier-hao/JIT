@@ -7,12 +7,14 @@ import { queryClient } from './lib/queryClient'
 import { AppShell } from './AppShell'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Button } from './ui/controls'
-import { useRoute, type Route } from './navigation'
+import { analysisRoute, hashFor, useRoute, type Route } from './navigation'
+import { useUserSession } from './userClient'
 import { useRepositories } from './repositoryWorkspace'
 import { LoadingNotice, EmptyState } from './Feedback'
 import { apiRequest } from './apiClient'
 import { parseSync } from './repositoryContract'
 import type { ReviewDraft } from './ReviewWorkbench'
+import { requestLogin } from './components/UserAccount'
 
 // 页面按路由拆包：首屏只加载项目列表与外壳，其余工作台按需下载。
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(module => ({ default: module.ProjectsPage })))
@@ -23,6 +25,13 @@ const AnalysisComparison = lazy(() => import('./pages/AnalysisComparison').then(
 const PullRequestWork = lazy(() => import('./pages/PullRequestJourney').then(module => ({ default: module.PullRequestWork })))
 const FixedPRSnapshot = lazy(() => import('./pages/PullRequestJourney').then(module => ({ default: module.FixedPRSnapshot })))
 const ProjectEvents = lazy(() => import('./components/ProjectActivity').then(module => ({ default: module.ProjectEvents })))
+const MyDataPage = lazy(() => import('./pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
+const MyTrainingPage = lazy(() => import('./pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
+const MyModelsPage = lazy(() => import('./pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
+const LandingPage = lazy(() => import('./pages/LandingPage').then(module => ({ default: module.LandingPage })))
+const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })))
+const LineResearchPage = lazy(() => import('./pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
@@ -40,16 +49,37 @@ export default function App() {
 function Workspace() {
   const { route, navigate } = useRoute()
   const repositories = useRepositories()
+  const { session, setSession } = useUserSession()
   const [drafts] = useState(() => new Map<string, ReviewDraft>())
   const stateKey = route.name === 'analysis' ? `${route.repositoryId}:${route.viewSyncId}` : ''
-  // 管理工作区是独立外壳：不显示用户项目导航，也不依赖项目侧栏。
+  if (route.name === 'landing') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LandingPage navigate={navigate} session={session}/></Suspense></ErrorBoundary>
+  }
+  if (route.name === 'login') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LoginPage route={route} session={session} navigate={navigate} onUser={setSession}/></Suspense></ErrorBoundary>
+  }
+  // 研究预览是公开的独立页面，不属于用户工作区，也不参与项目分析。
+  if (route.name === 'research-line') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LineResearchPage navigate={navigate}/></Suspense></ErrorBoundary>
+  }
+  // 管理工作区是独立外壳：管理员会话由管理工作区自行校验，未登录时返回登录页。
   if (route.name === 'admin' || route.name === 'report') {
     return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><AdminWorkspace route={route} navigate={navigate}/></Suspense></ErrorBoundary>
   }
+  if (session === null) return <div className="workspace-boot"><LoadingNotice label="正在确认登录状态"/></div>
+  if (!session.authenticated) {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>
+      <LoginPage route={{ name: 'login', role: 'user', next: hashFor(route) }} session={session} navigate={navigate} onUser={setSession}/>
+    </Suspense></ErrorBoundary>
+  }
   let content
   if (route.name === 'my-reviews') content = <ProjectsPage navigate={navigate} view="reviews"/>
-  else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} navigate={navigate}/>
+  else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
+  else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-training') content = <MyTrainingPage key={route.experimentId ?? 'list'} experimentId={route.experimentId} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'profile') content = <ProfilePage navigate={navigate} onLoginRequired={requestLogin} onSessionCleared={() => setSession({ authenticated: false, username: null })}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
@@ -57,7 +87,7 @@ function Workspace() {
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>
   else if (route.name === 'retired' || route.name === 'unknown') content = <EmptyState title={route.name === 'retired' ? '这个入口已移除' : '没有找到这个页面'} description={route.name === 'retired' ? '独立工具页面已撤下。请从项目开始分析；已保存的数据仍然保留。' : '请核对地址，或返回项目继续。'}><Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>返回项目</Button></EmptyState>
   else content = <ProjectsPage navigate={navigate}/>
-  return <AppShell route={route} navigate={navigate} repositories={repositories.items}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell>
+  return <AppShell route={route} navigate={navigate} repositories={repositories.items} session={session} onSession={setSession}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell>
 }
 
 function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy-sync' }>; navigate: (route: Route, replace?: boolean) => void }) {
@@ -67,7 +97,7 @@ function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy
     apiRequest({ path: `/api/v1/repository-syncs/${encodeURIComponent(route.syncId)}`, method: 'GET', signal: controller.signal }).then(parseSync).then(job => {
       if (controller.signal.aborted) return
       if (job.syncId !== route.syncId || !job.repositoryId || job.status !== 'completed') throw new Error('该作业尚无成功分析结果。')
-      navigate({ name: 'analysis', repositoryId: job.repositoryId, viewSyncId: job.syncId, view: route.view }, true)
+      navigate(analysisRoute(job.repositoryId, job.syncId, { view: route.view }), true)
     }).catch(error => { if (!controller.signal.aborted) setError(error instanceof Error ? error.message : '分析读取失败') })
     return () => controller.abort()
   }, [route.syncId, route.view, navigate])

@@ -29,6 +29,7 @@
 /* 左：当前分析结果 */
 .pw-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line-soft); }
 .pw-detail-head h2 { margin: 0; font: 600 15px/1.4 var(--sans); letter-spacing: -.01em; color: var(--fg); }
+.pw-detail-head h2 .source-chip { margin-left: 8px; font: 500 10.5px/1 var(--sans); color: var(--fg-3); vertical-align: middle; }
 .pw-detail-head span { font: 11.5px var(--mono); color: var(--fg-3); white-space: nowrap; }
 
 .result-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
@@ -74,6 +75,7 @@
 .pw-rail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 0 18px 12px; }
 .pw-rail-head h2 { margin: 0; font: 600 13px/1.4 var(--sans); color: var(--fg); }
 .pw-rail-head span { font: 11.5px var(--mono); color: var(--fg-3); }
+.record-notice { margin: -4px 18px 10px; color: var(--accent); font-size: 11.5px; }
 .pw-rail .field-error { margin: 0 18px 10px; font-size: 12px; }
 .pw-rail .quiet-empty { margin: 4px 18px 0; font-size: 12.5px; line-height: 1.7; color: var(--fg-3); }
 .pw-rail .pager { margin: 12px 18px 0; }
@@ -336,3 +338,40 @@
   .project-dataset-facts > div:nth-child(odd) { padding-right: 0; }
   .project-dataset-wide { grid-column: auto; }
 }
+
+/* 分析口径：结果之前先说明模型、数据集、切分与留出，避免把训练分数当新提交预测 */
+.analysis-scope { display: grid; gap: 12px; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.scope-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.scope-title { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.scope-tag { flex: none; padding: 3px 8px; border-radius: 999px; font: 600 11px var(--sans); }
+.scope-tag.is-trained { border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); background: color-mix(in srgb, var(--accent) 9%, var(--card)); color: var(--accent); }
+.scope-tag.is-generic { background: var(--sunken); color: var(--fg-2); }
+.scope-title h3 { margin: 0; font: 600 14px var(--sans); }
+.scope-title p { margin: 3px 0 0; color: var(--fg-3); font: 11.5px var(--mono); overflow-wrap: anywhere; }
+.scope-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.scope-grid > div { padding: 10px 12px; border: 1px solid var(--line-soft); border-radius: 8px; }
+.scope-grid dt { color: var(--fg-3); font-size: 11px; }
+.scope-grid dd { margin: 4px 0 0; font: 600 14px var(--sans); font-variant-numeric: tabular-nums; }
+.scope-grid span { display: block; margin-top: 2px; color: var(--fg-3); font-size: 11px; }
+.scope-grid .is-holdout { border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: color-mix(in srgb, var(--accent) 4%, var(--card)); }
+.scope-metrics { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--fg-3); font-size: 11.5px; }
+.scope-metrics b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.scope-boundary, .scope-note { margin: 0; color: var(--fg-3); font: 11.5px/1.6 var(--sans); }
+.scope-view-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.scope-view-switch > span { margin-left: 4px; color: var(--fg-3); font-size: 11.5px; }
+.result-distribution { display: grid; gap: 8px; }
+.result-bars-title { margin: 0; color: var(--fg-2); font: 600 12px var(--sans); }
+.result-hero .result-bars li { grid-template-columns: 78px minmax(0, 1fr) 92px; }
+.partition-chip { flex: none; padding: 1px 6px; border-radius: 4px; background: var(--sunken); color: var(--fg-3); font: 11px var(--sans); overflow: visible; }
+.partition-chip.is-holdout { background: color-mix(in srgb, var(--accent) 10%, var(--card)); color: var(--accent); }
+.partition-chip.is-excluded { color: var(--risk-mid); }
+.result-priority .priority-subject { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.result-priority .priority-subject-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-priority-note { margin: 6px 0 0; color: var(--fg-3); font: 11px/1.6 var(--sans); }
+@media (max-width: 900px) { .scope-grid { grid-template-columns: 1fr; } .scope-head { flex-direction: column; } }
+/* 结果头：模型名可能很长，标题不压缩，右侧身份省略显示 */
+.pw-detail-head h2 { flex: none; white-space: nowrap; }
+.pw-detail-head > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.label-chip { flex: none; padding: 1px 6px; border-radius: 4px; background: var(--sunken); color: var(--fg-3); font: 11px var(--sans); }
+.label-chip.is-positive { background: color-mix(in srgb, var(--risk-high) 10%, var(--card)); color: var(--risk-high); }
+.commit-meta .partition-chip { margin-right: 6px; }

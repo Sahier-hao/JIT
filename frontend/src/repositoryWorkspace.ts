@@ -60,6 +60,41 @@ export interface AnalysisContext {
   sourceKind?: string | null
   sourceSnapshotId?: string | null
   featureSchemaVersion?: string | null
+  scope: AnalysisScope | null
+}
+
+export interface ScopePartition {
+  count: number | null
+  end: string | null
+  endEpoch: number | null
+  positives: number | null
+  start: string | null
+}
+
+export interface AnalysisScope {
+  strategy: string | null
+  model: {
+    id: string | null; name: string | null; algorithmName: string | null
+    featureSchemaVersion: string | null
+  }
+  dataset: {
+    version: string
+    quality: { rawRows: number | null; includedRows: number | null; positiveLabels: number | null }
+    labelRule: string | null
+  } | null
+  datasetError: string | null
+  split: {
+    preset: string | null
+    train: ScopePartition; validation: ScopePartition; test: ScopePartition; holdout: ScopePartition
+  } | null
+  metrics: {
+    records: number | null; positives: number | null; rocAuc: number | null
+    averagePrecision: number | null; precision: number | null; recall: number | null
+    f1: number | null; referenceAp: number | null
+  } | null
+  distributions: Record<string, RepositoryDistribution>
+  excludedCommitIds: string[]
+  limitations: string[]
 }
 
 export interface RepositoryListPage {
@@ -76,6 +111,69 @@ function count(value: unknown): number {
   const raw = finiteNumber(value)
   if (!Number.isSafeInteger(raw) || raw < 0) contractFailed('仓库计数必须为非负整数')
   return raw
+}
+
+function optionalCount(value: unknown): number | null {
+  return value == null ? null : count(value)
+}
+
+function optionalNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function scopePartition(value: unknown): ScopePartition {
+  const raw = value == null ? {} : record(value)
+  return {
+    count: optionalCount(raw.count), end: textOrNull(raw.end), endEpoch: optionalCount(raw.endEpoch),
+    positives: optionalCount(raw.positives), start: textOrNull(raw.start),
+  }
+}
+
+function analysisScope(value: unknown): AnalysisScope | null {
+  if (value == null) return null
+  const raw = record(value)
+  const model = raw.model == null ? {} : record(raw.model)
+  const datasetRaw = raw.dataset == null ? null : record(raw.dataset)
+  const quality = datasetRaw == null || datasetRaw.quality == null ? null : record(datasetRaw.quality)
+  const splitRaw = raw.split == null ? null : record(raw.split)
+  const metricsRaw = raw.metrics == null ? null : record(raw.metrics)
+  const distributionsRaw = raw.distributions == null ? {} : record(raw.distributions)
+  const parsedDistributions: Record<string, RepositoryDistribution> = {}
+  for (const key of ['all', 'trainable', 'train', 'validation', 'test', 'holdout', 'excluded']) {
+    if (distributionsRaw[key] != null) parsedDistributions[key] = distribution(distributionsRaw[key])
+  }
+  return {
+    strategy: textOrNull(raw.strategy),
+    model: {
+      id: textOrNull(model.id), name: textOrNull(model.name),
+      algorithmName: textOrNull(model.algorithmName),
+      featureSchemaVersion: textOrNull(model.featureSchemaVersion),
+    },
+    dataset: datasetRaw ? {
+      version: text(datasetRaw.version),
+      quality: {
+        rawRows: quality ? optionalCount(quality.rawRows) : null,
+        includedRows: quality ? optionalCount(quality.includedRows) : null,
+        positiveLabels: quality ? optionalCount(quality.positiveLabels) : null,
+      },
+      labelRule: textOrNull(datasetRaw.labelRule),
+    } : null,
+    datasetError: textOrNull(raw.datasetError),
+    split: splitRaw ? {
+      preset: textOrNull(splitRaw.preset),
+      train: scopePartition(splitRaw.train), validation: scopePartition(splitRaw.validation),
+      test: scopePartition(splitRaw.test), holdout: scopePartition(splitRaw.holdout),
+    } : null,
+    metrics: metricsRaw ? {
+      records: optionalCount(metricsRaw.records), positives: optionalCount(metricsRaw.positives),
+      rocAuc: optionalNumber(metricsRaw.rocAuc), averagePrecision: optionalNumber(metricsRaw.averagePrecision),
+      precision: optionalNumber(metricsRaw.precision), recall: optionalNumber(metricsRaw.recall),
+      f1: optionalNumber(metricsRaw.f1), referenceAp: optionalNumber(metricsRaw.referenceAp),
+    } : null,
+    distributions: parsedDistributions,
+    excludedCommitIds: raw.excludedCommitIds == null ? [] : textList(raw.excludedCommitIds),
+    limitations: raw.limitations == null ? [] : textList(raw.limitations),
+  }
 }
 
 function distribution(value: unknown): RepositoryDistribution {
@@ -119,6 +217,7 @@ export function parseRepositoryDetail(value: unknown): RepositoryDetail {
       datasetVersion: textOrNull(context.datasetVersion), modelId: textOrNull(context.modelId), runId: textOrNull(context.runId),
       missingMetadata: textList(context.missingMetadata),
       sourceKind: textOrNull(context.sourceKind), sourceSnapshotId: textOrNull(context.sourceSnapshotId), featureSchemaVersion: textOrNull(context.featureSchemaVersion),
+      scope: analysisScope(context.scope),
     } : null,
     modelStrategy: strategy !== null && (STRATEGY_VALUES as readonly string[]).includes(strategy)
       ? (strategy as RepositoryDetail['modelStrategy'])

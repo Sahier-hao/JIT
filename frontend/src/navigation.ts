@@ -1,9 +1,16 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 export type Route =
+  | { name: 'landing' }
+  | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
-  | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string }
+  | { name: 'my-data' }
+  | { name: 'my-training'; experimentId?: string }
+  | { name: 'my-models' }
+  | { name: 'profile' }
+  | { name: 'research-line' }
+  | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string; mode?: 'preview' }
   | { name: 'notifications' }
   | { name: 'repositories' }
   | { name: 'sources' }
@@ -13,7 +20,7 @@ export type Route =
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
   | {
       name: 'admin'
-      view: 'models' | 'datasets' | 'training' | 'comparisons' | 'experiments' | 'experiment-runs'
+      view: 'models' | 'datasets' | 'training' | 'training-experiment' | 'comparisons' | 'experiments' | 'experiment-runs'
       resourceId?: string
       version?: string
       models?: string[]
@@ -31,18 +38,39 @@ export type Route =
  * `#/projects/:id/analyses/:syncId/(commits|plan)`。旧的 `#/repositories/...` 与
  * `#/connect` 继续可解析，已有书签不会断。
  */
+export function analysisRoute(repositoryId: string, viewSyncId: string, options: { commitId?: string; view?: 'commits' | 'plan' } = {}): Route {
+  return { name: 'analysis', repositoryId, viewSyncId, view: options.view ?? 'commits', ...(options.commitId ? { commitId: options.commitId } : {}) }
+}
+
+export function repositoryRoute(repositoryId: string, tab?: 'overview' | 'prs' | 'trends' | 'analyses', viewId?: string): Route {
+  return { name: 'repository', repositoryId, ...(tab ? { tab } : {}), ...(tab === 'trends' && viewId ? { viewId } : {}) }
+}
+
 export function parseHash(hash: string): Route {
   try {
     const [rawPath, query = ''] = hash.replace(/^#/, '').split('?')
     const params = new URLSearchParams(query)
     const snapshotId = params.get('snapshotId') || undefined
+    const mode = params.get('mode') === 'preview' ? 'preview' as const : undefined
     const path = rawPath.replace(/\/+$/, '')
     const parts = path.replace(/^\//, '').split('/').map(decodeURIComponent)
     if (parts.some(part => part.includes('/') || part.includes('\\'))) return { name: 'unknown', hash }
-    if (!path || path === '/') return { name: 'repositories' }
+    if (!path || path === '/') return { name: 'landing' }
+    if (path === '/login') {
+      const role = params.get('role') === 'admin' ? 'admin' as const : params.get('role') === 'user' ? 'user' as const : undefined
+      const next = params.get('next') || undefined
+      return { name: 'login', ...(role ? { role } : {}), ...(next ? { next } : {}) }
+    }
+    if (path === '/welcome') return { name: 'landing' }
     if (path === '/reviews') return { name: 'my-reviews' }
+    if (path === '/my-data') return { name: 'my-data' }
+    if (path === '/my-training') return { name: 'my-training' }
+    if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
+    if (path === '/my-models') return { name: 'my-models' }
+    if (path === '/profile') return { name: 'profile' }
+    if (path === '/research/line-model') return { name: 'research-line' }
     if (path === '/notifications') return { name: 'notifications' }
-    if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]), ...(snapshotId ? { snapshotId } : {}) }
+    if (parts[0] === 'reviews' && parts.length === 4 && /^[A-Za-z0-9_.-]+$/.test(parts[1]) && /^[A-Za-z0-9_.-]+$/.test(parts[2]) && /^[1-9]\d*$/.test(parts[3])) return { name: 'pr-work', owner: parts[1], repositoryName: parts[2], number: Number(parts[3]), ...(snapshotId ? { snapshotId } : {}), ...(mode ? { mode } : {}) }
     if (['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
     if (['/projects/new', '/connect', '/sources'].includes(path)) return { name: 'sources' }
     const comparisonModels = (params.get('models') ?? '').split(',').map(value => value.trim()).filter(Boolean)
@@ -52,6 +80,7 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'admin' && parts[1] === 'datasets' && [3, 4].includes(parts.length)) return { name: 'admin', view: 'datasets', resourceId: parts[2], ...(parts[3] ? { version: parts[3] } : {}) }
     if (path === '/admin/training') return { name: 'admin', view: 'training' }
     if (parts[0] === 'admin' && parts[1] === 'training' && parts.length === 3) return { name: 'admin', view: 'training', resourceId: parts[2] }
+    if (parts[0] === 'admin' && parts[1] === 'training-experiment' && parts.length === 3) return { name: 'admin', view: 'training-experiment', resourceId: parts[2] }
     if (path === '/admin/comparisons') return { name: 'admin', view: 'comparisons', ...(comparisonModels.length ? { models: comparisonModels } : {}) }
     if (path === '/admin/experiment-runs') return {
       name: 'admin', view: 'experiment-runs',
@@ -70,7 +99,7 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'admin' && parts[1] === 'reports' && parts.length === 4 && ['overview', 'commits', 'trends'].includes(parts[3])) return { name: 'report', runId: parts[2], view: parts[3] as 'overview' | 'commits' | 'trends' }
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
     const projectRoot = parts[0] === 'projects' || parts[0] === 'repositories'
-    if (projectRoot && parts[2] === 'prs' && parts.length === 6 && /^[A-Za-z0-9_.-]+$/.test(parts[3]) && /^[A-Za-z0-9_.-]+$/.test(parts[4]) && /^[1-9]\d*$/.test(parts[5])) return { name: 'pr-work', repositoryId: parts[1], owner: parts[3], repositoryName: parts[4], number: Number(parts[5]), ...(snapshotId ? { snapshotId } : {}) }
+    if (projectRoot && parts[2] === 'prs' && parts.length === 6 && /^[A-Za-z0-9_.-]+$/.test(parts[3]) && /^[A-Za-z0-9_.-]+$/.test(parts[4]) && /^[1-9]\d*$/.test(parts[5])) return { name: 'pr-work', repositoryId: parts[1], owner: parts[3], repositoryName: parts[4], number: Number(parts[5]), ...(snapshotId ? { snapshotId } : {}), ...(mode ? { mode } : {}) }
     if (projectRoot && parts.length === 3 && ['overview', 'prs', 'trends', 'analyses'].includes(parts[2])) return { name: 'repository', repositoryId: parts[1], tab: parts[2] as 'overview' | 'prs' | 'trends' | 'analyses' }
     if (projectRoot && parts.length === 4 && parts[2] === 'trends') return { name: 'repository', repositoryId: parts[1], tab: 'trends', viewId: parts[3] }
     if (projectRoot && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
@@ -87,8 +116,26 @@ export function parseHash(hash: string): Route {
 }
 export function hashFor(route: Route): string {
   switch (route.name) {
+    case 'landing': return '#/'
+    case 'login': {
+      const params = new URLSearchParams()
+      if (route.role) params.set('role', route.role)
+      if (route.next) params.set('next', route.next)
+      return params.size ? `#/login?${params}` : '#/login'
+    }
     case 'my-reviews': return '#/reviews'
-    case 'pr-work': return `${route.repositoryId ? `#/projects/${encodeURIComponent(route.repositoryId)}/prs` : '#/reviews'}/${encodeURIComponent(route.owner)}/${encodeURIComponent(route.repositoryName)}/${route.number}${route.snapshotId ? `?snapshotId=${encodeURIComponent(route.snapshotId)}` : ''}`
+    case 'my-data': return '#/my-data'
+    case 'my-training': return route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
+    case 'my-models': return '#/my-models'
+    case 'profile': return '#/profile'
+    case 'research-line': return '#/research/line-model'
+    case 'pr-work': {
+      const base = `${route.repositoryId ? `#/projects/${encodeURIComponent(route.repositoryId)}/prs` : '#/reviews'}/${encodeURIComponent(route.owner)}/${encodeURIComponent(route.repositoryName)}/${route.number}`
+      const query = new URLSearchParams()
+      if (route.snapshotId) query.set('snapshotId', route.snapshotId)
+      if (route.mode) query.set('mode', route.mode)
+      return query.size ? `${base}?${query}` : base
+    }
     case 'notifications': return '#/notifications'
     case 'repositories': return '#/projects'
     case 'sources': return '#/projects/new'
@@ -101,6 +148,7 @@ export function hashFor(route: Route): string {
       if (route.view === 'models' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'datasets' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}${route.version ? `/${encodeURIComponent(route.version)}` : ''}`
       if (route.view === 'training' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
+      if (route.view === 'training-experiment' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'experiments' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'experiment-runs' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'comparisons' && route.models?.length) return `${base}?models=${encodeURIComponent(route.models.join(','))}`
@@ -123,9 +171,6 @@ export function useRoute() {
   const navigate = useNavigate()
   // HashRouter 把 `#/projects/...` 解析为 pathname；解析器仍以带 `#` 的地址工作，旧解析逻辑不变。
   const route = parseHash(`#${location.pathname}${location.search}`)
-  useEffect(() => {
-    if (location.pathname === '/' && !location.search) navigate(hashFor({ name: 'repositories' }).replace(/^#/, ''), { replace: true })
-  }, [location.pathname, location.search, navigate])
   const go = useCallback((next: Route, replace = false) => {
     navigate(hashFor(next).replace(/^#/, ''), { replace })
   }, [navigate])

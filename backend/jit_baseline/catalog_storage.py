@@ -41,7 +41,11 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (28, Path(__file__).parent / 'migrations/028_sync_algorithm.sql'),
               (29, Path(__file__).parent / 'migrations/029_training_partition_diagnostics.sql'),
               (30, Path(__file__).parent / 'migrations/030_split_presets.sql'),
-              (31, Path(__file__).parent / 'migrations/031_dataset_build_tasks.sql'))
+              (31, Path(__file__).parent / 'migrations/031_dataset_build_tasks.sql'),
+              (32, Path(__file__).parent / 'migrations/032_label_evidence_lines.sql'),
+              (33, Path(__file__).parent / 'migrations/033_training_experiments.sql'),
+              (34, Path(__file__).parent / 'migrations/034_user_accounts_and_ownership.sql'),
+              (35, Path(__file__).parent / 'migrations/035_user_profile.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -202,9 +206,14 @@ class CatalogStorage:
             evidence = [item for item in (collection.get('labelEvidence') or [])
                         if item.get('introducedCommit') in included
                         and item.get('fixCommit') and item.get('path')]
-            db.executemany('INSERT OR IGNORE INTO commit_label_evidence VALUES (?,?,?,?,?,?)',
+            db.executemany('INSERT OR IGNORE INTO commit_label_evidence '
+                           '(dataset_version, commit_id, fix_commit_id, path, fix_time, rule_version, '
+                           'line_ranges_json, parent_ranges_json) VALUES (?,?,?,?,?,?,?,?)',
                            [(version, item['introducedCommit'], item['fixCommit'], item['path'],
-                             item['fixTime'], label_version or LABEL_RULE) for item in evidence])
+                             item['fixTime'], label_version or LABEL_RULE,
+                             json.dumps(item['lineRanges']) if item.get('lineRanges') else None,
+                             json.dumps(item['parentRanges']) if item.get('parentRanges') else None)
+                            for item in evidence])
             db.execute('INSERT INTO import_run VALUES (?,?,?,?,?,?,?)',
                        (uuid.uuid4().hex, version, 'success', len(records), None, started, utc_now()))
         return {'datasetVersion': version, 'created': True, 'commits': len(records)}
@@ -263,11 +272,15 @@ class CatalogStorage:
 
     @staticmethod
     def _evidence(db, version, commit_id):
-        rows = db.execute('SELECT fix_commit_id, path, fix_time, rule_version FROM commit_label_evidence '
+        rows = db.execute('SELECT fix_commit_id, path, fix_time, rule_version, '
+                          'line_ranges_json, parent_ranges_json FROM commit_label_evidence '
                           'WHERE dataset_version=? AND commit_id=? ORDER BY fix_time, fix_commit_id, path',
                           (version, commit_id)).fetchall()
         return [{'fixCommit': row['fix_commit_id'], 'path': row['path'],
-                 'fixTime': row['fix_time'], 'ruleVersion': row['rule_version']} for row in rows]
+                 'fixTime': row['fix_time'], 'ruleVersion': row['rule_version'],
+                 'lineRanges': json.loads(row['line_ranges_json']) if row['line_ranges_json'] else None,
+                 'parentRanges': json.loads(row['parent_ranges_json']) if row['parent_ranges_json'] else None}
+                for row in rows]
 
     @staticmethod
     def _summary_row(row, module):
@@ -293,6 +306,44 @@ class CatalogStorage:
                  'manifest': json.loads(row['manifest_json']), 'manifestSha256': row['manifest_sha256'],
                  'sourceSha256': row['source_sha256'], 'rowCount': row['row_count'],
                  'importedAt': row['created_at']} for row in rows]
+
+    def add_dataset_owner(self, version, username, *, limit=None):
+        """记录数据集所有者；全局共享版本没有所有者行。"""
+        if not isinstance(username, str) or not username:
+            raise BaselineError('INPUT_INVALID', '缺少数据集所有者')
+        now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        with self.connection(write=True) as db:
+            exists = db.execute(
+                'SELECT 1 FROM dataset_owner WHERE dataset_version=? AND username=?',
+                (version, username)).fetchone()
+            if exists:
+                return False
+            if limit is not None:
+                count = db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?',
+                                   (username,)).fetchone()[0]
+                if count >= limit:
+                    raise BaselineError(
+                        'QUOTA_EXCEEDED',
+                        f'每人最多保留 {limit} 个数据版本，请先清理不再使用的版本')
+            db.execute('INSERT INTO dataset_owner VALUES (?,?,?)', (version, username, now))
+        return True
+
+    def dataset_owners(self, version):
+        with self.connection() as db:
+            return [row[0] for row in db.execute(
+                'SELECT username FROM dataset_owner WHERE dataset_version=? ORDER BY username',
+                (version,))]
+
+    def dataset_owner_count(self, username):
+        with self.connection() as db:
+            return db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?',
+                              (username,)).fetchone()[0]
+
+    def user_datasets(self, username):
+        with self.connection() as db:
+            return [row[0] for row in db.execute(
+                'SELECT dataset_version FROM dataset_owner WHERE username=? ORDER BY created_at DESC',
+                (username,))]
 
     def dataset(self, version):
         with self.connection() as db:
@@ -340,13 +391,17 @@ class CatalogStorage:
             evidence = self._evidence(db, version, commit_id)
         return self._commit_row(row, features[commit_id], meta, evidence)
 
-    def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False):
+    def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False, version=None):
         """按已经持久化的文件或模块引用查提交（CMP-03）；测试用查询入口。"""
         with self.connection() as db:
             query = ('SELECT c.* FROM commit_record c JOIN modified_entity e '
                      'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
-                     'WHERE e.entity_type=? AND e.entity_value=? ORDER BY c.author_time, c.commit_id')
+                     'WHERE e.entity_type=? AND e.entity_value=?')
             params = [entity_type, entity_value]
+            if version is not None:
+                query += ' AND c.dataset_version=?'
+                params.append(version)
+            query += ' ORDER BY c.author_time, c.commit_id'
             if limit is not None:
                 query += ' LIMIT ? OFFSET ?'
                 params.extend((limit, offset))
@@ -358,13 +413,16 @@ class CatalogStorage:
             meta = self._label_meta(db, rows[0]['dataset_version']) if rows else None
         return [self._commit_row(row, features[row['commit_id']], meta) for row in rows]
 
-    def count_by_entity(self, entity_type, entity_value):
+    def count_by_entity(self, entity_type, entity_value, version=None):
         with self.connection() as db:
-            return db.execute(
-                'SELECT COUNT(*) FROM commit_record c JOIN modified_entity e '
-                'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
-                'WHERE e.entity_type=? AND e.entity_value=?',
-                (entity_type, entity_value)).fetchone()[0]
+            query = ('SELECT COUNT(*) FROM commit_record c JOIN modified_entity e '
+                     'ON e.dataset_version = c.dataset_version AND e.commit_id = c.commit_id '
+                     'WHERE e.entity_type=? AND e.entity_value=?')
+            params = [entity_type, entity_value]
+            if version is not None:
+                query += ' AND c.dataset_version=?'
+                params.append(version)
+            return db.execute(query, params).fetchone()[0]
 
     def import_runs(self, version):
         with self.connection() as db:

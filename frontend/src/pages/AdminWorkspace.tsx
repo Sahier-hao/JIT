@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '../apiClient'
 import { record } from '../apiContract'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import { Icon, type IconName } from '../Icon'
-import type { Route } from '../navigation'
+import { hashFor, type Route } from '../navigation'
 import { VerificationReport } from '../VerificationReport'
 import { AppearanceControl } from '../components/AppearanceControl'
-import { Dialog } from '../ui/dialog'
-import { Button, Input, PasswordInput } from '../ui/controls'
+import { Button } from '../ui/controls'
 import { AdminComparisonPage } from './admin/AdminComparisonPage'
 import { AdminDatasetsPage } from './admin/AdminDatasetsPage'
 import { AdminExperimentDetailPage } from './admin/AdminExperimentDetailPage'
@@ -16,6 +15,7 @@ import { AdminExperimentRunsPage } from './admin/AdminExperimentRunsPage'
 import { AdminModelDetailPage } from './admin/AdminModelDetailPage'
 import { AdminModelsPage } from './admin/AdminModelsPage'
 import { AdminTrainingPage } from './admin/AdminTrainingPage'
+import { AdminTrainingExperimentPage } from './admin/AdminTrainingExperimentPage'
 
 interface Session { authenticated: boolean; setupRequired: boolean; username: string | null }
 
@@ -32,8 +32,8 @@ const NAV: { view: 'models' | 'datasets' | 'training' | 'experiment-runs' | 'com
   { view: 'experiments', label: '多项目实验', icon: 'trend' },
 ]
 
-const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'experiment-runs' | 'comparisons' | 'experiments', string> = {
-  models: '模型管理', datasets: '数据集', training: '训练任务', 'experiment-runs': '实验登记', comparisons: '模型比较', experiments: '多项目实验',
+const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'training-experiment' | 'experiment-runs' | 'comparisons' | 'experiments', string> = {
+  models: '模型管理', datasets: '数据集', training: '训练任务', 'training-experiment': '训练实验', 'experiment-runs': '实验登记', comparisons: '模型比较', experiments: '多项目实验',
 }
 
 export function AdminWorkspace({ route, navigate }: {
@@ -59,19 +59,22 @@ export function AdminWorkspace({ route, navigate }: {
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener('focus', read) }
   }, [revision])
 
+  useEffect(() => {
+    if (session && !session.authenticated) navigate({ name: 'login', role: 'admin', next: hashFor(route) })
+  }, [session, navigate, route])
   if (!session) return <div className="admin-boot">
     {sessionError
       ? <EmptyState title="管理服务暂时不可用" description={sessionError}><Button onClick={() => setRevision(value => value + 1)}>重新连接</Button></EmptyState>
       : <LoadingNotice label="正在检查管理会话"/>}
   </div>
 
-  if (!session.authenticated) return <AdminSignIn setup={session.setupRequired} onSignedIn={setSession} onClose={() => navigate({ name: 'repositories' })}/>
+  if (!session.authenticated) return <div className="admin-boot"><LoadingNotice label="正在前往管理员登录"/></div>
 
   async function logout() {
     try {
       await apiRequest({ path: '/api/admin/logout', method: 'POST' })
       expired()
-      navigate({ name: 'repositories' })
+      navigate({ name: 'login', role: 'admin' })
     } catch (error) {
       setSessionError(error instanceof Error ? error.message : '退出失败')
     }
@@ -84,6 +87,7 @@ export function AdminWorkspace({ route, navigate }: {
   else if (route.view === 'models') content = <AdminModelsPage navigate={navigate} expired={expired}/>
   else if (route.view === 'datasets') content = <AdminDatasetsPage dataset={route.resourceId} version={route.version} navigate={navigate} expired={expired}/>
   else if (route.view === 'training') content = <AdminTrainingPage taskId={route.resourceId} navigate={navigate} expired={expired}/>
+  else if (route.view === 'training-experiment' && route.resourceId) content = <AdminTrainingExperimentPage experimentId={route.resourceId} navigate={navigate} expired={expired}/>
   else if (route.view === 'experiment-runs') content = <AdminExperimentRunsPage candidateId={route.resourceId} filters={{
     registrationState: route.registrationState,
     compatibility: route.compatibility,
@@ -96,7 +100,7 @@ export function AdminWorkspace({ route, navigate }: {
   return <div className="admin-frame">
     <a className="skip-link" href="#admin-main">跳到主要内容</a>
     <aside className="admin-rail">
-      <button className="admin-rail-brand" onClick={() => navigate({ name: 'repositories' })}><span className="brand-glyph"><Icon name="logo" size={22}/></span><span>JIT<span className="brand-caption">REVIEW</span></span></button>
+      <button className="admin-rail-brand" onClick={() => navigate({ name: 'landing' })}><span className="brand-glyph"><Icon name="logo" size={22}/></span><span>JIT<span className="brand-caption">REVIEW</span></span></button>
       <nav className="admin-nav" aria-label="管理导航">
         {NAV.map(item => <button key={item.view} aria-current={active(item.view)} onClick={() => navigate({ name: 'admin', view: item.view })}><Icon name={item.icon} size={17}/><span>{item.label}</span></button>)}
         <button aria-current={route.name === 'report' ? 'page' : undefined} onClick={() => navigate({ name: 'report', view: 'overview' })}><Icon name="download" size={17}/><span>验证报告</span></button>
@@ -105,7 +109,6 @@ export function AdminWorkspace({ route, navigate }: {
         <div className="admin-account"><span className="admin-account-name">{label(session.username, '管理员')}</span><span className="admin-account-role">管理员</span></div>
         <div className="admin-rail-actions">
           <Button variant="ghost" size="sm" onClick={() => void logout()}>退出管理</Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })}>返回用户工作区</Button>
         </div>
       </div>
     </aside>
@@ -119,56 +122,5 @@ export function AdminWorkspace({ route, navigate }: {
         {content}
       </main>
     </div>
-  </div>
-}
-
-function AdminSignIn({ setup, onSignedIn, onClose }: {
-  setup: boolean
-  onSignedIn: (session: Session) => void
-  onClose: () => void
-}) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmation, setConfirmation] = useState('')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const locked = useRef(false)
-  async function submit(event: FormEvent) {
-    event.preventDefault()
-    if (locked.current) return
-    if (setup && password !== confirmation) { setError('两次密码输入不一致'); return }
-    locked.current = true
-    setBusy(true)
-    setError('')
-    try {
-      const value = record(await apiRequest({ path: `/api/admin/${setup ? 'setup' : 'login'}`, method: 'POST', body: { username, password } }))
-      if (value.authenticated !== true) throw new Error('未能确认登录，请重试')
-      onSignedIn({ authenticated: true, username: label(value.username), setupRequired: false })
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : '登录失败')
-    } finally {
-      locked.current = false
-      setBusy(false)
-      setPassword('')
-      setConfirmation('')
-    }
-  }
-  return <div className="admin-auth-stage">
-    <div className="admin-auth-masthead"><span className="brand-glyph"><Icon name="logo" size={22}/></span><span className="admin-auth-wordmark">JIT REVIEW</span><span className="admin-auth-divider"/><span className="admin-auth-section">管理工作区</span></div>
-    <Dialog
-      open
-      onOpenChange={open => { if (!open) onClose() }}
-      width={430}
-      title={<span className="admin-auth-title">{setup ? '建立管理员账户' : '管理员登录'}</span>}
-    >
-      <form className="admin-auth-form" onSubmit={submit}>
-        <label className="admin-field"><span className="admin-field-label">账户名</span><Input aria-label="管理员账户名" autoComplete="username" maxLength={80} value={username} onChange={event => setUsername(event.target.value)} autoFocus/></label>
-        <label className="admin-field"><span className="admin-field-label">密码</span><PasswordInput aria-label="管理员密码" autoComplete={setup ? 'new-password' : 'current-password'} maxLength={256} value={password} onChange={event => setPassword(event.target.value)}/></label>
-        {setup ? <label className="admin-field"><span className="admin-field-label">确认密码</span><PasswordInput aria-label="确认管理员密码" autoComplete="new-password" value={confirmation} onChange={event => setConfirmation(event.target.value)}/></label> : null}
-        {setup ? <p className="admin-field-note">密码至少 12 位。</p> : null}
-        {error ? <p className="field-error" role="alert">{error}</p> : null}
-        <Button variant="primary" type="submit" loading={busy} block>{setup ? '建立账户并进入' : '登录'}</Button>
-      </form>
-    </Dialog>
   </div>
 }

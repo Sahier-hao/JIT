@@ -1,0 +1,319 @@
+{
+  "schema": "line-model-report-v2",
+  "inputs": [
+    "D:\\tmp\\measure\\sub2api-same.jsonl"
+  ],
+  "inputFiles": [
+    {
+      "path": "D:\\tmp\\measure\\sub2api-same.jsonl",
+      "sha256": "3debc7289d132cbe5db1d41b762a14265d62f16581b08d3d4368b2bad04041df",
+      "bytes": 6936285,
+      "rows": 6964,
+      "datasetVersions": [
+        "measure-sub2api"
+      ],
+      "repos": [
+        "sub2api"
+      ],
+      "languages": [
+        "css",
+        "go",
+        "other",
+        "shell",
+        "sql",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-sub2api",
+        "positives": 3482,
+        "negatives": 3482,
+        "positiveCommits": 178,
+        "negativeCommits": 176,
+        "files": 168,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 12,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    }
+  ],
+  "split": {
+    "kind": "commit",
+    "testRepo": null,
+    "seed": 42,
+    "trainCommits": 94,
+    "testCommits": 24,
+    "trainRepos": [
+      "sub2api"
+    ],
+    "testRepos": [
+      "sub2api"
+    ]
+  },
+  "languages": [
+    "go"
+  ],
+  "samples": {
+    "total": 4864,
+    "train": 4114,
+    "test": 750,
+    "positives": 2543,
+    "negatives": 2321,
+    "trainPositives": 2211,
+    "testPositives": 332
+  },
+  "features": {
+    "dimension": 30020,
+    "text": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "max_features": 30000,
+      "sublinear_tf": true
+    },
+    "numeric": [
+      "lineLength",
+      "indent",
+      "blank",
+      "comment",
+      "fileLines",
+      "lineRatio",
+      "if",
+      "for",
+      "while",
+      "return",
+      "try",
+      "catch",
+      "assign",
+      "compare",
+      "call",
+      "member",
+      "index",
+      "identifier",
+      "digit"
+    ],
+    "languages": [
+      "go"
+    ]
+  },
+  "model": {
+    "type": "logistic-regression",
+    "classWeight": "balanced",
+    "solver": "liblinear",
+    "maxIter": 2000,
+    "threshold": 0.5,
+    "includeCommitFeatures": false,
+    "repoBalance": true,
+    "positionFeatures": true,
+    "textFeatures": true
+  },
+  "metrics": {
+    "rocAuc": 0.6634576583847351,
+    "prAuc": 0.6323076620385293,
+    "brier": 0.23407286325632193,
+    "threshold": 0.5,
+    "precision": 0.6374269005847953,
+    "recall": 0.32831325301204817,
+    "f1": 0.43339960238568587,
+    "trueNegative": 356,
+    "falsePositive": 62,
+    "falseNegative": 223,
+    "truePositive": 109
+  },
+  "referenceBaselines": {
+    "randomPrAuc": 0.44266666666666665,
+    "note": "PR-AUC 的随机基线等于测试集正例率；排序模型必须明显高于它才有意义。"
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 24,
+    "candidateLines": 750,
+    "positives": 332,
+    "topKHit": {
+      "top1": 0.5,
+      "top3": 0.875,
+      "top5": 0.9166666666666666,
+      "top10": 1.0
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.286144578313253,
+    "recallAt20PercentPerCommitMean": 0.43024510428888835,
+    "ifaMean": 1.2083333333333333,
+    "ifaMedian": 0.5
+  },
+  "byRepo": {
+    "sub2api": {
+      "samples": 750,
+      "positives": 332,
+      "rocAuc": 0.6634576583847351,
+      "prAuc": 0.6323076620385293,
+      "brier": 0.23407286325632193,
+      "threshold": 0.5,
+      "precision": 0.6374269005847953,
+      "recall": 0.32831325301204817,
+      "f1": 0.43339960238568587,
+      "trueNegative": 356,
+      "falsePositive": 62,
+      "falseNegative": 223,
+      "truePositive": 109
+    }
+  },
+  "byLanguage": {
+    "go": {
+      "samples": 750,
+      "positives": 332,
+      "rocAuc": 0.6634576583847351,
+      "prAuc": 0.6323076620385293,
+      "brier": 0.23407286325632193,
+      "threshold": 0.5,
+      "precision": 0.6374269005847953,
+      "recall": 0.32831325301204817,
+      "f1": 0.43339960238568587,
+      "trueNegative": 356,
+      "falsePositive": 62,
+      "falseNegative": 223,
+      "truePositive": 109
+    }
+  },
+  "manifest": {
+    "schema": "line-experiment-manifest-v1",
+    "generatedAt": "2026-11-08T16:41:35.726210+00:00",
+    "inputs": [
+      {
+        "path": "D:\\tmp\\measure\\sub2api-same.jsonl",
+        "sha256": "3debc7289d132cbe5db1d41b762a14265d62f16581b08d3d4368b2bad04041df",
+        "bytes": 6936285,
+        "rows": 6964,
+        "datasetVersions": [
+          "measure-sub2api"
+        ],
+        "repos": [
+          "sub2api"
+        ],
+        "languages": [
+          "css",
+          "go",
+          "other",
+          "shell",
+          "sql",
+          "typescript",
+          "yaml"
+        ],
+        "sampling": {
+          "schema": "line-szz-v1",
+          "datasetVersion": "measure-sub2api",
+          "positives": 3482,
+          "negatives": 3482,
+          "positiveCommits": 178,
+          "negativeCommits": 176,
+          "files": 168,
+          "contextLines": 2,
+          "seed": 42,
+          "negativesPerPositive": 1,
+          "negativeMode": "same-file",
+          "missingLines": 12,
+          "missingDiffs": 0,
+          "skippedFiles": 0,
+          "truncated": false,
+          "negativeShortfall": 0,
+          "negativeFallback": 0
+        }
+      }
+    ],
+    "split": {
+      "kind": "commit",
+      "seed": 42,
+      "testRepo": null,
+      "trainCommits": 94,
+      "testCommits": 24,
+      "trainRepos": [
+        "sub2api"
+      ],
+      "testRepos": [
+        "sub2api"
+      ],
+      "memberSha256": {
+        "train": "13dda59abb23d6c10d15e9c4a34b07f317a0513dd226bc25bc4123bf2221faeb",
+        "test": "22acb8bd4fe679e661b9e60e4cb5c9d1cef6716edb852ab9fa5844e807c1d7a1"
+      }
+    },
+    "sampling": {
+      "negativeMode": "same-file",
+      "datasetSeed": 42,
+      "source": [
+        "D:\\tmp\\measure\\sub2api-same.jsonl"
+      ]
+    },
+    "features": {
+      "dimension": 30020,
+      "text": {
+        "analyzer": "char_wb",
+        "ngram_range": [
+          3,
+          5
+        ],
+        "min_df": 2,
+        "max_features": 30000,
+        "sublinear_tf": true
+      },
+      "numeric": [
+        "lineLength",
+        "indent",
+        "blank",
+        "comment",
+        "fileLines",
+        "lineRatio",
+        "if",
+        "for",
+        "while",
+        "return",
+        "try",
+        "catch",
+        "assign",
+        "compare",
+        "call",
+        "member",
+        "index",
+        "identifier",
+        "digit"
+      ],
+      "languages": [
+        "go"
+      ]
+    },
+    "model": {
+      "type": "logistic-regression",
+      "classWeight": "balanced",
+      "solver": "liblinear",
+      "maxIter": 2000,
+      "threshold": 0.5,
+      "includeCommitFeatures": false,
+      "repoBalance": true,
+      "positionFeatures": true,
+      "textFeatures": true
+    },
+    "environment": {
+      "python": "3.14.2",
+      "sklearn": "1.9.1",
+      "numpy": "2.5.3"
+    },
+    "command": "python -m jit_baseline.cli line-train --input D:\\tmp\\measure\\sub2api-same.jsonl --output <report>.json --seed 42 --language go",
+    "limitations": [
+      "历史 SZZ 弱标签，正例不是人工确认的真值；未观测行不等于无缺陷。",
+      "负例来自抽样列表，定位指标是代理值，不能代表完整候选集上的审查收益。",
+      "大型原始 JSONL 不入版本库，复现需按 inputs 的 sha256 与获取说明准备同一份数据。"
+    ]
+  }
+}

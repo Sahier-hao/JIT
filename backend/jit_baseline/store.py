@@ -44,6 +44,12 @@ def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
         manifest_path = Path(room) / f"{name}.json"
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
+            if manifest_path.exists():
+                existing = datasets.load_manifest(manifest_path)
+                declared = existing.get("file") or {}
+                if declared.get("sha256") != digest or declared.get("bytes") != len(blob):
+                    last = f"同名描述文件描述了不同内容：{name}"
+                    continue
             if not path.exists():
                 temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
                 try:
@@ -55,12 +61,14 @@ def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
                 finally:
                     temporary.unlink(missing_ok=True)
             if path.read_bytes() != blob:
-                raise BaselineError("DATASET_EXISTS", f"已有 CSV 内容不同，不覆盖：{name}")
+                last = f"已有 CSV 内容不同：{name}"
+                continue
             try:
                 registered = register(path, dataset=dataset, version=name, **kwargs)
             except BaselineError as exc:
                 if exc.code != "DATASET_EXISTS" or not manifest_path.exists():
                     raise
+                # 描述文件已确认描述本次 CSV 内容，按幂等复用处理。
                 entry = {"dataset": dataset, "version": name,
                          "path": datasets.manifest_relative(manifest_path),
                          "csvPath": datasets.manifest_relative(path),
@@ -164,6 +172,7 @@ def dataset_list(registered):
             "timeRange": manifest["timeRange"], "quality": manifest["quality"],
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
+            "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
             "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
@@ -180,6 +189,7 @@ def version_view(registered, name):
                           "timeRange": manifest["timeRange"], "quality": manifest["quality"],
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
+                          "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
                           "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}

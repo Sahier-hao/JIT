@@ -117,7 +117,7 @@ def load_projects(dataset_manifests):
     if len(labels) != 1 or next(iter(label_semantics(manifest))) != "kind":
         raise BaselineError("PROJECT_COHORT_INVALID", "四个项目必须使用同一标签规则")
     semantics = label_semantics(manifests[0])
-    if semantics["kind"] != "simplified-szz":
+    if semantics["kind"] not in ("simplified-szz", "szz-line", "szz-full"):
         raise BaselineError("PROJECT_COHORT_INVALID", "多项目 Git 训练要求简化 SZZ 标签")
     if manifests[0]["schemaName"] != "kamei14-git-v1":
         raise BaselineError("PROJECT_COHORT_INVALID", "多项目 Git 训练要求 kamei14-git-v1")

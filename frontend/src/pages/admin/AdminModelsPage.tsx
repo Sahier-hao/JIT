@@ -147,7 +147,7 @@ export function AdminModelsPage({ navigate, expired }: {
     <h2 className="admin-section-title">本机模型产物</h2>
     <div className="admin-candidates">{candidates.map(candidate => <article className="admin-candidate" key={label(candidate.candidateId)}>
       <div><strong>{label(candidate.displayName)}</strong><p>{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div>
-      <Button disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '校验并登记'}</Button>
+      <Button disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '登记本机产物'}</Button>
     </article>)}</div>
     {!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型</p> : null}
   </section>

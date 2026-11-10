@@ -875,3 +875,41 @@ def test_holdout_earlier_than_every_record_fails(tmp_path):
         build_run(BACKEND / "data/openstack", tmp_path / "too-early", holdout=1)
     assert error.value.code == "SPLIT_INVALID"
     assert "没有可训练记录" in str(error.value)
+
+
+def test_explicit_parameters_are_declared_and_change_run_config(tmp_path):
+    from jit_baseline.algorithms import PARAMETER_CONTRACT
+    from jit_baseline.artifacts import build_run, read_json
+    target = tmp_path / "parameter-run"
+    manifest = build_run(BACKEND / "data/openstack", target,
+                         algorithm="logistic-regression-l2-v1", params={"C": 0.5})
+    assert manifest["config"]["model"]["C"] == 0.5
+    assert manifest["config"]["model"]["max_iter"] == 1000
+    assert manifest["config"]["parameterContract"] == PARAMETER_CONTRACT
+    summary = read_json(target / "summary.json")
+    assert summary["parameters"]["C"] == 0.5
+    assert summary["parameterContract"] == PARAMETER_CONTRACT
+    assert "C=0.5" in summary["model"]["name"]
+
+
+def test_default_parameters_keep_legacy_run_config(tmp_path):
+    from jit_baseline.artifacts import build_run
+    target = tmp_path / "default-run"
+    manifest = build_run(BACKEND / "data/openstack", target,
+                         algorithm="logistic-regression-l2-v1")
+    assert "parameterContract" not in manifest["config"]
+    assert manifest["config"]["model"]["C"] == 1.0
+
+
+def test_declared_parameters_are_checked_against_the_contract():
+    from jit_baseline.algorithms import ALGORITHMS, validate_declared_params
+    from jit_baseline.data import BaselineError
+    method = "logistic-regression-l2-v1"
+    declared = dict(ALGORITHMS[method]["params"], C=0.5)
+    assert validate_declared_params(method, declared) is True
+    with pytest.raises(BaselineError):
+        validate_declared_params(method, dict(declared, C=0))
+    with pytest.raises(BaselineError):
+        validate_declared_params(method, dict(declared, threads=4))
+    with pytest.raises(BaselineError):
+        validate_declared_params(method, {"C": 0.5})

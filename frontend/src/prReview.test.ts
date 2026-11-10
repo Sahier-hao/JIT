@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { adoptVersion, createWork, exportReview, mergeBackup, parseBackup, readWorks, saveWork, setFileState, parsePatchLines } from './prReview'
+import { adoptVersion, candidateQuestion, createWork, exportReview, mergeBackup, parseBackup, readWorks, saveWork, setFileState, parsePatchLines } from './prReview'
 import { snapshot } from './prReview.fixture'
 
 
@@ -64,4 +64,21 @@ it('backup preserves missing notes and requires conflict choices', () => {
   expect(mergeBackup(current, parsed, {}).work.rounds.v1.deliveryDraft).toEqual(current.rounds.v1.deliveryDraft)
   expect(merged.conflicts.length).toBeGreaterThan(0)
   expect(() => parseBackup(JSON.stringify({ format: 'jit-pr-review-v1', work: backup }), 'other/pr#1')).toThrow()
+})
+it('keeps a candidate suggestion bound to its original snapshot when a new version arrives', () => {
+  const work = createWork(snapshot())
+  const suggestion = candidateQuestion(work.rounds.v1.source, {
+    path: 'src/token.py', line: 12, ruleId: 'py-bare-except', ruleVersion: '1',
+    message: '裸 except 会吞掉所有异常', evidence: 'except:',
+    suggestion: { title: '指明需要捕获的异常类型', rationale: '吞掉异常', manualChecks: ['确认范围'], example: null },
+  })
+  work.rounds.v1.questions.push(suggestion)
+  const next = snapshot('v2', 'e'.repeat(40))
+  const updated = adoptVersion(work, next)
+  const kept = updated.rounds.v1.questions.find(item => item.kind === 'suggestion')
+  expect(kept?.body).toContain('src/token.py:12')
+  expect(kept?.originSnapshotId).toBe('v1')
+  const carried = updated.rounds.v2.questions.find(item => item.kind === 'suggestion')
+  expect(carried?.originSnapshotId).toBe('v1')
+  expect(carried?.body).toContain('src/token.py:12')
 })

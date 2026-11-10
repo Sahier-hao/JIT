@@ -94,3 +94,20 @@ def test_load_all_requires_registry_and_rejects_duplicate_versions(manifest, tmp
     with pytest.raises(BaselineError) as error:
         datasets.load_all(tmp_path)
     assert error.value.code == "DATASET_INVALID"
+
+
+def test_publish_unique_skips_manifest_that_does_not_match_csv(manifest, tmp_path):
+    from jit_baseline.store import publish_unique
+    room = tmp_path / manifest["dataset"]
+    entry = publish_unique(room, manifest["dataset"], manifest["version"], CSV.read_bytes(),
+                           root=tmp_path)
+    assert entry["created"] is True
+    target = room / (manifest["version"] + ".json")
+    saved = json.loads(target.read_text(encoding="utf-8"))
+    saved["file"]["sha256"] = "0" * 64
+    target.write_text(json.dumps(saved, ensure_ascii=False), encoding="utf-8")
+    again = publish_unique(room, manifest["dataset"], manifest["version"], CSV.read_bytes(),
+                           root=tmp_path)
+    assert again["created"] is True
+    assert again["version"] != manifest["version"]
+    assert again["version"].startswith(manifest["version"] + "-")

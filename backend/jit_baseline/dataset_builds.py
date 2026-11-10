@@ -28,7 +28,7 @@ COLUMNS = (
     "status", "stage", "error_code", "error_message", "parent_task_id", "created_by",
     "request_id", "dataset_name", "dataset_version", "dataset_manifest", "manifest_sha256",
     "quality_json", "collection_json", "reused", "head_commit", "created_at", "updated_at",
-    "started_at", "deadline_at", "cancel_requested_at", "completed_at",
+    "started_at", "deadline_at", "cancel_requested_at", "completed_at", "owner_user_id",
 )
 
 
@@ -123,14 +123,14 @@ class DatasetBuildStorage:
         row = self.raw(task_id)
         return _view(row) if row is not None else None
 
-    def find_active(self, repository_id, branch, since, until, commit_limit):
+    def find_active(self, repository_id, branch, since, until, commit_limit, owner_user_id=None):
         with self.storage.connection() as db:
             row = db.execute(
                 "SELECT * FROM dataset_build_task WHERE repository_id=? AND branch=? "
-                "AND since IS ? AND until IS ? AND commit_limit=? "
+                "AND since IS ? AND until IS ? AND commit_limit=? AND owner_user_id IS ? "
                 f"AND status IN ({','.join('?' for _ in ACTIVE)}) "
                 "ORDER BY created_at DESC,id DESC LIMIT 1",
-                (repository_id, branch, since, until, commit_limit, *ACTIVE),
+                (repository_id, branch, since, until, commit_limit, owner_user_id, *ACTIVE),
             ).fetchone()
         return _view(row) if row is not None else None
 
@@ -312,10 +312,11 @@ class DatasetBuildService:
             "offset": offset,
         }
 
-    def _enqueue(self, repository, data, *, request_id, created_by, parent_task_id=None):
+    def _enqueue(self, repository, data, *, request_id, created_by, parent_task_id=None,
+                 owner_user_id=None):
         active = self.tasks.find_active(
             repository["id"], data["branch"], data["since"], data["until"],
-            data["commitLimit"])
+            data["commitLimit"], owner_user_id)
         if active is not None:
             return self._positions([active])[0], False
         task_id, now = str(uuid.uuid4()), utc_now()
@@ -335,21 +336,25 @@ class DatasetBuildService:
             "created_at": now,
             "updated_at": now,
             "reused": 0,
+            "owner_user_id": owner_user_id,
         })
         self._executor.submit(self._execute, task_id)
         return self.get(repository["id"], task_id), True
 
-    def create(self, repository_id, payload, request_id=None, *, created_by):
+    def create(self, repository_id, payload, request_id=None, *, created_by, owner_user_id=None):
         repository = self._repository(repository_id)
         collect.validate_source(repository["url"], allow_local=self.allow_local)
         data = self._payload(payload)
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "数据集构建服务正在停止")
+            if owner_user_id and self.storage.dataset_owner_count(owner_user_id) >= 5:
+                raise BaselineError("QUOTA_EXCEEDED", "每人最多保留 5 个数据版本，请先清理")
             return self._enqueue(
-                repository, data, request_id=request_id, created_by=created_by)
+                repository, data, request_id=request_id, created_by=created_by,
+                owner_user_id=owner_user_id)
 
-    def retry(self, repository_id, task_id, request_id=None, *, created_by):
+    def retry(self, repository_id, task_id, request_id=None, *, created_by, owner_user_id=None):
         source = self.get(repository_id, task_id)
         if source["status"] not in RETRYABLE:
             raise BaselineError("TASK_NOT_RETRYABLE", "只有失败、取消或中断的任务可以重试")
@@ -363,7 +368,7 @@ class DatasetBuildService:
         with self._lock:
             return self._enqueue(
                 repository, data, request_id=request_id, created_by=created_by,
-                parent_task_id=task_id)
+                parent_task_id=task_id, owner_user_id=owner_user_id)
 
     def cancel(self, repository_id, task_id):
         self.get(repository_id, task_id)
@@ -401,6 +406,9 @@ class DatasetBuildService:
                 collected=collected, usage="branch", source_id=task_id,
             )
             manifest = load_manifest(dataset_manifest_path(manifest_path))
+            # 只有本次新生成的版本归属用户；复用已登记版本保持原有共享范围。
+            if created and row["owner_user_id"]:
+                self.storage.add_dataset_owner(version, row["owner_user_id"], limit=5)
             self.tasks.finish(
                 task_id, "completed", None, None, stage="completed",
                 dataset_name=manifest["dataset"],

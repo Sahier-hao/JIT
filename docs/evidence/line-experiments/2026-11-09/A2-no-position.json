@@ -1,0 +1,489 @@
+{
+  "schema": "line-model-report-v2",
+  "inputs": [
+    "D:\\tmp\\measure\\cc-switch-same.jsonl",
+    "D:\\tmp\\measure\\JIT-same.jsonl",
+    "D:\\tmp\\measure\\axios.jsonl"
+  ],
+  "inputFiles": [
+    {
+      "path": "D:\\tmp\\measure\\cc-switch-same.jsonl",
+      "sha256": "5a9a5a4ce441d36e6c19610f5054d0413a74904112fdc8919239aa2951264a17",
+      "bytes": 12054892,
+      "rows": 11718,
+      "datasetVersions": [
+        "measure-cc-switch"
+      ],
+      "repos": [
+        "cc-switch"
+      ],
+      "languages": [
+        "css",
+        "json",
+        "other",
+        "rust",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-cc-switch",
+        "positives": 5859,
+        "negatives": 5859,
+        "positiveCommits": 352,
+        "negativeCommits": 350,
+        "files": 198,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 74,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "path": "D:\\tmp\\measure\\JIT-same.jsonl",
+      "sha256": "3a76ca056bfe9288dada81d1fa1b28eec8f1cc428199baa6b40bb8456fc27c64",
+      "bytes": 356318,
+      "rows": 304,
+      "datasetVersions": [
+        "measure-JIT"
+      ],
+      "repos": [
+        "JIT"
+      ],
+      "languages": [
+        "css",
+        "python",
+        "typescript"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-JIT",
+        "positives": 152,
+        "negatives": 152,
+        "positiveCommits": 17,
+        "negativeCommits": 17,
+        "files": 15,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 0,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "path": "D:\\tmp\\measure\\axios.jsonl",
+      "sha256": "1036a9fd8a55f7455924a04516ddc21b975a237696b3dfcee7857b5b25f3520c",
+      "bytes": 3061426,
+      "rows": 3166,
+      "datasetVersions": [
+        "measure-axios"
+      ],
+      "repos": [
+        "axios"
+      ],
+      "languages": [
+        "html",
+        "javascript",
+        "json",
+        "other",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-axios",
+        "positives": 1583,
+        "negatives": 1583,
+        "positiveCommits": 150,
+        "negativeCommits": 40,
+        "files": 53,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 2,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    }
+  ],
+  "split": {
+    "kind": "repo",
+    "testRepo": "axios",
+    "seed": 42,
+    "trainCommits": 249,
+    "testCommits": 120,
+    "trainRepos": [
+      "JIT",
+      "cc-switch"
+    ],
+    "testRepos": [
+      "axios"
+    ]
+  },
+  "languages": [
+    "javascript",
+    "typescript"
+  ],
+  "samples": {
+    "total": 8254,
+    "train": 6102,
+    "test": 2152,
+    "positives": 3560,
+    "negatives": 4694,
+    "trainPositives": 2435,
+    "testPositives": 1125
+  },
+  "features": {
+    "dimension": 30018,
+    "text": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "max_features": 30000,
+      "sublinear_tf": true
+    },
+    "numeric": [
+      "lineLength",
+      "indent",
+      "blank",
+      "comment",
+      "if",
+      "for",
+      "while",
+      "return",
+      "try",
+      "catch",
+      "assign",
+      "compare",
+      "call",
+      "member",
+      "index",
+      "identifier",
+      "digit"
+    ],
+    "languages": [
+      "typescript"
+    ]
+  },
+  "model": {
+    "type": "logistic-regression",
+    "classWeight": "balanced",
+    "solver": "liblinear",
+    "maxIter": 2000,
+    "threshold": 0.5,
+    "includeCommitFeatures": false,
+    "repoBalance": true,
+    "positionFeatures": false,
+    "textFeatures": true
+  },
+  "metrics": {
+    "rocAuc": 0.6582027480255328,
+    "prAuc": 0.6759498135871206,
+    "brier": 0.23335854494112462,
+    "threshold": 0.5,
+    "precision": 0.6608695652173913,
+    "recall": 0.5404444444444444,
+    "f1": 0.5946210268948655,
+    "trueNegative": 715,
+    "falsePositive": 312,
+    "falseNegative": 517,
+    "truePositive": 608
+  },
+  "referenceBaselines": {
+    "randomPrAuc": 0.5227695167286245,
+    "note": "PR-AUC 的随机基线等于测试集正例率；排序模型必须明显高于它才有意义。"
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 120,
+    "candidateLines": 2152,
+    "positives": 1125,
+    "topKHit": {
+      "top1": 0.8833333333333333,
+      "top3": 0.9166666666666666,
+      "top5": 0.9333333333333333,
+      "top10": 0.975
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.2853333333333333,
+    "recallAt20PercentPerCommitMean": 0.49568960824792957,
+    "ifaMean": 0.8166666666666667,
+    "ifaMedian": 0.0
+  },
+  "byRepo": {
+    "axios": {
+      "samples": 2152,
+      "positives": 1125,
+      "rocAuc": 0.6582027480255328,
+      "prAuc": 0.6759498135871206,
+      "brier": 0.23335854494112462,
+      "threshold": 0.5,
+      "precision": 0.6608695652173913,
+      "recall": 0.5404444444444444,
+      "f1": 0.5946210268948655,
+      "trueNegative": 715,
+      "falsePositive": 312,
+      "falseNegative": 517,
+      "truePositive": 608
+    }
+  },
+  "byLanguage": {
+    "javascript": {
+      "samples": 1970,
+      "positives": 1088,
+      "rocAuc": 0.645891168967587,
+      "prAuc": 0.6883500978983508,
+      "brier": 0.23703305324206234,
+      "threshold": 0.5,
+      "precision": 0.6753100338218715,
+      "recall": 0.5505514705882353,
+      "f1": 0.6065822784810126,
+      "trueNegative": 594,
+      "falsePositive": 288,
+      "falseNegative": 489,
+      "truePositive": 599
+    },
+    "typescript": {
+      "samples": 182,
+      "positives": 37,
+      "rocAuc": 0.5365330848089469,
+      "prAuc": 0.31824221137338393,
+      "brier": 0.193585021024381,
+      "threshold": 0.5,
+      "precision": 0.2727272727272727,
+      "recall": 0.24324324324324326,
+      "f1": 0.2571428571428571,
+      "trueNegative": 121,
+      "falsePositive": 24,
+      "falseNegative": 28,
+      "truePositive": 9
+    }
+  },
+  "manifest": {
+    "schema": "line-experiment-manifest-v1",
+    "generatedAt": "2026-11-08T16:41:58.600192+00:00",
+    "inputs": [
+      {
+        "path": "D:\\tmp\\measure\\cc-switch-same.jsonl",
+        "sha256": "5a9a5a4ce441d36e6c19610f5054d0413a74904112fdc8919239aa2951264a17",
+        "bytes": 12054892,
+        "rows": 11718,
+        "datasetVersions": [
+          "measure-cc-switch"
+        ],
+        "repos": [
+          "cc-switch"
+        ],
+        "languages": [
+          "css",
+          "json",
+          "other",
+          "rust",
+          "toml",
+          "typescript",
+          "yaml"
+        ],
+        "sampling": {
+          "schema": "line-szz-v1",
+          "datasetVersion": "measure-cc-switch",
+          "positives": 5859,
+          "negatives": 5859,
+          "positiveCommits": 352,
+          "negativeCommits": 350,
+          "files": 198,
+          "contextLines": 2,
+          "seed": 42,
+          "negativesPerPositive": 1,
+          "negativeMode": "same-file",
+          "missingLines": 74,
+          "missingDiffs": 0,
+          "skippedFiles": 0,
+          "truncated": false,
+          "negativeShortfall": 0,
+          "negativeFallback": 0
+        }
+      },
+      {
+        "path": "D:\\tmp\\measure\\JIT-same.jsonl",
+        "sha256": "3a76ca056bfe9288dada81d1fa1b28eec8f1cc428199baa6b40bb8456fc27c64",
+        "bytes": 356318,
+        "rows": 304,
+        "datasetVersions": [
+          "measure-JIT"
+        ],
+        "repos": [
+          "JIT"
+        ],
+        "languages": [
+          "css",
+          "python",
+          "typescript"
+        ],
+        "sampling": {
+          "schema": "line-szz-v1",
+          "datasetVersion": "measure-JIT",
+          "positives": 152,
+          "negatives": 152,
+          "positiveCommits": 17,
+          "negativeCommits": 17,
+          "files": 15,
+          "contextLines": 2,
+          "seed": 42,
+          "negativesPerPositive": 1,
+          "negativeMode": "same-file",
+          "missingLines": 0,
+          "missingDiffs": 0,
+          "skippedFiles": 0,
+          "truncated": false,
+          "negativeShortfall": 0,
+          "negativeFallback": 0
+        }
+      },
+      {
+        "path": "D:\\tmp\\measure\\axios.jsonl",
+        "sha256": "1036a9fd8a55f7455924a04516ddc21b975a237696b3dfcee7857b5b25f3520c",
+        "bytes": 3061426,
+        "rows": 3166,
+        "datasetVersions": [
+          "measure-axios"
+        ],
+        "repos": [
+          "axios"
+        ],
+        "languages": [
+          "html",
+          "javascript",
+          "json",
+          "other",
+          "toml",
+          "typescript",
+          "yaml"
+        ],
+        "sampling": {
+          "schema": "line-szz-v1",
+          "datasetVersion": "measure-axios",
+          "positives": 1583,
+          "negatives": 1583,
+          "positiveCommits": 150,
+          "negativeCommits": 40,
+          "files": 53,
+          "contextLines": 2,
+          "seed": 42,
+          "negativesPerPositive": 1,
+          "negativeMode": "same-file",
+          "missingLines": 2,
+          "missingDiffs": 0,
+          "skippedFiles": 0,
+          "truncated": false,
+          "negativeShortfall": 0,
+          "negativeFallback": 0
+        }
+      }
+    ],
+    "split": {
+      "kind": "repo",
+      "seed": 42,
+      "testRepo": "axios",
+      "trainCommits": 249,
+      "testCommits": 120,
+      "trainRepos": [
+        "JIT",
+        "cc-switch"
+      ],
+      "testRepos": [
+        "axios"
+      ],
+      "memberSha256": {
+        "train": "9c5a715bc55258e39b91c4a25d1957d94247a53618efb2c340da7c71efd40c20",
+        "test": "6b05f304348d9b7f5fa41dd2e030c5fd1e6bfffc2673e7b17df7b69d73b60da8"
+      }
+    },
+    "sampling": {
+      "negativeMode": "same-file",
+      "datasetSeed": 42,
+      "source": [
+        "D:\\tmp\\measure\\cc-switch-same.jsonl",
+        "D:\\tmp\\measure\\JIT-same.jsonl",
+        "D:\\tmp\\measure\\axios.jsonl"
+      ]
+    },
+    "features": {
+      "dimension": 30018,
+      "text": {
+        "analyzer": "char_wb",
+        "ngram_range": [
+          3,
+          5
+        ],
+        "min_df": 2,
+        "max_features": 30000,
+        "sublinear_tf": true
+      },
+      "numeric": [
+        "lineLength",
+        "indent",
+        "blank",
+        "comment",
+        "if",
+        "for",
+        "while",
+        "return",
+        "try",
+        "catch",
+        "assign",
+        "compare",
+        "call",
+        "member",
+        "index",
+        "identifier",
+        "digit"
+      ],
+      "languages": [
+        "typescript"
+      ]
+    },
+    "model": {
+      "type": "logistic-regression",
+      "classWeight": "balanced",
+      "solver": "liblinear",
+      "maxIter": 2000,
+      "threshold": 0.5,
+      "includeCommitFeatures": false,
+      "repoBalance": true,
+      "positionFeatures": false,
+      "textFeatures": true
+    },
+    "environment": {
+      "python": "3.14.2",
+      "sklearn": "1.9.1",
+      "numpy": "2.5.3"
+    },
+    "command": "python -m jit_baseline.cli line-train --input D:\\tmp\\measure\\cc-switch-same.jsonl --input D:\\tmp\\measure\\JIT-same.jsonl --input D:\\tmp\\measure\\axios.jsonl --output <report>.json --seed 42 --test-repo axios --no-position-features --language typescript --language javascript",
+    "limitations": [
+      "历史 SZZ 弱标签，正例不是人工确认的真值；未观测行不等于无缺陷。",
+      "负例来自抽样列表，定位指标是代理值，不能代表完整候选集上的审查收益。",
+      "大型原始 JSONL 不入版本库，复现需按 inputs 的 sha256 与获取说明准备同一份数据。"
+    ]
+  }
+}

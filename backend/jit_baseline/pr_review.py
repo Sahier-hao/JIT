@@ -341,7 +341,7 @@ class PullRequestReview:
                 skipped.append({'path': file['path'], 'reason': error})
                 continue
             analyzed.append(file['path'])
-            results.extend(items)
+            results.extend(dict(item, suggestion=candidate.suggestion(item)) for item in items)
         coverage = {'analyzerVersion': candidate.ANALYZER_VERSION, 'side': side,
                     'analyzed': analyzed, 'skipped': skipped,
                     'selected': len(selected), 'totalFiles': len(files)}
@@ -366,10 +366,14 @@ class PullRequestReview:
                               (snapshot_id,)).fetchall()
         return {'snapshotId': snapshot_id,
                 'coverage': json.loads(run['coverage_json']) if run else None,
-                'candidates': [{'side': row['side'], 'path': row['path'], 'line': row['line'],
-                                'ruleId': row['rule_id'], 'ruleVersion': row['rule_version'],
-                                'message': row['message'], 'evidence': row['evidence']}
-                               for row in rows]}
+                'candidates': [dict({
+                    'side': row['side'], 'path': row['path'], 'line': row['line'],
+                    'ruleId': row['rule_id'], 'ruleVersion': row['rule_version'],
+                    'message': row['message'], 'evidence': row['evidence'],
+                }, suggestion=candidate.suggestion({
+                    'side': row['side'], 'path': row['path'], 'line': row['line'],
+                    'ruleId': row['rule_id'], 'ruleVersion': row['rule_version'],
+                })) for row in rows]}
 
     def context(self, snapshot_id, path, side):
         source = self.get(snapshot_id)

@@ -85,7 +85,7 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   if (loading) return <LoadingNotice label="正在读取训练任务"/>
   if (error && !taskId && !tasks.length) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button></EmptyState>
   if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })}>返回任务列表</Button></EmptyState>
-  if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })}/>
+  if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })} openRuns={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })} openExperiment={id => navigate({ name: 'admin', view: 'training-experiment', resourceId: id })}/>
   return <section>
     <AdminPageHeader title="训练任务" onRefresh={retryLoad}/>
     <ErrorNotice>{error}</ErrorNotice>
@@ -108,20 +108,23 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   </section>
 }
 
-function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
+function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, openModel, openExperiment }: {
   task: TrainingTask
   error: string
   busy: string
   act: (id: string, action: 'cancel' | 'retry') => Promise<void>
   retry: () => void
   back: () => void
+  openRuns: () => void
+  openModel: (modelId: string) => void
+  openExperiment: (experimentId: string) => void
 }) {
   const active = ACTIVE_TASK_STATUSES.includes(task.status)
   const retryable = ['failed', 'cancelled', 'interrupted'].includes(task.status)
   return <section>
     <AdminPageHeader title="训练任务详情" meta={`${task.datasetVersion} · ${task.method}`}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
+    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{task.status === 'succeeded' ? <><Button onClick={openRuns}>查看实验登记</Button>{task.modelId ? <Button onClick={() => openModel(task.modelId!)}>查看模型</Button> : null}</> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
     <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>
     {task.error ? <div className="admin-error-box" role="alert"><strong>{task.error.code}</strong><p>{task.error.message}</p></div> : null}
     {task.status === 'succeeded' ? <><MetricGrid metrics={task.metrics}/><dl className="admin-facts">
@@ -131,6 +134,8 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>模型</dt><dd><code>{valueLabel(task.modelId)}</code></dd></div>
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
       <div><dt>时间切分预设</dt><dd><code>{task.splitPreset}</code></dd></div>
+      <div><dt>实际参数</dt><dd><code>{task.parameters ? JSON.stringify(task.parameters) : '默认参数（未记录覆盖）'}</code></dd></div>
+      {task.experimentId ? <div><dt>所属实验</dt><dd><Button size="sm" onClick={() => openExperiment(task.experimentId!)}>查看实验</Button></dd></div> : null}
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
       {task.splitRule ? <div><dt>切分规则</dt><dd>{task.splitRule}</dd></div> : null}
       {task.dataScale ? <div><dt>数据规模</dt><dd>{valueLabel(task.dataScale.records)} 条 · {valueLabel(task.dataScale.featureWidth)} 维</dd></div> : null}
@@ -139,10 +144,22 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       {task.classPolicySummary ? <div><dt>策略前后数量</dt><dd><code>{JSON.stringify(task.classPolicySummary)}</code></dd></div> : null}
     </dl>
     {task.metricsByPartition ? <TrainingPartitions metrics={task.metricsByPartition}/> : null}
+    {task.trainingHistory ? <section className="admin-training-partitions"><h2>训练过程</h2>
+      <div className="admin-table-wrap"><table className="admin-table">
+        <thead><tr><th>epoch</th><th>训练损失</th><th>耗时</th></tr></thead>
+        <tbody>{task.trainingHistory.entries.map(entry => <tr key={entry.epoch}>
+          <td>{entry.epoch}</td>
+          <td>{entry.trainLoss == null ? '未记录' : entry.trainLoss.toFixed(4)}</td>
+          <td>{entry.seconds.toFixed(2)} 秒</td>
+        </tr>)}</tbody>
+      </table></div>
+      <p className="admin-report-meta">固定 {task.trainingHistory.epochs} 个 epoch，不早停；测试分区不参与逐 epoch 监控。</p>
+    </section> : task.status === 'succeeded' ? <p className="admin-report-meta">未记录逐 epoch 训练历史：该方法可能是非迭代方法，或产物产生于历史版本。</p> : null}
     {task.classPolicy ? <p className="admin-report-meta">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
     <dl className="admin-facts">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
       <div><dt>创建人</dt><dd>{task.createdBy}</dd></div>
+      <div><dt>训练用户</dt><dd>{task.ownerUserId ?? '管理员'}</dd></div>
       <div><dt>创建时间</dt><dd>{formatDate(task.createdAt)}</dd></div>
       <div><dt>开始时间</dt><dd>{formatDate(task.startedAt)}</dd></div>
       <div><dt>完成时间</dt><dd>{formatDate(task.completedAt)}</dd></div>

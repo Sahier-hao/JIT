@@ -1,0 +1,38 @@
+{
+  "name": "jit-commit-analysis",
+  "displayName": "JIT Commit Analysis",
+  "description": "只读导入 JIT 提交范围检查报告并定位到代码行",
+  "version": "0.1.0",
+  "publisher": "local",
+  "private": true,
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "main": "./out/extension.js",
+  "activationEvents": ["onStartupFinished", "onCommand:jitReport.import", "onView:jitReport.view"],
+  "contributes": {
+    "commands": [
+      { "command": "jitReport.import", "title": "JIT: 导入提交分析报告" },
+      { "command": "jitReport.refresh", "title": "JIT: 重新核对报告身份" },
+      { "command": "jitReport.clear", "title": "JIT: 清除已导入报告" }
+    ],
+    "views": {
+      "explorer": [{ "id": "jitReport.view", "name": "JIT 提交分析" }]
+    },
+    "menus": {
+      "view/title": [
+        { "command": "jitReport.import", "when": "view == jitReport.view", "group": "navigation" },
+        { "command": "jitReport.refresh", "when": "view == jitReport.view", "group": "navigation" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "npm run compile && node --test test/report.test.js",
+    "package": "npx --yes @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.6.3"
+  }
+}

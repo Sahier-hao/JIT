@@ -1,0 +1,40 @@
+.research-page { background: var(--bg); }
+.research-head-actions { display: flex; align-items: center; gap: 12px; }
+.research-badge { padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg-2); font-size: 12px; font-weight: 600; }
+.research-main { flex: 1; width: min(1180px, 100%); margin: 0 auto; padding: 48px 32px 56px; display: grid; gap: 30px; }
+.research-intro { display: grid; gap: 14px; max-width: 860px; }
+.research-intro h1 { margin: 0; font-size: clamp(30px, 4vw, 44px); line-height: 1.15; letter-spacing: -.02em; }
+.research-warning { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-left: 3px solid var(--risk-mid); border-radius: 8px; background: var(--card); color: var(--fg-2); font-size: 13px; line-height: 1.6; }
+.research-warning svg { flex: none; margin-top: 2px; }
+.research-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.research-sandbox, .research-card, .research-results { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); min-width: 0; }
+.research-sandbox-head, .research-card-head, .research-results-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.research-sandbox h2, .research-card h2, .research-results h2 { margin: 0; font-size: 15px; }
+.research-card-head span, .research-results-head span { color: var(--fg-3); font-size: 12.5px; }
+.research-code-label { display: block; margin-bottom: 6px; color: var(--fg-3); font-size: 12.5px; }
+.research-sandbox textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2, var(--bg)); color: var(--fg); font: 12.5px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
+.research-sandbox textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.research-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; }
+.research-actions span { color: var(--fg-3); font-size: 12px; }
+.research-facts { display: grid; gap: 0; margin: 0; }
+.research-facts > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+.research-facts dt { color: var(--fg-3); }
+.research-facts dd { margin: 0; }
+.research-limits { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.research-limits li { position: relative; padding-left: 12px; color: var(--fg-3); font-size: 12px; line-height: 1.6; }
+.research-limits li::before { content: ""; position: absolute; left: 0; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--line-strong); }
+.research-table-scroll { overflow-x: auto; }
+.research-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.research-table caption { padding-bottom: 8px; color: var(--fg-3); font-size: 12px; text-align: left; }
+.research-table th, .research-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.research-table th { color: var(--fg-3); font-weight: 600; white-space: nowrap; }
+.research-table td:first-child { color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.research-table code { display: block; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.research-score { display: flex; align-items: center; gap: 8px; }
+.research-score-track { display: block; width: 90px; height: 4px; overflow: hidden; border-radius: 2px; background: var(--line); }
+.research-score-track > span { display: block; height: 100%; background: var(--accent); }
+.research-score b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.research-unavailable { display: grid; gap: 12px; justify-items: start; padding: 24px; border: 1px dashed var(--line); border-radius: 12px; }
+.research-unavailable p { margin: 0; color: var(--fg-2); }
+@media (max-width: 1000px) { .research-layout { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .research-main { padding-top: 28px; } .research-head-actions .research-badge { display: none; } }
