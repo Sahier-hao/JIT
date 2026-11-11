@@ -25,6 +25,14 @@ BUDGETS = (0.10, 0.20)
 SEEDS = (42, 43, 44)
 KEYWORDS = ("except", "eval(", "exec(", "catch", "panic", "unwrap(", "todo", "fixme",
             "assert", "null", "undefined", "==", "!=")
+GENERATED = ("dist/", "build/", "vendor/", "node_modules/", "coverage/", ".min.js",
+             ".bundle.js")
+
+
+def _generated_path(path):
+    """构建产物与第三方打包目录不作为候选总体：它们是生成代码，不是被审查的源码。"""
+    lowered = path.lower()
+    return any(token in lowered for token in GENERATED)
 
 
 def _csv_features(manifest):
@@ -63,9 +71,14 @@ def commit_diff(repo, commit):
 
     只解析新增/修改侧；删除行、二进制与空 diff 分别计数，不补齐。
     """
+    # 构建产物用 git pathspec 排除：它们不是被审查的源码，也能避免解析数百 MB 的打包 diff。
+    pathspecs = [".", ":(exclude)dist/**", ":(exclude)build/**", ":(exclude)vendor/**",
+                 ":(exclude)node_modules/**", ":(exclude)coverage/**",
+                 ":(exclude)**/*.min.js", ":(exclude)**/*.bundle.js"]
     diff = _git(repo, ["show", "--format=", "--unified=0", "--find-renames=50%",
-                       "--no-color", commit, "--"], timeout=300)
-    exclusions = {"missingDiff": 0, "skippedPath": 0, "noise": 0, "binary": 0, "empty": 0}
+                       "--no-color", commit, "--", *pathspecs], timeout=300)
+    exclusions = {"missingDiff": 0, "skippedPath": 0, "generatedPath": 0, "noise": 0,
+                  "binary": 0, "empty": 0}
     if diff is None:
         exclusions["missingDiff"] += 1
         return [], {}, exclusions
@@ -89,6 +102,9 @@ def commit_diff(repo, commit):
             next_line = None
             if current is not None and not _is_source_path(current):
                 exclusions["skippedPath"] += 1
+                current = None
+            elif current is not None and _generated_path(current):
+                exclusions["generatedPath"] += 1
                 current = None
             continue
         if line.startswith("Binary files") or line.startswith("GIT binary patch"):
@@ -122,8 +138,10 @@ def export_candidates(manifest, repo, output):
         "repo": repo_name, "revision": revision, "commits": len(commits),
         "commitsWithCandidates": 0, "candidates": 0, "positives": 0,
         "uncoverable": 0, "uncoverableReasons": {}, "exclusions": {
-            "missingDiff": 0, "skippedPath": 0, "noise": 0, "binary": 0, "empty": 0},
+            "missingDiff": 0, "skippedPath": 0, "generatedPath": 0, "noise": 0,
+            "binary": 0, "empty": 0},
         "byLanguage": {},
+        "generatedPathScope": "excluded-by-pathspec (dist/build/vendor/node_modules/coverage/*.min.js/*.bundle.js)",
     }
     covered = set()
     target = Path(output)
@@ -168,7 +186,9 @@ def export_candidates(manifest, repo, output):
         for line in lines:
             if (commit, path, line) in covered:
                 continue
-            if not _is_source_path(path):
+            if _generated_path(path):
+                reason = "generated-path"
+            elif not _is_source_path(path):
                 reason = "path-excluded"
             elif any((commit, other, line) in covered for other in renames.values()):
                 reason = "line-not-introduced"
@@ -255,11 +275,15 @@ def _commit_metrics(rows, scores, budgets=BUDGETS):
 
 def evaluate_candidates(inputs, output):
     """在完整候选总体上评价固定启发式与随机基线；按仓库与语言报告。"""
-    per_repo = {}
     rows_by_repo = {}
+    generated = {}
     for path in inputs:
         for row in _rows(path):
-            rows_by_repo.setdefault((row.get("repo"), row.get("datasetVersion")), []).append(row)
+            key = (row.get("repo"), row.get("datasetVersion"))
+            if _generated_path(row.get("path") or ""):
+                generated[key] = generated.get(key, 0) + 1
+                continue
+            rows_by_repo.setdefault(key, []).append(row)
     if not rows_by_repo:
         raise BaselineError("INPUT_INVALID", "没有候选行")
     report = {"format": "line-candidate-evaluation-v1", "population": POPULATION,
@@ -268,6 +292,7 @@ def evaluate_candidates(inputs, output):
         language = rows[0].get("language")
         entry = {"repo": repo, "version": version, "language": language,
                  "candidates": len(rows),
+                 "excludedGenerated": generated.get((repo, version), 0),
                  "positives": sum(1 for row in rows if row["labelStatus"] == "positive"),
                  "scorers": {}}
         for scorer in ("structure-v1", "keyword-v1"):
@@ -288,6 +313,8 @@ def case_pack(inputs, output, *, limit=30, seed=42):
     rows = []
     for path in inputs:
         for row in _rows(path):
+            if _generated_path(row.get("path") or ""):
+                continue
             if row.get("labelStatus") == "positive":
                 rows.append(row)
     random.Random(seed).shuffle(rows)

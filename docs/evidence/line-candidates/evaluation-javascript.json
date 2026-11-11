@@ -7,119 +7,120 @@
   "population": "introduced-added-lines-v1",
   "repos": [
     {
-      "candidates": 182462,
+      "candidates": 121804,
+      "excludedGenerated": 0,
       "language": "other",
-      "positives": 4236,
+      "positives": 4063,
       "repo": "kamei14-git-v2-axios-mature",
       "scorers": {
         "keyword-v1": {
           "budget@10%": {
-            "lines": 18246,
-            "positives": 404
+            "lines": 12180,
+            "positives": 380
           },
           "budget@20%": {
-            "lines": 36492,
-            "positives": 769
+            "lines": 24360,
+            "positives": 1987
           },
-          "candidates": 182462,
-          "commitsWithPositive": 483,
-          "ifaMean": 27.418219461697724,
+          "candidates": 121804,
+          "commitsWithPositive": 478,
+          "ifaMean": 5.7740585774058575,
           "ifaMedian": 0,
-          "positives": 4236,
-          "recall@10%": 0.09537299338999056,
-          "recall@20%": 0.1815391879131256,
+          "positives": 4063,
+          "recall@10%": 0.09352695052916564,
+          "recall@20%": 0.48904750184592666,
           "top": {
-            "top1": 0.5072463768115942,
-            "top10": 0.8509316770186336,
-            "top5": 0.772256728778468
+            "top1": 0.5188284518828452,
+            "top10": 0.8849372384937239,
+            "top5": 0.8096234309623431
           }
         },
         "random-42": {
           "budget@10%": {
-            "lines": 18246,
-            "positives": 394
+            "lines": 12180,
+            "positives": 370
           },
           "budget@20%": {
-            "lines": 36492,
-            "positives": 814
+            "lines": 24360,
+            "positives": 795
           },
-          "candidates": 182462,
-          "commitsWithPositive": 483,
-          "ifaMean": 13.81159420289855,
-          "ifaMedian": 1,
-          "positives": 4236,
-          "recall@10%": 0.09301227573182247,
-          "recall@20%": 0.19216241737488196,
+          "candidates": 121804,
+          "commitsWithPositive": 478,
+          "ifaMean": 5.2531380753138075,
+          "ifaMedian": 0,
+          "positives": 4063,
+          "recall@10%": 0.09106571498892443,
+          "recall@20%": 0.19566822544917548,
           "top": {
-            "top1": 0.43478260869565216,
-            "top10": 0.8385093167701864,
-            "top5": 0.7370600414078675
+            "top1": 0.5125523012552301,
+            "top10": 0.8765690376569037,
+            "top5": 0.7866108786610879
           }
         },
         "random-43": {
           "budget@10%": {
-            "lines": 18246,
-            "positives": 433
+            "lines": 12180,
+            "positives": 397
           },
           "budget@20%": {
-            "lines": 36492,
-            "positives": 886
+            "lines": 24360,
+            "positives": 834
           },
-          "candidates": 182462,
-          "commitsWithPositive": 483,
-          "ifaMean": 16.318840579710145,
+          "candidates": 121804,
+          "commitsWithPositive": 478,
+          "ifaMean": 5.7384937238493725,
           "ifaMedian": 1,
-          "positives": 4236,
-          "recall@10%": 0.102219074598678,
-          "recall@20%": 0.20915958451369215,
+          "positives": 4063,
+          "recall@10%": 0.09771105094757568,
+          "recall@20%": 0.20526704405611618,
           "top": {
-            "top1": 0.474120082815735,
-            "top10": 0.8674948240165632,
-            "top5": 0.7660455486542443
+            "top1": 0.48535564853556484,
+            "top10": 0.8870292887029289,
+            "top5": 0.797071129707113
           }
         },
         "random-44": {
           "budget@10%": {
-            "lines": 18246,
-            "positives": 450
+            "lines": 12180,
+            "positives": 428
           },
           "budget@20%": {
-            "lines": 36492,
-            "positives": 880
+            "lines": 24360,
+            "positives": 790
           },
-          "candidates": 182462,
-          "commitsWithPositive": 483,
-          "ifaMean": 13.538302277432713,
+          "candidates": 121804,
+          "commitsWithPositive": 478,
+          "ifaMean": 7.006276150627615,
           "ifaMedian": 1,
-          "positives": 4236,
-          "recall@10%": 0.10623229461756374,
-          "recall@20%": 0.2077431539187913,
+          "positives": 4063,
+          "recall@10%": 0.10534088112232341,
+          "recall@20%": 0.19443760767905488,
           "top": {
-            "top1": 0.46790890269151136,
-            "top10": 0.8612836438923396,
-            "top5": 0.7763975155279503
+            "top1": 0.48326359832635984,
+            "top10": 0.8744769874476988,
+            "top5": 0.7824267782426778
           }
         },
         "structure-v1": {
           "budget@10%": {
-            "lines": 18246,
-            "positives": 424
+            "lines": 12180,
+            "positives": 182
           },
           "budget@20%": {
-            "lines": 36492,
-            "positives": 920
+            "lines": 24360,
+            "positives": 654
           },
-          "candidates": 182462,
-          "commitsWithPositive": 483,
-          "ifaMean": 15.422360248447205,
+          "candidates": 121804,
+          "commitsWithPositive": 478,
+          "ifaMean": 6.562761506276151,
           "ifaMedian": 0,
-          "positives": 4236,
-          "recall@10%": 0.10009442870632672,
-          "recall@20%": 0.21718602455146366,
+          "positives": 4063,
+          "recall@10%": 0.04479448683238986,
+          "recall@20%": 0.16096480433177454,
           "top": {
-            "top1": 0.5279503105590062,
-            "top10": 0.8695652173913043,
-            "top5": 0.7950310559006211
+            "top1": 0.5439330543933054,
+            "top10": 0.899581589958159,
+            "top5": 0.8284518828451883
           }
         }
       },
@@ -127,6 +128,7 @@
     },
     {
       "candidates": 33804,
+      "excludedGenerated": 0,
       "language": "other",
       "positives": 3464,
       "repo": "kamei14-git-v2-express-mature",

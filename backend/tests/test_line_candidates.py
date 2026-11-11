@@ -41,7 +41,8 @@ def _repo(tmp_path):
     add = _commit(repo, "add", {"pkg/a.py": "l1\nl2\nl3\nl4\nl5\n", "README.md": "docs\n"},
                   "2024-01-01T00:00:00+00:00")
     change = _commit(repo, "change", {"pkg/a.py": "l1\nl2\nL3 changed\nl4\nl5\n",
-                                      "assets/logo.png": b"\x89PNG\r\n\x1a\n\x00\x00"},
+                                      "assets/logo.png": b"\x89PNG\r\n\x1a\n\x00\x00",
+                                      "dist/app.js": "built();\n"},
                      "2024-01-02T00:00:00+00:00")
     _git(repo, "mv", "pkg/a.py", "pkg/b.py")
     renamed = _commit(repo, "rename", {"pkg/b.py": "l1\nl2\nL3 changed\nl4\nl5\nl6 renamed\n"},
@@ -91,6 +92,9 @@ def test_export_uses_complete_diff_and_reports_uncoverable(tmp_path):
     rename_rows = [row for row in rows if row["commitId"] == renamed]
     assert any(row["path"] == "pkg/b.py" for row in rename_rows)
     assert summary["exclusions"]["binary"] >= 1
+    # 构建产物用 git pathspec 排除在候选总体之外。
+    assert not [row for row in rows if row["path"] == "dist/app.js"]
+    assert "pathspec" in summary["generatedPathScope"]
     # 删除提交没有新增行，不产生候选，但保留为已处理提交。
     assert not [row for row in rows if row["commitId"] == deleted]
     statuses = {row["labelStatus"] for row in rows}
