@@ -125,12 +125,19 @@ def _failed(stage, exc, **extra):
 
 
 def _fit_and_predict(train_records, eval_records, schema, method, params, extra=None):
-    """训练一次，预测测试分区；提供 `extra` 时同时预测一个附加分区。"""
+    """训练一次，预测测试分区；提供 `extra` 时同时预测一个附加分区。
+
+    迭代方法附上真实逐 epoch 训练损失；非迭代方法没有历史，保持为空。
+    """
     started = time.perf_counter()
     model = fit_model(train_records, schema=schema, algorithm=method, params=params)
     risks = predict_risks(model, eval_records, schema)
     extra_risks = predict_risks(model, extra, schema) if extra else None
-    return risks, extra_risks, time.perf_counter() - started
+    estimator = model.named_steps.get("model") if hasattr(model, "named_steps") else None
+    history = getattr(estimator, "training_history_", None)
+    if isinstance(history, dict):
+        history = dict(history)
+    return risks, extra_risks, time.perf_counter() - started, history
 
 
 def _brier(probabilities, labels):
@@ -283,7 +290,7 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
             for seed in seed_values:
                 params = _params_for(method, seed)
                 try:
-                    risks, validation, seconds = _fit_and_predict(
+                    risks, validation, seconds, history = _fit_and_predict(
                         split["train"], split["test"], dataset["schema"], method, params,
                         extra=split["validation"])
                 except BaselineError as exc:
@@ -296,6 +303,8 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                         "message": str(exc)})
                     continue
                 cell = _cell(split["test"], risks, method, params, seed=seed, seconds=seconds)
+                if history is not None:
+                    cell["trainingHistory"] = history
                 cell.update(dataset=dataset["name"], version=dataset["version"], language=language)
                 report["withinRepo"].append(cell)
                 report["calibration"].append({
@@ -326,7 +335,7 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                 for seed in seed_values:
                     params = _params_for(method, seed)
                     try:
-                        risks, _, seconds = _fit_and_predict(
+                        risks, _, seconds, history = _fit_and_predict(
                             train_records, held["split"]["test"], held["schema"], method, params)
                     except BaselineError as exc:
                         report["failures"].append(_failed(
@@ -343,6 +352,8 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                                 trainDatasets=[entry["name"] for entry in others],
                                 testVersion=held["version"])
                     cell["status"] = "succeeded"
+                    if history is not None:
+                        cell["trainingHistory"] = history
                     report["leaveOneRepoOut"].append(cell)
 
     report["status"] = "complete" if not report["failures"] else "partial"
