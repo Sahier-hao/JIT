@@ -42,7 +42,8 @@ def protected(path):
                  '/api/v1/training-tasks', '/api/v1/training-experiments', '/api/v1/commits', '/api/v1/predictions',
                  '/api/v1/prediction-batches', '/api/v1/feature-schemas',
                   '/api/v1/experiment-runs',
-                 '/api/admin/multi-project-reports', '/api/admin/curation')))
+                 '/api/admin/multi-project-reports', '/api/admin/curation',
+                 '/api/admin/evaluation-evidence')))
 
 
 def error(code, message, status):

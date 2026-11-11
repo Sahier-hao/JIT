@@ -263,6 +263,21 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
     if len(schemas) > 1:
         raise BaselineError("PROJECT_COHORT_INVALID",
                             f"评价矩阵要求同一特征 schema，实际：{sorted(schemas)}")
+    # 留一仓库必须以“仓库”为单位：同一仓库的另一个版本或别名不能充当其他仓库。
+    identities = {}
+    names = set()
+    for dataset in loaded.values():
+        url = str(dataset["manifest"].get("url") or "").strip().rstrip("/").lower()
+        if url.endswith(".git"):
+            url = url[:-4]
+        key = url or dataset["name"]
+        if key in identities or dataset["name"] in names:
+            raise BaselineError(
+                "PROJECT_COHORT_INVALID",
+                f"数据集 {identities.get(key, dataset['name'])} 与 {dataset['name']} "
+                "指向同一仓库，不能用留一仓库评价")
+        identities[key] = dataset["name"]
+        names.add(dataset["name"])
     protocol = {
         "format": FORMAT, "splitPreset": preset, "splitPolicy": "utc-distinct-times",
         "methods": list(methods), "seeds": list(seeds), "locBudget": LOC_BUDGET,
@@ -293,16 +308,28 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                     risks, validation, seconds, history = _fit_and_predict(
                         split["train"], split["test"], dataset["schema"], method, params,
                         extra=split["validation"])
-                except BaselineError as exc:
+                except Exception as exc:  # 单元格失败不终止整个矩阵
                     report["failures"].append(_failed(
                         "within-repo", exc, dataset=dataset["name"], method=method, seed=seed))
                     report["withinRepo"].append({
                         "dataset": dataset["name"], "version": dataset["version"],
                         "language": language, "method": method, "seed": seed,
                         "status": "failed", "code": getattr(exc, "code", "UNEXPECTED"),
-                        "message": str(exc)})
+                        "message": str(exc) if isinstance(exc, BaselineError)
+                        else f"{type(exc).__name__}: {exc}"})
                     continue
-                cell = _cell(split["test"], risks, method, params, seed=seed, seconds=seconds)
+                try:
+                    cell = _cell(split["test"], risks, method, params, seed=seed, seconds=seconds)
+                except Exception as exc:
+                    report["failures"].append(_failed(
+                        "within-repo", exc, dataset=dataset["name"], method=method, seed=seed))
+                    report["withinRepo"].append({
+                        "dataset": dataset["name"], "version": dataset["version"],
+                        "language": language, "method": method, "seed": seed,
+                        "status": "failed", "code": getattr(exc, "code", "UNEXPECTED"),
+                        "message": str(exc) if isinstance(exc, BaselineError)
+                        else f"{type(exc).__name__}: {exc}"})
+                    continue
                 if history is not None:
                     cell["trainingHistory"] = history
                 cell.update(dataset=dataset["name"], version=dataset["version"], language=language)
@@ -337,17 +364,31 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                     try:
                         risks, _, seconds, history = _fit_and_predict(
                             train_records, held["split"]["test"], held["schema"], method, params)
-                    except BaselineError as exc:
+                    except Exception as exc:
                         report["failures"].append(_failed(
                             "leave-one-repo-out", exc, dataset=held["name"], method=method,
                             seed=seed, language=language))
                         report["leaveOneRepoOut"].append({
                             "language": language, "heldOut": held["name"], "method": method,
                             "seed": seed, "status": "failed",
-                            "code": getattr(exc, "code", "UNEXPECTED"), "message": str(exc)})
+                            "code": getattr(exc, "code", "UNEXPECTED"),
+                            "message": str(exc) if isinstance(exc, BaselineError)
+                            else f"{type(exc).__name__}: {exc}"})
                         continue
-                    cell = _cell(held["split"]["test"], risks, method, params,
-                                 seed=seed, seconds=seconds)
+                    try:
+                        cell = _cell(held["split"]["test"], risks, method, params,
+                                     seed=seed, seconds=seconds)
+                    except Exception as exc:
+                        report["failures"].append(_failed(
+                            "leave-one-repo-out", exc, dataset=held["name"], method=method,
+                            seed=seed, language=language))
+                        report["leaveOneRepoOut"].append({
+                            "language": language, "heldOut": held["name"], "method": method,
+                            "seed": seed, "status": "failed",
+                            "code": getattr(exc, "code", "UNEXPECTED"),
+                            "message": str(exc) if isinstance(exc, BaselineError)
+                            else f"{type(exc).__name__}: {exc}"})
+                        continue
                     cell.update(language=language, heldOut=held["name"],
                                 trainDatasets=[entry["name"] for entry in others],
                                 testVersion=held["version"])
@@ -356,7 +397,12 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                         cell["trainingHistory"] = history
                     report["leaveOneRepoOut"].append(cell)
 
-    report["status"] = "complete" if not report["failures"] else "partial"
+    if not report["withinRepo"]:
+        report["status"] = "failed"
+    elif report["failures"] or split_failures:
+        report["status"] = "partial"
+    else:
+        report["status"] = "complete"
     target = Path(output)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

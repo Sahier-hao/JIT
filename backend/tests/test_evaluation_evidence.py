@@ -94,3 +94,21 @@ def test_dataset_view_exposes_observation_window():
                                                szz={"rule": "szz-full-v1", "truncated": True}))
     assert store.version_view({"demo-v1": truncated}, "demo")["versions"][0][
         "labelObservations"]["truncated"] is True
+
+
+def test_malformed_and_stale_line_evidence_are_isolated(tmp_path, monkeypatch):
+    _registry(tmp_path, monkeypatch)
+    root = tmp_path / "evidence"
+    _write(root / "broken-matrix.json", {"format": "evaluation-matrix-v1", "datasets": 1})
+    _write(root / "line.json", {"format": "line-candidate-evaluation-v1",
+                                "repos": [{"repo": "demo", "version": "missing-version",
+                                           "candidates": 1, "positives": 0, "scorers": {}}]})
+    _write(root / "summary.json", {"format": "line-candidates-v1", "datasetVersion": "demo-v1",
+                                   "repo": "demo", "candidates": 1, "positives": 0})
+    listing = evaluation_evidence.EvaluationEvidence(
+        [root], registry_root=tmp_path / "registry").list()
+    by_source = {entry["source"]: entry for entry in listing["evidence"]}
+    assert by_source["broken-matrix.json"]["status"] == "invalid"
+    assert by_source["line.json"]["status"] == "stale"
+    assert "未登记" in by_source["line.json"]["reason"]
+    assert by_source["summary.json"]["status"] == "available"

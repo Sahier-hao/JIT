@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .config import BACKEND
 from .errors import BaselineError
-from .line_dataset import LANGUAGE, _git, _is_source_path, _noise_line
+from .line_dataset import LANGUAGE, _git, _is_source_path, _noise_line, _repo_path
 
 FORMAT = "line-candidates-v1"
 POPULATION = "introduced-added-lines-v1"
@@ -35,35 +35,46 @@ def _generated_path(path):
     return any(token in lowered for token in GENERATED)
 
 
-def _csv_features(manifest):
-    """CSV 中全部提交身份，保持文件顺序；不读取特征值。"""
+def _csv_path(manifest):
     raw = (manifest.get("file") or {}).get("path")
     if not raw:
         raise BaselineError("INPUT_INVALID", "数据集描述缺少 CSV 路径")
-    path = Path(raw) if Path(raw).is_absolute() else BACKEND / raw
+    return Path(raw) if Path(raw).is_absolute() else BACKEND / raw
+
+
+def _csv_features(manifest):
+    """CSV 中全部提交身份，保持文件顺序；不读取特征值。"""
+    path = _csv_path(manifest)
     with path.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         return [row["commit_id"] for row in reader if row.get("commit_id")]
 
 
 def _evidence(manifest):
-    """SZZ 行级证据：{(commit, path): {line: {fixCommit, issueRefs}}}。"""
-    collected = {}
+    """SZZ 行级证据条目：每条含引入提交、路径别名与逐行信息。
+
+    同一证据可能在修复提交发生重命名时同时记录新路径与 oldPath；这里保留为一组别名，
+    覆盖判定只按证据条目计一次，避免同一行既算正例又算不可覆盖。
+    """
+    entries = []
     for item in (manifest.get("collection") or {}).get("labelEvidence") or []:
         commit = item.get("introducedCommit")
         if not commit:
             continue
-        for path in {item.get("path"), item.get("oldPath")}:
-            if not path:
-                continue
-            for start, end in item.get("lineRanges") or []:
-                for line in range(int(start), int(end) + 1):
-                    collected.setdefault((commit, path), {})[line] = {
-                        "fixCommit": item.get("fixCommit"),
-                        "issueRefs": list(item.get("issueRefs") or []),
-                        "fixSource": item.get("fixSource"),
-                    }
-    return collected
+        paths = [path for path in dict.fromkeys((item.get("path"), item.get("oldPath"))) if path]
+        if not paths:
+            continue
+        lines = {}
+        for start, end in item.get("lineRanges") or []:
+            for line in range(int(start), int(end) + 1):
+                lines[line] = {
+                    "fixCommit": item.get("fixCommit"),
+                    "issueRefs": list(item.get("issueRefs") or []),
+                    "fixSource": item.get("fixSource"),
+                }
+        if lines:
+            entries.append({"commit": commit, "paths": paths, "lines": lines})
+    return entries
 
 
 def commit_diff(repo, commit):
@@ -125,11 +136,22 @@ def commit_diff(repo, commit):
 
 def export_candidates(manifest, repo, output):
     """导出一个数据集的完整候选集与摘要；正例不可覆盖时单独计数。"""
-    repo_path = Path(repo)
-    if not repo_path.is_dir():
-        raise BaselineError("REPOSITORY_UNAVAILABLE", "完整候选导出需要可读的本地仓库或缓存裸克隆")
+    from .data import sha256 as _sha256
+    repo_path = _repo_path(manifest, repo)
+    csv_path = _csv_path(manifest)
+    try:
+        blob = csv_path.read_bytes()
+    except OSError as exc:
+        raise BaselineError("DATASET_UNAVAILABLE", f"原始 CSV 不可用：{csv_path.name}") from exc
+    declared = (manifest.get("file") or {}).get("sha256")
+    if not declared or _sha256(blob) != declared:
+        raise BaselineError("DATASET_INVALID", "原始 CSV 校验值与描述文件不一致")
     commits = _csv_features(manifest)
     evidence = _evidence(manifest)
+    marks_by_key = {}
+    for entry in evidence:
+        for path in entry["paths"]:
+            marks_by_key.setdefault((entry["commit"], path), {}).update(entry["lines"])
     version = manifest.get("version") or manifest.get("dataset")
     repo_name = manifest.get("dataset") or version
     revision = ((manifest.get("collection") or {}).get("repository") or {}).get("head")
@@ -158,10 +180,7 @@ def export_candidates(manifest, repo, output):
                 if not stripped or _noise_line(text):
                     summary["exclusions"]["noise"] += 1
                     continue
-                marks = evidence.get((commit, path)) or {}
-                for old, new in renames.items():
-                    if new == path and old != path:
-                        marks = evidence.get((commit, old)) or marks
+                marks = marks_by_key.get((commit, path)) or {}
                 evidence_entry = marks.get(line)
                 if evidence_entry:
                     covered.add((commit, path, line))
@@ -182,16 +201,15 @@ def export_candidates(manifest, repo, output):
                 if evidence_entry:
                     summary["positives"] += 1
     # 证据中不在候选总体里的行：不可覆盖，不是负例。
-    for (commit, path), lines in evidence.items():
-        for line in lines:
-            if (commit, path, line) in covered:
+    for entry in evidence:
+        commit, paths = entry["commit"], entry["paths"]
+        for line in entry["lines"]:
+            if any((commit, path, line) in covered for path in paths):
                 continue
-            if _generated_path(path):
+            if any(_generated_path(path) for path in paths):
                 reason = "generated-path"
-            elif not _is_source_path(path):
+            elif not any(_is_source_path(path) for path in paths):
                 reason = "path-excluded"
-            elif any((commit, other, line) in covered for other in renames.values()):
-                reason = "line-not-introduced"
             else:
                 reason = "line-not-in-diff"
             summary["uncoverable"] += 1

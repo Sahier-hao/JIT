@@ -45,6 +45,8 @@ test('identity distinguishes match, stale and unknown', () => {
   assert.match(identity(parsed, 'c'.repeat(40)).message, /不在当前代码上标注/)
   assert.equal(identity(parsed, null).state, 'unknown')
   assert.equal(identity(parsed, 'b'.repeat(40), true).state, 'dirty')
+  assert.equal(identity(parsed, 'b'.repeat(40), null).state, 'unknown')
+  assert.match(identity(parsed, 'b'.repeat(40), null).message, /无法读取工作树状态/)
   assert.match(identity(parsed, 'b'.repeat(40), true).message, /未提交改动/)
 })
 

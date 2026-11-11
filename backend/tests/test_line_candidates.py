@@ -52,11 +52,13 @@ def _repo(tmp_path):
 
 
 def _manifest(tmp_path, commits, evidence):
+    import hashlib
     csv_path = tmp_path / "demo.csv"
     csv_path.write_text("commit_id,author_date\n" + "".join(f"{c},2024-01-01\n" for c in commits),
                         encoding="utf-8")
     return {"dataset": "demo", "version": "demo-v1",
-            "file": {"path": str(csv_path)},
+            "file": {"path": str(csv_path),
+                     "sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest()},
             "collection": {"repository": {"head": commits[-1]}, "labelEvidence": evidence}}
 
 
@@ -146,3 +148,24 @@ def test_case_pack_marks_weak_labels(tmp_path):
     assert len(pack["cases"]) == 5
     assert all(case["labelStatus"] == "positive" for case in pack["cases"])
     assert "未经人工复核" in pack["note"]
+
+
+def test_renamed_evidence_is_counted_once(tmp_path):
+    """SZZ 同时记录新路径与 oldPath 时，同一证据行只算一次。"""
+    repo, add, change, renamed, deleted = _repo(tmp_path)
+    evidence = [{"introducedCommit": add, "path": "pkg/a.py", "oldPath": "pkg/old-a.py",
+                 "lineRanges": [[2, 2]], "fixCommit": "f" * 40, "issueRefs": []}]
+    manifest = _manifest(tmp_path, [add], evidence)
+    summary = line_candidates.export_candidates(manifest, repo, tmp_path / "c.jsonl")
+    assert summary["positives"] == 1
+    assert summary["uncoverable"] == 0
+
+
+def test_missing_repo_is_a_located_error(tmp_path):
+    from jit_baseline.errors import BaselineError
+    repo, add, _, _, _ = _repo(tmp_path)
+    manifest = _manifest(tmp_path, [add], [])
+    manifest["collection"]["repository"].pop("path", None)
+    import pytest
+    with pytest.raises(BaselineError):
+        line_candidates.export_candidates(manifest, None, tmp_path / "c.jsonl")

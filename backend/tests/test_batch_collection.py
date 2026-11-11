@@ -150,3 +150,42 @@ def test_state_file_is_reloadable_json(tmp_path, manifest_quality):
     saved = json.loads(path.read_text(encoding="utf-8"))
     assert saved["format"] == batch_collection.FORMAT
     assert saved["repos"][0]["stage"] == "pending"
+
+
+def test_external_cancel_during_run_is_not_overwritten(tmp_path, manifest_quality):
+    """另一个进程写入取消意图后，运行中的批次必须采纳而不是覆盖。"""
+    state_holder = {}
+
+    def collector(repo, **kwargs):
+        service.cancel(state_holder["batchId"])
+        return {"records": 1, "dataset": {"version": f"dataset-{repo}"}}
+
+    service = BatchCollection(tmp_path / "state", dataset_root=tmp_path / "datasets",
+                              collector=collector)
+    state, _ = service.create([_task("https://example.com/a"), _task("https://example.com/b")])
+    state_holder["batchId"] = state["batchId"]
+    after = service.run(state["batchId"])
+    assert after["cancelledAt"] is not None
+    assert [entry["stage"] for entry in after["repos"]] == ["completed", "cancelled"]
+
+
+def test_cancelled_batch_resumes_only_when_explicit(tmp_path, manifest_quality):
+    calls = []
+    service = BatchCollection(tmp_path / "state", dataset_root=tmp_path / "datasets",
+                              collector=_collector(calls))
+    state, _ = service.create([_task("https://example.com/a"), _task("https://example.com/b")])
+    service.cancel(state["batchId"])
+    assert service.run(state["batchId"])["repos"][0]["stage"] == "cancelled"
+    assert calls == []
+    resumed = service.run(state["batchId"], retry_failed=True)
+    assert resumed["cancelledAt"] is None
+    assert [entry["stage"] for entry in resumed["repos"]] == ["completed", "completed"]
+    assert len(calls) == 2
+
+
+def test_dataset_name_cannot_escape_batch_work_directory(tmp_path):
+    service = BatchCollection(tmp_path / "state", dataset_root=tmp_path / "datasets",
+                              collector=_collector([]))
+    for name in ("../outside", "a/b", "..", ".hidden", "a\b"):
+        with pytest.raises(BaselineError):
+            service.create([{"repo": "https://example.com/a", "dataset": name}])

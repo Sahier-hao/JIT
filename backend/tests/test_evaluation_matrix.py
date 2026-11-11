@@ -116,3 +116,31 @@ def test_mcc_and_calibration_are_explicit_when_undefined():
     assert large["status"] == "computed"
     assert large["brier"] == pytest.approx(0.25)
     assert len(large["buckets"]) == 5
+
+
+def test_same_repository_twice_is_rejected(tmp_path, monkeypatch):
+    """同一仓库的另一个版本不能冒充留一仓库中的“其他仓库”。"""
+    def builder(path):
+        dataset = _dataset(path)
+        dataset["manifest"]["url"] = "https://example.com/same"
+        return dataset
+    _install(monkeypatch, builder)
+    with pytest.raises(BaselineError) as error:
+        evaluation_matrix.run_matrix(
+            [("python", "alpha.json"), ("python", "beta.json"), ("python", "gamma.json")],
+            tmp_path / "report.json", methods=["logistic-regression-l2-v1"])
+    assert error.value.code == "PROJECT_COHORT_INVALID"
+    assert "同一仓库" in str(error.value)
+
+
+def test_split_failure_makes_status_partial(tmp_path, monkeypatch):
+    def builder(path):
+        if Path(path).stem == "broken":
+            return _dataset(path, records=_records("broken", positive_every=10_000))
+        return _dataset(path)
+    _install(monkeypatch, builder)
+    report = evaluation_matrix.run_matrix(
+        [("python", "alpha.json"), ("python", "broken.json"), ("python", "gamma.json")],
+        tmp_path / "report.json", methods=["logistic-regression-l2-v1"])
+    assert report["status"] == "partial"
+    assert report["splitFailures"]

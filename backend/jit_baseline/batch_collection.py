@@ -62,6 +62,12 @@ def normalize_task(entry, index):
     }
     if task["szz"] not in ("full", "line", "simple"):
         raise BaselineError("INPUT_INVALID", f"第 {index} 条任务的 szz 不受支持")
+    dataset = task.get("dataset")
+    if dataset is not None:
+        if (not isinstance(dataset, str) or not dataset or dataset.startswith(".")
+                or ".." in dataset or "/" in dataset or "\\" in dataset
+                or any(ord(char) < 32 for char in dataset)):
+            raise BaselineError("INPUT_INVALID", f"第 {index} 条任务的 dataset 名称无效")
     if task["limit"] is not None and (isinstance(task["limit"], bool)
                                       or not isinstance(task["limit"], int)
                                       or task["limit"] < 1):
@@ -91,7 +97,9 @@ class BatchCollection:
             raise BaselineError("INPUT_INVALID", "批次标识无效")
         return self.root / f"{batch_id}.json"
 
-    def _write(self, state):
+    def _write(self, state, *, adopt=True):
+        if adopt:
+            self._adopt_cancellation(state)
         state["updatedAt"] = _now()
         target = self._path(state["batchId"])
         temporary = target.with_name(target.name + ".tmp")
@@ -115,6 +123,20 @@ class BatchCollection:
         temporary.write_text(json.dumps(index, ensure_ascii=False, indent=2, sort_keys=True),
                              encoding="utf-8")
         os.replace(temporary, path)
+
+    def _adopt_cancellation(self, state):
+        """另一个进程可能已写入取消意图；写回前先采纳，避免整文件覆盖丢失。"""
+        try:
+            current = self.load(state["batchId"])
+        except BaselineError:
+            return
+        cancelled_at = current.get("cancelledAt")
+        if cancelled_at and not state.get("cancelledAt"):
+            state["cancelledAt"] = cancelled_at
+            for entry in state["repos"]:
+                if entry["stage"] == "pending":
+                    entry["stage"] = "cancelled"
+                    entry["finishedAt"] = cancelled_at
 
     def load(self, batch_id):
         path = self._path(batch_id)
@@ -173,7 +195,15 @@ class BatchCollection:
         """按清单顺序执行；中断后再次调用只继续未完成项。"""
         state = self.load(batch_id)
         if state.get("cancelledAt"):
-            return state
+            if not retry_failed:
+                return state
+            # 显式恢复：清理取消意图，把被取消的未开始项重新排队。
+            state["cancelledAt"] = None
+            for entry in state["repos"]:
+                if entry["stage"] == "cancelled":
+                    entry["stage"] = "pending"
+                    entry["finishedAt"] = None
+            self._write(state, adopt=False)
         processed = 0
         for entry in state["repos"]:
             if cancel_check is not None and cancel_check():

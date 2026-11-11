@@ -321,15 +321,20 @@ def main():
             elif args.batch:
                 state = service.load(args.batch)
                 if not args.status:
-                    state = service.run(args.batch, retry_failed=args.retry_failed,
-                                        max_repos=args.max_repos)
+                    state = service.run(
+                        args.batch, retry_failed=args.retry_failed, max_repos=args.max_repos,
+                        cancel_check=lambda: bool(
+                            service.load(args.batch).get("cancelledAt")))
             elif args.manifest:
                 payload = json.loads(args.manifest.read_text(encoding='utf-8'))
                 tasks = payload.get('tasks') if isinstance(payload, dict) else payload
                 state, created = service.create(tasks, register=not args.no_register)
                 if not args.status:
-                    state = service.run(state['batchId'], retry_failed=args.retry_failed,
-                                        max_repos=args.max_repos)
+                    batch_id = state['batchId']
+                    state = service.run(
+                        batch_id, retry_failed=args.retry_failed, max_repos=args.max_repos,
+                        cancel_check=lambda: bool(
+                            service.load(batch_id).get("cancelledAt")))
             else:
                 raise BaselineError("INPUT_INVALID", "需要 --manifest、--batch 或 --cancel")
             result = BatchCollection.summary(state)

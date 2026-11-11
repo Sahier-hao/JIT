@@ -137,7 +137,8 @@ export function parseReport(raw: unknown): CommitAnalysisReport {
 }
 
 /** 比较报告目标提交与当前检出；只知道其中一方时标为未核对，不在错误版本上标注。 */
-export function identity(report: CommitAnalysisReport, currentHead: string | null, dirty = false): IdentityResult {
+export function identity(report: CommitAnalysisReport, currentHead: string | null,
+                         dirty: boolean | null = false): IdentityResult {
   if (!currentHead) {
     return { state: 'unknown', message: '无法读取当前工作区的 Git HEAD，报告只读展示，不定位到代码行。' }
   }
@@ -145,6 +146,12 @@ export function identity(report: CommitAnalysisReport, currentHead: string | nul
     return {
       state: 'stale',
       message: `报告对应提交 ${report.repository.headSha.slice(0, 12)}，当前 HEAD 为 ${currentHead.slice(0, 12)}；只读展示，不在当前代码上标注。`,
+    }
+  }
+  if (dirty === null) {
+    return {
+      state: 'unknown',
+      message: '无法读取工作树状态；只读展示，不定位到代码行。',
     }
   }
   if (dirty) {

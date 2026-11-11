@@ -91,20 +91,32 @@ def _dataset_index(registry_root=None):
 
 
 def _staleness(report, registry):
-    """评价矩阵引用的数据集版本必须仍以相同内容登记。"""
-    if report.get("format") != MATRIX_FORMAT:
-        return None
+    """报告引用的数据版本必须仍以相同内容登记；不能静默展示过期结论。"""
     problems = []
-    for item in (report.get("protocol") or {}).get("datasets") or []:
-        current = registry.get(item.get("version"))
-        if current is None:
-            problems.append(f"{item.get('version')} 未登记")
-        elif (item.get("manifestSha256") and current.get("manifestSha256")
-              and item["manifestSha256"] != current["manifestSha256"]):
-            problems.append(f"{item.get('version')} 描述文件已变化")
-        elif item.get("csvSha256") and current.get("csvSha256") != item["csvSha256"]:
-            problems.append(f"{item.get('version')} CSV 已变化")
-    return "; ".join(problems) if problems else None
+    if report.get("format") == MATRIX_FORMAT:
+        for item in (report.get("protocol") or {}).get("datasets") or []:
+            current = registry.get(item.get("version"))
+            if current is None:
+                problems.append(f"{item.get('version')} 未登记")
+            elif (item.get("manifestSha256") and current.get("manifestSha256")
+                  and item["manifestSha256"] != current["manifestSha256"]):
+                problems.append(f"{item.get('version')} 描述文件已变化")
+            elif item.get("csvSha256") and current.get("csvSha256") != item["csvSha256"]:
+                problems.append(f"{item.get('version')} CSV 已变化")
+    elif report.get("format") == LINE_FORMAT:
+        for item in report.get("repos") or []:
+            version = item.get("version")
+            if not version:
+                problems.append("行级评价缺少数据版本")
+            elif version not in registry:
+                problems.append(f"{version} 未登记")
+    elif report.get("format") == CANDIDATE_SUMMARY_FORMAT:
+        version = report.get("datasetVersion")
+        if not version:
+            problems.append("候选摘要缺少数据版本")
+        elif version not in registry:
+            problems.append(f"{version} 未登记")
+    return "; ".join(dict.fromkeys(problems)) if problems else None
 
 
 class EvaluationEvidence:
@@ -145,10 +157,20 @@ class EvaluationEvidence:
                                 "sha256": digest, "summary": None,
                                 "reason": "不是有效的 UTF-8 JSON"})
                 continue
-            kind, summary = _kind(report if isinstance(report, dict) else {})
+            try:
+                kind, summary = _kind(report if isinstance(report, dict) else {})
+            except (TypeError, AttributeError, KeyError) as exc:
+                entries.append({"evidenceId": digest[:24], "kind": "invalid",
+                                "status": "invalid", "source": self._display(path, root),
+                                "sha256": digest, "summary": None,
+                                "reason": f"证据结构无效：{type(exc).__name__}"})
+                continue
             if kind is None:
                 continue
-            stale = _staleness(report, registry)
+            try:
+                stale = _staleness(report, registry)
+            except (TypeError, AttributeError, KeyError) as exc:
+                stale = f"证据结构无效：{type(exc).__name__}"
             entries.append({
                 "evidenceId": digest[:24], "kind": kind,
                 "status": "stale" if stale else "available",
@@ -169,10 +191,15 @@ class EvaluationEvidence:
                 report = json.loads(blob.decode("utf-8"))
             except (UnicodeError, ValueError) as exc:
                 raise BaselineError("EVIDENCE_INVALID", "证据不是有效的 UTF-8 JSON") from exc
-            kind, summary = _kind(report if isinstance(report, dict) else {})
-            if kind is None:
-                raise BaselineError("EVIDENCE_INVALID", "证据格式不受支持")
-            stale = _staleness(report, _dataset_index(self.registry_root))
+            try:
+                kind, summary = _kind(report if isinstance(report, dict) else {})
+                if kind is None:
+                    raise BaselineError("EVIDENCE_INVALID", "证据格式不受支持")
+                stale = _staleness(report, _dataset_index(self.registry_root))
+            except BaselineError:
+                raise
+            except (TypeError, AttributeError, KeyError) as exc:
+                raise BaselineError("EVIDENCE_INVALID", "证据结构无效") from exc
             return {"evidenceId": digest[:24], "kind": kind, "sha256": digest,
                     "status": "stale" if stale else "available", "reason": stale,
                     "source": self._display(path, root), "summary": summary,

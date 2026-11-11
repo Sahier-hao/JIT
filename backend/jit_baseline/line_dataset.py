@@ -46,7 +46,10 @@ def _repo_path(manifest, repo):
     if repo is not None:
         path = Path(repo)
     else:
-        path = Path((manifest.get("collection") or {}).get("repository", {}).get("path") or "")
+        raw = (manifest.get("collection") or {}).get("repository", {}).get("path")
+        if not isinstance(raw, str) or not raw.strip():
+            raise BaselineError("REPOSITORY_UNAVAILABLE", "行级导出需要可读的本地仓库或缓存裸克隆")
+        path = Path(raw)
     if not path.is_dir():
         raise BaselineError("REPOSITORY_UNAVAILABLE", "行级导出需要可读的本地仓库或缓存裸克隆")
     return path

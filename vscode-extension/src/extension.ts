@@ -94,12 +94,13 @@ async function gitHead(folder: string): Promise<string | null> {
   }
 }
 
-async function gitDirty(folder: string): Promise<boolean> {
+async function gitDirty(folder: string): Promise<boolean | null> {
   try {
     const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain'])
     return stdout.trim().length > 0
   } catch {
-    return false
+    // 读不到工作树状态时不能当作“干净”：宁可拒绝定位，也不在可能已改动的代码上标注。
+    return null
   }
 }
 
@@ -124,7 +125,7 @@ async function recomputeIdentity(): Promise<void> {
   if (!tree.report) { tree.identity = null; tree.refresh(); return }
   const folder = workspaceFolder()
   const head = folder ? await gitHead(folder.uri.fsPath) : null
-  const dirty = folder ? await gitDirty(folder.uri.fsPath) : false
+  const dirty = folder ? await gitDirty(folder.uri.fsPath) : null
   tree.identity = identity(tree.report, head, dirty)
   tree.refresh()
 }
