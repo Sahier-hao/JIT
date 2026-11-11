@@ -50,7 +50,14 @@
 | `cc-switch-farion-mature` | 2217 | 846 | 是 |
 | `vite-mature` | 9449 | 1983 | 是（修复提交恰好 2000） |
 
-第二轮以更高修复提交上限重采 pydantic、axios、cc-switch、vite（`*-mature-v2`），结果见本轮进展台账与评价文档。
+第二轮以更高修复提交上限重采 pydantic、axios、cc-switch、vite（`*-mature-v2`）。其中 vite 的历史与
+修复提交规模较大，回溯在本地预算内未完成，改为同一 JS/TS 语言组的 `expressjs/express`：
+
+- `kamei14-git-v2-express-mature`：纳入 5,673、正例 806，修复提交 951，未截断；时间切分
+  3,821 / 819 / 817，测试段 76 个正例。
+
+因此本轮 JS/TS 三个仓库为 axios、cc-switch、express；vite 的完整标签版本保留为未完成项，
+不使用截断标签的 vite 版本参与时间外评价。
 
 ## 三、恢复与取消
 

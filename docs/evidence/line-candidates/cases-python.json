@@ -1,0 +1,355 @@
+{
+  "format": "line-candidate-cases-v1",
+  "population": "introduced-added-lines-v1",
+  "note": "弱标签案例包；未经人工复核前不代表真实缺陷检出率。",
+  "cases": [
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "6923e5e677362adbe3a1ce93fa9f776080b8d904",
+      "path": "pydantic/main.py",
+      "side": "new",
+      "line": 155,
+      "text": "            extra = input_data.keys() - {f.alias for f in self.__fields__.values()}",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "f6643d60f9de027724382927819dd62e1ac5b672",
+        "issueRefs": [
+          221,
+          224
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "6923e5e67736:pydantic/main.py:155"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "4f4e22ef47ab04b289976bb4ba4904e3c701e72d",
+      "path": "pydantic/errors.py",
+      "side": "new",
+      "line": 54,
+      "text": "class DSNDriverIsEmptyError(PydanticValueError):",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "79017111aa030873f2dc54576e2c768d154b1be5",
+        "issueRefs": [
+          541,
+          603,
+          755
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "4f4e22ef47ab:pydantic/errors.py:54"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-flask-mature",
+      "datasetVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "repo": "kamei14-git-v2-flask-mature",
+      "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "commitId": "05f36c7f7e2df36ee28f90d99632162579b1287c",
+      "path": "flask.py",
+      "side": "new",
+      "line": 317,
+      "text": "        :param request: an instance of :attr:`response_class`",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "a01e8b49ca66608f0bd46134ff02deeb5724c799",
+        "issueRefs": [],
+        "fixSource": "keyword"
+      },
+      "language": "python",
+      "id": "05f36c7f7e2d:flask.py:317"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "3417fbc0399afd59a66bf0251a61993b56fe9923",
+      "path": "pydantic_core/core_schema.py",
+      "side": "new",
+      "line": 477,
+      "text": "    return dict_not_none(",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "c81d5cd94736d623600c55c93cb373b951d4054a",
+        "issueRefs": [
+          238
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "3417fbc0399a:pydantic_core/core_schema.py:477"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "c83156d0e07589cb8f8050bbeebe03490dc2e639",
+      "path": "pydantic/dataclasses.py",
+      "side": "new",
+      "line": 123,
+      "text": "        _cls = type(_cls.__name__, (_cls,), {'__post_init__': _pydantic_post_init})",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "0b9cd4e5370ac03347e70a2ff9b85852b002ddc4",
+        "issueRefs": [
+          2042,
+          2051,
+          2054
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "c83156d0e075:pydantic/dataclasses.py:123"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "a82c00e97e55e31c7c166dfd9d924962fcdf6d49",
+      "path": "src/validators/decimal.rs",
+      "side": "new",
+      "line": 259,
+      "text": "            Err(e) => return ValError::InternalErr(e),",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "95c7e65983a6ebdde90be169b5b450fb7eadd4fe",
+        "issueRefs": [],
+        "fixSource": "keyword"
+      },
+      "language": "rust",
+      "id": "a82c00e97e55:src/validators/decimal.rs:259"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-flask-mature",
+      "datasetVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "repo": "kamei14-git-v2-flask-mature",
+      "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "commitId": "d0c6ad7d287e543fcc941aa2b42557e06b9dc142",
+      "path": "flask/helpers.py",
+      "side": "new",
+      "line": 289,
+      "text": "            os.path.getmtime(filename),",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "2506c0b9a96d48f14624acfa552fc88e38a542ae",
+        "issueRefs": [
+          930
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "d0c6ad7d287e:flask/helpers.py:289"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "79017111aa030873f2dc54576e2c768d154b1be5",
+      "path": "pydantic/networks.py",
+      "side": "new",
+      "line": 178,
+      "text": "            scheme=scheme,",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "aacf5920402f374069af0c80e37d4d251f418d35",
+        "issueRefs": [
+          1877,
+          1909,
+          1911
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "79017111aa03:pydantic/networks.py:178"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "25b5d980306685957e3905a4f93c87cd8a3527b8",
+      "path": "pydantic/utils.py",
+      "side": "new",
+      "line": 247,
+      "text": "        annotations[name] = value",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "5f634067daa0236632af22c0a8b15dac310b18a1",
+        "issueRefs": [
+          713,
+          761
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "25b5d9803066:pydantic/utils.py:247"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-flask-mature",
+      "datasetVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "repo": "kamei14-git-v2-flask-mature",
+      "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "commitId": "67f4b0f31538832f06b9351d15e30c85f449ac7e",
+      "path": "flask.py",
+      "side": "new",
+      "line": 366,
+      "text": "            if self.url_prefix:",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "a921aef6c47cecbacef5173f03c07c52e6bc8fea",
+        "issueRefs": [
+          29
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "67f4b0f31538:flask.py:366"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "e3c5e1d3cda397eb9cc19a1d1b8f7582d9ebb16d",
+      "path": "pydantic/utils.py",
+      "side": "new",
+      "line": 235,
+      "text": "            unique_set.add(v)",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "bd61f1b6ee6cebfd997bf75cc47baa5f8d3df22e",
+        "issueRefs": [
+          2670
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "python",
+      "id": "e3c5e1d3cda3:pydantic/utils.py:235"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "7e41c7743e642229ccda1f63f1c757aa5477e78c",
+      "path": "src/serializers/type_serializers/model.rs",
+      "side": "new",
+      "line": 181,
+      "text": "            let root_extra = Extra {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "25316d722de695529ac6d96a9d0b38b99ef2dc77",
+        "issueRefs": [],
+        "fixSource": "keyword"
+      },
+      "language": "rust",
+      "id": "7e41c7743e64:src/serializers/type_serializers/model.rs:181"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "017c05a56d9468ac6d5096aa3cda3618e7609bcc",
+      "path": "src/lookup_key.rs",
+      "side": "new",
+      "line": 223,
+      "text": "            Self::I(key) => write!(f, \"{}\", key),",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "83241c2ad4eff8818ec5b8bc1155111714bdbc44",
+        "issueRefs": [],
+        "fixSource": "keyword"
+      },
+      "language": "rust",
+      "id": "017c05a56d94:src/lookup_key.rs:223"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "aad175a25f201124a8d25c7862d076d0a2f902f5",
+      "path": "pydantic/types.py",
+      "side": "new",
+      "line": 174,
+      "text": "    return type('UrlStrValue', (UrlStr,), namespace)",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "79017111aa030873f2dc54576e2c768d154b1be5",
+        "issueRefs": [
+          541,
+          603,
+          755
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "aad175a25f20:pydantic/types.py:174"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-pydantic-mature",
+      "datasetVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "repo": "kamei14-git-v2-pydantic-mature",
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "commitId": "dfc5924936584c50f7ed32ea2543f84246e35dbb",
+      "path": "pydantic/fields.py",
+      "side": "new",
+      "line": 30,
+      "text": "        'allow_none', 'shape'",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "a3a9b145311892a75668ad6fd287068e7ed954fa",
+        "issueRefs": [
+          137,
+          141
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "python",
+      "id": "dfc592493658:pydantic/fields.py:30"
+    }
+  ]
+}
