@@ -144,3 +144,14 @@ def test_split_failure_makes_status_partial(tmp_path, monkeypatch):
         tmp_path / "report.json", methods=["logistic-regression-l2-v1"])
     assert report["status"] == "partial"
     assert report["splitFailures"]
+
+
+def test_all_split_failures_is_failed_status(tmp_path, monkeypatch):
+    def builder(path):
+        return _dataset(path, records=_records(Path(path).stem, positive_every=10_000))
+    _install(monkeypatch, builder)
+    report = evaluation_matrix.run_matrix(
+        [("python", "alpha.json"), ("python", "beta.json")],
+        tmp_path / "report.json", methods=["logistic-regression-l2-v1"])
+    assert report["status"] == "failed"
+    assert report["withinRepo"] == []
