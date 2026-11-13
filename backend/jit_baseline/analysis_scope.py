@@ -165,6 +165,42 @@ def _split(service, item: dict[str, Any], rows: list[dict[str, Any]],
     return result, _metrics(summary.get("metrics"))
 
 
+def _frozen_identity(service, item: dict[str, Any], lineage: dict[str, Any],
+                     dataset: dict[str, Any] | None) -> dict[str, Any] | None:
+    """本次结果绑定的冻结运行身份；只在谱系已核对时返回。"""
+    if lineage.get("status") != model_lineage.VERIFIED:
+        return None
+    model_id = item.get("modelId")
+    try:
+        directory = Path(service.catalog.model_directory(model_id))
+    except Exception:
+        return None
+    summary = _read_json(directory / "summary.json")
+    if summary is None:
+        return None
+    manifest = _read_json(directory / "manifest.json") or {}
+    split = _read_json(directory / "split.json") or {}
+    partitions = split.get("partitions") if isinstance(split.get("partitions"), dict) else {}
+    try:
+        member_sha = model_lineage.membership_digest(partitions)
+    except Exception:
+        member_sha = None
+    dataset_source = (dataset or {}).get("source") or {}
+    return {
+        "modelId": model_id,
+        "artifactRunId": lineage.get("runId") or manifest.get("runId"),
+        "modelSha256": summary.get("modelSha256")
+        or (manifest.get("config") or {}).get("modelSha256"),
+        "datasetVersion": summary.get("datasetVersion") or lineage.get("datasetVersion"),
+        "datasetSha256": (summary.get("source") or {}).get("sha256")
+        or dataset_source.get("sha256"),
+        "memberVerification": lineage.get("memberVerification"),
+        "memberSha256": member_sha,
+        "splitPreset": lineage.get("preset"),
+        "holdoutFrom": lineage.get("holdoutFrom"),
+    }
+
+
 def _metrics(value: dict[str, Any] | None) -> dict[str, Any] | None:
     if value is None:
         return None
@@ -193,6 +229,7 @@ def build_scope(service, item: dict[str, Any], *, lineage: dict[str, Any] | None
         return {
             "strategy": strategy, "model": model, "dataset": None,
             "datasetError": "PR 固定分析没有分支训练切分", "split": None, "metrics": None,
+            "frozenIdentity": None,
             "excludedCommitIds": [], "limitations": [],
             "partitionCoverage": model_lineage.unknown_coverage("PR 固定分析没有分支训练切分"),
             "distributions": {"all": _distribution(rows)},
@@ -220,6 +257,7 @@ def build_scope(service, item: dict[str, Any], *, lineage: dict[str, Any] | None
         "datasetError": dataset_error,
         "split": split,
         "metrics": metrics,
+        "frozenIdentity": _frozen_identity(service, item, lineage, dataset),
         "excludedCommitIds": excluded,
         "partitionCoverage": lineage,
         "limitations": [value for value in (dataset or {}).get("limitations") or []

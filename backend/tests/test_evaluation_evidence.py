@@ -16,8 +16,10 @@ def _matrix(version, manifest_sha, csv_sha="c" * 64):
             "generatedUtc": "2026-11-11T04:00:00Z",
             "protocol": {"datasets": [{"version": version, "manifestSha256": manifest_sha,
                                        "csvSha256": csv_sha}]},
-            "datasets": [{"name": "demo", "version": version, "language": "python"}],
-            "withinRepo": [{"status": "succeeded"}], "leaveOneRepoOut": [],
+            "datasets": [{"name": "demo", "version": version, "language": "python",
+                          "schema": "kamei14-git-v2"}],
+            "withinRepo": [{"status": "succeeded", "method": "logistic-regression-l2-v1"}],
+            "leaveOneRepoOut": [],
             "baselines": [{"baseline": "churn"}], "failures": [],
             "protocolSha256": "p" * 64}
 
@@ -50,6 +52,8 @@ def test_available_and_stale_evidence(tmp_path, monkeypatch):
     assert by_source["missing.json"]["status"] == "stale"
     assert "未登记" in by_source["missing.json"]["reason"]
     assert by_source["fresh.json"]["summary"]["datasets"] == 1
+    assert by_source["fresh.json"]["summary"]["methods"] == ["logistic-regression-l2-v1"]
+    assert by_source["fresh.json"]["summary"]["schemas"] == ["kamei14-git-v2"]
     detail = service.get(by_source["fresh.json"]["evidenceId"][:12])
     assert detail["report"]["protocolSha256"] == "p" * 64
     assert detail["status"] == "available"

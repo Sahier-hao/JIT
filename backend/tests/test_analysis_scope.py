@@ -135,6 +135,12 @@ def test_build_scope_partitions_are_frozen_members_and_counts_conserve(tmp_path,
     assert scope["split"]["test"]["count"] == summary["split"]["test"]["count"]
     assert scope["split"]["holdout"]["kind"] == "time-view"
     assert scope["split"]["holdout"]["count"] == 1
+    identity = scope["frozenIdentity"]
+    assert identity["artifactRunId"] == summary["runId"]
+    assert identity["modelSha256"] == summary["modelSha256"]
+    assert identity["datasetVersion"] == summary["datasetVersion"]
+    assert identity["memberVerification"] == "digest"
+    assert identity["memberSha256"] == model_lineage.membership_digest(split["partitions"])
     labels = {"train": 1, "validation": 1, "test": 1, "holdout": 1,
               "excluded": 1, "notIncluded": 0, "unassigned": 0, "scored": 0, "unknown": 0}
     assert {name: scope["distributions"][name]["high"] + scope["distributions"][name]["medium"]
