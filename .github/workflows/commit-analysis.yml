@@ -2,6 +2,8 @@ name: Commit analysis report
 
 # 推送与 PR 触发：在 base 仓库检出上执行真实采集与推理，只上传报告。
 # 模型包、SHA-256 与模型 ID 来自仓库变量，触发时固定，不读取“最新默认模型”。
+# 模型包必须是能由提交采集生成特征的仓库分析模型（kamei14-git-v1/v2）；
+# openstack-six-v1 只能用于离线基准，pr-check-analyze 会返回 SCHEMA_UNSUPPORTED。
 # 不评论 PR、不设合并门禁、不修改远端配置；fork 事件不接触任何凭据。
 on:
   pull_request:
