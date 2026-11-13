@@ -587,6 +587,21 @@ def test_a_complete_declaration_does_not_redeem_an_unloadable_model(external_cop
     assert info.value.code == "MODEL_INVALID"
 
 
+def _drift_predictions(monkeypatch, drift):
+    """模拟跨 CPU/框架版本的浮点漂移：本机重算结果相对冻结参考预测逐条偏移。
+
+    `drift` 接收记录下标并返回偏移量；真实场景里偏移来自不同的浮点实现路径。
+    """
+    import jit_baseline.artifacts as artifacts
+    original = artifacts.predict_risks
+
+    def drifted(model, records, schema):
+        return [value + drift(index)
+                for index, value in enumerate(original(model, records, schema))]
+
+    monkeypatch.setattr(artifacts, "predict_risks", drifted)
+
+
 def test_verification_uses_the_methods_declared_tolerance(copied_run, monkeypatch):
     """按该运行声明的方法所声明的复现口径比较，不套用统一容差（PDB-18）。"""
     from jit_baseline.algorithms import ALGORITHMS, DEFAULT_ALGORITHM
@@ -597,14 +612,70 @@ def test_verification_uses_the_methods_declared_tolerance(copied_run, monkeypatc
                          "reproducibility": {"mode": "tolerance", "atol": 1e-3, "rtol": 0.0}})
     manifest = json.loads((copied_run / "manifest.json").read_text(encoding="utf-8"))
     assert declared_reproducibility(manifest)[1] == {"mode": "tolerance", "atol": 1e-3, "rtol": 0.0}
+    # 漂移发生在重算一侧（真实场景是不同 CPU/框架版本），冻结的参考预测与记录不变。
+    drift = [5e-4]
+    _drift_predictions(monkeypatch, lambda index: drift[0])
     # 落在该运行声明的口径之内：通过。
-    _perturb_reference(copied_run, 5e-4)
     assert verify_run(copied_run)["runId"]
     # 超出该运行声明的口径：判为不可用，并指出所用口径。
-    _perturb_reference(copied_run, 5e-3)
+    drift[0] = 5e-3
     with pytest.raises(BaselineError) as info:
         verify_run(copied_run)
     assert info.value.code == "ARTIFACT_INVALID" and "容差" in str(info.value)
+
+
+def test_recorded_aggregates_are_functions_of_the_frozen_reference_predictions(
+        copied_run, monkeypatch):
+    """记录的指标与时间桶聚合按冻结参考预测严格重算，容差内漂移不影响它们（PDB-12、PDB-21）。
+
+    深度方法在本机的重算风险与交付参考预测相差约 1e-7（落在方法声明容差内），
+    但未取整的指标与分位数会因此出现末位差异；记录的聚合必须仍然可核对，
+    而不是被本机漂移放大成“产物损坏”。这里把容差与漂移放大到可观察的量级，
+    论证同一条比较关系。
+    """
+    from jit_baseline.algorithms import ALGORITHMS, DEFAULT_ALGORITHM
+    from jit_baseline.artifacts import read_json, verify_run, write_json
+    from jit_baseline.data import BaselineError
+    from jit_baseline.metrics import evaluate
+    from jit_baseline.trends import TREND_KEY
+    monkeypatch.setitem(ALGORITHMS, DEFAULT_ALGORITHM,
+                        {**ALGORITHMS[DEFAULT_ALGORITHM],
+                         "reproducibility": {"mode": "tolerance", "atol": 1e-2, "rtol": 0.0}})
+
+    def drift(index):
+        return 5e-3 if index % 2 else -5e-3
+
+    _drift_predictions(monkeypatch, drift)
+    assert verify_run(copied_run)["runId"]
+
+    # 漂移确实会改动未取整的指标：证明上面的通过不是因为比较被放宽到“什么都能过”。
+    records = read_json(copied_run / "test-input.json")["records"]
+    labels = {row["id"]: row["label"] for row in read_json(copied_run / "test-labels.json")}
+    labeled = [dict(record, label=labels[record["id"]]) for record in records]
+    references = [item["risk"] for item in read_json(copied_run / "reference-predictions.json")]
+
+    def scalar(risks):
+        return {name: entry["value"] for name, entry in evaluate(labeled, risks, None).items()
+                if isinstance(entry, dict) and set(entry) == {"value", "reason"}
+                and entry["value"] is not None}
+
+    changed = [name for name, value in scalar(
+        [risk + drift(index) for index, risk in enumerate(references)]).items()
+        if value != scalar(references)[name]]
+    assert changed, "注入的漂移应当改变未取整指标，否则这条测试没有区分度"
+
+    # 记录本身被改动（与冻结参考预测不再自洽）时仍然判为不可用：即使
+    # metrics.json、summary.json 与清单哈希被一并改成互相一致，只要指标不再
+    # 等于冻结参考预测的函数就拒绝。
+    tampered = read_json(copied_run / "summary.json")
+    assert tampered[TREND_KEY] is not None
+    tampered["metrics"]["rocAuc"]["value"] = round(tampered["metrics"]["rocAuc"]["value"] + 0.01, 6)
+    write_json(copied_run / "summary.json", tampered)
+    write_json(copied_run / "metrics.json", tampered["metrics"])
+    _resync(copied_run, ("metrics.json", "summary.json"))
+    with pytest.raises(BaselineError) as info:
+        verify_run(copied_run)
+    assert info.value.code == "ARTIFACT_INVALID" and "冻结参考预测" in str(info.value)
 
 
 def test_a_non_numeric_caliber_is_not_verified_under_a_uniform_tolerance(copied_run, monkeypatch):

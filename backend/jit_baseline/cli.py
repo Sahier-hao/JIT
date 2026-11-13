@@ -90,6 +90,15 @@ def main():
     multi_project.add_argument("--methods", nargs="*", default=None,
                                help="方法子集；省略表示五种经典方法")
     multi_project.add_argument("--metric-set", default=None, help="默认 metric-set-v2")
+    evaluation = commands.add_parser("run-evaluation-matrix",
+                                     help="固定协议的多模型时间外与留一仓库评价")
+    evaluation.add_argument("--data", action="append", required=True,
+                            help="可重复：语言=数据集描述文件路径（如 python=backend/data/datasets/x/y.json）")
+    evaluation.add_argument("--output", type=Path, required=True, help="报告 JSON 输出路径")
+    evaluation.add_argument("--methods", nargs="*", default=None,
+                            help="方法子集；默认逻辑回归、决策树、随机森林与 MLP")
+    evaluation.add_argument("--seed", action="append", type=int, default=None,
+                            help="随机方法的种子，可重复；默认 42/43/44")
     benefit = commands.add_parser("evaluate-benefit", help="用冻结测试分区比较模型、时间与随机检查顺序")
     benefit.add_argument("--run", type=Path, required=True, help="已交付模型产物目录")
     benefit.add_argument("--output", type=Path, required=True, help="报告文件或目录；目录写 benefit-report.json")
@@ -172,6 +181,16 @@ def main():
     collect.add_argument('--szz', choices=['full', 'line', 'simple'], default='full',
                          help='标签规则：full 完整流程（默认），line 行级兼容，simple 文件级兼容')
     collect.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
+    batch = commands.add_parser('collect-batch', help='多仓库采集批处理：创建、续跑、取消或查看状态')
+    batch.add_argument('--manifest', type=Path, default=None, help='任务清单 JSON：[{repo, branch, since, until, limit, szz, dataset, language}]')
+    batch.add_argument('--batch', default=None, help='既有批次标识；省略 --manifest 时用于续跑或查看')
+    batch.add_argument('--state-root', type=Path, default=None, help='批次状态目录；默认 backend/artifacts/collection-batches')
+    batch.add_argument('--root', type=Path, default=None, help='数据集登记目录；默认 backend/data/datasets')
+    batch.add_argument('--retry-failed', action='store_true', help='续跑时重试失败仓库')
+    batch.add_argument('--max-repos', type=int, default=None, help='本次最多执行的仓库数')
+    batch.add_argument('--cancel', action='store_true', help='请求取消批次；停止后续仓库')
+    batch.add_argument('--status', action='store_true', help='只输出状态，不执行')
+    batch.add_argument('--no-register', action='store_true', help='只采集 CSV，不登记数据集')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
@@ -190,6 +209,18 @@ def main():
     line_dataset.add_argument("--context", type=int, default=3)
     line_dataset.add_argument("--negative-mode", choices=["added-line", "same-file"], default="added-line")
     line_dataset.add_argument("--seed", type=int, default=42)
+    line_candidates = commands.add_parser("line-candidates",
+                                          help="导出完整候选集（全部新增/修改代码行）")
+    line_candidates.add_argument("manifest", type=Path)
+    line_candidates.add_argument("--repo", default=None, help="本地仓库或缓存裸克隆；缺省读取数据集描述中的路径")
+    line_candidates.add_argument("--output", type=Path, required=True, help="候选 JSONL 输出路径")
+    evaluate_candidates = commands.add_parser("evaluate-line-candidates",
+                                              help="在完整候选总体上评价固定启发式与随机基线")
+    evaluate_candidates.add_argument("--input", action="append", type=Path, required=True,
+                                     help="可重复：候选 JSONL")
+    evaluate_candidates.add_argument("--output", type=Path, required=True, help="评价报告 JSON")
+    evaluate_candidates.add_argument("--cases", type=Path, default=None, help="可选：案例包 JSON 输出")
+    evaluate_candidates.add_argument("--cases-limit", type=int, default=30)
     line_train = commands.add_parser("line-train")
     line_train.add_argument("--input", action="append", type=Path, required=True, help="可重复：line-szz-v1 JSONL")
     line_train.add_argument("--test-repo", default=None, help="留出整个仓库做跨项目测试")
@@ -227,7 +258,8 @@ def main():
                     args.bundled_package or BUNDLED_PACKAGE_PATH,
                 )
                 result['bundledPackage'] = bundled_result
-                if bundled_result['status'] != 'completed':
+                # 冲突只表示本地产物优先、包内运行未被覆盖；只有加载失败或包级错误才以非零退出。
+                if bundled_result['status'] == 'failed' or bundled_result.get('failedCount'):
                     exit_code = 1
         elif args.command == 'admin-reset-password':
             from getpass import getpass
@@ -276,6 +308,40 @@ def main():
                                                   dataset=args.dataset, register=args.register,
                                                   limit=args.limit, root=args.root,
                                                   with_text=args.with_text, szz=args.szz)
+        elif args.command == 'collect-batch':
+            from .batch_collection import BatchCollection
+            from .config import BACKEND as _BACKEND
+            service = BatchCollection(args.state_root or _BACKEND / 'artifacts/collection-batches',
+                                      dataset_root=args.root)
+            created = None
+            if args.cancel:
+                if not args.batch:
+                    raise BaselineError("INPUT_INVALID", "取消需要 --batch")
+                state = service.cancel(args.batch)
+            elif args.batch:
+                state = service.load(args.batch)
+                if not args.status:
+                    state = service.run(
+                        args.batch, retry_failed=args.retry_failed, max_repos=args.max_repos,
+                        cancel_check=lambda: bool(
+                            service.load(args.batch).get("cancelledAt")))
+            elif args.manifest:
+                payload = json.loads(args.manifest.read_text(encoding='utf-8'))
+                tasks = payload.get('tasks') if isinstance(payload, dict) else payload
+                state, created = service.create(tasks, register=not args.no_register)
+                if not args.status:
+                    batch_id = state['batchId']
+                    state = service.run(
+                        batch_id, retry_failed=args.retry_failed, max_repos=args.max_repos,
+                        cancel_check=lambda: bool(
+                            service.load(batch_id).get("cancelledAt")))
+            else:
+                raise BaselineError("INPUT_INVALID", "需要 --manifest、--batch 或 --cancel")
+            result = BatchCollection.summary(state)
+            if created is not None:
+                result['created'] = created
+            if result['counts'].get('failed'):
+                exit_code = 1
         elif args.command == 'szz-sample':
             import json as json_module
             from . import szz as szz_module
@@ -283,6 +349,20 @@ def main():
             rows = szz_module.sample_evidence(manifest, repo=args.repo, limit=args.limit)
             target = szz_module.write_sample_csv(rows, args.output)
             result = {'kind': 'szz-sample', 'rows': len(rows), 'output': str(target)}
+        elif args.command == 'line-candidates':
+            import json as json_module
+            from . import line_candidates as candidates_module
+            manifest = json_module.loads(args.manifest.read_text(encoding='utf-8'))
+            summary = candidates_module.export_candidates(manifest, args.repo, args.output)
+            result = {"kind": summary["format"], **summary, "output": str(args.output)}
+        elif args.command == 'evaluate-line-candidates':
+            from . import line_candidates as candidates_module
+            report = candidates_module.evaluate_candidates(args.input, args.output)
+            result = {"kind": report["format"], "output": str(args.output),
+                      "repos": len(report["repos"])}
+            if args.cases:
+                result["cases"] = candidates_module.case_pack(
+                    args.input, args.cases, limit=args.cases_limit)
         elif args.command == 'line-dataset':
             import json as json_module
             from . import line_dataset as line_module
@@ -357,6 +437,22 @@ def main():
             report_path = args.output / "multi-project-report.json"
             result = run_multi_project(args.dataset_manifest, report_path,
                                        methods=args.methods, metric_set=args.metric_set)
+        elif args.command == "run-evaluation-matrix":
+            from . import evaluation_matrix
+            specs = []
+            for item in args.data:
+                if "=" not in item:
+                    raise BaselineError("INPUT_INVALID", "--data 需要 语言=路径")
+                language, path = item.split("=", 1)
+                specs.append((language, path))
+            methods = args.methods or evaluation_matrix.FROZEN_METHODS
+            seeds = tuple(args.seed) if args.seed else evaluation_matrix.FROZEN_SEEDS
+            report = evaluation_matrix.run_matrix(specs, args.output,
+                                                  methods=methods, seeds=seeds)
+            result = {"kind": report["format"], "output": str(args.output),
+                      "status": report["status"],
+                      "summary": evaluation_matrix.summarize(report),
+                      "protocolSha256": report["protocolSha256"]}
         elif args.command == "evaluate-benefit":
             report, path = run_benefit(args.run, args.output,
                                        random_runs=args.random_runs, seed=args.seed)

@@ -1,0 +1,11 @@
+fixCommit,introducedCommit,path,lineRanges,parentRanges,fixTime,fixSource,issueRefs,introducedSubject,fixSubject,verdict,note
+28073866a5c10e039c233d9ae22fe8bb95442bb7,9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689,dist/axios.js,"[[73, 73], [100, 100], [903, 903]]","[[73, 73], [100, 100], [903, 903]]",2014-08-26T15:35:33Z,keyword,,Adding initial source,Fixing issue with post data,,
+28073866a5c10e039c233d9ae22fe8bb95442bb7,9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689,lib/axios.js,"[[20, 20], [47, 47]]","[[20, 20], [47, 47]]",2014-08-26T15:35:33Z,keyword,,Adding initial source,Fixing issue with post data,,
+0c7236b292a77e330710994417c4214475fb6880,514e281a1bedd48b64d3343312e8ebeb41fd5d5d,lib/axios.js,"[[37, 37]]","[[38, 38]]",2014-08-27T19:59:29Z,keyword,,Adding support for params,Fixing issue referencing wrong headers,,
+0c7236b292a77e330710994417c4214475fb6880,c0a91847396519368c0f35976c13ea1a5e0dc123,lib/axios.js,"[[42, 42]]","[[42, 42]]",2014-08-27T19:59:29Z,keyword,,Using response headers,Fixing issue referencing wrong headers,,
+1fa35ced3c086622807de0c808a797cfbff092cd,0d0b8370205f62c65ee2e51262dab6bc48569548,karma.conf.js,"[[19, 19]]","[[19, 19]]",2014-09-16T17:51:29Z,keyword,[7],Adding nodeunit,Fixing issue #7,,
+1fa35ced3c086622807de0c808a797cfbff092cd,729404dff5454d74785e0c632bb6b4a855fa59ff,package.json,"[[32, 32]]","[[34, 34]]",2014-09-16T17:51:29Z,keyword,[7],Adding project files,Fixing issue #7,,
+1fa35ced3c086622807de0c808a797cfbff092cd,9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689,dist/axios.amd.js,"[[104, 104], [111, 111]]","[[86, 86], [94, 94]]",2014-09-16T17:51:29Z,keyword,[7],Adding initial source,Fixing issue #7,,
+1fa35ced3c086622807de0c808a797cfbff092cd,9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689,dist/axios.js,"[[105, 105], [112, 112]]","[[87, 87], [95, 95]]",2014-09-16T17:51:29Z,keyword,[7],Adding initial source,Fixing issue #7,,
+1fa35ced3c086622807de0c808a797cfbff092cd,9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689,lib/axios.js,"[[52, 52], [59, 59]]","[[34, 34], [42, 42]]",2014-09-16T17:51:29Z,keyword,[7],Adding initial source,Fixing issue #7,,
+59eb2b6204fa3730fc91258b5180eb0f8397fd8d,1fa35ced3c086622807de0c808a797cfbff092cd,dist/axios.amd.map,"[[1, 1]]","[[1, 1]]",2014-09-16T17:52:56Z,keyword,[8],Fixing issue #7,Fixing issue #8,,

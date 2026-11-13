@@ -113,11 +113,11 @@ export interface SyncCommit {
   partition: CommitPartition | null
 }
 
-export const COMMIT_PARTITIONS = ['train', 'validation', 'test', 'holdout', 'excluded', 'unassigned', 'scored'] as const
+export const COMMIT_PARTITIONS = ['train', 'validation', 'test', 'holdout', 'excluded', 'notIncluded', 'unassigned', 'scored', 'unknown'] as const
 export type CommitPartition = (typeof COMMIT_PARTITIONS)[number]
 export const PARTITION_LABELS: Record<CommitPartition, string> = {
   train: '训练', validation: '验证', test: '测试', holdout: '留出',
-  excluded: '未纳入', unassigned: '未分段', scored: '已打分',
+  excluded: '未纳入', notIncluded: '未训练', unassigned: '未分段', scored: '已打分', unknown: '分区未知',
 }
 
 export interface SyncCommitPage {

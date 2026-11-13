@@ -12,6 +12,7 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
 }) {
   const trained = scope.strategy === 'repository-trained'
   const split = scope.split
+  const coverage = scope.partitionCoverage
   const dataset = scope.dataset
   const metrics = scope.metrics
   const metricItems = metrics ? [
@@ -48,7 +49,7 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
         <div className="is-holdout">
           <dt>留出（模型没见过）</dt>
           <dd>{number(split.holdout.count)} 条 · {number(split.holdout.positives)} 个正例</dd>
-          <span>{date(split.holdout.start)} 起只打分</span>
+          <span>{date(split.holdout.start)} 起的时间视图，不是模型成员</span>
         </div>
       </dl>
       {metrics ? <p className="scope-metrics">
@@ -56,8 +57,10 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
         {metricItems.map(([label, value]) => <span key={label}>{label} <b>{value}</b></span>)}
       </p> : null}
     </> : trained && dataset ? <p className="scope-note">
-      数据集 {number(dataset.quality.includedRows)} / {number(dataset.quality.rawRows)} 条纳入；本次分析没有可用的时间切分产物，无法区分训练、测试与留出。
-    </p> : trained ? <p className="scope-note">数据集摘要不可用{scope.datasetError ? `（${scope.datasetError}）` : ''}；仍可查看提交分数与分区。</p>
+      数据集 {number(dataset.quality.includedRows)} / {number(dataset.quality.rawRows)} 条纳入；{coverage && coverage.status === 'unknown'
+        ? `训练成员无法核对（${coverage.reason ?? '模型运行未保存切分谱系'}），提交分区显示为未知。`
+        : '模型运行没有保存可核对的冻结成员，无法区分训练、测试与留出。'}
+    </p> : trained ? <p className="scope-note">数据集摘要不可用{scope.datasetError ? `（${scope.datasetError}）` : ''}；仍可查看提交分数与分区状态。</p>
       : <p className="scope-note">使用现成模型，没有在本项目训练，也没有本地训练/测试集。</p>}
     <p className="scope-boundary">分档只是未校准的模型分数，不是缺陷概率；训练与测试提交不等于“新提交”。</p>
   </section>

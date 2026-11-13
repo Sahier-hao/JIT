@@ -622,13 +622,20 @@ def verify_run(directory):
     if ids != [r["id"] for r in references] or ids != [r["id"] for r in labels]:
         raise BaselineError("ARTIFACT_INVALID", "参考风险或评价标签身份不一致")
     current = predict_risks(snapshot.model, snapshot.records, snapshot.schema)
+    reference_risks = [r["risk"] for r in references]
     # 按该运行声明的方法所声明的复现口径比较，不再写死固定容差（PDB-14、PDB-18）。
-    check_reference_predictions(manifest, current, [r["risk"] for r in references])
+    check_reference_predictions(manifest, current, reference_risks)
     evaluation_records = [dict(r, label=y["label"]) for r, y in zip(snapshot.records, labels, strict=True)]
+    # 产物里的指标与时间桶聚合是冻结参考预测的函数，不是本机重算结果的函数。
+    # 因此先按参考预测**严格**重算，核对记录自洽；本机模型与参考预测的差异只按
+    # 方法声明的容差判定（check_reference_predictions）。深度方法在不同 CPU/框架
+    # 版本上重算有 ~1e-7 的浮点漂移，落在声明容差内，但它会让未取整的指标与
+    # 分位数在末位上不同，若在这里沿用严格比较会把完好的产物误判为损坏。
     # 按该运行声明的指标集重算：新增指标不影响既有运行（PDB-12）。
     metric_set = manifest["config"].get("metricSet")
-    if identity(evaluate(evaluation_records, current, metric_set)) != identity(snapshot.summary["metrics"]):
-        raise BaselineError("ARTIFACT_INVALID", "指标与完整测试风险不一致")
+    recorded_metrics = evaluate(evaluation_records, reference_risks, metric_set)
+    if identity(recorded_metrics) != identity(snapshot.summary["metrics"]):
+        raise BaselineError("ARTIFACT_INVALID", "记录的指标与冻结参考预测不一致")
     # 声明提供时间桶聚合的运行：重算测试分区的桶并核对守恒（PDB-21）。
     # 未声明的既有运行不受影响：缺少该键时这里不做任何检查。
     recorded_trend = snapshot.summary.get(trends.TREND_KEY)
@@ -639,7 +646,7 @@ def verify_run(directory):
             # 使用 holdout 的运行只聚合可训练前缀，守恒基准随之收窄（quality 仍按全量）。
             expected = (sum(part["count"] for part in partitions.values()),
                         sum(part["positiveCount"] for part in partitions.values()))
-        trends.check_aggregate(recorded_trend, evaluation_records, current,
+        trends.check_aggregate(recorded_trend, evaluation_records, reference_risks,
                                partitions, snapshot.summary["source"]["quality"], expected)
     return manifest
 

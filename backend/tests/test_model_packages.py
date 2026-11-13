@@ -577,3 +577,21 @@ def test_package_metadata_must_match_the_embedded_manifest(tmp_path, real_run):
     with pytest.raises(BaselineError) as error:
         inspect_model_package(changed)
     assert error.value.code == "PACKAGE_INVALID"
+
+
+def test_bundle_conflicts_keep_existing_local_runs_without_failing_the_init(
+        tmp_path, real_run):  # noqa: F811
+    """既有环境在相同位置已有不同运行：保留本地产物，报告冲突而不是失败。"""
+    from jit_baseline.model_packages import import_model_package
+    _, _, package, registered = _package(tmp_path, real_run)
+    target = _catalog(tmp_path, "target")
+    method = list(ALGORITHMS)[0]
+    shutil.copytree(real_run, target.root / method)
+    rewrite_manifest(target.root / method,
+                     lambda config: config.__setitem__("localBuild", "different"))
+    _resync(target.root / method, ())
+    result = import_model_package(target, package)
+    assert result["status"] == "partial"  # 未覆盖任何运行，但冲突不算加载失败
+    assert result["conflictCount"] == 1
+    assert result["registeredCount"] == 0
+    assert result["items"][0]["code"] == "ARTIFACT_KEY_CONFLICT"

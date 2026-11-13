@@ -440,9 +440,14 @@ def _record_import(storage, *, import_id, package_sha, version, package_name,
     conflicts = sum(item["status"] == "conflict" for item in items)
     failed = sum(item["status"] == "failed" for item in items)
     successes = registered + reused + already
-    status = "failed" if successes == 0 and (conflicts or failed or code) else (
-        "completed" if not conflicts and not failed and not code else "partial"
-    )
+    # 全是“位置已有不同运行”的冲突不是失败：既有环境保留本地产物，
+    # 包内运行身份无法覆盖，需要操作者显式处理；失败只由包级错误或加载失败产生。
+    if code or (successes == 0 and failed):
+        status = "failed"
+    elif conflicts or failed:
+        status = "partial"
+    else:
+        status = "completed"
     report = {
         "importId": import_id,
         "packageSha256": package_sha,

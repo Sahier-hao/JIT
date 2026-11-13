@@ -19,6 +19,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
+from . import model_lineage
 from .analysis_scope import build_scope, partition_for
 from .repository_datasets import persist_collected_dataset
 from .algorithms import DEFAULT_ALGORITHM, check_method, get_algorithm
@@ -718,6 +719,7 @@ class SyncService:
         self._lock = threading.RLock()
         self._closing = threading.Event()
         self._scope_cache: dict[tuple, dict] = {}
+        self._lineage_cache: dict[tuple, tuple] = {}
 
     def analysis_scope(self, sync_id: str):
         """已保存分析的模型、数据集、切分与分区口径；只读并缓存。"""
@@ -731,11 +733,29 @@ class SyncService:
         cached = cache.get(key)
         if cached is not None:
             return cached
-        scope = build_scope(self, item)
+        lineage, labels = self._lineage(item)
+        scope = build_scope(self, item, lineage=lineage, labels=labels)
         if len(cache) >= 64:
             cache.clear()
         cache[key] = scope
         return scope
+
+    def _lineage(self, item):
+        """模型运行的冻结成员与分区覆盖；按模型与数据版本缓存，不改写产物。"""
+        if not item or item.get('modelStrategy') != 'repository-trained':
+            return model_lineage.unknown_coverage('该分析没有绑定项目自训模型'), {}
+        cache = getattr(self, '_lineage_cache', None)
+        if cache is None:
+            cache = self._lineage_cache = {}
+        key = (item.get('modelId'), item.get('datasetVersion'))
+        cached = cache.get(key)
+        if cached is None:
+            cached = model_lineage.verified_membership(
+                self.catalog, key[0], key[1])
+            if len(cache) >= 64:
+                cache.clear()
+            cache[key] = cached
+        return cached
 
     def close(self):
         with self._lock:
@@ -921,19 +941,21 @@ class SyncService:
         rows, total = self.sync.commits(sync_id, limit, offset, search=text or None,
                                         start=since, end=until, sort=sort)
         scope = self.analysis_scope(sync_id)
+        labels = self._lineage(item)[1]
         for row in rows:
-            row["partition"] = partition_for(scope, row["commitId"], row.get("epoch"))
+            row["partition"] = partition_for(scope, row["commitId"], row.get("epoch"), labels)
         return {"syncId": sync_id, "status": item["status"], "total": total, "limit": limit,
                 "offset": offset, "search": text or None, "start": start, "end": end,
                 "sort": sort, "commits": rows}
 
     def commit(self, sync_id, commit_id):
-        self.get(sync_id)
+        item = self.get(sync_id)
         record = self.sync.commit(sync_id, commit_id)
         if record is None:
             raise BaselineError("NOT_FOUND", "该同步作业里没有这个提交")
         scope = self.analysis_scope(sync_id)
-        record["partition"] = partition_for(scope, record["commitId"], record.get("epoch"))
+        labels = self._lineage(item)[1]
+        record["partition"] = partition_for(scope, record["commitId"], record.get("epoch"), labels)
         return record
 
     def repositories(self, limit=50, offset=0):
@@ -1109,16 +1131,17 @@ class SyncService:
                     "start": start, "end": end, "sort": sort, "commits": []}
         rows, total = self.sync.commits(repo["viewSyncId"], limit, offset, search=text or None,
                                         start=since, end=until, sort=sort)
+        labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
         return {"repositoryId": repository_id, "viewSyncId": repo["viewSyncId"], "total": total,
                 "limit": limit, "offset": offset, "search": text or None, "start": start,
-                "end": end, "sort": sort, "commits": [self._display_commit(repo, row) for row in rows]}
+                "end": end, "sort": sort,
+                "commits": [self._display_commit(repo, row, labels) for row in rows]}
 
-    @staticmethod
-    def _display_commit(repo, record):
+    def _display_commit(self, repo, record, labels=None):
         scope = (repo.get('viewContext') or {}).get('scope')
         return dict(record, repositoryId=repo['repositoryId'], viewSyncId=repo['viewSyncId'],
                     originalCommitUrl=original_commit_url(repo['url'], record['commitId']),
-                    partition=partition_for(scope, record['commitId'], record.get('epoch')),
+                    partition=partition_for(scope, record['commitId'], record.get('epoch'), labels),
                     explanationStatus='not-supported', explanationReason='仓库分析未提供逐条模型归因')
 
     def repository_commit(self, repository_id, commit_id, *, view_sync_id=None):
@@ -1128,7 +1151,8 @@ class SyncService:
         record = self.sync.commit(repo["viewSyncId"], commit_id)
         if record is None:
             raise BaselineError("NOT_FOUND", "该仓库里没有这个提交")
-        return self._display_commit(repo, record)
+        labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
+        return self._display_commit(repo, record, labels)
 
     def repository_summary(self, repository_id, *, view_sync_id=None):
         repo = self.repository(repository_id, view_sync_id=view_sync_id)

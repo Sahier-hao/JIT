@@ -1,0 +1,74 @@
+name: Commit analysis report
+
+# 推送与 PR 触发：在 base 仓库检出上执行真实采集与推理，只上传报告。
+# 模型包、SHA-256 与模型 ID 来自仓库变量，触发时固定，不读取“最新默认模型”。
+# 不评论 PR、不设合并门禁、不修改远端配置；fork 事件不接触任何凭据。
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commit-analysis-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the base revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha || github.event.before }}
+      - name: Fetch the analyzed revision
+        run: git fetch --no-tags origin ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require a pinned model package
+        env:
+          MODEL_PACKAGE_URL: ${{ vars.JIT_MODEL_PACKAGE_URL }}
+          MODEL_PACKAGE_SHA256: ${{ vars.JIT_MODEL_PACKAGE_SHA256 }}
+          MODEL_ID: ${{ vars.JIT_MODEL_ID }}
+        run: |
+          : "${MODEL_PACKAGE_URL:?请设置仓库变量 JIT_MODEL_PACKAGE_URL（固定版本的模型包地址）}"
+          : "${MODEL_PACKAGE_SHA256:?请设置仓库变量 JIT_MODEL_PACKAGE_SHA256}"
+          : "${MODEL_ID:?请设置仓库变量 JIT_MODEL_ID}"
+          curl --fail --silent --show-error --location "$MODEL_PACKAGE_URL" -o model-package.zip
+          echo "$MODEL_PACKAGE_SHA256  model-package.zip" | sha256sum --check --strict
+      - run: python -m pip install -r backend/requirements.txt
+      - name: Import the pinned model
+        working-directory: backend
+        run: |
+          python -m jit_baseline.cli catalog-init --skip-bundled-models \
+            --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
+            --artifact-root "$RUNNER_TEMP/jit/artifacts"
+          python -m jit_baseline.cli import-models ../model-package.zip \
+            --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
+            --artifact-root "$RUNNER_TEMP/jit/artifacts"
+      - name: Analyze the fixed commit range
+        working-directory: backend
+        env:
+          MODEL_ID: ${{ vars.JIT_MODEL_ID }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -m jit_baseline.cli pr-check-analyze \
+            --repo .. --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --model-id "$MODEL_ID" \
+            --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
+            --artifact-root "$RUNNER_TEMP/jit/artifacts" \
+            --output "$RUNNER_TEMP/jit/commit-analysis.json" \
+            --markdown "$RUNNER_TEMP/jit/commit-analysis.md"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: commit-analysis-${{ github.event.pull_request.number || github.sha }}
+          path: |
+            ${{ runner.temp }}/jit/commit-analysis.json
+            ${{ runner.temp }}/jit/commit-analysis.md
+          if-no-files-found: error

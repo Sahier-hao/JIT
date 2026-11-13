@@ -94,20 +94,38 @@ async function gitHead(folder: string): Promise<string | null> {
   }
 }
 
-async function gitDirty(folder: string): Promise<boolean> {
+async function gitDirty(folder: string): Promise<boolean | null> {
   try {
     const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain'])
     return stdout.trim().length > 0
   } catch {
-    return false
+    // 读不到工作树状态时不能当作“干净”：宁可拒绝定位，也不在可能已改动的代码上标注。
+    return null
   }
+}
+
+/** 单个路径在工作树中的状态；空表示与 HEAD 一致。 */
+async function gitPathStatus(folder: string, relativePath: string): Promise<string> {
+  try {
+    const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain', '--', relativePath])
+    return stdout.trim()
+  } catch {
+    return 'git-status-failed'
+  }
+}
+
+function insideWorkspace(root: string, relativePath: string): string | null {
+  const resolvedRoot = path.resolve(root)
+  const absolute = path.resolve(resolvedRoot, relativePath)
+  if (absolute !== resolvedRoot && !absolute.startsWith(resolvedRoot + path.sep)) return null
+  return absolute
 }
 
 async function recomputeIdentity(): Promise<void> {
   if (!tree.report) { tree.identity = null; tree.refresh(); return }
   const folder = workspaceFolder()
   const head = folder ? await gitHead(folder.uri.fsPath) : null
-  const dirty = folder ? await gitDirty(folder.uri.fsPath) : false
+  const dirty = folder ? await gitDirty(folder.uri.fsPath) : null
   tree.identity = identity(tree.report, head, dirty)
   tree.refresh()
 }
@@ -127,22 +145,35 @@ async function load(pathValue: string): Promise<void> {
 
 async function openAt(relativePath: string, line: number | null): Promise<void> {
   if (!tree.report) { vscode.window.showWarningMessage('先导入 JIT 提交分析报告。'); return }
-  if (tree.identity?.state !== 'match') {
+  if (tree.identity?.state !== 'match' && tree.identity?.state !== 'dirty') {
     vscode.window.showWarningMessage(tree.identity?.message ?? '报告身份未核对，不在当前代码上定位。')
     return
   }
   const folder = workspaceFolder()
   if (!folder) { vscode.window.showWarningMessage('当前没有工作区，无法定位文件。'); return }
-  const absolute = path.join(folder.uri.fsPath, relativePath)
+  const absolute = insideWorkspace(folder.uri.fsPath, relativePath)
+  if (absolute === null) {
+    vscode.window.showWarningMessage(`路径越出工作区，拒绝打开：${relativePath}`)
+    return
+  }
+  let effectiveLine = line
+  if (tree.identity?.state === 'dirty' && line !== null) {
+    const status = await gitPathStatus(folder.uri.fsPath, relativePath)
+    if (status) {
+      vscode.window.showWarningMessage(
+        `${relativePath} 在工作树中有未提交改动（${String(status).split(String.fromCharCode(10))[0]}）；按报告快照只读打开，不跳到报告行号。`)
+      effectiveLine = null
+    }
+  }
   try {
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(absolute))
     const options: vscode.TextDocumentShowOptions = { preview: true }
-    if (line !== null) {
-      if (!validLine(document.getText(), line)) {
-        vscode.window.showWarningMessage(`${relativePath} 只有 ${document.lineCount} 行，报告行号 ${line} 已过期。`)
+    if (effectiveLine !== null) {
+      if (!validLine(document.getText(), effectiveLine)) {
+        vscode.window.showWarningMessage(`${relativePath} 只有 ${document.lineCount} 行，报告行号 ${effectiveLine} 已过期。`)
         return
       }
-      const position = new vscode.Position(line - 1, 0)
+      const position = new vscode.Position(effectiveLine - 1, 0)
       options.selection = new vscode.Range(position, position)
     }
     await vscode.window.showTextDocument(document, options)

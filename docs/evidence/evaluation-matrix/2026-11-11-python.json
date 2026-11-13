@@ -1,0 +1,6481 @@
+{
+  "baselines": [
+    {
+      "baseline": "churn",
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.15001196682127466
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 2,
+          "totalLoc": 56679,
+          "usedLoc": 10361
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.19522315437692925
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8343971232722738
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7554119153606926
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "baseline": "time",
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.05481523961990159
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 45,
+          "totalLoc": 56679,
+          "usedLoc": 11152
+        },
+        "ifa": {
+          "reason": null,
+          "value": 22
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.00780892617507717
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7897084829164679
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0967741935483871
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.48484663699006036
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10550708754532505
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 113,
+          "totalLoc": 56679,
+          "usedLoc": 11103
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.02342677852523151
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8198319148810294
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5071650710409171
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.07076651113222665
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 68,
+          "totalLoc": 56679,
+          "usedLoc": 11214
+        },
+        "ifa": {
+          "reason": null,
+          "value": 7
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.039044630875385844
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8166931825574686
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5368010244527106
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.05540946145294422
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 131,
+          "totalLoc": 56679,
+          "usedLoc": 10928
+        },
+        "ifa": {
+          "reason": null,
+          "value": 13
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.02342677852523151
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7705306923900342
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.22580645161290322
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.4594792365388134
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "baseline": "churn",
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.06726023742830466
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 0,
+          "totalLoc": 21915,
+          "usedLoc": 0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 5
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.03955938860646178
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8950431497804117
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5273865414710486
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "baseline": "time",
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.019086385375978135
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 67,
+          "totalLoc": 21915,
+          "usedLoc": 3924
+        },
+        "ifa": {
+          "reason": null,
+          "value": 35
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.03955938860646178
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9127023125825369
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.4225352112676056
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.013196076169428203
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 82,
+          "totalLoc": 21915,
+          "usedLoc": 3820
+        },
+        "ifa": {
+          "reason": null,
+          "value": 137
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.11867816581938534
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9058075611928377
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.3098591549295775
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.1271072796934866
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 12,
+          "totalLoc": 21915,
+          "usedLoc": 577
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.03955938860646178
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9235435029636677
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6807511737089201
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.013026244531972847
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 99,
+          "totalLoc": 21915,
+          "usedLoc": 3604
+        },
+        "ifa": {
+          "reason": null,
+          "value": 139
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.11867816581938534
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9004483891772361
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.30516431924882625
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "baseline": "churn",
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.287380894439144
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 9,
+          "totalLoc": 86683,
+          "usedLoc": 16174
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.2141751307660165
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7185892370160909
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.057971014492753624
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7623265087033203
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "baseline": "time",
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.06552638768374514
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 235,
+          "totalLoc": 86683,
+          "usedLoc": 16705
+        },
+        "ifa": {
+          "reason": null,
+          "value": 11
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.048528530967500615
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.6482941281274897
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.13043478260869565
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.3936431255271835
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.08148457960983198
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 203,
+          "totalLoc": 86683,
+          "usedLoc": 17058
+        },
+        "ifa": {
+          "reason": null,
+          "value": 8
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.022258164794148903
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7114675951554268
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.2463768115942029
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.49125833908442607
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.07956265508815724
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 176,
+          "totalLoc": 86683,
+          "usedLoc": 17332
+        },
+        "ifa": {
+          "reason": null,
+          "value": 29
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.048528530967500615
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.6821311344542028
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.21739130434782608
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.4769189479334407
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "baseline": "random",
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.09287150273686363
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 173,
+          "totalLoc": 86683,
+          "usedLoc": 16598
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.05655293372590623
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.6961235257969574
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.15942028985507245
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5309408787669657
+        }
+      },
+      "note": "排序基线；分类阈值指标不适用，未报告 Precision/Recall/F1。",
+      "partition": "test",
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    }
+  ],
+  "calibration": [
+    {
+      "brier": 0.05876352050170824,
+      "buckets": [
+        {
+          "meanPredicted": 0.06773515359159046,
+          "observedRate": 0.03282275711159737,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 457
+        },
+        {
+          "meanPredicted": 0.28341131097860456,
+          "observedRate": 0.19402985074626866,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 67
+        },
+        {
+          "meanPredicted": 0.48705249725093586,
+          "observedRate": 0.2727272727272727,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 22
+        },
+        {
+          "meanPredicted": 0.6507471132748521,
+          "observedRate": 0.2,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 5
+        },
+        {
+          "meanPredicted": 0.814741814287347,
+          "observedRate": 1.0,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 1
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "logistic-regression-l2-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": null,
+      "status": "computed"
+    },
+    {
+      "brier": 0.06262479836361451,
+      "buckets": [
+        {
+          "meanPredicted": 0.08249039229103292,
+          "observedRate": 0.05979381443298969,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 485
+        },
+        {
+          "meanPredicted": 0.28217711166910786,
+          "observedRate": 0.08333333333333333,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 60
+        },
+        {
+          "meanPredicted": 0.4827586206896552,
+          "observedRate": 0.2857142857142857,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 7
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "decision-tree-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": null,
+      "status": "computed"
+    },
+    {
+      "brier": 0.0605384623569165,
+      "buckets": [
+        {
+          "meanPredicted": 0.08707234262243879,
+          "observedRate": 0.02843601895734597,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 422
+        },
+        {
+          "meanPredicted": 0.2569703574428444,
+          "observedRate": 0.18032786885245902,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 122
+        },
+        {
+          "meanPredicted": 0.4269915011405549,
+          "observedRate": 0.25,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 8
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "random-forest-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": 42,
+      "status": "computed"
+    },
+    {
+      "brier": 0.06059670827862349,
+      "buckets": [
+        {
+          "meanPredicted": 0.09132596313835646,
+          "observedRate": 0.03002309468822171,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 433
+        },
+        {
+          "meanPredicted": 0.26271595947761395,
+          "observedRate": 0.1891891891891892,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 111
+        },
+        {
+          "meanPredicted": 0.42734122829151666,
+          "observedRate": 0.25,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 8
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "random-forest-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": 43,
+      "status": "computed"
+    },
+    {
+      "brier": 0.06114642413552852,
+      "buckets": [
+        {
+          "meanPredicted": 0.08504210515014826,
+          "observedRate": 0.028846153846153848,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 416
+        },
+        {
+          "meanPredicted": 0.25624462400183157,
+          "observedRate": 0.171875,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 128
+        },
+        {
+          "meanPredicted": 0.4263169968549802,
+          "observedRate": 0.25,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 8
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "random-forest-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": 44,
+      "status": "computed"
+    },
+    {
+      "brier": 0.06152361896251185,
+      "buckets": [
+        {
+          "meanPredicted": 0.07526952174044117,
+          "observedRate": 0.03488372093023256,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 430
+        },
+        {
+          "meanPredicted": 0.2849823839607693,
+          "observedRate": 0.13333333333333333,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 105
+        },
+        {
+          "meanPredicted": 0.4790097878259771,
+          "observedRate": 0.4117647058823529,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 17
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "mlp-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": 42,
+      "status": "computed"
+    },
+    {
+      "brier": 0.06411102643776058,
+      "buckets": [
+        {
+          "meanPredicted": 0.07763660750735332,
+          "observedRate": 0.04,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 425
+        },
+        {
+          "meanPredicted": 0.2804824801782767,
+          "observedRate": 0.15,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 120
+        },
+        {
+          "meanPredicted": 0.44262203574180603,
+          "observedRate": 0.14285714285714285,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 7
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "mlp-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": 43,
+      "status": "computed"
+    },
+    {
+      "brier": 0.065062376262298,
+      "buckets": [
+        {
+          "meanPredicted": 0.0837965878339984,
+          "observedRate": 0.03414634146341464,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 410
+        },
+        {
+          "meanPredicted": 0.2873109806584948,
+          "observedRate": 0.16030534351145037,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 131
+        },
+        {
+          "meanPredicted": 0.45278247649019415,
+          "observedRate": 0.09090909090909091,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 11
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-flask-mature",
+      "method": "mlp-v1",
+      "positives": 36,
+      "reason": null,
+      "records": 552,
+      "seed": 44,
+      "status": "computed"
+    },
+    {
+      "brier": 0.031749714654391734,
+      "buckets": [
+        {
+          "meanPredicted": 0.02522805639330128,
+          "observedRate": 0.024752475247524754,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 202
+        },
+        {
+          "meanPredicted": 0.2903823074793166,
+          "observedRate": 0.1111111111111111,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 9
+        },
+        {
+          "meanPredicted": 0.48581113733311865,
+          "observedRate": 0.0,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 2
+        },
+        {
+          "meanPredicted": 0.6441432707962182,
+          "observedRate": 1.0,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 2
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "logistic-regression-l2-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": null,
+      "status": "computed"
+    },
+    {
+      "brier": 0.038142134743227175,
+      "buckets": [
+        {
+          "meanPredicted": 0.01617781562115229,
+          "observedRate": 0.025510204081632654,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 196
+        },
+        {
+          "meanPredicted": 0.23302729528535981,
+          "observedRate": 0.1,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 10
+        },
+        {
+          "meanPredicted": 0.525,
+          "observedRate": 0.2222222222222222,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 9
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "decision-tree-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": null,
+      "status": "computed"
+    },
+    {
+      "brier": 0.03160655041125348,
+      "buckets": [
+        {
+          "meanPredicted": 0.04695979241937316,
+          "observedRate": 0.014925373134328358,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 201
+        },
+        {
+          "meanPredicted": 0.311321504744784,
+          "observedRate": 0.35714285714285715,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 14
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "random-forest-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": 42,
+      "status": "computed"
+    },
+    {
+      "brier": 0.031706447601785814,
+      "buckets": [
+        {
+          "meanPredicted": 0.046069178012245464,
+          "observedRate": 0.015,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 200
+        },
+        {
+          "meanPredicted": 0.30823465989810017,
+          "observedRate": 0.3333333333333333,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 15
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "random-forest-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": 43,
+      "status": "computed"
+    },
+    {
+      "brier": 0.03185318505043677,
+      "buckets": [
+        {
+          "meanPredicted": 0.045681026752920954,
+          "observedRate": 0.01507537688442211,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 199
+        },
+        {
+          "meanPredicted": 0.30575206093301743,
+          "observedRate": 0.3125,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 16
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "random-forest-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": 44,
+      "status": "computed"
+    },
+    {
+      "brier": 0.032084692130791466,
+      "buckets": [
+        {
+          "meanPredicted": 0.031732040255278295,
+          "observedRate": 0.023923444976076555,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 209
+        },
+        {
+          "meanPredicted": 0.24012427031993866,
+          "observedRate": 0.5,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 6
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "mlp-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": 42,
+      "status": "computed"
+    },
+    {
+      "brier": 0.03164500980048147,
+      "buckets": [
+        {
+          "meanPredicted": 0.030942191289196345,
+          "observedRate": 0.024271844660194174,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 206
+        },
+        {
+          "meanPredicted": 0.2465581645568212,
+          "observedRate": 0.3333333333333333,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 9
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "mlp-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": 43,
+      "status": "computed"
+    },
+    {
+      "brier": 0.03158185782117382,
+      "buckets": [
+        {
+          "meanPredicted": 0.0355814681391352,
+          "observedRate": 0.024390243902439025,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 205
+        },
+        {
+          "meanPredicted": 0.2598766520619392,
+          "observedRate": 0.3,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 10
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 0
+        },
+        {
+          "meanPredicted": null,
+          "observedRate": null,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 0
+        }
+      ],
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "method": "mlp-v1",
+      "positives": 8,
+      "reason": null,
+      "records": 215,
+      "seed": 44,
+      "status": "computed"
+    },
+    {
+      "brier": 0.1209820959775583,
+      "buckets": [
+        {
+          "meanPredicted": 0.080611102448973,
+          "observedRate": 0.06794055201698514,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 471
+        },
+        {
+          "meanPredicted": 0.28643468897158264,
+          "observedRate": 0.1326530612244898,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 196
+        },
+        {
+          "meanPredicted": 0.47411970651419594,
+          "observedRate": 0.24509803921568626,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 102
+        },
+        {
+          "meanPredicted": 0.6834932536025708,
+          "observedRate": 0.30434782608695654,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 46
+        },
+        {
+          "meanPredicted": 0.848318922601793,
+          "observedRate": 0.6363636363636364,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 11
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "logistic-regression-l2-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": null,
+      "status": "computed"
+    },
+    {
+      "brier": 0.14005262088667325,
+      "buckets": [
+        {
+          "meanPredicted": 0.08264060500095621,
+          "observedRate": 0.07784431137724551,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 501
+        },
+        {
+          "meanPredicted": 0.2919465838898188,
+          "observedRate": 0.11382113821138211,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 123
+        },
+        {
+          "meanPredicted": 0.5088502869497784,
+          "observedRate": 0.203125,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 128
+        },
+        {
+          "meanPredicted": 0.6973241912798875,
+          "observedRate": 0.22916666666666666,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 48
+        },
+        {
+          "meanPredicted": 0.9107656534270938,
+          "observedRate": 0.5384615384615384,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 26
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "decision-tree-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": null,
+      "status": "computed"
+    },
+    {
+      "brier": 0.12640244703535816,
+      "buckets": [
+        {
+          "meanPredicted": 0.0927874969358451,
+          "observedRate": 0.059431524547803614,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 387
+        },
+        {
+          "meanPredicted": 0.2940761496785279,
+          "observedRate": 0.12359550561797752,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 267
+        },
+        {
+          "meanPredicted": 0.4736196593812926,
+          "observedRate": 0.22807017543859648,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 114
+        },
+        {
+          "meanPredicted": 0.6891789007362796,
+          "observedRate": 0.36,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 50
+        },
+        {
+          "meanPredicted": 0.837633237098842,
+          "observedRate": 0.5,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 8
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "random-forest-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": 42,
+      "status": "computed"
+    },
+    {
+      "brier": 0.12608527391154029,
+      "buckets": [
+        {
+          "meanPredicted": 0.09096050084556896,
+          "observedRate": 0.05454545454545454,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 385
+        },
+        {
+          "meanPredicted": 0.29139096332588843,
+          "observedRate": 0.13138686131386862,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 274
+        },
+        {
+          "meanPredicted": 0.4789062950484999,
+          "observedRate": 0.23148148148148148,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 108
+        },
+        {
+          "meanPredicted": 0.6869218301691326,
+          "observedRate": 0.3673469387755102,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 49
+        },
+        {
+          "meanPredicted": 0.8285383533560265,
+          "observedRate": 0.4,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 10
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "random-forest-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": 43,
+      "status": "computed"
+    },
+    {
+      "brier": 0.12632374402941626,
+      "buckets": [
+        {
+          "meanPredicted": 0.08951625136454401,
+          "observedRate": 0.05454545454545454,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 385
+        },
+        {
+          "meanPredicted": 0.29617906287503043,
+          "observedRate": 0.13333333333333333,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 270
+        },
+        {
+          "meanPredicted": 0.4748989856830925,
+          "observedRate": 0.19642857142857142,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 112
+        },
+        {
+          "meanPredicted": 0.6912238741792736,
+          "observedRate": 0.4117647058823529,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 51
+        },
+        {
+          "meanPredicted": 0.839012006937358,
+          "observedRate": 0.5,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 8
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "random-forest-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": 44,
+      "status": "computed"
+    },
+    {
+      "brier": 0.11451202324281406,
+      "buckets": [
+        {
+          "meanPredicted": 0.09526077574523895,
+          "observedRate": 0.06086956521739131,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 460
+        },
+        {
+          "meanPredicted": 0.28850490132324125,
+          "observedRate": 0.15384615384615385,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 247
+        },
+        {
+          "meanPredicted": 0.48332075735456065,
+          "observedRate": 0.2631578947368421,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 76
+        },
+        {
+          "meanPredicted": 0.6748305288228121,
+          "observedRate": 0.3939393939393939,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 33
+        },
+        {
+          "meanPredicted": 0.8401620984077454,
+          "observedRate": 0.5,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 10
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "mlp-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": 42,
+      "status": "computed"
+    },
+    {
+      "brier": 0.11489154697446247,
+      "buckets": [
+        {
+          "meanPredicted": 0.0868144084832498,
+          "observedRate": 0.05510204081632653,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 490
+        },
+        {
+          "meanPredicted": 0.2881633110821541,
+          "observedRate": 0.1724137931034483,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 203
+        },
+        {
+          "meanPredicted": 0.49053464755415915,
+          "observedRate": 0.225,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 80
+        },
+        {
+          "meanPredicted": 0.6942468773234974,
+          "observedRate": 0.4318181818181818,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 44
+        },
+        {
+          "meanPredicted": 0.8408275776439242,
+          "observedRate": 0.5555555555555556,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 9
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "mlp-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": 43,
+      "status": "computed"
+    },
+    {
+      "brier": 0.11662418553408231,
+      "buckets": [
+        {
+          "meanPredicted": 0.0836409605117923,
+          "observedRate": 0.06263048016701461,
+          "range": [
+            0.0,
+            0.2
+          ],
+          "records": 479
+        },
+        {
+          "meanPredicted": 0.28398288412047135,
+          "observedRate": 0.15763546798029557,
+          "range": [
+            0.2,
+            0.4
+          ],
+          "records": 203
+        },
+        {
+          "meanPredicted": 0.4953824386317679,
+          "observedRate": 0.22340425531914893,
+          "range": [
+            0.4,
+            0.6
+          ],
+          "records": 94
+        },
+        {
+          "meanPredicted": 0.6864179040110389,
+          "observedRate": 0.37209302325581395,
+          "range": [
+            0.6,
+            0.8
+          ],
+          "records": 43
+        },
+        {
+          "meanPredicted": 0.8347516911370414,
+          "observedRate": 0.7142857142857143,
+          "range": [
+            0.8,
+            1.0
+          ],
+          "records": 7
+        }
+      ],
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "method": "mlp-v1",
+      "positives": 104,
+      "reason": null,
+      "records": 826,
+      "seed": 44,
+      "status": "computed"
+    }
+  ],
+  "datasets": [
+    {
+      "csvSha256": "742c2cc8f02c8970b7e895a153a9cf30f2e67f071d16c7406a6046b68f9722c8",
+      "includedRows": 3694,
+      "language": "python",
+      "manifestSha256": "0886f42419b8fade9bf8f4a43523feafb8272020f921b1457191577db0198522",
+      "name": "kamei14-git-v2-flask-mature",
+      "positiveLabels": 410,
+      "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/pallets/flask",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "csvSha256": "0249fc41fa14587d18b3d21430e4b308c7b69df657a78ce7de1379109d782ea2",
+      "includedRows": 5500,
+      "language": "python",
+      "manifestSha256": "5851db2da6ad34376a711fc03cac9b7e6dcc1ec4dd96fbbb257d5e0f27123497",
+      "name": "kamei14-git-v2-pydantic-mature",
+      "positiveLabels": 1303,
+      "revision": "560f0f96a37d6913afdfddb2de22030ef08e68c3",
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/pydantic/pydantic",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "csvSha256": "73316c1c81631c9080e5292fce25fefada799ba5123d40afba2c7b0727339499",
+      "includedRows": 1434,
+      "language": "python",
+      "manifestSha256": "b3b4ece3404dccf6595c58bbf05f7b6f12137af31b66c2bdb5ac4ea4c2f9555e",
+      "name": "kamei14-git-v2-httpx-mature",
+      "positiveLabels": 111,
+      "revision": "b5addb64f0161ff6bfe94c124ef76f6a1fba5254",
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/encode/httpx",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    }
+  ],
+  "failures": [],
+  "format": "evaluation-matrix-v1",
+  "generatedUtc": "2026-11-11T03:55:35Z",
+  "leaveOneRepoOut": [
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "logistic-regression-l2-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.20539143577967187
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 27,
+          "fp": 15,
+          "tn": 514,
+          "tp": 4
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 3,
+          "totalLoc": 56679,
+          "usedLoc": 10669
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.16
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.12716364187404772
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8444017955890922
+        },
+        "poptEffort": {
+          "areaModel": 0.831418190386267,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.21052631578947367
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7667540703701444
+        }
+      },
+      "params": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "seconds": 0.082,
+      "seed": null,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "decision-tree-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.15793890711727568
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 23,
+          "fp": 39,
+          "tn": 490,
+          "tp": 8
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 18,
+          "totalLoc": 56679,
+          "usedLoc": 9467
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.20512820512820512
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.15202739458641654
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7794258373205721
+        },
+        "poptEffort": {
+          "areaModel": 0.7688917611290311,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1702127659574468
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.25806451612903225
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0967741935483871
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7339471919019451
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.044,
+      "seed": null,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.2224959659623076
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 25,
+          "fp": 25,
+          "tn": 504,
+          "tp": 6
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 18,
+          "totalLoc": 56679,
+          "usedLoc": 11031
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.14628940789072503
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8553929773303877
+        },
+        "poptEffort": {
+          "areaModel": 0.8419950155061127,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7675772912982499
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 42,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.598,
+      "seed": 42,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.2165728660540542
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 25,
+          "fp": 25,
+          "tn": 504,
+          "tp": 6
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 14,
+          "totalLoc": 56679,
+          "usedLoc": 10180
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.14628940789072503
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8548234278245296
+        },
+        "poptEffort": {
+          "areaModel": 0.841446937450236,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7756265625952802
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 43,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.557,
+      "seed": 43,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.22883691419610158
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 25,
+          "fp": 23,
+          "tn": 506,
+          "tp": 6
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 17,
+          "totalLoc": 56679,
+          "usedLoc": 10820
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.2
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.15486621041760454
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8567059574996556
+        },
+        "poptEffort": {
+          "areaModel": 0.8432584976286943,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.20689655172413793
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.1935483870967742
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7772730044514908
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 44,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.408,
+      "seed": 44,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.1616733040192787
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 29,
+          "fp": 8,
+          "tn": 521,
+          "tp": 2
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 11,
+          "totalLoc": 56679,
+          "usedLoc": 10853
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0975609756097561
+        },
+        "ifa": {
+          "reason": null,
+          "value": 5
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.08528938664220674
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8229765615296772
+        },
+        "poptEffort": {
+          "areaModel": 0.8108006663445358,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.756570522592841
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 42,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.622,
+      "seed": 42,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.15229736359448875
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 30,
+          "fp": 7,
+          "tn": 522,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 11,
+          "totalLoc": 56679,
+          "usedLoc": 10853
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.05128205128205128
+        },
+        "ifa": {
+          "reason": null,
+          "value": 7
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.03666328533154785
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8244291197709935
+        },
+        "poptEffort": {
+          "areaModel": 0.8121984645846532,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.125
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7507774864320996
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 43,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.921,
+      "seed": 43,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.13970088191092903
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 29,
+          "fp": 8,
+          "tn": 521,
+          "tp": 2
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 12,
+          "totalLoc": 56679,
+          "usedLoc": 11257
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0975609756097561
+        },
+        "ifa": {
+          "reason": null,
+          "value": 5
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.08528938664220674
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8034137484400933
+        },
+        "poptEffort": {
+          "areaModel": 0.7919753518541603,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7242514787487042
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 44,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.823,
+      "seed": 44,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8",
+      "trainDatasets": [
+        "kamei14-git-v2-httpx-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "logistic-regression-l2-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.07943154273203534
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 8,
+          "tn": 205,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 0,
+          "totalLoc": 21915,
+          "usedLoc": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.16666666666666666
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.17322275745038246
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9098000675654921
+        },
+        "poptEffort": {
+          "areaModel": 0.9059167997566355,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1111111111111111
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5586854460093897
+        }
+      },
+      "params": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "seconds": 0.032,
+      "seed": null,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "decision-tree-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.0892164273116654
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 8,
+          "tn": 205,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 8,
+          "totalLoc": 21915,
+          "usedLoc": 4365
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.16666666666666666
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.17322275745038246
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9266760848868274
+        },
+        "poptEffort": {
+          "areaModel": 0.9226328998402921,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1111111111111111
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.770735524256651
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.064,
+      "seed": null,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.18367786391042207
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 9,
+          "tn": 204,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 6,
+          "totalLoc": 21915,
+          "usedLoc": 4158
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.15384615384615385
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.16211712934301145
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9203187862780622
+        },
+        "poptEffort": {
+          "areaModel": 0.916335843029888,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6917057902973396
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 42,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.749,
+      "seed": 42,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10024180168731688
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 9,
+          "tn": 204,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 6,
+          "totalLoc": 21915,
+          "usedLoc": 4158
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.15384615384615385
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.16211712934301145
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.920472344215472
+        },
+        "poptEffort": {
+          "areaModel": 0.9164879458513954,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6838810641627542
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 43,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.579,
+      "seed": 43,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.12785372364908404
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 9,
+          "tn": 204,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 6,
+          "totalLoc": 21915,
+          "usedLoc": 4158
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.15384615384615385
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.16211712934301145
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.920380209453026
+        },
+        "poptEffort": {
+          "areaModel": 0.916396684158491,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6807511737089201
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 44,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.582,
+      "seed": 44,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.0843523851720573
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 10,
+          "tn": 203,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 3,
+          "totalLoc": 21915,
+          "usedLoc": 4316
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.14285714285714285
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.15244998555264003
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9149442584687199
+        },
+        "poptEffort": {
+          "areaModel": 0.9110122442771313,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.09090909090909091
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6744913928012519
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 42,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 4.427,
+      "seed": 42,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.07179998976406163
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 10,
+          "tn": 203,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 3,
+          "totalLoc": 21915,
+          "usedLoc": 4316
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.14285714285714285
+        },
+        "ifa": {
+          "reason": null,
+          "value": 5
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.15244998555264003
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9186757163477776
+        },
+        "poptEffort": {
+          "areaModel": 0.9147083428397597,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.09090909090909091
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6369327073552425
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 43,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 3.939,
+      "seed": 43,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.08448918717375094
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 9,
+          "tn": 204,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 3,
+          "totalLoc": 21915,
+          "usedLoc": 4273
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.15384615384615385
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.16211712934301145
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9175547434046862
+        },
+        "poptEffort": {
+          "areaModel": 0.9135979922427562,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.1
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6744913928012519
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 44,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 4.291,
+      "seed": 44,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-pydantic-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "logistic-regression-l2-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.31744398127535617
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 49,
+          "fp": 20,
+          "tn": 736,
+          "tp": 20
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 14,
+          "totalLoc": 86683,
+          "usedLoc": 17249
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.3669724770642202
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.33949741010804074
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7366770444877856
+        },
+        "poptEffort": {
+          "areaModel": 0.7116596922285717,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.5
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.2898550724637681
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.08695652173913043
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7814968177287018
+        }
+      },
+      "params": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "seconds": 0.042,
+      "seed": null,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "decision-tree-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.16124881128202218
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 50,
+          "fp": 47,
+          "tn": 709,
+          "tp": 19
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 23,
+          "totalLoc": 86683,
+          "usedLoc": 16954
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.2814814814814815
+        },
+        "ifa": {
+          "reason": null,
+          "value": 6
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.2175532331509348
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7044020395194784
+        },
+        "poptEffort": {
+          "areaModel": 0.6827962355589489,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2878787878787879
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.2753623188405797
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.10144927536231885
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6417836055517214
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.034,
+      "seed": null,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.18621431531337743
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 67,
+          "fp": 11,
+          "tn": 745,
+          "tp": 2
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 33,
+          "totalLoc": 86683,
+          "usedLoc": 17242
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.04878048780487805
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.03208927036064493
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7125448245781855
+        },
+        "poptEffort": {
+          "areaModel": 0.690078307984432,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.15384615384615385
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.028985507246376812
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.08695652173913043
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7089563683766581
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 42,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.067,
+      "seed": 42,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.18818432712981567
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 68,
+          "fp": 4,
+          "tn": 752,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 32,
+          "totalLoc": 86683,
+          "usedLoc": 17181
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.02702702702702703
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.03282191118024477
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7131180257948079
+        },
+        "poptEffort": {
+          "areaModel": 0.6905909204068066,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.014492753623188406
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.057971014492753624
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7142090330496127
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 43,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.293,
+      "seed": 43,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.19348817167959928
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 66,
+          "fp": 9,
+          "tn": 747,
+          "tp": 3
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 30,
+          "totalLoc": 86683,
+          "usedLoc": 17282
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.07407407407407407
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.07300830407299788
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7148791332509665
+        },
+        "poptEffort": {
+          "areaModel": 0.6921658744246697,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.25
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.043478260869565216
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.057971014492753624
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7185606931983743
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 44,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.102,
+      "seed": 44,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.20853217582596076
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 67,
+          "fp": 8,
+          "tn": 748,
+          "tp": 2
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 22,
+          "totalLoc": 86683,
+          "usedLoc": 17322
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.05063291139240506
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.046559358245360574
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7070472528312846
+        },
+        "poptEffort": {
+          "areaModel": 0.6851618432445928,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.028985507246376812
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.08695652173913043
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7390345832374818
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 42,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.772,
+      "seed": 42,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.178481920716081
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 69,
+          "fp": 4,
+          "tn": 752,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 24,
+          "totalLoc": 86683,
+          "usedLoc": 17283
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 10
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.02108735283406992
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7053470924059864
+        },
+        "poptEffort": {
+          "areaModel": 0.6836413940048425,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.07246376811594203
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7386703473659996
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 43,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.192,
+      "seed": 43,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    },
+    {
+      "heldOut": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.1788173879237872
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 69,
+          "fp": 1,
+          "tn": 755,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 28,
+          "totalLoc": 86683,
+          "usedLoc": 17301
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 6
+        },
+        "mcc": {
+          "reason": null,
+          "value": -0.010524465329559899
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7061304300112207
+        },
+        "poptEffort": {
+          "areaModel": 0.684341930876907,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.10144927536231885
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7313089487002531
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 44,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 1.801,
+      "seed": 44,
+      "status": "succeeded",
+      "testVersion": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31",
+      "trainDatasets": [
+        "kamei14-git-v2-flask-mature",
+        "kamei14-git-v2-httpx-mature"
+      ]
+    }
+  ],
+  "protocol": {
+    "datasets": [
+      {
+        "csvSha256": "742c2cc8f02c8970b7e895a153a9cf30f2e67f071d16c7406a6046b68f9722c8",
+        "language": "python",
+        "manifestSha256": "0886f42419b8fade9bf8f4a43523feafb8272020f921b1457191577db0198522",
+        "name": "kamei14-git-v2-flask-mature",
+        "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+      },
+      {
+        "csvSha256": "0249fc41fa14587d18b3d21430e4b308c7b69df657a78ce7de1379109d782ea2",
+        "language": "python",
+        "manifestSha256": "5851db2da6ad34376a711fc03cac9b7e6dcc1ec4dd96fbbb257d5e0f27123497",
+        "name": "kamei14-git-v2-pydantic-mature",
+        "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+      },
+      {
+        "csvSha256": "73316c1c81631c9080e5292fce25fefada799ba5123d40afba2c7b0727339499",
+        "language": "python",
+        "manifestSha256": "b3b4ece3404dccf6595c58bbf05f7b6f12137af31b66c2bdb5ac4ea4c2f9555e",
+        "name": "kamei14-git-v2-httpx-mature",
+        "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+      }
+    ],
+    "format": "evaluation-matrix-v1",
+    "locBudget": 0.2,
+    "methods": [
+      "logistic-regression-l2-v1",
+      "decision-tree-v1",
+      "random-forest-v1",
+      "mlp-v1"
+    ],
+    "metricSet": "metric-set-v2",
+    "parameters": {
+      "decision-tree-v1": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "logistic-regression-l2-v1": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "mlp-v1": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 2026,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "random-forest-v1": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "seed": 2026,
+        "threads": 1
+      }
+    },
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "splitPolicy": "utc-distinct-times",
+    "splitPreset": "temporal-70-15-15",
+    "threshold": 0.5
+  },
+  "protocolSha256": "575a3976c5eee765aa3ef791c4f408c3ab0d82b63112ba79acd3a6415b3ec2bd",
+  "splitFailures": [],
+  "status": "complete",
+  "withinRepo": [
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "logistic-regression-l2-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.15326155826056614
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 26,
+          "fp": 26,
+          "tn": 503,
+          "tp": 5
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 6,
+          "totalLoc": 56679,
+          "usedLoc": 7709
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.11214098420635404
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.849751302630096
+        },
+        "poptEffort": {
+          "areaModel": 0.8365660263316501,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.16129032258064516
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7588877370571376
+        }
+      },
+      "params": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "seconds": 0.251,
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "decision-tree-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.10366300314398319
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 31,
+          "fp": 0,
+          "tn": 529,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 63,
+          "totalLoc": 56679,
+          "usedLoc": 11008
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 17
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8446135284272006
+        },
+        "poptEffort": {
+          "areaModel": 0.8316219411069367,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0967741935483871
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7174217940118299
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.049,
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.16093623922071656
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 31,
+          "fp": 0,
+          "tn": 529,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 20,
+          "totalLoc": 56679,
+          "usedLoc": 11326
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8495129553290985
+        },
+        "poptEffort": {
+          "areaModel": 0.8363366644868755,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.780992743459967
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 42,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.78,
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.16985174710961
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 31,
+          "fp": 0,
+          "tn": 529,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 19,
+          "totalLoc": 56679,
+          "usedLoc": 11292
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8503125720808329
+        },
+        "poptEffort": {
+          "areaModel": 0.8371061364822495,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7772120251234831
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 43,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.141,
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.17304356214021144
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 31,
+          "fp": 0,
+          "tn": 529,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 20,
+          "totalLoc": 56679,
+          "usedLoc": 11236
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8515037171533131
+        },
+        "poptEffort": {
+          "areaModel": 0.8382523765700332,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7814195987560217
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 44,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.978,
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.18176132725603916
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 27,
+          "fp": 12,
+          "tn": 517,
+          "tp": 4
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 16,
+          "totalLoc": 56679,
+          "usedLoc": 11172
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.1702127659574468
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.14597495716537612
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8535317392255742
+        },
+        "poptEffort": {
+          "areaModel": 0.8402039442269397,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.25
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.12903225806451613
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7839502408683456
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 42,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 19.195,
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.13611230325887233
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 30,
+          "fp": 6,
+          "tn": 523,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 12,
+          "totalLoc": 56679,
+          "usedLoc": 11105
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.05263157894736842
+        },
+        "ifa": {
+          "reason": null,
+          "value": 4
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.043050068958138905
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8499245923551391
+        },
+        "poptEffort": {
+          "areaModel": 0.8367327832063873,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.14285714285714285
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.03225806451612903
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7766327215074089
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 43,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 1.423,
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-flask-mature",
+      "language": "python",
+      "members": {
+        "positives": 31,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.19565047575136701
+        },
+        "baseRate": 0.055357142857142855,
+        "confusion": {
+          "fn": 29,
+          "fp": 5,
+          "tn": 524,
+          "tp": 2
+        },
+        "effort": {
+          "budgetLoc": 11335.800000000001,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 16,
+          "totalLoc": 56679,
+          "usedLoc": 10047
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.10526315789473684
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.11333589582856976
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.8548234278245296
+        },
+        "poptEffort": {
+          "areaModel": 0.841446937450236,
+          "areaOracle": 0.9811504972257508,
+          "areaWorst": 0.01884950277425392,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 56679
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2857142857142857
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.06451612903225806
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7876699798768217
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 44,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 1.507,
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-flask-mature-2010-04-06_2026-07-30-742c2cc8"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "logistic-regression-l2-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.09514702055685663
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 4,
+          "tn": 209,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 0,
+          "totalLoc": 21915,
+          "usedLoc": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.25
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.24480450099762807
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9074659869168633
+        },
+        "poptEffort": {
+          "areaModel": 0.9036048368697239,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5524256651017214
+        }
+      },
+      "params": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "seconds": 0.022,
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "decision-tree-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.03956228956228956
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 2,
+          "fp": 10,
+          "tn": 203,
+          "tp": 1
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 9,
+          "totalLoc": 21915,
+          "usedLoc": 4284
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.14285714285714285
+        },
+        "ifa": {
+          "reason": null,
+          "value": 2
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.15244998555264003
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.2855870519947175
+        },
+        "poptEffort": {
+          "areaModel": 0.28761883032930263,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.09090909090909091
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.514866979655712
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.018,
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.17959265981044564
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 3,
+          "fp": 0,
+          "tn": 213,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 5,
+          "totalLoc": 21915,
+          "usedLoc": 3984
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9152053069623165
+        },
+        "poptEffort": {
+          "areaModel": 0.9112708190736938,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5727699530516432
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 42,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.651,
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.18007513926674437
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 3,
+          "fp": 0,
+          "tn": 213,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 7,
+          "totalLoc": 21915,
+          "usedLoc": 4268
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9121802155953438
+        },
+        "poptEffort": {
+          "areaModel": 0.9082743934899993,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5852895148669797
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 43,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.656,
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.1801054526748971
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 3,
+          "fp": 0,
+          "tn": 213,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 7,
+          "totalLoc": 21915,
+          "usedLoc": 4270
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9146064310064184
+        },
+        "poptEffort": {
+          "areaModel": 0.9106776180698152,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5790297339593115
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 44,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.792,
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.09787115883006293
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 3,
+          "fp": 0,
+          "tn": 213,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 2,
+          "totalLoc": 21915,
+          "usedLoc": 3866
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9303461195909215
+        },
+        "poptEffort": {
+          "areaModel": 0.9262681572743177,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.5993740219092332
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 42,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 0.808,
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.18145078780437898
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 3,
+          "fp": 0,
+          "tn": 213,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 4,
+          "totalLoc": 21915,
+          "usedLoc": 4063
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 1
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.933954731120051
+        },
+        "poptEffort": {
+          "areaModel": 0.9298425735797398,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6103286384976526
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 43,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 1.089,
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-httpx-mature",
+      "language": "python",
+      "members": {
+        "positives": 3,
+        "records": 216
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.09952545297670405
+        },
+        "baseRate": 0.013888888888888888,
+        "confusion": {
+          "fn": 3,
+          "fp": 0,
+          "tn": 213,
+          "tp": 0
+        },
+        "effort": {
+          "budgetLoc": 4383.0,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 2,
+          "totalLoc": 21915,
+          "usedLoc": 3257
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": "混淆矩阵有一侧为空，MCC 未定义",
+          "value": null
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.9151438837873528
+        },
+        "poptEffort": {
+          "areaModel": 0.9112099779450911,
+          "areaOracle": 0.9952619971100468,
+          "areaWorst": 0.00473800288995363,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 21915
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.0
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.6103286384976526
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 44,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 1.568,
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-httpx-mature-2019-04-04_2026-02-23"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "logistic-regression-l2-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.26306176969717887
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 39,
+          "fp": 71,
+          "tn": 685,
+          "tp": 30
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 16,
+          "totalLoc": 86683,
+          "usedLoc": 17032
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.35294117647058826
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.2878994060105353
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7213277404150097
+        },
+        "poptEffort": {
+          "areaModel": 0.6979328477726692,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.297029702970297
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.43478260869565216
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.11594202898550725
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7665056360708534
+        }
+      },
+      "params": {
+        "C": 1.0,
+        "class_weight": null,
+        "max_iter": 1000,
+        "regularization": "L2",
+        "seed": 2026,
+        "solver": "lbfgs",
+        "threads": 1,
+        "tol": 0.0001
+      },
+      "seconds": 0.038,
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "decision-tree-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.24929962286912236
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 36,
+          "fp": 96,
+          "tn": 660,
+          "tp": 33
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 21,
+          "totalLoc": 86683,
+          "usedLoc": 17270
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.3333333333333333
+        },
+        "ifa": {
+          "reason": null,
+          "value": 3
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.2677536285523636
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.6878451990285149
+        },
+        "poptEffort": {
+          "areaModel": 0.6679894942876136,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.2558139534883721
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.4782608695652174
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.13043478260869565
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7329480101219232
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 0.046,
+      "seed": null,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.2854604077216042
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 38,
+          "fp": 71,
+          "tn": 685,
+          "tp": 31
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 20,
+          "totalLoc": 86683,
+          "usedLoc": 16642
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.36257309941520466
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.2988716851428042
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7152515457830969
+        },
+        "poptEffort": {
+          "areaModel": 0.6924989220258994,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.30392156862745096
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.4492753623188406
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.11594202898550725
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7444406103826394
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 42,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.181,
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.2888683433122784
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 38,
+          "fp": 72,
+          "tn": 684,
+          "tp": 31
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 19,
+          "totalLoc": 86683,
+          "usedLoc": 15623
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.36046511627906974
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.29651537102412234
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7170466788822518
+        },
+        "poptEffort": {
+          "areaModel": 0.6941043050916662,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.30097087378640774
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.4492753623188406
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.11594202898550725
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7473161567364466
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 43,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.47,
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "random-forest-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.29349529361720794
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 38,
+          "fp": 72,
+          "tn": 684,
+          "tp": 31
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 21,
+          "totalLoc": 86683,
+          "usedLoc": 16703
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.36046511627906974
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.29651537102412234
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7157600608872107
+        },
+        "poptEffort": {
+          "areaModel": 0.6929536858187431,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.30097087378640774
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.4492753623188406
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.13043478260869565
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7481213097155125
+        }
+      },
+      "params": {
+        "criterion": "gini",
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "n_estimators": 200,
+        "random_state": 44,
+        "seed": 2026,
+        "threads": 1
+      },
+      "seconds": 1.21,
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.26765772846120583
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 43,
+          "fp": 56,
+          "tn": 700,
+          "tp": 26
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 16,
+          "totalLoc": 86683,
+          "usedLoc": 16721
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.3443708609271523
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.2801240257703373
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7186440145622328
+        },
+        "poptEffort": {
+          "areaModel": 0.6955327984174224,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.3170731707317073
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.37681159420289856
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.10144927536231885
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7677517061575032
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 42,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.357,
+      "seed": 42,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.32603959932777155
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 35,
+          "fp": 67,
+          "tn": 689,
+          "tp": 34
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 13,
+          "totalLoc": 86683,
+          "usedLoc": 16934
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.4
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.34133104876599146
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7221009824997948
+        },
+        "poptEffort": {
+          "areaModel": 0.6986243562459054,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.33663366336633666
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.4927536231884058
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.10144927536231885
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7670040641055134
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 43,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.318,
+      "seed": 43,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    },
+    {
+      "dataset": "kamei14-git-v2-pydantic-mature",
+      "language": "python",
+      "members": {
+        "positives": 69,
+        "records": 825
+      },
+      "method": "mlp-v1",
+      "metrics": {
+        "averagePrecision": {
+          "reason": null,
+          "value": 0.28007096459820535
+        },
+        "baseRate": 0.08363636363636363,
+        "confusion": {
+          "fn": 39,
+          "fp": 66,
+          "tn": 690,
+          "tp": 30
+        },
+        "effort": {
+          "budgetLoc": 17336.600000000002,
+          "name": "Recall@20%LOC (risk-ranked)",
+          "ordering": "risk-desc,time-desc,id-asc",
+          "policy": "whole-commit-prefix-stop",
+          "selectedCount": 15,
+          "totalLoc": 86683,
+          "usedLoc": 16617
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.36363636363636365
+        },
+        "ifa": {
+          "reason": null,
+          "value": 0
+        },
+        "mcc": {
+          "reason": null,
+          "value": 0.29999716585759323
+        },
+        "popt": {
+          "reason": null,
+          "value": 0.7160913435212145
+        },
+        "poptEffort": {
+          "areaModel": 0.6932499510543753,
+          "areaOracle": 0.9471487564132919,
+          "areaWorst": 0.052851243586701874,
+          "name": "Popt (density-ranked, full-range)",
+          "ordering": "density-desc,time-desc,id-asc",
+          "policy": "trapezoid-full-range",
+          "totalLoc": 86683
+        },
+        "precision": {
+          "reason": null,
+          "value": 0.3125
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.43478260869565216
+        },
+        "recall20Loc": {
+          "reason": null,
+          "value": 0.08695652173913043
+        },
+        "rocAuc": {
+          "reason": null,
+          "value": 0.7682117935741124
+        }
+      },
+      "params": {
+        "batch_size": 256,
+        "dropout": 0.2,
+        "epochs": 30,
+        "hidden": [
+          64,
+          32
+        ],
+        "lr": 0.001,
+        "seed": 44,
+        "threads": 1,
+        "weight_decay": 0.0001
+      },
+      "seconds": 2.289,
+      "seed": 44,
+      "status": "succeeded",
+      "version": "kamei14-git-v2-pydantic-mature-2017-05-03_2026-07-31"
+    }
+  ]
+}
