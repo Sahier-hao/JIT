@@ -232,6 +232,8 @@ def test_legacy_run_without_policy_uses_member_counts_not_guesses(tmp_path, real
     assert scope["partitionCoverage"]["status"] == model_lineage.VERIFIED
     assert scope["partitionCoverage"]["memberVerification"] == "counts"
     assert scope["partitionCoverage"]["preset"] is None
+    assert scope["frozenIdentity"]["memberVerification"] == "counts"
+    assert scope["frozenIdentity"]["memberSha256"] is None
     assert scope["split"]["test"]["count"] == split["partitions"]["test"]["count"]
     assert scope["distributions"]["test"]["high"] == 1
 

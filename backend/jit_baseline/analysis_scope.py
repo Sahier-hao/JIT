@@ -181,10 +181,12 @@ def _frozen_identity(service, item: dict[str, Any], lineage: dict[str, Any],
     manifest = _read_json(directory / "manifest.json") or {}
     split = _read_json(directory / "split.json") or {}
     partitions = split.get("partitions") if isinstance(split.get("partitions"), dict) else {}
-    try:
-        member_sha = model_lineage.membership_digest(partitions)
-    except Exception:
-        member_sha = None
+    member_sha = None
+    if lineage.get("memberVerification") == "digest":
+        try:
+            member_sha = model_lineage.membership_digest(partitions)
+        except Exception:
+            member_sha = None
     dataset_source = (dataset or {}).get("source") or {}
     return {
         "modelId": model_id,
