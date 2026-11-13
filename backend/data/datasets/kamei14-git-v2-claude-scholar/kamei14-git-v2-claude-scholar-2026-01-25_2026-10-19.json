@@ -1,0 +1,1069 @@
+{
+  "citation": "由仓库同步采集生成（简化 SZZ）",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1793923200,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 0
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 12,
+      "commitsInWindow": 178,
+      "excluded": {
+        "empty": 0,
+        "merges": 23,
+        "outsideWindow": 0,
+        "unparsed": 0
+      },
+      "negativeFileAgeFiles": 2,
+      "records": 178
+    },
+    "gitVersion": "git version 2.53.0.windows.1",
+    "kind": "git-repository",
+    "label": {
+      "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0",
+      "kind": "simplified-szz",
+      "maturityDays": 90,
+      "observedThrough": 1793923200,
+      "rule": "szz-simple-v1",
+      "version": "szz-simple-v1"
+    },
+    "labelEvidence": [
+      {
+        "fixCommit": "e445c100c2a72ba7e0d816b5a08152ccf146c4b6",
+        "fixTime": "2026-01-25T12:35:51Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "hooks/lib/common.sh"
+      },
+      {
+        "fixCommit": "e27f22f0d311cef8de4fe93747c30c8ad4562673",
+        "fixTime": "2026-01-26T07:42:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "hooks/skill_forced_eval.sh"
+      },
+      {
+        "fixCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "fixTime": "2026-01-26T13:06:18Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/resource-forced-eval.js"
+      },
+      {
+        "fixCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "fixTime": "2026-01-26T13:06:18Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/security-guard.js"
+      },
+      {
+        "fixCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "fixTime": "2026-01-26T13:06:18Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/session-start.js"
+      },
+      {
+        "fixCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "fixTime": "2026-01-26T13:06:18Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/session-summary.js"
+      },
+      {
+        "fixCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "fixTime": "2026-01-26T13:06:18Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/skill-forced-eval.js"
+      },
+      {
+        "fixCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "fixTime": "2026-01-26T13:06:18Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/stop-summary.js"
+      },
+      {
+        "fixCommit": "571db2eff8b3d2a1b853c8033de54a68614286f4",
+        "fixTime": "2026-01-26T13:34:21Z",
+        "introducedCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "path": "hooks/node/resource-forced-eval.js"
+      },
+      {
+        "fixCommit": "2b30b261d999cc47b5ff42456eb379210f78aa3d",
+        "fixTime": "2026-01-26T13:43:38Z",
+        "introducedCommit": "a3b592bb15d32079b2a057ef3b088ad4491a9893",
+        "path": "hooks/node/stop-summary.js"
+      },
+      {
+        "fixCommit": "59080b123235b8fd12b9f6b4c1c52ad933ff4989",
+        "fixTime": "2026-01-26T13:52:49Z",
+        "introducedCommit": "192c3648c303b5c61d2a8857a7fecf64b3093e9a",
+        "path": "hooks/node/hook-common.js"
+      },
+      {
+        "fixCommit": "21a6ac27ecffff550a92841643bf383890683bf1",
+        "fixTime": "2026-02-23T08:29:51Z",
+        "introducedCommit": "f4155bd7fa9178ed99bfe4aeb0912e78eab7409f",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "21a6ac27ecffff550a92841643bf383890683bf1",
+        "fixTime": "2026-02-23T08:29:51Z",
+        "introducedCommit": "f4155bd7fa9178ed99bfe4aeb0912e78eab7409f",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "21a6ac27ecffff550a92841643bf383890683bf1",
+        "fixTime": "2026-02-23T08:29:51Z",
+        "introducedCommit": "f4155bd7fa9178ed99bfe4aeb0912e78eab7409f",
+        "path": "settings.json.template"
+      },
+      {
+        "fixCommit": "40ce718c01d4702be921562557bfee8ac8a05591",
+        "fixTime": "2026-02-25T16:15:44Z",
+        "introducedCommit": "6ee11259a7f603fa111f4bdac74f1b1f83a926bb",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "40ce718c01d4702be921562557bfee8ac8a05591",
+        "fixTime": "2026-02-25T16:15:44Z",
+        "introducedCommit": "6ee11259a7f603fa111f4bdac74f1b1f83a926bb",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "a46bbcb957fca03effbdd27764a0d1a70a28a97b",
+        "fixTime": "2026-03-18T03:51:06Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "agents/paper-miner.md"
+      },
+      {
+        "fixCommit": "589a502b87ef1971f2e7291cd6efce774db7d194",
+        "fixTime": "2026-03-18T04:37:23Z",
+        "introducedCommit": "2475fcea5e568ab90fb56a91873c9fc0c15b6a32",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "589a502b87ef1971f2e7291cd6efce774db7d194",
+        "fixTime": "2026-03-18T04:37:23Z",
+        "introducedCommit": "2475fcea5e568ab90fb56a91873c9fc0c15b6a32",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "589a502b87ef1971f2e7291cd6efce774db7d194",
+        "fixTime": "2026-03-18T04:37:23Z",
+        "introducedCommit": "21a6ac27ecffff550a92841643bf383890683bf1",
+        "path": "scripts/setup.sh"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/bug-detective/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/code-review-excellence/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/doc-coauthoring/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "70ad6e228d23f47768ad96cb95b8dcf7a0168fdf",
+        "path": "skills/ml-paper-writing/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "skills/obsidian-project-bootstrap/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "d10042b8e8c8e4438762b831dd68148caac903ee",
+        "path": "skills/results-report/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "d10042b8e8c8e4438762b831dd68148caac903ee",
+        "path": "skills/results-report/examples/example-results-report.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/skill-development/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/skill-quality-reviewer/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "skills/zotero-obsidian-bridge/SKILL.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "skills/zotero-obsidian-bridge/references/WORKFLOW.md"
+      },
+      {
+        "fixCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "fixTime": "2026-03-18T15:16:49Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "skills/zotero-obsidian-bridge/scripts/verify_paper_notes.py"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "70ad6e228d23f47768ad96cb95b8dcf7a0168fdf",
+        "path": "CLAUDE.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "70ad6e228d23f47768ad96cb95b8dcf7a0168fdf",
+        "path": "CLAUDE.zh-CN.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "d10042b8e8c8e4438762b831dd68148caac903ee",
+        "path": "hooks/skill-forced-eval.js"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/agent-identifier/SKILL.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-development/SKILL.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/README.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/SKILL.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/examples/advanced-plugin.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/examples/minimal-plugin.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/examples/standard-plugin.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/references/component-patterns.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/command-name/references/manifest-reference.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/hook-development/SKILL.md"
+      },
+      {
+        "fixCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "fixTime": "2026-03-23T11:34:03Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/mcp-integration/SKILL.md"
+      },
+      {
+        "fixCommit": "37fdbf138534a7a825c0ebcf1d09dc907ac3d962",
+        "fixTime": "2026-03-24T07:46:49Z",
+        "introducedCommit": "519e9297e6308f82accd6138a1dca6036a49c527",
+        "path": "skills/agent-identifier/SKILL.md"
+      },
+      {
+        "fixCommit": "37fdbf138534a7a825c0ebcf1d09dc907ac3d962",
+        "fixTime": "2026-03-24T07:46:49Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "skills/architecture-design/SKILL.md"
+      },
+      {
+        "fixCommit": "afec796c37c36b111f81e103e5b6ed7ca13db078",
+        "fixTime": "2026-03-24T13:41:51Z",
+        "introducedCommit": "243ef58b4ee29208ed446f22e2757e93ac5f85d6",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "afec796c37c36b111f81e103e5b6ed7ca13db078",
+        "fixTime": "2026-03-24T13:41:51Z",
+        "introducedCommit": "243ef58b4ee29208ed446f22e2757e93ac5f85d6",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "afec796c37c36b111f81e103e5b6ed7ca13db078",
+        "fixTime": "2026-03-24T13:41:51Z",
+        "introducedCommit": "589a502b87ef1971f2e7291cd6efce774db7d194",
+        "path": "scripts/setup.sh"
+      },
+      {
+        "fixCommit": "c6035d802e4ca5ace550691051d8cc29d9b3a401",
+        "fixTime": "2026-03-26T07:37:27Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "hooks/hook-common.js"
+      },
+      {
+        "fixCommit": "c6035d802e4ca5ace550691051d8cc29d9b3a401",
+        "fixTime": "2026-03-26T07:37:27Z",
+        "introducedCommit": "a46258e640ed75b2c06ef7c3cd842b4d3800d79d",
+        "path": "hooks/session-start.js"
+      },
+      {
+        "fixCommit": "c6035d802e4ca5ace550691051d8cc29d9b3a401",
+        "fixTime": "2026-03-26T07:37:27Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "hooks/session-summary.js"
+      },
+      {
+        "fixCommit": "c6035d802e4ca5ace550691051d8cc29d9b3a401",
+        "fixTime": "2026-03-26T07:37:27Z",
+        "introducedCommit": "6edacc3ec5e7bc9ce927401f7b0518b204bf4ee4",
+        "path": "hooks/stop-summary.js"
+      },
+      {
+        "fixCommit": "a1243a91a39dfde7a5fe70e7a4784109fe45e172",
+        "fixTime": "2026-03-31T08:53:24Z",
+        "introducedCommit": "3a4426197a3961949cc9d727c48a0c4695d3b8f0",
+        "path": "README.ja.md"
+      },
+      {
+        "fixCommit": "a1243a91a39dfde7a5fe70e7a4784109fe45e172",
+        "fixTime": "2026-03-31T08:53:24Z",
+        "introducedCommit": "3a4426197a3961949cc9d727c48a0c4695d3b8f0",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "a1243a91a39dfde7a5fe70e7a4784109fe45e172",
+        "fixTime": "2026-03-31T08:53:24Z",
+        "introducedCommit": "3a4426197a3961949cc9d727c48a0c4695d3b8f0",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "36090dc70f482eaf2688d9cee87abccdb74ca94a",
+        "fixTime": "2026-04-15T03:10:28Z",
+        "introducedCommit": "ed207c1090ea89251a9e72850608972a12db5bce",
+        "path": "commands/commit.md"
+      },
+      {
+        "fixCommit": "39ce9be23337e85f710046c119682ca629c769f2",
+        "fixTime": "2026-04-15T09:10:00Z",
+        "introducedCommit": "4ee8a4fb5a1d790f6a395db19a59ea1969e9a3a4",
+        "path": "README.ja-JP.md"
+      },
+      {
+        "fixCommit": "39ce9be23337e85f710046c119682ca629c769f2",
+        "fixTime": "2026-04-15T09:10:00Z",
+        "introducedCommit": "4ee8a4fb5a1d790f6a395db19a59ea1969e9a3a4",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "39ce9be23337e85f710046c119682ca629c769f2",
+        "fixTime": "2026-04-15T09:10:00Z",
+        "introducedCommit": "4ee8a4fb5a1d790f6a395db19a59ea1969e9a3a4",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "20cb6c604fd99d9dc48c24d6435afe6d8da93c18",
+        "fixTime": "2026-04-15T09:21:22Z",
+        "introducedCommit": "39ce9be23337e85f710046c119682ca629c769f2",
+        "path": ".github/workflows/installer_smoke.yml"
+      },
+      {
+        "fixCommit": "20cb6c604fd99d9dc48c24d6435afe6d8da93c18",
+        "fixTime": "2026-04-15T09:21:22Z",
+        "introducedCommit": "39ce9be23337e85f710046c119682ca629c769f2",
+        "path": ".github/workflows/repo_sanity.yml"
+      },
+      {
+        "fixCommit": "1447d368bffd67736a0622a7efb9d1f326381ef6",
+        "fixTime": "2026-04-15T09:27:25Z",
+        "introducedCommit": "20cb6c604fd99d9dc48c24d6435afe6d8da93c18",
+        "path": ".github/workflows/repo_sanity.yml"
+      },
+      {
+        "fixCommit": "4422ecf1bafc20f7f56a016def9ebf9fbe56126a",
+        "fixTime": "2026-04-24T08:13:32Z",
+        "introducedCommit": "c6035d802e4ca5ace550691051d8cc29d9b3a401",
+        "path": "hooks/hook-common.js"
+      },
+      {
+        "fixCommit": "4422ecf1bafc20f7f56a016def9ebf9fbe56126a",
+        "fixTime": "2026-04-24T08:13:32Z",
+        "introducedCommit": "487b300a9e5c609f66a4800619e1b0ba45967b5d",
+        "path": "scripts/setup.sh"
+      },
+      {
+        "fixCommit": "4422ecf1bafc20f7f56a016def9ebf9fbe56126a",
+        "fixTime": "2026-04-24T08:13:32Z",
+        "introducedCommit": "487b300a9e5c609f66a4800619e1b0ba45967b5d",
+        "path": "scripts/uninstall.sh"
+      },
+      {
+        "fixCommit": "a9d0d56b75b418769eb1be360cff78ec0f7d642c",
+        "fixTime": "2026-04-24T09:07:22Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/scripts/kb_common.py"
+      },
+      {
+        "fixCommit": "a9d0d56b75b418769eb1be360cff78ec0f7d642c",
+        "fixTime": "2026-04-24T09:07:22Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/scripts/kb_link_check.py"
+      },
+      {
+        "fixCommit": "a9d0d56b75b418769eb1be360cff78ec0f7d642c",
+        "fixTime": "2026-04-24T09:07:22Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/scripts/kb_lint.py"
+      },
+      {
+        "fixCommit": "a9d0d56b75b418769eb1be360cff78ec0f7d642c",
+        "fixTime": "2026-04-24T09:07:22Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/scripts/project_kb.py"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "OBSIDIAN_SETUP.ja-JP.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "OBSIDIAN_SETUP.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "OBSIDIAN_SETUP.zh-CN.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/kb-archive.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/kb-index.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-ingest.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-init.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-link.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-note.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-notes.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-project.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-review.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-sync.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "commands/obsidian-views.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-kb-artifacts/references/BASES.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-kb-artifacts/references/CANVAS.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-kb-artifacts/references/CLI.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-kb-artifacts/references/OBSIDIAN-MARKDOWN.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-literature-workflow/references/CLAIM-EXTRACTION.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/SKILL.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/references/DIRECTORY-SCHEMA.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "skills/obsidian-project-kb-core/references/LIFECYCLE.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "a9d0d56b75b418769eb1be360cff78ec0f7d642c",
+        "path": "skills/obsidian-project-kb-core/scripts/kb_common.py"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "templates/project/02-Index.md"
+      },
+      {
+        "fixCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "fixTime": "2026-04-24T12:07:43Z",
+        "introducedCommit": "44df0307f0260f984ea1da7aa73f89bb9b4c7cd6",
+        "path": "templates/project/_system/schema.md"
+      },
+      {
+        "fixCommit": "a6ce278aa52c1e1a4698233979bc4c0db70cf828",
+        "fixTime": "2026-04-24T12:18:18Z",
+        "introducedCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "path": "skills/obsidian-kb-artifacts/references/CANVAS.md"
+      },
+      {
+        "fixCommit": "a6ce278aa52c1e1a4698233979bc4c0db70cf828",
+        "fixTime": "2026-04-24T12:18:18Z",
+        "introducedCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "path": "skills/obsidian-project-kb-core/scripts/kb_common.py"
+      },
+      {
+        "fixCommit": "a6ce278aa52c1e1a4698233979bc4c0db70cf828",
+        "fixTime": "2026-04-24T12:18:18Z",
+        "introducedCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "path": "templates/project/02-Index.md"
+      },
+      {
+        "fixCommit": "a6ce278aa52c1e1a4698233979bc4c0db70cf828",
+        "fixTime": "2026-04-24T12:18:18Z",
+        "introducedCommit": "cda44df14800b9be714d6921108be3d76e0c7128",
+        "path": "templates/project/_system/schema.md"
+      },
+      {
+        "fixCommit": "6db4bee55e176258cef10aee14c30c48482cc045",
+        "fixTime": "2026-06-01T08:55:25Z",
+        "introducedCommit": "011a3e61a907d9ec8ee07cc615b1e382c64f5724",
+        "path": "CLAUDE.ja-JP.md"
+      },
+      {
+        "fixCommit": "6db4bee55e176258cef10aee14c30c48482cc045",
+        "fixTime": "2026-06-01T08:55:25Z",
+        "introducedCommit": "011a3e61a907d9ec8ee07cc615b1e382c64f5724",
+        "path": "CLAUDE.md"
+      },
+      {
+        "fixCommit": "6db4bee55e176258cef10aee14c30c48482cc045",
+        "fixTime": "2026-06-01T08:55:25Z",
+        "introducedCommit": "011a3e61a907d9ec8ee07cc615b1e382c64f5724",
+        "path": "CLAUDE.zh-CN.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "a62036bc18e87702da9aad19fa8a33792a35ac46",
+        "path": "MCP_SETUP.ja-JP.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "a62036bc18e87702da9aad19fa8a33792a35ac46",
+        "path": "MCP_SETUP.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "a62036bc18e87702da9aad19fa8a33792a35ac46",
+        "path": "MCP_SETUP.zh-CN.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "2847aa1735205ef31e71068d45b902f3b228b98a",
+        "path": "README.ja-JP.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "2847aa1735205ef31e71068d45b902f3b228b98a",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "2847aa1735205ef31e71068d45b902f3b228b98a",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "487b300a9e5c609f66a4800619e1b0ba45967b5d",
+        "path": "scripts/test_install_uninstall.sh"
+      },
+      {
+        "fixCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "fixTime": "2026-08-23T13:14:52Z",
+        "introducedCommit": "37e3d55beff2568ccf993bef02ac083ae7c7a9b6",
+        "path": "skills/post-acceptance/SKILL.md"
+      },
+      {
+        "fixCommit": "0e6b3f1ea9efff97a49d6fbc5c439575f89cea88",
+        "fixTime": "2026-08-27T09:40:11Z",
+        "introducedCommit": "b11696f5ea777d7a001345efe05a538da7a617b9",
+        "path": "skills/post-acceptance/references/xquik-promotion.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "2847aa1735205ef31e71068d45b902f3b228b98a",
+        "path": "README.ja-JP.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "2847aa1735205ef31e71068d45b902f3b228b98a",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "2847aa1735205ef31e71068d45b902f3b228b98a",
+        "path": "README.zh-CN.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "3a1e218bc6ce9e312e73717fb2936a1c3e3b0df9",
+        "path": "agents/paper-miner.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "7597bfce3f7139801823f10f0b30d201377b6c9b",
+        "path": "commands/mine-writing-patterns.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "4422ecf1bafc20f7f56a016def9ebf9fbe56126a",
+        "path": "scripts/setup.sh"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "487b300a9e5c609f66a4800619e1b0ba45967b5d",
+        "path": "scripts/test_install_uninstall.sh"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "4422ecf1bafc20f7f56a016def9ebf9fbe56126a",
+        "path": "scripts/uninstall.sh"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "7597bfce3f7139801823f10f0b30d201377b6c9b",
+        "path": "skills/ml-paper-writing/SKILL.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "70ad6e228d23f47768ad96cb95b8dcf7a0168fdf",
+        "path": "skills/ml-paper-writing/references/knowledge/README.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "3407a3c99bc923a09b321fdc392d9fcb3e1c4ef1",
+        "path": "skills/nature-data/SKILL.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "fe77ce6c32770af135ea902fd965fbcdead76d16",
+        "path": "skills/nature-polishing/SKILL.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "3407a3c99bc923a09b321fdc392d9fcb3e1c4ef1",
+        "path": "skills/nature-response/SKILL.md"
+      },
+      {
+        "fixCommit": "6b6040e4600a723b6c77af7e2696552d79399303",
+        "fixTime": "2026-09-23T06:39:59Z",
+        "introducedCommit": "fe77ce6c32770af135ea902fd965fbcdead76d16",
+        "path": "skills/nature-writing/SKILL.md"
+      },
+      {
+        "fixCommit": "76a589331b4ee455a85de1898e83a763f5b06701",
+        "fixTime": "2026-10-14T08:41:22Z",
+        "introducedCommit": "c6035d802e4ca5ace550691051d8cc29d9b3a401",
+        "path": "hooks/security-guard.js"
+      }
+    ],
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。",
+      "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。"
+    ],
+    "repository": {
+      "branch": "HEAD",
+      "head": "d394fb599ed9e6ea2212a9e6daa864345fe97a26",
+      "path": "C:\\Users\\荀浩\\AppData\\Local\\Temp\\jit-sync-s_nm5g1d\\jit-collect-z7yemi3b\\repository.git",
+      "resolvedBranch": "main"
+    },
+    "szz": {
+      "fixCommits": 34,
+      "labeledCommits": 33,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 69,
+        "outsideWindow": 0
+      }
+    },
+    "window": {
+      "endEpoch": 1793923200,
+      "since": "1970-01-01T00:00:00+00:00",
+      "startEpoch": 0,
+      "until": "2026-11-06T00:00:00+00:00"
+    }
+  },
+  "dataset": "kamei14-git-v2-claude-scholar",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 21011,
+    "name": "kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19.csv",
+    "path": "data/datasets/kamei14-git-v2-claude-scholar/kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19.csv",
+    "sha256": "b9829956e04f45c8f017aa6ef5ffa1ffbe87cace14f7bbf17234c226c5895453"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 12,
+      "outsideWindow": 0,
+      "tooManyFiles": 1,
+      "tooMuchChurn": 4
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 161,
+    "positiveLabels": 30,
+    "rawRows": 178
+  },
+  "revision": "d394fb599ed9e6ea2212a9e6daa864345fe97a26",
+  "samples": [
+    {
+      "id": "e445c100c2a72ba7e0d816b5a08152ccf146c4b6",
+      "time": "2026-01-25T12:35:51Z"
+    },
+    {
+      "id": "07f9b1e90cf740e173161a3b0093827a267ebf95",
+      "time": "2026-01-25T12:47:50Z"
+    },
+    {
+      "id": "076ce4b8734be00fa927a685cc739d3cade59a1e",
+      "time": "2026-01-25T12:52:21Z"
+    },
+    {
+      "id": "d1b516484a91224f67dbf486c66145440197f847",
+      "time": "2026-10-17T15:23:20Z"
+    },
+    {
+      "id": "1f59a70606f1194f88087f82a463d62e4170c31d",
+      "time": "2026-10-19T10:05:33Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v2",
+  "timeRange": {
+    "end": "2026-10-19T10:05:33Z",
+    "endEpoch": 1792404333,
+    "start": "2026-01-25T12:35:51Z",
+    "startEpoch": 1769344551
+  },
+  "url": "https://github.com/Galaxy-Dawn/claude-scholar",
+  "version": "kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19"
+}
