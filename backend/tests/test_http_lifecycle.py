@@ -43,11 +43,13 @@ def request(port):
         return exc.code, json.load(exc)
 
 
-def wait_ready(port, timeout=15):
+def wait_ready(port, timeout=60):
     """Poll the owned service until it answers with a parseable batch.
 
     The service binds its port before the app finishes starting, so an accepted
     connection can carry an empty or unparseable body. That is not readiness.
+    Importing the app's runtime dependencies can take longer than 15 seconds on
+    a cold Windows checkout, so the deadline is deliberately generous.
     """
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:

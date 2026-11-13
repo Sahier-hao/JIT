@@ -4,6 +4,8 @@ import type { AnalysisScope } from '../repositoryWorkspace'
 const number = (value: number | null) => value == null ? '—' : value.toLocaleString('zh-CN')
 const decimal = (value: number | null) => value == null ? '—' : value.toFixed(3)
 const date = (value: string | null) => value ? value.slice(0, 10) : '—'
+const shortHash = (value: string | null) => value ? value.slice(0, 12) : null
+const identityText = (label: string, value: string) => label === '数据' ? value : shortHash(value) ?? value
 
 /** 结果卡顶部的分析口径：谁训练、用哪份数据、哪些提交是模型没见过的。 */
 export function AnalysisScopeCard({ scope, onOpenDataset }: {
@@ -15,6 +17,11 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
   const coverage = scope.partitionCoverage
   const dataset = scope.dataset
   const metrics = scope.metrics
+  const frozen = scope.frozenIdentity
+  const identityItems = frozen ? [
+    ['模型', frozen.modelSha256], ['运行', frozen.artifactRunId],
+    ['数据', frozen.datasetVersion], ['成员', frozen.memberSha256],
+  ].filter(([, value]) => value) as [string, string][] : []
   const metricItems = metrics ? [
     ['ROC-AUC', decimal(metrics.rocAuc)],
     ['AP', decimal(metrics.averagePrecision)],
@@ -55,6 +62,10 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
       {metrics ? <p className="scope-metrics">
         <b>测试集</b>{number(metrics.records)} 条 / {number(metrics.positives)} 正例
         {metricItems.map(([label, value]) => <span key={label}>{label} <b>{value}</b></span>)}
+      </p> : null}
+      {identityItems.length ? <p className="scope-identity">
+        <b>冻结身份</b>
+        {identityItems.map(([label, value]) => <span key={label}>{label} <code title={value}>{identityText(label, value)}</code></span>)}
       </p> : null}
     </> : trained && dataset ? <p className="scope-note">
       数据集 {number(dataset.quality.includedRows)} / {number(dataset.quality.rawRows)} 条纳入；{coverage && coverage.status === 'unknown'

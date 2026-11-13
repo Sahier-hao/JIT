@@ -16,6 +16,14 @@ const scope: AnalysisScope = {
     labelRule: 'szz-simple-v1',
   },
   datasetError: null,
+  frozenIdentity: {
+    modelId: 'b9b24d11-933d-497f-8a7b-ac976f0150df',
+    artifactRunId: 'a'.repeat(64), modelSha256: 'b'.repeat(64),
+    datasetVersion: 'kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19',
+    datasetSha256: 'c'.repeat(64), memberVerification: 'digest',
+    memberSha256: 'd'.repeat(64), splitPreset: 'temporal-70-15-15',
+    holdoutFrom: '2026-07-21T10:05:33+08:00',
+  },
   split: {
     preset: 'temporal-70-15-15',
     train: { count: 105, end: '2026-04-01T05:59:28Z', endEpoch: 1775023168, positives: null, start: null },
@@ -47,6 +55,10 @@ it('shows the model, dataset and holdout boundaries before the result', () => {
   expect(metrics).toHaveTextContent('ROC-AUC 0.778')
   expect(metrics).toHaveTextContent('AP 0.733')
   expect(metrics).toHaveTextContent('无信息 AP 0.217')
+  const identity = document.querySelector('.scope-identity')
+  expect(identity).toHaveTextContent('冻结身份')
+  expect(identity).toHaveTextContent('bbbbbbbbbbbb')
+  expect(identity).toHaveTextContent('kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19')
   expect(screen.getByText(/不是缺陷概率/)).toBeVisible()
 })
 

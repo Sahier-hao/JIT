@@ -39,6 +39,10 @@ def _matrix_summary(report):
         "protocolSha256": report.get("protocolSha256"),
         "languages": sorted({item.get("language") for item in report.get("datasets") or []
                              if item.get("language")}),
+        "methods": sorted({item.get("method") for item in report.get("withinRepo") or []
+                           if item.get("method")}),
+        "schemas": sorted({item.get("schema") for item in report.get("datasets") or []
+                           if item.get("schema")}),
     }
 
 
