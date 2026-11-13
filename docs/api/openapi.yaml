@@ -6783,6 +6783,10 @@ components:
             additionalProperties: true
         datasetError:
           type: [string, 'null']
+        frozenIdentity:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/AnalysisFrozenIdentity'
         split:
           oneOf:
           - type: 'null'
@@ -6806,7 +6810,21 @@ components:
           type: array
           items:
             type: string
-      required: [strategy, model, dataset, datasetError, split, metrics, distributions, excludedCommitIds, partitionCoverage, limitations]
+      required: [strategy, model, dataset, datasetError, frozenIdentity, split, metrics, distributions, excludedCommitIds, partitionCoverage, limitations]
+    AnalysisFrozenIdentity:
+      type: object
+      additionalProperties: false
+      properties:
+        modelId: {type: [string, 'null']}
+        artifactRunId: {type: [string, 'null']}
+        modelSha256: {type: [string, 'null']}
+        datasetVersion: {type: [string, 'null']}
+        datasetSha256: {type: [string, 'null']}
+        memberVerification: {type: [string, 'null']}
+        memberSha256: {type: [string, 'null']}
+        splitPreset: {type: [string, 'null']}
+        holdoutFrom: {type: [string, 'null']}
+      required: [modelId, artifactRunId, modelSha256, datasetVersion, datasetSha256, memberVerification, memberSha256, splitPreset, holdoutFrom]
     AnalysisPartitionCoverage:
       type: object
       additionalProperties: false
