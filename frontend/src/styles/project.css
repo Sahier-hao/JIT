@@ -289,6 +289,7 @@
 /* 最该先看的提交：序号、短号、标题、分数条四列 */
 .result-priority { margin-top: 20px; }
 .result-priority-title { margin: 0 0 6px; font: 600 13px var(--sans); color: var(--fg); }
+.result-priority-summary { margin: 0 0 8px; color: var(--fg-2); font: 12px/1.6 var(--sans); }
 .result-priority ol { margin: 0; padding: 0; list-style: none; }
 .result-priority li { display: grid; grid-template-columns: 16px 66px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 8px; margin: 0 -8px; border-radius: 8px; }
 .result-priority li + li { box-shadow: inset 0 1px 0 var(--line-soft); }
@@ -356,6 +357,9 @@
 .scope-grid .is-holdout { border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: color-mix(in srgb, var(--accent) 4%, var(--card)); }
 .scope-metrics { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--fg-3); font-size: 11.5px; }
 .scope-metrics b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.scope-identity { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: var(--fg-3); font-size: 11.5px; }
+.scope-identity b { color: var(--fg); }
+.scope-identity code { color: var(--fg-2); font-family: var(--mono); }
 .scope-boundary, .scope-note { margin: 0; color: var(--fg-3); font: 11.5px/1.6 var(--sans); }
 .scope-view-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
 .scope-view-switch > span { margin-left: 4px; color: var(--fg-3); font-size: 11.5px; }

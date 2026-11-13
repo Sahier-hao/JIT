@@ -139,12 +139,25 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const shownDistribution = scope?.distributions[activeView] ?? repository.distribution
   const shownTotal = shownDistribution.high + shownDistribution.medium + shownDistribution.low + shownDistribution.unknown
   const shownShare = (count: number) => shownTotal ? Math.round((count / shownTotal) * 100) : 0
-  const priorityCommits = priority
+  const viewCommits = priority
     .filter(commit => activeView === 'all' || commit.partition === activeView)
     .sort((left, right) => right.risk - left.risk)
-    .slice(0, 3)
-  const viewTitle = activeView === 'holdout' ? '留出集里先看这三条'
-    : activeView === 'test' ? '测试集里先看这三条' : '全部分析里先看这三条'
+  const priorityCommits = viewCommits.slice(0, 3)
+  const partitionTotal = activeView === 'holdout' ? scope?.split?.holdout.count ?? null
+    : activeView === 'test' ? scope?.split?.test.count ?? null : null
+  const partitionPositives = activeView === 'holdout' ? scope?.split?.holdout.positives ?? null
+    : activeView === 'test' ? scope?.split?.test.positives ?? null : null
+  // 只有加载覆盖了整个分区时，前三名才是该分区真正的前三名。
+  const replayComplete = partitionTotal != null && partitionTotal > 0 && viewCommits.length >= partitionTotal
+  const replaySummary = activeView !== 'all' && replayComplete && partitionPositives != null
+    ? `${activeView === 'holdout' ? '留出' : '测试集'} ${partitionTotal} 条 · ${partitionPositives} 条有缺陷证据 · 分数最高的三条命中 ${priorityCommits.filter(commit => commit.label === 1).length} 条`
+    : ''
+  const viewTitle = activeView === 'holdout' ? '模型没见过的提交里，分数最高的三条'
+    : activeView === 'test' ? '测试集里分数最高的三条' : '全部分数最高的三条'
+  const priorityNote = activeView === 'holdout'
+    ? '分支分析用于回放与复盘，不承担改动审查；待审查的改动在「PR 审查」。'
+    : activeView === 'all' ? '包含模型训练或调参时见过的提交，分数只反映拟合程度。'
+      : '测试集只用于评估模型，不是待审查清单。'
   const latestCompletedId = records.syncs.find(job => job.status === 'completed')?.syncId ?? null
   const currentBatchModel = modelChoices.find(model => model.modelId === repository.viewContext?.modelId)
   const defaultBatchModel = modelChoices.find(model => model.isDefault)
@@ -266,7 +279,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
     </nav>}/> : <>
     <div className="analysis-bar">
-      <span className="analysis-bar-label">当前审查所用结果</span>
+      <span className="analysis-bar-label">当前结果</span>
       <nav className="analysis-view-switch" aria-label="分析视图">
         <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
         <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
@@ -311,6 +324,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
           </div>
           {priorityCommits.length ? <div className="result-priority">
             <p className="result-priority-title">{viewTitle}</p>
+            {replaySummary ? <p className="result-priority-summary">{replaySummary}</p> : null}
             <ol>
               {priorityCommits.map((commit, index) => <li key={commit.commitId}>
                 <span className="priority-rank" aria-hidden="true">{index + 1}</span>
@@ -328,7 +342,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
                 </span>
               </li>)}
             </ol>
-            {activeView === 'all' ? <p className="result-priority-note">包含模型训练或调参时见过的提交，分数只反映拟合程度。</p> : null}
+            {priorityNote ? <p className="result-priority-note">{priorityNote}</p> : null}
             <p className="result-priority-note">分数是未校准的排序值，不是概率。</p>
           </div> : null}
           <div className="result-bottom">
