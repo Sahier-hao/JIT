@@ -43,6 +43,8 @@ jobs:
           : "${MODEL_ID:?请设置仓库变量 JIT_MODEL_ID}"
           curl --fail --silent --show-error --location "$MODEL_PACKAGE_URL" -o model-package.zip
           echo "$MODEL_PACKAGE_SHA256  model-package.zip" | sha256sum --check --strict
+      - name: Install PyTorch (CPU)
+        run: python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
       - run: python -m pip install -r backend/requirements.txt
       - name: Import the pinned model
         working-directory: backend
