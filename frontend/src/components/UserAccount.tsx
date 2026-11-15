@@ -19,7 +19,7 @@ export function UserAccount({ session, onChange, navigate }: {
 }) {
   async function logout() {
     try { await userLogout() } finally {
-      onChange({ authenticated: false, username: null })
+      onChange({ authenticated: false, username: null, status: 'anonymous' })
       notifyUserChanged()
       navigate({ name: 'landing' })
     }
