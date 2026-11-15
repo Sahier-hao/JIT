@@ -17,9 +17,12 @@ REPO = BACKEND.parent
 DEFAULT_ROOTS = (
     BACKEND / "artifacts/evaluation-evidence",
     REPO / "docs/evidence/evaluation-matrix",
+    REPO / "docs/evidence/review-benefit-2026-11-16",
     REPO / "docs/evidence/line-candidates",
 )
 MATRIX_FORMAT = "evaluation-matrix-v1"
+MATRIX_FORMATS = (MATRIX_FORMAT, "evaluation-matrix-v2")
+REVIEW_FORMAT = "review-benefit-report-v1"
 LINE_FORMAT = "line-candidate-evaluation-v1"
 CANDIDATE_SUMMARY_FORMAT = "line-candidates-v1"
 MAX_BYTES = 32 * 1024 * 1024
@@ -37,12 +40,30 @@ def _matrix_summary(report):
         "baselines": len(report.get("baselines") or []),
         "failures": len(report.get("failures") or []),
         "protocolSha256": report.get("protocolSha256"),
+        "budgetProtocolSha256": (report.get("protocol") or {}).get("budgetProtocolSha256"),
+        "budgetProtocol": ((report.get("protocol") or {}).get("budgetProtocol") or {}).get("name"),
         "languages": sorted({item.get("language") for item in report.get("datasets") or []
                              if item.get("language")}),
         "methods": sorted({item.get("method") for item in report.get("withinRepo") or []
                            if item.get("method")}),
         "schemas": sorted({item.get("schema") for item in report.get("datasets") or []
                            if item.get("schema")}),
+    }
+
+
+def _review_summary(report):
+    return {
+        "datasets": len(report.get("data") or []),
+        "cells": len(report.get("cells") or []),
+        "failures": len(report.get("failures") or []),
+        "cases": len(report.get("cases") or []),
+        "methods": sorted({cell.get("method") for cell in report.get("cells") or []
+                           if cell.get("method")}),
+        "languages": sorted({item.get("language") for item in report.get("data") or []
+                             if item.get("language")}),
+        "protocolSha256": (report.get("protocol") or {}).get("budgetProtocolSha256")
+                          or report.get("protocolSha256"),
+        "budgetProtocol": report.get("format"),
     }
 
 
@@ -66,9 +87,13 @@ def _candidate_summary(summary):
 
 
 def _kind(report):
+    if report.get("evidenceIndex") is False:
+        return None, None
     fmt = report.get("format")
-    if fmt == MATRIX_FORMAT:
+    if fmt in MATRIX_FORMATS:
         return "evaluation-matrix", _matrix_summary(report)
+    if fmt == REVIEW_FORMAT:
+        return "review-benefit", _review_summary(report)
     if fmt == LINE_FORMAT:
         return "line-candidate-evaluation", _line_summary(report)
     if fmt == CANDIDATE_SUMMARY_FORMAT:
@@ -97,8 +122,18 @@ def _dataset_index(registry_root=None):
 def _staleness(report, registry):
     """报告引用的数据版本必须仍以相同内容登记；不能静默展示过期结论。"""
     problems = []
-    if report.get("format") == MATRIX_FORMAT:
+    if report.get("format") in MATRIX_FORMATS:
         for item in (report.get("protocol") or {}).get("datasets") or []:
+            current = registry.get(item.get("version"))
+            if current is None:
+                problems.append(f"{item.get('version')} 未登记")
+            elif (item.get("manifestSha256") and current.get("manifestSha256")
+                  and item["manifestSha256"] != current["manifestSha256"]):
+                problems.append(f"{item.get('version')} 描述文件已变化")
+            elif item.get("csvSha256") and current.get("csvSha256") != item["csvSha256"]:
+                problems.append(f"{item.get('version')} CSV 已变化")
+    elif report.get("format") == REVIEW_FORMAT:
+        for item in report.get("data") or []:
             current = registry.get(item.get("version"))
             if current is None:
                 problems.append(f"{item.get('version')} 未登记")
