@@ -33,6 +33,6 @@ it('logs a user in and continues to the requested page', async () => {
   await user.type(screen.getByLabelText('用户账户名'), 'reader')
   await user.type(screen.getByLabelText('用户密码'), 'reader-pass-1')
   await user.click(screen.getByRole('button', { name: '登录' }))
-  await waitFor(() => expect(onUser).toHaveBeenCalledWith({ authenticated: true, username: 'reader' }))
+  await waitFor(() => expect(onUser).toHaveBeenCalledWith({ authenticated: true, username: 'reader', status: 'authenticated' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'repositories' })
 })

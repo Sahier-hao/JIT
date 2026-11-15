@@ -3,12 +3,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render as baseRender, renderHook as baseRenderHook } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { mantineTheme } from './lib/mantineTheme'
+import { ReviewAccountProvider } from './reviewAccount'
+
+export const TEST_REVIEW_ACCOUNT = 'alice'
 
 export { screen, waitFor, within, cleanup, fireEvent, act } from '@testing-library/react'
 
 function wrapper(client: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
-    return <MantineProvider theme={mantineTheme} env="test"><QueryClientProvider client={client}>{children}</QueryClientProvider></MantineProvider>
+    return <MantineProvider theme={mantineTheme} env="test"><QueryClientProvider client={client}><ReviewAccountProvider value={{ status: 'authenticated', account: TEST_REVIEW_ACCOUNT, generation: 0 }}>{children}</ReviewAccountProvider></QueryClientProvider></MantineProvider>
   }
 }
 
