@@ -7,6 +7,7 @@ import { apiTarget, frontendUrl, numberFromEnv, serviceUrl, DEFAULT_FRONTEND_POR
 // 当前仅验证聚焦的项目/报告流程；测试服务、模型副本和目录库与开发环境隔离。
 const frontendPort = numberFromEnv('JIT_FRONTEND_PORT', DEFAULT_FRONTEND_PORT)
 const servicePort = numberFromEnv('JIT_SERVICE_PORT', DEFAULT_SERVICE_PORT)
+const python = process.env.JIT_PYTHON ?? '.venv\\Scripts\\python.exe'
 
 export default defineConfig({
   testDir: './e2e',
@@ -38,7 +39,7 @@ export default defineConfig({
   webServer: [
     // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。
     {
-      command: `.venv\\Scripts\\python.exe ..\\frontend\\e2e\\server.py ${servicePort}`,
+      command: `${python} ..\\frontend\\e2e\\server.py ${servicePort}`,
       cwd: '../backend',
       url: `${serviceUrl(servicePort)}/api/health`,
       reuseExistingServer: false,

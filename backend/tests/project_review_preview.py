@@ -59,7 +59,8 @@ def build_preview(parent):
     state = dict(index=25, draft=False, remoteState='open', fail=False)
 
     root = room / 'artifacts'
-    shutil.copytree(BACKEND / 'artifacts' / 'baseline', root / 'baseline')
+    baseline_source = Path(os.environ.get('JIT_PREVIEW_BASELINE', BACKEND / 'artifacts' / 'baseline'))
+    shutil.copytree(baseline_source, root / 'baseline')
     benefit_root = room / 'benefit'
     run_benefit(root / 'baseline', benefit_root)
     report_root = room / 'multi-project'
