@@ -46,8 +46,9 @@ def _prepare_sources() -> dict:
 def _prepare_baseline(run_root: Path) -> dict:
     run = BACKEND / "artifacts" / "baseline"
     isolated = run_root / "artifacts" / "baseline"
+    reproduction = BACKEND / "artifacts" / "reproduction"
     result = {}
-    for label, target in (("backend", run), ("runRoot", isolated)):
+    for label, target in (("backend", run), ("runRoot", isolated), ("reproduction", reproduction)):
         if (target / "manifest.json").is_file():
             result[label] = "present"
             continue

@@ -38,8 +38,10 @@ jobs:
         shell: pwsh
         run: |
           $sha = git rev-parse HEAD
+          $head = "${{ github.event.pull_request.head.sha || github.sha }}"
           "REGRESSION_SHA=$sha" >> $env:GITHUB_ENV
-          "candidate=$sha" | Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+          "REGRESSION_HEAD_SHA=$head" >> $env:GITHUB_ENV
+          "candidate=$sha head=$head" | Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -114,8 +116,10 @@ jobs:
         shell: pwsh
         run: |
           $sha = git rev-parse HEAD
+          $head = "${{ github.event.pull_request.head.sha || github.sha }}"
           "REGRESSION_SHA=$sha" >> $env:GITHUB_ENV
-          "candidate=$sha" | Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+          "REGRESSION_HEAD_SHA=$head" >> $env:GITHUB_ENV
+          "candidate=$sha head=$head" | Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
