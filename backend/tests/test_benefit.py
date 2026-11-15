@@ -26,7 +26,7 @@ def test_benefit_evaluation_is_deterministic_and_reports_negative_results(real_r
     first = evaluate_run(real_run, random_runs=30, seed=2026)
     second = evaluate_run(real_run, random_runs=30, seed=2026)
     assert first['kind'] == 'model-benefit-evaluation'
-    assert first['reportVersion'] == 2
+    assert first['reportVersion'] == 3
     assert first['test']['records'] > 0 and first['test']['positives'] > 0
     assert first['strategies']['model']['ordering'] == 'score-desc,time-desc,id-asc'
     assert first['strategies']['density']['ordering'] == 'risk-per-loc-desc,time-desc,id-asc'
@@ -36,7 +36,10 @@ def test_benefit_evaluation_is_deterministic_and_reports_negative_results(real_r
     assert first['strategies']['random']['seed'] == 2026
     assert first['strategies']['random']['recall20Loc']['validRuns'] == 30
     assert first['strategies']['sensitivity']['model']['budgetRule'] == 'stop-at-first-overflow'
-    assert first['protocol']['strategies'] == ['model', 'density', 'loc', 'time', 'random']
+    assert first['protocol']['name'] == 'review-benefit-v3'
+    assert first['protocol']['budgetRule'] == 'continue-whole-commit'
+    assert first['protocol']['sensitivityRule'] == 'stop-at-first-overflow'
+    assert first['protocol']['budgetProtocolSha256']
     assert first['strategies'] == second['strategies']
     assert first['conclusion'] == second['conclusion']
     assert first['test'] == second['test']
@@ -54,8 +57,11 @@ def test_benefit_evaluation_is_deterministic_and_reports_negative_results(real_r
     assert model < time and model < random
     assert first['comparisons']['modelVsTime']['recall20Loc'] < 0
     assert first['comparisons']['modelVsRandomMean']['recall20Loc'] < 0
-    assert first['comparisons']['modelVsDensity']['recall20LocInterval']['runs'] > 0
-    assert first['comparisons']['modelVsLoc']['recall20LocInterval']['runs'] > 0
+    interval = first['comparisons']['modelVsDensity']['recall20LocInterval']
+    assert interval['requestedRuns'] == 1000
+    assert interval['validRuns'] > 0 or interval['reason']
+    assert (first['comparisons']['modelVsLoc']['recall20LocInterval']['validRuns'] > 0
+            or first['comparisons']['modelVsLoc']['recall20LocInterval']['reason'])
 
     output = tmp_path / 'benefit'
     report, path = run_benefit(real_run, output, random_runs=5, seed=7)

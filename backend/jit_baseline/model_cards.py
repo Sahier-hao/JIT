@@ -117,6 +117,7 @@ def _benefit_projection(service, run_id):
         "available": True,
         "reportId": entry["reportId"],
         "reportVersion": report.get("reportVersion"),
+        "protocol": report.get("protocol"),
         "test": report["test"],
         "conclusion": report["conclusion"],
         "boundary": report["boundary"],

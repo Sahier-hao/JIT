@@ -1,0 +1,2165 @@
+{
+  "boundary": {
+    "crossModelRanking": false,
+    "defaultModelChanged": false,
+    "defectProbability": false,
+    "retrospective": true,
+    "trainedOnTest": false
+  },
+  "cases": [
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "7374c85ddefc3f4b177a698ab9f0cbb6a5c0b392",
+      "cost": 7.0,
+      "dataset": "kamei14-git-v2-flask-observed",
+      "epoch": 1777726752,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 554,
+      "modelRisk": 0.0040359107752332545,
+      "randomRank": 307,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": true,
+      "subject": null,
+      "timeRank": 9,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "6fcf6d00bd36f7c3c51115199615dc93c4a3007a",
+      "cost": 2.0,
+      "dataset": "kamei14-git-v2-flask-observed",
+      "epoch": 1671726203,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 544,
+      "modelRisk": 0.007944617500350937,
+      "randomRank": 21,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": false,
+      "subject": null,
+      "timeRank": 367,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "c45c81938a1715eb4bdf9eaf6ac9d75becb8c191",
+      "cost": 6.0,
+      "dataset": "kamei14-git-v2-flask-observed",
+      "epoch": 1652399870,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 525,
+      "modelRisk": 0.014407593821617406,
+      "randomRank": 12,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": false,
+      "subject": null,
+      "timeRank": 492,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "d98eb69a354158252854ed4a5c9778e03d089191",
+      "cost": 9.0,
+      "dataset": "kamei14-git-v2-flask-observed",
+      "epoch": 1770930661,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 533,
+      "modelRisk": 0.011513062116598643,
+      "randomRank": 124,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": true,
+      "subject": null,
+      "timeRank": 24,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "5ce121dd841e2dc2594d0ed3954278f4101d3521",
+      "cost": 51.0,
+      "dataset": "kamei14-git-v2-flask-observed",
+      "epoch": 1784023657,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 511,
+      "modelRisk": 0.01720484880370439,
+      "randomRank": 65,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": true,
+      "subject": null,
+      "timeRank": 4,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "95d4cb0fdb1b798fa6de6e7b1d1fd66b72389c39",
+      "cost": 6.0,
+      "dataset": "kamei14-git-v2-axios-observed",
+      "epoch": 1785075369,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 279,
+      "modelRisk": 0.064472584727021,
+      "randomRank": 46,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": true,
+      "subject": null,
+      "timeRank": 9,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "0bf6e28eac86e87da2b60bbf5ea4237910e1a08e",
+      "cost": 4.0,
+      "dataset": "kamei14-git-v2-axios-observed",
+      "epoch": 1775569209,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 264,
+      "modelRisk": 0.11072809064415327,
+      "randomRank": 0,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": false,
+      "subject": null,
+      "timeRank": 242,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "8918811f872bffdb0b27736c533dfc52d226d170",
+      "cost": 14.0,
+      "dataset": "kamei14-git-v2-axios-observed",
+      "epoch": 1785077139,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 269,
+      "modelRisk": 0.09088609240919397,
+      "randomRank": 65,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": true,
+      "subject": null,
+      "timeRank": 8,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "0c139622c4c77cf55430cf9374ac0613d9f5356c",
+      "cost": 6.0,
+      "dataset": "kamei14-git-v2-axios-observed",
+      "epoch": 1774689732,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 273,
+      "modelRisk": 0.07290661929671888,
+      "randomRank": 14,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": false,
+      "subject": null,
+      "timeRank": 274,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "automaticCheck": {
+        "costPositive": true,
+        "rankOrderValid": true,
+        "statusMatchesCsv": true
+      },
+      "commitId": "cb4fd743abd1c595761c8eda25d1323fc62a3b93",
+      "cost": 6.0,
+      "dataset": "kamei14-git-v2-axios-observed",
+      "epoch": 1784648899,
+      "evidenceStatus": "unobserved",
+      "humanReview": {
+        "humanVerdict": "",
+        "note": "自动核验提交、成本、标签状态与排序位置；人工判断未执行。",
+        "status": "pending"
+      },
+      "label": 0,
+      "labelEvidence": [],
+      "modelRank": 266,
+      "modelRisk": 0.10343193848012767,
+      "randomRank": 153,
+      "selectedByModelBudget": false,
+      "selectedByTimeBudget": true,
+      "subject": null,
+      "timeRank": 11,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    }
+  ],
+  "cells": [
+    {
+      "conclusion": {
+        "higherThan": [],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.42857142857142855,
+            "low": -0.7878787878787878,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.4242424242424242,
+            "low": -0.7857142857142857,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.0,
+            "low": -0.3939393939393939,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.14634146341463417,
+            "low": -0.16216216216216217,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "时间顺序",
+          "随机平均"
+        ],
+        "sentence": "模型召回不高于任何基线；低于风险/成本密度、改动量升序、时间顺序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.7222222222222222,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.42857142857142855,
+          "low": -0.7878787878787878,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.4242424242424242,
+          "low": -0.7857142857142857,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.0,
+          "low": -0.3939393939393939,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.14634146341463417,
+          "low": -0.16216216216216217,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 3,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "logistic-regression-l2-v1",
+      "modelIfa": 1,
+      "modelPopt": 0.27616790022923665,
+      "modelRecall": 0.08333333333333333,
+      "randomMean": 0.22916666666666669,
+      "seconds": 0.055,
+      "seed": null,
+      "selectedCount": 18,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.41666666666666663,
+            "low": -0.761904761904762,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.39473684210526316,
+            "low": -0.75,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.037037037037037035,
+            "low": -0.35135135135135137,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.16216216216216217,
+            "low": -0.1111111111111111,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.6944444444444444,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.41666666666666663,
+          "low": -0.761904761904762,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.39473684210526316,
+          "low": -0.75,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.037037037037037035,
+          "low": -0.35135135135135137,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.16216216216216217,
+          "low": -0.1111111111111111,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 5,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "decision-tree-v1",
+      "modelIfa": 16,
+      "modelPopt": 0.4567127241246205,
+      "modelRecall": 0.1388888888888889,
+      "randomMean": 0.22916666666666669,
+      "seconds": 0.012,
+      "seed": null,
+      "selectedCount": 66,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序",
+          "随机平均"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.2571428571428571,
+            "low": -0.6666666666666667,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.24000000000000005,
+            "low": -0.6551724137931034,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.19230769230769232,
+            "low": -0.26086956521739135,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.3225806451612903,
+            "low": -0.02631578947368421,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序"
+        ],
+        "sentence": "模型召回高于时间顺序、随机平均；低于风险/成本密度、改动量升序"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.6944444444444444,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.2571428571428571,
+          "low": -0.6666666666666667,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.24000000000000005,
+          "low": -0.6551724137931034,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.19230769230769232,
+          "low": -0.26086956521739135,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.3225806451612903,
+          "low": -0.02631578947368421,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 10,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.45153942130775854,
+      "modelRecall": 0.2777777777777778,
+      "randomMean": 0.22916666666666669,
+      "seconds": 0.613,
+      "seed": 42,
+      "selectedCount": 31,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序",
+          "随机平均"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.2619047619047619,
+            "low": -0.6756756756756757,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.2368421052631579,
+            "low": -0.6585365853658537,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.1875,
+            "low": -0.2571428571428571,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.3125,
+            "low": -0.023809523809523808,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序"
+        ],
+        "sentence": "模型召回高于时间顺序、随机平均；低于风险/成本密度、改动量升序"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.6944444444444444,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.2619047619047619,
+          "low": -0.6756756756756757,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.2368421052631579,
+          "low": -0.6585365853658537,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.1875,
+          "low": -0.2571428571428571,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.3125,
+          "low": -0.023809523809523808,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 10,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.44736602646851764,
+      "modelRecall": 0.2777777777777778,
+      "randomMean": 0.22916666666666669,
+      "seconds": 0.443,
+      "seed": 43,
+      "selectedCount": 31,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序",
+          "随机平均"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.26666666666666666,
+            "low": -0.6756756756756757,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.2432432432432432,
+            "low": -0.6666666666666667,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.175,
+            "low": -0.2727272727272727,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.30434782608695654,
+            "low": -0.028571428571428567,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序"
+        ],
+        "sentence": "模型召回高于时间顺序、随机平均；低于风险/成本密度、改动量升序"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.6944444444444444,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.26666666666666666,
+          "low": -0.6756756756756757,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.2432432432432432,
+          "low": -0.6666666666666667,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.175,
+          "low": -0.2727272727272727,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.30434782608695654,
+          "low": -0.028571428571428567,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 9,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "random-forest-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.4506238243369913,
+      "modelRecall": 0.25,
+      "randomMean": 0.22916666666666669,
+      "seconds": 0.536,
+      "seed": 44,
+      "selectedCount": 26,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.35294117647058826,
+            "low": -0.7714285714285715,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.3235294117647059,
+            "low": -0.75,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.10810810810810811,
+            "low": -0.3414634146341463,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.20512820512820512,
+            "low": -0.1,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.75,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.35294117647058826,
+          "low": -0.7714285714285715,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.3235294117647059,
+          "low": -0.75,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.10810810810810811,
+          "low": -0.3414634146341463,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.20512820512820512,
+          "low": -0.1,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 6,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "modelIfa": 1,
+      "modelPopt": 0.469811775677202,
+      "modelRecall": 0.16666666666666666,
+      "randomMean": 0.22916666666666669,
+      "seconds": 6.028,
+      "seed": 42,
+      "selectedCount": 19,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.4594594594594595,
+            "low": -0.8125,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.425,
+            "low": -0.7948717948717948,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.0,
+            "low": -0.4074074074074074,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.10344827586206896,
+            "low": -0.15151515151515152,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "时间顺序",
+          "随机平均"
+        ],
+        "sentence": "模型召回不高于任何基线；低于风险/成本密度、改动量升序、时间顺序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.7222222222222222,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.4594594594594595,
+          "low": -0.8125,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.425,
+          "low": -0.7948717948717948,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.0,
+          "low": -0.4074074074074074,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.10344827586206896,
+          "low": -0.15151515151515152,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 2,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "modelIfa": 4,
+      "modelPopt": 0.5059493239439681,
+      "modelRecall": 0.05555555555555555,
+      "randomMean": 0.22916666666666669,
+      "seconds": 1.157,
+      "seed": 43,
+      "selectedCount": 15,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.33333333333333337,
+            "low": -0.7647058823529411,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.28205128205128205,
+            "low": -0.75,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.125,
+            "low": -0.35135135135135137,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.23529411764705882,
+            "low": -0.08695652173913045,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "densityRecall": 0.75,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.33333333333333337,
+          "low": -0.7647058823529411,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.28205128205128205,
+          "low": -0.75,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.125,
+          "low": -0.35135135135135137,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.23529411764705882,
+          "low": -0.08695652173913045,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 6,
+      "language": "python",
+      "locRecall": 0.6944444444444444,
+      "members": {
+        "positives": 36,
+        "records": 560
+      },
+      "method": "mlp-v1",
+      "modelIfa": 1,
+      "modelPopt": 0.5098163202461079,
+      "modelRecall": 0.16666666666666666,
+      "randomMean": 0.22916666666666669,
+      "seconds": 0.897,
+      "seed": 44,
+      "selectedCount": 23,
+      "timeRecall": 0.08333333333333333,
+      "usedLoc": 11335.0,
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.3833333333333333,
+            "low": -0.7142857142857143,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.3055555555555555,
+            "low": -0.6666666666666666,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.2641509433962264,
+            "low": -0.1568627450980392,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.2054794520547945,
+            "low": -0.1506849315068493,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7692307692307693,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.3833333333333333,
+          "low": -0.7142857142857143,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.3055555555555555,
+          "low": -0.6666666666666666,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.2641509433962264,
+          "low": -0.1568627450980392,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.2054794520547945,
+          "low": -0.1506849315068493,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 14,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "logistic-regression-l2-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.5403017186834845,
+      "modelRecall": 0.2153846153846154,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.011,
+      "seed": null,
+      "selectedCount": 24,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.34523809523809523,
+            "low": -0.6851851851851852,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.26315789473684215,
+            "low": -0.6164383561643836,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.2777777777777778,
+            "low": -0.12280701754385964,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.19047619047619047,
+            "low": -0.042857142857142844,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7692307692307693,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.34523809523809523,
+          "low": -0.6851851851851852,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.26315789473684215,
+          "low": -0.6164383561643836,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.2777777777777778,
+          "low": -0.12280701754385964,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.19047619047619047,
+          "low": -0.042857142857142844,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 13,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "decision-tree-v1",
+      "modelIfa": 2,
+      "modelPopt": 0.4450718836189744,
+      "modelRecall": 0.2,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.024,
+      "seed": null,
+      "selectedCount": 36,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序",
+          "随机平均"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.12903225806451613,
+            "low": -0.39473684210526316,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.02777777777777768,
+            "low": -0.3636363636363636,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.5645161290322581,
+            "low": 0.06976744186046513,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.4901960784313725,
+            "low": 0.12499999999999997,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序"
+        ],
+        "sentence": "模型召回高于时间顺序、随机平均；低于风险/成本密度、改动量升序"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7846153846153846,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.12903225806451613,
+          "low": -0.39473684210526316,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.02777777777777768,
+          "low": -0.3636363636363636,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.5645161290322581,
+          "low": 0.06976744186046513,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.4901960784313725,
+          "low": 0.12499999999999997,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 30,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "random-forest-v1",
+      "modelIfa": 5,
+      "modelPopt": 0.58583023823952,
+      "modelRecall": 0.46153846153846156,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.338,
+      "seed": 42,
+      "selectedCount": 64,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序",
+          "随机平均"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.15384615384615385,
+            "low": -0.3972602739726028,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.0444444444444444,
+            "low": -0.3555555555555555,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.5490196078431373,
+            "low": 0.06666666666666665,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.49152542372881347,
+            "low": 0.11764705882352938,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序"
+        ],
+        "sentence": "模型召回高于时间顺序、随机平均；低于风险/成本密度、改动量升序"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7846153846153846,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.15384615384615385,
+          "low": -0.3972602739726028,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.0444444444444444,
+          "low": -0.3555555555555555,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.5490196078431373,
+          "low": 0.06666666666666665,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.49152542372881347,
+          "low": 0.11764705882352938,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 30,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "random-forest-v1",
+      "modelIfa": 6,
+      "modelPopt": 0.5755407160408652,
+      "modelRecall": 0.46153846153846156,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.309,
+      "seed": 43,
+      "selectedCount": 64,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序",
+          "随机平均"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.125,
+            "low": -0.3835616438356165,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.023809523809523836,
+            "low": -0.3417721518987341,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.5714285714285714,
+            "low": 0.08823529411764708,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.5070422535211268,
+            "low": 0.14285714285714288,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序"
+        ],
+        "sentence": "模型召回高于时间顺序、随机平均；低于风险/成本密度、改动量升序"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7846153846153846,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.125,
+          "low": -0.3835616438356165,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.023809523809523836,
+          "low": -0.3417721518987341,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.5714285714285714,
+          "low": 0.08823529411764708,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.5070422535211268,
+          "low": 0.14285714285714288,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 30,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "random-forest-v1",
+      "modelIfa": 4,
+      "modelPopt": 0.5926379754005798,
+      "modelRecall": 0.46153846153846156,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.288,
+      "seed": 44,
+      "selectedCount": 66,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.33333333333333337,
+            "low": -0.7692307692307693,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.24999999999999994,
+            "low": -0.7000000000000001,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.2835820895522388,
+            "low": -0.14285714285714288,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.2708333333333333,
+            "low": -0.16666666666666666,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7846153846153846,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.33333333333333337,
+          "low": -0.7692307692307693,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.24999999999999994,
+          "low": -0.7000000000000001,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.2835820895522388,
+          "low": -0.14285714285714288,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.2708333333333333,
+          "low": -0.16666666666666666,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 16,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "mlp-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.4433053981033311,
+      "modelRecall": 0.24615384615384617,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.46,
+      "seed": 42,
+      "selectedCount": 30,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.26415094339622647,
+            "low": -0.7428571428571429,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.18965517241379315,
+            "low": -0.6666666666666666,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.4262295081967213,
+            "low": -0.15384615384615385,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.3939393939393939,
+            "low": -0.15686274509803924,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7846153846153846,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.26415094339622647,
+          "low": -0.7428571428571429,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.18965517241379315,
+          "low": -0.6666666666666666,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.4262295081967213,
+          "low": -0.15384615384615385,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.3939393939393939,
+          "low": -0.15686274509803924,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 12,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "mlp-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.4874612799285214,
+      "modelRecall": 0.18461538461538463,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.387,
+      "seed": 43,
+      "selectedCount": 21,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    },
+    {
+      "conclusion": {
+        "higherThan": [
+          "时间顺序"
+        ],
+        "intervals": {
+          "modelVsDensity": {
+            "high": -0.368421052631579,
+            "low": -0.7945205479452054,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsLoc": {
+            "high": -0.28571428571428575,
+            "low": -0.7200000000000001,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsRandomMean": {
+            "high": 0.29032258064516125,
+            "low": -0.16279069767441862,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          },
+          "modelVsTime": {
+            "high": 0.25,
+            "low": -0.17910447761194032,
+            "reason": null,
+            "requestedRuns": 1000,
+            "seed": 2026,
+            "unit": "recall20Loc-difference",
+            "validRuns": 1000
+          }
+        },
+        "lowerThan": [
+          "风险/成本密度",
+          "改动量升序",
+          "随机平均"
+        ],
+        "sentence": "模型召回高于时间顺序；低于风险/成本密度、改动量升序、随机平均"
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "densityRecall": 0.7846153846153846,
+      "intervals": {
+        "modelVsDensity": {
+          "high": -0.368421052631579,
+          "low": -0.7945205479452054,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsLoc": {
+          "high": -0.28571428571428575,
+          "low": -0.7200000000000001,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsRandomMean": {
+          "high": 0.29032258064516125,
+          "low": -0.16279069767441862,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        },
+        "modelVsTime": {
+          "high": 0.25,
+          "low": -0.17910447761194032,
+          "reason": null,
+          "requestedRuns": 1000,
+          "seed": 2026,
+          "unit": "recall20Loc-difference",
+          "validRuns": 1000
+        }
+      },
+      "issuesCovered": 13,
+      "language": "javascript",
+      "locRecall": 0.6615384615384615,
+      "members": {
+        "positives": 65,
+        "records": 280
+      },
+      "method": "mlp-v1",
+      "modelIfa": 0,
+      "modelPopt": 0.45667802332204477,
+      "modelRecall": 0.2,
+      "randomMean": 0.26046153846153847,
+      "seconds": 0.39,
+      "seed": 44,
+      "selectedCount": 24,
+      "timeRecall": 0.16923076923076924,
+      "usedLoc": 12016.0,
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    }
+  ],
+  "crossRepo": {
+    "languages": {
+      "javascript": 1,
+      "python": 1
+    },
+    "mixedLanguages": false,
+    "reason": "同语言合格仓库不足三个，未执行留一仓库评价：javascript=1、python=1",
+    "status": "not-run-insufficient-cohort"
+  },
+  "data": [
+    {
+      "admission": "8373269d8669452d054b4f88353f373d1b96dec6698ffe16dc4375d30ce653c5",
+      "admissionPolicy": "mature-observed-v1",
+      "csvSha256": "0130e26841ebe079aefe3ae08da911229ba6d52295cf902b45de86332155d25a",
+      "eligiblePositives": 418,
+      "eligibleRecords": 3694,
+      "includedRows": 3694,
+      "language": "python",
+      "manifestSha256": "92b2a1984363881d22121ed383e61774e8cebf14333456de2599386329f16ca8",
+      "name": "kamei14-git-v2-flask-observed",
+      "observationWindow": {
+        "fromEpoch": null,
+        "through": "2026-10-30T15:05:20Z",
+        "throughEpoch": 1793372720
+      },
+      "positiveLabels": 418,
+      "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "sampleWindow": {
+        "endEpoch": 1785542400,
+        "since": null,
+        "startEpoch": null,
+        "until": "2026-08-01"
+      },
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/pallets/flask",
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "admission": "072c76b5a3e3e9b8fa3e1de8930a1a1b0369be4ac6a172b7f325a9e8aba2c98e",
+      "admissionPolicy": "mature-observed-v1",
+      "csvSha256": "d757e43a8ce7f3c8fa2540ae7a42d0e18c75a34468b870718eb2066d383df212",
+      "eligiblePositives": 566,
+      "eligibleRecords": 1877,
+      "includedRows": 1877,
+      "language": "javascript",
+      "manifestSha256": "86e2934ead2fa24326cbd58cb8c06ab98863e5ef982cc83ee29a66892bfc3775",
+      "name": "kamei14-git-v2-axios-observed",
+      "observationWindow": {
+        "fromEpoch": null,
+        "through": "2026-11-01T00:00:00Z",
+        "throughEpoch": 1793491200
+      },
+      "positiveLabels": 566,
+      "revision": "85ffbafab1a3f4385b6a4118692a6995ce71d9d8",
+      "sampleWindow": {
+        "endEpoch": 1785542400,
+        "since": null,
+        "startEpoch": null,
+        "until": "2026-08-01"
+      },
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/axios/axios",
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    }
+  ],
+  "evidenceIndex": false,
+  "failures": [],
+  "files": {
+    "report": {
+      "path": "report.json",
+      "sha256": "3c8e6c3527897deb1543b7faf0a92d7e123694d90ae3761865d1708435c7cf69"
+    }
+  },
+  "format": "review-benefit-report-v1",
+  "generatedAt": "2026-11-15T17:53:13Z",
+  "kind": "review-benefit-evaluation",
+  "limitations": [
+    "预算协议按整提交累计：放不下时跳过并继续，前缀停止只作为敏感性结果。",
+    "这是固定测试分区上的回顾性评价，不是在线效果、缺陷概率或因果结论。",
+    "配对区间来自 UTC 自然周时间块重采样，不能当作独立提交数量。",
+    "零成本、无正例或时间块不足时，相关指标返回空值和原因，不以零或假区间代替。",
+    "历史正例来自完整 SZZ 观测；未观测到缺陷引入不等于已证实无缺陷。",
+    "这是冻结测试分区上的离线评价，不代表真实审查耗时、采纳率或在线效果。",
+    "同一仓库的多个方法共用同一测试成员；不据测试结果选择默认模型或自动替换。"
+  ],
+  "methods": [
+    "logistic-regression-l2-v1",
+    "decision-tree-v1",
+    "random-forest-v1",
+    "mlp-v1"
+  ],
+  "notCovered": [
+    "真实用户审查耗时与采纳率未采集",
+    "人工案例判断未执行",
+    "同语言合格仓库不足三个，未执行留一仓库评价"
+  ],
+  "protocol": {
+    "blockSeconds": 604800,
+    "bootstrapRuns": 1000,
+    "bootstrapSeed": 2026,
+    "budgetFraction": 0.2,
+    "budgetRule": "continue-whole-commit",
+    "confidence": 0.95,
+    "cost": "la+ld",
+    "minBlocks": 5,
+    "minPositives": 5,
+    "name": "review-benefit-v3",
+    "orderings": {
+      "density": "risk-per-loc-desc,time-desc,id-asc",
+      "loc": "loc-asc,time-desc,id-asc",
+      "model": "score-desc,time-desc,id-asc",
+      "time": "time-desc,id-asc"
+    },
+    "randomRuns": 200,
+    "randomSeed": 2026,
+    "sensitivityRule": "stop-at-first-overflow",
+    "strategies": [
+      "model",
+      "density",
+      "loc",
+      "time",
+      "random"
+    ],
+    "unit": "whole-commit"
+  },
+  "protocolSha256": "8555f9d0db41c46d2ff0f64ecd55eba21e3893f87f67423cbd2569d462210551",
+  "randomRuns": 200,
+  "reproduce": [
+    "cd backend",
+    "FL=$(ls artifacts/label-observation/2026-11-15d/datasets/kamei14-git-v2-flask-observed/*.json)",
+    "AX=$(ls artifacts/label-observation/2026-11-15d/datasets/kamei14-git-v2-axios-observed/*.json)",
+    "./.venv/Scripts/python.exe -m jit_baseline.cli run-review-benefit --data python=$FL --data javascript=$AX --output artifacts/label-observation/2026-11-15d/review-benefit/report.json"
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "splitPreset": "temporal-70-15-15",
+  "status": "complete"
+}
