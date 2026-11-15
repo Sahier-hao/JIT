@@ -10,6 +10,7 @@ import { Markdown } from './Markdown'
 import { RepositoryExplanation } from './RepositoryExplanation'
 import { analyzePRCandidates, type PRCandidate } from '../prReviewClient'
 import { adoptVersion, candidateQuestion, createWork, readWorks, saveWork } from '../prReview'
+import { requireAccount, useReviewAccount } from '../reviewAccount'
 import { useSnapshotAnalyses } from '../useSnapshotAnalyses'
 import { displayTime } from '../domain'
 import type { PRSnapshot } from '../prReviewClient'
@@ -20,6 +21,7 @@ const stateLabels: Record<string, string> = { open: '开放中', closed: '已关
 /** 只读 PR 详情：先看提交，点开某条提交才显示它触及的文件与代码；不写入个人草稿。 */
 export function PullRequestPreview({ source, remoteState, repositoryId, navigate, onStart, startLabel = '创建审查工作单', back }: { source: PRSnapshot; remoteState?: PRSnapshot['remoteState'] | null; repositoryId?: string; navigate: (route: Route) => void; onStart: () => void; startLabel?: string; back?: { label: string; onClick: () => void } }) {
   const state = remoteState ?? source.remoteState
+  const reviewAccount = useReviewAccount()
   const [filter, setFilter] = useState('')
   const [commitFilter, setCommitFilter] = useState('')
   const [path, setPath] = useState(source.files[0]?.path ?? '')
@@ -38,7 +40,8 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
   useEffect(() => { setSelectedCommit(''); setFilesOpen(false); setExplanationOpen(false); setCommitFilter(''); setCandidates([]); setCandidateCoverage(null); setCandidateError('') }, [source.snapshotId])
   function addCandidateQuestion(item: PRCandidate) {
     try {
-      const works = readWorks()
+      const account = requireAccount(reviewAccount)
+      const works = readWorks(account)
       let work = works.find(value => value.key === `${source.owner.toLowerCase()}/${source.name.toLowerCase()}#${source.number}`)
         ?? createWork(source)
       if (!work.rounds[source.snapshotId]) work = adoptVersion(work, source)
@@ -51,7 +54,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
         const created = candidateQuestion(source, item)
         work = { ...work, rounds: { ...work.rounds, [source.snapshotId]: { ...round, questions: [...round.questions, created], selectedQuestionId: created.id } } }
       }
-      saveWork(work)
+      saveWork(account, work)
       navigate({ name: 'pr-work', repositoryId, owner: source.owner, repositoryName: source.name, number: source.number, snapshotId: source.snapshotId })
     } catch (failure) {
       setCandidateError(failure instanceof Error ? failure.message : '创建工作单失败')

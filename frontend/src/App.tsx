@@ -9,6 +9,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { Button } from './ui/controls'
 import { analysisRoute, hashFor, useRoute, type Route } from './navigation'
 import { useUserSession } from './userClient'
+import { ReviewAccountProvider, type ReviewAccountStatus } from './reviewAccount'
 import { useRepositories } from './repositoryWorkspace'
 import { LoadingNotice, EmptyState } from './Feedback'
 import { apiRequest } from './apiClient'
@@ -49,7 +50,10 @@ export default function App() {
 function Workspace() {
   const { route, navigate } = useRoute()
   const repositories = useRepositories()
-  const { session, setSession } = useUserSession()
+  const { session, setSession, generation, verifying } = useUserSession()
+  const account = session?.authenticated ? session.username : null
+  const accountStatus: ReviewAccountStatus = session === null || verifying ? 'verifying' : session.status
+  const accountValue = { status: accountStatus, account, generation }
   const [drafts] = useState(() => new Map<string, ReviewDraft>())
   const stateKey = route.name === 'analysis' ? `${route.repositoryId}:${route.viewSyncId}` : ''
   if (route.name === 'landing') {
@@ -73,13 +77,13 @@ function Workspace() {
     </Suspense></ErrorBoundary>
   }
   let content
-  if (route.name === 'my-reviews') content = <ProjectsPage navigate={navigate} view="reviews"/>
-  else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
+  if (route.name === 'my-reviews') content = <ProjectsPage key={`${account ?? ''}:reviews`} navigate={navigate} view="reviews"/>
+  else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
   else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={route.experimentId ?? 'list'} experimentId={route.experimentId} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
-  else if (route.name === 'profile') content = <ProfilePage navigate={navigate} onLoginRequired={requestLogin} onSessionCleared={() => setSession({ authenticated: false, username: null })}/>
+  else if (route.name === 'profile') content = <ProfilePage navigate={navigate} onLoginRequired={requestLogin} onSessionCleared={() => setSession({ authenticated: false, username: null, status: 'anonymous' })}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
@@ -87,7 +91,7 @@ function Workspace() {
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>
   else if (route.name === 'retired' || route.name === 'unknown') content = <EmptyState title={route.name === 'retired' ? '这个入口已移除' : '没有找到这个页面'} description={route.name === 'retired' ? '独立工具页面已撤下。请从项目开始分析；已保存的数据仍然保留。' : '请核对地址，或返回项目继续。'}><Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>返回项目</Button></EmptyState>
   else content = <ProjectsPage navigate={navigate}/>
-  return <AppShell route={route} navigate={navigate} repositories={repositories.items} session={session} onSession={setSession}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell>
+  return <ReviewAccountProvider value={accountValue}><AppShell route={route} navigate={navigate} repositories={repositories.items} session={session} onSession={setSession}><ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}>{content}</Suspense></ErrorBoundary></AppShell></ReviewAccountProvider>
 }
 
 function LegacySync({ route, navigate }: { route: Extract<Route, { name: 'legacy-sync' }>; navigate: (route: Route, replace?: boolean) => void }) {

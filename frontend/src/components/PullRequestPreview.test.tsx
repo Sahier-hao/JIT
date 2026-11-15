@@ -2,6 +2,8 @@ import { render, screen } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PullRequestPreview } from './PullRequestPreview'
+import { accountWorkKey } from '../prReview'
+import { TEST_REVIEW_ACCOUNT } from '../test-utils'
 import { snapshot } from '../prReview.fixture'
 import { modelChoices, PROJECT, response } from '../projectActivity.fixture'
 const SYNC = '33333333-3333-4333-8333-333333333333'
@@ -86,7 +88,7 @@ it('analyzes static candidates directly in the read-only preview', async () => {
   expect(screen.getByText(/候选只作线索/)).toBeVisible()
   await user.click(screen.getByRole('button', { name: '加入问题草稿' }))
   expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ name: 'pr-work', snapshotId: 'v1', number: 12 }))
-  const saved = JSON.parse(localStorage.getItem('jit:pr-review:works:v1') ?? '{}')
+  const saved = JSON.parse(localStorage.getItem(accountWorkKey(TEST_REVIEW_ACCOUNT)) ?? '{}')
   const work = Object.values(saved)[0] as { rounds: Record<string, { questions: { kind: string }[] }> }
   expect(work.rounds.v1.questions.some(item => item.kind === 'suggestion')).toBe(true)
 })

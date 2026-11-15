@@ -18,7 +18,8 @@ import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
 import { displayTime } from '../domain'
 import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
-import { reviewStatusLabels, adoptVersion, candidateQuestion, conclusionLabels, createWork, downloadText, exportReview, question, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { reviewStatusLabels, adoptVersion, backupText, candidateQuestion, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { canWriteReview, requireAccount, useReviewAccount } from '../reviewAccount'
 
 
 type Navigate = (route: Route) => void
@@ -29,7 +30,7 @@ function splitPath(path: string) {
   const index = path.lastIndexOf('/')
   return index < 0 ? { dir: '', name: path } : { dir: path.slice(0, index + 1), name: path.slice(index + 1) }
 }
-function backup(work: PRWork) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, JSON.stringify({ format: 'jit-pr-review-v1', work }, null, 2), 'application/json') }
+function backup(work: PRWork, account: string | null) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, backupText(work, account), 'application/json') }
 
 function validateProjectSource(source: PRSnapshot, owner: string, name: string, number: number, repositoryId?: string) {
   if (source.owner.toLowerCase() !== owner.toLowerCase() || source.name.toLowerCase() !== name.toLowerCase() || source.number !== number || repositoryId && source.repositoryId !== repositoryId) throw new ContractError('PR 固定来源与项目上下文不一致，未修改个人草稿')
@@ -37,9 +38,11 @@ function validateProjectSource(source: PRSnapshot, owner: string, name: string, 
 
 /** 提醒只读打开固定快照，进入工作必须由用户明确执行。 */
 export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, snapshotId, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId: string; navigate: Navigate }) {
+  const reviewAccount = useReviewAccount()
+  const account = reviewAccount.account
   const [source, setSource] = useState<PRSnapshot | null>(null), [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0), [fileIndex, setFileIndex] = useState(0)
   const analysis = useSnapshotAnalyses(snapshotId)
-  const [personal] = useState(() => { try { return { works: readWorks(), error: '' } } catch (failure) { return { works: [], error: message(failure) } } })
+  const [personal] = useState(() => { try { return { works: account ? readWorks(account) : [], error: '' } } catch (failure) { return { works: [], error: message(failure) } } })
   const existing = personal.works.find(w => w.key === workKey(owner, repositoryName, number))
   useEffect(() => {
     const controller = new AbortController()
@@ -50,13 +53,14 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   function enter() {
     if (!source) return
     try {
-      const current = readWorks().find(w => w.key === workKey(owner, repositoryName, number))
+      const account = requireAccount(reviewAccount)
+      const current = readWorks(account).find(w => w.key === workKey(owner, repositoryName, number))
       let next = current ?? createWork(source)
       if (current && !current.rounds[source.snapshotId]) {
         if (Date.parse(source.capturedAt) >= Date.parse(current.rounds[current.latestSnapshotId].source.capturedAt)) next = adoptVersion(current, source)
         else next = { ...current, rounds: { ...current.rounds, [source.snapshotId]: createWork(source).rounds[source.snapshotId] } }
       }
-      saveWork({ ...next, viewedSnapshotId: source.snapshotId })
+      saveWork(account, { ...next, viewedSnapshotId: source.snapshotId })
       navigate({ name: 'pr-work', repositoryId: repositoryId ?? source.repositoryId, owner, repositoryName, number })
     } catch (failure) { setError(failure) }
   }
@@ -85,8 +89,24 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
 }
 
 export function PullRequestWork({ owner, repositoryName, number, repositoryId, preview = false, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; preview?: boolean; navigate: Navigate }) {
-  const [initial] = useState(() => { try { const work = readWorks().find(w => w.key === workKey(owner, repositoryName, number)) ?? null; if (work) validateProjectSource(work.rounds[work.viewedSnapshotId].source, owner, repositoryName, number, repositoryId); return { work, error: '' } } catch (error) { return { work: null, error: message(error) } } })
+  const reviewAccount = useReviewAccount()
+  const account = reviewAccount.account
+  const [initial] = useState(() => {
+    const key = workKey(owner, repositoryName, number)
+    try {
+      const work = account ? readWorks(account).find(w => w.key === key) ?? null : null
+      if (work) validateProjectSource(work.rounds[work.viewedSnapshotId].source, owner, repositoryName, number, repositoryId)
+      return { work, error: '', recovery: account ? readRecovery(account, key) : null }
+    } catch (error) { return { work: null, error: message(error), recovery: null } }
+  })
   const [work, setWork] = useState<PRWork | null>(initial.work)
+  const [recovery, setRecovery] = useState<PRWork | null>(initial.recovery)
+  const accountRef = useRef(account)
+  const reviewAccountRef = useRef(reviewAccount)
+  const saveErrorRef = useRef(Boolean(initial.error))
+  accountRef.current = account
+  reviewAccountRef.current = reviewAccount
+  saveErrorRef.current = Boolean(initial.error)
   const current = useRef(work)
   const [saveError, setSaveError] = useState(initial.error)
   const [source, setSource] = useState<PRSnapshot | null>(null)
@@ -122,10 +142,46 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     else setReviewView('commits')
   }, [version])
   function commit(next: PRWork) {
-    let saved = next
-    try { saved = saveWork(next); setSaveError('') } catch (error) { setSaveError(`尚未保存：${message(error)}。正在编辑的文本仍在本页，可重试或导出完整草稿。`) }
+    const ownerAccount = accountRef.current
+    let saved = next, failed = false
+    try {
+      if (!ownerAccount) throw new Error('登录身份尚未确认，个人工作单不写入')
+      if (!canWriteReview(reviewAccountRef.current)) {
+        saveRecovery(ownerAccount, next)
+        failed = true
+        setSaveError(`登录身份正在核验，草稿保留在账户 ${ownerAccount} 的恢复副本中；核验完成后请重试保存。`)
+      } else {
+        saved = saveWork(ownerAccount, next)
+        setSaveError('')
+        setRecovery(null)
+      }
+    } catch (error) {
+      if (ownerAccount) saveRecovery(ownerAccount, next)
+      failed = true
+      setSaveError(`尚未保存：${message(error)}。正在编辑的文本仍在本页，可重试或导出完整草稿。`)
+    }
+    saveErrorRef.current = failed
     current.current = saved; setWork(saved)
     return saved
+  }
+  useEffect(() => () => {
+    if (accountRef.current && saveErrorRef.current && current.current) {
+      saveRecovery(accountRef.current, current.current)
+    }
+  }, [])
+  function restoreRecovery() {
+    if (!recovery || !account) return
+    try {
+      const saved = saveWork(account, { ...recovery, revision: work?.revision ?? 0 })
+      saveErrorRef.current = false
+      current.current = saved; setWork(saved); setRecovery(null); setSaveError('')
+    } catch (error) {
+      setSaveError(`恢复未保存内容失败：${message(error)}。恢复副本仍保留在账户 ${account}。`)
+    }
+  }
+  function dismissRecovery() {
+    if (account) clearRecovery(account, work?.key ?? workKey(owner, repositoryName, number))
+    setRecovery(null)
   }
   useEffect(() => {
     const controller = new AbortController()
@@ -157,6 +213,14 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     if (!source) return
     commit({ ...createWork(source), remoteState: remoteState ?? source.remoteState, checkedAt: remoteCheckedAt ?? source.capturedAt })
     setReadError(null)
+  }
+  if (!work && recovery) {
+    return <section className="wb" aria-label="恢复未保存内容">
+      <div className="wb-alerts"><Alert type="warning" showIcon
+        title={`账户 ${account} 有本 PR 的未保存恢复副本`}
+        action={<Space size={4}><Button size="sm" variant="primary" onClick={restoreRecovery}>恢复未保存内容</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/>
+      </div>
+    </section>
   }
   if (preview || !work) {
     const failed = Boolean(readError || initial.error)
@@ -315,8 +379,9 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       </div>
       <div className="wb-meter" aria-hidden="true"><span style={{ width: `${readPercent}%` }}/></div>
     </header>
-    {(saveError || readError || work.checkError || work.remoteState !== 'open' || stale) ? <div className="wb-alerts">
-      {saveError ? <Alert type="warning" showIcon title={saveError} action={<Space size={4}><Button size="sm" onClick={() => commit(current.current!)}>重试保存</Button><Button size="sm" onClick={() => backup(work)}>导出草稿</Button></Space>}/> : null}
+    {(saveError || readError || recovery || work.checkError || work.remoteState !== 'open' || stale) ? <div className="wb-alerts">
+      {recovery ? <Alert type="warning" showIcon title={`账户 ${account} 有未保存的恢复副本`} action={<Space size={4}><Button size="sm" onClick={restoreRecovery}>恢复</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/> : null}
+      {saveError ? <Alert type="warning" showIcon title={saveError} action={<Space size={4}><Button size="sm" onClick={() => commit(current.current!)}>重试保存</Button><Button size="sm" onClick={() => backup(work, account)}>导出草稿</Button></Space>}/> : null}
       {readError ? <Alert type="error" showIcon title={message(readError)} action={<Button size="sm" onClick={() => setAttempt(v => v + 1)}>重新读取</Button>}/> : null}
       {work.checkError ? <Alert type="warning" showIcon title={`上次检查失败：${work.checkError}。仍保留此前版本，最近成功检查 ${displayTime(work.checkedAt)}。`}/> : null}
       {work.remoteState !== 'open' ? <Alert type="info" showIcon title={`远端 PR ${remoteLabel[work.remoteState]}，当前为历史审查；个人草稿和原结论保留。`}/> : null}
@@ -513,7 +578,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       </div>
     </Drawer>
     <Drawer open={drawer === 'backup'} onClose={() => setDrawer(null)} width={620} title="个人草稿备份">
-      <WorkBackup work={work} onMerge={commit}/>
+      <WorkBackup work={work} onMerge={commit} account={account}/>
       <FeedbackCases key={`feedback:${version}`} work={work} version={version}/>
     </Drawer>
   </section>
