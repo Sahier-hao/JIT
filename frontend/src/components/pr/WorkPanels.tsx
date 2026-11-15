@@ -2,11 +2,11 @@ import { useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { Alert, Space } from '../../ui/feedback'
 import { Button, Checkbox, Select, TextArea } from '../../ui/controls'
-import { downloadText, evidenceURL, mergeBackup, parseBackup, type Conclusion, type Evidence, type PRWork, type ReviewQuestion } from '../../prReview'
+import { backupText, downloadText, evidenceURL, mergeBackup, parseBackupInfo, type Conclusion, type Evidence, type PRWork, type ReviewQuestion } from '../../prReview'
 import { verifyBackupSources, type PRSnapshot } from '../../prReviewClient'
 
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
-function backup(work: PRWork) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, JSON.stringify({ format: 'jit-pr-review-v1', work }, null, 2), 'application/json') }
+function backup(work: PRWork, account: string | null) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, backupText(work, account), 'application/json') }
 
 export function QuestionEditor({ value: q, source, onChange, onJump, work }: { value: ReviewQuestion; source: PRSnapshot; onChange: (value: ReviewQuestion) => void; onJump: (e: Evidence) => void; work: PRWork }) {
   const [error, setError] = useState('')
@@ -45,17 +45,20 @@ export function DeliveryForm({ onPrepare, busy, draft, onDraft }: { onPrepare: (
     <Button variant="primary" type="submit" disabled={busy}>检查版本并预览意见</Button>
   </form>
 }
-export function WorkBackup({ work, onMerge }: { work: PRWork; onMerge: (work: PRWork) => unknown }) {
+export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: (work: PRWork) => unknown; account: string | null }) {
   const [incoming, setIncoming] = useState<PRWork | null>(null), [choices, setChoices] = useState<Record<string, boolean>>({}), [error, setError] = useState('')
+  const [accountHint, setAccountHint] = useState<string | null>(null)
   const file = useRef<HTMLInputElement | null>(null)
   const preview = incoming ? mergeBackup(work, incoming, choices) : null
   async function pick(picked: File) {
     try {
       if (picked.size > 1024 * 1024) throw new Error('备份超过 1 MiB')
-      const next = parseBackup(await picked.text(), work.key)
-      await verifyBackupSources(next)
-      mergeBackup(work, next, {})
-      setIncoming(next); setChoices({}); setError('')
+      const info = parseBackupInfo(await picked.text(), work.key)
+      if (info.accountHint && info.accountHint !== account
+          && !window.confirm(`备份归属 ${info.accountHint}，将导入当前账户 ${account}。继续？`)) return
+      await verifyBackupSources(info.work)
+      mergeBackup(work, info.work, {})
+      setIncoming(info.work); setAccountHint(info.accountHint); setChoices({}); setError('')
     } catch (failure) { setError(message(failure)) }
   }
   return <section className="pr-backups">
@@ -65,7 +68,7 @@ export function WorkBackup({ work, onMerge }: { work: PRWork; onMerge: (work: PR
         <p>包含此 PR 各版本的个人笔记、问题、反馈和结论。仅在你选择导出时生成本地文件，不上传。</p>
       </div>
       <Space>
-        <Button icon={<Download/>} aria-label="导出完整草稿" onClick={() => backup(work)}>导出完整草稿</Button>
+        <Button icon={<Download/>} aria-label="导出完整草稿" onClick={() => backup(work, account)}>导出完整草稿</Button>
         <Button icon={<Upload/>} aria-label="选择备份以预览合并" onClick={() => file.current?.click()}>选择备份以预览合并</Button>
       </Space>
       <input ref={file} type="file" hidden accept=".json,application/json" aria-label="导入完整草稿" onChange={event => { const picked = event.target.files?.[0]; event.target.value = ''; if (picked) void pick(picked) }}/>
@@ -73,6 +76,7 @@ export function WorkBackup({ work, onMerge }: { work: PRWork; onMerge: (work: PR
     {error ? <Alert type="warning" showIcon title={error}/> : null}
     {preview ? <div className="pr-merge-preview">
       <h4>备份合并预览 · {preview.conflicts.length} 处差异</h4>
+      <p>导入目标：{account ?? '身份尚未确认'}；备份归属：{accountHint ?? '未知'}。</p>
       <p>默认保留当前判断；备份缺少的笔记和问题不会清空当前记录。新增条目会追加。</p>
       <div className="pr-merge-diff-list">
         {preview.conflicts.map(c => <details key={c.key} className="pr-merge-diff-item">

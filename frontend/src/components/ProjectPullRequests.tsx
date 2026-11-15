@@ -11,6 +11,7 @@ import { repositoryModels, type ModelChoice } from '../modelClient'
 import { analyzeProjectPR, cancelProjectPRBatch, getTracking, latestProjectPRBatch, projectPRs, retryProjectPRBatch, type PRBatch, type PRState, type PRTracking, type ProjectPR, type ProjectPRPage } from '../projectActivityClient'
 import { cacheKey, readCache, writeCache } from '../lib/localCache'
 import { readWorks, remoteStateLabels as remoteLabel, workKey } from '../prReview'
+import { useReviewAccount } from '../reviewAccount'
 import type { Route } from '../navigation'
 import { PR_BATCH_CHANGED } from '../projectEvents'
 import { PRTrackingPanel } from './PRTrackingPanel'
@@ -144,7 +145,8 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
     return () => clearInterval(timer)
   }, [hasRunning])
   let localWorks: Set<string> = new Set()
-  try { localWorks = new Set(readWorks().map(work => work.key)) } catch { /* 本地存储损坏时仍允许查看远端 PR */ }
+  const { account } = useReviewAccount()
+  try { localWorks = account ? new Set(readWorks(account).map(work => work.key)) : new Set() } catch { /* 本地存储损坏时仍允许查看远端 PR */ }
   const refresh = () => { refreshRequested.current = true; setAttempt(v => v + 1) }
   const rows = result ? (sortBy === 'risk' ? [...result.pullRequests].sort((a, b) => (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt)) : result.pullRequests) : []
   const summary = rows.reduce((acc, pr) => {

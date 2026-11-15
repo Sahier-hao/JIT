@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from './apiClient'
 import { record, recordList, text, textOrNull, finiteNumber, textList } from './apiContract'
 import {
@@ -7,7 +7,19 @@ import {
   type TrainingExperimentMethodResult, type TrainingTask,
 } from './adminContracts'
 
-export interface UserSession { authenticated: boolean; username: string | null }
+export interface UserSession {
+  authenticated: boolean
+  username: string | null
+  status: 'authenticated' | 'anonymous' | 'failed'
+}
+export const SESSION_EPOCH_KEY = 'jit:user-session-epoch'
+function markSessionChanged() {
+  try { localStorage.setItem(SESSION_EPOCH_KEY, String(Date.now())) } catch { /* 存储不可用时仍由服务端会话决定 */ }
+}
+function activeSession(username: string | null, authenticated: boolean): UserSession {
+  return { authenticated: authenticated && Boolean(username), username,
+           status: authenticated && username ? 'authenticated' : 'anonymous' }
+}
 export interface UserDataset {
   version: string
   dataset: string
@@ -44,21 +56,24 @@ function userDataset(raw: unknown): UserDataset {
 
 export async function userSession(signal?: AbortSignal): Promise<UserSession> {
   const body = record(await apiRequest({ path: '/api/user/session', method: 'GET', signal }))
-  return { authenticated: body.authenticated === true, username: textOrNull(body.username) }
+  return activeSession(textOrNull(body.username), body.authenticated === true)
 }
 
 export async function userRegister(username: string, password: string): Promise<UserSession> {
   const body = record(await apiRequest({ path: '/api/user/register', method: 'POST', body: { username, password } }))
-  return { authenticated: body.authenticated === true, username: textOrNull(body.username) }
+  markSessionChanged()
+  return activeSession(textOrNull(body.username), body.authenticated === true)
 }
 
 export async function userLogin(username: string, password: string): Promise<UserSession> {
   const body = record(await apiRequest({ path: '/api/user/login', method: 'POST', body: { username, password } }))
-  return { authenticated: body.authenticated === true, username: textOrNull(body.username) }
+  markSessionChanged()
+  return activeSession(textOrNull(body.username), body.authenticated === true)
 }
 
 export async function userLogout(): Promise<void> {
   await apiRequest({ path: '/api/user/logout', method: 'POST' })
+  markSessionChanged()
 }
 
 export async function userDatasets(scope: 'mine' | 'usable' = 'usable', signal?: AbortSignal): Promise<UserDataset[]> {
@@ -155,14 +170,34 @@ export async function retryUserTask(taskId: string): Promise<TrainingTask> {
 
 export function useUserSession() {
   const [session, setSession] = useState<UserSession | null>(null)
-  const [revision, setRevision] = useState(0)
+  const [generation, setGeneration] = useState(0)
+  const [verifying, setVerifying] = useState(true)
+  const verify = useCallback(() => {
+    setVerifying(true)
+    userSession()
+      .then(value => setSession(value))
+      .catch(() => setSession({ authenticated: false, username: null, status: 'failed' }))
+      .finally(() => { setVerifying(false); setGeneration(value => value + 1) })
+  }, [])
   useEffect(() => {
-    const controller = new AbortController()
-    userSession(controller.signal).then(value => { if (!controller.signal.aborted) setSession(value) })
-      .catch(() => { if (!controller.signal.aborted) setSession({ authenticated: false, username: null }) })
-    return () => controller.abort()
-  }, [revision])
-  return { session, setSession, reload: () => setRevision(value => value + 1) }
+    verify()
+    const bump = () => verify()
+    const storage = (event: StorageEvent) => {
+      if (event.key === SESSION_EPOCH_KEY || event.key === null || (event.key ?? '').startsWith('jit:pr-review:')) bump()
+    }
+    const focus = () => { if (document.visibilityState !== 'hidden') verify() }
+    window.addEventListener(USER_CHANGED, bump)
+    window.addEventListener('storage', storage)
+    window.addEventListener('focus', focus)
+    document.addEventListener('visibilitychange', focus)
+    return () => {
+      window.removeEventListener(USER_CHANGED, bump)
+      window.removeEventListener('storage', storage)
+      window.removeEventListener('focus', focus)
+      document.removeEventListener('visibilitychange', focus)
+    }
+  }, [verify])
+  return { session, setSession, reload: verify, generation, verifying }
 }
 
 
