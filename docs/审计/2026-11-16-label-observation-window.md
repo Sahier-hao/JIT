@@ -56,7 +56,7 @@
 - `pytest tests/test_repository_sync.py tests/test_sync_model_strategy.py tests/test_sync_training_holdout.py tests/test_training_tasks.py tests/test_evaluation_matrix.py tests/test_dataset_builds.py`：通过；同步在无成熟记录时降级为现成模型并保留全部评分。
 - `pytest tests/test_analysis_context.py tests/test_sync_control.py tests/test_catalog_storage.py tests/test_model_policy.py`：迁移与 v7/v8/v12 旧库升级通过，包括前向迁移 036。
 - 前端 `npm run typecheck` 与 `npm test`：55 个测试文件、396 项通过。
-- 完整后端测试与前端测试结果见本轮收尾记录；不以单个测试数量代替浏览器旅程。
+- 完整后端测试 883 项通过；前端 55 个文件、399 项通过并完成构建。不以单个测试数量代替浏览器旅程。
 
 ## 5. 限制与未完成
 
