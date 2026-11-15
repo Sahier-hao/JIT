@@ -21,8 +21,10 @@ export interface ModelCardBenefit {
   available: boolean
   reason: string | null
   reportVersion: number | null
+  protocol: ModelMetricMap | null
   conclusion: ModelMetricMap | null
   strategies: ModelMetricMap | null
+  comparisons: ModelMetricMap | null
   test: ModelMetricMap | null
   boundary: ModelMetricMap | null
   limitations: string[]
@@ -113,8 +115,10 @@ export function parseModelCard(raw: unknown): ModelCard {
       available: benefit.available === true,
       reason: textOrNull(benefit.reason),
       reportVersion: numberOrNull(benefit.reportVersion),
+      protocol: benefit.protocol == null ? null : record(benefit.protocol),
       conclusion: benefit.conclusion == null ? null : record(benefit.conclusion),
       strategies: benefit.strategies == null ? null : record(benefit.strategies),
+      comparisons: benefit.comparisons == null ? null : record(benefit.comparisons),
       test: benefit.test == null ? null : record(benefit.test),
       boundary: benefit.boundary == null ? null : record(benefit.boundary),
       limitations: Array.isArray(benefit.limitations) ? textList(benefit.limitations) : [],

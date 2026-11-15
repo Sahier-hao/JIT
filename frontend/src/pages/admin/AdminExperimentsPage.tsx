@@ -13,6 +13,7 @@ const STATUS_LABELS: Record<MultiProjectReportStatus, string> = {
 }
 const EVIDENCE_KINDS: Record<string, string> = {
   'evaluation-matrix': '多模型评价矩阵',
+  'review-benefit': '审查收益评价',
   'line-candidate-evaluation': '完整候选定位评价',
   'line-candidates': '完整候选集',
   invalid: '无效证据',
@@ -23,7 +24,10 @@ const EVIDENCE_STATUS: Record<EvidenceStatus, string> = {
 function evidenceSummary(entry: EvaluationEvidenceEntry): string {
   const s = entry.summary ?? {}
   if (entry.kind === 'evaluation-matrix') {
-    return `${String(s.datasets ?? '—')} 个数据集 · 时间外 ${String(s.withinRepoCells ?? 0)} 格 · 留一仓库 ${String(s.leaveOneRepoOutCells ?? 0)} 格 · 失败 ${String(s.failures ?? 0)}`
+    return `${String(s.datasets ?? '—')} 个数据集 · 时间外 ${String(s.withinRepoCells ?? 0)} 格 · 留一仓库 ${String(s.leaveOneRepoOutCells ?? 0)} 格 · 失败 ${String(s.failures ?? 0)} · ${String(s.budgetProtocol ?? '旧预算协议')}`
+  }
+  if (entry.kind === 'review-benefit') {
+    return `${String(s.datasets ?? '—')} 个数据集 · ${String(s.cells ?? 0)} 个方法格 · 失败 ${String(s.failures ?? 0)} · review-benefit-v3`
   }
   if (entry.kind === 'line-candidate-evaluation') {
     return `${String(s.repos ?? '—')} 个仓库 · ${String(s.candidates ?? 0)} 条候选 · ${String(s.positives ?? 0)} 个正例`

@@ -30,7 +30,10 @@ function languageList(entry: EvaluationEvidenceEntry) {
 function scaleText(entry: EvaluationEvidenceEntry) {
   const summary = entry.summary ?? {}
   if (entry.kind === 'evaluation-matrix') {
-    return `${languageList(entry).join('/') || '语言未记录'} · 时间外 ${count(summary.withinRepoCells)} 格 · 留一仓库 ${count(summary.leaveOneRepoOutCells)} 格 · 失败 ${count(summary.failures)} 格`
+    return `${languageList(entry).join('/') || '语言未记录'} · 时间外 ${count(summary.withinRepoCells)} 格 · 留一仓库 ${count(summary.leaveOneRepoOutCells)} 格 · 失败 ${count(summary.failures)} 格 · ${text(summary.budgetProtocol, '旧预算协议')}`
+  }
+  if (entry.kind === 'review-benefit') {
+    return `${languageList(entry).join('/') || '语言未记录'} · ${count(summary.datasets)} 个数据集 · ${count(summary.cells)} 个方法格 · review-benefit-v3`
   }
   if (entry.kind === 'line-candidate-evaluation') {
     return `${count(summary.repos)} 仓库 · 候选 ${count(summary.candidates)} 行 · 正例 ${count(summary.positives)}`
@@ -43,6 +46,7 @@ function scaleText(entry: EvaluationEvidenceEntry) {
 
 function kindText(entry: EvaluationEvidenceEntry) {
   if (entry.kind === 'evaluation-matrix') return '跨仓库 / 时间外评价'
+  if (entry.kind === 'review-benefit') return '审查收益评价（review-benefit-v3）'
   if (entry.kind === 'line-candidate-evaluation') return '完整候选集定位'
   if (entry.kind === 'line-candidates') return '完整候选集导出'
   return entry.kind
@@ -77,7 +81,9 @@ export function ModelEvaluationEvidence({ method, expired }: {
   }
   const relevant = entries.filter(entry => entry.kind === 'evaluation-matrix'
     ? method !== null && methodList(entry).includes(method)
-    : entry.kind === 'line-candidate-evaluation' || entry.kind === 'line-candidates')
+    : entry.kind === 'review-benefit'
+      ? method !== null && methodList(entry).includes(method)
+      : entry.kind === 'line-candidate-evaluation' || entry.kind === 'line-candidates')
   return <section className="admin-model-evidence">
     <h2>评价证据</h2>
     {relevant.length ? <div className="admin-table-wrap"><table className="admin-table">

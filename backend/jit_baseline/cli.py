@@ -103,6 +103,16 @@ def main():
                             help="方法子集；默认逻辑回归、决策树、随机森林与 MLP")
     evaluation.add_argument("--seed", action="append", type=int, default=None,
                             help="随机方法的种子，可重复；默认 42/43/44")
+    review = commands.add_parser("run-review-benefit",
+                                 help="review-benefit-v3 数据级时间外审查收益评价")
+    review.add_argument("--data", action="append", required=True,
+                        help="可重复：语言=数据集描述文件路径")
+    review.add_argument("--output", type=Path, required=True, help="报告 JSON 输出路径")
+    review.add_argument("--methods", nargs="*", default=None,
+                        help="方法子集；默认逻辑回归、决策树、随机森林与 MLP")
+    review.add_argument("--seed", action="append", type=int, default=None,
+                        help="随机方法的种子，可重复；默认 42/43/44")
+    review.add_argument("--random-runs", type=int, default=None, help="随机排序重复次数；默认 200")
     benefit = commands.add_parser("evaluate-benefit", help="用冻结测试分区比较模型、时间与随机检查顺序")
     benefit.add_argument("--run", type=Path, required=True, help="已交付模型产物目录")
     benefit.add_argument("--output", type=Path, required=True, help="报告文件或目录；目录写 benefit-report.json")
@@ -467,6 +477,24 @@ def main():
             result = {"kind": report["format"], "output": str(args.output),
                       "status": report["status"],
                       "summary": evaluation_matrix.summarize(report),
+                      "protocolSha256": report["protocolSha256"]}
+        elif args.command == "run-review-benefit":
+            from . import review_benefit
+            specs = []
+            for item in args.data:
+                if "=" not in item:
+                    raise BaselineError("INPUT_INVALID", "--data 需要 语言=路径")
+                language, path = item.split("=", 1)
+                specs.append((language, path))
+            methods = args.methods or review_benefit.METHODS
+            seeds = tuple(args.seed) if args.seed else review_benefit.SEEDS
+            report = review_benefit.evaluate_datasets(
+                specs, args.output, methods=methods, seeds=seeds,
+                random_runs=(args.random_runs if args.random_runs is not None
+                             else review_benefit.RANDOM_RUNS))
+            result = {"kind": report["kind"], "output": str(args.output),
+                      "status": report["status"],
+                      "summary": review_benefit.summarize(report),
                       "protocolSha256": report["protocolSha256"]}
         elif args.command == "evaluate-benefit":
             report, path = run_benefit(args.run, args.output,
