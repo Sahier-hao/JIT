@@ -1,0 +1,11 @@
+fixCommit,introducedCommit,path,fixTime,fixSource,lineRanges,problems,automaticVerdict,humanReview,humanVerdict
+28073866a5c10e039c233d9ae22fe8bb95442bb7,9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689,dist/axios.js,2014-08-26T15:35:33Z,keyword,"[[73, 73], [100, 100], [903, 903]]",[],pass,pending,
+a98755c00a851765074e4ed866151232e03f931f,157efd5615890301824e3121cc6c9d2f9b21f94a,lib/adapters/xhr.js,2020-05-23T17:06:10Z,keyword,"[[153, 153]]",[],pass,pending,
+9588fcdec8aca45c3ba2f7968988a5d03f23168c,9f6ba5ee4326d33d2b84aef591582a26cc892d4d,index.d.ts,2022-09-28T18:30:21Z,keyword,"[[245, 248]]",[],pass,pending,
+a1c8ad008b3c13d53e135bbd0862587fb9d3fc09,7a2f901f42138e1ef89c63ee9ac89a0d7a630077,index.d.cts,2023-09-29T18:42:19Z,keyword,"[[23, 23]]",[],pass,pending,
+c71811b00f2fcff558e4382ba913bdac4ad7200e,a1938ff073fcb0f89011f001dfbc1fa1dc995e39,index.d.cts,2024-11-19T08:39:59Z,keyword,"[[399, 399]]",[],pass,pending,
+ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448,097b0d18e93d12c53b77741d6bfdc8a1fc11828b,bin/repo.js,2026-02-14T14:59:48Z,keyword,"[[6, 6], [12, 12], [14, 14], [25, 25], [29, 30], [34, 34], [37, 39], [42, 42]]",[],pass,pending,
+ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448,81e0455b7b57fbaf2be16a73ebe0e6591cc6d8f9,lib/core/Axios.js,2026-02-14T14:59:48Z,keyword,"[[54, 54]]",[],pass,pending,
+ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448,fe2563060dceaf8453c2f3654cc80aeae7da4ad1,rollup.config.js,2026-02-14T14:59:48Z,keyword,"[[3, 3], [6, 6], [8, 8], [13, 13], [26, 26], [30, 30], [32, 32], [44, 44], [46, 47], [56, 57], [59, 59]]",[],pass,pending,
+938a4fc4a8f66635bddfbaa0ccf0daa5fe865c28,e9a1db9d9b495f5205bdf7af748afd6356be2498,.github/workflows/moderator.yml,2026-05-13T17:05:26Z,keyword,"[[19, 20]]",[],pass,pending,
+43968f294eaf79dabf0fcc2c05fd9add6a4faf12,315ec44489cafeec509409fb6b0c0a6a88d56dc8,lib/helpers/Http2Sessions.js,2026-10-13T18:42:36Z,keyword,"[[95, 95]]",[],pass,pending,

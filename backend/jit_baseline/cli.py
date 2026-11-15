@@ -44,6 +44,10 @@ def main():
                      help="语义 schema 使用的嵌入表目录")
     run.add_argument("--params", default=None,
                      help="受控参数覆盖 JSON，例如 {\"C\": 0.5}；默认使用方法冻结参数")
+    run.add_argument("--allow-legacy-labels", action="store_true",
+                     help="显式按历史标签协议复现没有观察声明的旧 SZZ 数据")
+    run.add_argument("--allow-restricted-labels", action="store_true",
+                     help="显式诊断受限数据（观察不完整或证据截断）；结果不能当作完整可信评价")
     verify = commands.add_parser("verify")
     verify.add_argument("--run", type=Path, default=DEFAULT_RUN)
     compare = commands.add_parser("compare")
@@ -171,7 +175,12 @@ def main():
     collect = commands.add_parser('collect-repository')
     collect.add_argument('--repo', required=True, help='本地仓库路径或远程仓库地址')
     collect.add_argument('--since', default=None, help='起始时间（YYYY-MM-DD 或 ISO）')
-    collect.add_argument('--until', default=None, help='结束时间（YYYY-MM-DD 或 ISO）')
+    collect.add_argument('--until', default=None, help='样本截止时间（YYYY-MM-DD 或 ISO），之后提交不进入样本')
+    collect.add_argument('--observe-through', default=None,
+                         help='修复观察截止时间；可晚于样本截止，让后续修复为原提交提供证据')
+    collect.add_argument('--revision', default=None, help='固定采集提交；省略时把 --branch 解析成具体 SHA')
+    collect.add_argument('--maturity-days', type=int, default=None,
+                         help='成熟期天数；默认 90')
     collect.add_argument('--branch', default='HEAD', help='采集的分支或提交；默认 HEAD')
     collect.add_argument('--limit', type=int, default=None, help='提交数上限；超过即拒绝')
     collect.add_argument('--dataset', default=None, help='数据集名；默认由仓库名派生')
@@ -307,7 +316,11 @@ def main():
                                                   branch=args.branch, output=args.output,
                                                   dataset=args.dataset, register=args.register,
                                                   limit=args.limit, root=args.root,
-                                                  with_text=args.with_text, szz=args.szz)
+                                                  with_text=args.with_text, szz=args.szz,
+                                                  observe_through=args.observe_through,
+                                                  revision=args.revision,
+                                                  maturity_days=(args.maturity_days
+                                                                 if args.maturity_days is not None else 90))
         elif args.command == 'collect-batch':
             from .batch_collection import BatchCollection
             from .config import BACKEND as _BACKEND
@@ -404,7 +417,9 @@ def main():
                                  metric_set=args.metric_set,
                                  dataset_manifest=args.dataset_manifest, holdout=args.holdout,
                                  embedding_dir=args.embedding_dir,
-                                 split_preset=args.split_preset, params=params)
+                                 split_preset=args.split_preset, params=params,
+                                 allow_legacy_labels=args.allow_legacy_labels,
+                                 allow_restricted_labels=args.allow_restricted_labels)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
         elif args.command == "verify":
             manifest = verify_run(args.run)

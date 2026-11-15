@@ -69,7 +69,7 @@ def _limitations(manifest):
 
 def _declared_files(manifest):
     result = []
-    for key in ("file", "text", "labelEvidenceFile"):
+    for key in ("file", "text", "labelEvidenceFile", "labelStatusFile"):
         entry = manifest.get(key)
         if isinstance(entry, dict) and entry.get("path"):
             result.append((key, entry))
@@ -159,7 +159,28 @@ def public_view(resolved):
         },
         "source": _safe_source(manifest),
         "labelRule": _label_rule(manifest),
+        "labeling": _safe_labeling(manifest.get("labeling")),
         "limitations": _limitations(manifest),
+    }
+
+
+def _safe_labeling(labeling):
+    """观察与准入事实的安全投影；不含本机路径。"""
+    if not isinstance(labeling, dict):
+        return None
+    return {
+        "protocol": labeling.get("protocol"),
+        "sampleWindow": labeling.get("sampleWindow"),
+        "observationWindow": labeling.get("observationWindow"),
+        "observedThrough": labeling.get("observedThrough"),
+        "observedThroughIso": labeling.get("observedThroughIso"),
+        "maturityDays": labeling.get("maturityDays"),
+        "revision": labeling.get("revision"),
+        "historyStatus": labeling.get("historyStatus"),
+        "coverage": labeling.get("coverage"),
+        "counts": labeling.get("counts"),
+        "identity": labeling.get("identity"),
+        "statusRule": (labeling.get("statusFile") or {}).get("rule"),
     }
 
 
@@ -191,13 +212,17 @@ def export_zip(resolved):
                 archive.writestr(name, item["bytes"])
                 hashes.append(f"{item['sha256']}  {name}")
             portable = json.loads(resolved["manifestBytes"])
-            for key in ("file", "text", "labelEvidenceFile"):
+            for key in ("file", "text", "labelEvidenceFile", "labelStatusFile"):
                 entry = portable.get(key)
                 if isinstance(entry, dict) and entry.get("path"):
                     entry["path"] = renamed.get(key, Path(entry["path"]).name)
             decisions = (portable.get("curation") or {}).get("decisionsFile")
             if isinstance(decisions, dict) and decisions.get("path"):
                 decisions["path"] = renamed.get("curationDecisions", Path(decisions["path"]).name)
+            labeling = portable.get("labeling") or {}
+            status = labeling.get("statusFile")
+            if isinstance(status, dict) and status.get("path"):
+                status["path"] = renamed.get("labelStatusFile", Path(status["path"]).name)
             _scrub_absolute_paths(portable)
             portable_bytes = (json.dumps(portable, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
             manifest_name = f"{manifest['version']}.json"

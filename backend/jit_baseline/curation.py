@@ -5,7 +5,7 @@ import json
 import zipfile
 from pathlib import Path
 
-from . import datasets, store
+from . import admission, datasets, store
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .schemas import resolve
@@ -149,8 +149,32 @@ def derive(dataset_version, recipe, root=None):
                             "decisions": _stats(kept, excluded, len(records)),
                             "decisionsFile": ({"path": datasets.manifest_relative(decisions_path),
                                                "sha256": hashlib.sha256(decisions_bytes).hexdigest(),
-                                               "records": len(excluded)} if decisions_bytes else None)}})
+                                               "records": len(excluded)} if decisions_bytes else None)},
+               **_derived_labeling(manifest, room, kept)})
     return {"dataset": registered, "preview": result}
+
+
+def _derived_labeling(manifest, room, kept):
+    """派生版本沿用源版本的观察事实，并为保留成员生成新的逐提交状态旁车。"""
+    source = manifest.get("labeling")
+    if not source:
+        return {}
+    entries_by_id = admission.read_entries(manifest)
+    entries = sorted((entries_by_id[record["id"]] for record in kept
+                      if record["id"] in entries_by_id), key=lambda item: item["id"])
+    status_bytes = admission.status_bytes(entries)
+    digest = hashlib.sha256(status_bytes).hexdigest()
+    status_path = room / f"{manifest['dataset']}-label-status-{digest[:16]}.jsonl"
+    if status_path.exists():
+        if status_path.read_bytes() != status_bytes:
+            raise BaselineError("DATASET_EXISTS", "派生状态的旁车文件已存在且内容不同，不覆盖")
+    else:
+        status_path.write_bytes(status_bytes)
+    status_meta = {"path": datasets.manifest_relative(status_path), "sha256": digest,
+                   "records": len(entries), "rule": admission.STATUS_RULE}
+    labeling, _ = admission.derive_labeling(source, [record["id"] for record in kept],
+                                            entries_by_id, status_meta)
+    return {"labeling": labeling, "labelStatusFile": status_meta}
 
 
 def export_bundle(version, root=None):
@@ -160,7 +184,9 @@ def export_bundle(version, root=None):
     manifest_path = Path(registered[version]["manifestPath"])
     manifest_path = manifest_path if manifest_path.is_absolute() else BACKEND / manifest_path
     decisions = (manifest.get("curation") or {}).get("decisionsFile")
+    status_file = manifest.get("labelStatusFile") or (manifest.get("labeling") or {}).get("statusFile")
     buffer = io.BytesIO()
+    extras = []
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(csv_path, csv_path.name)
         archive.write(manifest_path, manifest_path.name)
@@ -168,8 +194,14 @@ def export_bundle(version, root=None):
             path = Path(decisions["path"])
             path = path if path.is_absolute() else BACKEND / path
             archive.write(path, path.name)
+            extras.append(path)
+        if status_file and status_file.get("path"):
+            path = Path(status_file["path"])
+            path = path if path.is_absolute() else BACKEND / path
+            archive.write(path, path.name)
+            extras.append(path)
         hashes = [f"{hashlib.sha256(item.read_bytes()).hexdigest()}  {item.name}"
-                  for item in (csv_path, manifest_path)]
+                  for item in (csv_path, manifest_path, *extras)]
         archive.writestr("SHA256SUMS", "\n".join(hashes) + "\n")
     return buffer.getvalue()
 

@@ -16,6 +16,7 @@ from .algorithms import (DEFAULT_ALGORITHM, PARAMETER_CONTRACT, get_algorithm,
                          model_descriptor, params_display, resolve_params,
                          validate_declared_params)
 from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
+from . import admission
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
@@ -198,7 +199,8 @@ def training_performance(duration_seconds, split):
 
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
               holdout=None, embedding_dir=None, model_name=None, class_policy=None,
-              split_preset=None, params=None):
+              split_preset=None, params=None, allow_legacy_labels=False,
+              allow_restricted_labels=False):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
@@ -265,6 +267,17 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
             dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": list(schema.in_model_names()),
                                                        "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
     semantic_meta = None
+    admission_result = (admission.evaluate(dataset, records,
+                                           allow_legacy=allow_legacy_labels,
+                                           allow_restricted=allow_restricted_labels)
+                        if dataset is not None else admission.evaluate({}, records))
+    source_record_count = len(records)
+    if not admission_result["available"]:
+        reason = admission_result["reason"]
+        raise BaselineError(reason["code"], reason["message"])
+    records = admission_result["eligible"]
+    if not records:
+        raise BaselineError("DATASET_INVALID", "成熟样本准入后没有可训练记录，请检查观察窗口与成熟期")
     if schema.semantic and dataset_manifest is None:
         raise BaselineError("DATASET_INVALID", "语义 schema 需要带文本的数据集描述文件")
     if schema.semantic:
@@ -312,7 +325,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
              for key, part in split.items()}
     summary_split = {key: {k: v for k, v in stat.items() if k != "ids"}
                      for key, stat in stats.items()}
-    scale = data_scale(summary_split, schema, total_records=len(records),
+    scale = data_scale(summary_split, schema, total_records=source_record_count,
                        trainable_records=len(trainable))
     performance = training_performance(training_seconds, split)
     if dataset_manifest is not None:
@@ -338,6 +351,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         "rule": split_rule,
         "policy": split_policy,
         "partitions": stats,
+        "admission": admission.view(admission_result),
     })
     keys = ["id", "time", "epoch", "sourceRow", "metrics", "features"]
     if schema.semantic:
@@ -360,6 +374,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
               "threshold": THRESHOLD, "model": resolved_params, "modelSha256": files["model.joblib"], "coreFiles": files,
               "splitPolicy": split_policy,
               "splitPreset": split_preset,
+              "admission": admission.view(admission_result),
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     if params_explicit:
         config["parameterContract"] = PARAMETER_CONTRACT
@@ -385,6 +400,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
                "split": summary_split, "splitPolicy": split_policy, "splitRule": split_rule,
+               "admission": admission.view(admission_result),
                "metrics": metrics, "metricsByPartition": partitioned_metrics,
                "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
                "dataScale": scale, "trainingPerformance": performance,

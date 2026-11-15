@@ -199,7 +199,7 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         db.execute('DROP TABLE user_account')
         for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version',
                        'distribution_rule', 'feature_source_json', 'algorithm',
-                       'split_preset', 'split_policy_json'):
+                       'split_preset', 'split_policy_json', 'admission_degrade_reason'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
         db.execute('DROP TABLE dataset_build_task')
         db.execute('DROP TABLE model_policy')

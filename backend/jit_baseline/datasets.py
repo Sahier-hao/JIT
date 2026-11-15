@@ -10,6 +10,7 @@ import json
 import re
 from pathlib import Path
 
+from . import admission
 from .config import BACKEND, BASE_URL, COHORT, REVISION, SOURCES
 from .data import parse_source, sha256
 from .errors import BaselineError
@@ -22,6 +23,7 @@ VERSION_PATTERN = re.compile(
     r"(?:-(?P<stamp>[0-9a-f]{8}))?$")
 DATASET_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]*")
 HEX64 = re.compile(r"[0-9a-f]{64}")
+HEX40 = re.compile(r"[0-9a-f]{40,64}")
 QUALITY_KEYS = ("rawRows", "includedRows", "positiveLabels", "blankLabels", "featureMissing", "excluded")
 EXCLUDED_KEYS = ("outsideWindow", "noAddedLines", "tooMuchChurn", "tooManyFiles", "missingRequiredField")
 REQUIRED = ("schema", "dataset", "version", "publisher", "revision", "url", "citation", "schemaName",
@@ -159,7 +161,59 @@ def validate_manifest(manifest):
     manifest.setdefault("usage", "branch")
     if manifest["usage"] not in ("branch", "pr"):
         raise BaselineError("DATASET_INVALID", f"数据集来源类型无效：{manifest['usage']}")
+    labeling = manifest.get("labeling")
+    if labeling is not None:
+        validate_labeling(labeling)
+        status_file = labeling["statusFile"]
+        declared = manifest.get("labelStatusFile")
+        if declared is not None and declared.get("sha256") != status_file.get("sha256"):
+            raise BaselineError("DATASET_INVALID", "逐提交状态文件记录与观察声明不一致")
     return manifest
+
+
+def validate_labeling(labeling):
+    """校验观察与准入声明；逐提交状态文件的内容由加载入口重算核对。"""
+    if not isinstance(labeling, dict):
+        raise BaselineError("DATASET_INVALID", "观察声明必须是 JSON 对象")
+    if labeling.get("protocol") != admission.PROTOCOL:
+        raise BaselineError("DATASET_INVALID", f"观察协议无效：{labeling.get('protocol')}")
+    observed, maturity = labeling.get("observedThrough"), labeling.get("maturityDays")
+    if not isinstance(observed, int) or isinstance(observed, bool):
+        raise BaselineError("DATASET_INVALID", "观察终点必须是 UTC 秒")
+    if not isinstance(maturity, int) or isinstance(maturity, bool) or maturity < 0:
+        raise BaselineError("DATASET_INVALID", "成熟期必须是非负整数天")
+    if not HEX40.fullmatch(str(labeling.get("revision") or "")):
+        raise BaselineError("DATASET_INVALID", "观察声明缺少固定 revision")
+    if labeling.get("historyStatus") not in ("complete", "shallow", "partial", "unknown"):
+        raise BaselineError("DATASET_INVALID", "观察声明的历史状态无效")
+    coverage = labeling.get("coverage")
+    if not isinstance(coverage, dict) or not isinstance(coverage.get("complete"), bool):
+        raise BaselineError("DATASET_INVALID", "观察声明的覆盖状态无效")
+    status_file = labeling.get("statusFile")
+    if not isinstance(status_file, dict) or not isinstance(status_file.get("path"), str):
+        raise BaselineError("DATASET_INVALID", "观察声明缺少逐提交状态文件")
+    if not HEX64.fullmatch(str(status_file.get("sha256") or "")):
+        raise BaselineError("DATASET_INVALID", "逐提交状态文件校验值无效")
+    if not isinstance(status_file.get("records"), int) or status_file["records"] < 0:
+        raise BaselineError("DATASET_INVALID", "逐提交状态文件记录数无效")
+    counts = labeling.get("counts")
+    if not isinstance(counts, dict) or "eligibleRecords" not in counts:
+        raise BaselineError("DATASET_INVALID", "观察声明缺少准入计数")
+    if not HEX64.fullmatch(str(labeling.get("identity") or "")):
+        raise BaselineError("DATASET_INVALID", "观察声明缺少内容身份")
+    if admission._identity_from_manifest({"labeling": labeling}) != labeling["identity"]:
+        raise BaselineError("DATASET_INVALID", "观察声明内容身份与字段不一致")
+    return labeling
+
+
+def semantic_identity(manifest):
+    """数据版本的语义身份：CSV、纳入规则、质量、文本与观察准入；不含采集时刻。"""
+    semantic = {key: manifest.get(key)
+                for key in ("schemaName", "cohort", "quality", "labeling")}
+    semantic["fileSha256"] = (manifest.get("file") or {}).get("sha256")
+    semantic["textSha256"] = (manifest.get("text") or {}).get("sha256")
+    return sha256(json.dumps(semantic, ensure_ascii=False, sort_keys=True,
+                             default=str).encode("utf-8"))
 
 
 def load_manifest(path):

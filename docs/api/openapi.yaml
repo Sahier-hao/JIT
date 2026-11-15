@@ -6331,6 +6331,7 @@ components:
           - fewPositives
           - noTestPositive
           - noGenericModel
+          - noMatureRecords
           - null
         trainRecords:
           type:
@@ -7060,6 +7061,7 @@ components:
           - fewPositives
           - noTestPositive
           - noGenericModel
+          - noMatureRecords
           - null
         runId:
           type:
