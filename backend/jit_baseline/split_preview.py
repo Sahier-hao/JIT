@@ -1,6 +1,7 @@
 """Read-only split previews backed by one registered dataset manifest."""
 from pathlib import Path
 
+from . import admission
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .datasets import load_all, load_manifest
@@ -22,7 +23,8 @@ def _records(manifest):
     return records
 
 
-def dataset_split_preview(dataset_root, dataset_version, preset=None):
+def dataset_split_preview(dataset_root, dataset_version, preset=None, *, allow_legacy=False,
+                          allow_restricted=False):
     """Return a no-write preview; invalid membership is data, not a failed request."""
     preset = resolve_preset(preset)
     registered = load_all(dataset_root)
@@ -33,15 +35,27 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None):
     manifest_path = declared if declared.is_absolute() else BACKEND / declared
     manifest = load_manifest(manifest_path)
     records = _records(manifest)
+    evaluated = admission.evaluate(manifest, records, allow_legacy=allow_legacy,
+                                   allow_restricted=allow_restricted)
     base = {
         "datasetVersion": dataset_version,
         "schemaName": manifest["schemaName"],
         "preset": preset_view(preset),
         "timezone": "UTC",
         "datasetRecords": len(records),
+        "eligibleRecords": evaluated["counts"]["eligibleRecords"],
+        "admission": admission.view(evaluated),
     }
+    if not evaluated["available"]:
+        return {
+            **base,
+            "available": False,
+            "reason": evaluated["reason"],
+            "partitions": None,
+            "policy": None,
+        }
     try:
-        split, _, policy = split_records(records, preset)
+        split, boundaries, policy = split_records(evaluated["eligible"], preset)
     except BaselineError as exc:
         return {
             **base,
@@ -64,12 +78,13 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None):
         "available": True,
         "reason": None,
         "partitions": partitions,
-        "policy": policy,
+        "policy": {**policy, "admission": evaluated["identity"] or evaluated["policy"]},
     }
 
 
-def validate_dataset_split(dataset_root, dataset_version, preset=None):
-    preview = dataset_split_preview(dataset_root, dataset_version, preset)
+def validate_dataset_split(dataset_root, dataset_version, preset=None, *, allow_legacy=False):
+    preview = dataset_split_preview(dataset_root, dataset_version, preset,
+                                    allow_legacy=allow_legacy)
     if not preview["available"]:
         reason = preview["reason"]
         raise BaselineError(reason["code"], reason["message"])

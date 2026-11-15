@@ -1,0 +1,682 @@
+{
+  "generatedAt": "2026-11-15T17:01:16Z",
+  "maturityDays": 90,
+  "notCovered": [
+    "人工判定与真实审查耗时未执行",
+    "六个旧仓库未在本轮重采",
+    "axios 使用默认分支 v1.x；flask 使用 main"
+  ],
+  "protocol": "mature-observed-v1",
+  "qualification": {
+    "note": "完整观察与成熟准入；自动核验通过不代表人工金标准。",
+    "usableForFormalEvaluation": true
+  },
+  "repositories": [
+    {
+      "admissionIdentity": "8373269d8669452d054b4f88353f373d1b96dec6698ffe16dc4375d30ce653c5",
+      "automaticCheck": {
+        "checked": 10,
+        "failed": 0,
+        "needsHuman": 0,
+        "passed": 10
+      },
+      "branch": "main",
+      "cohort": {
+        "addedLinesGreaterThan": 0,
+        "endEpochExclusive": 1785542400,
+        "maxChurnInclusive": 10000,
+        "maxFilesInclusive": 100,
+        "startEpochInclusive": 0
+      },
+      "counts": {
+        "eligibleRecords": 3694,
+        "excludedImmature": 0,
+        "excludedUnknown": 0,
+        "originalRecords": 3694,
+        "positivesEligible": 418,
+        "positivesOriginal": 418
+      },
+      "coverage": {
+        "complete": true,
+        "historyBounded": true,
+        "reason": null,
+        "truncated": false,
+        "unresolvedRanges": 0
+      },
+      "dataset": "kamei14-git-v2-flask-observed",
+      "files": {
+        "csv": {
+          "bytes": 426622,
+          "path": "artifacts/label-observation/2026-11-15d/work/flask.csv",
+          "sha256": "0130e26841ebe079aefe3ae08da911229ba6d52295cf902b45de86332155d25a"
+        },
+        "evidence": {
+          "path": "artifacts/label-observation/2026-11-15d/work/flask.label-evidence.jsonl",
+          "records": 706,
+          "rule": "szz-full-v1",
+          "sha256": "242b8e30b70409dfd4d463506a18f98d119dab2518cfcb86424596d12312e6b8"
+        },
+        "manifest": {
+          "path": "artifacts/label-observation/2026-11-15d/datasets/kamei14-git-v2-flask-observed/kamei14-git-v2-flask-observed-2010-04-06_2026-07-30.json",
+          "sha256": "92b2a1984363881d22121ed383e61774e8cebf14333456de2599386329f16ca8"
+        },
+        "status": {
+          "path": "artifacts/label-observation/2026-11-15d/work/flask.label-status.jsonl",
+          "records": 3694,
+          "rule": "commit-label-status-v1",
+          "sha256": "6d2ee61a583e46dea5b85c8af8ded39389bfd833c74a4273408cc3ac6b796fcc"
+        }
+      },
+      "historyStatus": "complete",
+      "humanReview": {
+        "note": "自动对象、路径与行号核验已完成；人工复核未执行，不能写成金标准。",
+        "reviewed": 0,
+        "status": "pending"
+      },
+      "language": "python",
+      "limitations": [
+        "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+        "标签由完整 SZZ 流程生成：修复提交优先用 issue/PR 关联确认，关键词兜底；删除/修改行用 git blame 回溯到引入提交。",
+        "issue 元数据是采集时的快照；离线或未配置 token 时退化为关键词识别，无法确认 issue 类型。",
+        "未关联 issue、纯新增式修复、强制推送改写历史与跨仓库搬运仍可能漏标；文档/测试/纯空白/重构不参与。",
+        "人工抽样复核不自动改变标签；可用 szz-sample 导出复核表，结论由人填写。",
+        "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。"
+      ],
+      "maturityDays": 90,
+      "observationWindow": {
+        "fromEpoch": null,
+        "through": "2026-10-30T15:05:20Z",
+        "throughEpoch": 1793372720
+      },
+      "observedThrough": 1793372720,
+      "observedThroughIso": "2026-10-30T15:05:20Z",
+      "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "sampleWindow": {
+        "endEpoch": 1785542400,
+        "since": null,
+        "startEpoch": null,
+        "until": "2026-08-01"
+      },
+      "samples": [
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "3d719f35f5c1ee4ce3dc01fb2167ef49c0180cf6",
+          "fixSource": "keyword",
+          "fixTime": "2010-04-10T13:49:15Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "7d6b8e9ab3e738d69e39ad53a7c0f6a552d5284a",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              291,
+              291
+            ],
+            [
+              301,
+              301
+            ],
+            [
+              308,
+              308
+            ],
+            [
+              375,
+              375
+            ]
+          ],
+          "path": "flask.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "f5b8c082847baa8a902cef22c43a5d50d7a55bdc",
+          "fixSource": "issueRef",
+          "fixTime": "2010-07-15T12:35:02Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "51a89bf35ec6231d55f5caa8e12484e801f593fe",
+          "issueRefs": [
+            86
+          ],
+          "lineRanges": [
+            [
+              12,
+              12
+            ]
+          ],
+          "path": "flask/module.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "075b6b11c8b1690d946b8839e6dc4eb8a8cb7e3c",
+          "fixSource": "keyword",
+          "fixTime": "2012-03-12T03:45:58Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "d0dc89ea802130e8a3a16b4fba73fa10815c09fb",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              649,
+              649
+            ]
+          ],
+          "path": "flask/app.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "51042f4c9f2c68a63ad5b8ee3000a52518a4b87b",
+          "fixSource": "keyword",
+          "fixTime": "2013-05-30T14:00:43Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "239780be289efd365c07be2f60bab9223388399e",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              90,
+              90
+            ]
+          ],
+          "path": "flask/testsuite/appctx.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "5da31f8af36012a4f76c3bd0d536ae107e0519b5",
+          "fixSource": "keyword",
+          "fixTime": "2015-07-14T23:20:39Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "6caaa8a527134dc9aff6d5c442969e96f9c00f21",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              1629,
+              1629
+            ]
+          ],
+          "path": "flask/app.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "697f7b9365304c45216e6c8dd307d931ea1506d0",
+          "fixSource": "issueRef",
+          "fixTime": "2017-04-24T21:11:49Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "2af0ffaef63dbd6031d889d28e4d60794becb7b6",
+          "issueRefs": [
+            1676
+          ],
+          "lineRanges": [
+            [
+              32,
+              32
+            ]
+          ],
+          "path": "flask/app.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "0f7b3a4f26dfbbe453a504abd4a8bcbf49194d46",
+          "fixSource": "issueRef",
+          "fixTime": "2017-06-14T14:16:55Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "48f7cdd01699fdc4048b18d827fccfbf9f266c9f",
+          "issueRefs": [
+            1809
+          ],
+          "lineRanges": [
+            [
+              849,
+              849
+            ]
+          ],
+          "path": "flask/app.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "976dfedaa9efdb566333ea829b12751820268f67",
+          "fixSource": "issueRef",
+          "fixTime": "2019-05-31T14:49:23Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "e853a0f73959ad12cdabc2d74324cdc9329ae794",
+          "issueRefs": [
+            3207
+          ],
+          "lineRanges": [
+            [
+              22,
+              22
+            ],
+            [
+              26,
+              26
+            ]
+          ],
+          "path": "flask/testing.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "746455d1038fd5479f396cbf2d19b48edfeb8290",
+          "fixSource": "keyword",
+          "fixTime": "2022-08-14T22:59:19Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "aa40b1731e09e839502994b3b0c22d3f2361d045",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              197,
+              198
+            ]
+          ],
+          "path": "flask/config.py",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "d086db856be187255b8ec61ef409357393020f32",
+          "fixSource": "keyword",
+          "fixTime": "2026-10-07T14:02:54Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "6000e80acf931b05b4911c3fa7f3ba33e2b80e64",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              279,
+              279
+            ]
+          ],
+          "path": "src/flask/sansio/app.py",
+          "problems": []
+        }
+      ],
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/pallets/flask",
+      "version": "kamei14-git-v2-flask-observed-2010-04-06_2026-07-30"
+    },
+    {
+      "admissionIdentity": "072c76b5a3e3e9b8fa3e1de8930a1a1b0369be4ac6a172b7f325a9e8aba2c98e",
+      "automaticCheck": {
+        "checked": 10,
+        "failed": 0,
+        "needsHuman": 0,
+        "passed": 10
+      },
+      "branch": "v1.x",
+      "cohort": {
+        "addedLinesGreaterThan": 0,
+        "endEpochExclusive": 1785542400,
+        "maxChurnInclusive": 10000,
+        "maxFilesInclusive": 100,
+        "startEpochInclusive": 0
+      },
+      "counts": {
+        "eligibleRecords": 1877,
+        "excludedImmature": 0,
+        "excludedUnknown": 0,
+        "originalRecords": 1877,
+        "positivesEligible": 566,
+        "positivesOriginal": 566
+      },
+      "coverage": {
+        "complete": true,
+        "historyBounded": false,
+        "reason": null,
+        "truncated": false,
+        "unresolvedRanges": 0
+      },
+      "dataset": "kamei14-git-v2-axios-observed",
+      "files": {
+        "csv": {
+          "bytes": 221349,
+          "path": "artifacts/label-observation/2026-11-15d/work/axios.csv",
+          "sha256": "d757e43a8ce7f3c8fa2540ae7a42d0e18c75a34468b870718eb2066d383df212"
+        },
+        "evidence": {
+          "path": "artifacts/label-observation/2026-11-15d/work/axios.label-evidence.jsonl",
+          "records": 1352,
+          "rule": "szz-full-v1",
+          "sha256": "6d515f86c5cf01d4e0bd9551217cd898e8cab2bd994c2248b6565f71eb080fea"
+        },
+        "manifest": {
+          "path": "artifacts/label-observation/2026-11-15d/datasets/kamei14-git-v2-axios-observed/kamei14-git-v2-axios-observed-2014-08-18_2026-07-30.json",
+          "sha256": "86e2934ead2fa24326cbd58cb8c06ab98863e5ef982cc83ee29a66892bfc3775"
+        },
+        "status": {
+          "path": "artifacts/label-observation/2026-11-15d/work/axios.label-status.jsonl",
+          "records": 1877,
+          "rule": "commit-label-status-v1",
+          "sha256": "0bdb6277d98fe14ca530484e106312e88fcd5bd84f196aaf880a134e114ff0c4"
+        }
+      },
+      "historyStatus": "complete",
+      "humanReview": {
+        "note": "自动对象、路径与行号核验已完成；人工复核未执行，不能写成金标准。",
+        "reviewed": 0,
+        "status": "pending"
+      },
+      "language": "javascript",
+      "limitations": [
+        "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+        "标签由完整 SZZ 流程生成：修复提交优先用 issue/PR 关联确认，关键词兜底；删除/修改行用 git blame 回溯到引入提交。",
+        "issue 元数据是采集时的快照；离线或未配置 token 时退化为关键词识别，无法确认 issue 类型。",
+        "未关联 issue、纯新增式修复、强制推送改写历史与跨仓库搬运仍可能漏标；文档/测试/纯空白/重构不参与。",
+        "人工抽样复核不自动改变标签；可用 szz-sample 导出复核表，结论由人填写。",
+        "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。"
+      ],
+      "maturityDays": 90,
+      "observationWindow": {
+        "fromEpoch": null,
+        "through": "2026-11-01T00:00:00Z",
+        "throughEpoch": 1793491200
+      },
+      "observedThrough": 1793491200,
+      "observedThroughIso": "2026-11-01T00:00:00Z",
+      "revision": "85ffbafab1a3f4385b6a4118692a6995ce71d9d8",
+      "sampleWindow": {
+        "endEpoch": 1785542400,
+        "since": null,
+        "startEpoch": null,
+        "until": "2026-08-01"
+      },
+      "samples": [
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "28073866a5c10e039c233d9ae22fe8bb95442bb7",
+          "fixSource": "keyword",
+          "fixTime": "2014-08-26T15:35:33Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "9c2528d9cca7c7be0b0e5c6cc58f2ad13a1d5689",
+          "issueRefs": [],
+          "lineRanges": [
+            [
+              73,
+              73
+            ],
+            [
+              100,
+              100
+            ],
+            [
+              903,
+              903
+            ]
+          ],
+          "path": "dist/axios.js",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "a98755c00a851765074e4ed866151232e03f931f",
+          "fixSource": "keyword",
+          "fixTime": "2020-05-23T17:06:10Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "157efd5615890301824e3121cc6c9d2f9b21f94a",
+          "issueRefs": [
+            1487
+          ],
+          "lineRanges": [
+            [
+              153,
+              153
+            ]
+          ],
+          "path": "lib/adapters/xhr.js",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "9588fcdec8aca45c3ba2f7968988a5d03f23168c",
+          "fixSource": "keyword",
+          "fixTime": "2022-09-28T18:30:21Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "9f6ba5ee4326d33d2b84aef591582a26cc892d4d",
+          "issueRefs": [
+            4884
+          ],
+          "lineRanges": [
+            [
+              245,
+              248
+            ]
+          ],
+          "path": "index.d.ts",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "a1c8ad008b3c13d53e135bbd0862587fb9d3fc09",
+          "fixSource": "keyword",
+          "fixTime": "2023-09-29T18:42:19Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "7a2f901f42138e1ef89c63ee9ac89a0d7a630077",
+          "issueRefs": [
+            5931
+          ],
+          "lineRanges": [
+            [
+              23,
+              23
+            ]
+          ],
+          "path": "index.d.cts",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "c71811b00f2fcff558e4382ba913bdac4ad7200e",
+          "fixSource": "keyword",
+          "fixTime": "2024-11-19T08:39:59Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "a1938ff073fcb0f89011f001dfbc1fa1dc995e39",
+          "issueRefs": [
+            6218
+          ],
+          "lineRanges": [
+            [
+              399,
+              399
+            ]
+          ],
+          "path": "index.d.cts",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+          "fixSource": "keyword",
+          "fixTime": "2026-02-14T14:59:48Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "097b0d18e93d12c53b77741d6bfdc8a1fc11828b",
+          "issueRefs": [
+            7385
+          ],
+          "lineRanges": [
+            [
+              6,
+              6
+            ],
+            [
+              12,
+              12
+            ],
+            [
+              14,
+              14
+            ],
+            [
+              25,
+              25
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              34,
+              34
+            ],
+            [
+              37,
+              39
+            ],
+            [
+              42,
+              42
+            ]
+          ],
+          "path": "bin/repo.js",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+          "fixSource": "keyword",
+          "fixTime": "2026-02-14T14:59:48Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "81e0455b7b57fbaf2be16a73ebe0e6591cc6d8f9",
+          "issueRefs": [
+            7385
+          ],
+          "lineRanges": [
+            [
+              54,
+              54
+            ]
+          ],
+          "path": "lib/core/Axios.js",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+          "fixSource": "keyword",
+          "fixTime": "2026-02-14T14:59:48Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "fe2563060dceaf8453c2f3654cc80aeae7da4ad1",
+          "issueRefs": [
+            7385
+          ],
+          "lineRanges": [
+            [
+              3,
+              3
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              13,
+              13
+            ],
+            [
+              26,
+              26
+            ],
+            [
+              30,
+              30
+            ],
+            [
+              32,
+              32
+            ],
+            [
+              44,
+              44
+            ],
+            [
+              46,
+              47
+            ],
+            [
+              56,
+              57
+            ],
+            [
+              59,
+              59
+            ]
+          ],
+          "path": "rollup.config.js",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "938a4fc4a8f66635bddfbaa0ccf0daa5fe865c28",
+          "fixSource": "keyword",
+          "fixTime": "2026-05-13T17:05:26Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "e9a1db9d9b495f5205bdf7af748afd6356be2498",
+          "issueRefs": [
+            10887
+          ],
+          "lineRanges": [
+            [
+              19,
+              20
+            ]
+          ],
+          "path": ".github/workflows/moderator.yml",
+          "problems": []
+        },
+        {
+          "automaticVerdict": "pass",
+          "fixCommit": "43968f294eaf79dabf0fcc2c05fd9add6a4faf12",
+          "fixSource": "keyword",
+          "fixTime": "2026-10-13T18:42:36Z",
+          "humanReview": "pending",
+          "humanVerdict": "",
+          "introducedCommit": "315ec44489cafeec509409fb6b0c0a6a88d56dc8",
+          "issueRefs": [
+            11210
+          ],
+          "lineRanges": [
+            [
+              95,
+              95
+            ]
+          ],
+          "path": "lib/helpers/Http2Sessions.js",
+          "problems": []
+        }
+      ],
+      "schema": "kamei14-git-v2",
+      "url": "https://github.com/axios/axios",
+      "version": "kamei14-git-v2-axios-observed-2014-08-18_2026-07-30"
+    }
+  ],
+  "reproduce": [
+    "cd backend",
+    "JIT_SZZ_MAX_SECONDS=7200 JIT_SZZ_MAX_RANGES_PER_FILE=2000 JIT_SZZ_MAX_LINES_PER_COMMIT=100000 ./.venv/Scripts/python.exe -m jit_baseline.cli collect-repository --repo https://github.com/pallets/flask --branch main --until 2026-08-01 --observe-through 2026-11-01 --dataset kamei14-git-v2-flask-observed --output artifacts/label-observation/2026-11-15d/work/flask.csv --register --root artifacts/label-observation/2026-11-15d/datasets --szz full --maturity-days 90",
+    "JIT_SZZ_MAX_SECONDS=7200 JIT_SZZ_MAX_RANGES_PER_FILE=2000 JIT_SZZ_MAX_LINES_PER_COMMIT=100000 ./.venv/Scripts/python.exe -m jit_baseline.cli collect-repository --repo https://github.com/axios/axios --branch HEAD --until 2026-08-01 --observe-through 2026-11-01 --dataset kamei14-git-v2-axios-observed --output artifacts/label-observation/2026-11-15d/work/axios.csv --register --root artifacts/label-observation/2026-11-15d/datasets --szz full --maturity-days 90"
+  ],
+  "statusRule": "commit-label-status-v1"
+}

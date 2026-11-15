@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
+from . import admission
 from .algorithms import ALGORITHMS, get_algorithm
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
@@ -57,12 +58,17 @@ def load_dataset(path):
     records, quality = parse_source(blob, schema, manifest["cohort"])
     if quality != manifest["quality"]:
         raise BaselineError("DATASET_INVALID", "按描述文件规则重算的质量统计与描述不一致")
+    evaluated = admission.evaluate(manifest, records)
+    if not evaluated["available"]:
+        reason = evaluated["reason"]
+        raise BaselineError(reason["code"], reason["message"])
     return {
         "manifest": manifest,
         "manifestSha256": sha256(manifest_path.read_bytes()),
         "csvSha256": manifest["file"]["sha256"],
         "schema": schema,
-        "records": records,
+        "records": evaluated["eligible"],
+        "admission": admission.view(evaluated),
         "quality": quality,
         "name": manifest["dataset"],
         "version": manifest["version"],
@@ -204,14 +210,23 @@ def _baseline_cell(test_records, kind, seed=None):
 
 
 def _dataset_entry(dataset):
+    evaluated = dataset.get("admission") or {}
+    counts = evaluated.get("counts") or {}
     return {
         "name": dataset["name"], "version": dataset["version"],
         "language": dataset["language"], "schema": dataset["schema"].name,
         "manifestSha256": dataset["manifestSha256"], "csvSha256": dataset["csvSha256"],
         "includedRows": dataset["quality"]["includedRows"],
         "positiveLabels": dataset["quality"]["positiveLabels"],
+        "eligibleRecords": counts.get("eligibleRecords", len(dataset["records"])),
+        "eligiblePositives": counts.get("positivesEligible",
+                                        sum(record["label"] for record in dataset["records"])),
+        "admission": evaluated.get("identity") or evaluated.get("policy") or "publisher-labels-v1",
+        "admissionPolicy": evaluated.get("policy"),
         "url": dataset["manifest"].get("url"),
         "revision": dataset["manifest"].get("revision"),
+        "sampleWindow": (dataset["manifest"].get("labeling") or {}).get("sampleWindow"),
+        "observationWindow": (dataset["manifest"].get("labeling") or {}).get("observationWindow"),
     }
 
 

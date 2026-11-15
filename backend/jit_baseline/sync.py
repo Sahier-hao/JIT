@@ -6,6 +6,7 @@
 """
 import hashlib
 import json
+import logging
 import os
 import re
 import sys
@@ -35,6 +36,8 @@ from .schemas import resolve
 from .splits import resolve_preset, split_records
 from .task_process import OwnedProcess
 from .training import TrainingExecutor
+
+logger = logging.getLogger(__name__)
 
 SCHEMA_NAME = collect.SCHEMA_NAME
 GENERIC_SCHEMA = "openstack-six-v1"
@@ -67,7 +70,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
            "origin", "feature_schema_version", "distribution_rule", "feature_source_json", "algorithm")
-COLUMNS = (*COLUMNS, "split_preset", "split_policy_json")
+COLUMNS = (*COLUMNS, "split_preset", "split_policy_json", "admission_degrade_reason")
 
 
 def worker_command():
@@ -168,6 +171,13 @@ def _repository_view(row):
             "createdAt": row["created_at"], "updatedAt": row["updated_at"]}
 
 
+def _degrade_fields(reason):
+    """成熟准入的降级原因写入独立列；旧 CHECK 只约束历史四种原因。"""
+    if reason == "noMatureRecords":
+        return {"admission_degrade_reason": reason, "degrade_reason": None}
+    return {"degrade_reason": reason, "admission_degrade_reason": None}
+
+
 def _view(row):
     """作业行转接口表示；错误只在这里拼出可读提示。"""
     item = dict(row)
@@ -182,7 +192,8 @@ def _view(row):
             "resolvedModelId": item.get('resolved_model_id'),
             "stage": item["stage"], "datasetVersion": item["dataset_version"],
             "runId": item["run_id"], "modelId": item["model_id"],
-            "modelStrategy": item["model_strategy"], "degradeReason": item["degrade_reason"],
+            "modelStrategy": item["model_strategy"],
+            "degradeReason": item["degrade_reason"] or item["admission_degrade_reason"],
             "trainRecords": item["train_records"], "trainPositives": item["train_positives"],
             "createdAt": item["created_at"], "updatedAt": item["updated_at"],
             "completedAt": item.get("completed_at"), "headCommit": item.get("head_commit"),
@@ -1251,7 +1262,7 @@ class SyncService:
 
     def _persist(self, sync_id, item, collected):
         """写 CSV、登记数据集并入库；返回描述文件绝对路径与版本名（RCL-08）。"""
-        manifest_path, version, parsed, _ = persist_collected_dataset(
+        manifest_path, version, parsed, _, admission_view = persist_collected_dataset(
             self.sync.storage, self.dataset_root,
             repository_url=item["repositoryUrl"], since=item["since"], until=item["until"],
             collected=collected,
@@ -1259,7 +1270,7 @@ class SyncService:
             source_id=sync_id,
         )
         self.sync.update(sync_id, dataset_version=version)
-        return manifest_path, version, parsed
+        return manifest_path, version, parsed, admission_view
 
     def _run(self, sync_id):
         started = time.monotonic()
@@ -1304,14 +1315,26 @@ class SyncService:
             records = collected["rawRecords"]
 
             self._step(sync_id, "registering", started)
-            manifest_path, version, trainable = self._persist(sync_id, item, collected)
+            manifest_path, version, trainable, admission_view = self._persist(sync_id, item, collected)
 
             self._step(sync_id, "training", started)
-            holdout = _holdout(trainable)
-            decision = choose_model(trainable, item["requestedStrategy"], holdout,
-                                    item["splitPreset"])
+            if not trainable:
+                if item["requestedStrategy"] == "force-train":
+                    reason = (admission_view.get("reason") or {}).get("message") or "成熟样本准入后没有可用训练记录"
+                    raise BaselineError("SPLIT_INVALID",
+                                        f"{reason}；请改用现成模型或等待观察期")
+                holdout = None
+                decision = {"modelStrategy": GENERIC,
+                            "degradeReason": "noMatureRecords",
+                            "trainRecords": 0, "trainPositives": 0, "holdout": None}
+            else:
+                # holdout 仍相对本次样本的最新提交计算；成熟准入作为另一层交集，
+                # 不从成熟成员里另算一个更早的截止点。
+                holdout = _holdout(records)
+                decision = choose_model(trainable, item["requestedStrategy"], holdout,
+                                        item["splitPreset"])
             self.sync.update(sync_id, model_strategy=decision["modelStrategy"],
-                             degrade_reason=decision["degradeReason"],
+                             **_degrade_fields(decision["degradeReason"]),
                              train_records=decision["trainRecords"],
                              train_positives=decision["trainPositives"])
             if decision["modelStrategy"] == TRAINED:
@@ -1375,11 +1398,12 @@ class SyncService:
             if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):
                 degrade = "noGenericModel"
             self.sync.finish(sync_id, 'cancelled' if exc.code == 'SYNC_CANCELLED' else 'failed', exc.code, str(exc),
-                             **({"degrade_reason": degrade} if degrade else {}),
+                             **(_degrade_fields(degrade) if degrade else {}),
                              **({"dataset_version": version} if version else {}))
             if exc.code != 'SYNC_CANCELLED':
                 self._event(sync_id, 'analysis-failed', '分析失败', str(exc), payload={'errorCode': exc.code})
         except Exception:
+            logger.exception("仓库同步出现未预期错误：sync=%s", sync_id)
             self.sync.finish(sync_id, 'failed', 'INTERNAL_ERROR',
                              '同步过程中出现未预期错误，请重试；如果反复失败请联系维护者')
             self._event(sync_id, 'analysis-failed', '分析失败', '同步过程中出现未预期错误，请重试', payload={'errorCode': 'INTERNAL_ERROR'})

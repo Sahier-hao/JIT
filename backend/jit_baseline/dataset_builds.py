@@ -400,7 +400,7 @@ class DatasetBuildService:
             )
             self._check(task_id)
             self.tasks.update(task_id, stage="registering")
-            manifest_path, version, _, created = persist_collected_dataset(
+            manifest_path, version, _, created, admission_view = persist_collected_dataset(
                 self.storage, self.dataset_root,
                 repository_url=row["repository_url"], since=row["since"], until=row["until"],
                 collected=collected, usage="branch", source_id=task_id,

@@ -24,6 +24,7 @@ from ipaddress import ip_address
 from pathlib import Path
 from urllib.parse import urlparse
 
+from . import admission
 from .errors import BaselineError
 from .schemas import resolve
 from .szz import (SZZ_FULL_LIMITATIONS, SZZ_FULL_RULE, SZZ_LINE_LIMITATIONS, SZZ_LINE_RULE,
@@ -408,18 +409,57 @@ class _History:
         }
 
 
-def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=False, szz="full"):
+def _revision_info(repo, ref):
+    """固定本次采集使用的提交：返回提交 SHA 与其作者时间。"""
+    identity = head(repo, ref)
+    result = _run(repo, ["show", "-s", "--format=%at", identity], check=False)
+    epoch = None
+    if result.returncode == 0 and result.stdout.strip().isdigit():
+        epoch = int(result.stdout.strip())
+    return identity, epoch
+
+
+def _history_status(repo, entries):
+    """仓库历史完整性：浅克隆或第一条提交仍有父提交时不能声明完整历史。"""
+    result = _run(repo, ["rev-parse", "--is-shallow-repository"], check=False)
+    if result.returncode == 0 and result.stdout.strip().lower() == "true":
+        return "shallow"
+    if entries and entries[0]["parents"]:
+        return "partial"
+    return "complete"
+
+
+def _iso_epoch(epoch):
+    if epoch is None:
+        return None
+    return datetime.fromtimestamp(epoch, timezone.utc).isoformat(
+        timespec="seconds").replace("+00:00", "Z")
+
+
+def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=False, szz="full",
+            observe_through=None, revision=None, maturity_days=RECENT_DAYS):
     """采集一个仓库的提交窗口；返回记录、标签统计、采集证据与 CSV 字节。
 
+    `since`/`until` 只决定哪些提交进入样本；`observe_through` 决定修复观察到哪个时刻，
+    可以晚于样本截止，从而让样本截止之后发生的修复为原纳入提交提供证据。未提供观察
+    终点时只声明实际执行到的范围，不虚构更长的观察时间。
+    `revision` 固定采集使用的提交；省略时把 `branch` 解析成具体 SHA 并贯穿本次采集。
     `szz="full"` 使用完整流程（szz-full-v1）；`szz="line"` 行级兼容；`szz="simple"` 文件级兼容。
     """
     if szz not in ("full", "line", "simple"):
         raise BaselineError("INPUT_INVALID", "标签规则必须是 full、line 或 simple")
+    if not isinstance(maturity_days, int) or isinstance(maturity_days, bool) or maturity_days < 0:
+        raise BaselineError("INPUT_INVALID", "成熟期必须是非负整数天")
     repo = repository(repo)
     start, end = parse_time(since), parse_time(until)
     if start is not None and end is not None and start >= end:
         raise BaselineError("INPUT_INVALID", "起始时间必须早于结束时间")
-    entries, unparsed = _entries(repo, branch)
+    requested_observation = parse_time(observe_through)
+    if start is not None and requested_observation is not None and requested_observation < start:
+        raise BaselineError("INPUT_INVALID", "观察终点必须不早于采集起始时间")
+    pinned, revision_epoch = _revision_info(repo, revision or branch)
+    entries, unparsed = _entries(repo, pinned)
+    history_status = _history_status(repo, entries)
     non_merge = [commit for commit in entries if len(commit["parents"]) <= 1]
     excluded = {"merges": sum(1 for commit in entries
                               if len(commit["parents"]) > 1 and _inside(commit["epoch"], start, end)),
@@ -432,6 +472,14 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     if limit is not None and len(window) > limit:
         raise BaselineError("DATASET_INVALID",
                             f"范围内提交数 {len(window)} 超过上限 {limit}，请缩小范围")
+    observed_through = end if end is not None else max(commit["epoch"] for commit in window)
+    if requested_observation is not None:
+        observed_through = requested_observation
+    history_bounded = False
+    if revision_epoch is not None and observed_through > revision_epoch:
+        # 请求的观察终点晚于固定 revision：只能声明 revision 实际覆盖到的历史。
+        observed_through = revision_epoch
+        history_bounded = True
 
     # 每个提交只沿第一父链取得状态；分支点复制状态，线性历史原地推进。
     remaining = {commit["id"]: 0 for commit in entries}
@@ -458,34 +506,38 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     for commit in entries:
         parent = commit["parents"][0] if commit["parents"] else None
         state = take(parent) if parent is not None else _History()
+        in_sample = _inside(commit["epoch"], start, end)
+        in_observation = ((start is None or commit["epoch"] >= start)
+                          and (observed_through is None or commit["epoch"] <= observed_through))
         if len(commit["parents"]) > 1:
             # 合并提交不进入记录，也不把两个父的状态相加；只把第一父状态交给后续提交。
             states[commit["id"]] = state
             if remaining[commit["id"]] == 0:
                 states.pop(commit["id"], None)
             continue
-        if _inside(commit["epoch"], start, end):
+        if (szz == "simple" and in_observation and commit["files"]
+                and re.search(SZZ_PATTERN, commit["subject"] or "")):
+            fix_commits += 1
+            for item in commit["files"]:
+                previous = state.file_last.get(item["path"])
+                if previous is None:
+                    skipped["noEarlierChange"] += 1
+                    continue
+                identity, epoch = previous
+                if start is not None and epoch < start:
+                    skipped["outsideWindow"] += 1
+                    continue
+                labels.add(identity)
+                evidence.append({"introducedCommit": identity,
+                                 "fixCommit": commit["id"],
+                                 "path": item["path"],
+                                 "fixTime": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z")})
+        if in_sample:
             if not commit["files"]:
                 excluded["empty"] += 1
             else:
                 metrics = state.features(commit)
                 negative_file_ages += metrics.pop("_negativeFileAges", 0)
-                if szz == "simple" and metrics["fix"]:
-                    fix_commits += 1
-                    for item in commit["files"]:
-                        previous = state.file_last.get(item["path"])
-                        if previous is None:
-                            skipped["noEarlierChange"] += 1
-                            continue
-                        identity, epoch = previous
-                        if start is not None and epoch < start:
-                            skipped["outsideWindow"] += 1
-                            continue
-                        labels.add(identity)
-                        evidence.append({"introducedCommit": identity,
-                                         "fixCommit": commit["id"],
-                                         "path": item["path"],
-                                         "fixTime": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z")})
                 records.append({"id": commit["id"], "epoch": commit["epoch"],
                                 "time": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z"),
                                 "subject": commit["subject"], "authorName": commit["author"],
@@ -495,7 +547,6 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         if remaining[commit["id"]] == 0:
             states.pop(commit["id"], None)
 
-    observed_through = end if end is not None else max(commit["epoch"] for commit in window)
     line_result = None
     if szz in ("full", "line"):
         resolver = build_resolver(repo) if szz == "full" else None
@@ -504,7 +555,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                     and record["metrics"]["la"] + record["metrics"]["ld"] <= 10000
                     and record["metrics"]["nf"] <= 100}
         line_result = label_repository_lines(repo, entries, included,
-                                             start, end, mode=szz, resolver=resolver)
+                                             start, observed_through, mode=szz, resolver=resolver)
         labels = line_result.labels
         evidence = line_result.evidence
         fix_commits = line_result.fix_commits
@@ -513,6 +564,15 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                    "skippedFiles": line_result.skipped_files,
                    "skippedExcluded": line_result.skipped_excluded,
                    "skippedWhitespace": line_result.skipped_whitespace}
+    truncated = bool(line_result.truncated) if line_result is not None else False
+    coverage = {
+        "complete": history_status == "complete" and not truncated,
+        "truncated": truncated,
+        "historyBounded": history_bounded,
+        "unresolvedRanges": (line_result.unresolved_ranges if line_result is not None else 0),
+        "reason": (None if history_status == "complete" and not truncated else
+                   "history" if history_status != "complete" else "szz-budget"),
+    }
     rule = (SZZ_FULL_RULE if line_result is not None and szz == "full" else
             SZZ_LINE_RULE if line_result is not None else SZZ_RULE)
     names = resolve(SCHEMA_NAME).in_model_names()
@@ -520,7 +580,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         record["label"] = 1 if record["id"] in labels else 0
         record["labelRule"] = rule if record["label"] else None
         record["labelStatus"] = ("positive" if record["label"] else
-                                 "immature" if observed_through - record["epoch"] < RECENT_DAYS * 86400
+                                 "immature" if observed_through - record["epoch"] < maturity_days * 86400
                                  else "unobserved")
         record["labelNote"] = (None if record["label"]
                                else ("未观测到缺陷引入（完整 SZZ），不等于已证实无缺陷"
@@ -529,6 +589,31 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                                      if line_result is not None
                                      else "未观测到缺陷引入（简化 SZZ），不等于已证实无缺陷"))
         record["features"] = [record["metrics"][name] for name in names]
+
+    status_records = [record for record in records
+                      if record["metrics"]["la"] > 0
+                      and record["metrics"]["la"] + record["metrics"]["ld"] <= 10000
+                      and record["metrics"]["nf"] <= 100]
+    status_entries = admission.build_status(
+        status_records, observed_through if history_status == "complete" else None, maturity_days)
+    sample_window = {"since": since, "until": until, "startEpoch": start, "endEpoch": end}
+    observation = {
+        "protocol": admission.PROTOCOL,
+        "labelRule": rule,
+        "sampleWindow": sample_window,
+        "observationWindow": {"fromEpoch": start, "throughEpoch": observed_through,
+                              "through": _iso_epoch(observed_through)},
+        "observedThrough": observed_through,
+        "observedThroughIso": _iso_epoch(observed_through),
+        "requestedThrough": requested_observation,
+        "maturityDays": maturity_days,
+        "revision": pinned,
+        "revisionEpoch": revision_epoch,
+        "historyStatus": history_status,
+        "coverage": coverage,
+        "statusRule": admission.STATUS_RULE,
+        "counts": admission.count_summary(status_entries),
+    }
 
     blob = _csv_bytes(records, names)
     label_kind = ("szz-full" if line_result is not None and szz == "full" else
@@ -539,21 +624,26 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                    if line_result is not None else list(LIMITATIONS))
     szz_info = (line_result.stats() if line_result is not None else
                 {"rule": SZZ_RULE, "pattern": SZZ_PATTERN, "fixCommits": fix_commits,
-                 "labeledCommits": len(labels), "unresolved": dict(skipped)})
+                 "labeledCommits": len(labels), "unresolved": dict(skipped),
+                 "truncated": truncated})
     collection = {
         "kind": "git-repository",
-        "repository": {"path": str(repo), "head": head(repo, branch), "branch": branch,
-                       "resolvedBranch": _run(repo, ['rev-parse', '--abbrev-ref', branch]).stdout.strip()},
+        "repository": {"path": str(repo), "head": pinned, "branch": branch,
+                       "resolvedBranch": _run(repo, ['rev-parse', '--abbrev-ref', branch]).stdout.strip(),
+                       "revision": pinned, "revisionEpoch": revision_epoch},
         "window": {"since": since, "until": until, "startEpoch": start, "endEpoch": end},
+        "observation": observation,
         "gitVersion": git_version(),
         "label": {"kind": label_kind, "rule": rule, "version": rule,
-                  "observedThrough": observed_through, "maturityDays": RECENT_DAYS,
+                  "observedThrough": observed_through, "maturityDays": maturity_days,
+                  "protocol": admission.PROTOCOL,
                   "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0",
                   "limitations": limitations},
         "labelEvidence": evidence,
         "fixSignals": (line_result.fix_signal_evidence[:500] if line_result is not None else []),
         "szz": szz_info,
         "counts": {"commitsInWindow": len(window), "records": len(records),
+                   "datasetRecords": len(status_records),
                    "excluded": excluded,
                    "negativeFileAgeFiles": negative_file_ages,
                    "binaryFiles": sum(1 for commit in window for item in commit["files"]
@@ -562,13 +652,15 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     }
     text = None
     if with_text:
-        entries = text_entries(repo, branch, records)
-        text = {"records": entries, "bytes": _jsonl_bytes(entries), "rule": TEXT_RULE,
-                "truncated": sum(1 for entry in entries if entry["truncated"]),
-                "skippedFiles": sum(len(entry["skippedFiles"]) for entry in entries)}
+        entries_text = text_entries(repo, pinned, records)
+        text = {"records": entries_text, "bytes": _jsonl_bytes(entries_text), "rule": TEXT_RULE,
+                "truncated": sum(1 for entry in entries_text if entry["truncated"]),
+                "skippedFiles": sum(len(entry["skippedFiles"]) for entry in entries_text)}
     return {"records": records, "csv": blob, "collection": collection, "excluded": excluded,
             "skipped": skipped, "fixCommits": fix_commits, "labeled": len(labels), "text": text,
-            "labelEvidence": evidence}
+            "labelEvidence": evidence, "status": status_entries,
+            "observation": observation}
+
 
 
 def _csv_bytes(records, names):
@@ -871,13 +963,33 @@ def _publish_output(path, blob):
     raise BaselineError("DATASET_EXISTS", f"目标文件已存在且内容不同，不覆盖：{path.name}")
 
 
+def _relative_backend(path):
+    from .config import BACKEND
+    resolved = Path(path).resolve()
+    return (resolved.relative_to(BACKEND.resolve()).as_posix()
+            if resolved.is_relative_to(BACKEND.resolve()) else resolved.as_posix())
+
+
+def _write_sidecar(path, blob):
+    """写旁车文件；已存在且内容不同即失败，不覆盖旧证据。"""
+    if path.exists() and path.read_bytes() != blob:
+        raise BaselineError("DATASET_EXISTS", f"旁车文件已存在且内容不同，不覆盖：{path.name}")
+    if not path.exists():
+        temporary = path.with_name(path.name + ".tmp")
+        temporary.write_bytes(blob)
+        temporary.replace(path)
+    return path
+
+
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
-                       allow_local=True, return_blob=False, with_text=False, szz="full"):
-    """采集 → 写 CSV → 可选登记；远程来源克隆到临时目录并在结束时清理。
+                       allow_local=True, return_blob=False, with_text=False, szz="full",
+                       observe_through=None, revision=None, maturity_days=RECENT_DAYS):
+    """采集 → 写 CSV 与逐提交状态旁车 → 可选登记；远程来源克隆到临时目录并在结束时清理。
 
     `allow_local=False` 时只接受公开 HTTP(S) 地址（同步接口使用）；
     `return_blob=True` 时把 CSV 字节与逐条记录一并返回，供同步编排直接落库。
+    观察终点可以晚于样本截止；`revision` 固定采集使用的提交。
     """
     repo = validate_source(repo, allow_local=allow_local)
     temporary = None
@@ -895,7 +1007,9 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                 clone = Path(temporary) / "repository.git"
                 _clone_bare(repo, clone)
                 target = clone
-        collected = collect(target, since, until, branch, limit, with_text=with_text, szz=szz)
+        collected = collect(target, since, until, branch, limit, with_text=with_text, szz=szz,
+                            observe_through=observe_through, revision=revision,
+                            maturity_days=maturity_days)
         if not collected["records"]:
             raise BaselineError("DATASET_INVALID", "采集范围内没有可纳入的提交")
         blob = collected["csv"]
@@ -921,17 +1035,9 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                 raise BaselineError("INPUT_INVALID", "文本采集需要 --output 指定 CSV 路径")
             text_path = path.with_name(path.stem + ".text.jsonl")
             text_bytes = collected["text"]["bytes"]
-            if text_path.exists() and text_path.read_bytes() != text_bytes:
-                raise BaselineError("DATASET_EXISTS", f"文本文件已存在且内容不同，不覆盖：{text_path.name}")
-            if not text_path.exists():
-                temporary_text = text_path.with_name(text_path.name + ".tmp")
-                temporary_text.write_bytes(text_bytes)
-                temporary_text.replace(text_path)
-            from .config import BACKEND
-            resolved = text_path.resolve()
-            relative = (resolved.relative_to(BACKEND.resolve()).as_posix()
-                        if resolved.is_relative_to(BACKEND.resolve()) else resolved.as_posix())
-            text_meta = {"path": relative, "sha256": hashlib.sha256(text_bytes).hexdigest(),
+            _write_sidecar(text_path, text_bytes)
+            text_meta = {"path": _relative_backend(text_path),
+                         "sha256": hashlib.sha256(text_bytes).hexdigest(),
                          "bytes": len(text_bytes), "rule": TEXT_RULE,
                          "records": len(collected["text"]["records"]),
                          "truncated": collected["text"]["truncated"],
@@ -941,28 +1047,26 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
         if evidence and path is not None:
             evidence_path = path.with_name(path.stem + ".label-evidence.jsonl")
             evidence_bytes = _jsonl_bytes(evidence)
-            if evidence_path.exists() and evidence_path.read_bytes() != evidence_bytes:
-                raise BaselineError("DATASET_EXISTS", f"标签证据文件已存在且内容不同，不覆盖：{evidence_path.name}")
-            if not evidence_path.exists():
-                temporary_evidence = evidence_path.with_name(evidence_path.name + ".tmp")
-                temporary_evidence.write_bytes(evidence_bytes)
-                temporary_evidence.replace(evidence_path)
-            from .config import BACKEND
-            resolved_evidence = evidence_path.resolve()
-            relative_evidence = (resolved_evidence.relative_to(BACKEND.resolve()).as_posix()
-                                 if resolved_evidence.is_relative_to(BACKEND.resolve())
-                                 else resolved_evidence.as_posix())
-            evidence_meta = {"path": relative_evidence,
+            _write_sidecar(evidence_path, evidence_bytes)
+            evidence_meta = {"path": _relative_backend(evidence_path),
                              "sha256": hashlib.sha256(evidence_bytes).hexdigest(),
-                             "records": len(evidence), "rule": SZZ_RULE}
+                             "records": len(evidence),
+                             "rule": collected["observation"]["labelRule"]}
+        status_meta, labeling = _status_sidecar(path, collected)
         result = {"kind": "repository-collected", "repository": str(repo),
                   "records": len(collected["records"]), "fixCommits": collected["fixCommits"],
                   "labeled": collected["labeled"], "skipped": collected["skipped"],
                   "excluded": collected["excluded"], "collection": collected["collection"],
-                  "cacheHit": cache_hit, "text": text_meta}
+                  "cacheHit": cache_hit, "text": text_meta,
+                  "observation": collected["observation"],
+                  "admission": admission.summary(collected["observation"],
+                                                 collected["status"])}
         if return_blob:
             result["blob"] = blob
             result["rawRecords"] = collected["records"]
+            result["status"] = collected["status"]
+            result["statusEntries"] = collected["status"]
+            result["labeling"] = labeling
         if path is not None:
             result["csv"] = {"path": str(path.resolve()), "bytes": len(blob)}
         if register:
@@ -973,7 +1077,9 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                 schema=SCHEMA_NAME, dataset=dataset_name_value,
                 cohort=cohort(since, until), root=root,
                 extra={"collection": collected["collection"],
+                       "labeling": labeling,
                        **({"text": text_meta} if text_meta else {}),
+                       **({"labelStatusFile": status_meta} if status_meta else {}),
                        **({"labelEvidenceFile": evidence_meta} if evidence_meta else {})},
                 provenance={"publisher": "collected",
                             "revision": collected["collection"]["repository"]["head"],
@@ -985,7 +1091,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                 if exc.code != "DATASET_EXISTS":
                     raise
                 published = store.register(
-                    path, version=f"{version}-{hashlib.sha256(blob).hexdigest()[:8]}",
+                    path, version=f"{version}-{labeling['identity'][:8]}",
                     **register_kwargs)
             result["dataset"] = published
             result["csv"] = {"path": str(path.resolve()), "bytes": len(blob)}
@@ -995,3 +1101,33 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             lease.__exit__(None, None, None)
         if temporary is not None:
             _remove_tree(temporary)
+
+
+def _status_sidecar(path, collected):
+    """写逐提交状态旁车并返回描述文件记录与观察声明；无输出路径时只构造声明。"""
+    entries = collected["status"]
+    status_bytes_value = admission.status_bytes(entries)
+    status_meta = None
+    if path is not None:
+        status_path = path.with_name(path.stem + ".label-status.jsonl")
+        _write_sidecar(status_path, status_bytes_value)
+        status_meta = {"path": _relative_backend(status_path),
+                       "sha256": hashlib.sha256(status_bytes_value).hexdigest(),
+                       "records": len(entries), "rule": admission.STATUS_RULE}
+    observation = collected["observation"]
+    labeling = admission.declaration(
+        label_rule=observation["labelRule"],
+        sample_window=observation["sampleWindow"],
+        observation_window=observation["observationWindow"],
+        observed_through=observation["observedThrough"],
+        maturity_days=observation["maturityDays"],
+        revision=observation["revision"],
+        revision_epoch=observation["revisionEpoch"],
+        history_status=observation["historyStatus"],
+        coverage=observation["coverage"],
+        entries=entries,
+        status_file=status_meta,
+        requested_through=observation.get("requestedThrough"),
+    )
+    return status_meta, labeling
+
