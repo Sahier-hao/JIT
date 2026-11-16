@@ -99,7 +99,7 @@ export function CodeDiff({ file, view, onAnchor, location }: {
     }
   }, [parsed, file.path])
   if (!parsed || !parsed.hunks.length) {
-    return <p className="wb-diff-empty">这个文件没有可解析的改动行（可能是二进制、重命名或超出接口上限）。请到 GitHub 核对原文件。</p>
+    return <p className="p-4 text-xs leading-body text-foreground-3">这个文件没有可解析的改动行（可能是二进制、重命名或超出接口上限）。请到 GitHub 核对原文件。</p>
   }
   const focused = (change: ChangeData) => {
     if (!location) return false
@@ -111,16 +111,16 @@ export function CodeDiff({ file, view, onAnchor, location }: {
     const target: 'base' | 'head' = side === 'old' ? 'base' : 'head'
     return <button
       type="button"
-      className="wb-gutter-number"
+      className="wb-gutter-number cursor-pointer border-0 bg-transparent px-1 text-right font-mono text-[11px] text-foreground-4 hover:text-accent"
       data-focused={focused(change) ? 'true' : undefined}
       aria-label={`关联 ${file.path}:${target}:${number}`}
       onClick={() => onAnchor(target, number)}
     >{number}</button>
   }
   /* react-diff-view 不渲染 @@ 块头，也没有折叠区间；每块单独成表并在上面标出位置。 */
-  return <div className="wb-diff-scroll">
-    {parsed.hunks.map((hunk, index) => <div className="wb-hunk" key={`${hunk.oldStart}-${hunk.newStart}-${index}`}>
-      <div className="wb-hunk-head">
+  return <div className="overflow-auto">
+    {parsed.hunks.map((hunk, index) => <div className="wb-hunk border-b border-border-soft last:border-b-0" key={`${hunk.oldStart}-${hunk.newStart}-${index}`}>
+      <div className="wb-hunk-head sticky top-0 z-10 flex items-center gap-2 border-b border-border-soft bg-sunken px-2 py-1 font-mono text-[11px] text-foreground-3">
         <code>{hunk.content.trim() || `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`}</code>
       </div>
       <Diff

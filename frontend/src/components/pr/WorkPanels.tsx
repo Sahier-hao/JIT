@@ -1,48 +1,59 @@
 import { Icon } from '../../Icon'
 import { useRef, useState } from 'react'
 import { Alert, Space } from '../../ui/feedback'
-import { Button, Checkbox, Select, TextArea } from '../../ui/controls'
+import { Button, Checkbox, NativeSelect, TextArea } from '../../ui/controls'
 import { backupText, downloadText, evidenceURL, mergeBackup, parseBackupInfo, type Conclusion, type Evidence, type PRWork, type ReviewQuestion } from '../../prReview'
 import { verifyBackupSources, type PRSnapshot } from '../../prReviewClient'
 
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
 function backup(work: PRWork, account: string | null) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, backupText(work, account), 'application/json') }
+const field = 'grid gap-1.5'
+const fieldLabel = 'text-xs font-medium text-foreground-2'
 
 export function QuestionEditor({ value: q, source, onChange, onJump, work }: { value: ReviewQuestion; source: PRSnapshot; onChange: (value: ReviewQuestion) => void; onJump: (e: Evidence) => void; work: PRWork }) {
   const [error, setError] = useState('')
-  return <div className="pr-question-editor"><p className="pr-source-label">来源：{q.source === 'author' ? '作者原始说明中的核对目标' : q.source === 'change' ? '已加载文件事实，规则生成的核对问题' : '人工提出'} · 原版本 {q.originSnapshotId.slice(0, 12)}</p>
-    {q.requiresRecheck ? <p className="warning">相关代码已变化，旧证据可能过期。原问题和判断保留，请人工核对。</p> : null}
-    <label>问题、疑问或建议<textarea aria-label="审查问题内容" value={q.body} onChange={e => onChange({ ...q, body: e.target.value })}/></label>
-    <label>记录类型<select aria-label="审查记录类型" value={q.kind} onChange={e => onChange({ ...q, kind: e.target.value as ReviewQuestion['kind'] })}><option value="question">待确认的问题</option><option value="finding">人工确认的问题</option><option value="suggestion">一般建议</option></select></label>
-    <details><summary>关联实现与测试文件（{q.relatedFiles.length}）</summary>{source.files.map(f => <label key={f.path}><input type="checkbox" checked={q.relatedFiles.includes(f.path)} onChange={e => onChange({ ...q, relatedFiles: e.target.checked ? [...q.relatedFiles, f.path] : q.relatedFiles.filter(p => p !== f.path) })}/>{f.path}</label>)}</details>
-    <label>人工判断<textarea aria-label="人工判断" value={q.judgment} onChange={e => onChange({ ...q, judgment: e.target.value })}/></label>
-    <label>处理理由<textarea aria-label="问题处理理由" value={q.reason} onChange={e => onChange({ ...q, reason: e.target.value })}/></label>
-    <label>处理状态<select aria-label="问题处理状态" value={q.status} onChange={e => { const status = e.target.value as ReviewQuestion['status']; if (status !== 'open' && !q.reason.trim()) { setError('先填写处理理由，原内容会保留'); return } setError(''); onChange({ ...q, status }) }}><option value="open">待核对 / 重新打开</option><option value="resolved">人工标记已解决</option><option value="deferred">暂不处理</option><option value="withdrawn">撤回记录（保留原文）</option></select></label>
-    {error ? <p className="field-error">{error}</p> : null}
-    {q.requiresRecheck ? <Button size="sm" disabled={!q.reason.trim()} onClick={() => onChange({ ...q, requiresRecheck: false })}>已人工复核当前版本</Button> : null}
-    <h3>位置与证据（{q.evidence.length}）</h3>{q.evidence.map((e, index) => <article key={index} className="pr-evidence"><Button variant="link" size="sm" onClick={() => onJump(e)}>{e.path}:{e.line ?? '整体'} · {e.side === 'head' ? '目标' : '基准'} · 原版本</Button><a href={evidenceURL(work.rounds[e.snapshotId]?.source ?? source, e)} target="_blank" rel="noreferrer">核对原代码</a><input aria-label={`证据说明 ${index + 1}`} value={e.note} placeholder="已核对什么，还缺什么证据" onChange={event => onChange({ ...q, evidence: q.evidence.map((a, i) => i === index ? { ...a, note: event.target.value } : a) })}/><Button variant="link" size="sm" onClick={() => onChange({ ...q, evidence: q.evidence.filter((_, i) => i !== index) })}>移除此证据</Button></article>)}
-    <label>对线索的反馈<select aria-label="线索反馈" value={q.feedback} onChange={e => onChange({ ...q, feedback: e.target.value as ReviewQuestion['feedback'] })}><option value="">尚未反馈</option><option value="helpful">有帮助</option><option value="irrelevant">无关</option><option value="more-evidence">需要更多证据</option></select></label><input aria-label="线索反馈理由" value={q.feedbackReason} onChange={e => onChange({ ...q, feedbackReason: e.target.value })} placeholder="反馈理由（仅保存在当前浏览器）"/>
+  return <div className="grid gap-3">
+    <p className="text-xs text-foreground-3">来源：{q.source === 'author' ? '作者原始说明中的核对目标' : q.source === 'change' ? '已加载文件事实，规则生成的核对问题' : '人工提出'} · 原版本 {q.originSnapshotId.slice(0, 12)}</p>
+    {q.requiresRecheck ? <p className="text-xs text-amber-deep">相关代码已变化，旧证据可能过期。原问题和判断保留，请人工核对。</p> : null}
+    <label className={field}><span className={fieldLabel}>问题、疑问或建议</span><TextArea aria-label="审查问题内容" value={q.body} onChange={e => onChange({ ...q, body: e.target.value })}/></label>
+    <label className={field}><span className={fieldLabel}>记录类型</span><NativeSelect aria-label="审查记录类型" value={q.kind} onChange={e => onChange({ ...q, kind: e.target.value as ReviewQuestion['kind'] })}><option value="question">待确认的问题</option><option value="finding">人工确认的问题</option><option value="suggestion">一般建议</option></NativeSelect></label>
+    <details className="rounded-sm border border-border-soft">
+      <summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">关联实现与测试文件（{q.relatedFiles.length}）</summary>
+      <div className="grid max-h-40 gap-1 overflow-auto border-t border-border-soft p-2.5">{source.files.map(f => <Checkbox key={f.path} checked={q.relatedFiles.includes(f.path)} onCheckedChange={checked => onChange({ ...q, relatedFiles: checked ? [...q.relatedFiles, f.path] : q.relatedFiles.filter(p => p !== f.path) })}>{f.path}</Checkbox>)}</div>
+    </details>
+    <label className={field}><span className={fieldLabel}>人工判断</span><TextArea aria-label="人工判断" value={q.judgment} onChange={e => onChange({ ...q, judgment: e.target.value })}/></label>
+    <label className={field}><span className={fieldLabel}>处理理由</span><TextArea aria-label="问题处理理由" value={q.reason} onChange={e => onChange({ ...q, reason: e.target.value })}/></label>
+    <label className={field}><span className={fieldLabel}>处理状态</span><NativeSelect aria-label="问题处理状态" value={q.status} onChange={e => { const status = e.target.value as ReviewQuestion['status']; if (status !== 'open' && !q.reason.trim()) { setError('先填写处理理由，原内容会保留'); return } setError(''); onChange({ ...q, status }) }}><option value="open">待核对 / 重新打开</option><option value="resolved">人工标记已解决</option><option value="deferred">暂不处理</option><option value="withdrawn">撤回记录（保留原文）</option></NativeSelect></label>
+    {error ? <p className="text-xs text-rose">{error}</p> : null}
+    {q.requiresRecheck ? <Button size="sm" className="justify-self-start" disabled={!q.reason.trim()} onClick={() => onChange({ ...q, requiresRecheck: false })}>已人工复核当前版本</Button> : null}
+    <h3 className="text-sm font-semibold text-foreground">位置与证据（{q.evidence.length}）</h3>
+    <div className="grid gap-1.5">{q.evidence.map((e, index) => <article key={index} className="grid gap-1 rounded-sm border border-border-soft p-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="link" size="sm" onClick={() => onJump(e)}>{e.path}:{e.line ?? '整体'} · {e.side === 'head' ? '目标' : '基准'} · 原版本</Button>
+        <a className="text-accent underline-offset-2 hover:underline" href={evidenceURL(work.rounds[e.snapshotId]?.source ?? source, e)} target="_blank" rel="noreferrer">核对原代码</a>
+      </div>
+      <input className="h-8 w-full rounded-sm border border-input bg-card px-2 text-xs text-foreground" aria-label={`证据说明 ${index + 1}`} value={e.note} placeholder="已核对什么，还缺什么证据" onChange={event => onChange({ ...q, evidence: q.evidence.map((a, i) => i === index ? { ...a, note: event.target.value } : a) })}/>
+      <Button variant="link" size="sm" className="justify-self-start" onClick={() => onChange({ ...q, evidence: q.evidence.filter((_, i) => i !== index) })}>移除此证据</Button>
+    </article>)}</div>
+    <label className={field}><span className={fieldLabel}>对线索的反馈</span><NativeSelect aria-label="线索反馈" value={q.feedback} onChange={e => onChange({ ...q, feedback: e.target.value as ReviewQuestion['feedback'] })}><option value="">尚未反馈</option><option value="helpful">有帮助</option><option value="irrelevant">无关</option><option value="more-evidence">需要更多证据</option></NativeSelect></label>
+    <input className="h-8 w-full rounded-sm border border-input bg-card px-2 text-xs text-foreground" aria-label="线索反馈理由" value={q.feedbackReason} onChange={e => onChange({ ...q, feedbackReason: e.target.value })} placeholder="反馈理由（仅保存在当前浏览器）"/>
   </div>
 }
 
 export function DeliveryForm({ onPrepare, busy, draft, onDraft }: { onPrepare: (kind: Conclusion, note: string) => Promise<void>; busy: boolean; draft?: { kind: Conclusion; note: string }; onDraft: (value: { kind: Conclusion; note: string }) => void }) {
   const kind = draft?.kind ?? 'changes', note = draft?.note ?? ''
-  return <form className="pr-delivery-form" onSubmit={event => { event.preventDefault(); void onPrepare(kind, note) }}>
-    <div className="pr-field">
-      <span className="pr-field-label">本轮结论</span>
-      <Select
-        aria-label="本轮结论"
-        value={kind}
-        onChange={value => onDraft({ kind: value as Conclusion, note })}
-        style={{ width: '100%' }}
-        options={[{ value: 'changes', label: '建议修改' }, { value: 'complete', label: '本轮审查完成' }, { value: 'defer', label: '暂缓并说明原因' }]}
-      />
+  return <form className="grid gap-3" onSubmit={event => { event.preventDefault(); void onPrepare(kind, note) }}>
+    <div className={field}>
+      <span className={fieldLabel}>本轮结论</span>
+      <NativeSelect aria-label="本轮结论" value={kind} onChange={event => onDraft({ kind: event.target.value as Conclusion, note })}>
+        <option value="changes">建议修改</option><option value="complete">本轮审查完成</option><option value="defer">暂缓并说明原因</option>
+      </NativeSelect>
     </div>
-    <div className="pr-field">
-      <span className="pr-field-label">说明与未完成事项</span>
+    <div className={field}>
+      <span className={fieldLabel}>说明与未完成事项</span>
       <TextArea aria-label="本轮结论说明" value={note} onChange={event => onDraft({ kind, note: event.target.value })}/>
     </div>
-    <Button variant="primary" type="submit" disabled={busy}>检查版本并预览意见</Button>
+    <Button variant="primary" type="submit" className="justify-self-start" disabled={busy}>检查版本并预览意见</Button>
   </form>
 }
 export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: (work: PRWork) => unknown; account: string | null }) {
@@ -61,34 +72,34 @@ export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: 
       setIncoming(info.work); setAccountHint(info.accountHint); setChoices({}); setError('')
     } catch (failure) { setError(message(failure)) }
   }
-  return <section className="pr-backups">
-    <div className="pr-backups-head">
-      <div>
-        <h3>个人草稿备份</h3>
-        <p>包含此 PR 各版本的个人笔记、问题、反馈和结论。仅在你选择导出时生成本地文件，不上传。</p>
+  return <section className="grid gap-3">
+    <div className="flex flex-wrap items-start justify-between gap-2">
+      <div className="min-w-0">
+        <h3 className="text-sm font-semibold text-foreground">个人草稿备份</h3>
+        <p className="mt-0.5 text-xs leading-body text-foreground-3">包含此 PR 各版本的个人笔记、问题、反馈和结论。仅在你选择导出时生成本地文件，不上传。</p>
       </div>
-      <Space>
+      <Space wrap>
         <Button icon={<Icon name="download"/>} aria-label="导出完整草稿" onClick={() => backup(work, account)}>导出完整草稿</Button>
         <Button icon={<Icon name="upload"/>} aria-label="选择备份以预览合并" onClick={() => file.current?.click()}>选择备份以预览合并</Button>
       </Space>
       <input ref={file} type="file" hidden accept=".json,application/json" aria-label="导入完整草稿" onChange={event => { const picked = event.target.files?.[0]; event.target.value = ''; if (picked) void pick(picked) }}/>
     </div>
-    {error ? <Alert type="warning" showIcon title={error}/> : null}
-    {preview ? <div className="pr-merge-preview">
-      <h4>备份合并预览 · {preview.conflicts.length} 处差异</h4>
-      <p>导入目标：{account ?? '身份尚未确认'}；备份归属：{accountHint ?? '未知'}。</p>
-      <p>默认保留当前判断；备份缺少的笔记和问题不会清空当前记录。新增条目会追加。</p>
-      <div className="pr-merge-diff-list">
-        {preview.conflicts.map(c => <details key={c.key} className="pr-merge-diff-item">
-          <summary>{c.label}</summary>
-          <div className="pr-merge-diff">
-            <p>当前内容</p><pre>{c.current}</pre>
-            <p>备份内容</p><pre>{c.incoming}</pre>
+    {error ? <Alert type="warning" title={error}/> : null}
+    {preview ? <div className="grid gap-2 rounded-sm border border-border-soft p-3">
+      <h4 className="text-sm font-semibold text-foreground">备份合并预览 · {preview.conflicts.length} 处差异</h4>
+      <p className="text-xs text-foreground-3">导入目标：{account ?? '身份尚未确认'}；备份归属：{accountHint ?? '未知'}。</p>
+      <p className="text-xs leading-body text-foreground-3">默认保留当前判断；备份缺少的笔记和问题不会清空当前记录。新增条目会追加。</p>
+      <div className="grid gap-1.5">
+        {preview.conflicts.map(c => <details key={c.key} className="rounded-sm border border-border-soft">
+          <summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">{c.label}</summary>
+          <div className="grid gap-1.5 border-t border-border-soft p-2.5 text-xs">
+            <p className="text-foreground-3">当前内容</p><pre className="overflow-auto rounded-sm bg-soft p-2 font-mono text-[11px] text-foreground-2">{c.current}</pre>
+            <p className="text-foreground-3">备份内容</p><pre className="overflow-auto rounded-sm bg-soft p-2 font-mono text-[11px] text-foreground-2">{c.incoming}</pre>
             <Checkbox checked={choices[c.key] ?? false} onCheckedChange={checked => setChoices({ ...choices, [c.key]: checked })}>对此项采用备份内容</Checkbox>
           </div>
         </details>)}
       </div>
-      <Space>
+      <Space wrap>
         <Button variant="primary" onClick={() => { onMerge(mergeBackup(work, incoming!, choices).work); setIncoming(null) }}>确认合并草稿</Button>
         <Button onClick={() => setIncoming(null)}>取消恢复</Button>
       </Space>
@@ -99,10 +110,10 @@ export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: 
 export function FeedbackCases({ work, version }: { work: PRWork; version: string }) {
   const [selected, setSelected] = useState<string[]>([]), [preview, setPreview] = useState('')
   const questions = work.rounds[version].questions.filter(q => q.feedback)
-  return <section className="pr-feedback">
-    <h3>反馈案例导出</h3>
-    <p>反馈不会自动上传、公开给管理员、成为训练标签或修改模型。仅导出你选择的问题、位置、反馈与理由；不会附带个人笔记和其他问题。</p>
-    <div className="pr-feedback-list">
+  return <section className="grid gap-2 rounded-sm border border-border-soft p-3">
+    <h3 className="text-sm font-semibold text-foreground">反馈案例导出</h3>
+    <p className="text-xs leading-body text-foreground-3">反馈不会自动上传、公开给管理员、成为训练标签或修改模型。仅导出你选择的问题、位置、反馈与理由；不会附带个人笔记和其他问题。</p>
+    <div className="grid gap-1">
       {questions.map(q => <Checkbox key={q.id} checked={selected.includes(q.id)} onCheckedChange={checked => { setPreview(''); setSelected(checked ? [...selected, q.id] : selected.filter(id => id !== q.id)) }}>{q.body.slice(0, 80)}</Checkbox>)}
     </div>
     <Space wrap>

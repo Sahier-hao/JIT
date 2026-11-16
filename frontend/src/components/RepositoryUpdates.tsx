@@ -102,7 +102,7 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
       </div> : <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-border-soft p-2.5">
           <span className={cn('size-2 rounded-full', TONE_DOT[tone])} aria-hidden="true"/>
-          <p role="status" className="text-sm font-medium text-foreground">{LABELS[state.status]}</p>
+          <p role="status" data-testid="update-status-title" className="text-sm font-medium text-foreground">{LABELS[state.status]}</p>
           <span className="text-xs text-foreground-3">{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚未检查'}</span>
           <Button className="ml-auto" size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '检查中…' : state.status === 'error' ? '重试检查' : '立即检查'}</Button>
         </div>

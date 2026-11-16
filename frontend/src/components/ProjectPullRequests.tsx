@@ -16,6 +16,7 @@ import type { Route } from '../navigation'
 import { PR_BATCH_CHANGED } from '../projectEvents'
 import { PRTrackingPanel } from './PRTrackingPanel'
 import { ProgressBar } from './JobProgress'
+import { cn } from '../lib/utils'
 
 const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', scoring: '评分中' }
 const batchLabel: Record<string, string> = { discovering: '正在获取 PR 范围', running: '正在提交分析', completed: '提交完成', partial: '部分完成', failed: '未能开始', interrupted: '已中断', cancelled: '已取消' }
@@ -158,104 +159,103 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
   }, { completed: 0, running: 0, failed: 0, none: 0 })
   const statusRank = (status?: string | null) => ['running', 'queued', 'checking'].includes(status ?? '') ? 0 : ['failed', 'cancelled', 'interrupted'].includes(status ?? '') ? 1 : 2
   const pendingRows = rows.filter(pr => pr.analysisStatus !== 'completed').sort((a, b) => statusRank(a.analysisStatus) - statusRank(b.analysisStatus) || (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt))
-  return <section className="pr-hub" aria-label="项目 PR 审查">
+  return <section className="grid gap-4" aria-label="项目 PR 审查">
     <h2 className="sr-only">PR 审查</h2>
-    <div className="pr-hub-layout">
-    <div className="pr-hub-main">
-    {result?.supported === false ? null : <>
-      <div className="pr-hub-toolbar">
-        <div className="pr-hub-filters">
-          <Segmented aria-label="PR 范围" value={state} onChange={value => { setState(value as PRState); setPage(1) }} options={[{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]}/>
-        </div>
-        <span className="pr-hub-sort">
-          <Dropdown
-            items={[{ key: 'updated', label: '按最近更新' }, { key: 'risk', label: '按风险最高' }]}
-            onClick={key => setSortBy(key as 'updated' | 'risk')}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="pr-hub-sort-btn"
-              aria-haspopup="menu"
-              aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`}
-              trailing={<Icon name="chevronDown" size={13}/>}
-            >排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}</Button>
-          </Dropdown>
-        </span>
-        <div className="pr-hub-actions">
-          {tracking?.supported === false ? null : <Button icon={<span className="pr-auto-dot" data-on={tracking?.enabled ? 'true' : undefined} aria-hidden="true"/>} onClick={() => setTrackingOpen(true)}>{tracking?.enabled ? '自动分析已开启' : '自动分析'}</Button>}
-          <Button variant="primary" disabled={busy} onClick={refresh}>{busy ? '正在检查…' : '检查远端 PR'}</Button>
-        </div>
-      </div>
-    </>}
-    {batch ? <div className="pr-batch" data-status={batch.status}>
-      <ProgressBar value={batch.discovered ? Math.round(((batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted) / batch.discovered) * 100) : null}
-        state={batch.status === 'failed' ? 'failed' : batch.status === 'completed' && batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted >= batch.discovered ? 'done' : batch.status === 'discovering' ? 'queued' : 'running'}
-        label="批量分析进度"/>
-    <div className="pr-batch-line" data-status={batch.status}>
-      <span className="pr-batch-state">批量分析 · {batchLabel[batch.status] ?? batch.status}</span>
-      <span>{batch.discoveryComplete ? `范围 ${batch.discovered} 个开放 PR` : `已发现 ${batch.discovered} 个，范围未完整获取`}</span>
-      <span>已入队 {batch.submission.submitted} · 复用 {batch.submission.reused} · 失败 {batch.counts.failed} · 待处理 {batch.submission.pending}</span>
-      {batch.counts.cancelled || batch.counts.interrupted ? <span>取消/中断 {batch.counts.cancelled + batch.counts.interrupted}</span> : null}
-      {batch.counts.queued || batch.counts.running ? <span>分析中 {batch.counts.queued + batch.counts.running}</span> : null}
-      <span>模型 {modelName(batch.modelId)}</span>
-      {batch.error ? <span role="alert">{batch.error.message}</span> : null}
-      {batchError ? <span role="alert">{batchError}</span> : null}
-      {batch.status !== 'cancelled' && (batch.status === 'discovering' || batch.status === 'running') ? <Button size="sm" disabled={batchBusy || cancelBusy || batch.cancelRequested} onClick={() => setCancelOpen(true)}>{batch.cancelRequested || cancelBusy ? '正在取消…' : '取消批次'}</Button> : null}
-      {batch.counts.failed > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('failed')}>{batchBusy ? '正在重试…' : '仅重试失败项'}</Button> : null}
-      {batch.counts.interrupted > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('interrupted')}>{batchBusy ? '正在重试…' : '重新分析中断项'}</Button> : null}
-    </div>
-    </div> : null}
-    {batchError && !batch ? <div className="pr-hub-alert" role="alert"><span>{batchError}</span><Button size="sm" onClick={() => setAttempt(value => value + 1)}>重试读取</Button></div> : null}
-    {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
-    {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
-    {result && !result.supported ? <EmptyState title="此项目不是公开 GitHub 来源" description="PR 发现和自动分析只读取公开 GitHub；分支分析和风险趋势仍可使用。"/> : null}
-    {busy && result ? <ProgressBar value={null} state="queued" label="正在检查远端 PR"/> : null}
-    {result?.supported ? <div className="pr-hub-panel">
-      {analysisError ? <div className="pr-hub-alert" role="alert"><span>{analysisError}</span></div> : null}
-      {result.errorCode ? <div className="pr-hub-alert" role="alert"><span>远端检查未完成（{result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。</span><Button size="sm" disabled={busy} onClick={refresh}>重试检查</Button></div> : null}
-      {rows.length ? <div className="pr-hub-list">{rows.map(pr => {
-        const hasWork = Boolean(result.owner && result.name && localWorks.has(workKey(result.owner, result.name, pr.number)))
-        const rowRunning = ['queued', 'running', 'checking', 'collecting', 'scoring'].includes(pr.analysisStatus ?? '')
-        const rowLabel = analyzingNumber === pr.number ? '提交中…' : rowRunning ? '分析中…' : ['failed', 'cancelled', 'interrupted'].includes(pr.analysisStatus ?? '') ? '重试分析' : '分析'
-        return <article className="pr-row" key={pr.number}>
-          <div className="pr-row-main">
-            <div className="pr-row-title"><h3><span className="pr-row-number">#{pr.number}</span> {pr.title}</h3><span className="pr-row-state" data-state={pr.remoteState}>{remoteLabel[pr.remoteState]}</span>{pr.draft ? <span className="pr-row-draft">草稿</span> : null}</div>
-            <p className="pr-row-meta"><span>{pr.author}</span><span>更新于 {displayTime(pr.updatedAt)}</span><span>{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.featureSource ? ' · 复用已保存特征' : ''}</span>{pr.maxRisk != null ? <span className="pr-row-risk" title="该 PR 已分析提交中的最高分数；排序参考，不是 PR 整体缺陷概率">{`最高风险 ${pr.maxRisk.toFixed(3)}${pr.scoredCommits != null ? ` · ${pr.scoredCommits} 条有分数` : ''}`}</span> : null}</p>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+      <div className="grid gap-3">
+        {result?.supported === false ? null : <>
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmented aria-label="PR 范围" value={state} onChange={value => { setState(value as PRState); setPage(1) }} options={[{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]}/>
+            <Dropdown items={[{ key: 'updated', label: '按最近更新' }, { key: 'risk', label: '按风险最高' }]} onClick={key => setSortBy(key as 'updated' | 'risk')}>
+              <Button variant="ghost" size="sm" aria-haspopup="menu" aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`} trailing={<Icon name="chevronDown" size={13}/>}>排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}</Button>
+            </Dropdown>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {tracking?.supported === false ? null : <Button icon={<span className={cn('size-1.5 rounded-full', tracking?.enabled ? 'bg-teal' : 'bg-foreground-4')} aria-hidden="true"/>} onClick={() => setTrackingOpen(true)}>{tracking?.enabled ? '自动分析已开启' : '自动分析'}</Button>}
+              <Button variant="primary" disabled={busy} onClick={refresh}>{busy ? '正在检查…' : '检查远端 PR'}</Button>
+            </div>
           </div>
-          <div className="pr-row-actions">
-            {result.owner && result.name ? <>
-              {pr.analysisStatus !== 'completed'
-                ? <Button size="sm" variant="secondary" disabled={rowRunning || analyzingNumber !== null} onClick={() => void analyzeOne(pr)}>{rowLabel}</Button>
-                : <Button size="sm" variant="ghost" disabled={analyzingNumber !== null} onClick={() => openReanalyze(pr)}>换模型</Button>}
-              <Button size="sm" variant={hasWork ? 'primary' : pr.analysisStatus === 'completed' ? 'secondary' : 'ghost'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })}>{hasWork ? '继续审查' : '查看 PR'}</Button>
-            </> : <a href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
+        </>}
+
+        {batch ? <div className="grid gap-1.5 rounded-sm border border-border-soft p-3">
+          <ProgressBar value={batch.discovered ? Math.round(((batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted) / batch.discovered) * 100) : null}
+            state={batch.status === 'failed' ? 'failed' : batch.status === 'completed' && batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted >= batch.discovered ? 'done' : batch.status === 'discovering' ? 'queued' : 'running'}
+            label="批量分析进度"/>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3">
+            <span className={cn('font-medium', batch.status === 'failed' ? 'text-rose' : batch.status === 'completed' ? 'text-teal-deep' : 'text-foreground-2')}>批量分析 · {batchLabel[batch.status] ?? batch.status}</span>
+            <span>{batch.discoveryComplete ? `范围 ${batch.discovered} 个开放 PR` : `已发现 ${batch.discovered} 个，范围未完整获取`}</span>
+            <span>已入队 {batch.submission.submitted} · 复用 {batch.submission.reused} · 失败 {batch.counts.failed} · 待处理 {batch.submission.pending}</span>
+            {batch.counts.cancelled || batch.counts.interrupted ? <span>取消/中断 {batch.counts.cancelled + batch.counts.interrupted}</span> : null}
+            {batch.counts.queued || batch.counts.running ? <span>分析中 {batch.counts.queued + batch.counts.running}</span> : null}
+            <span>模型 {modelName(batch.modelId)}</span>
+            {batch.error ? <span role="alert" className="text-rose">{batch.error.message}</span> : null}
+            {batchError ? <span role="alert" className="text-rose">{batchError}</span> : null}
+            {batch.status !== 'cancelled' && (batch.status === 'discovering' || batch.status === 'running') ? <Button size="sm" disabled={batchBusy || cancelBusy || batch.cancelRequested} onClick={() => setCancelOpen(true)}>{batch.cancelRequested || cancelBusy ? '正在取消…' : '取消批次'}</Button> : null}
+            {batch.counts.failed > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('failed')}>{batchBusy ? '正在重试…' : '仅重试失败项'}</Button> : null}
+            {batch.counts.interrupted > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('interrupted')}>{batchBusy ? '正在重试…' : '重新分析中断项'}</Button> : null}
           </div>
-        </article>
-      })}</div> : <div className="pr-hub-empty"><Empty description="当前范围没有 PR"/></div>}
-      <div className="pr-hub-foot">
-        <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}{state === 'closed' ? ' · 已结束含已合并' : ''}</span>
-        {page > 1 || result.hasMore ? <nav className="pr-hub-pager" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)}>上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)}>下一页</Button></nav> : null}
+        </div> : null}
+        {batchError && !batch ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><span>{batchError}</span><Button size="sm" onClick={() => setAttempt(value => value + 1)}>重试读取</Button></div> : null}
+        {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
+        {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
+        {result && !result.supported ? <EmptyState title="此项目不是公开 GitHub 来源" description="PR 发现和自动分析只读取公开 GitHub；分支分析和风险趋势仍可使用。"/> : null}
+        {busy && result ? <ProgressBar value={null} state="queued" label="正在检查远端 PR"/> : null}
+
+        {result?.supported ? <div className="grid gap-3">
+          {analysisError ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><span>{analysisError}</span></div> : null}
+          {result.errorCode ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="alert"><span>远端检查未完成（{result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。</span><Button size="sm" disabled={busy} onClick={refresh}>重试检查</Button></div> : null}
+          {rows.length ? <div className="grid gap-2">{rows.map(pr => {
+            const hasWork = Boolean(result.owner && result.name && localWorks.has(workKey(result.owner, result.name, pr.number)))
+            const rowRunning = ['queued', 'running', 'checking', 'collecting', 'scoring'].includes(pr.analysisStatus ?? '')
+            const rowLabel = analyzingNumber === pr.number ? '提交中…' : rowRunning ? '分析中…' : ['failed', 'cancelled', 'interrupted'].includes(pr.analysisStatus ?? '') ? '重试分析' : '分析'
+            return <article className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-border-soft bg-card p-3" key={pr.number}>
+              <div className="grid min-w-0 flex-1 gap-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <h3 className="text-sm font-medium text-foreground"><span className="font-mono text-xs text-foreground-3">#{pr.number}</span> {pr.title}</h3>
+                  <span className={cn('rounded-sm px-1 py-0.5 text-[11px]', pr.remoteState === 'open' ? 'bg-teal-soft text-teal-deep' : 'bg-soft text-foreground-3')}>{remoteLabel[pr.remoteState]}</span>
+                  {pr.draft ? <span className="rounded-sm bg-soft px-1 py-0.5 text-[11px] text-foreground-3">草稿</span> : null}
+                </div>
+                <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-foreground-3">
+                  <span>{pr.author}</span>
+                  <span>更新于 {displayTime(pr.updatedAt)}</span>
+                  <span>{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.featureSource ? ' · 复用已保存特征' : ''}</span>
+                  {pr.maxRisk != null ? <span className="text-foreground-2" title="该 PR 已分析提交中的最高分数；排序参考，不是 PR 整体缺陷概率">{`最高风险 ${pr.maxRisk.toFixed(3)}${pr.scoredCommits != null ? ` · ${pr.scoredCommits} 条有分数` : ''}`}</span> : null}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {result.owner && result.name ? <>
+                  {pr.analysisStatus !== 'completed'
+                    ? <Button size="sm" variant="secondary" disabled={rowRunning || analyzingNumber !== null} onClick={() => void analyzeOne(pr)}>{rowLabel}</Button>
+                    : <Button size="sm" variant="ghost" disabled={analyzingNumber !== null} onClick={() => openReanalyze(pr)}>换模型</Button>}
+                  <Button size="sm" variant={hasWork ? 'primary' : pr.analysisStatus === 'completed' ? 'secondary' : 'ghost'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })}>{hasWork ? '继续审查' : '查看 PR'}</Button>
+                </> : <a className="text-xs text-accent underline-offset-2 hover:underline" href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
+              </div>
+            </article>
+          })}</div> : <Empty description="当前范围没有 PR"/>}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-3">
+            <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}{state === 'closed' ? ' · 已结束含已合并' : ''}</span>
+            {page > 1 || result.hasMore ? <nav className="flex items-center gap-2" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)}>上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)}>下一页</Button></nav> : null}
+          </div>
+        </div> : null}
       </div>
-    </div> : null}
+
+      {result?.supported ? <aside className="grid content-start gap-2 rounded-md border border-border-soft bg-card p-3" aria-label="待处理 PR">
+        <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">待处理 PR</h2><span className="text-xs text-foreground-4">{pendingRows.length} 个</span></div>
+        <p className="text-xs text-foreground-3">分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
+        <div className="grid gap-1.5">
+          {pendingRows.length === 0 ? <p className="py-4 text-center text-xs text-foreground-3">没有待处理 PR</p> : pendingRows.map(pr => <button key={pr.number} type="button" className="block w-full rounded-sm border border-border-soft bg-card p-2 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
+            <span className="block truncate text-sm font-medium text-foreground"><b className="font-mono text-xs text-foreground-3">#{pr.number}</b> {pr.title}</span>
+            <span className="mt-0.5 block text-xs text-foreground-3">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
+          </button>)}
+        </div>
+      </aside> : null}
     </div>
-    {result?.supported ? <aside className="pr-hub-records" aria-label="待处理 PR">
-      <div className="pw-rail-head"><h2>待处理 PR</h2><span>{pendingRows.length} 个</span></div>
-      <p className="pr-hub-records-summary">分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
-      <div className="pr-record-list">
-        {pendingRows.length === 0 ? <p className="quiet-empty">没有待处理 PR</p> : pendingRows.map(pr => <button key={pr.number} type="button" className="pr-record" data-status={pr.analysisStatus ?? 'none'} onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
-          <span className="pr-record-title"><b>#{pr.number}</b> {pr.title}</span>
-          <span className="pr-record-meta">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
-        </button>)}
-      </div>
-    </aside> : null}
-    </div>
+
     <Dialog open={trackingOpen} onOpenChange={setTrackingOpen} title="PR 自动分析" width={620}>
       <PRTrackingPanel repositoryId={repositoryId} onTracking={setTracking}/>
     </Dialog>
     <Dialog open={cancelOpen} onOpenChange={setCancelOpen} title="取消这次批量分析？" width={440}
       description="将停止提交后续条目；已入队的单 PR 任务继续执行并保留结果。">
-      <div className="pr-row-actions">
+      <div className="flex justify-end gap-2">
         <Button onClick={() => setCancelOpen(false)}>返回</Button>
         <Button variant="danger" loading={cancelBusy} onClick={() => void cancelBatch()}>确认取消</Button>
       </div>
@@ -264,8 +264,7 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
       footer={<><Button onClick={() => setReanalyzing(null)}>取消</Button><Button variant="primary" loading={reanalyzeBusy} disabled={!reanalyzeModel} onClick={() => void reanalyze()}>开始分析</Button></>}>
       {reanalyzeOptions.length
         ? <Select ariaLabel="重新分析模型" value={reanalyzeModel} onChange={setReanalyzeModel} options={reanalyzeOptions}/>
-        : <p className="field-hint">没有其他可用的兼容模型</p>}
+        : <p className="text-xs text-foreground-3">没有其他可用的兼容模型</p>}
     </Dialog>
   </section>
 }
-

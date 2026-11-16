@@ -38,7 +38,6 @@ export const ALLOWED_STYLE_FILES = [
   'src/styles/tokens.css',
   'src/styles/update-status.css',
   'src/styles/user-workspace.css',
-  'src/styles/workbench-modern.css',
   'src/styles/workbench.css',
 ]
 
@@ -58,7 +57,6 @@ export const ALLOWED_ENTRY_IMPORTS = [
   './styles/claude.css',
   './styles/dashboard.css',
   './styles/project-redesign.css',
-  './styles/workbench-modern.css',
 ]
 
 /** 允许在组件/页面中直接导入的 CSS：入口、第三方内容与迁移中的页面样式。 */

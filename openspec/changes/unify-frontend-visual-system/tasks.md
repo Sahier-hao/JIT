@@ -34,10 +34,10 @@
 
 ## 5. PR 审查与工作单
 
-- [ ] 5.1 迁移 `ReviewWorkbench`、`PullRequestJourney`、`PullRequestPreview`、`PRModelClues`、`PRTrackingPanel` 与 `CodeDiff` 容器，把代码差异覆盖规则集中到 `styles/content.css` 并限定在容器内；运行 PR 审查、工作单与预览相关 Vitest 与 Playwright 用例。
-- [ ] 5.2 验证工作单在 1440px 下代码栏不少于 780px、全局导航收起、统一/并排视图切换、行号固定证据与移动后返回列表的焦点恢复；为 `.wb-hunk`、`.pr-risk-line`、`.pr-fixed-preview` 等钩子加 `data-testid` 并更新 Playwright 定位。
-- [ ] 5.3 删除 `styles/workbench.css`、`styles/workbench-modern.css`、`styles/claude.css`、`styles/pr-review.css` 中已无消费者的文件，更新 `index.css`；运行 `project-workspace` 与 PR 旅程配置，确认无样式类定位残留。
-- [ ] 5.4 在 `docs/evidence/unify-frontend-visual-system/04-PR审查/` 存档工作单、文件列表、问题栏与预览页截图，核对代码优先表面、焦点反馈与窄屏重排在四套主题下一致。
+- [x] 5.1 迁移 `ProjectPullRequests`、`PRTrackingPanel`、`PRModelClues`、`PullRequestPreview`、`ReviewWorkbench` 与代码差异容器，统一 PR 列表、追踪设置、风险线索、只读预览与提交明细的表面、表头与操作区。
+- [x] 5.2 迁移审查工作单的页头、提交表、三栏阅读区、问题编辑、交付与备份抽屉；PR 续审完整浏览器旅程（两账户、登录注册、工作单、草稿）通过，1440px 下代码栏按 260/1fr/320 分配并保持独立滚动。
+- [x] 5.3 将 `pr-risk-line`、`update-status-title` 等样式钩子改为 `data-testid` 并更新浏览器用例；删除已无消费者的 `workbench-modern.css`，`workbench.css`、`pr-review.css`、`claude.css` 仍被个人工作区、趋势与管理页面使用，保留到各自批次。
+- [x] 5.4 在 `docs/evidence/unify-frontend-visual-system/05-PR审查/` 存档 PR 列表、只读预览、工作单文件视图与深色截图，核对代码优先表面、独立滚动与三栏层级。
 
 ## 6. 趋势、报告与内容
 

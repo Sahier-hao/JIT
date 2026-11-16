@@ -1,14 +1,14 @@
 import { Icon } from '../Icon'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Space, Tag, Tooltip } from '../ui/feedback'
-import { Button, Input, Select } from '../ui/controls'
+import { Button, Input, NativeSelect, Select } from '../ui/controls'
 import { Drawer } from '../ui/drawer'
 import { Dialog } from '../ui/dialog'
 import { Segmented } from '../ui/segmented'
-import * as ui from '../ui/controls'
+import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../ui/layout'
 import { repositoryRoute, type Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
-import { FailureNotice, LoadingNotice } from '../Feedback'
+import { LoadingNotice } from '../Feedback'
 import { ContractError } from '../apiContract'
 import { PRModelClues } from '../components/PRModelClues'
 import { Markdown } from '../components/Markdown'
@@ -20,11 +20,13 @@ import { displayTime } from '../domain'
 import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
 import { reviewStatusLabels, adoptVersion, backupText, candidateQuestion, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
 import { canWriteReview, requireAccount, useReviewAccount } from '../reviewAccount'
+import { cn } from '../lib/utils'
 
 
 type Navigate = (route: Route) => void
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
 const changeLabels: Record<string, string> = { added: '新增', removed: '删除', modified: '修改', renamed: '重命名', copied: '复制', changed: '内容变化', unchanged: '未变化' }
+const FILE_FLAG: Record<string, string> = { added: 'bg-teal', removed: 'bg-rose', modified: 'bg-amber', renamed: 'bg-blue', copied: 'bg-blue', changed: 'bg-amber', unchanged: 'bg-foreground-4' }
 /** 文件行把路径拆成"目录 + 文件名"：目录可以被省略号吃掉，文件名必须始终完整。 */
 function splitPath(path: string) {
   const index = path.lastIndexOf('/')
@@ -65,25 +67,32 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
     } catch (failure) { setError(failure) }
   }
   const file = source?.files[fileIndex]
-  return <section className="pr-fixed-preview">
-    <ui.Button variant="ghost" size="sm" icon={<Icon name="arrowLeft"/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
-    <header className="page-heading"><div><h1>固定快照 · PR #{number}</h1><p>{owner}/{repositoryName} · 版本 {snapshotId}</p></div></header>
-    <div className="pr-update-note"><strong>固定来源只读预览</strong><p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>{existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}</div>
-    {personal.error ? <p className="field-error" role="alert">{personal.error}；现有存储未清空。</p> : null}
-    {error ? <FailureNotice error={error} onRetry={() => setAttempt(v => v + 1)}/> : null}
+  return <section className="grid gap-4 pr-fixed-preview" data-testid="pr-fixed-preview">
+    <Button variant="ghost" size="sm" className="justify-self-start" icon={<Icon name="arrowLeft"/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</Button>
+    <header className="grid gap-1 border-b border-border-soft pb-3">
+      <h1 className="font-sans text-xl font-semibold leading-title text-foreground">固定快照 · PR #{number}</h1>
+      <p className="text-xs text-foreground-3">{owner}/{repositoryName} · 版本 {snapshotId}</p>
+    </header>
+    <div className="grid gap-1 rounded-sm border border-amber/30 bg-amber-soft p-3 text-xs text-amber-deep">
+      <strong className="text-sm">固定来源只读预览</strong>
+      <p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>
+      {existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}
+    </div>
+    {personal.error ? <p className="text-xs text-rose" role="alert">{personal.error}；现有存储未清空。</p> : null}
+    {error ? <Alert type="error" title={message(error)} action={<Button size="sm" onClick={() => setAttempt(v => v + 1)}>重新读取</Button>}/> : null}
     {!source && !error ? <LoadingNotice label="读取提醒绑定的固定快照"/> : null}
     {source ? <>
-      <h2>{source.title}</h2>
-      <p>{source.author} · 保存于 {displayTime(source.capturedAt)} · 基准 {source.baseSha.slice(0, 12)} / 目标 {source.headSha.slice(0, 12)}</p>
-      <div className="panel-actions">
-        <ui.Button variant="primary" disabled={Boolean(personal.error)} onClick={enter}>{existing ? existing.rounds[snapshotId] ? '明确进入此保存轮次' : Date.parse(source.capturedAt) < Date.parse(existing.rounds[existing.latestSnapshotId].source.capturedAt) ? '明确进入历史复盘轮次' : '明确开始此版本新一轮' : '开始审查此固定版本'}</ui.Button>
-        {existing ? <ui.Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })}>返回原阅读轮次</ui.Button> : null}
-        <a href={source.url} target="_blank" rel="noreferrer">核对远端 PR</a>
+      <h2 className="text-base font-semibold text-foreground">{source.title}</h2>
+      <p className="text-xs text-foreground-3">{source.author} · 保存于 {displayTime(source.capturedAt)} · 基准 {source.baseSha.slice(0, 12)} / 目标 {source.headSha.slice(0, 12)}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="primary" disabled={Boolean(personal.error)} onClick={enter}>{existing ? existing.rounds[snapshotId] ? '明确进入此保存轮次' : Date.parse(source.capturedAt) < Date.parse(existing.rounds[existing.latestSnapshotId].source.capturedAt) ? '明确进入历史复盘轮次' : '明确开始此版本新一轮' : '开始审查此固定版本'}</Button>
+        {existing ? <Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })}>返回原阅读轮次</Button> : null}
+        <a className="text-xs text-accent underline-offset-2 hover:underline" href={source.url} target="_blank" rel="noreferrer">核对远端 PR</a>
       </div>
       <PRModelClues analysis={analysis}/>
-      <label>预览文件<select aria-label="固定快照预览文件" value={fileIndex} onChange={e => setFileIndex(Number(e.target.value))}>{source.files.map((f, i) => <option key={f.path} value={i}>{f.path}</option>)}</select></label>
-      {file?.patch ? <CodeDiff file={file} view="unified" onAnchor={() => {}}/> : <p>没有可展示的完整 Diff，未视作空文件。可以进入此轮次后读取固定上下文。</p>}
-      {!source.filesComplete ? <p className="field-error">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
+      <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">预览文件</span><NativeSelect aria-label="固定快照预览文件" value={fileIndex} onChange={e => setFileIndex(Number(e.target.value))}>{source.files.map((f, i) => <option key={f.path} value={i}>{f.path}</option>)}</NativeSelect></label>
+      {file?.patch ? <div className="overflow-auto rounded-sm border border-border-soft"><CodeDiff file={file} view="unified" onAnchor={() => {}}/></div> : <p className="text-xs text-foreground-3">没有可展示的完整 Diff，未视作空文件。可以进入此轮次后读取固定上下文。</p>}
+      {!source.filesComplete ? <p className="text-xs text-amber-deep">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
     </> : null}
   </section>
 }
@@ -215,11 +224,10 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     setReadError(null)
   }
   if (!work && recovery) {
-    return <section className="wb" aria-label="恢复未保存内容">
-      <div className="wb-alerts"><Alert type="warning" showIcon
+    return <section className="grid gap-3" aria-label="恢复未保存内容">
+      <Alert type="warning"
         title={`账户 ${account} 有本 PR 的未保存恢复副本`}
         action={<Space size={4}><Button size="sm" variant="primary" onClick={restoreRecovery}>恢复未保存内容</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/>
-      </div>
     </section>
   }
   if (preview || !work) {
@@ -233,7 +241,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     return <Dialog
       open
       onOpenChange={next => { if (!next) back() }}
-      title={<span className="wb-read-head"><span className={failed ? 'wb-read-dot is-failed' : 'wb-read-dot'} aria-hidden="true"/>{failed ? '这个 PR 暂时读不出来' : '正在读取 PR'}</span>}
+      title={<span className="inline-flex items-center gap-2"><span className={cn('size-2 rounded-full', failed ? 'bg-rose' : 'bg-blue')} aria-hidden="true"/>{failed ? '这个 PR 暂时读不出来' : '正在读取 PR'}</span>}
       description={<span role={failed ? 'alert' : 'status'}>{detail}</span>}
       width={480}
       footer={<>
@@ -337,37 +345,38 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
   const filteredFiles = needle ? scopedFiles.filter(f => f.path.toLowerCase().includes(needle)) : scopedFiles
   const visibleFiles = fileOrder === 'path' ? filteredFiles : [...filteredFiles].sort((a, b) => (fileRisks[b.path] ?? -1) - (fileRisks[a.path] ?? -1))
   const stale = work.latestSnapshotId !== version
-  return <section className="wb">
-    <header className="wb-head">
-      <div className="wb-head-main">
-        <div className="wb-head-text">
-          <div className="wb-crumb">
-            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<Icon name="arrowLeft"/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
-            <span className="wb-sep">/</span>
+  const paneHead = 'flex items-center justify-between gap-2 border-b border-border-soft px-3 py-2'
+  return <section className="grid gap-3">
+    <header className="grid gap-2 border-b border-border-soft pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid min-w-0 gap-1">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-foreground-3">
+            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" icon={<Icon name="arrowLeft"/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
+            <span aria-hidden="true">/</span>
             <span>{owner}/{repositoryName}</span>
-            <span className="wb-sep">·</span>
+            <span aria-hidden="true">·</span>
             <span>#{number}</span>
-            <Tag className="wb-state">{remoteLabel[work.remoteState]}</Tag>
-            <Tag className="wb-state wb-work">个人工作单</Tag>
+            <Tag>{remoteLabel[work.remoteState]}</Tag>
+            <Tag>个人工作单</Tag>
           </div>
-          <h1 className="wb-title" title={round.source.title}>{round.source.title}</h1>
-          <div className="wb-facts">
+          <h1 className="font-sans text-xl font-semibold leading-title text-foreground" title={round.source.title}>{round.source.title}</h1>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-3">
             <span>{round.source.author}</span>
-            <span className="wb-sep">·</span>
-            <span>已读 <b>{readCount}</b>/{live.totalFiles}</span>
-            <span className="wb-sep">·</span>
-            <span>待复核 <b>{recheckCount}</b></span>
-            <span className="wb-sep">·</span>
-            <span>待处理问题 <b>{pendingCount}</b></span>
-            <span className="wb-sep">·</span>
-            <span className={saveError ? 'wb-save is-error' : 'wb-save'}>{saveError ? '草稿尚未保存' : work.savedAt ? `草稿已保存 ${displayTime(work.savedAt)}` : '草稿尚未保存'}</span>
+            <span aria-hidden="true">·</span>
+            <span>已读 <b className="text-foreground">{readCount}</b>/{live.totalFiles}</span>
+            <span aria-hidden="true">·</span>
+            <span>待复核 <b className="text-foreground">{recheckCount}</b></span>
+            <span aria-hidden="true">·</span>
+            <span>待处理问题 <b className="text-foreground">{pendingCount}</b></span>
+            <span aria-hidden="true">·</span>
+            <span className={saveError ? 'text-rose' : 'text-foreground-4'}>{saveError ? '草稿尚未保存' : work.savedAt ? `草稿已保存 ${displayTime(work.savedAt)}` : '草稿尚未保存'}</span>
           </div>
         </div>
-        <div className="wb-head-actions">
+        <div className="flex flex-wrap items-center gap-2">
           <Button icon={<Icon name="eye"/>} onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本">查看只读版本</Button>
           <Button icon={<Icon name="refresh"/>} loading={busy} onClick={() => void check()} aria-label="检查 PR 更新">检查 PR 更新</Button>
           <Select
-            className="wb-interest"
+            className="w-28"
             aria-label="个人关注状态"
             value={work.interest}
             onChange={value => commit({ ...current.current!, interest: value as PRWork['interest'] })}
@@ -377,95 +386,101 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
           <Button variant="primary" icon={<Icon name="external"/>} onClick={() => setDrawer('delivery')} aria-label="输出意见">输出意见</Button>
         </div>
       </div>
-      <div className="wb-meter" aria-hidden="true"><span style={{ width: `${readPercent}%` }}/></div>
+      <div className="h-1 overflow-hidden rounded-full bg-strong" aria-hidden="true"><span className="block h-full rounded-full bg-accent" style={{ width: `${readPercent}%` }}/></div>
     </header>
-    {(saveError || readError || recovery || work.checkError || work.remoteState !== 'open' || stale) ? <div className="wb-alerts">
-      {recovery ? <Alert type="warning" showIcon title={`账户 ${account} 有未保存的恢复副本`} action={<Space size={4}><Button size="sm" onClick={restoreRecovery}>恢复</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/> : null}
-      {saveError ? <Alert type="warning" showIcon title={saveError} action={<Space size={4}><Button size="sm" onClick={() => commit(current.current!)}>重试保存</Button><Button size="sm" onClick={() => backup(work, account)}>导出草稿</Button></Space>}/> : null}
-      {readError ? <Alert type="error" showIcon title={message(readError)} action={<Button size="sm" onClick={() => setAttempt(v => v + 1)}>重新读取</Button>}/> : null}
-      {work.checkError ? <Alert type="warning" showIcon title={`上次检查失败：${work.checkError}。仍保留此前版本，最近成功检查 ${displayTime(work.checkedAt)}。`}/> : null}
-      {work.remoteState !== 'open' ? <Alert type="info" showIcon title={`远端 PR ${remoteLabel[work.remoteState]}，当前为历史审查；个人草稿和原结论保留。`}/> : null}
-      {stale ? <Alert type="warning" showIcon title="代码基准或目标版本已有变化，当前仍阅读原版本；旧意见不会自动解决。" action={<Button size="sm" variant="primary" onClick={() => switchVersion(work.latestSnapshotId)}>开始复核新版本</Button>}/> : null}
-      {round.historyNotice ? <Alert type="info" showIcon title={round.historyNotice}/> : null}
+
+    {(saveError || readError || recovery || work.checkError || work.remoteState !== 'open' || stale) ? <div className="grid gap-2">
+      {recovery ? <Alert type="warning" title={`账户 ${account} 有未保存的恢复副本`} action={<Space size={4}><Button size="sm" onClick={restoreRecovery}>恢复</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/> : null}
+      {saveError ? <Alert type="warning" title={saveError} action={<Space size={4}><Button size="sm" onClick={() => commit(current.current!)}>重试保存</Button><Button size="sm" onClick={() => backup(work, account)}>导出草稿</Button></Space>}/> : null}
+      {readError ? <Alert type="error" title={message(readError)} action={<Button size="sm" onClick={() => setAttempt(v => v + 1)}>重新读取</Button>}/> : null}
+      {work.checkError ? <Alert type="warning" title={`上次检查失败：${work.checkError}。仍保留此前版本，最近成功检查 ${displayTime(work.checkedAt)}。`}/> : null}
+      {work.remoteState !== 'open' ? <Alert type="info" title={`远端 PR ${remoteLabel[work.remoteState]}，当前为历史审查；个人草稿和原结论保留。`}/> : null}
+      {stale ? <Alert type="warning" title="代码基准或目标版本已有变化，当前仍阅读原版本；旧意见不会自动解决。" action={<Button size="sm" variant="primary" onClick={() => switchVersion(work.latestSnapshotId)}>开始复核新版本</Button>}/> : null}
+      {round.historyNotice ? <Alert type="info" title={round.historyNotice}/> : null}
     </div> : null}
-    <div className="wb-clues">
-      <PRModelClues key={`model:${version}`} analysis={analysis}/>
-    </div>
-    {reviewView === 'commits' ? <section className="wb-commit-table" aria-label="PR 提交风险排序">
-      <div className="wb-commit-table-head">
-        <h2>提交风险排序</h2>
-        <div className="wb-commit-head-actions">
+
+    <PRModelClues key={`model:${version}`} analysis={analysis}/>
+
+    {reviewView === 'commits' ? <section className="grid gap-2" aria-label="PR 提交风险排序">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-foreground">提交风险排序</h2>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
           <span>{scoredCommits}/{live.commits.length} 有分数</span>
           <Segmented size="sm" aria-label="提交排序" value={commitOrder} onChange={value => setCommitOrder(value as 'risk' | 'order')} options={[{ label: '按风险', value: 'risk' }, { label: '按提交顺序', value: 'order' }]}/>
         </div>
       </div>
-      <div className="table-scroll">
-        <table>
-          <thead><tr><th scope="col">提交 / 改动</th><th scope="col">模型分数</th><th scope="col">变更行</th><th scope="col">文件</th></tr></thead>
-          <tbody>
-            {commitRows.map(commit => {
-              const info = commitRisks[commit.sha]
-              const lines = info ? (info.addedLines ?? 0) + (info.deletedLines ?? 0) : null
-              return <tr key={commit.sha} tabIndex={0} onClick={() => selectCommit(commit.sha)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectCommit(commit.sha) } }}>
-                <td>
-                  <div className="wb-commit-title"><span>{commit.message.split('\n')[0]}</span><code className="wb-commit-sha">{commit.sha.slice(0, 12)}</code></div>
-                </td>
-                <td><span className={`wb-commit-risk${info ? '' : ' is-unknown'}`}>{info ? info.risk.toFixed(2) : '未评分'}</span></td>
-                <td className="numeric">{lines == null ? '—' : lines.toLocaleString()}</td>
-                <td className="numeric">{info?.fileCount ?? '—'}</td>
-              </tr>
-            })}
-          </tbody>
-        </table>
-      </div>
-      {!live.commitsComplete ? <p className="wb-pane-note">仅显示已加载的 {live.commits.length}/{live.totalCommits} 条提交。</p> : null}
+      <Table>
+        <TableHead><TableRow><TableHeaderCell>提交 / 改动</TableHeaderCell><TableHeaderCell>模型分数</TableHeaderCell><TableHeaderCell numeric>变更行</TableHeaderCell><TableHeaderCell numeric>文件</TableHeaderCell></TableRow></TableHead>
+        <TableBody>
+          {commitRows.map(commit => {
+            const info = commitRisks[commit.sha]
+            const lines = info ? (info.addedLines ?? 0) + (info.deletedLines ?? 0) : null
+            return <TableRow key={commit.sha} tabIndex={0} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => selectCommit(commit.sha)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectCommit(commit.sha) } }}>
+              <TableCell><div className="flex min-w-0 flex-wrap items-baseline gap-2"><span className="truncate text-sm font-medium text-foreground">{commit.message.split('\n')[0]}</span><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 12)}</code></div></TableCell>
+              <TableCell><span className={cn('tabular-nums', info ? 'text-foreground' : 'text-foreground-4')}>{info ? info.risk.toFixed(2) : '未评分'}</span></TableCell>
+              <TableCell numeric>{lines == null ? '—' : lines.toLocaleString()}</TableCell>
+              <TableCell numeric>{info?.fileCount ?? '—'}</TableCell>
+            </TableRow>
+          })}
+        </TableBody>
+      </Table>
+      {!live.commitsComplete ? <p className="text-xs text-foreground-3">仅显示已加载的 {live.commits.length}/{live.totalCommits} 条提交。</p> : null}
     </section> : null}
-    {reviewView === 'files' && evidenceError ? <Alert type="error" showIcon title={evidenceError}/> : null}
-    {reviewView === 'files' ? <div className="wb-body">
-      <aside className="wb-files" aria-label="提交与文件">
-        <div className="wb-pane-head"><h2>文件</h2><span className="wb-count">{selectedCommit ? `${scopedFiles.length} 个文件` : `${live.files.length}/${live.totalFiles}`}</span></div>
-        <div className="wb-file-scope">
+
+    {reviewView === 'files' && evidenceError ? <Alert type="error" title={evidenceError}/> : null}
+    {reviewView === 'files' ? <div className="grid overflow-hidden rounded-lg border border-border-strong bg-card lg:h-[calc(100vh-260px)] lg:min-h-[560px] lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+      <aside className="flex min-h-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="提交与文件">
+        <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">文件</h2><span className="text-xs text-foreground-3">{selectedCommit ? `${scopedFiles.length} 个文件` : `${live.files.length}/${live.totalFiles}`}</span></div>
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
           <Button size="sm" icon={<Icon name="arrowLeft"/>} onClick={showCommitList}>提交列表</Button>
-          {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code><Button variant="link" size="sm" onClick={() => selectCommit(null)}>全部文件</Button></> : <span>全部文件</span>}
+          {selectedCommit ? <><code className="font-mono text-foreground-3">{selectedCommit.slice(0, 12)}</code><Button variant="link" size="sm" onClick={() => selectCommit(null)}>全部文件</Button></> : <span className="text-foreground-3">全部文件</span>}
         </div>
-        {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="wb-pane-note">{scoredCommits === 0 ? '此版本尚未分析，无法按提交筛选文件；下方显示全部文件。' : '这条提交没有文件映射（旧分析），下方仍显示全部文件。'}</p> : null}
-        <Input size="sm" allowClear prefix={<Icon name="search"/>} placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径"/>
-        <Segmented size="sm" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/>
-        <div className="wb-file-list" role="listbox" aria-label="改动文件">
+        {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="px-3 pb-2 text-xs text-amber-deep">{scoredCommits === 0 ? '此版本尚未分析，无法按提交筛选文件；下方显示全部文件。' : '这条提交没有文件映射（旧分析），下方仍显示全部文件。'}</p> : null}
+        <div className="grid gap-2 px-3 pb-2">
+          <Input size="sm" allowClear prefix={<Icon name="search"/>} placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径"/>
+          <Segmented size="sm" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/>
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto px-1.5 pb-2" role="listbox" aria-label="改动文件">
           {visibleFiles.map(f => {
             const state = round.progress[f.path]?.state ?? 'unread'
             const { dir, name } = splitPath(f.path)
-            return <button key={f.path} role="option" aria-selected={path === f.path} className={`wb-file${path === f.path ? ' is-active' : ''}`} onClick={() => chooseFile(f.path)}>
-              <span className={`wb-file-flag is-${f.status}`} aria-hidden="true"/>
-              <span className="wb-file-path" title={f.path}><span className="wb-file-path-name">{name}</span><span className="wb-file-path-dir">{dir}</span></span>
-              <span className="wb-file-meta">{f.additions ? <em className="wb-add">+{f.additions}</em> : null}{f.deletions ? <em className="wb-del">−{f.deletions}</em> : null}{fileRisks[f.path] != null ? <em className="wb-file-risk" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[f.path].toFixed(3)}</em> : null}<span className={`wb-file-state is-${state}`}>{fileLabel[state]}</span></span>
+            return <button key={f.path} role="option" aria-selected={path === f.path} className={cn('flex w-full items-start gap-1.5 rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === f.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => chooseFile(f.path)}>
+              <span className={cn('mt-1 size-1.5 shrink-0 rounded-full', FILE_FLAG[f.status] ?? 'bg-foreground-4')} aria-hidden="true"/>
+              <span className="min-w-0 flex-1" title={f.path}><span className="block truncate font-medium">{name}</span><span className="block truncate text-[11px] text-foreground-4">{dir}</span></span>
+              <span className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] tabular-nums">
+                <span className="flex gap-1">{f.additions ? <em className="not-italic text-teal-deep">+{f.additions}</em> : null}{f.deletions ? <em className="not-italic text-rose-deep">−{f.deletions}</em> : null}{fileRisks[f.path] != null ? <em className="not-italic text-foreground-3" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[f.path].toFixed(3)}</em> : null}</span>
+                <span className={cn(state === 'read' ? 'text-teal-deep' : state === 'recheck' ? 'text-amber-deep' : 'text-foreground-4')}>{fileLabel[state]}</span>
+              </span>
             </button>
           })}
-          {!visibleFiles.length ? <p className="wb-pane-empty">没有匹配的文件。</p> : null}
+          {!visibleFiles.length ? <p className="py-4 text-center text-xs text-foreground-3">没有匹配的文件。</p> : null}
         </div>
-        {!live.filesComplete ? <p className="wb-pane-note">还有 {live.totalFiles - live.files.length} 个文件未覆盖，请在 GitHub 核对超出接口上限的范围。</p> : null}
+        {!live.filesComplete ? <p className="border-t border-border-soft px-3 py-2 text-xs text-amber-deep">还有 {live.totalFiles - live.files.length} 个文件未覆盖，请在 GitHub 核对超出接口上限的范围。</p> : null}
       </aside>
-      <section className="wb-code pr-code" aria-label="PR 代码阅读">
+
+      <section className="pr-code flex min-h-0 min-w-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="PR 代码阅读">
         {file ? <>
-          <div className="wb-code-head">
-            <div className="wb-code-title">
-              <code>{file.path}</code>
-              <span className="wb-code-meta">{changeLabels[file.status] ?? file.status} · <em className="wb-add">+{file.additions}</em> <em className="wb-del">−{file.deletions}</em>{file.previousPath ? ` · 重命名自 ${file.previousPath}` : ''}</span>
+          <div className="grid gap-2 border-b border-border-soft px-3 py-2">
+            <div className="min-w-0">
+              <code className="block truncate font-mono text-xs text-foreground-2">{file.path}</code>
+              <span className="text-[11px] text-foreground-3">{changeLabels[file.status] ?? file.status} · <em className="not-italic text-teal-deep">+{file.additions}</em> <em className="not-italic text-rose-deep">−{file.deletions}</em>{file.previousPath ? ` · 重命名自 ${file.previousPath}` : ''}</span>
             </div>
-            <div className="wb-code-actions">
+            <div className="flex flex-wrap items-center gap-2">
               <Segmented size="sm" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
               <Tooltip title="读取基准与目标的完整文件内容"><Button size="sm" loading={contextBusy} onClick={() => void loadContext()}>完整上下文</Button></Tooltip>
               <Button size="sm" loading={candidateBusy} onClick={() => { if (!file) return; setCandidateBusy(true); setCandidateError(''); void analyzePRCandidates(live.snapshotId, [file.path], 'head').then(result => setCandidates(result.candidates)).catch(error => setCandidateError(message(error))).finally(() => setCandidateBusy(false)) }}>分析代码候选</Button>
               <Button size="sm" variant={round.progress[path]?.state === 'read' ? 'secondary' : 'primary'} disabled={!readable} onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))}>标记已阅读</Button>
-              <Select size="sm" className="wb-mark" value={round.progress[path]?.state ?? 'unread'} onChange={value => commit(setFileState(current.current!, version, path, value as FileState, readable))} options={[{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]} aria-label="文件阅读状态"/>
+              <Select size="sm" className="w-28" value={round.progress[path]?.state ?? 'unread'} onChange={value => commit(setFileState(current.current!, version, path, value as FileState, readable))} options={[{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]} aria-label="文件阅读状态"/>
             </div>
           </div>
-          {file.patchComplete ? null : <p className="wb-code-hint">Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。</p>}
-          <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
-          {candidateError ? <Alert type="error" showIcon title={candidateError}/> : null}
-          {candidates.length ? <section className="wb-candidates" aria-label="代码候选">
-            <h3>代码候选</h3>
-            <p className="wb-code-hint">候选只作线索，不是缺陷概率或行级缺陷结论。</p>
+          {file.patchComplete ? null : <p className="border-b border-border-soft px-3 py-2 text-xs text-amber-deep">Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。</p>}
+          <div className="min-h-0 flex-1 overflow-auto">
+            <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
+          </div>
+          {candidateError ? <div className="border-t border-border-soft p-2"><Alert type="error" title={candidateError}/></div> : null}
+          {candidates.length ? <section className="grid max-h-72 gap-2 overflow-auto border-t border-border-soft p-3" aria-label="代码候选">
+            <h3 className="text-sm font-semibold text-foreground">代码候选</h3>
+            <p className="text-xs text-foreground-3">候选只作线索，不是缺陷概率或行级缺陷结论。</p>
             {candidates.filter(item => item.path === file.path).map((item, index) => {
               const key = `${item.side}:${item.path}:${item.line}:${item.ruleId}:${item.ruleVersion}`
               const decision = round.candidateDecisions?.[key]
@@ -475,18 +490,18 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
                 setCandidateError('')
                 changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status, reason } } }))
               }
-              return <div key={`${key}:${index}`} className="wb-candidate">
-                <code>{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
-                {item.evidence ? <pre>{item.evidence}</pre> : null}
-                {item.suggestion ? <div className="wb-candidate-suggestion">
-                  <strong>{item.suggestion.title}</strong>
-                  <p>{item.suggestion.rationale}</p>
-                  {item.suggestion.manualChecks.length ? <ul>{item.suggestion.manualChecks.map(check => <li key={check}>{check}</li>)}</ul> : null}
-                  {item.suggestion.example ? <pre>{`${item.suggestion.example.before}\n→\n${item.suggestion.example.after}`}</pre> : null}
+              return <div key={`${key}:${index}`} className="grid gap-1 rounded-sm border border-border-soft p-2 text-xs">
+                <code className="font-mono text-foreground-2">{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
+                {item.evidence ? <pre className="overflow-auto rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{item.evidence}</pre> : null}
+                {item.suggestion ? <div className="grid gap-1 rounded-sm bg-soft p-2">
+                  <strong className="text-foreground">{item.suggestion.title}</strong>
+                  <p className="text-foreground-3">{item.suggestion.rationale}</p>
+                  {item.suggestion.manualChecks.length ? <ul className="list-disc pl-4 text-foreground-3">{item.suggestion.manualChecks.map(check => <li key={check}>{check}</li>)}</ul> : null}
+                  {item.suggestion.example ? <pre className="overflow-auto rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{`${item.suggestion.example.before}\n→\n${item.suggestion.example.after}`}</pre> : null}
                 </div> : null}
-                <Space>
+                <Space wrap>
                   {(['confirmed', 'rejected', 'deferred'] as const).map(status => <Button key={status} size="sm" variant={decision?.status === status ? 'primary' : 'secondary'} onClick={() => set(status)}>{status === 'confirmed' ? '确认' : status === 'rejected' ? '驳回' : '暂缓'}</Button>)}
-                  <input aria-label="候选处理理由" value={decision?.reason ?? ''} onChange={event => changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status: decision?.status ?? 'deferred', reason: event.target.value } } }))} placeholder="处理理由"/>
+                  <input className="h-8 flex-1 rounded-sm border border-input bg-card px-2 text-xs text-foreground" aria-label="候选处理理由" value={decision?.reason ?? ''} onChange={event => changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status: decision?.status ?? 'deferred', reason: event.target.value } } }))} placeholder="处理理由"/>
                   <Button size="sm" onClick={() => {
                     const exists = round.questions.some(item2 => item2.kind === 'suggestion' && item2.relatedFiles[0] === item.path && item2.body.includes(`${item.ruleId}@${item.ruleVersion}`) && item2.body.includes(`${item.path}:${item.line}`))
                     if (exists) { setCandidateError('该候选建议已在问题草稿中'); return }
@@ -498,55 +513,54 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
               </div>
             })}
           </section> : null}
-          <details className="wb-author">
-            <summary>作者原始说明</summary>
-            <div className="wb-author-inner">
-              <h3>作者原始说明</h3>
-              <pre className="wb-author-body">{live.body || '作者没有填写说明'}</pre>
-            </div>
+          <details className="border-t border-border-soft">
+            <summary className="cursor-pointer px-3 py-2 text-xs text-foreground-2">作者原始说明</summary>
+            <pre className="max-h-48 overflow-auto border-t border-border-soft p-3 font-mono text-[11px] leading-body text-foreground-2">{live.body || '作者没有填写说明'}</pre>
           </details>
-          {contextError ? <Alert type="error" showIcon title={contextError}/> : null}
-          {[baseContext, headContext].filter((c): c is PRContext => Boolean(c)).map(c => <details key={c.side} className="wb-context" open>
-            <summary>{c.side === 'base' ? '基准' : '目标'}上下文 · {c.absent ? '该侧不存在此文件' : c.complete ? `${c.totalLines} 行完整文本` : `仅前 10000/${c.totalLines} 行，未完整覆盖`}</summary>
-            <div className="wb-context-lines">{c.content.split('\n').map((line, i) => <button key={i} data-code-line={`${c.side}:${i + 1}`} data-focused={round.location?.side === c.side && round.location.line === i + 1 ? 'true' : undefined} onClick={() => anchor(c.side, i + 1)} aria-label={`关联 ${file.path}:${c.side}:${i + 1}`}><span>{i + 1}</span><code>{line || ' '}</code></button>)}</div>
+          {contextError ? <div className="border-t border-border-soft p-2"><Alert type="error" title={contextError}/></div> : null}
+          {[baseContext, headContext].filter((c): c is PRContext => Boolean(c)).map(c => <details key={c.side} className="border-t border-border-soft" open>
+            <summary className="cursor-pointer px-3 py-2 text-xs text-foreground-2">{c.side === 'base' ? '基准' : '目标'}上下文 · {c.absent ? '该侧不存在此文件' : c.complete ? `${c.totalLines} 行完整文本` : `仅前 10000/${c.totalLines} 行，未完整覆盖`}</summary>
+            <div className="max-h-64 overflow-auto border-t border-border-soft font-mono text-[11px]">{c.content.split('\n').map((line, i) => <button key={i} type="button" data-code-line={`${c.side}:${i + 1}`} data-focused={round.location?.side === c.side && round.location.line === i + 1 ? 'true' : undefined} onClick={() => anchor(c.side, i + 1)} aria-label={`关联 ${file.path}:${c.side}:${i + 1}`} className="flex w-full gap-2 border-0 bg-transparent px-2 py-0.5 text-left text-foreground-2 hover:bg-hover data-[focused=true]:bg-accent-soft"><span className="w-9 shrink-0 text-right tabular-nums text-foreground-4">{i + 1}</span><code className="truncate font-mono">{line || ' '}</code></button>)}</div>
           </details>)}
-        </> : <div className="wb-code-empty"><p>这个版本没有可展示的文件，请核对 GitHub 来源。</p></div>}
+        </> : <div className="grid place-items-center p-8 text-center"><p className="text-xs text-foreground-3">这个版本没有可展示的文件，请核对 GitHub 来源。</p></div>}
       </section>
-      <aside className="wb-notes" aria-label="问题与人工记录">
-        <div className="wb-pane-head"><h2>问题</h2><Button aria-label="新建" size="sm" variant="ghost" icon={<Icon name="plus"/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
-        <div className="wb-question-list">
-          {round.questions.map(q => <button key={q.id} className={`wb-question${selected?.id === q.id ? ' is-active' : ''}`} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
-            <span className="wb-question-body">{q.body.slice(0, 60) || '未填写的问题'}</span>
-            <span className="wb-question-meta">{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化待复核' : ''}{q.evidence.length ? ` · ${q.evidence.length} 条证据` : ''}</span>
+
+      <aside className="flex min-h-0 flex-col" aria-label="问题与人工记录">
+        <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">问题</h2><Button aria-label="新建" size="sm" variant="ghost" icon={<Icon name="plus"/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
+        <div className="max-h-40 shrink-0 overflow-auto border-b border-border-soft p-1.5">
+          {round.questions.map(q => <button key={q.id} className={cn('block w-full rounded-sm border-0 bg-transparent px-2 py-1.5 text-left text-xs', selected?.id === q.id ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
+            <span className="block truncate font-medium">{q.body.slice(0, 60) || '未填写的问题'}</span>
+            <span className="block text-[11px] text-foreground-4">{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化待复核' : ''}{q.evidence.length ? ` · ${q.evidence.length} 条证据` : ''}</span>
           </button>)}
-          {!round.questions.length ? <p className="wb-pane-empty">还没有问题记录。新建一条，或点击代码行把位置关联进来。</p> : null}
+          {!round.questions.length ? <p className="py-3 text-center text-xs text-foreground-3">还没有问题记录。新建一条，或点击代码行把位置关联进来。</p> : null}
         </div>
-        <div className="wb-question-detail">
+        <div className="min-h-0 flex-1 overflow-auto p-3">
           {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setContextError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined, { evidence: true }) }} work={work}/> : null}
         </div>
-        <label className="wb-note">
-          <span>个人笔记{round.scratchOriginSnapshotId ? <small>沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}</span>
-          <textarea aria-label="个人笔记" value={round.scratch} onChange={e => changeRound(r => ({ ...r, scratch: e.target.value, scratchOriginSnapshotId: undefined }))} placeholder="读到哪里、还待核对什么；不会附到对外意见里。"/>
+        <label className="grid shrink-0 gap-1 border-t border-border-soft p-2">
+          <span className="text-xs text-foreground-2">个人笔记{round.scratchOriginSnapshotId ? <small className="ml-1 text-foreground-4">沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}</span>
+          <textarea className="min-h-16 w-full rounded-sm border border-input bg-card p-2 text-xs text-foreground placeholder:text-foreground-4" aria-label="个人笔记" value={round.scratch} onChange={e => changeRound(r => ({ ...r, scratch: e.target.value, scratchOriginSnapshotId: undefined }))} placeholder="读到哪里、还待核对什么；不会附到对外意见里。"/>
         </label>
       </aside>
     </div> : null}
+
     <Drawer open={drawer === 'source'} onClose={() => setDrawer(null)} width={600} title="代码版本与作者说明">
-      <div className="wb-drawer">
-        <label className="wb-field">正在阅读的版本
+      <div className="grid gap-3">
+        <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">正在阅读的版本</span>
           <Select value={version} onChange={value => switchVersion(value)} options={Object.values(work.rounds).map(r => ({ value: r.source.snapshotId, label: `${r.source.headSha.slice(0, 12)} · ${displayTime(r.source.capturedAt)}` }))} aria-label="审查代码版本"/>
         </label>
-        <dl className="wb-defs">
-          <div><dt>基准</dt><dd>{live.baseBranch} · {live.baseSha.slice(0, 12)}</dd></div>
-          <div><dt>目标</dt><dd>{live.headBranch} · {live.headSha.slice(0, 12)}</dd></div>
-          <div><dt>代码读取于</dt><dd>{displayTime(live.capturedAt)}</dd></div>
-          <div><dt>最近检查</dt><dd>{displayTime(work.checkedAt)}</dd></div>
+        <dl className="grid gap-1 text-sm">
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-1.5"><dt className="text-xs text-foreground-3">基准</dt><dd className="m-0 break-words">{live.baseBranch} · {live.baseSha.slice(0, 12)}</dd></div>
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-1.5"><dt className="text-xs text-foreground-3">目标</dt><dd className="m-0 break-words">{live.headBranch} · {live.headSha.slice(0, 12)}</dd></div>
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-1.5"><dt className="text-xs text-foreground-3">代码读取于</dt><dd className="m-0 break-words">{displayTime(live.capturedAt)}</dd></div>
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-1.5"><dt className="text-xs text-foreground-3">最近检查</dt><dd className="m-0 break-words">{displayTime(work.checkedAt)}</dd></div>
         </dl>
-        <details className="wb-commits" open>
-          <summary>涉及提交（已加载 {live.commits.length}/{live.totalCommits}）</summary>
-          <ul>{live.commits.map(c => <li key={c.sha}><a href={`https://github.com/${live.baseRepository}/commit/${c.sha}`} target="_blank" rel="noreferrer">{c.sha.slice(0, 12)}</a> <span>{c.message.split('\n')[0]}</span></li>)}</ul>
-          {!live.commitsComplete ? <p>提交列表未完整加载，请在 GitHub 核对其余提交；文件阅读不依赖模型。</p> : null}
+        <details className="rounded-sm border border-border-soft" open>
+          <summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">涉及提交（已加载 {live.commits.length}/{live.totalCommits}）</summary>
+          <ul className="grid gap-1 border-t border-border-soft p-2.5 text-xs">{live.commits.map(c => <li key={c.sha} className="flex gap-2"><a className="shrink-0 font-mono text-accent underline-offset-2 hover:underline" href={`https://github.com/${live.baseRepository}/commit/${c.sha}`} target="_blank" rel="noreferrer">{c.sha.slice(0, 12)}</a> <span className="min-w-0 truncate text-foreground-3">{c.message.split('\n')[0]}</span></li>)}</ul>
+          {!live.commitsComplete ? <p className="border-t border-border-soft p-2.5 text-xs text-amber-deep">提交列表未完整加载，请在 GitHub 核对其余提交；文件阅读不依赖模型。</p> : null}
         </details>
-        <div className="wb-drawer-links">
+        <div className="flex flex-wrap gap-2">
           <Button size="sm" icon={<Icon name="external"/>} href={live.url} target="_blank" aria-label="在 GitHub 核对 PR">在 GitHub 核对 PR</Button>
           <Button size="sm" onClick={() => navigate(repositoryRoute(live.repositoryId))}>项目分析与模型线索</Button>
           <Button size="sm" icon={<Icon name="save"/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
@@ -554,26 +568,26 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       </div>
     </Drawer>
     <Drawer open={drawer === 'delivery'} onClose={() => setDrawer(null)} width={680} title="输出本轮审查意见">
-      <div className="wb-drawer">
-        <p className="wb-drawer-note">尚需处理：{live.totalFiles - readCount} 个未完整阅读文件、{pendingCount} 个未关闭或待复核问题。可继续阅读，或在结论中明确保留。</p>
+      <div className="grid gap-3">
+        <p className="text-xs leading-body text-foreground-3">尚需处理：{live.totalFiles - readCount} 个未完整阅读文件、{pendingCount} 个未关闭或待复核问题。可继续阅读，或在结论中明确保留。</p>
         <DeliveryForm busy={busy} draft={round.deliveryDraft} onDraft={deliveryDraft => changeRound(r => ({ ...r, deliveryDraft }))} onPrepare={prepareDelivery}/>
-        {delivery ? <div className="wb-delivery-preview">
-          <h3>审查意见预览</h3>
-          {!delivery.checked || work.latestSnapshotId !== version ? <label className="wb-check"><input type="checkbox" checked={delivery.oldConfirmed} onChange={e => setDelivery({ ...delivery, oldConfirmed: e.target.checked })}/>确认按当前旧版本交付，并保留版本和未覆盖事项说明</label> : null}
-          <textarea readOnly aria-label="审查意见预览" value={delivery.preview}/>
-          <Space>
+        {delivery ? <div className="grid gap-2 rounded-sm border border-border-soft p-3">
+          <h3 className="text-sm font-semibold text-foreground">审查意见预览</h3>
+          {!delivery.checked || work.latestSnapshotId !== version ? <label className="flex items-start gap-2 text-xs text-foreground-2"><input type="checkbox" className="mt-0.5" checked={delivery.oldConfirmed} onChange={e => setDelivery({ ...delivery, oldConfirmed: e.target.checked })}/>确认按当前旧版本交付，并保留版本和未覆盖事项说明</label> : null}
+          <textarea className="min-h-40 w-full rounded-sm border border-input bg-sunken p-2 font-mono text-[11px] text-foreground-2" readOnly aria-label="审查意见预览" value={delivery.preview}/>
+          <Space wrap>
             <Button variant="primary" disabled={busy || ((!delivery.checked || work.latestSnapshotId !== version) && !delivery.oldConfirmed)} onClick={() => void confirmDelivery()}>确认保存本轮结论</Button>
             <Button onClick={() => setDelivery(null)}>继续审查</Button>
           </Space>
         </div> : null}
-        {round.conclusion ? <div className="wb-receipt">
-          <h3>{conclusionLabels[round.conclusion.kind]} · {displayTime(round.conclusion.createdAt)}</h3>
-          <p>意见属于 {live.headSha.slice(0, 12)}，尚未发送到 GitHub。</p>
-          <Space>
+        {round.conclusion ? <div className="grid gap-2 rounded-sm border border-border-soft p-3">
+          <h3 className="text-sm font-semibold text-foreground">{conclusionLabels[round.conclusion.kind]} · {displayTime(round.conclusion.createdAt)}</h3>
+          <p className="text-xs text-foreground-3">意见属于 {live.headSha.slice(0, 12)}，尚未发送到 GitHub。</p>
+          <Space wrap>
             <Button size="sm" onClick={() => downloadText(`review-${number}-${live.headSha.slice(0, 8)}.md`, round.conclusion!.markdown, 'text/markdown')}>下载 Markdown 意见</Button>
             <Button size="sm" onClick={() => navigator.clipboard.writeText(round.conclusion!.markdown).catch(error => setReadError(error))}>复制审查意见</Button>
           </Space>
-          <details><summary>查看已保存意见</summary><Markdown>{round.conclusion.markdown}</Markdown></details>
+          <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看已保存意见</summary><div className="border-t border-border-soft p-2.5"><Markdown>{round.conclusion.markdown}</Markdown></div></details>
         </div> : null}
       </div>
     </Drawer>

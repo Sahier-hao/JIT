@@ -69,7 +69,7 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await page.getByRole('button', { name: '启用自动分析', exact: true }).click()
   await expect(page.getByRole('alertdialog', { name: '确认项目 PR 自动分析' })).toContainText(fixture.modelId)
   await page.getByRole('button', { name: '确认启用并处理现有开放 PR', exact: true }).click()
-  await expect(page.locator('.update-status-title')).toHaveText('自动分析已开启')
+  await expect(page.locator('[data-testid="update-status-title"]')).toHaveText('自动分析已开启')
   await page.getByRole('button', { name: '关闭', exact: true }).click()
   await expect.poll(async () => {
     await request.post(`${api}/__test/observe`)
@@ -77,7 +77,7 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   }, { timeout: 120_000 }).toBe('completed')
 
   await page.getByRole('button', { name: '查看 PR', exact: true }).click()
-  await expect(page.locator('.pr-risk-line')).toBeVisible()
+  await expect(page.locator('[data-testid="pr-risk-line"]')).toBeVisible()
   await page.screenshot({ path: `${evidence}/${info.project.name}-pr-preview.png`, fullPage: true })
   expect(await page.evaluate(key => localStorage.getItem(key), workKey)).toBeNull()
   await page.getByRole('button', { name: '开始审查', exact: true }).click()

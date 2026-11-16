@@ -4,6 +4,7 @@ import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { checkTracking, getTracking, projectPRs, updateTracking, type PRTracking, type ProjectPRPage } from '../projectActivityClient'
 import { repositoryModels, type ModelChoice } from '../modelClient'
+import { cn } from '../lib/utils'
 
 const INTERVALS = [300, 600, 900, 1800, 3600]
 const watchLabel: Record<string, string> = { idle: '等待下次检查', checking: '正在检查远端', error: '上次检查失败' }
@@ -54,49 +55,49 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
   }
   if (error && !tracking) return <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/>
   if (!tracking) return <LoadingNotice label="正在读取 PR 自动分析设置"/>
-  if (!tracking.supported) return <p className="pr-track-unsupported">此项目不是公开 GitHub 来源，无法启用 PR 自动分析；分支分析和风险趋势不受影响。</p>
-  const tone = tracking.status === 'error' ? 'alert' : tracking.status === 'checking' ? 'active' : tracking.enabled ? undefined : 'muted'
-  return <div className="pr-track">
-    <div className="update-status" data-tone={tone}>
-      <span className="update-dot" aria-hidden="true"/>
-      <p className="update-status-title" role="status">{tracking.enabled ? '自动分析已开启' : '自动分析未开启'}</p>
-      <span className="update-status-time">{tracking.enabled ? (tracking.nextCheckAt ? `下次 ${displayTime(tracking.nextCheckAt)}` : watchLabel[tracking.status] ?? tracking.status) : '开启后由后台定期检查'}</span>
-      {tracking.enabled ? <Button size="sm" disabled={busy} onClick={() => void action(() => checkTracking(repositoryId))}>立即检查</Button> : null}
+  if (!tracking.supported) return <p className="text-xs leading-body text-foreground-3">此项目不是公开 GitHub 来源，无法启用 PR 自动分析；分支分析和风险趋势不受影响。</p>
+  const tone = tracking.status === 'error' ? 'bg-rose' : tracking.status === 'checking' ? 'bg-blue' : tracking.enabled ? 'bg-teal' : 'bg-foreground-4'
+  return <div className="grid gap-3">
+    <div className="flex flex-wrap items-center gap-2 rounded-sm border border-border-soft p-2.5">
+      <span className={cn('size-2 rounded-full', tone)} aria-hidden="true"/>
+      <p className="text-sm font-medium text-foreground" role="status" data-testid="update-status-title">{tracking.enabled ? '自动分析已开启' : '自动分析未开启'}</p>
+      <span className="text-xs text-foreground-3">{tracking.enabled ? (tracking.nextCheckAt ? `下次 ${displayTime(tracking.nextCheckAt)}` : watchLabel[tracking.status] ?? tracking.status) : '开启后由后台定期检查'}</span>
+      {tracking.enabled ? <Button className="ml-auto" size="sm" disabled={busy} onClick={() => void action(() => checkTracking(repositoryId))}>立即检查</Button> : null}
     </div>
-    {tracking.lastCheckedAt ? <p className="pr-track-last">最近检查 {displayTime(tracking.lastCheckedAt)}{tracking.errorCode ? ` · 失败原因 ${tracking.errorCode}` : ''}</p> : null}
+    {tracking.lastCheckedAt ? <p className="text-xs text-foreground-3">最近检查 {displayTime(tracking.lastCheckedAt)}{tracking.errorCode ? ` · 失败原因 ${tracking.errorCode}` : ''}</p> : null}
     {error && tracking ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}
-    <div className="pr-track-fields">
-      <div className="pr-track-field">
-        <span className="pr-track-label">固定分析模型</span>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-1.5">
+        <span className="text-xs font-medium text-foreground-2">固定分析模型</span>
         <Select ariaLabel="固定自动分析模型" value={modelId} disabled={busy} onChange={value => { setModelId(value); setConfirm(false) }} placeholder="选择真实兼容模型" options={[
           ...(modelId && !models.some(m => m.modelId === modelId) ? [{ value: modelId, label: `原选模型 ${modelId}（不可用）`, disabled: true }] : []),
           ...models.map(m => ({ value: m.modelId, label: `${m.name} · ${m.modelId}${compatible(m) ? '' : '（不可用）'}`, disabled: !compatible(m) })),
         ]}/>
       </div>
-      <div className="pr-track-field">
-        <span className="pr-track-label">检查间隔</span>
+      <div className="grid gap-1.5">
+        <span className="text-xs font-medium text-foreground-2">检查间隔</span>
         <Select ariaLabel="PR 检查间隔" value={cadence} disabled={busy} onChange={value => { setCadence(Number(value)); setConfirm(false) }} options={[...new Set([...INTERVALS, cadence])].sort((a, b) => a - b).map(value => ({ value, label: `${value / 60} 分钟` }))}/>
       </div>
     </div>
-    {modelId && !validModel ? <p className="field-error" role="alert">原选模型已不可用，未自动替换。请明确选择 ready、启用且兼容的模型。</p> : null}
-    {!validInterval ? <p className="field-error" role="alert">原检查间隔不在可选范围内，请重新选择。</p> : null}
-    <div className="pr-track-scope">
-      <div>
-        <p className="pr-track-scope-title">启用范围</p>
-        <p className="pr-track-scope-text">{scope?.checkedAt ? `第 ${scope.page} 页开放 PR ${scope.pullRequests.length} 项，其中非草稿 ${eligible} 项；检查于 ${displayTime(scope.checkedAt)}${scope.hasMore ? '。还有后续页，以上不是完整数量。' : '。'}` : '尚未获取开放 PR 范围。'}</p>
+    {modelId && !validModel ? <p className="text-xs text-rose" role="alert">原选模型已不可用，未自动替换。请明确选择 ready、启用且兼容的模型。</p> : null}
+    {!validInterval ? <p className="text-xs text-rose" role="alert">原检查间隔不在可选范围内，请重新选择。</p> : null}
+    <div className="flex flex-wrap items-start justify-between gap-2 rounded-sm border border-border-soft p-2.5">
+      <div className="grid gap-0.5">
+        <p className="text-sm font-medium text-foreground-2">启用范围</p>
+        <p className="text-xs leading-body text-foreground-3">{scope?.checkedAt ? `第 ${scope.page} 页开放 PR ${scope.pullRequests.length} 项，其中非草稿 ${eligible} 项；检查于 ${displayTime(scope.checkedAt)}${scope.hasMore ? '。还有后续页，以上不是完整数量。' : '。'}` : '尚未获取开放 PR 范围。'}</p>
       </div>
       <Button size="sm" disabled={busy} onClick={() => void loadScope()}>更新范围</Button>
     </div>
-    {scope?.errorCode ? <p className="field-error" role="alert">开放范围检查失败：{scope.errorCode}，请重试后再启用。</p> : null}
-    <div className="pr-track-actions">
+    {scope?.errorCode ? <p className="text-xs text-rose" role="alert">开放范围检查失败：{scope.errorCode}，请重试后再启用。</p> : null}
+    <div className="flex flex-wrap gap-2">
       <Button variant="primary" disabled={busy || !validModel || !validInterval || !scope?.checkedAt || Boolean(scope.errorCode)} onClick={() => setConfirm(true)}>{tracking.enabled ? '保存修改' : '启用自动分析'}</Button>
       {tracking.enabled ? <Button disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: false }))}>暂停自动分析</Button> : null}
     </div>
-    <p className="pr-track-note">只分析开放且非草稿 PR；暂停不会取消已提交的任务。</p>
-    {confirm ? <div className="pr-track-confirm" role="alertdialog" aria-label="确认项目 PR 自动分析">
-      <strong>{tracking.enabled ? '确认保存自动分析设置？' : '确认使用固定模型分析开放 PR？'}</strong>
-      <p>模型 {modelId}，每 {cadence / 60} 分钟检查一次；{tracking.enabled ? '之后新增的版本会按新设置处理' : `首次会处理当前开放非草稿 PR ${eligible} 项${scope?.hasMore ? '（清单尚未取完）' : ''}`}。不会上传个人笔记、问题或阅读进度。</p>
-      <div className="pr-track-confirm-actions">
+    <p className="text-xs text-foreground-3">只分析开放且非草稿 PR；暂停不会取消已提交的任务。</p>
+    {confirm ? <div className="grid gap-2 rounded-sm border border-accent bg-accent-soft p-3" role="alertdialog" aria-label="确认项目 PR 自动分析">
+      <strong className="text-sm font-semibold text-foreground">{tracking.enabled ? '确认保存自动分析设置？' : '确认使用固定模型分析开放 PR？'}</strong>
+      <p className="text-xs leading-body text-foreground-2">模型 {modelId}，每 {cadence / 60} 分钟检查一次；{tracking.enabled ? '之后新增的版本会按新设置处理' : `首次会处理当前开放非草稿 PR ${eligible} 项${scope?.hasMore ? '（清单尚未取完）' : ''}`}。不会上传个人笔记、问题或阅读进度。</p>
+      <div className="flex flex-wrap gap-2">
         <Button variant="primary" disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: true, modelId, intervalSeconds: cadence, confirmExisting: true }))}>{busy ? '正在保存…' : tracking.enabled ? '确认保存设置' : '确认启用并处理现有开放 PR'}</Button>
         <Button disabled={busy} onClick={() => setConfirm(false)}>取消设置</Button>
       </div>
