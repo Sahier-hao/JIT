@@ -111,6 +111,47 @@ it('opens a comparison of a historical success against the pinned current result
 
 afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear() })
 
+it('reports how many of the top holdout commits carry defect evidence', async () => {
+  const fetch = mockApi(); const original = fetch.getMockImplementation()!
+  const rows: [string, number, number][] = [
+    ['1'.repeat(40), 0.9, 1], ['2'.repeat(40), 0.8, 0], ['3'.repeat(40), 0.7, 1], ['4'.repeat(40), 0.1, 0],
+  ]
+  const commits = rows.map(([commitId, risk, label], index) => ({
+    commitId, epoch: index + 1, risk, addedLines: 10, deletedLines: 1, files: 1,
+    label, labelNote: null, subject: `holdout-${index + 1}`, features: {}, partition: 'holdout',
+  }))
+  fetch.mockImplementation(async (input, init) => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname === `/api/v1/repository-syncs/${SYNC}/commits`) {
+      return response({ syncId: SYNC, status: 'completed', total: 4, limit: 200, offset: 0, commits })
+    }
+    if (url.pathname === `/api/v1/repositories/${REPO}`) {
+      const base = detail()
+      return response({
+        ...base,
+        viewContext: {
+          ...base.viewContext,
+          scope: {
+            strategy: 'repository-trained', model: { name: '模型' }, dataset: null, datasetError: null,
+            split: {
+              preset: 'temporal-70-15-15', train: { count: 5 }, validation: { count: 2 },
+              test: { count: 1 }, holdout: { count: 4, positives: 2 },
+            },
+            metrics: null, distributions: { holdout: { high: 2, medium: 1, low: 1, unknown: 0 } },
+            partitionCoverage: { status: 'verified', reason: null, preset: 'temporal-70-15-15' },
+            excludedCommitIds: [], limitations: [], frozenIdentity: null,
+          },
+        },
+      })
+    }
+    return original(input, init)
+  })
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
+  expect(await screen.findByText('模型没见过的提交里，分数最高的三条')).toBeVisible()
+  expect(await screen.findByText('留出 4 条 · 2 条有缺陷证据 · 分数最高的三条命中 2 条')).toBeVisible()
+  expect(screen.getByText(/分支分析用于回放与复盘/)).toBeVisible()
+})
+
 it('retries a cancelled analysis with branch and strategy but without a hidden date window', async () => {
   sessionStorage.clear()
   let posted: unknown = null

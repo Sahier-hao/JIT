@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { adoptVersion, candidateQuestion, createWork, exportReview, mergeBackup, parseBackup, readWorks, saveWork, setFileState, parsePatchLines } from './prReview'
+import { adoptVersion, backupText, candidateQuestion, createWork, exportReview, hasLegacyWorks, legacyImportReceipt, legacyWorksHash, markLegacyImported, mergeBackup, parseBackup, parseBackupInfo, readLegacyWorks, readWorks, saveWork, setFileState, parsePatchLines } from './prReview'
 import { snapshot } from './prReview.fixture'
+const ACCOUNT = 'alice'
 
 
 afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
@@ -12,10 +13,10 @@ it('anchors deletions to base lines and additions to head lines across hunks', (
 })
 it('persists separate work and detects a newer tab instead of losing changes', () => {
   const original = createWork(snapshot())
-  const saved = saveWork(original)
-  expect(readWorks()[0].latestSnapshotId).toBe('v1')
-  expect(() => saveWork(original)).toThrow(/其他页面/)
-  expect(saveWork({ ...saved, interest: 'paused' }).interest).toBe('paused')
+  const saved = saveWork(ACCOUNT, original)
+  expect(readWorks(ACCOUNT)[0].latestSnapshotId).toBe('v1')
+  expect(() => saveWork(ACCOUNT, original)).toThrow(/其他页面/)
+  expect(saveWork(ACCOUNT, { ...saved, interest: 'paused' }).interest).toBe('paused')
 })
 it('carries unchanged reading provenance, flags changed evidence and never resolves a question', () => {
   let work = createWork(snapshot())
@@ -81,4 +82,38 @@ it('keeps a candidate suggestion bound to its original snapshot when a new versi
   const carried = updated.rounds.v2.questions.find(item => item.kind === 'suggestion')
   expect(carried?.originSnapshotId).toBe('v1')
   expect(carried?.body).toContain('src/token.py:12')
+})
+
+it('keeps the same PR work separate for two confirmed accounts', () => {
+  const work = createWork(snapshot())
+  const savedA = saveWork('alice', work)
+  expect(readWorks('alice')).toHaveLength(1)
+  expect(readWorks('bob')).toHaveLength(0)
+  const savedB = saveWork('bob', { ...work, revision: 0, rounds: { ...work.rounds, v1: { ...work.rounds.v1, scratch: 'B notes' } } })
+  expect(readWorks('bob')[0].rounds.v1.scratch).toBe('B notes')
+  expect(readWorks('alice')[0].rounds.v1.scratch).toBe('')
+  expect(() => saveWork('bob', { ...savedA, revision: 0 })).toThrow(/其他页面/)
+  expect(savedB.revision).toBe(1)
+})
+
+it('does not claim legacy work automatically and records an explicit import receipt', () => {
+  const legacy = createWork(snapshot())
+  localStorage.setItem('jit:pr-review:works:v1', JSON.stringify({ [legacy.key]: { ...legacy, revision: 1 } }))
+  expect(readWorks('alice')).toEqual([])
+  expect(hasLegacyWorks()).toBe(true)
+  const hash = legacyWorksHash()
+  markLegacyImported('alice', hash)
+  expect(legacyImportReceipt('alice')).toBe(hash)
+  expect(readLegacyWorks()).toHaveLength(1)
+  expect(localStorage.getItem('jit:pr-review:works:v1')).toContain(legacy.key)
+})
+
+it('exports a versioned backup with an account hint and still reads v1 backups', () => {
+  const work = createWork(snapshot())
+  const modern = parseBackupInfo(backupText(work, 'alice'))
+  expect(modern.accountHint).toBe('alice')
+  expect(modern.work.key).toBe(work.key)
+  const legacy = parseBackupInfo(JSON.stringify({ format: 'jit-pr-review-v1', work }))
+  expect(legacy.accountHint).toBeNull()
+  expect(legacy.work.key).toBe(work.key)
 })

@@ -63,15 +63,30 @@ function BenefitView({ benefit }: { benefit: ModelCardBenefit }) {
   }
   const model = record(benefit.strategies.model)
   const time = record(benefit.strategies.time)
+  const density = benefit.strategies.density == null ? null : record(benefit.strategies.density)
+  const loc = benefit.strategies.loc == null ? null : record(benefit.strategies.loc)
   const random = record(benefit.strategies.random)
   const sentence = valueText(benefit.conclusion.sentence, '收益结论未提供')
+  const protocol = benefit.protocol ?? {}
+  const intervals = ['modelVsDensity', 'modelVsLoc', 'modelVsTime', 'modelVsRandomMean']
+    .map(key => record(record(benefit.comparisons ?? {})[key]).recall20LocInterval)
+    .filter(value => value !== undefined)
+    .map(value => record(value))
+  const intervalRuns = Math.max(0, ...intervals.map(value => typeof value.validRuns === 'number' ? value.validRuns : 0))
+  const intervalReason = intervals.map(value => value.reason).find(value => typeof value === 'string')
   return <section className="model-card-section model-card-benefit">
     <h2>审查收益</h2>
     <p className="model-card-callout" role="status">{sentence}</p>
+    <p className="model-card-note">
+      协议 {valueText(protocol.name, '未提供')} · 报告版本 {valueText(benefit.reportVersion, '未提供')} ·
+      {intervalRuns > 0 ? ` 配对区间 ${intervalRuns} 次重采样` : ` 配对区间不足${intervalReason ? `：${intervalReason}` : ''}`}
+    </p>
     <div className="model-card-table-wrap"><table className="model-card-table">
       <thead><tr><th>检查顺序</th><th>Recall@20%LOC</th><th>Popt</th><th>IFA</th><th>覆盖正例</th></tr></thead>
       <tbody>
         <tr><th>模型分数</th><td>{benefitMetric(model, 'recall20Loc', 'percent')}</td><td>{benefitMetric(model, 'popt', 'number')}</td><td>{benefitMetric(model, 'ifa', 'count')}</td><td>{coverageText(model)}</td></tr>
+        {density ? <tr><th>风险/成本密度</th><td>{benefitMetric(density, 'recall20Loc', 'percent')}</td><td>{benefitMetric(density, 'popt', 'number')}</td><td>{benefitMetric(density, 'ifa', 'count')}</td><td>{coverageText(density)}</td></tr> : null}
+        {loc ? <tr><th>改动量升序</th><td>{benefitMetric(loc, 'recall20Loc', 'percent')}</td><td>{benefitMetric(loc, 'popt', 'number')}</td><td>{benefitMetric(loc, 'ifa', 'count')}</td><td>{coverageText(loc)}</td></tr> : null}
         <tr><th>时间顺序</th><td>{benefitMetric(time, 'recall20Loc', 'percent')}</td><td>{benefitMetric(time, 'popt', 'number')}</td><td>{benefitMetric(time, 'ifa', 'count')}</td><td>{coverageText(time)}</td></tr>
         <tr><th>随机均值</th><td>{randomMetric(random.recall20Loc, 'percent')}</td><td>{randomMetric(random.popt, 'number')}</td><td>{randomMetric(random.ifa, 'count')}</td><td>—</td></tr>
       </tbody>

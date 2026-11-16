@@ -51,8 +51,8 @@ def _env_limit(name, default, minimum=1):
 
 
 MAX_FIX_COMMITS = _env_limit("JIT_SZZ_MAX_FIX_COMMITS", 2000)
-MAX_RANGES_PER_FILE = 50
-MAX_LINES_PER_COMMIT = 2000
+MAX_RANGES_PER_FILE = _env_limit("JIT_SZZ_MAX_RANGES_PER_FILE", 50)
+MAX_LINES_PER_COMMIT = _env_limit("JIT_SZZ_MAX_LINES_PER_COMMIT", 2000)
 # 单次采集的行的回溯时间预算；超出即停止并标记截断，避免拖垮分析作业。
 MAX_SECONDS = _env_limit("JIT_SZZ_MAX_SECONDS", 120)
 ISSUE_LOOKUP_SECONDS = 5
@@ -321,21 +321,36 @@ def _merge_ranges(ranges):
 
 
 def _blame(repo, parent, path, start, end):
-    """返回 [(commit, orig_line, parent_line)]；失败返回 None。"""
+    """返回 [(commit, orig_line, parent_line, source_path)]；失败返回 None。
+
+    `-C` 会把被复制的内容归因到引入提交里的源文件；`filename` 头部给出该提交中的
+    实际路径，证据必须用它核对，否则会出现“路径不在引入提交”的悬空记录。
+    """
     output = _git(repo, ["blame", "--line-porcelain", "-M", "-C",
                          "-L", f"{start},{end}", parent, "--", path])
     if output is None:
         return None
-    blamed = []
+    blamed, pending, source = [], [], None
+
+    def flush():
+        for identity, orig, final in pending:
+            blamed.append((identity, orig, final, source))
+
     for line in output.splitlines():
         match = re.match(r"^\^?([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$", line)
-        if not match:
+        if match:
+            flush()
+            pending = []
+            source = None
+            identity, orig, final = match.group(1), int(match.group(2)), int(match.group(3))
+            count = int(match.group(4) or 1)
+            if set(identity) == {"0"}:
+                continue
+            pending.extend((identity, orig + offset, final + offset) for offset in range(count))
             continue
-        identity, orig, final = match.group(1), int(match.group(2)), int(match.group(3))
-        count = int(match.group(4) or 1)
-        if set(identity) == {"0"}:
-            continue
-        blamed.extend((identity, orig + offset, final + offset) for offset in range(count))
+        if line.startswith("filename "):
+            source = line[len("filename "):].strip()
+    flush()
     return blamed
 
 
@@ -432,10 +447,13 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
                     continue
                 ranges_done += sub_end - sub_start + 1
                 old_path = item["old"] if item["old"] != item["new"] else None
-                for identity, orig, final in blamed:
+                for identity, orig, final, source in blamed:
                     if identity == commit["id"]:
                         continue
-                    pairs.setdefault((identity, path, old_path), []).append((orig, final))
+                    evidence_path = source or path
+                    pairs.setdefault(
+                        (identity, evidence_path, old_path if evidence_path == path else None),
+                        []).append((orig, final))
             if capped:
                 break
         if capped:
@@ -475,13 +493,17 @@ def _iso(value):
 
 
 def label_repository(repo, entries, window_ids, start=None, end=None, mode="line", resolver=None):
-    """对窗口内的修复提交做回溯；只把窗口内提交标为正例。"""
+    """对观察窗口内的修复提交做回溯；只把窗口内提交标为正例。
+
+    `end` 是实际观察到的最后时刻（含），因此位于固定 revision 的修复提交也能为更早的
+    纳入提交提供证据；它不扩大样本成员。
+    """
     result = LineSzzResult(mode=mode, rule=SZZ_FULL_RULE if mode == "full" else SZZ_LINE_RULE)
     candidates = []
     for commit in entries:
         if start is not None and commit["epoch"] < start:
             continue
-        if end is not None and commit["epoch"] >= end:
+        if end is not None and commit["epoch"] > end:
             continue
         if len(commit.get("parents") or []) > 1:
             if mode == "full":

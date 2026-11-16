@@ -317,6 +317,12 @@ def test_real_updates_remind_without_analyzing(tmp_path, real_run):  # noqa: F81
                                  'since': (now - timedelta(days=90)).date().isoformat()})
         finished = wait_job(job['syncId'])
         assert finished['status'] == 'completed'
+        deadline = time.monotonic() + 10
+        while not any(note['kind'] == 'analysis-completed'
+                      for note in events(service, repository_id)):
+            if time.monotonic() > deadline:
+                break
+            time.sleep(.05)
         assert any(note['kind'] == 'analysis-completed' for note in events(service, repository_id))
         old = service.repository_commits(repository_id, view_sync_id=job['syncId'])
         assert old['total'] == 2

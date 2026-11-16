@@ -1,0 +1,212 @@
+name: Continuous regression
+
+# 独立于模型风险报告：PR 与 main 推送运行关键层，定期/手动运行完整层。
+# 只读仓库权限；不评论 PR、不部署、不修改分支保护，也不以模型分数决定合并。
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '22'
+  JIT_PYTHON: python
+  PYTHONIOENCODING: utf-8
+
+jobs:
+  key:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record the checked-out revision
+        shell: pwsh
+        run: |
+          $sha = git rev-parse HEAD
+          $head = "${{ github.event.pull_request.head.sha || github.sha }}"
+          "REGRESSION_SHA=$sha" >> $env:GITHUB_ENV
+          "REGRESSION_HEAD_SHA=$head" >> $env:GITHUB_ENV
+          "candidate=$sha head=$head" | Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            vscode-extension/package-lock.json
+      - name: Install CPU PyTorch and backend dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
+          python -m pip install -r backend/requirements.txt
+          python -m pip install -r backend/scripts/requirements-contract.txt
+      - name: Prepare isolated fixtures
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: python backend/scripts/regression_environment.py --root "$env:JIT_REGRESSION_ROOT"
+      - name: Verify the key scope
+        shell: pwsh
+        run: python backend/scripts/regression_scope.py --layer key
+      - name: Key backend tests
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: python backend/scripts/regression_scope.py --layer key --pytest-junit "$env:JIT_REGRESSION_ROOT\logs\key-backend.xml"
+      - name: Frontend install, typecheck, unit tests and build
+        working-directory: frontend
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: |
+          npm ci
+          npm run typecheck
+          npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\frontend-unit.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build
+      - name: VS Code extension tests
+        working-directory: vscode-extension
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: |
+          npm ci
+          npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\extension.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Job summary
+        if: always()
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: |
+          "layer=key status=${{ job.status }} sha=$env:REGRESSION_SHA head=$env:REGRESSION_HEAD_SHA event=${{ github.event_name }}" |
+            Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+          Get-Content "$env:JIT_REGRESSION_ROOT\environment.json" -ErrorAction SilentlyContinue |
+            Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+      - name: Upload key reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-key-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/jit-regression/logs
+            ${{ runner.temp }}/jit-regression/environment.json
+            docs/evidence/_run
+            frontend/test-results
+          if-no-files-found: warn
+
+  full:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record the checked-out revision
+        shell: pwsh
+        run: |
+          $sha = git rev-parse HEAD
+          $head = "${{ github.event.pull_request.head.sha || github.sha }}"
+          "REGRESSION_SHA=$sha" >> $env:GITHUB_ENV
+          "REGRESSION_HEAD_SHA=$head" >> $env:GITHUB_ENV
+          "candidate=$sha head=$head" | Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            vscode-extension/package-lock.json
+      - name: Install CPU PyTorch and backend dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.1
+          python -m pip install -r backend/requirements.txt
+          python -m pip install -r backend/scripts/requirements-contract.txt
+      - name: Prepare isolated fixtures
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: python backend/scripts/regression_environment.py --root "$env:JIT_REGRESSION_ROOT"
+      - name: Verify the full scope
+        shell: pwsh
+        run: python backend/scripts/regression_scope.py --layer full
+      - name: Full backend suite
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: python backend/scripts/regression_scope.py --layer full --pytest-junit "$env:JIT_REGRESSION_ROOT\logs\full-backend.xml"
+      - name: Frontend install, typecheck, unit tests and build
+        working-directory: frontend
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: |
+          npm ci
+          npm run typecheck
+          npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\frontend-unit.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build
+      - name: VS Code extension tests
+        working-directory: vscode-extension
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: |
+          npm ci
+          npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\extension.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Browser - model package recovery
+        working-directory: frontend
+        shell: pwsh
+        run: npx playwright test --config=playwright.model-package.config.ts
+      - name: Browser - project analysis to PR continuation
+        working-directory: frontend
+        shell: pwsh
+        env:
+          JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
+        run: npx playwright test --config=playwright.regression-pr.config.ts
+      - name: Job summary
+        if: always()
+        shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+        run: |
+          "layer=full status=${{ job.status }} sha=$env:REGRESSION_SHA head=$env:REGRESSION_HEAD_SHA event=${{ github.event_name }}" |
+            Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+          Get-Content "$env:JIT_REGRESSION_ROOT\environment.json" -ErrorAction SilentlyContinue |
+            Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
+      - name: Upload full reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-full-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/jit-regression/logs
+            ${{ runner.temp }}/jit-regression/environment.json
+            docs/evidence/_run
+            frontend/test-results
+          if-no-files-found: warn

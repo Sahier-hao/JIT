@@ -202,6 +202,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>窗口外引入</dt><dd>{valueLabel(szzNumber('outsideWindow'))}</dd></div>
         <div><dt>成熟期</dt><dd>{observations?.maturityDays ? `${valueLabel(observations.maturityDays)} 天` : label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
         <div><dt>观察终点</dt><dd>{observedThrough ?? '—'}</dd></div>
+        <div><dt>观察协议</dt><dd>{valueLabel(observations?.protocol ?? 'legacy-unobserved-v1')}</dd></div>
+        <div><dt>样本/合格</dt><dd>{valueLabel((observations?.counts as Row | undefined)?.originalRecords ?? quality.includedRows)} / {valueLabel((observations?.counts as Row | undefined)?.eligibleRecords ?? quality.includedRows)}</dd></div>
+        <div><dt>未成熟排除</dt><dd>{valueLabel((observations?.counts as Row | undefined)?.excludedImmature ?? 0)}</dd></div>
+        <div><dt>历史状态</dt><dd>{valueLabel(observations?.historyStatus ?? 'unknown')}</dd></div>
         <div><dt>标签版本</dt><dd>{valueLabel(observations?.version ?? label.rule ?? selected.labelRule)}</dd></div>
         {observations?.truncated === true ? <div><dt>证据截断</dt><dd>是（回溯时间预算用尽，正例只覆盖部分历史）</dd></div> : null}
         {szz.truncated === true && observations?.truncated !== true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
@@ -314,6 +318,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     <section className="admin-train-panel"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
       {splitPreviewBusy ? <p className="admin-report-meta">正在按原始唯一成员计算三档边界…</p> : splitPreview ? <>
         {!splitPreview.available ? <div className="admin-error-box" role="alert"><strong>{splitPreview.reason?.code ?? 'SPLIT_INVALID'}</strong><p>{splitPreview.reason?.message ?? '该预设不可用'}</p></div> : <div className="admin-detail-grid">
+          <p className="admin-report-meta">样本 {valueLabel(splitPreview.datasetRecords)} · 成熟合格 {valueLabel(splitPreview.eligibleRecords)}</p>
           {(['train', 'validation', 'test'] as const).map(name => {
             const part = splitPreview.partitions?.[name]
             return <section key={name}><h2>{{ train: '训练', validation: '验证', test: '测试' }[name]}</h2><dl className="admin-facts">

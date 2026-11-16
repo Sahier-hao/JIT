@@ -9,3 +9,7 @@ docs/evidence/restyle-review-workbench-closeout-20261019/** -text whitespace=-bl
 
 # Versioned model releases are reviewed binary assets, never line-normalized.
 backend/model-packages/*.zip binary
+
+# Dataset descriptors and CSVs are content-addressed; keep checkout bytes stable.
+backend/data/datasets/kamei14-git-v1-cc-switch/kamei14-git-v1-cc-switch-2026-08-01_2026-10-30.json -text
+backend/data/datasets/kamei14-git-v1-cc-switch/kamei14-git-v1-cc-switch-2026-08-01_2026-10-30.csv -text

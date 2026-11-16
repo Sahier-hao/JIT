@@ -94,6 +94,12 @@ export interface AnalysisScope {
     labelRule: string | null
   } | null
   datasetError: string | null
+  frozenIdentity: {
+    modelId: string | null; artifactRunId: string | null; modelSha256: string | null
+    datasetVersion: string | null; datasetSha256: string | null
+    memberVerification: string | null; memberSha256: string | null
+    splitPreset: string | null; holdoutFrom: string | null
+  } | null
   split: {
     preset: string | null
     train: ScopePartition; validation: ScopePartition; test: ScopePartition; holdout: ScopePartition
@@ -172,6 +178,7 @@ function analysisScope(value: unknown): AnalysisScope | null {
       labelRule: textOrNull(datasetRaw.labelRule),
     } : null,
     datasetError: textOrNull(raw.datasetError),
+    frozenIdentity: frozenIdentity(raw.frozenIdentity),
     split: splitRaw ? {
       preset: textOrNull(splitRaw.preset),
       train: scopePartition(splitRaw.train), validation: scopePartition(splitRaw.validation),
@@ -190,8 +197,23 @@ function analysisScope(value: unknown): AnalysisScope | null {
   }
 }
 
-function partitionCoverage(value: unknown): PartitionCoverage | null {
+function frozenIdentity(value: unknown): AnalysisScope['frozenIdentity'] {
   if (value == null) return null
+  const raw = record(value)
+  return {
+    modelId: textOrNull(raw.modelId),
+    artifactRunId: textOrNull(raw.artifactRunId),
+    modelSha256: textOrNull(raw.modelSha256),
+    datasetVersion: textOrNull(raw.datasetVersion),
+    datasetSha256: textOrNull(raw.datasetSha256),
+    memberVerification: textOrNull(raw.memberVerification),
+    memberSha256: textOrNull(raw.memberSha256),
+    splitPreset: textOrNull(raw.splitPreset),
+    holdoutFrom: textOrNull(raw.holdoutFrom),
+  }
+}
+
+function partitionCoverage(value: unknown): PartitionCoverage | null {  if (value == null) return null
   const raw = record(value)
   const status = raw.status === 'verified' || raw.status === 'external' ? raw.status : 'unknown'
   return {

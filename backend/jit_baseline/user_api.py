@@ -79,6 +79,13 @@ def _portable_manifest(manifest, version):
     file = portable.get('file') or {}
     if file.get('path'):
         file['path'] = Path(file['path']).name
+    status = portable.get('labelStatusFile')
+    if isinstance(status, dict) and status.get('path'):
+        status['path'] = Path(status['path']).name
+    labeling = portable.get('labeling') or {}
+    nested = labeling.get('statusFile')
+    if isinstance(nested, dict) and nested.get('path'):
+        nested['path'] = Path(nested['path']).name
     return portable
 
 
@@ -244,13 +251,27 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         portable_bytes = (json.dumps(_portable_manifest(manifest, version), ensure_ascii=False,
                                      sort_keys=True, indent=2) + '\n').encode('utf-8')
         manifest_name = f'{version}.json'
+        status_entry = manifest.get('labelStatusFile')
+        status_blob, status_name = None, None
+        if isinstance(status_entry, dict) and status_entry.get('path'):
+            status_path = _csv_path({'file': {'path': status_entry['path']}})
+            try:
+                status_blob = status_path.read_bytes()
+            except OSError as exc:
+                raise BaselineError('DATASET_UNAVAILABLE', '逐提交标签状态文件不可用') from exc
+            if sha256(status_blob) != status_entry.get('sha256'):
+                raise BaselineError('DATASET_INTEGRITY_ERROR', '逐提交标签状态文件校验值不匹配')
+            status_name = status_path.name
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
             archive.writestr(Path(csv_path).name, blob)
             archive.writestr(manifest_name, portable_bytes)
-            archive.writestr('SHA256SUMS',
-                             f'{sha256(blob)}  {Path(csv_path).name}\n'
-                             f'{sha256(portable_bytes)}  {manifest_name}\n')
+            hashes = [f'{sha256(blob)}  {Path(csv_path).name}',
+                      f'{sha256(portable_bytes)}  {manifest_name}']
+            if status_blob is not None and status_name is not None:
+                archive.writestr(status_name, status_blob)
+                hashes.append(f'{sha256(status_blob)}  {status_name}')
+            archive.writestr('SHA256SUMS', '\n'.join(hashes) + '\n')
         if buffer.tell() > MAX_EXPORT_BYTES:
             raise BaselineError('DATASET_EXPORT_LIMIT_EXCEEDED', '数据集导出总大小超过上限')
         return Response(buffer.getvalue(), media_type='application/zip',

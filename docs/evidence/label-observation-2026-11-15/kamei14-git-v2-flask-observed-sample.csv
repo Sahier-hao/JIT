@@ -1,0 +1,11 @@
+fixCommit,introducedCommit,path,fixTime,fixSource,lineRanges,problems,automaticVerdict,humanReview,humanVerdict
+3d719f35f5c1ee4ce3dc01fb2167ef49c0180cf6,7d6b8e9ab3e738d69e39ad53a7c0f6a552d5284a,flask.py,2010-04-10T13:49:15Z,keyword,"[[291, 291], [301, 301], [308, 308], [375, 375]]",[],pass,pending,
+f5b8c082847baa8a902cef22c43a5d50d7a55bdc,51a89bf35ec6231d55f5caa8e12484e801f593fe,flask/module.py,2010-07-15T12:35:02Z,issueRef,"[[12, 12]]",[],pass,pending,
+075b6b11c8b1690d946b8839e6dc4eb8a8cb7e3c,d0dc89ea802130e8a3a16b4fba73fa10815c09fb,flask/app.py,2012-03-12T03:45:58Z,keyword,"[[649, 649]]",[],pass,pending,
+51042f4c9f2c68a63ad5b8ee3000a52518a4b87b,239780be289efd365c07be2f60bab9223388399e,flask/testsuite/appctx.py,2013-05-30T14:00:43Z,keyword,"[[90, 90]]",[],pass,pending,
+5da31f8af36012a4f76c3bd0d536ae107e0519b5,6caaa8a527134dc9aff6d5c442969e96f9c00f21,flask/app.py,2015-07-14T23:20:39Z,keyword,"[[1629, 1629]]",[],pass,pending,
+697f7b9365304c45216e6c8dd307d931ea1506d0,2af0ffaef63dbd6031d889d28e4d60794becb7b6,flask/app.py,2017-04-24T21:11:49Z,issueRef,"[[32, 32]]",[],pass,pending,
+0f7b3a4f26dfbbe453a504abd4a8bcbf49194d46,48f7cdd01699fdc4048b18d827fccfbf9f266c9f,flask/app.py,2017-06-14T14:16:55Z,issueRef,"[[849, 849]]",[],pass,pending,
+976dfedaa9efdb566333ea829b12751820268f67,e853a0f73959ad12cdabc2d74324cdc9329ae794,flask/testing.py,2019-05-31T14:49:23Z,issueRef,"[[22, 22], [26, 26]]",[],pass,pending,
+746455d1038fd5479f396cbf2d19b48edfeb8290,aa40b1731e09e839502994b3b0c22d3f2361d045,flask/config.py,2022-08-14T22:59:19Z,keyword,"[[197, 198]]",[],pass,pending,
+d086db856be187255b8ec61ef409357393020f32,6000e80acf931b05b4911c3fa7f3ba33e2b80e64,src/flask/sansio/app.py,2026-10-07T14:02:54Z,keyword,"[[279, 279]]",[],pass,pending,

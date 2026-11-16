@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { RefreshCw, Upload } from 'lucide-react'
 import { Button } from '../ui/controls'
 import { FailureNotice } from '../Feedback'
-import { adoptVersion, parseBackup, readWorks, remoteStateLabels as remoteLabel, saveWork, type PRWork } from '../prReview'
+import { adoptVersion, hasLegacyWorks, legacyImportReceipt, legacyWorksHash, markLegacyImported, mergeBackup, parseBackupInfo, readLegacyWorks, readWorks, remoteStateLabels as remoteLabel, saveWork, type PRWork } from '../prReview'
 import { refreshPR, verifyBackupSources } from '../prReviewClient'
+import { canWriteReview, useReviewAccount } from '../reviewAccount'
 import type { Route } from '../navigation'
 
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
@@ -14,39 +15,63 @@ const shortTime = (value: string) => {
   const pad = (part: number) => String(part).padStart(2, '0')
   return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
-function loadPersonal() { try { return { works: readWorks(), error: '' } } catch (error) { return { works: [], error: message(error) } } }
+function loadPersonal(account: string | null) {
+  if (!account) return { works: [] as PRWork[], error: '登录身份尚未确认，个人工作单暂不可读' }
+  try { return { works: readWorks(account), error: '' } } catch (error) { return { works: [], error: message(error) } }
+}
 
 /**
- * 跨项目个人审查队列：只汇总当前浏览器的工作单状态。
+ * 跨项目个人审查队列：只汇总当前浏览器中当前账户的工作单状态。
  * 发现新 PR 交给项目 PR 审查；后台更新交给项目自动跟踪，这里只保留手动刷新。
  */
 export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }) {
-  const [personal, setPersonal] = useState(loadPersonal)
+  const reviewAccount = useReviewAccount()
+  const account = reviewAccount.account
+  const [personal, setPersonal] = useState(() => loadPersonal(account))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
+  const [legacy, setLegacy] = useState<{ hash: string; entries: { work: PRWork; exists: boolean; conflicts: number }[] } | null>(null)
+  const [legacyError, setLegacyError] = useState('')
+  const [legacyResult, setLegacyResult] = useState('')
   const lock = useRef(false)
   const restoreInput = useRef<HTMLInputElement>(null)
-  const refreshPersonal = () => setPersonal(loadPersonal())
+  const accountRef = useRef(account)
+  const generationRef = useRef(reviewAccount.generation)
+  accountRef.current = account
+  generationRef.current = reviewAccount.generation
+  const refreshPersonal = () => setPersonal(loadPersonal(account))
   useEffect(() => {
-    window.addEventListener('jit:pr-work-changed', refreshPersonal)
+    setPersonal(loadPersonal(account))
+    setLegacy(null); setLegacyError(''); setLegacyResult('')
+  }, [account, reviewAccount.generation])
+  useEffect(() => {
+    const changed = (event: Event) => {
+      const detail = (event as CustomEvent<{ account?: string }>).detail
+      if (!detail?.account || detail.account === accountRef.current) refreshPersonal()
+    }
+    window.addEventListener('jit:pr-work-changed', changed)
     window.addEventListener('storage', refreshPersonal)
     return () => {
-      window.removeEventListener('jit:pr-work-changed', refreshPersonal)
+      window.removeEventListener('jit:pr-work-changed', changed)
       window.removeEventListener('storage', refreshPersonal)
     }
-  }, [])
+  }, [account])
   async function checkAll() {
-    if (lock.current) return
+    if (lock.current || !account) return
+    const capturedAccount = account, capturedGeneration = reviewAccount.generation
     lock.current = true; setBusy(true); setError(null)
     try {
-      for (const item of readWorks().filter(w => w.interest === 'active')) {
+      for (const item of readWorks(capturedAccount).filter(w => w.interest === 'active')) {
+        if (accountRef.current !== capturedAccount || generationRef.current !== capturedGeneration || !canWriteReview(reviewAccount)) break
         try {
           const result = await refreshPR(item.owner, item.name, item.number)
-          const latest = readWorks().find(w => w.key === item.key) ?? item
-          saveWork({ ...adoptVersion(latest, result.snapshot), checkedAt: result.checkedAt, remoteState: result.remoteState, checkError: '' })
+          if (accountRef.current !== capturedAccount || generationRef.current !== capturedGeneration) break
+          const latest = readWorks(capturedAccount).find(w => w.key === item.key) ?? item
+          saveWork(capturedAccount, { ...adoptVersion(latest, result.snapshot), checkedAt: result.checkedAt, remoteState: result.remoteState, checkError: '' })
         } catch (failure) {
-          const latest = readWorks().find(w => w.key === item.key) ?? item
-          saveWork({ ...latest, checkError: message(failure) })
+          if (accountRef.current !== capturedAccount || generationRef.current !== capturedGeneration) break
+          const latest = readWorks(capturedAccount).find(w => w.key === item.key) ?? item
+          saveWork(capturedAccount, { ...latest, checkError: message(failure) })
         }
       }
       refreshPersonal()
@@ -63,10 +88,63 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
   const groups = ['作者更新待复核', '继续审查', '新关注的工作', '等待作者处理', '历史与暂停']
   const counts = groups.map(group => personal.works.filter(work => status(work) === group).length)
   const total = personal.works.length
+  function previewLegacy() {
+    if (!account) return
+    try {
+      const works = readLegacyWorks()
+      const current = readWorks(account)
+      setLegacy({
+        hash: legacyWorksHash(),
+        entries: works.map(work => {
+          const existing = current.find(item => item.key === work.key)
+          const conflicts = existing ? mergeBackup(existing, { ...work, revision: 0 }, {}).conflicts.length : 0
+          return { work, exists: Boolean(existing), conflicts }
+        }),
+      })
+      setLegacyError(''); setLegacyResult('')
+    } catch (failure) { setLegacyError(message(failure)) }
+  }
+  function importLegacy() {
+    if (!account || !legacy) return
+    let imported = 0
+    const failures: string[] = []
+    for (const { work: source } of legacy.entries) {
+      try {
+        const current = readWorks(account).find(work => work.key === source.key)
+        const merged = current ? mergeBackup(current, { ...source, revision: 0 }, {}).work
+          : { ...source, revision: 0 }
+        saveWork(account, merged)
+        imported += 1
+      } catch (failure) {
+        failures.push(`${source.owner}/${source.name}#${source.number}：${message(failure)}`)
+      }
+    }
+    if (failures.length) {
+      setLegacyError(`部分工作单未导入：${failures.join('；')}`)
+      setLegacyResult(`已导入 ${imported} 个工作单到 ${account}；原旧数据未删除`)
+    } else {
+      markLegacyImported(account, legacy.hash)
+      setLegacy(null)
+      setLegacyResult(`已导入 ${imported} 个工作单到 ${account}；原旧数据保留在浏览器中`)
+    }
+    refreshPersonal()
+  }
+  const legacyAvailable = Boolean(account) && hasLegacyWorks()
+    && legacyImportReceipt(account ?? '') !== legacyWorksHash()
   return <section className="mr personal-works" aria-label="我的审查">
     <div className="mr-toolbar">
       <Button variant="secondary" icon={<RefreshCw size={14}/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
+      {legacyAvailable ? <Button variant="ghost" icon={<Upload size={14}/>} onClick={previewLegacy}>导入本机旧工作单</Button> : null}
     </div>
+    {legacy ? <section className="mr-group" aria-label="旧工作单导入">
+      <h2 className="mr-group-head">导入本机旧工作单到 {account}</h2>
+      <p>{legacy.entries.length} 个旧工作单；原数据不会删除，也不会自动归给其他账户。</p>
+      <ul>{legacy.entries.map(({ work, exists, conflicts }) => <li key={work.key}>{work.owner}/{work.name}#{work.number}{exists ? ` · 已有工作单，${conflicts} 处差异按当前判断合并` : ' · 新建到当前账户'}</li>)}</ul>
+      {legacyError ? <p role="alert" className="field-error">{legacyError}</p> : null}
+      <Button variant="primary" size="sm" onClick={importLegacy}>确认导入</Button>{' '}
+      <Button variant="ghost" size="sm" onClick={() => setLegacy(null)}>取消</Button>
+    </section> : null}
+    {legacyResult ? <p role="status">{legacyResult}</p> : null}
     <div className="mr-kpis" aria-label="审查队列概览">
       {groups.map((group, index) => <div key={group} className="mr-kpi">
         <span className="mr-kpi-label">{group}</span>
@@ -114,6 +192,6 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
       <p>到「项目」选择一个 PR 开始审查。</p>
     </div> : null}
     <Button className="mr-restore" variant="ghost" size="sm" icon={<Upload size={14}/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button>
-    <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const incoming = parseBackup(await file.text()); await verifyBackupSources(incoming); const old = readWorks().find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork({ ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
+    <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const info = parseBackupInfo(await file.text()); const incoming = info.work; if (info.accountHint && info.accountHint !== account && !window.confirm(`备份归属 ${info.accountHint}，将导入当前账户 ${account}。继续？`)) return; await verifyBackupSources(incoming); const old = readWorks(account ?? '').find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork(account ?? '', { ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
   </section>
 }

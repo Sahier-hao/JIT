@@ -10,6 +10,7 @@ from jit_baseline.api import create_app
 from jit_baseline.schemas import resolve
 from test_catalog_api import settings  # noqa: F401
 from test_artifacts import real_run  # noqa: F401
+from label_fixtures import register_labeled
 
 
 def _records():
@@ -83,8 +84,9 @@ def test_derived_version_can_train(tmp_path):
                 'metrics': {name: (1000 if index == 1 and name == 'la' else base[name]) for name in names}}
                for index in range(300)]
     source.write_bytes(collect._csv_bytes(records, names))
-    registered = datasets.register(source, schema='kamei14-git-v2', dataset='train-demo', root=root,
-                                   cohort=collect.cohort('2024-01-01', '2024-12-31'))
+    registered = register_labeled(source, records, schema='kamei14-git-v2',
+                                  dataset='train-demo', root=root,
+                                  cohort=collect.cohort('2024-01-01', '2024-12-31'))
     derived = curation.derive(registered['version'], {'version': 1, 'rules': [
         {'id': 'max-value', 'field': 'la', 'value': 100}]}, root)
     storage = CatalogStorage(tmp_path / 'catalog.sqlite3')

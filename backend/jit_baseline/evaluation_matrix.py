@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
+from . import admission, budget as review_budget
 from .algorithms import ALGORITHMS, get_algorithm
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
@@ -22,7 +23,7 @@ from .model import fit_model, predict_risks
 from .schemas import resolve
 from .splits import resolve_preset, split_records
 
-FORMAT = "evaluation-matrix-v1"
+FORMAT = "evaluation-matrix-v2"
 FROZEN_METHODS = ("logistic-regression-l2-v1", "decision-tree-v1",
                   "random-forest-v1", "mlp-v1")
 FROZEN_SEEDS = (42, 43, 44)
@@ -57,12 +58,17 @@ def load_dataset(path):
     records, quality = parse_source(blob, schema, manifest["cohort"])
     if quality != manifest["quality"]:
         raise BaselineError("DATASET_INVALID", "按描述文件规则重算的质量统计与描述不一致")
+    evaluated = admission.evaluate(manifest, records)
+    if not evaluated["available"]:
+        reason = evaluated["reason"]
+        raise BaselineError(reason["code"], reason["message"])
     return {
         "manifest": manifest,
         "manifestSha256": sha256(manifest_path.read_bytes()),
         "csvSha256": manifest["file"]["sha256"],
         "schema": schema,
-        "records": records,
+        "records": evaluated["eligible"],
+        "admission": admission.view(evaluated),
         "quality": quality,
         "name": manifest["dataset"],
         "version": manifest["version"],
@@ -95,6 +101,17 @@ def _params_for(method, seed=None):
     return params
 
 
+def _review_benefit(records, risks, *, random_runs=review_budget.RANDOM_RUNS):
+    """在相同测试成员与预算上运行 review-benefit-v3；与模型收益报告共用实现。"""
+    try:
+        prepared = [{**dict(record), "risk": float(risk)}
+                    for record, risk in zip(records, risks, strict=True)]
+        result = review_budget.evaluate(prepared, random_runs=random_runs)
+    except BaselineError as exc:
+        return {"status": "failed", "code": exc.code, "message": str(exc)}
+    return {"status": "succeeded", **result}
+
+
 def _cell(records, risks, method, params, *, seed=None, seconds=None):
     metrics = evaluate([dict(record) for record in records], risks, "metric-set-v2")
     return {
@@ -114,6 +131,7 @@ def _cell(records, risks, method, params, *, seed=None, seconds=None):
             "effort": metrics.get("effort"), "poptEffort": metrics.get("poptEffort"),
             "confusion": metrics["confusion"],
         },
+        "reviewBenefit": _review_benefit(records, risks),
         "seconds": None if seconds is None else round(seconds, 3),
     }
 
@@ -204,14 +222,23 @@ def _baseline_cell(test_records, kind, seed=None):
 
 
 def _dataset_entry(dataset):
+    evaluated = dataset.get("admission") or {}
+    counts = evaluated.get("counts") or {}
     return {
         "name": dataset["name"], "version": dataset["version"],
         "language": dataset["language"], "schema": dataset["schema"].name,
         "manifestSha256": dataset["manifestSha256"], "csvSha256": dataset["csvSha256"],
         "includedRows": dataset["quality"]["includedRows"],
         "positiveLabels": dataset["quality"]["positiveLabels"],
+        "eligibleRecords": counts.get("eligibleRecords", len(dataset["records"])),
+        "eligiblePositives": counts.get("positivesEligible",
+                                        sum(record["label"] for record in dataset["records"])),
+        "admission": evaluated.get("identity") or evaluated.get("policy") or "publisher-labels-v1",
+        "admissionPolicy": evaluated.get("policy"),
         "url": dataset["manifest"].get("url"),
         "revision": dataset["manifest"].get("revision"),
+        "sampleWindow": (dataset["manifest"].get("labeling") or {}).get("sampleWindow"),
+        "observationWindow": (dataset["manifest"].get("labeling") or {}).get("observationWindow"),
     }
 
 
@@ -286,6 +313,8 @@ def run_matrix(specs, output, *, methods=FROZEN_METHODS, seeds=FROZEN_SEEDS):
                       "manifestSha256": entry["manifestSha256"], "csvSha256": entry["csvSha256"],
                       "language": entry["language"]} for entry in datasets],
         "parameters": {method: dict(ALGORITHMS[method]["params"]) for method in methods},
+        "budgetProtocol": review_budget.protocol(),
+        "budgetProtocolSha256": review_budget.protocol_sha256(),
     }
     report = {
         "format": FORMAT, "generatedUtc": _now(),

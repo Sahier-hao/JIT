@@ -39,11 +39,33 @@ def _records(count=310):
 
 
 def _collect(records):
+    from jit_baseline import admission
+    observed = records[-1]["epoch"]
+    status = admission.build_status(records, observed, 90)
+    observation = {
+        "protocol": admission.PROTOCOL, "labelRule": "szz-full-v1",
+        "sampleWindow": {"since": "2023-01-01", "until": "2024-12-31",
+                         "startEpoch": None, "endEpoch": None},
+        "observationWindow": {"fromEpoch": None, "throughEpoch": observed,
+                              "through": records[-1]["time"]},
+        "observedThrough": observed, "observedThroughIso": records[-1]["time"],
+        "requestedThrough": None, "maturityDays": 90,
+        "revision": records[-1]["id"], "revisionEpoch": observed,
+        "historyStatus": "complete",
+        "coverage": {"complete": True, "truncated": False, "historyBounded": False,
+                     "unresolvedRanges": 0, "reason": None},
+        "statusRule": admission.STATUS_RULE,
+    }
+
     def collect(repo, *, since=None, until=None, branch="HEAD", limit=500,
-                allow_local=False, return_blob=False):
+                allow_local=False, return_blob=False, observe_through=None,
+                revision=None, maturity_days=90):
         return {
             "blob": _csv_bytes(records, NAMES),
             "rawRecords": records,
+            "status": status,
+            "statusEntries": status,
+            "observation": observation,
             "collection": {
                 "kind": "git-repository",
                 "repository": {"path": repo, "head": records[-1]["id"], "branch": branch,

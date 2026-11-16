@@ -51,7 +51,7 @@ def test_repository_view_tracks_the_completed_job(harness):
         assert detail["commitCount"] == 7
         assert detail["distributionRule"] == DISTRIBUTION_RULE
         assert detail["modelStrategy"] == "generic-model"
-        assert detail["degradeReason"] == "fewRecords"
+        assert detail["degradeReason"] == "noMatureRecords"
         assert detail["limitations"]
         assert detail['viewContext']['completedAt'] == done['completedAt']
         assert detail['viewContext']['headCommit'] == done['headCommit']
