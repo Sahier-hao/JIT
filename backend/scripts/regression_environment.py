@@ -65,6 +65,31 @@ def _prepare_baseline(run_root: Path) -> dict:
     return result
 
 
+def _prepare_model_artifacts() -> list[str]:
+    """从仓库内置模型包补齐缺失的本机产物目录；已有目录不覆盖。"""
+    import json
+    import zipfile
+    package = BACKEND / "model-packages" / "jit-nine-models-v1.zip"
+    if not package.is_file():
+        raise SystemExit("缺少内置模型包：jit-nine-models-v1.zip")
+    extracted = []
+    with zipfile.ZipFile(package) as archive:
+        manifest = json.loads(archive.read("model-package.json"))
+        for item in manifest["models"]:
+            target = BACKEND / "artifacts" / item["artifactKey"]
+            if (target / "manifest.json").is_file():
+                continue
+            for entry in item["files"]:
+                blob = archive.read(f"{item['packagePath']}/{entry['path']}")
+                if hashlib.sha256(blob).hexdigest() != entry["sha256"]:
+                    raise SystemExit(f"模型包内文件校验失败：{item['artifactKey']}/{entry['path']}")
+                path = target / entry["path"]
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(blob)
+            extracted.append(item["artifactKey"])
+    return extracted
+
+
 def _verify_packages() -> list[dict]:
     result = []
     for package in sorted((BACKEND / "model-packages").glob("*.zip")):
@@ -93,6 +118,7 @@ def main() -> None:
         "runRoot": str(run_root),
         "sources": _prepare_sources(),
         "baseline": _prepare_baseline(run_root),
+        "modelArtifacts": _prepare_model_artifacts(),
         "modelPackages": _verify_packages(),
         "datasets": str(BACKEND / "data" / "datasets"),
         "python": sys.version.split()[0],
