@@ -4,14 +4,15 @@
  * 起因：等宽字体的斜杠零会把 `2011-11` 读成 "2811-11"（实测踩到）。
  * 这里只禁止"日期与句子"这两类，标识、KPI、刻度、序号、凭据与 JSON 仍可用等宽。
  */
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const styleDir = resolve(process.cwd(), 'src/styles')
+const legacyTrend = resolve(process.cwd(), 'src/trend.css')
 const files = [
   ...readdirSync(styleDir).filter((f) => f.endsWith('.css')).map((f) => resolve(styleDir, f)),
-  resolve(process.cwd(), 'src/trend.css'),
+  ...(existsSync(legacyTrend) ? [legacyTrend] : []),
 ]
 
 /** 禁止用等宽的选择器：日期主体与中文句子。 */

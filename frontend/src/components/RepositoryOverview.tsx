@@ -94,7 +94,7 @@ function ActivityChart({ activity, coverage, fetchedAt }: { activity: Repository
       <EChartCanvas option={option} height={220} label={`最近 ${activity.length} 周每周提交量曲线`} onChart={instance => { chart.current = instance }}/>
     </div> : <p className="quiet-empty">GitHub 没有返回周提交统计。</p>}
     <p className="chart-readout" role="status" aria-live="polite">{current ? `${current.weekStart} 起一周 · ${current.commits.toLocaleString()} 个提交${isPartialWeek(current.weekStart, fetchedAt) ? '（本周进行中）' : ''}` : '悬停或聚焦后用左右方向键查看每周数量。'}</p>
-    <details className="repo-table-details"><summary>查看等价数据表</summary><table className="trend-data-table"><caption>{tableTitle}提交量</caption><thead><tr><th scope="col">周起始</th><th scope="col">提交数</th></tr></thead><tbody>{activity.map(item => <tr key={item.weekStart}><th scope="row">{item.weekStart}</th><td>{item.commits}</td></tr>)}</tbody></table></details>
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>{tableTitle}提交量</caption><thead><tr><th scope="col">周起始</th><th scope="col">提交数</th></tr></thead><tbody>{activity.map(item => <tr key={item.weekStart}><th scope="row">{item.weekStart}</th><td>{item.commits}</td></tr>)}</tbody></table></details>
   </div>
 }
 
@@ -151,18 +151,18 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
   const option = useMemo(() => languageOption(slices, colors), [slices, colors])
   const total = languages.reduce((sum, item) => sum + item.bytes, 0)
   return <>
-    <div className="repo-language-chart">
+    <div className="grid items-center gap-3 sm:grid-cols-[160px_minmax(0,1fr)]">
       <EChartCanvas option={option} height={216} label="语言构成环形图；各语言名称、占比与字节数见旁边图例和等价数据表" className="ui-chart repo-language-donut"/>
-      <ul className="repo-language-legend">
+      <ul className="repo-language-legend grid gap-1 text-xs">
         {slices.map(item => <li key={item.name}>
-          <span className="repo-language-swatch" style={{ background: item.color }} aria-hidden="true"/>
-          <span className="repo-language-name">{item.name}</span>
+          <span className="size-2.5 shrink-0 rounded-sm" style={{ background: item.color }} aria-hidden="true"/>
+          <span className="truncate text-foreground-2">{item.name}</span>
           <b>{languagePercent(item)}</b>
-          <small>{item.bytes.toLocaleString()} 字节</small>
+          <small className="text-foreground-4">{item.bytes.toLocaleString()} 字节</small>
         </li>)}
       </ul>
     </div>
-    <details className="repo-table-details"><summary>查看等价数据表</summary><table className="trend-data-table"><caption>语言构成（GitHub 字节统计，共 {total.toLocaleString()} 字节）</caption><thead><tr><th scope="col">语言</th><th scope="col">字节</th><th scope="col">占比</th></tr></thead><tbody>{slices.map(item => <tr key={item.name}><th scope="row">{item.name}</th><td>{item.bytes.toLocaleString()}</td><td>{languagePercent(item)}</td></tr>)}</tbody></table></details>
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>语言构成（GitHub 字节统计，共 {total.toLocaleString()} 字节）</caption><thead><tr><th scope="col">语言</th><th scope="col">字节</th><th scope="col">占比</th></tr></thead><tbody>{slices.map(item => <tr key={item.name}><th scope="row">{item.name}</th><td>{item.bytes.toLocaleString()}</td><td>{languagePercent(item)}</td></tr>)}</tbody></table></details>
   </>
 }
 
@@ -187,46 +187,46 @@ export function RepositoryOverviewView({ repositoryId, repository, onOpenAnalysi
   }, [repositoryId, attempt])
   const metadata = overview?.metadata ?? null
   const hasAnalysis = Boolean(repository.viewSyncId)
-  return <section className="repo-overview" aria-label="仓库概览">
-    <div className="repo-overview-head">
+  return <section className="grid gap-4" aria-label="仓库概览">
+    <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p className="page-intro">{metadata?.description || '公开仓库概览。这里只展示仓库事实，不是模型分数或缺陷率。'}</p>
-        {metadata ? <p className="repo-overview-meta"><span>{metadata.fullName}</span><span>{metadata.defaultBranch ? `默认分支 ${metadata.defaultBranch}` : '默认分支未知'}</span><span>{metadata.private ? '私有' : '公开'}</span>{metadata.license ? <span>{metadata.license}</span> : null}<a href={metadata.htmlUrl} target="_blank" rel="noreferrer">在 GitHub 打开</a></p> : <p className="repo-overview-meta"><span>{repository.url}</span><a href={repository.url} target="_blank" rel="noreferrer">在 GitHub 打开</a></p>}
+        <p className="text-sm leading-body text-foreground-3">{metadata?.description || '公开仓库概览。这里只展示仓库事实，不是模型分数或缺陷率。'}</p>
+        {metadata ? <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3"><span>{metadata.fullName}</span><span>{metadata.defaultBranch ? `默认分支 ${metadata.defaultBranch}` : '默认分支未知'}</span><span>{metadata.private ? '私有' : '公开'}</span>{metadata.license ? <span>{metadata.license}</span> : null}<a href={metadata.htmlUrl} target="_blank" rel="noreferrer">在 GitHub 打开</a></p> : <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3"><span>{repository.url}</span><a href={repository.url} target="_blank" rel="noreferrer">在 GitHub 打开</a></p>}
       </div>
-      <div className="repo-overview-actions">
+      <div className="flex flex-wrap gap-2">
         {overview ? <Button size="sm" onClick={() => setAttempt(value => value + 1)}>刷新</Button> : null}
         {hasAnalysis ? <Button size="sm" onClick={onOpenAnalysis}>查看分析结果</Button> : null}
       </div>
     </div>
     {loading && !overview ? <LoadingNotice label="正在读取仓库概览"/> : null}
     {error ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}
-    {overview && !overview.supported ? <div className="repo-empty"><h2>此项目不支持 GitHub 仓库概览</h2><p>分支分析和风险趋势仍可使用。仓库概览只读取公开 GitHub 元数据，不访问私有来源。</p></div> : null}
-    {overview?.supported && !metadata ? <div className="repo-empty"><h2>仓库概览暂时不可用</h2><p>{overview.errorCode === 'PR_RATE_LIMITED' ? 'GitHub 匿名额度受限，稍后重试；不影响项目分析。' : '无法读取 GitHub 仓库信息，可以稍后重试；不影响项目分析。'}</p><Button onClick={() => setAttempt(value => value + 1)}>重新读取概览</Button></div> : null}
-    {overview?.stale ? <p className="status-note">显示上次缓存的概览（读取于 {compact(overview.fetchedAt)}），GitHub 暂时不可用。</p> : null}
+    {overview && !overview.supported ? <div className="grid gap-1 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">此项目不支持 GitHub 仓库概览</h2><p className="text-xs leading-body text-foreground-3">分支分析和风险趋势仍可使用。仓库概览只读取公开 GitHub 元数据，不访问私有来源。</p></div> : null}
+    {overview?.supported && !metadata ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">仓库概览暂时不可用</h2><p className="text-xs leading-body text-foreground-3">{overview.errorCode === 'PR_RATE_LIMITED' ? 'GitHub 匿名额度受限，稍后重试；不影响项目分析。' : '无法读取 GitHub 仓库信息，可以稍后重试；不影响项目分析。'}</p><Button onClick={() => setAttempt(value => value + 1)}>重新读取概览</Button></div> : null}
+    {overview?.stale ? <p className="text-xs text-amber-deep">显示上次缓存的概览（读取于 {compact(overview.fetchedAt)}），GitHub 暂时不可用。</p> : null}
     {overview && metadata ? <>
-      <div className="repo-stats">
-        <div><b>{metadata.stars.toLocaleString()}</b><span>stars</span></div>
-        <div><b>{metadata.forks.toLocaleString()}</b><span>forks</span></div>
-        <div><b>{metadata.openIssues.toLocaleString()}</b><span>开放 issue/PR</span></div>
-        <div><b>{metadata.watchers.toLocaleString()}</b><span>watchers</span></div>
-        <div><b>{compact(metadata.pushedAt)}</b><span>最近推送</span></div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.stars.toLocaleString()}</b><span className="text-xs text-foreground-3">stars</span></div>
+        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.forks.toLocaleString()}</b><span className="text-xs text-foreground-3">forks</span></div>
+        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.openIssues.toLocaleString()}</b><span className="text-xs text-foreground-3">开放 issue/PR</span></div>
+        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.watchers.toLocaleString()}</b><span className="text-xs text-foreground-3">watchers</span></div>
+        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{compact(metadata.pushedAt)}</b><span className="text-xs text-foreground-3">最近推送</span></div>
       </div>
-      <div className="repo-charts">
-        <section className="repo-chart-card" aria-label="仓库活跃度">
-          <div className="section-label"><h2>仓库活跃度</h2><span>{overview.activityCoverage === 'last-52-weeks' ? '近一年 · 按周' : '最近 12 周'}</span></div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
+        <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="仓库活跃度">
+          <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">仓库活跃度</h2><span className="text-xs text-foreground-3">{overview.activityCoverage === 'last-52-weeks' ? '近一年 · 按周' : '最近 12 周'}</span></div>
           <ActivityChart activity={overview.activity} coverage={overview.activityCoverage} fetchedAt={overview.fetchedAt}/>
         </section>
-        <section className="repo-chart-card" aria-label="语言构成">
-          <div className="section-label"><h2>语言构成</h2><span>GitHub 字节统计</span></div>
-          {overview.languages.length ? <LanguageChart languages={overview.languages}/> : <p className="quiet-empty">GitHub 没有返回语言统计。</p>}
+        <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="语言构成">
+          <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">语言构成</h2><span className="text-xs text-foreground-3">GitHub 字节统计</span></div>
+          {overview.languages.length ? <LanguageChart languages={overview.languages}/> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回语言统计。</p>}
         </section>
       </div>
-      <section className="repo-commits" aria-label="最近提交">
-        <div className="section-label"><h2>最近提交</h2><span>最多 10 条</span></div>
-        {overview.recentCommits.length ? <ul>{overview.recentCommits.map(commit => <li key={commit.sha}><a href={commit.url} target="_blank" rel="noreferrer"><code>{commit.sha.slice(0, 7)}</code> {commit.message}</a><span>{commit.author} · {compact(commit.date)}</span></li>)}</ul> : <p className="quiet-empty">GitHub 没有返回最近提交。</p>}
+      <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="最近提交">
+        <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">最近提交</h2><span className="text-xs text-foreground-3">最多 10 条</span></div>
+        {overview.recentCommits.length ? <ul className="grid gap-1">{overview.recentCommits.map(commit => <li key={commit.sha} className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-soft py-1.5 text-sm"><a className="min-w-0 truncate text-foreground-2 hover:text-foreground" href={commit.url} target="_blank" rel="noreferrer"><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 7)}</code> {commit.message}</a><span className="shrink-0 text-xs text-foreground-4">{commit.author} · {compact(commit.date)}</span></li>)}</ul> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回最近提交。</p>}
       </section>
-      {metadata.topics.length ? <p className="repo-topics">{metadata.topics.map(topic => <span key={topic}>{topic}</span>)}</p> : null}
-      <p className="form-hint">读取于 {compact(overview.fetchedAt)}</p>
+      {metadata.topics.length ? <p className="flex flex-wrap gap-1">{metadata.topics.map(topic => <span key={topic} className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{topic}</span>)}</p> : null}
+      <p className="text-xs text-foreground-4">读取于 {compact(overview.fetchedAt)}</p>
     </> : null}
   </section>
 }

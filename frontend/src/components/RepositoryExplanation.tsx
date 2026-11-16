@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/controls'
 import { requestRepositoryExplanation, type ExplanationContext, type RepositoryExplanation as Explanation } from '../repositoryExplanation'
-import './repository-explanation.css'
 
 const LABELS: Record<string, string> = { ns: '子系统数', nd: '目录数', nf: '文件数', ent: '改动分散度', entropy: '改动分散度',
   la: '新增行数', ld: '删除行数', lt: '变更前规模', fix: '修复标记', ndev: '参与开发者数', age: '变更间隔',

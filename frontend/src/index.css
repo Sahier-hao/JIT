@@ -9,6 +9,7 @@
 /* Tokens、共享组件、领域页面、产品组合，最后是现代外壳。 */
 @import './styles/tokens.css';
 @import './styles/base.css' layer(base);
+@import './styles/content.css' layer(components);
 @import './styles/components.css' layer(legacy);
 
 @import './styles/product.css' layer(legacy);

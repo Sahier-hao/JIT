@@ -6,15 +6,16 @@
  * 2) 焦点与选中环（0 0 0 Npx）
  * 3) 抽屉的一层投影（var(--sh-2)）与过渡属性里的 box-shadow 关键字
  */
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const root = process.cwd()
 const styleDir = resolve(root, 'src/styles')
+const legacyTrend = resolve(root, 'src/trend.css')
 const files = [
   ...readdirSync(styleDir).filter((f) => f.endsWith('.css')).map((f) => resolve(styleDir, f)),
-  resolve(root, 'src/trend.css'),
+  ...(existsSync(legacyTrend) ? [legacyTrend] : []),
 ]
 
 function read(file: string): string {

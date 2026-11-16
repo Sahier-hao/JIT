@@ -163,7 +163,7 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
 
   return (
     <svg
-      className="trend-chart"
+      className="trend-chart h-auto w-full"
       viewBox={`0 0 ${CHART.width} ${CHART.height}`}
       role="img"
       aria-label={`历史趋势图：${count} 个时间桶的提交数、观测正标签比例与模型风险中位数，并按运行摘要标出 ${bands.length} 个分区的范围；完整数值见同数据的文本视图`}
@@ -176,17 +176,17 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
       {bands.map((band) => (
         <g key={`band-${band.key}`} data-partition={band.key}>
           <rect
-            className={band.key === 'test' ? 'trend-band trend-band-test' : 'trend-band trend-band-hatch'}
+            className={band.key === 'test' ? 'trend-band trend-band-test' : 'trend-band trend-band-hatch'} fill={band.key === 'test' ? 'var(--blue-soft)' : 'url(#trend-hatch)'}
             x={band.x}
             y={CHART.top}
             width={band.width}
             height={plotHeight}
           />
           {band.showStartEdge ? (
-            <line className="trend-band-edge" x1={band.x} x2={band.x} y1={CHART.top} y2={CHART.top + plotHeight} />
+            <line className="trend-band-edge" stroke="var(--line-strong)" x1={band.x} x2={band.x} y1={CHART.top} y2={CHART.top + plotHeight} />
           ) : null}
           {band.labelVisible ? (
-            <text className="trend-band-label" x={band.x + band.width / 2} y={CHART.top + 12} textAnchor="middle">
+            <text className="trend-band-label" fill="var(--fg-3)" fontSize="10" x={band.x + band.width / 2} y={CHART.top + 12} textAnchor="middle">
               {band.label}
             </text>
           ) : null}
@@ -194,19 +194,19 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
       ))}
       {[0, rateMax / 2, rateMax].map((tick) => (
         <g key={`rate-${tick}`}>
-          <line className="trend-grid" x1={CHART.left} x2={CHART.left + plotWidth} y1={yRate(tick)} y2={yRate(tick)} />
-          <line className="trend-tick" x1={CHART.left - 4} x2={CHART.left} y1={yRate(tick)} y2={yRate(tick)} />
-          <text className="trend-axis-text" x={CHART.left - 8} y={yRate(tick) + 3.5} textAnchor="end">
+          <line className="trend-grid" stroke="var(--line-soft)" x1={CHART.left} x2={CHART.left + plotWidth} y1={yRate(tick)} y2={yRate(tick)} />
+          <line className="trend-tick" stroke="var(--line-strong)" x1={CHART.left - 4} x2={CHART.left} y1={yRate(tick)} y2={yRate(tick)} />
+          <text className="trend-axis-text" fill="var(--fg-3)" fontSize="10" x={CHART.left - 8} y={yRate(tick) + 3.5} textAnchor="end">
             {percent(tick)}
           </text>
-          <text className="trend-axis-text" x={CHART.left + plotWidth + 8} y={yRate(tick) + 3.5} textAnchor="start">{tick.toFixed(2)}</text>
+          <text className="trend-axis-text" fill="var(--fg-3)" fontSize="10" x={CHART.left + plotWidth + 8} y={yRate(tick) + 3.5} textAnchor="start">{tick.toFixed(2)}</text>
         </g>
       ))}
       {[0, Math.round(commitsMax / 2), commitsMax].map((tick) => (
         <g key={`commits-${tick}`}>
-          <line className="trend-grid" x1={CHART.left} x2={CHART.left + plotWidth} y1={yCommits(tick)} y2={yCommits(tick)} />
-          <line className="trend-tick" x1={CHART.left - 4} x2={CHART.left} y1={yCommits(tick)} y2={yCommits(tick)} />
-          <text className="trend-axis-text" x={CHART.left - 8} y={yCommits(tick) + 3.5} textAnchor="end">
+          <line className="trend-grid" stroke="var(--line-soft)" x1={CHART.left} x2={CHART.left + plotWidth} y1={yCommits(tick)} y2={yCommits(tick)} />
+          <line className="trend-tick" stroke="var(--line-strong)" x1={CHART.left - 4} x2={CHART.left} y1={yCommits(tick)} y2={yCommits(tick)} />
+          <text className="trend-axis-text" fill="var(--fg-3)" fontSize="10" x={CHART.left - 8} y={yCommits(tick) + 3.5} textAnchor="end">
             {tick}
           </text>
         </g>
@@ -217,7 +217,7 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
         return (
           <rect
             key={`bar-${bucket.start}`}
-            className="trend-bar"
+            className="trend-bar" fill="var(--chart-bar)"
             x={midOf(bucket) - barWidth / 2}
             y={yCommits(bucket.commits)}
             width={barWidth}
@@ -228,7 +228,7 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
       {gaps.map((index) => (
         <line
           key={`gap-${buckets[index].start}`}
-          className="trend-gap"
+          className="trend-gap" stroke="var(--line-strong)" strokeDasharray="3 4"
           x1={midOf(buckets[index])}
           x2={midOf(buckets[index])}
           y1={CHART.top}
@@ -238,27 +238,27 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
       {observed.map((points) => (
         <g key={`observed-${points[0].x}`}>
           {points.length > 1 ? (
-            <polyline className="trend-line trend-line-observed" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
+            <polyline className="trend-line trend-line-observed" fill="none" stroke="var(--chart-obs)" strokeWidth="2" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
           ) : null}
           {points.map((point) => (
-            <rect key={point.x} className="trend-dot trend-dot-observed" x={point.x - 2.5} y={point.y - 2.5} width={5} height={5} />
+            <rect key={point.x} className="trend-dot trend-dot-observed" fill="var(--chart-obs)" x={point.x - 2.5} y={point.y - 2.5} width={5} height={5} />
           ))}
         </g>
       ))}
       {estimated.map((points) => (
         <g key={`estimated-${points[0].x}`}>
           {points.length > 1 ? (
-            <polyline className="trend-line trend-line-estimated" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
+            <polyline className="trend-line trend-line-estimated" fill="none" stroke="var(--chart-est)" strokeWidth="2" strokeDasharray="4 3" points={points.map((point) => `${point.x},${point.y}`).join(' ')} />
           ) : null}
           {points.map((point) => (
-            <rect key={point.x} className="trend-dot trend-dot-estimated" x={point.x - 2.5} y={point.y - 2.5} width={5} height={5} />
+            <rect key={point.x} className="trend-dot trend-dot-estimated" fill="var(--chart-est)" x={point.x - 2.5} y={point.y - 2.5} width={5} height={5} />
           ))}
         </g>
       ))}
-      <line className="trend-axis trend-axis-split" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateTop - 6} y2={rateTop - 6} />
-      <text className="trend-axis-unit" x={CHART.left} y={rateTop - 10}>观测比例</text>
-      <text className="trend-axis-unit" x={CHART.left + plotWidth} y={rateTop - 10} textAnchor="end">模型分数</text>
-      <line className="trend-axis" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateBottom} y2={rateBottom} />
+      <line className="trend-axis trend-axis-split" stroke="var(--line-soft)" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateTop - 6} y2={rateTop - 6} />
+      <text className="trend-axis-text" fill="var(--fg-3)" fontSize="10" x={CHART.left} y={rateTop - 10}>观测比例</text>
+      <text className="trend-axis-text" fill="var(--fg-3)" fontSize="10" x={CHART.left + plotWidth} y={rateTop - 10} textAnchor="end">模型分数</text>
+      <line className="trend-axis" stroke="var(--line)" x1={CHART.left} x2={CHART.left + plotWidth} y1={rateBottom} y2={rateBottom} />
       {(() => {
         let lastLabelX = -Infinity
         return buckets.map((bucket, index) => {
@@ -269,7 +269,7 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
           return (
             <text
               key={`label-${bucket.start}`}
-              className="trend-axis-text"
+              className="trend-axis-text" fill="var(--fg-3)" fontSize="10"
               x={x}
               y={CHART.top + plotHeight + 20}
               textAnchor="middle"
@@ -287,18 +287,16 @@ export function TrendChart({ data, split }: { data: TrendAggregate; split: Split
 export function PartitionList({ split }: { split: Split | undefined }) {
   if (split === undefined) return null
   return (
-    <ul className="trend-partitions" aria-label="分区范围">
+    <ul className="grid gap-1 text-xs sm:grid-cols-3" aria-label="分区范围">
       {Object.entries(split)
         .sort(([, left], [, right]) => Date.parse(left.start) - Date.parse(right.start))
         .map(([key, stat]) => (
-        <li key={key}>
-          <span>{partitionLabel(key)}：</span>
-          <time dateTime={stat.start}>{stat.start}</time>
+        <li key={key} className="grid gap-0.5 border-t border-border-soft pt-1.5">
+          <span className="text-foreground-3">{partitionLabel(key)}：</span>
+          <time className="font-mono text-[11px] text-foreground-2" dateTime={stat.start}>{stat.start}</time>
           <span>—</span>
-          <time dateTime={stat.end}>{stat.end}</time>
-          <code>
-            {stat.count} 条 / 正 {stat.positiveCount}
-          </code>
+          <time className="font-mono text-[11px] text-foreground-2" dateTime={stat.end}>{stat.end}</time>
+          <code className="font-mono text-[11px] text-foreground-3">{stat.count} 条 / 正 {stat.positiveCount}</code>
         </li>
       ))}
     </ul>
@@ -307,9 +305,9 @@ export function PartitionList({ split }: { split: Split | undefined }) {
 
 export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (bucket: TrendBucket) => void }) {
   return (
-    <div className="table-wrap trend-table-wrap" role="region" aria-label="历史趋势文本视图" tabIndex={0}>
-      <table className="trend-table">
-        <caption>
+    <div className="overflow-x-auto" role="region" aria-label="历史趋势文本视图" tabIndex={0}>
+      <table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top">
+        <caption className="px-2 py-1.5 text-left text-xs text-foreground-3">
           历史趋势文本视图：每个时间桶的提交数、记录分区、观测正标签比例与模型风险中位数（时区 {data.timezone}，最小样本{' '}
           {data.minSample}）
         </caption>
@@ -320,7 +318,7 @@ export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (
             <th>记录分区</th>
             <th>观测正标签比例</th>
             <th>模型风险中位数</th>
-            <th className="trend-drill-head">下钻</th>
+            <th>下钻</th>
           </tr>
         </thead>
         <tbody>
@@ -328,9 +326,9 @@ export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (
             const range = drillRange(bucket)
             return (
               <tr key={bucket.start}>
-                <td className="time-cell">
-                  <time dateTime={bucket.start}>{monthOf(bucket.start)}</time>
-                  <span>
+                <td>
+                  <time className="font-mono text-foreground-2" dateTime={bucket.start}>{monthOf(bucket.start)}</time>
+                  <span className="block text-[11px] text-foreground-4">
                     {bucket.start.slice(0, 10)} — {bucket.end.slice(0, 10)}
                   </span>
                 </td>
@@ -338,11 +336,10 @@ export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (
                 <td>{partitionText(bucket)}</td>
                 <td>{measureText(bucket.observedRate, '样本不足')}</td>
                 <td>{riskText(bucket)}</td>
-                <td className="trend-drill-cell">
+                <td>
                   <Button
                     variant="link"
                     size="sm"
-                    className="trend-drill"
                     aria-label={`查看该桶提交：${range.start} 至 ${range.end}`}
                     onClick={() => onDrill(bucket)}
                   >查看提交</Button>
@@ -352,7 +349,7 @@ export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (
           })}
         </tbody>
       </table>
-      <p className="trend-table-note">「—」表示该桶没有测试分区记录，因此不提供模型风险中位数；样本不足的桶在单元格内给出原因。</p>
+      <p className="px-2 py-1.5 text-xs text-foreground-3">「—」表示该桶没有测试分区记录，因此不提供模型风险中位数；样本不足的桶在单元格内给出原因。</p>
     </div>
   )
 }

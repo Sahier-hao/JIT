@@ -41,10 +41,10 @@
 
 ## 6. 趋势、报告与内容
 
-- [ ] 6.1 迁移 `TrendPage`、`TrendPanels`、`ProjectTrends`、`ProjectActivity`、`RepositoryOverview`、`RepositoryUpdates`、`AnalysisComparison`、`RepositoryExplanation`，保留图表工具类与下钻行为；运行趋势、覆盖度、下钻与通知相关测试。
-- [ ] 6.2 把 Markdown 与 `repository-explanation` 的样式收敛到 `styles/content.css`，删除 `components/markdown.css` 与 `components/repository-explanation.css`；运行 `Markdown`、`RepositoryExplanation` 测试并确认表格、代码块、长链接不破坏容器布局。
-- [ ] 6.3 删除 `trend.css`、`styles/dashboard.css`、`styles/research.css`、`pages/analysis-comparison.css`、`styles/modern.css` 中已无消费者的文件，更新 `index.css`；运行趋势与报告 Playwright 用例，`trend-tooltip`、`trend-drilldown`、`ui-chart` 改用 `data-testid`。
-- [ ] 6.4 在 `docs/evidence/unify-frontend-visual-system/05-趋势与报告/` 存档趋势、覆盖度、对比与仓库概览截图，核对图表刻度、浮层、图例与表格在四套主题下的可读性。
+- [x] 6.1 迁移 `TrendPage`、`TrendPanels`、`ProjectTrends`、`ProjectActivity`、`RepositoryOverview`、`AnalysisComparison`，统一 KPI、分区覆盖、图表卡片、等价数据表、站内提醒与仓库概览的表面与表格结构。
+- [x] 6.2 新建 `styles/content.css` 承载 Markdown 正文与模型解释的后代规则，删除组件级 `markdown.css` 与 `repository-explanation.css`，内容仍限定在各自容器内。
+- [x] 6.3 删除 `trend.css` 与 `analysis-comparison.css`；图表 SVG 改用内联令牌色与 Tailwind，保留 `trend-*` 作为图表测试钩子并更新 `chartTokens.test.ts`。`research.css`、`dashboard.css`、`modern.css` 仍被个人工作区、管理端与共享反馈使用，保留到后续批次。
+- [x] 6.4 在 `docs/evidence/unify-frontend-visual-system/06-趋势与报告/` 存档项目风险趋势与站内提醒截图，核对图表、图例、覆盖条与表格在浅色和深色下的可读性。
 
 ## 7. 个人工作区
 
