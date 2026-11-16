@@ -77,7 +77,7 @@ export const IconButton = forwardRef<HTMLButtonElement, Omit<ButtonHTMLAttribute
     aria-label={label}
     title={label}
     className={cn(
-      'inline-grid size-8 place-items-center rounded-sm border border-transparent text-foreground-3 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50',
+      'inline-grid size-8 place-items-center rounded-sm border border-transparent bg-transparent text-foreground-3 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50',
       danger && 'text-rose hover:bg-rose-soft hover:text-rose-deep',
       className,
     )}

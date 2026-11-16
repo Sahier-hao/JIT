@@ -6,7 +6,7 @@ import { cn } from '../lib/utils'
 import { THEMES, initialTheme, initialDensity, applyTheme, applyDensity, writeStored, THEME_KEY, DENSITY_KEY, type ThemeId } from '../preferences'
 
 const optionClass = (selected: boolean) => cn(
-  'rounded-sm border px-2 py-1.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+  'rounded-sm border bg-transparent px-2 py-1.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
   selected ? 'border-accent bg-accent-soft font-medium text-foreground' : 'border-border-soft text-foreground-2 hover:bg-hover',
 )
 

@@ -30,10 +30,12 @@ describe('图标材料', () => {
     expect(svg?.getAttribute('aria-hidden')).toBe('true')
   })
 
-  it('非品牌图标使用 24 网格', () => {
+  it('非品牌图标使用 24 网格且默认不填充', () => {
     for (const name of lucideNames) {
       const { container } = render(<Icon name={name} />)
-      expect(container.querySelector('svg')?.getAttribute('viewBox'), name).toBe('0 0 24 24')
+      const svg = container.querySelector('svg')
+      expect(svg?.getAttribute('viewBox'), name).toBe('0 0 24 24')
+      expect(svg?.getAttribute('fill'), name).toBe('none')
     }
   })
 

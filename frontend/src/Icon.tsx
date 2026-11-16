@@ -112,5 +112,5 @@ function BrandLogo({ size = 16, className }: { size?: number; className?: string
 export function Icon({ name, size = 16, className, strokeWidth = 1.5, fill }: { name: IconName; size?: number; className?: string; strokeWidth?: number; fill?: string }) {
   if (name === 'logo') return <BrandLogo size={size} className={className}/>
   const Glyph = icons[name]
-  return <Glyph size={size} strokeWidth={strokeWidth} fill={fill} className={className} aria-hidden="true" focusable="false"/>
+  return <Glyph size={size} strokeWidth={strokeWidth} fill={fill ?? 'none'} className={className} aria-hidden="true" focusable="false"/>
 }
