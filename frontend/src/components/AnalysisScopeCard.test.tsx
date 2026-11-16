@@ -51,11 +51,11 @@ it('shows the model, dataset and holdout boundaries before the result', () => {
   expect(screen.getByText('161 / 178 条纳入')).toBeVisible()
   expect(screen.getByText('105 / 22 / 23')).toBeVisible()
   expect(screen.getByText('11 条 · 2 个正例')).toBeVisible()
-  const metrics = document.querySelector('.scope-metrics')
+  const metrics = screen.getByTestId('scope-metrics')
   expect(metrics).toHaveTextContent('ROC-AUC 0.778')
   expect(metrics).toHaveTextContent('AP 0.733')
   expect(metrics).toHaveTextContent('无信息 AP 0.217')
-  const identity = document.querySelector('.scope-identity')
+  const identity = screen.getByTestId('scope-identity')
   expect(identity).toHaveTextContent('冻结身份')
   expect(identity).toHaveTextContent('bbbbbbbbbbbb')
   expect(identity).toHaveTextContent('kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19')
@@ -78,8 +78,8 @@ it('shows why partitions are unknown instead of guessing them from time', () => 
       preset: null, holdoutFrom: null, holdoutCutoffEpoch: null,
     },
   }} onOpenDataset={vi.fn()}/>)
-  expect(document.querySelector('.scope-note')).toHaveTextContent('训练成员无法核对')
-  expect(document.querySelector('.scope-note')).toHaveTextContent('模型数据版本或切分成员与本项目分析不一致')
+  expect(screen.getByTestId('scope-note')).toHaveTextContent('训练成员无法核对')
+  expect(screen.getByTestId('scope-note')).toHaveTextContent('模型数据版本或切分成员与本项目分析不一致')
 })
 
 it('parses the analysis scope without dropping the split', () => {

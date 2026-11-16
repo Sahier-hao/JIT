@@ -9,7 +9,9 @@ import { Icon } from '../Icon'
 import { useEffect, useRef, useState } from 'react'
 import { Button, IconButton, NumberInput, Select } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
-import { Popover } from '../ui/popover'
+import { Dropdown } from '../ui/dropdown'
+import { TabBar } from '../ui/layout'
+import { Segmented } from '../ui/segmented'
 import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
 import type { SyncCommit } from '../repositoryContract'
 import { prBatchChanged, projectsChanged } from '../projectEvents'
@@ -27,13 +29,22 @@ import { getPRSnapshot } from '../prReviewClient'
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
-import { projectStatus } from '../projectStatus'
+import { projectStatus, type ProjectTone } from '../projectStatus'
 import { ACTIVE_STATUSES, DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
 import { useRepository } from '../repositoryWorkspace'
 import { AnalysisScopeCard } from '../components/AnalysisScopeCard'
 import { displayTime } from '../domain'
+import { cn } from '../lib/utils'
 
 type ProjectTab = 'overview' | 'prs' | 'trends' | 'analyses'
+
+const TONE_DOT: Record<ProjectTone, string> = { active: 'bg-blue', ok: 'bg-teal', alert: 'bg-rose', muted: 'bg-foreground-4' }
+const PARTITION_CLASS: Record<string, string> = {
+  holdout: 'bg-blue-soft text-blue-deep',
+  test: 'bg-amber-soft text-amber-deep',
+  validation: 'bg-teal-soft text-teal-deep',
+  train: 'bg-soft text-foreground-3',
+}
 
 export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositoryId: string; tab?: ProjectTab; viewId?: string; navigate: (route: Route, replace?: boolean) => void }) {
   // 风险趋势不再是独立页签：地址仍保留 /trends[/viewId] 以支持旧链接，界面并入「分析」。
@@ -239,148 +250,163 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     }
   }
 
-  return <section className="project-page">
-    <header className="page-heading project-heading">
-      <div className="project-head-text">
-        <Button className="project-back" aria-label="全部项目" variant="ghost" size="sm" icon={<Icon name="arrowLeft" size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
-        <div className="project-title-row">
-          <h1 title={repository.url}>{repository.displayName}</h1>
-          <p className={`status-line tone-${status.tone}`} role="status">{status.label}</p>
+  return <section className="grid gap-4">
+    <header className="grid gap-4 border-b border-border-soft pb-4">
+      <div className="grid gap-2">
+        <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" icon={<Icon name="arrowLeft" size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-sans text-xl font-semibold leading-title text-foreground" title={repository.url}>{repository.displayName}</h1>
+          <p className="inline-flex items-center gap-1.5 text-xs text-foreground-3" role="status"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</p>
         </div>
-        <p className="project-meta">
-          <a className="project-repo" href={repository.url} target="_blank" rel="noreferrer">{repository.url.replace(/^https?:\/\/github\.com\//i, '')}</a>
-          <span className="project-meta-sep" aria-hidden="true">·</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
+          <a className="text-accent underline-offset-2 hover:underline" href={repository.url} target="_blank" rel="noreferrer">{repository.url.replace(/^https?:\/\/github\.com\//i, '')}</a>
+          <span aria-hidden="true">·</span>
           <span>默认分支 {repository.defaultBranch ?? '未登记'}</span>
-          <span className="project-meta-sep" aria-hidden="true">·</span>
+          <span aria-hidden="true">·</span>
           <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onAnalyze={branch => analyzeBranch(branch)} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
-        </p>
+        </div>
       </div>
-      <div className="page-actions">
+      <div className="flex flex-wrap items-center gap-2">
         <Button icon={<Icon name="database" size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
         <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
         <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
       </div>
-      {prAnalysisError ? <p className="field-error" role="alert">{prAnalysisError}</p> : null}
+      {prAnalysisError ? <p className="text-xs text-rose" role="alert">{prAnalysisError}</p> : null}
     </header>
-    {latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? <section className="project-progress" aria-label="当前分析进度">
+
+    {latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? <section className="rounded-md border border-border-soft bg-card p-card" aria-label="当前分析进度">
       <JobProgress status={latest.status} stage={latest.stage} queuePosition={latest.queuePosition} startedAt={latest.startedAt}/>
     </section> : null}
 
-    <nav className="project-tabs" aria-label="项目工作台视图">
-      {([['overview', '概览'], ['analyses', '分析'], ['prs', 'PR 审查']] as const).map(([value, label]) => <Button key={value} variant={activeTab === value ? 'primary' : 'ghost'} size="sm" aria-current={activeTab === value ? 'page' : undefined} onClick={() => navigate(repositoryRoute(repositoryId, value))}>{label}</Button>)}
-    </nav>
+    <TabBar
+      label="项目工作台视图"
+      value={activeTab}
+      onChange={value => navigate(repositoryRoute(repositoryId, value))}
+      items={[{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分析' }, { value: 'prs', label: 'PR 审查' }]}
+      className="border-b-0 pb-0"
+    />
 
     {activeTab === 'overview' ? <>
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate(repositoryRoute(repositoryId, 'analyses'))}/>
     </> : null}
+
     {activeTab === 'analyses' ? <>
-    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={<nav className="analysis-view-switch" aria-label="分析视图">
-      <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
-      <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
-    </nav>}/> : <>
-    <div className="analysis-bar">
-      <span className="analysis-bar-label">当前结果</span>
-      <nav className="analysis-view-switch" aria-label="分析视图">
-        <Button size="sm" variant="primary" aria-current="page" onClick={() => navigate(repositoryRoute(repositoryId, 'analyses'))}>分析结果</Button>
-        <Button size="sm" variant="ghost" onClick={() => navigate(repositoryRoute(repositoryId, 'trends'))}>风险趋势</Button>
-      </nav>
+    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={
+      <TabBar label="分析视图" value="trends" onChange={value => navigate(repositoryRoute(repositoryId, value))} items={[{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]} className="border-b-0"/>
+    }/> : <>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <span className="text-sm font-medium text-foreground-2">当前结果</span>
+      <TabBar label="分析视图" value="analyses" onChange={value => navigate(repositoryRoute(repositoryId, value))} items={[{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]} className="border-b-0"/>
     </div>
-    <div className="project-workspace">
-      <aside className="pw-rail" aria-label="分析记录">
-        <div className="pw-rail-head"><h2>分析记录</h2><span>{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
-        {currentNotice ? <p className="record-notice" role="status">{currentNotice}</p> : null}
-        {recordError ? <p className="field-error" role="alert">{recordError}</p> : null}
-        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="quiet-empty">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="job-list pw-timeline">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}{records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="pw-list-end">共 {records.total} 次分析</p> : null}
-        {records.total > 10 ? <nav className="pager" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
+    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+      <aside className="grid content-start gap-3 rounded-md border border-border-soft bg-card p-3" aria-label="分析记录">
+        <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">分析记录</h2><span className="text-xs text-foreground-4">{records.state === 'ready' ? `${records.total} 次` : ''}</span></div>
+        {currentNotice ? <p className="text-xs text-teal-deep" role="status">{currentNotice}</p> : null}
+        {recordError ? <p className="text-xs text-rose" role="alert">{recordError}</p> : null}
+        {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="py-6 text-center text-xs text-foreground-3">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="grid gap-2">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}
+        {records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="text-center text-xs text-foreground-4">共 {records.total} 次分析</p> : null}
+        {records.total > 10 ? <nav className="flex items-center justify-between gap-2 border-t border-border-soft pt-2 text-xs text-foreground-3" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
       </aside>
 
-      <div className="pw-detail">
-        <div className="pw-detail-head">
-          <h2>当前分析结果{context && latestCompletedId && context.syncId !== latestCompletedId ? <span className="source-chip">历史固定结果</span> : null}</h2>
-          <span>{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
+      <div className="grid content-start gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">当前分析结果{context && latestCompletedId && context.syncId !== latestCompletedId ? <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] font-normal text-foreground-3">历史固定结果</span> : null}</h2>
+          <span className="text-xs text-foreground-3">{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
         </div>
-        {context && context.sourceKind === 'pr' ? <p className="status-note">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}
-        {context ? <div className="pw-result">
+        {context && context.sourceKind === 'pr' ? <p className="text-xs text-foreground-3">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}
+        {context ? <div className="grid gap-3">
           {scope ? <AnalysisScopeCard scope={scope} onOpenDataset={() => setDatasetOpen(true)}/> : null}
-          {scope?.split ? <div className="scope-view-switch" role="group" aria-label="查看提交范围">
-            <Button size="sm" variant={activeView === 'holdout' ? 'primary' : 'ghost'} aria-pressed={activeView === 'holdout'} onClick={() => setScopeView('holdout')}>留出 {scope.split.holdout.count ?? 0}</Button>
-            <Button size="sm" variant={activeView === 'test' ? 'primary' : 'ghost'} aria-pressed={activeView === 'test'} onClick={() => setScopeView('test')}>测试 {scope.split.test.count ?? 0}</Button>
-            <Button size="sm" variant={activeView === 'all' ? 'primary' : 'ghost'} aria-pressed={activeView === 'all'} onClick={() => setScopeView('all')}>全部 {repository.commitCount}</Button>
-            <span>{activeView === 'all' ? '含训练、验证、测试、留出与未纳入数据集的提交' : '模型没见过的提交'}</span>
+          {scope?.split ? <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="查看提交范围">
+            <Segmented size="sm" value={activeView} onChange={setScopeView} options={[
+              { value: 'holdout', label: `留出 ${scope.split.holdout.count ?? 0}` },
+              { value: 'test', label: `测试 ${scope.split.test.count ?? 0}` },
+              { value: 'all', label: `全部 ${repository.commitCount}` },
+            ]}/>
+            <span className="text-foreground-3">{activeView === 'all' ? '含训练、验证、测试、留出与未纳入数据集的提交' : '模型没见过的提交'}</span>
           </div> : null}
-          <div className="result-hero">
-            <div className="result-total">
-              <b>{shownTotal.toLocaleString()}</b>
-              <span>{activeView === 'holdout' ? '模型没见过的提交' : activeView === 'test' ? '测试集提交' : '已分析提交'}</span>
+
+          <div className="grid gap-4 rounded-md border border-border-soft bg-card p-card sm:grid-cols-[160px_minmax(0,1fr)]">
+            <div className="grid content-center gap-1">
+              <b className="text-2xl font-semibold tabular-nums text-foreground">{shownTotal.toLocaleString()}</b>
+              <span className="text-xs text-foreground-3">{activeView === 'holdout' ? '模型没见过的提交' : activeView === 'test' ? '测试集提交' : '已分析提交'}</span>
             </div>
-            <div className="result-distribution">
-              <p className="result-bars-title">模型分数分布（未校准）</p>
-              <ul className="result-bars" aria-label={`模型分数分布：≥0.25 ${shownDistribution.high} 条、0.10 到 0.25 ${shownDistribution.medium} 条、小于 0.10 ${shownDistribution.low} 条`}>
-                <li className="is-high"><span className="bar-label">≥ 0.25</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.high)}%` }}/></span><span className="bar-value"><b>{shownDistribution.high.toLocaleString()}</b><em>{shownShare(shownDistribution.high)}%</em></span></li>
-                <li className="is-mid"><span className="bar-label">0.10–0.25</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.medium)}%` }}/></span><span className="bar-value"><b>{shownDistribution.medium.toLocaleString()}</b><em>{shownShare(shownDistribution.medium)}%</em></span></li>
-                <li className="is-low"><span className="bar-label">&lt; 0.10</span><span className="bar-track"><span style={{ width: `${shownShare(shownDistribution.low)}%` }}/></span><span className="bar-value"><b>{shownDistribution.low.toLocaleString()}</b><em>{shownShare(shownDistribution.low)}%</em></span></li>
+            <div className="grid gap-2">
+              <p className="text-xs text-foreground-3">模型分数分布（未校准）</p>
+              <ul className="grid gap-1.5" aria-label={`模型分数分布：≥0.25 ${shownDistribution.high} 条、0.10 到 0.25 ${shownDistribution.medium} 条、小于 0.10 ${shownDistribution.low} 条`}>
+                {([
+                  ['≥ 0.25', shownDistribution.high, 'bg-rose'],
+                  ['0.10–0.25', shownDistribution.medium, 'bg-amber'],
+                  ['< 0.10', shownDistribution.low, 'bg-teal'],
+                ] as const).map(([label, count, fill]) => <li key={label} className="flex items-center gap-2 text-xs">
+                  <span className="w-20 shrink-0 tabular-nums text-foreground-3">{label}</span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-strong"><span className={cn('block h-full rounded-full', fill)} style={{ width: `${shownShare(count)}%` }}/></span>
+                  <span className="flex w-20 shrink-0 items-baseline justify-end gap-1 tabular-nums"><b className="text-foreground">{count.toLocaleString()}</b><em className="not-italic text-foreground-4">{shownShare(count)}%</em></span>
+                </li>)}
               </ul>
             </div>
           </div>
-          {priorityCommits.length ? <div className="result-priority">
-            <p className="result-priority-title">{viewTitle}</p>
-            {replaySummary ? <p className="result-priority-summary">{replaySummary}</p> : null}
+
+          {priorityCommits.length ? <div className="grid gap-2 rounded-md border border-border-soft bg-card p-card">
+            <p className="text-sm font-medium text-foreground-2">{viewTitle}</p>
+            {replaySummary ? <p className="text-xs text-foreground-3">{replaySummary}</p> : null}
             <ol>
-              {priorityCommits.map((commit, index) => <li key={commit.commitId}>
-                <span className="priority-rank" aria-hidden="true">{index + 1}</span>
-                <code className="priority-sha">{commit.commitId.slice(0, 7)}</code>
-                <span className="priority-subject">
-                  {commit.partition ? <span className={`partition-chip is-${commit.partition}`}>{PARTITION_LABELS[commit.partition]}</span> : null}
-                  <span className="priority-subject-text" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
-                  <span className={`label-chip ${commit.label === 1 ? 'is-positive' : ''}`} title={commit.labelNote ?? ''}>
+              {priorityCommits.map((commit, index) => <li key={commit.commitId} className="flex items-center gap-2 border-t border-border-soft py-2 text-sm first:border-t-0">
+                <span className="w-4 shrink-0 text-xs tabular-nums text-foreground-4" aria-hidden="true">{index + 1}</span>
+                <code className="shrink-0 font-mono text-xs text-foreground-3">{commit.commitId.slice(0, 7)}</code>
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                  {commit.partition ? <span className={cn('shrink-0 rounded-sm px-1 py-0.5 text-[11px]', PARTITION_CLASS[commit.partition] ?? 'bg-soft text-foreground-3')}>{PARTITION_LABELS[commit.partition]}</span> : null}
+                  <span className="truncate text-foreground-2" title={commit.subject ?? ''}>{commit.subject ?? '未提供标题'}</span>
+                  <span className={cn('shrink-0 rounded-sm px-1 py-0.5 text-[11px]', commit.label === 1 ? 'bg-rose-soft text-rose-deep' : 'bg-soft text-foreground-3')} title={commit.labelNote ?? ''}>
                     {commit.label === 1 ? '有证据' : '未观测'}
                   </span>
                 </span>
-                <span className="priority-score">
-                  <span className="priority-meter" aria-hidden="true"><span style={{ width: `${Math.round(commit.risk * 100)}%` }}/></span>
-                  <b>{commit.risk.toFixed(2)}</b>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="h-1 w-16 overflow-hidden rounded-full bg-strong" aria-hidden="true"><span className="block h-full rounded-full bg-accent" style={{ width: `${Math.round(commit.risk * 100)}%` }}/></span>
+                  <b className="text-xs tabular-nums text-foreground">{commit.risk.toFixed(2)}</b>
                 </span>
               </li>)}
             </ol>
-            {priorityNote ? <p className="result-priority-note">{priorityNote}</p> : null}
-            <p className="result-priority-note">分数是未校准的排序值，不是概率。</p>
+            {priorityNote ? <p className="text-xs leading-body text-foreground-3">{priorityNote}</p> : null}
+            <p className="text-xs leading-body text-foreground-3">分数是未校准的排序值，不是概率。</p>
           </div> : null}
-          <div className="result-bottom">
-          {repository.degradeReason ? <p className="result-note">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
-          <div className="result-foot">
-            <div className="result-data-actions">
-              <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
-              <Button variant="ghost" size="sm" className="result-data-button" onClick={() => setDatasetOpen(true)}>数据来源</Button>
+
+          <div className="grid gap-3">
+            {repository.degradeReason ? <p className="text-xs text-foreground-3">模型说明：{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-sm border border-border-soft px-2 py-1 text-xs text-foreground-3" title={context.datasetVersion ?? ''}>数据 <b className="text-foreground">{datasetRange(context.datasetVersion)}</b></span>
+                <Button variant="ghost" size="sm" onClick={() => setDatasetOpen(true)}>数据来源</Button>
+              </div>
+              <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} trailing={<Icon name="arrow" size={15}/>}>查看提交明细</Button>
             </div>
-            <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} trailing={<Icon name="arrow" size={15}/>}>查看提交明细</Button>
           </div>
-          </div>
-        </div> : <div className="result-empty">
+        </div> : <div className="rounded-md border border-dashed border-border p-6 text-sm text-foreground-3">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : ''}</p>
         </div>}
       </div>
     </div>
     </>}
     </> : null}
+
     {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} modelId={repository.modelId ?? undefined} onPageChange={setPrPage} navigate={navigate}/> : null}
 
     <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={520}
       footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel || !prScopeValid} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
-      <div className="batch-dialog">
-        <label className="batch-dialog-field"><span>模型</span>
+      <div className="grid gap-3">
+        <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">模型</span>
           <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={prModelOptions}/>
         </label>
-        <label className="batch-dialog-field"><span>范围</span>
+        <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">范围</span>
           <Select ariaLabel="批量分析范围" value={prScopeKind} onChange={value => setPrScopeKind(value as 'all' | 'limit' | 'page')} options={[
             { value: 'all', label: '全部开放 PR' },
             { value: 'limit', label: '前 N 个' },
             { value: 'page', label: `当前页（第 ${prPage} 页）` },
           ]}/>
         </label>
-        {prScopeKind === 'limit' ? <label className="batch-dialog-field"><span>数量</span>
+        {prScopeKind === 'limit' ? <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">数量</span>
           <NumberInput aria-label="批量分析数量" min={1} max={500} value={prScopeLimit} onChange={event => setPrScopeLimit(event.target.value)}/>
         </label> : null}
-        <p className="batch-dialog-summary">开放 PR <b>{prOpenCount == null ? '—' : prOpenCount}</b> 个</p>
+        <p className="text-xs text-foreground-3">开放 PR <b className="text-foreground">{prOpenCount == null ? '—' : prOpenCount}</b> 个</p>
       </div>
     </Dialog>
     <DatasetBuildDialog
@@ -429,52 +455,37 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
   const title = pendingCancel ? '正在取消' : completed && current ? '当前结果' : switchable ? '设为当前结果' : job.status === 'queued' && job.queuePosition ? `排队第 ${job.queuePosition} 位` : STATUS_LABELS[active ? job.stage : job.status]
   const meta = `${shortTime(job.createdAt)} · ${syncSpan(job)}${switchable ? ' · 已完成' : ''}${isPR ? ' · PR 固定版本' : ''}`
   const shortId = job.syncId.slice(0, 7)
-  return <article className={`analysis-job ${current ? 'is-current' : ''}`} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
-    <span className="record-marker" aria-hidden="true"/>
-    <div className="record-body">
-    <div className="job-main">
-      {completed ? (current ? <div className="record-pick is-static">
-        <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Icon name="pin" size={12} fill="currentColor" strokeWidth={1.6}/></span>
-        <span className="record-text">
-          <span className="record-title">{title}</span>
-          <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
-        </span>
-      </div> : isPR ? <div className="record-pick is-static">
-        <span className="record-text">
-          <span className="record-title">{title}</span>
-          <span className="record-meta">{meta}</span>
-        </span>
-      </div> : <button type="button" className="record-pick is-clickable" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>
-        <span className="record-text">
-          <span className="record-title">{title}</span>
-          <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
-        </span>
-      </button>) : <div className="record-pick is-static">
-        <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}>{active ? <Icon name="loader" size={16}/> : <Icon name="warning" size={16}/>}</span>
-        <span className="record-text">
-          <span className="record-title">{title}</span>
-          <span className="record-meta">{meta}</span>
-        </span>
-      </div>}
-      <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
+  const text = <div className="min-w-0">
+    <p className="flex items-center gap-1.5 text-sm">
+      {completed ? current ? <span className="text-accent" aria-label={`当前结果 ${shortId}`}><Icon name="pin" size={12} fill="currentColor" strokeWidth={1.6}/></span>
+        : isPR ? <span className="text-foreground-4"><Icon name="gitCompare" size={13}/></span>
+          : <span className="text-foreground-4"><Icon name="check" size={13}/></span>
+        : <span className={cn(active ? 'text-accent' : 'text-rose')}>{active ? <Icon name="loader" size={14}/> : <Icon name="warning" size={14}/>}</span>}
+      <span className="truncate font-medium text-foreground">{title}</span>
+    </p>
+    <p className="mt-0.5 text-xs text-foreground-3">{meta}{selecting && switchable ? ' · 正在切换…' : ''}</p>
+  </div>
+  return <article className={cn('rounded-sm border p-2.5', current ? 'border-accent bg-accent-soft/40' : 'border-border-soft bg-card')} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
+    <div className="flex items-start justify-between gap-2">
+      {switchable ? <button type="button" className="min-w-0 flex-1 border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</button> : text}
+      <RecordMenu pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
-    {active ? <div className="record-progress"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}
-    {job.error ? <p className="record-error" title={job.error.message}><Icon name="warning" size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
-    </div>
+    {active ? <div className="mt-2"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}
+    {job.error ? <p className="mt-1.5 flex items-start gap-1 text-xs text-rose" title={job.error.message}><Icon name="warning" size={13} className="mt-0.5 shrink-0"/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="mt-1.5 text-xs text-foreground-3">已取消，可用原参数重新分析。</p> : null}
   </article>
 }
 
 /** 记录详情：放进浮层，避免在列表里向下展开把卡片撑长。 */
 function RecordDetails({ job, active }: { job: SyncView; active: boolean }) {
-  return <dl className="record-details">
-    <div><dt>范围</dt><dd>{fullHistory(job.since) ? '全部历史' : `${job.since ?? '不限'} — ${job.until ?? '不限'}`}</dd></div>
-    <div><dt>分支</dt><dd>{job.branch}</dd></div>
-    {job.algorithmName ? <div><dt>训练方法</dt><dd>{job.algorithmName}</dd></div> : null}
-    {job.startedAt ? <div><dt>开始执行</dt><dd>{displayTime(job.startedAt)}</dd></div> : null}
-    {active && job.deadlineAt ? <div><dt>执行截止</dt><dd>{displayTime(job.deadlineAt)}</dd></div> : null}
-    <div><dt>数据</dt><dd>{job.datasetVersion ?? '尚未生成'}</dd></div>
-    {job.degradeReason ? <div><dt>模型说明</dt><dd>{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
-    {job.requestId ? <div><dt>请求标识</dt><dd><code>{job.requestId}</code></dd></div> : null}
+  return <dl className="grid gap-2 text-sm">
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 first:border-t-0 first:pt-0"><dt className="text-xs text-foreground-3">范围</dt><dd className="m-0 break-words">{fullHistory(job.since) ? '全部历史' : `${job.since ?? '不限'} — ${job.until ?? '不限'}`}</dd></div>
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">分支</dt><dd className="m-0 break-words">{job.branch}</dd></div>
+    {job.algorithmName ? <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">训练方法</dt><dd className="m-0 break-words">{job.algorithmName}</dd></div> : null}
+    {job.startedAt ? <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">开始执行</dt><dd className="m-0 break-words">{displayTime(job.startedAt)}</dd></div> : null}
+    {active && job.deadlineAt ? <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">执行截止</dt><dd className="m-0 break-words">{displayTime(job.deadlineAt)}</dd></div> : null}
+    <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">数据</dt><dd className="m-0 break-words">{job.datasetVersion ?? '尚未生成'}</dd></div>
+    {job.degradeReason ? <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">模型说明</dt><dd className="m-0 break-words">{DEGRADE_LABELS[job.degradeReason] ?? job.degradeReason}</dd></div> : null}
+    {job.requestId ? <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2"><dt className="text-xs text-foreground-3">请求标识</dt><dd className="m-0 break-all"><code className="font-mono text-xs">{job.requestId}</code></dd></div> : null}
   </dl>
 }
 function datasetRange(version?: string | null) {
@@ -485,9 +496,7 @@ function datasetRange(version?: string | null) {
   return range ? `${range[1]} → ${range[2].slice(5)}` : version
 }
 /** 记录卡只放一个入口：点开后再选具体动作，避免每行三四个图标。 */
-function RecordMenu({ job, pendingCancel, onOpen, openLabel = '打开结果', openBusy, onCompare, onSelect, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
-  job: SyncView
-  active: boolean
+function RecordMenu({ pendingCancel, onOpen, openLabel = '打开结果', openBusy, onCompare, onSelect, onRetry, onCancel, onDetail, onDelete, cancelBusy, deleteBusy }: {
   pendingCancel: boolean
   onOpen?: () => void
   openLabel?: string
@@ -501,20 +510,26 @@ function RecordMenu({ job, pendingCancel, onOpen, openLabel = '打开结果', op
   cancelBusy: boolean
   deleteBusy: boolean
 }) {
-  const [open, setOpen] = useState(false)
-  const choose = (action?: () => void) => () => { setOpen(false); action?.() }
-  return <Popover open={open} onOpenChange={setOpen} label={`分析记录 ${job.syncId} 的操作`} trigger={<IconButton label="更多操作" icon={<Icon name="more" size={16}/>}/>}>
-    <div className="record-menu" role="menu" aria-label="分析记录操作">
-      {onOpen ? <button type="button" role="menuitem" className="record-menu-item" disabled={openBusy} onClick={choose(onOpen)}><Icon name="arrowUpRight" size={14}/>{openLabel}</button> : null}
-      {onCompare ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onCompare)}><Icon name="gitCompare" size={14}/>与当前结果对比</button> : null}
-      {onSelect ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onSelect)}><Icon name="pin" size={14}/>设为当前结果</button> : null}
-      {onRetry ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onRetry)}><Icon name="rotate" size={14}/>用这些参数重试</button> : null}
-      {onCancel ? <button type="button" role="menuitem" className="record-menu-item" disabled={cancelBusy} onClick={choose(onCancel)}><Icon name="xCircle" size={14}/>取消分析</button> : null}
-      {pendingCancel ? <p className="record-menu-note">正在取消…</p> : null}
-      <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onDetail)}><Icon name="info" size={14}/>分析详情</button>
-      {onDelete ? <button type="button" role="menuitem" className="record-menu-item is-danger" disabled={deleteBusy} onClick={choose(onDelete)}><Icon name="trash" size={14}/>删除记录</button> : null}
-    </div>
-  </Popover>
+  const items = [] as { key: string; label: string; danger?: boolean; disabled?: boolean }[]
+  if (onOpen) items.push({ key: 'open', label: openLabel, disabled: openBusy })
+  if (onCompare) items.push({ key: 'compare', label: '与当前结果对比' })
+  if (onSelect) items.push({ key: 'select', label: '设为当前结果' })
+  if (onRetry) items.push({ key: 'retry', label: '用这些参数重试' })
+  if (onCancel) items.push({ key: 'cancel', label: '取消分析', disabled: cancelBusy })
+  if (pendingCancel) items.push({ key: 'pending', label: '正在取消…', disabled: true })
+  items.push({ key: 'detail', label: '分析详情' })
+  if (onDelete) items.push({ key: 'delete', label: '删除记录', danger: true, disabled: deleteBusy })
+  return <Dropdown items={items} onClick={key => {
+    if (key === 'open') onOpen?.()
+    else if (key === 'compare') onCompare?.()
+    else if (key === 'select') onSelect?.()
+    else if (key === 'retry') onRetry?.()
+    else if (key === 'cancel') onCancel?.()
+    else if (key === 'detail') onDetail()
+    else if (key === 'delete') onDelete?.()
+  }}>
+    <IconButton label="更多操作" icon={<Icon name="more" size={16}/>}/>
+  </Dropdown>
 }
 
 /** 失败原因：常见错误给一句人话，原始信息留在详情里。 */

@@ -5,6 +5,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type FormEvent, type 
 import { updateRepository, type UpdateState } from '../repositoryUpdatesClient'
 import { displayTime } from '../domain'
 import { FailureNotice } from '../Feedback'
+import { cn } from '../lib/utils'
 
 const LABELS: Record<UpdateState['status'], string> = {
   idle: '尚未开启提醒',
@@ -21,6 +22,7 @@ const ERRORS: Record<string, string> = {
   CONFLICT_ACTIVE_SYNC: '项目已有进行中的分析，结束后可重试检查。',
   SYNC_INTERRUPTED: '服务停止时检查未完成，请重试。',
 }
+const TONE_DOT: Record<string, string> = { active: 'bg-blue', ok: 'bg-teal', alert: 'bg-rose' }
 
 export type UpdateHandle = { refresh: () => void }
 
@@ -86,43 +88,41 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
     error: '这次检查没有完成，可以重试。',
   }[state.status] : ''
   return <>
-    <button type="button" className="update-entry" data-tone={tone} onClick={() => setOpen(true)} aria-haspopup="dialog">
-      <span className="update-entry-icon" aria-hidden="true"><Icon name="refresh" size={15}/></span>
-      <span className="update-entry-text">
-        <b>分支提醒</b>
-        <span>{state ? SHORT[state.status] : '读取中'}</span>
-      </span>
-      <Icon name="chevron" size={15} className="update-entry-chevron"/>
+    <button type="button" className="inline-flex items-center gap-1.5 rounded-sm border border-border-soft bg-card px-2 py-1 text-xs text-foreground-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <span className={cn('size-1.5 rounded-full', TONE_DOT[tone])} aria-hidden="true"/>
+      <b className="font-medium">分支提醒</b>
+      <span className="text-foreground-3">{state ? SHORT[state.status] : '读取中'}</span>
+      <Icon name="chevron" size={13} className="text-foreground-4"/>
     </button>
     <Dialog open={open} onOpenChange={setOpen} title="分支提醒与仓库检查" width={560}>
       {error ? <FailureNotice error={error}/> : null}
-      {!state || error ? <div className="update-empty">
-        <p>提醒状态暂时不可用。</p>
+      {!state || error ? <div className="grid justify-items-start gap-2">
+        <p className="text-sm text-foreground-3">提醒状态暂时不可用。</p>
         <Button size="sm" disabled={busy} onClick={() => setAttempt(value => value + 1)}>重新读取</Button>
-      </div> : <div className="update-body">
-        <div className="update-status" data-tone={tone}>
-          <span className="update-dot" aria-hidden="true"/>
-          <p role="status" className="update-status-title">{LABELS[state.status]}</p>
-          <span className="update-status-time">{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚未检查'}</span>
-          <Button size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '检查中…' : state.status === 'error' ? '重试检查' : '立即检查'}</Button>
+      </div> : <div className="grid gap-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-border-soft p-2.5">
+          <span className={cn('size-2 rounded-full', TONE_DOT[tone])} aria-hidden="true"/>
+          <p role="status" className="text-sm font-medium text-foreground">{LABELS[state.status]}</p>
+          <span className="text-xs text-foreground-3">{state.lastCheckedAt ? displayTime(state.lastCheckedAt) : '尚未检查'}</span>
+          <Button className="ml-auto" size="sm" variant={state.status === 'error' ? 'danger' : 'secondary'} disabled={busy || running} onClick={() => void act('refresh')}>{running ? '检查中…' : state.status === 'error' ? '重试检查' : '立即检查'}</Button>
         </div>
-        <p className="update-status-detail">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `检查未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
-        {state.status === 'updated' && onAnalyze ? <div className="update-submit"><Button variant="primary" size="sm" onClick={() => { setOpen(false); onAnalyze(state.resolvedBranch ?? (state.branch === 'HEAD' ? '' : state.branch)) }}>分析这次更新</Button></div> : null}
-        <div className="update-foot-row">
-          <span className="update-auto"><Switch ariaLabel="分支提醒" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}/><span>分支提醒</span></span>
-          <span className="update-cadence">{`每 ${state.intervalSeconds / 60} 分钟检查一次`}</span>
+        <p className="text-xs leading-body text-foreground-3">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `检查未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
+        {state.status === 'updated' && onAnalyze ? <div className="flex justify-end"><Button variant="primary" size="sm" onClick={() => { setOpen(false); onAnalyze(state.resolvedBranch ?? (state.branch === 'HEAD' ? '' : state.branch)) }}>分析这次更新</Button></div> : null}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft pt-2 text-xs text-foreground-3">
+          <span className="inline-flex items-center gap-2"><Switch ariaLabel="分支提醒" checked={state.enabled} disabled={busy} onCheckedChange={checked => void act('configure', { enabled: checked })}/><span>分支提醒</span></span>
+          <span>{`每 ${state.intervalSeconds / 60} 分钟检查一次`}</span>
         </div>
-        <form className="update-settings" onSubmit={save}>
-          <p className="update-settings-title">提醒设置</p>
-          <div className="update-field">
-            <span className="pr-field-label">跟踪分支</span>
+        <form className="grid gap-2 border-t border-border-soft pt-3" onSubmit={save}>
+          <p className="text-sm font-semibold text-foreground">提醒设置</p>
+          <div className="grid gap-1.5">
+            <span className="text-xs font-medium text-foreground-2">跟踪分支</span>
             <Input aria-label="提醒跟踪分支" value={branch ?? state.branch} onChange={event => setBranch(event.target.value)} disabled={busy || running}/>
           </div>
-          <div className="update-field">
-            <span className="pr-field-label">检查频率</span>
+          <div className="grid gap-1.5">
+            <span className="text-xs font-medium text-foreground-2">检查频率</span>
             <Select ariaLabel="仓库检查频率" value={interval ?? state.intervalSeconds} onChange={value => setIntervalValue(Number(value))} disabled={busy || running} options={[...new Set([300, 900, 1800, 3600, state.intervalSeconds])].sort((a, b) => a - b).map(value => ({ value, label: `每 ${value / 60} 分钟` }))}/>
           </div>
-          <div className="update-submit"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
+          <div className="flex justify-end"><Button type="submit" variant="primary" size="sm" disabled={busy || running}>保存并检查</Button></div>
         </form>
       </div>}
     </Dialog>

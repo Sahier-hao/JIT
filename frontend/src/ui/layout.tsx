@@ -17,7 +17,7 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
   return <header className={cn('flex flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-3', className)}>
     <div className="min-w-0">
       {eyebrow ? <p className="text-xs text-foreground-3">{eyebrow}</p> : null}
-      <h1 className="text-xl font-semibold leading-title text-foreground">{title}</h1>
+      <h1 className="font-sans text-xl font-semibold leading-title text-foreground">{title}</h1>
       {description ? <p className="mt-1 text-sm text-foreground-2">{description}</p> : null}
     </div>
     {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
@@ -34,6 +34,27 @@ export function SectionHeader({ title, aside, actions, className }: {
     <h2 className="text-lg font-semibold leading-title text-foreground">{title}</h2>
     {aside ?? actions}
   </div>
+}
+
+export function TabBar<T extends string>({ value, onChange, items, label, className }: {
+  value: T
+  onChange: (value: T) => void
+  items: { value: T; label: ReactNode }[]
+  label: string
+  className?: string
+}) {
+  return <nav aria-label={label} className={cn('flex gap-1 border-b border-border', className)}>
+    {items.map(item => <button
+      key={item.value}
+      type="button"
+      aria-current={value === item.value ? 'page' : undefined}
+      onClick={() => onChange(item.value)}
+      className={cn(
+        'border-0 border-b-2 bg-transparent px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+        value === item.value ? 'border-accent font-medium text-foreground' : 'border-transparent text-foreground-3 hover:text-foreground',
+      )}
+    >{item.label}</button>)}
+  </nav>
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {

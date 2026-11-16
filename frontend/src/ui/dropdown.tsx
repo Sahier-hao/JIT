@@ -17,7 +17,7 @@ export function Dropdown({ children, items, onClick, open, onOpenChange, align =
   onOpenChange?: (open: boolean) => void
   align?: 'start' | 'center' | 'end'
 }) {
-  return <DropdownMenuPrimitive.Root open={open} onOpenChange={onOpenChange}>
+  return <DropdownMenuPrimitive.Root open={open} onOpenChange={onOpenChange} modal={false}>
     <DropdownMenuPrimitive.Trigger asChild>{children}</DropdownMenuPrimitive.Trigger>
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content

@@ -44,27 +44,30 @@ export function ProjectDatasetDialog({ repositoryId, syncId, open, onOpenChange 
 
   return <Dialog open={open} onOpenChange={onOpenChange} title="本次分析的数据集" width={720}
     footer={<Button onClick={() => onOpenChange(false)}>返回结果</Button>}>
-    {error ? <FailureNotice error={error} onRetry={() => { setDataset(null); setError(null); setRevision(value => value + 1) }}/> : dataset ? <div className="project-dataset">
-      <div className="project-dataset-heading">
-        <div><h3>{dataset.datasetId}</h3><p>{dataset.version}</p></div>
-        <span>{dataset.schema}</span>
+    {error ? <FailureNotice error={error} onRetry={() => { setDataset(null); setError(null); setRevision(value => value + 1) }}/> : dataset ? <div className="grid gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0"><h3 className="text-base font-semibold text-foreground">{dataset.datasetId}</h3><p className="mt-0.5 break-all text-xs text-foreground-3">{dataset.version}</p></div>
+        <span className="rounded-sm bg-soft px-1.5 py-0.5 text-xs text-foreground-3">{dataset.schema}</span>
       </div>
-      <dl className="project-dataset-facts">
-        <div><dt>时间范围</dt><dd>{displayTime(dataset.timeRange.start)} — {displayTime(dataset.timeRange.end)}</dd></div>
-        <div><dt>原始 / 纳入</dt><dd>{numberText(dataset.quality.rawRows)} / {numberText(dataset.quality.includedRows)}</dd></div>
-        <div><dt>正例</dt><dd>{numberText(dataset.quality.positiveLabels)}</dd></div>
-        <div><dt>CSV</dt><dd>{dataset.file.name} · {dataset.file.bytes.toLocaleString()} 字节</dd></div>
-        <div className="project-dataset-wide"><dt>SHA-256</dt><dd><code>{dataset.file.sha256}</code></dd></div>
-        <div><dt>来源</dt><dd>{dataset.source.publisher ?? '未提供'}{dataset.source.branch ? ` · ${dataset.source.branch}` : ''}</dd></div>
-        <div><dt>修订</dt><dd><code>{dataset.source.revision ?? '未提供'}</code></dd></div>
-        <div className="project-dataset-wide"><dt>标签规则</dt><dd>{dataset.labelRule ?? '未声明'}</dd></div>
+      <dl className="grid gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm"><dt className="text-xs text-foreground-3">时间范围</dt><dd className="m-0 break-words">{displayTime(dataset.timeRange.start)} — {displayTime(dataset.timeRange.end)}</dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm"><dt className="text-xs text-foreground-3">原始 / 纳入</dt><dd className="m-0">{numberText(dataset.quality.rawRows)} / {numberText(dataset.quality.includedRows)}</dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm"><dt className="text-xs text-foreground-3">正例</dt><dd className="m-0">{numberText(dataset.quality.positiveLabels)}</dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm"><dt className="text-xs text-foreground-3">CSV</dt><dd className="m-0 break-words">{dataset.file.name} · {dataset.file.bytes.toLocaleString()} 字节</dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm sm:col-span-2"><dt className="text-xs text-foreground-3">SHA-256</dt><dd className="m-0 break-all"><code className="font-mono text-xs">{dataset.file.sha256}</code></dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm"><dt className="text-xs text-foreground-3">来源</dt><dd className="m-0 break-words">{dataset.source.publisher ?? '未提供'}{dataset.source.branch ? ` · ${dataset.source.branch}` : ''}</dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm"><dt className="text-xs text-foreground-3">修订</dt><dd className="m-0 break-all"><code className="font-mono text-xs">{dataset.source.revision ?? '未提供'}</code></dd></div>
+        <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 border-t border-border-soft pt-2 text-sm sm:col-span-2"><dt className="text-xs text-foreground-3">标签规则</dt><dd className="m-0 break-words">{dataset.labelRule ?? '未声明'}</dd></div>
       </dl>
-      {dataset.source.url ? <p className="project-dataset-source"><a href={dataset.source.url} target="_blank" rel="noreferrer">打开原始来源</a></p> : null}
-      {dataset.limitations.length ? <section aria-label="数据集限制"><h3>限制</h3><ul>{dataset.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section> : null}
-      <section className="project-dataset-download" aria-label="下载数据集">
-        <h3>下载</h3>
-        <p>CSV 包包含 manifest 和 SHA256SUMS，是完整性核对版本。</p>
-        <div>
+      {dataset.source.url ? <p className="text-xs"><a className="text-accent underline-offset-2 hover:underline" href={dataset.source.url} target="_blank" rel="noreferrer">打开原始来源</a></p> : null}
+      {dataset.limitations.length ? <section className="grid gap-1.5" aria-label="数据集限制">
+        <h3 className="text-sm font-semibold text-foreground">限制</h3>
+        <ul className="list-disc pl-5 text-xs leading-body text-foreground-3">{dataset.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul>
+      </section> : null}
+      <section className="grid gap-2 border-t border-border-soft pt-3" aria-label="下载数据集">
+        <h3 className="text-sm font-semibold text-foreground">下载</h3>
+        <p className="text-xs leading-body text-foreground-3">CSV 包包含 manifest 和 SHA256SUMS，是完整性核对版本。</p>
+        <div className="flex flex-wrap gap-2">
           <Button loading={downloadBusy === 'zip'} disabled={!!downloadBusy} onClick={() => void download('zip')}>下载 CSV 包</Button>
           <Button loading={downloadBusy === 'xlsx'} disabled={!!downloadBusy} onClick={() => void download('xlsx')}>下载 XLSX</Button>
         </div>

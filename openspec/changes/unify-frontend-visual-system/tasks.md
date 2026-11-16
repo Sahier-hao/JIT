@@ -26,11 +26,11 @@
 
 ## 4. 项目与分析
 
-- [ ] 4.1 迁移 `ProjectsPage`、`NewProjectDialog`、`NewProjectForm`、项目重命名与删除流程；验证新建、重命名、删除后的列表与侧栏同步，`ProjectsPage` 测试与项目旅程 Playwright 用例通过。
-- [ ] 4.2 迁移 `ProjectPage` 的分析选项、`AnalysisForm`、`AnalysisScopeCard`、`AnalysisLauncher`、分析记录列表与当前结果选择；验证发起、重试、设为当前结果与分页旅程，`ProjectPage`、`AnalysisScopeCard` 测试通过。
-- [ ] 4.3 迁移提交明细、`CommitDetail`、`ModelCardDialog`、`ProjectDatasetDialog`、`DatasetBuildDialog`、`JobProgress`，把进度与状态的实现收敛到共享 `Progress` 与状态标签；运行提交明细、模型卡与数据集对话框测试，确认两档密度下表格行高与分页可用。
-- [ ] 4.4 删除 `styles/product.css`、`styles/project.css`、`styles/project-workspace.css`、`styles/project-redesign.css`、`styles/update-status.css`、`styles/progress.css` 中已无消费者的文件，更新 `index.css` 导入；用 `scripts/check-styles.mjs` 与 `grep` 证明无引用，运行 `npm test` 与项目详情 Playwright 用例。
-- [ ] 4.5 在 `docs/evidence/unify-frontend-visual-system/03-项目与分析/` 存档项目列表、项目详情、提交明细在双视口、双主题与紧凑密度下的截图，记录与旧外观的差异和保留项。
+- [x] 4.1 迁移 `ProjectsPage` 的项目卡片、状态标记、管理菜单与内联改名/删除确认，`NewProjectForm` 与新建对话框统一字段结构；项目列表、改名、删除与新建旅程的既有测试通过。
+- [x] 4.2 迁移 `ProjectPage` 的页头、项目标签、分析结果区、分析记录列表与分页，`AnalysisForm`、`AnalysisLauncher`、`AnalysisScopeCard` 与 `JobProgress` 改用共享组件；项目页 20 项测试通过，含切换当前结果、取消、重试与分页。
+- [x] 4.3 迁移 `CommitDetail`、`ProjectDatasetDialog`、`DatasetBuildDialog` 与 `RepositoryUpdates`，统一详情、对话框与分支提醒的表面和字段结构；相关组件测试通过。
+- [x] 4.4 删除已无消费者的 `styles/progress.css` 并更新守卫；`project.css`、`project-workspace.css`、`project-redesign.css`、`update-status.css` 仍被 PR、趋势与管理页面使用，保留到各自批次删除。
+- [x] 4.5 把旧页面样式导入到 `legacy` 级联层，使 Tailwind 工具类可以覆盖旧样式而无需先删除文件；入口、项目列表、项目详情、分析结果、PR 标签与提交明细在双主题下截图核对，证据在 `docs/evidence/unify-frontend-visual-system/04-项目与分析/`。
 
 ## 5. PR 审查与工作单
 

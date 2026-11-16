@@ -5,7 +5,7 @@
  * 表单本身不带展开与收起，由调用方放进对话框里呈现。
  */
 import { Icon } from '../Icon'
-import { Button, Input } from '../ui/controls'
+import { Button, Input, NativeSelect } from '../ui/controls'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRepositorySync, type SyncForm } from '../apiClient'
 import { repositoryModels, trainingMethods, type MethodChoice, type ModelChoice } from '../modelClient'
@@ -115,41 +115,41 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     }
   }
 
-  return <><form className="analysis-form" onSubmit={submit}>
-    <fieldset className="analysis-options" aria-label="分析选项">
-      <div className="form-grid">
-        <label>分支<Input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/></label>
-        <div className="model-source-field">
-          <label>模型来源<select aria-label="模型来源" value={choice} onChange={event => setChoice(event.target.value)}>
+  const fieldLabel = 'grid gap-1.5'
+  const labelText = 'text-xs font-medium text-foreground-2'
+  return <><form className="grid gap-4" onSubmit={submit}>
+    <fieldset className="m-0 grid gap-3 border-0 p-0" aria-label="分析选项">
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <label className={fieldLabel}><span className={labelText}>分支</span><Input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/></label>
+        <div className="grid content-start gap-1.5">
+          <label className={fieldLabel}><span className={labelText}>模型来源</span><NativeSelect aria-label="模型来源" value={choice} onChange={event => setChoice(event.target.value)}>
             <option value="auto">自动：数据足够就训练</option>
             <option value="default" disabled={modelsLoaded && !modelError && !defaultUsable}>使用默认模型{defaultModel ? `：${defaultModel.name}` : ''}</option>
             <option value="train">训练新模型</option>
             {explicitModel && !modelsLoaded && !modelError ? <option value={choice} disabled>正在核对原选模型…</option> : null}
             {explicitModel && modelsLoaded && !selected ? <option value={choice} disabled>原选模型（已不存在）</option> : null}
             {models.length ? <optgroup label="指定已有模型">{models.map(model => <option key={model.modelId} value={model.modelId} disabled={!model.repositoryPredictionSupported}>{model.name}{!model.enabled ? '（已停用）' : !model.repositoryPredictionSupported ? '（不可用）' : model.isDefault ? '（默认）' : ''}</option>)}</optgroup> : null}
-          </select></label>
-          {explicitModel && selected ? <Button type="button" size="sm" onClick={() => setModelCardOpen(true)}>查看模型卡</Button> : null}
+          </NativeSelect></label>
+          {explicitModel && selected ? <Button type="button" size="sm" className="justify-self-start" onClick={() => setModelCardOpen(true)}>查看模型卡</Button> : null}
         </div>
-        {!explicitModel ? <label>训练方法<select aria-label="训练方法" value={algorithm} onChange={event => setAlgorithm(event.target.value)}>
+        {!explicitModel ? <label className={fieldLabel}><span className={labelText}>训练方法</span><NativeSelect aria-label="训练方法" value={algorithm} onChange={event => setAlgorithm(event.target.value)}>
           {methods.map(item => <option key={item.method} value={item.method} disabled={!item.available}>{item.name}{item.available ? '' : `（${item.reason ?? '不可用'}）`}</option>)}
-        </select></label> : null}
-        {!explicitModel ? <label>时间切分<select aria-label="时间切分预设" value={splitPreset} onChange={event => setSplitPreset(event.target.value)}>
+        </NativeSelect></label> : null}
+        {!explicitModel ? <label className={fieldLabel}><span className={labelText}>时间切分</span><NativeSelect aria-label="时间切分预设" value={splitPreset} onChange={event => setSplitPreset(event.target.value)}>
           <option value="temporal-70-15-15">70 / 15 / 15（默认）</option>
           <option value="temporal-80-10-10">80 / 10 / 10</option>
           <option value="temporal-60-20-20">60 / 20 / 20</option>
-        </select></label> : null}
-        {modelError ? <p className="field-error wide-field" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>重新读取</Button></p> : null}
-        {methodsError ? <p className="field-error wide-field" role="alert">训练方法列表暂时不可用：{methodsError}</p> : null}
-        {methodUnavailable ? <p className="field-error wide-field" role="alert">{selectedMethod?.reason ?? '所选训练方法当前不可用，请重新选择。'}</p> : null}
-        {defaultUnavailable ? <p role="alert" className="field-error wide-field">{defaultModel ? '默认模型当前不可用，请改选自动或指定已有模型。' : '尚未设置默认模型，请改选自动或指定已有模型。'}</p> : explicitModel && selectionUnavailable && !checkingModel ? <p role="alert" className="field-error wide-field">原选模型已停用或不可用，请重新选择；不会自动替换。</p> : null}
+        </NativeSelect></label> : null}
+        {modelError ? <p className="text-xs text-rose sm:col-span-2" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>重新读取</Button></p> : null}
+        {methodsError ? <p className="text-xs text-rose sm:col-span-2" role="alert">训练方法列表暂时不可用：{methodsError}</p> : null}
+        {methodUnavailable ? <p className="text-xs text-rose sm:col-span-2" role="alert">{selectedMethod?.reason ?? '所选训练方法当前不可用，请重新选择。'}</p> : null}
+        {defaultUnavailable ? <p role="alert" className="text-xs text-rose sm:col-span-2">{defaultModel ? '默认模型当前不可用，请改选自动或指定已有模型。' : '尚未设置默认模型，请改选自动或指定已有模型。'}</p> : explicitModel && selectionUnavailable && !checkingModel ? <p role="alert" className="text-xs text-rose sm:col-span-2">原选模型已停用或不可用，请重新选择；不会自动替换。</p> : null}
       </div>
     </fieldset>
-    {error ? <div className="analysis-form-error"><FailureNotice error={error}/></div> : null}
-    <div className="form-submit">
-      <div className="form-submit-actions">
-        {onCancel ? <Button onClick={onCancel} disabled={busy}>取消</Button> : null}
-        <Button type="submit" variant="primary" aria-label="开始分析" loading={busy} disabled={blocked}>{busy ? '正在发起…' : '开始分析'}<Icon name="arrow" size={14}/></Button>
-      </div>
+    {error ? <FailureNotice error={error}/> : null}
+    <div className="flex flex-wrap justify-end gap-2 border-t border-border-soft pt-3">
+      {onCancel ? <Button onClick={onCancel} disabled={busy}>取消</Button> : null}
+      <Button type="submit" variant="primary" aria-label="开始分析" loading={busy} disabled={blocked}>{busy ? '正在发起…' : '开始分析'}<Icon name="arrow" size={14}/></Button>
     </div>
   </form>
   {explicitModel && selected ? <ModelCardDialog modelId={selected.modelId} open={modelCardOpen} onOpenChange={setModelCardOpen}/> : null}

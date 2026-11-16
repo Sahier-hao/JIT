@@ -23,17 +23,17 @@ export function NewProjectForm({ navigate, onCancel }: { navigate: (route: Route
     }
   })
 
-  return <form className="new-project-form" onSubmit={submit}>
-    <label>仓库地址<Input
+  return <form className="grid gap-3" onSubmit={submit}>
+    <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">仓库地址</span><Input
       aria-label="仓库地址"
       autoComplete="off"
       placeholder="https://github.com/owner/repository"
       {...register('url', { validate: value => /^https?:\/\//i.test(value.trim()) || '请填写公开仓库的 HTTP(S) 地址，例如 https://github.com/owner/repository。' })}
     /></label>
-    {errors.url ? <p className="field-error" role="alert">{errors.url.message}</p> : null}
+    {errors.url ? <p className="text-xs text-rose" role="alert">{errors.url.message}</p> : null}
     {error ? <FailureNotice error={error}/> : null}
     {isSubmitting ? <ProgressBar value={null} state="queued" label="正在建立项目"/> : null}
-    <div className="form-actions">
+    <div className="flex flex-wrap justify-end gap-2">
       {onCancel ? <Button type="button" onClick={onCancel}>取消</Button> : null}
       <Button type="submit" variant="primary" loading={isSubmitting}>{isSubmitting ? '正在建立…' : '建立项目'}</Button>
     </div>

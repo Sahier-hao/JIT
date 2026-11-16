@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { STATUS_LABELS, type SyncStatus } from '../repositoryContract'
+import { cn } from '../lib/utils'
 
 const STAGES = [
   { key: 'queued', label: '排队' },
@@ -27,6 +28,13 @@ function elapsed(startedAt?: string | null) {
   return `${pad(Math.floor(seconds / 60))}:${pad(seconds % 60)}`
 }
 
+const NODE_CLASS = {
+  done: 'border-accent bg-accent',
+  active: 'border-accent bg-card',
+  failed: 'border-rose bg-rose',
+  pending: 'border-border-strong bg-card',
+} as const
+
 /** 分析作业的阶段进度：排队、采集、登记、训练、评分，只展示服务端真实阶段。 */
 export function JobProgress({ status, stage, queuePosition, startedAt, compact }: {
   status: SyncStatus
@@ -47,27 +55,30 @@ export function JobProgress({ status, stage, queuePosition, startedAt, compact }
   const failed = status === 'failed'
   const stopped = status === 'cancelled' || status === 'interrupted'
   const value = done ? 100 : index === 0 ? 0 : Math.round((index / (STAGES.length - 1)) * 100)
-  const state = done ? 'done' : failed ? 'failed' : stopped ? 'stopped' : status === 'queued' ? 'queued' : 'running'
+  const fill = done ? 'bg-teal' : failed ? 'bg-rose' : stopped ? 'bg-foreground-4' : 'bg-accent'
   const meta = status === 'queued' && queuePosition
     ? `排队第 ${queuePosition} 位`
     : running && startedAt ? `已用 ${elapsed(startedAt)}` : ''
   void tick
-  return <div className="job-progress" data-state={state} data-compact={compact || undefined}>
-    {!compact ? <div className="job-progress-head">
-      <span className="job-progress-title">{STATUS_LABELS[status]}</span>
-      {meta ? <span className="job-progress-meta">{meta}</span> : null}
+  return <div className="grid gap-1.5">
+    {!compact ? <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs">
+      <span className="font-medium text-foreground-2">{STATUS_LABELS[status]}</span>
+      {meta ? <span className="text-foreground-4">{meta}</span> : null}
     </div> : null}
-    <div className="job-progress-track" role="progressbar" aria-label={compact ? `分析进度：${STATUS_LABELS[status]}` : undefined}
+    <div className="relative h-1.5 rounded-full bg-strong" role="progressbar" aria-label={compact ? `分析进度：${STATUS_LABELS[status]}` : undefined}
       aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}>
-      <span className="job-progress-fill" style={{ width: `${value}%` }}/>
+      <span className={cn('block h-full rounded-full transition-[width]', fill)} style={{ width: `${value}%` }}/>
       {STAGES.map((item, position) => {
         const nodeState = done || position < index ? 'done' : failed && position === index ? 'failed' : position === index ? 'active' : 'pending'
-        return <span key={item.key} className="job-progress-node" data-state={nodeState}
+        return <span key={item.key} className={cn('absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border', NODE_CLASS[nodeState])}
           style={{ left: `${(position / (STAGES.length - 1)) * 100}%` }}/>
       })}
     </div>
-    {!compact ? <div className="job-progress-legend">
-      {STAGES.map((item, position) => <span key={item.key} data-state={done || position < index ? 'done' : failed && position === index ? 'failed' : position === index ? 'active' : 'pending'}>{item.label}</span>)}
+    {!compact ? <div className="flex justify-between text-[11px] text-foreground-4">
+      {STAGES.map((item, position) => {
+        const nodeState = done || position < index ? 'done' : failed && position === index ? 'failed' : position === index ? 'active' : 'pending'
+        return <span key={item.key} className={cn(nodeState === 'active' && 'font-medium text-foreground', nodeState === 'failed' && 'text-rose')}>{item.label}</span>
+      })}
     </div> : null}
   </div>
 }
@@ -78,8 +89,10 @@ export function ProgressBar({ value, state = 'running', label }: {
   state?: 'running' | 'done' | 'failed' | 'queued'
   label?: string
 }) {
-  return <div className="progress-bar" data-state={state} role="progressbar" aria-label={label}
+  const fill = state === 'failed' ? 'bg-rose' : state === 'done' ? 'bg-teal' : state === 'queued' ? 'bg-foreground-4' : 'bg-accent'
+  return <div className="h-1.5 w-full overflow-hidden rounded-full bg-strong" role="progressbar" aria-label={label}
     aria-valuemin={0} aria-valuemax={100} aria-valuenow={value ?? undefined}>
-    <span className="progress-bar-fill" style={value === null ? undefined : { width: `${Math.max(0, Math.min(100, value))}%` }}/>
+    <span className={cn('block h-full rounded-full transition-[width]', fill, value === null && 'w-1/3 animate-pulse')}
+      style={value === null ? undefined : { width: `${Math.max(0, Math.min(100, value))}%` }}/>
   </div>
 }

@@ -21,7 +21,7 @@ export interface AnalysisLauncherProps {
 export function AnalysisLauncher({ repositoryUrl, defaultBranch, onStarted, initial }: AnalysisLauncherProps) {
   const [open, setOpen] = useState(Boolean(initial))
   const close = () => setOpen(false)
-  return <div className="analysis-launcher">
+  return <div>
     <Button variant="primary" size="lg" icon={<Icon name="plus" size={17} strokeWidth={2.6}/>} onClick={() => setOpen(true)}>发起分析</Button>
     <Dialog
       open={open}

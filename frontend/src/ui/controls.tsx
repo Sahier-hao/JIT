@@ -8,7 +8,7 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox'
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
-import type { ButtonHTMLAttributes, ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ChangeEvent, CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { forwardRef, useState } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Icon } from '../Icon'
@@ -154,6 +154,14 @@ export function PasswordInput({ className, value, onChange, placeholder, disable
 /* ------------------------------------------------------------------ Select */
 
 export interface Choice { value: string | number; label: string; disabled?: boolean }
+
+/** 原生选择框：用于需要 optgroup、表单值语义或系统下拉的字段。 */
+export function NativeSelect({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select
+    {...rest}
+    className={cn('h-9 w-full rounded-sm border border-input bg-card px-2.5 text-sm text-foreground transition-colors focus:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50', className)}
+  >{children}</select>
+}
 
 export function Select({ value, onChange, options, placeholder = '请选择', ariaLabel, 'aria-label': ariaLabelProp, className, style, disabled }: {
   value?: string | number

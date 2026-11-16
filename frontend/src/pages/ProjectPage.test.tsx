@@ -335,7 +335,7 @@ it('keeps following a queued job until the result is available', async () => {
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '发起分析' }))
   await user.click(await screen.findByRole('button', { name: '开始分析' }))
-  await waitFor(() => expect(document.querySelectorAll('.record-pin').length).toBeGreaterThan(0), { timeout: 7000 })
+  await waitFor(() => expect(document.querySelectorAll('[data-current]').length).toBeGreaterThan(0), { timeout: 7000 })
 })
 
 it('lets users reach an older analysis beyond the first ten', async () => {
