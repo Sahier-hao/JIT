@@ -30,7 +30,7 @@ export function Segmented<T extends string | number>({ value, onChange, options,
         disabled={option.disabled}
         onClick={() => onChange(option.value)}
         className={cn(
-          'rounded-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:opacity-50',
+          'rounded-sm border-0 bg-transparent font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:opacity-50',
           size === 'sm' ? 'h-6 px-2 text-xs' : 'h-7 px-2.5 text-xs',
           selected ? 'bg-card text-foreground shadow-1' : 'text-foreground-3 hover:text-foreground',
         )}

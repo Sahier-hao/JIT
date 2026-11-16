@@ -34,7 +34,7 @@ export function NotificationEntry({ navigate }: { navigate: (r: Route) => void }
     window.addEventListener('jit:event-read', check); window.addEventListener('storage', check)
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener('jit:event-read', check); window.removeEventListener('storage', check) }
   }, [])
-  return <Button variant="link" className="notification-entry" onClick={() => navigate({ name: 'notifications' })}>站内提醒{unread ? <span aria-label={`最近提醒中 ${unread} 条未读`}>{unread}</span> : null}</Button>
+  return <Button variant="link" className="gap-1.5" onClick={() => navigate({ name: 'notifications' })}>站内提醒{unread ? <span className="rounded-full bg-rose-soft px-1.5 text-xs tabular-nums text-rose-deep" aria-label={`最近提醒中 ${unread} 条未读`}>{unread}</span> : null}</Button>
 }
 export function ProjectEvents({ navigate }: { navigate: (r: Route) => void }) {
   const [page, setPage] = useState<EventPage | null>(null), [offset, setOffset] = useState(0), [attempt, setAttempt] = useState(0)

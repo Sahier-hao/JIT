@@ -7,7 +7,7 @@ import {
 } from '../lineResearch'
 import { Icon } from '../Icon'
 import { Button, Select } from '../ui/controls'
-import '../styles/entry.css'
+import { EntryHeader, EntryPage } from '../components/EntryChrome'
 import '../styles/research.css'
 
 const LANGUAGE_LABELS: Record<string, string> = { typescript: 'TypeScript', javascript: 'JavaScript' }
@@ -64,20 +64,17 @@ export function LineResearchPage({ navigate }: { navigate: (route: Route) => voi
   }
 
   const lines = code ? code.split('\n').length : 0
-  return <div className="entry-page research-page">
-    <header className="entry-header">
-      <button className="entry-brand" onClick={() => navigate({ name: 'landing' })}>
-        <span className="brand-glyph"><Icon name="logo" size={22}/></span>
-        <span>JIT<span className="brand-caption">REVIEW</span></span>
-      </button>
-      <div className="research-head-actions">
-        <span className="research-badge">研究预览</span>
+  return <EntryPage>
+    <EntryHeader
+      onHome={() => navigate({ name: 'landing' })}
+      right={<>
+        <span className="hidden rounded-full border border-border-strong px-2.5 py-1 text-xs font-semibold text-foreground-2 sm:inline">研究预览</span>
         <Button variant="ghost" size="sm" onClick={() => navigate({ name: 'landing' })}>返回首页</Button>
-      </div>
-    </header>
+      </>}
+    />
     <main className="research-main">
       <section className="research-intro">
-        <p className="entry-eyebrow">行级模型 · 实验性</p>
+        <p className="text-xs uppercase tracking-[.14em] text-foreground-3">行级模型 · 实验性</p>
         <h1>按行查看研究模型的排序分数</h1>
         <p className="research-warning" role="note">
           <Icon name="warning" size={16}/>
@@ -141,5 +138,5 @@ export function LineResearchPage({ navigate }: { navigate: (route: Route) => voi
         </div>
       </section> : null}
     </main>
-  </div>
+  </EntryPage>
 }

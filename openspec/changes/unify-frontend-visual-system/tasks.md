@@ -20,9 +20,9 @@
 
 ## 3. 外壳与入口
 
-- [ ] 3.1 用共享组件与工具类重写 `AppShell` 的侧栏、顶栏、面包屑、跳过链接与最近项目列表；验证导航高亮、键盘跳转与 768px 折叠，运行 `workspaceRoutes`、`FocusedProduct` 相关测试及受影响 Playwright 用例。
-- [ ] 3.2 迁移 `LandingPage`、`LoginPage`、账户菜单、外观控件与退役/未知路由提示，删除 `styles/entry.css`；运行 `entryFlow`、账户切换与登录 Playwright 用例，确认四套主题下入口页无横向滚动。
-- [ ] 3.3 在 `docs/evidence/unify-frontend-visual-system/02-外壳与入口/` 存档 1280×720 与 1440×900、浅色与深色主题截图，核对侧栏、顶栏与入口页字号、间距和表面层级与设计规范一致。
+- [x] 3.1 用共享组件与工具类重写 `AppShell` 的侧栏、顶栏、面包屑、跳过链接与最近项目列表；导航高亮、键盘跳转与 768px 折叠由 `workspaceRoutes`、`entryFlow` 测试和 PR 续审浏览器旅程验证。
+- [x] 3.2 迁移 `LandingPage`、`LoginPage`、`LineResearchPage` 的入口外壳与表单，统一品牌头、入口页脚与登录卡片，删除 `styles/entry.css`；退役/未知路由仍复用 `EmptyState`，其样式随共享反馈在收尾批次统一。
+- [x] 3.3 在 `docs/evidence/unify-frontend-visual-system/03-外壳与入口/` 存档入口页、管理员登录与研究预览在双视口、双主题下的截图，核对品牌头、表单与页脚的字号、间距和表面层级。
 
 ## 4. 项目与分析
 

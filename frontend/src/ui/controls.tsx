@@ -251,7 +251,7 @@ export function Disclosure({ summary, children, className, trailing }: { summary
   const [open, setOpen] = useState(false)
   return <CollapsiblePrimitive.Root open={open} onOpenChange={setOpen} className={cn('rounded-sm', className)}>
     <div className="flex items-center gap-2">
-      <CollapsiblePrimitive.Trigger className="inline-flex flex-1 items-center gap-1.5 rounded-sm py-1 text-left text-sm text-foreground-2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+      <CollapsiblePrimitive.Trigger className="inline-flex flex-1 items-center gap-1.5 rounded-sm border-0 bg-transparent py-1 text-left text-sm text-foreground-2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <Icon name="chevron" size={13} className={cn('text-foreground-4 transition-transform', open && 'rotate-90')}/>
         {summary}
       </CollapsiblePrimitive.Trigger>
