@@ -13,7 +13,7 @@ export default defineConfig({
     // （曾出现 5077ms 的间歇失败）；真正的挂起仍会在 15 秒内暴露。
     testTimeout: 15000,
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
-    setupFiles: ['./src/test-setup.ts'],
+    setupFiles: ['./src/lib/test-setup.ts'],
     reporters: ['default', 'json'],
     outputFile: { json: `${ensureDir(runEvidenceDir)}/unit-results.json` },
   },

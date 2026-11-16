@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "check:styles": "node scripts/check-styles.mjs",
+    "check:modules": "node scripts/check-module-boundaries.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",

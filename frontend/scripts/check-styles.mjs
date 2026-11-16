@@ -14,7 +14,6 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const FRONTEND_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const SRC = join(FRONTEND_ROOT, 'src')
 
 /** 当前允许存在的样式表（每批迁移后收缩）。 */
 export const ALLOWED_STYLE_FILES = [
@@ -33,7 +32,7 @@ export const ALLOWED_ENTRY_IMPORTS = [
 
 /** 允许在组件/页面中直接导入的 CSS：入口、第三方内容与迁移中的页面样式。 */
 export const ALLOWED_TSX_IMPORTS = [
-  ['src/main.tsx', './index.css'],
+  ['src/app/main.tsx', '../index.css'],
 ]
 
 /** 收尾前允许引用 Mantine 的文件；删除依赖时清空。 */
@@ -104,7 +103,7 @@ export function validateInventory(inventory, allowed = {
 
   const allowedFiles = new Set(allowed.styleFiles)
   for (const file of inventory.styleFiles) {
-    if (!allowedFiles.has(file)) violations.push(`未登记样式表：${file}（禁止新增页面级 CSS；共享形状放 src/ui）`)
+    if (!allowedFiles.has(file)) violations.push(`未登记样式表：${file}（禁止新增页面级 CSS；共享形状放 src/components）`)
   }
 
   const allowedEntry = new Set(allowed.entryImports)
@@ -123,7 +122,7 @@ export function validateInventory(inventory, allowed = {
 
   const allowedMantine = new Set(allowed.mantineRefs)
   for (const file of inventory.mantineRefs) {
-    if (!allowedMantine.has(file)) violations.push(`新增 Mantine 引用：${file}（新代码使用 src/ui 共享组件）`)
+    if (!allowedMantine.has(file)) violations.push(`新增 Mantine 引用：${file}（新代码使用 src/components/ui 共享组件）`)
   }
 
   return violations

@@ -2,7 +2,7 @@ import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '../../test-utils'
+import { render, screen } from '@/lib/test-utils'
 
 
 describe('共享表面', () => {

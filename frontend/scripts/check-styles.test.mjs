@@ -33,7 +33,7 @@ describe('样式来源守卫', () => {
 
   it('页面直接导入页面级样式会失败', () => {
     const violations = validateInventory(
-      { ...cleanInventory, tsxImports: [['src/pages/ProjectPage.tsx', '../styles/project.css']] },
+      { ...cleanInventory, tsxImports: [['src/features/projects/pages/ProjectPage.tsx', '../../../styles/project.css']] },
       emptyAllowed,
     )
     expect(violations.join('\n')).toContain('直接导入了页面级样式')
@@ -41,7 +41,7 @@ describe('样式来源守卫', () => {
 
   it('新增 Mantine 引用会失败', () => {
     const violations = validateInventory(
-      { ...cleanInventory, mantineRefs: ['src/pages/ProjectPage.tsx'] },
+      { ...cleanInventory, mantineRefs: ['src/features/projects/pages/ProjectPage.tsx'] },
       emptyAllowed,
     )
     expect(violations.join('\n')).toContain('新增 Mantine 引用')
@@ -49,8 +49,8 @@ describe('样式来源守卫', () => {
 
   it('重新引入旧基础控件或从业务直接使用底层交互库会失败', () => {
     const violations = validateInventory({ ...cleanInventory,
-      legacyUiRefs: ['src/pages/ProjectPage.tsx'],
-      primitiveRefs: ['src/pages/ProfilePage.tsx'],
+      legacyUiRefs: ['src/features/projects/pages/ProjectPage.tsx'],
+      primitiveRefs: ['src/features/account/pages/ProfilePage.tsx'],
     }, emptyAllowed)
     expect(violations.join('\n')).toContain('旧基础控件')
     expect(violations.join('\n')).toContain('绕过官方组件')
