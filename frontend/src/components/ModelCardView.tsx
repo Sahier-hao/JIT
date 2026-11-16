@@ -1,6 +1,7 @@
 import { metricReason, metricValue, type Row } from '../adminContracts'
 import type { ModelCard, ModelCardBenefit, ModelCardPartition } from '../modelCardClient'
 import { Button } from '../ui/controls'
+import { releaseEffortDeltas, releaseWorstProject } from '../releaseEvidence'
 
 const METRICS = [
   ['averagePrecision', 'AP'],
@@ -99,6 +100,10 @@ export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => 
   const scale = card.dataScale ?? {}
   const performance = card.trainingPerformance ?? {}
   const source = card.source ?? {}
+  const maturity = record(card.maturity)
+  const maturityCounts = record(maturity.statusCounts)
+  const worstReleaseProject = releaseWorstProject(card.release)
+  const releaseEffort = releaseEffortDeltas(card.release)
   return <div className="model-card">
     <header className="model-card-head">
       <div><h2>{card.name}</h2><p>{card.method ?? '方法未提供'} · {card.featureSchemaVersion ?? 'schema 未提供'}</p></div>
@@ -112,13 +117,38 @@ export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => 
       <div><dt>训练吞吐</dt><dd>{typeof performance.recordsPerSecond === 'number' ? `${performance.recordsPerSecond.toFixed(1)} 条/秒` : '未记录'}</dd></div>
       <div><dt>数据版本</dt><dd><code>{card.datasetVersion ?? '未记录'}</code></dd></div>
       <div><dt>来源</dt><dd>{valueText(source.publisher)}{source.revision ? ` · ${valueText(source.revision)}` : ''}</dd></div>
+      <div><dt>标签成熟</dt><dd>{valueText(maturity.effectivePolicy, '未记录')} · 未成熟排除 {valueText(maturity.excludedImmature, '—')}</dd></div>
+      <div><dt>成熟状态计数</dt><dd>{Object.keys(maturityCounts).length ? Object.entries(maturityCounts).map(([name, count]) => `${name} ${valueText(count)}`).join(' · ') : '未记录'}</dd></div>
     </dl>
     <section className="model-card-section">
       <h2>分区指标</h2>
       <div className="model-partition-grid">{card.partitions.map(partition => <PartitionCard key={partition.name} partition={partition}/>)}</div>
       {card.diagnostics?.reason ? <p className="model-card-note">{valueText(card.diagnostics.reason)}</p> : null}
     </section>
+    <section className="model-card-section model-card-release">
+      <h2>发布资格</h2>
+      {card.release.available ? <>
+        <p className="model-card-callout" role="status">{card.release.status === 'qualified' ? '已通过 jit-release-v1 发布门槛' : '未通过正式发布门槛'}</p>
+        <dl className="model-card-facts">
+          <div><dt>发布报告</dt><dd><code>{card.release.reportId}</code></dd></div>
+          <div><dt>人工默认候选</dt><dd>{card.release.approvedDefault ? '已批准（导入不覆盖既有默认）' : '未批准'}</dd></div>
+          <div><dt>最差项目 AP</dt><dd>{worstReleaseProject ? `${worstReleaseProject.project} · ${worstReleaseProject.ap.toFixed(4)}${worstReleaseProject.auc === null ? '' : ` · ROC-AUC ${worstReleaseProject.auc.toFixed(4)}`}` : '无已定义项目'}</dd></div>
+        </dl>
+        {releaseEffort.length ? <div className="model-card-table-wrap"><table className="model-card-table">
+          <thead><tr><th>跨项目指标</th><th>模型</th><th>较时间顺序</th><th>较随机均值</th></tr></thead>
+          <tbody>{releaseEffort.map(item => <tr key={item.metric}>
+            <th>{item.metric}</th><td>{item.value.toFixed(4)}</td>
+            <td>{signed(item.timeDelta)}</td><td>{signed(item.randomDelta)}</td>
+          </tr>)}</tbody>
+        </table></div> : null}
+        <ul className="admin-limitations">{card.release.gates.map((gate, index) => <li key={index}><strong>{valueText(gate.id)}</strong> · {gate.passed === true ? '通过' : '未通过'}{Array.isArray(gate.reasons) && gate.reasons.length ? `：${gate.reasons.join('；')}` : ''}</li>)}</ul>
+      </> : <p className="quiet-empty">{card.release.reason ?? '尚无匹配的发布资格报告'}</p>}
+    </section>
     <BenefitView benefit={card.benefit}/>
     <section className="model-card-section"><h2>限制</h2>{card.limitations.length ? <ul className="model-card-limitations">{card.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul> : <p className="quiet-empty">未记录限制说明。</p>}</section>
   </div>
+}
+
+function signed(value: number) {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(4)}`
 }

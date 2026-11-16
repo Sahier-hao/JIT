@@ -164,6 +164,7 @@ def dataset_list(registered):
             "timeRange": manifest["timeRange"], "quality": manifest["quality"],
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
+            "labelMaturity": _label_maturity(manifest),
             "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
@@ -180,6 +181,7 @@ def version_view(registered, name):
                           "timeRange": manifest["timeRange"], "quality": manifest["quality"],
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
+                          "labelMaturity": _label_maturity(manifest),
                           "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}
@@ -205,6 +207,30 @@ def _label_rule(manifest):
         return declared["rule"]
     collection = manifest.get("collection") or {}
     return (collection.get("szz") or {}).get("rule") or manifest.get("labelRule")
+
+
+def _label_maturity(manifest):
+    declared = manifest.get("label") or {}
+    collection = manifest.get("collection") or {}
+    label = collection.get("label") or {}
+    counts = declared.get("statusCounts") or label.get("statusCounts")
+    if not isinstance(counts, dict):
+        return {
+            "available": False,
+            "reason": "成熟状态未记录",
+            "statusCounts": None,
+            "observedThroughEpoch": None,
+            "maturityDays": None,
+            "rule": _label_rule(manifest),
+        }
+    return {
+        "available": True,
+        "reason": None,
+        "statusCounts": counts,
+        "observedThroughEpoch": declared.get("observedThrough") or label.get("observedThrough"),
+        "maturityDays": declared.get("maturityDays") or label.get("maturityDays"),
+        "rule": declared.get("version") or label.get("version") or _label_rule(manifest),
+    }
 
 
 def _limitations(manifest):

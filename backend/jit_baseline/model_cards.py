@@ -5,6 +5,7 @@ from .artifacts import PARTITIONS
 from .benefit_reports import BenefitReportService
 from .data import BaselineError
 from .model_diagnostics import PARTITION_LABELS, DiagnosticReportService
+from .release_reports import ReleaseReportService
 from .schemas import resolve
 
 
@@ -126,11 +127,35 @@ def _benefit_projection(service, run_id):
     }
 
 
+def _release_projection(service, manifest, schema):
+    entry, error = service.for_run(
+        manifest["runId"], model_sha256=manifest["config"].get("modelSha256"),
+        schema=schema.name,
+    )
+    if error is not None:
+        return {"available": False, "reason": error["message"], "error": error}
+    if entry is None:
+        return {"available": False, "reason": "尚无匹配的发布资格报告"}
+    report = entry["report"]
+    return {
+        "available": True,
+        "reportId": entry["reportId"],
+        "source": entry["source"],
+        "policy": report["assessment"]["policy"],
+        "status": report["status"],
+        "gates": report["assessment"]["gates"],
+        "macro": report["assessment"].get("macro"),
+        "projects": report.get("projects"),
+        "approvedDefault": report.get("approvedDefault"),
+    }
+
+
 class ModelCardService:
-    def __init__(self, catalog, diagnostics=None, benefits=None):
+    def __init__(self, catalog, diagnostics=None, benefits=None, releases=None):
         self.catalog = catalog
         self.diagnostics = diagnostics or DiagnosticReportService()
         self.benefits = benefits or BenefitReportService()
+        self.releases = releases or ReleaseReportService()
 
     def get(self, model_id):
         try:
@@ -193,6 +218,12 @@ class ModelCardService:
             "metricSet": metric_set,
             "threshold": summary.get("threshold"),
             "splitRule": summary.get("splitRule"),
+            "maturity": summary.get("maturity") or {
+                "requestedPolicy": "legacy-unrecorded",
+                "effectivePolicy": "legacy-unrecorded",
+                "releaseEligible": False,
+                "reason": "旧模型未记录标签成熟策略",
+            },
             "partitions": _partition_summary(summary),
             "metricsByPartition": metrics,
             "diagnostics": diagnostic_meta,
@@ -200,6 +231,7 @@ class ModelCardService:
             "trainingPerformance": _training_performance(summary, summary.get("split") or {}),
             "limitations": list(summary.get("limitations") or []),
             "benefit": _benefit_projection(self.benefits, manifest["runId"]),
+            "release": _release_projection(self.releases, manifest, schema),
             "compatibility": {
                 "repositoryPredictionSupported": schema.name in (
                     "openstack-six-v1", "kamei14-git-v1", "kamei14-git-v2")

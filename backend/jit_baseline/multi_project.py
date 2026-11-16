@@ -12,8 +12,10 @@ from .artifacts import environment, write_json
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .datasets import load_manifest, manifest_relative
+from .label_maturity import apply_label_maturity
 from .metrics import evaluate, get_metric_set
-from .model import fit_model, predict_risks, temporal_split
+from .model import fit_model, predict_risks
+from .splits import DEFAULT_PRESET, split_records
 from .suite import SUITE_METRIC_SET, label_semantics, select_methods
 
 REPORT_KIND = "multi-project-training-report"
@@ -58,7 +60,7 @@ def _ids_digest(records):
     return sha256(encoded)
 
 
-def _project_summary(manifest, records, split, boundaries):
+def _project_summary(manifest, records, split, boundaries, maturity):
     return {
         "status": "succeeded",
         "name": manifest["dataset"],
@@ -73,6 +75,7 @@ def _project_summary(manifest, records, split, boundaries):
         "schema": manifest["schemaName"],
         "includedRows": manifest["quality"]["includedRows"],
         "positiveLabels": manifest["quality"]["positiveLabels"],
+        "maturity": maturity,
         "labelSemantics": label_semantics(manifest),
         "splitRule": "UTC distinct timestamps, floor(0.70G), floor(0.85G)",
         "boundaryEpochs": list(boundaries),
@@ -119,8 +122,9 @@ def load_projects(dataset_manifests):
     semantics = label_semantics(manifests[0])
     if semantics["kind"] != "simplified-szz":
         raise BaselineError("PROJECT_COHORT_INVALID", "多项目 Git 训练要求简化 SZZ 标签")
-    if manifests[0]["schemaName"] != "kamei14-git-v1":
-        raise BaselineError("PROJECT_COHORT_INVALID", "多项目 Git 训练要求 kamei14-git-v1")
+    if manifests[0]["schemaName"] not in ("kamei14-git-v1", "kamei14-git-v2"):
+        raise BaselineError("PROJECT_COHORT_INVALID",
+                            "多项目 Git 训练要求 kamei14-git-v1 或 kamei14-git-v2")
     windows = [(manifest.get("collection") or {}).get("window") for manifest in manifests]
     if any(window != windows[0] for window in windows[1:]) or not windows[0]:
         raise BaselineError("PROJECT_COHORT_INVALID", "四个项目必须使用同一 Git 采集窗口")
@@ -137,7 +141,8 @@ def load_projects(dataset_manifests):
         if quality != manifest["quality"]:
             raise BaselineError("DATASET_INVALID", f"项目质量统计无法重算：{manifest['dataset']}")
         try:
-            split, boundaries = temporal_split(records)
+            records, maturity = apply_label_maturity(records, "mature-only")
+            split, boundaries, _ = split_records(records, DEFAULT_PRESET)
         except BaselineError as exc:
             projects.append({
                 "name": manifest["dataset"],
@@ -153,7 +158,10 @@ def load_projects(dataset_manifests):
             "records": records,
             "split": split,
             "failure": None,
-            "summary": _project_summary(manifest, records, split, boundaries),
+            "maturity": maturity,
+            "summary": _project_summary(
+                manifest, records, split, boundaries, maturity,
+            ),
         })
     return projects
 

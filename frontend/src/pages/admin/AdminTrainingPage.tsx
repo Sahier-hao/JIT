@@ -8,6 +8,7 @@ import { EmptyState, LoadingNotice } from '../../Feedback'
 import { Button } from '../../ui/controls'
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from './AdminShared'
+import { ReleaseEvidence } from '../../releaseEvidence'
 
 const STATUS_LABELS: Record<string, string> = {
   queued: '排队中', running: '训练中', succeeded: '成功', failed: '失败',
@@ -95,7 +96,7 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
       <tbody>{tasks.map(item => <tr key={item.taskId}>
         <td><strong>{item.datasetVersion}</strong><small>{item.metricSet}</small></td>
         <td>{item.method}</td>
-        <td><span className="source-chip">{STATUS_LABELS[item.status]}</span>{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</td>
+        <td><span className="source-chip">{STATUS_LABELS[item.status]}</span>{item.status === 'succeeded' ? <small>发布资格：{releaseLabel(item.releaseStatus)}</small> : null}{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</td>
         <td>{formatDate(item.createdAt)}</td>
         <td><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })}>查看</Button></td>
       </tr>)}</tbody>
@@ -131,6 +132,8 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>模型</dt><dd><code>{valueLabel(task.modelId)}</code></dd></div>
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
       <div><dt>时间切分预设</dt><dd><code>{task.splitPreset}</code></dd></div>
+      <div><dt>标签成熟策略</dt><dd><code>{task.maturityPolicy}</code> · 排除 {valueLabel(task.maturity?.excludedImmature)}</dd></div>
+      <div><dt>发布资格</dt><dd>{releaseLabel(task.releaseStatus)}</dd></div>
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
       {task.splitRule ? <div><dt>切分规则</dt><dd>{task.splitRule}</dd></div> : null}
       {task.dataScale ? <div><dt>数据规模</dt><dd>{valueLabel(task.dataScale.records)} 条 · {valueLabel(task.dataScale.featureWidth)} 维</dd></div> : null}
@@ -139,6 +142,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       {task.classPolicySummary ? <div><dt>策略前后数量</dt><dd><code>{JSON.stringify(task.classPolicySummary)}</code></dd></div> : null}
     </dl>
     {task.metricsByPartition ? <TrainingPartitions metrics={task.metricsByPartition}/> : null}
+    {task.release ? <ReleaseEvidence report={task.release}/> : null}
     {task.classPolicy ? <p className="admin-report-meta">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
     <dl className="admin-facts">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
@@ -148,6 +152,12 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back }: {
       <div><dt>完成时间</dt><dd>{formatDate(task.completedAt)}</dd></div>
     </dl>
   </section>
+}
+
+function releaseLabel(status: TrainingTask['releaseStatus']) {
+  if (status === 'qualified') return '发布合格'
+  if (status === 'unqualified') return '发布不合格'
+  return '未评估'
 }
 
 function TrainingPartitions({ metrics }: { metrics: Row }) {

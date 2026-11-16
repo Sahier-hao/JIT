@@ -13,6 +13,9 @@ export interface SplitPreview {
   preset: { id: string; ratios: { train: number; validation: number; test: number }; timezone: string }
   timezone: string
   datasetRecords: number
+  eligibleRecords: number
+  maturityPolicy: string
+  maturity: Record<string, unknown> | null
   available: boolean
   reason: { code: string; message: string } | null
   partitions: null | Record<'train' | 'validation' | 'test', {
@@ -23,8 +26,9 @@ export interface SplitPreview {
   }>
 }
 
-export async function previewDatasetSplit(datasetVersion: string, preset: string, signal?: AbortSignal): Promise<SplitPreview> {
-  const query = new URLSearchParams({ preset })
+export async function previewDatasetSplit(datasetVersion: string, preset: string, signal?: AbortSignal,
+                                          maturityPolicy = 'mature-only'): Promise<SplitPreview> {
+  const query = new URLSearchParams({ preset, maturityPolicy })
   const value = record(await apiRequest({
     path: `/api/admin/datasets/${encodeURIComponent(datasetVersion)}/split-preview?${query}`,
     method: 'GET',
@@ -48,6 +52,9 @@ export async function previewDatasetSplit(datasetVersion: string, preset: string
     },
     timezone: text(value.timezone),
     datasetRecords: finiteNumber(value.datasetRecords),
+    eligibleRecords: finiteNumber(value.eligibleRecords),
+    maturityPolicy: text(value.maturityPolicy),
+    maturity: value.maturity == null ? null : record(value.maturity),
     available: value.available === true,
     reason: reason ? { code: text(reason.code), message: text(reason.message) } : null,
     partitions: parts == null ? null : {

@@ -10,6 +10,7 @@ function card(overrides: Partial<ModelCard> = {}): ModelCard {
     featureSchemaVersion: 'kamei14-git-v1', runId: 'run-1', artifactRunId: 'artifact-1',
     modelSha256: 'a'.repeat(64), datasetVersion: 'data-v1', datasetSha256: 'b'.repeat(64),
     metricSet: 'metric-set-v2', threshold: 0.5, splitRule: '时间切分 70/15/15',
+    maturity: null,
     dataScale: { records: 30, featureWidth: 14 },
     trainingPerformance: { durationSeconds: 1.2, recordsPerSecond: 20 },
     diagnostics: { available: false, reason: '模型产物已直接记录三档指标' },
@@ -31,6 +32,17 @@ function card(overrides: Partial<ModelCard> = {}): ModelCard {
         random: { recall20Loc: { mean: 0.25, std: 0.05, reason: null }, popt: { mean: 0.35, std: 0.04, reason: null }, ifa: { mean: 2, std: 1, reason: null } },
       },
       limitations: ['回顾性评估，不代表在线效果。'],
+    },
+    release: {
+      available: false,
+      reason: '尚无匹配的发布资格报告',
+      reportId: null,
+      status: 'not-evaluated',
+      policy: null,
+      gates: [],
+      macro: null,
+      projects: [],
+      approvedDefault: null,
     },
     ...overrides,
   }
@@ -59,4 +71,40 @@ it('keeps unavailable reasons and missing partition evidence explicit', () => {
   expect(screen.getAllByText('模型产物损坏').length).toBeGreaterThan(0)
   expect(screen.getByText('旧模型未记录训练指标')).toBeVisible()
   expect(screen.getByText('测试分区没有正例')).toBeVisible()
+})
+
+it('shows release qualification separately from training and lists the failed project gate', () => {
+  render(<ModelCardView card={card({
+    release: {
+      available: true,
+      reason: null,
+      reportId: 'e'.repeat(64),
+      status: 'unqualified',
+      policy: { id: 'jit-release-v1' },
+      gates: [
+        { id: 'project:vue', passed: false, reasons: ['rocAuc is below 0.65'] },
+        { id: 'macro-effort', passed: true, reasons: [] },
+      ],
+      macro: {
+        metrics: { recall20Loc: 0.1, popt: 0.9 },
+        baselines: {
+          recall20Loc: { time: 0.2, random: 0.15 },
+          popt: { time: 0.6, random: 0.5 },
+        },
+      },
+      projects: [
+        { project: 'commons', metrics: { averagePrecision: { value: 0.4, reason: null }, rocAuc: { value: 0.7, reason: null } } },
+        { project: 'vue', metrics: { averagePrecision: { value: 0.6, reason: null }, rocAuc: { value: 0.72, reason: null } } },
+      ],
+      approvedDefault: null,
+    },
+  })}/>)
+  expect(screen.getByRole('heading', { name: '发布资格' })).toBeVisible()
+  expect(screen.getByText('未通过正式发布门槛')).toBeVisible()
+  expect(screen.getByText(/project:vue/)).toBeVisible()
+  expect(screen.getByText(/rocAuc is below 0.65/)).toBeVisible()
+  expect(screen.getByText('未批准')).toBeVisible()
+  expect(screen.getByText(/commons · 0.4000/)).toBeVisible()
+  expect(screen.getByText('-0.1000')).toBeVisible()
+  expect(screen.getByText('+0.3000')).toBeVisible()
 })

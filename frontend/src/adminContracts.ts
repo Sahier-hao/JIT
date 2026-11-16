@@ -14,6 +14,7 @@ export interface AdminDatasetVersion {
   manifestPath: string | null
   source: Row
   labelRule: string | null
+  labelMaturity: Row | null
   limitations: string[]
   usage: 'branch' | 'pr'
   sourceSyncId: string | null
@@ -65,6 +66,12 @@ export interface TrainingTask {
   split: Row | null
   splitPreset: string
   splitPolicy: Row | null
+  maturityPolicy: 'mature-only' | 'include-immature' | 'legacy-unrecorded'
+  maturity: Row | null
+  releasePolicy: string | null
+  releaseStatus: 'qualified' | 'unqualified' | 'not-evaluated'
+  releaseReportId: string | null
+  release: Row | null
   splitRule: string | null
   dataScale: Row | null
   trainingPerformance: Row | null
@@ -120,6 +127,10 @@ export interface ExperimentRun {
   limitations: string[]
   serviceCompatibility: 'repository-analysis' | 'offline-only' | 'input-unsupported' | 'schema-incompatible'
   serviceCompatibilityReason: string | null
+  releaseStatus: 'qualified' | 'unqualified' | 'not-evaluated'
+  releaseReportId: string | null
+  releaseError: { code: string; message: string } | null
+  releaseReport: Row | null
   promotable: boolean
   locations: ExperimentRunLocation[]
 }
@@ -271,6 +282,7 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     manifestPath: textOrNull(value.manifestPath),
     source: record(value.source),
     labelRule: textOrNull(value.labelRule),
+    labelMaturity: value.labelMaturity == null ? null : record(value.labelMaturity),
     limitations: textList(value.limitations),
     usage: value.usage === 'pr' ? 'pr' : 'branch',
     sourceSyncId: textOrNull(value.sourceSyncId),
@@ -386,6 +398,14 @@ function trainingTask(raw: unknown): TrainingTask {
     split: value.split == null ? null : record(value.split),
     splitPreset: textOrNull(value.splitPreset) ?? 'temporal-70-15-15',
     splitPolicy: value.splitPolicy == null ? null : record(value.splitPolicy),
+    maturityPolicy: ['mature-only', 'include-immature', 'legacy-unrecorded'].includes(text(value.maturityPolicy))
+      ? text(value.maturityPolicy) as TrainingTask['maturityPolicy'] : 'mature-only',
+    maturity: value.maturity == null ? null : record(value.maturity),
+    releasePolicy: textOrNull(value.releasePolicy),
+    releaseStatus: ['qualified', 'unqualified', 'not-evaluated'].includes(text(value.releaseStatus))
+      ? text(value.releaseStatus) as TrainingTask['releaseStatus'] : 'not-evaluated',
+    releaseReportId: textOrNull(value.releaseReportId),
+    release: value.release == null ? null : record(value.release),
     splitRule: textOrNull(value.splitRule),
     dataScale: value.dataScale == null ? null : record(value.dataScale),
     trainingPerformance: value.trainingPerformance == null ? null : record(value.trainingPerformance),
@@ -448,6 +468,14 @@ function experimentRun(raw: unknown): ExperimentRun {
     limitations: textList(value.limitations),
     serviceCompatibility: compatibility as ExperimentRun['serviceCompatibility'],
     serviceCompatibilityReason: textOrNull(value.serviceCompatibilityReason),
+    releaseStatus: ['qualified', 'unqualified', 'not-evaluated'].includes(text(value.releaseStatus))
+      ? text(value.releaseStatus) as ExperimentRun['releaseStatus'] : 'not-evaluated',
+    releaseReportId: textOrNull(value.releaseReportId),
+    releaseError: value.releaseError == null ? null : {
+      code: text(record(value.releaseError).code),
+      message: text(record(value.releaseError).message),
+    },
+    releaseReport: value.releaseReport == null ? null : record(value.releaseReport),
     promotable: value.promotable === true,
     locations: recordList(value.locations).map(experimentLocation),
   }
@@ -590,11 +618,12 @@ export async function fetchTrainingTask(taskId: string, signal?: AbortSignal): P
 
 export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string,
                                           classPolicy?: { kind: 'weights' | 'sample'; seed?: number },
-                                          splitPreset = 'temporal-70-15-15'): Promise<TrainingTask> {
+                                          splitPreset = 'temporal-70-15-15',
+                                          maturityPolicy: 'mature-only' | 'include-immature' = 'mature-only'): Promise<TrainingTask> {
   return trainingTask(await apiRequest({
     path: '/api/v1/training-tasks',
     method: 'POST',
-    body: { datasetVersion, method, metricSet, splitPreset, ...(classPolicy ? { classPolicy } : {}) },
+    body: { datasetVersion, method, metricSet, splitPreset, maturityPolicy, ...(classPolicy ? { classPolicy } : {}) },
   }))
 }
 

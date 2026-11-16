@@ -29,6 +29,7 @@ def test_published_blank_label_is_not_observed_and_features_are_allowlisted():
     assert records[0]["time"].endswith("Z")
     assert "fixcount" not in records[0]["metrics"]
     assert quality["blankLabels"] == 1
+    assert records[0]["labelStatus"] == "unrecorded"
 
 
 @pytest.mark.parametrize("label,expected", [("0", 0), ("1", 1), ("29", 1)])
@@ -36,6 +37,43 @@ def test_label_counts_are_binary_observations(label, expected):
     from jit_baseline.data import parse_source
     records, _ = parse_source(csv_bytes([row(bugcount=label)]))
     assert records[0]["label"] == expected
+
+
+def test_recorded_label_maturity_round_trips_and_is_recomputable():
+    from jit_baseline.data import parse_source
+    stream = io.StringIO()
+    fields = ["commit_id", "author_date", "bugcount", "label_status",
+              "observed_through_epoch", "maturity_days", "fixcount", "ns", "nd", "nf",
+              "ent", "la", "ld", "rexp"]
+    writer = csv.DictWriter(stream, fieldnames=fields)
+    writer.writeheader()
+    writer.writerow({
+        **row(bugcount="0"), "label_status": "unobserved",
+        "observed_through_epoch": str(1350000000 + 90 * 86400), "maturity_days": "90",
+    })
+    records, quality = parse_source(stream.getvalue().encode())
+    assert records[0]["labelStatus"] == "unobserved"
+    assert records[0]["observedThroughEpoch"] == 1350000000 + 90 * 86400
+    assert records[0]["maturityDays"] == 90
+    assert quality["labelStatusCounts"] == {
+        "positive": 0, "unobserved": 1, "immature": 0, "unrecorded": 0,
+    }
+
+
+def test_inconsistent_label_maturity_is_rejected():
+    from jit_baseline.data import parse_source
+    stream = io.StringIO()
+    fields = ["commit_id", "author_date", "bugcount", "label_status",
+              "observed_through_epoch", "maturity_days", "fixcount", "ns", "nd", "nf",
+              "ent", "la", "ld", "rexp"]
+    writer = csv.DictWriter(stream, fieldnames=fields)
+    writer.writeheader()
+    writer.writerow({
+        **row(bugcount="0"), "label_status": "unobserved",
+        "observed_through_epoch": str(1350000000 + 10), "maturity_days": "90",
+    })
+    with pytest.raises(ValueError, match="不可重算"):
+        parse_source(stream.getvalue().encode())
 
 
 @pytest.mark.parametrize("patch", [

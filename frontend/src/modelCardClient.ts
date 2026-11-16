@@ -28,6 +28,18 @@ export interface ModelCardBenefit {
   limitations: string[]
 }
 
+export interface ModelCardRelease {
+  available: boolean
+  reason: string | null
+  reportId: string | null
+  status: string | null
+  policy: ModelMetricMap | null
+  gates: ModelMetricMap[]
+  macro: ModelMetricMap | null
+  projects: ModelMetricMap[]
+  approvedDefault: ModelMetricMap | null
+}
+
 export interface ModelCard {
   available: boolean
   reason: string | null
@@ -43,6 +55,7 @@ export interface ModelCard {
   metricSet: string | null
   threshold: number | null
   splitRule: string | null
+  maturity: ModelMetricMap | null
   dataScale: ModelMetricMap | null
   trainingPerformance: ModelMetricMap | null
   diagnostics: ModelMetricMap | null
@@ -50,6 +63,7 @@ export interface ModelCard {
   partitions: ModelCardPartition[]
   limitations: string[]
   benefit: ModelCardBenefit
+  release: ModelCardRelease
 }
 
 function numberOrNull(value: unknown) {
@@ -78,6 +92,7 @@ export function parseModelCard(raw: unknown): ModelCard {
   const metrics = record(value.metricsByPartition)
   const partitions = record(value.partitions)
   const benefit = record(value.benefit)
+  const release = value.release == null ? {} : record(value.release)
   return {
     available: value.available === true,
     reason: textOrNull(value.reason),
@@ -93,6 +108,7 @@ export function parseModelCard(raw: unknown): ModelCard {
     metricSet: textOrNull(value.metricSet),
     threshold: numberOrNull(value.threshold),
     splitRule: textOrNull(value.splitRule),
+    maturity: value.maturity == null ? null : record(value.maturity),
     dataScale: value.dataScale == null ? null : record(value.dataScale),
     trainingPerformance: value.trainingPerformance == null ? null : record(value.trainingPerformance),
     diagnostics: value.diagnostics == null ? null : record(value.diagnostics),
@@ -118,6 +134,17 @@ export function parseModelCard(raw: unknown): ModelCard {
       test: benefit.test == null ? null : record(benefit.test),
       boundary: benefit.boundary == null ? null : record(benefit.boundary),
       limitations: Array.isArray(benefit.limitations) ? textList(benefit.limitations) : [],
+    },
+    release: {
+      available: release.available === true,
+      reason: textOrNull(release.reason),
+      reportId: textOrNull(release.reportId),
+      status: textOrNull(release.status),
+      policy: release.policy == null ? null : record(release.policy),
+      gates: Array.isArray(release.gates) ? release.gates.map(value => record(value)) : [],
+      macro: release.macro == null ? null : record(release.macro),
+      projects: Array.isArray(release.projects) ? release.projects.map(value => record(value)) : [],
+      approvedDefault: release.approvedDefault == null ? null : record(release.approvedDefault),
     },
   }
 }

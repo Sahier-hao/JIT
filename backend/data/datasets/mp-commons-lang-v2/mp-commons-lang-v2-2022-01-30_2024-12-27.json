@@ -1,0 +1,2245 @@
+{
+  "citation": "由本地 Git 仓库采集生成",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1640995200
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 1,
+      "commitsInWindow": 1679,
+      "excluded": {
+        "empty": 1,
+        "merges": 46,
+        "outsideWindow": 8213,
+        "unparsed": 0
+      },
+      "negativeFileAgeFiles": 7,
+      "records": 1678
+    },
+    "gitVersion": "git version 2.50.0.windows.1",
+    "kind": "git-repository",
+    "label": {
+      "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0",
+      "kind": "simplified-szz",
+      "maturityDays": 90,
+      "observedThrough": 1735689600,
+      "rule": "szz-simple-v1",
+      "statusCounts": {
+        "immature": 147,
+        "positive": 167,
+        "unobserved": 1364
+      },
+      "version": "szz-simple-v1"
+    },
+    "labelEvidence": [
+      {
+        "fixCommit": "0013a996d219e8113d91ea09a8518c1a1e4c00cd",
+        "fixTime": "2022-03-07T20:49:24Z",
+        "introducedCommit": "9ebcddc0b15c39f18c26b330acd3bfd921ef9bff",
+        "path": "src/test/java/org/apache/commons/lang3/event/EventListenerSupportTest.java"
+      },
+      {
+        "fixCommit": "4a5ef835ccb3cf8f765ee1e95962bf0863af8ce8",
+        "fixTime": "2022-03-20T17:27:18Z",
+        "introducedCommit": "033cd48313d7bd2e767d72804e160b2a190643f5",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/Memoizer.java"
+      },
+      {
+        "fixCommit": "0486d069b51ab19faee3402c5bb806a769f88694",
+        "fixTime": "2022-03-21T14:55:13Z",
+        "introducedCommit": "a9f9ba4fba7f009f0714331e3f7ddc47fc99254d",
+        "path": "pom.xml"
+      },
+      {
+        "fixCommit": "0486d069b51ab19faee3402c5bb806a769f88694",
+        "fixTime": "2022-03-21T14:55:13Z",
+        "introducedCommit": "38285a15f5a8ffdb62d86a3461266f064231e338",
+        "path": "src/main/java/org/apache/commons/lang3/JavaVersion.java"
+      },
+      {
+        "fixCommit": "0486d069b51ab19faee3402c5bb806a769f88694",
+        "fixTime": "2022-03-21T14:55:13Z",
+        "introducedCommit": "5648bc42e2f618bd230e815eb36964d2fd62d303",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      },
+      {
+        "fixCommit": "3e6255ec52cd10848d8ce627aca98f8c4d2bb045",
+        "fixTime": "2022-03-21T15:36:01Z",
+        "introducedCommit": "0486d069b51ab19faee3402c5bb806a769f88694",
+        "path": "src/main/java/org/apache/commons/lang3/builder/Diff.java"
+      },
+      {
+        "fixCommit": "3e6255ec52cd10848d8ce627aca98f8c4d2bb045",
+        "fixTime": "2022-03-21T15:36:01Z",
+        "introducedCommit": "0486d069b51ab19faee3402c5bb806a769f88694",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      },
+      {
+        "fixCommit": "69533819a07a779676cf974f14bcc4fd361922ea",
+        "fixTime": "2022-03-25T15:47:03Z",
+        "introducedCommit": "2252fade508663ca468f6a6455494a1d511934c5",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/Computable.java"
+      },
+      {
+        "fixCommit": "1926e35e3e1e94a43c64cb4d65f51d115fae02cd",
+        "fixTime": "2022-04-03T21:02:00Z",
+        "introducedCommit": "a64be9d8a85cd2a87859e64cdd0dbcbb2eb7f5ce",
+        "path": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java"
+      },
+      {
+        "fixCommit": "85c70a450c53f72fee660bcc0007d0be506a8e1d",
+        "fixTime": "2022-04-03T21:03:17Z",
+        "introducedCommit": "f714c84f9564ba96d24700f9937ee5dfd01abc89",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "517a9e063002ba2154c8727bf87a92f1622ab686",
+        "fixTime": "2022-04-03T21:13:23Z",
+        "introducedCommit": "1926e35e3e1e94a43c64cb4d65f51d115fae02cd",
+        "path": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java"
+      },
+      {
+        "fixCommit": "e6dadcb49a5e89c3f5ce6b2012c6d1e7a84bed97",
+        "fixTime": "2022-05-02T13:30:03Z",
+        "introducedCommit": "9bf6b2fb41704f3a3eadd4816bdff3c4ec24604e",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "e6dadcb49a5e89c3f5ce6b2012c6d1e7a84bed97",
+        "fixTime": "2022-05-02T13:30:03Z",
+        "introducedCommit": "9bf6b2fb41704f3a3eadd4816bdff3c4ec24604e",
+        "path": "src/main/java/org/apache/commons/lang3/Validate.java"
+      },
+      {
+        "fixCommit": "af157c49d5adf5b48e7816bf5e9e6820e2c3fd52",
+        "fixTime": "2022-05-15T20:01:00Z",
+        "introducedCommit": "25e91c4242283d118ba978d4f38cd18e10c890dc",
+        "path": "src/main/java/org/apache/commons/lang3/time/CalendarUtils.java"
+      },
+      {
+        "fixCommit": "8b7539432c7e549ea508b4b9b8c9b4b02da16be0",
+        "fixTime": "2022-05-26T16:28:49Z",
+        "introducedCommit": "af157c49d5adf5b48e7816bf5e9e6820e2c3fd52",
+        "path": "src/main/java/org/apache/commons/lang3/time/CalendarUtils.java"
+      },
+      {
+        "fixCommit": "65fb650380c063f1aece7e93d14e2052fc2ec747",
+        "fixTime": "2022-05-27T18:18:16Z",
+        "introducedCommit": "d8cea4d1f4cd5d5a4426f1f7577479af54da4e08",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "308b28a4783a58f6c362e7e162362dfbacb82bbf",
+        "fixTime": "2022-05-29T21:10:12Z",
+        "introducedCommit": "16de452a3754bfb2b36d8f6cd4a0b55432803455",
+        "path": "src/test/java/org/apache/commons/lang3/time/DurationUtilsTest.java"
+      },
+      {
+        "fixCommit": "6ebaad61fe469983d90c615d8c753451ad10f9eb",
+        "fixTime": "2022-05-29T21:41:36Z",
+        "introducedCommit": "308b28a4783a58f6c362e7e162362dfbacb82bbf",
+        "path": "src/test/java/org/apache/commons/lang3/time/DurationUtilsTest.java"
+      },
+      {
+        "fixCommit": "2da006dbbede3f18d0898819edae9a5c71eac947",
+        "fixTime": "2022-06-10T11:56:28Z",
+        "introducedCommit": "6f3b00f36dc9638abe6721b83fe02a065c0e4d6d",
+        "path": "src/main/java/org/apache/commons/lang3/StringEscapeUtils.java"
+      },
+      {
+        "fixCommit": "2da006dbbede3f18d0898819edae9a5c71eac947",
+        "fixTime": "2022-06-10T11:56:28Z",
+        "introducedCommit": "eb62fccc1cbedd7f27c817593cbd7708828627c4",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "2da006dbbede3f18d0898819edae9a5c71eac947",
+        "fixTime": "2022-06-10T11:56:28Z",
+        "introducedCommit": "9ffccd7ac3e5ee85dcef5fb8612e97589fcca91c",
+        "path": "src/test/java/org/apache/commons/lang3/StringEscapeUtilsTest.java"
+      },
+      {
+        "fixCommit": "ef07c645efe7a490f21ae80473814d6117832ded",
+        "fixTime": "2022-06-12T02:05:10Z",
+        "introducedCommit": "2da006dbbede3f18d0898819edae9a5c71eac947",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "c18803a47f4a4e51f08c1cb1ef9b84b21e106e6f",
+        "fixTime": "2022-06-14T12:44:11Z",
+        "introducedCommit": "6f3b00f36dc9638abe6721b83fe02a065c0e4d6d",
+        "path": "src/main/java/org/apache/commons/lang3/text/WordUtils.java"
+      },
+      {
+        "fixCommit": "8cacc3b3380a444face883344ac74c3fd528b67c",
+        "fixTime": "2022-07-05T23:37:14Z",
+        "introducedCommit": "5f22e0451457abc62c87c83526ac129f89cc6d8f",
+        "path": "src/main/java/org/apache/commons/lang3/builder/ReflectionToStringBuilder.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "aae5a3522fd585513693d6c550044247eae28a51",
+        "path": "src/main/java/org/apache/commons/lang3/ArrayUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "dad064eebbde450cb500a0e0d72200c655ac47c6",
+        "path": "src/main/java/org/apache/commons/lang3/BooleanUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/CharSequenceUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/EnumUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/Functions.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/LocaleUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/Range.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "f099b4a5fcbc9d77f721b0b69b5d2da414bbc840",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/CompareToBuilder.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/DiffBuilder.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/DiffResult.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/EqualsBuilder.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/HashCodeBuilder.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/RecursiveToStringStyle.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/compare/ComparableUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/TimedSemaphore.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/function/Failable.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/function/FailableFunction.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/math/Fraction.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/mutable/MutableInt.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "bdde0e1c13ed5dddcb358ef8b3d0c0dce11d8b92",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/MemberUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/TypeUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/text/StrBuilder.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "fa380309554ce4e0c1efdbec1e3b489444ecbf72",
+        "path": "src/main/java/org/apache/commons/lang3/text/StrSubstitutor.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/text/StrTokenizer.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "cbdb43f76a4350f64e14351e4c13896597580ee9",
+        "path": "src/main/java/org/apache/commons/lang3/time/DurationFormatUtils.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateFormat.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "28b11d15e722760fd2f453e45517dce3f5124dec",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDatePrinter.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/time/FormatCache.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/ObjectUtilsTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsSubstringTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "1bf7d7ec12fa143a1b544cf2dd1a0c1a8de7548a",
+        "path": "src/test/java/org/apache/commons/lang3/builder/EqualsBuilderTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "1bf7d7ec12fa143a1b544cf2dd1a0c1a8de7548a",
+        "path": "src/test/java/org/apache/commons/lang3/builder/HashCodeBuilderAndEqualsBuilderTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/exception/ExceptionUtilsTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/math/NumberUtilsTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/text/ExtendedMessageFormatTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/DateUtilsTest.java"
+      },
+      {
+        "fixCommit": "d7889a8ffea465a223dad8410f5d36e48641aa69",
+        "fixTime": "2022-07-15T12:25:29Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParserTest.java"
+      },
+      {
+        "fixCommit": "63cc351c73be29a93c6e5df0cfb0c83cc8a77aae",
+        "fixTime": "2022-07-15T12:26:42Z",
+        "introducedCommit": "1c9673a218de6fcf2fe263758f039e8d66ea6394",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "fixTime": "2022-07-15T17:51:03Z",
+        "introducedCommit": "7c68936044687a10bfef0ee2c87e962855c707b6",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "fixTime": "2022-07-15T17:51:03Z",
+        "introducedCommit": "f29647a1495fe63bd7ea5795be0c75e34ce28bc7",
+        "path": "src/conf/spotbugs-exclude-filter.xml"
+      },
+      {
+        "fixCommit": "261334e5ae0832dcb722b129a1c9fd803e56984b",
+        "fixTime": "2022-07-15T17:51:54Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "fixTime": "2022-08-21T12:57:32Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/ObjectUtils.java"
+      },
+      {
+        "fixCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "fixTime": "2022-08-21T12:57:32Z",
+        "introducedCommit": "30a14e9451e991f9a2aa0097260895279bcdbb3c",
+        "path": "src/main/java/org/apache/commons/lang3/builder/ToStringStyle.java"
+      },
+      {
+        "fixCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "fixTime": "2022-08-21T12:57:32Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/BasicThreadFactory.java"
+      },
+      {
+        "fixCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "fixTime": "2022-08-21T12:57:32Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/math/Fraction.java"
+      },
+      {
+        "fixCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "fixTime": "2022-08-21T12:57:32Z",
+        "introducedCommit": "28b11d15e722760fd2f453e45517dce3f5124dec",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDatePrinter.java"
+      },
+      {
+        "fixCommit": "db606c65b0a329cf4a1005d9f592c0499314f31e",
+        "fixTime": "2022-08-21T12:58:49Z",
+        "introducedCommit": "5fc1f111f84306de1e9b31fae29940a51db8604e",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "2f153733c7dfe33f38438be3fd3269e0c3ab7005",
+        "fixTime": "2022-08-21T18:29:49Z",
+        "introducedCommit": "fc7d83bf84a57d50ea924887a8b348f6029faa87",
+        "path": "src/main/java/org/apache/commons/lang3/time/DurationUtils.java"
+      },
+      {
+        "fixCommit": "2f153733c7dfe33f38438be3fd3269e0c3ab7005",
+        "fixTime": "2022-08-21T18:29:49Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/DurationUtilsTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "RELEASE-NOTES.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "f8df864f4cde9d8c6a21ba04ecfe9abd286de71d",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/CharUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2c16052f94e9e551bb68a8529b7f0c4e336237b0",
+        "path": "src/main/java/org/apache/commons/lang3/ClassUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/RandomStringUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/RandomUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/StringEscapeUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "717f163a6df989499dc5df2f1de2e1b6a23ba1e8",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "e5e8ba09066fadb13d6b84402d46287bbd1569b7",
+        "path": "src/main/java/org/apache/commons/lang3/SystemUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "827f5c93df63d6b2300d2a87729c0911b4fc14f1",
+        "path": "src/main/java/org/apache/commons/lang3/Validate.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/EqualsBuilder.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/builder/HashCodeBuilder.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "path": "src/main/java/org/apache/commons/lang3/builder/ToStringStyle.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/CircuitBreaker.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/EventCountCircuitBreaker.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/ThresholdCircuitBreaker.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "598f2fb91594f4a71642632e7f9582afefd62d4d",
+        "path": "src/main/java/org/apache/commons/lang3/math/Fraction.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "2c16052f94e9e551bb68a8529b7f0c4e336237b0",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/FieldUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "6de0fc1ae5b72af4eb64fb877d81acbc22319193",
+        "path": "src/main/java/org/apache/commons/lang3/time/DurationFormatUtils.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "9f71c33b000083dab7bb746a2fca193a78a51f13",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-2.1.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-2.2.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-2.3.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-2.4.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.5.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.6.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.7.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.8.1.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.8.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.9.txt"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/xdoc/article2_4.xml"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/xdoc/article2_5.xml"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/xdoc/upgradeto2_1.xml"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/xdoc/upgradeto2_3.xml"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "1774335e56fb8837d34258f29b6ac1f536c8f456",
+        "path": "src/site/xdoc/upgradeto2_4.xml"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "c0707a1a24bc209caef5caa66f54e27e4230500e",
+        "path": "src/test/java/org/apache/commons/lang3/ClassUtilsTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/LocaleUtilsTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/StringEscapeUtilsTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsContainsTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsEqualsIndexOfTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "c0707a1a24bc209caef5caa66f54e27e4230500e",
+        "path": "src/test/java/org/apache/commons/lang3/builder/EqualsBuilderTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/DurationFormatUtilsTest.java"
+      },
+      {
+        "fixCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "fixTime": "2022-08-21T19:29:18Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParserTest.java"
+      },
+      {
+        "fixCommit": "28ab516d962039909c99318b989b89e79bd968e0",
+        "fixTime": "2022-08-21T19:30:20Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "cec7857a0e35fe605abda09de78df53099c3207f",
+        "fixTime": "2022-08-23T14:54:28Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      },
+      {
+        "fixCommit": "855a439d0dbd428641661f300ab34dad21f99d3f",
+        "fixTime": "2022-08-26T19:12:17Z",
+        "introducedCommit": "161c08bacd37d15243ab869f29d43125fb559511",
+        "path": "pom.xml"
+      },
+      {
+        "fixCommit": "bf1a8ea27836166df96f12f5210301d12a1def64",
+        "fixTime": "2022-08-26T20:39:03Z",
+        "introducedCommit": "161c08bacd37d15243ab869f29d43125fb559511",
+        "path": "src/conf/exclude-pmd.properties"
+      },
+      {
+        "fixCommit": "0f7db25d6043de5b67731c9b9aaf0bf022a10dae",
+        "fixTime": "2022-10-14T20:19:09Z",
+        "introducedCommit": "d16a1b49c240f1b4441b4e0a0171ac17de8b3ca5",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "273a6bd20e2daddd0772a2961c86f56838b6a01a",
+        "fixTime": "2022-10-15T21:54:09Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/RegExUtils.java"
+      },
+      {
+        "fixCommit": "a1e911a935aaf510c0faf4b3db28884eaef2eb5c",
+        "fixTime": "2022-10-23T16:47:34Z",
+        "introducedCommit": "32756ef89b0c592d601312ec77846bd6c93e89c8",
+        "path": "src/main/java/org/apache/commons/lang3/ClassUtils.java"
+      },
+      {
+        "fixCommit": "a1e911a935aaf510c0faf4b3db28884eaef2eb5c",
+        "fixTime": "2022-10-23T16:47:34Z",
+        "introducedCommit": "57ddce119516f451168f4489f55f399fd9309b53",
+        "path": "src/main/java/org/apache/commons/lang3/DoubleRange.java"
+      },
+      {
+        "fixCommit": "a1e911a935aaf510c0faf4b3db28884eaef2eb5c",
+        "fixTime": "2022-10-23T16:47:34Z",
+        "introducedCommit": "57ddce119516f451168f4489f55f399fd9309b53",
+        "path": "src/main/java/org/apache/commons/lang3/IntegerRange.java"
+      },
+      {
+        "fixCommit": "a1e911a935aaf510c0faf4b3db28884eaef2eb5c",
+        "fixTime": "2022-10-23T16:47:34Z",
+        "introducedCommit": "57ddce119516f451168f4489f55f399fd9309b53",
+        "path": "src/main/java/org/apache/commons/lang3/LongRange.java"
+      },
+      {
+        "fixCommit": "7b732b7a26a14a0a5f1c23f27f27014436e0226e",
+        "fixTime": "2022-12-07T14:41:42Z",
+        "introducedCommit": "f55164f28e1a720d2ec7e27a6ebfe7e501710dd6",
+        "path": "src/test/java/org/apache/commons/lang3/time/DurationFormatUtilsTest.java"
+      },
+      {
+        "fixCommit": "e3b4fc79dfcae9c20d913472da1ce51160a38af8",
+        "fixTime": "2022-12-18T11:01:49Z",
+        "introducedCommit": "fb90d0bd85bf500611e904da67531ee360249049",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "c9360b3db851fb03f82b875d109458ed8186b4d9",
+        "fixTime": "2022-12-18T11:29:09Z",
+        "introducedCommit": "5a5f4f1c868ee04432cc7b2741d2fca1981715c2",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "af27d810d3c045c0bfe901680d03bdde5f99251d",
+        "fixTime": "2023-01-10T20:57:08Z",
+        "introducedCommit": "302d697f9b8eff0cd453626dd57b467ed9650061",
+        "path": "src/main/java/org/apache/commons/lang3/time/DateFormatUtils.java"
+      },
+      {
+        "fixCommit": "0cfedf63f7051703248f76faf359167a2a8205d6",
+        "fixTime": "2023-01-15T12:38:45Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.7.txt"
+      },
+      {
+        "fixCommit": "0cfedf63f7051703248f76faf359167a2a8205d6",
+        "fixTime": "2023-01-15T12:38:45Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.8.1.txt"
+      },
+      {
+        "fixCommit": "0cfedf63f7051703248f76faf359167a2a8205d6",
+        "fixTime": "2023-01-15T12:38:45Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.8.txt"
+      },
+      {
+        "fixCommit": "0cfedf63f7051703248f76faf359167a2a8205d6",
+        "fixTime": "2023-01-15T12:38:45Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "src/site/resources/release-notes/RELEASE-NOTES-3.9.txt"
+      },
+      {
+        "fixCommit": "b7d4b9075832f94540acdfab6d5827fe4273b04b",
+        "fixTime": "2023-01-15T12:38:57Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "RELEASE-NOTES.txt"
+      },
+      {
+        "fixCommit": "fe42d6b087f596717b7e7c9b1f17055b73c3b73a",
+        "fixTime": "2023-01-15T13:13:46Z",
+        "introducedCommit": "ba6a66bc04caba01179b94c2014fbf8fa3240c8e",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "fe42d6b087f596717b7e7c9b1f17055b73c3b73a",
+        "fixTime": "2023-01-15T13:13:46Z",
+        "introducedCommit": "8b6f18cb0d4b0fb1281b39bfb36bababa6c26886",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/package-info.java"
+      },
+      {
+        "fixCommit": "469013a4f5a5cb666b35d72122690bb7f355c0b5",
+        "fixTime": "2023-02-19T19:34:32Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      },
+      {
+        "fixCommit": "2986222b8c3ce04ffe7380cde78b40c91a2df3d1",
+        "fixTime": "2023-03-02T14:33:54Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/EnumUtils.java"
+      },
+      {
+        "fixCommit": "4d7e6ffac8f34ea6554078054c866ea76502f8ed",
+        "fixTime": "2023-03-13T12:19:45Z",
+        "introducedCommit": "e9f3ece022854a7c415b6ce8435ca803dc8aee8b",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "7b15f3e61defc5264d77f43c1c7db51c7e6cdfdf",
+        "fixTime": "2023-04-10T18:50:10Z",
+        "introducedCommit": "ff733d9d9bb03ce840200aa213b7bdfc5755777d",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      },
+      {
+        "fixCommit": "e2b2d90b60b93bd4c4a1e3bcda6557f1d8917c0f",
+        "fixTime": "2023-04-14T00:07:14Z",
+        "introducedCommit": "11b1bc19ab360afce8a48167002bfcb747faeb68",
+        "path": "src/test/java/org/apache/commons/lang3/ThreadUtilsTest.java"
+      },
+      {
+        "fixCommit": "dd49aa9d1f2cb8dca8f5bb19375f645e9ae04a3c",
+        "fixTime": "2023-04-14T19:31:39Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/ArrayUtilsTest.java"
+      },
+      {
+        "fixCommit": "dd49aa9d1f2cb8dca8f5bb19375f645e9ae04a3c",
+        "fixTime": "2023-04-14T19:31:39Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/exception/AbstractExceptionContextTest.java"
+      },
+      {
+        "fixCommit": "4623bf18270c9e5e9e8996070a4cc54d81e07d9d",
+        "fixTime": "2023-04-17T12:20:11Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/function/Failable.java"
+      },
+      {
+        "fixCommit": "f59fa5c36df23cc8da2c8708ddb60cd6203da354",
+        "fixTime": "2023-04-17T12:22:01Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/compare/ComparableUtils.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/ClassPathUtils.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/RandomStringUtils.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/builder/DiffBuilder.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/builder/HashCodeBuilder.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "680f9d5492e2c9c27e5c1178744a9edf36a0272b",
+        "path": "src/main/java/org/apache/commons/lang3/builder/ToStringBuilder.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/math/Fraction.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d839a82521d17e2f4c81764cf6f508130c1ba0c6",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/FieldUtils.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d47dc7af76471c3d0bc600361a62c65e0cb865b9",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "680f9d5492e2c9c27e5c1178744a9edf36a0272b",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/TypeUtils.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/RandomStringUtilsTest.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "1bf7d7ec12fa143a1b544cf2dd1a0c1a8de7548a",
+        "path": "src/test/java/org/apache/commons/lang3/builder/DiffBuilderTest.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/FieldUtilsTest.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "d47dc7af76471c3d0bc600361a62c65e0cb865b9",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/MethodUtilsTest.java"
+      },
+      {
+        "fixCommit": "f19416ae375e46c4e8220141f55f8d3a334f4104",
+        "fixTime": "2023-04-17T12:58:49Z",
+        "introducedCommit": "680f9d5492e2c9c27e5c1178744a9edf36a0272b",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/TypeUtilsTest.java"
+      },
+      {
+        "fixCommit": "5a0eed4f380a9ae1723754470b4beccbbc7472fa",
+        "fixTime": "2023-04-17T13:00:51Z",
+        "introducedCommit": "860a343217cc2c13755998cc2debe9500c990a80",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "df64310a696fc15f848a303eb866ca0a1c4eba02",
+        "fixTime": "2023-04-18T12:57:02Z",
+        "introducedCommit": "f0e5dcffe25e1e922558b73595390702925b9e3e",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "5b6030595205f5f843549f1f12a0e1037bf4a50f",
+        "fixTime": "2023-07-02T19:36:17Z",
+        "introducedCommit": "3a0d3b93a81fd8c795be4da3bc34f693f7ee9ed3",
+        "path": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java"
+      },
+      {
+        "fixCommit": "5b6030595205f5f843549f1f12a0e1037bf4a50f",
+        "fixTime": "2023-07-02T19:36:17Z",
+        "introducedCommit": "3a0d3b93a81fd8c795be4da3bc34f693f7ee9ed3",
+        "path": "src/test/java/org/apache/commons/lang3/exception/ExceptionUtilsTest.java"
+      },
+      {
+        "fixCommit": "1e523283ce8c9e5027bdc84325af4ae980e493bf",
+        "fixTime": "2023-07-05T08:29:55Z",
+        "introducedCommit": "71340db86f0984c415c78c5641d92e287b29d72b",
+        "path": "src/test/java/org/apache/commons/lang3/SystemUtilsTest.java"
+      },
+      {
+        "fixCommit": "72dd504e6f9d22574652baf31075d369692a085a",
+        "fixTime": "2023-07-23T18:20:03Z",
+        "introducedCommit": "514f6751ab29dbdc6b44995555474fbec88dcd97",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "2c7dbba0f2f2be7f8b0a0137c8a19b6cc3c13f76",
+        "fixTime": "2023-07-23T18:18:35Z",
+        "introducedCommit": "71340db86f0984c415c78c5641d92e287b29d72b",
+        "path": "src/main/java/org/apache/commons/lang3/SystemUtils.java"
+      },
+      {
+        "fixCommit": "90b327a96cc31a156e86e8eb7e98f84cb2d822bb",
+        "fixTime": "2023-07-29T12:05:43Z",
+        "introducedCommit": "f59fa5c36df23cc8da2c8708ddb60cd6203da354",
+        "path": "src/main/java/org/apache/commons/lang3/compare/ComparableUtils.java"
+      },
+      {
+        "fixCommit": "890af3816d22016bdd7dc2174821b517bfbc5b95",
+        "fixTime": "2023-07-29T12:06:39Z",
+        "introducedCommit": "aa74b736dec153d5d460ee1d559054f085b2e1a4",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "afb8f7e9bbf822a993fb8a8012b591e7abb21db5",
+        "fixTime": "2023-08-10T18:04:58Z",
+        "introducedCommit": "c6ac3119bb99e376a6ddbd7f8e83e1dedbab32a5",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParser_TimeZoneStrategyTest.java"
+      },
+      {
+        "fixCommit": "8c92ba822e383c1f0e2bfa4a137e9026ef85db32",
+        "fixTime": "2023-08-11T18:37:24Z",
+        "introducedCommit": "f4ad38820165172a84a1780762b904b54bf2cf9b",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParser_TimeZoneStrategyTest.java"
+      },
+      {
+        "fixCommit": "971efec0e17c7238ff397a7b149ac316ca156b76",
+        "fixTime": "2023-08-11T21:21:23Z",
+        "introducedCommit": "768cb5abf762f7a22664c40751bc87e13b10d2f2",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParser_TimeZoneStrategyTest.java"
+      },
+      {
+        "fixCommit": "565fc7601a647a91745321737697630cea6fefe1",
+        "fixTime": "2023-08-11T21:32:10Z",
+        "introducedCommit": "971efec0e17c7238ff397a7b149ac316ca156b76",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParser_TimeZoneStrategyTest.java"
+      },
+      {
+        "fixCommit": "9f4a554f9a2722c466568e7701fd6420a4bfcd17",
+        "fixTime": "2023-08-11T22:13:46Z",
+        "introducedCommit": "565fc7601a647a91745321737697630cea6fefe1",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParser_TimeZoneStrategyTest.java"
+      },
+      {
+        "fixCommit": "0d4909fd86a7336f52db096286c849c0ab7fc40e",
+        "fixTime": "2023-08-14T12:26:17Z",
+        "introducedCommit": "1903d88e0b214fa369fe0c49c71e4c3b480f2f7d",
+        "path": "src/main/java/org/apache/commons/lang3/arch/Processor.java"
+      },
+      {
+        "fixCommit": "cff5ccf8b0b19da504ccd5fff017f5b543051fd2",
+        "fixTime": "2023-08-14T12:27:50Z",
+        "introducedCommit": "d26170a97698da141d616942f2673874e043a13c",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "a9b25d0ba909f09974a6fb1fe127fdc0e895694e",
+        "fixTime": "2023-10-07T14:30:58Z",
+        "introducedCommit": "1bd04d5bd47f6121257784bed77e330d6ccd89ce",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/CircuitBreaker.java"
+      },
+      {
+        "fixCommit": "b55d278cce19df99fd50f2ae800c5de2fc0991f7",
+        "fixTime": "2023-10-07T14:38:10Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/ThresholdCircuitBreaker.java"
+      },
+      {
+        "fixCommit": "b55d278cce19df99fd50f2ae800c5de2fc0991f7",
+        "fixTime": "2023-10-07T14:38:10Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/concurrent/ThresholdCircuitBreakerTest.java"
+      },
+      {
+        "fixCommit": "7be4557a8ee61b19547d4a9a807bd61b4ae4f3d6",
+        "fixTime": "2023-10-07T14:40:00Z",
+        "introducedCommit": "ede98ffdb928586528a8b2876b049cb8bf362926",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "d4ebf9abcccdb0347a94172e1da97aa692e20336",
+        "fixTime": "2023-10-10T19:39:05Z",
+        "introducedCommit": "7be4557a8ee61b19547d4a9a807bd61b4ae4f3d6",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "d4ebf9abcccdb0347a94172e1da97aa692e20336",
+        "fixTime": "2023-10-10T19:39:05Z",
+        "introducedCommit": "e2426182c81d371e3c1ea3410156528e7c7944b3",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "d4ebf9abcccdb0347a94172e1da97aa692e20336",
+        "fixTime": "2023-10-10T19:39:05Z",
+        "introducedCommit": "60b55f21b4b5e9fb5a655c588f2a212a88ca9483",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDatePrinter.java"
+      },
+      {
+        "fixCommit": "d4ebf9abcccdb0347a94172e1da97aa692e20336",
+        "fixTime": "2023-10-10T19:39:05Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateFormatTest.java"
+      },
+      {
+        "fixCommit": "152c7204a0a9f88db0255815a7d3e300604abf74",
+        "fixTime": "2023-10-12T15:09:07Z",
+        "introducedCommit": "d4ebf9abcccdb0347a94172e1da97aa692e20336",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "bc4eeca21b2f917a623da5fe5283dfc852b6e818",
+        "fixTime": "2023-10-12T15:09:40Z",
+        "introducedCommit": "152c7204a0a9f88db0255815a7d3e300604abf74",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "ce5522f60dc87fb1b1ee115427519ebe1d33760f",
+        "fixTime": "2023-10-17T14:48:51Z",
+        "introducedCommit": "1abc85cb2db060b48c54537089b0a1e48524b5ad",
+        "path": "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java"
+      },
+      {
+        "fixCommit": "9840b9df5795a9d253611ac7cd451163470b2443",
+        "fixTime": "2023-10-20T19:15:10Z",
+        "introducedCommit": "d43a20f352a867dc68b8b976fe3f9d6696889592",
+        "path": "src/test/java/org/apache/commons/lang3/time/StopWatchTest.java"
+      },
+      {
+        "fixCommit": "2e876a87578b0ff0d88750db8c4cc1c0da09134c",
+        "fixTime": "2023-10-21T16:17:45Z",
+        "introducedCommit": "112740b21851ecbe1226f80d91fef097acb71eb9",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "29f958d055e79e7b94379238f7da54c7a539f981",
+        "fixTime": "2023-11-13T12:39:03Z",
+        "introducedCommit": "dc83c2820b96095f63d233475037ca7a9da2839f",
+        "path": "src/main/java/org/apache/commons/lang3/ObjectUtils.java"
+      },
+      {
+        "fixCommit": "29f958d055e79e7b94379238f7da54c7a539f981",
+        "fixTime": "2023-11-13T12:39:03Z",
+        "introducedCommit": "dc83c2820b96095f63d233475037ca7a9da2839f",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/FieldUtils.java"
+      },
+      {
+        "fixCommit": "912ab7154d5280a2632f375b5efd97e1b70149a4",
+        "fixTime": "2023-11-13T12:40:24Z",
+        "introducedCommit": "ebca9c9ee89c5654f2e748ef12e755abdc286d34",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "2aded9825f5019933a9b37bf6280d00b8a2b730a",
+        "fixTime": "2023-11-22T02:08:58Z",
+        "introducedCommit": "ccb4ad2234dbc56a6396e4b1d54a1675b5446c5b",
+        "path": "src/test/java/org/apache/commons/lang3/EnumUtilsTest.java"
+      },
+      {
+        "fixCommit": "c9dfff1c08f6fbe63c1795172f9221678eb89398",
+        "fixTime": "2023-11-22T02:10:00Z",
+        "introducedCommit": "9f67b81dab0502b9fde981cbeac9ae3bbcd2039d",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "d7e927deffc5c687c1fb8c7f10bed571a91e420f",
+        "fixTime": "2023-12-05T18:36:34Z",
+        "introducedCommit": "cae7d5f6133e4cc19d2fbc71233c5eac5efeaa38",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "6f2c93ceeecc48f4eca2c52345a7bf33329211c1",
+        "fixTime": "2023-12-06T14:44:40Z",
+        "introducedCommit": "f04b12b9cef909b079984fa4ab51c2ff8bb323f8",
+        "path": "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      },
+      {
+        "fixCommit": "6f2c93ceeecc48f4eca2c52345a7bf33329211c1",
+        "fixTime": "2023-12-06T14:44:40Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/math/NumberUtilsTest.java"
+      },
+      {
+        "fixCommit": "68fdc0dd671c26ca1314858063c3e8e9c4c2a1e4",
+        "fixTime": "2023-12-06T14:46:15Z",
+        "introducedCommit": "c9dfff1c08f6fbe63c1795172f9221678eb89398",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "6dc61ad800695b6d2f682d6914b376a2d08c60e3",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/BackgroundInitializer.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "dc83c2820b96095f63d233475037ca7a9da2839f",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/LazyInitializer.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/ArrayUtilsSetTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "563bf489649ab3ab2a1b374a9b4530afc8faf038",
+        "path": "src/test/java/org/apache/commons/lang3/ValidateTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "f04b12b9cef909b079984fa4ab51c2ff8bb323f8",
+        "path": "src/test/java/org/apache/commons/lang3/builder/ReflectionDiffBuilderTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "f04b12b9cef909b079984fa4ab51c2ff8bb323f8",
+        "path": "src/test/java/org/apache/commons/lang3/builder/ToStringBuilderTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/concurrent/AbstractConcurrentInitializerCloseAndExceptionsTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/concurrent/BackgroundInitializerSupplierTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/concurrent/BackgroundInitializerTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/concurrent/MultiBackgroundInitializerSupplierTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/concurrent/MultiBackgroundInitializerTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/MethodUtilsTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "563bf489649ab3ab2a1b374a9b4530afc8faf038",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/TypeUtilsTest.java"
+      },
+      {
+        "fixCommit": "d3f8fdf1265c3a1bf5e91c2b4aeaa351586b60ce",
+        "fixTime": "2023-12-07T13:42:22Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/util/FluentBitSetTest.java"
+      },
+      {
+        "fixCommit": "3201bdff383367d4a9def647c90330bd6147cb59",
+        "fixTime": "2023-11-15T00:31:10Z",
+        "introducedCommit": "912ab7154d5280a2632f375b5efd97e1b70149a4",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "ba729fc832230acc21a3c6b520793943cefbcd86",
+        "fixTime": "2023-12-08T23:29:44Z",
+        "introducedCommit": "5fbd1bd9090bef99344bc927c34b92fae714457a",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDatePrinter.java"
+      },
+      {
+        "fixCommit": "bb6d9b6384140265090e56c803de6439f5278c32",
+        "fixTime": "2023-12-08T23:44:45Z",
+        "introducedCommit": "629a83c6c477cdddc58f395786d607ec46fe1d31",
+        "path": "src/test/java/org/apache/commons/lang3/CharSetUtilsTest.java"
+      },
+      {
+        "fixCommit": "cbc44a30453a1e06cb51b61bb0cf23b158a5c015",
+        "fixTime": "2023-12-09T15:21:55Z",
+        "introducedCommit": "7659889a06742f79f6e9f631f7d596fc21be319a",
+        "path": "src/conf/spotbugs-exclude-filter.xml"
+      },
+      {
+        "fixCommit": "d85460129fe533a28c7860492c9cb02cf00861c7",
+        "fixTime": "2023-12-11T02:11:43Z",
+        "introducedCommit": "cae7d5f6133e4cc19d2fbc71233c5eac5efeaa38",
+        "path": "RELEASE-NOTES.txt"
+      },
+      {
+        "fixCommit": "a429db625eb300bdbac5b0babbb5c2b718603ba6",
+        "fixTime": "2023-12-23T00:57:57Z",
+        "introducedCommit": "74f3e26e78dcfe737c0a834a1ecb7c5503c8bf7e",
+        "path": ".github/workflows/scorecards-analysis.yml"
+      },
+      {
+        "fixCommit": "cc625debde8ad6e4e3d74863a29b59c4e40489e6",
+        "fixTime": "2024-03-09T18:57:09Z",
+        "introducedCommit": "d7e927deffc5c687c1fb8c7f10bed571a91e420f",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "cc625debde8ad6e4e3d74863a29b59c4e40489e6",
+        "fixTime": "2024-03-09T18:57:09Z",
+        "introducedCommit": "5a19ce90574b23d81086a276efb671a7dfc024fd",
+        "path": "pom.xml"
+      },
+      {
+        "fixCommit": "5a9cc5f20be095efb9eb50cb456d00ce706daffa",
+        "fixTime": "2024-03-09T18:58:34Z",
+        "introducedCommit": "3909e385080aa88ba86f22c9cfe3f6aa322ede57",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "797f9a4f5d8746a8c2c5dc28c422176ead897516",
+        "fixTime": "2024-05-16T23:02:06Z",
+        "introducedCommit": "3322d974876b8d4f934d3544967103ebbcaef726",
+        "path": "src/main/java/org/apache/commons/lang3/annotations/Safe.java"
+      },
+      {
+        "fixCommit": "797f9a4f5d8746a8c2c5dc28c422176ead897516",
+        "fixTime": "2024-05-16T23:02:06Z",
+        "introducedCommit": "3322d974876b8d4f934d3544967103ebbcaef726",
+        "path": "src/main/java/org/apache/commons/lang3/annotations/package-info.java"
+      },
+      {
+        "fixCommit": "569195db85ce0d6e86f8693afdb5af6c82a97183",
+        "fixTime": "2024-05-23T12:02:30Z",
+        "introducedCommit": "5e36226a06443f7032c113b39ac9e3f32ec93b23",
+        "path": "src/test/java/org/apache/commons/lang3/ArrayUtilsTest.java"
+      },
+      {
+        "fixCommit": "569195db85ce0d6e86f8693afdb5af6c82a97183",
+        "fixTime": "2024-05-23T12:02:30Z",
+        "introducedCommit": "f4a616f50d3fd5af06981d6010b166f7e3362a87",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java"
+      },
+      {
+        "fixCommit": "4bd73afe7acda991aff07bf762e87fc5f6dc41cd",
+        "fixTime": "2024-05-23T12:05:03Z",
+        "introducedCommit": "83ce04b0bf1c30bafd4bfd0abc3b2cf7b731deee",
+        "path": "pom.xml"
+      },
+      {
+        "fixCommit": "77e3913ea37edb392b10c01f0a8ab796510f3f9f",
+        "fixTime": "2024-05-23T12:18:11Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/util/FluentBitSet.java"
+      },
+      {
+        "fixCommit": "ba247a9c482a26856afd1b62f61d3e4a5e351b8b",
+        "fixTime": "2024-05-23T12:18:24Z",
+        "introducedCommit": "83ce04b0bf1c30bafd4bfd0abc3b2cf7b731deee",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "453510009c60f0964162a3911b6aa2e955d6fdac",
+        "fixTime": "2024-05-23T12:29:01Z",
+        "introducedCommit": "569195db85ce0d6e86f8693afdb5af6c82a97183",
+        "path": "src/test/java/org/apache/commons/lang3/ArrayUtilsTest.java"
+      },
+      {
+        "fixCommit": "352f9671b22448e69fba49d072561444388b1426",
+        "fixTime": "2024-05-23T13:04:53Z",
+        "introducedCommit": "8ddebc231eb63d4e00ba3c04d108f2569c521561",
+        "path": "src/main/java/org/apache/commons/lang3/text/StrBuilder.java"
+      },
+      {
+        "fixCommit": "f827d6ac51d3f58fb19c6d9f59e6d1b99378cdfd",
+        "fixTime": "2024-05-23T13:08:51Z",
+        "introducedCommit": "bf1728a6ba405691f26642dc438e87f86f3228ad",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "90a5e8ad37bca75eb82d76e06bef5108453abcc0",
+        "fixTime": "2024-07-06T19:03:48Z",
+        "introducedCommit": "6ff74418edb3aa8475daa2e27b9a0e29bfbd97a7",
+        "path": "src/main/java/org/apache/commons/lang3/time/DurationFormatUtils.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "35350e3eeace8ea271b0b9cfbada283ea2a973c4",
+        "path": "src/main/java/org/apache/commons/lang3/ArrayUtils.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "58d5af480897b869f195f723d83e5a9a432b36b4",
+        "path": "src/main/java/org/apache/commons/lang3/BooleanUtils.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "29c94abc083e7de44c1fdb83679ed32181d9884e",
+        "path": "src/main/java/org/apache/commons/lang3/Range.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "9e9d293755c23422cae1a1084a771abac1b30f2a",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "a37e8de046a328c3400ea2f78b51d792152e9569",
+        "path": "src/main/java/org/apache/commons/lang3/SystemProperties.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "30428e5f991f25c2b54db9cb887f179ab0a0eeaa",
+        "path": "src/main/java/org/apache/commons/lang3/builder/EqualsBuilder.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "dc83c2820b96095f63d233475037ca7a9da2839f",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/ConcurrentUtils.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "2e71945163b08326a64b7264466069dd3a83b0de",
+        "path": "src/main/java/org/apache/commons/lang3/function/TriConsumer.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "8e03321d14f176d6a0235e915270fa999121fe5a",
+        "path": "src/main/java/org/apache/commons/lang3/math/Fraction.java"
+      },
+      {
+        "fixCommit": "59a679310a39331c4c54e8858408f5213f70dbc2",
+        "fixTime": "2024-07-16T09:49:34Z",
+        "introducedCommit": "144b86a7cc45b079ccab3546e900fc0cda3f542d",
+        "path": "src/main/java/org/apache/commons/lang3/time/DateUtils.java"
+      },
+      {
+        "fixCommit": "752496200f029ecb3ca88cb95a943ccb65f48db5",
+        "fixTime": "2024-07-25T23:36:48Z",
+        "introducedCommit": "b7be19dc9f26c86fba870a9d9dcb1391c51b053b",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "12c71a019faf874e22be3890b5687d757864755f",
+        "fixTime": "2024-07-25T23:38:00Z",
+        "introducedCommit": "64c73d02e0b3815a0c0cc9212124697584d454b9",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "fa01994df1ca311a2840703207fccea7ebd17d6b",
+        "fixTime": "2024-07-29T23:30:48Z",
+        "introducedCommit": "3a854b01f61c8b21e2f2153a218360f3311fea99",
+        "path": "src/main/java/org/apache/commons/lang3/stream/Streams.java"
+      },
+      {
+        "fixCommit": "9345437e0f6bdc7232b8fa9eea46b705693dd447",
+        "fixTime": "2024-07-29T23:35:39Z",
+        "introducedCommit": "c1955a208678c3c34ca9fd5578bb951870def5cc",
+        "path": "src/main/java/org/apache/commons/lang3/Streams.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "6bd90026cab839a1a31fc93508e2d70d62be4048",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "b224a8195fadbb131be6bc6e8abe1b2b3a6a024c",
+        "path": "src/main/java/org/apache/commons/lang3/ArraySorter.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "98ef0a4138ac032923c4fb12a97b388bde354668",
+        "path": "src/main/java/org/apache/commons/lang3/Functions.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "cb078c556ff430fae60ecd509a6498a2cc189cd6",
+        "path": "src/main/java/org/apache/commons/lang3/RuntimeEnvironment.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "16bce45fec8861dd040e3d0231a71acabd6b5160",
+        "path": "src/main/java/org/apache/commons/lang3/Streams.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "3334009c309f0b1f2ecf86af4a0b7a03f26a860b",
+        "path": "src/main/java/org/apache/commons/lang3/builder/DiffBuilder.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "3334009c309f0b1f2ecf86af4a0b7a03f26a860b",
+        "path": "src/main/java/org/apache/commons/lang3/builder/ReflectionDiffBuilder.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "84abc1181c86d58e9e7cb3046271193311211dd3",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/AbstractConcurrentInitializer.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "6540edfdc0b710f05316bbe6b4f0eb140dca317c",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/AtomicInitializer.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "6540edfdc0b710f05316bbe6b4f0eb140dca317c",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/AtomicSafeInitializer.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "30428e5f991f25c2b54db9cb887f179ab0a0eeaa",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/BackgroundInitializer.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "4fcc82bcb1480ba813068333a64563bb7c65a45b",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/BasicThreadFactory.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "3334009c309f0b1f2ecf86af4a0b7a03f26a860b",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/LazyInitializer.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "15503e82ec95d29db904b42d0070d4f634003204",
+        "path": "src/main/java/org/apache/commons/lang3/exception/DefaultExceptionContext.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "16bce45fec8861dd040e3d0231a71acabd6b5160",
+        "path": "src/main/java/org/apache/commons/lang3/stream/Streams.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "b5e6e213e3b06406b944a335b3951b05a755dce8",
+        "path": "src/main/java/org/apache/commons/lang3/text/translate/CharSequenceTranslator.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "47f433f490bfd5da66f2717197995a7b16377625",
+        "path": "src/main/java/org/apache/commons/lang3/text/translate/CodePointTranslator.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "dc83c2820b96095f63d233475037ca7a9da2839f",
+        "path": "src/main/java/org/apache/commons/lang3/text/translate/OctalUnescaper.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "47f433f490bfd5da66f2717197995a7b16377625",
+        "path": "src/main/java/org/apache/commons/lang3/text/translate/UnicodeUnpairedSurrogateRemover.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "8eef2fc92229e47889e66774edd3df0a9f6d6281",
+        "path": "src/main/java/org/apache/commons/lang3/tuple/Pair.java"
+      },
+      {
+        "fixCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "fixTime": "2024-07-31T12:51:04Z",
+        "introducedCommit": "1c2397eb4774032eedd4223b7d3b9ec366d3b685",
+        "path": "src/main/java/org/apache/commons/lang3/tuple/Triple.java"
+      },
+      {
+        "fixCommit": "df4be6cd6e2a8bba13095a4415cfbc80abfbbe5b",
+        "fixTime": "2024-08-21T13:17:10Z",
+        "introducedCommit": "17c32087ad475b043e373e56f2a489d79046334d",
+        "path": "src/main/java/org/apache/commons/lang3/RandomStringUtils.java"
+      },
+      {
+        "fixCommit": "3769c18aaa1071ab3fe222b396db67b0d6f28e14",
+        "fixTime": "2024-08-30T12:41:43Z",
+        "introducedCommit": "1091e835deaf654fa4e88ef74dfc790e0c673c32",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "97a96ba08b6e2fba266c0d391c7c3508714eb572",
+        "fixTime": "2024-08-30T12:42:14Z",
+        "introducedCommit": "3769c18aaa1071ab3fe222b396db67b0d6f28e14",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "fd866a9c2d6c69f9f6462a5e498b58293597d611",
+        "fixTime": "2024-09-11T00:47:24Z",
+        "introducedCommit": "5d3c269193614161daae75946b3f632c65a6d8a8",
+        "path": "src/main/java/org/apache/commons/lang3/RandomStringUtils.java"
+      },
+      {
+        "fixCommit": "fd866a9c2d6c69f9f6462a5e498b58293597d611",
+        "fixTime": "2024-09-11T00:47:24Z",
+        "introducedCommit": "250addd743596599d2d2fd6bed8f04bdd648a3d5",
+        "path": "src/test/java/org/apache/commons/lang3/RandomStringUtilsTest.java"
+      },
+      {
+        "fixCommit": "61580f2c01b0d184c6b14ebd339f694f9e861ecd",
+        "fixTime": "2024-09-11T00:49:42Z",
+        "introducedCommit": "03aba1634dc5a00b7712a7da3ccd4cf70a810ad1",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "346a020b633cf2ee61c459e55c650c056ed090e3",
+        "fixTime": "2024-10-10T20:01:55Z",
+        "introducedCommit": "37cb5a4901a6e794ec9e5b841e8553f225a8a3cc",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "5059d190d9e1df358d0964c9f7cfce2e206b41ea",
+        "fixTime": "2024-10-14T01:54:17Z",
+        "introducedCommit": "b64f71df6dabe0bc144715fabc82c311cf9eb8f0",
+        "path": "README.md"
+      },
+      {
+        "fixCommit": "bd25bdcf802194e39ab101c47a8b16f996d47b9e",
+        "fixTime": "2024-10-14T11:33:39Z",
+        "introducedCommit": "798caa4e51747dfbfceba0af8db7afa4fe629e36",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "972aa7b29a7cb7306b9e0737bac86fa42d6218ac",
+        "fixTime": "2024-10-15T17:31:23Z",
+        "introducedCommit": "479532b83db2d7b228e4128f2db02233f91e6e91",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "972aa7b29a7cb7306b9e0737bac86fa42d6218ac",
+        "fixTime": "2024-10-15T17:31:23Z",
+        "introducedCommit": "569195db85ce0d6e86f8693afdb5af6c82a97183",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsTest.java"
+      },
+      {
+        "fixCommit": "d8faf082bbb5fedc6d19fc3ec89499123b5679d2",
+        "fixTime": "2024-11-02T21:27:35Z",
+        "introducedCommit": "85f91f4208903bb7ca608d51c941214b667d3c06",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "d8faf082bbb5fedc6d19fc3ec89499123b5679d2",
+        "fixTime": "2024-11-02T21:27:35Z",
+        "introducedCommit": "0f28590306ea5ffc7516a9f498fcf8b16531593b",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      },
+      {
+        "fixCommit": "4e228a53509bd8cb01220939906a538dcd1baa40",
+        "fixTime": "2024-11-04T14:19:05Z",
+        "introducedCommit": "af1598229fca5808042ed20f50c36a4fe923c915",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "4e228a53509bd8cb01220939906a538dcd1baa40",
+        "fixTime": "2024-11-04T14:19:05Z",
+        "introducedCommit": "066b9d3047a7429b0e1888f1931f72327641809b",
+        "path": "src/main/java/org/apache/commons/lang3/reflect/TypeUtils.java"
+      },
+      {
+        "fixCommit": "4e228a53509bd8cb01220939906a538dcd1baa40",
+        "fixTime": "2024-11-04T14:19:05Z",
+        "introducedCommit": "b7a2586a314a2b1acfc5d72be2b7f44436910cc1",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/TypeUtilsTest.java"
+      },
+      {
+        "fixCommit": "d08dc8bbf4392f5a234612d74573cf85b7d11fac",
+        "fixTime": "2024-11-04T20:23:56Z",
+        "introducedCommit": "3bf280a4e463a94587f8e58b2d0c71c515cbfaff",
+        "path": "src/main/java/org/apache/commons/lang3/LocaleUtils.java"
+      },
+      {
+        "fixCommit": "6c50a6e5675585e0cfd3536b5294702ac0dbddc2",
+        "fixTime": "2024-11-05T15:00:55Z",
+        "introducedCommit": "56006a6cd7e4687dd74be198839d8a4c2f726de1",
+        "path": "src/test/java/org/apache/commons/lang3/builder/ReflectionDiffBuilderTest.java"
+      },
+      {
+        "fixCommit": "451ee1bf91168df0e26f57d39476b0ec6b32dfa6",
+        "fixTime": "2024-11-29T14:35:55Z",
+        "introducedCommit": "f67af836e8c69644aa87ef916ae7f1b7a9e635c2",
+        "path": "src/conf/spotbugs-exclude-filter.xml"
+      },
+      {
+        "fixCommit": "67c90830ffb7fbc2dbeff6baa2938987d4ab2b36",
+        "fixTime": "2024-12-02T13:37:17Z",
+        "introducedCommit": "63dab1ed37189d73bf2953e728df224446d2bdf2",
+        "path": "src/test/java/org/apache/commons/lang3/RuntimeEnvironmentTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "b7be19dc9f26c86fba870a9d9dcb1391c51b053b",
+        "path": "src/main/java/org/apache/commons/lang3/BooleanUtils.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "5e91a0f9af3ef910ab1e17cd2f0bf45a522bedc7",
+        "path": "src/main/java/org/apache/commons/lang3/StringEscapeUtils.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "e53ac03299baba72a2cb875efb4a8c1c7d374353",
+        "path": "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "5e91a0f9af3ef910ab1e17cd2f0bf45a522bedc7",
+        "path": "src/main/java/org/apache/commons/lang3/concurrent/BackgroundInitializer.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "fa668ef0d929366e78f993ffda70b2dbd436f295",
+        "path": "src/main/java/org/apache/commons/lang3/math/Fraction.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "cdcd915d02b089a62f607670e46b05b475da0050",
+        "path": "src/main/java/org/apache/commons/lang3/text/translate/NumericEntityUnescaper.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4bc3fb504e166aadd14db0dffd25eb631e78e79d",
+        "path": "src/main/java/org/apache/commons/lang3/text/translate/OctalUnescaper.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "5e91a0f9af3ef910ab1e17cd2f0bf45a522bedc7",
+        "path": "src/main/java/org/apache/commons/lang3/time/FastDatePrinter.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "c024925ee942ec453af9293343f4b08d745a9d69",
+        "path": "src/site/resources/checkstyle/checkstyle.xml"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/CharSetTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/ObjectUtilsTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsEqualsIndexOfTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsSubstringTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/math/IEEE754rUtilsTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/mutable/MutableByteTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/mutable/MutableDoubleTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/mutable/MutableFloatTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/mutable/MutableIntTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/mutable/MutableLongTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/mutable/MutableShortTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/reflect/FieldUtilsTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/text/StrBuilderAppendInsertTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/text/StrBuilderTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/text/WordUtilsTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "8e03321d14f176d6a0235e915270fa999121fe5a",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParserSDFTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/FastDateParser_MoreOrLessTest.java"
+      },
+      {
+        "fixCommit": "837e1bc174868f890a2849d7b1c6865f07bef60c",
+        "fixTime": "2024-12-02T14:06:06Z",
+        "introducedCommit": "3c0ac0e87c03ae63a782e48bb31878ec9f114c39",
+        "path": "src/test/java/org/apache/commons/lang3/time/WeekYearTest.java"
+      },
+      {
+        "fixCommit": "c74cbf9fab4e949ad81888f8d29ecf27619a32b3",
+        "fixTime": "2024-12-02T14:13:23Z",
+        "introducedCommit": "3d52296417d630d7a41edd70e23ae223440ef9f2",
+        "path": "src/changes/changes.xml"
+      },
+      {
+        "fixCommit": "f0c370e2c0e90cd34c75a6a14b47dcd418309cde",
+        "fixTime": "2024-12-03T13:54:50Z",
+        "introducedCommit": "4b43be141f9c1ffa56950dc0a77bedcf2b7d5ce9",
+        "path": "src/test/java/org/apache/commons/lang3/StringUtilsContainsTest.java"
+      },
+      {
+        "fixCommit": "f0c370e2c0e90cd34c75a6a14b47dcd418309cde",
+        "fixTime": "2024-12-03T13:54:50Z",
+        "introducedCommit": "19bad1a6cb7430b573c21962ab2e013ef537a8a0",
+        "path": "src/test/java/org/apache/commons/lang3/Supplementary.java"
+      },
+      {
+        "fixCommit": "7d4bbde146fa2afc4f8dadad6c555045d68966b4",
+        "fixTime": "2024-12-03T13:58:43Z",
+        "introducedCommit": "17ba8b9da6a87791446917250b3d92b6925cbff0",
+        "path": "src/changes/changes.xml"
+      }
+    ],
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由简化 SZZ 生成，未处理重命名、跨文件传播与 issue 关联，不是完整 SZZ。",
+      "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。"
+    ],
+    "repository": {
+      "branch": "00efc7500abe2d1a810cb7138995c2dfbe5fa9a2",
+      "head": "00efc7500abe2d1a810cb7138995c2dfbe5fa9a2",
+      "path": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\backend\\.cache\\repositories\\59a656f6c3339b63.git",
+      "resolvedBranch": ""
+    },
+    "szz": {
+      "fixCommits": 130,
+      "labeledCommits": 167,
+      "pattern": "(?i)\\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\\b",
+      "rule": "szz-simple-v1",
+      "unresolved": {
+        "noEarlierChange": 1,
+        "outsideWindow": 77
+      }
+    },
+    "window": {
+      "endEpoch": 1735689600,
+      "since": "2022-01-01",
+      "startEpoch": 1640995200,
+      "until": "2025-01-01"
+    }
+  },
+  "dataset": "mp-commons-lang-v2",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 238372,
+    "name": "mp-commons-lang-v2.csv",
+    "path": "data/collected/jit-current-v2/mp-commons-lang-v2.csv",
+    "sha256": "adb7f725d35c2672e6166700c6d60f233a82d363e36d97f85df43de96b2ed2eb"
+  },
+  "labelEvidenceFile": {
+    "path": "data/collected/jit-current-v2/mp-commons-lang-v2.label-evidence.jsonl",
+    "records": 323,
+    "rule": "szz-simple-v1",
+    "sha256": "d8f0d267067d3e912fd5bd2ed0c0bcdec83e203456d61dc51d5b7b0ce60e87fb"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 92,
+      "outsideWindow": 0,
+      "tooManyFiles": 3,
+      "tooMuchChurn": 2
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 1581,
+    "labelStatusCounts": {
+      "immature": 138,
+      "positive": 154,
+      "unobserved": 1289,
+      "unrecorded": 0
+    },
+    "positiveLabels": 154,
+    "rawRows": 1678
+  },
+  "revision": "00efc7500abe2d1a810cb7138995c2dfbe5fa9a2",
+  "samples": [
+    {
+      "id": "184e20697bd3695135bc3e31c818d5bfa003a516",
+      "time": "2022-01-30T20:04:16Z"
+    },
+    {
+      "id": "1eba02e2a2734f7a6e8ca2338aa0897460da3e77",
+      "time": "2022-01-30T20:19:28Z"
+    },
+    {
+      "id": "41cfe1574ae06b23a4b42e16ca74317eacf47c3a",
+      "time": "2022-01-30T20:30:04Z"
+    },
+    {
+      "id": "1a89cca97e397feaf3c18924b86e74e2b5cda2ac",
+      "time": "2024-12-26T14:32:44Z"
+    },
+    {
+      "id": "62b08ffdbab7a83911a8805bad1dbb22134406b6",
+      "time": "2024-12-27T15:35:27Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v2",
+  "timeRange": {
+    "end": "2024-12-27T15:35:27Z",
+    "endEpoch": 1735313727,
+    "start": "2022-01-30T20:04:16Z",
+    "startEpoch": 1643573056
+  },
+  "url": "https://github.com/apache/commons-lang",
+  "usage": "branch",
+  "version": "mp-commons-lang-v2-2022-01-30_2024-12-27"
+}

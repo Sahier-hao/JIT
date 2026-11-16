@@ -495,10 +495,15 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         record["labelStatus"] = ("positive" if record["label"] else
                                  "immature" if observed_through - record["epoch"] < RECENT_DAYS * 86400
                                  else "unobserved")
+        record["observedThroughEpoch"] = observed_through
+        record["maturityDays"] = RECENT_DAYS
         record["labelNote"] = (None if record["label"]
                                else "未观测到缺陷引入（简化 SZZ），不等于已证实无缺陷")
         record["features"] = [record["metrics"][name] for name in names]
 
+    status_counts = {"positive": 0, "unobserved": 0, "immature": 0}
+    for record in records:
+        status_counts[record["labelStatus"]] += 1
     blob = _csv_bytes(records, names)
     collection = {
         "kind": "git-repository",
@@ -508,6 +513,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         "gitVersion": git_version(),
         "label": {"kind": "simplified-szz", "rule": SZZ_RULE, "version": SZZ_RULE,
                   "observedThrough": observed_through, "maturityDays": RECENT_DAYS,
+                  "statusCounts": status_counts,
                   "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0"},
         "labelEvidence": evidence,
         "szz": {"rule": SZZ_RULE, "pattern": SZZ_PATTERN, "fixCommits": fix_commits,
@@ -533,9 +539,18 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
 def _csv_bytes(records, names):
     stream = io.StringIO()
     writer = csv.writer(stream, lineterminator="\n")
-    writer.writerow(["commit_id", "author_date", "bugcount"] + list(names))
+    has_status = bool(records) and all(
+        {"labelStatus", "observedThroughEpoch", "maturityDays"} <= set(record)
+        for record in records
+    )
+    writer.writerow(["commit_id", "author_date", "bugcount"]
+                    + (["label_status", "observed_through_epoch", "maturity_days"]
+                       if has_status else []) + list(names))
     for record in records:
         cells = [record["id"], record["epoch"], record["label"]]
+        if has_status:
+            cells.extend([record["labelStatus"], record["observedThroughEpoch"],
+                          record["maturityDays"]])
         for name in names:
             value = record["metrics"][name]
             cells.append(repr(value) if isinstance(value, float) else value)

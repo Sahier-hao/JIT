@@ -33,6 +33,7 @@ from .schemas import resolve
 from .splits import resolve_preset, split_records
 from .task_process import OwnedProcess
 from .training import TrainingExecutor
+from .label_maturity import apply_label_maturity, resolve_policy, status_counts
 
 SCHEMA_NAME = collect.SCHEMA_NAME
 GENERIC_SCHEMA = "openstack-six-v1"
@@ -65,7 +66,7 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
            "origin", "feature_schema_version", "distribution_rule", "feature_source_json", "algorithm")
-COLUMNS = (*COLUMNS, "split_preset", "split_policy_json")
+COLUMNS = (*COLUMNS, "split_preset", "split_policy_json", "maturity_policy", "maturity_json")
 
 
 def worker_command():
@@ -196,7 +197,10 @@ def _view(row):
             "distributionRule": item.get('distribution_rule'),
             "splitPreset": item.get('split_preset') or 'temporal-70-15-15',
             "splitPolicy": (json.loads(item['split_policy_json'])
-                            if item.get('split_policy_json') else None)}
+                            if item.get('split_policy_json') else None),
+            "maturityPolicy": item.get('maturity_policy') or 'mature-only',
+            "maturity": (json.loads(item['maturity_json'])
+                         if item.get('maturity_json') else None)}
 
 
 class SyncStorage:
@@ -206,7 +210,12 @@ class SyncStorage:
         self.storage = storage if storage is not None else CatalogStorage()
 
     def create(self, row, *, publish=False):
-        row = {'source_kind': 'branch', 'origin': 'manual', **row}
+        row = {
+            'source_kind': 'branch',
+            'origin': 'manual',
+            'maturity_policy': 'mature-only',
+            **row,
+        }
         columns = ", ".join(COLUMNS)
         placeholders = ", ".join("?" for _ in COLUMNS)
         with self.storage.connection(write=True) as db:
@@ -297,7 +306,7 @@ class SyncStorage:
 
     def find_active(self, *, repository_url, branch, since, until, commit_limit,
                     requested_strategy, requested_model_id=None, resolved_model_id=None,
-                    algorithm=None, split_preset=None):
+                    algorithm=None, split_preset=None, maturity_policy=None):
         placeholders = ", ".join("?" for _ in PROGRESS)
         with self.storage.connection() as db:
             row = db.execute(
@@ -305,9 +314,11 @@ class SyncStorage:
                 "AND until IS ? AND commit_limit IS ? AND requested_strategy=? "
                 f"AND requested_model_id IS ? AND resolved_model_id IS ? AND algorithm IS ? "
                 "AND COALESCE(split_preset,'temporal-70-15-15') IS ? "
+                "AND COALESCE(maturity_policy,'mature-only') IS ? "
                 f"AND source_kind='branch' AND status IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
                 (repository_url, branch, since, until, commit_limit, requested_strategy,
                  requested_model_id, resolved_model_id, algorithm, split_preset,
+                 maturity_policy,
                  *PROGRESS)).fetchone()
         return _view(row) if row is not None else None
 
@@ -562,6 +573,32 @@ def _holdout(records):
     return max(record["epoch"] for record in records) - HOLDOUT_DAYS * 86400
 
 
+def _scoring_maturity(records, policy=None):
+    """Scoring reuses an existing model, so label maturity does not affect admission."""
+    requested = resolve_policy(policy)
+    counts = status_counts(records)
+    observed = {
+        int(record["observedThroughEpoch"])
+        for record in records
+        if record.get("observedThroughEpoch") is not None
+    }
+    maturity = {
+        int(record["maturityDays"])
+        for record in records
+        if record.get("maturityDays") is not None
+    }
+    return {
+        "requestedPolicy": requested,
+        "effectivePolicy": "not-applicable",
+        "releaseEligible": False,
+        "inputRecords": len(records),
+        "excludedImmature": 0,
+        "statusCounts": counts,
+        "observedThroughEpoch": next(iter(observed), None),
+        "maturityDays": next(iter(maturity), None),
+    }
+
+
 def _sample_counts(records, holdout, split_preset=None):
     """按 holdout 切出训练段并试算时间切分，返回样本量与切分错误。"""
     trainable = [record for record in records if record["epoch"] < holdout]
@@ -665,7 +702,7 @@ def sync_input(payload, *, allow_local=False):
     """校验创建作业的输入；返回可直接落库的请求快照。"""
     if not isinstance(payload, dict) or set(payload) - {
         'repositoryUrl', 'branch', 'since', 'until', 'commitLimit', 'strategy',
-        'modelId', 'algorithm', 'splitPreset',
+        'modelId', 'algorithm', 'splitPreset', 'maturityPolicy',
     }:
         raise BaselineError("INPUT_INVALID", "请求体必须只包含公开分析参数")
     url = payload.get("repositoryUrl")
@@ -692,10 +729,11 @@ def sync_input(payload, *, allow_local=False):
         algorithm = algorithm.strip()
         check_method(algorithm, SCHEMA_NAME)
     split_preset = resolve_preset(payload.get('splitPreset'))
+    maturity_policy = resolve_policy(payload.get('maturityPolicy'))
     since, until = _window(payload)
     return {"repositoryUrl": url, "branch": branch.strip(), "since": since, "until": until,
             "commitLimit": limit, "requestedStrategy": strategy, "algorithm": algorithm,
-            "splitPreset": split_preset}
+            "splitPreset": split_preset, "maturityPolicy": maturity_policy}
 
 
 class SyncService:
@@ -847,7 +885,8 @@ class SyncService:
                                                  requested_strategy=data["requestedStrategy"], requested_model_id=model_id,
                                                  resolved_model_id=resolved_model_id,
                                                  algorithm=data.get("algorithm"),
-                                                 split_preset=data["splitPreset"])
+                                                 split_preset=data["splitPreset"],
+                                                 maturity_policy=data["maturityPolicy"])
                 if existing is not None:
                     return self.get(existing['syncId']), False
                 repository_id = self._ensure_repository(data["repositoryUrl"], data["branch"], now)
@@ -860,6 +899,7 @@ class SyncService:
                               "stage": "queued", "request_id": request_id, "requested_model_id": model_id,
                               "resolved_model_id": resolved_model_id, "algorithm": data.get("algorithm"),
                               "split_preset": data["splitPreset"],
+                              "maturity_policy": data["maturityPolicy"],
                               "source_kind": 'pr' if _pr_source is not None else 'branch',
                               "source_snapshot_id": _pr_source['snapshotId'] if _pr_source is not None else None,
                               "origin": 'automatic' if _automatic else 'manual',
@@ -1253,6 +1293,16 @@ class SyncService:
 
             self._step(sync_id, "registering", started)
             manifest_path, version, trainable = self._persist(sync_id, item, collected)
+            if item["requestedStrategy"] == GENERIC:
+                maturity = _scoring_maturity(records, item.get("maturityPolicy"))
+            else:
+                trainable, maturity = apply_label_maturity(
+                    trainable, item.get("maturityPolicy")
+                )
+            self.sync.update(
+                sync_id,
+                maturity_json=json.dumps(maturity, ensure_ascii=False, sort_keys=True),
+            )
 
             self._step(sync_id, "training", started)
             holdout = _holdout(trainable)
@@ -1271,6 +1321,7 @@ class SyncService:
                     channel="repository-sync", request_id=item.get("requestId"),
                     holdout=holdout,
                     split_preset=item["splitPreset"],
+                    maturity_policy=item.get("maturityPolicy"),
                     model_name=training_model_name(item["repositoryUrl"], version, method,
                                                    dataset_schema.name, len(dataset_schema.in_model_names())))
                 split = artifacts.read_json(self.artifact_root / trained["artifactKey"] / "split.json")

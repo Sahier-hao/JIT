@@ -4,6 +4,7 @@ from pathlib import Path
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .datasets import load_all, load_manifest
+from .label_maturity import apply_label_maturity, resolve_policy
 from .splits import PARTITIONS, preset_view, resolve_preset, split_records
 
 
@@ -22,9 +23,10 @@ def _records(manifest):
     return records
 
 
-def dataset_split_preview(dataset_root, dataset_version, preset=None):
+def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_policy=None):
     """Return a no-write preview; invalid membership is data, not a failed request."""
     preset = resolve_preset(preset)
+    maturity_policy = resolve_policy(maturity_policy)
     registered = load_all(dataset_root)
     dataset = registered.get(dataset_version)
     if dataset is None:
@@ -33,12 +35,32 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None):
     manifest_path = declared if declared.is_absolute() else BACKEND / declared
     manifest = load_manifest(manifest_path)
     records = _records(manifest)
+    try:
+        records, maturity = apply_label_maturity(records, maturity_policy)
+    except BaselineError as exc:
+        return {
+            "datasetVersion": dataset_version,
+            "schemaName": manifest["schemaName"],
+            "preset": preset_view(preset),
+            "timezone": "UTC",
+            "datasetRecords": 0,
+            "eligibleRecords": 0,
+            "maturityPolicy": maturity_policy,
+            "maturity": None,
+            "available": False,
+            "reason": {"code": exc.code, "message": str(exc)},
+            "partitions": None,
+            "policy": None,
+        }
     base = {
         "datasetVersion": dataset_version,
         "schemaName": manifest["schemaName"],
         "preset": preset_view(preset),
         "timezone": "UTC",
-        "datasetRecords": len(records),
+        "datasetRecords": maturity["inputRecords"],
+        "eligibleRecords": len(records),
+        "maturityPolicy": maturity_policy,
+        "maturity": maturity,
     }
     try:
         split, _, policy = split_records(records, preset)
@@ -68,8 +90,8 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None):
     }
 
 
-def validate_dataset_split(dataset_root, dataset_version, preset=None):
-    preview = dataset_split_preview(dataset_root, dataset_version, preset)
+def validate_dataset_split(dataset_root, dataset_version, preset=None, maturity_policy=None):
+    preview = dataset_split_preview(dataset_root, dataset_version, preset, maturity_policy)
     if not preview["available"]:
         reason = preview["reason"]
         raise BaselineError(reason["code"], reason["message"])

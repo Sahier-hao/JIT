@@ -16,6 +16,7 @@ from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
 from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
+from .label_maturity import apply_label_maturity
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
 from .model import apply_class_policy, feature_matrix, fit_model, predict_risks
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
@@ -28,7 +29,7 @@ CORE_FILES = ("source.json", "split.json", "test-input.json", "test-labels.json"
 SERVICE_FILES = ("source.json", "split.json", "test-input.json", "model.joblib", "metrics.json", "summary.json")
 TRAINING_CODE = ("config.py", "data.py", "model.py", "metrics.py", "artifacts.py",
                  "schemas.py", "algorithms.py", "errors.py", "deep.py", "trends.py",
-                 "splits.py")
+                 "splits.py", "label_maturity.py")
 KAMEI14_FIELDS = ("ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix",
                   "ndev", "age", "nuc", "exp", "rexp", "sexp")
 # 每个运行都记录的基础依赖；方法可在其声明里追加自己需要的包（PDB-11）。
@@ -196,7 +197,7 @@ def training_performance(duration_seconds, split):
 
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
               holdout=None, embedding_dir=None, model_name=None, class_policy=None,
-              split_preset=None):
+              split_preset=None, maturity_policy=None, split_override=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
@@ -260,6 +261,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         else:
             dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": list(schema.in_model_names()),
                                                        "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
+    input_record_count = len(records)
+    records, maturity = apply_label_maturity(records, maturity_policy)
     semantic_meta = None
     if schema.semantic and dataset_manifest is None:
         raise BaselineError("DATASET_INVALID", "语义 schema 需要带文本的数据集描述文件")
@@ -286,7 +289,40 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         if not trainable:
             raise BaselineError("SPLIT_INVALID", "holdout 之前没有可训练记录，无法完成时间切分")
     split_preset = resolve_preset(split_preset)
-    split, boundaries, split_policy = split_records(trainable, split_preset)
+    if split_override is not None:
+        if holdout is not None:
+            raise BaselineError("SPLIT_INVALID", "显式成员切分不能与 holdout 同时使用")
+        if not isinstance(split_override, dict):
+            raise BaselineError("SPLIT_INVALID", "显式成员切分必须是对象")
+        partitions = split_override.get("partitions")
+        policy = split_override.get("policy")
+        if not isinstance(partitions, dict) or set(partitions) != set(PARTITIONS):
+            raise BaselineError("SPLIT_INVALID", "显式成员切分缺少训练、验证或测试分区")
+        if not isinstance(policy, dict):
+            raise BaselineError("SPLIT_INVALID", "显式成员切分缺少策略声明")
+        by_id = {record["id"]: record for record in trainable}
+        split = {}
+        seen = set()
+        for name in PARTITIONS:
+            ids = partitions[name]
+            if (not isinstance(ids, list) or not ids
+                    or any(not isinstance(item, str) for item in ids)):
+                raise BaselineError("SPLIT_INVALID", f"{name} 分区成员无效")
+            split[name] = [by_id[item] for item in ids if item in by_id]
+            if len(split[name]) != len(ids) or seen & set(ids):
+                raise BaselineError("SPLIT_INVALID", "显式切分包含未知或重复成员")
+            seen.update(ids)
+        if seen != set(by_id):
+            raise BaselineError("SPLIT_INVALID", "显式切分没有覆盖全部可训练记录")
+        if any({record["label"] for record in split[name]} != {0, 1}
+               for name in ("train", "test")):
+            raise BaselineError("SPLIT_INVALID", "训练与测试必须包含两类发布标签")
+        boundaries = list(split_override.get("boundaries") or [])
+        split_policy = policy
+        explicit_split_rule = split_override.get("rule")
+    else:
+        split, boundaries, split_policy = split_records(trainable, split_preset)
+        explicit_split_rule = None
     started = time.perf_counter()
     _, _, class_summary = apply_class_policy(split["train"], class_policy)
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
@@ -303,7 +339,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
              for key, part in split.items()}
     summary_split = {key: {k: v for k, v in stat.items() if k != "ids"}
                      for key, stat in stats.items()}
-    scale = data_scale(summary_split, schema, total_records=len(records),
+    scale = data_scale(summary_split, schema, total_records=input_record_count,
                        trainable_records=len(trainable))
     performance = training_performance(training_seconds, split)
     if dataset_manifest is not None:
@@ -321,7 +357,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     # No usable manifest exists until every artifact is written and checked.
     output.mkdir(parents=True)
     write_json(output / "source.json", source)
-    split_rule = rule_text(split_preset)
+    split_rule = explicit_split_rule or rule_text(split_preset)
     if holdout is not None:
         split_rule += f"; only records with epoch < {int(holdout)}"
     write_json(output / "split.json", {
@@ -347,6 +383,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
               "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
               "splitPolicy": split_policy,
               "splitPreset": split_preset,
+              "maturityPolicy": maturity,
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
     if declared:
         config["datasetManifest"] = {"path": manifest_relative(manifest_file),
@@ -366,6 +403,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
                "split": summary_split, "splitPolicy": split_policy, "splitRule": split_rule,
+               "maturity": maturity,
                "metrics": metrics, "metricsByPartition": partitioned_metrics,
                "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
                "dataScale": scale, "trainingPerformance": performance,
@@ -391,6 +429,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         command += f" --holdout {int(holdout)}"
     if split_preset != DEFAULT_PRESET:
         command += f" --split-preset {split_preset}"
+    if maturity["requestedPolicy"] != "mature-only":
+        command += f" --maturity-policy {maturity['requestedPolicy']}"
     if embedding_dir is not None:
         command += f" --embedding-dir {Path(embedding_dir).as_posix()}"
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,

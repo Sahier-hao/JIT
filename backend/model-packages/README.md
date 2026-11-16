@@ -6,6 +6,8 @@
 
 - `jit-nine-models-v1.zip`：包含九种标准方法的模型文件、manifest、摘要、数据集版本、schema、依赖声明、运行身份和逐文件 SHA-256。
 - `jit-nine-models-v1.zip.sha256`：ZIP 字节的总 SHA-256，由目录初始化在导入前核对。
+- `jit-current-v2-models-v1.zip`：当前 `kamei14-git-v2` 四项目正式基线，包含 4 个经典和 4 个深度合格模型、8 份发布报告及徐卓航批准的 `mlp-v1` 默认候选。
+- `jit-current-v2-models-v1.zip.sha256`：当前 v2 正式包总 SHA-256；目录初始化先完成发布报告、覆盖和默认批准一致性预检，再登记模型。
 
 包内不包含 SQLite 目录库、项目、账户、会话、运行期证据或未登记实验。解包后的 `backend/artifacts/` 仍由 `catalog-init` 在目标环境生成并保持 Git 忽略。
 

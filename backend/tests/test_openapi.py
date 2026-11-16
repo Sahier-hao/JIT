@@ -140,6 +140,17 @@ def test_experiment_run_contract_and_promotion(settings):
         )
         assert detail['artifactRunId'] == run['artifactRunId']
         location = run['locations'][0]
+        from jit_baseline.release_qualification import write_release_report
+        report, _ = write_release_report(
+            settings['artifact_root'] / location['artifactKey'],
+        )
+        evaluated = validate_response(
+            client.get(f"/api/v1/experiment-runs/{run['candidateId']}"),
+            '/api/v1/experiment-runs/{candidateId}',
+        )
+        assert evaluated['releaseStatus'] == 'unqualified'
+        assert evaluated['releaseReportId'] == report['reportId']
+        assert evaluated['releaseReport']['reportId'] == report['reportId']
         promotion = validate_response(client.post('/api/v1/experiment-runs/promote', json={'items': [{
             'candidateId': location['candidateId'],
             'expectedManifestSha256': location['manifestSha256'],

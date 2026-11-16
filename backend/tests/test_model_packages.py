@@ -577,3 +577,236 @@ def test_package_metadata_must_match_the_embedded_manifest(tmp_path, real_run):
     with pytest.raises(BaselineError) as error:
         inspect_model_package(changed)
     assert error.value.code == "PACKAGE_INVALID"
+
+
+def _current_schema_package(tmp_path, *, report_status="qualified", approval_report=None):
+    from jit_baseline.algorithms import ALGORITHMS
+    from jit_baseline.artifacts import identity
+    from jit_baseline.release_qualification import (
+        REPORT_KIND,
+        REPORT_VERSION,
+        REQUIRED_POLICY,
+        release_identity_payload,
+    )
+
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    method_names = [
+        method for method, entry in ALGORITHMS.items()
+        if method != "gaussian-naive-bayes-v1"
+    ]
+    assert len(method_names) == 8
+    package = tmp_path / "jit-current-v2-models-v1.zip"
+    models = []
+    with zipfile.ZipFile(package, "w") as archive:
+        for index, method in enumerate(method_names):
+            source_model_id = f"00000000-0000-4000-8000-{index:012d}"
+            run_id = sha256(f"run:{method}".encode("ascii"))
+            model_sha = sha256(f"model:{method}".encode("ascii"))
+            item = {
+                "sourceModelId": source_model_id,
+                "artifactRunId": run_id,
+                "method": method,
+                "datasetVersion": "jit-current-v2-pooled",
+                "schema": "kamei14-git-v2",
+                "model": {"id": method, "name": method, "sha256": model_sha},
+                "packagePath": f"models/{index:03d}",
+            }
+            models.append(item)
+            artifact = {
+                "runId": run_id,
+                "modelSha256": model_sha,
+                "schema": "kamei14-git-v2",
+                "datasetVersion": "jit-current-v2-pooled",
+                "datasetSha256": sha256(b"dataset"),
+                "splitSha256": sha256(b"split"),
+                "maturity": {
+                    "requestedPolicy": "mature-only",
+                    "effectivePolicy": "mature-only",
+                },
+            }
+            report = {
+                "kind": REPORT_KIND,
+                "reportVersion": REPORT_VERSION,
+                "reportId": identity(release_identity_payload(
+                    artifact, [], REQUIRED_POLICY,
+                )),
+                "status": report_status,
+                "artifact": artifact,
+                "assessment": {"policy": REQUIRED_POLICY},
+                "projects": [],
+            }
+            report_id = report["reportId"]
+            archive.writestr(
+                f"{item['packagePath']}/release-report.json",
+                json.dumps(report),
+            )
+            if index == 0:
+                approval = {
+                    "artifactRunId": run_id,
+                    "modelSha256": model_sha,
+                    "releaseReportId": approval_report or report_id,
+                    "modelId": source_model_id,
+                    "approvedBy": "test-reviewer",
+                    "approvedAt": "2026-11-16T00:00:00Z",
+                }
+                archive.writestr(
+                    f"{item['packagePath']}/release-approval.json",
+                    json.dumps(approval),
+                )
+    _write_checksum(package)
+    return package, models
+
+
+class _CurrentSchemaCatalog:
+    def __init__(self, root, models):
+        self.root = root
+        self._models = models
+        self.policy_updates = []
+        self.store = object()
+
+    def models(self):
+        return self._models
+
+    def update_policy(self, model_id, payload):
+        self.policy_updates.append((model_id, payload))
+
+
+def test_current_schema_package_sets_only_one_default_on_an_empty_catalog(
+        tmp_path, monkeypatch):
+    from jit_baseline import model_packages
+
+    package, items = _current_schema_package(tmp_path)
+    catalog = _CurrentSchemaCatalog(tmp_path / "artifacts", [])
+    imported = []
+
+    monkeypatch.setattr(model_packages, "inspect_model_package", lambda path: {
+        "models": items,
+        "packageSha256": sha256(Path(path).read_bytes()),
+        "packageVersion": 1,
+        "modelCount": len(items),
+    })
+
+    def fake_import(target, path):
+        imported.append(path)
+        return {
+            "status": "completed",
+            "items": [
+                {
+                    "artifactRunId": item["artifactRunId"],
+                    "modelId": item["sourceModelId"],
+                    "status": "registered",
+                }
+                for item in items
+            ],
+        }
+
+    monkeypatch.setattr(model_packages, "import_model_package", fake_import)
+    result = model_packages.import_current_schema_model_package(catalog, package)
+    assert imported == [package]
+    assert result["defaultModelId"] == items[0]["sourceModelId"]
+    assert catalog.policy_updates == [(items[0]["sourceModelId"], {"isDefault": True})]
+
+
+def test_current_schema_package_preserves_existing_default_and_rejects_unqualified_models(
+        tmp_path, monkeypatch):
+    from jit_baseline import model_packages
+    from jit_baseline.errors import BaselineError
+
+    package, items = _current_schema_package(tmp_path)
+    catalog = _CurrentSchemaCatalog(tmp_path / "artifacts", [{"modelId": "existing"}])
+    imported = []
+    monkeypatch.setattr(model_packages, "inspect_model_package", lambda path: {
+        "models": items,
+        "packageSha256": sha256(Path(path).read_bytes()),
+        "packageVersion": 1,
+        "modelCount": len(items),
+    })
+    monkeypatch.setattr(model_packages, "import_model_package", lambda target, path: (
+        imported.append(path) or {
+            "status": "completed",
+            "items": [
+                {
+                    "artifactRunId": item["artifactRunId"],
+                    "modelId": item["sourceModelId"],
+                    "status": "registered",
+                }
+                for item in items
+            ],
+        }
+    ))
+    result = model_packages.import_current_schema_model_package(catalog, package)
+    assert result["defaultModelId"] is None
+    assert catalog.policy_updates == []
+
+    unqualified, unqualified_items = _current_schema_package(
+        tmp_path / "unqualified", report_status="unqualified",
+    )
+    imported.clear()
+    monkeypatch.setattr(model_packages, "inspect_model_package", lambda path: {
+        "models": unqualified_items,
+        "packageSha256": sha256(Path(path).read_bytes()),
+        "packageVersion": 1,
+        "modelCount": len(unqualified_items),
+    })
+    with pytest.raises(BaselineError) as error:
+        model_packages.import_current_schema_model_package(catalog, unqualified)
+    assert error.value.code == "PACKAGE_INVALID"
+    assert imported == []
+
+
+def test_committed_current_schema_package_initializes_and_preserves_existing_policy(tmp_path):
+    from jit_baseline.model_packages import (
+        BUNDLED_PACKAGE_PATH,
+        CURRENT_SCHEMA_PACKAGE_PATH,
+        import_bundled_model_package,
+        import_current_schema_model_package,
+        inspect_model_package,
+    )
+    from jit_baseline.release_reports import ReleaseReportService
+
+    inspected = inspect_model_package(CURRENT_SCHEMA_PACKAGE_PATH)
+    assert inspected["modelCount"] == 8
+    assert inspected["fileCount"] == 81
+    assert {item["schema"] for item in inspected["models"]} == {"kamei14-git-v2"}
+    with zipfile.ZipFile(CURRENT_SCHEMA_PACKAGE_PATH) as archive:
+        names = archive.namelist()
+    assert not [name for name in names if name.endswith((".sqlite3", ".sqlite"))]
+    assert sum(name.endswith("/release-report.json") for name in names) == 8
+    assert sum(name.endswith("/release-approval.json") for name in names) == 1
+
+    empty = _catalog(tmp_path, "current-empty")
+    imported = import_current_schema_model_package(empty, CURRENT_SCHEMA_PACKAGE_PATH)
+    assert imported["status"] == "completed"
+    assert imported["registeredCount"] == 8
+    assert imported["defaultModelId"]
+    default = next(item for item in empty.models() if item["modelId"] == imported["defaultModelId"])
+    assert default["method"] == "mlp-v1"
+    assert default["featureSchemaVersion"] == "kamei14-git-v2"
+    releases = ReleaseReportService([empty.root])
+    for model in empty.models():
+        entry, error = releases.for_run(
+            model["artifactRunId"], model_sha256=model["sha256"],
+            schema=model["featureSchemaVersion"],
+        )
+        assert error is None
+        assert entry["report"]["status"] == "qualified"
+    approved = releases.for_run(
+        default["artifactRunId"], model_sha256=default["sha256"],
+        schema=default["featureSchemaVersion"],
+    )[0]["report"]["approvedDefault"]
+    assert approved["approvedBy"] == "徐卓航"
+
+    existing = _catalog(tmp_path, "current-existing")
+    bundled = import_bundled_model_package(existing, BUNDLED_PACKAGE_PATH)
+    assert bundled["status"] == "completed"
+    old_default = existing.default_model_id()
+    other = next(item["modelId"] for item in existing.models()
+                 if item["modelId"] != old_default)
+    existing.update_policy(other, {"enabled": False})
+    before_count = len(existing.models())
+    preserved = import_current_schema_model_package(existing, CURRENT_SCHEMA_PACKAGE_PATH)
+    assert preserved["status"] == "completed"
+    assert preserved["defaultModelId"] is None
+    assert existing.default_model_id() == old_default
+    assert existing.policy(other)["enabled"] is False
+    assert len(existing.models()) == before_count + 8

@@ -1,0 +1,54 @@
+{
+  "kind": "current-schema-source-and-license-audit",
+  "generatedUtc": "2026-11-16T13:00:00Z",
+  "boundary": "The release redistributes derived tabular features, models, metrics and frozen test evidence only. It does not redistribute upstream source repositories. This records provenance and observed license declarations; it is not a legal opinion.",
+  "sources": [
+    {
+      "dataset": "mp-commons-lang-v2",
+      "url": "https://github.com/apache/commons-lang",
+      "revision": "00efc7500abe2d1a810cb7138995c2dfbe5fa9a2",
+      "licenseFiles": ["LICENSE.txt", "NOTICE.txt"],
+      "observedLicense": "Apache License 2.0"
+    },
+    {
+      "dataset": "mp-vue-core-v2",
+      "url": "https://github.com/vuejs/core",
+      "revision": "24c9d0bffb2299635b8112a978d74a38723aaa10",
+      "licenseFiles": ["LICENSE"],
+      "observedLicense": "MIT"
+    },
+    {
+      "dataset": "mp-redis-v2",
+      "url": "https://github.com/redis/redis",
+      "revision": "6a5fee67583480de1fec323649f43fd000001b49",
+      "licenseFiles": ["LICENSE.txt"],
+      "observedLicense": "RSALv2 OR SSPLv1 OR AGPLv3"
+    },
+    {
+      "dataset": "mp-scikit-learn-v2",
+      "url": "https://github.com/scikit-learn/scikit-learn",
+      "revision": "583b8c40912b9b57f59fd4ab2f63d961e6dafe57",
+      "licenseFiles": ["COPYING"],
+      "observedLicense": "BSD 3-Clause"
+    }
+  ],
+  "packages": [
+    {
+      "path": "backend/model-packages/jit-nine-models-v1.zip",
+      "bytes": 6213040,
+      "scope": "legacy openstack-six-v1 compatibility"
+    },
+    {
+      "path": "backend/model-packages/jit-current-v2-models-v1.zip",
+      "bytes": 5131768,
+      "sha256": "f90e8f4d7d6b04518a44654d50a3da40b9d83f2f1c042a2cf4357ec91ab81972",
+      "scope": "current kamei14-git-v2 release"
+    }
+  ],
+  "volume": {
+    "packageCombinedBytes": 11344808,
+    "singlePackageUnder100MiB": true,
+    "rawRepositoriesCommitted": false,
+    "sqliteCommitted": false
+  }
+}

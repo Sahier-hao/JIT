@@ -23,6 +23,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [metricSet, setMetricSet] = useState('metric-set-v2')
   const [classPolicy, setClassPolicy] = useState<'none' | 'weights' | 'sample'>('none')
   const [splitPreset, setSplitPreset] = useState('temporal-70-15-15')
+  const [maturityPolicy, setMaturityPolicy] = useState<'mature-only' | 'include-immature'>('mature-only')
   const [splitPreview, setSplitPreview] = useState<SplitPreview | null>(null)
   const [splitPreviewError, setSplitPreviewError] = useState('')
   const [splitPreviewBusy, setSplitPreviewBusy] = useState(false)
@@ -47,12 +48,12 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     if (!selected) return
     const controller = new AbortController()
     setSplitPreviewBusy(true); setSplitPreviewError(''); setSplitPreview(null)
-    previewDatasetSplit(selected.version, splitPreset, controller.signal)
+    previewDatasetSplit(selected.version, splitPreset, controller.signal, maturityPolicy)
       .then(value => { if (!controller.signal.aborted) setSplitPreview(value) })
       .catch(failure => { if (!controller.signal.aborted) setSplitPreviewError(failure instanceof Error ? failure.message : '切分预览失败') })
       .finally(() => { if (!controller.signal.aborted) setSplitPreviewBusy(false) })
     return () => controller.abort()
-  }, [selected?.version, splitPreset])
+  }, [selected?.version, splitPreset, maturityPolicy])
   if (!selected) return null
   const quality = selected.quality
   const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
@@ -61,7 +62,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     try {
       const task = await createTrainingTask(selected!.version, selectedMethod, metricSet,
                                             classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
-                                            splitPreset)
+                                            splitPreset, maturityPolicy)
       navigate({ name: 'admin', view: 'training', resourceId: task.taskId })
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) expired()
@@ -126,6 +127,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>CSV SHA-256</dt><dd><code>{valueLabel(selected.file.sha256)}</code></dd></div>
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
+        <div><dt>标签成熟</dt><dd>{selected.labelMaturity?.available ? Object.entries((selected.labelMaturity.statusCounts ?? {}) as Row).map(([name, count]) => `${name} ${valueLabel(count)}`).join(' · ') : valueLabel(selected.labelMaturity?.reason, '成熟状态未记录')}</dd></div>
       </dl></section>
       <section><h2>来源</h2><dl className="admin-facts">
         <div><dt>发布者</dt><dd>{valueLabel(selected.source.publisher)}</dd></div>
@@ -176,6 +178,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       <Select ariaLabel="指标集" value={metricSet} onChange={setMetricSet} options={[{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]}/>
       <Select ariaLabel="训练分区类别策略" value={classPolicy} onChange={value => setClassPolicy(value as 'none' | 'weights' | 'sample')} options={[{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]}/>
       <Select ariaLabel="时间切分预设" value={splitPreset} onChange={setSplitPreset} options={[...SPLIT_PRESETS]}/>
+      <Select ariaLabel="标签成熟策略" value={maturityPolicy} onChange={value => setMaturityPolicy(value as 'mature-only' | 'include-immature')} options={[{ value: 'mature-only', label: '正式：排除未成熟标签' }, { value: 'include-immature', label: '敏感性：包含未成熟标签' }]}/>
       <Button variant="primary" loading={busy} disabled={!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available} onClick={() => void train()}>创建训练任务</Button>
     </div></section>
     <section className="admin-train-panel"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
@@ -190,7 +193,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
             </dl></section>
           })}
         </div>}
-        <p className="admin-report-meta">时区 {splitPreview.timezone}；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
+        <p className="admin-report-meta">时区 {splitPreview.timezone}；原始 {splitPreview.datasetRecords} 条，成熟策略后 {splitPreview.eligibleRecords} 条；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
       </> : null}
     </section>
     <Dialog open={confirmCleanup} onOpenChange={setConfirmCleanup} title="确认清理 PR 数据集？" width={460}

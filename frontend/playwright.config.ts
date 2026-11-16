@@ -18,6 +18,7 @@ export default defineConfig({
     '**/experiment-model-promotion.spec.ts',
     '**/model-package-recovery.spec.ts',
     '**/bundled-model-bootstrap.spec.ts',
+    '**/current-schema-release.spec.ts',
   ],
   outputDir: './test-results/default',
   globalSetup: './e2e/repository-setup.ts',

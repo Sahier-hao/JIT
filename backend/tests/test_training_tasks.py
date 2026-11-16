@@ -33,6 +33,7 @@ def wait_for(test, timeout=8):
 
 
 def successful_runner(manifest, algorithm, metric_set, **kwargs):
+    requested = kwargs.get("maturity_policy", "mature-only")
     return {
         "artifactKey": kwargs["output_key"],
         "artifactRunId": "a" * 64,
@@ -60,6 +61,16 @@ def successful_runner(manifest, algorithm, metric_set, **kwargs):
             "boundaries": [],
             "partitionCounts": {},
             "memberSha256": "c" * 64,
+        },
+        "maturity": {
+            "requestedPolicy": requested,
+            "effectivePolicy": "mature-only",
+            "releaseEligible": True,
+            "inputRecords": 6,
+            "excludedImmature": 0,
+            "statusCounts": {"positive": 3, "unobserved": 3, "immature": 0, "unrecorded": 0},
+            "observedThroughEpoch": 1700000000,
+            "maturityDays": 90,
         },
     }
 
@@ -126,6 +137,21 @@ def test_split_preset_is_part_of_active_reuse_identity(service):
         release.set()
 
 
+def test_maturity_policy_is_preserved_and_part_of_active_reuse_identity(service):
+    release = threading.Event()
+    service._executor.submit(release.wait)
+    try:
+        first, first_created = service.create(payload(), created_by="admin")
+        sensitivity, sensitivity_created = service.create(
+            dict(payload(), maturityPolicy="include-immature"), created_by="admin")
+        assert first_created and sensitivity_created
+        assert first["taskId"] != sensitivity["taskId"]
+        assert first["maturityPolicy"] == "mature-only"
+        assert sensitivity["maturityPolicy"] == "include-immature"
+    finally:
+        release.set()
+
+
 def test_success_returns_real_metrics_and_lineage(service):
     task, created = service.create(payload(), created_by="admin")
     assert created
@@ -141,6 +167,7 @@ def test_success_returns_real_metrics_and_lineage(service):
     assert completed["splitPolicy"]["id"] == "temporal-70-15-15"
     assert completed["dataScale"]["records"] == 6
     assert completed["trainingPerformance"]["trainingRecords"] == 3
+    assert completed["maturity"]["effectivePolicy"] == "mature-only"
     assert completed["error"] is None
 
 
@@ -166,6 +193,7 @@ def test_failure_is_recorded_and_retry_creates_parented_task(tmp_path, storage):
         assert retried["datasetVersion"] == first["datasetVersion"]
         assert retried["method"] == first["method"]
         assert retried["splitPreset"] == "temporal-60-20-20"
+        wait_for(lambda: len(seen) == 2)
         assert seen == ["temporal-60-20-20", "temporal-60-20-20"]
     finally:
         service.close()
@@ -333,7 +361,7 @@ def test_training_task_migration_preserves_old_rows_and_is_idempotent(tmp_path):
     storage.initialize()
     with storage.connection() as db:
         assert tuple(db.execute("SELECT * FROM repository_sync").fetchone()) == before + (
-            None, 'logistic-regression-l2-v1', None, None)
+            None, 'logistic-regression-l2-v1', None, None, 'mature-only', None)
         assert db.execute("SELECT COUNT(*) FROM training_task").fetchone()[0] == 0
         assert db.execute("SELECT version FROM schema_migration").fetchone()[0] == MIGRATIONS[-1][0]
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
@@ -352,6 +380,8 @@ def test_real_training_executor_verifies_and_registers(tmp_path):
         output_key="training-task-real-test", channel="training-task", request_id="request")
     assert result["runId"] and result["modelId"] and result["artifactRunId"]
     assert result["metrics"]["averagePrecision"]["value"] is not None
+    assert result["maturity"]["effectivePolicy"] == "legacy-unrecorded"
+    assert result["maturity"]["releaseEligible"] is False
     assert (root / "training-task-real-test" / "manifest.json").is_file()
 
 
@@ -373,6 +403,10 @@ def test_isolated_worker_completes_a_real_task(tmp_path):
         assert completed["status"] == "succeeded", completed
         assert completed["runId"] and completed["artifactRunId"] and completed["modelId"]
         assert completed["metrics"]["averagePrecision"]["value"] is not None
+        assert completed["releaseStatus"] == "unqualified"
+        assert completed["releaseReportId"]
+        assert any(gate["id"] == "maturity-policy"
+                   for gate in completed["release"]["assessment"]["gates"])
     finally:
         service.close()
 
