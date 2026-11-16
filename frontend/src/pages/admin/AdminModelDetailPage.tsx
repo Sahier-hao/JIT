@@ -6,7 +6,16 @@ import { EmptyState, LoadingNotice } from '../../Feedback'
 import { Button } from '../../ui/controls'
 import type { Route } from '../../navigation'
 import { ModelCardView } from '../../components/ModelCardView'
+import { ModelEvaluationEvidence } from '../../components/ModelEvaluationEvidence'
 import { AdminPageHeader, MetricGrid } from './AdminShared'
+
+function parameterText(parameters: unknown): string {
+  if (parameters == null || typeof parameters !== 'object') return '未记录'
+  return Object.entries(parameters as Record<string, unknown>)
+    .filter(([key]) => !['threads', 'seed', 'hidden', 'deep', 'd_token', 'heads', 'layers'].includes(key))
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? `[${value.join(',')}]` : String(value)}`)
+    .join(' · ')
+}
 
 export function AdminModelDetailPage({ modelId, navigate, expired }: {
   modelId: string
@@ -32,10 +41,13 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
     <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'models' })}>返回模型列表</Button><Button onClick={() => navigate({ name: 'admin', view: 'comparisons', models: [model.modelId] })}>加入比较</Button></div>
     <div className="admin-status-line"><span className="source-chip">{model.state === 'ready' ? '已校验' : '不可用'}</span><span>{model.enabled ? '已启用' : '已停用'}</span>{model.isDefault ? <strong>默认模型</strong> : null}</div>
     {model.card ? <ModelCardView card={model.card}/> : <><MetricGrid metrics={model.metrics}/><BenefitSection modelId={modelId} expired={expired}/></>}
+    <ModelEvaluationEvidence method={model.card?.method ?? model.method ?? null} expired={expired}/>
     <div className="admin-detail-grid">
       <section><h2>身份与能力</h2><dl className="admin-facts">
         <div><dt>模型</dt><dd><code>{model.modelId}</code></dd></div>
         <div><dt>方法</dt><dd>{model.method}</dd></div>
+        <div><dt>实际参数</dt><dd>{parameterText(model.parameters)}</dd></div>
+        <div><dt>所有者</dt><dd>{model.ownerUserId ? model.ownerUserId : '共享'}</dd></div>
         <div><dt>特征 schema</dt><dd>{model.featureSchemaVersion}</dd></div>
         <div><dt>业务运行</dt><dd><code>{model.runId}</code></dd></div>
         <div><dt>原产物运行</dt><dd><code>{model.artifactRunId}</code></dd></div>

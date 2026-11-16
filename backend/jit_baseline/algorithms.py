@@ -155,6 +155,114 @@ ALGORITHMS = {
 
 DEFAULT_ALGORITHM = "logistic-regression-l2-v1"
 
+# 可配置训练的参数契约版本。显式提供参数时写入运行配置；没有该字段的既有运行
+# 继续按注册表冻结参数严格校验。
+PARAMETER_CONTRACT = "training-params-v1"
+
+# 受控参数声明：只允许这里列出的键，键必须在方法冻结参数中已存在。
+# 值声明类型（int/float）与闭区间 [min, max]；不支持任意 estimator 或表达式。
+PARAM_SPECS = {
+    "logistic-regression-l2-v1": {
+        "C": {"type": "float", "min": 0.01, "max": 100.0},
+        "max_iter": {"type": "int", "min": 100, "max": 5000},
+    },
+    "decision-tree-v1": {
+        "max_depth": {"type": "int", "min": 1, "max": 32},
+        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000},
+    },
+    "random-forest-v1": {
+        "n_estimators": {"type": "int", "min": 10, "max": 1000},
+        "max_depth": {"type": "int", "min": 1, "max": 32},
+        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000},
+    },
+    "gradient-boosting-v1": {
+        "n_estimators": {"type": "int", "min": 10, "max": 1000},
+        "max_depth": {"type": "int", "min": 1, "max": 16},
+        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000},
+    },
+    "mlp-v1": {
+        "epochs": {"type": "int", "min": 1, "max": 200},
+        "lr": {"type": "float", "min": 1e-5, "max": 1e-1},
+        "batch_size": {"type": "int", "min": 16, "max": 2048},
+    },
+}
+
+
+def param_specs(name):
+    """返回方法的可配置参数声明；不支持配置时返回空字典。"""
+    get_algorithm(name)
+    return dict(PARAM_SPECS.get(name, {}))
+
+
+def _check_value(method, key, declaration, value):
+    if isinstance(value, bool):
+        raise BaselineError("INPUT_INVALID", f"参数 {key} 的类型无效")
+    kind = declaration["type"]
+    if kind == "int":
+        if not isinstance(value, int):
+            raise BaselineError("INPUT_INVALID", f"参数 {key} 必须是整数")
+    elif kind == "float":
+        if not isinstance(value, (int, float)):
+            raise BaselineError("INPUT_INVALID", f"参数 {key} 必须是数值")
+        value = float(value)
+    else:  # pragma: no cover - 声明表由本模块维护
+        raise BaselineError("INPUT_INVALID", f"参数 {key} 的声明类型无效")
+    if value < declaration["min"] or value > declaration["max"]:
+        raise BaselineError(
+            "INPUT_INVALID",
+            f"参数 {key} 必须在 {declaration['min']} 到 {declaration['max']} 之间",
+        )
+    return value
+
+
+def resolve_params(method, overrides=None):
+    """解析一次训练的实际参数，返回 (参数, 是否显式覆盖)。
+
+    没有覆盖时返回冻结声明本身，使默认运行的配置与旧运行完全一致。
+    有覆盖时只接受声明过的键，并写入契约版本；未知或越界参数直接拒绝。
+    """
+    entry = get_algorithm(method)
+    if not overrides:
+        return dict(entry["params"]), False
+    specs = PARAM_SPECS.get(method)
+    if not specs:
+        raise BaselineError("INPUT_INVALID", f"{entry['name']} 不支持自定义参数")
+    if not isinstance(overrides, dict):
+        raise BaselineError("INPUT_INVALID", "训练参数必须是对象")
+    unknown = set(overrides) - set(specs)
+    if unknown:
+        raise BaselineError("INPUT_INVALID", f"未声明的训练参数：{sorted(unknown)}")
+    resolved = dict(entry["params"])
+    for key, value in overrides.items():
+        resolved[key] = _check_value(method, key, specs[key], value)
+    return resolved, True
+
+
+def validate_declared_params(method, values):
+    """校验运行配置里声明的实际参数（加载阶段使用）。
+
+    配置必须包含该方法冻结参数的全部键；声明过的键按契约校验，未声明的键
+    必须与冻结值一致。这样既有参数化产物可加载，被篡改的配置会被拒绝。
+    """
+    entry = get_algorithm(method)
+    if not isinstance(values, dict) or set(values) != set(entry["params"]):
+        raise BaselineError("ARTIFACT_INVALID", "运行参数声明不完整")
+    specs = PARAM_SPECS.get(method, {})
+    for key, value in values.items():
+        if key in specs:
+            _check_value(method, key, specs[key], value)
+        elif value != entry["params"][key]:
+            raise BaselineError("ARTIFACT_INVALID", f"未声明参数 {key} 与冻结声明不一致")
+    return True
+
+
+def params_display(params, method):
+    """相对于方法冻结声明的差异摘要，用于模型显示名。"""
+    entry = get_algorithm(method)
+    changed = {key: value for key, value in (params or {}).items()
+               if entry["params"].get(key) != value}
+    return ",".join(f"{key}={value}" for key, value in changed.items())
+
 # (schema, 方法) → 模型标识。既有两项保持既有标识不变，使既有运行的来源信息可继续追溯。
 METHOD_LABELS = {
     ("openstack-six-v1", "logistic-regression-l2-v1"): {"id": "logistic-regression-six-v1", "name": "逻辑回归 · 六字段"},

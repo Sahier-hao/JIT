@@ -1,0 +1,79 @@
+{
+  "kind": "line-model-report",
+  "samples": {
+    "total": 8254,
+    "train": 2379,
+    "test": 5875,
+    "positives": 3560,
+    "negatives": 4694,
+    "trainPositives": 1237,
+    "testPositives": 2323
+  },
+  "metrics": {
+    "rocAuc": 0.6344944479024871,
+    "prAuc": 0.521348245445096,
+    "brier": 0.2521945233811687,
+    "threshold": 0.5,
+    "precision": 0.5115670013094719,
+    "recall": 0.5045200172191132,
+    "f1": 0.5080190723883832,
+    "trueNegative": 2433,
+    "falsePositive": 1119,
+    "falseNegative": 1151,
+    "truePositive": 1172
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 234,
+    "candidateLines": 5875,
+    "positives": 2323,
+    "topKHit": {
+      "top1": 0.44017094017094016,
+      "top3": 0.6794871794871795,
+      "top5": 0.8333333333333334,
+      "top10": 0.9700854700854701
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.28282393456736976,
+    "recallAt20PercentPerCommitMean": 0.39204790278254303,
+    "ifaMean": 2.0427350427350426,
+    "ifaMedian": 1.0
+  },
+  "byRepo": {
+    "cc-switch": {
+      "samples": 5875,
+      "positives": 2323,
+      "rocAuc": 0.6344944479024871,
+      "prAuc": 0.521348245445096,
+      "brier": 0.2521945233811687,
+      "threshold": 0.5,
+      "precision": 0.5115670013094719,
+      "recall": 0.5045200172191132,
+      "f1": 0.5080190723883832,
+      "trueNegative": 2433,
+      "falsePositive": 1119,
+      "falseNegative": 1151,
+      "truePositive": 1172
+    }
+  },
+  "byLanguage": {
+    "typescript": {
+      "samples": 5875,
+      "positives": 2323,
+      "rocAuc": 0.6344944479024871,
+      "prAuc": 0.521348245445096,
+      "brier": 0.2521945233811687,
+      "threshold": 0.5,
+      "precision": 0.5115670013094719,
+      "recall": 0.5045200172191132,
+      "f1": 0.5080190723883832,
+      "trueNegative": 2433,
+      "falsePositive": 1119,
+      "falseNegative": 1151,
+      "truePositive": 1172
+    }
+  },
+  "manifest": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E3-axios-jit-to-cc.manifest.json",
+  "output": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E3-axios-jit-to-cc.json"
+}

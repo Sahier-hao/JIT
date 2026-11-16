@@ -180,12 +180,13 @@ def test_trained_analysis_artifact_run_reference_is_preserved(context):
 def test_real_registered_fourteen_field_model_uses_its_own_dataset_baseline(context, tmp_path):
     import csv
     from datetime import datetime, timedelta, timezone
-    from jit_baseline import artifacts, collect, datasets, store
+    from jit_baseline import artifacts, collect, store
     from jit_baseline.schemas import resolve
     c = context
     schema = resolve('kamei14-git-v1')
     fields = schema.in_model_names()
     source = tmp_path / 'fourteen.csv'
+    records = []
     with source.open('w', newline='', encoding='utf-8') as handle:
         writer = csv.writer(handle)
         writer.writerow(['commit_id', 'author_date', 'bugcount', *fields])
@@ -194,9 +195,13 @@ def test_real_registered_fourteen_field_model_uses_its_own_dataset_baseline(cont
             metrics = dict(ns=1+index%3, nd=2, nf=3, entropy=.7, la=30+index, ld=4, lt=100+index,
                            fix=index%2, ndev=2, age=3, nuc=2+index, exp=7+index, rexp=3, sexp=4)
             writer.writerow([f'{index:040x}', int(moment.timestamp()), index%2, *(metrics[name] for name in fields)])
+            records.append({'id': f'{index:040x}', 'epoch': int(moment.timestamp()),
+                            'label': index % 2})
     registry = tmp_path / 'model-datasets'
-    registered = datasets.register(source, schema=schema.name, dataset='explain-git', root=registry,
-                                   cohort=collect.cohort('2024-01-01', '2025-01-01'))
+    from label_fixtures import register_labeled
+    registered = register_labeled(source, records, schema=schema.name, dataset='explain-git',
+                                  root=registry,
+                                  cohort=collect.cohort('2024-01-01', '2025-01-01'))
     manifest = registry / 'explain-git' / (registered['version'] + '.json')
     artifacts.build_run(tmp_path / 'source', c['root'] / 'fourteen', schema=schema.name, dataset_manifest=manifest)
     model = c['catalog'].register_key('fourteen')['model']

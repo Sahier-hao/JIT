@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsPage } from './ProjectsPage'
 import { createWork, saveWork } from '../prReview'
+import { TEST_REVIEW_ACCOUNT } from '../test-utils'
 import { snapshot } from '../prReview.fixture'
 
 const REPO = '11111111-1111-4111-8111-111111111111'
@@ -106,7 +107,7 @@ it('shows the cross-project personal works view without the project list', async
   mockApi()
   const work = createWork(snapshot())
   work.rounds.v1.progress['src/token.py'].state = 'read'
-  saveWork(work)
+  saveWork(TEST_REVIEW_ACCOUNT, work)
   render(<ProjectsPage navigate={vi.fn()} view="reviews"/>)
   expect(await screen.findByRole('heading', { name: '我的审查' })).toBeVisible()
   expect(await screen.findByRole('heading', { name: /继续审查/ })).toBeVisible()

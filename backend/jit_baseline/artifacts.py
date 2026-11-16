@@ -12,11 +12,14 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 
 from . import trends
-from .algorithms import DEFAULT_ALGORITHM, get_algorithm, model_descriptor
+from .algorithms import (DEFAULT_ALGORITHM, PARAMETER_CONTRACT, get_algorithm,
+                         model_descriptor, params_display, resolve_params,
+                         validate_declared_params)
 from .config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, THRESHOLD
+from . import admission
 from .data import BaselineError, parse_source, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
-from .label_maturity import apply_label_maturity
+from .label_maturity import apply_label_maturity, resolve_policy, status_counts
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
 from .model import apply_class_policy, feature_matrix, fit_model, predict_risks
 from .schemas import DEFAULT_SCHEMA, get_schema, resolve
@@ -195,19 +198,149 @@ def training_performance(duration_seconds, split):
     }
 
 
+def _label_admission(dataset, records, maturity_policy, *,
+                     allow_legacy=False, allow_restricted=False):
+    """Apply the shared admission contract while retaining recorded-v2 datasets."""
+    input_count = len(records)
+    dataset = dataset or {}
+    collection = dataset.get("collection") or {}
+    source_projects = dataset.get("sourceProjects") or collection.get("sourceProjects") or []
+    if (collection.get("kind") == "pooled-release-baseline" and source_projects
+            and all((project.get("maturity") or {}).get("releaseEligible") is True
+                    for project in source_projects)):
+        first = source_projects[0]["maturity"]
+        counts = {
+            "originalRecords": input_count,
+            "eligibleRecords": input_count,
+            "excludedImmature": 0,
+            "excludedUnknown": 0,
+            "positivesOriginal": sum(record["label"] for record in records),
+            "positivesEligible": sum(record["label"] for record in records),
+        }
+        maturity = {
+            "requestedPolicy": resolve_policy(maturity_policy),
+            "effectivePolicy": "mature-only",
+            "releaseEligible": True,
+            "inputRecords": input_count,
+            "excludedImmature": 0,
+            "statusCounts": status_counts(records),
+            "observedThroughEpoch": first.get("observedThroughEpoch"),
+            "maturityDays": first.get("maturityDays"),
+        }
+        evaluated = {
+            "protocol": "recorded-maturity-v1",
+            "policy": "recorded-maturity-v1",
+            "available": True,
+            "restricted": False,
+            "reason": None,
+            "observedThrough": maturity["observedThroughEpoch"],
+            "observedThroughIso": None,
+            "maturityDays": maturity["maturityDays"],
+            "sampleWindow": collection.get("window"),
+            "observationWindow": None,
+            "revision": dataset.get("revision"),
+            "revisionEpoch": None,
+            "historyStatus": None,
+            "coverage": None,
+            "counts": counts,
+            "identity": None,
+            "statusFile": None,
+        }
+        return records, maturity, evaluated
+    declared = (dataset or {}).get("labeling") or {}
+    if declared.get("protocol"):
+        evaluated = admission.evaluate(
+            dataset, records, allow_legacy=allow_legacy,
+            allow_restricted=allow_restricted,
+        )
+        if not evaluated["available"]:
+            reason = evaluated["reason"]
+            raise BaselineError(reason["code"], reason["message"])
+        eligible = evaluated["eligible"]
+        counts = evaluated["counts"]
+        maturity = {
+            "requestedPolicy": resolve_policy(maturity_policy),
+            "effectivePolicy": evaluated["policy"],
+            "releaseEligible": not evaluated.get("restricted", False),
+            "inputRecords": input_count,
+            "excludedImmature": counts["excludedImmature"],
+            "statusCounts": status_counts(records),
+            "observedThroughEpoch": evaluated.get("observedThrough"),
+            "maturityDays": evaluated.get("maturityDays"),
+        }
+        return eligible, maturity, evaluated
+
+    recorded = any(record.get("labelStatus", "unrecorded") != "unrecorded"
+                   for record in records)
+    if dataset is not None and admission.is_szz(dataset) and recorded:
+        eligible, maturity = apply_label_maturity(records, maturity_policy)
+        counts = {
+            "originalRecords": maturity["inputRecords"],
+            "eligibleRecords": len(eligible),
+            "excludedImmature": maturity["excludedImmature"],
+            "excludedUnknown": 0,
+            "positivesOriginal": sum(record["label"] for record in records),
+            "positivesEligible": sum(record["label"] for record in eligible),
+        }
+        evaluated = {
+            "protocol": "recorded-maturity-v1",
+            "policy": "recorded-maturity-v1",
+            "available": True,
+            "restricted": not maturity["releaseEligible"],
+            "reason": None,
+            "observedThrough": maturity["observedThroughEpoch"],
+            "observedThroughIso": None,
+            "maturityDays": maturity["maturityDays"],
+            "sampleWindow": None,
+            "observationWindow": None,
+            "revision": (dataset or {}).get("revision"),
+            "revisionEpoch": None,
+            "historyStatus": None,
+            "coverage": None,
+            "counts": counts,
+            "identity": None,
+            "statusFile": None,
+        }
+        return eligible, maturity, evaluated
+
+    evaluated = admission.evaluate(
+        dataset or {}, records, allow_legacy=allow_legacy,
+        allow_restricted=allow_restricted,
+    )
+    if not evaluated["available"]:
+        reason = evaluated["reason"]
+        raise BaselineError(reason["code"], reason["message"])
+    maturity = {
+        "requestedPolicy": resolve_policy(maturity_policy),
+        "effectivePolicy": evaluated["policy"],
+        "releaseEligible": (evaluated["policy"] != admission.PUBLISHER_PROTOCOL
+                            and not evaluated.get("restricted", False)),
+        "inputRecords": input_count,
+        "excludedImmature": evaluated["counts"]["excludedImmature"],
+        "statusCounts": status_counts(records),
+        "observedThroughEpoch": evaluated.get("observedThrough"),
+        "maturityDays": evaluated.get("maturityDays"),
+    }
+    return evaluated["eligible"], maturity, evaluated
+
+
 def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, dataset_manifest=None,
               holdout=None, embedding_dir=None, model_name=None, class_policy=None,
-              split_preset=None, maturity_policy=None, split_override=None):
+              split_preset=None, maturity_policy=None, split_override=None, params=None,
+              allow_legacy_labels=False,
+              allow_restricted_labels=False):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
     评估，质量统计与文件校验仍按全量；默认 `None` 保持既有行为。
     `model_name` 覆盖产物里的模型显示名，用于区分同一方法在不同仓库或范围上训练出的模型；
     模型身份仍由 runId 与产物内容确定。
+    `params` 是显式参数覆盖；为空时使用方法冻结声明，运行配置与旧运行完全一致。
     """
     output, source_dir = Path(output), Path(source_dir)
     algorithm_version = algorithm if algorithm else DEFAULT_ALGORITHM
     entry = get_algorithm(algorithm_version)
+    resolved_params, params_explicit = resolve_params(algorithm_version, params)
     metric_set = metric_set if metric_set else DEFAULT_METRIC_SET
     declared_metric_set(metric_set)
     if dataset_manifest is None and schema is not None and resolve(schema).semantic:
@@ -262,8 +395,14 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
             dataset_version = "openstack-" + identity({"sources": sources, "cohort": COHORT, "features": list(schema.in_model_names()),
                                                        "labelRule": "bugcount > 0; blank = 0", "protocol": schema.name})
     input_record_count = len(records)
-    records, maturity = apply_label_maturity(records, maturity_policy)
     semantic_meta = None
+    records, maturity, admission_result = _label_admission(
+        dataset, records, maturity_policy,
+        allow_legacy=allow_legacy_labels,
+        allow_restricted=allow_restricted_labels,
+    )
+    if not records:
+        raise BaselineError("DATASET_INVALID", "成熟样本准入后没有可训练记录，请检查观察窗口与成熟期")
     if schema.semantic and dataset_manifest is None:
         raise BaselineError("DATASET_INVALID", "语义 schema 需要带文本的数据集描述文件")
     if schema.semantic:
@@ -326,8 +465,13 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     started = time.perf_counter()
     _, _, class_summary = apply_class_policy(split["train"], class_policy)
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
-                         class_policy=class_policy)
+                         class_policy=class_policy, params=resolved_params)
     training_seconds = round(time.perf_counter() - started, 6)
+    estimator = pipeline.named_steps.get("model") if hasattr(pipeline, "named_steps") else None
+    training_history = getattr(estimator, "training_history_", None)
+    if training_history is not None:
+        training_history = dict(training_history)
+        training_history["method"] = algorithm_version
     partitioned_metrics = partition_diagnostics(pipeline, split, schema, metric_set)
     risks = predict_risks(pipeline, split["test"], schema)
     metrics = partitioned_metrics["test"]
@@ -365,6 +509,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         "rule": split_rule,
         "policy": split_policy,
         "partitions": stats,
+        "admission": admission.view(admission_result),
     })
     keys = ["id", "time", "epoch", "sourceRow", "metrics", "features"]
     if schema.semantic:
@@ -375,16 +520,23 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     joblib.dump(pipeline, output / "model.joblib")
     write_json(output / "reference-predictions.json", [{"id": r["id"], "risk": p} for r, p in zip(split["test"], risks, strict=True)])
     write_json(output / "metrics.json", metrics)
-    files = {name: sha256((output / name).read_bytes()) for name in CORE_FILES}
+    artifact_names = list(CORE_FILES)
+    if training_history is not None:
+        write_json(output / "training-history.json", training_history)
+        artifact_names.append("training-history.json")
+    files = {name: sha256((output / name).read_bytes()) for name in artifact_names}
     config = {"protocol": schema.name, "schema": schema.name, "algorithmVersion": algorithm_version,
               "metricSet": metric_set,
               "datasetVersion": dataset_version, "features": fields, "cohort": cohort,
               "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
-              "threshold": THRESHOLD, "model": entry["params"], "modelSha256": files["model.joblib"], "coreFiles": files,
+              "threshold": THRESHOLD, "model": resolved_params, "modelSha256": files["model.joblib"], "coreFiles": files,
               "splitPolicy": split_policy,
               "splitPreset": split_preset,
               "maturityPolicy": maturity,
+              "admission": admission.view(admission_result),
               "trainingEnvironment": environment(entry["requires"]), "sourceCode": {name: sha256((Path(__file__).parent / name).read_bytes()) for name in TRAINING_CODE}}
+    if params_explicit:
+        config["parameterContract"] = PARAMETER_CONTRACT
     if declared:
         config["datasetManifest"] = {"path": manifest_relative(manifest_file),
                                      "sha256": sha256(Path(manifest_file).read_bytes())}
@@ -400,16 +552,22 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         if not isinstance(model_name, str) or not model_name.strip():
             raise BaselineError("INPUT_INVALID", "模型显示名必须是非空字符串")
         label = {"id": label["id"], "name": model_name.strip()}
+    if params_explicit:
+        suffix = params_display(resolved_params, algorithm_version)
+        if suffix:
+            label = {"id": label["id"], "name": f"{label['name']}（{suffix}）"}
     summary = {"runId": run_id, "datasetVersion": dataset_version, "modelSha256": files["model.joblib"], "source": source,
                "features": fields, "featureSchema": feature_schema(schema), "cohort": cohort,
                "split": summary_split, "splitPolicy": split_policy, "splitRule": split_rule,
                "maturity": maturity,
+               "admission": admission.view(admission_result),
                "metrics": metrics, "metricsByPartition": partitioned_metrics,
                "diagnosticsVersion": PARTITION_DIAGNOSTICS_VERSION,
                "dataScale": scale, "trainingPerformance": performance,
                "threshold": THRESHOLD, "protocolVersion": schema.name,
                "algorithmVersion": algorithm_version, "metricSet": metric_set,
                "model": {"id": label["id"], "name": label["name"]},
+               "parameters": resolved_params,
                "trainingSeconds": training_seconds,
                trends.TREND_KEY: trend,
                "limitations": limitations(schema)}
@@ -419,6 +577,10 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         summary["semantic"] = semantic_meta
     if class_summary is not None:
         summary["classPolicy"] = class_summary
+    if params_explicit:
+        summary["parameterContract"] = PARAMETER_CONTRACT
+    if training_history is not None:
+        summary["trainingHistory"] = training_history
     write_json(output / "summary.json", summary)
     files = dict(files, **{"summary.json": sha256((output / "summary.json").read_bytes())})
     command = (f"python -m jit_baseline.cli run --output {output.as_posix()}"
@@ -431,6 +593,8 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
         command += f" --split-preset {split_preset}"
     if maturity["requestedPolicy"] != "mature-only":
         command += f" --maturity-policy {maturity['requestedPolicy']}"
+    if allow_legacy_labels:
+        command += " --allow-legacy-labels"
     if embedding_dir is not None:
         command += f" --embedding-dir {Path(embedding_dir).as_posix()}"
     manifest = {"schema": 1, "runId": run_id, "config": config, "files": files,
@@ -461,8 +625,14 @@ def check_files(directory, names):
         # 未注册的方法名在这里以 ALGORITHM_UNKNOWN 被拒绝。
         algorithm_version = config.get("algorithmVersion") or DEFAULT_ALGORITHM
         entry = get_algorithm(algorithm_version)
-        if config["model"] != entry["params"]:
-            raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
+        if config.get("parameterContract") is None:
+            # 旧运行与默认运行：参数必须与注册表冻结声明完全相等。
+            if config["model"] != entry["params"]:
+                raise BaselineError("ARTIFACT_INVALID", f"运行声明的超参与 {algorithm_version} 的注册声明不一致")
+        else:
+            if config["parameterContract"] != PARAMETER_CONTRACT:
+                raise BaselineError("ARTIFACT_INVALID", "运行声明的参数契约版本未知")
+            validate_declared_params(algorithm_version, config["model"])
         if config["threshold"] != THRESHOLD:
             raise BaselineError("ARTIFACT_INVALID", "阈值不匹配")
         if schema.semantic:
@@ -632,25 +802,35 @@ def verify_run(directory):
     if ids != [r["id"] for r in references] or ids != [r["id"] for r in labels]:
         raise BaselineError("ARTIFACT_INVALID", "参考风险或评价标签身份不一致")
     current = predict_risks(snapshot.model, snapshot.records, snapshot.schema)
+    reference_risks = [r["risk"] for r in references]
     # 按该运行声明的方法所声明的复现口径比较，不再写死固定容差（PDB-14、PDB-18）。
-    check_reference_predictions(manifest, current, [r["risk"] for r in references])
+    check_reference_predictions(manifest, current, reference_risks)
     evaluation_records = [dict(r, label=y["label"]) for r, y in zip(snapshot.records, labels, strict=True)]
+    # 产物里的指标与时间桶聚合是冻结参考预测的函数，不是本机重算结果的函数。
+    # 因此先按参考预测**严格**重算，核对记录自洽；本机模型与参考预测的差异只按
+    # 方法声明的容差判定（check_reference_predictions）。深度方法在不同 CPU/框架
+    # 版本上重算有 ~1e-7 的浮点漂移，落在声明容差内，但它会让未取整的指标与
+    # 分位数在末位上不同，若在这里沿用严格比较会把完好的产物误判为损坏。
     # 按该运行声明的指标集重算：新增指标不影响既有运行（PDB-12）。
     metric_set = manifest["config"].get("metricSet")
-    if identity(evaluate(evaluation_records, current, metric_set)) != identity(snapshot.summary["metrics"]):
-        raise BaselineError("ARTIFACT_INVALID", "指标与完整测试风险不一致")
+    recorded_metrics = evaluate(evaluation_records, reference_risks, metric_set)
+    if identity(recorded_metrics) != identity(snapshot.summary["metrics"]):
+        raise BaselineError("ARTIFACT_INVALID", "记录的指标与冻结参考预测不一致")
     # 声明提供时间桶聚合的运行：重算测试分区的桶并核对守恒（PDB-21）。
     # 未声明的既有运行不受影响：缺少该键时这里不做任何检查。
     recorded_trend = snapshot.summary.get(trends.TREND_KEY)
     if recorded_trend is not None:
         partitions = snapshot.summary["split"]
         expected = None
-        if snapshot.summary.get("holdout"):
-            # 使用 holdout 的运行只聚合可训练前缀，守恒基准随之收窄（quality 仍按全量）。
-            expected = (sum(part["count"] for part in partitions.values()),
+        split_totals = (sum(part["count"] for part in partitions.values()),
                         sum(part["positiveCount"] for part in partitions.values()))
-        trends.check_aggregate(recorded_trend, evaluation_records, current,
-                               partitions, snapshot.summary["source"]["quality"], expected)
+        quality = snapshot.summary["source"]["quality"]
+        if (snapshot.summary.get("holdout")
+                or split_totals != (quality["includedRows"], quality["positiveLabels"])):
+            # holdout、成熟准入或显式切分可能只聚合可用成员；守恒基准随之收窄。
+            expected = split_totals
+        trends.check_aggregate(recorded_trend, evaluation_records, reference_risks,
+                               partitions, quality, expected)
     return manifest
 
 

@@ -1,0 +1,399 @@
+{
+  "schema": "line-model-report-v2",
+  "inputs": [
+    "D:\\tmp\\measure\\cc-switch-same.jsonl",
+    "D:\\tmp\\measure\\pydantic.jsonl"
+  ],
+  "inputFiles": [
+    {
+      "path": "D:\\tmp\\measure\\cc-switch-same.jsonl",
+      "sha256": "5a9a5a4ce441d36e6c19610f5054d0413a74904112fdc8919239aa2951264a17",
+      "bytes": 12054892,
+      "rows": 11718,
+      "datasetVersions": [
+        "measure-cc-switch"
+      ],
+      "repos": [
+        "cc-switch"
+      ],
+      "languages": [
+        "css",
+        "json",
+        "other",
+        "rust",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-cc-switch",
+        "positives": 5859,
+        "negatives": 5859,
+        "positiveCommits": 352,
+        "negativeCommits": 350,
+        "files": 198,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 74,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "path": "D:\\tmp\\measure\\pydantic.jsonl",
+      "sha256": "8055716ac23e1eb8242d3ad1bf305bc2d177c2e810accedea664f3223c4a7646",
+      "bytes": 1583673,
+      "rows": 1598,
+      "datasetVersions": [
+        "measure-pydantic"
+      ],
+      "repos": [
+        "pydantic"
+      ],
+      "languages": [
+        "other",
+        "python",
+        "rust",
+        "shell",
+        "toml",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-pydantic",
+        "positives": 799,
+        "negatives": 799,
+        "positiveCommits": 127,
+        "negativeCommits": 125,
+        "files": 69,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 40,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    }
+  ],
+  "split": {
+    "kind": "repo",
+    "testRepo": "pydantic",
+    "seed": 42,
+    "trainCommits": 124,
+    "testCommits": 34,
+    "trainRepos": [
+      "cc-switch"
+    ],
+    "testRepos": [
+      "pydantic"
+    ]
+  },
+  "languages": [
+    "rust"
+  ],
+  "samples": {
+    "total": 4531,
+    "train": 3924,
+    "test": 607,
+    "positives": 2487,
+    "negatives": 2044,
+    "trainPositives": 2162,
+    "testPositives": 325
+  },
+  "features": {
+    "dimension": 30020,
+    "text": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "max_features": 30000,
+      "sublinear_tf": true
+    },
+    "numeric": [
+      "lineLength",
+      "indent",
+      "blank",
+      "comment",
+      "fileLines",
+      "lineRatio",
+      "if",
+      "for",
+      "while",
+      "return",
+      "try",
+      "catch",
+      "assign",
+      "compare",
+      "call",
+      "member",
+      "index",
+      "identifier",
+      "digit"
+    ],
+    "languages": [
+      "rust"
+    ]
+  },
+  "model": {
+    "type": "logistic-regression",
+    "classWeight": "balanced",
+    "solver": "liblinear",
+    "maxIter": 2000,
+    "threshold": 0.5,
+    "includeCommitFeatures": false,
+    "repoBalance": true,
+    "positionFeatures": true,
+    "textFeatures": true
+  },
+  "metrics": {
+    "rocAuc": 0.6577850518276049,
+    "prAuc": 0.6755097770847871,
+    "brier": 0.2420429285685074,
+    "threshold": 0.5,
+    "precision": 0.680952380952381,
+    "recall": 0.44,
+    "f1": 0.5345794392523364,
+    "trueNegative": 215,
+    "falsePositive": 67,
+    "falseNegative": 182,
+    "truePositive": 143
+  },
+  "referenceBaselines": {
+    "randomPrAuc": 0.5354200988467874,
+    "note": "PR-AUC 的随机基线等于测试集正例率；排序模型必须明显高于它才有意义。"
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 34,
+    "candidateLines": 607,
+    "positives": 325,
+    "topKHit": {
+      "top1": 0.5,
+      "top3": 0.7352941176470589,
+      "top5": 0.8529411764705882,
+      "top10": 1.0
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.27076923076923076,
+    "recallAt20PercentPerCommitMean": 0.3982229088518853,
+    "ifaMean": 1.5588235294117647,
+    "ifaMedian": 0.5
+  },
+  "byRepo": {
+    "pydantic": {
+      "samples": 607,
+      "positives": 325,
+      "rocAuc": 0.6577850518276049,
+      "prAuc": 0.6755097770847871,
+      "brier": 0.2420429285685074,
+      "threshold": 0.5,
+      "precision": 0.680952380952381,
+      "recall": 0.44,
+      "f1": 0.5345794392523364,
+      "trueNegative": 215,
+      "falsePositive": 67,
+      "falseNegative": 182,
+      "truePositive": 143
+    }
+  },
+  "byLanguage": {
+    "rust": {
+      "samples": 607,
+      "positives": 325,
+      "rocAuc": 0.6577850518276049,
+      "prAuc": 0.6755097770847871,
+      "brier": 0.2420429285685074,
+      "threshold": 0.5,
+      "precision": 0.680952380952381,
+      "recall": 0.44,
+      "f1": 0.5345794392523364,
+      "trueNegative": 215,
+      "falsePositive": 67,
+      "falseNegative": 182,
+      "truePositive": 143
+    }
+  },
+  "manifest": {
+    "schema": "line-experiment-manifest-v1",
+    "generatedAt": "2026-11-08T16:41:31.147132+00:00",
+    "inputs": [
+      {
+        "path": "D:\\tmp\\measure\\cc-switch-same.jsonl",
+        "sha256": "5a9a5a4ce441d36e6c19610f5054d0413a74904112fdc8919239aa2951264a17",
+        "bytes": 12054892,
+        "rows": 11718,
+        "datasetVersions": [
+          "measure-cc-switch"
+        ],
+        "repos": [
+          "cc-switch"
+        ],
+        "languages": [
+          "css",
+          "json",
+          "other",
+          "rust",
+          "toml",
+          "typescript",
+          "yaml"
+        ],
+        "sampling": {
+          "schema": "line-szz-v1",
+          "datasetVersion": "measure-cc-switch",
+          "positives": 5859,
+          "negatives": 5859,
+          "positiveCommits": 352,
+          "negativeCommits": 350,
+          "files": 198,
+          "contextLines": 2,
+          "seed": 42,
+          "negativesPerPositive": 1,
+          "negativeMode": "same-file",
+          "missingLines": 74,
+          "missingDiffs": 0,
+          "skippedFiles": 0,
+          "truncated": false,
+          "negativeShortfall": 0,
+          "negativeFallback": 0
+        }
+      },
+      {
+        "path": "D:\\tmp\\measure\\pydantic.jsonl",
+        "sha256": "8055716ac23e1eb8242d3ad1bf305bc2d177c2e810accedea664f3223c4a7646",
+        "bytes": 1583673,
+        "rows": 1598,
+        "datasetVersions": [
+          "measure-pydantic"
+        ],
+        "repos": [
+          "pydantic"
+        ],
+        "languages": [
+          "other",
+          "python",
+          "rust",
+          "shell",
+          "toml",
+          "yaml"
+        ],
+        "sampling": {
+          "schema": "line-szz-v1",
+          "datasetVersion": "measure-pydantic",
+          "positives": 799,
+          "negatives": 799,
+          "positiveCommits": 127,
+          "negativeCommits": 125,
+          "files": 69,
+          "contextLines": 2,
+          "seed": 42,
+          "negativesPerPositive": 1,
+          "negativeMode": "same-file",
+          "missingLines": 40,
+          "missingDiffs": 0,
+          "skippedFiles": 0,
+          "truncated": false,
+          "negativeShortfall": 0,
+          "negativeFallback": 0
+        }
+      }
+    ],
+    "split": {
+      "kind": "repo",
+      "seed": 42,
+      "testRepo": "pydantic",
+      "trainCommits": 124,
+      "testCommits": 34,
+      "trainRepos": [
+        "cc-switch"
+      ],
+      "testRepos": [
+        "pydantic"
+      ],
+      "memberSha256": {
+        "train": "6308f138dfb5d56471d172e3aa50d6f557a16d8c110eea7a85821aad2079c730",
+        "test": "08b9391650723d614d40c7e390ec2bb6dde057a7983e2b257d89b212a204bd5e"
+      }
+    },
+    "sampling": {
+      "negativeMode": "same-file",
+      "datasetSeed": 42,
+      "source": [
+        "D:\\tmp\\measure\\cc-switch-same.jsonl",
+        "D:\\tmp\\measure\\pydantic.jsonl"
+      ]
+    },
+    "features": {
+      "dimension": 30020,
+      "text": {
+        "analyzer": "char_wb",
+        "ngram_range": [
+          3,
+          5
+        ],
+        "min_df": 2,
+        "max_features": 30000,
+        "sublinear_tf": true
+      },
+      "numeric": [
+        "lineLength",
+        "indent",
+        "blank",
+        "comment",
+        "fileLines",
+        "lineRatio",
+        "if",
+        "for",
+        "while",
+        "return",
+        "try",
+        "catch",
+        "assign",
+        "compare",
+        "call",
+        "member",
+        "index",
+        "identifier",
+        "digit"
+      ],
+      "languages": [
+        "rust"
+      ]
+    },
+    "model": {
+      "type": "logistic-regression",
+      "classWeight": "balanced",
+      "solver": "liblinear",
+      "maxIter": 2000,
+      "threshold": 0.5,
+      "includeCommitFeatures": false,
+      "repoBalance": true,
+      "positionFeatures": true,
+      "textFeatures": true
+    },
+    "environment": {
+      "python": "3.14.2",
+      "sklearn": "1.9.1",
+      "numpy": "2.5.3"
+    },
+    "command": "python -m jit_baseline.cli line-train --input D:\\tmp\\measure\\cc-switch-same.jsonl --input D:\\tmp\\measure\\pydantic.jsonl --output <report>.json --seed 42 --test-repo pydantic --language rust",
+    "limitations": [
+      "历史 SZZ 弱标签，正例不是人工确认的真值；未观测行不等于无缺陷。",
+      "负例来自抽样列表，定位指标是代理值，不能代表完整候选集上的审查收益。",
+      "大型原始 JSONL 不入版本库，复现需按 inputs 的 sha256 与获取说明准备同一份数据。"
+    ]
+  }
+}

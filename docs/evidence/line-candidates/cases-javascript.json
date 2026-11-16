@@ -1,0 +1,348 @@
+{
+  "format": "line-candidate-cases-v1",
+  "population": "introduced-added-lines-v1",
+  "note": "弱标签案例包；未经人工复核前不代表真实缺陷检出率。",
+  "cases": [
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-express-mature",
+      "datasetVersion": "kamei14-git-v2-express-mature-2009-06-26_2026-07-27",
+      "repo": "kamei14-git-v2-express-mature",
+      "revision": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "commitId": "9be5992f22c3c335a95b32a88dde13f4928c1e16",
+      "path": "lib/router/index.js",
+      "side": "new",
+      "line": 285,
+      "text": "        for (var j = 1, l = captures.length; j < l; ++j) {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "80e9ffbf5d23bfd5cf4f3c0ac3e8e230afac8c2d",
+        "issueRefs": [
+          639
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "javascript",
+      "id": "9be5992f22c3:lib/router/index.js:285"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "4d061124521ce28682f54f61aa9915d7187b63a7",
+      "path": "gulpfile.js",
+      "side": "new",
+      "line": 43,
+      "text": "  return Promise.all(contributors.map(async (contributor) => {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "4d061124521c:gulpfile.js:43"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-express-mature",
+      "datasetVersion": "kamei14-git-v2-express-mature-2009-06-26_2026-07-27",
+      "repo": "kamei14-git-v2-express-mature",
+      "revision": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "commitId": "e5de08faa182fc48a371e1df57338f5e6e9aacd8",
+      "path": "lib/response.js",
+      "side": "new",
+      "line": 740,
+      "text": "    field.forEach(function(field){",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "6d65ae5ba6b07057b117c4e8fcdf4310d31904c9",
+        "issueRefs": [
+          2161
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "javascript",
+      "id": "e5de08faa182:lib/response.js:740"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "d03f245a40ec016b190748a865cce9fe3815c903",
+      "path": "bin/pr.js",
+      "side": "new",
+      "line": 86,
+      "text": "      history: commits.map(({tag}) => {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "d03f245a40ec:bin/pr.js:86"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "7f1236652adb813ff884be008fe73ddf0590c664",
+      "path": "lib/utils.js",
+      "side": "new",
+      "line": 338,
+      "text": "}",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "28c721588c7a77e7503d0a434e016f852c597b57",
+        "issueRefs": [
+          7369
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "7f1236652adb:lib/utils.js:338"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "32c7bcc0f233285ba27dec73a4b1e81fb7a219b3",
+      "path": "lib/core/buildFullPath.js",
+      "side": "new",
+      "line": 18,
+      "text": "  if (baseURL && isRelativeUrl || allowAbsoluteUrls == false) {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "f10c2e0de7fde0051f848609a29c2906d0caa1d9",
+        "issueRefs": [
+          6833
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "32c7bcc0f233:lib/core/buildFullPath.js:18"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-express-mature",
+      "datasetVersion": "kamei14-git-v2-express-mature-2009-06-26_2026-07-27",
+      "repo": "kamei14-git-v2-express-mature",
+      "revision": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "commitId": "c21e3feaa6c80bc262738bec6e4707dda297a279",
+      "path": "lib/utils.js",
+      "side": "new",
+      "line": 8,
+      "text": "/**",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "694869d2aa7b5ff5886faf1642011858fc779c36",
+        "issueRefs": [
+          2620
+        ],
+        "fixSource": "issueRef"
+      },
+      "language": "javascript",
+      "id": "c21e3feaa6c8:lib/utils.js:8"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "cff996779b272a5e94c2b52f5503ccf668bc42dc",
+      "path": "lib/helpers/cookies.js",
+      "side": "new",
+      "line": 20,
+      "text": "    },",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "cff996779b27:lib/helpers/cookies.js:20"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "c9b33712aac00ca6da7e9767426ff2e0a36c7eed",
+      "path": "sandbox/client.html",
+      "side": "new",
+      "line": 138,
+      "text": "      .box {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "html",
+      "id": "c9b33712aac0:sandbox/client.html:138"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-express-mature",
+      "datasetVersion": "kamei14-git-v2-express-mature-2009-06-26_2026-07-27",
+      "repo": "kamei14-git-v2-express-mature",
+      "revision": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "commitId": "c40c54fbee840d322e54fa45bc14ddeeba550edf",
+      "path": "lib/response.js",
+      "side": "new",
+      "line": 488,
+      "text": " *  ",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "8f4e61a4747fd611035eb491d9ce69b35db79167",
+        "issueRefs": [],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "c40c54fbee84:lib/response.js:488"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "cff996779b272a5e94c2b52f5503ccf668bc42dc",
+      "path": "lib/helpers/cookies.js",
+      "side": "new",
+      "line": 25,
+      "text": "    },",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "cff996779b27:lib/helpers/cookies.js:25"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "e2a1e280f6dfbb4f11ad541dec9541cdbf760ab1",
+      "path": "bin/helpers/colorize.js",
+      "side": "new",
+      "line": 14,
+      "text": "}",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "e2a1e280f6df:bin/helpers/colorize.js:14"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-express-mature",
+      "datasetVersion": "kamei14-git-v2-express-mature-2009-06-26_2026-07-27",
+      "repo": "kamei14-git-v2-express-mature",
+      "revision": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "commitId": "0f74408b0eacd07135cc8f59a8200f383ab6d0a9",
+      "path": "lib/express/core.js",
+      "side": "new",
+      "line": 212,
+      "text": "        function callback(e, result) {",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "75c530516a7d8b199165efbb0280c40be2a03f0f",
+        "issueRefs": [],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "0f74408b0eac:lib/express/core.js:212"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-express-mature",
+      "datasetVersion": "kamei14-git-v2-express-mature-2009-06-26_2026-07-27",
+      "repo": "kamei14-git-v2-express-mature",
+      "revision": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "commitId": "48940e61202be07677659b3b9d87c967fc4e8bdc",
+      "path": "lib/response.js",
+      "side": "new",
+      "line": 178,
+      "text": "  var len",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "18e5985b8a9d5e8423db0a9121f22bdaecd5b120",
+        "issueRefs": [
+          4893
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "48940e61202b:lib/response.js:178"
+    },
+    {
+      "schema": "line-candidates-v1",
+      "population": "introduced-added-lines-v1",
+      "datasetId": "kamei14-git-v2-axios-mature",
+      "datasetVersion": "kamei14-git-v2-axios-mature-2014-08-18_2026-07-30",
+      "repo": "kamei14-git-v2-axios-mature",
+      "revision": "83426bc8bc03be4cab5396d554d52c4863bd8eff",
+      "commitId": "c05ad4895293ac8e0bbb90b28e0772571a97cdd5",
+      "path": "lib/defaults/index.js",
+      "side": "new",
+      "line": 89,
+      "text": "          this.formSerializer",
+      "labelStatus": "positive",
+      "evidence": {
+        "fixCommit": "ef3711d1b3a3c1eb4f11dc43e8db38e9c5342448",
+        "issueRefs": [
+          7385
+        ],
+        "fixSource": "keyword"
+      },
+      "language": "javascript",
+      "id": "c05ad4895293:lib/defaults/index.js:89"
+    }
+  ]
+}

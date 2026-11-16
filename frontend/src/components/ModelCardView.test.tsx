@@ -22,7 +22,12 @@ function card(overrides: Partial<ModelCard> = {}): ModelCard {
     ],
     limitations: ['历史标签只表示未观测与已观测，不是完整缺陷事实。'],
     benefit: {
-      available: true, reason: null, reportVersion: 2,
+      available: true, reason: null, reportVersion: 3,
+      protocol: { name: 'review-benefit-v3', budgetRule: 'continue-whole-commit' },
+      comparisons: {
+        modelVsTime: { recall20LocInterval: { validRuns: 1000, reason: null } },
+        modelVsLoc: { recall20LocInterval: { validRuns: 0, reason: '时间块不足' } },
+      },
       conclusion: { sentence: '模型排序低于时间顺序和随机策略。' },
       test: { records: 5, positives: 2, budgetLoc: 20, totalLoc: 100 },
       boundary: { crossModelRanking: false },

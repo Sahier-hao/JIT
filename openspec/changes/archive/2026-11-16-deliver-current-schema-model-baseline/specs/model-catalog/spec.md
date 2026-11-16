@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### Requirement: MC-19 当前 schema 正式基线与发布资格
+### Requirement: MC-20 当前 schema 正式基线与发布资格
 
 模型目录 SHALL 分别公开模型的登记状态、产物可加载状态、发布资格、服务兼容性和默认候选状态。只有发布合格且服务兼容的模型 MAY 标为正式可服务模型；训练成功或登记成功 MUST NOT 自动产生发布合格状态。目录 SHALL 能读取当前 `kamei14-git-v2` 正式模型包及其发布报告，新环境初始化时不得用六字段模型替代当前 schema 默认候选。
 

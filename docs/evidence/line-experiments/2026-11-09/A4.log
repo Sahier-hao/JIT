@@ -1,0 +1,94 @@
+{
+  "kind": "line-model-report",
+  "samples": {
+    "total": 8254,
+    "train": 6102,
+    "test": 2152,
+    "positives": 3560,
+    "negatives": 4694,
+    "trainPositives": 2435,
+    "testPositives": 1125
+  },
+  "metrics": {
+    "rocAuc": 0.6805898517797253,
+    "prAuc": 0.6789315678825587,
+    "brier": 0.22709755063729004,
+    "threshold": 0.5,
+    "precision": 0.6496212121212122,
+    "recall": 0.6097777777777778,
+    "f1": 0.6290692342961944,
+    "trueNegative": 657,
+    "falsePositive": 370,
+    "falseNegative": 439,
+    "truePositive": 686
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 120,
+    "candidateLines": 2152,
+    "positives": 1125,
+    "topKHit": {
+      "top1": 0.9,
+      "top3": 0.95,
+      "top5": 0.9583333333333334,
+      "top10": 0.975
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.2897777777777778,
+    "recallAt20PercentPerCommitMean": 0.5136289379427237,
+    "ifaMean": 0.6083333333333333,
+    "ifaMedian": 0.0
+  },
+  "byRepo": {
+    "axios": {
+      "samples": 2152,
+      "positives": 1125,
+      "rocAuc": 0.6805898517797253,
+      "prAuc": 0.6789315678825587,
+      "brier": 0.22709755063729004,
+      "threshold": 0.5,
+      "precision": 0.6496212121212122,
+      "recall": 0.6097777777777778,
+      "f1": 0.6290692342961944,
+      "trueNegative": 657,
+      "falsePositive": 370,
+      "falseNegative": 439,
+      "truePositive": 686
+    }
+  },
+  "byLanguage": {
+    "javascript": {
+      "samples": 1970,
+      "positives": 1088,
+      "rocAuc": 0.6653770883353342,
+      "prAuc": 0.689192528922973,
+      "brier": 0.2307348771432373,
+      "threshold": 0.5,
+      "precision": 0.6572815533980583,
+      "recall": 0.6222426470588235,
+      "f1": 0.6392823418319169,
+      "trueNegative": 529,
+      "falsePositive": 353,
+      "falseNegative": 411,
+      "truePositive": 677
+    },
+    "typescript": {
+      "samples": 182,
+      "positives": 37,
+      "rocAuc": 0.5507921714818267,
+      "prAuc": 0.30185909842446124,
+      "brier": 0.18772648900698105,
+      "threshold": 0.5,
+      "precision": 0.34615384615384615,
+      "recall": 0.24324324324324326,
+      "f1": 0.2857142857142857,
+      "trueNegative": 128,
+      "falsePositive": 17,
+      "falseNegative": 28,
+      "truePositive": 9
+    }
+  },
+  "manifest": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\A4-no-repo-balance.manifest.json",
+  "output": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\A4-no-repo-balance.json"
+}

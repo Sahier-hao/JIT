@@ -12,7 +12,16 @@ export interface PRSnapshot extends PRItem {
 export interface PRPrepared { snapshot: PRSnapshot; checkedAt: string; remoteState: PRItem['remoteState'] }
 export interface PRList { owner: string; name: string; repositoryId: string; repositoryUrl: string; pullRequests: PRItem[]; page: number; hasMore: boolean; checkedAt: string; state: string }
 export interface PRContext { snapshotId: string; path: string; side: 'base' | 'head'; ref: string; content: string; complete: boolean; absent: boolean; totalLines: number }
-export interface PRCandidate { side: 'base' | 'head'; path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string }
+export interface PRSuggestion {
+  ruleId: string
+  ruleVersion: string
+  title: string
+  rationale: string
+  location: { path: string; line: number; side: 'base' | 'head' }
+  manualChecks: string[]
+  example: { before: string; after: string } | null
+}
+export interface PRCandidate { side: 'base' | 'head'; path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string; suggestion?: PRSuggestion | null }
 export interface PRCandidates {
   snapshotId: string
   coverage: { analyzed: string[]; skipped: { path: string; reason: string }[]; analyzerVersion: string; side: string; selected: number; totalFiles: number } | null
@@ -72,6 +81,20 @@ export async function getPRContext(source: PRSnapshot, path: string, side: 'base
   return { snapshotId: source.snapshotId, path, side, ref: text(b.ref), content: string(b.content), complete: flag(b.complete), absent: flag(b.absent), totalLines: integer(b.totalLines) }
 }
 
+function suggestion(raw: unknown): PRSuggestion | null {
+  if (raw == null) return null
+  const value = record(raw)
+  const location = record(value.location)
+  const example = value.example == null ? null : record(value.example)
+  return {
+    ruleId: text(value.ruleId), ruleVersion: text(value.ruleVersion),
+    title: text(value.title), rationale: text(value.rationale),
+    location: { path: text(location.path), line: integer(location.line), side: text(location.side) as 'base' | 'head' },
+    manualChecks: Array.isArray(value.manualChecks) ? value.manualChecks.map(item => text(item)) : [],
+    example: example ? { before: text(example.before), after: text(example.after) } : null,
+  }
+}
+
 function candidates(raw: unknown, snapshotId: string): PRCandidates {
   const b = record(raw)
   if (b.snapshotId !== snapshotId) contractFailed('候选位置不属于当前快照')
@@ -88,6 +111,7 @@ function candidates(raw: unknown, snapshotId: string): PRCandidates {
       side: text(item.side) as PRCandidate['side'], path: text(item.path), line: integer(item.line),
       ruleId: text(item.ruleId), ruleVersion: text(item.ruleVersion),
       message: text(item.message), evidence: text(item.evidence),
+      suggestion: suggestion(item.suggestion),
     })),
   }
 }

@@ -142,18 +142,27 @@ def test_release_report_requires_admin_and_missing_report_is_explicit(settings):
 
 
 def test_old_model_without_supplement_marks_train_and_validation_not_recorded(
-        tmp_path, monkeypatch):
+        tmp_path, monkeypatch, real_run):  # noqa: F811
     from fastapi.testclient import TestClient as PublicTestClient
     from jit_baseline.api import create_app
     from jit_baseline.catalog_storage import CatalogStorage
-    from jit_baseline.config import BACKEND
+    from jit_baseline.data import sha256
 
     root = tmp_path / 'artifacts'
-    shutil.copytree(BACKEND / 'artifacts/baseline', root / 'baseline')
+    shutil.copytree(real_run, root / 'baseline')
+    # 显式构造“未记录分区诊断”的旧产物，避免依赖开发机遗留的 baseline。
+    summary_path = root / 'baseline' / 'summary.json'
+    summary = json.loads(summary_path.read_text(encoding='utf-8'))
+    summary.pop('metricsByPartition', None)
+    summary_path.write_text(json.dumps(summary), encoding='utf-8')
+    manifest_path = root / 'baseline' / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    manifest['files']['summary.json'] = sha256(summary_path.read_bytes())
+    manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
     store = CatalogStorage(tmp_path / 'catalog.sqlite3')
     store.initialize()
     monkeypatch.setenv('JIT_MODEL_DIAGNOSTICS_ROOT', str(tmp_path / 'no-diagnostics'))
-    settings = {'directory': BACKEND / 'artifacts/baseline',
+    settings = {'directory': root / 'baseline',
                 'database': store.path, 'artifact_root': root}
     with TestClient(create_app(**settings)) as client:
         candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
@@ -177,8 +186,22 @@ def test_old_model_reads_matching_frozen_diagnostic_and_benefit_without_admin_fi
     from jit_baseline.config import BACKEND
     from jit_baseline.data import sha256
 
+    # 冻结诊断与收益报告绑定仓库内置包里的原运行身份；本机 artifacts 目录可能
+    # 已被重建，模型哈希与数据版本都不同，不能拿它冒充“旧模型”。
+    import zipfile
+    from jit_baseline.model_packages import inspect_model_package
+
     root = tmp_path / 'artifacts'
-    shutil.copytree(BACKEND / 'artifacts/baseline', root / 'baseline')
+    package = BACKEND / 'model-packages/jit-nine-models-v1.zip'
+    inspected = inspect_model_package(package)
+    item = next(entry for entry in inspected['models'] if entry['artifactKey'] == 'baseline')
+    with zipfile.ZipFile(package) as archive:
+        prefix = item['packagePath'] + '/'
+        for info in archive.infolist():
+            if info.filename.startswith(prefix) and not info.is_dir():
+                target = root / 'baseline' / info.filename[len(prefix):]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(archive.read(info))
     model_hash = sha256((root / 'baseline/model.joblib').read_bytes())
     store = CatalogStorage(tmp_path / 'catalog.sqlite3')
     store.initialize()

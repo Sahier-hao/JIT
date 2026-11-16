@@ -81,10 +81,10 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     assert view["status"] in ("queued", "collecting")
     done = _wait(harness["service"], view["syncId"])
 
-    assert done["status"] == "completed", done
+    assert done["status"] == "completed", done["error"]
     assert done["requestedStrategy"] == "auto"
     assert done["modelStrategy"] == "generic-model"
-    assert done["degradeReason"] == "fewRecords"
+    assert done["degradeReason"] == "noMatureRecords"
     assert done["trainRecords"] < 200
     assert done["modelId"] and done["runId"] and done["datasetVersion"]
     assert done["datasetVersion"].startswith("kamei14-git-v2-")
@@ -101,7 +101,8 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
         assert risks == sorted(risks, reverse=True)
         first = commits["commits"][0]
         assert set(first) == {"commitId", "epoch", "risk", "addedLines", "deletedLines",
-                                  "files", "features", "label", "labelNote", "subject", "authorName"}
+                                  "files", "features", "label", "labelNote", "subject", "authorName",
+                                  "partition"}
         assert len(first["features"]) == 14
         assert first["subject"]
         detail = client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits/"

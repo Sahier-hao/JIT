@@ -16,6 +16,7 @@ export interface SplitPreview {
   eligibleRecords: number
   maturityPolicy: string
   maturity: Record<string, unknown> | null
+  admission: Record<string, unknown> | null
   available: boolean
   reason: { code: string; message: string } | null
   partitions: null | Record<'train' | 'validation' | 'test', {
@@ -52,9 +53,10 @@ export async function previewDatasetSplit(datasetVersion: string, preset: string
     },
     timezone: text(value.timezone),
     datasetRecords: finiteNumber(value.datasetRecords),
-    eligibleRecords: finiteNumber(value.eligibleRecords),
-    maturityPolicy: text(value.maturityPolicy),
-    maturity: value.maturity == null ? null : record(value.maturity),
+      eligibleRecords: finiteNumber(value.eligibleRecords ?? value.datasetRecords),
+      maturityPolicy: textOrNull(value.maturityPolicy) ?? 'mature-only',
+      maturity: value.maturity == null ? null : record(value.maturity),
+      admission: value.admission == null ? null : record(value.admission),
     available: value.available === true,
     reason: reason ? { code: text(reason.code), message: text(reason.message) } : null,
     partitions: parts == null ? null : {

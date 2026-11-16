@@ -7,10 +7,10 @@ import uuid
 from bisect import bisect_right
 from datetime import date, datetime, timedelta
 
+from . import model_lineage
 from .api_errors import RequestError
 from .catalog_storage import utc_now
-from .data import BaselineError
-from .splits import PARTITIONS, membership_digest
+from .splits import PARTITIONS
 from .sync import DISTRIBUTION_RULE, distribution_of
 from .trends import DEFAULT_MIN_SAMPLE, LOCAL, TIMEZONE
 
@@ -329,60 +329,20 @@ class ProjectTrendService:
         if self.catalog is None:
             coverage['reason'] = '趋势服务未取得模型目录，不能验证切分谱系'
             return coverage, {}
-        try:
-            snapshot, _ = self.catalog.load_model(model_id)
-            directory = self.catalog.model_directory(model_id)
-            split = json.loads((directory / 'split.json').read_text(encoding='utf-8'))
-            policy = snapshot.summary.get('splitPolicy')
-            if (not isinstance(policy, dict) or split.get('policy') != policy
-                    or snapshot.summary.get('datasetVersion') != dataset_version
-                    or not isinstance(split.get('partitions'), dict)
-                    or membership_digest(split['partitions']) != policy.get('memberSha256')):
-                coverage['reason'] = '模型数据版本或切分成员与本项目分析不一致'
-                return coverage, {}
-        except (BaselineError, OSError, ValueError, TypeError, KeyError):
-            coverage['reason'] = '模型切分谱系不可用，不能推断分区'
+        # 与项目分析口径共用同一份成员核对：模型可加载、切分策略与成员摘要一致。
+        lineage, labels = model_lineage.verified_membership(
+            self.catalog, model_id, dataset_version)
+        if lineage['status'] != model_lineage.VERIFIED:
+            coverage['reason'] = lineage['reason'] or '模型切分谱系不可用，不能推断分区'
             return coverage, {}
-        labels = {}
-        for name in PARTITIONS:
-            ids = split['partitions'].get(name, {}).get('ids') or []
-            if not isinstance(ids, list):
-                coverage['reason'] = '模型切分成员结构无效，不能推断分区'
-                return coverage, {}
-            for commit_id in ids:
-                if commit_id in labels:
-                    coverage['reason'] = '模型切分成员重叠，不能推断分区'
-                    return coverage, {}
-                labels[commit_id] = name
-        holdout = snapshot.summary.get('holdout')
-        cutoff = holdout.get('epoch') if isinstance(holdout, dict) else None
-        if cutoff is None:
-            test_end = (
-                (policy.get('partitionCounts') or {}).get('test') or {}
-            ).get('end')
-            if isinstance(test_end, str):
-                try:
-                    cutoff = int(datetime.fromisoformat(
-                        test_end.replace('Z', '+00:00')).timestamp())
-                except ValueError:
-                    cutoff = None
         coverage.update(
-            status='verified', reason=None, preset=policy.get('id'),
-            timezone=policy.get('timezone'), boundaries=policy.get('boundaries') or [],
-            partitions={
-                name: {
-                    **{
-                        key: value
-                        for key, value in (policy.get('partitionCounts') or {}).get(name, {}).items()
-                        if key in ('records', 'positives', 'start', 'end')
-                    },
-                }
-                for name in PARTITIONS
-            },
+            status='verified', reason=None, preset=lineage.get('preset'),
+            timezone=lineage.get('timezone'), boundaries=lineage.get('boundaries') or [],
+            partitions=lineage.get('partitions') or {},
+            runId=lineage.get('runId'),
         )
-        if cutoff is not None:
-            coverage['recentUnseenFrom'] = datetime.fromtimestamp(
-                cutoff, LOCAL).isoformat(timespec='seconds')
+        if lineage.get('holdoutFrom') is not None:
+            coverage['recentUnseenFrom'] = lineage['holdoutFrom']
         return coverage, labels
 
     @staticmethod

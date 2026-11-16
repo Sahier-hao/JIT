@@ -148,12 +148,21 @@ def feature_matrix(records, schema=None):
     return matrix
 
 
-def build_estimator(entry):
-    """由方法声明构造估计器；未实现的估计器必须被拒绝。"""
+def build_estimator(entry, params=None):
+    """由方法声明构造估计器；未实现的估计器必须被拒绝。
+
+    `params` 是已解析的实际参数；只覆盖声明中已有的估计器参数，不会引入
+    额外键。默认参数与冻结声明一致，估计器行为保持不变。
+    """
     factory = ESTIMATORS.get(entry.get("estimator"))
     if factory is None:
         raise BaselineError("ALGORITHM_UNKNOWN", f"方法声明的估计器未实现：{entry.get('estimator')}")
-    return factory(**entry["kwargs"])
+    kwargs = dict(entry["kwargs"])
+    if params:
+        for key in kwargs:
+            if key in params:
+                kwargs[key] = params[key]
+    return factory(**kwargs)
 
 
 def apply_class_policy(records, policy):
@@ -196,11 +205,12 @@ def apply_class_policy(records, policy):
     raise BaselineError("CLASS_POLICY_INVALID", "未知的类别处理策略")
 
 
-def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None):
+def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None, params=None):
     """按 schema 的变换与方法的声明构造流水线。
 
     `counts` 由 schema 决定、方法不得覆盖；是否标准化与估计器由方法声明。
     `class_policy` 只作用于传入的训练记录，调用方负责只传训练分区。
+    `params` 是已解析的实际参数，默认保持冻结声明。
     """
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
     entry = get_algorithm(algorithm if algorithm else DEFAULT_ALGORITHM)
@@ -216,7 +226,7 @@ def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None):
         steps.append(("scale", ExpertStandardScaler(
             0 if schema.semantic_only else len(schema.in_model_names()))
             if schema.semantic else StandardScaler()))
-    steps.append(("model", build_estimator(entry)))
+    steps.append(("model", build_estimator(entry, params)))
     pipeline = Pipeline(steps)
     fit_kwargs = {"model__sample_weight": sample_weight} if sample_weight is not None else {}
     try:

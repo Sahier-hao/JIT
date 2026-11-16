@@ -8,7 +8,7 @@ const LABELS: Record<string, string> = { ns: '子系统数', nd: '目录数', nf
   nuc: '历史变更数', exp: '作者经验', rexp: '作者近期经验', sexp: '子系统经验' }
 type State = { key: string; result?: Explanation; error?: string; busy?: boolean }
 
-export function RepositoryExplanation({ context }: { context: ExplanationContext }) {
+export function RepositoryExplanation({ context, heading = true }: { context: ExplanationContext; heading?: boolean }) {
   const key = JSON.stringify(context)
   const [state, setState] = useState<State>({ key: '' })
   const [attempt, setAttempt] = useState(0)
@@ -42,7 +42,7 @@ export function RepositoryExplanation({ context }: { context: ExplanationContext
   const result = current?.result
   const supported = result?.explanationStatus === 'supported'
   return <section className="repository-explanation" aria-label="模型解释" aria-busy={!current || Boolean(current.busy)}>
-    <h3>模型解释</h3>
+    {heading ? <h3>模型解释</h3> : null}
     <p className="muted">单特征敏感度，不是缺陷结论、因果解释或代码定位；保存的模型分数不会改变。</p>
     {!current ? <p role="status">正在读取模型解释…</p> : null}
     {current?.error ? <div role="alert"><p>{current.error}</p><Button variant="link" size="sm" onClick={() => { setState({ key: '' }); setAttempt(value => value + 1) }}>重新读取解释</Button></div> : null}

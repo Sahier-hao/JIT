@@ -31,19 +31,34 @@ def register(csv_path, schema=None, dataset=None, version=None, root=None, cohor
                              cohort=cohort, provenance=provenance, extra=extra)
 
 
-def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
+def publish_unique(room, dataset, version, blob, *, after=None, identity=None, **kwargs):
     """把 CSV 以不可覆盖方式发布到数据集目录，再登记描述文件。
 
-    目标已存在且字节相同即复用；字节不同时追加内容哈希作为新版本，仍冲突则失败。
-    命令行和服务端同步共用这条路径，避免先替换旧文件再登记。
+    目标已存在且字节相同即复用；字节相同但观察准入语义不同（`identity`）时改用带
+    语义哈希的新版本，不把旧版本当成同一份数据。仍冲突则失败。命令行和服务端同步共用
+    这条路径，避免先替换旧文件再登记。
     """
     digest = hashlib.sha256(blob).hexdigest()
+    names = [version]
+    if identity:
+        names.append(f"{version}-{identity[:8]}")
+    if f"{version}-{digest[:8]}" not in names:
+        names.append(f"{version}-{digest[:8]}")
     last = None
-    for name in (version, f"{version}-{digest[:8]}"):
+    for name in names:
         path = Path(room) / f"{name}.csv"
         manifest_path = Path(room) / f"{name}.json"
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
+            if manifest_path.exists():
+                existing = datasets.load_manifest(manifest_path)
+                declared = existing.get("file") or {}
+                if declared.get("sha256") != digest or declared.get("bytes") != len(blob):
+                    last = f"同名描述文件描述了不同内容：{name}"
+                    continue
+                if identity is not None and (existing.get("labeling") or {}).get("identity") != identity:
+                    last = f"同名描述文件的观察准入身份不同：{name}"
+                    continue
             if not path.exists():
                 temporary = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
                 try:
@@ -55,12 +70,19 @@ def publish_unique(room, dataset, version, blob, *, after=None, **kwargs):
                 finally:
                     temporary.unlink(missing_ok=True)
             if path.read_bytes() != blob:
-                raise BaselineError("DATASET_EXISTS", f"已有 CSV 内容不同，不覆盖：{name}")
+                last = f"已有 CSV 内容不同：{name}"
+                continue
             try:
                 registered = register(path, dataset=dataset, version=name, **kwargs)
             except BaselineError as exc:
                 if exc.code != "DATASET_EXISTS" or not manifest_path.exists():
                     raise
+                if identity is not None:
+                    existing = datasets.load_manifest(manifest_path)
+                    if (existing.get("labeling") or {}).get("identity") != identity:
+                        last = f"描述文件观察准入身份不同：{name}"
+                        continue
+                # 描述文件已确认描述本次 CSV 内容，按幂等复用处理。
                 entry = {"dataset": dataset, "version": name,
                          "path": datasets.manifest_relative(manifest_path),
                          "csvPath": datasets.manifest_relative(path),
@@ -137,7 +159,8 @@ def delete_dataset_version(storage, manifest):
     """两阶段删除数据集：先移除登记与提交记录，再删除描述、CSV 与旁注文件。"""
     version = manifest['version']
     files = []
-    for entry in (manifest.get('file'), manifest.get('text'), manifest.get('labelEvidenceFile')):
+    for entry in (manifest.get('file'), manifest.get('text'), manifest.get('labelEvidenceFile'),
+                  manifest.get('labelStatusFile')):
         if isinstance(entry, dict) and entry.get('path'):
             path = Path(entry['path'])
             files.append(path if path.is_absolute() else BACKEND / path)
@@ -165,6 +188,8 @@ def dataset_list(registered):
             "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
             "source": _source(manifest), "labelRule": _label_rule(manifest),
             "labelMaturity": _label_maturity(manifest),
+            "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
+            "labelObservations": _observations(manifest),
             "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
             "limitations": _limitations(manifest)})
     return [{"dataset": name, "versions": sorted(versions, key=lambda item: item["version"])}
@@ -182,9 +207,42 @@ def version_view(registered, name):
                           "file": manifest["file"], "manifestPath": manifest.get("manifestPath"),
                           "source": _source(manifest), "labelRule": _label_rule(manifest),
                           "labelMaturity": _label_maturity(manifest),
+                          "label": manifest.get("label") or (manifest.get("collection") or {}).get("label") or {}, "szz": (manifest.get("collection") or {}).get("szz") or {},
+                          "labelObservations": _observations(manifest),
                           "usage": manifest.get("usage", "branch"), "sourceSyncId": manifest.get("sourceSyncId"),
                           "limitations": _limitations(manifest)}
                          for manifest in sorted(matches, key=lambda item: item["version"])]}
+
+
+def _observations(manifest):
+    """标签观察窗口与成熟准入事实；旧版本缺少观察声明时明确标为未知。"""
+    collection = manifest.get("collection") or {}
+    label = collection.get("label") or {}
+    szz = collection.get("szz") or {}
+    labeling = manifest.get("labeling") or {}
+    observed = labeling.get("observedThrough") or label.get("observedThrough") or szz.get("observedThrough")
+    facts = {
+        "rule": labeling.get("labelRule") or label.get("rule") or szz.get("rule"),
+        "version": label.get("version") or szz.get("version"),
+        "protocol": labeling.get("protocol") or "legacy-unobserved-v1",
+        "observedThrough": observed,
+        "observedThroughIso": (labeling.get("observedThroughIso")
+                               or (datetime.fromtimestamp(observed, timezone.utc)
+                                   .isoformat(timespec="seconds") if isinstance(observed, (int, float))
+                                   else None)),
+        "maturityDays": labeling.get("maturityDays") or label.get("maturityDays") or szz.get("maturityDays"),
+        "binarizationRule": label.get("binarizationRule") or szz.get("binarizationRule"),
+        "truncated": bool(szz.get("truncated") or label.get("truncated")
+                          or not (labeling.get("coverage") or {}).get("complete", True)),
+        "sampleWindow": labeling.get("sampleWindow") or collection.get("window"),
+        "observationWindow": labeling.get("observationWindow"),
+        "revision": labeling.get("revision") or manifest.get("revision"),
+        "historyStatus": labeling.get("historyStatus"),
+        "counts": labeling.get("counts"),
+        "identity": labeling.get("identity"),
+        "statusRule": (labeling.get("statusFile") or {}).get("rule"),
+    }
+    return facts if any(value not in (None, False) for value in facts.values()) else None
 
 
 def _source(manifest):

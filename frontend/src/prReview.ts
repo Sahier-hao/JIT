@@ -2,6 +2,7 @@ import { parseSnapshot, type PRSnapshot } from './prReviewClient'
 
 export type FileState = 'unread' | 'read' | 'recheck' | 'uncovered'
 export const readStatusLabels: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
+export const remoteStateLabels = { open: '开放中', closed: '已关闭', merged: '已合并' }
 export const reviewStatusLabels = { open: '待核对', resolved: '人工标记已解决', deferred: '暂不处理', withdrawn: '已撤回' }
 export function parsePatchLines(patch: string): { text: string; side: 'base' | 'head'; line: number | null; kind: 'hunk' | 'add' | 'delete' | 'context' }[] {
   let old = 0, next = 0
@@ -40,11 +41,39 @@ export interface PRWork {
   rounds: Record<string, ReviewRound>; revision: number; savedAt: string
 }
 export const WORK_KEY = 'jit:pr-review:works:v1'
+export const ACCOUNT_KEY_PREFIX = 'jit:pr-review:works:v2:'
+export const RECOVERY_KEY_PREFIX = 'jit:pr-review:recovery:v1:'
+export const IMPORT_RECEIPT_PREFIX = 'jit:pr-review:legacy-import:v1:'
+export function accountWorkKey(account: string): string {
+  const value = account.trim()
+  if (!value) throw new Error('账户身份尚未确认，不能读取个人工作单')
+  return `${ACCOUNT_KEY_PREFIX}${encodeURIComponent(value)}`
+}
 export const workKey = (owner: string, name: string, number: number) => `${owner.toLowerCase()}/${name.toLowerCase()}#${number}`
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 export function question(source: PRSnapshot, body = '', origin: ReviewQuestion['source'] = 'manual'): ReviewQuestion {
   return { id: crypto.randomUUID(), body, source: origin, kind: 'question', originSnapshotId: source.snapshotId, relatedFiles: [], evidence: [], status: 'open', judgment: '', reason: '', requiresRecheck: false, feedback: '', feedbackReason: '' }
 }
+
+export function candidateQuestion(source: PRSnapshot, candidate: {
+  path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string
+  suggestion?: { title: string; rationale: string; manualChecks: string[]; example: { before: string; after: string } | null } | null
+}): ReviewQuestion {
+  const suggestion = candidate.suggestion
+  const parts = [
+    suggestion?.title ?? `处理候选 ${candidate.ruleId}`,
+    `位置：${candidate.path}:${candidate.line}（规则 ${candidate.ruleId}@${candidate.ruleVersion}）`,
+    suggestion?.rationale ?? candidate.message,
+    candidate.evidence ? `证据：${candidate.evidence}` : '',
+    suggestion?.manualChecks.length ? `人工确认：${suggestion.manualChecks.join('；')}` : '',
+    suggestion?.example ? `示例（不自动应用）：\n${suggestion.example.before}\n→\n${suggestion.example.after}` : '',
+  ].filter(Boolean)
+  const created = question(source, parts.join('\n\n'), 'manual')
+  created.kind = 'suggestion'
+  created.relatedFiles = [candidate.path]
+  return created
+}
+
 function localSource(source: PRSnapshot): PRSnapshot { return { ...source, files: source.files.map(file => ({ ...file, patch: null, patchComplete: false })) } }
 function round(source: PRSnapshot): ReviewRound {
   const questions = [question(source, `这次改动在实现和相关测试中是否保持一致？（${source.files.length} 个已加载文件，请补充具体核对目标）`, 'change')]
@@ -121,26 +150,90 @@ function validWork(raw: unknown): PRWork {
   }
   return work
 }
-export function readWorks(): PRWork[] {
-  const raw = JSON.parse(localStorage.getItem(WORK_KEY) ?? '{}')
+function readKey(key: string): PRWork[] {
+  const raw = JSON.parse(localStorage.getItem(key) ?? '{}')
   if (!raw || Array.isArray(raw) || typeof raw !== 'object') throw new Error('个人工作单存储不可读，请先导出或恢复备份')
   return Object.values(raw).map(validWork)
 }
-export function saveWork(work: PRWork): PRWork {
-  const works = readWorks(), old = works.find(item => item.key === work.key)
+export function readWorks(account: string): PRWork[] {
+  return readKey(accountWorkKey(account))
+}
+export function saveWork(account: string, work: PRWork): PRWork {
+  const key = accountWorkKey(account)
+  const works = readKey(key), old = works.find(item => item.key === work.key)
   if (old && old.revision !== work.revision) throw new Error('其他页面已保存较新工作单，请导出当前草稿后通过备份合并，未覆盖任何记录')
   const next = { ...work, revision: work.revision + 1, savedAt: new Date().toISOString() }
-  localStorage.setItem(WORK_KEY, JSON.stringify(Object.fromEntries([...works.filter(item => item.key !== work.key), next].map(item => [item.key, item]))))
-  window.dispatchEvent(new Event('jit:pr-work-changed'))
+  localStorage.setItem(key, JSON.stringify(Object.fromEntries([...works.filter(item => item.key !== work.key), next].map(item => [item.key, item]))))
+  clearRecovery(account, work.key)
+  window.dispatchEvent(new CustomEvent('jit:pr-work-changed', { detail: { account } }))
   return next
 }
-export function parseBackup(text: string, key?: string): PRWork {
+
+export function hasLegacyWorks(): boolean {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WORK_KEY) ?? '{}')
+    return Boolean(raw && typeof raw === 'object' && !Array.isArray(raw) && Object.keys(raw).length)
+  } catch { return false }
+}
+export function readLegacyWorks(): PRWork[] {
+  return readKey(WORK_KEY)
+}
+export function legacyWorksHash(): string {
+  const raw = localStorage.getItem(WORK_KEY) ?? ''
+  let hash = 0
+  for (let index = 0; index < raw.length; index++) hash = ((hash << 5) - hash + raw.charCodeAt(index)) | 0
+  return `${raw.length}:${hash >>> 0}`
+}
+export function legacyImportReceipt(account: string): string | null {
+  return localStorage.getItem(`${IMPORT_RECEIPT_PREFIX}${encodeURIComponent(account.trim())}`)
+}
+export function markLegacyImported(account: string, hash: string): void {
+  localStorage.setItem(`${IMPORT_RECEIPT_PREFIX}${encodeURIComponent(account.trim())}`, hash)
+}
+
+export function saveRecovery(account: string, work: PRWork): void {
+  if (!account.trim()) return
+  const key = `${RECOVERY_KEY_PREFIX}${encodeURIComponent(account.trim())}`
+  try {
+    const raw = JSON.parse(localStorage.getItem(key) ?? '{}')
+    const current = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}
+    localStorage.setItem(key, JSON.stringify({ ...current, [work.key]: work }))
+  } catch { /* 配额或损坏时不覆盖已有恢复内容 */ }
+}
+export function readRecovery(account: string, workKeyValue: string): PRWork | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(`${RECOVERY_KEY_PREFIX}${encodeURIComponent(account.trim())}`) ?? '{}')
+    const value = raw?.[workKeyValue]
+    return value ? validWork(value) : null
+  } catch { return null }
+}
+export function clearRecovery(account: string, workKeyValue: string): void {
+  if (!account.trim()) return
+  const key = `${RECOVERY_KEY_PREFIX}${encodeURIComponent(account.trim())}`
+  try {
+    const raw = JSON.parse(localStorage.getItem(key) ?? '{}')
+    if (!raw || typeof raw !== 'object') return
+    delete raw[workKeyValue]
+    if (Object.keys(raw).length) localStorage.setItem(key, JSON.stringify(raw))
+    else localStorage.removeItem(key)
+  } catch { /* 恢复副本清理失败不影响已保存工作 */ }
+}
+
+export function backupText(work: PRWork, account: string | null): string {
+  return JSON.stringify({ format: 'jit-pr-review-v2', accountHint: account ?? null, work }, null, 2)
+}
+export function parseBackupInfo(text: string, key?: string): { work: PRWork; accountHint: string | null } {
   if (new Blob([text]).size > 1024 * 1024) throw new Error('备份不能超过 1 MiB')
   const parsed = JSON.parse(text)
-  if (parsed.format !== 'jit-pr-review-v1') throw new Error('不支持的工作单备份格式')
+  if (!['jit-pr-review-v1', 'jit-pr-review-v2'].includes(parsed.format)) throw new Error('不支持的工作单备份格式')
   const work = validWork(parsed.work)
   if (key && work.key !== key) throw new Error('备份不属于当前 PR')
-  return work
+  const accountHint = parsed.format === 'jit-pr-review-v2' && typeof parsed.accountHint === 'string'
+    ? parsed.accountHint : null
+  return { work, accountHint }
+}
+export function parseBackup(text: string, key?: string): PRWork {
+  return parseBackupInfo(text, key).work
 }
 export interface MergeConflict { key: string; label: string; current: string; incoming: string }
 export function mergeBackup(current: PRWork, incoming: PRWork, choices: Record<string, boolean>): { work: PRWork; conflicts: MergeConflict[] } {

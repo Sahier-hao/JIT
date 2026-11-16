@@ -1,0 +1,67 @@
+name: Commit range analysis example
+
+# 示例：从明确的 base/head 在本地检出上执行真实特征采集、推理和报告。
+# 模型来自受控发布包并校验 SHA-256；不访问本机后端、不评论 PR、不阻断合并，
+# 也不上传 SQLite、凭据或个人草稿。远端尚未实际运行，本文件与本地命令一并验证。
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 基准提交 SHA
+        required: true
+      head:
+        description: 目标提交 SHA（默认本次触发提交）
+        required: false
+        default: ''
+      model_package_url:
+        description: 受控模型包 ZIP 的 HTTPS 地址
+        required: true
+      model_package_sha256:
+        description: 模型包 ZIP 的 SHA-256
+        required: true
+      model_id:
+        description: 模型包内明确选择的模型 ID
+        required: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download and verify the model package
+        run: |
+          curl --fail --silent --show-error --location "${{ inputs.model_package_url }}" -o model-package.zip
+          echo "${{ inputs.model_package_sha256 }}  model-package.zip" | sha256sum --check --strict
+      - run: python -m pip install -r backend/requirements.txt
+      - name: Import the model into a disposable catalog
+        working-directory: backend
+        run: |
+          python -m jit_baseline.cli catalog-init --skip-bundled-models \
+            --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
+            --artifact-root "$RUNNER_TEMP/jit/artifacts"
+          python -m jit_baseline.cli import-models ../model-package.zip \
+            --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
+            --artifact-root "$RUNNER_TEMP/jit/artifacts"
+      - name: Analyze the commit range
+        working-directory: backend
+        run: |
+          HEAD_SHA="${{ inputs.head }}"
+          if [ -z "$HEAD_SHA" ]; then HEAD_SHA="$GITHUB_SHA"; fi
+          python -m jit_baseline.cli pr-check-analyze \
+            --repo .. --base "${{ inputs.base }}" --head "$HEAD_SHA" \
+            --model-id "${{ inputs.model_id }}" \
+            --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
+            --artifact-root "$RUNNER_TEMP/jit/artifacts" \
+            --output "$RUNNER_TEMP/jit/commit-analysis.json" \
+            --markdown "$RUNNER_TEMP/jit/commit-analysis.md"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: commit-analysis
+          path: |
+            ${{ runner.temp }}/jit/commit-analysis.json
+            ${{ runner.temp }}/jit/commit-analysis.md

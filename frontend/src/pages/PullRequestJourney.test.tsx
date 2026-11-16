@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PullRequestWork } from './PullRequestJourney'
 import { adoptVersion, createWork, readWorks, saveWork } from '../prReview'
+import { TEST_REVIEW_ACCOUNT } from '../test-utils'
 import { snapshot } from '../prReview.fixture'
 
 afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
 function response(body: unknown) { return new Response(JSON.stringify(body), { status: 200 }) }
 it('keeps writing and reports unsaved text when browser storage fails', async () => {
   const source = snapshot()
-  saveWork(createWork(source))
+  saveWork(TEST_REVIEW_ACCOUNT, createWork(source))
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: [] }) : String(path).endsWith('/analyses') ? response({ snapshotId: source.snapshotId, analyses: [] }) : response(source))
   render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
   await screen.findByText('提交风险排序')
@@ -24,7 +25,7 @@ it('keeps writing and reports unsaved text when browser storage fails', async ()
   expect(screen.getAllByRole('button', { name: '导出完整草稿' })[0]).toBeEnabled()
 })
 it('updates a version without resolving old questions and restores the old round', async () => {
-  const source = snapshot(); saveWork(createWork(source))
+  const source = snapshot(); saveWork(TEST_REVIEW_ACCOUNT, createWork(source))
   const updated = snapshot('v2', 'e'.repeat(40)); updated.files[0].blobSha = 'f'.repeat(40)
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (_, options) => options?.method === 'POST'
     ? response({ snapshot: updated, remoteState: 'open', checkedAt: updated.capturedAt }) : response(source))
@@ -32,13 +33,13 @@ it('updates a version without resolving old questions and restores the old round
   await screen.findByText('提交风险排序')
   await user.click(screen.getByRole('button', { name: '检查 PR 更新' }))
   expect(await screen.findByRole('button', { name: '开始复核新版本' })).toBeVisible()
-  expect(readWorks()[0].rounds.v1.questions[0].status).toBe('open')
-  expect(readWorks()[0].rounds.v2.questions[0].status).toBe('open')
+  expect(readWorks(TEST_REVIEW_ACCOUNT)[0].rounds.v1.questions[0].status).toBe('open')
+  expect(readWorks(TEST_REVIEW_ACCOUNT)[0].rounds.v2.questions[0].status).toBe('open')
 })
 it('returns from evidence to the original version and code line', async () => {
   const source = snapshot(), work = createWork(source)
   work.rounds.v1.questions[0].evidence = [{ snapshotId: 'v1', path: 'src/token.py', side: 'head', line: 1, blobSha: 'c'.repeat(40), note: '' }]
-  saveWork(work)
+  saveWork(TEST_REVIEW_ACCOUNT, work)
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: [] }) : String(path).endsWith('/analyses') ? response({ snapshotId: source.snapshotId, analyses: [] }) : response(source))
   render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
   await user.click(await screen.findByText('handle expiry'))
@@ -46,7 +47,7 @@ it('returns from evidence to the original version and code line', async () => {
   await waitFor(() => expect(screen.getByRole('button', { name: '关联 src/token.py:head:1' })).toHaveAttribute('data-focused', 'true'))
 })
 it('resumes the question being edited after leaving and reopening', async () => {
-  const source = snapshot(); saveWork(createWork(source))
+  const source = snapshot(); saveWork(TEST_REVIEW_ACCOUNT, createWork(source))
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: [] }) : String(path).endsWith('/analyses') ? response({ snapshotId: source.snapshotId, analyses: [] }) : response(source))
   const first = render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
   await user.click(await screen.findByText('handle expiry'))
@@ -66,12 +67,12 @@ it('uses current remote state when directly opening a cached code version', asyn
     return options?.method === 'POST' ? response({ snapshot: source, checkedAt, remoteState: 'merged' }) : response(source)
   })
   render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>); const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '开始审查' }))
+  await user.click(await screen.findByRole('button', { name: '创建审查工作单' }))
   expect(await screen.findByText(/远端 PR 已合并，当前为历史审查/)).toBeVisible()
-  expect(readWorks()[0]).toMatchObject({ remoteState: 'merged', checkedAt })
+  expect(readWorks(TEST_REVIEW_ACCOUNT)[0]).toMatchObject({ remoteState: 'merged', checkedAt })
 })
 it('restores an unfinished delivery note and conclusion choice after reopening', async () => {
-  const source = snapshot(); saveWork(createWork(source))
+  const source = snapshot(); saveWork(TEST_REVIEW_ACCOUNT, createWork(source))
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: [] }) : String(path).endsWith('/analyses') ? response({ snapshotId: source.snapshotId, analyses: [] }) : response(source))
   const first = render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>), user = userEvent.setup()
   await user.click(await screen.findByRole('button', { name: '输出意见' }))
@@ -90,7 +91,7 @@ it('opens an old evidence version directly instead of returning to the commit li
   const latest = snapshot('v2', 'e'.repeat(40)); latest.previousSnapshotId = 'v1'
   const work = adoptVersion(createWork(old), latest)
   work.rounds.v1.questions[0].evidence = [{ snapshotId: 'v1', path: 'src/token.py', side: 'head', line: 1, blobSha: 'c'.repeat(40), note: '' }]
-  saveWork(work)
+  saveWork(TEST_REVIEW_ACCOUNT, work)
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     if (String(path).endsWith('/repository-models')) return response({ models: [] })
     if (String(path).endsWith('/analyses')) return response({ snapshotId: String(path).includes('v1') ? 'v1' : 'v2', analyses: [] })
@@ -100,8 +101,28 @@ it('opens an old evidence version directly instead of returning to the commit li
   await screen.findByText('提交风险排序')
   await user.click(screen.getByText('handle expiry'))
   await user.click(await screen.findByRole('button', { name: 'src/token.py:1 · 目标 · 原版本' }))
-  await waitFor(() => expect(readWorks()[0].viewedSnapshotId).toBe('v1'))
+  await waitFor(() => expect(readWorks(TEST_REVIEW_ACCOUNT)[0].viewedSnapshotId).toBe('v1'))
   expect(screen.queryByText('提交风险排序')).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '提交列表' })).toBeVisible()
   await waitFor(() => expect(screen.getByRole('button', { name: '关联 src/token.py:head:1' })).toHaveAttribute('data-focused', 'true'))
+})
+it('opens the read-only preview for an existing work and returns to it', async () => {
+  const source = snapshot(); saveWork(TEST_REVIEW_ACCOUNT, createWork(source))
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: [] }) : String(path).endsWith('/analyses') ? response({ snapshotId: source.snapshotId, analyses: [] }) : response(source))
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<PullRequestWork owner="example" repositoryName="project" number={12} preview navigate={navigate}/>)
+  expect(await screen.findByText('只读预览')).toBeVisible()
+  expect(await screen.findByText('提交风险排序')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '进入工作单' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'pr-work', repositoryId: undefined, owner: 'example', repositoryName: 'project', number: 12 })
+  expect(readWorks(TEST_REVIEW_ACCOUNT)).toHaveLength(1)
+})
+it('offers the read-only version from the workbench', async () => {
+  const source = snapshot(); saveWork(TEST_REVIEW_ACCOUNT, createWork(source))
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/repository-models') ? response({ models: [] }) : String(path).endsWith('/analyses') ? response({ snapshotId: source.snapshotId, analyses: [] }) : response(source))
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={navigate}/>)
+  await screen.findByText('提交风险排序')
+  await user.click(screen.getByRole('button', { name: '查看只读版本' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'pr-work', repositoryId: undefined, owner: 'example', repositoryName: 'project', number: 12, mode: 'preview' })
 })

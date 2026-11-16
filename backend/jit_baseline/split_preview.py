@@ -1,10 +1,12 @@
 """Read-only split previews backed by one registered dataset manifest."""
 from pathlib import Path
 
+from . import admission
+from .artifacts import _label_admission
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .datasets import load_all, load_manifest
-from .label_maturity import apply_label_maturity, resolve_policy
+from .label_maturity import resolve_policy
 from .splits import PARTITIONS, preset_view, resolve_preset, split_records
 
 
@@ -23,7 +25,8 @@ def _records(manifest):
     return records
 
 
-def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_policy=None):
+def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
+                          allow_legacy=False, allow_restricted=False):
     """Return a no-write preview; invalid membership is data, not a failed request."""
     preset = resolve_preset(preset)
     maturity_policy = resolve_policy(maturity_policy)
@@ -36,17 +39,25 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
     manifest = load_manifest(manifest_path)
     records = _records(manifest)
     try:
-        records, maturity = apply_label_maturity(records, maturity_policy)
+        eligible, maturity, evaluated = _label_admission(
+            manifest, records, maturity_policy,
+            allow_legacy=allow_legacy, allow_restricted=allow_restricted,
+        )
     except BaselineError as exc:
+        result = admission.evaluate(
+            manifest, records, allow_legacy=allow_legacy,
+            allow_restricted=allow_restricted,
+        )
         return {
             "datasetVersion": dataset_version,
             "schemaName": manifest["schemaName"],
             "preset": preset_view(preset),
             "timezone": "UTC",
-            "datasetRecords": 0,
+            "datasetRecords": len(records),
             "eligibleRecords": 0,
             "maturityPolicy": maturity_policy,
             "maturity": None,
+            "admission": admission.view(result),
             "available": False,
             "reason": {"code": exc.code, "message": str(exc)},
             "partitions": None,
@@ -57,13 +68,14 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
         "schemaName": manifest["schemaName"],
         "preset": preset_view(preset),
         "timezone": "UTC",
-        "datasetRecords": maturity["inputRecords"],
-        "eligibleRecords": len(records),
+        "datasetRecords": len(records),
+        "eligibleRecords": len(eligible),
         "maturityPolicy": maturity_policy,
         "maturity": maturity,
+        "admission": admission.view(evaluated),
     }
     try:
-        split, _, policy = split_records(records, preset)
+        split, boundaries, policy = split_records(eligible, preset)
     except BaselineError as exc:
         return {
             **base,
@@ -86,12 +98,15 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
         "available": True,
         "reason": None,
         "partitions": partitions,
-        "policy": policy,
+        "policy": {**policy, "admission": evaluated["identity"] or evaluated["policy"]},
     }
 
 
-def validate_dataset_split(dataset_root, dataset_version, preset=None, maturity_policy=None):
-    preview = dataset_split_preview(dataset_root, dataset_version, preset, maturity_policy)
+def validate_dataset_split(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
+                           allow_legacy=False, allow_restricted=False):
+    preview = dataset_split_preview(dataset_root, dataset_version, preset,
+                                     maturity_policy, allow_legacy=allow_legacy,
+                                     allow_restricted=allow_restricted)
     if not preview["available"]:
         reason = preview["reason"]
         raise BaselineError(reason["code"], reason["message"])

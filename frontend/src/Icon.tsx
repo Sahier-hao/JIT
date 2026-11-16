@@ -26,6 +26,7 @@ const drawings = {
   filter: <><path d="M3.5 5.5h13l-5 5.5v5l-3 1.5v-6.5z" /></>,
   sort: <><path d="M6 4v12M3.5 13.5 6 16l2.5-2.5" /><path d="M14 16V4M11.5 6.5 14 4l2.5 2.5" /></>,
   download: <><path d="M10 3.5v9M6.5 9.5 10 13l3.5-3.5" /><path d="M4 16.5h12" /></>,
+  user: <><circle cx="10" cy="7" r="3" /><path d="M4.5 16.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" /></>,
 } satisfies Record<string, ReactNode>
 
 export type IconName = keyof typeof drawings

@@ -166,7 +166,7 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
   </>
 }
 
-export function RepositoryOverviewView({ repositoryId, repository, onStartAnalysis, onOpenAnalysis }: { repositoryId: string; repository: RepositoryView; onStartAnalysis: () => void; onOpenAnalysis: () => void }) {
+export function RepositoryOverviewView({ repositoryId, repository, onOpenAnalysis }: { repositoryId: string; repository: RepositoryView; onOpenAnalysis: () => void }) {
   const cache = cacheKey('overview-v2', repositoryId)
   const [overview, setOverview] = useState<RepositoryOverview | null>(() => readCache<RepositoryOverview>(cache, 7 * 24 * 60 * 60_000))
   const [error, setError] = useState<unknown>(null)
@@ -195,7 +195,7 @@ export function RepositoryOverviewView({ repositoryId, repository, onStartAnalys
       </div>
       <div className="repo-overview-actions">
         {overview ? <Button size="sm" onClick={() => setAttempt(value => value + 1)}>刷新</Button> : null}
-        <Button variant={hasAnalysis ? 'secondary' : 'primary'} onClick={hasAnalysis ? onOpenAnalysis : onStartAnalysis}>{hasAnalysis ? '查看分析结果' : '发起第一次分析'}</Button>
+        {hasAnalysis ? <Button size="sm" onClick={onOpenAnalysis}>查看分析结果</Button> : null}
       </div>
     </div>
     {loading && !overview ? <LoadingNotice label="正在读取仓库概览"/> : null}
@@ -228,6 +228,5 @@ export function RepositoryOverviewView({ repositoryId, repository, onStartAnalys
       {metadata.topics.length ? <p className="repo-topics">{metadata.topics.map(topic => <span key={topic}>{topic}</span>)}</p> : null}
       <p className="form-hint">读取于 {compact(overview.fetchedAt)}</p>
     </> : null}
-    {!hasAnalysis ? <div className="repo-callout"><strong>还没有分析结果</strong><Button variant="primary" onClick={onStartAnalysis}>发起分析</Button></div> : null}
   </section>
 }

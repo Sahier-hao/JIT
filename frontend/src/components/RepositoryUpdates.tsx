@@ -53,11 +53,12 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
     return () => controller.abort()
   }, [repositoryId, attempt])
   const running = state?.status === 'checking' || state?.status === 'analyzing'
+  const checking = state?.status === 'checking'
   useEffect(() => {
-    if (!running && !state?.enabled) return
-    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, running ? 1500 : 15000)
+    if (!checking && !state?.enabled) return
+    const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, checking ? 2000 : 15000)
     return () => clearInterval(timer)
-  }, [running, state?.enabled])
+  }, [checking, state?.enabled])
 
   async function act(action: 'refresh' | 'configure', body?: { enabled?: boolean; branch?: string; intervalSeconds?: number }, check = false) {
     if (locked.current) return

@@ -69,11 +69,19 @@ function summary(overrides: Record<string, unknown> = {}) {
   }
 }
 
+const evidence = {
+  evidenceId: 'e'.repeat(24), kind: 'evaluation-matrix', status: 'stale',
+  reason: 'kamei14-git-v2-flask 描述文件已变化', source: '2026-11-11-matrix.json',
+  sha256: 'f'.repeat(64), generatedUtc: NOW,
+  summary: { datasets: 6, withinRepoCells: 48, leaveOneRepoOutCells: 48, baselines: 30, failures: 0 },
+}
+
 function api(list = [summary()], detail = { ...summary({ status: 'partial', reportStatus: 'complete-with-failures' }), report: rawReport }) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     const url = String(path)
     if (url.endsWith('/api/admin/session')) return response({ authenticated: true, setupRequired: false, username: 'admin' })
     if (url.endsWith('/api/admin/multi-project-reports')) return response({ reports: list, total: list.length })
+    if (url.endsWith('/api/admin/evaluation-evidence')) return response({ evidence: [evidence], total: 1 })
     return response(detail)
   })
 }
@@ -88,6 +96,10 @@ it('lists real report statuses and opens a controlled report id', async () => {
   const navigate = vi.fn()
   render(<AdminWorkspace route={{ name: 'admin', view: 'experiments' }} navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: '多项目实验' })).toBeVisible()
+  expect(screen.getByText('多模型评价矩阵')).toBeVisible()
+  expect(screen.getByText('已陈旧')).toBeVisible()
+  expect(screen.getByText(/kamei14-git-v2-flask 描述文件已变化/)).toBeVisible()
+  expect(screen.getByText(/6 个数据集 · 时间外 48 格/)).toBeVisible()
   expect(screen.getByText('完整')).toBeVisible()
   expect(screen.getByText('部分失败')).toBeVisible()
   expect(screen.getAllByText('失败').length).toBeGreaterThan(1)

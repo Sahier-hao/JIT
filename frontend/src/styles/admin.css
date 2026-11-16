@@ -904,3 +904,17 @@
   .model-card-facts > div:nth-child(odd) { padding-right: 0; }
   .model-partition-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.admin-experiment-task { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.admin-experiment-task:last-child { border-bottom: 0; }
+.admin-experiment-task-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.admin-experiment-task-head strong { font-size: 14px; }
+.admin-experiment-task-head span { color: var(--fg-3); font-size: 12.5px; }
+.admin-compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.admin-compare-table th, .admin-compare-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.admin-compare-table th { color: var(--fg-3); font-weight: 600; white-space: nowrap; }
+.admin-method-picker { display: grid; gap: 10px; }
+.admin-method-option { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.admin-method-params { display: flex; flex-wrap: wrap; gap: 10px; }
+.admin-method-params label { display: grid; gap: 4px; font-size: 12.5px; color: var(--fg-3); }
+.admin-method-params input { width: 110px; }

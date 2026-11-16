@@ -6,6 +6,7 @@
 """
 import hashlib
 import json
+import logging
 import os
 import re
 import sys
@@ -19,6 +20,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import artifacts, collect, store
+from . import model_lineage
+from .analysis_scope import build_scope, partition_for
 from .repository_datasets import persist_collected_dataset
 from .algorithms import DEFAULT_ALGORITHM, check_method, get_algorithm
 from .artifacts import Snapshot
@@ -34,6 +37,8 @@ from .splits import resolve_preset, split_records
 from .task_process import OwnedProcess
 from .training import TrainingExecutor
 from .label_maturity import apply_label_maturity, resolve_policy, status_counts
+
+logger = logging.getLogger(__name__)
 
 SCHEMA_NAME = collect.SCHEMA_NAME
 GENERIC_SCHEMA = "openstack-six-v1"
@@ -66,7 +71,8 @@ COLUMNS = ("id", "repository_url", "repository_id", "branch", "since", "until", 
            "completed_at", "head_commit", "analysis_branch", "requested_model_id", "resolved_model_id",
            "started_at", "deadline_at", "cancel_requested_at", "source_kind", "source_snapshot_id",
            "origin", "feature_schema_version", "distribution_rule", "feature_source_json", "algorithm")
-COLUMNS = (*COLUMNS, "split_preset", "split_policy_json", "maturity_policy", "maturity_json")
+COLUMNS = (*COLUMNS, "split_preset", "split_policy_json", "maturity_policy",
+           "maturity_json", "admission_degrade_reason")
 
 
 def worker_command():
@@ -167,6 +173,13 @@ def _repository_view(row):
             "createdAt": row["created_at"], "updatedAt": row["updated_at"]}
 
 
+def _degrade_fields(reason):
+    """成熟准入的降级原因写入独立列；旧 CHECK 只约束历史四种原因。"""
+    if reason == "noMatureRecords":
+        return {"admission_degrade_reason": reason, "degrade_reason": None}
+    return {"degrade_reason": reason, "admission_degrade_reason": None}
+
+
 def _view(row):
     """作业行转接口表示；错误只在这里拼出可读提示。"""
     item = dict(row)
@@ -181,7 +194,8 @@ def _view(row):
             "resolvedModelId": item.get('resolved_model_id'),
             "stage": item["stage"], "datasetVersion": item["dataset_version"],
             "runId": item["run_id"], "modelId": item["model_id"],
-            "modelStrategy": item["model_strategy"], "degradeReason": item["degrade_reason"],
+            "modelStrategy": item["model_strategy"],
+            "degradeReason": item["degrade_reason"] or item["admission_degrade_reason"],
             "trainRecords": item["train_records"], "trainPositives": item["train_positives"],
             "createdAt": item["created_at"], "updatedAt": item["updated_at"],
             "completedAt": item.get("completed_at"), "headCommit": item.get("head_commit"),
@@ -754,6 +768,44 @@ class SyncService:
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._lock = threading.RLock()
         self._closing = threading.Event()
+        self._scope_cache: dict[tuple, dict] = {}
+        self._lineage_cache: dict[tuple, tuple] = {}
+
+    def analysis_scope(self, sync_id: str):
+        """已保存分析的模型、数据集、切分与分区口径；只读并缓存。"""
+        item = self.get(sync_id)
+        if item is None:
+            return None
+        cache = getattr(self, '_scope_cache', None)
+        if cache is None:
+            cache = self._scope_cache = {}
+        key = (sync_id, item.get('completedAt'), item.get('modelId'), item.get('datasetVersion'))
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        lineage, labels = self._lineage(item)
+        scope = build_scope(self, item, lineage=lineage, labels=labels)
+        if len(cache) >= 64:
+            cache.clear()
+        cache[key] = scope
+        return scope
+
+    def _lineage(self, item):
+        """模型运行的冻结成员与分区覆盖；按模型与数据版本缓存，不改写产物。"""
+        if not item or item.get('modelStrategy') != 'repository-trained':
+            return model_lineage.unknown_coverage('该分析没有绑定项目自训模型'), {}
+        cache = getattr(self, '_lineage_cache', None)
+        if cache is None:
+            cache = self._lineage_cache = {}
+        key = (item.get('modelId'), item.get('datasetVersion'))
+        cached = cache.get(key)
+        if cached is None:
+            cached = model_lineage.verified_membership(
+                self.catalog, key[0], key[1])
+            if len(cache) >= 64:
+                cache.clear()
+            cache[key] = cached
+        return cached
 
     def close(self):
         with self._lock:
@@ -940,15 +992,22 @@ class SyncService:
             raise BaselineError("INPUT_INVALID", "起始日期必须早于或等于结束日期")
         rows, total = self.sync.commits(sync_id, limit, offset, search=text or None,
                                         start=since, end=until, sort=sort)
+        scope = self.analysis_scope(sync_id)
+        labels = self._lineage(item)[1]
+        for row in rows:
+            row["partition"] = partition_for(scope, row["commitId"], row.get("epoch"), labels)
         return {"syncId": sync_id, "status": item["status"], "total": total, "limit": limit,
                 "offset": offset, "search": text or None, "start": start, "end": end,
                 "sort": sort, "commits": rows}
 
     def commit(self, sync_id, commit_id):
-        self.get(sync_id)
+        item = self.get(sync_id)
         record = self.sync.commit(sync_id, commit_id)
         if record is None:
             raise BaselineError("NOT_FOUND", "该同步作业里没有这个提交")
+        scope = self.analysis_scope(sync_id)
+        labels = self._lineage(item)[1]
+        record["partition"] = partition_for(scope, record["commitId"], record.get("epoch"), labels)
         return record
 
     def repositories(self, limit=50, offset=0):
@@ -1091,6 +1150,7 @@ class SyncService:
                        'sourceKind', 'sourceSnapshotId', 'featureSchemaVersion')}
             context.update(distributionRule=DISTRIBUTION_RULE, limitations=list(REPOSITORY_LIMITATIONS),
                            missingMetadata=[key for key in ('completedAt', 'headCommit') if not source.get(key)])
+            context['scope'] = self.analysis_scope(selected)
             context['branch'] = source.get('analysisBranch') or source['branch']
             repo = dict(repo, viewSyncId=selected, headCommit=source.get('headCommit'),
                         commitCount=len(risks), distribution=counts, distributionRule=DISTRIBUTION_RULE)
@@ -1123,14 +1183,17 @@ class SyncService:
                     "start": start, "end": end, "sort": sort, "commits": []}
         rows, total = self.sync.commits(repo["viewSyncId"], limit, offset, search=text or None,
                                         start=since, end=until, sort=sort)
+        labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
         return {"repositoryId": repository_id, "viewSyncId": repo["viewSyncId"], "total": total,
                 "limit": limit, "offset": offset, "search": text or None, "start": start,
-                "end": end, "sort": sort, "commits": [self._display_commit(repo, row) for row in rows]}
+                "end": end, "sort": sort,
+                "commits": [self._display_commit(repo, row, labels) for row in rows]}
 
-    @staticmethod
-    def _display_commit(repo, record):
+    def _display_commit(self, repo, record, labels=None):
+        scope = (repo.get('viewContext') or {}).get('scope')
         return dict(record, repositoryId=repo['repositoryId'], viewSyncId=repo['viewSyncId'],
                     originalCommitUrl=original_commit_url(repo['url'], record['commitId']),
+                    partition=partition_for(scope, record['commitId'], record.get('epoch'), labels),
                     explanationStatus='not-supported', explanationReason='仓库分析未提供逐条模型归因')
 
     def repository_commit(self, repository_id, commit_id, *, view_sync_id=None):
@@ -1140,7 +1203,8 @@ class SyncService:
         record = self.sync.commit(repo["viewSyncId"], commit_id)
         if record is None:
             raise BaselineError("NOT_FOUND", "该仓库里没有这个提交")
-        return self._display_commit(repo, record)
+        labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
+        return self._display_commit(repo, record, labels)
 
     def repository_summary(self, repository_id, *, view_sync_id=None):
         repo = self.repository(repository_id, view_sync_id=view_sync_id)
@@ -1239,7 +1303,7 @@ class SyncService:
 
     def _persist(self, sync_id, item, collected):
         """写 CSV、登记数据集并入库；返回描述文件绝对路径与版本名（RCL-08）。"""
-        manifest_path, version, parsed, _ = persist_collected_dataset(
+        manifest_path, version, parsed, _, admission_view = persist_collected_dataset(
             self.sync.storage, self.dataset_root,
             repository_url=item["repositoryUrl"], since=item["since"], until=item["until"],
             collected=collected,
@@ -1247,7 +1311,7 @@ class SyncService:
             source_id=sync_id,
         )
         self.sync.update(sync_id, dataset_version=version)
-        return manifest_path, version, parsed
+        return manifest_path, version, parsed, admission_view
 
     def _run(self, sync_id):
         started = time.monotonic()
@@ -1292,9 +1356,24 @@ class SyncService:
             records = collected["rawRecords"]
 
             self._step(sync_id, "registering", started)
-            manifest_path, version, trainable = self._persist(sync_id, item, collected)
+            manifest_path, version, trainable, admission_view = self._persist(
+                sync_id, item, collected)
             if item["requestedStrategy"] == GENERIC:
                 maturity = _scoring_maturity(records, item.get("maturityPolicy"))
+            elif not trainable:
+                requested = resolve_policy(item.get("maturityPolicy"))
+                counts = (admission_view.get("counts") or {})
+                maturity = {
+                    "requestedPolicy": requested,
+                    "effectivePolicy": "mature-only",
+                    "releaseEligible": False,
+                    "inputRecords": counts.get("originalRecords", len(records)),
+                    "excludedImmature": (counts.get("excludedImmature", 0)
+                                         + counts.get("excludedUnknown", 0)),
+                    "statusCounts": status_counts(records),
+                    "observedThroughEpoch": (admission_view.get("observedThrough")),
+                    "maturityDays": admission_view.get("maturityDays"),
+                }
             else:
                 trainable, maturity = apply_label_maturity(
                     trainable, item.get("maturityPolicy")
@@ -1305,11 +1384,23 @@ class SyncService:
             )
 
             self._step(sync_id, "training", started)
-            holdout = _holdout(trainable)
-            decision = choose_model(trainable, item["requestedStrategy"], holdout,
-                                    item["splitPreset"])
+            if not trainable:
+                if item["requestedStrategy"] == "force-train":
+                    reason = (admission_view.get("reason") or {}).get("message") or "成熟样本准入后没有可用训练记录"
+                    raise BaselineError("SPLIT_INVALID",
+                                        f"{reason}；请改用现成模型或等待观察期")
+                holdout = None
+                decision = {"modelStrategy": GENERIC,
+                            "degradeReason": "noMatureRecords",
+                            "trainRecords": 0, "trainPositives": 0, "holdout": None}
+            else:
+                # holdout 仍相对本次样本的最新提交计算；成熟准入作为另一层交集，
+                # 不从成熟成员里另算一个更早的截止点。
+                holdout = _holdout(records)
+                decision = choose_model(trainable, item["requestedStrategy"], holdout,
+                                        item["splitPreset"])
             self.sync.update(sync_id, model_strategy=decision["modelStrategy"],
-                             degrade_reason=decision["degradeReason"],
+                             **_degrade_fields(decision["degradeReason"]),
                              train_records=decision["trainRecords"],
                              train_positives=decision["trainPositives"])
             if decision["modelStrategy"] == TRAINED:
@@ -1374,11 +1465,12 @@ class SyncService:
             if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):
                 degrade = "noGenericModel"
             self.sync.finish(sync_id, 'cancelled' if exc.code == 'SYNC_CANCELLED' else 'failed', exc.code, str(exc),
-                             **({"degrade_reason": degrade} if degrade else {}),
+                             **(_degrade_fields(degrade) if degrade else {}),
                              **({"dataset_version": version} if version else {}))
             if exc.code != 'SYNC_CANCELLED':
                 self._event(sync_id, 'analysis-failed', '分析失败', str(exc), payload={'errorCode': exc.code})
         except Exception:
+            logger.exception("仓库同步出现未预期错误：sync=%s", sync_id)
             self.sync.finish(sync_id, 'failed', 'INTERNAL_ERROR',
                              '同步过程中出现未预期错误，请重试；如果反复失败请联系维护者')
             self._event(sync_id, 'analysis-failed', '分析失败', '同步过程中出现未预期错误，请重试', payload={'errorCode': 'INTERNAL_ERROR'})

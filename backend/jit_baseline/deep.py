@@ -6,6 +6,7 @@
 - 训练随机性由冻结种子、单线程与固定 epoch 控制；不做早停。
 """
 import random
+import time
 
 import numpy as np
 import torch
@@ -143,12 +144,24 @@ class TorchTabularClassifier(ClassifierMixin, BaseEstimator):
         loader = torch.utils.data.DataLoader(dataset, batch_size=self.params["batch_size"],
                                              shuffle=True, generator=generator)
         self.module_.train()
-        for _ in range(self.params["epochs"]):
+        history = {"unit": "epoch", "epochs": int(self.params["epochs"]),
+                   "complete": True, "entries": []}
+        for epoch in range(1, int(self.params["epochs"]) + 1):
+            started = time.perf_counter()
+            total, batches = 0.0, 0
             for batch_x, batch_y in loader:
                 optimiser.zero_grad()
                 loss = loss_fn(self.module_(batch_x), batch_y)
                 loss.backward()
                 optimiser.step()
+                total += float(loss.item())
+                batches += 1
+            history["entries"].append({
+                "epoch": epoch,
+                "trainLoss": round(total / batches, 8) if batches else None,
+                "seconds": round(time.perf_counter() - started, 6),
+            })
+        self.training_history_ = history
         self.module_.eval()
         return self
 

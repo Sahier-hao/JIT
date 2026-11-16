@@ -6,10 +6,10 @@ import { Dialog } from './ui/dialog'
 import { EmptyState, LoadingNotice } from './Feedback'
 import { Icon } from './Icon'
 import { Button, Input } from './ui/controls'
-import type { Route } from './navigation'
+import { analysisRoute, repositoryRoute, type Route } from './navigation'
 import { useRepository, useRepositoryCommits, useRepositoryCommitRecords, type RepositoryDetail } from './repositoryWorkspace'
 import { toCommit } from './domain'
-import { DEGRADE_LABELS, STATUS_LABELS } from './repositoryContract'
+import { DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type CommitPartition } from './repositoryContract'
 import { useModelName } from './modelClient'
 
 const PAGE_SIZE = 20
@@ -100,6 +100,8 @@ function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: stri
                     <span className="commit-title">{commit.title || '未提供标题'}</span><code>{commit.id.slice(0, 8)}</code>
                   </button>
                   <span className="commit-meta">
+                    {commit.partition && PARTITION_LABELS[commit.partition as CommitPartition]
+                      ? <span className={`partition-chip is-${commit.partition}`}>{PARTITION_LABELS[commit.partition as CommitPartition]}</span> : null}
                     <span>{commit.authorName || '作者未提供'} · </span>
                     <time dateTime={commit.time}>{displayTime(commit.time).slice(0, 16)}</time>
                   </span>
@@ -139,7 +141,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   const [offset, setOffset] = useState(() => reviewDrafts.get(stateKey)?.offset ?? 0)
   const selected = commitId ?? null
   const setSelected = useCallback((id: string | null) => {
-    navigate({ name: 'analysis', repositoryId, viewSyncId, view: 'commits', ...(id ? { commitId: id } : {}) })
+    navigate(analysisRoute(repositoryId, viewSyncId, id ? { commitId: id } : {}))
   }, [navigate, repositoryId, viewSyncId])
   const page = useRepositoryCommits(repository.repository ? repositoryId : '', queryState.applied, offset, PAGE_SIZE, viewSyncId)
   const detailRecords = useRepositoryCommitRecords(repositoryId, selected ? [selected] : [], viewSyncId)
@@ -163,7 +165,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       degradeReason: repository.repository.degradeReason ?? null,
       trainRecords: null,
       trainPositives: null,
-      labelNote: '标签由简化 SZZ 从后续修复提交倒推',
+      labelNote: '标签由完整 SZZ 从后续修复提交倒推',
     } : undefined,
   }), [repository.repository, repositoryId, viewSyncId])
   useEffect(() => { reviewDrafts.set(stateKey, { ...queryState, offset }) }, [stateKey, queryState, offset, reviewDrafts])
@@ -208,19 +210,22 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   }
 
   const repo = repository.repository
+  const scope = repo.viewContext?.scope ?? null
   const first = page.total === 0 ? 0 : offset + 1
   const last = Math.min(offset + PAGE_SIZE, page.total)
 
   return (
     <div className="review">
-      <Button variant="ghost" size="sm" className="back-link" onClick={() => navigate({ name: 'repository', repositoryId })} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} icon={<Icon name="collapse" size={16}/>}>返回项目</Button>
+      <Button variant="ghost" size="sm" className="back-link" onClick={() => navigate(repositoryRoute(repositoryId))} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} icon={<Icon name="collapse" size={16}/>}>返回项目</Button>
       <RepositoryHead repository={repo} total={repo.commitCount} />
       <details className="analysis-source"><summary><span className="source-chip">仓库分析 · {repo.viewContext?.branch ?? '分支未提供'}</span><span>分析来源 <Icon name="chevron" size={13}/></span></summary>      <div className="analysis-context"><span>分析 <code>{viewSyncId}</code></span><span>HEAD <code>{repo.viewContext?.headCommit ?? '旧记录未提供'}</code></span><span>数据 <code>{repo.datasetVersion ?? '未提供'}</code></span><span>模型 <code>{repo.modelId ?? '未提供'}</code></span><span>运行 <code>{repo.runId ?? '未提供'}</code></span><span>{repo.modelStrategy === 'generic-model' ? '通用模型' : repo.modelStrategy === 'repository-trained' ? '仓库模型' : '模型来源未提供'}{repo.degradeReason ? ` · ${DEGRADE_LABELS[repo.degradeReason] ?? repo.degradeReason}` : ''}</span></div>
 </details>
       {repo.latestSync?.syncId !== viewSyncId ? <p className="status-note">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。
-        {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate({ name: 'repository', repositoryId })}>检查最新成功分析</Button>}
+        {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate(repositoryRoute(repositoryId))}>检查最新成功分析</Button>}
       </p> : null}
-      <p className="muted">{modelName ? `分析模型 ${modelName}。` : ''}分数只用于排序参考，未经仓库概率校准，不代表已确认缺陷。</p>
+      <p className="muted">{modelName ? `分析模型 ${modelName}。` : ''}{scope?.dataset && scope.split
+        ? `数据集 ${scope.dataset.quality.includedRows ?? '—'} / ${scope.dataset.quality.rawRows ?? '—'} 条纳入，训练 ${scope.split.train.count ?? '—'} / 验证 ${scope.split.validation.count ?? '—'} / 测试 ${scope.split.test.count ?? '—'}，留出 ${scope.split.holdout.count ?? '—'} 条只打分。`
+        : ''}分数只用于排序参考，未经仓库概率校准，不代表已确认缺陷。</p>
       <div className="review-body">
         <section className="review-main" aria-label="已分析提交">
           <div className="review-toolbar" role="search" aria-label="提交筛选">

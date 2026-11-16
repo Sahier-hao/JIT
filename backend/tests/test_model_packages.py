@@ -265,12 +265,14 @@ def test_catalog_init_cli_imports_repository_bundle(tmp_path, monkeypatch, capsy
     main()
     result = json.loads(capsys.readouterr().out)
     assert result["kind"] == "catalog-initialized"
+    assert result["currentSchemaPackage"]["status"] == "completed"
+    assert result["currentSchemaPackage"]["registeredCount"] == 8
     assert result["bundledPackage"]["status"] == "completed"
     assert result["bundledPackage"]["registeredCount"] == 9
     assert result["bundledPackage"]["skipped"] is False
     assert str(tmp_path) not in json.dumps(result, ensure_ascii=False)
     catalog = ModelCatalog(CatalogStorage(database), artifacts)
-    assert len(catalog.models()) == 9
+    assert len(catalog.models()) == 17
 
 
 def test_catalog_init_cli_returns_nonzero_for_wrong_bundle(
@@ -288,6 +290,8 @@ def test_catalog_init_cli_returns_nonzero_for_wrong_bundle(
         main()
     assert stopped.value.code == 1
     result = json.loads(capsys.readouterr().out)
+    assert result["currentSchemaPackage"]["status"] == "skipped"
+    assert result["currentSchemaPackage"]["reason"] == "explicit-bundled-package"
     assert result["bundledPackage"]["status"] == "failed"
     assert result["bundledPackage"]["code"] == "PACKAGE_INVALID"
     assert "必须包含 9 个模型" in result["bundledPackage"]["message"]
@@ -810,3 +814,20 @@ def test_committed_current_schema_package_initializes_and_preserves_existing_pol
     assert existing.default_model_id() == old_default
     assert existing.policy(other)["enabled"] is False
     assert len(existing.models()) == before_count + 8
+
+def test_bundle_conflicts_keep_existing_local_runs_without_failing_the_init(
+        tmp_path, real_run):  # noqa: F811
+    """既有环境在相同位置已有不同运行：保留本地产物，报告冲突而不是失败。"""
+    from jit_baseline.model_packages import import_model_package
+    _, _, package, registered = _package(tmp_path, real_run)
+    target = _catalog(tmp_path, "target")
+    method = list(ALGORITHMS)[0]
+    shutil.copytree(real_run, target.root / method)
+    rewrite_manifest(target.root / method,
+                     lambda config: config.__setitem__("localBuild", "different"))
+    _resync(target.root / method, ())
+    result = import_model_package(target, package)
+    assert result["status"] == "partial"  # 未覆盖任何运行，但冲突不算加载失败
+    assert result["conflictCount"] == 1
+    assert result["registeredCount"] == 0
+    assert result["items"][0]["code"] == "ARTIFACT_KEY_CONFLICT"

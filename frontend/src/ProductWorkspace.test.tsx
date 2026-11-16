@@ -18,6 +18,7 @@ function mockApi() {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const url = new URL(String(input), 'http://localhost')
     if (url.pathname === '/api/admin/session') return response({ authenticated: true, setupRequired: false, username: 'maintainer' })
+    if (url.pathname === '/api/user/session') return response({ authenticated: true, username: 'reader' })
     if (url.pathname === '/api/v1/repositories') return response({ repositories: [repo(REPO_A), repo(REPO_B)], total: 2, offset: 0, limit: 100 })
     if (url.pathname === '/api/v1/repository-syncs') return response({ syncs: [], total: 0, offset: 0, limit: 50 })
     const id = url.pathname.split('/')[4] ?? REPO_B
@@ -28,7 +29,7 @@ function mockApi() {
   })
 }
 async function connect() { return userEvent.setup() }
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/') })
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); window.history.replaceState({}, '', '/#/projects') })
 afterEach(() => vi.restoreAllMocks())
 it('offers the new successful result and comparison while preserving the open analysis', async () => {
   const newer = '44444444-4444-4444-8444-444444444444'
@@ -57,9 +58,9 @@ it('keeps repository B and its fixed analysis when visiting a report and returni
   expect(screen.getByRole('heading', { name: '项目 B' })).toBeVisible()
   expect(screen.getByText('0.81')).toBeVisible()
   expect(screen.getByText('main 分支', { exact: false })).toBeVisible()
-  await user.click(screen.getByRole('button', { name: '管理工作区' }))
+  window.location.hash = '#/admin/models'
   await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
-  await user.click(await screen.findByRole('button', { name: '返回用户工作区' }, { timeout: 15000 }))
+  window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
   await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
@@ -129,9 +130,9 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByText('0.81')
-  await user.click(screen.getByRole('button', { name: '管理工作区' }))
+  window.location.hash = '#/admin/models'
   await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
-  await user.click(await screen.findByRole('button', { name: '返回用户工作区' }, { timeout: 15000 }))
+  window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
   await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))

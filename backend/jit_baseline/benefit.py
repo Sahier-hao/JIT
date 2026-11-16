@@ -13,13 +13,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .artifacts import Snapshot, check_reference_predictions, environment, read_json, write_json
+from . import budget as review_budget
 from .config import BACKEND
 from .data import BaselineError, sha256
 from .metrics import normalized_effort_area
 from .model import predict_risks
 
 REPORT_KIND = "model-benefit-evaluation"
-REPORT_VERSION = 2
+REPORT_VERSION = 3
+PROTOCOL = review_budget.PROTOCOL
 BENEFIT_FILE = "benefit-report.json"
 DEFAULT_RANDOM_RUNS = 200
 DEFAULT_SEED = 2026
@@ -35,6 +37,7 @@ LIMITATIONS = (
     "模型分数策略按原始风险降序；风险/成本密度和按改动量升序作为简单基线并列。",
     "模型、阈值和策略在评估前已固定；没有使用测试分区调参。",
     "配对区间来自时间块重采样，不是在线效果或因果结论。",
+    *review_budget.LIMITATIONS,
 )
 
 
@@ -263,64 +266,10 @@ def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED)
         raise BaselineError('INPUT_INVALID', '随机种子必须是非负整数')
     snapshot, records, positives, total = _load(run_dir)
     budget = BUDGET_FRACTION * total
-    orders = {
-        'model': _model_order(records),
-        'density': _density_order(records),
-        'loc': _loc_order(records),
-        'time': _time_order(records),
-        'random': _random_order(records, seed, 0),
-    }
-    ordering_labels = {
-        'model': 'score-desc,time-desc,id-asc',
-        'density': 'risk-per-loc-desc,time-desc,id-asc',
-        'loc': 'loc-asc,time-desc,id-asc',
-        'time': 'time-desc,id-asc',
-    }
-    primary = {
-        key: _strategy(records, orders[key], ordering=ordering_labels[key],
-                       total=total, budget=budget, positives=positives, skip_overflow=True)
-        for key in ordering_labels
-    }
-    sensitivity = {
-        key: _strategy(records, orders[key], ordering=ordering_labels[key],
-                       total=total, budget=budget, positives=positives, skip_overflow=False)
-        for key in ordering_labels
-    }
-    random_results = [
-        _strategy(records, _random_order(records, seed, run), ordering=f'random(seed={seed},run={run})',
-                  total=total, budget=budget, positives=positives, skip_overflow=True)
-        for run in range(random_runs)
-    ]
-    random = _random_summary(random_results, random_runs, seed)
-    random_sensitivity = _random_summary([
-        _strategy(records, _random_order(records, seed, run), ordering=f'random(seed={seed},run={run})',
-                  total=total, budget=budget, positives=positives, skip_overflow=False)
-        for run in range(random_runs)
-    ], random_runs, seed)
-    strategies = {
-        'model': primary['model'],
-        'density': primary['density'],
-        'loc': primary['loc'],
-        'time': primary['time'],
-        'random': random,
-        'sensitivity': {**sensitivity, 'random': random_sensitivity},
-    }
-    comparisons = {}
-    for key, label in (('density', 'modelVsDensity'), ('loc', 'modelVsLoc'), ('time', 'modelVsTime')):
-        comparisons[label] = {
-            'recall20Loc': _delta(primary['model']['recall20Loc'].get('value'),
-                                  primary[key]['recall20Loc'].get('value')),
-            'ifa': _delta(primary['model']['ifa'].get('value'), primary[key]['ifa'].get('value')),
-            'popt': _delta(primary['model']['popt'].get('value'), primary[key]['popt'].get('value')),
-            'recall20LocInterval': _bootstrap_delta(records, orders['model'], orders[key], seed=seed),
-        }
-    comparisons['modelVsRandomMean'] = {
-        'recall20Loc': _delta(primary['model']['recall20Loc'].get('value'),
-                              random['recall20Loc'].get('mean')),
-        'ifa': _delta(primary['model']['ifa'].get('value'), random['ifa'].get('mean')),
-        'popt': _delta(primary['model']['popt'].get('value'), random['popt'].get('mean')),
-        'recall20LocInterval': _bootstrap_delta(records, orders['model'], orders['random'], seed=seed),
-    }
+    prepared = [dict(record, risk=float(record['risk'])) for record in records]
+    evaluation = review_budget.evaluate(prepared, random_runs=random_runs, seed=seed)
+    strategies = evaluation['strategies']
+    comparisons = evaluation['comparisons']
     summary = snapshot.summary
     manifest = snapshot.manifest
     source = summary.get('source') or {}
@@ -359,24 +308,28 @@ def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED)
                        ('publisher', 'url', 'revision', 'labelRule', 'quality')},
         },
         'protocol': {
-            'strategies': list(STRATEGIES),
+            **review_budget.protocol(),
+            'budgetProtocolSha256': evaluation['protocolSha256'],
             'budgetRule': BUDGET_RULE,
             'sensitivityRule': SENSITIVITY_RULE,
-            'bootstrapRuns': BOOTSTRAP_RUNS,
+            'randomRuns': random_runs,
+            'randomSeed': seed,
+            'bootstrapRuns': review_budget.BOOTSTRAP_RUNS,
             'bootstrapSeed': seed,
         },
         'strategies': strategies,
         'comparisons': comparisons,
         'conclusion': {
-            'sentence': _sentence(primary['model'], primary['density'], primary['loc'],
-                                  primary['time'], random, budget=budget, total=total,
+            'sentence': _sentence(strategies['model'], strategies['density'],
+                                  strategies['loc'], strategies['time'],
+                                  strategies['random'], budget=budget, total=total,
                                   positives=positives),
             'recall20': {
-                'model': primary['model']['recall20Loc'],
-                'density': primary['density']['recall20Loc'],
-                'loc': primary['loc']['recall20Loc'],
-                'time': primary['time']['recall20Loc'],
-                'randomMean': random['recall20Loc'],
+                'model': strategies['model']['recall20Loc'],
+                'density': strategies['density']['recall20Loc'],
+                'loc': strategies['loc']['recall20Loc'],
+                'time': strategies['time']['recall20Loc'],
+                'randomMean': strategies['random']['recall20Loc'],
                 'modelVsDensity': comparisons['modelVsDensity']['recall20Loc'],
                 'modelVsLoc': comparisons['modelVsLoc']['recall20Loc'],
                 'modelVsTime': comparisons['modelVsTime']['recall20Loc'],
@@ -405,6 +358,8 @@ def evaluate_run(run_dir, *, random_runs=DEFAULT_RANDOM_RUNS, seed=DEFAULT_SEED)
             'budgetFraction': BUDGET_FRACTION,
             'budgetRule': BUDGET_RULE,
             'sensitivityRule': SENSITIVITY_RULE,
+            'protocol': PROTOCOL,
+            'protocolSha256': evaluation['protocolSha256'],
         },
         'sourceHashes': {name: sha256((Path(run_dir) / name).read_bytes()) for name in files},
     }

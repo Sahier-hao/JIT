@@ -1,0 +1,48 @@
+/* 只读 Markdown 正文：限制行长、压低标题层级，代码与表格沿用界面令牌。 */
+.md-prose { max-width: 74ch; color: var(--fg-2); font-size: 13.5px; line-height: 1.68; overflow-wrap: anywhere; }
+.md-prose > :first-child { margin-top: 0; }
+.md-prose > :last-child { margin-bottom: 0; }
+.md-prose p { margin: 0.6em 0; }
+.md-prose h1, .md-prose h2, .md-prose h3, .md-prose h4 {
+  margin: 1.1em 0 0.4em;
+  color: var(--fg);
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+.md-prose h1 { font-size: 18px; }
+.md-prose h2 { font-size: 15.5px; }
+.md-prose h3 { font-size: 14px; }
+.md-prose h4 { font-size: 13px; }
+.md-prose ul, .md-prose ol { margin: 0.5em 0; padding-inline-start: 1.35em; }
+.md-prose li { margin: 0.22em 0; }
+.md-prose li::marker { color: var(--fg-4); }
+.md-prose code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--soft);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.md-prose pre {
+  margin: 0.7em 0;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--sunken);
+  overflow-x: auto;
+}
+.md-prose pre code { padding: 0; background: none; font-size: 12px; line-height: 1.55; }
+.md-prose blockquote {
+  margin: 0.7em 0;
+  padding: 0.1em 0 0.1em 12px;
+  border-inline-start: 3px solid var(--line-strong);
+  color: var(--fg-3);
+}
+.md-prose a { color: var(--accent); text-underline-offset: 3px; }
+.md-prose a:hover { color: var(--accent-hover); }
+.md-prose hr { margin: 1em 0; border: 0; border-top: 1px solid var(--line); }
+.md-prose img { max-width: 100%; height: auto; }
+.md-prose table { width: 100%; margin: 0.7em 0; border-collapse: collapse; font-size: 12.5px; }
+.md-prose th, .md-prose td { padding: 6px 9px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.md-prose th { color: var(--fg-3); font-weight: 500; }

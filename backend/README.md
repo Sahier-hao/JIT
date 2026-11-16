@@ -124,7 +124,7 @@ success；失败写 failed 与错误码，库内容不变）。重复导入同�
 ### 从 Git 仓库采集提交（add-git-repository-collection）
 
 `collect-repository` 直接把一个 Git 仓库转换成 `kamei14-git-v1` 数据集：遍历提交、计算
-Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链路。
+Kamei 14 维特征、默认用完整 SZZ 打标签（issue/PR 关联 + 行级回溯；离线退化为关键词），再走既有的登记与入库链路。
 
 ```powershell
 & .venv/Scripts/python.exe -m jit_baseline.cli collect-repository --repo https://github.com/apache/activemq `
@@ -140,6 +140,7 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 | `--limit` | 窗口内提交数上限；超过直接拒绝，避免一次拉爆内存 |
 | `--dataset` / `--output` | 数据集名与 CSV 输出位置；数据集名默认由仓库名派生 |
 | `--register` / `--root` | 采集后立即登记；默认写入 `data/datasets/<数据集>/` |
+| `--szz` | 标签规则：`full` 完整流程（默认），`line` 行级兼容，`simple` 文件级兼容；旧数据集不迁移 |
 
 克隆子进程显式带代理与停滞阈值：代理优先取 `JIT_GIT_PROXY`，其次 `HTTPS_PROXY` / `HTTP_PROXY`，
 都未设置时读取当前用户的 Windows 系统代理。git 自己不读系统代理，浏览器能打开 GitHub 时克隆
@@ -162,8 +163,55 @@ Kamei 14 维特征、用简化 SZZ 打标签，再走既有的登记与入库链
 与两条限制。同一范围重跑幂等，内容不同以 `DATASET_EXISTS` 拒绝覆盖。
 
 两条限制随产物记录，不被静默忽略：特征是**提交级聚合**（Kamei 论文的样本单位是文件级）；
-标签是**简化 SZZ**（只看修复提交消息里的关键词并回溯最近一次变更，不处理重命名、跨文件传播
-与 issue 关联）。采到的数据集可以直接训练，训练时用描述文件指定它：
+标签默认是**完整 SZZ**（`szz-full-v1`）：修复提交优先用 issue/PR 关联确认，关键词兜底；删除/修改
+行用 `git blame -M -C` 回溯到引入提交，保留原始行号与 issue 快照。排除回滚、重构、纯空白、
+文档/测试路径；离线或没有 `JIT_GITHUB_TOKEN` 时退化为关键词识别，并在统计中记录。未关联 issue
+的修复、纯新增式修复与改写历史仍可能漏标；`--szz line` 保留行级兼容，`--szz simple` 保留文件级。
+
+可用 `szz-sample` 从数据集描述导出人工复核表（`verdict`/`note` 留空，由人填写）：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli szz-sample data/datasets/<数据集>/<版本>.json `
+  --limit 50 --output ..\.dsh-tmp\szz-review.csv
+```
+
+
+行级训练样本（`line-szz-v1`）可从同一描述导出，正例来自行号证据，负例来自 `label=0` 提交的新增行：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli line-dataset `
+  data/datasets/<数据集>/<版本>.json --repo .cache/repositories/<缓存>.git `
+  --output ..\.dsh-tmp\line-dataset.jsonl --negatives-per-positive 3 --context 3 --negative-mode same-file
+```
+
+`--negative-mode same-file` 从正例所在提交/文件的未标记行取负例，避免“提交类型”成为捷径；默认 `added-line` 保留原分布。输出 JSONL 与同名 `.summary.json`。导出不写回数据集、目录库或模型。
+
+行级基线训练（逻辑回归）可把一个或多个 JSONL 合并训练，并按仓库留出或按提交分组评估：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli line-train `
+  --input ..\.dsh-tmp\cc-switch.jsonl --input ..\.dsh-tmp\sub2api.jsonl `
+  --test-repo JIT --output ..\.dsh-tmp\line-model-report.json
+```
+
+默认只使用代码文本、结构与语言特征，不把提交级 Kamei 特征作为默认输入，避免用提交类型泄漏标签；需要对照时加 `--include-commit-features`。默认按仓库平衡样本权重，`--no-repo-balance` 关闭；可加 `--language javascript --language typescript` 只训练/评估同一语言，跨语言混训会把项目差异当成信号。
+
+报告记录切分方式、样本/提交/仓库数、特征维度、正负例、随机基线（测试正例率）、分仓库/分语言指标、ROC-AUC/PR-AUC/Brier 与定位代理指标（Top-k 命中、20% 行预算召回、IFA）。同时生成同名 `.manifest.json`，记录输入 SHA-256/行数/采样摘要、切分成员哈希、环境与复现命令。`--no-text`、`--no-position-features`、`--include-commit-features`、`--no-repo-balance` 用于消融对照。定位指标来自抽样负例，是上限代理，不能当作实际审查收益。训练只输出报告，不登记模型、不改默认模型、不接产品。本轮固定实验与结果见 `docs/审计/2026-11-09-line-experiment-reproducible.md`。
+
+### 提交范围触发分析（pr-check-analyze）
+
+从本地 Git 仓库的明确 base/head 执行真实特征采集、模型推理和报告生成；不要求先做分支同步，也不访问远端：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli pr-check-analyze `
+  --repo .. --base <base-sha> --head <head-sha> `
+  --model-id <已登记模型 ID> --database storage/catalog.sqlite3 --artifact-root artifacts `
+  --output ..\.dsh-tmp\commit-analysis.json --markdown ..\.dsh-tmp\commit-analysis.md
+```
+
+报告 `jit-commit-analysis-v1` 记录仓库与 base/head、模型运行与参数、逐提交分数、覆盖与未解析历史、静态候选与修复建议；同一范围与模型重复执行得到相同 `analysisId` 与内容哈希。没有变更返回 `NO_CHANGES`（退出码 2），基准不是祖先或身份不一致返回 3，输入无效返回 4，模型特征 schema 无法由提交采集生成返回 5。默认只写报告，不评论 PR、不阻断合并。CI 示例见 `.github/workflows/commit-analysis-example.yml`（远端尚未实际运行）。
+
+采到的数据集可以直接训练，训练时用描述文件指定它：
 
 ```powershell
 & .venv/Scripts/python.exe -m jit_baseline.cli run --output ..\.dsh-tmp\run-activemq `

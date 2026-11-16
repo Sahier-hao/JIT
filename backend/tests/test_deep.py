@@ -74,3 +74,18 @@ def test_same_frozen_declaration_is_reproducible():
     first = torch_mlp(hidden=[8, 4], dropout=0.1, epochs=3).fit(features, labels)
     second = torch_mlp(hidden=[8, 4], dropout=0.1, epochs=3).fit(features, labels)
     assert np.allclose(first.predict_proba(features), second.predict_proba(features), atol=1e-8, rtol=0)
+
+
+def test_training_history_records_every_epoch_with_real_loss():
+    from jit_baseline.deep import TorchTabularClassifier
+    features, labels = synthetic()
+    model = TorchTabularClassifier("mlp", hidden=[8, 4], epochs=4, batch_size=16, dropout=0.0)
+    model.fit(features, labels)
+    history = model.training_history_
+    assert history["unit"] == "epoch"
+    assert history["epochs"] == 4
+    assert history["complete"] is True
+    assert [entry["epoch"] for entry in history["entries"]] == [1, 2, 3, 4]
+    losses = [entry["trainLoss"] for entry in history["entries"]]
+    assert all(isinstance(value, float) and value > 0 for value in losses)
+    assert all(entry["seconds"] >= 0 for entry in history["entries"])

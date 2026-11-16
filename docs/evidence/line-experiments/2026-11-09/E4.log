@@ -1,0 +1,79 @@
+{
+  "kind": "line-model-report",
+  "samples": {
+    "total": 8405,
+    "train": 8254,
+    "test": 151,
+    "positives": 3631,
+    "negatives": 4774,
+    "trainPositives": 3560,
+    "testPositives": 71
+  },
+  "metrics": {
+    "rocAuc": 0.6313380281690141,
+    "prAuc": 0.5673073459662787,
+    "brier": 0.27125804514106777,
+    "threshold": 0.5,
+    "precision": 0.5,
+    "recall": 0.8732394366197183,
+    "f1": 0.6358974358974359,
+    "trueNegative": 18,
+    "falsePositive": 62,
+    "falseNegative": 9,
+    "truePositive": 62
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 6,
+    "candidateLines": 151,
+    "positives": 71,
+    "topKHit": {
+      "top1": 0.6666666666666666,
+      "top3": 0.8333333333333334,
+      "top5": 1.0,
+      "top10": 1.0
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.22535211267605634,
+    "recallAt20PercentPerCommitMean": 0.34867393143255215,
+    "ifaMean": 0.8333333333333334,
+    "ifaMedian": 0.0
+  },
+  "byRepo": {
+    "kamei14-git-v2-claude-scholar-full": {
+      "samples": 151,
+      "positives": 71,
+      "rocAuc": 0.6313380281690141,
+      "prAuc": 0.5673073459662787,
+      "brier": 0.27125804514106777,
+      "threshold": 0.5,
+      "precision": 0.5,
+      "recall": 0.8732394366197183,
+      "f1": 0.6358974358974359,
+      "trueNegative": 18,
+      "falsePositive": 62,
+      "falseNegative": 9,
+      "truePositive": 62
+    }
+  },
+  "byLanguage": {
+    "javascript": {
+      "samples": 151,
+      "positives": 71,
+      "rocAuc": 0.6313380281690141,
+      "prAuc": 0.5673073459662787,
+      "brier": 0.27125804514106777,
+      "threshold": 0.5,
+      "precision": 0.5,
+      "recall": 0.8732394366197183,
+      "f1": 0.6358974358974359,
+      "trueNegative": 18,
+      "falsePositive": 62,
+      "falseNegative": 9,
+      "truePositive": 62
+    }
+  },
+  "manifest": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E4-all-to-claude.manifest.json",
+  "output": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E4-all-to-claude.json"
+}

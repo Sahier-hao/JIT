@@ -1,0 +1,79 @@
+{
+  "kind": "line-model-report",
+  "samples": {
+    "total": 6102,
+    "train": 5875,
+    "test": 227,
+    "positives": 2435,
+    "negatives": 3667,
+    "trainPositives": 2323,
+    "testPositives": 112
+  },
+  "metrics": {
+    "rocAuc": 0.7108695652173913,
+    "prAuc": 0.7359798739550374,
+    "brier": 0.21715211766139492,
+    "threshold": 0.5,
+    "precision": 0.6597938144329897,
+    "recall": 0.5714285714285714,
+    "f1": 0.6124401913875598,
+    "trueNegative": 82,
+    "falsePositive": 33,
+    "falseNegative": 48,
+    "truePositive": 64
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 15,
+    "candidateLines": 227,
+    "positives": 112,
+    "topKHit": {
+      "top1": 0.5333333333333333,
+      "top3": 0.8,
+      "top5": 0.8,
+      "top10": 0.9333333333333333
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.30357142857142855,
+    "recallAt20PercentPerCommitMean": 0.2747630147630148,
+    "ifaMean": 2.066666666666667,
+    "ifaMedian": 0.0
+  },
+  "byRepo": {
+    "JIT": {
+      "samples": 227,
+      "positives": 112,
+      "rocAuc": 0.7108695652173913,
+      "prAuc": 0.7359798739550374,
+      "brier": 0.21715211766139492,
+      "threshold": 0.5,
+      "precision": 0.6597938144329897,
+      "recall": 0.5714285714285714,
+      "f1": 0.6124401913875598,
+      "trueNegative": 82,
+      "falsePositive": 33,
+      "falseNegative": 48,
+      "truePositive": 64
+    }
+  },
+  "byLanguage": {
+    "typescript": {
+      "samples": 227,
+      "positives": 112,
+      "rocAuc": 0.7108695652173913,
+      "prAuc": 0.7359798739550374,
+      "brier": 0.21715211766139492,
+      "threshold": 0.5,
+      "precision": 0.6597938144329897,
+      "recall": 0.5714285714285714,
+      "f1": 0.6124401913875598,
+      "trueNegative": 82,
+      "falsePositive": 33,
+      "falseNegative": 48,
+      "truePositive": 64
+    }
+  },
+  "manifest": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E5-ts-cc-to-jit.manifest.json",
+  "output": "D:\\code\\jit-defect-prediction\\docs\\evidence\\line-experiments\\2026-11-09\\E5-ts-cc-to-jit.json"
+}

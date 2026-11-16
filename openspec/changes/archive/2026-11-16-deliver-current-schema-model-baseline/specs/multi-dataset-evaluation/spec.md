@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### Requirement: MDE-10 多项目发布资格与最差项目
+### Requirement: MDE-13 多项目发布资格与最差项目
 
 多项目正式评估 SHALL 对每个目标项目报告正例数、AP、ROC-AUC、Recall@20%LOC、Popt、基线差值及项目级门槛，并只在全部项目满足正例数、AP 和 ROC-AUC 门槛、同时宏平均 Recall@20%LOC 或宏平均 Popt 至少一项不低于时间与随机顺序时判定模型整体合格。跨项目汇总 MUST NOT 掩盖单项目失败；任一项目缺少有效正例、基线或工作量条件时 MUST 显示未定义而非零。正式基线 MAY 汇总达标的项目结果，MUST 明确参与汇总的项目数，MUST NOT 把未通过项目排除后宣称全部项目达标。
 

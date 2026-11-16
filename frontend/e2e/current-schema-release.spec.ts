@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import { LARGE_REPOSITORY } from './repository-setup.ts'
+import { loginOrCreateUser } from './support/user-session.ts'
 
 const account = { username: 'current-schema-admin', password: 'isolated-current-schema-password' }
 
@@ -23,6 +24,7 @@ test('当前 v2 正式包、项目分析、模型卡与发布报告形成真实�
   } else {
     expect(setup.status()).toBe(201)
   }
+  await loginOrCreateUser(page)
 
   const catalog = await (await page.request.get('/api/v1/models')).json()
   const current = catalog.models.filter((model: {

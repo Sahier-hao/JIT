@@ -1,0 +1,238 @@
+{
+  "schema": "line-preview-model-v1",
+  "generatedAt": "2026-11-09T12:06:11.463124+00:00",
+  "sourceReport": {
+    "name": "P1-compact.json",
+    "sha256": "7493eefe5ccf07e8bc7418d1773327206f7a4ed2daad3e5dc19f98b2a1154b68"
+  },
+  "inputs": [
+    {
+      "name": "cc-switch-same.jsonl",
+      "sha256": "5a9a5a4ce441d36e6c19610f5054d0413a74904112fdc8919239aa2951264a17",
+      "rows": 11718,
+      "repos": [
+        "cc-switch"
+      ],
+      "languages": [
+        "css",
+        "json",
+        "other",
+        "rust",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-cc-switch",
+        "positives": 5859,
+        "negatives": 5859,
+        "positiveCommits": 352,
+        "negativeCommits": 350,
+        "files": 198,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 74,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "name": "JIT-same.jsonl",
+      "sha256": "3a76ca056bfe9288dada81d1fa1b28eec8f1cc428199baa6b40bb8456fc27c64",
+      "rows": 304,
+      "repos": [
+        "JIT"
+      ],
+      "languages": [
+        "css",
+        "python",
+        "typescript"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-JIT",
+        "positives": 152,
+        "negatives": 152,
+        "positiveCommits": 17,
+        "negativeCommits": 17,
+        "files": 15,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 0,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    },
+    {
+      "name": "axios.jsonl",
+      "sha256": "1036a9fd8a55f7455924a04516ddc21b975a237696b3dfcee7857b5b25f3520c",
+      "rows": 3166,
+      "repos": [
+        "axios"
+      ],
+      "languages": [
+        "html",
+        "javascript",
+        "json",
+        "other",
+        "toml",
+        "typescript",
+        "yaml"
+      ],
+      "sampling": {
+        "schema": "line-szz-v1",
+        "datasetVersion": "measure-axios",
+        "positives": 1583,
+        "negatives": 1583,
+        "positiveCommits": 150,
+        "negativeCommits": 40,
+        "files": 53,
+        "contextLines": 2,
+        "seed": 42,
+        "negativesPerPositive": 1,
+        "negativeMode": "same-file",
+        "missingLines": 2,
+        "missingDiffs": 0,
+        "skippedFiles": 0,
+        "truncated": false,
+        "negativeShortfall": 0,
+        "negativeFallback": 0
+      }
+    }
+  ],
+  "split": {
+    "kind": "repo",
+    "testRepo": "axios",
+    "seed": 42,
+    "trainCommits": 249,
+    "testCommits": 120,
+    "trainRepos": [
+      "JIT",
+      "cc-switch"
+    ],
+    "testRepos": [
+      "axios"
+    ]
+  },
+  "samples": {
+    "total": 8254,
+    "train": 6102,
+    "test": 2152,
+    "positives": 3560,
+    "negatives": 4694,
+    "trainPositives": 2435,
+    "testPositives": 1125
+  },
+  "metrics": {
+    "rocAuc": 0.6579694904251866,
+    "prAuc": 0.658875455890759,
+    "brier": 0.2334932681617257,
+    "threshold": 0.5,
+    "precision": 0.6359262229350441,
+    "recall": 0.7048888888888889,
+    "f1": 0.6686340640809444,
+    "trueNegative": 573,
+    "falsePositive": 454,
+    "falseNegative": 332,
+    "truePositive": 793
+  },
+  "referenceBaselines": {
+    "randomPrAuc": 0.5227695167286245,
+    "note": "PR-AUC 的随机基线等于测试集正例率；排序模型必须明显高于它才有意义。"
+  },
+  "localization": {
+    "proxy": true,
+    "reason": "评估集是正负抽样列表，不是完整文件或 PR 候选集合；IFA 与预算召回只是上限代理，不能当作实际审查节省或线上收益。",
+    "commitsWithPositives": 120,
+    "candidateLines": 2152,
+    "positives": 1125,
+    "topKHit": {
+      "top1": 0.825,
+      "top3": 0.8916666666666667,
+      "top5": 0.9333333333333333,
+      "top10": 0.9833333333333333
+    },
+    "lineBudget": "每提交按预测分数取 ceil(20% 候选行)",
+    "recallAt20PercentLines": 0.2604444444444444,
+    "recallAt20PercentPerCommitMean": 0.49443318631527805,
+    "ifaMean": 0.8833333333333333,
+    "ifaMedian": 0.0
+  },
+  "model": {
+    "type": "logistic-regression",
+    "classWeight": "balanced",
+    "threshold": 0.5,
+    "repoBalance": true,
+    "positionFeatures": false,
+    "textFeatures": false,
+    "includeCommitFeatures": false
+  },
+  "features": {
+    "language": [
+      "typescript"
+    ],
+    "supported": [
+      "javascript",
+      "typescript"
+    ],
+    "numeric": [
+      "lineLength",
+      "indent",
+      "blank",
+      "comment",
+      "if",
+      "for",
+      "while",
+      "return",
+      "try",
+      "catch",
+      "assign",
+      "compare",
+      "call",
+      "member",
+      "index",
+      "identifier",
+      "digit"
+    ]
+  },
+  "intercept": -0.48697315114167206,
+  "coefficients": {
+    "language:typescript": -0.48697315114167183,
+    "lineLength": 0.00360910811518943,
+    "indent": 0.05778180691654832,
+    "blank": 3.658664925567746,
+    "comment": 0.2991131380816179,
+    "if": 0.05377620040976852,
+    "for": 0.03394047459660665,
+    "while": 0.0,
+    "return": 0.6865769567915578,
+    "try": -1.0458658084943648,
+    "catch": -0.8665379683086591,
+    "assign": 0.12238174574344758,
+    "compare": -0.1749982369386416,
+    "call": 0.0012590000008616264,
+    "member": 0.021885928134374056,
+    "index": -0.045792480803054,
+    "identifier": 0.055434544236106845,
+    "digit": 0.10850456237840189
+  },
+  "limitations": [
+    "历史 SZZ 弱标签，正例不是人工确认的真值。",
+    "训练使用正负 1:1 同文件抽样，分数未做概率校准，不能解释为缺陷概率。",
+    "定位指标来自抽样列表，是上限代理，不代表完整文件或 PR 上的审查收益。",
+    "评估覆盖 javascript、typescript；语言特征只在 typescript 上拟合，其他语言使用零语言向量。",
+    "预览只做请求内打分，不写目录库、不登记模型、不参与项目分析。"
+  ],
+  "artifactSha256": "271a6c6b590796660fe350580c20ec886f3f29a6b0f1af8cc83752add5598123"
+}

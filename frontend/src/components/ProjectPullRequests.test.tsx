@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '../test-utils'
+import { render, screen, waitFor, within } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectPullRequests } from './ProjectPullRequests'
@@ -144,4 +144,22 @@ it('does not silently substitute a disabled fixed model and pauses without sendi
   await user.click(screen.getByRole('button', { name: '暂停自动分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(true))
   expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')?.[1]?.body))).toEqual({ enabled: false })
+})
+it('keeps only pending pull requests in the side rail', async () => {
+  const completed = { ...prPage().pullRequests[0] }
+  const failed = { ...completed, number: 13, title: '失败的分析', analysisStatus: 'failed' }
+  const pending = { ...completed, number: 14, title: '等待分析', analysisStatus: null }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).includes('pull-request-batches') ? response(null) : response(prPage({ pullRequests: [completed, failed, pending] })))
+  render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
+  const rail = await screen.findByRole('complementary', { name: '待处理 PR' })
+  expect(within(rail).getByText(/#13/)).toBeVisible()
+  expect(within(rail).getByText(/#14/)).toBeVisible()
+  expect(within(rail).queryByText(/#12/)).not.toBeInTheDocument()
+  expect(within(rail).getByText('失败 1 · 未分析 1', { exact: false })).toBeVisible()
+})
+it('shows an empty pending rail when every pull request is analyzed', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).includes('pull-request-batches') ? response(null) : response(prPage()))
+  render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
+  const rail = await screen.findByRole('complementary', { name: '待处理 PR' })
+  expect(within(rail).getByText('没有待处理 PR')).toBeVisible()
 })

@@ -60,6 +60,59 @@ export interface AnalysisContext {
   sourceKind?: string | null
   sourceSnapshotId?: string | null
   featureSchemaVersion?: string | null
+  scope: AnalysisScope | null
+}
+
+export interface ScopePartition {
+  count: number | null
+  end: string | null
+  endEpoch: number | null
+  positives: number | null
+  start: string | null
+  /** 留出是时间视图（训练截止之后），不是模型成员分区。 */
+  kind?: string | null
+}
+
+/** 分区是否来自可核对的冻结训练成员；unknown 时提交分区不可推断。 */
+export interface PartitionCoverage {
+  status: 'verified' | 'external' | 'unknown'
+  reason: string | null
+  preset: string | null
+  holdoutFrom: string | null
+  holdoutCutoffEpoch: number | null
+}
+
+export interface AnalysisScope {
+  strategy: string | null
+  model: {
+    id: string | null; name: string | null; algorithmName: string | null
+    featureSchemaVersion: string | null
+  }
+  dataset: {
+    version: string
+    quality: { rawRows: number | null; includedRows: number | null; positiveLabels: number | null }
+    labelRule: string | null
+  } | null
+  datasetError: string | null
+  frozenIdentity: {
+    modelId: string | null; artifactRunId: string | null; modelSha256: string | null
+    datasetVersion: string | null; datasetSha256: string | null
+    memberVerification: string | null; memberSha256: string | null
+    splitPreset: string | null; holdoutFrom: string | null
+  } | null
+  split: {
+    preset: string | null
+    train: ScopePartition; validation: ScopePartition; test: ScopePartition; holdout: ScopePartition
+  } | null
+  metrics: {
+    records: number | null; positives: number | null; rocAuc: number | null
+    averagePrecision: number | null; precision: number | null; recall: number | null
+    f1: number | null; referenceAp: number | null
+  } | null
+  distributions: Record<string, RepositoryDistribution>
+  partitionCoverage: PartitionCoverage | null
+  excludedCommitIds: string[]
+  limitations: string[]
 }
 
 export interface RepositoryListPage {
@@ -76,6 +129,100 @@ function count(value: unknown): number {
   const raw = finiteNumber(value)
   if (!Number.isSafeInteger(raw) || raw < 0) contractFailed('仓库计数必须为非负整数')
   return raw
+}
+
+function optionalCount(value: unknown): number | null {
+  return value == null ? null : count(value)
+}
+
+function optionalNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function scopePartition(value: unknown): ScopePartition {
+  const raw = value == null ? {} : record(value)
+  return {
+    count: optionalCount(raw.count), end: textOrNull(raw.end), endEpoch: optionalCount(raw.endEpoch),
+    positives: optionalCount(raw.positives), start: textOrNull(raw.start),
+  }
+}
+
+function analysisScope(value: unknown): AnalysisScope | null {
+  if (value == null) return null
+  const raw = record(value)
+  const model = raw.model == null ? {} : record(raw.model)
+  const datasetRaw = raw.dataset == null ? null : record(raw.dataset)
+  const quality = datasetRaw == null || datasetRaw.quality == null ? null : record(datasetRaw.quality)
+  const splitRaw = raw.split == null ? null : record(raw.split)
+  const metricsRaw = raw.metrics == null ? null : record(raw.metrics)
+  const distributionsRaw = raw.distributions == null ? {} : record(raw.distributions)
+  const parsedDistributions: Record<string, RepositoryDistribution> = {}
+  for (const key of ['all', 'trainable', 'train', 'validation', 'test', 'holdout', 'excluded',
+    'notIncluded', 'unassigned', 'scored', 'unknown']) {
+    if (distributionsRaw[key] != null) parsedDistributions[key] = distribution(distributionsRaw[key])
+  }
+  return {
+    strategy: textOrNull(raw.strategy),
+    model: {
+      id: textOrNull(model.id), name: textOrNull(model.name),
+      algorithmName: textOrNull(model.algorithmName),
+      featureSchemaVersion: textOrNull(model.featureSchemaVersion),
+    },
+    dataset: datasetRaw ? {
+      version: text(datasetRaw.version),
+      quality: {
+        rawRows: quality ? optionalCount(quality.rawRows) : null,
+        includedRows: quality ? optionalCount(quality.includedRows) : null,
+        positiveLabels: quality ? optionalCount(quality.positiveLabels) : null,
+      },
+      labelRule: textOrNull(datasetRaw.labelRule),
+    } : null,
+    datasetError: textOrNull(raw.datasetError),
+    frozenIdentity: frozenIdentity(raw.frozenIdentity),
+    split: splitRaw ? {
+      preset: textOrNull(splitRaw.preset),
+      train: scopePartition(splitRaw.train), validation: scopePartition(splitRaw.validation),
+      test: scopePartition(splitRaw.test), holdout: scopePartition(splitRaw.holdout),
+    } : null,
+    metrics: metricsRaw ? {
+      records: optionalCount(metricsRaw.records), positives: optionalCount(metricsRaw.positives),
+      rocAuc: optionalNumber(metricsRaw.rocAuc), averagePrecision: optionalNumber(metricsRaw.averagePrecision),
+      precision: optionalNumber(metricsRaw.precision), recall: optionalNumber(metricsRaw.recall),
+      f1: optionalNumber(metricsRaw.f1), referenceAp: optionalNumber(metricsRaw.referenceAp),
+    } : null,
+    distributions: parsedDistributions,
+    partitionCoverage: partitionCoverage(raw.partitionCoverage),
+    excludedCommitIds: raw.excludedCommitIds == null ? [] : textList(raw.excludedCommitIds),
+    limitations: raw.limitations == null ? [] : textList(raw.limitations),
+  }
+}
+
+function frozenIdentity(value: unknown): AnalysisScope['frozenIdentity'] {
+  if (value == null) return null
+  const raw = record(value)
+  return {
+    modelId: textOrNull(raw.modelId),
+    artifactRunId: textOrNull(raw.artifactRunId),
+    modelSha256: textOrNull(raw.modelSha256),
+    datasetVersion: textOrNull(raw.datasetVersion),
+    datasetSha256: textOrNull(raw.datasetSha256),
+    memberVerification: textOrNull(raw.memberVerification),
+    memberSha256: textOrNull(raw.memberSha256),
+    splitPreset: textOrNull(raw.splitPreset),
+    holdoutFrom: textOrNull(raw.holdoutFrom),
+  }
+}
+
+function partitionCoverage(value: unknown): PartitionCoverage | null {  if (value == null) return null
+  const raw = record(value)
+  const status = raw.status === 'verified' || raw.status === 'external' ? raw.status : 'unknown'
+  return {
+    status,
+    reason: textOrNull(raw.reason),
+    preset: textOrNull(raw.preset),
+    holdoutFrom: textOrNull(raw.holdoutFrom),
+    holdoutCutoffEpoch: optionalCount(raw.holdoutCutoffEpoch),
+  }
 }
 
 function distribution(value: unknown): RepositoryDistribution {
@@ -119,6 +266,7 @@ export function parseRepositoryDetail(value: unknown): RepositoryDetail {
       datasetVersion: textOrNull(context.datasetVersion), modelId: textOrNull(context.modelId), runId: textOrNull(context.runId),
       missingMetadata: textList(context.missingMetadata),
       sourceKind: textOrNull(context.sourceKind), sourceSnapshotId: textOrNull(context.sourceSnapshotId), featureSchemaVersion: textOrNull(context.featureSchemaVersion),
+      scope: analysisScope(context.scope),
     } : null,
     modelStrategy: strategy !== null && (STRATEGY_VALUES as readonly string[]).includes(strategy)
       ? (strategy as RepositoryDetail['modelStrategy'])

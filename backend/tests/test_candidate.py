@@ -21,6 +21,23 @@ def test_python_rules_return_lines_and_evidence():
     assert all(item['line'] > 0 and item['evidence'] for item in items)
 
 
+def test_each_rule_gets_a_different_suggestion_without_patching_code():
+    from jit_baseline.candidate import suggestion
+    content = ("def f(items=[]):\n"
+               "    try:\n"
+               "        eval('1')\n"
+               "    except:\n"
+               "        pass\n")
+    items, _ = analyze('pkg/a.py', 'head', content)
+    by_rule = {item['ruleId']: suggestion(item) for item in items}
+    assert by_rule['py-mutable-default']['example']['after'].startswith('def handle(items=None)')
+    assert by_rule['py-bare-except']['manualChecks']
+    assert by_rule['py-eval-exec']['example'] is None
+    assert len({entry['title'] for entry in by_rule.values()}) == 3
+    assert all(entry['location']['path'] == 'pkg/a.py' and entry['location']['side'] == 'head'
+               and entry['location']['line'] > 0 for entry in by_rule.values())
+
+
 def test_unsupported_or_invalid_file_is_not_guessed():
     assert analyze('pkg/a.js', 'head', 'const x = 1') == ([], 'unsupported-language')
     assert analyze('pkg/a.py', 'head', 'def broken(:') == ([], 'parse-failed')
@@ -51,6 +68,8 @@ def test_candidates_are_persisted_and_coverage_is_reported(tmp_path, monkeypatch
     result = review.candidates('snap1', ['pkg/a.py'], 'head')
     assert result['coverage']['analyzed'] == ['pkg/a.py']
     assert result['candidates'][0]['ruleId'] == 'py-mutable-default'
+    assert result['candidates'][0]['suggestion']['title']
     stored = review.stored_candidates('snap1')
     assert stored['coverage']['analyzed'] == ['pkg/a.py']
     assert len(stored['candidates']) == 1
+    assert stored['candidates'][0]['suggestion']['manualChecks']

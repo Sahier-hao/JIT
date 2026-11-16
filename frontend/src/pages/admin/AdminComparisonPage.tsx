@@ -24,8 +24,11 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
     fetchAdminModels(controller.signal).then(result => {
       if (controller.signal.aborted) return
       setModels(result.models)
-      if (!requestedFirst) setFirst(result.models.find(model => model.state === 'ready')?.modelId ?? '')
-      if (!requestedSecond) setSecond(result.models.find(model => model.state === 'ready' && model.modelId !== (requestedFirst || result.models[0]?.modelId))?.modelId ?? '')
+      if (!requestedFirst && !requestedSecond) {
+        const ready = result.models.filter(model => model.state === 'ready')
+        setFirst(ready[0]?.modelId ?? '')
+        setSecond(ready.find(model => model.modelId !== ready[0]?.modelId)?.modelId ?? '')
+      }
     }).catch(failure => {
       if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) expired()
@@ -56,8 +59,8 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
     <div className="admin-compare-picker">
       <Select ariaLabel="模型 A" value={first} onChange={setFirst} options={options}/>
       <Select ariaLabel="模型 B" value={second} onChange={setSecond} options={options}/>
-      <Button disabled={!first || !second || first === second} onClick={() => navigate({ name: 'admin', view: 'comparisons', models: [first, second] })}>比较</Button>
     </div>
+    {first && !second ? <p className="status-note" role="status">请选择模型 B 进行比较。</p> : null}
     {error ? <p className="field-error" role="alert">{error}</p> : null}
     {left && right ? <>
       {left.featureSchemaVersion !== right.featureSchemaVersion || left.artifactDatasetVersion !== right.artifactDatasetVersion ? <p className="admin-notice" role="status">两个模型的数据版本或特征 schema 不同，指标只能并列，不能据此排名。</p> : null}

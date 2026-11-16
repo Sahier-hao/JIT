@@ -5,31 +5,32 @@ import { Drawer } from '../ui/drawer'
 import { Dialog } from '../ui/dialog'
 import { Segmented } from '../ui/segmented'
 import * as ui from '../ui/controls'
-import { ArrowLeft, ExternalLink, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
-import type { Route } from '../navigation'
+import { ArrowLeft, ExternalLink, Eye, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
+import { repositoryRoute, type Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { ContractError } from '../apiContract'
 import { PRModelClues } from '../components/PRModelClues'
+import { Markdown } from '../components/Markdown'
+import { useSnapshotAnalyses } from '../useSnapshotAnalyses'
 import { ProgressBar } from '../components/JobProgress'
 import { PullRequestPreview } from '../components/PullRequestPreview'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '../components/pr/WorkPanels'
 import { displayTime } from '../domain'
 import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '../prReviewClient'
-import { reviewStatusLabels, adoptVersion, conclusionLabels, createWork, downloadText, exportReview, question, readWorks, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { reviewStatusLabels, adoptVersion, backupText, candidateQuestion, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '../prReview'
+import { canWriteReview, requireAccount, useReviewAccount } from '../reviewAccount'
 
 
 type Navigate = (route: Route) => void
 const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
-const remoteLabel = { open: '开放中', closed: '已关闭', merged: '已合并' }
 const changeLabels: Record<string, string> = { added: '新增', removed: '删除', modified: '修改', renamed: '重命名', copied: '复制', changed: '内容变化', unchanged: '未变化' }
-const fileLabel: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
 /** 文件行把路径拆成"目录 + 文件名"：目录可以被省略号吃掉，文件名必须始终完整。 */
 function splitPath(path: string) {
   const index = path.lastIndexOf('/')
   return index < 0 ? { dir: '', name: path } : { dir: path.slice(0, index + 1), name: path.slice(index + 1) }
 }
-function backup(work: PRWork) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, JSON.stringify({ format: 'jit-pr-review-v1', work }, null, 2), 'application/json') }
+function backup(work: PRWork, account: string | null) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, backupText(work, account), 'application/json') }
 
 function validateProjectSource(source: PRSnapshot, owner: string, name: string, number: number, repositoryId?: string) {
   if (source.owner.toLowerCase() !== owner.toLowerCase() || source.name.toLowerCase() !== name.toLowerCase() || source.number !== number || repositoryId && source.repositoryId !== repositoryId) throw new ContractError('PR 固定来源与项目上下文不一致，未修改个人草稿')
@@ -37,8 +38,11 @@ function validateProjectSource(source: PRSnapshot, owner: string, name: string, 
 
 /** 提醒只读打开固定快照，进入工作必须由用户明确执行。 */
 export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, snapshotId, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId: string; navigate: Navigate }) {
+  const reviewAccount = useReviewAccount()
+  const account = reviewAccount.account
   const [source, setSource] = useState<PRSnapshot | null>(null), [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0), [fileIndex, setFileIndex] = useState(0)
-  const [personal] = useState(() => { try { return { works: readWorks(), error: '' } } catch (failure) { return { works: [], error: message(failure) } } })
+  const analysis = useSnapshotAnalyses(snapshotId)
+  const [personal] = useState(() => { try { return { works: account ? readWorks(account) : [], error: '' } } catch (failure) { return { works: [], error: message(failure) } } })
   const existing = personal.works.find(w => w.key === workKey(owner, repositoryName, number))
   useEffect(() => {
     const controller = new AbortController()
@@ -49,19 +53,20 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   function enter() {
     if (!source) return
     try {
-      const current = readWorks().find(w => w.key === workKey(owner, repositoryName, number))
+      const account = requireAccount(reviewAccount)
+      const current = readWorks(account).find(w => w.key === workKey(owner, repositoryName, number))
       let next = current ?? createWork(source)
       if (current && !current.rounds[source.snapshotId]) {
         if (Date.parse(source.capturedAt) >= Date.parse(current.rounds[current.latestSnapshotId].source.capturedAt)) next = adoptVersion(current, source)
         else next = { ...current, rounds: { ...current.rounds, [source.snapshotId]: createWork(source).rounds[source.snapshotId] } }
       }
-      saveWork({ ...next, viewedSnapshotId: source.snapshotId })
+      saveWork(account, { ...next, viewedSnapshotId: source.snapshotId })
       navigate({ name: 'pr-work', repositoryId: repositoryId ?? source.repositoryId, owner, repositoryName, number })
     } catch (failure) { setError(failure) }
   }
   const file = source?.files[fileIndex]
   return <section className="pr-fixed-preview">
-    <ui.Button variant="ghost" size="sm" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
+    <ui.Button variant="ghost" size="sm" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
     <header className="page-heading"><div><h1>固定快照 · PR #{number}</h1><p>{owner}/{repositoryName} · 版本 {snapshotId}</p></div></header>
     <div className="pr-update-note"><strong>固定来源只读预览</strong><p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>{existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}</div>
     {personal.error ? <p className="field-error" role="alert">{personal.error}；现有存储未清空。</p> : null}
@@ -75,7 +80,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
         {existing ? <ui.Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })}>返回原阅读轮次</ui.Button> : null}
         <a href={source.url} target="_blank" rel="noreferrer">核对远端 PR</a>
       </div>
-      <PRModelClues source={source} navigate={navigate}/>
+      <PRModelClues analysis={analysis}/>
       <label>预览文件<select aria-label="固定快照预览文件" value={fileIndex} onChange={e => setFileIndex(Number(e.target.value))}>{source.files.map((f, i) => <option key={f.path} value={i}>{f.path}</option>)}</select></label>
       {file?.patch ? <CodeDiff file={file} view="unified" onAnchor={() => {}}/> : <p>没有可展示的完整 Diff，未视作空文件。可以进入此轮次后读取固定上下文。</p>}
       {!source.filesComplete ? <p className="field-error">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
@@ -83,9 +88,25 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   </section>
 }
 
-export function PullRequestWork({ owner, repositoryName, number, repositoryId, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; navigate: Navigate }) {
-  const [initial] = useState(() => { try { const work = readWorks().find(w => w.key === workKey(owner, repositoryName, number)) ?? null; if (work) validateProjectSource(work.rounds[work.viewedSnapshotId].source, owner, repositoryName, number, repositoryId); return { work, error: '' } } catch (error) { return { work: null, error: message(error) } } })
+export function PullRequestWork({ owner, repositoryName, number, repositoryId, preview = false, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; preview?: boolean; navigate: Navigate }) {
+  const reviewAccount = useReviewAccount()
+  const account = reviewAccount.account
+  const [initial] = useState(() => {
+    const key = workKey(owner, repositoryName, number)
+    try {
+      const work = account ? readWorks(account).find(w => w.key === key) ?? null : null
+      if (work) validateProjectSource(work.rounds[work.viewedSnapshotId].source, owner, repositoryName, number, repositoryId)
+      return { work, error: '', recovery: account ? readRecovery(account, key) : null }
+    } catch (error) { return { work: null, error: message(error), recovery: null } }
+  })
   const [work, setWork] = useState<PRWork | null>(initial.work)
+  const [recovery, setRecovery] = useState<PRWork | null>(initial.recovery)
+  const accountRef = useRef(account)
+  const reviewAccountRef = useRef(reviewAccount)
+  const saveErrorRef = useRef(Boolean(initial.error))
+  accountRef.current = account
+  reviewAccountRef.current = reviewAccount
+  saveErrorRef.current = Boolean(initial.error)
   const current = useRef(work)
   const [saveError, setSaveError] = useState(initial.error)
   const [source, setSource] = useState<PRSnapshot | null>(null)
@@ -104,9 +125,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [delivery, setDelivery] = useState<{ kind: Conclusion; note: string; preview: string; checked: boolean; oldConfirmed: boolean } | null>(null)
   const [drawer, setDrawer] = useState<'source' | 'delivery' | 'backup' | null>(null)
   const [filter, setFilter] = useState('')
-  const [fileRisks, setFileRisks] = useState<Record<string, number>>({})
   const [fileOrder, setFileOrder] = useState<'risk' | 'path'>('risk')
-  const [commitRisks, setCommitRisks] = useState<Record<string, { risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }>>({})
   const [selectedCommit, setSelectedCommit] = useState<string | null>(null)
   const [reviewView, setReviewView] = useState<'commits' | 'files'>('commits')
   const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
@@ -115,16 +134,54 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
   const [candidateBusy, setCandidateBusy] = useState(false)
   const [candidateError, setCandidateError] = useState('')
   const version = work?.viewedSnapshotId ?? ''
+  const analysis = useSnapshotAnalyses(version)
+  const { fileRisks, commitRisks } = analysis
   useEffect(() => {
-    setSelectedCommit(null); setCommitRisks({}); setFileRisks({}); setCandidates([]); setCandidateError('')
+    setSelectedCommit(null); setCandidates([]); setCandidateError('')
     if (evidenceJump.current) { evidenceJump.current = false; setReviewView('files') }
     else setReviewView('commits')
   }, [version])
   function commit(next: PRWork) {
-    let saved = next
-    try { saved = saveWork(next); setSaveError('') } catch (error) { setSaveError(`尚未保存：${message(error)}。正在编辑的文本仍在本页，可重试或导出完整草稿。`) }
+    const ownerAccount = accountRef.current
+    let saved = next, failed = false
+    try {
+      if (!ownerAccount) throw new Error('登录身份尚未确认，个人工作单不写入')
+      if (!canWriteReview(reviewAccountRef.current)) {
+        saveRecovery(ownerAccount, next)
+        failed = true
+        setSaveError(`登录身份正在核验，草稿保留在账户 ${ownerAccount} 的恢复副本中；核验完成后请重试保存。`)
+      } else {
+        saved = saveWork(ownerAccount, next)
+        setSaveError('')
+        setRecovery(null)
+      }
+    } catch (error) {
+      if (ownerAccount) saveRecovery(ownerAccount, next)
+      failed = true
+      setSaveError(`尚未保存：${message(error)}。正在编辑的文本仍在本页，可重试或导出完整草稿。`)
+    }
+    saveErrorRef.current = failed
     current.current = saved; setWork(saved)
     return saved
+  }
+  useEffect(() => () => {
+    if (accountRef.current && saveErrorRef.current && current.current) {
+      saveRecovery(accountRef.current, current.current)
+    }
+  }, [])
+  function restoreRecovery() {
+    if (!recovery || !account) return
+    try {
+      const saved = saveWork(account, { ...recovery, revision: work?.revision ?? 0 })
+      saveErrorRef.current = false
+      current.current = saved; setWork(saved); setRecovery(null); setSaveError('')
+    } catch (error) {
+      setSaveError(`恢复未保存内容失败：${message(error)}。恢复副本仍保留在账户 ${account}。`)
+    }
+  }
+  function dismissRecovery() {
+    if (account) clearRecovery(account, work?.key ?? workKey(owner, repositoryName, number))
+    setRecovery(null)
   }
   useEffect(() => {
     const controller = new AbortController()
@@ -157,11 +214,22 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
     commit({ ...createWork(source), remoteState: remoteState ?? source.remoteState, checkedAt: remoteCheckedAt ?? source.capturedAt })
     setReadError(null)
   }
-  if (!work) {
+  if (!work && recovery) {
+    return <section className="wb" aria-label="恢复未保存内容">
+      <div className="wb-alerts"><Alert type="warning" showIcon
+        title={`账户 ${account} 有本 PR 的未保存恢复副本`}
+        action={<Space size={4}><Button size="sm" variant="primary" onClick={restoreRecovery}>恢复未保存内容</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/>
+      </div>
+    </section>
+  }
+  if (preview || !work) {
     const failed = Boolean(readError || initial.error)
-    if (!failed && source) return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={begin}/>
+    if (!failed && source) {
+      const toWork = () => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })
+      return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={work ? toWork : begin} startLabel={work ? '进入工作单' : undefined} back={work ? { label: '返回工作单', onClick: toWork } : undefined}/>
+    }
     const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 文件与固定代码版本。'
-    const back = () => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })
+    const back = () => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })
     return <Dialog
       open
       onOpenChange={next => { if (!next) back() }}
@@ -274,12 +342,13 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
       <div className="wb-head-main">
         <div className="wb-head-text">
           <div className="wb-crumb">
-            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? { name: 'repository', repositoryId, tab: 'prs' } : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
+            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
             <span className="wb-sep">/</span>
             <span>{owner}/{repositoryName}</span>
             <span className="wb-sep">·</span>
             <span>#{number}</span>
             <Tag className="wb-state">{remoteLabel[work.remoteState]}</Tag>
+            <Tag className="wb-state wb-work">个人工作单</Tag>
           </div>
           <h1 className="wb-title" title={round.source.title}>{round.source.title}</h1>
           <div className="wb-facts">
@@ -295,6 +364,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
           </div>
         </div>
         <div className="wb-head-actions">
+          <Button icon={<Eye/>} onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本">查看只读版本</Button>
           <Button icon={<RefreshCw/>} loading={busy} onClick={() => void check()} aria-label="检查 PR 更新">检查 PR 更新</Button>
           <Select
             className="wb-interest"
@@ -309,8 +379,9 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
       </div>
       <div className="wb-meter" aria-hidden="true"><span style={{ width: `${readPercent}%` }}/></div>
     </header>
-    {(saveError || readError || work.checkError || work.remoteState !== 'open' || stale) ? <div className="wb-alerts">
-      {saveError ? <Alert type="warning" showIcon title={saveError} action={<Space size={4}><Button size="sm" onClick={() => commit(current.current!)}>重试保存</Button><Button size="sm" onClick={() => backup(work)}>导出草稿</Button></Space>}/> : null}
+    {(saveError || readError || recovery || work.checkError || work.remoteState !== 'open' || stale) ? <div className="wb-alerts">
+      {recovery ? <Alert type="warning" showIcon title={`账户 ${account} 有未保存的恢复副本`} action={<Space size={4}><Button size="sm" onClick={restoreRecovery}>恢复</Button><Button size="sm" onClick={dismissRecovery}>忽略</Button></Space>}/> : null}
+      {saveError ? <Alert type="warning" showIcon title={saveError} action={<Space size={4}><Button size="sm" onClick={() => commit(current.current!)}>重试保存</Button><Button size="sm" onClick={() => backup(work, account)}>导出草稿</Button></Space>}/> : null}
       {readError ? <Alert type="error" showIcon title={message(readError)} action={<Button size="sm" onClick={() => setAttempt(v => v + 1)}>重新读取</Button>}/> : null}
       {work.checkError ? <Alert type="warning" showIcon title={`上次检查失败：${work.checkError}。仍保留此前版本，最近成功检查 ${displayTime(work.checkedAt)}。`}/> : null}
       {work.remoteState !== 'open' ? <Alert type="info" showIcon title={`远端 PR ${remoteLabel[work.remoteState]}，当前为历史审查；个人草稿和原结论保留。`}/> : null}
@@ -318,7 +389,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
       {round.historyNotice ? <Alert type="info" showIcon title={round.historyNotice}/> : null}
     </div> : null}
     <div className="wb-clues">
-      <PRModelClues key={`model:${version}`} source={live} navigate={navigate} onFileRisks={setFileRisks} onCommitRisks={setCommitRisks}/>
+      <PRModelClues key={`model:${version}`} analysis={analysis}/>
     </div>
     {reviewView === 'commits' ? <section className="wb-commit-table" aria-label="PR 提交风险排序">
       <div className="wb-commit-table-head">
@@ -407,9 +478,22 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
               return <div key={`${key}:${index}`} className="wb-candidate">
                 <code>{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
                 {item.evidence ? <pre>{item.evidence}</pre> : null}
+                {item.suggestion ? <div className="wb-candidate-suggestion">
+                  <strong>{item.suggestion.title}</strong>
+                  <p>{item.suggestion.rationale}</p>
+                  {item.suggestion.manualChecks.length ? <ul>{item.suggestion.manualChecks.map(check => <li key={check}>{check}</li>)}</ul> : null}
+                  {item.suggestion.example ? <pre>{`${item.suggestion.example.before}\n→\n${item.suggestion.example.after}`}</pre> : null}
+                </div> : null}
                 <Space>
                   {(['confirmed', 'rejected', 'deferred'] as const).map(status => <Button key={status} size="sm" variant={decision?.status === status ? 'primary' : 'secondary'} onClick={() => set(status)}>{status === 'confirmed' ? '确认' : status === 'rejected' ? '驳回' : '暂缓'}</Button>)}
                   <input aria-label="候选处理理由" value={decision?.reason ?? ''} onChange={event => changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status: decision?.status ?? 'deferred', reason: event.target.value } } }))} placeholder="处理理由"/>
+                  <Button size="sm" onClick={() => {
+                    const exists = round.questions.some(item2 => item2.kind === 'suggestion' && item2.relatedFiles[0] === item.path && item2.body.includes(`${item.ruleId}@${item.ruleVersion}`) && item2.body.includes(`${item.path}:${item.line}`))
+                    if (exists) { setCandidateError('该候选建议已在问题草稿中'); return }
+                    const created = candidateQuestion(live, item)
+                    changeRound(r => ({ ...r, questions: [...r.questions, created], selectedQuestionId: created.id }))
+                    setSelectedId(created.id); setCandidateError('')
+                  }}>加入问题草稿</Button>
                 </Space>
               </div>
             })}
@@ -464,7 +548,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
         </details>
         <div className="wb-drawer-links">
           <Button size="sm" icon={<ExternalLink/>} href={live.url} target="_blank" aria-label="在 GitHub 核对 PR">在 GitHub 核对 PR</Button>
-          <Button size="sm" onClick={() => navigate({ name: 'repository', repositoryId: live.repositoryId })}>项目分析与模型线索</Button>
+          <Button size="sm" onClick={() => navigate(repositoryRoute(live.repositoryId))}>项目分析与模型线索</Button>
           <Button size="sm" icon={<Save/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
         </div>
       </div>
@@ -489,12 +573,12 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, n
             <Button size="sm" onClick={() => downloadText(`review-${number}-${live.headSha.slice(0, 8)}.md`, round.conclusion!.markdown, 'text/markdown')}>下载 Markdown 意见</Button>
             <Button size="sm" onClick={() => navigator.clipboard.writeText(round.conclusion!.markdown).catch(error => setReadError(error))}>复制审查意见</Button>
           </Space>
-          <details><summary>查看已保存意见</summary><pre>{round.conclusion.markdown}</pre></details>
+          <details><summary>查看已保存意见</summary><Markdown>{round.conclusion.markdown}</Markdown></details>
         </div> : null}
       </div>
     </Drawer>
     <Drawer open={drawer === 'backup'} onClose={() => setDrawer(null)} width={620} title="个人草稿备份">
-      <WorkBackup work={work} onMerge={commit}/>
+      <WorkBackup work={work} onMerge={commit} account={account}/>
       <FeedbackCases key={`feedback:${version}`} work={work} version={version}/>
     </Drawer>
   </section>
