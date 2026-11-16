@@ -1,6 +1,8 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { metricReason, metricValue, type Row } from '../adminContracts'
 import type { ModelCard, ModelCardBenefit, ModelCardPartition } from '../modelCardClient'
-import { Button } from '../ui/controls'
+
 
 const METRICS = [
   ['averagePrecision', 'AP'],
@@ -81,16 +83,16 @@ function BenefitView({ benefit }: { benefit: ModelCardBenefit }) {
       协议 {valueText(protocol.name, '未提供')} · 报告版本 {valueText(benefit.reportVersion, '未提供')} ·
       {intervalRuns > 0 ? ` 配对区间 ${intervalRuns} 次重采样` : ` 配对区间不足${intervalReason ? `：${intervalReason}` : ''}`}
     </p>
-    <div className="overflow-x-auto rounded-sm border border-border-soft"><table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:tabular-nums">
-      <thead><tr><th>检查顺序</th><th>Recall@20%LOC</th><th>Popt</th><th>IFA</th><th>覆盖正例</th></tr></thead>
-      <tbody>
-        <tr><th>模型分数</th><td>{benefitMetric(model, 'recall20Loc', 'percent')}</td><td>{benefitMetric(model, 'popt', 'number')}</td><td>{benefitMetric(model, 'ifa', 'count')}</td><td>{coverageText(model)}</td></tr>
-        {density ? <tr><th>风险/成本密度</th><td>{benefitMetric(density, 'recall20Loc', 'percent')}</td><td>{benefitMetric(density, 'popt', 'number')}</td><td>{benefitMetric(density, 'ifa', 'count')}</td><td>{coverageText(density)}</td></tr> : null}
-        {loc ? <tr><th>改动量升序</th><td>{benefitMetric(loc, 'recall20Loc', 'percent')}</td><td>{benefitMetric(loc, 'popt', 'number')}</td><td>{benefitMetric(loc, 'ifa', 'count')}</td><td>{coverageText(loc)}</td></tr> : null}
-        <tr><th>时间顺序</th><td>{benefitMetric(time, 'recall20Loc', 'percent')}</td><td>{benefitMetric(time, 'popt', 'number')}</td><td>{benefitMetric(time, 'ifa', 'count')}</td><td>{coverageText(time)}</td></tr>
-        <tr><th>随机均值</th><td>{randomMetric(random.recall20Loc, 'percent')}</td><td>{randomMetric(random.popt, 'number')}</td><td>{randomMetric(random.ifa, 'count')}</td><td>—</td></tr>
-      </tbody>
-    </table></div>
+    <div className="overflow-x-auto rounded-sm border border-border-soft"><Table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:tabular-nums">
+      <TableHeader><TableRow><TableHead>检查顺序</TableHead><TableHead>Recall@20%LOC</TableHead><TableHead>Popt</TableHead><TableHead>IFA</TableHead><TableHead>覆盖正例</TableHead></TableRow></TableHeader>
+      <TableBody>
+        <TableRow><TableHead>模型分数</TableHead><TableCell>{benefitMetric(model, 'recall20Loc', 'percent')}</TableCell><TableCell>{benefitMetric(model, 'popt', 'number')}</TableCell><TableCell>{benefitMetric(model, 'ifa', 'count')}</TableCell><TableCell>{coverageText(model)}</TableCell></TableRow>
+        {density ? <TableRow><TableHead>风险/成本密度</TableHead><TableCell>{benefitMetric(density, 'recall20Loc', 'percent')}</TableCell><TableCell>{benefitMetric(density, 'popt', 'number')}</TableCell><TableCell>{benefitMetric(density, 'ifa', 'count')}</TableCell><TableCell>{coverageText(density)}</TableCell></TableRow> : null}
+        {loc ? <TableRow><TableHead>改动量升序</TableHead><TableCell>{benefitMetric(loc, 'recall20Loc', 'percent')}</TableCell><TableCell>{benefitMetric(loc, 'popt', 'number')}</TableCell><TableCell>{benefitMetric(loc, 'ifa', 'count')}</TableCell><TableCell>{coverageText(loc)}</TableCell></TableRow> : null}
+        <TableRow><TableHead>时间顺序</TableHead><TableCell>{benefitMetric(time, 'recall20Loc', 'percent')}</TableCell><TableCell>{benefitMetric(time, 'popt', 'number')}</TableCell><TableCell>{benefitMetric(time, 'ifa', 'count')}</TableCell><TableCell>{coverageText(time)}</TableCell></TableRow>
+        <TableRow><TableHead>随机均值</TableHead><TableCell>{randomMetric(random.recall20Loc, 'percent')}</TableCell><TableCell>{randomMetric(random.popt, 'number')}</TableCell><TableCell>{randomMetric(random.ifa, 'count')}</TableCell><TableCell>—</TableCell></TableRow>
+      </TableBody>
+    </Table></div>
     <p className="text-xs leading-body text-foreground-3">只读回顾性评估；检查顺序不代表缺陷概率，也不用于自动选择模型。</p>
     {benefit.limitations.length ? <ul className="list-disc pl-5 text-xs leading-body text-foreground-3">{benefit.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul> : null}
   </section>
@@ -109,7 +111,7 @@ function record(value: unknown): Row {
 
 export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => void }) {
   if (!card.available && !card.method) {
-    return <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>{card.name}</strong><p>{card.reason ?? '模型卡不可用'}</p>{retry ? <Button size="sm" onClick={retry}>重试</Button> : null}</div>
+    return <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>{card.name}</strong><p>{card.reason ?? '模型卡不可用'}</p>{retry ? <Button size="sm" onClick={retry} variant="outline" type="button">重试</Button> : null}</div>
   }
   const scale = card.dataScale ?? {}
   const performance = card.trainingPerformance ?? {}
@@ -119,7 +121,7 @@ export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => 
       <div><h2 className="text-lg font-semibold text-foreground">{card.name}</h2><p className="text-xs text-foreground-3">{card.method ?? '方法未提供'} · {card.featureSchemaVersion ?? 'schema 未提供'}</p></div>
       <span className="text-xs text-foreground-3" data-available={card.available}>{card.available ? '可用于项目分析' : card.reason ?? '不可用'}</span>
     </header>
-    {!card.available ? <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>当前模型不可用</strong><p>{card.reason ?? '无法加载模型产物'}{retry ? <Button size="sm" onClick={retry}>重试</Button> : null}</p></div> : null}
+    {!card.available ? <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>当前模型不可用</strong><p>{card.reason ?? '无法加载模型产物'}{retry ? <Button size="sm" onClick={retry} variant="outline" type="button">重试</Button> : null}</p></div> : null}
     <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
       <div><dt>数据规模</dt><dd>{valueText(scale.records)} 条 · {valueText(scale.featureWidth)} 维输入</dd></div>
       <div><dt>切分</dt><dd>{card.splitRule ?? '未记录'}</dd></div>

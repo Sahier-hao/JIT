@@ -1,12 +1,15 @@
+import { type LucideIcon, SlidersHorizontal, List, TrendingUp, ArrowUpDown, Download } from 'lucide-react'
+import { BrandLogo } from '@/components/shared/BrandLogo'
+import { Button } from '@/components/ui/button'
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '../apiClient'
 import { record } from '../apiContract'
 import { EmptyState, LoadingNotice } from '../Feedback'
-import { Icon, type IconName } from '../Icon'
+
 import { hashFor, type Route } from '../navigation'
 import { VerificationReport } from '../VerificationReport'
 import { AppearanceControl } from '../components/AppearanceControl'
-import { Button } from '../ui/controls'
+
 import { AdminComparisonPage } from './admin/AdminComparisonPage'
 import { AdminDatasetsPage } from './admin/AdminDatasetsPage'
 import { AdminExperimentDetailPage } from './admin/AdminExperimentDetailPage'
@@ -23,13 +26,13 @@ function label(value: unknown, fallback = '未提供') {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : fallback
 }
 
-const NAV: { view: 'models' | 'datasets' | 'training' | 'experiment-runs' | 'comparisons' | 'experiments'; label: string; icon: IconName }[] = [
-  { view: 'models', label: '模型管理', icon: 'sliders' },
-  { view: 'datasets', label: '数据集', icon: 'list' },
-  { view: 'training', label: '训练任务', icon: 'trend' },
-  { view: 'experiment-runs', label: '实验登记', icon: 'list' },
-  { view: 'comparisons', label: '模型比较', icon: 'sort' },
-  { view: 'experiments', label: '多项目实验', icon: 'trend' },
+const NAV: { view: 'models' | 'datasets' | 'training' | 'experiment-runs' | 'comparisons' | 'experiments'; label: string; icon: LucideIcon }[] = [
+  { view: 'models', label: '模型管理', icon: SlidersHorizontal },
+  { view: 'datasets', label: '数据集', icon: List },
+  { view: 'training', label: '训练任务', icon: TrendingUp },
+  { view: 'experiment-runs', label: '实验登记', icon: List },
+  { view: 'comparisons', label: '模型比较', icon: ArrowUpDown },
+  { view: 'experiments', label: '多项目实验', icon: TrendingUp },
 ]
 
 const SECTION_TITLES: Record<'models' | 'datasets' | 'training' | 'training-experiment' | 'experiment-runs' | 'comparisons' | 'experiments', string> = {
@@ -64,7 +67,7 @@ export function AdminWorkspace({ route, navigate }: {
   }, [session, navigate, route])
   if (!session) return <div className="grid min-h-screen place-items-center p-8">
     {sessionError
-      ? <EmptyState title="管理服务暂时不可用" description={sessionError}><Button onClick={() => setRevision(value => value + 1)}>重新连接</Button></EmptyState>
+      ? <EmptyState title="管理服务暂时不可用" description={sessionError}><Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重新连接</Button></EmptyState>
       : <LoadingNotice label="正在检查管理会话"/>}
   </div>
 
@@ -100,15 +103,15 @@ export function AdminWorkspace({ route, navigate }: {
   return <div className="min-h-screen bg-background lg:grid lg:grid-cols-[236px_minmax(0,1fr)]">
     <a className="fixed left-2.5 top-[-60px] z-[100] rounded-sm border border-border bg-card px-3.5 py-2.5 text-sm text-foreground focus:top-2.5" href="#admin-main">跳到主要内容</a>
     <aside className="flex flex-col border-b border-border bg-rail px-3.5 py-4 lg:border-b-0 lg:border-r">
-      <button type="button" className="flex items-center gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'landing' })}><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Icon name="logo" size={18}/></span><span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span></button>
+      <Button variant="ghost" type="button" className="flex items-center gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'landing' })}><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><BrandLogo aria-hidden="true" focusable="false" strokeWidth={1.5} size={18}/></span><span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span></Button>
       <nav className="mt-4 flex gap-1 overflow-x-auto lg:grid" aria-label="管理导航">
-        {NAV.map(item => <button key={item.view} type="button" aria-current={active(item.view)} className="flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground" onClick={() => navigate({ name: 'admin', view: item.view })}><Icon name={item.icon} size={17}/><span>{item.label}</span></button>)}
-        <button type="button" aria-current={route.name === 'report' ? 'page' : undefined} className="flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground" onClick={() => navigate({ name: 'report', view: 'overview' })}><Icon name="download" size={17}/><span>验证报告</span></button>
+        {NAV.map(item => <Button variant="ghost" key={item.view} type="button" aria-current={active(item.view)} className="flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground" onClick={() => navigate({ name: 'admin', view: item.view })}><item.icon aria-hidden="true" focusable="false" strokeWidth={1.5} size={17}/><span>{item.label}</span></Button>)}
+        <Button variant="ghost" type="button" aria-current={route.name === 'report' ? 'page' : undefined} className="flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground" onClick={() => navigate({ name: 'report', view: 'overview' })}><Download aria-hidden="true" focusable="false" strokeWidth={1.5} size={17}/><span>验证报告</span></Button>
       </nav>
       <div className="mt-auto grid gap-2 border-t border-border-soft pt-3">
         <div className="flex items-baseline justify-between gap-2 px-2 text-xs"><span className="truncate text-foreground">{label(session.username, '管理员')}</span><span className="text-foreground-4">管理员</span></div>
         <div className="flex flex-wrap gap-2 px-1">
-          <Button variant="ghost" size="sm" onClick={() => void logout()}>退出管理</Button>
+          <Button variant="ghost" size="sm" onClick={() => void logout()} type="button">退出管理</Button>
         </div>
       </div>
     </aside>

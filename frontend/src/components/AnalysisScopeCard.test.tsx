@@ -1,8 +1,8 @@
 import { render, screen } from '../test-utils'
 import { expect, it, vi } from 'vitest'
 import { AnalysisScopeCard } from './AnalysisScopeCard'
-import { parseRepositoryDetail } from '../repositoryWorkspace'
-import type { AnalysisScope } from '../repositoryWorkspace'
+import { parseRepositoryDetail, type AnalysisScope } from '../repositoryWorkspace'
+
 
 const scope: AnalysisScope = {
   strategy: 'repository-trained',

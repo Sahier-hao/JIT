@@ -1,3 +1,8 @@
+import { Checkbox } from '@/components/ui/checkbox'
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import {
@@ -11,7 +16,7 @@ import {
   type Row,
 } from '../../adminContracts'
 import { EmptyState, LoadingNotice } from '../../Feedback'
-import { Button, NativeSelect } from '../../ui/controls'
+
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from './AdminShared'
 
@@ -55,9 +60,7 @@ function FilterSelect({ label, value, onChange, options }: {
   onChange: (value: string) => void
   options: { value: string; label: string }[]
 }) {
-  return <label className="grid min-w-40 gap-1.5 text-xs text-foreground-3"><span>{label}</span><NativeSelect aria-label={label} value={value} onChange={event => onChange(event.target.value)}>
-    {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-  </NativeSelect></label>
+  return <label className="grid min-w-40 gap-1.5 text-xs text-foreground-3"><span>{label}</span><NativeSelect aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</NativeSelect></label>
 }
 
 export function AdminExperimentRunsPage({ candidateId, filters, navigate, expired }: {
@@ -184,28 +187,28 @@ function ExperimentList({ filters, navigate, expired }: {
     </div>
     {loading ? <LoadingNotice label="正在盘点实验运行"/> : null}
     {!loading && !page?.runs.length ? <p className="text-xs text-foreground-3">当前筛选没有实验运行。</p> : null}
-    {page?.runs.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-experiment-table">
-      <thead><tr><th><span className="sr-only">选择</span></th><th>数据集 / 方法</th><th>指标</th><th>状态</th><th>运行</th><th><span className="sr-only">操作</span></th></tr></thead>
-      <tbody>{page.runs.map(run => {
+    {page?.runs.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-experiment-table">
+      <TableHeader><TableRow><TableHead><span className="sr-only">选择</span></TableHead><TableHead>数据集 / 方法</TableHead><TableHead>指标</TableHead><TableHead>状态</TableHead><TableHead>运行</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
+      <TableBody>{page.runs.map(run => {
         const checked = selected.includes(run.candidateId)
-        return <tr key={run.candidateId}>
-          <td><input type="checkbox" aria-label={`选择实验 ${run.artifactRunId ?? run.displayName}`} checked={checked} disabled={!run.promotable || !run.manifestSha256}
-            onChange={event => setSelected(current => event.target.checked ? [...current, run.candidateId] : current.filter(id => id !== run.candidateId))}/></td>
-          <td><strong>{experimentLabel(run)}</strong><small>{run.datasetVersion ?? '数据集未知'} · {run.method ?? '方法未知'}</small></td>
-          <td>{metricSummary(run.metrics)}</td>
-          <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</td>
-          <td><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></td>
-          <td><div className="flex flex-wrap items-center gap-1.5"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })}>查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }}>登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型</Button> : null}</div></td>
-        </tr>
-      })}</tbody>
-    </table></div> : null}
+        return <TableRow key={run.candidateId}>
+          <TableCell><Checkbox aria-label={`选择实验 ${run.artifactRunId ?? run.displayName}`} checked={checked} disabled={!run.promotable || !run.manifestSha256}
+            onCheckedChange={checked => setSelected(current => checked === true ? [...current, run.candidateId] : current.filter(id => id !== run.candidateId))}/></TableCell>
+          <TableCell><strong>{experimentLabel(run)}</strong><small>{run.datasetVersion ?? '数据集未知'} · {run.method ?? '方法未知'}</small></TableCell>
+          <TableCell>{metricSummary(run.metrics)}</TableCell>
+          <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</TableCell>
+          <TableCell><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></TableCell>
+          <TableCell><div className="flex flex-wrap items-center gap-1.5"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })} variant="outline" type="button">查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }} variant="outline" type="button">登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型</Button> : null}</div></TableCell>
+        </TableRow>
+      })}</TableBody>
+    </Table></div> : null}
     {selected.length ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="登记所选实验">
       <strong>已选择 {selected.length} 个运行</strong>
-      {confirming ? <><p>确认后会重新校验产物并按运行身份登记；不会自动设置默认模型。</p><div className="flex flex-wrap items-center gap-2"><Button variant="primary" loading={busy} onClick={() => void promote()}>确认登记实验运行</Button><Button disabled={busy} onClick={() => setConfirming(false)}>取消</Button></div></> : <Button onClick={() => setConfirming(true)}>登记所选实验运行</Button>}
+      {confirming ? <><p>确认后会重新校验产物并按运行身份登记；不会自动设置默认模型。</p><div className="flex flex-wrap items-center gap-2"><Button variant='default' onClick={() => void promote()} disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认登记实验运行</Button><Button disabled={busy} onClick={() => setConfirming(false)} variant="outline" type="button">取消</Button></div></> : <Button onClick={() => setConfirming(true)} variant="outline" type="button">登记所选实验运行</Button>}
     </section> : null}
-    {results.length ? <section className="grid gap-2" aria-label="登记结果"><h2>登记结果</h2>{results.map(result => <div key={result.candidateId} data-status={result.status}><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[result.status] ?? result.status}</span><code>{result.candidateId}</code>{result.message ? <p>{result.message}</p> : null}{result.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: result.modelId! })}>查看模型</Button> : null}</div>)}</section> : null}
+    {results.length ? <section className="grid gap-2" aria-label="登记结果"><h2>登记结果</h2>{results.map(result => <div key={result.candidateId} data-status={result.status}><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[result.status] ?? result.status}</span><code>{result.candidateId}</code>{result.message ? <p>{result.message}</p> : null}{result.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: result.modelId! })} variant="outline" type="button">查看模型</Button> : null}</div>)}</section> : null}
     {page?.reports.length ? <section className="grid gap-2"><h2>不可登记报告</h2><p>聚合报告不包含完整模型产物，只能用于比较。</p>{page.reports.map(report => <div key={report.artifactKey}><code>{report.artifactKey}</code><p>{report.reason}</p></div>)}</section> : null}
-    {total > PAGE_SIZE ? <nav className="flex flex-wrap items-center justify-between gap-2 text-xs" aria-label="实验运行分页"><Button disabled={offset === 0} onClick={() => goTo(Math.max(0, offset - PAGE_SIZE))}>上一页</Button><span>第 {Math.floor(offset / PAGE_SIZE) + 1} 页</span><Button disabled={offset + PAGE_SIZE >= total} onClick={() => goTo(offset + PAGE_SIZE)}>下一页</Button></nav> : null}
+    {total > PAGE_SIZE ? <nav className="flex flex-wrap items-center justify-between gap-2 text-xs" aria-label="实验运行分页"><Button disabled={offset === 0} onClick={() => goTo(Math.max(0, offset - PAGE_SIZE))} variant="outline" type="button">上一页</Button><span>第 {Math.floor(offset / PAGE_SIZE) + 1} 页</span><Button disabled={offset + PAGE_SIZE >= total} onClick={() => goTo(offset + PAGE_SIZE)} variant="outline" type="button">下一页</Button></nav> : null}
   </section>
 }
 
@@ -225,11 +228,11 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
     })
     return () => controller.abort()
   }, [candidateId, expired])
-  if (error) return <EmptyState title="实验运行不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>返回实验运行</Button></EmptyState>
+  if (error) return <EmptyState title="实验运行不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button></EmptyState>
   if (!run) return <LoadingNotice label="正在读取实验运行详情"/>
   return <section>
     <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
-    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型详情</Button> : null}</div>
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型详情</Button> : null}</div>
     <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span></div>
     {run.serviceCompatibilityReason ? <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2">{run.serviceCompatibilityReason}</p> : null}
     {run.artifactStateReason ? <p className="text-xs text-rose">{run.artifactStateReason}</p> : null}

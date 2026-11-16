@@ -1,9 +1,9 @@
-import { render, screen, waitFor } from '../test-utils'
+import { render, screen, waitFor, TEST_REVIEW_ACCOUNT } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsPage } from './ProjectsPage'
 import { createWork, saveWork } from '../prReview'
-import { TEST_REVIEW_ACCOUNT } from '../test-utils'
+
 import { snapshot } from '../prReview.fixture'
 
 const REPO = '11111111-1111-4111-8111-111111111111'
@@ -86,7 +86,7 @@ it('asks for confirmation before deleting a project', async () => {
   await screen.findByRole('heading', { name: 'demo-project' })
   await user.click(screen.getByRole('button', { name: '管理项目 demo-project' }))
   await user.click(screen.getByRole('menuitem', { name: '删除项目' }))
-  expect(screen.getByRole('alertdialog', { name: '确认删除项目' })).toBeVisible()
+  expect(screen.getByRole('alertdialog', { name: '删除「demo-project」？' })).toBeVisible()
   expect(deleted).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: '确认删除' }))
   await waitFor(() => expect(deleted).toHaveBeenCalled())
@@ -120,9 +120,9 @@ it('navigates between projects and personal works through the page tabs', async 
   const navigate = vi.fn(), user = userEvent.setup()
   render(<ProjectsPage navigate={navigate}/>)
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click(screen.getByRole('button', { name: '我的审查' }))
+  await user.click(screen.getByRole('link', { name: '我的审查' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'my-reviews' })
-  await user.click(screen.getByRole('button', { name: '项目' }))
+  await user.click(screen.getByRole('link', { name: '项目' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'repositories' })
 })
 

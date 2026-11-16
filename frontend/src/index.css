@@ -12,10 +12,7 @@
 @import './styles/base.css' layer(base);
 @import './styles/content.css' layer(components);
 
-
-/* Claude 骨架层：同权重下由它决定外壳、列表行与工作单的形状。 */
-
-/* 信息密度层最后加载：按 Data-Dense Dashboard 规范收紧栅格、行高与表头。 */
+@custom-variant dark (&:where([data-theme="charcoal"], [data-theme="charcoal"] *));
 
 /*
  * 主题桥接：把 tokens.css 的全部语义键暴露给 Tailwind。
@@ -159,4 +156,12 @@
   --spacing-section: var(--sp-section);
   --spacing-page-x: var(--sp-page-x);
   --spacing-page-x-narrow: var(--sp-page-x-narrow);
+  --color-sidebar-ring: var(--accent);
+  --color-sidebar-border: var(--line);
+  --color-sidebar-accent-foreground: var(--fg);
+  --color-sidebar-accent: var(--hover);
+  --color-sidebar-primary-foreground: var(--btn-fg);
+  --color-sidebar-primary: var(--btn);
+  --color-sidebar-foreground: var(--fg);
+  --color-sidebar: var(--rail);
 }

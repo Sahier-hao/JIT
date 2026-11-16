@@ -1,24 +1,26 @@
-/**
- * 项目总览：只回答两个问题——有哪些项目、各自处在什么状态。
- *
- * 项目本身的管理（重命名、删除）放在这一层：进入项目页只做分析相关的事。
- * 卡片整卡可点进入项目页；右上角的管理菜单负责改名与删除。
- */
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { linkTo } from '@/navigation'
+
+import { Button } from '@/components/ui/button'
+import { LoaderCircle, Plus, Folder, ArrowRight, Settings } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+
 import { useEffect, useState } from 'react'
-import { Button, IconButton, Input } from '../ui/controls'
-import { Dropdown } from '../ui/dropdown'
-import { PageHeader, TabBar } from '../ui/layout'
+
+
+
 import { EmptyState, LoadingNotice } from '../Feedback'
-import { Icon } from '../Icon'
+
 import { repositoryRoute, type Route } from '../navigation'
 import { deleteRepository, renameRepository } from '../projectClient'
 import { projectStatus, type ProjectTone } from '../projectStatus'
-import { useRepositories } from '../repositoryWorkspace'
+import { useRepositories, type RepositoryView } from '../repositoryWorkspace'
 import { displayTime } from '../domain'
 import { ACTIVE_STATUSES } from '../repositoryContract'
 import { PersonalWorks } from '../components/PersonalWorks'
 import { NewProjectDialog } from '../components/NewProjectDialog'
-import type { RepositoryView } from '../repositoryWorkspace'
+
 import { cn } from '../lib/utils'
 
 const TONE_DOT: Record<ProjectTone, string> = {
@@ -97,21 +99,12 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
   }
 
   return <section className="grid gap-4">
-    <PageHeader
-      title={view === 'reviews' ? '我的审查' : '项目'}
-      description={view === 'reviews' ? '草稿只保存在当前浏览器。' : undefined}
-      actions={view === 'projects' ? <Button aria-label="新建项目" variant="primary" icon={<Icon name="plus" size={15}/>} onClick={() => setCreating(true)}>新建项目</Button> : undefined}
-    />
+    <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3"><div><h1 className="text-xl font-semibold">{view === 'reviews' ? '我的审查' : '项目'}</h1><p className="mt-1 text-sm text-muted-foreground">{view === 'reviews' ? '草稿只保存在当前浏览器。' : undefined}</p></div><div className="flex flex-wrap gap-2">{view === 'projects' ? <Button aria-label="新建项目" variant='default' onClick={() => setCreating(true)} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}新建项目</Button> : undefined}</div></header>
 
-    <TabBar
-      label="项目与个人工作"
-      value={view}
-      onChange={next => navigate({ name: next === 'projects' ? 'repositories' : 'my-reviews' })}
-      items={[{ value: 'projects', label: '项目' }, { value: 'reviews', label: '我的审查' }]}
-    />
+    <nav aria-label="项目与个人工作" className="flex gap-1 border-b border-border">{([{ value: 'projects', label: '项目' }, { value: 'reviews', label: '我的审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String(view) === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo({ name: option.value === 'projects' ? 'repositories' : 'my-reviews' }, navigate)} aria-current={String(view) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
 
     {view === 'reviews' ? <PersonalWorks navigate={navigate}/> : <>
-      {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry}>重新加载</Button></EmptyState> : items.length ? <>
+      {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry} variant="outline" type="button">重新加载</Button></EmptyState> : items.length ? <>
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs text-foreground-3">
           <span className="text-sm font-medium text-foreground-2">全部项目</span>
           <span>{items.length} 个项目 · {commits.toLocaleString()} 个已分析提交{high ? ` · ${high.toLocaleString()} 个高风险` : ''}{running ? ` · ${running} 个正在分析` : ''}</span>
@@ -122,9 +115,9 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
           const editing = renamingId === repo.repositoryId
           const confirming = confirmingId === repo.repositoryId
           return <article className={cn('relative rounded-md border bg-card p-card', editing || confirming ? 'border-accent' : 'border-border-soft')} key={repo.repositoryId}>
-            <button type="button" className="block w-full border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => navigate(repositoryRoute(repo.repositoryId))} aria-label={`打开项目 ${repo.displayName}`}>
+            <Button variant="ghost" type="button" className="block w-full border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => navigate(repositoryRoute(repo.repositoryId))} aria-label={`打开项目 ${repo.displayName}`}>
               <div className="flex items-center justify-between gap-2 pr-10">
-                <span className="grid size-10 shrink-0 place-items-center rounded-md border border-border-soft bg-sunken text-foreground-2"><Icon name="project" size={20}/></span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-md border border-border-soft bg-sunken text-foreground-2"><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={20}/></span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-foreground-3"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</span>
               </div>
               <h2 className="mt-3 truncate text-base font-semibold text-foreground">{repo.displayName}</h2>
@@ -133,38 +126,36 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
                 <span><b className="text-sm font-semibold text-foreground">{repo.commitCount.toLocaleString()}</b> 个已分析提交</span>
                 {repo.viewSyncId ? <span><b className="text-sm font-semibold text-foreground">{repo.distribution.high.toLocaleString()}</b> 个高风险</span> : null}
               </div>
-              <div className="mt-4 flex items-center justify-between border-t border-border-soft pt-3 text-xs text-foreground-2"><span>打开项目</span><Icon name="arrow" size={14}/></div>
+              <div className="mt-4 flex items-center justify-between border-t border-border-soft pt-3 text-xs text-foreground-2"><span>打开项目</span><ArrowRight aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/></div>
               <small className="mt-2 block text-xs text-foreground-4">最近请求 · {repo.latestSyncAt ? displayTime(repo.latestSyncAt) : '尚未分析'}</small>
-            </button>
+            </Button>
             <div className="absolute right-2 top-2">
-              <Dropdown open={menuFor === repo.repositoryId} onOpenChange={open => setMenuFor(open ? repo.repositoryId : '')} items={[{ key: 'rename', label: '重命名' }, { key: 'delete', label: '删除项目', danger: true }]} onClick={key => { if (key === 'rename') startRename(repo); else startDelete(repo) }}>
-                <IconButton label={`管理项目 ${repo.displayName}`} icon={<Icon name="settings" size={16}/>}/>
-              </Dropdown>
+              <DropdownMenu modal={false} open={menuFor === repo.repositoryId} onOpenChange={open => setMenuFor(open ? repo.repositoryId : '')}><DropdownMenuTrigger asChild><Button aria-label={`管理项目 ${repo.displayName}`} title={`管理项目 ${repo.displayName}`} variant="ghost" size="icon-sm" type="button">{<Settings aria-hidden="true" focusable="false" strokeWidth={1.5} size={16}/>}</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{([{ key: 'rename', label: '重命名' }, { key: 'delete', label: '删除项目', danger: true }]).map(item => <DropdownMenuItem key={item.key} disabled={'disabled' in item && item.disabled === true} variant={'danger' in item && item.danger ? 'destructive' : 'default'} onSelect={() => (key => { if (key === 'rename') startRename(repo); else startDelete(repo) })(item.key)}>{item.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
             </div>
             {editing ? <form className="mt-4 grid gap-2.5 border-t border-border-soft pt-4" onSubmit={event => { event.preventDefault(); void saveName(repo.repositoryId) }}>
               <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">项目显示名</span><Input aria-label="项目显示名" value={draft} maxLength={80} autoFocus onChange={event => setDraft(event.target.value)}/></label>
               {editorError ? <p className="text-xs text-rose" role="alert">{editorError}</p> : null}
               <div className="flex flex-wrap gap-2">
-                <Button variant="primary" type="submit" loading={busy}>{busy ? '正在保存…' : '保存名称'}</Button>
-                <Button onClick={() => setRenamingId('')}>取消</Button>
+                <Button variant='default' type="submit" disabled={Boolean(busy)}>{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}{busy ? '正在保存…' : '保存名称'}</Button>
+                <Button onClick={() => setRenamingId('')} variant="outline" type="button">取消</Button>
               </div>
             </form> : null}
-            {confirming ? <div className="mt-4 grid gap-2.5 rounded-sm border border-rose/30 bg-rose-soft p-3" role="alertdialog" aria-label="确认删除项目">
-              <h3 className="text-sm font-semibold text-rose-deep">删除「{repo.displayName}」？</h3>
+            {confirming ? <AlertDialog open onOpenChange={open => { if (!open) setConfirmingId(''); }}><AlertDialogContent aria-label="确认删除项目" aria-describedby={undefined}>
+              <AlertDialogHeader><AlertDialogTitle className="text-sm font-semibold text-rose-deep">删除「{repo.displayName}」？</AlertDialogTitle></AlertDialogHeader>
               <p className="text-xs leading-body text-foreground-2">项目、全部分析记录与提交数据会被删除，无法恢复。仓库本身不受影响。</p>
               {editorError ? <p className="text-xs text-rose" role="alert">{editorError}</p> : null}
               <div className="flex flex-wrap gap-2">
-                <Button danger loading={busy} onClick={() => void removeProject(repo.repositoryId)}>{busy ? '正在删除…' : '确认删除'}</Button>
-                <Button onClick={() => setConfirmingId('')}>取消</Button>
+                <Button onClick={() => void removeProject(repo.repositoryId)} variant="destructive" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}{busy ? '正在删除…' : '确认删除'}</Button>
+                <Button onClick={() => setConfirmingId('')} variant="outline" type="button">取消</Button>
               </div>
-            </div> : null}
+            </AlertDialogContent></AlertDialog> : null}
           </article>
         })}</div>
       </> : <div className="grid justify-items-center gap-4 rounded-lg border border-border bg-card px-6 py-14 text-center">
-        <div className="flex items-center gap-4 text-accent" aria-hidden="true"><span className="h-px w-12 bg-border-strong"/><Icon name="project" size={44} className="rounded-xl border border-border-strong bg-card p-4"/><span className="h-px w-12 bg-border-strong"/></div>
+        <div className="flex items-center gap-4 text-accent" aria-hidden="true"><span className="h-px w-12 bg-border-strong"/><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={44} className="rounded-xl border border-border-strong bg-card p-4"/><span className="h-px w-12 bg-border-strong"/></div>
         <h2 className="text-2xl font-semibold tracking-tight text-foreground">从一个仓库开始</h2>
         <p className="max-w-md text-sm leading-body text-foreground-3">接入仓库后自动准备首次分析，并持续跟进新提交；结果与审查记录会一直保留。</p>
-        <Button aria-label="新建项目" variant="primary" size="lg" icon={<Icon name="plus" size={15}/>} onClick={() => setCreating(true)}>新建项目</Button>
+        <Button aria-label="新建项目" variant='default' size="lg" onClick={() => setCreating(true)} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}新建项目</Button>
         <div className="mt-2 flex flex-wrap justify-center gap-6 border-t border-border-soft pt-4 text-xs text-foreground-3">
           <span><b className="mr-1.5 font-mono text-foreground">01</b>接入仓库</span>
           <span><b className="mr-1.5 font-mono text-foreground">02</b>自动分析</span>

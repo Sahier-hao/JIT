@@ -1,12 +1,14 @@
+import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-react'
+import { PasswordField } from '@/components/shared/PasswordField'
+import { Input } from '@/components/ui/input'
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError } from '../apiContract'
 import type { Route } from '../navigation'
-import {
-  changeUserPassword, updateUserProfile, userLogout, userProfile, type UserProfile,
-} from '../userClient'
-import { Button, Input, PasswordInput } from '../ui/controls'
+import { changeUserPassword, updateUserProfile, userLogout, userProfile, type UserProfile, notifyUserChanged } from '../userClient'
+
 import { EmptyState, LoadingNotice } from '../Feedback'
-import { notifyUserChanged } from '../userClient'
+
 
 export function ProfilePage({ navigate, onLoginRequired, onSessionCleared }: {
   navigate: (route: Route) => void
@@ -67,7 +69,7 @@ export function ProfilePage({ navigate, onLoginRequired, onSessionCleared }: {
   }
 
   if (!profile) return <section className="grid gap-4">
-    {error ? <EmptyState title="个人资料不可用" description={error}><Button onClick={onLoginRequired}>登录</Button></EmptyState> : <LoadingNotice label="正在读取个人资料"/>}
+    {error ? <EmptyState title="个人资料不可用" description={error}><Button onClick={onLoginRequired} variant="outline" type="button">登录</Button></EmptyState> : <LoadingNotice label="正在读取个人资料"/>}
   </section>
   const name = profile.displayName || profile.username
   return <section className="grid gap-4">
@@ -81,11 +83,11 @@ export function ProfilePage({ navigate, onLoginRequired, onSessionCleared }: {
         <p className="text-xs text-foreground-3">账户 {profile.username}</p>
         <p className="text-xs text-foreground-4">创建于 {new Date(profile.createdAt * 1000).toLocaleString('zh-CN', { hour12: false })}</p>
         <div className="grid w-full grid-cols-3 gap-2 border-t border-border-soft pt-2">
-          <button className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-data' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.datasetCount}</b><span className="text-[11px] text-foreground-3">数据版本</span></button>
-          <button className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-training' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.experimentCount}</b><span className="text-[11px] text-foreground-3">训练实验</span></button>
-          <button className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-models' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.modelCount}</b><span className="text-[11px] text-foreground-3">我的模型</span></button>
+          <Button variant="ghost" className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-data' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.datasetCount}</b><span className="text-[11px] text-foreground-3">数据版本</span></Button>
+          <Button variant="ghost" className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-training' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.experimentCount}</b><span className="text-[11px] text-foreground-3">训练实验</span></Button>
+          <Button variant="ghost" className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-models' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.modelCount}</b><span className="text-[11px] text-foreground-3">我的模型</span></Button>
         </div>
-        <Button variant="ghost" onClick={() => void logout()}>退出登录</Button>
+        <Button variant="ghost" onClick={() => void logout()} type="button">退出登录</Button>
       </section>
       <div className="grid gap-4">
         <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">显示名称</h2>
@@ -93,18 +95,18 @@ export function ProfilePage({ navigate, onLoginRequired, onSessionCleared }: {
             <label className="grid w-full gap-1.5"><span className="text-xs font-medium text-foreground-2">显示名称</span>
               <Input aria-label="显示名称" maxLength={40} value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="留空则显示账户名"/>
             </label>
-            <Button variant="primary" type="submit" loading={busy === 'name'}>保存名称</Button>
+            <Button variant='default' type="submit" disabled={Boolean(busy === 'name')}>{busy === 'name' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}保存名称</Button>
           </form>
         </section>
         <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">修改密码</h2>
           <form className="grid justify-items-start gap-3" onSubmit={changePassword}>
             <label className="grid w-full gap-1.5"><span className="text-xs font-medium text-foreground-2">当前密码</span>
-              <PasswordInput aria-label="当前密码" autoComplete="current-password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)}/>
+              <PasswordField aria-label="当前密码" autoComplete="current-password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)}/>
             </label>
             <label className="grid w-full gap-1.5"><span className="text-xs font-medium text-foreground-2">新密码</span>
-              <PasswordInput aria-label="新密码" autoComplete="new-password" value={newPassword} onChange={event => setNewPassword(event.target.value)}/>
+              <PasswordField aria-label="新密码" autoComplete="new-password" value={newPassword} onChange={event => setNewPassword(event.target.value)}/>
             </label>
-            <Button variant="primary" type="submit" loading={busy === 'password'} disabled={!currentPassword || newPassword.length < 8}>更新密码</Button>
+            <Button variant='default' type="submit" disabled={Boolean(!currentPassword || newPassword.length < 8) || Boolean(busy === 'password')}>{busy === 'password' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}更新密码</Button>
           </form>
         </section>
       </div>

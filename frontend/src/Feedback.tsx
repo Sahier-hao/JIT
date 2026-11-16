@@ -1,13 +1,11 @@
-/**
- * 新页面共用的状态与错误呈现（MPW-10、MPW-11）。
- *
- * 三类状态必须能被文字区分，而不是只靠颜色：加载中、需要凭据、失败。失败一律展示可公开的
- * 原因与服务端 requestId，字段级错误单独列出。
- */
-
+import { Info } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { ReactNode } from 'react'
-import { Icon } from './Icon'
-import { Button } from './ui/controls'
+
+
 import { describeFailure, type FailureKind } from './requestState'
 import { cn } from './lib/utils'
 
@@ -38,14 +36,14 @@ export function LoadingNotice({
 }) {
   return (
     <div className="flex gap-2 rounded-sm border border-border-soft bg-sunken p-3 text-sm text-foreground-2" role="status" aria-busy="true" aria-live="polite">
-      <Icon name="info" size={16} className="mt-0.5 shrink-0 text-foreground-3"/>
+      <Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={16} className="mt-0.5 shrink-0 text-foreground-3"/>
       <div className="grid min-w-0 gap-0.5">
         {prefix ? <strong className="text-foreground">正在读取</strong> : null}
         <span>{label}</span>
         {note === undefined ? null : <span className="text-xs text-foreground-3">{note}</span>}
         <div className="mt-2 grid gap-1" aria-hidden="true">
           {['100%', '92%', '64%'].map((width, index) => (
-            <span key={index} className="h-2 rounded-full bg-strong" style={{ width }} />
+            <Skeleton key={index} className="h-2 rounded-full" style={{ width }} />
           ))}
         </div>
       </div>
@@ -71,11 +69,11 @@ export function EmptyState({
   children?: ReactNode
 }) {
   return (
-    <div className={cn('grid justify-items-start gap-1.5 rounded-sm border p-4', tone === 'alert' ? 'border-rose/30 bg-rose-soft' : 'border-border-soft bg-card')} data-state={tone} role={tone === 'alert' ? 'alert' : undefined}>
+    <Card className={cn('grid justify-items-start gap-1.5', tone === 'alert' && 'border-rose/30 bg-rose-soft')} data-state={tone} role={tone === 'alert' ? 'alert' : undefined}>
       <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       <p className="text-xs leading-body text-foreground-3">{description}</p>
       {children === undefined ? null : <div className="mt-1 flex flex-wrap gap-2">{children}</div>}
-    </div>
+    </Card>
   )
 }
 
@@ -92,10 +90,10 @@ export function FailureNotice({
 }) {
   const failure = describeFailure(error)
   return (
-    <div className="flex gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert">
-      <Icon name="info" size={17} className="mt-0.5 shrink-0"/>
-      <div className="grid min-w-0 gap-0.5">
-        <strong className="text-sm">{KIND_TITLES[failure.kind]}</strong>
+    <Alert variant="destructive" className="border-rose/30 bg-rose-soft text-rose-deep">
+      <Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={17} className="mt-0.5 shrink-0"/>
+      <AlertTitle>{KIND_TITLES[failure.kind]}</AlertTitle>
+      <AlertDescription className="min-w-0">
         <span>{failure.message}</span>
         {failure.details.length > 0 ? (
           <ul className="mt-1 grid gap-0.5 pl-4 list-disc">
@@ -115,11 +113,11 @@ export function FailureNotice({
         {children}
         {onRetry === undefined ? null : (
           <div className="mt-1">
-            <Button type="button" size="sm" onClick={onRetry}>{retryLabel}</Button>
+            <Button type="button" size="sm" onClick={onRetry} variant="outline">{retryLabel}</Button>
           </div>
         )}
-      </div>
-    </div>
+      </AlertDescription>
+    </Alert>
   )
 }
 

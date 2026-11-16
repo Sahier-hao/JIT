@@ -1,9 +1,9 @@
-import { render, screen } from '../test-utils'
+import { render, screen, TEST_REVIEW_ACCOUNT } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PullRequestPreview } from './PullRequestPreview'
 import { accountWorkKey } from '../prReview'
-import { TEST_REVIEW_ACCOUNT } from '../test-utils'
+
 import { snapshot } from '../prReview.fixture'
 import { modelChoices, PROJECT, response } from '../projectActivity.fixture'
 const SYNC = '33333333-3333-4333-8333-333333333333'

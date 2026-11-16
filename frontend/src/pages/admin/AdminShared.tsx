@@ -1,12 +1,14 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import type { ReactNode } from 'react'
-import { Button } from '../../ui/controls'
-import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../../ui/layout'
+
+
 import { metricReason, metricValue, type Row } from '../../adminContracts'
 
 export function AdminPageHeader({ title, meta, actions, onRefresh }: { title: string; meta?: ReactNode; actions?: ReactNode; onRefresh?: () => void }) {
   return <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-3">
     <div className="grid min-w-0 gap-1"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">{title}</h1>{meta ? <p className="text-xs text-foreground-3">{meta}</p> : null}</div>
-    <div className="flex flex-wrap items-center gap-2">{actions}{onRefresh ? <Button onClick={onRefresh}>刷新</Button> : null}</div>
+    <div className="flex flex-wrap items-center gap-2">{actions}{onRefresh ? <Button onClick={onRefresh} variant="outline" type="button">刷新</Button> : null}</div>
   </header>
 }
 
@@ -30,10 +32,7 @@ export function MetricGrid({ metrics }: { metrics: Row | null | undefined }) {
 }
 
 export function MetricComparison({ left, right, leftName, rightName }: { left: Row; right: Row; leftName: string; rightName: string }) {
-  return <Table>
-    <TableHead><TableRow><TableHeaderCell>指标</TableHeaderCell><TableHeaderCell>{leftName}</TableHeaderCell><TableHeaderCell>{rightName}</TableHeaderCell></TableRow></TableHead>
-    <TableBody>{METRICS.map(([key, name]) => <TableRow key={key}><TableCell className="font-medium text-foreground-2">{name}</TableCell><MetricCell metrics={left} metric={key}/><MetricCell metrics={right} metric={key}/></TableRow>)}</TableBody>
-  </Table>
+  return <Table><TableHeader><TableRow><TableHead>指标</TableHead><TableHead>{leftName}</TableHead><TableHead>{rightName}</TableHead></TableRow></TableHeader><TableBody>{METRICS.map(([key, name]) => <TableRow key={key}><TableCell className="font-medium text-foreground-2">{name}</TableCell><MetricCell metrics={left} metric={key}/><MetricCell metrics={right} metric={key}/></TableRow>)}</TableBody></Table>
 }
 
 function MetricCell({ metrics, metric }: { metrics: Row; metric: string }) {

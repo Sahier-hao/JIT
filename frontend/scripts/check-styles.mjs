@@ -78,7 +78,15 @@ export function readInventory(root = FRONTEND_ROOT) {
     .map(toPosix)
     .sort()
 
-  return { styleFiles, entryImports, tsxImports, mantineRefs }
+  const production = files.filter(file => /\.(tsx?|jsx?)$/.test(file) && !/\.test\./.test(file))
+  const legacyUiRefs = production.filter(file => {
+    const source = readFileSync(file, 'utf8')
+    return /from ['"](?:\.\.?\/)+ui\/(?:controls|layout|feedback|dialog|drawer|dropdown|popover|segmented)['"]/.test(source)
+      || toPosix(file).startsWith('src/ui/')
+  }).map(toPosix)
+  const primitiveRefs = production.filter(file => !toPosix(file).startsWith('src/components/ui/')
+    && /from ['"](?:radix-ui|@radix-ui\/)/.test(readFileSync(file, 'utf8'))).map(toPosix)
+  return { styleFiles, entryImports, tsxImports, mantineRefs, legacyUiRefs, primitiveRefs }
 }
 
 /** 纯校验：输入样式事实与允许清单，返回违规说明列表。 */
@@ -89,6 +97,8 @@ export function validateInventory(inventory, allowed = {
   mantineRefs: MANTINE_PENDING,
 }, root = FRONTEND_ROOT) {
   const violations = []
+  for (const file of inventory.legacyUiRefs ?? []) violations.push(`${file} 重新引入旧基础控件`)
+  for (const file of inventory.primitiveRefs ?? []) violations.push(`${file} 绕过官方组件直接引用底层交互库`)
   const existing = new Set(inventory.styleFiles)
   const rel = (path) => relative(root, path).replace(/\\/g, '/')
 

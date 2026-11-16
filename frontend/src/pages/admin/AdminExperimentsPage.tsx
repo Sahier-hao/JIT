@@ -1,10 +1,12 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import { formatDate } from '../../adminContracts'
 import { fetchMultiProjectReports, type MultiProjectReportStatus, type MultiProjectReportSummary } from '../../multiProjectReportContracts'
 import { fetchEvaluationEvidence, type EvaluationEvidenceEntry, type EvidenceStatus } from '../../evaluationEvidenceClient'
 import { EmptyState, LoadingNotice } from '../../Feedback'
-import { Button } from '../../ui/controls'
+
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice } from './AdminShared'
 
@@ -67,35 +69,35 @@ export function AdminExperimentsPage({ navigate, expired }: {
 
   if (loading) return <LoadingNotice label="正在读取多项目实验报告"/>
   if (error && !reports.length) return <EmptyState title="多项目实验报告不可用" description={error}>
-    <Button onClick={() => setRevision(value => value + 1)}>重试</Button>
+    <Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button>
   </EmptyState>
   return <section>
     <AdminPageHeader title="多项目实验" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {!reports.length ? <p className="text-xs text-foreground-3">报告目录中没有多项目实验报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
-      <thead><tr><th>生成时间</th><th>状态</th><th>方法与口径</th><th>项目</th><th>失败</th><th>来源</th><th><span className="sr-only">操作</span></th></tr></thead>
-      <tbody>{reports.map(report => <tr key={report.reportId}>
-        <td>{formatDate(report.generatedUtc)}</td>
-        <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[report.status]}</span>{report.status === 'invalid' && report.error ? <small>{report.error.message}</small> : null}</td>
-        <td>{report.methodCount} 种方法 · {report.protocolCount} 种口径<small>{report.metricSet ?? '指标集未提供'}</small></td>
-        <td>{report.projectCount} 个项目{report.failedProjectCount ? <small>失败 {report.failedProjectCount}</small> : null}</td>
-        <td>{report.failureCount ? report.failureCount : '无'}</td>
-        <td><code>{report.source}</code></td>
-        <td>{report.status === 'invalid' ? null : <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiments', resourceId: report.reportId })}>查看</Button>}</td>
-      </tr>)}</tbody>
-    </table></div>}
+    {!reports.length ? <p className="text-xs text-foreground-3">报告目录中没有多项目实验报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
+      <TableHeader><TableRow><TableHead>生成时间</TableHead><TableHead>状态</TableHead><TableHead>方法与口径</TableHead><TableHead>项目</TableHead><TableHead>失败</TableHead><TableHead>来源</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
+      <TableBody>{reports.map(report => <TableRow key={report.reportId}>
+        <TableCell>{formatDate(report.generatedUtc)}</TableCell>
+        <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[report.status]}</span>{report.status === 'invalid' && report.error ? <small>{report.error.message}</small> : null}</TableCell>
+        <TableCell>{report.methodCount} 种方法 · {report.protocolCount} 种口径<small>{report.metricSet ?? '指标集未提供'}</small></TableCell>
+        <TableCell>{report.projectCount} 个项目{report.failedProjectCount ? <small>失败 {report.failedProjectCount}</small> : null}</TableCell>
+        <TableCell>{report.failureCount ? report.failureCount : '无'}</TableCell>
+        <TableCell><code>{report.source}</code></TableCell>
+        <TableCell>{report.status === 'invalid' ? null : <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiments', resourceId: report.reportId })} variant="outline" type="button">查看</Button>}</TableCell>
+      </TableRow>)}</TableBody>
+    </Table></div>}
     <section aria-label="评价证据">
       <h2>评价证据</h2>
-      {!evidence.length ? <p className="text-xs text-foreground-3">固定目录中没有评价矩阵或候选集报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
-        <thead><tr><th>类型</th><th>状态</th><th>事实</th><th>内容 SHA-256</th><th>来源</th></tr></thead>
-        <tbody>{evidence.map(entry => <tr key={entry.evidenceId}>
-          <td>{EVIDENCE_KINDS[entry.kind] ?? entry.kind}</td>
-          <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{EVIDENCE_STATUS[entry.status]}</span>{entry.reason ? <small>{entry.reason}</small> : null}</td>
-          <td>{evidenceSummary(entry)}</td>
-          <td><code>{entry.sha256.slice(0, 12)}</code></td>
-          <td><code>{entry.source}</code></td>
-        </tr>)}</tbody>
-      </table></div>}
+      {!evidence.length ? <p className="text-xs text-foreground-3">固定目录中没有评价矩阵或候选集报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
+        <TableHeader><TableRow><TableHead>类型</TableHead><TableHead>状态</TableHead><TableHead>事实</TableHead><TableHead>内容 SHA-256</TableHead><TableHead>来源</TableHead></TableRow></TableHeader>
+        <TableBody>{evidence.map(entry => <TableRow key={entry.evidenceId}>
+          <TableCell>{EVIDENCE_KINDS[entry.kind] ?? entry.kind}</TableCell>
+          <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{EVIDENCE_STATUS[entry.status]}</span>{entry.reason ? <small>{entry.reason}</small> : null}</TableCell>
+          <TableCell>{evidenceSummary(entry)}</TableCell>
+          <TableCell><code>{entry.sha256.slice(0, 12)}</code></TableCell>
+          <TableCell><code>{entry.source}</code></TableCell>
+        </TableRow>)}</TableBody>
+      </Table></div>}
     </section>
   </section>
 }

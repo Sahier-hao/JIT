@@ -1,15 +1,20 @@
-/** 固定分析结果：提交明细、筛选与单条详情，用于风险度量与复盘。 */
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { NativeSelect } from '@/components/ui/native-select'
+import { Input } from '@/components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { applyQuery, displayTime, emptyQuery, readSeedQuery, validRisk, type Commit, type Dataset, type Query } from './domain'
+import { applyQuery, displayTime, emptyQuery, readSeedQuery, validRisk, type Commit, type Dataset, type Query, toCommit } from './domain'
 import { CommitDetail } from './CommitDetail'
-import { Dialog } from './ui/dialog'
+
 import { EmptyState, LoadingNotice } from './Feedback'
-import { Icon } from './Icon'
-import { Button, Input, NativeSelect } from './ui/controls'
-import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from './ui/layout'
+
+
+
 import { analysisRoute, repositoryRoute, type Route } from './navigation'
 import { useRepository, useRepositoryCommits, useRepositoryCommitRecords, type RepositoryDetail } from './repositoryWorkspace'
-import { toCommit } from './domain'
+
 import { DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type CommitPartition } from './repositoryContract'
 import { useModelName } from './modelClient'
 import { cn } from './lib/utils'
@@ -84,26 +89,13 @@ function RepositoryHead({ repository, total }: { repository: RepositoryDetail; t
 
 function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: string, trigger: HTMLButtonElement) => void }) {
   return (
-    <Table>
-      <caption className="sr-only">仓库提交风险列表，按模型分数从高到低</caption>
-      <TableHead>
-        <TableRow>
-          <TableHeaderCell>提交 / 改动</TableHeaderCell>
-          <TableHeaderCell>模型分数</TableHeaderCell>
-          <TableHeaderCell numeric>变更行</TableHeaderCell>
-          <TableHeaderCell numeric>文件</TableHeaderCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {commits.map(commit => {
+    <Table><caption className="sr-only">仓库提交风险列表，按模型分数从高到低</caption><TableHeader><TableRow><TableHead>提交 / 改动</TableHead><TableHead>模型分数</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commits.map(commit => {
           const tone = riskTone(safeRisk(commit.risk))
           return (
-            <TableRow key={commit.id} data-tone={tone}>
-              <TableCell>
-                <div className="flex items-start gap-2">
+            <TableRow key={commit.id} data-tone={tone}><TableCell><div className="flex items-start gap-2">
                   <i className={cn('mt-1.5 size-2 shrink-0 rounded-full', TONE_FILL[tone])} aria-hidden="true" />
                   <div className="min-w-0">
-                    <button
+                    <Button variant="ghost"
                       type="button"
                       className="block max-w-full border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                       title={commit.id}
@@ -112,7 +104,7 @@ function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: stri
                     >
                       <span className="block truncate text-sm font-medium text-foreground">{commit.title || '未提供标题'}</span>
                       <code className="font-mono text-xs text-foreground-3">{commit.id.slice(0, 8)}</code>
-                    </button>
+                    </Button>
                     <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-foreground-3">
                       {commit.partition && PARTITION_LABELS[commit.partition as CommitPartition]
                         ? <span className={cn('rounded-sm px-1 py-0.5 text-[11px]', PARTITION_CLASS[commit.partition] ?? 'bg-soft text-foreground-3')}>{PARTITION_LABELS[commit.partition as CommitPartition]}</span> : null}
@@ -120,23 +112,14 @@ function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: stri
                       <time dateTime={commit.time}>{displayTime(commit.time).slice(0, 16)}</time>
                     </span>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
+                </div></TableCell><TableCell><div className="flex items-center gap-2">
                   <b className="tabular-nums text-foreground">{scoreText(safeRisk(commit.risk))}</b>
                   <span className="h-1 w-16 overflow-hidden rounded-full bg-strong" aria-hidden="true">
                     <i className={cn('block h-full rounded-full', TONE_FILL[tone])} style={{ width: `${Math.round((safeRisk(commit.risk) ?? 0) * 100)}%` }} />
                   </span>
-                </div>
-              </TableCell>
-              <TableCell numeric>{commit.lines === undefined ? '—' : commit.lines.toLocaleString()}</TableCell>
-              <TableCell numeric>{commit.files === undefined ? '—' : commit.files.toLocaleString()}</TableCell>
-            </TableRow>
+                </div></TableCell><TableCell className="text-right tabular-nums">{commit.lines === undefined ? '—' : commit.lines.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{commit.files === undefined ? '—' : commit.files.toLocaleString()}</TableCell></TableRow>
           )
-        })}
-      </TableBody>
-    </Table>
+        })}</TableBody></Table>
   )
 }
 
@@ -214,14 +197,14 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   if (repository.state === 'error') {
     return (
       <EmptyState tone="alert" title="仓库读取失败" description={repository.error}>
-        <Button variant="primary" onClick={repository.retry}>重新加载</Button>
+        <Button variant='default' onClick={repository.retry} type="button">重新加载</Button>
       </EmptyState>
     )
   }
   if (repository.repository === null) {
     return (
       <EmptyState title="仓库不存在" description="这个地址对应的仓库已经不在目录里。">
-        <Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>查看全部仓库</Button>
+        <Button variant='default' onClick={() => navigate({ name: 'repositories' })} type="button">查看全部仓库</Button>
       </EmptyState>
     )
   }
@@ -235,12 +218,12 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
 
   return (
     <div className="grid gap-4">
-      <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => navigate(repositoryRoute(repositoryId))} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} icon={<Icon name="collapse" size={16}/>}>返回项目</Button>
+      <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => navigate(repositoryRoute(repositoryId))} aria-label={`返回项目 ${repo.displayName}`} title={`返回项目 ${repo.displayName}`} type="button">{<ChevronLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={16}/>}返回项目</Button>
       <RepositoryHead repository={repo} total={repo.commitCount} />
       <details className="rounded-sm border border-border-soft">
         <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs text-foreground-3">
           <span className="rounded-sm bg-soft px-1.5 py-0.5 text-foreground-2">仓库分析 · {repo.viewContext?.branch ?? '分支未提供'}</span>
-          <span className="inline-flex items-center gap-1">分析来源 <Icon name="chevron" size={13}/></span>
+          <span className="inline-flex items-center gap-1">分析来源 <ChevronRight aria-hidden="true" focusable="false" strokeWidth={1.5} size={13}/></span>
         </summary>
         <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border-soft p-3 text-xs text-foreground-3">
           <span>分析 <code className="font-mono text-foreground-2">{viewSyncId}</code></span>
@@ -252,7 +235,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
         </div>
       </details>
       {repo.latestSync?.syncId !== viewSyncId ? <p className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。
-        {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })}>打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })}>对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate(repositoryRoute(repositoryId))}>检查最新成功分析</Button>}
+        {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })} type="button">打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })} type="button">对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate(repositoryRoute(repositoryId))} type="button">检查最新成功分析</Button>}
       </p> : null}
       <p className="text-xs leading-body text-foreground-3">{modelName ? `分析模型 ${modelName}。` : ''}{scope?.dataset && scope.split
         ? `数据集 ${scope.dataset.quality.includedRows ?? '—'} / ${scope.dataset.quality.rawRows ?? '—'} 条纳入，训练 ${scope.split.train.count ?? '—'} / 验证 ${scope.split.validation.count ?? '—'} / 测试 ${scope.split.test.count ?? '—'}，留出 ${scope.split.holdout.count ?? '—'} 条只打分。`
@@ -262,7 +245,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
         <div className="flex flex-wrap items-end gap-2" role="search" aria-label="提交筛选">
           <label className="relative min-w-[220px] flex-1">
             <span className="sr-only">搜索提交标题或 SHA</span>
-            <Icon name="search" size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-4"/>
+            <Search aria-hidden="true" focusable="false" strokeWidth={1.5} size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-4"/>
             <Input className="pl-8" aria-label="搜索提交标题或 SHA" placeholder="搜索提交标题或 SHA" value={queryState.draft.search} onChange={event => updateQuery({ search: event.target.value })}/>
           </label>
           <label className={fieldLabel}><span className={labelText}>起始日期</span>
@@ -272,12 +255,9 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
             <Input className="w-36" aria-label="结束日期" inputMode="numeric" placeholder="YYYY-MM-DD" value={queryState.draft.end} aria-invalid={!!queryState.error} onChange={event => updateQuery({ end: event.target.value })}/>
           </label>
           <label className={fieldLabel}><span className={labelText}>排序</span>
-            <NativeSelect className="w-40" aria-label="排序" value={queryState.draft.sort} onChange={event => updateQuery({ sort: event.target.value as Query['sort'] })}>
-              <option value="risk">风险从高到低</option>
-              <option value="time">时间从新到旧</option>
-            </NativeSelect>
+            <NativeSelect className="w-40" aria-label="排序" value={queryState.draft.sort} onChange={event => updateQuery({ sort: event.target.value as Query['sort'] })}><option value="risk">风险从高到低</option><option value="time">时间从新到旧</option></NativeSelect>
           </label>
-          <Button onClick={clearQuery}>清除筛选</Button>
+          <Button onClick={clearQuery} variant="outline" type="button">清除筛选</Button>
         </div>
         {queryState.error ? <p className="text-xs text-amber-deep" role="alert">{queryState.error} 当前保留最近一次有效结果。</p> : null}
         <p className="flex flex-wrap items-baseline justify-between gap-2 text-xs text-foreground-3">
@@ -287,7 +267,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
         {page.state === 'loading' && visible.length === 0
           ? <LoadingNotice prefix={false} label="正在读取提交" note="按当前筛选条件从服务端读取这一页。" />
           : page.state === 'error' || totalMismatch
-            ? <EmptyState tone="alert" title="提交读取失败" description={totalMismatch ? '提交总数与固定分析不一致，请重新加载核对。' : page.error}><Button variant="primary" onClick={page.retry}>重新加载</Button></EmptyState>
+            ? <EmptyState tone="alert" title="提交读取失败" description={totalMismatch ? '提交总数与固定分析不一致，请重新加载核对。' : page.error}><Button variant='default' onClick={page.retry} type="button">重新加载</Button></EmptyState>
             : visible.length === 0
               ? <EmptyState title="没有符合条件的提交" description="使用「清除筛选」恢复列表，或换一个查询条件。" />
               : <>
@@ -295,24 +275,22 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                 <nav className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-3" aria-label="提交分页">
                   <span role="status">第 {first}–{last} 条，共 {page.total.toLocaleString()} 条</span>
                   <span className="flex gap-2">
-                    <Button disabled={offset === 0 || page.state === 'loading'} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>上一页</Button>
-                    <Button disabled={offset + PAGE_SIZE >= page.total || page.state === 'loading'} onClick={() => setOffset(offset + PAGE_SIZE)}>下一页</Button>
+                    <Button disabled={offset === 0 || page.state === 'loading'} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))} variant="outline" type="button">上一页</Button>
+                    <Button disabled={offset + PAGE_SIZE >= page.total || page.state === 'loading'} onClick={() => setOffset(offset + PAGE_SIZE)} variant="outline" type="button">下一页</Button>
                   </span>
                 </nav>
               </>}
         <p className="text-xs text-foreground-4">点击提交查看原始度量，并可主动生成原模型解释</p>
       </section>
 
-      <Dialog open={selected !== null} onOpenChange={open => { if (!open) closeDetail() }} title="提交详情" width={720}>
-        {selected ? (
+      <Dialog open={selected !== null} onOpenChange={open => { if (!open) closeDetail() }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${720}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"提交详情"}</DialogTitle></DialogHeader>{selected ? (
           <CommitDetail
             data={dataset}
             id={selected}
             record={detailRecords.records.get(selected) ?? visible.find(record => record.id === selected)}
             onClose={closeDetail}
           />
-        ) : null}
-      </Dialog>
+        ) : null}</DialogContent></Dialog>
     </div>
   )
 }

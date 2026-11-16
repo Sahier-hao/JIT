@@ -17,13 +17,12 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 describe('图标来源', () => {
-  it('lucide-react 只被 Icon.tsx 引用', () => {
+  it('业务直接使用 lucide-react，不重新引入旧图标适配层', () => {
     const root = process.cwd()
     const offenders = walk(join(root, 'src'))
-      .filter((file) => !/\.test\./.test(file))
-      .filter((file) => readFileSync(file, 'utf8').includes("from 'lucide-react'"))
-      .map((file) => relative(root, file).replace(/\\/g, '/'))
-      .filter((file) => file !== 'src/Icon.tsx')
-    expect(offenders, `直接引用 lucide-react 的文件：${offenders.join(', ')}`).toEqual([])
+      .filter(file => !/\.test\./.test(file))
+      .filter(file => /from ["'](?:\.\.?\/)+Icon["']/.test(readFileSync(file, 'utf8')))
+      .map(file => relative(root, file).replace(/\\/g, '/'))
+    expect(offenders).toEqual([])
   })
 })

@@ -1,7 +1,10 @@
+import { SlidersHorizontal } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useState } from 'react'
-import { Icon } from '../Icon'
-import { Popover } from '../ui/popover'
-import { IconButton } from '../ui/controls'
+
+
+
 import { cn } from '../lib/utils'
 import { THEMES, initialTheme, initialDensity, applyTheme, applyDensity, writeStored, THEME_KEY, DENSITY_KEY, type ThemeId } from '../preferences'
 
@@ -19,28 +22,21 @@ export function AppearanceControl() {
     applyTheme(id)
     writeStored(THEME_KEY, id)
   }
-  return <Popover
-    label="外观偏好"
-    open={open}
-    onOpenChange={setOpen}
-    trigger={<IconButton label="外观偏好" aria-expanded={open} icon={<Icon name="sliders" size={18}/>}/>}
-  >
-    <div className="grid gap-3">
+  return <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild>{<Button aria-expanded={open} aria-label="外观偏好" title="外观偏好" variant="ghost" size="icon-sm" type="button">{<SlidersHorizontal aria-hidden="true" focusable="false" strokeWidth={1.5} size={18}/>}</Button>}</PopoverTrigger><PopoverContent aria-label="外观偏好"><div className="grid gap-3">
       <strong className="text-sm font-semibold text-foreground">外观偏好</strong>
       <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="主题">
-        {THEMES.map(item => <button
+        {THEMES.map(item => <Button variant="ghost"
           key={item.id}
           type="button"
           aria-pressed={theme === item.id}
           data-theme-option={item.id}
           onClick={() => chooseTheme(item.id)}
           className={optionClass(theme === item.id)}
-        >{item.name}</button>)}
+        >{item.name}</Button>)}
       </div>
       <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="阅读密度">
-        <button type="button" aria-pressed={density === 'comfortable'} onClick={() => { setDensity('comfortable'); applyDensity('comfortable'); writeStored(DENSITY_KEY, 'comfortable') }} className={optionClass(density === 'comfortable')}>舒适</button>
-        <button type="button" aria-pressed={density === 'compact'} onClick={() => { setDensity('compact'); applyDensity('compact'); writeStored(DENSITY_KEY, 'compact') }} className={optionClass(density === 'compact')}>紧凑</button>
+        <Button variant="ghost" type="button" aria-pressed={density === 'comfortable'} onClick={() => { setDensity('comfortable'); applyDensity('comfortable'); writeStored(DENSITY_KEY, 'comfortable') }} className={optionClass(density === 'comfortable')}>舒适</Button>
+        <Button variant="ghost" type="button" aria-pressed={density === 'compact'} onClick={() => { setDensity('compact'); applyDensity('compact'); writeStored(DENSITY_KEY, 'compact') }} className={optionClass(density === 'compact')}>紧凑</Button>
       </div>
-    </div>
-  </Popover>
+    </div></PopoverContent></Popover>
 }

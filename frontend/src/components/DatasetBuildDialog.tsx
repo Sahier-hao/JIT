@@ -1,6 +1,10 @@
+import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEffect, useState } from 'react'
-import { Button, Input } from '../ui/controls'
-import { Dialog } from '../ui/dialog'
+
+
 import type { Route } from '../navigation'
 import {
   cancelDatasetBuild, createDatasetBuild, getDatasetBuild, listDatasetBuilds, retryDatasetBuild,
@@ -101,21 +105,7 @@ export function DatasetBuildDialog({
   }
 
   const active = task ? ACTIVE.includes(task.status) : false
-  return <Dialog
-    open={open}
-    onOpenChange={onOpenChange}
-    title="从当前项目构建数据集"
-    width={620}
-    footer={<>
-      <Button onClick={() => onOpenChange(false)}>关闭</Button>
-      {task && active ? <Button danger loading={busy} onClick={() => void cancel()}>取消任务</Button> : null}
-      {task && ['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button loading={busy} onClick={() => void retry()}>按原参数重试</Button> : null}
-      {task?.status === 'completed' && task.datasetName && task.datasetVersion ? <>
-        <Button onClick={openDataset}>进入管理工作区查看并训练</Button>
-      </> : <Button variant="primary" loading={busy} disabled={!branch.trim() || active} onClick={() => void submit()}>{task ? '用当前参数重新构建' : '开始构建'}</Button>}
-    </>}
-  >
-    <div className="grid gap-3">
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${620}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"从当前项目构建数据集"}</DialogTitle></DialogHeader><div className="grid gap-3">
       <p className="text-xs leading-body text-foreground-3">只采集公开仓库并登记 Kamei 14 维数据集。不会训练模型、给提交评分或修改项目当前结果。</p>
       <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">公开仓库</span><Input value={`已绑定当前项目：${repositoryId.slice(0, 8)}`} disabled readOnly/></label>
       <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">分支或提交</span><Input aria-label="数据集构建分支" value={branch} onChange={event => setBranch(event.target.value)} disabled={active}/></label>
@@ -145,6 +135,12 @@ export function DatasetBuildDialog({
         <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-foreground-2">范围与标签限制</summary>
         <p className="border-t border-border-soft p-3 text-xs leading-body text-foreground-3">标签使用完整 SZZ（优先 issue/PR 关联，关键词兜底，删除行回溯到引入提交）；未关联 issue、纯新增修复与改写历史仍可能漏标。空范围或无法登记的来源会失败，不生成空数据集。命令不接受上传 CSV 或服务器文件路径。</p>
       </details>
-    </div>
-  </Dialog>
+    </div><DialogFooter>{<>
+      <Button onClick={() => onOpenChange(false)} variant="outline" type="button">关闭</Button>
+      {task && active ? <Button onClick={() => void cancel()} variant="destructive" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}取消任务</Button> : null}
+      {task && ['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button onClick={() => void retry()} variant="outline" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}按原参数重试</Button> : null}
+      {task?.status === 'completed' && task.datasetName && task.datasetVersion ? <>
+        <Button onClick={openDataset} variant="outline" type="button">进入管理工作区查看并训练</Button>
+      </> : <Button variant='default' disabled={Boolean(!branch.trim() || active) || Boolean(busy)} onClick={() => void submit()} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}{task ? '用当前参数重新构建' : '开始构建'}</Button>}
+    </>}</DialogFooter></DialogContent></Dialog>
 }

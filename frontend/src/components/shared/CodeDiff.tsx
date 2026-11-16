@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
-import { Diff, parseDiff, tokenize } from 'react-diff-view'
+import { Button } from '@/components/ui/button'
+import { Diff, parseDiff, tokenize, type ChangeData, type GutterOptions } from 'react-diff-view'
 import 'react-diff-view/style/index.css'
 import { refractor } from 'refractor'
 import jsx from 'refractor/jsx'
 import tsx from 'refractor/tsx'
 import docker from 'refractor/docker'
-import type { ChangeData, GutterOptions } from 'react-diff-view'
-import type { PRFile } from '../prReviewClient'
+
+import type { PRFile } from '../../prReviewClient'
 
 /* refractor 默认只注册基础语言集，tsx / jsx / docker 这类要显式登记，
  * 否则 languageOf 会退回 markup，代码就变成单色。 */
@@ -109,13 +110,13 @@ export function CodeDiff({ file, view, onAnchor, location }: {
     const number = side === 'old' ? baseLine(change) : headLine(change)
     if (number == null) return null
     const target: 'base' | 'head' = side === 'old' ? 'base' : 'head'
-    return <button
+    return <Button variant="ghost"
       type="button"
-      className="wb-gutter-number cursor-pointer border-0 bg-transparent px-1 text-right font-mono text-[11px] text-foreground-4 hover:text-accent"
+      className="wb-gutter-number h-auto w-full rounded-none shadow-none cursor-pointer border-0 bg-transparent px-1 text-right font-mono text-[11px] text-foreground-4 hover:text-accent"
       data-focused={focused(change) ? 'true' : undefined}
       aria-label={`关联 ${file.path}:${target}:${number}`}
       onClick={() => onAnchor(target, number)}
-    >{number}</button>
+    >{number}</Button>
   }
   /* react-diff-view 不渲染 @@ 块头，也没有折叠区间；每块单独成表并在上面标出位置。 */
   return <div className="overflow-auto">

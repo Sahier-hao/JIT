@@ -1,5 +1,8 @@
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useEffect, useRef, useState } from 'react'
-import { Button, Select } from '../ui/controls'
+
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { checkTracking, getTracking, projectPRs, updateTracking, type PRTracking, type ProjectPRPage } from '../projectActivityClient'
@@ -62,21 +65,21 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
       <span className={cn('size-2 rounded-full', tone)} aria-hidden="true"/>
       <p className="text-sm font-medium text-foreground" role="status" data-testid="update-status-title">{tracking.enabled ? '自动分析已开启' : '自动分析未开启'}</p>
       <span className="text-xs text-foreground-3">{tracking.enabled ? (tracking.nextCheckAt ? `下次 ${displayTime(tracking.nextCheckAt)}` : watchLabel[tracking.status] ?? tracking.status) : '开启后由后台定期检查'}</span>
-      {tracking.enabled ? <Button className="ml-auto" size="sm" disabled={busy} onClick={() => void action(() => checkTracking(repositoryId))}>立即检查</Button> : null}
+      {tracking.enabled ? <Button className="ml-auto" size="sm" disabled={busy} onClick={() => void action(() => checkTracking(repositoryId))} variant="outline" type="button">立即检查</Button> : null}
     </div>
     {tracking.lastCheckedAt ? <p className="text-xs text-foreground-3">最近检查 {displayTime(tracking.lastCheckedAt)}{tracking.errorCode ? ` · 失败原因 ${tracking.errorCode}` : ''}</p> : null}
     {error && tracking ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="grid gap-1.5">
         <span className="text-xs font-medium text-foreground-2">固定分析模型</span>
-        <Select ariaLabel="固定自动分析模型" value={modelId} disabled={busy} onChange={value => { setModelId(value); setConfirm(false) }} placeholder="选择真实兼容模型" options={[
+        <Select value={modelId == null ? '' : String(modelId)} onValueChange={nextValue => (value => { setModelId(value); setConfirm(false) })(nextValue === '__jit_empty__' ? '' : nextValue)} disabled={busy}><SelectTrigger aria-label="固定自动分析模型"><SelectValue placeholder={"选择真实兼容模型"}/></SelectTrigger><SelectContent>{([
           ...(modelId && !models.some(m => m.modelId === modelId) ? [{ value: modelId, label: `原选模型 ${modelId}（不可用）`, disabled: true }] : []),
           ...models.map(m => ({ value: m.modelId, label: `${m.name} · ${m.modelId}${compatible(m) ? '' : '（不可用）'}`, disabled: !compatible(m) })),
-        ]}/>
+        ]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       </div>
       <div className="grid gap-1.5">
         <span className="text-xs font-medium text-foreground-2">检查间隔</span>
-        <Select ariaLabel="PR 检查间隔" value={cadence} disabled={busy} onChange={value => { setCadence(Number(value)); setConfirm(false) }} options={[...new Set([...INTERVALS, cadence])].sort((a, b) => a - b).map(value => ({ value, label: `${value / 60} 分钟` }))}/>
+        <Select value={cadence == null ? '' : String(cadence)} onValueChange={nextValue => (value => { setCadence(Number(value)); setConfirm(false) })(nextValue === '__jit_empty__' ? '' : nextValue)} disabled={busy}><SelectTrigger aria-label="PR 检查间隔"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([...new Set([...INTERVALS, cadence])].sort((a, b) => a - b).map(value => ({ value, label: `${value / 60} 分钟` }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       </div>
     </div>
     {modelId && !validModel ? <p className="text-xs text-rose" role="alert">原选模型已不可用，未自动替换。请明确选择 ready、启用且兼容的模型。</p> : null}
@@ -86,21 +89,21 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
         <p className="text-sm font-medium text-foreground-2">启用范围</p>
         <p className="text-xs leading-body text-foreground-3">{scope?.checkedAt ? `第 ${scope.page} 页开放 PR ${scope.pullRequests.length} 项，其中非草稿 ${eligible} 项；检查于 ${displayTime(scope.checkedAt)}${scope.hasMore ? '。还有后续页，以上不是完整数量。' : '。'}` : '尚未获取开放 PR 范围。'}</p>
       </div>
-      <Button size="sm" disabled={busy} onClick={() => void loadScope()}>更新范围</Button>
+      <Button size="sm" disabled={busy} onClick={() => void loadScope()} variant="outline" type="button">更新范围</Button>
     </div>
     {scope?.errorCode ? <p className="text-xs text-rose" role="alert">开放范围检查失败：{scope.errorCode}，请重试后再启用。</p> : null}
     <div className="flex flex-wrap gap-2">
-      <Button variant="primary" disabled={busy || !validModel || !validInterval || !scope?.checkedAt || Boolean(scope.errorCode)} onClick={() => setConfirm(true)}>{tracking.enabled ? '保存修改' : '启用自动分析'}</Button>
-      {tracking.enabled ? <Button disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: false }))}>暂停自动分析</Button> : null}
+      <Button variant='default' disabled={busy || !validModel || !validInterval || !scope?.checkedAt || Boolean(scope.errorCode)} onClick={() => setConfirm(true)} type="button">{tracking.enabled ? '保存修改' : '启用自动分析'}</Button>
+      {tracking.enabled ? <Button disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: false }))} variant="outline" type="button">暂停自动分析</Button> : null}
     </div>
     <p className="text-xs text-foreground-3">只分析开放且非草稿 PR；暂停不会取消已提交的任务。</p>
-    {confirm ? <div className="grid gap-2 rounded-sm border border-accent bg-accent-soft p-3" role="alertdialog" aria-label="确认项目 PR 自动分析">
+    {confirm ? <AlertDialog open onOpenChange={open => { if (!open) setConfirm(false); }}><AlertDialogContent aria-label="确认项目 PR 自动分析" aria-describedby={undefined}>
       <strong className="text-sm font-semibold text-foreground">{tracking.enabled ? '确认保存自动分析设置？' : '确认使用固定模型分析开放 PR？'}</strong>
       <p className="text-xs leading-body text-foreground-2">模型 {modelId}，每 {cadence / 60} 分钟检查一次；{tracking.enabled ? '之后新增的版本会按新设置处理' : `首次会处理当前开放非草稿 PR ${eligible} 项${scope?.hasMore ? '（清单尚未取完）' : ''}`}。不会上传个人笔记、问题或阅读进度。</p>
       <div className="flex flex-wrap gap-2">
-        <Button variant="primary" disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: true, modelId, intervalSeconds: cadence, confirmExisting: true }))}>{busy ? '正在保存…' : tracking.enabled ? '确认保存设置' : '确认启用并处理现有开放 PR'}</Button>
-        <Button disabled={busy} onClick={() => setConfirm(false)}>取消设置</Button>
+        <Button variant='default' disabled={busy} onClick={() => void action(() => updateTracking(repositoryId, { enabled: true, modelId, intervalSeconds: cadence, confirmExisting: true }))} type="button">{busy ? '正在保存…' : tracking.enabled ? '确认保存设置' : '确认启用并处理现有开放 PR'}</Button>
+        <Button disabled={busy} onClick={() => setConfirm(false)} variant="outline" type="button">取消设置</Button>
       </div>
-    </div> : null}
+    </AlertDialogContent></AlertDialog> : null}
   </div>
 }

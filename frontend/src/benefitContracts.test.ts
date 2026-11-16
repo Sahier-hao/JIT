@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { expect, it } from 'vitest'
-import { parseBenefitReport } from './benefitContracts'
+import { expect, it, afterEach, vi } from 'vitest'
+import { parseBenefitReport, fetchModelBenefit } from './benefitContracts'
 
 const raw = JSON.parse(readFileSync(resolve(process.cwd(), '../docs/evidence/benefit-evaluation/baseline/benefit-report.json'), 'utf-8'))
 
@@ -20,8 +20,8 @@ it('parses the frozen baseline benefit report without filling missing metrics', 
   expect(report.limitations.length).toBeGreaterThanOrEqual(4)
   expect(report.existingMetrics?.averagePrecision).toMatchObject({ value: 0.38293951606100585 })
 })
-import { afterEach, vi } from 'vitest'
-import { fetchModelBenefit } from './benefitContracts'
+
+
 afterEach(() => vi.restoreAllMocks())
 it('parses the API envelope with report identity', async () => {
   const body = { available: true, modelId: 'm1', runId: raw.artifact.runId, reportId: 'benefit-id', source: 'docs/evidence/benefit-evaluation/baseline/benefit-report.json', report: raw }

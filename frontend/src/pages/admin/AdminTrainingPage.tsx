@@ -1,3 +1,5 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import {
@@ -5,7 +7,7 @@ import {
   retryTrainingTask, formatDate, valueLabel, type Row, type TrainingTask,
 } from '../../adminContracts'
 import { EmptyState, LoadingNotice } from '../../Feedback'
-import { Button } from '../../ui/controls'
+
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from './AdminShared'
 
@@ -83,27 +85,27 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   }
 
   if (loading) return <LoadingNotice label="正在读取训练任务"/>
-  if (error && !taskId && !tasks.length) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button></EmptyState>
-  if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad}>重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })}>返回任务列表</Button></EmptyState>
+  if (error && !taskId && !tasks.length) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad} variant="outline" type="button">重试</Button></EmptyState>
+  if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad} variant="outline" type="button">重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })} variant="outline" type="button">返回任务列表</Button></EmptyState>
   if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })} openRuns={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })} openExperiment={id => navigate({ name: 'admin', view: 'training-experiment', resourceId: id })}/>
   return <section>
     <AdminPageHeader title="训练任务" onRefresh={retryLoad}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {error ? <div className="flex flex-wrap items-center gap-2"><Button size="sm" onClick={retryLoad}>重新读取</Button></div> : null}
-    {!tasks.length ? <p className="text-xs text-foreground-3">尚无训练任务。请从数据集详情创建。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-task-table">
-      <thead><tr><th>数据集</th><th>方法</th><th>状态</th><th>时间</th><th><span className="sr-only">操作</span></th></tr></thead>
-      <tbody>{tasks.map(item => <tr key={item.taskId}>
-        <td><strong>{item.datasetVersion}</strong><small>{item.metricSet}</small></td>
-        <td>{item.method}</td>
-        <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[item.status]}</span>{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</td>
-        <td>{formatDate(item.createdAt)}</td>
-        <td><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })}>查看</Button></td>
-      </tr>)}</tbody>
-    </table></div>}
+    {error ? <div className="flex flex-wrap items-center gap-2"><Button size="sm" onClick={retryLoad} variant="outline" type="button">重新读取</Button></div> : null}
+    {!tasks.length ? <p className="text-xs text-foreground-3">尚无训练任务。请从数据集详情创建。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-task-table">
+      <TableHeader><TableRow><TableHead>数据集</TableHead><TableHead>方法</TableHead><TableHead>状态</TableHead><TableHead>时间</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
+      <TableBody>{tasks.map(item => <TableRow key={item.taskId}>
+        <TableCell><strong>{item.datasetVersion}</strong><small>{item.metricSet}</small></TableCell>
+        <TableCell>{item.method}</TableCell>
+        <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[item.status]}</span>{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</TableCell>
+        <TableCell>{formatDate(item.createdAt)}</TableCell>
+        <TableCell><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })} variant="outline" type="button">查看</Button></TableCell>
+      </TableRow>)}</TableBody>
+    </Table></div>}
     {total > PAGE_SIZE ? <div className="flex flex-wrap items-center gap-2">
-      <Button size="sm" disabled={page <= 0} onClick={() => setPage(value => value - 1)}>上一页</Button>
+      <Button size="sm" disabled={page <= 0} onClick={() => setPage(value => value - 1)} variant="outline" type="button">上一页</Button>
       <span>第 {page + 1} 页 · 共 {total} 条</span>
-      <Button size="sm" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(value => value + 1)}>下一页</Button>
+      <Button size="sm" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(value => value + 1)} variant="outline" type="button">下一页</Button>
     </div> : null}
   </section>
 }
@@ -124,7 +126,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
   return <section>
     <AdminPageHeader title="训练任务详情" meta={`${task.datasetVersion} · ${task.method}`}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="flex flex-wrap items-center gap-2"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{task.status === 'succeeded' ? <><Button onClick={openRuns}>查看实验登记</Button>{task.modelId ? <Button onClick={() => openModel(task.modelId!)}>查看模型</Button> : null}</> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={back} variant="outline" type="button">返回任务列表</Button>{error ? <Button onClick={retry} variant="outline" type="button">重新读取</Button> : null}{task.status === 'succeeded' ? <><Button onClick={openRuns} variant="outline" type="button">查看实验登记</Button>{task.modelId ? <Button onClick={() => openModel(task.modelId!)} variant="outline" type="button">查看模型</Button> : null}</> : null}{active ? <Button disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')} variant="destructive" type="button">{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')} variant="outline" type="button">重试</Button> : null}</div>
     <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>
     {task.error ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><strong>{task.error.code}</strong><p>{task.error.message}</p></div> : null}
     {task.status === 'succeeded' ? <><MetricGrid metrics={task.metrics}/><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
@@ -135,7 +137,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
       <div><dt>时间切分预设</dt><dd><code>{task.splitPreset}</code></dd></div>
       <div><dt>实际参数</dt><dd><code>{task.parameters ? JSON.stringify(task.parameters) : '默认参数（未记录覆盖）'}</code></dd></div>
-      {task.experimentId ? <div><dt>所属实验</dt><dd><Button size="sm" onClick={() => openExperiment(task.experimentId!)}>查看实验</Button></dd></div> : null}
+      {task.experimentId ? <div><dt>所属实验</dt><dd><Button size="sm" onClick={() => openExperiment(task.experimentId!)} variant="outline" type="button">查看实验</Button></dd></div> : null}
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
       {task.splitRule ? <div><dt>切分规则</dt><dd>{task.splitRule}</dd></div> : null}
       {task.dataScale ? <div><dt>数据规模</dt><dd>{valueLabel(task.dataScale.records)} 条 · {valueLabel(task.dataScale.featureWidth)} 维</dd></div> : null}
@@ -145,14 +147,14 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
     </dl>
     {task.metricsByPartition ? <TrainingPartitions metrics={task.metricsByPartition}/> : null}
     {task.trainingHistory ? <section className="grid gap-2"><h2>训练过程</h2>
-      <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
-        <thead><tr><th>epoch</th><th>训练损失</th><th>耗时</th></tr></thead>
-        <tbody>{task.trainingHistory.entries.map(entry => <tr key={entry.epoch}>
-          <td>{entry.epoch}</td>
-          <td>{entry.trainLoss == null ? '未记录' : entry.trainLoss.toFixed(4)}</td>
-          <td>{entry.seconds.toFixed(2)} 秒</td>
-        </tr>)}</tbody>
-      </table></div>
+      <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
+        <TableHeader><TableRow><TableHead>epoch</TableHead><TableHead>训练损失</TableHead><TableHead>耗时</TableHead></TableRow></TableHeader>
+        <TableBody>{task.trainingHistory.entries.map(entry => <TableRow key={entry.epoch}>
+          <TableCell>{entry.epoch}</TableCell>
+          <TableCell>{entry.trainLoss == null ? '未记录' : entry.trainLoss.toFixed(4)}</TableCell>
+          <TableCell>{entry.seconds.toFixed(2)} 秒</TableCell>
+        </TableRow>)}</TableBody>
+      </Table></div>
       <p className="text-xs leading-body text-foreground-3">固定 {task.trainingHistory.epochs} 个 epoch，不早停；测试分区不参与逐 epoch 监控。</p>
     </section> : task.status === 'succeeded' ? <p className="text-xs leading-body text-foreground-3">未记录逐 epoch 训练历史：该方法可能是非迭代方法，或产物产生于历史版本。</p> : null}
     {task.classPolicy ? <p className="text-xs leading-body text-foreground-3">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}

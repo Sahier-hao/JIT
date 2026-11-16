@@ -1,6 +1,8 @@
-import { Icon } from '../Icon'
+import { Button } from '@/components/ui/button'
+import { LoaderCircle, RefreshCw, Upload } from 'lucide-react'
+
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '../ui/controls'
+
 import { FailureNotice } from '../Feedback'
 import { adoptVersion, hasLegacyWorks, legacyImportReceipt, legacyWorksHash, markLegacyImported, mergeBackup, parseBackupInfo, readLegacyWorks, readWorks, remoteStateLabels as remoteLabel, saveWork, type PRWork } from '../prReview'
 import { refreshPR, verifyBackupSources } from '../prReviewClient'
@@ -133,16 +135,16 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
     && legacyImportReceipt(account ?? '') !== legacyWorksHash()
   return <section className="grid gap-4" aria-label="我的审查">
     <div className="flex flex-wrap gap-2">
-      <Button variant="secondary" icon={<Icon name="refresh" size={14}/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
-      {legacyAvailable ? <Button variant="ghost" icon={<Icon name="upload" size={14}/>} onClick={previewLegacy}>导入本机旧工作单</Button> : null}
+      <Button variant='outline' onClick={() => void checkAll()} disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <RefreshCw aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
+      {legacyAvailable ? <Button variant="ghost" onClick={previewLegacy} type="button">{<Upload aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}导入本机旧工作单</Button> : null}
     </div>
     {legacy ? <section className="grid gap-2 rounded-sm border border-amber/30 bg-amber-soft p-3 text-xs text-amber-deep" aria-label="旧工作单导入">
       <h2 className="text-sm font-semibold">导入本机旧工作单到 {account}</h2>
       <p className="leading-body">{legacy.entries.length} 个旧工作单；原数据不会删除，也不会自动归给其他账户。</p>
       <ul className="grid gap-0.5 pl-4 list-disc">{legacy.entries.map(({ work, exists, conflicts }) => <li key={work.key}>{work.owner}/{work.name}#{work.number}{exists ? ` · 已有工作单，${conflicts} 处差异按当前判断合并` : ' · 新建到当前账户'}</li>)}</ul>
       {legacyError ? <p role="alert" className="text-rose">{legacyError}</p> : null}
-      <Button variant="primary" size="sm" onClick={importLegacy}>确认导入</Button>{' '}
-      <Button variant="ghost" size="sm" onClick={() => setLegacy(null)}>取消</Button>
+      <Button variant='default' size="sm" onClick={importLegacy} type="button">确认导入</Button>{' '}
+      <Button variant="ghost" size="sm" onClick={() => setLegacy(null)} type="button">取消</Button>
     </section> : null}
     {legacyResult ? <p role="status">{legacyResult}</p> : null}
     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border-soft bg-border-soft sm:grid-cols-3 lg:grid-cols-6" aria-label="审查队列概览">
@@ -182,7 +184,7 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
               <div className="h-1 overflow-hidden rounded-full bg-strong" role="img" aria-label={`已阅读 ${percent}%`}><i className="block h-full rounded-full bg-accent" style={{ width: `${percent}%` }}/></div>
             </div>
             <span className="text-xs text-foreground-4">检查于 {shortTime(work.checkedAt)}</span>
-            <Button className="justify-self-start" variant="secondary" size="sm" onClick={() => navigate(routeFor(work))}>{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</Button>
+            <Button className="justify-self-start" variant='outline' size="sm" onClick={() => navigate(routeFor(work))} type="button">{group === '作者更新待复核' ? '核对更新' : group === '新关注的工作' ? '开始审查' : group === '历史与暂停' ? '查看记录' : '继续工作'}</Button>
           </article>
         })}</div>
       </section>
@@ -191,7 +193,7 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
       <h2 className="text-sm font-semibold text-foreground">还没有审查工作</h2>
       <p className="text-xs text-foreground-3">到「项目」选择一个 PR 开始审查。</p>
     </div> : null}
-    <Button className="justify-self-start" variant="ghost" size="sm" icon={<Icon name="upload" size={14}/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button>
+    <Button className="justify-self-start" variant="ghost" size="sm" onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作" type="button">{<Upload aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}从完整草稿备份恢复工作</Button>
     <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const info = parseBackupInfo(await file.text()); const incoming = info.work; if (info.accountHint && info.accountHint !== account && !window.confirm(`备份归属 ${info.accountHint}，将导入当前账户 ${account}。继续？`)) return; await verifyBackupSources(incoming); const old = readWorks(account ?? '').find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork(account ?? '', { ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
   </section>
 }

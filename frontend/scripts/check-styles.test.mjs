@@ -47,6 +47,15 @@ describe('样式来源守卫', () => {
     expect(violations.join('\n')).toContain('新增 Mantine 引用')
   })
 
+  it('重新引入旧基础控件或从业务直接使用底层交互库会失败', () => {
+    const violations = validateInventory({ ...cleanInventory,
+      legacyUiRefs: ['src/pages/ProjectPage.tsx'],
+      primitiveRefs: ['src/pages/ProfilePage.tsx'],
+    }, emptyAllowed)
+    expect(violations.join('\n')).toContain('旧基础控件')
+    expect(violations.join('\n')).toContain('绕过官方组件')
+  })
+
   it('允许清单与入口导入一致', () => {
     const files = new Set(ALLOWED_STYLE_FILES)
     for (const spec of ALLOWED_ENTRY_IMPORTS) {

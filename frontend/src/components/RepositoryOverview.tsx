@@ -1,7 +1,9 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { ECharts } from 'echarts/core'
-import { Button } from '../ui/controls'
-import { EChartCanvas, chartTooltip, escapeHtml, useChartColors, type ChartColors, type ChartOption } from '../ui/chart'
+
+import { EChartCanvas, chartTooltip, escapeHtml, useChartColors, type ChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { getRepositoryOverview, type RepositoryOverview, type RepositoryOverviewActivity, type RepositoryOverviewLanguage } from '../repositoryOverviewClient'
@@ -94,7 +96,7 @@ function ActivityChart({ activity, coverage, fetchedAt }: { activity: Repository
       <EChartCanvas option={option} height={220} label={`最近 ${activity.length} 周每周提交量曲线`} onChart={instance => { chart.current = instance }}/>
     </div> : <p className="text-xs text-foreground-3">GitHub 没有返回周提交统计。</p>}
     <p className="text-xs text-foreground-3" role="status" aria-live="polite">{current ? `${current.weekStart} 起一周 · ${current.commits.toLocaleString()} 个提交${isPartialWeek(current.weekStart, fetchedAt) ? '（本周进行中）' : ''}` : '悬停或聚焦后用左右方向键查看每周数量。'}</p>
-    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>{tableTitle}提交量</caption><thead><tr><th scope="col">周起始</th><th scope="col">提交数</th></tr></thead><tbody>{activity.map(item => <tr key={item.weekStart}><th scope="row">{item.weekStart}</th><td>{item.commits}</td></tr>)}</tbody></table></details>
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>{tableTitle}提交量</caption><TableHeader><TableRow><TableHead scope="col">周起始</TableHead><TableHead scope="col">提交数</TableHead></TableRow></TableHeader><TableBody>{activity.map(item => <TableRow key={item.weekStart}><TableHead scope="row">{item.weekStart}</TableHead><TableCell>{item.commits}</TableCell></TableRow>)}</TableBody></Table></details>
   </div>
 }
 
@@ -162,7 +164,7 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
         </li>)}
       </ul>
     </div>
-    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>语言构成（GitHub 字节统计，共 {total.toLocaleString()} 字节）</caption><thead><tr><th scope="col">语言</th><th scope="col">字节</th><th scope="col">占比</th></tr></thead><tbody>{slices.map(item => <tr key={item.name}><th scope="row">{item.name}</th><td>{item.bytes.toLocaleString()}</td><td>{languagePercent(item)}</td></tr>)}</tbody></table></details>
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>语言构成（GitHub 字节统计，共 {total.toLocaleString()} 字节）</caption><TableHeader><TableRow><TableHead scope="col">语言</TableHead><TableHead scope="col">字节</TableHead><TableHead scope="col">占比</TableHead></TableRow></TableHeader><TableBody>{slices.map(item => <TableRow key={item.name}><TableHead scope="row">{item.name}</TableHead><TableCell>{item.bytes.toLocaleString()}</TableCell><TableCell>{languagePercent(item)}</TableCell></TableRow>)}</TableBody></Table></details>
   </>
 }
 
@@ -194,14 +196,14 @@ export function RepositoryOverviewView({ repositoryId, repository, onOpenAnalysi
         {metadata ? <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3"><span>{metadata.fullName}</span><span>{metadata.defaultBranch ? `默认分支 ${metadata.defaultBranch}` : '默认分支未知'}</span><span>{metadata.private ? '私有' : '公开'}</span>{metadata.license ? <span>{metadata.license}</span> : null}<a href={metadata.htmlUrl} target="_blank" rel="noreferrer">在 GitHub 打开</a></p> : <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3"><span>{repository.url}</span><a href={repository.url} target="_blank" rel="noreferrer">在 GitHub 打开</a></p>}
       </div>
       <div className="flex flex-wrap gap-2">
-        {overview ? <Button size="sm" onClick={() => setAttempt(value => value + 1)}>刷新</Button> : null}
-        {hasAnalysis ? <Button size="sm" onClick={onOpenAnalysis}>查看分析结果</Button> : null}
+        {overview ? <Button size="sm" onClick={() => setAttempt(value => value + 1)} variant="outline" type="button">刷新</Button> : null}
+        {hasAnalysis ? <Button size="sm" onClick={onOpenAnalysis} variant="outline" type="button">查看分析结果</Button> : null}
       </div>
     </div>
     {loading && !overview ? <LoadingNotice label="正在读取仓库概览"/> : null}
     {error ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}
     {overview && !overview.supported ? <div className="grid gap-1 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">此项目不支持 GitHub 仓库概览</h2><p className="text-xs leading-body text-foreground-3">分支分析和风险趋势仍可使用。仓库概览只读取公开 GitHub 元数据，不访问私有来源。</p></div> : null}
-    {overview?.supported && !metadata ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">仓库概览暂时不可用</h2><p className="text-xs leading-body text-foreground-3">{overview.errorCode === 'PR_RATE_LIMITED' ? 'GitHub 匿名额度受限，稍后重试；不影响项目分析。' : '无法读取 GitHub 仓库信息，可以稍后重试；不影响项目分析。'}</p><Button onClick={() => setAttempt(value => value + 1)}>重新读取概览</Button></div> : null}
+    {overview?.supported && !metadata ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">仓库概览暂时不可用</h2><p className="text-xs leading-body text-foreground-3">{overview.errorCode === 'PR_RATE_LIMITED' ? 'GitHub 匿名额度受限，稍后重试；不影响项目分析。' : '无法读取 GitHub 仓库信息，可以稍后重试；不影响项目分析。'}</p><Button onClick={() => setAttempt(value => value + 1)} variant="outline" type="button">重新读取概览</Button></div> : null}
     {overview?.stale ? <p className="text-xs text-amber-deep">显示上次缓存的概览（读取于 {compact(overview.fetchedAt)}），GitHub 暂时不可用。</p> : null}
     {overview && metadata ? <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">

@@ -62,7 +62,7 @@ it('keeps repository B and its fixed analysis when visiting a report and returni
   await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
   window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
-  await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
+  await user.click(await screen.findByRole('link', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
   await screen.findByText('0.81')
   expect(window.location.hash).toContain(REPO_B)
@@ -103,7 +103,7 @@ it('ignores an earlier repository response after navigating to another repositor
   fetch.mockImplementation(async (...args) => String(args[0]).includes(`${REPO_A}/commits?`) ? pending : original(...args))
   render(<App/>); const user = await connect()
   await user.click(await screen.findByRole('button', { name: '项目 B' }))
-  await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
+  await user.click(await screen.findByRole('link', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
   await screen.findByText('0.81')
   await act(async () => release(response({ repositoryId: REPO_A, viewSyncId: ANALYSIS, total: 1, commits: [{ ...commit(REPO_A), risk: .99 }] })))
@@ -134,7 +134,7 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
   window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
-  await user.click(await screen.findByRole('button', { name: '分析' }, { timeout: 15000 }))
+  await user.click(await screen.findByRole('link', { name: '分析' }, { timeout: 15000 }))
   await user.click(await screen.findByRole('button', { name: '查看提交明细' }, { timeout: 5000 }))
   await screen.findByText('0.81')
   expect(window.location.hash).toBe(hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))

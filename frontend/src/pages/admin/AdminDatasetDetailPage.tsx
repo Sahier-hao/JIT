@@ -1,10 +1,18 @@
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-react'
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '../../adminContracts'
 import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '../../curationClient'
 import { trainingMethods, type MethodChoice } from '../../modelClient'
-import { Button, Checkbox, NumberInput, Select, TextArea } from '../../ui/controls'
-import { Dialog } from '../../ui/dialog'
+
+
 import type { Route } from '../../navigation'
 import { previewDatasetSplit, SPLIT_PRESETS, type SplitPreview } from '../../splitClient'
 import { AdminPageHeader, ErrorNotice } from './AdminShared'
@@ -177,8 +185,8 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   }
   return <section>
     <AdminPageHeader title={dataset} meta={selected.schema}/>
-    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集列表</Button></div>
-    <div className="flex flex-wrap items-end gap-2"><span>版本</span><Select ariaLabel="数据集版本" value={version} onChange={setVersion} options={versions.map(item => ({ value: item.version, label: item.version }))}/></div>
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })} variant="outline" type="button">返回数据集列表</Button></div>
+    <div className="flex flex-wrap items-end gap-2"><span>版本</span><Select value={version == null ? '' : String(version)} onValueChange={nextValue => (setVersion)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="数据集版本"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(versions.map(item => ({ value: item.version, label: item.version }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select></div>
     <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
       <section><h2>版本与质量</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>schema</dt><dd>{selected.schema}</dd></div>
@@ -230,10 +238,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     </div>
     <section><h2>训练限制</h2><ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{selected.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>清洗与派生</h2><ErrorNotice>{curationError}</ErrorNotice>
-      <TextArea aria-label="清洗配方" value={recipeText} onChange={event => { setRecipeText(event.target.value); setCurationPreview(null); setDerivedVersion('') }}/>
+      <Textarea aria-label="清洗配方" value={recipeText} onChange={event => { setRecipeText(event.target.value); setCurationPreview(null); setDerivedVersion('') }}/>
       <div className="flex flex-wrap items-end gap-3">
-        <Button loading={curationBusy} onClick={() => void previewCurationAction()}>预览清洗</Button>
-        <Button loading={curationBusy} onClick={() => void deriveCurationAction()}>生成派生版本</Button>
+        <Button onClick={() => void previewCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览清洗</Button>
+        <Button onClick={() => void deriveCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成派生版本</Button>
       </div>
       {curationPreview ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
         <section><h2>清洗前后</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
@@ -252,9 +260,9 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     </section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
       <div className="flex flex-wrap items-end gap-3">
-        <Select ariaLabel="对比派生版本" value={compareVersion} onChange={setCompareVersion} options={versions.filter(item => item.version !== selected.version).map(item => ({ value: item.version, label: item.version }))}/>
-        <Button disabled={!compareVersion} onClick={() => void compareAction()}>对比版本</Button>
-        <Button onClick={() => void exportCuration(selected.version)}>导出当前版本</Button>
+        <Select value={compareVersion == null ? '' : String(compareVersion)} onValueChange={nextValue => (setCompareVersion)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="对比派生版本"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(versions.filter(item => item.version !== selected.version).map(item => ({ value: item.version, label: item.version }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+        <Button disabled={!compareVersion} onClick={() => void compareAction()} variant="outline" type="button">对比版本</Button>
+        <Button onClick={() => void exportCuration(selected.version)} variant="outline" type="button">导出当前版本</Button>
       </div>
       {comparison ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
         {(['source', 'derived'] as const).map(key => {
@@ -273,12 +281,12 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     </section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>PR 数据集清理</h2><ErrorNotice>{cleanupError}</ErrorNotice>
       <div className="flex flex-wrap items-end gap-3">
-        <NumberInput aria-label="保留 PR 版本数" min={0} value={keep} onChange={event => setKeep(event.target.value)}/>
-        <Button loading={cleanupBusy} onClick={() => void previewCleanup()}>预览可清理版本</Button>
+        <Input aria-label="保留 PR 版本数" min={0} value={keep} onChange={event => setKeep(event.target.value)} type="number"/>
+        <Button onClick={() => void previewCleanup()} variant="outline" disabled={Boolean(cleanupBusy)} type="button">{cleanupBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览可清理版本</Button>
       </div>
       {prunable === null ? null : prunable.length ? <>
         <ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{prunable.map(item => <li key={item.version}><code>{item.version}</code> · {item.createdAt.slice(0, 10)}</li>)}</ul>
-        <Button variant="danger" onClick={() => setConfirmCleanup(true)}>清理 {prunable.length} 个版本</Button>
+        <Button variant='destructive' onClick={() => setConfirmCleanup(true)} type="button">清理 {prunable.length} 个版本</Button>
       </> : <p className="text-xs leading-body text-foreground-3">没有超出保留数量且无引用的 PR 版本。</p>}
       {cleanupResult ? <p className="text-xs leading-body text-foreground-3">{cleanupResult}</p> : null}
     </section>
@@ -288,32 +296,26 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
           const checked = selectedMethods.includes(choice.method)
           const blocked = !choice.available || splitPreviewBusy || !splitPreview?.available
           return <div key={choice.method} className="grid gap-2 rounded-md border border-border-soft p-3">
-            <Checkbox checked={checked} disabled={blocked} onCheckedChange={() => toggleMethod(choice.method)}>
-              {choice.name} · <code>{choice.method}</code>{choice.reason ? ` · ${choice.reason}` : ''}
-            </Checkbox>
+            <label className="inline-flex items-start gap-2 text-sm"><Checkbox checked={checked} disabled={blocked} onCheckedChange={() => toggleMethod(choice.method)}/><span>{choice.name} · <code>{choice.method}</code>{choice.reason ? ` · ${choice.reason}` : ''}</span></label>
             {checked && choice.params.length ? <div className="flex flex-wrap gap-2.5 [&_label]:grid [&_label]:gap-1 [&_label]:text-xs [&_label]:text-foreground-3 [&_input]:w-28">
               {choice.params.map(spec => <label key={spec.name}>{spec.name}（{spec.type} {spec.min}–{spec.max}）
-                <NumberInput aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any"
-                  value={paramValues[choice.method]?.[spec.name] ?? ''}
-                  onChange={event => setParam(choice.method, spec.name, event.target.value)}/>
+                <Input aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any" value={paramValues[choice.method]?.[spec.name] ?? ''} onChange={event => setParam(choice.method, spec.name, event.target.value)} type="number"/>
               </label>)}
             </div> : null}
           </div>
         })}
       </div>
       <div className="flex flex-wrap items-end gap-3">
-        <Button variant="primary" loading={experimentBusy}
-          disabled={!selectedMethods.length || splitPreviewBusy || !splitPreview?.available}
-          onClick={() => void runExperiment()}>创建实验（{selectedMethods.length} 个方法）</Button>
+        <Button variant='default' disabled={Boolean(!selectedMethods.length || splitPreviewBusy || !splitPreview?.available) || Boolean(experimentBusy)} onClick={() => void runExperiment()} type="button">{experimentBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}创建实验（{selectedMethods.length} 个方法）</Button>
       </div>
       {!splitPreview?.available && splitPreview ? <p className="text-xs leading-body text-foreground-3">当前切分预设不可用，不能创建实验。</p> : null}
     </section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="flex flex-wrap items-end gap-3">
-      <Select ariaLabel="训练方法" value={selectedMethod} onChange={setMethod} options={methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))}/>
-      <Select ariaLabel="指标集" value={metricSet} onChange={setMetricSet} options={[{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]}/>
-      <Select ariaLabel="训练分区类别策略" value={classPolicy} onChange={value => setClassPolicy(value as 'none' | 'weights' | 'sample')} options={[{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]}/>
-      <Select ariaLabel="时间切分预设" value={splitPreset} onChange={setSplitPreset} options={[...SPLIT_PRESETS]}/>
-      <Button variant="primary" loading={busy} disabled={!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available} onClick={() => void train()}>创建训练任务</Button>
+      <Select value={selectedMethod == null ? '' : String(selectedMethod)} onValueChange={nextValue => (setMethod)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练方法"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+      <Select value={metricSet == null ? '' : String(metricSet)} onValueChange={nextValue => (setMetricSet)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="指标集"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+      <Select value={classPolicy == null ? '' : String(classPolicy)} onValueChange={nextValue => (value => setClassPolicy(value as 'none' | 'weights' | 'sample'))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练分区类别策略"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+      <Select value={splitPreset == null ? '' : String(splitPreset)} onValueChange={nextValue => (setSplitPreset)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="时间切分预设"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([...SPLIT_PRESETS]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+      <Button variant='default' disabled={Boolean(!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available) || Boolean(busy)} onClick={() => void train()} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}创建训练任务</Button>
     </div></section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
       {splitPreviewBusy ? <p className="text-xs leading-body text-foreground-3">正在按原始唯一成员计算三档边界…</p> : splitPreview ? <>
@@ -331,10 +333,6 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <p className="text-xs leading-body text-foreground-3">时区 {splitPreview.timezone}；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
       </> : null}
     </section>
-    <Dialog open={confirmCleanup} onOpenChange={setConfirmCleanup} title="确认清理 PR 数据集？" width={460}
-      description="将删除选中的数据集登记、提交记录与文件；此操作不可恢复，被模型、分析或趋势引用的版本不会出现在列表中。"
-      footer={<><Button onClick={() => setConfirmCleanup(false)}>取消</Button><Button variant="danger" loading={cleanupBusy} onClick={() => void runCleanup()}>确认清理</Button></>}>
-      {null}
-    </Dialog>
+    <AlertDialog open={confirmCleanup} onOpenChange={setConfirmCleanup}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${460}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"确认清理 PR 数据集？"}</AlertDialogTitle><AlertDialogDescription>{"将删除选中的数据集登记、提交记录与文件；此操作不可恢复，被模型、分析或趋势引用的版本不会出现在列表中。"}</AlertDialogDescription></AlertDialogHeader>{null}<AlertDialogFooter>{<><Button onClick={() => setConfirmCleanup(false)} variant="outline" type="button">取消</Button><Button variant='destructive' onClick={() => void runCleanup()} disabled={Boolean(cleanupBusy)} type="button">{cleanupBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认清理</Button></>}</AlertDialogFooter></AlertDialogContent></AlertDialog>
   </section>
 }

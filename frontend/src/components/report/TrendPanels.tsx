@@ -1,6 +1,8 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { shanghaiDate, type BaselineSummary } from '../../domain'
 import { type TrendAggregate, type TrendBucket, type TrendMeasure } from '../../trendContract'
-import { Button } from '../../ui/controls'
+
 
 type Split = BaselineSummary['split']
 
@@ -306,49 +308,44 @@ export function PartitionList({ split }: { split: Split | undefined }) {
 export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (bucket: TrendBucket) => void }) {
   return (
     <div className="overflow-x-auto" role="region" aria-label="历史趋势文本视图" tabIndex={0}>
-      <table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top">
+      <Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top">
         <caption className="px-2 py-1.5 text-left text-xs text-foreground-3">
           历史趋势文本视图：每个时间桶的提交数、记录分区、观测正标签比例与模型风险中位数（时区 {data.timezone}，最小样本{' '}
           {data.minSample}）
         </caption>
-        <thead>
-          <tr>
-            <th>时间桶（{data.timezone}）</th>
-            <th className="tabular-nums text-right">提交数</th>
-            <th>记录分区</th>
-            <th>观测正标签比例</th>
-            <th>模型风险中位数</th>
-            <th>下钻</th>
-          </tr>
-        </thead>
-        <tbody>
+        <TableHeader>
+          <TableRow>
+            <TableHead>时间桶（{data.timezone}）</TableHead>
+            <TableHead className="tabular-nums text-right">提交数</TableHead>
+            <TableHead>记录分区</TableHead>
+            <TableHead>观测正标签比例</TableHead>
+            <TableHead>模型风险中位数</TableHead>
+            <TableHead>下钻</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {data.buckets.map((bucket) => {
             const range = drillRange(bucket)
             return (
-              <tr key={bucket.start}>
-                <td>
+              <TableRow key={bucket.start}>
+                <TableCell>
                   <time className="font-mono text-foreground-2" dateTime={bucket.start}>{monthOf(bucket.start)}</time>
                   <span className="block text-[11px] text-foreground-4">
                     {bucket.start.slice(0, 10)} — {bucket.end.slice(0, 10)}
                   </span>
-                </td>
-                <td className="tabular-nums text-right">{bucket.commits}</td>
-                <td>{partitionText(bucket)}</td>
-                <td>{measureText(bucket.observedRate, '样本不足')}</td>
-                <td>{riskText(bucket)}</td>
-                <td>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    aria-label={`查看该桶提交：${range.start} 至 ${range.end}`}
-                    onClick={() => onDrill(bucket)}
-                  >查看提交</Button>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell className="tabular-nums text-right">{bucket.commits}</TableCell>
+                <TableCell>{partitionText(bucket)}</TableCell>
+                <TableCell>{measureText(bucket.observedRate, '样本不足')}</TableCell>
+                <TableCell>{riskText(bucket)}</TableCell>
+                <TableCell>
+                  <Button variant="link" size="sm" aria-label={`查看该桶提交：${range.start} 至 ${range.end}`} onClick={() => onDrill(bucket)} type="button">查看提交</Button>
+                </TableCell>
+              </TableRow>
             )
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       <p className="px-2 py-1.5 text-xs text-foreground-3">「—」表示该桶没有测试分区记录，因此不提供模型风险中位数；样本不足的桶在单元格内给出原因。</p>
     </div>
   )

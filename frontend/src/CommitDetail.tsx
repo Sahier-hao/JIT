@@ -1,9 +1,11 @@
-import { Button, IconButton } from './ui/controls'
+import { Copy, ExternalLink, Info } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
 import { useEffect, useState } from 'react'
 import { displayTime, validRisk, type Commit, type Dataset } from './domain'
 import { RepositoryExplanation } from './components/RepositoryExplanation'
 import { Risk } from './Risk'
-import { Icon } from './Icon'
+
 import { EmptyState } from './Feedback'
 
 export interface DetailProps { data: Dataset; id: string; record?: Commit; onClose: () => void }
@@ -21,8 +23,8 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
       <p className="text-xs text-foreground-3">{record.authorName || '作者未提供'} <span>·</span> {displayTime(record.time)}</p>
       <div className="flex flex-wrap items-center gap-2">
         <code className="font-mono text-xs text-foreground-3">{record.id.slice(0, 12)}</code>
-        <IconButton label="复制完整提交 ID" icon={<Icon name="copy" size={15}/>} onClick={copy}/>
-        {safeOriginal ? <a className="inline-flex items-center gap-1 text-xs text-accent underline-offset-2 hover:underline" href={safeOriginal} target="_blank" rel="noopener noreferrer">原始提交 <Icon name="external" size={14}/></a> : null}
+        <Button onClick={copy} aria-label="复制完整提交 ID" title="复制完整提交 ID" variant="ghost" size="icon-sm" type="button">{<Copy aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}</Button>
+        {safeOriginal ? <a className="inline-flex items-center gap-1 text-xs text-accent underline-offset-2 hover:underline" href={safeOriginal} target="_blank" rel="noopener noreferrer">原始提交 <ExternalLink aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/></a> : null}
       </div>
       {copied ? <p className="text-xs text-foreground-3" role="status">{copied}</p> : null}
     </div>
@@ -34,7 +36,7 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
       <div className="grid gap-0.5"><span className="text-xs text-foreground-3">变更行</span><strong className="text-lg font-semibold text-foreground">{record.lines ?? '未提供'}</strong></div>
       <div className="grid gap-0.5"><span className="text-xs text-foreground-3">文件</span><strong className="text-lg font-semibold text-foreground">{record.files ?? '未提供'}</strong></div>
     </div>
-    {data.mode === 'repository' && data.repository?.repositoryId && validRisk(record.risk) ? <RepositoryExplanation key={`${data.repository.repositoryId}:${data.repository.syncId}:${record.id}`} context={{ repositoryId: data.repository.repositoryId, viewSyncId: data.repository.syncId, commitId: record.id, risk: record.risk, modelId: data.repository.modelId, runId: data.repository.runId, datasetVersion: data.repository.datasetVersion }}/> : <p className="flex items-start gap-1.5 text-xs text-foreground-3"><Icon name="info" size={14} className="mt-0.5 shrink-0"/>当前分析未提供逐条模型归因。</p>}
+    {data.mode === 'repository' && data.repository?.repositoryId && validRisk(record.risk) ? <RepositoryExplanation key={`${data.repository.repositoryId}:${data.repository.syncId}:${record.id}`} context={{ repositoryId: data.repository.repositoryId, viewSyncId: data.repository.syncId, commitId: record.id, risk: record.risk, modelId: data.repository.modelId, runId: data.repository.runId, datasetVersion: data.repository.datasetVersion }}/> : <p className="flex items-start gap-1.5 text-xs text-foreground-3"><Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={14} className="mt-0.5 shrink-0"/>当前分析未提供逐条模型归因。</p>}
     <details className="rounded-sm border border-border-soft">
       <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-foreground-2">原始变更度量 <span className="text-xs font-normal text-foreground-3">{Object.keys(record.metrics ?? {}).length} 项</span></summary>
       <div className="grid gap-1 border-t border-border-soft p-3">
@@ -62,5 +64,5 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
         {!safeOriginal ? <p className="text-xs text-foreground-3">此记录未提供受支持的原始提交外链，可复制完整 ID 核对。</p> : null}
       </div>
     </details>
-  </div> : <EmptyState title="提交不存在" description="该分析中未找到这个提交。"><Button onClick={onClose}>返回列表</Button></EmptyState>
+  </div> : <EmptyState title="提交不存在" description="该分析中未找到这个提交。"><Button onClick={onClose} variant="outline" type="button">返回列表</Button></EmptyState>
 }

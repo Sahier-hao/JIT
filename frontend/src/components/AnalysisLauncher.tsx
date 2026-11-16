@@ -1,13 +1,12 @@
-/**
- * 发起分析的入口：窄栏里只留一个主按钮，参数在对话框里改。
- * 表单字段多，内联展开会把项目页拉得很长；摘要和说明都收进对话框。
- */
-import { Icon } from '../Icon'
+import { Plus } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+
 import { useState } from 'react'
 import type { SyncForm } from '../apiClient'
 import type { SyncView } from '../repositoryContract'
-import { Button } from '../ui/controls'
-import { Dialog } from '../ui/dialog'
+
+
 import { AnalysisForm } from './AnalysisForm'
 
 export interface AnalysisLauncherProps {
@@ -22,21 +21,14 @@ export function AnalysisLauncher({ repositoryUrl, defaultBranch, onStarted, init
   const [open, setOpen] = useState(Boolean(initial))
   const close = () => setOpen(false)
   return <div>
-    <Button variant="primary" size="lg" icon={<Icon name="plus" size={17} strokeWidth={2.6}/>} onClick={() => setOpen(true)}>发起分析</Button>
-    <Dialog
-      open={open}
-      onOpenChange={next => { if (!next) close() }}
-      title="发起分析"
-      width={600}
-    >
-      <AnalysisForm
+    <Button variant='default' size="lg" onClick={() => setOpen(true)} type="button">{<Plus aria-hidden="true" focusable="false"  size={17} strokeWidth={2.6}/>}发起分析</Button>
+    <Dialog open={open} onOpenChange={next => { if (!next) close() }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${600}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"发起分析"}</DialogTitle></DialogHeader><AnalysisForm
         key={initial ? JSON.stringify(initial) : 'new'}
         repositoryUrl={repositoryUrl}
         defaultBranch={defaultBranch}
         initial={initial}
         onCancel={close}
         onStarted={job => { close(); onStarted(job) }}
-      />
-    </Dialog>
+      /></DialogContent></Dialog>
   </div>
 }

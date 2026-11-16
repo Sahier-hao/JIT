@@ -1,3 +1,4 @@
+import { Progress } from '@/components/ui/progress'
 import { useEffect, useState } from 'react'
 import { STATUS_LABELS, type SyncStatus } from '../repositoryContract'
 import { cn } from '../lib/utils'
@@ -55,7 +56,7 @@ export function JobProgress({ status, stage, queuePosition, startedAt, compact }
   const failed = status === 'failed'
   const stopped = status === 'cancelled' || status === 'interrupted'
   const value = done ? 100 : index === 0 ? 0 : Math.round((index / (STAGES.length - 1)) * 100)
-  const fill = done ? 'bg-teal' : failed ? 'bg-rose' : stopped ? 'bg-foreground-4' : 'bg-accent'
+  const fill = done ? '[&_[data-slot=progress-indicator]]:bg-teal' : failed ? '[&_[data-slot=progress-indicator]]:bg-rose' : stopped ? '[&_[data-slot=progress-indicator]]:bg-foreground-4' : '[&_[data-slot=progress-indicator]]:bg-accent'
   const meta = status === 'queued' && queuePosition
     ? `排队第 ${queuePosition} 位`
     : running && startedAt ? `已用 ${elapsed(startedAt)}` : ''
@@ -65,9 +66,8 @@ export function JobProgress({ status, stage, queuePosition, startedAt, compact }
       <span className="font-medium text-foreground-2">{STATUS_LABELS[status]}</span>
       {meta ? <span className="text-foreground-4">{meta}</span> : null}
     </div> : null}
-    <div className="relative h-1.5 rounded-full bg-strong" role="progressbar" aria-label={compact ? `分析进度：${STATUS_LABELS[status]}` : undefined}
-      aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}>
-      <span className={cn('block h-full rounded-full transition-[width]', fill)} style={{ width: `${value}%` }}/>
+    <div className="relative">
+      <Progress value={value} className={cn('h-1.5 bg-strong', fill)} aria-label={compact ? `分析进度：${STATUS_LABELS[status]}` : undefined}/>
       {STAGES.map((item, position) => {
         const nodeState = done || position < index ? 'done' : failed && position === index ? 'failed' : position === index ? 'active' : 'pending'
         return <span key={item.key} className={cn('absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border', NODE_CLASS[nodeState])}
@@ -89,10 +89,6 @@ export function ProgressBar({ value, state = 'running', label }: {
   state?: 'running' | 'done' | 'failed' | 'queued'
   label?: string
 }) {
-  const fill = state === 'failed' ? 'bg-rose' : state === 'done' ? 'bg-teal' : state === 'queued' ? 'bg-foreground-4' : 'bg-accent'
-  return <div className="h-1.5 w-full overflow-hidden rounded-full bg-strong" role="progressbar" aria-label={label}
-    aria-valuemin={0} aria-valuemax={100} aria-valuenow={value ?? undefined}>
-    <span className={cn('block h-full rounded-full transition-[width]', fill, value === null && 'w-1/3 animate-pulse')}
-      style={value === null ? undefined : { width: `${Math.max(0, Math.min(100, value))}%` }}/>
-  </div>
+  const fill = state === 'failed' ? '[&_[data-slot=progress-indicator]]:bg-rose' : state === 'done' ? '[&_[data-slot=progress-indicator]]:bg-teal' : state === 'queued' ? '[&_[data-slot=progress-indicator]]:bg-foreground-4' : '[&_[data-slot=progress-indicator]]:bg-accent'
+  return <Progress className={cn('h-1.5 bg-strong', fill)} value={value === null ? null : Math.max(0, Math.min(100, value))} aria-label={label}/>
 }

@@ -381,9 +381,9 @@ it('restores the bound fallback model on retry even if the administrator default
 it('switches project subviews without dropping project identity', async () => {
   mockApi(); const navigate = vi.fn(), user = userEvent.setup()
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
-  await user.click(await screen.findByRole('button', { name: 'PR 审查' }))
+  await user.click(await screen.findByRole('link', { name: 'PR 审查' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'prs' })
-  await user.click(screen.getByRole('button', { name: '风险趋势' }))
+  await user.click(screen.getByRole('link', { name: '风险趋势' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'trends' })
 })
 

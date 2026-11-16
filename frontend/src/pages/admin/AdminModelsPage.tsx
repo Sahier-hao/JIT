@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, NetworkError, record } from '../../apiContract'
 import { apiRequest } from '../../apiClient'
@@ -10,7 +11,7 @@ import {
   type ModelReadiness,
   type Row,
 } from '../../adminContracts'
-import { Button } from '../../ui/controls'
+
 import { EmptyState, LoadingNotice } from '../../Feedback'
 import type { Route } from '../../navigation'
 import { ModelPolicyCards } from '../ModelPolicyCards'
@@ -119,7 +120,7 @@ export function AdminModelsPage({ navigate, expired }: {
     <AdminPageHeader title="模型管理" onRefresh={() => setRevision(value => value + 1)}/>
     <LoadingNotice label="正在读取模型目录"/>
   </section>
-  if (error && !models.length) return <EmptyState title="无法读取模型目录" description={error}><Button onClick={() => setRevision(value => value + 1)}>重试</Button></EmptyState>
+  if (error && !models.length) return <EmptyState title="无法读取模型目录" description={error}><Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button></EmptyState>
   return <section>
     <AdminPageHeader title="模型管理" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
@@ -130,13 +131,13 @@ export function AdminModelsPage({ navigate, expired }: {
     {readiness && readiness.issues.length ? <section className="grid gap-2" aria-label="模型目录就绪状态">
       <strong>模型目录需要处理 {readiness.issues.length} 项</strong>
       <ul>{readiness.issues.map(issue => <li key={issue.code}>{issue.message}</li>)}</ul>
-      {readiness.unregisteredExperiments ? <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })}>查看未登记实验</Button> : null}
+      {readiness.unregisteredExperiments ? <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })} variant="outline" type="button">查看未登记实验</Button> : null}
     </section> : null}
     {readiness ? <CatalogState readiness={readiness} imported={coverage?.latestImport ?? null}
       coverageKnown={coverage !== null}/> : null}
     {coverageError ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card text-xs text-rose" aria-label="训练覆盖读取失败">
       <strong>训练覆盖暂不可用</strong><p>{coverageError}</p>
-      <Button size="sm" onClick={() => setRevision(value => value + 1)}>重试</Button>
+      <Button size="sm" onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button>
     </section> : null}
     {coverage ? <CoverageMatrix page={coverage} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/> : null}
     {coverage ? <ModelPackageDelivery latest={coverage.latestImport}/> : null}
@@ -147,7 +148,7 @@ export function AdminModelsPage({ navigate, expired }: {
     <h2 className="text-base font-semibold text-foreground">本机模型产物</h2>
     <div className="grid gap-2">{candidates.map(candidate => <article className="grid gap-1.5 rounded-sm border border-border-soft p-2.5 text-xs" key={label(candidate.candidateId)}>
       <div className="grid gap-0.5"><strong className="text-sm font-medium text-foreground">{label(candidate.displayName)}</strong><p className="text-xs text-foreground-3">{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div>
-      <Button className="justify-self-start" disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '登记本机产物'}</Button>
+      <Button className="justify-self-start" disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)} variant="outline" type="button">{busy === candidate.candidateId ? '正在校验…' : '登记本机产物'}</Button>
     </article>)}</div>
     {!candidates.length ? <p className="text-xs text-foreground-3">当前产物目录没有可发现的模型</p> : null}
   </section>
@@ -225,9 +226,9 @@ function CoverageCell({ cell, openModel }: {
     <span className="text-[11px] text-foreground-3" data-state={cell.state}>{COVERAGE_LABELS[cell.state]}</span>
     {cell.reason ? <small title={cell.reason}>{cell.reason}</small> : null}
   </>
-  if (cell.modelId) return <button type="button" className="block w-full border-0 bg-transparent p-0 text-left"
+  if (cell.modelId) return <Button variant="ghost" type="button" className="block w-full border-0 bg-transparent p-0 text-left"
     aria-label={`${cell.name}：${COVERAGE_LABELS[cell.state]}，查看模型详情`}
-    onClick={() => openModel(cell.modelId!)}>{content}</button>
+    onClick={() => openModel(cell.modelId!)}>{content}</Button>
   return <div className="block" title={cell.reason ?? undefined}>{content}</div>
 }
 

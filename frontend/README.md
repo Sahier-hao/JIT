@@ -7,9 +7,9 @@
 - React 19 + TypeScript + Vite。
 - 路由：React Router 7 的 `createHashRouter`；地址继续使用 `#/projects/...`，旧链接由 `navigation.ts` 的解析器映射。
 - 样式：Tailwind CSS 4（启用 preflight）+ `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把全部令牌映射为 Tailwind 语义色、字号、间距与圆角，四套主题由 `html[data-theme]` 切换，两档密度由 `html[data-density]` 切换。外观规则见 [界面设计规范](../docs/界面设计规范.md)；`npm run check:styles` 检查样式只从登记的位置产生。样式表只保留 `index.css`、`tokens.css`、`base.css` 与 `content.css` 四个。
-- 组件：`src/ui/` 是共享组件层，形态参考 shadcn/ui：Radix 提供行为（对话框、下拉、选择、复选、开关、浮层、提示），CVA 提供变体，`cn` 合并类名，外观全部用 Tailwind 工具类与设计令牌。页面只组合导出组件，不直接拼控件样式。
-- 图标：`Icon.tsx` 的自绘 SVG 与 lucide-react。
-- 代码对比：react-diff-view + refractor；图表为手写 SVG。
+- 组件：`src/components/ui/` 由官方 shadcn/ui CLI 4.23.0、`new-york` / Radix registry 添加，配置在 `components.json`。页面直接使用标准组合接口；密码显隐、状态反馈等业务组合独立维护，基础组件不接收旧 `options/title/footer/loading/icon` 兼容参数。
+- 图标：直接使用 lucide-react，品牌标志由 `BrandLogo` 保留。
+- 代码对比：react-diff-view + refractor；项目概览和风险趋势使用 ECharts 的 SVG 渲染，专用封装位于 `components/shared/`。
 - 测试：Vitest + Testing Library（组件）与 Playwright（浏览器验收）。
 
 ## 运行
@@ -31,7 +31,7 @@ npm run dev
 ## 用户流程
 
 1. 在项目页选择“新建项目”，登记公开 HTTP(S) 仓库地址；登记不会启动分析。
-2. 进入项目，展开分析选项，选择分支、日期、上限以及真实可用模型或自动策略。
+2. 进入项目，点击“发起分析”，选择分支、真实可用模型或自动策略、训练方法和时间切分预设。
 3. 发起分析后自动跟踪执行状态，完成后打开固定分析的提交明细与单条详情。
 4. 分析记录支持分页、设置当前结果、恢复失败参数后修改重试；删除记录前确认影响范围。
 5. 项目改名、删除和分析完成后，侧栏及项目数据同步更新。表单草稿在同一浏览器会话内保留。

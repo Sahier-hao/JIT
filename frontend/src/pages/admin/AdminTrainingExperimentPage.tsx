@@ -1,3 +1,8 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Button } from '@/components/ui/button'
+import { ChevronRight, LoaderCircle } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useEffect, useMemo, useState } from 'react'
 import { ApiError } from '../../apiContract'
 import {
@@ -5,9 +10,9 @@ import {
   formatDate, retryTrainingTask, valueLabel,
   type Row, type TrainingExperiment, type TrainingExperimentComparison, type TrainingTask,
 } from '../../adminContracts'
-import { Button, Select } from '../../ui/controls'
-import { Disclosure } from '../../ui/controls'
-import { EChartCanvas, useChartColors } from '../../ui/chart'
+
+
+import { EChartCanvas, useChartColors } from '@/components/shared/EChartCanvas'
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice } from './AdminShared'
 
@@ -120,9 +125,9 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
   return <section>
     <AdminPageHeader title="训练实验" meta={experiment.datasetVersion}/>
     <div className="flex flex-wrap items-center gap-2">
-      <Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集</Button>
-      <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>登记实验运行</Button>
-      <Button onClick={exportComparison} disabled={!comparison}>导出比较</Button>
+      <Button onClick={() => navigate({ name: 'admin', view: 'datasets' })} variant="outline" type="button">返回数据集</Button>
+      <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">登记实验运行</Button>
+      <Button onClick={exportComparison} disabled={!comparison} variant="outline" type="button">导出比较</Button>
     </div>
     <ErrorNotice>{error}</ErrorNotice>
     <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
@@ -158,37 +163,36 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
         {task.trainingHistory ? null : task.status === 'succeeded'
           ? <p className="text-xs leading-body text-foreground-3">该方法是单次拟合，无逐 epoch 曲线。</p> : null}
         <div className="flex flex-wrap items-end gap-3">
-          <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: task.taskId })}>任务详情</Button>
-          {ACTIVE.has(task.status) ? <Button size="sm" variant="danger" loading={busy === task.taskId} onClick={() => void cancel(task)}>取消</Button> : null}
-          {['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button size="sm" loading={busy === task.taskId} onClick={() => void retry(task)}>重试</Button> : null}
+          <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: task.taskId })} variant="outline" type="button">任务详情</Button>
+          {ACTIVE.has(task.status) ? <Button size="sm" variant='destructive' onClick={() => void cancel(task)} disabled={Boolean(busy === task.taskId)} type="button">{busy === task.taskId ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}取消</Button> : null}
+          {['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button size="sm" onClick={() => void retry(task)} variant="outline" disabled={Boolean(busy === task.taskId)} type="button">{busy === task.taskId ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}重试</Button> : null}
         </div>
       </div>)}
     </section>
     {historyTasks.length ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>训练曲线</h2>
       <div className="flex flex-wrap items-end gap-3">
-        <Select ariaLabel="训练曲线方法" value={selectedHistory?.taskId ?? ''} onChange={setHistoryMethod}
-          options={historyTasks.map(task => ({ value: task.taskId, label: task.method }))}/>
+        <Select value={selectedHistory?.taskId ?? '' == null ? '' : String(selectedHistory?.taskId ?? '')} onValueChange={nextValue => (setHistoryMethod)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练曲线方法"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(historyTasks.map(task => ({ value: task.taskId, label: task.method }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       </div>
       {selectedHistory ? <LossChart task={selectedHistory}/> : null}
     </section> : null}
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>同一口径比较</h2>
       {comparison ? <>
         {comparison.notes.map(note => <p key={note} className="text-xs leading-body text-foreground-3">{note}</p>)}
-        <table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:tabular-nums">
-          <thead><tr><th>方法</th><th>参数</th><th>PR-AUC</th><th>ROC-AUC</th><th>F1</th><th>P / R</th><th>Recall@20%LOC</th><th>MCC</th><th>耗时</th><th>状态</th></tr></thead>
-          <tbody>{comparison.methods.map(row => <tr key={row.taskId}>
-            <td>{row.methodName}</td>
-            <td>{paramsText(row.parameters)}</td>
-            <td>{metric(row.metrics, 'averagePrecision')}</td>
-            <td>{metric(row.metrics, 'rocAuc')}</td>
-            <td>{metric(row.metrics, 'f1')}</td>
-            <td>{metric(row.metrics, 'precision')} / {metric(row.metrics, 'recall')}</td>
-            <td>{metric(row.metrics, 'recall20Loc')}</td>
-            <td>未定义</td>
-            <td>{row.trainingSeconds == null ? '未记录' : `${row.trainingSeconds.toFixed(2)}s`}</td>
-            <td>{row.error ? `${row.error.code} · ${row.error.message}` : valueLabel(row.status)}</td>
-          </tr>)}</tbody>
-        </table>
+        <Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:tabular-nums">
+          <TableHeader><TableRow><TableHead>方法</TableHead><TableHead>参数</TableHead><TableHead>PR-AUC</TableHead><TableHead>ROC-AUC</TableHead><TableHead>F1</TableHead><TableHead>P / R</TableHead><TableHead>Recall@20%LOC</TableHead><TableHead>MCC</TableHead><TableHead>耗时</TableHead><TableHead>状态</TableHead></TableRow></TableHeader>
+          <TableBody>{comparison.methods.map(row => <TableRow key={row.taskId}>
+            <TableCell>{row.methodName}</TableCell>
+            <TableCell>{paramsText(row.parameters)}</TableCell>
+            <TableCell>{metric(row.metrics, 'averagePrecision')}</TableCell>
+            <TableCell>{metric(row.metrics, 'rocAuc')}</TableCell>
+            <TableCell>{metric(row.metrics, 'f1')}</TableCell>
+            <TableCell>{metric(row.metrics, 'precision')} / {metric(row.metrics, 'recall')}</TableCell>
+            <TableCell>{metric(row.metrics, 'recall20Loc')}</TableCell>
+            <TableCell>未定义</TableCell>
+            <TableCell>{row.trainingSeconds == null ? '未记录' : `${row.trainingSeconds.toFixed(2)}s`}</TableCell>
+            <TableCell>{row.error ? `${row.error.code} · ${row.error.message}` : valueLabel(row.status)}</TableCell>
+          </TableRow>)}</TableBody>
+        </Table>
         <p className="text-xs leading-body text-foreground-3">
           口径：{comparison.datasetVersion} · {comparison.splitPreset} · {comparison.metricSet} ·
           manifest {comparison.manifestSha256.slice(0, 12)}…
@@ -197,12 +201,10 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
         </p>
       </> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
     </section>
-    <Disclosure summary="比较口径与限制">
-      <p className="text-xs leading-body text-foreground-3">
+    <Collapsible className="group/collapsible"><div className="flex items-center gap-2"><CollapsibleTrigger asChild><Button type="button" variant="ghost" className="justify-start"><ChevronRight aria-hidden="true" className="group-data-[state=open]/collapsible:rotate-90"/>{"比较口径与限制"}</Button></CollapsibleTrigger></div><CollapsibleContent><p className="text-xs leading-body text-foreground-3">
         三档指标来自各自运行的冻结分区；训练档只用于拟合诊断，验证档是模型选择背景，测试档承担冻结泛化评价。
         单次实验不按测试指标选择参数或方法，训练成功仍需在「登记实验运行」中显式登记，项目分析也只使用显式选择的已登记模型。
         分数未经当前仓库概率校准，不能视为缺陷概率。
-      </p>
-    </Disclosure>
+      </p></CollapsibleContent></Collapsible>
   </section>
 }

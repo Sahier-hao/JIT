@@ -1,7 +1,9 @@
+import { User, SlidersHorizontal } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { Route } from '../navigation'
 import type { UserSession } from '../userClient'
-import { Icon } from '../Icon'
-import { Button } from '../ui/controls'
+
+
 import { EntryFooter, EntryHeader, EntryPage } from '../components/EntryChrome'
 
 /** 产品介绍首页：通过两个角色入口进入各自工作区。 */
@@ -24,16 +26,14 @@ export function LandingPage({ navigate, session }: {
         </div>
         <div className="grid gap-3" aria-label="选择工作区">
           <article className="grid gap-3 rounded-lg border border-border bg-card p-5">
-            <div className="flex items-center gap-2"><Icon name="user" size={18} className="text-foreground-3"/><h2 className="text-base font-semibold text-foreground">用户工作区</h2></div>
+            <div className="flex items-center gap-2"><User aria-hidden="true" focusable="false" strokeWidth={1.5} size={18} className="text-foreground-3"/><h2 className="text-base font-semibold text-foreground">用户工作区</h2></div>
             <p className="text-xs leading-[1.65] text-foreground-3">管理自己的数据集、训练实验与模型，进入项目和 PR 审查。</p>
-            <Button variant="primary" block onClick={() => navigate(loggedIn ? { name: 'repositories' } : { name: 'login', role: 'user' })}>
-              {loggedIn ? `继续进入项目 · ${session?.username}` : '登录 / 注册'}
-            </Button>
+            <Button variant='default' onClick={() => navigate(loggedIn ? { name: 'repositories' } : { name: 'login', role: 'user' })} className="w-full" type="button">{loggedIn ? `继续进入项目 · ${session?.username}` : '登录 / 注册'}</Button>
           </article>
           <article className="grid gap-3 rounded-lg border border-border bg-card p-5">
-            <div className="flex items-center gap-2"><Icon name="sliders" size={18} className="text-foreground-3"/><h2 className="text-base font-semibold text-foreground">管理工作区</h2></div>
+            <div className="flex items-center gap-2"><SlidersHorizontal aria-hidden="true" focusable="false" strokeWidth={1.5} size={18} className="text-foreground-3"/><h2 className="text-base font-semibold text-foreground">管理工作区</h2></div>
             <p className="text-xs leading-[1.65] text-foreground-3">维护全局数据集、模型目录、默认模型和验证记录。</p>
-            <Button block onClick={() => navigate({ name: 'login', role: 'admin' })}>管理员登录</Button>
+            <Button onClick={() => navigate({ name: 'login', role: 'admin' })} variant="outline" className="w-full" type="button">管理员登录</Button>
           </article>
         </div>
       </section>
@@ -50,7 +50,7 @@ export function LandingPage({ navigate, session }: {
           <h2 className="text-base font-semibold text-foreground">行级模型</h2>
           <p className="text-xs text-foreground-3">TypeScript / JavaScript · 按行排序分数</p>
         </div>
-        <Button onClick={() => navigate({ name: 'research-line' })}>进入研究预览</Button>
+        <Button onClick={() => navigate({ name: 'research-line' })} variant="outline" type="button">进入研究预览</Button>
       </section>
 
       <section className="grid gap-6 md:grid-cols-3" aria-label="使用流程">

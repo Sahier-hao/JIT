@@ -59,7 +59,7 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await expect(page.getByRole('heading', { name: '仓库活跃度' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '语言构成' })).toBeVisible()
   await page.screenshot({ path: `${evidence}/${info.project.name}-repo-overview.png`, fullPage: true })
-  await page.getByRole('button', { name: 'PR 审查', exact: true }).click()
+  await page.getByRole('link', { name: 'PR 审查', exact: true }).click()
   await page.getByRole('button', { name: '检查远端 PR', exact: true }).click()
   await expect(page.getByRole('heading', { name: '#1 修正审查示例 · 版本 25', exact: true })).toBeVisible()
   expect(await page.evaluate(key => localStorage.getItem(key), workKey)).toBeNull()
@@ -140,8 +140,8 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await page.screenshot({ path: `${evidence}/${info.project.name}-old-evidence.png`, fullPage: true })
 
   await page.getByRole('button', { name: '返回项目 PR 审查', exact: true }).click()
-  await page.getByRole('navigation', { name: '项目工作台视图' }).getByRole('button', { name: '分析', exact: true }).click()
-  await page.getByRole('button', { name: '风险趋势', exact: true }).click()
+  await page.getByRole('navigation', { name: '项目工作台视图' }).getByRole('link', { name: '分析', exact: true }).click()
+  await page.getByRole('link', { name: '风险趋势', exact: true }).click()
   await expect(page.locator('.project-trends .ui-chart svg path[stroke="#2a78d6"]').first()).toBeAttached()
   await expect(page.getByRole('table', { name: '趋势等价数据表：风险分为模型估计，高分占比不是缺陷率' })).toBeVisible()
   const oldViewId = page.url().split('/').at(-1)!

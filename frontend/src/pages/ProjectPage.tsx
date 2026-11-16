@@ -1,19 +1,23 @@
-/**
- * 项目页：一个项目的全部操作都收在这一页。
- *
- * 顺序按使用频率排：先看「当前分析结果」，再决定是否发起新分析，最后才是分析记录。
- * 「当前结果」严格指项目可用于审查的那次成功分析；最近一次尝试可能还在跑或已失败，
- * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
- */
-import { Icon } from '../Icon'
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { linkTo } from '@/navigation'
+
+import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { LoaderCircle, ArrowLeft, Database, ArrowRight, Pin, GitCompare, Check, Loader, AlertTriangle, MoreHorizontal } from 'lucide-react'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+
+
 import { useEffect, useRef, useState } from 'react'
-import { Button, IconButton, NumberInput, Select } from '../ui/controls'
-import { Dialog } from '../ui/dialog'
-import { Dropdown } from '../ui/dropdown'
-import { TabBar } from '../ui/layout'
-import { Segmented } from '../ui/segmented'
+
+
+
+
+
 import { fetchRepositorySyncCommits, type SyncForm } from '../apiClient'
-import type { SyncCommit } from '../repositoryContract'
+import { type SyncCommit, ACTIVE_STATUSES, DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
 import { prBatchChanged, projectsChanged } from '../projectEvents'
 import { repositoryModels, useModelName, type ModelChoice } from '../modelClient'
 import { analyzeAllProjectPRs, projectPROpenCount, type PRBatchScope } from '../projectActivityClient'
@@ -30,7 +34,7 @@ import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { analysisRoute, repositoryRoute, type Route } from '../navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '../projectClient'
 import { projectStatus, type ProjectTone } from '../projectStatus'
-import { ACTIVE_STATUSES, DEGRADE_LABELS, PARTITION_LABELS, STATUS_LABELS, type SyncError, type SyncView } from '../repositoryContract'
+
 import { useRepository } from '../repositoryWorkspace'
 import { AnalysisScopeCard } from '../components/AnalysisScopeCard'
 import { displayTime } from '../domain'
@@ -138,7 +142,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
   if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
   if (detail.state === 'error' || !detail.repository) {
-    return <EmptyState title="项目读取失败" description={detail.error} tone="alert"><Button onClick={detail.retry}>重新加载</Button><Button onClick={() => navigate({ name: 'repositories' })}>返回项目列表</Button></EmptyState>
+    return <EmptyState title="项目读取失败" description={detail.error} tone="alert"><Button onClick={detail.retry} variant="outline" type="button">重新加载</Button><Button onClick={() => navigate({ name: 'repositories' })} variant="outline" type="button">返回项目列表</Button></EmptyState>
   }
 
   const repository = detail.repository
@@ -253,7 +257,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   return <section className="grid gap-4">
     <header className="grid gap-4 border-b border-border-soft pb-4">
       <div className="grid gap-2">
-        <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" icon={<Icon name="arrowLeft" size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
+        <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}全部项目</Button>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-sans text-xl font-semibold leading-title text-foreground" title={repository.url}>{repository.displayName}</h1>
           <p className="inline-flex items-center gap-1.5 text-xs text-foreground-3" role="status"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</p>
@@ -267,8 +271,8 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button icon={<Icon name="database" size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
-        <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
+        <Button onClick={() => setDatasetBuildOpen(true)} variant="outline" type="button">{<Database aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}构建数据集</Button>
+        <Button onClick={() => void openPrAnalysis()} variant="outline" type="button">分析全部 PR</Button>
         <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
       </div>
       {prAnalysisError ? <p className="text-xs text-rose" role="alert">{prAnalysisError}</p> : null}
@@ -278,13 +282,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <JobProgress status={latest.status} stage={latest.stage} queuePosition={latest.queuePosition} startedAt={latest.startedAt}/>
     </section> : null}
 
-    <TabBar
-      label="项目工作台视图"
-      value={activeTab}
-      onChange={value => navigate(repositoryRoute(repositoryId, value))}
-      items={[{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分析' }, { value: 'prs', label: 'PR 审查' }]}
-      className="border-b-0 pb-0"
-    />
+    <nav aria-label="项目工作台视图" className="flex gap-1 border-b border-border">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String(activeTab) === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
 
     {activeTab === 'overview' ? <>
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate(repositoryRoute(repositoryId, 'analyses'))}/>
@@ -292,11 +290,11 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
     {activeTab === 'analyses' ? <>
     {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={
-      <TabBar label="分析视图" value="trends" onChange={value => navigate(repositoryRoute(repositoryId, value))} items={[{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]} className="border-b-0"/>
+      <nav aria-label="分析视图" className="flex gap-1 border-b border-border">{([{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String("trends") === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String("trends") === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
     }/> : <>
     <div className="flex flex-wrap items-center justify-between gap-3">
       <span className="text-sm font-medium text-foreground-2">当前结果</span>
-      <TabBar label="分析视图" value="analyses" onChange={value => navigate(repositoryRoute(repositoryId, value))} items={[{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]} className="border-b-0"/>
+      <nav aria-label="分析视图" className="flex gap-1 border-b border-border">{([{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String("analyses") === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String("analyses") === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
     </div>
     <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
       <aside className="grid content-start gap-3 rounded-md border border-border-soft bg-card p-3" aria-label="分析记录">
@@ -305,7 +303,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         {recordError ? <p className="text-xs text-rose" role="alert">{recordError}</p> : null}
         {records.state === 'loading' && records.syncs.length === 0 ? <LoadingNotice label="正在读取分析记录"/> : records.state === 'error' ? <FailureNotice error={records.error} onRetry={records.retry}/> : records.syncs.length === 0 ? <p className="py-6 text-center text-xs text-foreground-3">还没有分析记录。发起第一次分析后，这里按时间排列。</p> : <div className="grid gap-2">{records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }</div>}
         {records.state === 'ready' && records.total > 0 && records.total <= 10 ? <p className="text-center text-xs text-foreground-4">共 {records.total} 次分析</p> : null}
-        {records.total > 10 ? <nav className="flex items-center justify-between gap-2 border-t border-border-soft pt-2 text-xs text-foreground-3" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)}>上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)}>下一页</Button></nav> : null}
+        {records.total > 10 ? <nav className="flex items-center justify-between gap-2 border-t border-border-soft pt-2 text-xs text-foreground-3" aria-label="分析记录分页"><span>第 {page + 1} / {Math.ceil(records.total / 10)} 页</span><Button size="sm" disabled={page === 0 || records.state === 'loading'} onClick={() => setPage(value => value - 1)} variant="outline" type="button">上一页</Button><Button size="sm" disabled={(page + 1) * 10 >= records.total || records.state === 'loading'} onClick={() => setPage(value => value + 1)} variant="outline" type="button">下一页</Button></nav> : null}
       </aside>
 
       <div className="grid content-start gap-3">
@@ -317,11 +315,11 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         {context ? <div className="grid gap-3">
           {scope ? <AnalysisScopeCard scope={scope} onOpenDataset={() => setDatasetOpen(true)}/> : null}
           {scope?.split ? <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="查看提交范围">
-            <Segmented size="sm" value={activeView} onChange={setScopeView} options={[
+            <ToggleGroup type="single" value={String(activeView)} onValueChange={nextValue => { if (nextValue) (setScopeView)(nextValue as typeof activeView); }} aria-label="视图">{([
               { value: 'holdout', label: `留出 ${scope.split.holdout.count ?? 0}` },
               { value: 'test', label: `测试 ${scope.split.test.count ?? 0}` },
               { value: 'all', label: `全部 ${repository.commitCount}` },
-            ]}/>
+            ]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
             <span className="text-foreground-3">{activeView === 'all' ? '含训练、验证、测试、留出与未纳入数据集的提交' : '模型没见过的提交'}</span>
           </div> : null}
 
@@ -375,9 +373,9 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft pt-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-sm border border-border-soft px-2 py-1 text-xs text-foreground-3" title={context.datasetVersion ?? ''}>数据 <b className="text-foreground">{datasetRange(context.datasetVersion)}</b></span>
-                <Button variant="ghost" size="sm" onClick={() => setDatasetOpen(true)}>数据来源</Button>
+                <Button variant="ghost" size="sm" onClick={() => setDatasetOpen(true)} type="button">数据来源</Button>
               </div>
-              <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} trailing={<Icon name="arrow" size={15}/>}>查看提交明细</Button>
+              <Button variant='default' aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} type="button">查看提交明细{<ArrowRight aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}</Button>
             </div>
           </div>
         </div> : <div className="rounded-md border border-dashed border-border p-6 text-sm text-foreground-3">
@@ -390,25 +388,22 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
     {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} modelId={repository.modelId ?? undefined} onPageChange={setPrPage} navigate={navigate}/> : null}
 
-    <Dialog open={prDialog} onOpenChange={setPrDialog} title="分析全部 PR" width={520}
-      footer={<><Button onClick={() => setPrDialog(false)}>取消</Button><Button variant="primary" loading={prAnalyzing} disabled={!selectedModel || !prScopeValid} onClick={() => void analyzeAllPRs()}>开始分析</Button></>}>
-      <div className="grid gap-3">
+    <Dialog open={prDialog} onOpenChange={setPrDialog}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${520}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"分析全部 PR"}</DialogTitle></DialogHeader><div className="grid gap-3">
         <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">模型</span>
-          <Select ariaLabel="批量分析模型" value={selectedModel} onChange={setSelectedModel} options={prModelOptions}/>
+          <Select value={selectedModel == null ? '' : String(selectedModel)} onValueChange={nextValue => (setSelectedModel)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="批量分析模型"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(prModelOptions).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
         </label>
         <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">范围</span>
-          <Select ariaLabel="批量分析范围" value={prScopeKind} onChange={value => setPrScopeKind(value as 'all' | 'limit' | 'page')} options={[
+          <Select value={prScopeKind == null ? '' : String(prScopeKind)} onValueChange={nextValue => (value => setPrScopeKind(value as 'all' | 'limit' | 'page'))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="批量分析范围"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([
             { value: 'all', label: '全部开放 PR' },
             { value: 'limit', label: '前 N 个' },
             { value: 'page', label: `当前页（第 ${prPage} 页）` },
-          ]}/>
+          ]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
         </label>
         {prScopeKind === 'limit' ? <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">数量</span>
-          <NumberInput aria-label="批量分析数量" min={1} max={500} value={prScopeLimit} onChange={event => setPrScopeLimit(event.target.value)}/>
+          <Input aria-label="批量分析数量" min={1} max={500} value={prScopeLimit} onChange={event => setPrScopeLimit(event.target.value)} type="number"/>
         </label> : null}
         <p className="text-xs text-foreground-3">开放 PR <b className="text-foreground">{prOpenCount == null ? '—' : prOpenCount}</b> 个</p>
-      </div>
-    </Dialog>
+      </div><DialogFooter>{<><Button onClick={() => setPrDialog(false)} variant="outline" type="button">取消</Button><Button variant='default' disabled={Boolean(!selectedModel || !prScopeValid) || Boolean(prAnalyzing)} onClick={() => void analyzeAllPRs()} type="button">{prAnalyzing ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}开始分析</Button></>}</DialogFooter></DialogContent></Dialog>
     <DatasetBuildDialog
       repositoryId={repositoryId}
       defaultBranch={repository.defaultBranch}
@@ -416,31 +411,15 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       onOpenChange={setDatasetBuildOpen}
       navigate={navigate}
     />
-    <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }} title="分析详情" width={480}>
-      {detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}
-    </Dialog>
-    <Dialog
-      open={Boolean(deleteJob)}
-      onOpenChange={next => { if (!next) setDeleteJob(null) }}
-      title="删除这条分析记录？"
-      description={deleteJob && deleteJob.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'}
-      width={460}
-      footer={<>
-        <Button onClick={() => setDeleteJob(null)}>取消</Button>
-        <Button variant="danger" loading={deleteBusy} onClick={() => { if (deleteJob) void removeRecord(deleteJob).then(() => setDeleteJob(null)) }}>确认删除记录</Button>
-      </>}
-    >{null}</Dialog>
-    <Dialog
-      open={Boolean(cancelJob)}
-      onOpenChange={next => { if (!next) setCancelJob(null) }}
-      title="取消这次分析？"
-      description="取消后这次分析不再继续，已经生成的结果不会保留；可以用原参数重新发起。"
-      width={440}
-      footer={<>
-        <Button onClick={() => setCancelJob(null)}>返回</Button>
-        <Button variant="danger" loading={cancelBusy} onClick={() => { if (cancelJob) void cancelRecord(cancelJob).then(() => setCancelJob(null)) }}>确认取消分析</Button>
-      </>}
-    >{null}</Dialog>
+    <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${480}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"分析详情"}</DialogTitle></DialogHeader>{detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}</DialogContent></Dialog>
+    <AlertDialog open={Boolean(deleteJob)} onOpenChange={next => { if (!next) setDeleteJob(null) }}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${460}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"删除这条分析记录？"}</AlertDialogTitle><AlertDialogDescription>{deleteJob && deleteJob.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'}</AlertDialogDescription></AlertDialogHeader>{null}<AlertDialogFooter>{<>
+        <Button onClick={() => setDeleteJob(null)} variant="outline" type="button">取消</Button>
+        <Button variant='destructive' onClick={() => { if (deleteJob) void removeRecord(deleteJob).then(() => setDeleteJob(null)) }} disabled={Boolean(deleteBusy)} type="button">{deleteBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认删除记录</Button>
+      </>}</AlertDialogFooter></AlertDialogContent></AlertDialog>
+    <AlertDialog open={Boolean(cancelJob)} onOpenChange={next => { if (!next) setCancelJob(null) }}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${440}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"取消这次分析？"}</AlertDialogTitle><AlertDialogDescription>{"取消后这次分析不再继续，已经生成的结果不会保留；可以用原参数重新发起。"}</AlertDialogDescription></AlertDialogHeader>{null}<AlertDialogFooter>{<>
+        <Button onClick={() => setCancelJob(null)} variant="outline" type="button">返回</Button>
+        <Button variant='destructive' onClick={() => { if (cancelJob) void cancelRecord(cancelJob).then(() => setCancelJob(null)) }} disabled={Boolean(cancelBusy)} type="button">{cancelBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认取消分析</Button>
+      </>}</AlertDialogFooter></AlertDialogContent></AlertDialog>
     {context ? <ProjectDatasetDialog key={context.syncId} repositoryId={repositoryId} syncId={context.syncId}
       open={datasetOpen} onOpenChange={setDatasetOpen}/> : null}
   </section>
@@ -457,21 +436,21 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
   const shortId = job.syncId.slice(0, 7)
   const text = <div className="min-w-0">
     <p className="flex items-center gap-1.5 text-sm">
-      {completed ? current ? <span className="text-accent" aria-label={`当前结果 ${shortId}`}><Icon name="pin" size={12} fill="currentColor" strokeWidth={1.6}/></span>
-        : isPR ? <span className="text-foreground-4"><Icon name="gitCompare" size={13}/></span>
-          : <span className="text-foreground-4"><Icon name="check" size={13}/></span>
-        : <span className={cn(active ? 'text-accent' : 'text-rose')}>{active ? <Icon name="loader" size={14}/> : <Icon name="warning" size={14}/>}</span>}
+      {completed ? current ? <span className="text-accent" aria-label={`当前结果 ${shortId}`}><Pin aria-hidden="true" focusable="false"  size={12} fill="currentColor" strokeWidth={1.6}/></span>
+        : isPR ? <span className="text-foreground-4"><GitCompare aria-hidden="true" focusable="false" strokeWidth={1.5} size={13}/></span>
+          : <span className="text-foreground-4"><Check aria-hidden="true" focusable="false" strokeWidth={1.5} size={13}/></span>
+        : <span className={cn(active ? 'text-accent' : 'text-rose')}>{active ? <Loader aria-hidden="true" focusable="false"  size={14}/> : <AlertTriangle aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}</span>}
       <span className="truncate font-medium text-foreground">{title}</span>
     </p>
     <p className="mt-0.5 text-xs text-foreground-3">{meta}{selecting && switchable ? ' · 正在切换…' : ''}</p>
   </div>
   return <article className={cn('rounded-sm border p-2.5', current ? 'border-accent bg-accent-soft/40' : 'border-border-soft bg-card')} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
     <div className="flex items-start justify-between gap-2">
-      {switchable ? <button type="button" className="min-w-0 flex-1 border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</button> : text}
+      {switchable ? <Button variant="ghost" type="button" className="min-w-0 flex-1 border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</Button> : text}
       <RecordMenu pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
     {active ? <div className="mt-2"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}
-    {job.error ? <p className="mt-1.5 flex items-start gap-1 text-xs text-rose" title={job.error.message}><Icon name="warning" size={13} className="mt-0.5 shrink-0"/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="mt-1.5 text-xs text-foreground-3">已取消，可用原参数重新分析。</p> : null}
+    {job.error ? <p className="mt-1.5 flex items-start gap-1 text-xs text-rose" title={job.error.message}><AlertTriangle aria-hidden="true" focusable="false" strokeWidth={1.5} size={13} className="mt-0.5 shrink-0"/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="mt-1.5 text-xs text-foreground-3">已取消，可用原参数重新分析。</p> : null}
   </article>
 }
 
@@ -519,7 +498,7 @@ function RecordMenu({ pendingCancel, onOpen, openLabel = '打开结果', openBus
   if (pendingCancel) items.push({ key: 'pending', label: '正在取消…', disabled: true })
   items.push({ key: 'detail', label: '分析详情' })
   if (onDelete) items.push({ key: 'delete', label: '删除记录', danger: true, disabled: deleteBusy })
-  return <Dropdown items={items} onClick={key => {
+  return <DropdownMenu modal={false}><DropdownMenuTrigger asChild><Button aria-label="更多操作" title="更多操作" variant="ghost" size="icon-sm" type="button">{<MoreHorizontal aria-hidden="true" focusable="false" strokeWidth={1.5} size={16}/>}</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{(items).map(item => <DropdownMenuItem key={item.key} disabled={'disabled' in item && item.disabled === true} variant={'danger' in item && item.danger ? 'destructive' : 'default'} onSelect={() => (key => {
     if (key === 'open') onOpen?.()
     else if (key === 'compare') onCompare?.()
     else if (key === 'select') onSelect?.()
@@ -527,9 +506,7 @@ function RecordMenu({ pendingCancel, onOpen, openLabel = '打开结果', openBus
     else if (key === 'cancel') onCancel?.()
     else if (key === 'detail') onDetail()
     else if (key === 'delete') onDelete?.()
-  }}>
-    <IconButton label="更多操作" icon={<Icon name="more" size={16}/>}/>
-  </Dropdown>
+  })(item.key)}>{item.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
 }
 
 /** 失败原因：常见错误给一句人话，原始信息留在详情里。 */

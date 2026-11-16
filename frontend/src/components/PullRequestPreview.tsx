@@ -1,20 +1,27 @@
-import { Icon } from '../Icon'
+import { Button } from '@/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { LoaderCircle, X, Search, ChevronDown, ArrowLeft } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+
 import { useEffect, useState } from 'react'
-import { Segmented } from '../ui/segmented'
-import { Button, Input } from '../ui/controls'
-import { Dropdown } from '../ui/dropdown'
-import { CodeDiff } from '../ui/CodeDiff'
-import { Dialog } from '../ui/dialog'
-import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '../ui/layout'
+
+
+
+import { CodeDiff } from '@/components/shared/CodeDiff'
+
+
 import { PRModelClues } from './PRModelClues'
 import { Markdown } from './Markdown'
 import { RepositoryExplanation } from './RepositoryExplanation'
-import { analyzePRCandidates, type PRCandidate } from '../prReviewClient'
+import { analyzePRCandidates, type PRCandidate, type PRSnapshot } from '../prReviewClient'
 import { adoptVersion, candidateQuestion, createWork, readWorks, saveWork } from '../prReview'
 import { requireAccount, useReviewAccount } from '../reviewAccount'
 import { useSnapshotAnalyses } from '../useSnapshotAnalyses'
 import { displayTime } from '../domain'
-import type { PRSnapshot } from '../prReviewClient'
+
 import { repositoryRoute, type Route } from '../navigation'
 import { cn } from '../lib/utils'
 
@@ -105,9 +112,9 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
   const file = source.files.find(item => item.path === path)
   return <section className="grid gap-4" aria-label="PR 只读详情">
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <Button variant="ghost" size="sm" onClick={back ? back.onClick : () => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{back ? back.label : `返回${repositoryId ? '项目 PR 审查' : '我的审查'}`}</Button>
+      <Button variant="ghost" size="sm" onClick={back ? back.onClick : () => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })} type="button">{back ? back.label : `返回${repositoryId ? '项目 PR 审查' : '我的审查'}`}</Button>
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={onStart} title="创建工作单后可标记阅读进度、记录问题并导出意见">{startLabel}</Button>
+        <Button variant='default' onClick={onStart} title="创建工作单后可标记阅读进度、记录问题并导出意见" type="button">{startLabel}</Button>
         <a className="text-xs text-accent underline-offset-2 hover:underline" href={source.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>
       </div>
     </div>
@@ -132,45 +139,29 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
             <span className="text-xs text-foreground-3">{scoredCommitCount}/{source.commits.length} 有分数</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Input className="w-56" size="sm" placeholder="搜索提交标题或 SHA" aria-label="搜索 PR 提交" prefix={<Icon name="search" size={14}/>} allowClear value={commitFilter} onChange={event => setCommitFilter(event.target.value)}/>
-            <Dropdown items={[{ key: 'risk', label: '按风险' }, { key: 'order', label: '按提交顺序' }]} onClick={key => setCommitOrder(key as 'risk' | 'order')}>
-              <Button variant="ghost" size="sm" aria-haspopup="menu" aria-label={`提交排序方式：${commitOrder === 'risk' ? '按风险' : '按提交顺序'}`} trailing={<Icon name="chevronDown" size={13}/>}>排序：{commitOrder === 'risk' ? '按风险' : '按提交顺序'}</Button>
-            </Dropdown>
+            <div className="relative"><span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">{<Search aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}</span><Input className={[["w-56", "h-8"].filter(Boolean).join(' '), "pl-9 pr-9"].filter(Boolean).join(' ')} placeholder="搜索提交标题或 SHA" aria-label="搜索 PR 提交" value={commitFilter} onChange={event => setCommitFilter(event.target.value)}/>{commitFilter ? <Button type="button" variant="ghost" size="icon-xs" aria-label="清除" className="absolute right-1 top-1/2 -translate-y-1/2" onClick={() => setCommitFilter('')}><X aria-hidden="true"/></Button> : null}</div>
+            <DropdownMenu modal={false}><DropdownMenuTrigger asChild><Button variant="ghost" size="sm" aria-haspopup="menu" aria-label={`提交排序方式：${commitOrder === 'risk' ? '按风险' : '按提交顺序'}`} type="button">排序：{commitOrder === 'risk' ? '按风险' : '按提交顺序'}{<ChevronDown aria-hidden="true" focusable="false" strokeWidth={1.5} size={13}/>}</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{([{ key: 'risk', label: '按风险' }, { key: 'order', label: '按提交顺序' }]).map(item => <DropdownMenuItem key={item.key} disabled={'disabled' in item && item.disabled === true} variant={'danger' in item && item.danger ? 'destructive' : 'default'} onSelect={() => (key => setCommitOrder(key as 'risk' | 'order'))(item.key)}>{item.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
           </div>
         </div>
         {scoredCommitCount === 0 ? <p className="text-xs text-foreground-3">此版本尚未分析，暂无模型分数。</p> : null}
         {commitRows.length === 0
           ? <p className="text-xs text-foreground-3">没有匹配的提交。可换一个标题片段或提交 SHA。</p>
-          : <Table>
-            <TableHead><TableRow><TableHeaderCell>提交 / 改动</TableHeaderCell><TableHeaderCell>模型分数</TableHeaderCell><TableHeaderCell numeric>变更行</TableHeaderCell><TableHeaderCell numeric>文件</TableHeaderCell></TableRow></TableHead>
-            <TableBody>
-              {commitRows.map(commit => {
+          : <Table><TableHeader><TableRow><TableHead>提交 / 改动</TableHead><TableHead>模型分数</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commitRows.map(commit => {
                 const info = commitRisks[commit.sha]
                 const lines = info ? (info.addedLines ?? 0) + (info.deletedLines ?? 0) : null
-                return <TableRow key={commit.sha} tabIndex={0} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => openCommit(commit.sha)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openCommit(commit.sha) } }}>
-                  <TableCell>
-                    <div className="flex min-w-0 flex-wrap items-baseline gap-2"><span className="truncate text-sm font-medium text-foreground">{commit.message.split('\n')[0]}</span><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 12)}</code></div>
-                  </TableCell>
-                  <TableCell><span className={cn('tabular-nums', info ? 'text-foreground' : 'text-foreground-4')}>{info ? info.risk.toFixed(2) : '未评分'}</span></TableCell>
-                  <TableCell numeric>{lines == null ? '—' : lines.toLocaleString()}</TableCell>
-                  <TableCell numeric>{info?.fileCount ?? '—'}</TableCell>
-                </TableRow>
-              })}
-            </TableBody>
-          </Table>}
+                return <TableRow key={commit.sha} tabIndex={0} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => openCommit(commit.sha)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openCommit(commit.sha) } }}><TableCell><div className="flex min-w-0 flex-wrap items-baseline gap-2"><span className="truncate text-sm font-medium text-foreground">{commit.message.split('\n')[0]}</span><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 12)}</code></div></TableCell><TableCell><span className={cn('tabular-nums', info ? 'text-foreground' : 'text-foreground-4')}>{info ? info.risk.toFixed(2) : '未评分'}</span></TableCell><TableCell className="text-right tabular-nums">{lines == null ? '—' : lines.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{info?.fileCount ?? '—'}</TableCell></TableRow>
+              })}</TableBody></Table>}
         {commitRows.length ? <p className="text-xs text-foreground-4">选择一条提交，查看它触及的文件与代码。</p> : null}
       </section>
     </> : <>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" icon={<Icon name="arrowLeft" size={14}/>} onClick={backToCommits}>提交列表</Button>
+        <Button size="sm" onClick={backToCommits} variant="outline" type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}提交列表</Button>
         {selectedCommit ? <><code className="font-mono text-xs text-foreground-3">{selectedCommit.slice(0, 12)}</code>{commitRisks[selectedCommit]?.files.length
-          ? <Button size="sm" variant="ghost" title="退出这次提交的范围，看整个 PR" onClick={() => setSelectedCommit('')}>全部 {source.files.length} 个文件</Button>
+          ? <Button size="sm" variant="ghost" title="退出这次提交的范围，看整个 PR" onClick={() => setSelectedCommit('')} type="button">全部 {source.files.length} 个文件</Button>
           : <span className="text-xs text-foreground-3" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="text-xs text-foreground-3">全部 {source.files.length} 个文件</span>}
-        {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)}>模型解释</Button> : null}
+        {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)} type="button">模型解释</Button> : null}
       </div>
-      <Dialog open={explanationOpen && Boolean(selectedCommit && explanationRepository && explanationRisk != null && analysis.primary)}
-        onOpenChange={setExplanationOpen} title="模型解释" width={560}>
-        {selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <RepositoryExplanation heading={false} context={{
+      <Dialog open={explanationOpen && Boolean(selectedCommit && explanationRepository && explanationRisk != null && analysis.primary)} onOpenChange={setExplanationOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${560}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"模型解释"}</DialogTitle></DialogHeader>{selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <RepositoryExplanation heading={false} context={{
           repositoryId: explanationRepository,
           viewSyncId: analysis.primary.sync.syncId,
           commitId: selectedCommit,
@@ -178,18 +169,17 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           modelId: analysis.primary.sync.modelId,
           runId: analysis.primary.sync.runId,
           datasetVersion: analysis.primary.sync.datasetVersion,
-        }}/> : null}
-      </Dialog>
+        }}/> : null}</DialogContent></Dialog>
       <div className="grid overflow-hidden rounded-lg border border-border-strong bg-card lg:grid-cols-[260px_minmax(0,1fr)] lg:h-[min(70vh,680px)]">
         <aside className="flex min-h-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="PR 文件">
           <div className="flex items-baseline justify-between gap-2 px-3 py-2">
             <h2 className="text-sm font-semibold text-foreground">文件</h2><span className="text-xs text-foreground-3">{source.files.length}/{source.totalFiles}</span>
           </div>
-          <div className="px-3 pb-2"><Segmented size="sm" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/></div>
+          <div className="px-3 pb-2"><ToggleGroup type="single" value={String(fileOrder)} onValueChange={nextValue => { if (nextValue) (value => setFileOrder(value as 'risk' | 'path'))(nextValue as typeof fileOrder); }} aria-label="文件排序">{([{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup></div>
           {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="px-3 pb-2 text-xs text-amber-deep">{scoredCommitCount === 0 ? '此版本尚未分析，无法按提交筛选文件；显示全部文件。' : '这条提交没有文件映射（旧分析），显示全部文件。'}</p> : null}
           <div className="px-3 pb-2"><Input placeholder="筛选路径" aria-label="筛选 PR 文件路径" value={filter} onChange={event => setFilter(event.target.value)}/></div>
           <div className="min-h-0 flex-1 overflow-auto px-1.5 pb-2" role="listbox" aria-label="PR 文件列表">
-            {files.map((item, index) => <button key={item.path} type="button" role="option" aria-selected={path === item.path} className={cn('flex w-full items-start justify-between gap-2 rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === item.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => setPath(item.path)}>
+            {files.map((item, index) => <Button variant="ghost" key={item.path} type="button" role="option" aria-selected={path === item.path} className={cn('flex w-full items-start justify-between gap-2 rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === item.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => setPath(item.path)}>
               <span className="min-w-0 flex-1" title={item.path}>
                 <span className="block truncate font-medium">{item.path.slice(item.path.lastIndexOf('/') + 1)}</span>
                 <span className="block truncate text-[11px] text-foreground-4">{files[index - 1]?.path.slice(0, files[index - 1].path.lastIndexOf('/')) === item.path.slice(0, item.path.lastIndexOf('/')) ? '' : item.path.slice(0, item.path.lastIndexOf('/'))}</span>
@@ -199,7 +189,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
                 {item.deletions ? <em className="not-italic text-rose-deep">−{item.deletions}</em> : null}
                 {fileRisks[item.path] != null ? <em className="not-italic text-foreground-3" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[item.path].toFixed(3)}</em> : null}
               </span>
-            </button>)}
+            </Button>)}
             {!files.length ? <p className="py-4 text-center text-xs text-foreground-3">没有匹配的文件。</p> : null}
           </div>
           {!source.filesComplete ? <p className="border-t border-border-soft px-3 py-2 text-xs text-amber-deep">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
@@ -209,8 +199,8 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-3 py-2">
               <div className="min-w-0"><code className="block truncate font-mono text-xs text-foreground-2">{file.path}</code>{file.previousPath ? <span className="text-[11px] text-foreground-4">重命名自 {file.previousPath}</span> : null}</div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="ghost" loading={candidateBusy} onClick={() => void analyzeCandidates()}>分析代码候选</Button>
-                <Segmented size="sm" value={diffView} onChange={value => setDiffView(value as 'unified' | 'split')} options={[{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]}/>
+                <Button size="sm" variant="ghost" onClick={() => void analyzeCandidates()} disabled={Boolean(candidateBusy)} type="button">{candidateBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}分析代码候选</Button>
+                <ToggleGroup type="single" value={String(diffView)} onValueChange={nextValue => { if (nextValue) (value => setDiffView(value as 'unified' | 'split'))(nextValue as typeof diffView); }} aria-label="视图">{([{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
@@ -231,7 +221,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
 →
 ${item.suggestion.example.after}`}</pre> : null}
                 </div> : null}
-                <Button size="sm" className="justify-self-start" onClick={() => addCandidateQuestion(item)}>加入问题草稿</Button>
+                <Button size="sm" className="justify-self-start" onClick={() => addCandidateQuestion(item)} variant="outline" type="button">加入问题草稿</Button>
               </div>)}
               {!candidates.filter(item => item.path === file.path).length ? <p className="mt-2 text-xs text-foreground-3">
                 {candidateCoverage.analyzed.includes(file.path) ? '该文件没有命中当前规则，不代表没有缺陷。' : `未分析：${candidateCoverage.skipped.find(item => item.path === file.path)?.reason ?? '不支持的文件'}`}

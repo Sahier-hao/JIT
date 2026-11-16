@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, type MouseEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 export type Route =
@@ -164,6 +164,18 @@ export function hashFor(route: Route): string {
     }
     case 'legacy-sync': return `#/legacy/sync/${encodeURIComponent(route.syncId)}/${route.view}`
     default: return route.hash
+  }
+}
+
+/** 保留链接复制、修饰键和新标签页行为，普通点击使用工作区导航。 */
+export function linkTo(route: Route, navigate: (route: Route) => void) {
+  return {
+    href: hashFor(route),
+    onClick(event: MouseEvent<HTMLAnchorElement>) {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      event.preventDefault()
+      navigate(route)
+    },
   }
 }
 export function useRoute() {

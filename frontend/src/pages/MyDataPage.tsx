@@ -1,3 +1,11 @@
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-react'
+
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useEffect, useMemo, useState } from 'react'
 import { ApiError } from '../apiContract'
 import { trainingMethods, type MethodChoice } from '../modelClient'
@@ -6,8 +14,8 @@ import {
   createUserExperiment, deleteUserDataset, deriveCuration, exportDataset, previewCuration, splitPreview,
   userDatasets, useUserRevision, type UserDataset,
 } from '../userClient'
-import { Button, Checkbox, NumberInput, Select, TextArea } from '../ui/controls'
-import { Dialog } from '../ui/dialog'
+
+
 import { formatDate, valueLabel } from '../adminContracts'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
@@ -126,12 +134,12 @@ export function MyDataPage({ navigate, onLoginRequired }: {
   }
 
   if (datasets === null) return <section className="grid gap-4">
-    {error ? <div className="grid justify-items-start gap-2"><p className="text-xs text-rose" role="alert">{error}</p><Button onClick={onLoginRequired}>登录后重试</Button></div>
+    {error ? <div className="grid justify-items-start gap-2"><p className="text-xs text-rose" role="alert">{error}</p><Button onClick={onLoginRequired} variant="outline" type="button">登录后重试</Button></div>
       : <LoadingNotice label="正在读取我的数据"/>}
   </section>
   if (!datasets.length) return <section className="grid gap-4">
     <EmptyState title="还没有可用数据" description="在项目页点击「构建数据集」从真实提交采集，或使用管理员登记的共享数据集。">
-      <Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>去项目</Button>
+      <Button variant='default' onClick={() => navigate({ name: 'repositories' })} type="button">去项目</Button>
     </EmptyState>
   </section>
   return <section className="grid gap-4">
@@ -139,13 +147,13 @@ export function MyDataPage({ navigate, onLoginRequired }: {
     {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
     <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
       <div className="grid max-h-[70vh] content-start gap-2 overflow-auto pr-1" role="listbox" aria-label="我的数据版本">
-        {datasets.map(item => <button key={item.version} role="option" aria-selected={item.version === selected}
+        {datasets.map(item => <Button variant="ghost" key={item.version} role="option" aria-selected={item.version === selected}
           className={`grid gap-0.5 rounded-sm border p-2.5 text-left text-xs transition-colors ${item.version === selected ? 'border-accent bg-accent-soft' : 'border-border-soft bg-card hover:bg-hover'}`} onClick={() => setSelected(item.version)}>
           <strong className="truncate text-sm font-medium text-foreground">{item.dataset}</strong>
           <span className="text-foreground-3">{item.shared ? '共享数据' : '我的数据'} · {item.schema}</span>
           <span>{valueLabel(item.quality.includedRows)} 行 · {valueLabel(item.quality.positiveLabels)} 正例</span>
           <code className="break-all font-mono text-[11px] text-foreground-4">{item.version}</code>
-        </button>)}
+        </Button>)}
       </div>
       <div className="grid gap-3">
         {current ? <>
@@ -158,12 +166,12 @@ export function MyDataPage({ navigate, onLoginRequired }: {
             <div><dt>来源</dt><dd>{valueLabel(current.source.url)}</dd></div>
           </dl>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => exportDataset(current.version)}>导出 CSV 包</Button>
-            <Button onClick={() => setSelected(current.version)}>刷新版本</Button>
-            {current.mine ? <Button variant="danger" loading={busy} onClick={() => setConfirmDelete(true)}>删除此版本</Button> : null}
+            <Button onClick={() => exportDataset(current.version)} variant="outline" type="button">导出 CSV 包</Button>
+            <Button onClick={() => setSelected(current.version)} variant="outline" type="button">刷新版本</Button>
+            {current.mine ? <Button variant='destructive' onClick={() => setConfirmDelete(true)} disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}删除此版本</Button> : null}
           </div>
           <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">时间切分</h2>
-            <div className="flex flex-wrap items-center gap-2"><Select ariaLabel="时间切分预设" value={preset} onChange={setPreset} options={[...SPLIT_PRESETS]}/></div>
+            <div className="flex flex-wrap items-center gap-2"><Select value={preset == null ? '' : String(preset)} onValueChange={nextValue => (setPreset)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="时间切分预设"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([...SPLIT_PRESETS]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select></div>
             {preview ? preview.available === false
               ? <p className="text-xs text-rose">{valueLabel((preview.reason as Record<string, unknown> | undefined)?.message ?? '该预设不可用')}</p>
               : <div className="grid gap-2 sm:grid-cols-3">{(['train', 'validation', 'test'] as const).map(name => {
@@ -174,37 +182,28 @@ export function MyDataPage({ navigate, onLoginRequired }: {
           <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">训练模型</h2>
             <div className="grid gap-2">
               {methods.map(choice => <div key={choice.method} className="grid gap-1.5 rounded-sm border border-border-soft p-2.5">
-                <Checkbox checked={chosen.includes(choice.method)} disabled={!choice.available} onCheckedChange={() => toggle(choice.method)}>
-                  {choice.name}{choice.available ? '' : `（${choice.reason ?? '不可用'}）`}
-                </Checkbox>
+                <label className="inline-flex items-start gap-2 text-sm"><Checkbox checked={chosen.includes(choice.method)} disabled={!choice.available} onCheckedChange={() => toggle(choice.method)}/><span>{choice.name}{choice.available ? '' : `（${choice.reason ?? '不可用'}）`}</span></label>
                 {chosen.includes(choice.method) && choice.params.length ? <div className="grid gap-2 pl-6 sm:grid-cols-2">
                   {choice.params.map(spec => <label key={spec.name} className="grid gap-1 text-xs text-foreground-3">{spec.name}（{spec.min}–{spec.max}）
-                    <NumberInput aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any"
-                      value={params[choice.method]?.[spec.name] ?? ''}
-                      onChange={event => setParams(values => ({ ...values, [choice.method]: { ...(values[choice.method] ?? {}), [spec.name]: event.target.value } }))}/>
+                    <Input aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any" value={params[choice.method]?.[spec.name] ?? ''} onChange={event => setParams(values => ({ ...values, [choice.method]: { ...(values[choice.method] ?? {}), [spec.name]: event.target.value } }))} type="number"/>
                   </label>)}
                 </div> : null}
               </div>)}
             </div>
-            <Button variant="primary" loading={busy} disabled={!chosen.length || !preview || preview.available !== true} onClick={() => void train()}>
-              开始训练（{chosen.length} 个方法）
+            <Button variant='default' disabled={Boolean(!chosen.length || !preview || preview.available !== true) || Boolean(busy)} onClick={() => void train()} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}开始训练（{chosen.length} 个方法）
             </Button>
           </section>
           {current.mine ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">清洗与派生</h2>
-            <TextArea aria-label="清洗配方" value={recipe} onChange={event => setRecipe(event.target.value)}/>
+            <Textarea aria-label="清洗配方" value={recipe} onChange={event => setRecipe(event.target.value)}/>
             <div className="flex flex-wrap gap-2">
-              <Button loading={busy} onClick={() => void runCuration(false)}>预览清洗</Button>
-              <Button loading={busy} onClick={() => void runCuration(true)}>生成派生版本</Button>
+              <Button onClick={() => void runCuration(false)} variant="outline" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览清洗</Button>
+              <Button onClick={() => void runCuration(true)} variant="outline" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成派生版本</Button>
             </div>
             {curation ? <pre className="max-h-64 overflow-auto rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{JSON.stringify(curation, null, 2)}</pre> : null}
           </section> : null}
         </> : null}
       </div>
     </div>
-    <Dialog open={confirmDelete} onOpenChange={setConfirmDelete} title="删除这个数据版本？" width={460}
-      description="会删除该版本的登记、提交特征和文件，无法恢复；被模型或分析引用的版本会被拒绝。"
-      footer={<><Button onClick={() => setConfirmDelete(false)}>取消</Button><Button variant="danger" loading={busy} onClick={() => void removeVersion()}>确认删除</Button></>}>
-      {null}
-    </Dialog>
+    <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${460}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"删除这个数据版本？"}</AlertDialogTitle><AlertDialogDescription>{"会删除该版本的登记、提交特征和文件，无法恢复；被模型或分析引用的版本会被拒绝。"}</AlertDialogDescription></AlertDialogHeader>{null}<AlertDialogFooter>{<><Button onClick={() => setConfirmDelete(false)} variant="outline" type="button">取消</Button><Button variant='destructive' onClick={() => void removeVersion()} disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认删除</Button></>}</AlertDialogFooter></AlertDialogContent></AlertDialog>
   </section>
 }

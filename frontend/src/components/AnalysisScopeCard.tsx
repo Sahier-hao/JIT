@@ -1,4 +1,5 @@
-import { Button } from '../ui/controls'
+import { Button } from '@/components/ui/button'
+
 import type { AnalysisScope } from '../repositoryWorkspace'
 
 const number = (value: number | null) => value == null ? '—' : value.toLocaleString('zh-CN')
@@ -39,7 +40,7 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
           <p className="mt-0.5 text-xs text-foreground-3">{[scope.model.algorithmName, scope.model.featureSchemaVersion, scope.model.id?.slice(0, 8)].filter(Boolean).join(' · ')}</p>
         </div>
       </div>
-      {dataset ? <Button variant="ghost" size="sm" onClick={onOpenDataset}>查看数据集</Button> : null}
+      {dataset ? <Button variant="ghost" size="sm" onClick={onOpenDataset} type="button">查看数据集</Button> : null}
     </div>
     {trained && dataset && split ? <>
       <dl className="grid gap-3 sm:grid-cols-3">

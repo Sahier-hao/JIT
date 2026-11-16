@@ -1,22 +1,9 @@
-/**
- * 历史趋势视图（DTD-01～DTD-09、change make-trend-actionable 的 design D2～D7）。
- *
- * 数据取自与工作台同一次运行摘要响应（`/api/review-batch`），可以独立读取，也不要求先
- * 打开工作台。聚合的解析走独立路径 `trendContract.ts`：缺少该键即"未提供"，不合法即"不可用"，
- * 两种情况都不影响工作台、详情、清单与基线摘要。
- *
- * 本轮新增三件事：
- * - 分区带：按运行摘要声明的分区集合在图上标出范围与边界，并按时间桶的域裁剪（DTD-08）。
- * - 洞察：页面只渲染传入的洞察列表，不含任何具体算法；本轮注册"估计与观测的差异"（DTD-09、design D6）。
- * - 下钻：文本视图每行一个按钮，把该桶范围作为工作台的初始日期筛选（DTD-07、design D2/D5）。
- *
- * 时间轴按真实时间比例投影（不是按桶序号等距）：分区边界只有落在时间比例轴上才可能与摘要一致。
- */
-
+import { Folder, ChevronRight, TrendingUp, Info } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { type Dataset } from './domain'
 import { EmptyState, LoadingNotice } from './Feedback'
-import { Button } from './ui/controls'
-import { Icon } from './Icon'
+
+
 import { parseSummaryTrend, type TrendAggregate } from './trendContract'
 import { TrendChart, PartitionList, TrendTable, monthOf, signedPoints, drillSearch } from './components/report/TrendPanels'
 import { DEFAULT_INSIGHTS, INSIGHT_DISCLAIMER, type TrendInsight } from './trendInsights'
@@ -128,7 +115,7 @@ export function TrendPage({
           <LoadingNotice label="正在读取真实历史运行的摘要与趋势聚合。" />
         ) : (
           <EmptyState tone="alert" title="数据不可用" description={resource.error}>
-            <Button variant="primary" onClick={retry}>重新加载</Button>
+            <Button variant='default' onClick={retry} type="button">重新加载</Button>
           </EmptyState>
         )}
       </>
@@ -144,9 +131,9 @@ export function TrendPage({
       {!embedded ? <>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-4 py-2 text-sm">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="grid size-6 shrink-0 place-items-center rounded-sm bg-sunken text-foreground-3"><Icon name="project" size={14}/></span>
+          <span className="grid size-6 shrink-0 place-items-center rounded-sm bg-sunken text-foreground-3"><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/></span>
           <strong className="truncate text-foreground">{resource.data.project}</strong>
-          <Icon name="chevron" size={14} className="text-foreground-4"/>
+          <ChevronRight aria-hidden="true" focusable="false" strokeWidth={1.5} size={14} className="text-foreground-4"/>
           <span className="text-foreground-3">历史趋势</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
@@ -167,26 +154,26 @@ export function TrendPage({
         </div>
         {trend.state === 'ready' ? (
           <div className="flex items-center gap-2 text-foreground-3">
-            <Icon name="trend" size={20}/>
+            <TrendingUp aria-hidden="true" focusable="false" strokeWidth={1.5} size={20}/>
             <div className="grid leading-tight"><strong className="text-lg font-semibold tabular-nums text-foreground">{trend.data.buckets.length}</strong><span className="text-xs">个时间桶</span></div>
           </div>
         ) : null}
       </header>
       </> : null}
       <div className="flex gap-2 rounded-sm border border-blue/30 bg-blue-soft p-3 text-xs text-blue-deep">
-        <Icon name="info" size={16} className="mt-0.5 shrink-0"/>
+        <Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={16} className="mt-0.5 shrink-0"/>
         <div className="grid gap-0.5"><strong className="text-sm">历史观测 · 模型估计</strong><span>风险为模型估计，未经概率校准；观测比例来自历史标签聚合。</span></div>
       </div>
       {trend.state === 'absent' ? (
         <div className="grid gap-1 rounded-sm border border-border-soft bg-card p-3 text-xs text-foreground-2" role="status">
-          <div className="flex gap-2"><Icon name="info" size={16} className="mt-0.5 shrink-0"/><strong className="text-sm text-foreground">该运行未提供趋势聚合</strong></div>
+          <div className="flex gap-2"><Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={16} className="mt-0.5 shrink-0"/><strong className="text-sm text-foreground">该运行未提供趋势聚合</strong></div>
           <span>当前供给的运行产物里没有趋势聚合键，因此没有可核对的时间桶数据。其余视图（提交工作台、详情、优先审查清单与基线摘要）不受影响。</span>
           <a className="text-accent underline-offset-2 hover:underline" href="#/validation">前往验证数据列表</a>
         </div>
       ) : null}
       {trend.state === 'invalid' ? (
         <div className="grid gap-1 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert">
-          <div className="flex gap-2"><Icon name="info" size={16} className="mt-0.5 shrink-0"/><strong className="text-sm">趋势聚合不可用</strong></div>
+          <div className="flex gap-2"><Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={16} className="mt-0.5 shrink-0"/><strong className="text-sm">趋势聚合不可用</strong></div>
           <span>该运行提供了趋势聚合，但与约定不符：{trend.reason}。这里不展示可疑数值、不沿用上一次结果；工作台、详情、清单与基线摘要不受影响。</span>
         </div>
       ) : null}

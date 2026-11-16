@@ -1,9 +1,9 @@
-import { render, screen, waitFor } from '../test-utils'
+import { render, screen, waitFor, TEST_REVIEW_ACCOUNT } from '../test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { EVENT_READ_KEY, ProjectEvents, eventRoute } from './ProjectActivity'
 import { accountWorkKey, createWork, readWorks, saveWork } from '../prReview'
-import { TEST_REVIEW_ACCOUNT } from '../test-utils'
+
 import { snapshot } from '../prReview.fixture'
 import { event, PROJECT, response } from '../projectActivity.fixture'
 afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })

@@ -43,11 +43,7 @@ describe('材料规范', () => {
     const index = read(resolve(root, 'src/index.css'))
     expect(index).toMatch(/var\(--card\)/)
     expect(index).toMatch(/var\(--line-strong\)/)
-    const shared = [
-      'src/Feedback.tsx',
-      'src/ui/controls.tsx', 'src/ui/dialog.tsx', 'src/ui/drawer.tsx', 'src/ui/dropdown.tsx',
-      'src/ui/feedback.tsx', 'src/ui/popover.tsx', 'src/ui/segmented.tsx', 'src/ui/layout.tsx',
-    ]
+    const shared = ['src/Feedback.tsx', ...readdirSync(resolve(root, 'src/components/ui')).filter(file => file.endsWith('.tsx')).map(file => `src/components/ui/${file}`)]
     for (const file of shared) {
       const source = read(resolve(root, file))
       expect(source, file).not.toMatch(/#[0-9a-fA-F]{3,8}/)

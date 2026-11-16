@@ -10,8 +10,8 @@
  * - 详情额外带来源模型（`modelStrategy`）、降级原因与数据局限。
  */
 import { contractFailed, finiteNumber, record, recordList, text, textList, textOrNull, uuidText } from './apiContract'
-import type { Commit, Query } from './domain'
-import { toCommit } from './domain'
+import { type Commit, type Query, toCommit } from './domain'
+
 import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from './apiClient'

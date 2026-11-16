@@ -48,7 +48,7 @@ test('当前成功分析可核对并下载绑定数据集', async ({ page }, inf
   expect(JSON.stringify(dataset)).not.toContain('manifestPath')
 
   await page.goto(`/#/projects/${project.repositoryId}`)
-  await page.getByRole('navigation', { name: '项目工作台视图' }).getByRole('button', { name: '分析', exact: true }).click()
+  await page.getByRole('navigation', { name: '项目工作台视图' }).getByRole('link', { name: '分析', exact: true }).click()
   const trigger = page.getByRole('button', { name: '数据来源', exact: true })
   await trigger.focus()
   await page.keyboard.press('Enter')

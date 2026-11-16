@@ -1,9 +1,11 @@
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { ApiError } from '../apiContract'
 import {
   fetchEvaluationEvidence, type EvaluationEvidenceEntry, type EvidenceStatus,
 } from '../evaluationEvidenceClient'
-import { Button } from '../ui/controls'
+
 
 const STATUS_LABEL: Record<EvidenceStatus, string> = {
   available: '可用', stale: '陈旧', invalid: '无效',
@@ -73,7 +75,7 @@ export function ModelEvaluationEvidence({ method, expired }: {
   if (error) {
     return <section className="grid gap-2 rounded-sm border border-border-soft p-3">
       <h2>评价证据</h2>
-      <div className="text-xs text-rose" role="alert">{error}<Button size="sm" onClick={() => setRevision(value => value + 1)}>重试</Button></div>
+      <div className="text-xs text-rose" role="alert">{error}<Button size="sm" onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button></div>
     </section>
   }
   if (entries === null) {
@@ -86,15 +88,15 @@ export function ModelEvaluationEvidence({ method, expired }: {
       : entry.kind === 'line-candidate-evaluation' || entry.kind === 'line-candidates')
   return <section className="grid gap-2 rounded-sm border border-border-soft p-3">
     <h2>评价证据</h2>
-    {relevant.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
-      <thead><tr><th>类型</th><th>状态</th><th>规模</th><th>来源</th></tr></thead>
-      <tbody>{relevant.map(entry => <tr key={entry.evidenceId}>
-        <th>{kindText(entry)}</th>
-        <td>{STATUS_LABEL[entry.status]}{entry.reason ? <small>{entry.reason}</small> : null}</td>
-        <td>{scaleText(entry)}</td>
-        <td><code>{entry.source}</code><small>{entry.evidenceId}</small></td>
-      </tr>)}</tbody>
-    </table></div> : <p className="text-xs text-foreground-3">固定目录中没有与该模型方法匹配的跨仓库评价，也没有完整候选集报告。</p>}
+    {relevant.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
+      <TableHeader><TableRow><TableHead>类型</TableHead><TableHead>状态</TableHead><TableHead>规模</TableHead><TableHead>来源</TableHead></TableRow></TableHeader>
+      <TableBody>{relevant.map(entry => <TableRow key={entry.evidenceId}>
+        <TableHead>{kindText(entry)}</TableHead>
+        <TableCell>{STATUS_LABEL[entry.status]}{entry.reason ? <small>{entry.reason}</small> : null}</TableCell>
+        <TableCell>{scaleText(entry)}</TableCell>
+        <TableCell><code>{entry.source}</code><small>{entry.evidenceId}</small></TableCell>
+      </TableRow>)}</TableBody>
+    </Table></div> : <p className="text-xs text-foreground-3">固定目录中没有与该模型方法匹配的跨仓库评价，也没有完整候选集报告。</p>}
     <p className="text-xs leading-body text-foreground-3">方法级评价来自独立仓库的时间外与留一仓库实验，不绑定当前模型产物；行级候选是独立结构基线。数据版本变化时证据标为陈旧。</p>
   </section>
 }

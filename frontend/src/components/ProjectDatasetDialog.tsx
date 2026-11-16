@@ -1,6 +1,9 @@
+import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-react'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEffect, useState } from 'react'
-import { Button } from '../ui/controls'
-import { Dialog } from '../ui/dialog'
+
+
 import { FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { downloadProjectDataset, fetchProjectDataset, type ProjectDataset } from '../projectDatasetClient'
@@ -42,9 +45,7 @@ export function ProjectDatasetDialog({ repositoryId, syncId, open, onOpenChange 
     }
   }
 
-  return <Dialog open={open} onOpenChange={onOpenChange} title="本次分析的数据集" width={720}
-    footer={<Button onClick={() => onOpenChange(false)}>返回结果</Button>}>
-    {error ? <FailureNotice error={error} onRetry={() => { setDataset(null); setError(null); setRevision(value => value + 1) }}/> : dataset ? <div className="grid gap-4">
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${720}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"本次分析的数据集"}</DialogTitle></DialogHeader>{error ? <FailureNotice error={error} onRetry={() => { setDataset(null); setError(null); setRevision(value => value + 1) }}/> : dataset ? <div className="grid gap-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0"><h3 className="text-base font-semibold text-foreground">{dataset.datasetId}</h3><p className="mt-0.5 break-all text-xs text-foreground-3">{dataset.version}</p></div>
         <span className="rounded-sm bg-soft px-1.5 py-0.5 text-xs text-foreground-3">{dataset.schema}</span>
@@ -68,11 +69,10 @@ export function ProjectDatasetDialog({ repositoryId, syncId, open, onOpenChange 
         <h3 className="text-sm font-semibold text-foreground">下载</h3>
         <p className="text-xs leading-body text-foreground-3">CSV 包包含 manifest 和 SHA256SUMS，是完整性核对版本。</p>
         <div className="flex flex-wrap gap-2">
-          <Button loading={downloadBusy === 'zip'} disabled={!!downloadBusy} onClick={() => void download('zip')}>下载 CSV 包</Button>
-          <Button loading={downloadBusy === 'xlsx'} disabled={!!downloadBusy} onClick={() => void download('xlsx')}>下载 XLSX</Button>
+          <Button disabled={Boolean(!!downloadBusy) || Boolean(downloadBusy === 'zip')} onClick={() => void download('zip')} variant="outline" type="button">{downloadBusy === 'zip' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}下载 CSV 包</Button>
+          <Button disabled={Boolean(!!downloadBusy) || Boolean(downloadBusy === 'xlsx')} onClick={() => void download('xlsx')} variant="outline" type="button">{downloadBusy === 'xlsx' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}下载 XLSX</Button>
         </div>
         {downloadError ? <FailureNotice error={downloadError} onRetry={() => void download('zip')} retryLabel="重新下载 CSV 包"/> : null}
       </section>
-    </div> : <LoadingNotice label="正在核对数据集与文件哈希"/>}
-  </Dialog>
+    </div> : <LoadingNotice label="正在核对数据集与文件哈希"/>}<DialogFooter>{<Button onClick={() => onOpenChange(false)} variant="outline" type="button">返回结果</Button>}</DialogFooter></DialogContent></Dialog>
 }

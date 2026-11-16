@@ -1,10 +1,17 @@
-import { Icon } from '../Icon'
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { LoaderCircle, ChevronDown } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+
 import { useEffect, useRef, useState } from 'react'
-import { Empty } from '../ui/feedback'
-import { Segmented } from '../ui/segmented'
-import { Button, Select } from '../ui/controls'
-import { Dropdown } from '../ui/dropdown'
-import { Dialog } from '../ui/dialog'
+
+
+
+
+
 import { EmptyState, FailureNotice, LoadingNotice } from '../Feedback'
 import { displayTime } from '../domain'
 import { repositoryModels, type ModelChoice } from '../modelClient'
@@ -165,13 +172,11 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
       <div className="grid gap-3">
         {result?.supported === false ? null : <>
           <div className="flex flex-wrap items-center gap-2">
-            <Segmented aria-label="PR 范围" value={state} onChange={value => { setState(value as PRState); setPage(1) }} options={[{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]}/>
-            <Dropdown items={[{ key: 'updated', label: '按最近更新' }, { key: 'risk', label: '按风险最高' }]} onClick={key => setSortBy(key as 'updated' | 'risk')}>
-              <Button variant="ghost" size="sm" aria-haspopup="menu" aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`} trailing={<Icon name="chevronDown" size={13}/>}>排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}</Button>
-            </Dropdown>
+            <ToggleGroup type="single" value={String(state)} onValueChange={nextValue => { if (nextValue) (value => { setState(value as PRState); setPage(1) })(nextValue as typeof state); }} aria-label="PR 范围">{([{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
+            <DropdownMenu modal={false}><DropdownMenuTrigger asChild><Button variant="ghost" size="sm" aria-haspopup="menu" aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`} type="button">排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}{<ChevronDown aria-hidden="true" focusable="false" strokeWidth={1.5} size={13}/>}</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{([{ key: 'updated', label: '按最近更新' }, { key: 'risk', label: '按风险最高' }]).map(item => <DropdownMenuItem key={item.key} disabled={'disabled' in item && item.disabled === true} variant={'danger' in item && item.danger ? 'destructive' : 'default'} onSelect={() => (key => setSortBy(key as 'updated' | 'risk'))(item.key)}>{item.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              {tracking?.supported === false ? null : <Button icon={<span className={cn('size-1.5 rounded-full', tracking?.enabled ? 'bg-teal' : 'bg-foreground-4')} aria-hidden="true"/>} onClick={() => setTrackingOpen(true)}>{tracking?.enabled ? '自动分析已开启' : '自动分析'}</Button>}
-              <Button variant="primary" disabled={busy} onClick={refresh}>{busy ? '正在检查…' : '检查远端 PR'}</Button>
+              {tracking?.supported === false ? null : <Button onClick={() => setTrackingOpen(true)} variant="outline" type="button">{<span className={cn('size-1.5 rounded-full', tracking?.enabled ? 'bg-teal' : 'bg-foreground-4')} aria-hidden="true"/>}{tracking?.enabled ? '自动分析已开启' : '自动分析'}</Button>}
+              <Button variant='default' disabled={busy} onClick={refresh} type="button">{busy ? '正在检查…' : '检查远端 PR'}</Button>
             </div>
           </div>
         </>}
@@ -189,12 +194,12 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
             <span>模型 {modelName(batch.modelId)}</span>
             {batch.error ? <span role="alert" className="text-rose">{batch.error.message}</span> : null}
             {batchError ? <span role="alert" className="text-rose">{batchError}</span> : null}
-            {batch.status !== 'cancelled' && (batch.status === 'discovering' || batch.status === 'running') ? <Button size="sm" disabled={batchBusy || cancelBusy || batch.cancelRequested} onClick={() => setCancelOpen(true)}>{batch.cancelRequested || cancelBusy ? '正在取消…' : '取消批次'}</Button> : null}
-            {batch.counts.failed > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('failed')}>{batchBusy ? '正在重试…' : '仅重试失败项'}</Button> : null}
-            {batch.counts.interrupted > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('interrupted')}>{batchBusy ? '正在重试…' : '重新分析中断项'}</Button> : null}
+            {batch.status !== 'cancelled' && (batch.status === 'discovering' || batch.status === 'running') ? <Button size="sm" disabled={batchBusy || cancelBusy || batch.cancelRequested} onClick={() => setCancelOpen(true)} variant="outline" type="button">{batch.cancelRequested || cancelBusy ? '正在取消…' : '取消批次'}</Button> : null}
+            {batch.counts.failed > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('failed')} variant="outline" type="button">{batchBusy ? '正在重试…' : '仅重试失败项'}</Button> : null}
+            {batch.counts.interrupted > 0 && !batchActive ? <Button size="sm" disabled={batchBusy} onClick={() => void retryItems('interrupted')} variant="outline" type="button">{batchBusy ? '正在重试…' : '重新分析中断项'}</Button> : null}
           </div>
         </div> : null}
-        {batchError && !batch ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><span>{batchError}</span><Button size="sm" onClick={() => setAttempt(value => value + 1)}>重试读取</Button></div> : null}
+        {batchError && !batch ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><span>{batchError}</span><Button size="sm" onClick={() => setAttempt(value => value + 1)} variant="outline" type="button">重试读取</Button></div> : null}
         {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
         {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
         {result && !result.supported ? <EmptyState title="此项目不是公开 GitHub 来源" description="PR 发现和自动分析只读取公开 GitHub；分支分析和风险趋势仍可使用。"/> : null}
@@ -202,7 +207,7 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
 
         {result?.supported ? <div className="grid gap-3">
           {analysisError ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><span>{analysisError}</span></div> : null}
-          {result.errorCode ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="alert"><span>远端检查未完成（{result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。</span><Button size="sm" disabled={busy} onClick={refresh}>重试检查</Button></div> : null}
+          {result.errorCode ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="alert"><span>远端检查未完成（{result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。</span><Button size="sm" disabled={busy} onClick={refresh} variant="outline" type="button">重试检查</Button></div> : null}
           {rows.length ? <div className="grid gap-2">{rows.map(pr => {
             const hasWork = Boolean(result.owner && result.name && localWorks.has(workKey(result.owner, result.name, pr.number)))
             const rowRunning = ['queued', 'running', 'checking', 'collecting', 'scoring'].includes(pr.analysisStatus ?? '')
@@ -224,16 +229,16 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
               <div className="flex flex-wrap items-center gap-2">
                 {result.owner && result.name ? <>
                   {pr.analysisStatus !== 'completed'
-                    ? <Button size="sm" variant="secondary" disabled={rowRunning || analyzingNumber !== null} onClick={() => void analyzeOne(pr)}>{rowLabel}</Button>
-                    : <Button size="sm" variant="ghost" disabled={analyzingNumber !== null} onClick={() => openReanalyze(pr)}>换模型</Button>}
-                  <Button size="sm" variant={hasWork ? 'primary' : pr.analysisStatus === 'completed' ? 'secondary' : 'ghost'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })}>{hasWork ? '继续审查' : '查看 PR'}</Button>
+                    ? <Button size="sm" variant='outline' disabled={rowRunning || analyzingNumber !== null} onClick={() => void analyzeOne(pr)} type="button">{rowLabel}</Button>
+                    : <Button size="sm" variant="ghost" disabled={analyzingNumber !== null} onClick={() => openReanalyze(pr)} type="button">换模型</Button>}
+                  <Button size="sm" variant={hasWork ? 'default' : pr.analysisStatus === 'completed' ? 'outline' : 'ghost'} onClick={() => navigate({ name: 'pr-work', repositoryId, owner: result.owner!, repositoryName: result.name!, number: pr.number })} type="button">{hasWork ? '继续审查' : '查看 PR'}</Button>
                 </> : <a className="text-xs text-accent underline-offset-2 hover:underline" href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
               </div>
             </article>
-          })}</div> : <Empty description="当前范围没有 PR"/>}
+          })}</div> : <p className="py-8 text-center text-sm text-muted-foreground">{"当前范围没有 PR"}</p>}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-3">
             <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}{state === 'closed' ? ' · 已结束含已合并' : ''}</span>
-            {page > 1 || result.hasMore ? <nav className="flex items-center gap-2" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)}>上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)}>下一页</Button></nav> : null}
+            {page > 1 || result.hasMore ? <nav className="flex items-center gap-2" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)} variant="outline" type="button">上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)} variant="outline" type="button">下一页</Button></nav> : null}
           </div>
         </div> : null}
       </div>
@@ -242,29 +247,21 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
         <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">待处理 PR</h2><span className="text-xs text-foreground-4">{pendingRows.length} 个</span></div>
         <p className="text-xs text-foreground-3">分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
         <div className="grid gap-1.5">
-          {pendingRows.length === 0 ? <p className="py-4 text-center text-xs text-foreground-3">没有待处理 PR</p> : pendingRows.map(pr => <button key={pr.number} type="button" className="block w-full rounded-sm border border-border-soft bg-card p-2 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
+          {pendingRows.length === 0 ? <p className="py-4 text-center text-xs text-foreground-3">没有待处理 PR</p> : pendingRows.map(pr => <Button variant="ghost" key={pr.number} type="button" className="block w-full rounded-sm border border-border-soft bg-card p-2 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
             <span className="block truncate text-sm font-medium text-foreground"><b className="font-mono text-xs text-foreground-3">#{pr.number}</b> {pr.title}</span>
             <span className="mt-0.5 block text-xs text-foreground-3">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
-          </button>)}
+          </Button>)}
         </div>
       </aside> : null}
     </div>
 
-    <Dialog open={trackingOpen} onOpenChange={setTrackingOpen} title="PR 自动分析" width={620}>
-      <PRTrackingPanel repositoryId={repositoryId} onTracking={setTracking}/>
-    </Dialog>
-    <Dialog open={cancelOpen} onOpenChange={setCancelOpen} title="取消这次批量分析？" width={440}
-      description="将停止提交后续条目；已入队的单 PR 任务继续执行并保留结果。">
-      <div className="flex justify-end gap-2">
-        <Button onClick={() => setCancelOpen(false)}>返回</Button>
-        <Button variant="danger" loading={cancelBusy} onClick={() => void cancelBatch()}>确认取消</Button>
-      </div>
-    </Dialog>
-    <Dialog open={Boolean(reanalyzing)} onOpenChange={next => { if (!next) setReanalyzing(null) }} title={reanalyzing ? `换模型分析 #${reanalyzing.number}` : '换模型分析'} width={480}
-      footer={<><Button onClick={() => setReanalyzing(null)}>取消</Button><Button variant="primary" loading={reanalyzeBusy} disabled={!reanalyzeModel} onClick={() => void reanalyze()}>开始分析</Button></>}>
-      {reanalyzeOptions.length
-        ? <Select ariaLabel="重新分析模型" value={reanalyzeModel} onChange={setReanalyzeModel} options={reanalyzeOptions}/>
-        : <p className="text-xs text-foreground-3">没有其他可用的兼容模型</p>}
-    </Dialog>
+    <Dialog open={trackingOpen} onOpenChange={setTrackingOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${620}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"PR 自动分析"}</DialogTitle></DialogHeader><PRTrackingPanel repositoryId={repositoryId} onTracking={setTracking}/></DialogContent></Dialog>
+    <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${440}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"取消这次批量分析？"}</AlertDialogTitle><AlertDialogDescription>{"将停止提交后续条目；已入队的单 PR 任务继续执行并保留结果。"}</AlertDialogDescription></AlertDialogHeader><div className="flex justify-end gap-2">
+        <Button onClick={() => setCancelOpen(false)} variant="outline" type="button">返回</Button>
+        <Button variant='destructive' onClick={() => void cancelBatch()} disabled={Boolean(cancelBusy)} type="button">{cancelBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认取消</Button>
+      </div></AlertDialogContent></AlertDialog>
+    <Dialog open={Boolean(reanalyzing)} onOpenChange={next => { if (!next) setReanalyzing(null) }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${480}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{reanalyzing ? `换模型分析 #${reanalyzing.number}` : '换模型分析'}</DialogTitle></DialogHeader>{reanalyzeOptions.length
+        ? <Select value={reanalyzeModel == null ? '' : String(reanalyzeModel)} onValueChange={nextValue => (setReanalyzeModel)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="重新分析模型"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(reanalyzeOptions).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+        : <p className="text-xs text-foreground-3">没有其他可用的兼容模型</p>}<DialogFooter>{<><Button onClick={() => setReanalyzing(null)} variant="outline" type="button">取消</Button><Button variant='default' disabled={Boolean(!reanalyzeModel) || Boolean(reanalyzeBusy)} onClick={() => void reanalyze()} type="button">{reanalyzeBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}开始分析</Button></>}</DialogFooter></DialogContent></Dialog>
   </section>
 }
