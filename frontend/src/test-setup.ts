@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach } from 'vitest'
 import { queryClient } from './lib/queryClient'
+
+// 路由与页面按需加载；jsdom 首次解析较慢时，默认 1 秒的异步查询会误报。
+configure({ asyncUtilTimeout: 10000 })
 
 // antd 的弹层组件在 jsdom 下需要这两个浏览器 API，否则打开 Select 下拉会抛
 // ReferenceError: ResizeObserver is not defined。

@@ -11,7 +11,6 @@ import { Dialog } from '../ui/dialog'
 import { formatDate, valueLabel } from '../adminContracts'
 import { EmptyState, LoadingNotice } from '../Feedback'
 import type { Route } from '../navigation'
-import '../styles/user-workspace.css'
 
 const RECIPE = '{\n  "version": 1,\n  "rules": [\n    { "id": "max-value", "field": "la", "value": 10000 }\n  ]\n}'
 
@@ -126,31 +125,31 @@ export function MyDataPage({ navigate, onLoginRequired }: {
     } finally { setBusy(false) }
   }
 
-  if (datasets === null) return <section className="user-workspace">
-    {error ? <div className="user-empty"><p className="field-error" role="alert">{error}</p><Button onClick={onLoginRequired}>登录后重试</Button></div>
+  if (datasets === null) return <section className="grid gap-4">
+    {error ? <div className="grid justify-items-start gap-2"><p className="text-xs text-rose" role="alert">{error}</p><Button onClick={onLoginRequired}>登录后重试</Button></div>
       : <LoadingNotice label="正在读取我的数据"/>}
   </section>
-  if (!datasets.length) return <section className="user-workspace">
+  if (!datasets.length) return <section className="grid gap-4">
     <EmptyState title="还没有可用数据" description="在项目页点击「构建数据集」从真实提交采集，或使用管理员登记的共享数据集。">
       <Button variant="primary" onClick={() => navigate({ name: 'repositories' })}>去项目</Button>
     </EmptyState>
   </section>
-  return <section className="user-workspace">
-    <header className="user-page-head"><h1>我的数据</h1><span>{datasets.length} 个可用版本 · 每人最多保留 5 个自有版本</span></header>
-    {error ? <p className="field-error" role="alert">{error}</p> : null}
-    <div className="user-data-layout">
-      <div className="user-data-list" role="listbox" aria-label="我的数据版本">
+  return <section className="grid gap-4">
+    <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-soft pb-3"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的数据</h1><span className="text-xs text-foreground-3">{datasets.length} 个可用版本 · 每人最多保留 5 个自有版本</span></header>
+    {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
+    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+      <div className="grid max-h-[70vh] content-start gap-2 overflow-auto pr-1" role="listbox" aria-label="我的数据版本">
         {datasets.map(item => <button key={item.version} role="option" aria-selected={item.version === selected}
-          className={`user-data-card${item.version === selected ? ' is-active' : ''}`} onClick={() => setSelected(item.version)}>
-          <strong>{item.dataset}</strong>
-          <span>{item.shared ? '共享数据' : '我的数据'} · {item.schema}</span>
+          className={`grid gap-0.5 rounded-sm border p-2.5 text-left text-xs transition-colors ${item.version === selected ? 'border-accent bg-accent-soft' : 'border-border-soft bg-card hover:bg-hover'}`} onClick={() => setSelected(item.version)}>
+          <strong className="truncate text-sm font-medium text-foreground">{item.dataset}</strong>
+          <span className="text-foreground-3">{item.shared ? '共享数据' : '我的数据'} · {item.schema}</span>
           <span>{valueLabel(item.quality.includedRows)} 行 · {valueLabel(item.quality.positiveLabels)} 正例</span>
-          <code>{item.version}</code>
+          <code className="break-all font-mono text-[11px] text-foreground-4">{item.version}</code>
         </button>)}
       </div>
-      <div className="user-data-detail">
+      <div className="grid gap-3">
         {current ? <>
-          <dl className="admin-facts">
+          <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
             <div><dt>版本</dt><dd><code>{current.version}</code></dd></div>
             <div><dt>时间范围</dt><dd>{formatDate(current.timeRange.start)} — {formatDate(current.timeRange.end)}</dd></div>
             <div><dt>原始 / 纳入</dt><dd>{valueLabel(current.quality.rawRows)} / {valueLabel(current.quality.includedRows)}</dd></div>
@@ -158,28 +157,28 @@ export function MyDataPage({ navigate, onLoginRequired }: {
             <div><dt>CSV SHA-256</dt><dd><code>{valueLabel(current.file.sha256)}</code></dd></div>
             <div><dt>来源</dt><dd>{valueLabel(current.source.url)}</dd></div>
           </dl>
-          <div className="user-data-actions">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={() => exportDataset(current.version)}>导出 CSV 包</Button>
             <Button onClick={() => setSelected(current.version)}>刷新版本</Button>
             {current.mine ? <Button variant="danger" loading={busy} onClick={() => setConfirmDelete(true)}>删除此版本</Button> : null}
           </div>
-          <section className="user-panel"><h2>时间切分</h2>
-            <div className="user-inline"><Select ariaLabel="时间切分预设" value={preset} onChange={setPreset} options={[...SPLIT_PRESETS]}/></div>
+          <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">时间切分</h2>
+            <div className="flex flex-wrap items-center gap-2"><Select ariaLabel="时间切分预设" value={preset} onChange={setPreset} options={[...SPLIT_PRESETS]}/></div>
             {preview ? preview.available === false
-              ? <p className="field-error">{valueLabel((preview.reason as Record<string, unknown> | undefined)?.message ?? '该预设不可用')}</p>
-              : <div className="user-split-grid">{(['train', 'validation', 'test'] as const).map(name => {
+              ? <p className="text-xs text-rose">{valueLabel((preview.reason as Record<string, unknown> | undefined)?.message ?? '该预设不可用')}</p>
+              : <div className="grid gap-2 sm:grid-cols-3">{(['train', 'validation', 'test'] as const).map(name => {
                 const part = (preview.partitions as Record<string, Record<string, unknown>> | undefined)?.[name]
                 return <div key={name}><strong>{{ train: '训练', validation: '验证', test: '测试' }[name]}</strong><span>{valueLabel(part?.records)} 行 · {valueLabel(part?.positives)} 正例</span><span>{part?.start ? `${formatDate(part.start)} — ${formatDate(part.end)}` : '—'}</span></div>
-              })}</div> : <p className="quiet-empty">正在计算切分…</p>}
+              })}</div> : <p className="py-4 text-center text-xs text-foreground-3">正在计算切分…</p>}
           </section>
-          <section className="user-panel"><h2>训练模型</h2>
-            <div className="user-methods">
-              {methods.map(choice => <div key={choice.method} className="user-method">
+          <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">训练模型</h2>
+            <div className="grid gap-2">
+              {methods.map(choice => <div key={choice.method} className="grid gap-1.5 rounded-sm border border-border-soft p-2.5">
                 <Checkbox checked={chosen.includes(choice.method)} disabled={!choice.available} onCheckedChange={() => toggle(choice.method)}>
                   {choice.name}{choice.available ? '' : `（${choice.reason ?? '不可用'}）`}
                 </Checkbox>
-                {chosen.includes(choice.method) && choice.params.length ? <div className="admin-method-params">
-                  {choice.params.map(spec => <label key={spec.name}>{spec.name}（{spec.min}–{spec.max}）
+                {chosen.includes(choice.method) && choice.params.length ? <div className="grid gap-2 pl-6 sm:grid-cols-2">
+                  {choice.params.map(spec => <label key={spec.name} className="grid gap-1 text-xs text-foreground-3">{spec.name}（{spec.min}–{spec.max}）
                     <NumberInput aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any"
                       value={params[choice.method]?.[spec.name] ?? ''}
                       onChange={event => setParams(values => ({ ...values, [choice.method]: { ...(values[choice.method] ?? {}), [spec.name]: event.target.value } }))}/>
@@ -191,13 +190,13 @@ export function MyDataPage({ navigate, onLoginRequired }: {
               开始训练（{chosen.length} 个方法）
             </Button>
           </section>
-          {current.mine ? <section className="user-panel"><h2>清洗与派生</h2>
+          {current.mine ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">清洗与派生</h2>
             <TextArea aria-label="清洗配方" value={recipe} onChange={event => setRecipe(event.target.value)}/>
-            <div className="user-inline">
+            <div className="flex flex-wrap gap-2">
               <Button loading={busy} onClick={() => void runCuration(false)}>预览清洗</Button>
               <Button loading={busy} onClick={() => void runCuration(true)}>生成派生版本</Button>
             </div>
-            {curation ? <pre className="user-json">{JSON.stringify(curation, null, 2)}</pre> : null}
+            {curation ? <pre className="max-h-64 overflow-auto rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{JSON.stringify(curation, null, 2)}</pre> : null}
           </section> : null}
         </> : null}
       </div>

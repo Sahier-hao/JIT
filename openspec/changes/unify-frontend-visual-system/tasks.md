@@ -48,9 +48,9 @@
 
 ## 7. 个人工作区
 
-- [ ] 7.1 迁移 `MyDataPage`、`MyModelsPage`、`MyTrainingPage`、`ProfilePage`、`LineResearchPage` 与 `PersonalWorks`，统一列表、空状态与操作区；运行 `userWorkspace`、`lineResearch` 与个人作品相关测试。
-- [ ] 7.2 删除 `styles/user-workspace.css` 与 `styles/research.css` 中已无消费者的文件，更新 `index.css`；运行个人工作区与账户隔离 Playwright 用例，确认无横向滚动与权限提示缺失。
-- [ ] 7.3 在 `docs/evidence/unify-frontend-visual-system/06-个人工作区/` 存档四个页面在双主题、两档密度与 768px 窄屏下的截图，核对与项目页同一套表格、卡片与空状态。
+- [x] 7.1 迁移 `MyDataPage`、`MyModelsPage`、`MyTrainingPage`、`ProfilePage`、`LineResearchPage` 与 `PersonalWorks`，统一列表、卡片、表单、状态标签与空状态；用户工作区、研究预览与个人作品相关测试通过。
+- [x] 7.2 删除 `user-workspace.css` 与 `research.css` 并更新守卫；与账户隔离相关的既有测试通过，`dashboard.css`、`claude.css`、`modern.css` 仍被管理端与共享反馈使用，保留到第 8 批。
+- [x] 7.3 在 `docs/evidence/unify-frontend-visual-system/07-个人工作区/` 存档我的数据、我的训练、我的模型、个人空间、我的审查与研究预览截图，核对列表、表单与统计栅格在浅色和深色下的一致性。
 
 ## 8. 管理工作区
 

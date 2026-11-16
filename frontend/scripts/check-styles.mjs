@@ -32,11 +32,9 @@ export const ALLOWED_STYLE_FILES = [
   'src/styles/project-redesign.css',
   'src/styles/project-workspace.css',
   'src/styles/project.css',
-  'src/styles/research.css',
   'src/styles/tokens.css',
   'src/styles/content.css',
   'src/styles/update-status.css',
-  'src/styles/user-workspace.css',
   'src/styles/workbench.css',
 ]
 
@@ -63,11 +61,6 @@ export const ALLOWED_ENTRY_IMPORTS = [
 export const ALLOWED_TSX_IMPORTS = [
   ['src/main.tsx', './index.css'],
   ['src/pages/AnalysisComparison.tsx', './analysis-comparison.css'],
-  ['src/pages/LineResearchPage.tsx', '../styles/research.css'],
-  ['src/pages/MyDataPage.tsx', '../styles/user-workspace.css'],
-  ['src/pages/MyModelsPage.tsx', '../styles/user-workspace.css'],
-  ['src/pages/MyTrainingPage.tsx', '../styles/user-workspace.css'],
-  ['src/pages/ProfilePage.tsx', '../styles/user-workspace.css'],
   ['src/TrendPage.tsx', './trend.css'],
 ]
 
