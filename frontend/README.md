@@ -6,7 +6,7 @@
 
 - React 19 + TypeScript + Vite。
 - 路由：React Router 7 的 `createHashRouter`；地址继续使用 `#/projects/...`，旧链接由 `navigation.ts` 的解析器映射。
-- 样式：Tailwind CSS 4（只取 theme/utilities，不启用 preflight）+ `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把令牌映射为 Tailwind 语义色，四套主题由 `html[data-theme]` 切换。
+- 样式：Tailwind CSS 4 + `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把全部令牌映射为 Tailwind 语义色、字号、间距与圆角，四套主题由 `html[data-theme]` 切换，两档密度由 `html[data-density]` 切换。外观规则见 [界面设计规范](../docs/界面设计规范.md)；`npm run check:styles` 检查样式只从登记的位置产生。preflight 在旧页面样式层删除后启用，当前阶段关闭。
 - 组件：Mantine 8（`@mantine/core`）。`src/ui/` 是适配层，把项目既有 API 映射到 Mantine 的 Button、TextInput、Select、Checkbox、Switch、Modal、Drawer、SegmentedControl、Menu、Tooltip、Alert 等组件；颜色、圆角与字体通过 `lib/mantineTheme.ts` 和 `styles/mantine-bridge.css` 指回设计令牌，四套主题继续生效。
 - 图标：`Icon.tsx` 的自绘 SVG 与 lucide-react。
 - 代码对比：react-diff-view + refractor；图表为手写 SVG。

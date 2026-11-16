@@ -333,3 +333,24 @@ html[data-theme="paper"] {
   --hover: #E7EAE8;
   --scrim: #101413;
 }
+
+/* ---------- 密度（2 档）：只改间距，不改字号、颜色与层级 ----------
+ * 选择器特异性高于 :root，因此在任一主题下都生效；主题块不声明这些键。
+ * 工具类 `h-row`、`px-cell-x`、`p-card`、`gap-section`、`px-page-x` 读取它们。
+ */
+:root {
+  --sp-row: 40px;
+  --sp-cell-x: 12px;
+  --sp-cell-y: 10px;
+  --sp-card: 16px;
+  --sp-section: 24px;
+  --sp-page-x: 24px;
+  --sp-page-x-narrow: 16px;
+}
+
+html[data-density="compact"] {
+  --sp-row: 32px;
+  --sp-cell-y: 6px;
+  --sp-card: 12px;
+  --sp-section: 16px;
+}

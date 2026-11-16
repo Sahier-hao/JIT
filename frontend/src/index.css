@@ -4,7 +4,8 @@
 /* Mantine 组件样式必须先于其他 import 加载。 */
 @import '@mantine/core/styles.css';
 
-/* Tailwind 只取工具类，preflight 关闭以避免覆盖 base.css 的重置。 */
+/* Tailwind 只取主题与工具类；preflight 在页面迁移完成后随收尾批次启用，
+ * 以免在旧样式层仍在时改变列表、表单与 SVG 的默认呈现。 */
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
@@ -33,35 +34,142 @@
 @import './styles/workbench-modern.css';
 
 /*
- * 把现有设计令牌映射为 Tailwind 语义色，让新组件与旧页面共用同一套变量。
- * 主题切换仍由 html[data-theme] 决定，Tailwind 不自己保存颜色。
+ * 主题桥接：把 tokens.css 的全部语义键暴露给 Tailwind。
+ *
+ * - 使用 `@theme inline` 让工具类直接引用令牌变量，主题切换仍由 html[data-theme] 决定，
+ *   Tailwind 不保存颜色状态。
+ * - 这里只做映射，不定义值；新增令牌必须同步补到这里，`theme.test.ts` 会校验。
+ * - 圆角档位按名称对齐：sm=6 / md=8 / lg=12 / xl=16 / 2xl=20，避免 `rounded-lg` 与
+ *   `var(--r-lg)` 名实不符。
  */
 @theme inline {
+  /* ---------- 表面与文字 ---------- */
   --color-background: var(--canvas);
   --color-foreground: var(--fg);
+  --color-foreground-2: var(--fg-2);
+  --color-foreground-3: var(--fg-3);
+  --color-foreground-4: var(--fg-4);
+  --color-foreground-inverse: var(--fg-inv);
+
   --color-card: var(--card);
   --color-card-foreground: var(--fg);
   --color-popover: var(--card);
   --color-popover-foreground: var(--fg);
+  --color-rail: var(--rail);
+  --color-sunken: var(--sunken);
+  --color-soft: var(--soft);
+  --color-strong: var(--strong);
+
+  /* ---------- 线与交互 ---------- */
+  --color-border: var(--line);
+  --color-border-strong: var(--line-strong);
+  --color-border-soft: var(--line-soft);
+  --color-input: var(--line-strong);
+  --color-hover: var(--hover);
+  --color-scrim: var(--scrim);
+
+  /* ---------- 强调与主行动 ---------- */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-hover);
+  --color-ring: var(--accent-ring);
+
   --color-primary: var(--btn);
+  --color-primary-hover: var(--btn-hover);
   --color-primary-foreground: var(--btn-fg);
+  --color-shadow-ink: var(--shadow-ink);
   --color-secondary: var(--sunken);
   --color-secondary-foreground: var(--fg-2);
   --color-muted: var(--sunken);
   --color-muted-foreground: var(--fg-3);
-  --color-accent: var(--accent-soft);
-  --color-accent-foreground: var(--accent-hover);
   --color-destructive: var(--risk-high);
   --color-destructive-foreground: #ffffff;
-  --color-border: var(--line);
-  --color-input: var(--line-strong);
-  --color-ring: var(--accent-ring);
 
+  /* ---------- 五个色族：soft 当底、base 当填充、deep 当文字 ---------- */
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-blue-deep: var(--blue-deep);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-teal-deep: var(--teal-deep);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-amber-deep: var(--amber-deep);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
+  --color-rose-deep: var(--rose-deep);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-deep: var(--violet-deep);
+
+  /* ---------- 深色面：只给代码、终端与模型输出 ---------- */
+  --color-dark: var(--dark);
+  --color-dark-elevated: var(--dark-elevated);
+  --color-dark-soft: var(--dark-soft);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-soft: var(--on-dark-soft);
+
+  /* ---------- 风险色阶 ---------- */
+  --color-risk: var(--risk);
+  --color-risk-mid: var(--risk-mid);
+  --color-risk-high: var(--risk-high);
+  --color-risk-strong: var(--risk-strong);
+  --color-risk-foreground: var(--risk-fg);
+  --color-risk-track: var(--risk-track);
+  --color-risk-soft: var(--risk-soft);
+
+  /* ---------- 图表 ---------- */
+  --color-chart-obs: var(--chart-obs);
+  --color-chart-est: var(--chart-est);
+  --color-chart-bar: var(--chart-bar);
+  --color-chart-hatch: var(--chart-hatch);
+
+  /* ---------- 字体 ---------- */
+  --font-sans: var(--sans);
+  --font-display: var(--display);
+  --font-mono: var(--mono);
+
+  /* ---------- 字号与行高：12/13/14/16/20/24/28 ---------- */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.4;
+  --text-xs: 12px;
+  --text-xs--line-height: 1.5;
+  --text-sm: 13px;
+  --text-sm--line-height: 1.5;
+  --text-base: 14px;
+  --text-base--line-height: 1.6;
+  --text-lg: 16px;
+  --text-lg--line-height: 1.4;
+  --text-xl: 20px;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 28px;
+  --text-3xl--line-height: 1.2;
+
+  --leading-tight: 1.2;
+  --leading-title: 1.3;
+  --leading-body: 1.6;
+
+  /* ---------- 圆角：6 / 8 / 12 / 16 / 20 ---------- */
   --radius-sm: var(--r);
   --radius-md: var(--r-xs);
   --radius-lg: var(--r-lg);
   --radius-xl: var(--r-md);
+  --radius-2xl: var(--r-xl);
 
-  --font-sans: var(--sans);
-  --font-mono: var(--mono);
+  /* ---------- 阴影：只用三级 ---------- */
+  --shadow-1: var(--sh-1);
+  --shadow-2: var(--sh-2);
+  --shadow-3: var(--sh-3);
+
+  /* ---------- 密度间距：读取 tokens.css 的密度变量 ---------- */
+  --spacing-row: var(--sp-row);
+  --spacing-cell-x: var(--sp-cell-x);
+  --spacing-cell-y: var(--sp-cell-y);
+  --spacing-card: var(--sp-card);
+  --spacing-section: var(--sp-section);
+  --spacing-page-x: var(--sp-page-x);
+  --spacing-page-x-narrow: var(--sp-page-x-narrow);
 }
