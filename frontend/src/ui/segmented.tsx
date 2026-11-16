@@ -1,7 +1,11 @@
-import { SegmentedControl as MantineSegmentedControl } from '@mantine/core'
-import clsx from 'clsx'
+/**
+ * 分段控件：单选按钮组。
+ *
+ * 语义是 radiogroup，保留原有 `value / onChange / options` API；
+ * 选中态用表面与文字色区分，并保持可见焦点。
+ */
+import { cn } from '../lib/utils'
 
-/** 分段控件：由 Mantine SegmentedControl 渲染，保持原有 value/onChange 语义。 */
 export function Segmented<T extends string | number>({ value, onChange, options, ariaLabel, 'aria-label': ariaLabelProp, size = 'md', className }: {
   value: T
   onChange: (value: T) => void
@@ -11,12 +15,26 @@ export function Segmented<T extends string | number>({ value, onChange, options,
   size?: 'sm' | 'md'
   className?: string
 }) {
-  return <MantineSegmentedControl
-    data={options.map(option => ({ label: option.label, value: String(option.value), disabled: option.disabled }))}
-    value={String(value)}
-    onChange={next => { const found = options.find(option => String(option.value) === next); if (found) onChange(found.value) }}
-    size={size === 'sm' ? 'xs' : 'sm'}
+  return <div
+    role="radiogroup"
     aria-label={ariaLabel ?? ariaLabelProp}
-    className={clsx('ui-segmented', className)}
-  />
+    className={cn('inline-flex items-center gap-0.5 rounded-md border border-border-soft bg-sunken p-0.5', className)}
+  >
+    {options.map(option => {
+      const selected = option.value === value
+      return <button
+        key={String(option.value)}
+        type="button"
+        role="radio"
+        aria-checked={selected}
+        disabled={option.disabled}
+        onClick={() => onChange(option.value)}
+        className={cn(
+          'rounded-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:opacity-50',
+          size === 'sm' ? 'h-6 px-2 text-xs' : 'h-7 px-2.5 text-xs',
+          selected ? 'bg-card text-foreground shadow-1' : 'text-foreground-3 hover:text-foreground',
+        )}
+      >{option.label}</button>
+    })}
+  </div>
 }

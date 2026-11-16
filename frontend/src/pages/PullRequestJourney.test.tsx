@@ -82,7 +82,7 @@ it('restores an unfinished delivery note and conclusion choice after reopening',
   first.unmount()
   render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>)
   await user.click(await screen.findByRole('button', { name: '输出意见' }))
-  expect(screen.getByRole('combobox', { name: '本轮结论' })).toHaveValue('暂缓并说明原因')
+  expect(screen.getByRole('combobox', { name: '本轮结论' })).toHaveTextContent('暂缓并说明原因')
   expect(screen.getByRole('textbox', { name: '本轮结论说明' })).toHaveValue('Still checking the expiry boundary')
 })
 

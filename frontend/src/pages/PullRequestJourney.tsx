@@ -1,3 +1,4 @@
+import { Icon } from '../Icon'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Space, Tag, Tooltip } from '../ui/feedback'
 import { Button, Input, Select } from '../ui/controls'
@@ -5,7 +6,6 @@ import { Drawer } from '../ui/drawer'
 import { Dialog } from '../ui/dialog'
 import { Segmented } from '../ui/segmented'
 import * as ui from '../ui/controls'
-import { ArrowLeft, ExternalLink, Eye, FileText, Plus, RefreshCw, Save, Search } from 'lucide-react'
 import { repositoryRoute, type Route } from '../navigation'
 import { CodeDiff } from '../ui/CodeDiff'
 import { FailureNotice, LoadingNotice } from '../Feedback'
@@ -66,7 +66,7 @@ export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, s
   }
   const file = source?.files[fileIndex]
   return <section className="pr-fixed-preview">
-    <ui.Button variant="ghost" size="sm" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
+    <ui.Button variant="ghost" size="sm" icon={<Icon name="arrowLeft"/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })}>返回{repositoryId ? '项目 PR' : '站内提醒'}</ui.Button>
     <header className="page-heading"><div><h1>固定快照 · PR #{number}</h1><p>{owner}/{repositoryName} · 版本 {snapshotId}</p></div></header>
     <div className="pr-update-note"><strong>固定来源只读预览</strong><p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>{existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}</div>
     {personal.error ? <p className="field-error" role="alert">{personal.error}；现有存储未清空。</p> : null}
@@ -342,7 +342,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       <div className="wb-head-main">
         <div className="wb-head-text">
           <div className="wb-crumb">
-            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<ArrowLeft/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
+            <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" className="wb-back" icon={<Icon name="arrowLeft"/>} onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })}>{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
             <span className="wb-sep">/</span>
             <span>{owner}/{repositoryName}</span>
             <span className="wb-sep">·</span>
@@ -364,8 +364,8 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
           </div>
         </div>
         <div className="wb-head-actions">
-          <Button icon={<Eye/>} onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本">查看只读版本</Button>
-          <Button icon={<RefreshCw/>} loading={busy} onClick={() => void check()} aria-label="检查 PR 更新">检查 PR 更新</Button>
+          <Button icon={<Icon name="eye"/>} onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本">查看只读版本</Button>
+          <Button icon={<Icon name="refresh"/>} loading={busy} onClick={() => void check()} aria-label="检查 PR 更新">检查 PR 更新</Button>
           <Select
             className="wb-interest"
             aria-label="个人关注状态"
@@ -373,8 +373,8 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
             onChange={value => commit({ ...current.current!, interest: value as PRWork['interest'] })}
             options={[{ value: 'active', label: '关注中' }, { value: 'paused', label: '已暂停' }, { value: 'ended', label: '已结束' }]}
           />
-          <Button icon={<FileText/>} onClick={() => setDrawer('source')} aria-label="版本与说明">版本与说明</Button>
-          <Button variant="primary" icon={<ExternalLink/>} onClick={() => setDrawer('delivery')} aria-label="输出意见">输出意见</Button>
+          <Button icon={<Icon name="fileText"/>} onClick={() => setDrawer('source')} aria-label="版本与说明">版本与说明</Button>
+          <Button variant="primary" icon={<Icon name="external"/>} onClick={() => setDrawer('delivery')} aria-label="输出意见">输出意见</Button>
         </div>
       </div>
       <div className="wb-meter" aria-hidden="true"><span style={{ width: `${readPercent}%` }}/></div>
@@ -425,11 +425,11 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       <aside className="wb-files" aria-label="提交与文件">
         <div className="wb-pane-head"><h2>文件</h2><span className="wb-count">{selectedCommit ? `${scopedFiles.length} 个文件` : `${live.files.length}/${live.totalFiles}`}</span></div>
         <div className="wb-file-scope">
-          <Button size="sm" icon={<ArrowLeft/>} onClick={showCommitList}>提交列表</Button>
+          <Button size="sm" icon={<Icon name="arrowLeft"/>} onClick={showCommitList}>提交列表</Button>
           {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code><Button variant="link" size="sm" onClick={() => selectCommit(null)}>全部文件</Button></> : <span>全部文件</span>}
         </div>
         {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="wb-pane-note">{scoredCommits === 0 ? '此版本尚未分析，无法按提交筛选文件；下方显示全部文件。' : '这条提交没有文件映射（旧分析），下方仍显示全部文件。'}</p> : null}
-        <Input size="sm" allowClear prefix={<Search/>} placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径"/>
+        <Input size="sm" allowClear prefix={<Icon name="search"/>} placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径"/>
         <Segmented size="sm" aria-label="文件排序" value={fileOrder} onChange={value => setFileOrder(value as 'risk' | 'path')} options={[{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]}/>
         <div className="wb-file-list" role="listbox" aria-label="改动文件">
           {visibleFiles.map(f => {
@@ -513,7 +513,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
         </> : <div className="wb-code-empty"><p>这个版本没有可展示的文件，请核对 GitHub 来源。</p></div>}
       </section>
       <aside className="wb-notes" aria-label="问题与人工记录">
-        <div className="wb-pane-head"><h2>问题</h2><Button aria-label="新建" size="sm" variant="ghost" icon={<Plus/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
+        <div className="wb-pane-head"><h2>问题</h2><Button aria-label="新建" size="sm" variant="ghost" icon={<Icon name="plus"/>} onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }}>新建</Button></div>
         <div className="wb-question-list">
           {round.questions.map(q => <button key={q.id} className={`wb-question${selected?.id === q.id ? ' is-active' : ''}`} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
             <span className="wb-question-body">{q.body.slice(0, 60) || '未填写的问题'}</span>
@@ -547,9 +547,9 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
           {!live.commitsComplete ? <p>提交列表未完整加载，请在 GitHub 核对其余提交；文件阅读不依赖模型。</p> : null}
         </details>
         <div className="wb-drawer-links">
-          <Button size="sm" icon={<ExternalLink/>} href={live.url} target="_blank" aria-label="在 GitHub 核对 PR">在 GitHub 核对 PR</Button>
+          <Button size="sm" icon={<Icon name="external"/>} href={live.url} target="_blank" aria-label="在 GitHub 核对 PR">在 GitHub 核对 PR</Button>
           <Button size="sm" onClick={() => navigate(repositoryRoute(live.repositoryId))}>项目分析与模型线索</Button>
-          <Button size="sm" icon={<Save/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
+          <Button size="sm" icon={<Icon name="save"/>} onClick={() => setDrawer('backup')} aria-label="草稿备份与反馈">草稿备份与反馈</Button>
         </div>
       </div>
     </Drawer>

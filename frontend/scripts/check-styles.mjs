@@ -29,7 +29,6 @@ export const ALLOWED_STYLE_FILES = [
   'src/styles/components.css',
   'src/styles/dashboard.css',
   'src/styles/entry.css',
-  'src/styles/mantine-bridge.css',
   'src/styles/modern.css',
   'src/styles/pr-review.css',
   'src/styles/product.css',
@@ -48,7 +47,6 @@ export const ALLOWED_STYLE_FILES = [
 /** index.css 允许的样式导入（包导入如 tailwindcss / @mantine 不在此列）。 */
 export const ALLOWED_ENTRY_IMPORTS = [
   './styles/tokens.css',
-  './styles/mantine-bridge.css',
   './styles/base.css',
   './styles/components.css',
   './styles/product.css',
@@ -83,17 +81,8 @@ export const ALLOWED_TSX_IMPORTS = [
   ['src/TrendPage.tsx', './trend.css'],
 ]
 
-/** 收尾前允许引用 Mantine 的文件；删除依赖时应清空。 */
-export const MANTINE_PENDING = [
-  'src/App.tsx',
-  'src/lib/mantineTheme.ts',
-  'src/test-utils.tsx',
-  'src/ui/controls.tsx',
-  'src/ui/dialog.tsx',
-  'src/ui/dropdown.tsx',
-  'src/ui/feedback.tsx',
-  'src/ui/segmented.tsx',
-]
+/** 收尾前允许引用 Mantine 的文件；删除依赖时清空。 */
+export const MANTINE_PENDING = []
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {

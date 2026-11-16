@@ -4,7 +4,7 @@
  * 只负责表单与请求，成功后把作业交回给页面；记录列表与「当前结果」由页面刷新。
  * 表单本身不带展开与收起，由调用方放进对话框里呈现。
  */
-import { ArrowRight } from 'lucide-react'
+import { Icon } from '../Icon'
 import { Button, Input } from '../ui/controls'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRepositorySync, type SyncForm } from '../apiClient'
@@ -148,7 +148,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     <div className="form-submit">
       <div className="form-submit-actions">
         {onCancel ? <Button onClick={onCancel} disabled={busy}>取消</Button> : null}
-        <Button type="submit" variant="primary" aria-label="开始分析" loading={busy} disabled={blocked}>{busy ? '正在发起…' : '开始分析'}<ArrowRight size={14}/></Button>
+        <Button type="submit" variant="primary" aria-label="开始分析" loading={busy} disabled={blocked}>{busy ? '正在发起…' : '开始分析'}<Icon name="arrow" size={14}/></Button>
       </div>
     </div>
   </form>

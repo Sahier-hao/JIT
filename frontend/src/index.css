@@ -1,9 +1,6 @@
 /* 声明层顺序：基础重置低于工具类，组件层可被页面规则覆盖。 */
 @layer theme, base, components, utilities;
 
-/* Mantine 组件样式必须先于其他 import 加载。 */
-@import '@mantine/core/styles.css';
-
 /* Tailwind 只取主题与工具类；preflight 在页面迁移完成后随收尾批次启用，
  * 以免在旧样式层仍在时改变列表、表单与 SVG 的默认呈现。 */
 @import 'tailwindcss/theme.css' layer(theme);
@@ -11,7 +8,6 @@
 
 /* Tokens、共享组件、领域页面、产品组合，最后是现代外壳。 */
 @import './styles/tokens.css';
-@import './styles/mantine-bridge.css';
 @import './styles/base.css';
 @import './styles/components.css';
 

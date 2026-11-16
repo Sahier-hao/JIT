@@ -19,7 +19,7 @@ export function Popover({ trigger, children, label, open, onOpenChange }: {
         align="start"
         sideOffset={8}
         aria-label={label}
-        className="z-[60] w-72 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-[var(--sh-2)] outline-none"
+        className="z-[60] w-72 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-2 outline-none"
       >
         {children}
         <PopoverPrimitive.Arrow className="fill-[var(--card)]"/>

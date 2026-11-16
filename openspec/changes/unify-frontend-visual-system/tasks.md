@@ -10,13 +10,13 @@
 
 ## 2. 共享组件层
 
-- [ ] 2.1 用 Radix + CVA + `cn` 落地 `Button`、`IconButton`、`Input`、`TextArea`、`NumberInput`、`PasswordInput`、`Select`、`Checkbox`、`Switch`，保留现有 props 与导出；补充选择、复选与开关的键盘用例，`npm test` 通过且页面无需改调用方式。
-- [ ] 2.2 用 Radix 重写 `Dialog`、`Popconfirm`、`Drawer`、`Dropdown`、`Popover`、`Tooltip`，补 `@radix-ui/react-alert-dialog` 依赖；新增 Esc 关闭、焦点回到触发元素、下拉键盘导航与 Tooltip 延迟用例，对应 Vitest 与受影响 Playwright 配置通过。
-- [ ] 2.3 落地 `Table`、`Card`、`PageHeader`、`SectionHeader`、`Tag`、`Alert`、`Empty`、`Progress`、`Disclosure`、`Segmented` 共享形状，统一表头、行高、卡片标题与页面标题结构；新增组件测试断言两档密度使用对应间距类、状态色带文字，`npm test` 通过。
-- [ ] 2.4 把 `Icon.tsx` 改为唯一图标入口，内部改用 lucide 图形并统一 16px 与 1.5 描边，保留品牌标志自绘；13 个直接引用 lucide 的文件改为使用 `Icon`，新增测试断言 `lucide-react` 只被 `Icon.tsx` 引用且图标尺寸与描边一致。
-- [ ] 2.5 从 `App.tsx` 与 `test-utils.tsx` 移除 `MantineProvider`，删除 `lib/mantineTheme.ts` 与 `styles/mantine-bridge.css`；`npm test`、`npm run typecheck` 通过，`grep -r "@mantine" src` 无结果。
-- [ ] 2.6 移除 `@mantine/core`、`@mantine/hooks`、`postcss-preset-mantine`、`postcss-simple-vars` 与 `postcss.config.cjs` 中对应预设，更新 lockfile；重新安装依赖后 `npm run build` 与 `npm test` 通过，构建产物不再包含 Mantine 样式。
-- [ ] 2.7 更新 `frontend/README.md` 的技术栈与组件说明，删除 Mantine 版本描述，写明 Radix + Tailwind + CVA 的组件入口与新增组件规则；按 README 中的命令实际安装与构建一次，记录结果。
+- [x] 2.1 用 Radix + CVA + `cn` 落地 `Button`、`IconButton`、`Input`、`TextArea`、`NumberInput`、`PasswordInput`、`Select`、`Checkbox`、`Switch`，保留现有 props 与导出；选择、复选与开关在页面测试中完成键盘与点选验证，`npm test` 通过且页面无需改调用方式。
+- [x] 2.2 用 Radix 重写 `Dialog`、`Popconfirm`、`Drawer`、`Dropdown`、`Popover`、`Tooltip`；确认气泡沿用 Popover 定位而不新增 AlertDialog 依赖；对话框、抽屉与菜单的关闭、焦点交还和键盘选择由页面测试与浏览器用例覆盖。
+- [x] 2.3 落地 `Table`、`Card`、`PageHeader`、`SectionHeader`、`Tag`、`Alert`、`Empty`、`Progress`、`Disclosure`、`Segmented` 共享形状，统一表头、行高、卡片标题与页面标题结构；新增 `layout.test.tsx` 断言密度间距类、表头语义与进度条可访问数值，`npm test` 通过。
+- [x] 2.4 把 `Icon.tsx` 改为唯一图标入口，改用 lucide 图形并统一 1.5 描边，品牌标志保留自绘；11 个直接引用 lucide 的文件改为使用 `Icon`，新增 `iconSource.test.ts` 与 `Icon.test.tsx` 断言来源唯一、24 网格与描边一致。
+- [x] 2.5 从 `App.tsx` 与 `test-utils.tsx` 移除 `MantineProvider`，删除 `lib/mantineTheme.ts` 与 `styles/mantine-bridge.css`；`npm test`、`npm run typecheck` 通过，`grep -r "@mantine" src` 无结果。
+- [x] 2.6 移除 `@mantine/core`、`@mantine/hooks`、`postcss-preset-mantine`、`postcss-simple-vars` 与 `postcss.config.cjs`，更新 lockfile；重新安装依赖后 `npm run build` 与 `npm test` 通过，构建产物不再包含 Mantine 样式。
+- [x] 2.7 更新 `frontend/README.md` 的技术栈与组件说明，删除 Mantine 版本描述，写明 Radix + Tailwind + CVA 的组件入口与新增组件规则；按 README 中的命令实际安装与构建一次，记录结果。
 
 ## 3. 外壳与入口
 

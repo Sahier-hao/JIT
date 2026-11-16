@@ -1,5 +1,5 @@
+import { Icon } from '../Icon'
 import { Button, Select } from '../ui/controls'
-import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { fetchComparison, type Comparison, type ComparisonFilter, type ComparedSource, type ComparisonIdentity } from '../analysisComparison'
 import type { Route } from '../navigation'
@@ -28,7 +28,7 @@ export function AnalysisComparison({repositoryId,baseSyncId,targetSyncId,navigat
   const current=state.key===key?state:undefined, data=current?.data
   function open(syncId:string,commitId:string) {navigate({name:'analysis',repositoryId,viewSyncId:syncId,view:'commits',commitId})}
   return <section className="analysis-comparison">
-    <Button aria-label="返回项目" variant="ghost" size="sm" className="back-link" icon={<ArrowLeft size={15}/>} onClick={()=>navigate({name:'repository',repositoryId})}>返回项目</Button>
+    <Button aria-label="返回项目" variant="ghost" size="sm" className="back-link" icon={<Icon name="arrowLeft" size={15}/>} onClick={()=>navigate({name:'repository',repositoryId})}>返回项目</Button>
     <header className="page-heading"><div><h1>分析对比</h1><p className="page-intro">对照两次已保存的分析，查看覆盖范围与提交分数。</p></div></header>
     {current?.error?<EmptyState title="对比读取失败" description={current.error} tone="alert"><Button onClick={()=>{setState({key:''});setAttempt(value=>value+1)}}>重新读取对比</Button></EmptyState>:!data?<LoadingNotice label="正在读取两次固定分析"/>:<>
       <div className="comparison-sources"><Source title="基准分析" source={data.base}/><Source title="目标分析" source={data.target}/></div>

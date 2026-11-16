@@ -1,5 +1,5 @@
+import { Icon } from '../../Icon'
 import { useRef, useState } from 'react'
-import { Download, Upload } from 'lucide-react'
 import { Alert, Space } from '../../ui/feedback'
 import { Button, Checkbox, Select, TextArea } from '../../ui/controls'
 import { backupText, downloadText, evidenceURL, mergeBackup, parseBackupInfo, type Conclusion, type Evidence, type PRWork, type ReviewQuestion } from '../../prReview'
@@ -68,8 +68,8 @@ export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: 
         <p>包含此 PR 各版本的个人笔记、问题、反馈和结论。仅在你选择导出时生成本地文件，不上传。</p>
       </div>
       <Space>
-        <Button icon={<Download/>} aria-label="导出完整草稿" onClick={() => backup(work, account)}>导出完整草稿</Button>
-        <Button icon={<Upload/>} aria-label="选择备份以预览合并" onClick={() => file.current?.click()}>选择备份以预览合并</Button>
+        <Button icon={<Icon name="download"/>} aria-label="导出完整草稿" onClick={() => backup(work, account)}>导出完整草稿</Button>
+        <Button icon={<Icon name="upload"/>} aria-label="选择备份以预览合并" onClick={() => file.current?.click()}>选择备份以预览合并</Button>
       </Space>
       <input ref={file} type="file" hidden accept=".json,application/json" aria-label="导入完整草稿" onChange={event => { const picked = event.target.files?.[0]; event.target.value = ''; if (picked) void pick(picked) }}/>
     </div>

@@ -1,8 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { MantineProvider } from '@mantine/core'
-import { mantineTheme } from './lib/mantineTheme'
 import { queryClient } from './lib/queryClient'
 import { AppShell } from './AppShell'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -36,15 +34,7 @@ const LineResearchPage = lazy(() => import('./pages/LineResearchPage').then(modu
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
-  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'charcoal')
-  useEffect(() => {
-    const observer = new MutationObserver(() => setDark(document.documentElement.dataset.theme === 'charcoal'))
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => observer.disconnect()
-  }, [])
-  return <MantineProvider theme={mantineTheme} forceColorScheme={dark ? 'dark' : 'light'} env={import.meta.env.MODE === 'test' ? 'test' : undefined}>
-    <QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>
-  </MantineProvider>
+  return <QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>
 }
 
 function Workspace() {

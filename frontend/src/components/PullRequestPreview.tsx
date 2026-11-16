@@ -1,5 +1,5 @@
+import { Icon } from '../Icon'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ChevronDown, Search } from 'lucide-react'
 import { Segmented } from '../ui/segmented'
 import { Button, Input } from '../ui/controls'
 import { Dropdown } from '../ui/dropdown'
@@ -124,9 +124,9 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
             <span className="pr-commit-count">{scoredCommitCount}/{source.commits.length} 有分数</span>
           </div>
           <div className="pr-commit-controls">
-            <Input className="pr-commit-search" size="sm" placeholder="搜索提交标题或 SHA" aria-label="搜索 PR 提交" prefix={<Search size={14}/>} allowClear value={commitFilter} onChange={event => setCommitFilter(event.target.value)}/>
+            <Input className="pr-commit-search" size="sm" placeholder="搜索提交标题或 SHA" aria-label="搜索 PR 提交" prefix={<Icon name="search" size={14}/>} allowClear value={commitFilter} onChange={event => setCommitFilter(event.target.value)}/>
             <Dropdown items={[{ key: 'risk', label: '按风险' }, { key: 'order', label: '按提交顺序' }]} onClick={key => setCommitOrder(key as 'risk' | 'order')}>
-              <Button variant="ghost" size="sm" className="pr-commit-sort" aria-haspopup="menu" aria-label={`提交排序方式：${commitOrder === 'risk' ? '按风险' : '按提交顺序'}`} trailing={<ChevronDown size={13} aria-hidden/>}>排序：{commitOrder === 'risk' ? '按风险' : '按提交顺序'}</Button>
+              <Button variant="ghost" size="sm" className="pr-commit-sort" aria-haspopup="menu" aria-label={`提交排序方式：${commitOrder === 'risk' ? '按风险' : '按提交顺序'}`} trailing={<Icon name="chevronDown" size={13}/>}>排序：{commitOrder === 'risk' ? '按风险' : '按提交顺序'}</Button>
             </Dropdown>
           </div>
         </div>
@@ -156,7 +156,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
       </section>
     </> : <>
       <div className="pr-preview-files-bar">
-        <Button size="sm" icon={<ArrowLeft size={14}/>} onClick={backToCommits}>提交列表</Button>
+        <Button size="sm" icon={<Icon name="arrowLeft" size={14}/>} onClick={backToCommits}>提交列表</Button>
         {selectedCommit ? <><code>{selectedCommit.slice(0, 12)}</code>{commitRisks[selectedCommit]?.files.length
           ? <Button size="sm" variant="ghost" title="退出这次提交的范围，看整个 PR" onClick={() => setSelectedCommit('')}>全部 {source.files.length} 个文件</Button>
           : <span className="pr-preview-scope" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="pr-preview-scope">全部 {source.files.length} 个文件</span>}

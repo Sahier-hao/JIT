@@ -1,6 +1,6 @@
+import { Icon } from '../Icon'
 import { Button, Input, Select, Switch } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
-import { ChevronRight, RefreshCw } from 'lucide-react'
 import { useEffect, useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react'
 import { updateRepository, type UpdateState } from '../repositoryUpdatesClient'
 import { displayTime } from '../domain'
@@ -87,12 +87,12 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
   }[state.status] : ''
   return <>
     <button type="button" className="update-entry" data-tone={tone} onClick={() => setOpen(true)} aria-haspopup="dialog">
-      <span className="update-entry-icon" aria-hidden="true"><RefreshCw size={15}/></span>
+      <span className="update-entry-icon" aria-hidden="true"><Icon name="refresh" size={15}/></span>
       <span className="update-entry-text">
         <b>分支提醒</b>
         <span>{state ? SHORT[state.status] : '读取中'}</span>
       </span>
-      <ChevronRight size={15} className="update-entry-chevron" aria-hidden="true"/>
+      <Icon name="chevron" size={15} className="update-entry-chevron"/>
     </button>
     <Dialog open={open} onOpenChange={setOpen} title="分支提醒与仓库检查" width={560}>
       {error ? <FailureNotice error={error}/> : null}

@@ -1,5 +1,5 @@
+import { Icon } from '../Icon'
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
 import { Empty } from '../ui/feedback'
 import { Segmented } from '../ui/segmented'
 import { Button, Select } from '../ui/controls'
@@ -178,7 +178,7 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
               className="pr-hub-sort-btn"
               aria-haspopup="menu"
               aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`}
-              trailing={<ChevronDown size={13} aria-hidden/>}
+              trailing={<Icon name="chevronDown" size={13}/>}
             >排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}</Button>
           </Dropdown>
         </span>

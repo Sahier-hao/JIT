@@ -51,6 +51,7 @@ it('searches commits and explains one commit without leaving the read-only detai
   expect(await screen.findByText(/尚未生成该提交的模型解释/)).toBeVisible()
   expect(fetch.mock.calls.some(([path]) => String(path).includes(`/commits/${SHA_A}/explanation?viewSyncId=${SYNC}`))).toBe(true)
 
+  await user.click(screen.getByRole('button', { name: '关闭' }))
   await user.click(screen.getByRole('button', { name: '提交列表' }))
   await user.click(screen.getByText('docs note'))
   expect(screen.queryByText(/尚未生成该提交的模型解释/)).not.toBeInTheDocument()

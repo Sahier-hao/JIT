@@ -56,4 +56,19 @@ describe('主题桥接', () => {
       expect(theme).toContain(`var(--sp-${key})`)
     }
   })
+
+  it('紧凑密度只收紧间距，数值小于舒适档', () => {
+    const rootStart = tokens.indexOf(':root {')
+    const root = tokens.slice(rootStart, tokens.indexOf('}', rootStart))
+    const compactStart = tokens.indexOf('html[data-density="compact"]')
+    const compact = tokens.slice(compactStart, tokens.indexOf('}', compactStart))
+    const read = (block: string, key: string) => {
+      const match = block.match(new RegExp(`--${key}:\\s*(\\d+)px`))
+      if (!match) throw new Error(`缺少 ${key}`)
+      return Number(match[1])
+    }
+    for (const key of ['sp-row', 'sp-cell-y', 'sp-card', 'sp-section']) {
+      expect(read(compact, key), `${key} 紧凑档应小于舒适档`).toBeLessThan(read(root, key))
+    }
+  })
 })

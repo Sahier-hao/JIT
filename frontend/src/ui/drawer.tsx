@@ -1,7 +1,13 @@
-import { createPortal } from 'react-dom'
+/**
+ * 右侧抽屉：Radix Dialog 的侧滑面板。
+ *
+ * 内容只在打开时挂载；关闭按钮、Esc 与遮罩点击都回到 onClose，
+ * 焦点由 Radix 交还触发元素。
+ */
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 import type { ReactNode } from 'react'
+import { Icon } from '../Icon'
 
-/** 右侧抽屉：固定定位面板，内容只在打开时挂载。 */
 export function Drawer({ open, onOpenChange, onClose, title, children, width = 600 }: {
   open: boolean
   onOpenChange?: (open: boolean) => void
@@ -10,26 +16,22 @@ export function Drawer({ open, onOpenChange, onClose, title, children, width = 6
   children: ReactNode
   width?: number
 }) {
-  if (!open) return null
   const close = () => { onOpenChange?.(false); onClose?.() }
-  return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : '抽屉'}
-      style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', justifyContent: 'flex-end' }}>
-      <div onClick={close} aria-hidden="true"
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.4)' }}/>
-      <aside style={{
-        position: 'relative', height: '100%', width, maxWidth: '100%', overflow: 'auto',
-        background: 'var(--mantine-color-body, #fff)', color: 'var(--mantine-color-text, inherit)',
-        boxShadow: '-8px 0 24px rgba(0, 0, 0, 0.18)', padding: 20,
-      }}>
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>{title}</h2>
-          <button type="button" aria-label="关闭" onClick={close}
-            style={{ border: 0, background: 'transparent', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
+  return <DialogPrimitive.Root open={open} onOpenChange={value => { if (value) onOpenChange?.(true); else close() }}>
+    <DialogPrimitive.Portal>
+      <DialogPrimitive.Overlay className="fixed inset-0 z-[300] bg-scrim/40"/>
+      <DialogPrimitive.Content
+        className="fixed inset-y-0 right-0 z-[301] flex flex-col border-l border-border-soft bg-card text-foreground shadow-3"
+        style={{ width: `min(100vw, ${width}px)` }}
+      >
+        <header className="flex items-center justify-between gap-3 border-b border-border-soft px-5 py-3">
+          <DialogPrimitive.Title className="text-lg font-semibold leading-title">{title}</DialogPrimitive.Title>
+          <DialogPrimitive.Close asChild>
+            <button type="button" aria-label="关闭" className="grid size-7 shrink-0 place-items-center rounded-sm border-0 bg-transparent text-foreground-4 hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"><Icon name="close" size={14}/></button>
+          </DialogPrimitive.Close>
         </header>
-        {children}
-      </aside>
-    </div>,
-    document.body,
-  )
+        <div className="flex-1 overflow-auto p-5">{children}</div>
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
+  </DialogPrimitive.Root>
 }

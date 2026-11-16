@@ -1,5 +1,5 @@
+import { Icon } from '../Icon'
 import { useEffect, useRef, useState } from 'react'
-import { RefreshCw, Upload } from 'lucide-react'
 import { Button } from '../ui/controls'
 import { FailureNotice } from '../Feedback'
 import { adoptVersion, hasLegacyWorks, legacyImportReceipt, legacyWorksHash, markLegacyImported, mergeBackup, parseBackupInfo, readLegacyWorks, readWorks, remoteStateLabels as remoteLabel, saveWork, type PRWork } from '../prReview'
@@ -133,8 +133,8 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
     && legacyImportReceipt(account ?? '') !== legacyWorksHash()
   return <section className="mr personal-works" aria-label="我的审查">
     <div className="mr-toolbar">
-      <Button variant="secondary" icon={<RefreshCw size={14}/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
-      {legacyAvailable ? <Button variant="ghost" icon={<Upload size={14}/>} onClick={previewLegacy}>导入本机旧工作单</Button> : null}
+      <Button variant="secondary" icon={<Icon name="refresh" size={14}/>} loading={busy} onClick={() => void checkAll()}>{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
+      {legacyAvailable ? <Button variant="ghost" icon={<Icon name="upload" size={14}/>} onClick={previewLegacy}>导入本机旧工作单</Button> : null}
     </div>
     {legacy ? <section className="mr-group" aria-label="旧工作单导入">
       <h2 className="mr-group-head">导入本机旧工作单到 {account}</h2>
@@ -191,7 +191,7 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
       <h2>还没有审查工作</h2>
       <p>到「项目」选择一个 PR 开始审查。</p>
     </div> : null}
-    <Button className="mr-restore" variant="ghost" size="sm" icon={<Upload size={14}/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button>
+    <Button className="mr-restore" variant="ghost" size="sm" icon={<Icon name="upload" size={14}/>} onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作">从完整草稿备份恢复工作</Button>
     <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const info = parseBackupInfo(await file.text()); const incoming = info.work; if (info.accountHint && info.accountHint !== account && !window.confirm(`备份归属 ${info.accountHint}，将导入当前账户 ${account}。继续？`)) return; await verifyBackupSources(incoming); const old = readWorks(account ?? '').find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork(account ?? '', { ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
   </section>
 }

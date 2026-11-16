@@ -5,8 +5,8 @@
  * 「当前结果」严格指项目可用于审查的那次成功分析；最近一次尝试可能还在跑或已失败，
  * 两者分开显示，避免一次失败把上一次成功的结果一起弄丢。
  */
+import { Icon } from '../Icon'
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, Database, GitCompare, Info, Loader, MoreHorizontal, Pin, RotateCcw, Trash2, XCircle } from 'lucide-react'
 import { Button, IconButton, NumberInput, Select } from '../ui/controls'
 import { Dialog } from '../ui/dialog'
 import { Popover } from '../ui/popover'
@@ -242,7 +242,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   return <section className="project-page">
     <header className="page-heading project-heading">
       <div className="project-head-text">
-        <Button className="project-back" aria-label="全部项目" variant="ghost" size="sm" icon={<ArrowLeft size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
+        <Button className="project-back" aria-label="全部项目" variant="ghost" size="sm" icon={<Icon name="arrowLeft" size={14}/>} onClick={() => navigate({ name: 'repositories' })}>全部项目</Button>
         <div className="project-title-row">
           <h1 title={repository.url}>{repository.displayName}</h1>
           <p className={`status-line tone-${status.tone}`} role="status">{status.label}</p>
@@ -256,7 +256,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         </p>
       </div>
       <div className="page-actions">
-        <Button icon={<Database size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
+        <Button icon={<Icon name="database" size={15}/>} onClick={() => setDatasetBuildOpen(true)}>构建数据集</Button>
         <Button onClick={() => void openPrAnalysis()}>分析全部 PR</Button>
         <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
       </div>
@@ -352,7 +352,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
               <span className="result-chip" title={context.datasetVersion ?? ''}>数据 <b>{datasetRange(context.datasetVersion)}</b></span>
               <Button variant="ghost" size="sm" className="result-data-button" onClick={() => setDatasetOpen(true)}>数据来源</Button>
             </div>
-            <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} trailing={<ArrowRight size={15}/>}>查看提交明细</Button>
+            <Button variant="accent" aria-label="查看提交明细" onClick={() => navigate(analysisRoute(repositoryId, context.syncId))} trailing={<Icon name="arrow" size={15}/>}>查看提交明细</Button>
           </div>
           </div>
         </div> : <div className="result-empty">
@@ -434,7 +434,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
     <div className="record-body">
     <div className="job-main">
       {completed ? (current ? <div className="record-pick is-static">
-        <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Pin size={12} fill="currentColor" strokeWidth={1.6}/></span>
+        <span className="record-pin" aria-label={`当前结果 ${shortId}`}><Icon name="pin" size={12} fill="currentColor" strokeWidth={1.6}/></span>
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
@@ -450,7 +450,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
           <span className="record-meta">{meta}{selecting ? ' · 正在切换…' : ''}</span>
         </span>
       </button>) : <div className="record-pick is-static">
-        <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}>{active ? <Loader size={16}/> : <AlertTriangle size={16}/>}</span>
+        <span className={`job-status-icon ${active ? 'is-active' : 'is-failed'}`}>{active ? <Icon name="loader" size={16}/> : <Icon name="warning" size={16}/>}</span>
         <span className="record-text">
           <span className="record-title">{title}</span>
           <span className="record-meta">{meta}</span>
@@ -459,7 +459,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
       <RecordMenu job={job} active={active} pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
     {active ? <div className="record-progress"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}
-    {job.error ? <p className="record-error" title={job.error.message}><AlertTriangle size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
+    {job.error ? <p className="record-error" title={job.error.message}><Icon name="warning" size={13}/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="record-note">已取消，可用原参数重新分析。</p> : null}
     </div>
   </article>
 }
@@ -503,16 +503,16 @@ function RecordMenu({ job, pendingCancel, onOpen, openLabel = '打开结果', op
 }) {
   const [open, setOpen] = useState(false)
   const choose = (action?: () => void) => () => { setOpen(false); action?.() }
-  return <Popover open={open} onOpenChange={setOpen} label={`分析记录 ${job.syncId} 的操作`} trigger={<IconButton label="更多操作" icon={<MoreHorizontal size={16}/>}/>}>
+  return <Popover open={open} onOpenChange={setOpen} label={`分析记录 ${job.syncId} 的操作`} trigger={<IconButton label="更多操作" icon={<Icon name="more" size={16}/>}/>}>
     <div className="record-menu" role="menu" aria-label="分析记录操作">
-      {onOpen ? <button type="button" role="menuitem" className="record-menu-item" disabled={openBusy} onClick={choose(onOpen)}><ArrowUpRight size={14}/>{openLabel}</button> : null}
-      {onCompare ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onCompare)}><GitCompare size={14}/>与当前结果对比</button> : null}
-      {onSelect ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onSelect)}><Pin size={14}/>设为当前结果</button> : null}
-      {onRetry ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onRetry)}><RotateCcw size={14}/>用这些参数重试</button> : null}
-      {onCancel ? <button type="button" role="menuitem" className="record-menu-item" disabled={cancelBusy} onClick={choose(onCancel)}><XCircle size={14}/>取消分析</button> : null}
+      {onOpen ? <button type="button" role="menuitem" className="record-menu-item" disabled={openBusy} onClick={choose(onOpen)}><Icon name="arrowUpRight" size={14}/>{openLabel}</button> : null}
+      {onCompare ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onCompare)}><Icon name="gitCompare" size={14}/>与当前结果对比</button> : null}
+      {onSelect ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onSelect)}><Icon name="pin" size={14}/>设为当前结果</button> : null}
+      {onRetry ? <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onRetry)}><Icon name="rotate" size={14}/>用这些参数重试</button> : null}
+      {onCancel ? <button type="button" role="menuitem" className="record-menu-item" disabled={cancelBusy} onClick={choose(onCancel)}><Icon name="xCircle" size={14}/>取消分析</button> : null}
       {pendingCancel ? <p className="record-menu-note">正在取消…</p> : null}
-      <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onDetail)}><Info size={14}/>分析详情</button>
-      {onDelete ? <button type="button" role="menuitem" className="record-menu-item is-danger" disabled={deleteBusy} onClick={choose(onDelete)}><Trash2 size={14}/>删除记录</button> : null}
+      <button type="button" role="menuitem" className="record-menu-item" onClick={choose(onDetail)}><Icon name="info" size={14}/>分析详情</button>
+      {onDelete ? <button type="button" role="menuitem" className="record-menu-item is-danger" disabled={deleteBusy} onClick={choose(onDelete)}><Icon name="trash" size={14}/>删除记录</button> : null}
     </div>
   </Popover>
 }
