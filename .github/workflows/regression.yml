@@ -21,8 +21,6 @@ concurrency:
 env:
   PYTHON_VERSION: '3.12'
   NODE_VERSION: '22'
-  JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
-  JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
   JIT_PYTHON: python
 
 jobs:
@@ -30,6 +28,9 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: windows-latest
     timeout-minutes: 45
+    env:
+      JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+      JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,7 +89,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          "layer=key status=${{ job.status }} sha=$env:REGRESSION_SHA event=${{ github.event_name }}" |
+          "layer=key status=${{ job.status }} sha=$env:REGRESSION_SHA head=$env:REGRESSION_HEAD_SHA event=${{ github.event_name }}" |
             Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
           Get-Content "$env:JIT_REGRESSION_ROOT\environment.json" -ErrorAction SilentlyContinue |
             Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
@@ -108,6 +109,9 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 90
+    env:
+      JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
+      JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
     steps:
       - uses: actions/checkout@v4
         with:
@@ -174,7 +178,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          "layer=full status=${{ job.status }} sha=$env:REGRESSION_SHA event=${{ github.event_name }}" |
+          "layer=full status=${{ job.status }} sha=$env:REGRESSION_SHA head=$env:REGRESSION_HEAD_SHA event=${{ github.event_name }}" |
             Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
           Get-Content "$env:JIT_REGRESSION_ROOT\environment.json" -ErrorAction SilentlyContinue |
             Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
