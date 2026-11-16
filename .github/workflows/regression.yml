@@ -28,9 +28,6 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: windows-latest
     timeout-minutes: 45
-    env:
-      JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
-      JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,16 +59,22 @@ jobs:
           python -m pip install -r backend/scripts/requirements-contract.txt
       - name: Prepare isolated fixtures
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: python backend/scripts/regression_environment.py --root "$env:JIT_REGRESSION_ROOT"
       - name: Verify the key scope
         shell: pwsh
         run: python backend/scripts/regression_scope.py --layer key
       - name: Key backend tests
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: python backend/scripts/regression_scope.py --layer key --pytest-junit "$env:JIT_REGRESSION_ROOT\logs\key-backend.xml"
       - name: Frontend install, typecheck, unit tests and build
         working-directory: frontend
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: |
           npm ci
           npm run typecheck
@@ -81,6 +84,8 @@ jobs:
       - name: VS Code extension tests
         working-directory: vscode-extension
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: |
           npm ci
           npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\extension.log"
@@ -88,6 +93,8 @@ jobs:
       - name: Job summary
         if: always()
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: |
           "layer=key status=${{ job.status }} sha=$env:REGRESSION_SHA head=$env:REGRESSION_HEAD_SHA event=${{ github.event_name }}" |
             Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
@@ -99,8 +106,8 @@ jobs:
         with:
           name: regression-key-${{ github.run_id }}
           path: |
-            ${{ env.JIT_REGRESSION_ROOT }}/logs
-            ${{ env.JIT_REGRESSION_ROOT }}/environment.json
+            ${{ runner.temp }}/jit-regression/logs
+            ${{ runner.temp }}/jit-regression/environment.json
             docs/evidence/_run
             frontend/test-results
           if-no-files-found: warn
@@ -109,9 +116,6 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 90
-    env:
-      JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
-      JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
     steps:
       - uses: actions/checkout@v4
         with:
@@ -143,16 +147,22 @@ jobs:
           python -m pip install -r backend/scripts/requirements-contract.txt
       - name: Prepare isolated fixtures
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: python backend/scripts/regression_environment.py --root "$env:JIT_REGRESSION_ROOT"
       - name: Verify the full scope
         shell: pwsh
         run: python backend/scripts/regression_scope.py --layer full
       - name: Full backend suite
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: python backend/scripts/regression_scope.py --layer full --pytest-junit "$env:JIT_REGRESSION_ROOT\logs\full-backend.xml"
       - name: Frontend install, typecheck, unit tests and build
         working-directory: frontend
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: |
           npm ci
           npm run typecheck
@@ -162,6 +172,8 @@ jobs:
       - name: VS Code extension tests
         working-directory: vscode-extension
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: |
           npm ci
           npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\extension.log"
@@ -173,10 +185,14 @@ jobs:
       - name: Browser - project analysis to PR continuation
         working-directory: frontend
         shell: pwsh
+        env:
+          JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
         run: npx playwright test --config=playwright.regression-pr.config.ts
       - name: Job summary
         if: always()
         shell: pwsh
+        env:
+          JIT_REGRESSION_ROOT: ${{ runner.temp }}\jit-regression
         run: |
           "layer=full status=${{ job.status }} sha=$env:REGRESSION_SHA head=$env:REGRESSION_HEAD_SHA event=${{ github.event_name }}" |
             Out-File -Append -Encoding utf8 "$env:GITHUB_STEP_SUMMARY"
@@ -188,8 +204,8 @@ jobs:
         with:
           name: regression-full-${{ github.run_id }}
           path: |
-            ${{ env.JIT_REGRESSION_ROOT }}/logs
-            ${{ env.JIT_REGRESSION_ROOT }}/environment.json
+            ${{ runner.temp }}/jit-regression/logs
+            ${{ runner.temp }}/jit-regression/environment.json
             docs/evidence/_run
             frontend/test-results
           if-no-files-found: warn
