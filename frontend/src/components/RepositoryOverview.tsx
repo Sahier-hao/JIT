@@ -85,16 +85,16 @@ function ActivityChart({ activity, coverage, fetchedAt }: { activity: Repository
   }
   const current = active == null ? null : activity[active]
   return <div className="repo-chart">
-    <div className="repo-activity-facts">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground-3">
       <span><b>{total.toLocaleString()}</b>个提交</span>
       <span><b>{max.toLocaleString()}</b>单周峰值</span>
       <span><b>{Math.round(total / Math.max(1, activity.length)).toLocaleString()}</b>周均</span>
     </div>
-    {activity.length ? <div className="repo-activity-chart" tabIndex={0} role="group" aria-label={`最近 ${activity.length} 周每周提交量曲线；左右方向键逐周查看，等价数据表在本卡下方`} onKeyDown={keys} onFocus={() => { if (active === null) show(activity.length - 1) }} onBlur={() => { setActive(null); chart.current?.dispatchAction({ type: 'hideTip' }) }}>
+    {activity.length ? <div className="outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" tabIndex={0} role="group" aria-label={`最近 ${activity.length} 周每周提交量曲线；左右方向键逐周查看，等价数据表在本卡下方`} onKeyDown={keys} onFocus={() => { if (active === null) show(activity.length - 1) }} onBlur={() => { setActive(null); chart.current?.dispatchAction({ type: 'hideTip' }) }}>
       <EChartCanvas option={option} height={220} label={`最近 ${activity.length} 周每周提交量曲线`} onChart={instance => { chart.current = instance }}/>
-    </div> : <p className="quiet-empty">GitHub 没有返回周提交统计。</p>}
-    <p className="chart-readout" role="status" aria-live="polite">{current ? `${current.weekStart} 起一周 · ${current.commits.toLocaleString()} 个提交${isPartialWeek(current.weekStart, fetchedAt) ? '（本周进行中）' : ''}` : '悬停或聚焦后用左右方向键查看每周数量。'}</p>
-    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>{tableTitle}提交量</caption><thead><tr><th scope="col">周起始</th><th scope="col">提交数</th></tr></thead><tbody>{activity.map(item => <tr key={item.weekStart}><th scope="row">{item.weekStart}</th><td>{item.commits}</td></tr>)}</tbody></table></details>
+    </div> : <p className="text-xs text-foreground-3">GitHub 没有返回周提交统计。</p>}
+    <p className="text-xs text-foreground-3" role="status" aria-live="polite">{current ? `${current.weekStart} 起一周 · ${current.commits.toLocaleString()} 个提交${isPartialWeek(current.weekStart, fetchedAt) ? '（本周进行中）' : ''}` : '悬停或聚焦后用左右方向键查看每周数量。'}</p>
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>{tableTitle}提交量</caption><thead><tr><th scope="col">周起始</th><th scope="col">提交数</th></tr></thead><tbody>{activity.map(item => <tr key={item.weekStart}><th scope="row">{item.weekStart}</th><td>{item.commits}</td></tr>)}</tbody></table></details>
   </div>
 }
 
@@ -152,7 +152,7 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
   const total = languages.reduce((sum, item) => sum + item.bytes, 0)
   return <>
     <div className="grid items-center gap-3 sm:grid-cols-[160px_minmax(0,1fr)]">
-      <EChartCanvas option={option} height={216} label="语言构成环形图；各语言名称、占比与字节数见旁边图例和等价数据表" className="ui-chart repo-language-donut"/>
+      <EChartCanvas option={option} height={216} label="语言构成环形图；各语言名称、占比与字节数见旁边图例和等价数据表" className="ui-chart"/>
       <ul className="repo-language-legend grid gap-1 text-xs">
         {slices.map(item => <li key={item.name}>
           <span className="size-2.5 shrink-0 rounded-sm" style={{ background: item.color }} aria-hidden="true"/>
@@ -162,7 +162,7 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
         </li>)}
       </ul>
     </div>
-    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>语言构成（GitHub 字节统计，共 {total.toLocaleString()} 字节）</caption><thead><tr><th scope="col">语言</th><th scope="col">字节</th><th scope="col">占比</th></tr></thead><tbody>{slices.map(item => <tr key={item.name}><th scope="row">{item.name}</th><td>{item.bytes.toLocaleString()}</td><td>{languagePercent(item)}</td></tr>)}</tbody></table></details>
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">查看等价数据表</summary><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><caption>语言构成（GitHub 字节统计，共 {total.toLocaleString()} 字节）</caption><thead><tr><th scope="col">语言</th><th scope="col">字节</th><th scope="col">占比</th></tr></thead><tbody>{slices.map(item => <tr key={item.name}><th scope="row">{item.name}</th><td>{item.bytes.toLocaleString()}</td><td>{languagePercent(item)}</td></tr>)}</tbody></table></details>
   </>
 }
 

@@ -42,12 +42,12 @@ function modelIdleLabel(partition: ModelCardPartition) {
 }
 
 function PartitionCard({ partition }: { partition: ModelCardPartition }) {
-  return <article className="model-partition-card" data-partition={partition.name}>
-    <header>
-      <div><h3>{modelIdleLabel(partition)}</h3><p>{partition.available ? `${partition.records ?? '—'} 条 · ${partition.positives ?? '—'} 个正例` : partition.reason ?? '未记录'}</p></div>
-      <span>{partition.available ? '已记录' : '未记录'}</span>
+  return <article className="grid gap-1.5 rounded-sm border border-border-soft p-2.5" data-partition={partition.name}>
+    <header className="flex flex-wrap items-start justify-between gap-2">
+      <div><h3 className="text-sm font-semibold text-foreground">{modelIdleLabel(partition)}</h3><p className="text-xs text-foreground-3">{partition.available ? `${partition.records ?? '—'} 条 · ${partition.positives ?? '—'} 个正例` : partition.reason ?? '未记录'}</p></div>
+      <span className="text-[11px] text-foreground-4">{partition.available ? '已记录' : '未记录'}</span>
     </header>
-    {partition.available && partition.metrics ? <dl className="model-partition-metrics">
+    {partition.available && partition.metrics ? <dl className="grid gap-0.5 text-xs [&>div]:flex [&>div]:justify-between [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-0.5 [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:tabular-nums">
       {METRICS.map(([key, label]) => {
         const value = metricValue(partition.metrics, key)
         const reason = metricReason(partition.metrics, key)
@@ -59,7 +59,7 @@ function PartitionCard({ partition }: { partition: ModelCardPartition }) {
 
 function BenefitView({ benefit }: { benefit: ModelCardBenefit }) {
   if (!benefit.available || !benefit.conclusion || !benefit.strategies) {
-    return <section className="model-card-section"><h2>审查收益</h2><p className="quiet-empty">{benefit.reason ?? '尚无该模型的收益评估报告'}</p></section>
+    return <section className="grid gap-2"><h2 className="text-base font-semibold text-foreground">审查收益</h2><p className="text-xs text-foreground-3">{benefit.reason ?? '尚无该模型的收益评估报告'}</p></section>
   }
   const model = record(benefit.strategies.model)
   const time = record(benefit.strategies.time)
@@ -74,14 +74,14 @@ function BenefitView({ benefit }: { benefit: ModelCardBenefit }) {
     .map(value => record(value))
   const intervalRuns = Math.max(0, ...intervals.map(value => typeof value.validRuns === 'number' ? value.validRuns : 0))
   const intervalReason = intervals.map(value => value.reason).find(value => typeof value === 'string')
-  return <section className="model-card-section model-card-benefit">
-    <h2>审查收益</h2>
-    <p className="model-card-callout" role="status">{sentence}</p>
-    <p className="model-card-note">
+  return <section className="grid gap-2">
+    <h2 className="text-base font-semibold text-foreground">审查收益</h2>
+    <p className="rounded-sm bg-accent-soft p-2.5 text-sm text-foreground" role="status">{sentence}</p>
+    <p className="text-xs leading-body text-foreground-3">
       协议 {valueText(protocol.name, '未提供')} · 报告版本 {valueText(benefit.reportVersion, '未提供')} ·
       {intervalRuns > 0 ? ` 配对区间 ${intervalRuns} 次重采样` : ` 配对区间不足${intervalReason ? `：${intervalReason}` : ''}`}
     </p>
-    <div className="model-card-table-wrap"><table className="model-card-table">
+    <div className="overflow-x-auto rounded-sm border border-border-soft"><table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:tabular-nums">
       <thead><tr><th>检查顺序</th><th>Recall@20%LOC</th><th>Popt</th><th>IFA</th><th>覆盖正例</th></tr></thead>
       <tbody>
         <tr><th>模型分数</th><td>{benefitMetric(model, 'recall20Loc', 'percent')}</td><td>{benefitMetric(model, 'popt', 'number')}</td><td>{benefitMetric(model, 'ifa', 'count')}</td><td>{coverageText(model)}</td></tr>
@@ -91,8 +91,8 @@ function BenefitView({ benefit }: { benefit: ModelCardBenefit }) {
         <tr><th>随机均值</th><td>{randomMetric(random.recall20Loc, 'percent')}</td><td>{randomMetric(random.popt, 'number')}</td><td>{randomMetric(random.ifa, 'count')}</td><td>—</td></tr>
       </tbody>
     </table></div>
-    <p className="model-card-note">只读回顾性评估；检查顺序不代表缺陷概率，也不用于自动选择模型。</p>
-    {benefit.limitations.length ? <ul className="model-card-limitations">{benefit.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul> : null}
+    <p className="text-xs leading-body text-foreground-3">只读回顾性评估；检查顺序不代表缺陷概率，也不用于自动选择模型。</p>
+    {benefit.limitations.length ? <ul className="list-disc pl-5 text-xs leading-body text-foreground-3">{benefit.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul> : null}
   </section>
 }
 
@@ -109,18 +109,18 @@ function record(value: unknown): Row {
 
 export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => void }) {
   if (!card.available && !card.method) {
-    return <div className="model-card-unavailable" role="alert"><strong>{card.name}</strong><p>{card.reason ?? '模型卡不可用'}</p>{retry ? <Button size="sm" onClick={retry}>重试</Button> : null}</div>
+    return <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>{card.name}</strong><p>{card.reason ?? '模型卡不可用'}</p>{retry ? <Button size="sm" onClick={retry}>重试</Button> : null}</div>
   }
   const scale = card.dataScale ?? {}
   const performance = card.trainingPerformance ?? {}
   const source = card.source ?? {}
-  return <div className="model-card">
-    <header className="model-card-head">
-      <div><h2>{card.name}</h2><p>{card.method ?? '方法未提供'} · {card.featureSchemaVersion ?? 'schema 未提供'}</p></div>
-      <span data-available={card.available}>{card.available ? '可用于项目分析' : card.reason ?? '不可用'}</span>
+  return <div className="grid gap-3">
+    <header className="flex flex-wrap items-start justify-between gap-3">
+      <div><h2 className="text-lg font-semibold text-foreground">{card.name}</h2><p className="text-xs text-foreground-3">{card.method ?? '方法未提供'} · {card.featureSchemaVersion ?? 'schema 未提供'}</p></div>
+      <span className="text-xs text-foreground-3" data-available={card.available}>{card.available ? '可用于项目分析' : card.reason ?? '不可用'}</span>
     </header>
-    {!card.available ? <div className="model-card-unavailable" role="alert"><strong>当前模型不可用</strong><p>{card.reason ?? '无法加载模型产物'}{retry ? <Button size="sm" onClick={retry}>重试</Button> : null}</p></div> : null}
-    <dl className="model-card-facts">
+    {!card.available ? <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>当前模型不可用</strong><p>{card.reason ?? '无法加载模型产物'}{retry ? <Button size="sm" onClick={retry}>重试</Button> : null}</p></div> : null}
+    <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
       <div><dt>数据规模</dt><dd>{valueText(scale.records)} 条 · {valueText(scale.featureWidth)} 维输入</dd></div>
       <div><dt>切分</dt><dd>{card.splitRule ?? '未记录'}</dd></div>
       <div><dt>训练耗时</dt><dd>{typeof performance.durationSeconds === 'number' ? `${performance.durationSeconds.toFixed(2)} 秒` : '未记录'}</dd></div>
@@ -128,12 +128,12 @@ export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => 
       <div><dt>数据版本</dt><dd><code>{card.datasetVersion ?? '未记录'}</code></dd></div>
       <div><dt>来源</dt><dd>{valueText(source.publisher)}{source.revision ? ` · ${valueText(source.revision)}` : ''}</dd></div>
     </dl>
-    <section className="model-card-section">
-      <h2>分区指标</h2>
-      <div className="model-partition-grid">{card.partitions.map(partition => <PartitionCard key={partition.name} partition={partition}/>)}</div>
-      {card.diagnostics?.reason ? <p className="model-card-note">{valueText(card.diagnostics.reason)}</p> : null}
+    <section className="grid gap-2">
+      <h2 className="text-base font-semibold text-foreground">分区指标</h2>
+      <div className="grid gap-2 sm:grid-cols-3">{card.partitions.map(partition => <PartitionCard key={partition.name} partition={partition}/>)}</div>
+      {card.diagnostics?.reason ? <p className="text-xs leading-body text-foreground-3">{valueText(card.diagnostics.reason)}</p> : null}
     </section>
     <BenefitView benefit={card.benefit}/>
-    <section className="model-card-section"><h2>限制</h2>{card.limitations.length ? <ul className="model-card-limitations">{card.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul> : <p className="quiet-empty">未记录限制说明。</p>}</section>
+    <section className="grid gap-2"><h2 className="text-base font-semibold text-foreground">限制</h2>{card.limitations.length ? <ul className="list-disc pl-5 text-xs leading-body text-foreground-3">{card.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul> : <p className="text-xs text-foreground-3">未记录限制说明。</p>}</section>
   </div>
 }

@@ -98,7 +98,10 @@
   --risk-track: #E0E3E1;
   --risk-soft: #F7E8EA;
 
-  /* ---------- 图表（4） ---------- */
+  /* ---------- 图表（4）与趋势序列 ---------- */
+  --project-series: #1F5D4C;
+  --project-series-ink: #164537;
+  --project-chart-surface: #ffffff;
   --chart-obs: #1F5D4C;
   --chart-est: #8A6524;
   --chart-bar: #D6DAD8;
@@ -250,6 +253,9 @@ html[data-theme="charcoal"] {
   --risk-track: #202624;
   --risk-soft: #2A1A1C;
 
+  --project-series: #86C4AD;
+  --project-series-ink: #B7DFD0;
+  --project-chart-surface: #0E1211;
   --chart-obs: #86C4AD;
   --chart-est: #D8B071;
   --chart-bar: #232927;

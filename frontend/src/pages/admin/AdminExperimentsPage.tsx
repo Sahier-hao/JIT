@@ -72,11 +72,11 @@ export function AdminExperimentsPage({ navigate, expired }: {
   return <section>
     <AdminPageHeader title="多项目实验" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {!reports.length ? <p className="quiet-empty">报告目录中没有多项目实验报告。</p> : <div className="admin-table-wrap"><table className="admin-table">
+    {!reports.length ? <p className="text-xs text-foreground-3">报告目录中没有多项目实验报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <thead><tr><th>生成时间</th><th>状态</th><th>方法与口径</th><th>项目</th><th>失败</th><th>来源</th><th><span className="sr-only">操作</span></th></tr></thead>
       <tbody>{reports.map(report => <tr key={report.reportId}>
         <td>{formatDate(report.generatedUtc)}</td>
-        <td><span className="source-chip">{STATUS_LABELS[report.status]}</span>{report.status === 'invalid' && report.error ? <small>{report.error.message}</small> : null}</td>
+        <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[report.status]}</span>{report.status === 'invalid' && report.error ? <small>{report.error.message}</small> : null}</td>
         <td>{report.methodCount} 种方法 · {report.protocolCount} 种口径<small>{report.metricSet ?? '指标集未提供'}</small></td>
         <td>{report.projectCount} 个项目{report.failedProjectCount ? <small>失败 {report.failedProjectCount}</small> : null}</td>
         <td>{report.failureCount ? report.failureCount : '无'}</td>
@@ -86,11 +86,11 @@ export function AdminExperimentsPage({ navigate, expired }: {
     </table></div>}
     <section aria-label="评价证据">
       <h2>评价证据</h2>
-      {!evidence.length ? <p className="quiet-empty">固定目录中没有评价矩阵或候选集报告。</p> : <div className="admin-table-wrap"><table className="admin-table">
+      {!evidence.length ? <p className="text-xs text-foreground-3">固定目录中没有评价矩阵或候选集报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
         <thead><tr><th>类型</th><th>状态</th><th>事实</th><th>内容 SHA-256</th><th>来源</th></tr></thead>
         <tbody>{evidence.map(entry => <tr key={entry.evidenceId}>
           <td>{EVIDENCE_KINDS[entry.kind] ?? entry.kind}</td>
-          <td><span className="source-chip">{EVIDENCE_STATUS[entry.status]}</span>{entry.reason ? <small>{entry.reason}</small> : null}</td>
+          <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{EVIDENCE_STATUS[entry.status]}</span>{entry.reason ? <small>{entry.reason}</small> : null}</td>
           <td>{evidenceSummary(entry)}</td>
           <td><code>{entry.sha256.slice(0, 12)}</code></td>
           <td><code>{entry.source}</code></td>

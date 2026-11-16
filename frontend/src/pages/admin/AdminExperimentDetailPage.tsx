@@ -53,7 +53,7 @@ function ProjectRow({ project }: { project: ReportProject }) {
   })
   return <tr>
     <td><strong>{project.name}</strong><small>{project.version ?? '版本未提供'}</small></td>
-    <td><span className="source-chip">{statusLabel(project.status)}</span>{project.failure ? <small>{project.failure.code}: {project.failure.message}</small> : null}</td>
+    <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{statusLabel(project.status)}</span>{project.failure ? <small>{project.failure.code}: {project.failure.message}</small> : null}</td>
     <td>{project.includedRows ?? '—'} / {project.positiveLabels ?? '—'}</td>
     <td>{partitions.join(' · ')}</td>
     <td>{project.schema ?? '—'}<small>{project.revision ? project.revision.slice(0, 12) : '修订未提供'}</small></td>
@@ -64,7 +64,7 @@ function ProjectRow({ project }: { project: ReportProject }) {
 function TargetRow({ target, protocol }: { target: ReportTarget; protocol: string }) {
   return <tr>
     <td><strong>{target.project}</strong><small>{protocolLabel(protocol)}</small></td>
-    <td><span className="source-chip">{statusLabel(target.status)}</span>{target.failure ? <small>{target.failure.code}: {target.failure.message}</small> : null}</td>
+    <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{statusLabel(target.status)}</span>{target.failure ? <small>{target.failure.code}: {target.failure.message}</small> : null}</td>
     {METRICS.map(([key]) => <MetricCell key={key} metrics={target.metrics} name={key}/>)}
     <td>{target.trainingProjects.length ? target.trainingProjects.join(', ') : '—'}</td>
     <td>{target.blend
@@ -74,10 +74,10 @@ function TargetRow({ target, protocol }: { target: ReportTarget; protocol: strin
 }
 
 function ProtocolSection({ protocol, result }: { protocol: string; result: ReportProtocol | undefined }) {
-  if (!result) return <details className="admin-report-protocol"><summary>{protocolLabel(protocol)} · 未提供</summary></details>
-  return <details className="admin-report-protocol" open={protocol === 'local'}>
+  if (!result) return <details className="rounded-md border border-border-soft bg-card px-3.5 pb-3.5 [&>summary]:cursor-pointer [&>summary]:py-3 [&>summary]:text-sm [&>summary]:font-semibold"><summary>{protocolLabel(protocol)} · 未提供</summary></details>
+  return <details className="rounded-md border border-border-soft bg-card px-3.5 pb-3.5 [&>summary]:cursor-pointer [&>summary]:py-3 [&>summary]:text-sm [&>summary]:font-semibold" open={protocol === 'local'}>
     <summary>{protocolLabel(protocol)} · {statusLabel(result.status)} · {result.targets.length} 个目标</summary>
-    <div className="admin-table-wrap"><table className="admin-table">
+    <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <thead><tr><th>目标项目</th><th>状态</th>{METRICS.map(([key, name]) => <th key={key}>{name}</th>)}<th>训练来源</th><th>融合权重</th></tr></thead>
       <tbody>{result.targets.length ? result.targets.map(target => <TargetRow key={target.project} target={target} protocol={protocol}/>)
         : <tr><td colSpan={9}>没有目标结果。</td></tr>}</tbody>
@@ -126,39 +126,39 @@ export function AdminExperimentDetailPage({ reportId, navigate, expired }: {
     <AdminPageHeader title="多项目实验报告" meta={`${report.source} · ${formatDate(report.generatedUtc)}`}
       actions={<Button onClick={() => navigate({ name: 'admin', view: 'experiments' })}>返回实验列表</Button>}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-status-line">
-      <span className="source-chip">{statusLabel(report.status)}</span>
+    <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3">
+      <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{statusLabel(report.status)}</span>
       <span>{report.schema ?? 'schema 未提供'}</span>
       <span>{report.metricSet ?? '指标集未提供'}</span>
       <span>{report.methodCount} 种方法 · {report.protocolCount} 种口径</span>
       <span>{report.projectCount} 个项目 · 失败 {report.failureCount}</span>
     </div>
-    <p className="admin-notice" role="status">只读报告；宏平均不是全局最佳模型，不改变默认模型。融合权重只用各目标项目的验证段选择。</p>
+    <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2" role="status">只读报告；宏平均不是全局最佳模型，不改变默认模型。融合权重只用各目标项目的验证段选择。</p>
 
-    <h2 className="admin-report-heading">数据与项目</h2>
-    <div className="admin-table-wrap"><table className="admin-table">
+    <h2 className="mt-6 mb-3 text-base font-semibold text-foreground">数据与项目</h2>
+    <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <thead><tr><th>项目</th><th>状态</th><th>纳入 / 正例</th><th>训练 · 验证 · 测试</th><th>schema / 修订</th><th>来源</th></tr></thead>
       <tbody>{report.report.projects.map(project => <ProjectRow key={project.name} project={project}/>)}</tbody>
     </table></div>
-    {report.report.projects.some(project => project.limitations.length) ? <details className="admin-report-identity">
+    {report.report.projects.some(project => project.limitations.length) ? <details className="mt-5 rounded-md border border-border-soft bg-card px-3.5 pb-3.5 [&>summary]:cursor-pointer [&>summary]:py-3 [&>summary]:text-sm [&>summary]:font-semibold">
       <summary>标签语义与限制</summary>
-      <dl className="admin-facts">{report.report.projects.map(project => <div key={project.name}>
+      <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">{report.report.projects.map(project => <div key={project.name}>
         <dt>{project.name}</dt>
         <dd>{project.labelRule ?? '标签规则未提供'}{project.limitations.length ? <small>{project.limitations.join('；')}</small> : null}</dd>
       </div>)}</dl>
     </details> : null}
 
-    <h2 className="admin-report-heading">训练方式与目标指标</h2>
-    <div className="admin-compare-picker"><Select ariaLabel="实验方法" value={selected} onChange={setMethod}
+    <h2 className="mt-6 mb-3 text-base font-semibold text-foreground">训练方式与目标指标</h2>
+    <div className="flex flex-wrap items-end gap-3"><Select ariaLabel="实验方法" value={selected} onChange={setMethod}
       options={report.methods.map(value => ({ value, label: methodLabel(value) }))}/></div>
-    <div className="admin-table-wrap"><table className="admin-table">
+    <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <thead><tr><th>训练方式</th><th>状态</th><th>AP 宏平均</th><th>AP 方差</th><th>ROC-AUC</th><th>Recall@20%LOC</th><th>Popt</th><th>IFA</th><th>最差项目</th></tr></thead>
       <tbody>{report.protocols.map(name => {
         const result = results[name]
         const worst = result?.worstProjectByPrimaryMetric
         return <tr key={name}>
           <th>{protocolLabel(name)}</th>
-          <td><span className="source-chip">{statusLabel(result?.status ?? '未提供')}</span></td>
+          <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{statusLabel(result?.status ?? '未提供')}</span></td>
           {summaryCell(result?.metrics.averagePrecision, 'macroMean')}
           {summaryCell(result?.metrics.averagePrecision, 'populationVariance')}
           {summaryCell(result?.metrics.rocAuc, 'macroMean')}
@@ -169,10 +169,10 @@ export function AdminExperimentDetailPage({ reportId, navigate, expired }: {
         </tr>
       })}</tbody>
     </table></div>
-    <div className="admin-report-protocols">{report.protocols.map(name => <ProtocolSection key={name} protocol={name} result={results[name]}/>)}</div>
+    <div className="grid gap-2.5">{report.protocols.map(name => <ProtocolSection key={name} protocol={name} result={results[name]}/>)}</div>
 
-    <h2 className="admin-report-heading">失败记录</h2>
-    {report.report.failures.length ? <div className="admin-table-wrap"><table className="admin-table">
+    <h2 className="mt-6 mb-3 text-base font-semibold text-foreground">失败记录</h2>
+    {report.report.failures.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <thead><tr><th>阶段</th><th>方法 / 口径</th><th>项目</th><th>错误</th><th>训练来源</th></tr></thead>
       <tbody>{report.report.failures.map((failure, index) => <tr key={index}>
         <td>{failure.stage ?? '—'}</td>
@@ -181,11 +181,11 @@ export function AdminExperimentDetailPage({ reportId, navigate, expired }: {
         <td><code>{failure.code ?? '—'}</code><small>{failure.message ?? '未提供原因'}</small></td>
         <td>{failure.trainingProjects.join(', ') || '—'}</td>
       </tr>)}</tbody>
-    </table></div> : <p className="quiet-empty">报告没有失败记录。</p>}
+    </table></div> : <p className="text-xs text-foreground-3">报告没有失败记录。</p>}
 
-    <details className="admin-report-identity">
+    <details className="mt-5 rounded-md border border-border-soft bg-card px-3.5 pb-3.5 [&>summary]:cursor-pointer [&>summary]:py-3 [&>summary]:text-sm [&>summary]:font-semibold">
       <summary>运行身份与边界</summary>
-      <dl className="admin-facts">
+      <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>报告版本</dt><dd>{report.report.reportVersion}</dd></div>
         <div><dt>生成时间</dt><dd>{formatDate(report.report.generatedUtc)}</dd></div>
         <div><dt>Python / 平台</dt><dd>{valueLabel(report.report.environment.python)} / {valueLabel(report.report.environment.platform)}</dd></div>

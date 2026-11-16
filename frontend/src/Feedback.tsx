@@ -7,7 +7,9 @@
 
 import type { ReactNode } from 'react'
 import { Icon } from './Icon'
+import { Button } from './ui/controls'
 import { describeFailure, type FailureKind } from './requestState'
+import { cn } from './lib/utils'
 
 const KIND_TITLES: Record<FailureKind, string> = {
   network: '无法连接服务',
@@ -35,15 +37,15 @@ export function LoadingNotice({
   prefix?: boolean
 }) {
   return (
-    <div className="notice notice-loading" role="status" aria-busy="true" aria-live="polite">
-      <Icon name="info" size={16} />
-      <div>
-        {prefix ? <strong>正在读取</strong> : null}
+    <div className="flex gap-2 rounded-sm border border-border-soft bg-sunken p-3 text-sm text-foreground-2" role="status" aria-busy="true" aria-live="polite">
+      <Icon name="info" size={16} className="mt-0.5 shrink-0 text-foreground-3"/>
+      <div className="grid min-w-0 gap-0.5">
+        {prefix ? <strong className="text-foreground">正在读取</strong> : null}
         <span>{label}</span>
-        {note === undefined ? null : <span className="notice-note">{note}</span>}
-        <div className="skeleton-lines" aria-hidden="true">
-          {[0, 1, 2].map((index) => (
-            <span key={index} className="skeleton-line" data-line={index} />
+        {note === undefined ? null : <span className="text-xs text-foreground-3">{note}</span>}
+        <div className="mt-2 grid gap-1" aria-hidden="true">
+          {['100%', '92%', '64%'].map((width, index) => (
+            <span key={index} className="h-2 rounded-full bg-strong" style={{ width }} />
           ))}
         </div>
       </div>
@@ -69,10 +71,10 @@ export function EmptyState({
   children?: ReactNode
 }) {
   return (
-    <div className="state-block" data-state={tone} role={tone === 'alert' ? 'alert' : undefined}>
-      <h2 className="state-block-title">{title}</h2>
-      <p className="state-block-note">{description}</p>
-      {children === undefined ? null : <div className="state-block-actions">{children}</div>}
+    <div className={cn('grid justify-items-start gap-1.5 rounded-sm border p-4', tone === 'alert' ? 'border-rose/30 bg-rose-soft' : 'border-border-soft bg-card')} data-state={tone} role={tone === 'alert' ? 'alert' : undefined}>
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      <p className="text-xs leading-body text-foreground-3">{description}</p>
+      {children === undefined ? null : <div className="mt-1 flex flex-wrap gap-2">{children}</div>}
     </div>
   )
 }
@@ -90,32 +92,30 @@ export function FailureNotice({
 }) {
   const failure = describeFailure(error)
   return (
-    <div className="notice notice-failure" role="alert">
-      <Icon name="info" size={17} />
-      <div>
-        <strong>{KIND_TITLES[failure.kind]}</strong>
+    <div className="flex gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert">
+      <Icon name="info" size={17} className="mt-0.5 shrink-0"/>
+      <div className="grid min-w-0 gap-0.5">
+        <strong className="text-sm">{KIND_TITLES[failure.kind]}</strong>
         <span>{failure.message}</span>
         {failure.details.length > 0 ? (
-          <ul className="failure-details">
+          <ul className="mt-1 grid gap-0.5 pl-4 list-disc">
             {failure.details.map((detail) => (
               <li key={`${detail.field}:${detail.reason}`}>
-                <code>{detail.field}</code>
+                <code className="font-mono">{detail.field}</code>
                 {detail.reason}
               </li>
             ))}
           </ul>
         ) : null}
         {failure.requestId === '' ? null : (
-          <span className="failure-request">
-            请求编号 <code>{failure.requestId}</code>
+          <span className="text-foreground-3">
+            请求编号 <code className="font-mono text-foreground-2">{failure.requestId}</code>
           </span>
         )}
         {children}
         {onRetry === undefined ? null : (
-          <div className="notice-actions">
-            <button type="button" onClick={onRetry}>
-              {retryLabel}
-            </button>
+          <div className="mt-1">
+            <Button type="button" size="sm" onClick={onRetry}>{retryLabel}</Button>
           </div>
         )}
       </div>
@@ -126,7 +126,7 @@ export function FailureNotice({
 /** 成功或中性的操作反馈：写操作的结果必须能被文字读到。 */
 export function StatusNote({ tone = 'info', children }: { tone?: 'info' | 'ok' | 'warn'; children: ReactNode }) {
   return (
-    <p className={`status-note status-${tone}`} role="status">
+    <p className={cn('text-xs', tone === 'ok' ? 'text-teal-deep' : tone === 'warn' ? 'text-amber-deep' : 'text-foreground-3')} role="status">
       {children}
     </p>
   )
@@ -135,9 +135,9 @@ export function StatusNote({ tone = 'info', children }: { tone?: 'info' | 'ok' |
 /** 完整来源里的结构化字段：以等宽文本原样展示，长哈希在容器内换行，不产生页面级横向滚动。 */
 export function MetaBlock({ title, value }: { title: string; value: unknown }) {
   return (
-    <div className="meta-block">
-      <h4>{title}</h4>
-      <pre>{JSON.stringify(value, null, 2)}</pre>
+    <div className="grid gap-1 rounded-sm border border-border-soft p-3">
+      <h4 className="text-xs font-medium text-foreground-2">{title}</h4>
+      <pre className="overflow-auto whitespace-pre-wrap break-all rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{JSON.stringify(value, null, 2)}</pre>
     </div>
   )
 }

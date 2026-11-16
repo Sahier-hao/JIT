@@ -306,7 +306,7 @@ export function PartitionList({ split }: { split: Split | undefined }) {
 export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (bucket: TrendBucket) => void }) {
   return (
     <div className="overflow-x-auto" role="region" aria-label="历史趋势文本视图" tabIndex={0}>
-      <table className="w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top">
+      <table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top">
         <caption className="px-2 py-1.5 text-left text-xs text-foreground-3">
           历史趋势文本视图：每个时间桶的提交数、记录分区、观测正标签比例与模型风险中位数（时区 {data.timezone}，最小样本{' '}
           {data.minSample}）
@@ -314,7 +314,7 @@ export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (
         <thead>
           <tr>
             <th>时间桶（{data.timezone}）</th>
-            <th className="numeric">提交数</th>
+            <th className="tabular-nums text-right">提交数</th>
             <th>记录分区</th>
             <th>观测正标签比例</th>
             <th>模型风险中位数</th>
@@ -332,7 +332,7 @@ export function TrendTable({ data, onDrill }: { data: TrendAggregate; onDrill: (
                     {bucket.start.slice(0, 10)} — {bucket.end.slice(0, 10)}
                   </span>
                 </td>
-                <td className="numeric">{bucket.commits}</td>
+                <td className="tabular-nums text-right">{bucket.commits}</td>
                 <td>{partitionText(bucket)}</td>
                 <td>{measureText(bucket.observedRate, '样本不足')}</td>
                 <td>{riskText(bucket)}</td>

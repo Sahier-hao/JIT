@@ -11,7 +11,7 @@ import {
   type Row,
 } from '../../adminContracts'
 import { EmptyState, LoadingNotice } from '../../Feedback'
-import { Button } from '../../ui/controls'
+import { Button, NativeSelect } from '../../ui/controls'
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from './AdminShared'
 
@@ -55,9 +55,9 @@ function FilterSelect({ label, value, onChange, options }: {
   onChange: (value: string) => void
   options: { value: string; label: string }[]
 }) {
-  return <label className="admin-filter-field"><span>{label}</span><select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>
+  return <label className="grid min-w-40 gap-1.5 text-xs text-foreground-3"><span>{label}</span><NativeSelect aria-label={label} value={value} onChange={event => onChange(event.target.value)}>
     {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-  </select></label>
+  </NativeSelect></label>
 }
 
 export function AdminExperimentRunsPage({ candidateId, filters, navigate, expired }: {
@@ -177,14 +177,14 @@ function ExperimentList({ filters, navigate, expired }: {
       onRefresh={() => setRevision(value => value + 1)}
     />
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-experiment-filters">
+    <div className="flex flex-wrap items-end gap-2">
       <FilterSelect label="登记状态" value={filters.registrationState ?? ''} onChange={value => setFilter('registrationState', value)} options={options('全部登记状态', [['unregistered', '未登记'], ['registered', '已登记']])}/>
       <FilterSelect label="服务兼容性" value={filters.compatibility ?? ''} onChange={value => setFilter('compatibility', value)} options={options('全部兼容性', [['repository-analysis', '可用于仓库分析'], ['offline-only', '仅离线基准'], ['input-unsupported', '当前输入不支持'], ['schema-incompatible', 'schema 不兼容']])}/>
       <FilterSelect label="产物状态" value={filters.artifactState ?? ''} onChange={value => setFilter('artifactState', value)} options={options('全部产物状态', [['complete', '完整'], ['invalid', '产物无效'], ['failed', '训练失败']])}/>
     </div>
     {loading ? <LoadingNotice label="正在盘点实验运行"/> : null}
-    {!loading && !page?.runs.length ? <p className="quiet-empty">当前筛选没有实验运行。</p> : null}
-    {page?.runs.length ? <div className="admin-table-wrap"><table className="admin-table admin-experiment-table">
+    {!loading && !page?.runs.length ? <p className="text-xs text-foreground-3">当前筛选没有实验运行。</p> : null}
+    {page?.runs.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-experiment-table">
       <thead><tr><th><span className="sr-only">选择</span></th><th>数据集 / 方法</th><th>指标</th><th>状态</th><th>运行</th><th><span className="sr-only">操作</span></th></tr></thead>
       <tbody>{page.runs.map(run => {
         const checked = selected.includes(run.candidateId)
@@ -193,19 +193,19 @@ function ExperimentList({ filters, navigate, expired }: {
             onChange={event => setSelected(current => event.target.checked ? [...current, run.candidateId] : current.filter(id => id !== run.candidateId))}/></td>
           <td><strong>{experimentLabel(run)}</strong><small>{run.datasetVersion ?? '数据集未知'} · {run.method ?? '方法未知'}</small></td>
           <td>{metricSummary(run.metrics)}</td>
-          <td><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</td>
+          <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</td>
           <td><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></td>
-          <td><div className="admin-row-actions"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })}>查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }}>登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型</Button> : null}</div></td>
+          <td><div className="flex flex-wrap items-center gap-1.5"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })}>查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }}>登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型</Button> : null}</div></td>
         </tr>
       })}</tbody>
     </table></div> : null}
-    {selected.length ? <section className="admin-promotion-panel" aria-label="登记所选实验">
+    {selected.length ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="登记所选实验">
       <strong>已选择 {selected.length} 个运行</strong>
-      {confirming ? <><p>确认后会重新校验产物并按运行身份登记；不会自动设置默认模型。</p><div className="admin-detail-actions"><Button variant="primary" loading={busy} onClick={() => void promote()}>确认登记实验运行</Button><Button disabled={busy} onClick={() => setConfirming(false)}>取消</Button></div></> : <Button onClick={() => setConfirming(true)}>登记所选实验运行</Button>}
+      {confirming ? <><p>确认后会重新校验产物并按运行身份登记；不会自动设置默认模型。</p><div className="flex flex-wrap items-center gap-2"><Button variant="primary" loading={busy} onClick={() => void promote()}>确认登记实验运行</Button><Button disabled={busy} onClick={() => setConfirming(false)}>取消</Button></div></> : <Button onClick={() => setConfirming(true)}>登记所选实验运行</Button>}
     </section> : null}
-    {results.length ? <section className="admin-promotion-results" aria-label="登记结果"><h2>登记结果</h2>{results.map(result => <div key={result.candidateId} data-status={result.status}><span className="source-chip">{STATUS_LABELS[result.status] ?? result.status}</span><code>{result.candidateId}</code>{result.message ? <p>{result.message}</p> : null}{result.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: result.modelId! })}>查看模型</Button> : null}</div>)}</section> : null}
-    {page?.reports.length ? <section className="admin-report-only"><h2>不可登记报告</h2><p>聚合报告不包含完整模型产物，只能用于比较。</p>{page.reports.map(report => <div key={report.artifactKey}><code>{report.artifactKey}</code><p>{report.reason}</p></div>)}</section> : null}
-    {total > PAGE_SIZE ? <nav className="pager" aria-label="实验运行分页"><Button disabled={offset === 0} onClick={() => goTo(Math.max(0, offset - PAGE_SIZE))}>上一页</Button><span>第 {Math.floor(offset / PAGE_SIZE) + 1} 页</span><Button disabled={offset + PAGE_SIZE >= total} onClick={() => goTo(offset + PAGE_SIZE)}>下一页</Button></nav> : null}
+    {results.length ? <section className="grid gap-2" aria-label="登记结果"><h2>登记结果</h2>{results.map(result => <div key={result.candidateId} data-status={result.status}><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[result.status] ?? result.status}</span><code>{result.candidateId}</code>{result.message ? <p>{result.message}</p> : null}{result.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: result.modelId! })}>查看模型</Button> : null}</div>)}</section> : null}
+    {page?.reports.length ? <section className="grid gap-2"><h2>不可登记报告</h2><p>聚合报告不包含完整模型产物，只能用于比较。</p>{page.reports.map(report => <div key={report.artifactKey}><code>{report.artifactKey}</code><p>{report.reason}</p></div>)}</section> : null}
+    {total > PAGE_SIZE ? <nav className="flex flex-wrap items-center justify-between gap-2 text-xs" aria-label="实验运行分页"><Button disabled={offset === 0} onClick={() => goTo(Math.max(0, offset - PAGE_SIZE))}>上一页</Button><span>第 {Math.floor(offset / PAGE_SIZE) + 1} 页</span><Button disabled={offset + PAGE_SIZE >= total} onClick={() => goTo(offset + PAGE_SIZE)}>下一页</Button></nav> : null}
   </section>
 }
 
@@ -229,13 +229,13 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
   if (!run) return <LoadingNotice label="正在读取实验运行详情"/>
   return <section>
     <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
-    <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型详情</Button> : null}</div>
-    <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span></div>
-    {run.serviceCompatibilityReason ? <p className="admin-notice">{run.serviceCompatibilityReason}</p> : null}
-    {run.artifactStateReason ? <p className="field-error">{run.artifactStateReason}</p> : null}
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型详情</Button> : null}</div>
+    <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span></div>
+    {run.serviceCompatibilityReason ? <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2">{run.serviceCompatibilityReason}</p> : null}
+    {run.artifactStateReason ? <p className="text-xs text-rose">{run.artifactStateReason}</p> : null}
     <MetricGrid metrics={run.metrics}/>
-    <div className="admin-detail-grid">
-      <section><h2>运行身份</h2><dl className="admin-facts">
+    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+      <section><h2>运行身份</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>artifact run</dt><dd><code>{run.artifactRunId ?? '无'}</code></dd></div>
         <div><dt>业务运行</dt><dd><code>{run.runId ?? '未登记'}</code></dd></div>
         <div><dt>模型</dt><dd><code>{run.modelId ?? '未登记'}</code></dd></div>
@@ -243,8 +243,8 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
         <div><dt>schema</dt><dd>{run.featureSchemaVersion ?? '未提供'}</dd></div>
         <div><dt>指标集</dt><dd>{run.metricSet ?? '未提供'}</dd></div>
       </dl></section>
-      <section><h2>产物位置</h2><div className="admin-location-list">{run.locations.map(location => <div key={location.candidateId}><code>{location.artifactKey}</code><span>{STATUS_LABELS[location.artifactState]}</span>{location.reason ? <p>{location.reason}</p> : null}</div>)}</div></section>
+      <section><h2>产物位置</h2><div className="grid gap-2.5 [&>div]:grid [&>div]:gap-1 [&_span]:text-xs [&_span]:text-foreground-3 [&_p]:text-xs [&_p]:text-foreground-2">{run.locations.map(location => <div key={location.candidateId}><code>{location.artifactKey}</code><span>{STATUS_LABELS[location.artifactState]}</span>{location.reason ? <p>{location.reason}</p> : null}</div>)}</div></section>
     </div>
-    <section><h2>训练限制</h2><ul className="admin-limitations">{run.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
+    <section><h2>训练限制</h2><ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{run.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
   </section>
 }

@@ -123,33 +123,33 @@ export function AdminModelsPage({ navigate, expired }: {
   return <section>
     <AdminPageHeader title="模型管理" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {notice ? <p role="status" className="admin-notice">{notice}</p> : null}
-    {readiness ? <section className="admin-visibility-summary" aria-label="模型可见性">
+    {notice ? <p role="status" className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2">{notice}</p> : null}
+    {readiness ? <section className="grid gap-2" aria-label="模型可见性">
       <VisibilitySummary readiness={readiness}/>
     </section> : null}
-    {readiness && readiness.issues.length ? <section className="admin-readiness" aria-label="模型目录就绪状态">
+    {readiness && readiness.issues.length ? <section className="grid gap-2" aria-label="模型目录就绪状态">
       <strong>模型目录需要处理 {readiness.issues.length} 项</strong>
       <ul>{readiness.issues.map(issue => <li key={issue.code}>{issue.message}</li>)}</ul>
       {readiness.unregisteredExperiments ? <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })}>查看未登记实验</Button> : null}
     </section> : null}
     {readiness ? <CatalogState readiness={readiness} imported={coverage?.latestImport ?? null}
       coverageKnown={coverage !== null}/> : null}
-    {coverageError ? <section className="admin-panel model-coverage-error" aria-label="训练覆盖读取失败">
+    {coverageError ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card text-xs text-rose" aria-label="训练覆盖读取失败">
       <strong>训练覆盖暂不可用</strong><p>{coverageError}</p>
       <Button size="sm" onClick={() => setRevision(value => value + 1)}>重试</Button>
     </section> : null}
     {coverage ? <CoverageMatrix page={coverage} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/> : null}
     {coverage ? <ModelPackageDelivery latest={coverage.latestImport}/> : null}
-    <h2 className="admin-section-title">已登记模型 <span className="admin-count">{models.length}</span></h2>
+    <h2 className="text-base font-semibold text-foreground">已登记模型 <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{models.length}</span></h2>
     <ModelPolicyCards models={models} busy={!!busy} update={updatePolicy} open={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })}/>
-    {!models.length ? <p className="quiet-empty">尚无已登记模型</p> : null}
+    {!models.length ? <p className="text-xs text-foreground-3">尚无已登记模型</p> : null}
     <MethodAvailability methods={methods}/>
-    <h2 className="admin-section-title">本机模型产物</h2>
-    <div className="admin-candidates">{candidates.map(candidate => <article className="admin-candidate" key={label(candidate.candidateId)}>
-      <div><strong>{label(candidate.displayName)}</strong><p>{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div>
-      <Button disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '登记本机产物'}</Button>
+    <h2 className="text-base font-semibold text-foreground">本机模型产物</h2>
+    <div className="grid gap-2">{candidates.map(candidate => <article className="grid gap-1.5 rounded-sm border border-border-soft p-2.5 text-xs" key={label(candidate.candidateId)}>
+      <div className="grid gap-0.5"><strong className="text-sm font-medium text-foreground">{label(candidate.displayName)}</strong><p className="text-xs text-foreground-3">{label(candidate.method)} · {label(candidate.featureSchemaVersion)}</p></div>
+      <Button className="justify-self-start" disabled={!!busy || candidate.state === 'invalid'} onClick={() => void register(candidate)}>{busy === candidate.candidateId ? '正在校验…' : '登记本机产物'}</Button>
     </article>)}</div>
-    {!candidates.length ? <p className="quiet-empty">当前产物目录没有可发现的模型</p> : null}
+    {!candidates.length ? <p className="text-xs text-foreground-3">当前产物目录没有可发现的模型</p> : null}
   </section>
 }
 
@@ -166,7 +166,7 @@ const COVERAGE_LABELS: Record<CoverageState, string> = {
 }
 
 function VisibilitySummary({ readiness }: { readiness: ModelReadiness }) {
-  return <div className="admin-status-line" aria-label="模型可见性">
+  return <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3" aria-label="模型可见性">
     <span>{readiness.registeredModels} 个已登记</span>
     <span>{readiness.readyModels} 个可用模型</span>
     <span>{readiness.userSelectableModels} 个用户可选</span>
@@ -182,7 +182,7 @@ function CatalogState({ readiness, imported, coverageKnown }: {
 }) {
   if (readiness.registeredModels > 0) return null
   const hasCandidates = readiness.completeUnregisteredExperiments > 0 || readiness.invalidArtifacts > 0
-  return <section className="admin-panel catalog-empty-state" aria-label="模型目录为空">
+  return <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card text-xs text-foreground-3" aria-label="模型目录为空">
     <strong>尚无已登记模型</strong>
     <p>{hasCandidates
       ? '本机已有训练产物，但还没有登记为可用模型。'
@@ -198,22 +198,22 @@ function CoverageMatrix({ page, openModel }: {
   page: ModelCoveragePage
   openModel: (modelId: string) => void
 }) {
-  if (!page.datasets.length) return <section className="admin-panel model-coverage-empty" aria-label="训练覆盖">
+  if (!page.datasets.length) return <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card text-xs text-foreground-3" aria-label="训练覆盖">
     <strong>没有训练覆盖记录</strong><p>当前产物目录没有套件索引或完整运行。</p>
   </section>
   return <section className="model-coverage" aria-label="数据集与方法训练覆盖">
-    <h2 className="admin-section-title">训练覆盖 <span className="admin-count">{page.total}</span></h2>
-    <div className="model-coverage-datasets">{page.datasets.map(dataset =>
-      <article className="model-coverage-dataset" key={dataset.datasetKey}>
-        <header><strong>{dataset.dataset}</strong><span>{dataset.datasetVersion} · {dataset.schema}</span></header>
-        <div className="model-coverage-grid" role="list">
-          {dataset.methods.map(cell => <div role="listitem" key={cell.method}>
-            <strong>{cell.name}</strong>
+    <h2 className="text-base font-semibold text-foreground">训练覆盖 <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{page.total}</span></h2>
+    <div className="grid gap-2">{page.datasets.map(dataset =>
+      <article className="grid gap-1 rounded-sm border border-border-soft p-2.5 text-xs" key={dataset.datasetKey}>
+        <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-soft pb-1.5"><strong className="text-sm font-semibold text-foreground">{dataset.dataset}</strong><span className="text-xs text-foreground-3">{dataset.datasetVersion} · {dataset.schema}</span></header>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" role="list">
+          {dataset.methods.map(cell => <div className="grid gap-1 rounded-sm border border-border-soft p-2" role="listitem" key={cell.method}>
+            <strong className="text-xs font-medium text-foreground">{cell.name}</strong>
             <CoverageCell cell={cell} openModel={openModel}/>
           </div>)}
         </div>
       </article>)}</div>
-    <p className="model-coverage-note">覆盖来自真实运行和产物校验；未登记项不会自动发布或设为默认。</p>
+    <p className="text-xs text-foreground-3">覆盖来自真实运行和产物校验；未登记项不会自动发布或设为默认。</p>
   </section>
 }
 
@@ -222,35 +222,35 @@ function CoverageCell({ cell, openModel }: {
   openModel: (modelId: string) => void
 }) {
   const content = <>
-    <span className="coverage-state" data-state={cell.state}>{COVERAGE_LABELS[cell.state]}</span>
+    <span className="text-[11px] text-foreground-3" data-state={cell.state}>{COVERAGE_LABELS[cell.state]}</span>
     {cell.reason ? <small title={cell.reason}>{cell.reason}</small> : null}
   </>
-  if (cell.modelId) return <button type="button" className="coverage-cell-button"
+  if (cell.modelId) return <button type="button" className="block w-full border-0 bg-transparent p-0 text-left"
     aria-label={`${cell.name}：${COVERAGE_LABELS[cell.state]}，查看模型详情`}
     onClick={() => openModel(cell.modelId!)}>{content}</button>
-  return <div className="coverage-cell-static" title={cell.reason ?? undefined}>{content}</div>
+  return <div className="block" title={cell.reason ?? undefined}>{content}</div>
 }
 
 function ModelPackageDelivery({ latest }: { latest: ModelPackageImport | null }) {
   const failures = latest?.items.filter(item => item.status === 'conflict' || item.status === 'failed') ?? []
-  return <section className="admin-panel model-package-panel" aria-label="模型包交付">
-    <h2 className="admin-section-title">模型包恢复</h2>
+  return <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="模型包交付">
+    <h2 className="text-base font-semibold text-foreground">模型包恢复</h2>
     {latest ? <>
-      <div className="admin-status-line">
+      <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3">
         <span>{latest.packageName}</span><span>{latest.status === 'completed' ? '导入完成' : latest.status === 'partial' ? '部分导入' : '导入失败'}</span>
         <span>新建 {latest.registeredCount}</span><span>复用 {latest.reusedCount}</span><span>已存在 {latest.alreadyRegisteredCount}</span>
       </div>
-      <div className="model-package-identity"><span>SHA-256</span><code>{latest.packageSha256}</code></div>
-      {latest.message ? <p>{latest.message}</p> : null}
-      {failures.length ? <ul className="model-package-failures">{failures.map((item, index) =>
+      <div className="grid gap-0.5 text-xs text-foreground-3"><span>SHA-256</span><code>{latest.packageSha256}</code></div>
+      {latest.message ? <p className="text-xs text-foreground-3">{latest.message}</p> : null}
+      {failures.length ? <ul className="grid gap-1 text-xs text-rose">{failures.map((item, index) =>
         <li key={`${item.artifactRunId ?? item.artifactKey ?? 'item'}-${index}`}><code>{item.artifactKey ?? item.artifactRunId ?? '未知条目'}</code><span>{item.message ?? item.code ?? '导入失败'}</span></li>)}</ul> : null}
-    </> : <p>尚无模型包导入记录。</p>}
-    <details><summary>维护命令</summary><pre>{`python -m jit_baseline.cli export-models <MODEL_ID...> --output models.zip
+    </> : <p className="text-xs text-foreground-3">尚无模型包导入记录。</p>}
+    <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">维护命令</summary><pre className="overflow-auto border-t border-border-soft bg-dark p-2.5 font-mono text-[11px] text-on-dark">{`python -m jit_baseline.cli export-models <MODEL_ID...> --output models.zip
 python -m jit_baseline.cli import-models models.zip`}</pre></details>
   </section>
 }
 
 function MethodAvailability({ methods }: { methods: Row[] }) {
   if (!methods.length) return null
-  return <section className="admin-panel method-availability" aria-label="方法支持情况"><h2 className="admin-section-title">方法支持情况 <span className="admin-count">{methods.length}</span></h2><ul>{methods.map(method => <li key={label(method.method)}><div><strong>{label(method.name)}</strong><span>{method.category === 'deep' ? '深度学习' : '经典机器学习'}</span></div><span className="admin-status-chip">{Number(method.registeredModels) > 0 ? `已校验模型 ${method.registeredModels}` : Number(method.deliveredArtifacts) > 0 ? '待校验登记' : '无已交付产物'}</span></li>)}</ul></section>
+  return <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="方法支持情况"><h2 className="text-base font-semibold text-foreground">方法支持情况 <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{methods.length}</span></h2><ul className="grid gap-0.5">{methods.map(method => <li key={label(method.method)} className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft py-1.5 text-xs"><div className="flex flex-wrap items-baseline gap-2"><strong className="text-sm font-medium text-foreground">{label(method.name)}</strong><span className="text-xs text-foreground-3">{method.category === 'deep' ? '深度学习' : '经典机器学习'}</span></div><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{Number(method.registeredModels) > 0 ? `已校验模型 ${method.registeredModels}` : Number(method.deliveredArtifacts) > 0 ? '待校验登记' : '无已交付产物'}</span></li>)}</ul></section>
 }

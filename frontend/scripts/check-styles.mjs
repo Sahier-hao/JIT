@@ -19,49 +19,21 @@ const SRC = join(FRONTEND_ROOT, 'src')
 /** 当前允许存在的样式表（每批迁移后收缩）。 */
 export const ALLOWED_STYLE_FILES = [
   'src/index.css',
-  'src/trend.css',
-  'src/pages/analysis-comparison.css',
-  'src/styles/admin.css',
-  'src/styles/base.css',
-  'src/styles/claude.css',
-  'src/styles/components.css',
-  'src/styles/dashboard.css',
-  'src/styles/modern.css',
-  'src/styles/pr-review.css',
-  'src/styles/product.css',
-  'src/styles/project-redesign.css',
-  'src/styles/project-workspace.css',
-  'src/styles/project.css',
   'src/styles/tokens.css',
+  'src/styles/base.css',
   'src/styles/content.css',
-  'src/styles/update-status.css',
-  'src/styles/workbench.css',
 ]
 
 /** index.css 允许的样式导入（包导入如 tailwindcss / @mantine 不在此列）。 */
 export const ALLOWED_ENTRY_IMPORTS = [
   './styles/tokens.css',
-  './styles/content.css',
   './styles/base.css',
-  './styles/components.css',
-  './styles/product.css',
-  './styles/modern.css',
-  './styles/admin.css',
-  './styles/pr-review.css',
-  './styles/workbench.css',
-  './styles/update-status.css',
-  './styles/project.css',
-  './styles/project-workspace.css',
-  './styles/claude.css',
-  './styles/dashboard.css',
-  './styles/project-redesign.css',
+  './styles/content.css',
 ]
 
 /** 允许在组件/页面中直接导入的 CSS：入口、第三方内容与迁移中的页面样式。 */
 export const ALLOWED_TSX_IMPORTS = [
   ['src/main.tsx', './index.css'],
-  ['src/pages/AnalysisComparison.tsx', './analysis-comparison.css'],
-  ['src/TrendPage.tsx', './trend.css'],
 ]
 
 /** 收尾前允许引用 Mantine 的文件；删除依赖时清空。 */

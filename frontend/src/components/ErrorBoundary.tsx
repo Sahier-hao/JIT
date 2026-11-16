@@ -22,8 +22,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode; onReset?: ()
       <p className="mt-2 text-[var(--fg-2)]">其他数据与已保存的分析不受影响。可以重试，或返回项目列表继续。</p>
       <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-card p-2 text-xs text-[var(--fg-3)]">{this.state.error.message}</pre>
       <div className="mt-3 flex gap-2">
-        <button type="button" className="ui-btn ui-btn--primary ui-btn--md inline-flex h-[30px] items-center rounded-md border border-primary bg-primary px-3 text-[13px] font-medium text-primary-foreground" onClick={() => { this.setState({ error: null }); this.props.onReset?.() }}>重试</button>
-        <a href="#/projects" className="ui-btn ui-btn--secondary ui-btn--md inline-flex h-[30px] items-center rounded-md border border-input bg-card px-3 text-[13px] font-medium text-foreground">返回项目列表</a>
+        <button type="button" className="inline-flex h-[30px] items-center rounded-md border border-primary bg-primary px-3 text-[13px] font-medium text-primary-foreground" onClick={() => { this.setState({ error: null }); this.props.onReset?.() }}>重试</button>
+        <a href="#/projects" className="inline-flex h-[30px] items-center rounded-md border border-input bg-card px-3 text-[13px] font-medium text-foreground">返回项目列表</a>
       </div>
     </section>
   }

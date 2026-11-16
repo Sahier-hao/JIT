@@ -111,7 +111,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
   if (!experiment) return <section>
     <AdminPageHeader title="训练实验"/>
     <ErrorNotice>{error}</ErrorNotice>
-    {!error ? <p className="admin-report-meta">正在读取实验…</p> : null}
+    {!error ? <p className="text-xs leading-body text-foreground-3">正在读取实验…</p> : null}
   </section>
 
   const historyTasks = experiment.tasks.filter(task => task.trainingHistory)
@@ -119,14 +119,14 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
   const counts = experiment.statusCounts
   return <section>
     <AdminPageHeader title="训练实验" meta={experiment.datasetVersion}/>
-    <div className="admin-detail-actions">
+    <div className="flex flex-wrap items-center gap-2">
       <Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集</Button>
       <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>登记实验运行</Button>
       <Button onClick={exportComparison} disabled={!comparison}>导出比较</Button>
     </div>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-detail-grid">
-      <section><h2>实验身份</h2><dl className="admin-facts">
+    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+      <section><h2>实验身份</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>数据版本</dt><dd>{experiment.datasetVersion}</dd></div>
         <div><dt>manifest SHA-256</dt><dd><code>{experiment.manifestSha256}</code></dd></div>
         <div><dt>切分预设</dt><dd>{experiment.splitPreset}</dd></div>
@@ -136,45 +136,45 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
         <div><dt>创建</dt><dd>{formatDate(experiment.createdAt)}</dd></div>
         <div><dt>训练用户</dt><dd>{experiment.ownerUserId ?? '管理员'}</dd></div>
       </dl></section>
-      <section><h2>子任务</h2><dl className="admin-facts">
+      <section><h2>子任务</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>状态</dt><dd>{valueLabel(experiment.status)}</dd></div>
         {['queued', 'running', 'succeeded', 'failed', 'cancelled', 'interrupted'].map(key =>
           <div key={key}><dt>{valueLabel(key)}</dt><dd>{counts[key] ?? 0}</dd></div>)}
       </dl></section>
     </div>
-    <section className="admin-train-panel"><h2>子任务与真实训练过程</h2>
-      {experiment.tasks.map(task => <div key={task.taskId} className="admin-experiment-task">
-        <div className="admin-experiment-task-head">
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>子任务与真实训练过程</h2>
+      {experiment.tasks.map(task => <div key={task.taskId} className="grid gap-2 rounded-sm border border-border-soft p-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <strong>{task.method}</strong>
           <span>{valueLabel(task.status)}{task.queuePosition ? ` · 队列第 ${task.queuePosition} 位` : ''}</span>
-          <span className="admin-report-meta">{paramsText(task.parameters)}</span>
+          <span className="text-xs leading-body text-foreground-3">{paramsText(task.parameters)}</span>
         </div>
-        {task.error ? <p className="admin-inline-error">{task.error.code} · {task.error.message}</p> : null}
-        {task.metrics ? <p className="admin-report-meta">
+        {task.error ? <p className="text-xs text-rose">{task.error.code} · {task.error.message}</p> : null}
+        {task.metrics ? <p className="text-xs leading-body text-foreground-3">
           PR-AUC {metric(task.metrics, 'averagePrecision')} · ROC-AUC {metric(task.metrics, 'rocAuc')} ·
           F1 {metric(task.metrics, 'f1')} · P {metric(task.metrics, 'precision')} / R {metric(task.metrics, 'recall')} ·
           耗时 {task.trainingPerformance?.durationSeconds == null ? '未记录' : `${Number(task.trainingPerformance.durationSeconds).toFixed(2)}s`}
         </p> : null}
         {task.trainingHistory ? null : task.status === 'succeeded'
-          ? <p className="admin-report-meta">该方法是单次拟合，无逐 epoch 曲线。</p> : null}
-        <div className="admin-train-form">
+          ? <p className="text-xs leading-body text-foreground-3">该方法是单次拟合，无逐 epoch 曲线。</p> : null}
+        <div className="flex flex-wrap items-end gap-3">
           <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: task.taskId })}>任务详情</Button>
           {ACTIVE.has(task.status) ? <Button size="sm" variant="danger" loading={busy === task.taskId} onClick={() => void cancel(task)}>取消</Button> : null}
           {['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button size="sm" loading={busy === task.taskId} onClick={() => void retry(task)}>重试</Button> : null}
         </div>
       </div>)}
     </section>
-    {historyTasks.length ? <section className="admin-train-panel"><h2>训练曲线</h2>
-      <div className="admin-train-form">
+    {historyTasks.length ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>训练曲线</h2>
+      <div className="flex flex-wrap items-end gap-3">
         <Select ariaLabel="训练曲线方法" value={selectedHistory?.taskId ?? ''} onChange={setHistoryMethod}
           options={historyTasks.map(task => ({ value: task.taskId, label: task.method }))}/>
       </div>
       {selectedHistory ? <LossChart task={selectedHistory}/> : null}
     </section> : null}
-    <section className="admin-train-panel"><h2>同一口径比较</h2>
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>同一口径比较</h2>
       {comparison ? <>
-        {comparison.notes.map(note => <p key={note} className="admin-report-meta">{note}</p>)}
-        <table className="admin-compare-table">
+        {comparison.notes.map(note => <p key={note} className="text-xs leading-body text-foreground-3">{note}</p>)}
+        <table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:tabular-nums">
           <thead><tr><th>方法</th><th>参数</th><th>PR-AUC</th><th>ROC-AUC</th><th>F1</th><th>P / R</th><th>Recall@20%LOC</th><th>MCC</th><th>耗时</th><th>状态</th></tr></thead>
           <tbody>{comparison.methods.map(row => <tr key={row.taskId}>
             <td>{row.methodName}</td>
@@ -189,16 +189,16 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
             <td>{row.error ? `${row.error.code} · ${row.error.message}` : valueLabel(row.status)}</td>
           </tr>)}</tbody>
         </table>
-        <p className="admin-report-meta">
+        <p className="text-xs leading-body text-foreground-3">
           口径：{comparison.datasetVersion} · {comparison.splitPreset} · {comparison.metricSet} ·
           manifest {comparison.manifestSha256.slice(0, 12)}…
           {comparison.comparable ? '；各方法使用相同数据与切分成员。' : '；口径不一致，不可直接比较。'}
           MCC 未纳入当前指标集。
         </p>
-      </> : <p className="admin-report-meta">正在读取比较结果…</p>}
+      </> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
     </section>
     <Disclosure summary="比较口径与限制">
-      <p className="admin-report-meta">
+      <p className="text-xs leading-body text-foreground-3">
         三档指标来自各自运行的冻结分区；训练档只用于拟合诊断，验证档是模型选择背景，测试档承担冻结泛化评价。
         单次实验不按测试指标选择参数或方法，训练成功仍需在「登记实验运行」中显式登记，项目分析也只使用显式选择的已登记模型。
         分数未经当前仓库概率校准，不能视为缺陷概率。

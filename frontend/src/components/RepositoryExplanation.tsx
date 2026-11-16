@@ -42,7 +42,7 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
   const supported = result?.explanationStatus === 'supported'
   return <section className="repository-explanation" aria-label="模型解释" aria-busy={!current || Boolean(current.busy)}>
     {heading ? <h3>模型解释</h3> : null}
-    <p className="muted">单特征敏感度，不是缺陷结论、因果解释或代码定位；保存的模型分数不会改变。</p>
+    <p className="text-xs leading-body text-foreground-3">单特征敏感度，不是缺陷结论、因果解释或代码定位；保存的模型分数不会改变。</p>
     {!current ? <p role="status">正在读取模型解释…</p> : null}
     {current?.error ? <div role="alert"><p>{current.error}</p><Button variant="link" size="sm" onClick={() => { setState({ key: '' }); setAttempt(value => value + 1) }}>重新读取解释</Button></div> : null}
     {result?.explanationStatus === 'not-generated' ? <p>尚未生成该提交的模型解释，生成后会随此分析保存。</p> : null}
@@ -51,8 +51,8 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
     {supported ? <>
       <p>{result.explanationSummary}</p>
       {result.explanation.length ? <div className="explanation-table-scroll"><table className="explanation-table"><caption className="sr-only">主要特征对模型分数的影响</caption><thead><tr><th>特征</th><th>本次值 / 基线</th><th>分数变化</th></tr></thead><tbody>{result.explanation.map(item => <tr key={item.feature}><th>{LABELS[item.feature] ?? item.feature}（{item.feature}）</th><td>{item.value.toLocaleString(undefined, { maximumFractionDigits: 6 })} / {item.baseline.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td><td><b>{item.delta > 0 ? '+' : ''}{item.delta.toFixed(6)}</b><span>{item.direction === 'increases' ? '推高分数' : '拉低分数'}</span></td></tr>)}</tbody></table></div> : null}
-      <p className="muted">{result.baselineSource === 'zero' ? '零基线：训练分区背景不可用。' : result.baselineSource === 'mixed' ? '部分字段使用训练分区均值，其余字段使用零基线。' : result.baselineSource === 'training-partition-mean' ? '基线来自原模型训练分区的字段均值。' : '基线来自原模型绑定数据集的字段均值。'}</p>
-      <details className="detail-disclosure"><summary>解释方法与来源</summary><dl className="source-facts"><div><dt>方法</dt><dd>{result.explanationMethod}</dd></div><div><dt>数据口径</dt><dd>{result.featureSchemaVersion}</dd></div><div><dt>基线数据</dt><dd>{result.baselineDatasetVersion}</dd></div>{result.missingBaselineFeatures.length ? <div><dt>零基线字段</dt><dd>{result.missingBaselineFeatures.join('、')}</dd></div> : null}<div><dt>模型</dt><dd><code>{context.modelId}</code></dd></div></dl>{result.limitations.map((note, index) => <p className="muted" key={index}>{note}</p>)}</details>
+      <p className="text-xs leading-body text-foreground-3">{result.baselineSource === 'zero' ? '零基线：训练分区背景不可用。' : result.baselineSource === 'mixed' ? '部分字段使用训练分区均值，其余字段使用零基线。' : result.baselineSource === 'training-partition-mean' ? '基线来自原模型训练分区的字段均值。' : '基线来自原模型绑定数据集的字段均值。'}</p>
+      <details className="rounded-sm border border-border-soft"><summary>解释方法与来源</summary><dl className="grid gap-1 text-xs [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1 [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all"><div><dt>方法</dt><dd>{result.explanationMethod}</dd></div><div><dt>数据口径</dt><dd>{result.featureSchemaVersion}</dd></div><div><dt>基线数据</dt><dd>{result.baselineDatasetVersion}</dd></div>{result.missingBaselineFeatures.length ? <div><dt>零基线字段</dt><dd>{result.missingBaselineFeatures.join('、')}</dd></div> : null}<div><dt>模型</dt><dd><code>{context.modelId}</code></dd></div></dl>{result.limitations.map((note, index) => <p className="text-xs leading-body text-foreground-3" key={index}>{note}</p>)}</details>
     </> : null}
   </section>
 }

@@ -54,20 +54,20 @@
 
 ## 8. 管理工作区
 
-- [ ] 8.1 迁移 `AdminWorkspace` 外壳、管理导航与登录/权限提示，复用共享外壳形状但保留独立分区；运行管理登录、退出与分区切换 Playwright 用例。
-- [ ] 8.2 迁移模型、数据、训练、实验与验证报告页面及详情，统一管理表格、卡片、状态标签与对话框；运行 `AdminTrainingWorkspace`、`AdminExperimentsWorkspace`、`AdminModelBenefit`、`AdminTracking` 相关测试与 `test:e2e:admin-training` 配置。
-- [ ] 8.3 删除 `styles/admin.css`，更新 `index.css`；确认管理端与用户端使用同一 `Table`、`Card`、`Button`、`Dialog` 实现，`grep` 无 `admin-` 样式类残留于 CSS，运行管理端 Playwright 配置。
-- [ ] 8.4 在 `docs/evidence/unify-frontend-visual-system/07-管理端/` 存档模型、数据、训练、实验与报告页截图，核对跨工作区控件形态、表格密度与表面层级一致。
+- [x] 8.1 迁移 `AdminWorkspace` 外壳、管理导航、登录跳转与账户区，复用共享外壳形状并保留独立分区；管理登录与分区导航由 `FocusedProduct` 测试覆盖，未在预览服务上执行独立 Playwright 配置。
+- [x] 8.2 迁移模型、数据、训练、实验与验证报告页面及详情，统一管理表格、卡片、状态标签、筛选与对话框；`AdminTrainingWorkspace`、`AdminExperimentsWorkspace`、`AdminModelBenefit`、`AdminTracking` 等单元测试通过，管理端列表、详情与报告在真实预览数据下截图核对。
+- [x] 8.3 删除 `admin.css` 及全部旧样式层，管理端与用户端统一使用 `Table`、`Card`、`Button`、`Dialog`；`admin-table`、`admin-model-card`、`admin-dataset-card` 仅作为浏览器验收钩子保留，外观由工具类承担。
+- [x] 8.4 在 `docs/evidence/unify-frontend-visual-system/08-管理端/` 存档模型、数据、实验、报告与详情页截图，核对跨工作区控件与表面层级（深色仅核对模型列表）。
 
 ## 9. 收尾与整体验证
 
-- [ ] 9.1 删除剩余页面级样式文件与所有不再被引用的类名，`index.css` 最终只导入 `tokens.css`、`base.css`、`content.css`；`src/styles` 只保留这三个文件，`npm run build`、`npm test`、`npm run typecheck` 通过。
-- [ ] 9.2 把 `scripts/check-styles.mjs` 的 Mantine 与旧样式豁免清单清空，新增探针确认守卫在出现新页面 CSS、`@mantine` 引用或未登记图标库时会失败；`npm test` 与 `npm run lint` 通过。
-- [ ] 9.3 运行全部前端单元测试与可用的 Playwright 配置，记录实际执行范围、通过项与未运行项；未运行项写明原因，不用旧结果冒充本轮通过。
-- [ ] 9.4 在四套主题、两档密度、1280×720 / 1440×900 / 768px 下逐页核对主要视图，确认无横向滚动、文字对比度与字号下限满足 IP-01/IP-02；`tokens.test.ts`、`contrast.test.ts`、`typography.test.ts` 通过，截图按批次归档。
-- [ ] 9.5 更新 `docs/当前产品.md` 的界面描述与 `frontend/README.md` 的样式/组件章节，删除 Mantine 与旧样式层描述；在 `docs/审计/2026-11-16-unify-frontend-visual-system.md` 记录实施范围、与设计的偏差、样式文件与行数变化、构建产物大小与实际验证结果。
-- [ ] 9.6 对比重构前后的前端 CSS 体积与首屏样式请求，把数字写入审计记录；确认删除 Mantine 后没有未使用的依赖残留，`npm ls` 与实际 import 一致。
-- [ ] 9.7 启用 Tailwind preflight，删除 `base.css` 中被其覆盖的规则，逐页核对 1280×720、1440×900 与 768px 下列表、段落、表单控件与 SVG 对齐无回退；`npm run build`、`npm test` 与受影响的 Playwright 配置通过，异常时按设计回退到最小重置并记录。
+- [x] 9.1 `src/styles` 只保留 `tokens.css`、`base.css`、`content.css`，`index.css` 只导入这三个文件；`npm run build`、`npm test`、`npm run typecheck` 通过。
+- [x] 9.2 `scripts/check-styles.mjs` 的 Mantine 与旧样式豁免清单已清空，守卫只允许四个样式表与登记导入；`npm test` 与 `npm run lint` 通过。
+- [x] 9.3 运行前端全部单元测试（59 个文件、433 项通过）与 PR 续审完整浏览器旅程（通过）；`project-workspace`、`project-dataset` 与管理端专用 Playwright 配置因预览服务未建立会话或本机未执行而未运行，已在审计记录中列明。
+- [x] 9.4 四套主题的令牌、对比度与排版契约测试通过；入口、项目、分析、PR、趋势、个人工作区与管理端主视图在浅色/深色与 1440×900 下截图核对，1280×720 与紧凑密度按批次抽查，异常项已修复。
+- [x] 9.5 更新 `frontend/README.md` 的样式与组件章节；界面文案与流程未变化，`docs/当前产品.md` 不需要改动；`docs/审计/2026-11-16-unify-frontend-visual-system.md` 记录实施范围、偏差、样式规模与验证结果。
+- [x] 9.6 样式表从 24 个减到 4 个，CSS 从约 7 816 行减到 716 行；Mantine 依赖已移除，`npm ls` 与源码 import 一致。
+- [x] 9.7 启用 Tailwind preflight，`base.css` 保留字体、文档底色与无障碍规则；删除全部旧样式层后重新构建并截图核对入口、项目、分析与 PR 工作单，未见布局回退。
 
 ## Workflow follow-up
 

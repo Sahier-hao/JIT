@@ -1,32 +1,21 @@
 /* 声明层顺序：基础重置低于工具类，组件层可被页面规则覆盖。 */
-@layer theme, base, components, legacy, utilities;
+@layer theme, base, components, utilities;
 
 /* Tailwind 只取主题与工具类；preflight 在页面迁移完成后随收尾批次启用，
  * 以免在旧样式层仍在时改变列表、表单与 SVG 的默认呈现。 */
 @import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /* Tokens、共享组件、领域页面、产品组合，最后是现代外壳。 */
 @import './styles/tokens.css';
 @import './styles/base.css' layer(base);
 @import './styles/content.css' layer(components);
-@import './styles/components.css' layer(legacy);
 
-@import './styles/product.css' layer(legacy);
-@import './styles/modern.css' layer(legacy);
-@import './styles/admin.css' layer(legacy);
-@import './styles/pr-review.css' layer(legacy);
-@import './styles/workbench.css' layer(legacy);
-@import './styles/update-status.css' layer(legacy);
-@import './styles/project.css' layer(legacy);
-@import './styles/project-workspace.css' layer(legacy);
 
 /* Claude 骨架层：同权重下由它决定外壳、列表行与工作单的形状。 */
-@import './styles/claude.css' layer(legacy);
 
 /* 信息密度层最后加载：按 Data-Dense Dashboard 规范收紧栅格、行高与表头。 */
-@import './styles/dashboard.css' layer(legacy);
-@import './styles/project-redesign.css' layer(legacy);
 
 /*
  * 主题桥接：把 tokens.css 的全部语义键暴露给 Tailwind。
@@ -115,6 +104,9 @@
   --color-risk-soft: var(--risk-soft);
 
   /* ---------- 图表 ---------- */
+  --color-project-series: var(--project-series);
+  --color-project-series-ink: var(--project-series-ink);
+  --color-project-chart-surface: var(--project-chart-surface);
   --color-chart-obs: var(--chart-obs);
   --color-chart-est: var(--chart-est);
   --color-chart-bar: var(--chart-bar);

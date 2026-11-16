@@ -177,10 +177,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   }
   return <section>
     <AdminPageHeader title={dataset} meta={selected.schema}/>
-    <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集列表</Button></div>
-    <div className="admin-dataset-version-picker"><span>版本</span><Select ariaLabel="数据集版本" value={version} onChange={setVersion} options={versions.map(item => ({ value: item.version, label: item.version }))}/></div>
-    <div className="admin-detail-grid">
-      <section><h2>版本与质量</h2><dl className="admin-facts">
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集列表</Button></div>
+    <div className="flex flex-wrap items-end gap-2"><span>版本</span><Select ariaLabel="数据集版本" value={version} onChange={setVersion} options={versions.map(item => ({ value: item.version, label: item.version }))}/></div>
+    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+      <section><h2>版本与质量</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>schema</dt><dd>{selected.schema}</dd></div>
         <div><dt>时间范围</dt><dd>{formatDate(selected.timeRange.start)} — {formatDate(selected.timeRange.end)}</dd></div>
         <div><dt>原始/纳入</dt><dd>{valueLabel(quality.rawRows)} / {valueLabel(quality.includedRows)}</dd></div>
@@ -190,7 +190,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
       </dl></section>
-      <section><h2>标签与 SZZ</h2><dl className="admin-facts">
+      <section><h2>标签与 SZZ</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
         <div><dt>被标为引入</dt><dd>{valueLabel(szzNumber('labeledCommits'))}</dd></div>
         <div><dt>证据对数</dt><dd>{valueLabel(szzNumber('evidencePairs'))}</dd></div>
@@ -211,8 +211,8 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         {szz.truncated === true && observations?.truncated !== true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
       </dl></section>
     </div>
-    <div className="admin-detail-grid">
-      <section><h2>来源</h2><dl className="admin-facts">
+    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+      <section><h2>来源</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>发布者</dt><dd>{valueLabel(selected.source.publisher)}</dd></div>
         <div><dt>地址</dt><dd>{valueLabel(selected.source.url)}</dd></div>
         <div><dt>修订</dt><dd><code>{valueLabel(selected.source.revision)}</code></dd></div>
@@ -224,45 +224,45 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>所有者</dt><dd>{selected.owners.length ? selected.owners.join('、') : '共享'}</dd></div>
       </dl></section>
     </div>
-    <div className="admin-detail-grid">
-      <section><h2>字段缺失</h2><dl className="admin-facts">{Object.entries(quality.featureMissing ?? {}).map(([field, count]) => <div key={field}><dt>{field}</dt><dd>{valueLabel(count)}</dd></div>)}</dl></section>
-      <section><h2>排除统计</h2><dl className="admin-facts">{Object.entries(quality.excluded ?? {}).map(([reason, count]) => <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}</dl></section>
+    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+      <section><h2>字段缺失</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">{Object.entries(quality.featureMissing ?? {}).map(([field, count]) => <div key={field}><dt>{field}</dt><dd>{valueLabel(count)}</dd></div>)}</dl></section>
+      <section><h2>排除统计</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">{Object.entries(quality.excluded ?? {}).map(([reason, count]) => <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}</dl></section>
     </div>
-    <section><h2>训练限制</h2><ul className="admin-limitations">{selected.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
-    <section className="admin-train-panel"><h2>清洗与派生</h2><ErrorNotice>{curationError}</ErrorNotice>
+    <section><h2>训练限制</h2><ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{selected.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>清洗与派生</h2><ErrorNotice>{curationError}</ErrorNotice>
       <TextArea aria-label="清洗配方" value={recipeText} onChange={event => { setRecipeText(event.target.value); setCurationPreview(null); setDerivedVersion('') }}/>
-      <div className="admin-train-form">
+      <div className="flex flex-wrap items-end gap-3">
         <Button loading={curationBusy} onClick={() => void previewCurationAction()}>预览清洗</Button>
         <Button loading={curationBusy} onClick={() => void deriveCurationAction()}>生成派生版本</Button>
       </div>
-      {curationPreview ? <div className="admin-detail-grid">
-        <section><h2>清洗前后</h2><dl className="admin-facts">
+      {curationPreview ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+        <section><h2>清洗前后</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
           <div><dt>原始 / 纳入 / 排除</dt><dd>{valueLabel(curationPreview.stats.rawRows)} / {valueLabel(curationPreview.stats.includedRows)} / {valueLabel(curationPreview.stats.excludedRows)}</dd></div>
           <div><dt>正例</dt><dd>{valueLabel(curationPreview.stats.positiveLabels)}{typeof curationPreview.stats.includedRows === 'number' && typeof curationPreview.stats.positiveLabels === 'number' && curationPreview.stats.includedRows > 0 ? ` · ${(Number(curationPreview.stats.positiveLabels) / Number(curationPreview.stats.includedRows) * 100).toFixed(1)}%` : ''}</dd></div>
           <div><dt>时间范围</dt><dd>{curationPreview.stats.timeRange ? `${formatDate((curationPreview.stats.timeRange as Row).start)} — ${formatDate((curationPreview.stats.timeRange as Row).end)}` : '—'}</dd></div>
           <div><dt>配方哈希</dt><dd><code>{curationPreview.recipeSha256}</code></dd></div>
         </dl></section>
-        <section><h2>排除原因</h2><dl className="admin-facts">
+        <section><h2>排除原因</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
           {Object.entries((curationPreview.stats.excluded as Row | undefined) ?? {}).map(([reason, count]) =>
             <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}
           {!Object.keys((curationPreview.stats.excluded as Row | undefined) ?? {}).length ? <div><dt>无</dt><dd>没有记录被排除</dd></div> : null}
         </dl></section>
       </div> : null}
-      {derivedVersion ? <p className="admin-report-meta">已生成派生版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
+      {derivedVersion ? <p className="text-xs leading-body text-foreground-3">已生成派生版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
     </section>
-    <section className="admin-train-panel"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
-      <div className="admin-train-form">
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
+      <div className="flex flex-wrap items-end gap-3">
         <Select ariaLabel="对比派生版本" value={compareVersion} onChange={setCompareVersion} options={versions.filter(item => item.version !== selected.version).map(item => ({ value: item.version, label: item.version }))}/>
         <Button disabled={!compareVersion} onClick={() => void compareAction()}>对比版本</Button>
         <Button onClick={() => void exportCuration(selected.version)}>导出当前版本</Button>
       </div>
-      {comparison ? <div className="admin-detail-grid">
+      {comparison ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
         {(['source', 'derived'] as const).map(key => {
           const side = comparison[key] as Row | undefined
           if (!side) return null
           const quality = (side.quality ?? {}) as Row
           const range = (side.timeRange ?? {}) as Row
-          return <section key={key}><h2>{key === 'source' ? '来源版本' : '派生版本'}</h2><dl className="admin-facts">
+          return <section key={key}><h2>{key === 'source' ? '来源版本' : '派生版本'}</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
             <div><dt>版本</dt><dd><code>{valueLabel(side.version)}</code></dd></div>
             <div><dt>纳入行</dt><dd>{valueLabel(quality.includedRows)}</dd></div>
             <div><dt>正例行</dt><dd>{valueLabel(quality.positiveLabels)}</dd></div>
@@ -271,27 +271,27 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         })}
       </div> : null}
     </section>
-    <section className="admin-train-panel"><h2>PR 数据集清理</h2><ErrorNotice>{cleanupError}</ErrorNotice>
-      <div className="admin-train-form">
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>PR 数据集清理</h2><ErrorNotice>{cleanupError}</ErrorNotice>
+      <div className="flex flex-wrap items-end gap-3">
         <NumberInput aria-label="保留 PR 版本数" min={0} value={keep} onChange={event => setKeep(event.target.value)}/>
         <Button loading={cleanupBusy} onClick={() => void previewCleanup()}>预览可清理版本</Button>
       </div>
       {prunable === null ? null : prunable.length ? <>
-        <ul className="admin-limitations">{prunable.map(item => <li key={item.version}><code>{item.version}</code> · {item.createdAt.slice(0, 10)}</li>)}</ul>
+        <ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{prunable.map(item => <li key={item.version}><code>{item.version}</code> · {item.createdAt.slice(0, 10)}</li>)}</ul>
         <Button variant="danger" onClick={() => setConfirmCleanup(true)}>清理 {prunable.length} 个版本</Button>
-      </> : <p className="admin-report-meta">没有超出保留数量且无引用的 PR 版本。</p>}
-      {cleanupResult ? <p className="admin-report-meta">{cleanupResult}</p> : null}
+      </> : <p className="text-xs leading-body text-foreground-3">没有超出保留数量且无引用的 PR 版本。</p>}
+      {cleanupResult ? <p className="text-xs leading-body text-foreground-3">{cleanupResult}</p> : null}
     </section>
-    <section className="admin-train-panel"><h2>多方法实验</h2><ErrorNotice>{experimentError}</ErrorNotice>
-      <div className="admin-method-picker">
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>多方法实验</h2><ErrorNotice>{experimentError}</ErrorNotice>
+      <div className="grid gap-2.5">
         {experimentMethods.map(choice => {
           const checked = selectedMethods.includes(choice.method)
           const blocked = !choice.available || splitPreviewBusy || !splitPreview?.available
-          return <div key={choice.method} className="admin-method-option">
+          return <div key={choice.method} className="grid gap-2 rounded-md border border-border-soft p-3">
             <Checkbox checked={checked} disabled={blocked} onCheckedChange={() => toggleMethod(choice.method)}>
               {choice.name} · <code>{choice.method}</code>{choice.reason ? ` · ${choice.reason}` : ''}
             </Checkbox>
-            {checked && choice.params.length ? <div className="admin-method-params">
+            {checked && choice.params.length ? <div className="flex flex-wrap gap-2.5 [&_label]:grid [&_label]:gap-1 [&_label]:text-xs [&_label]:text-foreground-3 [&_input]:w-28">
               {choice.params.map(spec => <label key={spec.name}>{spec.name}（{spec.type} {spec.min}–{spec.max}）
                 <NumberInput aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any"
                   value={paramValues[choice.method]?.[spec.name] ?? ''}
@@ -301,34 +301,34 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
           </div>
         })}
       </div>
-      <div className="admin-train-form">
+      <div className="flex flex-wrap items-end gap-3">
         <Button variant="primary" loading={experimentBusy}
           disabled={!selectedMethods.length || splitPreviewBusy || !splitPreview?.available}
           onClick={() => void runExperiment()}>创建实验（{selectedMethods.length} 个方法）</Button>
       </div>
-      {!splitPreview?.available && splitPreview ? <p className="admin-report-meta">当前切分预设不可用，不能创建实验。</p> : null}
+      {!splitPreview?.available && splitPreview ? <p className="text-xs leading-body text-foreground-3">当前切分预设不可用，不能创建实验。</p> : null}
     </section>
-    <section className="admin-train-panel"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="admin-train-form">
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="flex flex-wrap items-end gap-3">
       <Select ariaLabel="训练方法" value={selectedMethod} onChange={setMethod} options={methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))}/>
       <Select ariaLabel="指标集" value={metricSet} onChange={setMetricSet} options={[{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]}/>
       <Select ariaLabel="训练分区类别策略" value={classPolicy} onChange={value => setClassPolicy(value as 'none' | 'weights' | 'sample')} options={[{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]}/>
       <Select ariaLabel="时间切分预设" value={splitPreset} onChange={setSplitPreset} options={[...SPLIT_PRESETS]}/>
       <Button variant="primary" loading={busy} disabled={!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available} onClick={() => void train()}>创建训练任务</Button>
     </div></section>
-    <section className="admin-train-panel"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
-      {splitPreviewBusy ? <p className="admin-report-meta">正在按原始唯一成员计算三档边界…</p> : splitPreview ? <>
-        {!splitPreview.available ? <div className="admin-error-box" role="alert"><strong>{splitPreview.reason?.code ?? 'SPLIT_INVALID'}</strong><p>{splitPreview.reason?.message ?? '该预设不可用'}</p></div> : <div className="admin-detail-grid">
-          <p className="admin-report-meta">样本 {valueLabel(splitPreview.datasetRecords)} · 成熟合格 {valueLabel(splitPreview.eligibleRecords)}</p>
+    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
+      {splitPreviewBusy ? <p className="text-xs leading-body text-foreground-3">正在按原始唯一成员计算三档边界…</p> : splitPreview ? <>
+        {!splitPreview.available ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><strong>{splitPreview.reason?.code ?? 'SPLIT_INVALID'}</strong><p>{splitPreview.reason?.message ?? '该预设不可用'}</p></div> : <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
+          <p className="text-xs leading-body text-foreground-3">样本 {valueLabel(splitPreview.datasetRecords)} · 成熟合格 {valueLabel(splitPreview.eligibleRecords)}</p>
           {(['train', 'validation', 'test'] as const).map(name => {
             const part = splitPreview.partitions?.[name]
-            return <section key={name}><h2>{{ train: '训练', validation: '验证', test: '测试' }[name]}</h2><dl className="admin-facts">
+            return <section key={name}><h2>{{ train: '训练', validation: '验证', test: '测试' }[name]}</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
               <div><dt>样本 / 正例</dt><dd>{part?.records ?? '—'} / {part?.positives ?? '—'}</dd></div>
               <div><dt>开始</dt><dd>{part?.start ? formatDate(part.start) : '—'}</dd></div>
               <div><dt>结束</dt><dd>{part?.end ? formatDate(part.end) : '—'}</dd></div>
             </dl></section>
           })}
         </div>}
-        <p className="admin-report-meta">时区 {splitPreview.timezone}；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
+        <p className="text-xs leading-body text-foreground-3">时区 {splitPreview.timezone}；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
       </> : null}
     </section>
     <Dialog open={confirmCleanup} onOpenChange={setConfirmCleanup} title="确认清理 PR 数据集？" width={460}

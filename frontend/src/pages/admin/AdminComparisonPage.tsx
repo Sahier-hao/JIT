@@ -56,22 +56,22 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
   const options = models.map(model => ({ value: model.modelId, label: `${model.name} · ${model.method}` }))
   return <section>
     <AdminPageHeader title="模型比较"/>
-    <div className="admin-compare-picker">
+    <div className="flex flex-wrap items-end gap-3">
       <Select ariaLabel="模型 A" value={first} onChange={setFirst} options={options}/>
       <Select ariaLabel="模型 B" value={second} onChange={setSecond} options={options}/>
     </div>
-    {first && !second ? <p className="status-note" role="status">请选择模型 B 进行比较。</p> : null}
-    {error ? <p className="field-error" role="alert">{error}</p> : null}
+    {first && !second ? <p className="text-xs text-foreground-3" role="status">请选择模型 B 进行比较。</p> : null}
+    {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
     {left && right ? <>
-      {left.featureSchemaVersion !== right.featureSchemaVersion || left.artifactDatasetVersion !== right.artifactDatasetVersion ? <p className="admin-notice" role="status">两个模型的数据版本或特征 schema 不同，指标只能并列，不能据此排名。</p> : null}
+      {left.featureSchemaVersion !== right.featureSchemaVersion || left.artifactDatasetVersion !== right.artifactDatasetVersion ? <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2" role="status">两个模型的数据版本或特征 schema 不同，指标只能并列，不能据此排名。</p> : null}
       <MetricComparison left={left.metrics ?? {}} right={right.metrics ?? {}} leftName={left.name} rightName={right.name}/>
-      <div className="admin-table-wrap"><table className="admin-table"><tbody>
+      <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all"><tbody>
         <tr><th>方法</th><td>{left.method}</td><td>{right.method}</td></tr>
         <tr><th>schema</th><td>{left.featureSchemaVersion}</td><td>{right.featureSchemaVersion}</td></tr>
         <tr><th>数据版本</th><td>{left.artifactDatasetVersion}</td><td>{right.artifactDatasetVersion}</td></tr>
         <tr><th>运行</th><td><code>{left.runId}</code></td><td><code>{right.runId}</code></td></tr>
         <tr><th>状态</th><td>{left.state}</td><td>{right.state}</td></tr>
       </tbody></table></div>
-    </> : <p className="quiet-empty">选择两个不同模型后并列比较。</p>}
+    </> : <p className="text-xs text-foreground-3">选择两个不同模型后并列比较。</p>}
   </section>
 }

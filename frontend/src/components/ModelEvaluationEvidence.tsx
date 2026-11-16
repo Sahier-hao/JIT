@@ -71,22 +71,22 @@ export function ModelEvaluationEvidence({ method, expired }: {
     return () => controller.abort()
   }, [expired, revision])
   if (error) {
-    return <section className="admin-model-evidence">
+    return <section className="grid gap-2 rounded-sm border border-border-soft p-3">
       <h2>评价证据</h2>
-      <div className="admin-inline-error" role="alert">{error}<Button size="sm" onClick={() => setRevision(value => value + 1)}>重试</Button></div>
+      <div className="text-xs text-rose" role="alert">{error}<Button size="sm" onClick={() => setRevision(value => value + 1)}>重试</Button></div>
     </section>
   }
   if (entries === null) {
-    return <section className="admin-model-evidence"><h2>评价证据</h2><p className="quiet-empty" role="status">正在读取固定目录中的评价证据。</p></section>
+    return <section className="grid gap-2 rounded-sm border border-border-soft p-3"><h2>评价证据</h2><p className="text-xs text-foreground-3" role="status">正在读取固定目录中的评价证据。</p></section>
   }
   const relevant = entries.filter(entry => entry.kind === 'evaluation-matrix'
     ? method !== null && methodList(entry).includes(method)
     : entry.kind === 'review-benefit'
       ? method !== null && methodList(entry).includes(method)
       : entry.kind === 'line-candidate-evaluation' || entry.kind === 'line-candidates')
-  return <section className="admin-model-evidence">
+  return <section className="grid gap-2 rounded-sm border border-border-soft p-3">
     <h2>评价证据</h2>
-    {relevant.length ? <div className="admin-table-wrap"><table className="admin-table">
+    {relevant.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <thead><tr><th>类型</th><th>状态</th><th>规模</th><th>来源</th></tr></thead>
       <tbody>{relevant.map(entry => <tr key={entry.evidenceId}>
         <th>{kindText(entry)}</th>
@@ -94,7 +94,7 @@ export function ModelEvaluationEvidence({ method, expired }: {
         <td>{scaleText(entry)}</td>
         <td><code>{entry.source}</code><small>{entry.evidenceId}</small></td>
       </tr>)}</tbody>
-    </table></div> : <p className="quiet-empty">固定目录中没有与该模型方法匹配的跨仓库评价，也没有完整候选集报告。</p>}
-    <p className="admin-report-meta">方法级评价来自独立仓库的时间外与留一仓库实验，不绑定当前模型产物；行级候选是独立结构基线。数据版本变化时证据标为陈旧。</p>
+    </table></div> : <p className="text-xs text-foreground-3">固定目录中没有与该模型方法匹配的跨仓库评价，也没有完整候选集报告。</p>}
+    <p className="text-xs leading-body text-foreground-3">方法级评价来自独立仓库的时间外与留一仓库实验，不绑定当前模型产物；行级候选是独立结构基线。数据版本变化时证据标为陈旧。</p>
   </section>
 }

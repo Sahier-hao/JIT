@@ -43,7 +43,7 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
     return [...values.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [datasets, usageFilter])
 
-  if (loading) return <section>
+  if (loading) return <section className="grid gap-4">
     <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
     <LoadingNotice label="正在读取数据集版本"/>
   </section>
@@ -53,15 +53,15 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
     if (!versions.length) return <EmptyState title="数据集不存在" description={dataset}><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })}>返回数据集列表</Button></EmptyState>
     return <AdminDatasetDetailPage dataset={dataset} versions={versions} initialVersion={version} methods={methods} navigate={navigate} expired={expired}/>
   }
-  return <section>
+  return <section className="grid gap-4">
     <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-dataset-filters"><Segmented aria-label="数据集来源" value={usageFilter} onChange={value => setUsageFilter(value as 'all' | 'branch' | 'pr')} options={[
+    <div className="flex flex-wrap items-end gap-2"><Segmented aria-label="数据集来源" value={usageFilter} onChange={value => setUsageFilter(value as 'all' | 'branch' | 'pr')} options={[
       { label: '全部', value: 'all' }, { label: '分支分析', value: 'branch' }, { label: 'PR 分析', value: 'pr' },
     ]}/></div>
-    {!grouped.length ? <p className="quiet-empty">尚无已登记数据集</p> : <div className="admin-dataset-list">{grouped.map(([name, versions]) => <article className="admin-dataset-card" key={name}>
-      <div className="admin-dataset-main"><h2>{name}</h2><p>{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="admin-card-meta">最新数据 {versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'} · {versions.filter(item => item.usage === 'pr').length} 个 PR 版本</p></div>
-      <Button onClick={() => navigate({ name: 'admin', view: 'datasets', resourceId: name, version: versions.at(-1)?.version })}>查看详情</Button>
+    {!grouped.length ? <p className="text-xs text-foreground-3">尚无已登记数据集</p> : <div className="grid max-h-[70vh] content-start gap-2 overflow-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">{grouped.map(([name, versions]) => <article className="admin-dataset-card grid gap-2 rounded-md border border-border-soft bg-card p-card" key={name}>
+      <div className="grid gap-0.5"><h2 className="text-sm font-semibold text-foreground">{name}</h2><p className="text-xs text-foreground-3">{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="text-xs text-foreground-4">最新数据 {versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'} · {versions.filter(item => item.usage === 'pr').length} 个 PR 版本</p></div>
+      <Button className="justify-self-start" onClick={() => navigate({ name: 'admin', view: 'datasets', resourceId: name, version: versions.at(-1)?.version })}>查看详情</Button>
     </article>)}</div>}
   </section>
 }

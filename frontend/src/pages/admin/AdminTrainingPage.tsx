@@ -89,18 +89,18 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   return <section>
     <AdminPageHeader title="训练任务" onRefresh={retryLoad}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {error ? <div className="admin-detail-actions"><Button size="sm" onClick={retryLoad}>重新读取</Button></div> : null}
-    {!tasks.length ? <p className="quiet-empty">尚无训练任务。请从数据集详情创建。</p> : <div className="admin-table-wrap"><table className="admin-table admin-task-table">
+    {error ? <div className="flex flex-wrap items-center gap-2"><Button size="sm" onClick={retryLoad}>重新读取</Button></div> : null}
+    {!tasks.length ? <p className="text-xs text-foreground-3">尚无训练任务。请从数据集详情创建。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-task-table">
       <thead><tr><th>数据集</th><th>方法</th><th>状态</th><th>时间</th><th><span className="sr-only">操作</span></th></tr></thead>
       <tbody>{tasks.map(item => <tr key={item.taskId}>
         <td><strong>{item.datasetVersion}</strong><small>{item.metricSet}</small></td>
         <td>{item.method}</td>
-        <td><span className="source-chip">{STATUS_LABELS[item.status]}</span>{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</td>
+        <td><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[item.status]}</span>{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</td>
         <td>{formatDate(item.createdAt)}</td>
         <td><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })}>查看</Button></td>
       </tr>)}</tbody>
     </table></div>}
-    {total > PAGE_SIZE ? <div className="admin-detail-actions">
+    {total > PAGE_SIZE ? <div className="flex flex-wrap items-center gap-2">
       <Button size="sm" disabled={page <= 0} onClick={() => setPage(value => value - 1)}>上一页</Button>
       <span>第 {page + 1} 页 · 共 {total} 条</span>
       <Button size="sm" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(value => value + 1)}>下一页</Button>
@@ -124,10 +124,10 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
   return <section>
     <AdminPageHeader title="训练任务详情" meta={`${task.datasetVersion} · ${task.method}`}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="admin-detail-actions"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{task.status === 'succeeded' ? <><Button onClick={openRuns}>查看实验登记</Button>{task.modelId ? <Button onClick={() => openModel(task.modelId!)}>查看模型</Button> : null}</> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
-    <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>
-    {task.error ? <div className="admin-error-box" role="alert"><strong>{task.error.code}</strong><p>{task.error.message}</p></div> : null}
-    {task.status === 'succeeded' ? <><MetricGrid metrics={task.metrics}/><dl className="admin-facts">
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={back}>返回任务列表</Button>{error ? <Button onClick={retry}>重新读取</Button> : null}{task.status === 'succeeded' ? <><Button onClick={openRuns}>查看实验登记</Button>{task.modelId ? <Button onClick={() => openModel(task.modelId!)}>查看模型</Button> : null}</> : null}{active ? <Button danger disabled={!!busy || !!task.cancelRequestedAt} onClick={() => void act(task.taskId, 'cancel')}>{task.cancelRequestedAt ? '正在取消…' : '取消任务'}</Button> : retryable ? <Button disabled={!!busy} onClick={() => void act(task.taskId, 'retry')}>重试</Button> : null}</div>
+    <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[task.status]}</span><span>{task.stage}</span>{task.queuePosition ? <span>队列位置 {task.queuePosition}</span> : null}</div>
+    {task.error ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><strong>{task.error.code}</strong><p>{task.error.message}</p></div> : null}
+    {task.status === 'succeeded' ? <><MetricGrid metrics={task.metrics}/><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
       <div><dt>数据版本</dt><dd><code>{task.datasetVersion}</code></dd></div>
       <div><dt>业务运行</dt><dd><code>{valueLabel(task.runId)}</code></dd></div>
       <div><dt>原产物运行</dt><dd><code>{valueLabel(task.artifactRunId)}</code></dd></div>
@@ -144,8 +144,8 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
       {task.classPolicySummary ? <div><dt>策略前后数量</dt><dd><code>{JSON.stringify(task.classPolicySummary)}</code></dd></div> : null}
     </dl>
     {task.metricsByPartition ? <TrainingPartitions metrics={task.metricsByPartition}/> : null}
-    {task.trainingHistory ? <section className="admin-training-partitions"><h2>训练过程</h2>
-      <div className="admin-table-wrap"><table className="admin-table">
+    {task.trainingHistory ? <section className="grid gap-2"><h2>训练过程</h2>
+      <div className="overflow-x-auto rounded-md border border-border-soft"><table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
         <thead><tr><th>epoch</th><th>训练损失</th><th>耗时</th></tr></thead>
         <tbody>{task.trainingHistory.entries.map(entry => <tr key={entry.epoch}>
           <td>{entry.epoch}</td>
@@ -153,10 +153,10 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
           <td>{entry.seconds.toFixed(2)} 秒</td>
         </tr>)}</tbody>
       </table></div>
-      <p className="admin-report-meta">固定 {task.trainingHistory.epochs} 个 epoch，不早停；测试分区不参与逐 epoch 监控。</p>
-    </section> : task.status === 'succeeded' ? <p className="admin-report-meta">未记录逐 epoch 训练历史：该方法可能是非迭代方法，或产物产生于历史版本。</p> : null}
-    {task.classPolicy ? <p className="admin-report-meta">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
-    <dl className="admin-facts">
+      <p className="text-xs leading-body text-foreground-3">固定 {task.trainingHistory.epochs} 个 epoch，不早停；测试分区不参与逐 epoch 监控。</p>
+    </section> : task.status === 'succeeded' ? <p className="text-xs leading-body text-foreground-3">未记录逐 epoch 训练历史：该方法可能是非迭代方法，或产物产生于历史版本。</p> : null}
+    {task.classPolicy ? <p className="text-xs leading-body text-foreground-3">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
+    <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
       <div><dt>创建人</dt><dd>{task.createdBy}</dd></div>
       <div><dt>训练用户</dt><dd>{task.ownerUserId ?? '管理员'}</dd></div>
@@ -173,10 +173,10 @@ function TrainingPartitions({ metrics }: { metrics: Row }) {
     ['validation', '模型选择背景'],
     ['test', '冻结泛化评价'],
   ] as const
-  return <section className="admin-training-partitions"><h2>分区指标</h2><div className="admin-detail-grid">
+  return <section className="grid gap-2"><h2>分区指标</h2><div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
     {partitions.map(([name, label]) => {
       const part = metrics[name]
-      return <section key={name}><h2>{label}</h2>{part && typeof part === 'object' ? <MetricGrid metrics={part as Row}/> : <p className="quiet-empty">未记录</p>}</section>
+      return <section key={name}><h2>{label}</h2>{part && typeof part === 'object' ? <MetricGrid metrics={part as Row}/> : <p className="text-xs text-foreground-3">未记录</p>}</section>
     })}
   </div></section>
 }
