@@ -83,9 +83,9 @@ export function ProfilePage({ navigate, onLoginRequired, onSessionCleared }: {
         <p className="text-xs text-foreground-3">账户 {profile.username}</p>
         <p className="text-xs text-foreground-4">创建于 {new Date(profile.createdAt * 1000).toLocaleString('zh-CN', { hour12: false })}</p>
         <div className="grid w-full grid-cols-3 gap-2 border-t border-border-soft pt-2">
-          <Button variant="ghost" className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-data' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.datasetCount}</b><span className="text-[11px] text-foreground-3">数据版本</span></Button>
-          <Button variant="ghost" className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-training' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.experimentCount}</b><span className="text-[11px] text-foreground-3">训练实验</span></Button>
-          <Button variant="ghost" className="grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 hover:bg-hover" onClick={() => navigate({ name: 'my-models' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.modelCount}</b><span className="text-[11px] text-foreground-3">我的模型</span></Button>
+          <Button variant="ghost" className="h-auto grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 whitespace-normal hover:bg-hover" onClick={() => navigate({ name: 'my-data' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.datasetCount}</b><span className="text-[11px] text-foreground-3">数据版本</span></Button>
+          <Button variant="ghost" className="h-auto grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 whitespace-normal hover:bg-hover" onClick={() => navigate({ name: 'my-training' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.experimentCount}</b><span className="text-[11px] text-foreground-3">训练实验</span></Button>
+          <Button variant="ghost" className="h-auto grid gap-0.5 rounded-sm border-0 bg-transparent p-1.5 whitespace-normal hover:bg-hover" onClick={() => navigate({ name: 'my-models' })}><b className="text-lg font-semibold tabular-nums text-foreground">{profile.modelCount}</b><span className="text-[11px] text-foreground-3">我的模型</span></Button>
         </div>
         <Button variant="ghost" onClick={() => void logout()} type="button">退出登录</Button>
       </section>

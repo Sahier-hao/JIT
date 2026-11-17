@@ -115,7 +115,7 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
     {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
     {list === null ? <p className="py-6 text-center text-xs text-foreground-3">正在读取训练记录…</p> : list.length === 0
       ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><p className="text-sm text-foreground-3">还没有训练记录。先到「我的数据」选择一个版本发起训练。</p><Button variant='default' onClick={() => navigate({ name: 'my-data' })} type="button">选择数据</Button></div>
-      : <div className="grid gap-2">{list.map(item => <Button variant="ghost" key={item.experimentId} className="grid gap-0.5 rounded-sm border border-border-soft bg-card p-2.5 text-left text-xs hover:bg-hover" onClick={() => navigate({ name: 'my-training', experimentId: item.experimentId })}>
+      : <div className="grid gap-2">{list.map(item => <Button variant="ghost" key={item.experimentId} className="h-auto min-w-0 w-full grid gap-0.5 rounded-sm border border-border-soft bg-card p-2.5 text-left text-xs whitespace-normal hover:bg-hover" onClick={() => navigate({ name: 'my-training', experimentId: item.experimentId })}>
         <strong className="truncate text-sm font-medium text-foreground">{item.datasetVersion}</strong><span className="text-foreground-3">{valueLabel(item.status)} · {item.tasks.length} 个方法 · {item.splitPreset}</span><code className="break-all font-mono text-[11px] text-foreground-4">{item.experimentId}</code>
       </Button>)}</div>}
   </section>

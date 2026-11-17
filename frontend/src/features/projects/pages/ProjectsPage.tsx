@@ -114,8 +114,8 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
           const status = projectStatus(repo, job)
           const editing = renamingId === repo.repositoryId
           const confirming = confirmingId === repo.repositoryId
-          return <article className={cn('relative rounded-md border bg-card p-card', editing || confirming ? 'border-accent' : 'border-border-soft')} key={repo.repositoryId}>
-            <Button variant="ghost" type="button" className="block w-full border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => navigate(repositoryRoute(repo.repositoryId))} aria-label={`打开项目 ${repo.displayName}`}>
+          return <article className={cn('relative min-w-0 rounded-md border bg-card p-card', editing || confirming ? 'border-accent' : 'border-border-soft')} key={repo.repositoryId}>
+            <Button variant="ghost" type="button" className="h-auto min-w-0 block w-full whitespace-normal border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => navigate(repositoryRoute(repo.repositoryId))} aria-label={`打开项目 ${repo.displayName}`}>
               <div className="flex items-center justify-between gap-2 pr-10">
                 <span className="grid size-10 shrink-0 place-items-center rounded-md border border-border-soft bg-sunken text-foreground-2"><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={20}/></span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-foreground-3"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</span>

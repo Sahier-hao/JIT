@@ -148,7 +148,7 @@ export function MyDataPage({ navigate, onLoginRequired }: {
     <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
       <div className="grid max-h-[70vh] content-start gap-2 overflow-auto pr-1" role="listbox" aria-label="我的数据版本">
         {datasets.map(item => <Button variant="ghost" key={item.version} role="option" aria-selected={item.version === selected}
-          className={`grid gap-0.5 rounded-sm border p-2.5 text-left text-xs transition-colors ${item.version === selected ? 'border-accent bg-accent-soft' : 'border-border-soft bg-card hover:bg-hover'}`} onClick={() => setSelected(item.version)}>
+          className={`h-auto min-w-0 w-full grid gap-0.5 rounded-sm border p-2.5 text-left text-xs whitespace-normal transition-colors ${item.version === selected ? 'border-accent bg-accent-soft' : 'border-border-soft bg-card hover:bg-hover'}`} onClick={() => setSelected(item.version)}>
           <strong className="truncate text-sm font-medium text-foreground">{item.dataset}</strong>
           <span className="text-foreground-3">{item.shared ? '共享数据' : '我的数据'} · {item.schema}</span>
           <span>{valueLabel(item.quality.includedRows)} 行 · {valueLabel(item.quality.positiveLabels)} 正例</span>

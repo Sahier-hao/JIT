@@ -417,7 +417,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     </section> : null}
 
     {reviewView === 'files' && evidenceError ? <Alert variant="destructive"><AlertTitle>{evidenceError}</AlertTitle></Alert> : null}
-    {reviewView === 'files' ? <div className="grid overflow-hidden rounded-lg border border-border-strong bg-card lg:h-[calc(100vh-260px)] lg:min-h-[560px] lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+    {reviewView === 'files' ? <div className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:h-[calc(100vh-260px)] lg:min-h-[560px] lg:grid-cols-[260px_minmax(0,1fr)_320px]">
       <aside className="flex min-h-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="提交与文件">
         <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">文件</h2><span className="text-xs text-foreground-3">{selectedCommit ? `${scopedFiles.length} 个文件` : `${live.files.length}/${live.totalFiles}`}</span></div>
         <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
@@ -433,7 +433,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
           {visibleFiles.map(f => {
             const state = round.progress[f.path]?.state ?? 'unread'
             const { dir, name } = splitPath(f.path)
-            return <Button variant="ghost" key={f.path} role="option" aria-selected={path === f.path} className={cn('flex w-full items-start gap-1.5 rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === f.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => chooseFile(f.path)}>
+            return <Button variant="ghost" key={f.path} role="option" aria-selected={path === f.path} className={cn('h-auto min-w-0 flex w-full items-start gap-1.5 whitespace-normal rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === f.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => chooseFile(f.path)}>
               <span className={cn('mt-1 size-1.5 shrink-0 rounded-full', FILE_FLAG[f.status] ?? 'bg-foreground-4')} aria-hidden="true"/>
               <span className="min-w-0 flex-1" title={f.path}><span className="block truncate font-medium">{name}</span><span className="block truncate text-[11px] text-foreground-4">{dir}</span></span>
               <span className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] tabular-nums">
@@ -513,7 +513,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
       <aside className="flex min-h-0 flex-col" aria-label="问题与人工记录">
         <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">问题</h2><Button aria-label="新建" size="sm" variant="ghost" onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} />}新建</Button></div>
         <div className="max-h-40 shrink-0 overflow-auto border-b border-border-soft p-1.5">
-          {round.questions.map(q => <Button variant="ghost" key={q.id} className={cn('block w-full rounded-sm border-0 bg-transparent px-2 py-1.5 text-left text-xs', selected?.id === q.id ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
+          {round.questions.map(q => <Button variant="ghost" key={q.id} className={cn('h-auto min-w-0 block w-full whitespace-normal rounded-sm border-0 bg-transparent px-2 py-1.5 text-left text-xs', selected?.id === q.id ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
             <span className="block truncate font-medium">{q.body.slice(0, 60) || '未填写的问题'}</span>
             <span className="block text-[11px] text-foreground-4">{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化待复核' : ''}{q.evidence.length ? ` · ${q.evidence.length} 条证据` : ''}</span>
           </Button>)}

@@ -302,7 +302,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
         {records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }
       </ProjectAnalysisHistory>
 
-      <div className="grid content-start gap-3">
+      <div className="grid min-w-0 content-start gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">当前分析结果{context && latestCompletedId && context.syncId !== latestCompletedId ? <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] font-normal text-foreground-3">历史固定结果</span> : null}</h2>
           <span className="text-xs text-foreground-3">{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
@@ -442,7 +442,7 @@ function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect, onDel
   </div>
   return <article className={cn('rounded-sm border p-2.5', current ? 'border-accent bg-accent-soft/40' : 'border-border-soft bg-card')} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
     <div className="flex items-start justify-between gap-2">
-      {switchable ? <Button variant="ghost" type="button" className="min-w-0 flex-1 border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</Button> : text}
+      {switchable ? <Button variant="ghost" type="button" className="h-auto min-w-0 flex-1 whitespace-normal border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</Button> : text}
       <RecordMenu pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
     {active ? <div className="mt-2"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}

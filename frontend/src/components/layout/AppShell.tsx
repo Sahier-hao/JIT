@@ -30,7 +30,7 @@ export function AppShell({ route, navigate, repositories, session, onSession, ch
     <a className="fixed left-2.5 top-[-60px] z-[100] rounded-sm border border-border bg-card px-3.5 py-2.5 text-sm text-foreground focus:top-2.5" href="#product-main">跳到主要内容</a>
     <aside className="border-b border-border bg-rail sm:border-b-0 sm:border-r">
       <div className="flex h-full flex-col px-3.5 py-4">
-        <Button variant="ghost" type="button" className="flex justify-start items-center gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'repositories' })}>
+        <Button variant="ghost" type="button" className="h-auto flex justify-start items-center gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'repositories' })}>
           <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><BrandLogo aria-hidden="true" focusable="false" strokeWidth={1.5} size={18}/></span>
           <span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span>
         </Button>
@@ -45,7 +45,7 @@ export function AppShell({ route, navigate, repositories, session, onSession, ch
               aria-current={active ? 'page' : undefined}
               onClick={() => navigate(item.route)}
               className={cn(
-                'flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground',
+                'flex h-9 min-w-0 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground',
               )}
             ><item.icon aria-hidden="true" focusable="false" strokeWidth={1.5} size={18} className={cn('opacity-60', active && 'opacity-90')}/>{item.label}</Button>
           })}

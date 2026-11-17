@@ -97,7 +97,7 @@ function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: stri
                   <div className="min-w-0">
                     <Button variant="ghost"
                       type="button"
-                      className="block max-w-full border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                      className="h-auto min-w-0 block max-w-full whitespace-normal border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                       title={commit.id}
                       aria-label={`查看 ${commit.id}`}
                       onClick={event => onOpen(commit.id, event.currentTarget)}
@@ -271,7 +271,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
             : visible.length === 0
               ? <EmptyState title="没有符合条件的提交" description="使用「清除筛选」恢复列表，或换一个查询条件。" />
               : <>
-                <ReviewTable commits={visible} onOpen={id => setSelected(id)} />
+                <div className="min-w-0 overflow-x-auto"><ReviewTable commits={visible} onOpen={id => setSelected(id)} /></div>
                 <nav className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-3" aria-label="提交分页">
                   <span role="status">第 {first}–{last} 条，共 {page.total.toLocaleString()} 条</span>
                   <span className="flex gap-2">

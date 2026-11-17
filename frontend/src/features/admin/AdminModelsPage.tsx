@@ -226,7 +226,7 @@ function CoverageCell({ cell, openModel }: {
     <span className="text-[11px] text-foreground-3" data-state={cell.state}>{COVERAGE_LABELS[cell.state]}</span>
     {cell.reason ? <small title={cell.reason}>{cell.reason}</small> : null}
   </>
-  if (cell.modelId) return <Button variant="ghost" type="button" className="block w-full border-0 bg-transparent p-0 text-left"
+  if (cell.modelId) return <Button variant="ghost" type="button" className="h-auto min-w-0 block w-full whitespace-normal border-0 bg-transparent p-0 text-left"
     aria-label={`${cell.name}：${COVERAGE_LABELS[cell.state]}，查看模型详情`}
     onClick={() => openModel(cell.modelId!)}>{content}</Button>
   return <div className="block" title={cell.reason ?? undefined}>{content}</div>

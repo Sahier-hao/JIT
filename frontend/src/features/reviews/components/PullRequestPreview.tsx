@@ -146,11 +146,11 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
         {scoredCommitCount === 0 ? <p className="text-xs text-foreground-3">此版本尚未分析，暂无模型分数。</p> : null}
         {commitRows.length === 0
           ? <p className="text-xs text-foreground-3">没有匹配的提交。可换一个标题片段或提交 SHA。</p>
-          : <Table><TableHeader><TableRow><TableHead>提交 / 改动</TableHead><TableHead>模型分数</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commitRows.map(commit => {
+          : <div className="min-w-0 overflow-x-auto"><Table><TableHeader><TableRow><TableHead>提交 / 改动</TableHead><TableHead>模型分数</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commitRows.map(commit => {
                 const info = commitRisks[commit.sha]
                 const lines = info ? (info.addedLines ?? 0) + (info.deletedLines ?? 0) : null
                 return <TableRow key={commit.sha} tabIndex={0} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => openCommit(commit.sha)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openCommit(commit.sha) } }}><TableCell><div className="flex min-w-0 flex-wrap items-baseline gap-2"><span className="truncate text-sm font-medium text-foreground">{commit.message.split('\n')[0]}</span><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 12)}</code></div></TableCell><TableCell><span className={cn('tabular-nums', info ? 'text-foreground' : 'text-foreground-4')}>{info ? info.risk.toFixed(2) : '未评分'}</span></TableCell><TableCell className="text-right tabular-nums">{lines == null ? '—' : lines.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{info?.fileCount ?? '—'}</TableCell></TableRow>
-              })}</TableBody></Table>}
+              })}</TableBody></Table></div>}
         {commitRows.length ? <p className="text-xs text-foreground-4">选择一条提交，查看它触及的文件与代码。</p> : null}
       </section>
     </> : <>
@@ -170,7 +170,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           runId: analysis.primary.sync.runId,
           datasetVersion: analysis.primary.sync.datasetVersion,
         }}/> : null}</DialogContent></Dialog>
-      <div className="grid overflow-hidden rounded-lg border border-border-strong bg-card lg:grid-cols-[260px_minmax(0,1fr)] lg:h-[min(70vh,680px)]">
+      <div className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:grid-cols-[260px_minmax(0,1fr)] lg:h-[min(70vh,680px)]">
         <aside className="flex min-h-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="PR 文件">
           <div className="flex items-baseline justify-between gap-2 px-3 py-2">
             <h2 className="text-sm font-semibold text-foreground">文件</h2><span className="text-xs text-foreground-3">{source.files.length}/{source.totalFiles}</span>
@@ -179,7 +179,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="px-3 pb-2 text-xs text-amber-deep">{scoredCommitCount === 0 ? '此版本尚未分析，无法按提交筛选文件；显示全部文件。' : '这条提交没有文件映射（旧分析），显示全部文件。'}</p> : null}
           <div className="px-3 pb-2"><Input placeholder="筛选路径" aria-label="筛选 PR 文件路径" value={filter} onChange={event => setFilter(event.target.value)}/></div>
           <div className="min-h-0 flex-1 overflow-auto px-1.5 pb-2" role="listbox" aria-label="PR 文件列表">
-            {files.map((item, index) => <Button variant="ghost" key={item.path} type="button" role="option" aria-selected={path === item.path} className={cn('flex w-full items-start justify-between gap-2 rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === item.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => setPath(item.path)}>
+            {files.map((item, index) => <Button variant="ghost" key={item.path} type="button" role="option" aria-selected={path === item.path} className={cn('h-auto min-w-0 flex w-full items-start justify-between gap-2 whitespace-normal rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === item.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => setPath(item.path)}>
               <span className="min-w-0 flex-1" title={item.path}>
                 <span className="block truncate font-medium">{item.path.slice(item.path.lastIndexOf('/') + 1)}</span>
                 <span className="block truncate text-[11px] text-foreground-4">{files[index - 1]?.path.slice(0, files[index - 1].path.lastIndexOf('/')) === item.path.slice(0, item.path.lastIndexOf('/')) ? '' : item.path.slice(0, item.path.lastIndexOf('/'))}</span>

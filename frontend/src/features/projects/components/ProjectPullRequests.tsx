@@ -168,8 +168,8 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
   const pendingRows = rows.filter(pr => pr.analysisStatus !== 'completed').sort((a, b) => statusRank(a.analysisStatus) - statusRank(b.analysisStatus) || (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt))
   return <section className="grid gap-4" aria-label="项目 PR 审查">
     <h2 className="sr-only">PR 审查</h2>
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-      <div className="grid gap-3">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+      <div className="grid min-w-0 gap-3">
         {result?.supported === false ? null : <>
           <div className="flex flex-wrap items-center gap-2">
             <ToggleGroup type="single" value={String(state)} onValueChange={nextValue => { if (nextValue) (value => { setState(value as PRState); setPage(1) })(nextValue as typeof state); }} aria-label="PR 范围">{([{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
@@ -243,11 +243,11 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
         </div> : null}
       </div>
 
-      {result?.supported ? <aside className="grid content-start gap-2 rounded-md border border-border-soft bg-card p-3" aria-label="待处理 PR">
+      {result?.supported ? <aside className="grid min-w-0 content-start gap-2 rounded-md border border-border-soft bg-card p-3" aria-label="待处理 PR">
         <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">待处理 PR</h2><span className="text-xs text-foreground-4">{pendingRows.length} 个</span></div>
         <p className="text-xs text-foreground-3">分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
         <div className="grid gap-1.5">
-          {pendingRows.length === 0 ? <p className="py-4 text-center text-xs text-foreground-3">没有待处理 PR</p> : pendingRows.map(pr => <Button variant="ghost" key={pr.number} type="button" className="block w-full rounded-sm border border-border-soft bg-card p-2 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
+          {pendingRows.length === 0 ? <p className="py-4 text-center text-xs text-foreground-3">没有待处理 PR</p> : pendingRows.map(pr => <Button variant="ghost" key={pr.number} type="button" className="h-auto min-w-0 w-full block whitespace-normal rounded-sm border border-border-soft bg-card p-2 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
             <span className="block truncate text-sm font-medium text-foreground"><b className="font-mono text-xs text-foreground-3">#{pr.number}</b> {pr.title}</span>
             <span className="mt-0.5 block text-xs text-foreground-3">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
           </Button>)}

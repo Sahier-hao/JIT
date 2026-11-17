@@ -103,6 +103,13 @@ it('opens the project from the card body', async () => {
   expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO })
 })
 
+it('keeps the project card action tall enough for its multi-line content', async () => {
+  mockApi()
+  render(<ProjectsPage navigate={vi.fn()}/>)
+  const card = await screen.findByRole('button', { name: '打开项目 demo-project' })
+  expect(card).toHaveClass('h-auto')
+})
+
 it('shows the cross-project personal works view without the project list', async () => {
   mockApi()
   const work = createWork(snapshot())
