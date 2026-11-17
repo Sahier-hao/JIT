@@ -10,6 +10,7 @@ import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
+import { ReleaseEvidence } from '@/releaseEvidence'
 
 const STATUS_LABELS: Record<string, string> = {
   queued: '排队中', running: '训练中', succeeded: '成功', failed: '失败',
@@ -97,7 +98,7 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
       <TableBody>{tasks.map(item => <TableRow key={item.taskId}>
         <TableCell><strong>{item.datasetVersion}</strong><small>{item.metricSet}</small></TableCell>
         <TableCell>{item.method}</TableCell>
-        <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[item.status]}</span>{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</TableCell>
+        <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[item.status]}</span>{item.status === 'succeeded' ? <small>发布资格：{releaseLabel(item.releaseStatus)}</small> : null}{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</TableCell>
         <TableCell>{formatDate(item.createdAt)}</TableCell>
         <TableCell><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })} variant="outline" type="button">查看</Button></TableCell>
       </TableRow>)}</TableBody>
@@ -136,6 +137,8 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
       <div><dt>模型</dt><dd><code>{valueLabel(task.modelId)}</code></dd></div>
       <div><dt>特征 schema</dt><dd>{valueLabel(task.featureSchemaVersion)}</dd></div>
       <div><dt>时间切分预设</dt><dd><code>{task.splitPreset}</code></dd></div>
+      <div><dt>标签成熟策略</dt><dd><code>{task.maturityPolicy}</code> · 排除 {valueLabel(task.maturity?.excludedImmature)}</dd></div>
+      <div><dt>发布资格</dt><dd>{releaseLabel(task.releaseStatus)}</dd></div>
       <div><dt>实际参数</dt><dd><code>{task.parameters ? JSON.stringify(task.parameters) : '默认参数（未记录覆盖）'}</code></dd></div>
       {task.experimentId ? <div><dt>所属实验</dt><dd><Button size="sm" onClick={() => openExperiment(task.experimentId!)} variant="outline" type="button">查看实验</Button></dd></div> : null}
       <div><dt>产物位置</dt><dd><code>{valueLabel(task.artifactKey)}</code></dd></div>
@@ -157,6 +160,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
       </Table></div>
       <p className="text-xs leading-body text-foreground-3">固定 {task.trainingHistory.epochs} 个 epoch，不早停；测试分区不参与逐 epoch 监控。</p>
     </section> : task.status === 'succeeded' ? <p className="text-xs leading-body text-foreground-3">未记录逐 epoch 训练历史：该方法可能是非迭代方法，或产物产生于历史版本。</p> : null}
+    {task.release ? <ReleaseEvidence report={task.release}/> : null}
     {task.classPolicy ? <p className="text-xs leading-body text-foreground-3">测试指标不因训练分区策略而可直接比较。</p> : null}</> : null}
     <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
       <div><dt>父任务</dt><dd><code>{task.parentTaskId ?? '无'}</code></dd></div>
@@ -167,6 +171,12 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
       <div><dt>完成时间</dt><dd>{formatDate(task.completedAt)}</dd></div>
     </dl>
   </section>
+}
+
+function releaseLabel(status: TrainingTask['releaseStatus']) {
+  if (status === 'qualified') return '发布合格'
+  if (status === 'unqualified') return '发布不合格'
+  return '未评估'
 }
 
 function TrainingPartitions({ metrics }: { metrics: Row }) {

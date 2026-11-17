@@ -1,0 +1,250 @@
+{
+  "config": {
+    "argv": [
+      "D:\\Node\\node.exe",
+      "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config=playwright.current-schema.config.ts"
+    ],
+    "configFile": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\playwright.current-schema.config.ts",
+    "rootDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\repository-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/docs/evidence/_run/current-schema-release/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop-1280",
+        "name": "desktop-1280",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "current-schema-release.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/docs/evidence/_run/current-schema-release/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop-1440",
+        "name": "desktop-1440",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "current-schema-release.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\docs\\evidence\\_run\\current-schema-release\\results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "desktop-1280",
+        "testDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "snapshotDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "testIgnore": [],
+        "testMatch": "current-schema-release.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:14535",
+          "browserName": "chromium",
+          "channel": "msedge",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop-1280"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\docs\\evidence\\_run\\current-schema-release\\results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "desktop-1440",
+        "testDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "snapshotDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "testIgnore": [],
+        "testMatch": "current-schema-release.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:14535",
+          "browserName": "chromium",
+          "channel": "msedge",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop-1440"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "../docs/evidence/_run/current-schema-release/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "current-schema-release.spec.ts",
+      "file": "current-schema-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "当前 v2 正式包、项目分析、模型卡与发布报告形成真实闭环",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "desktop-1280",
+              "projectName": "desktop-1280",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 27348,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:01:46.693Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "62b602c4756430d3644f-ed6c494792963449bc9a",
+          "file": "current-schema-release.spec.ts",
+          "line": 17,
+          "column": 1
+        },
+        {
+          "title": "当前 v2 正式包、项目分析、模型卡与发布报告形成真实闭环",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "当前 schema 闭环只跑一个浏览器项目",
+                  "location": {
+                    "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\current-schema-release.spec.ts",
+                    "line": 18,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "desktop-1440",
+              "projectName": "desktop-1440",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 364,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T13:02:16.177Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "当前 schema 闭环只跑一个浏览器项目",
+                      "location": {
+                        "file": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\current-schema-release.spec.ts",
+                        "line": 18,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "62b602c4756430d3644f-b29ed85debc6ea0b0009",
+          "file": "current-schema-release.spec.ts",
+          "line": 17,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T13:00:00.797Z",
+    "duration": 138062.23,
+    "expected": 1,
+    "skipped": 1,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

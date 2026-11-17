@@ -167,7 +167,16 @@ def test_model_policy_contract_matches_real_responses(policy, tmp_path):
     app = create_app(tmp_path / 'missing', database=catalog.store.path, artifact_root=catalog.root)
     with TestClient(app) as client:
         client.post('/api/admin/setup', json={'username': 'admin', 'password': 'model-policy-test-password'})
-        validate('ModelRegistration', catalog.register_key('baseline'))
+        candidate = next(
+            item for item in client.get('/api/v1/model-candidates').json()['candidates']
+            if item['displayName'] == 'baseline'
+        )
+        registration = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        })
+        assert registration.status_code == 200
+        validate('ModelRegistration', registration.json())
         validate('ModelList', client.get('/api/v1/models').json())
         validate('ModelChoiceList', client.get('/api/v1/repository-models').json())
         validate('ModelPolicy', client.patch(f'/api/v1/models/{second}/policy', json={'enabled': False}).json())
@@ -199,7 +208,9 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         db.execute('DROP TABLE user_account')
         for column in ('source_kind', 'source_snapshot_id', 'origin', 'feature_schema_version',
                        'distribution_rule', 'feature_source_json', 'algorithm',
-                       'split_preset', 'split_policy_json', 'admission_degrade_reason'):
+                           'split_preset', 'split_policy_json',
+                           'admission_degrade_reason', 'maturity_policy',
+                           'maturity_json'):
             db.execute(f'ALTER TABLE repository_sync DROP COLUMN {column}')
         db.execute('DROP TABLE dataset_build_task')
         db.execute('DROP TABLE model_policy')

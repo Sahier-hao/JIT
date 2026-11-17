@@ -47,6 +47,42 @@ def membership_digest(partitions):
     return _digest(members)
 
 
+def policy_for_partitions(partitions, preset=None):
+    """Describe a fixed member set assembled from local project partitions."""
+    preset = resolve_preset(preset)
+    if not isinstance(partitions, dict) or set(partitions) != set(PARTITIONS):
+        raise BaselineError("SPLIT_INVALID", "显式切分必须包含三个分区")
+    seen = set()
+    counts = {}
+    ids = {}
+    for name in PARTITIONS:
+        records = list(partitions[name])
+        if not records:
+            raise BaselineError("SPLIT_INVALID", "显式时间分区不能为空")
+        if any(record["id"] in seen for record in records):
+            raise BaselineError("SPLIT_INVALID", "显式时间分区成员重复")
+        seen.update(record["id"] for record in records)
+        ids[name] = [record["id"] for record in records]
+        counts[name] = {
+            "records": len(records),
+            "positives": sum(record["label"] for record in records),
+            "start": min(record["time"] for record in records),
+            "end": max(record["time"] for record in records),
+        }
+    if any({record["label"] for record in partitions[name]} != {0, 1}
+           for name in ("train", "test")):
+        raise BaselineError("SPLIT_INVALID", "训练与测试必须包含两类发布标签")
+    return {
+        **preset_view(preset),
+        "boundaryMode": "project-local",
+        "boundaries": [],
+        "partitionCounts": counts,
+        "memberSha256": membership_digest(
+            {name: {"ids": ids[name]} for name in PARTITIONS}
+        ),
+    }
+
+
 def split_records(records, preset=None):
     """Split unique records by sorted timestamp groups without crossing a boundary."""
     preset = resolve_preset(preset)

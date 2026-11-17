@@ -21,6 +21,23 @@ function task(index: number, id = `task-${index}`) {
     runId: 'c'.repeat(64),
     modelId: 'd'.repeat(64),
     featureSchemaVersion: 'kamei14-git-v1',
+    splitPreset: 'temporal-70-15-15',
+    maturityPolicy: 'mature-only',
+    maturity: {
+      requestedPolicy: 'mature-only',
+      effectivePolicy: 'mature-only',
+      releaseEligible: true,
+      excludedImmature: 0,
+      statusCounts: { positive: 1, unobserved: 1, immature: 0, unrecorded: 0 },
+    },
+    releasePolicy: 'jit-release-v1',
+    releaseStatus: 'qualified',
+    releaseReportId: 'e'.repeat(64),
+    release: {
+      status: 'qualified',
+      assessment: { policy: { id: 'jit-release-v1' }, gates: [], macro: null },
+      projects: [],
+    },
     metrics: {
       averagePrecision: { value: 0.42, reason: null },
       rocAuc: { value: 0.71, reason: null },

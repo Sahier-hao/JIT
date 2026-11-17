@@ -1243,6 +1243,12 @@ paths:
         required: false
         schema:
           $ref: '#/components/schemas/SplitPreset'
+      - name: maturityPolicy
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [mature-only, include-immature]
       responses:
         '200':
           description: 可用时返回三个分区；不可用时 available=false 并给出具体原因。预览不创建任务、运行或模型。
@@ -3315,6 +3321,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelCard'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/models/{modelId}/release:
+    get:
+      operationId: getModelReleaseQualification
+      summary: 读取模型发布资格报告
+      tags: [目标共享产品]
+      x-implementation-status: implemented
+      x-auth-status: implemented
+      x-access-policy: admin
+      security:
+      - AdminSession: []
+      parameters:
+      - name: modelId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 匹配的发布资格报告；没有报告时 available=false。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelReleaseResponse'
+        '401':
+          $ref: '#/components/responses/AdminRequired'
         '404':
           $ref: '#/components/responses/NotFound'
         '503':
@@ -6185,6 +6220,10 @@ components:
           description: 训练方法；只在 auto 或 force-train 时可用，缺省为 logistic-regression-l2-v1。
         splitPreset:
           $ref: '#/components/schemas/SplitPreset'
+        maturityPolicy:
+          type: string
+          enum: [mature-only, include-immature]
+          default: mature-only
       required:
       - repositoryUrl
       additionalProperties: false
@@ -6220,6 +6259,11 @@ components:
           oneOf:
           - type: 'null'
           - $ref: '#/components/schemas/SplitPolicy'
+        maturityPolicy:
+          type: string
+          enum: [mature-only, include-immature, legacy-unrecorded]
+        maturity:
+          type: [object, 'null']
         featureSource:
           type: [object, 'null']
           description: 复用已保存特征时的来源说明；未复用时为 null。
@@ -6398,6 +6442,8 @@ components:
       - degradeReason
       - trainRecords
       - trainPositives
+      - maturityPolicy
+      - maturity
       - createdAt
       - updatedAt
       - requestId
@@ -7547,6 +7593,33 @@ components:
           enum:
           - local
           - external
+        releaseStatus:
+          type: string
+          enum:
+          - qualified
+          - unqualified
+          - not-evaluated
+        releaseReportId:
+          oneOf:
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
+        defaultCandidate:
+          type: boolean
+        releaseError:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              code:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+            required:
+            - code
+            - message
+            additionalProperties: false
         parameters:
           type:
           - object
@@ -7592,6 +7665,10 @@ components:
       - verificationEnvironment
       - reproducibility
       - origin
+      - releaseStatus
+      - releaseReportId
+      - defaultCandidate
+      - releaseError
       additionalProperties: false
     ModelCard:
       type: object
@@ -7629,6 +7706,8 @@ components:
           type: [number, 'null']
         splitRule:
           type: [string, 'null']
+        maturity:
+          type: [object, 'null']
         source:
           type: object
         partitions:
@@ -7647,6 +7726,8 @@ components:
             type: string
         benefit:
           type: object
+        release:
+          type: object
         compatibility:
           type: object
       required:
@@ -7660,6 +7741,28 @@ components:
       - isDefault
       - limitations
       additionalProperties: false
+    ModelReleaseResponse:
+      type: object
+      properties:
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        runId:
+          type: string
+          minLength: 1
+        available:
+          type: boolean
+        reason:
+          type: [string, 'null']
+        reportId:
+          type: [string, 'null']
+        source:
+          type: [string, 'null']
+        report:
+          type: object
+        error:
+          type: [object, 'null']
+      required: [modelId, runId, available]
+      additionalProperties: true
     ModelDetail:
       type: object
       properties:
@@ -7856,6 +7959,26 @@ components:
           type: string
           enum: [repository-analysis, offline-only, input-unsupported, schema-incompatible]
         serviceCompatibilityReason: {type: [string, 'null']}
+        releaseStatus:
+          type: string
+          enum: [qualified, unqualified, not-evaluated]
+        releaseReportId:
+          oneOf:
+          - $ref: '#/components/schemas/Hash'
+          - type: 'null'
+        releaseError:
+          oneOf:
+          - type: 'null'
+          - type: object
+            properties:
+              code: {type: string, minLength: 1}
+              message: {type: string, minLength: 1}
+            required: [code, message]
+            additionalProperties: false
+        releaseReport:
+          oneOf:
+          - type: 'null'
+          - type: object
         promotable: {type: boolean}
         locations:
           type: array
@@ -7889,6 +8012,9 @@ components:
       - limitations
       - serviceCompatibility
       - serviceCompatibilityReason
+      - releaseStatus
+      - releaseReportId
+      - releaseError
       - promotable
       - locations
       additionalProperties: false
@@ -8910,7 +9036,15 @@ components:
           required: [id, ratios, timezone]
           additionalProperties: false
         timezone: {type: string, enum: [UTC]}
-        datasetRecords: {type: integer, minimum: 1}
+        datasetRecords: {type: integer, minimum: 0}
+        eligibleRecords: {type: integer, minimum: 0}
+        maturityPolicy:
+          type: string
+          enum: [mature-only, include-immature]
+        maturity:
+          oneOf:
+          - type: 'null'
+          - type: object
         available: {type: boolean}
         reason:
           oneOf:
@@ -8936,7 +9070,7 @@ components:
             required: [train, validation, test]
             additionalProperties: false
       required: [datasetVersion, schemaName, preset, timezone, datasetRecords,
-                 available, reason, partitions]
+                 eligibleRecords, maturityPolicy, maturity, available, reason, partitions]
       additionalProperties: false
     SplitPreviewPartition:
       type: object
@@ -9063,6 +9197,10 @@ components:
           default: metric-set-v2
         splitPreset:
           $ref: '#/components/schemas/SplitPreset'
+        maturityPolicy:
+          type: string
+          enum: [mature-only, include-immature]
+          default: mature-only
       required: [datasetVersion, method]
       additionalProperties: false
     TrainingTaskView:
@@ -9129,6 +9267,20 @@ components:
           oneOf:
           - type: 'null'
           - $ref: '#/components/schemas/SplitPolicy'
+        maturityPolicy:
+          type: string
+          enum: [mature-only, include-immature, legacy-unrecorded]
+        maturity:
+          type: [object, 'null']
+        releasePolicy:
+          type: [string, 'null']
+        releaseStatus:
+          type: string
+          enum: [qualified, unqualified, not-evaluated]
+        releaseReportId:
+          type: [string, 'null']
+        release:
+          type: [object, 'null']
         dataScale:
           type: [object, 'null']
         trainingPerformance:
@@ -9164,6 +9316,12 @@ components:
       - splitPreset
       - splitPolicy
       - splitRule
+      - maturityPolicy
+      - maturity
+      - releasePolicy
+      - releaseStatus
+      - releaseReportId
+      - release
       - dataScale
       - trainingPerformance
       - createdAt

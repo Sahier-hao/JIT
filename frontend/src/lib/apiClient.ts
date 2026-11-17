@@ -118,6 +118,7 @@ export interface SyncForm {
   commitLimit?: string
   strategy: SyncStrategy
   splitPreset?: string
+  maturityPolicy?: 'mature-only' | 'include-immature'
 }
 
 export function createRepositorySync(

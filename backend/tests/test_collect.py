@@ -505,10 +505,14 @@ def test_recent_unobserved_commit_is_immature(tmp_path):
     repo = _make_repo(tmp_path / "repo")
     _commit(repo, "add module", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
 
-    record = collect(repo, since="2024-01-01", until="2024-01-02")["records"][0]
+    collected = collect(repo, since="2024-01-01", until="2024-01-02")
+    record = collected["records"][0]
 
     assert record["label"] == 0
     assert record["labelStatus"] == "immature"
+    assert collected["collection"]["label"]["statusCounts"] == {
+        "positive": 0, "unobserved": 0, "immature": 1,
+    }
 
 
 def test_collect_repository_does_not_overwrite_existing_output(tmp_path):

@@ -2,9 +2,11 @@
 from pathlib import Path
 
 from . import admission
+from .artifacts import _label_admission
 from .config import BACKEND
 from .data import BaselineError, parse_source, sha256
 from .datasets import load_all, load_manifest
+from .label_maturity import resolve_policy
 from .splits import PARTITIONS, preset_view, resolve_preset, split_records
 
 
@@ -23,10 +25,11 @@ def _records(manifest):
     return records
 
 
-def dataset_split_preview(dataset_root, dataset_version, preset=None, *, allow_legacy=False,
-                          allow_restricted=False):
+def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
+                          allow_legacy=False, allow_restricted=False):
     """Return a no-write preview; invalid membership is data, not a failed request."""
     preset = resolve_preset(preset)
+    maturity_policy = resolve_policy(maturity_policy)
     registered = load_all(dataset_root)
     dataset = registered.get(dataset_version)
     if dataset is None:
@@ -35,27 +38,44 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, *, allow_l
     manifest_path = declared if declared.is_absolute() else BACKEND / declared
     manifest = load_manifest(manifest_path)
     records = _records(manifest)
-    evaluated = admission.evaluate(manifest, records, allow_legacy=allow_legacy,
-                                   allow_restricted=allow_restricted)
+    try:
+        eligible, maturity, evaluated = _label_admission(
+            manifest, records, maturity_policy,
+            allow_legacy=allow_legacy, allow_restricted=allow_restricted,
+        )
+    except BaselineError as exc:
+        result = admission.evaluate(
+            manifest, records, allow_legacy=allow_legacy,
+            allow_restricted=allow_restricted,
+        )
+        return {
+            "datasetVersion": dataset_version,
+            "schemaName": manifest["schemaName"],
+            "preset": preset_view(preset),
+            "timezone": "UTC",
+            "datasetRecords": len(records),
+            "eligibleRecords": 0,
+            "maturityPolicy": maturity_policy,
+            "maturity": None,
+            "admission": admission.view(result),
+            "available": False,
+            "reason": {"code": exc.code, "message": str(exc)},
+            "partitions": None,
+            "policy": None,
+        }
     base = {
         "datasetVersion": dataset_version,
         "schemaName": manifest["schemaName"],
         "preset": preset_view(preset),
         "timezone": "UTC",
         "datasetRecords": len(records),
-        "eligibleRecords": evaluated["counts"]["eligibleRecords"],
+        "eligibleRecords": len(eligible),
+        "maturityPolicy": maturity_policy,
+        "maturity": maturity,
         "admission": admission.view(evaluated),
     }
-    if not evaluated["available"]:
-        return {
-            **base,
-            "available": False,
-            "reason": evaluated["reason"],
-            "partitions": None,
-            "policy": None,
-        }
     try:
-        split, boundaries, policy = split_records(evaluated["eligible"], preset)
+        split, boundaries, policy = split_records(eligible, preset)
     except BaselineError as exc:
         return {
             **base,
@@ -82,9 +102,11 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, *, allow_l
     }
 
 
-def validate_dataset_split(dataset_root, dataset_version, preset=None, *, allow_legacy=False):
+def validate_dataset_split(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
+                           allow_legacy=False, allow_restricted=False):
     preview = dataset_split_preview(dataset_root, dataset_version, preset,
-                                    allow_legacy=allow_legacy)
+                                     maturity_policy, allow_legacy=allow_legacy,
+                                     allow_restricted=allow_restricted)
     if not preview["available"]:
         reason = preview["reason"]
         raise BaselineError(reason["code"], reason["message"])

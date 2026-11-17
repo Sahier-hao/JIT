@@ -1,0 +1,72 @@
+{
+  "failedCount": 0,
+  "importStatus": "completed",
+  "kind": "model-package-cpu-import-verification",
+  "loadedModels": [
+    {
+      "artifactRunId": "45f418b71d0b1a77cde3addca9c335d0a64810aab9acc16990d483ffe38395e1",
+      "cpuLoaded": true,
+      "method": "logistic-regression-l2-v1",
+      "modelId": "cbc89403-33a8-4643-90ab-40f9938e2dcd",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "ea0f1435431f42e8484b4e3f5bf24d19af6bfc637ee2ec0ba0203bb67dd19a1b",
+      "cpuLoaded": true,
+      "method": "decision-tree-v1",
+      "modelId": "7fb1252c-ab1f-42ed-a501-98690a0a1a04",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "f475f3e5923f1d9f82116f33839fec16f3c7f35c9d901880bdfb806b29be0ca4",
+      "cpuLoaded": true,
+      "method": "random-forest-v1",
+      "modelId": "c6016ed4-5b27-445f-9b41-a6e675916c14",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "d119cd2e16612d25038ebb0798463b5d1d3a65a28f34481a03d427da6eea64ed",
+      "cpuLoaded": true,
+      "method": "gradient-boosting-v1",
+      "modelId": "72a0b0a5-68ad-488b-a397-9307e9c9e97e",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "9d63a121af57cb2a9f811a66c57e18e30cac1e0fbdf8e5a63ffda5cce8c48dd9",
+      "cpuLoaded": true,
+      "method": "mlp-v1",
+      "modelId": "31984905-224c-42d9-8efd-f7ea675d7ce6",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "91ce294b2a2ea8a22be29c95659e0096bf181699d64cb0484b4a88e7693b205d",
+      "cpuLoaded": true,
+      "method": "tabular-resnet-v1",
+      "modelId": "3a28d18e-986a-4749-99ab-bb7d0c765617",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "a3a5b52dffde3a63072c75fcc4769fd84397928cd138c7935dc2f1b1967cb6d1",
+      "cpuLoaded": true,
+      "method": "ft-transformer-v1",
+      "modelId": "086d8f50-d2ea-4e40-997e-96a0f8ddf56b",
+      "schema": "kamei14-git-v2"
+    },
+    {
+      "artifactRunId": "8dc3768c37d82a45c16ab2806242f961cb66623a15492e7bd826b5089a2210f0",
+      "cpuLoaded": true,
+      "method": "wide-deep-v1",
+      "modelId": "a93c71c1-cc31-40af-acb6-0cc15528dd59",
+      "schema": "kamei14-git-v2"
+    }
+  ],
+  "package": {
+    "fileCount": 81,
+    "modelCount": 8,
+    "path": "C:/Users/fgdvf/Desktop/openspec/JIT/backend/model-packages/jit-current-v2-models-v1.zip",
+    "sha256": "f90e8f4d7d6b04518a44654d50a3da40b9d83f2f1c042a2cf4357ec91ab81972",
+    "uncompressedBytes": 17028126
+  },
+  "passed": true,
+  "registeredCount": 8
+}

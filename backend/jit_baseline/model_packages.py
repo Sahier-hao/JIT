@@ -37,6 +37,8 @@ FILE_KEYS = {"path", "sha256", "size"}
 MODEL_KEYS = {"id", "name", "sha256"}
 BUNDLED_PACKAGE_PATH = BACKEND / "model-packages" / "jit-nine-models-v1.zip"
 BUNDLED_MODEL_COUNT = 9
+CURRENT_SCHEMA_PACKAGE_PATH = BACKEND / "model-packages" / "jit-current-v2-models-v1.zip"
+CURRENT_SCHEMA_MIN_MODELS = 8
 
 
 def _hash_file(path):
@@ -307,7 +309,12 @@ def export_model_package(catalog: ModelCatalog, model_ids, output):
         row = catalog._row(model_id)
         directory = catalog._nested_directory(row["relative_key"])
         files = []
-        for name in sorted(MODEL_FILES):
+        names = list(MODEL_FILES)
+        if (directory / "release-report.json").is_file():
+            names.append("release-report.json")
+        if (directory / "release-approval.json").is_file():
+            names.append("release-approval.json")
+        for name in sorted(names):
             path = directory / name
             if path.is_symlink() or not path.is_file():
                 raise BaselineError("ARTIFACT_INVALID", f"模型包导出缺少文件：{name}")
@@ -657,6 +664,88 @@ def import_bundled_model_package(catalog: ModelCatalog, package=BUNDLED_PACKAGE_
     if previous is not None:
         return dict(previous, skipped=True)
     return dict(import_model_package(catalog, package), skipped=False)
+
+
+def import_current_schema_model_package(
+        catalog: ModelCatalog, package=CURRENT_SCHEMA_PACKAGE_PATH):
+    """Import the versioned current v2 baseline without replacing an existing default."""
+    package = Path(package)
+    if not package.exists():
+        return {
+            "packageName": package.name,
+            "status": "skipped",
+            "skipped": True,
+            "reason": "当前 schema 正式模型包尚未交付",
+            "modelCount": 0,
+        }
+    checksum = package.with_name(package.name + ".sha256")
+    try:
+        fields = checksum.read_text(encoding="ascii").split()
+        expected_sha, expected_name = fields
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise BaselineError("PACKAGE_INVALID", "当前 schema 模型包校验文件不可用") from exc
+    if expected_name != package.name or expected_sha != _hash_file(package):
+        raise BaselineError("PACKAGE_INVALID", "当前 schema 模型包 SHA-256 不匹配")
+    inspected = inspect_model_package(package)
+    if len(inspected["models"]) < CURRENT_SCHEMA_MIN_MODELS:
+        raise BaselineError("PACKAGE_INVALID", "当前 schema 模型包少于八种方法")
+    if any(item["schema"] != "kamei14-git-v2" for item in inspected["models"]):
+        raise BaselineError("PACKAGE_INVALID", "当前 schema 模型包混入其他 schema")
+    categories = [ALGORITHMS.get(item["method"], {}).get("category") for item in inspected["models"]]
+    if categories.count("classic") < 4 or categories.count("deep") < 3:
+        raise BaselineError("PACKAGE_INVALID", "当前 schema 模型包未达到经典/深度覆盖要求")
+    from .release_reports import validate_report
+
+    approvals = []
+    with zipfile.ZipFile(package) as archive:
+        for item in inspected["models"]:
+            report_name = f"{item['packagePath']}/release-report.json"
+            if report_name not in archive.namelist():
+                raise BaselineError("PACKAGE_INVALID", "当前 schema 模型缺少发布资格报告")
+            try:
+                report = json.loads(archive.read(report_name).decode("utf-8"))
+            except (UnicodeError, ValueError) as exc:
+                raise BaselineError("PACKAGE_INVALID", "当前 schema 发布资格报告格式无效") from exc
+            validate_report(report)
+            artifact = report["artifact"]
+            if (report["status"] != "qualified"
+                    or artifact.get("runId") != item["artifactRunId"]
+                    or artifact.get("modelSha256") != item["model"]["sha256"]
+                    or artifact.get("schema") != item["schema"]
+                    or artifact.get("datasetVersion") != item["datasetVersion"]):
+                raise BaselineError("PACKAGE_INVALID", "当前 schema 模型与发布资格报告不一致")
+            name = f"{item['packagePath']}/release-approval.json"
+            if name not in archive.namelist():
+                continue
+            try:
+                approval = json.loads(archive.read(name).decode("utf-8"))
+            except (UnicodeError, ValueError) as exc:
+                raise BaselineError("PACKAGE_INVALID", "当前 schema 默认候选批准记录格式无效") from exc
+            if (approval.get("artifactRunId") != item["artifactRunId"]
+                    or approval.get("modelSha256") != item["model"]["sha256"]
+                    or approval.get("releaseReportId") != report["reportId"]
+                    or approval.get("modelId") != item["sourceModelId"]
+                    or not isinstance(approval.get("approvedBy"), str)
+                    or not isinstance(approval.get("approvedAt"), str)):
+                raise BaselineError("PACKAGE_INVALID", "当前 schema 默认候选批准记录不一致")
+            approvals.append((item, approval))
+    if len(approvals) != 1:
+        raise BaselineError("PACKAGE_INVALID", "当前 schema 模型包必须包含一个人工批准的默认候选")
+
+    before_empty = not catalog.models()
+    result = import_model_package(catalog, package)
+    defaultModelId = None
+    if before_empty and result["status"] == "completed":
+        item, _ = approvals[0]
+        imported = next(
+            (entry for entry in result["items"]
+             if entry.get("artifactRunId") == item["artifactRunId"]
+             and entry.get("modelId")), None,
+        )
+        if imported:
+            catalog.update_policy(imported["modelId"], {"isDefault": True})
+            defaultModelId = imported["modelId"]
+    return dict(result, packageName=package.name, defaultModelId=defaultModelId)
 
 
 def latest_model_package_import(storage):

@@ -316,7 +316,8 @@ def test_real_updates_remind_without_analyzing(tmp_path, real_run):  # noqa: F81
                                  'modelId': model_id, 'commitLimit': 500,
                                  'since': (now - timedelta(days=90)).date().isoformat()})
         finished = wait_job(job['syncId'])
-        assert finished['status'] == 'completed'
+        assert finished['status'] == 'completed', finished
+        assert finished['maturity']['effectivePolicy'] == 'not-applicable'
         deadline = time.monotonic() + 10
         while not any(note['kind'] == 'analysis-completed'
                       for note in events(service, repository_id)):

@@ -32,6 +32,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [metricSet, setMetricSet] = useState('metric-set-v2')
   const [classPolicy, setClassPolicy] = useState<'none' | 'weights' | 'sample'>('none')
   const [splitPreset, setSplitPreset] = useState('temporal-70-15-15')
+  const [maturityPolicy, setMaturityPolicy] = useState<'mature-only' | 'include-immature'>('mature-only')
   const [splitPreview, setSplitPreview] = useState<SplitPreview | null>(null)
   const [splitPreviewError, setSplitPreviewError] = useState('')
   const [splitPreviewBusy, setSplitPreviewBusy] = useState(false)
@@ -69,12 +70,12 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     if (!selected) return
     const controller = new AbortController()
     setSplitPreviewBusy(true); setSplitPreviewError(''); setSplitPreview(null)
-    previewDatasetSplit(selected.version, splitPreset, controller.signal)
+    previewDatasetSplit(selected.version, splitPreset, controller.signal, maturityPolicy)
       .then(value => { if (!controller.signal.aborted) setSplitPreview(value) })
       .catch(failure => { if (!controller.signal.aborted) setSplitPreviewError(failure instanceof Error ? failure.message : '切分预览失败') })
       .finally(() => { if (!controller.signal.aborted) setSplitPreviewBusy(false) })
     return () => controller.abort()
-  }, [selected?.version, splitPreset])
+  }, [selected?.version, splitPreset, maturityPolicy])
   if (!selected) return null
   const quality = selected.quality
   const szz = selected.szz, label = selected.label
@@ -90,7 +91,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     try {
       const task = await createTrainingTask(selected!.version, selectedMethod, metricSet,
                                             classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
-                                            splitPreset)
+                                            splitPreset, maturityPolicy)
       navigate({ name: 'admin', view: 'training', resourceId: task.taskId })
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) expired()
@@ -131,7 +132,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       const experiment = await createTrainingExperiment({
         datasetVersion: selected!.version, methods, metricSet,
         classPolicy: classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
-        splitPreset,
+        splitPreset, maturityPolicy,
       })
       navigate({ name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId })
     } catch (failure) {
@@ -197,6 +198,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>CSV SHA-256</dt><dd><code>{valueLabel(selected.file.sha256)}</code></dd></div>
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
+        <div><dt>标签成熟</dt><dd>{selected.labelMaturity?.available ? Object.entries((selected.labelMaturity.statusCounts ?? {}) as Row).map(([name, count]) => `${name} ${valueLabel(count)}`).join(' · ') : valueLabel(selected.labelMaturity?.reason, '成熟状态未记录')}</dd></div>
       </dl></section>
       <section><h2>标签与 SZZ</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
@@ -315,6 +317,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       <Select value={metricSet == null ? '' : String(metricSet)} onValueChange={nextValue => (setMetricSet)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="指标集"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       <Select value={classPolicy == null ? '' : String(classPolicy)} onValueChange={nextValue => (value => setClassPolicy(value as 'none' | 'weights' | 'sample'))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练分区类别策略"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       <Select value={splitPreset == null ? '' : String(splitPreset)} onValueChange={nextValue => (setSplitPreset)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="时间切分预设"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([...SPLIT_PRESETS]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+      <Select value={maturityPolicy} onValueChange={nextValue => setMaturityPolicy(nextValue as 'mature-only' | 'include-immature')}><SelectTrigger aria-label="标签成熟策略"><SelectValue placeholder="请选择"/></SelectTrigger><SelectContent>{([{ value: 'mature-only', label: '正式：排除未成熟标签' }, { value: 'include-immature', label: '敏感性：包含未成熟标签' }]).map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>
       <Button variant='default' disabled={Boolean(!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available) || Boolean(busy)} onClick={() => void train()} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}创建训练任务</Button>
     </div></section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>

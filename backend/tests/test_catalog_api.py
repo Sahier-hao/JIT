@@ -114,6 +114,33 @@ def test_public_model_card_reuses_diagnostics_and_hides_admin_artifacts(settings
         assert 'sqlite' not in response.text.lower()
 
 
+def test_release_report_requires_admin_and_missing_report_is_explicit(settings):
+    from fastapi.testclient import TestClient as PublicTestClient
+    from jit_baseline.api import create_app
+
+    with TestClient(create_app(**settings)) as client:
+        candidate = client.get('/api/v1/model-candidates').json()['candidates'][0]
+        model = client.post('/api/v1/models/register', json={
+            'candidateId': candidate['candidateId'],
+            'expectedManifestSha256': candidate['manifestSha256'],
+        }).json()['model']
+        response = client.get(f"/api/v1/models/{model['modelId']}/release")
+        assert response.status_code == 200
+        assert response.json()['available'] is False
+        assert response.json()['status'] == 'not-evaluated'
+        from jit_baseline.release_qualification import write_release_report
+        report, _ = write_release_report(settings['artifact_root'] / 'baseline')
+        evaluated = client.get(f"/api/v1/models/{model['modelId']}/release")
+        assert evaluated.status_code == 200
+        assert evaluated.json()['available'] is True
+        assert evaluated.json()['reportId'] == report['reportId']
+        assert evaluated.json()['report']['status'] == 'unqualified'
+    with PublicTestClient(create_app(**settings)) as public:
+        assert public.get(
+            f"/api/v1/models/{model['modelId']}/release"
+        ).status_code == 401
+
+
 def test_old_model_without_supplement_marks_train_and_validation_not_recorded(
         tmp_path, monkeypatch, real_run):  # noqa: F811
     from fastapi.testclient import TestClient as PublicTestClient

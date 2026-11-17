@@ -1,10 +1,12 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
+import { loginOrCreateUser } from './support/user-session.ts'
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
 // These reads validate real model artifacts; allow the API to finish on a busy host.
 const catalogTimeout = 30_000
+test.beforeEach(async ({ page }) => loginOrCreateUser(page))
 async function noOverflow(page: Page) { expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true) }
 async function adminSession(page: Page) {
   const setup = await page.request.post('/api/admin/setup', { data: account })
@@ -123,15 +125,20 @@ test('管理员登录、模型产物登记、验证报告和退出权限', async
   await adminSession(page)
   await page.request.post('/api/admin/logout')
   await page.goto('/#/admin')
-  await expect(page.getByRole('heading', { name: '管理员登录', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '进入管理工作区', exact: true })).toBeVisible()
   await page.getByLabel('管理员账户名').fill(account.username)
   await page.getByLabel('管理员密码', { exact: true }).fill(account.password)
-  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await page.getByRole('button', { name: '登录管理', exact: true }).click()
   await expect(page.getByRole('heading', { name: '模型管理', exact: true })).toBeVisible()
   await expect.poll(() => page.locator('.admin-model-card').count(), { timeout: catalogTimeout })
     .toBeGreaterThanOrEqual(9)
-  await page.getByRole('button', { name: '校验并登记', exact: true }).first().click()
-  await expect(page.getByRole('status').filter({ hasText: '产物校验通过' })).toBeVisible()
+  const registerCandidate = page.getByRole('button', { name: '登记本机产物', exact: true })
+  if (await registerCandidate.count()) {
+    await registerCandidate.first().click()
+    await expect(page.getByRole('status').filter({ hasText: '产物校验通过' })).toBeVisible()
+  } else {
+    await expect(page.getByText('0 个完整未登记', { exact: true })).toBeVisible()
+  }
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/admin-models-${info.project.name}.png`, fullPage: true })
   await page.getByRole('button', { name: '数据集', exact: true }).click()
@@ -142,6 +149,8 @@ test('管理员登录、模型产物登记、验证报告和退出权限', async
   await expect(page.getByRole('navigation', { name: '验证报告视图' })).toBeVisible()
   await expect(page.getByText('公开历史数据', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '退出管理', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '进入管理工作区', exact: true })).toBeVisible()
+  await page.goto('/#/projects')
   await expect(page.getByRole('heading', { name: '项目', exact: true })).toBeVisible()
   expect((await page.request.get('/api/v1/models')).status()).toBe(401)
   await expect(page.locator('.admin-model-card')).toHaveCount(0)
@@ -154,5 +163,5 @@ test('旧工具链接明确退役，旧报告链接进入管理员登录', async
   await page.goto('/#/models')
   await expect(page.getByRole('heading', { name: '这个入口已移除' })).toBeVisible()
   await page.goto('/#/reports')
-  await expect(page.getByRole('heading', { name: /管理员登录|建立管理员账户/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '进入管理工作区', exact: true })).toBeVisible()
 })

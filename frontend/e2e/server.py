@@ -30,6 +30,7 @@ MODELS = (
 EXPERIMENT_MODE = os.environ.get("JIT_E2E_EXPERIMENT_MODE") == "1"
 PACKAGE_MODE = os.environ.get("JIT_E2E_MODEL_PACKAGE_MODE") == "1"
 BUNDLED_MODEL_MODE = os.environ.get("JIT_E2E_BUNDLED_MODEL_MODE") == "1"
+CURRENT_SCHEMA_MODE = os.environ.get("JIT_E2E_CURRENT_SCHEMA_MODE") == "1"
 
 
 def _rewrite_run_identity(directory, marker):
@@ -200,12 +201,43 @@ def _bundled_model_setup():
         json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _current_schema_setup():
+    """Initialize only the committed current 14-field release package."""
+    from jit_baseline.catalog import ModelCatalog
+    from jit_baseline.catalog_storage import CatalogStorage
+    from jit_baseline.model_packages import (
+        CURRENT_SCHEMA_PACKAGE_PATH,
+        import_current_schema_model_package,
+    )
+
+    if not CURRENT_SCHEMA_PACKAGE_PATH.is_file():
+        raise RuntimeError("当前 schema 正式模型包尚未生成")
+    shutil.rmtree(ARTIFACT_ROOT, ignore_errors=True)
+    ARTIFACT_ROOT.mkdir(parents=True)
+    storage = CatalogStorage(DATABASE)
+    storage.initialize()
+    catalog = ModelCatalog(storage, ARTIFACT_ROOT)
+    imported = import_current_schema_model_package(catalog, CURRENT_SCHEMA_PACKAGE_PATH)
+    if imported["status"] != "completed" or not imported.get("defaultModelId"):
+        raise RuntimeError(f"当前 schema 模型包初始化失败：{imported}")
+    evidence = {
+        "packageName": CURRENT_SCHEMA_PACKAGE_PATH.name,
+        "import": imported,
+    }
+    (DATABASE.parent / "current-schema-model-bootstrap.json").write_text(
+        json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def main():
     DATABASE.unlink(missing_ok=True)
     shutil.rmtree(ARTIFACT_ROOT, ignore_errors=True)
     shutil.rmtree(DATASET_ROOT, ignore_errors=True)
     ARTIFACT_ROOT.mkdir(parents=True, exist_ok=True)
     shutil.copytree(BACKEND / "data" / "datasets", DATASET_ROOT)
+    if CURRENT_SCHEMA_MODE:
+        _current_schema_setup()
+        uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=int(sys.argv[1]), workers=1)
+        return
     if BUNDLED_MODEL_MODE:
         _bundled_model_setup()
         uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=int(sys.argv[1]), workers=1)

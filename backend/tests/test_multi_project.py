@@ -11,29 +11,44 @@ FIELDS = ("ns", "nd", "nf", "entropy", "la", "ld", "lt", "fix",
           "ndev", "age", "nuc", "exp", "rexp", "sexp")
 
 
-def _csv_bytes(offset=0):
+def _csv_bytes(offset=0, schema="kamei14-git-v1"):
     stream = io.StringIO()
-    writer = csv.writer(stream)
-    writer.writerow(("commit_id", "author_date", "bugcount", *FIELDS))
+    fields = ["commit_id", "author_date", "bugcount"]
+    if schema == "kamei14-git-v2":
+        fields += ["label_status", "observed_through_epoch", "maturity_days"]
+    writer = csv.DictWriter(stream, fieldnames=(*fields, *FIELDS))
+    writer.writeheader()
     for index in range(20):
         epoch = 1640995200 + offset + index * 86400
         label = 1 if index in (2, 17, 19) else 0
         values = (1 + index % 3, 2 + index % 2, 1, 0.5, 4, 5, 3, 0,
                   2, 1.5, 3, 4, 2.0, 3)
-        writer.writerow((f"{index + offset:040x}", epoch, label, *values))
+        row = {
+            "commit_id": f"{index + offset:040x}",
+            "author_date": epoch,
+            "bugcount": label,
+            **dict(zip(FIELDS, values, strict=True)),
+        }
+        if schema == "kamei14-git-v2":
+            row.update(
+                label_status="positive" if label else "unobserved",
+                observed_through_epoch=1735689600,
+                maturity_days=90,
+            )
+        writer.writerow(row)
     return stream.getvalue().encode("utf-8")
 
 
-def write_project(root, name, *, label_kind=None):
+def write_project(root, name, *, label_kind=None, schema="kamei14-git-v1"):
     from jit_baseline.datasets import build_manifest
 
     csv_path = root / f"{name}.csv"
-    csv_path.write_bytes(_csv_bytes(offset=len(name)))
+    csv_path.write_bytes(_csv_bytes(offset=len(name), schema=schema))
     start = datetime.fromtimestamp(1640995200 + len(name), tz=timezone.utc).date().isoformat()
     end = datetime.fromtimestamp(
         1640995200 + len(name) + 19 * 86400, tz=timezone.utc).date().isoformat()
     manifest = build_manifest(
-        csv_path, schema="kamei14-git-v1", dataset=name,
+        csv_path, schema=schema, dataset=name,
         version=f"{name}-{start}_{end}",
         cohort={
             "addedLinesGreaterThan": 0,
@@ -126,6 +141,24 @@ def test_load_projects_validates_count_window_and_labels(tmp_path):
     with pytest.raises(BaselineError) as info:
         load_projects(paths)
     assert info.value.code == "PROJECT_COHORT_INVALID"
+
+
+def test_load_projects_supports_current_v2_and_filters_before_split(tmp_path):
+    from jit_baseline.multi_project import load_projects
+
+    paths = [
+        write_project(
+            tmp_path, name, schema="kamei14-git-v2",
+        )
+        for name in ("commons-lang", "vue-core", "redis", "scikit-learn")
+    ]
+    projects = load_projects(paths)
+    assert all(project["manifest"]["schemaName"] == "kamei14-git-v2"
+               for project in projects)
+    assert all(project["maturity"]["effectivePolicy"] == "mature-only"
+               for project in projects)
+    assert all(project["maturity"]["releaseEligible"] is True
+               for project in projects)
 
 
 def test_run_multi_project_uses_each_protocol_training_cohort(tmp_path, project_paths):

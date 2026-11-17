@@ -19,6 +19,7 @@ import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
+import { ReleaseEvidence } from '@/releaseEvidence'
 
 interface Filters {
   registrationState?: string
@@ -41,6 +42,9 @@ const STATUS_LABELS: Record<string, string> = {
   registeredResult: '已登记',
   reused: '复用已有模型',
   'already-registered': '此前已登记',
+  qualified: '发布合格',
+  unqualified: '发布不合格',
+  'not-evaluated': '未评估发布资格',
 }
 
 function experimentLabel(run: ExperimentRun) {
@@ -196,7 +200,7 @@ function ExperimentList({ filters, navigate, expired }: {
             onCheckedChange={checked => setSelected(current => checked === true ? [...current, run.candidateId] : current.filter(id => id !== run.candidateId))}/></TableCell>
           <TableCell><strong>{experimentLabel(run)}</strong><small>{run.datasetVersion ?? '数据集未知'} · {run.method ?? '方法未知'}</small></TableCell>
           <TableCell>{metricSummary(run.metrics)}</TableCell>
-          <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</TableCell>
+          <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small><small>发布资格：{STATUS_LABELS[run.releaseStatus]}</small>{run.releaseError ? <small>{run.releaseError.message}</small> : null}{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</TableCell>
           <TableCell><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></TableCell>
           <TableCell><div className="flex flex-wrap items-center gap-1.5"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })} variant="outline" type="button">查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }} variant="outline" type="button">登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型</Button> : null}</div></TableCell>
         </TableRow>
@@ -233,10 +237,11 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
   return <section>
     <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
     <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型详情</Button> : null}</div>
-    <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span></div>
+    <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span><span>{STATUS_LABELS[run.releaseStatus]}</span></div>
     {run.serviceCompatibilityReason ? <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2">{run.serviceCompatibilityReason}</p> : null}
     {run.artifactStateReason ? <p className="text-xs text-rose">{run.artifactStateReason}</p> : null}
     <MetricGrid metrics={run.metrics}/>
+    {run.releaseReport ? <ReleaseEvidence report={run.releaseReport}/> : null}
     <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
       <section><h2>运行身份</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>artifact run</dt><dd><code>{run.artifactRunId ?? '无'}</code></dd></div>
@@ -245,6 +250,7 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
         <div><dt>数据集</dt><dd><code>{run.datasetVersion ?? '未提供'}</code></dd></div>
         <div><dt>schema</dt><dd>{run.featureSchemaVersion ?? '未提供'}</dd></div>
         <div><dt>指标集</dt><dd>{run.metricSet ?? '未提供'}</dd></div>
+        <div><dt>发布报告</dt><dd><code>{run.releaseReportId ?? '未生成'}</code></dd></div>
       </dl></section>
       <section><h2>产物位置</h2><div className="grid gap-2.5 [&>div]:grid [&>div]:gap-1 [&_span]:text-xs [&_span]:text-foreground-3 [&_p]:text-xs [&_p]:text-foreground-2">{run.locations.map(location => <div key={location.candidateId}><code>{location.artifactKey}</code><span>{STATUS_LABELS[location.artifactState]}</span>{location.reason ? <p>{location.reason}</p> : null}</div>)}</div></section>
     </div>

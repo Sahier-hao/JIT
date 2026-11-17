@@ -57,6 +57,8 @@ export interface SyncView {
   distributionRule?: string | null
   splitPreset?: string | null
   splitPolicy?: Record<string, unknown> | null
+  maturityPolicy?: 'mature-only' | 'include-immature' | 'legacy-unrecorded' | null
+  maturity?: Record<string, unknown> | null
   sourceSnapshotId?: string | null
   origin?: string | null
   queuePosition?: number | null
@@ -188,6 +190,8 @@ export function parseSync(value: unknown): SyncView {
     distributionRule: textOrNull(raw.distributionRule),
     splitPreset: textOrNull(raw.splitPreset),
     splitPolicy: raw.splitPolicy == null ? null : record(raw.splitPolicy),
+    maturityPolicy: raw.maturityPolicy == null ? null : oneOf(raw.maturityPolicy, ['mature-only', 'include-immature', 'legacy-unrecorded'] as const),
+    maturity: raw.maturity == null ? null : record(raw.maturity),
     sourceSnapshotId: textOrNull(raw.sourceSnapshotId),
     origin: textOrNull(raw.origin),
     queuePosition,
@@ -292,6 +296,7 @@ export function syncBody(form: {
   commitLimit?: string
   strategy: SyncStrategy
   splitPreset?: string
+  maturityPolicy?: 'mature-only' | 'include-immature'
 }): Record<string, unknown> {
   const body: Record<string, unknown> = { repositoryUrl: form.repositoryUrl.trim(), strategy: form.strategy }
   if (form.modelId) body.modelId = form.modelId
@@ -301,6 +306,7 @@ export function syncBody(form: {
   if (form.until?.trim()) body.until = form.until.trim()
   if (form.commitLimit?.trim()) body.commitLimit = Number(form.commitLimit.trim())
   if (form.splitPreset?.trim()) body.splitPreset = form.splitPreset.trim()
+  if (form.maturityPolicy) body.maturityPolicy = form.maturityPolicy
   return body
 }
 

@@ -1,0 +1,546 @@
+{
+  "coverage": {
+    "classic": 4,
+    "deep": 4,
+    "passed": true,
+    "qualified": 8
+  },
+  "generatedUtc": "2026-11-16T12:56:23.654649+00:00",
+  "kind": "current-schema-release-audit",
+  "package": {
+    "bytes": 5131768,
+    "path": "C:/Users/fgdvf/Desktop/openspec/JIT/backend/model-packages/jit-current-v2-models-v1.zip",
+    "sha256": "f90e8f4d7d6b04518a44654d50a3da40b9d83f2f1c042a2cf4357ec91ab81972"
+  },
+  "passed": true,
+  "projects": [
+    {
+      "csvSha256": "adb7f725d35c2672e6166700c6d60f233a82d363e36d97f85df43de96b2ed2eb",
+      "dataset": "mp-commons-lang-v2",
+      "formalRecordCount": 1443,
+      "manifestSha256": "85b0396640654360dbd3c18055d1c03639f8d1a9fcdf1bbf49c4a16ff0373a16",
+      "maturity": {
+        "effectivePolicy": "mature-only",
+        "excludedImmature": 138,
+        "inputRecords": 1581,
+        "maturityDays": 90,
+        "observedThroughEpoch": 1735689600,
+        "releaseEligible": true,
+        "requestedPolicy": "mature-only",
+        "statusCounts": {
+          "immature": 138,
+          "positive": 154,
+          "unobserved": 1289,
+          "unrecorded": 0
+        }
+      },
+      "missingFields": [],
+      "qualityMatches": true,
+      "requiredFieldsPresent": true,
+      "revision": "00efc7500abe2d1a810cb7138995c2dfbe5fa9a2",
+      "schema": "kamei14-git-v2",
+      "split": {
+        "boundaries": [
+          1710562708,
+          1720797939
+        ],
+        "partitions": {
+          "test": {
+            "positives": 33,
+            "records": 217
+          },
+          "train": {
+            "positives": 104,
+            "records": 1009
+          },
+          "validation": {
+            "positives": 17,
+            "records": 217
+          }
+        },
+        "policy": {
+          "boundaries": [
+            {
+              "epoch": 1710562708,
+              "time": "2024-03-16T04:18:28Z"
+            },
+            {
+              "epoch": 1720797939,
+              "time": "2024-07-12T15:25:39Z"
+            }
+          ],
+          "id": "temporal-70-15-15",
+          "memberSha256": "10999e5d0fd9d97379373ce24402fad450a0e35cad75ebc7103826ffb85fd6b9",
+          "partitionCounts": {
+            "test": {
+              "end": "2024-12-02T15:49:51Z",
+              "positives": 33,
+              "records": 217,
+              "start": "2024-07-12T15:25:39Z"
+            },
+            "train": {
+              "end": "2024-03-16T03:59:31Z",
+              "positives": 104,
+              "records": 1009,
+              "start": "2022-01-30T20:04:16Z"
+            },
+            "validation": {
+              "end": "2024-07-11T12:34:03Z",
+              "positives": 17,
+              "records": 217,
+              "start": "2024-03-16T04:18:28Z"
+            }
+          },
+          "ratios": {
+            "test": 15,
+            "train": 70,
+            "validation": 15
+          },
+          "timezone": "UTC"
+        },
+        "preset": "temporal-70-15-15"
+      },
+      "statusCounts": {
+        "immature": 138,
+        "positive": 154,
+        "unobserved": 1289
+      },
+      "timeRange": {
+        "first": "2022-01-30T20:04:16+00:00",
+        "firstEpoch": 1643573056,
+        "last": "2024-12-27T15:35:27+00:00",
+        "lastEpoch": 1735313727
+      },
+      "url": "https://github.com/apache/commons-lang",
+      "version": "mp-commons-lang-v2-2022-01-30_2024-12-27"
+    },
+    {
+      "csvSha256": "2ade808c650aeb5b9a8ffbdded8d1e8395330d987f63c7718de349a511bdf392",
+      "dataset": "mp-vue-core-v2",
+      "formalRecordCount": 2195,
+      "manifestSha256": "0bf38df6bd480ddaa13be0d5cd8b1351553638c2bdab1b58154e398a21cf0521",
+      "maturity": {
+        "effectivePolicy": "mature-only",
+        "excludedImmature": 93,
+        "inputRecords": 2288,
+        "maturityDays": 90,
+        "observedThroughEpoch": 1735689600,
+        "releaseEligible": true,
+        "requestedPolicy": "mature-only",
+        "statusCounts": {
+          "immature": 93,
+          "positive": 1028,
+          "unobserved": 1167,
+          "unrecorded": 0
+        }
+      },
+      "missingFields": [],
+      "qualityMatches": true,
+      "requiredFieldsPresent": true,
+      "revision": "24c9d0bffb2299635b8112a978d74a38723aaa10",
+      "schema": "kamei14-git-v2",
+      "split": {
+        "boundaries": [
+          1713191314,
+          1722570323
+        ],
+        "partitions": {
+          "test": {
+            "positives": 166,
+            "records": 329
+          },
+          "train": {
+            "positives": 715,
+            "records": 1537
+          },
+          "validation": {
+            "positives": 147,
+            "records": 329
+          }
+        },
+        "policy": {
+          "boundaries": [
+            {
+              "epoch": 1713191314,
+              "time": "2024-04-15T14:28:34Z"
+            },
+            {
+              "epoch": 1722570323,
+              "time": "2024-08-02T03:45:23Z"
+            }
+          ],
+          "id": "temporal-70-15-15",
+          "memberSha256": "d9262ae3ccc53b368eb2496a8f24cfdc35a587b18224dc2650b6f46e7f55a3ea",
+          "partitionCounts": {
+            "test": {
+              "end": "2024-12-16T02:48:44Z",
+              "positives": 166,
+              "records": 329,
+              "start": "2024-08-02T03:45:23Z"
+            },
+            "train": {
+              "end": "2024-04-15T14:02:57Z",
+              "positives": 715,
+              "records": 1537,
+              "start": "2022-01-04T09:09:13Z"
+            },
+            "validation": {
+              "end": "2024-08-02T03:38:07Z",
+              "positives": 147,
+              "records": 329,
+              "start": "2024-04-15T14:28:34Z"
+            }
+          },
+          "ratios": {
+            "test": 15,
+            "train": 70,
+            "validation": 15
+          },
+          "timezone": "UTC"
+        },
+        "preset": "temporal-70-15-15"
+      },
+      "statusCounts": {
+        "immature": 93,
+        "positive": 1028,
+        "unobserved": 1167
+      },
+      "timeRange": {
+        "first": "2022-01-04T09:09:13+00:00",
+        "firstEpoch": 1641287353,
+        "last": "2024-12-30T01:57:28+00:00",
+        "lastEpoch": 1735523848
+      },
+      "url": "https://github.com/vuejs/core",
+      "version": "mp-vue-core-v2-2022-01-04_2024-12-30"
+    },
+    {
+      "csvSha256": "f40ac6fe6c2aaf7457a108acbe43a5905f08952bf4ad5865dc863ee6495c0c36",
+      "dataset": "mp-redis-v2",
+      "formalRecordCount": 1435,
+      "manifestSha256": "dbd95285ba8009b2a3f5d7870bcea1fdc1a847269ddd5426fd4730b6a0fe9f34",
+      "maturity": {
+        "effectivePolicy": "mature-only",
+        "excludedImmature": 36,
+        "inputRecords": 1471,
+        "maturityDays": 90,
+        "observedThroughEpoch": 1735689600,
+        "releaseEligible": true,
+        "requestedPolicy": "mature-only",
+        "statusCounts": {
+          "immature": 36,
+          "positive": 573,
+          "unobserved": 862,
+          "unrecorded": 0
+        }
+      },
+      "missingFields": [],
+      "qualityMatches": true,
+      "requiredFieldsPresent": true,
+      "revision": "6a5fee67583480de1fec323649f43fd000001b49",
+      "schema": "kamei14-git-v2",
+      "split": {
+        "boundaries": [
+          1693125775,
+          1707222668
+        ],
+        "partitions": {
+          "test": {
+            "positives": 86,
+            "records": 216
+          },
+          "train": {
+            "positives": 397,
+            "records": 1004
+          },
+          "validation": {
+            "positives": 90,
+            "records": 215
+          }
+        },
+        "policy": {
+          "boundaries": [
+            {
+              "epoch": 1693125775,
+              "time": "2023-08-27T08:42:55Z"
+            },
+            {
+              "epoch": 1707222668,
+              "time": "2024-02-06T12:31:08Z"
+            }
+          ],
+          "id": "temporal-70-15-15",
+          "memberSha256": "12c3e8a8aaac7695513a60ce5746827dc09e48a727e0fcde00690d6964fb34db",
+          "partitionCounts": {
+            "test": {
+              "end": "2024-12-25T08:03:22Z",
+              "positives": 86,
+              "records": 216,
+              "start": "2024-02-06T12:31:08Z"
+            },
+            "train": {
+              "end": "2023-08-22T15:15:47Z",
+              "positives": 397,
+              "records": 1004,
+              "start": "2022-01-01T15:45:13Z"
+            },
+            "validation": {
+              "end": "2024-02-06T11:41:02Z",
+              "positives": 90,
+              "records": 215,
+              "start": "2023-08-27T08:42:55Z"
+            }
+          },
+          "ratios": {
+            "test": 15,
+            "train": 70,
+            "validation": 15
+          },
+          "timezone": "UTC"
+        },
+        "preset": "temporal-70-15-15"
+      },
+      "statusCounts": {
+        "immature": 36,
+        "positive": 573,
+        "unobserved": 862
+      },
+      "timeRange": {
+        "first": "2022-01-01T15:45:13+00:00",
+        "firstEpoch": 1641051913,
+        "last": "2024-12-31T13:41:10+00:00",
+        "lastEpoch": 1735652470
+      },
+      "url": "https://github.com/redis/redis",
+      "version": "mp-redis-v2-2022-01-01_2024-12-31"
+    },
+    {
+      "csvSha256": "a870640f6ff6aab695de18b2a971d2831ef7401124462450a615569b3d424724",
+      "dataset": "mp-scikit-learn-v2",
+      "formalRecordCount": 3968,
+      "manifestSha256": "c222ebe40ce695ab3ef63c44badf5ad0db021e29a2896305adf8beb7f8b4446c",
+      "maturity": {
+        "effectivePolicy": "mature-only",
+        "excludedImmature": 242,
+        "inputRecords": 4210,
+        "maturityDays": 90,
+        "observedThroughEpoch": 1735689600,
+        "releaseEligible": true,
+        "requestedPolicy": "mature-only",
+        "statusCounts": {
+          "immature": 242,
+          "positive": 1301,
+          "unobserved": 2667,
+          "unrecorded": 0
+        }
+      },
+      "missingFields": [],
+      "qualityMatches": true,
+      "requiredFieldsPresent": true,
+      "revision": "583b8c40912b9b57f59fd4ab2f63d961e6dafe57",
+      "schema": "kamei14-git-v2",
+      "split": {
+        "boundaries": [
+          1697806680,
+          1712349804
+        ],
+        "partitions": {
+          "test": {
+            "positives": 186,
+            "records": 596
+          },
+          "train": {
+            "positives": 906,
+            "records": 2777
+          },
+          "validation": {
+            "positives": 209,
+            "records": 595
+          }
+        },
+        "policy": {
+          "boundaries": [
+            {
+              "epoch": 1697806680,
+              "time": "2023-10-20T12:58:00Z"
+            },
+            {
+              "epoch": 1712349804,
+              "time": "2024-04-05T20:43:24Z"
+            }
+          ],
+          "id": "temporal-70-15-15",
+          "memberSha256": "60ad1ac3cccf7a8b052f17f9c18e779a2155689f8cce47b7e51034bcb61d0311",
+          "partitionCounts": {
+            "test": {
+              "end": "2024-12-05T08:48:48Z",
+              "positives": 186,
+              "records": 596,
+              "start": "2024-04-05T20:43:24Z"
+            },
+            "train": {
+              "end": "2023-10-20T05:26:57Z",
+              "positives": 906,
+              "records": 2777,
+              "start": "2022-01-02T19:56:57Z"
+            },
+            "validation": {
+              "end": "2024-04-05T13:44:18Z",
+              "positives": 209,
+              "records": 595,
+              "start": "2023-10-20T12:58:00Z"
+            }
+          },
+          "ratios": {
+            "test": 15,
+            "train": 70,
+            "validation": 15
+          },
+          "timezone": "UTC"
+        },
+        "preset": "temporal-70-15-15"
+      },
+      "statusCounts": {
+        "immature": 242,
+        "positive": 1301,
+        "unobserved": 2667
+      },
+      "timeRange": {
+        "first": "2022-01-02T19:56:57+00:00",
+        "firstEpoch": 1641153417,
+        "last": "2024-12-30T21:53:07+00:00",
+        "lastEpoch": 1735595587
+      },
+      "url": "https://github.com/scikit-learn/scikit-learn",
+      "version": "mp-scikit-learn-v2-2022-01-02_2024-12-30"
+    }
+  ],
+  "runs": [
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-logistic-regression-l2-v1",
+      "artifactRunId": "45f418b71d0b1a77cde3addca9c335d0a64810aab9acc16990d483ffe38395e1",
+      "category": "classic",
+      "cpuInferenceVerified": true,
+      "method": "logistic-regression-l2-v1",
+      "modelSha256": "24a99953805d7196b424dd0159c949976a282827073ec766b354e102fbe7345b",
+      "releaseReportId": "22837de813f1060bea1f98a0f16a8db45860f3bc922c3b0019bda625df909422",
+      "runId": "884c08a2-f680-4ffb-8a18-7cce376529b8",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-decision-tree-v1",
+      "artifactRunId": "ea0f1435431f42e8484b4e3f5bf24d19af6bfc637ee2ec0ba0203bb67dd19a1b",
+      "category": "classic",
+      "cpuInferenceVerified": true,
+      "method": "decision-tree-v1",
+      "modelSha256": "16717a0d496320753d677eca459c1cfdb4ff2a96db31f16755207e7dc9a77a47",
+      "releaseReportId": "91a444183c18093a0d93e5aa72ebe4ffaba4c84425ee83a8ffaf1a98c2d2ea9e",
+      "runId": "5d474b4b-f704-478c-a686-6ee3925f6972",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-random-forest-v1",
+      "artifactRunId": "f475f3e5923f1d9f82116f33839fec16f3c7f35c9d901880bdfb806b29be0ca4",
+      "category": "classic",
+      "cpuInferenceVerified": true,
+      "method": "random-forest-v1",
+      "modelSha256": "1be6710cb3ea219c7d9bd7af9b7ff9096791af5a6caa36af17d8507452516239",
+      "releaseReportId": "84fbe0bc2232610035558a4bf2a7dcea221736b137e9978ae22862b6ab6b0a15",
+      "runId": "ca3abc44-82df-43a9-a76d-8f99fd19b8a0",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-gaussian-naive-bayes-v1",
+      "artifactRunId": "1e9bfe92cf691d0418fd1ec5a916dc0af9c7cc501116ad80eef4ff6c096c0d28",
+      "category": "classic",
+      "cpuInferenceVerified": true,
+      "method": "gaussian-naive-bayes-v1",
+      "modelSha256": "86c33ab08a90f37392d1b1b29ed6e522b14554da3113d4278c79eb9d6598fd9b",
+      "releaseReportId": "cecf7d2bf8a0f55caf794c1391704c6ac76d4df16480bd893fcfe2bb6b903c80",
+      "runId": "85f196ee-8f2e-47b4-bc64-f9d6e55a7df1",
+      "status": "unqualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-gradient-boosting-v1",
+      "artifactRunId": "d119cd2e16612d25038ebb0798463b5d1d3a65a28f34481a03d427da6eea64ed",
+      "category": "classic",
+      "cpuInferenceVerified": true,
+      "method": "gradient-boosting-v1",
+      "modelSha256": "08526b32f8cf66958b8dfdcfbdbc5057e37a737d765bac0fe64dbedc8b26313a",
+      "releaseReportId": "6787baab15de54ae4c6403f796e58331f44e35b59ff61411d700bf658aa2e4f1",
+      "runId": "ff29697f-ca1f-4fe5-8f3a-c8d5564142fb",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": {
+        "approvedAt": "2026-11-16T12:53:11.503065+00:00",
+        "approvedBy": "徐卓航",
+        "artifactRunId": "9d63a121af57cb2a9f811a66c57e18e30cac1e0fbdf8e5a63ffda5cce8c48dd9",
+        "kind": "jit-release-default-approval",
+        "modelId": "31984905-224c-42d9-8efd-f7ea675d7ce6",
+        "modelSha256": "2fb7eb27ce365e30d638e9f6b5be6f0af0afe6d4fbf6c51984f91711ce76998f",
+        "releaseReportId": "c9781faf2156338856597b707a71ae32485231fa5e35a951671400e6237ddb72"
+      },
+      "artifactKey": "jit-current-v2-pooled-mlp-v1",
+      "artifactRunId": "9d63a121af57cb2a9f811a66c57e18e30cac1e0fbdf8e5a63ffda5cce8c48dd9",
+      "category": "deep",
+      "cpuInferenceVerified": true,
+      "method": "mlp-v1",
+      "modelSha256": "2fb7eb27ce365e30d638e9f6b5be6f0af0afe6d4fbf6c51984f91711ce76998f",
+      "releaseReportId": "c9781faf2156338856597b707a71ae32485231fa5e35a951671400e6237ddb72",
+      "runId": "9a0cf52b-feae-41c5-b625-ee82360b735d",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-tabular-resnet-v1",
+      "artifactRunId": "91ce294b2a2ea8a22be29c95659e0096bf181699d64cb0484b4a88e7693b205d",
+      "category": "deep",
+      "cpuInferenceVerified": true,
+      "method": "tabular-resnet-v1",
+      "modelSha256": "4ff402313fbc6af7e54c3882a5ac5b7e0d6b369aea4068421602185263f51458",
+      "releaseReportId": "bb74d7f0a64956013ad42119d6d59a3b044d7c314705276155784484ee25be15",
+      "runId": "c4854030-c74e-4291-804a-6e91c00899b3",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-ft-transformer-v1",
+      "artifactRunId": "a3a5b52dffde3a63072c75fcc4769fd84397928cd138c7935dc2f1b1967cb6d1",
+      "category": "deep",
+      "cpuInferenceVerified": true,
+      "method": "ft-transformer-v1",
+      "modelSha256": "583830107e735f128b9dbaf6222bf8c773f20a1a6a5871c3503dae184aa9c56b",
+      "releaseReportId": "d827c17181035a3ed860a8a903cd8f6cfb917fcb5b5b424c571a873451f5b675",
+      "runId": "5f272218-1e30-407b-8dfe-b0ac2ab03d30",
+      "status": "qualified",
+      "testRecords": 1358
+    },
+    {
+      "approvedDefault": null,
+      "artifactKey": "jit-current-v2-pooled-wide-deep-v1",
+      "artifactRunId": "8dc3768c37d82a45c16ab2806242f961cb66623a15492e7bd826b5089a2210f0",
+      "category": "deep",
+      "cpuInferenceVerified": true,
+      "method": "wide-deep-v1",
+      "modelSha256": "ea46767a382a160c9b28c498dca411b9e592297a0a25a9b7ec85e21a768674a9",
+      "releaseReportId": "0b13990e9efb6c30719aae5b3f012e0116d20b642ab021371856e79651ce5613",
+      "runId": "239dd5f2-05ca-4c84-8551-b73bf39ea627",
+      "status": "qualified",
+      "testRecords": 1358
+    }
+  ],
+  "schema": "kamei14-git-v2"
+}
