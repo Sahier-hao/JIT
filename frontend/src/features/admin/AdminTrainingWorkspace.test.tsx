@@ -1,0 +1,471 @@
+import { act, render, screen, waitFor } from '@/lib/test-utils'
+import userEvent from '@testing-library/user-event'
+import { afterEach, expect, it, vi } from 'vitest'
+import { AdminWorkspace } from '@/features/admin/AdminWorkspace'
+
+afterEach(() => vi.restoreAllMocks())
+
+const NOW = '2026-10-30T10:00:00Z'
+const READINESS = {
+  ready: true, completeArtifacts: 2, unregisteredExperiments: 0, registeredModels: 2,
+  readyModels: 2, repositorySelectableModels: 2, defaultModelId: 'm1',
+  defaultAvailable: true, reportOnlyArtifacts: 0, issues: [],
+}
+const TASK = {
+  taskId: '22222222-2222-4222-8222-222222222222',
+  datasetVersion: 'mp-scikit-learn-2022-01-02_2024-12-30',
+  datasetManifest: 'data/datasets/mp-scikit-learn/manifest.json',
+  manifestSha256: 'a'.repeat(64),
+  method: 'logistic-regression-l2-v1',
+  metricSet: 'metric-set-v2',
+  status: 'succeeded',
+  stage: 'completed',
+  error: null,
+  parentTaskId: null,
+  createdBy: 'admin',
+  requestId: 'request-1',
+  artifactKey: 'training-task-example',
+  artifactRunId: 'b'.repeat(64),
+  runId: '33333333-3333-4333-8333-333333333333',
+  modelId: '44444444-4444-4444-8444-444444444444',
+  featureSchemaVersion: 'kamei14-git-v1',
+  splitPreset: 'temporal-70-15-15',
+  splitPolicy: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 } },
+  maturityPolicy: 'mature-only',
+  maturity: {
+    requestedPolicy: 'mature-only',
+    effectivePolicy: 'mature-only',
+    releaseEligible: true,
+    inputRecords: 4210,
+    excludedImmature: 12,
+    statusCounts: { positive: 1301, unobserved: 2885, immature: 12, unrecorded: 0 },
+    observedThroughEpoch: 1_735_689_600,
+    maturityDays: 90,
+  },
+  releasePolicy: 'jit-release-v1',
+  releaseStatus: 'qualified',
+  releaseReportId: 'f'.repeat(64),
+  release: {
+    status: 'qualified',
+    assessment: {
+      policy: { id: 'jit-release-v1' },
+      gates: [{ id: 'macro-effort', passed: true, reasons: [] }],
+      failedProjectCount: 0,
+      macro: {
+        metrics: { recall20Loc: 0.1, popt: 0.9 },
+        baselines: {
+          recall20Loc: { time: 0.2, random: 0.15 },
+          popt: { time: 0.6, random: 0.5 },
+        },
+      },
+    },
+    projects: [
+      { project: 'commons', metrics: { averagePrecision: { value: 0.4, reason: null }, rocAuc: { value: 0.7, reason: null } } },
+      { project: 'vue', metrics: { averagePrecision: { value: 0.6, reason: null }, rocAuc: { value: 0.72, reason: null } } },
+    ],
+  },
+  metrics: {
+    averagePrecision: { value: 0.42, reason: null },
+    rocAuc: { value: 0.71, reason: null },
+    recall20Loc: { value: 0.12, reason: null },
+    popt: { value: 0.8, reason: null },
+    f1: { value: 0.31, reason: null },
+    ifa: { value: 2, reason: null },
+  },
+  createdAt: NOW,
+  updatedAt: NOW,
+  startedAt: NOW,
+  deadlineAt: NOW,
+  cancelRequestedAt: null,
+  completedAt: NOW,
+  queuePosition: null,
+}
+
+const DATASET = {
+  dataset: 'mp-scikit-learn',
+  versions: [{
+    version: TASK.datasetVersion,
+    schema: 'kamei14-git-v1',
+    timeRange: { start: '2022-01-02T00:00:00Z', end: '2024-12-30T00:00:00Z', startEpoch: 1, endEpoch: 2 },
+    quality: {
+      rawRows: 4300, includedRows: 4210, positiveLabels: 1301, blankLabels: 0,
+      featureMissing: { lt: 0, age: 0 },
+      excluded: { outsideWindow: 0, noAddedLines: 90, tooMuchChurn: 0, tooManyFiles: 0, missingRequiredField: 0 },
+    },
+    file: { name: 'mp-scikit-learn.csv', path: 'data/collected/mp-scikit-learn.csv', sha256: 'c'.repeat(64), bytes: 509179 },
+    manifestPath: 'data/datasets/mp-scikit-learn/manifest.json',
+    source: { publisher: 'collected', url: 'https://github.com/scikit-learn/scikit-learn', revision: 'd'.repeat(40), citation: 'git', branch: 'main', head: 'e'.repeat(40), window: null },
+    labelRule: 'szz-full-v1',
+    label: { kind: 'szz-full', rule: 'szz-full-v1', maturityDays: 90 },
+    szz: { rule: 'szz-full-v1', mode: 'full', fixCommits: 12, labeledCommits: 9, evidencePairs: 15, unresolvedRanges: 2, skippedFiles: 3, skippedExcluded: 4, skippedWhitespace: 1, skippedDocsOnly: 2, outsideWindow: 4, fixSignals: { issue: 5, issueRef: 2, keyword: 5 }, issueLookup: { attempted: 7, succeeded: 7, failed: 0, unavailable: 0 } },
+    limitations: ['特征为提交级聚合', '标签为行级 SZZ'],
+  }],
+}
+
+function session(path: string) {
+  return String(path).endsWith('/api/admin/session') ? Response.json({ authenticated: true, username: 'admin' }) : null
+}
+
+it('loads a successful training task with metrics and lineage', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => session(String(path)) ?? Response.json(TASK))
+  const navigate = vi.fn()
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={navigate}/>)
+  expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
+  expect(screen.getByText('0.4200')).toBeVisible()
+  expect(screen.getByText(TASK.runId)).toBeVisible()
+  expect(screen.getByText(TASK.modelId)).toBeVisible()
+  expect(screen.getByText('发布合格')).toBeVisible()
+  expect(screen.getByText(/mature-only/)).toBeVisible()
+  expect(screen.getByText(/commons · 0.4000/)).toBeVisible()
+  expect(screen.getByText('-0.1000')).toBeVisible()
+  expect(screen.getByText('+0.3000')).toBeVisible()
+  const user = userEvent.setup()
+  await user.click(screen.getByRole('button', { name: '查看实验登记' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })
+  await user.click(screen.getByRole('button', { name: '查看模型' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'models', resourceId: TASK.modelId })
+})
+
+it('keeps a successful task visibly release-unqualified', async () => {
+  const unqualified = {
+    ...TASK,
+    releaseStatus: 'unqualified',
+    release: {
+      status: 'unqualified',
+      assessment: {
+        policy: { id: 'jit-release-v1' },
+        gates: [{ id: 'project:vue', passed: false, reasons: ['rocAuc is below 0.65'] }],
+        failedProjectCount: 1,
+      },
+      projects: [],
+    },
+  }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path =>
+    session(String(path)) ?? Response.json(unqualified))
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('成功')).toBeVisible()
+  expect(screen.getByText('发布不合格')).toBeVisible()
+  expect(screen.getByText(/rocAuc is below 0.65/)).toBeVisible()
+})
+
+it('retries a failed task through the management API', async () => {
+  const failed = { ...TASK, status: 'failed', stage: 'training', error: { code: 'MODEL_NOT_CONVERGED', message: '未收敛' }, metrics: null, runId: null, modelId: null, artifactRunId: null }
+  const queued = { ...failed, taskId: '55555555-5555-4555-8555-555555555555', parentTaskId: TASK.taskId, status: 'queued', stage: 'queued', error: null }
+  const navigate = vi.fn()
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => session(String(path)) ?? (options?.method === 'POST' ? Response.json(queued) : Response.json(failed)))
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={navigate}/>)
+  await userEvent.setup().click(await screen.findByRole('button', { name: '重试' }))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'training', resourceId: queued.taskId }))
+})
+
+it('cancels an active task and shows the terminal state', async () => {
+  const queued = { ...TASK, status: 'queued', stage: 'queued', metrics: null, runId: null, modelId: null, artifactRunId: null, queuePosition: 1 }
+  const cancelled = { ...queued, status: 'cancelled', stage: 'cancelled', queuePosition: null, cancelRequestedAt: NOW, completedAt: NOW }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => session(String(path)) ?? (options?.method === 'POST' ? Response.json(cancelled) : Response.json(queued)))
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  await userEvent.setup().click(await screen.findByRole('button', { name: '取消任务' }))
+  expect(await screen.findByText('已取消')).toBeVisible()
+})
+
+it('keeps an actionable error visible when cancellation fails', async () => {
+  const running = { ...TASK, status: 'running', stage: 'training', metrics: null, runId: null, modelId: null, artifactRunId: null }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (options?.method === 'POST') return Response.json({ error: { code: 'WORKER_EXITED', message: '取消请求未被服务接受', requestId: 'cancel-request' } }, { status: 503 })
+    return Response.json(running)
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  await userEvent.setup().click(await screen.findByRole('button', { name: '取消任务' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('取消请求未被服务接受')
+})
+
+it('polls an active task list and stops after it reaches a terminal state', async () => {
+  let listCalls = 0
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    listCalls += 1
+    const status = listCalls === 1 ? 'queued' : 'succeeded'
+    return Response.json({ tasks: [{ ...TASK, status, stage: status, metrics: status === 'succeeded' ? TASK.metrics : null }], total: 1, limit: 20, offset: 0 })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('排队中')).toBeVisible()
+  await waitFor(() => expect(screen.getByText('成功')).toBeVisible(), { timeout: 4500 })
+  expect(listCalls).toBe(2)
+  await new Promise(resolve => window.setTimeout(resolve, 3200))
+  expect(listCalls).toBe(2)
+})
+
+it('shows loading and empty states', async () => {
+  let release: ((response: Response) => void) | undefined
+  let waitingForInitialLoad = true
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (waitingForInitialLoad) {
+      waitingForInitialLoad = false
+      return new Promise(resolve => { release = resolve })
+    }
+    return Response.json({ tasks: [], total: 0, limit: 20, offset: 0 })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('正在读取训练任务')).toBeVisible()
+  await act(async () => {
+    release?.(Response.json({ tasks: [], total: 0, limit: 20, offset: 0 }))
+  })
+  expect(await screen.findByText('尚无训练任务。请从数据集详情创建。')).toBeVisible()
+})
+
+it('shows an error state and keeps its recovery action keyboard focusable', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    return Response.json({ error: { code: 'STORAGE_UNAVAILABLE', message: '训练任务存储暂不可用', requestId: 'list-request' } }, { status: 503 })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('训练任务不可用')).toBeVisible()
+  expect(screen.getByText('训练任务存储暂不可用')).toBeVisible()
+  const retry = screen.getByRole('button', { name: '重试' })
+  const user = userEvent.setup()
+  retry.focus()
+  expect(retry).toHaveFocus()
+  await user.tab()
+  expect(retry).not.toHaveFocus()
+})
+
+it('filters datasets by branch or PR origin', async () => {
+  const branch = { ...DATASET, dataset: 'branch-set', versions: [{ ...DATASET.versions[0], usage: 'branch' }] }
+  const pr = { ...DATASET, versions: [{ ...DATASET.versions[0], usage: 'pr', sourceSyncId: 'sync-1' }] }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [branch, pr] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    return Response.json({})
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets' }} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('heading', { name: 'branch-set' })).toBeVisible()
+  expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+  await userEvent.setup().click(screen.getByText('PR 分析'))
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'branch-set' })).not.toBeInTheDocument())
+  expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+})
+
+it('previews and confirms PR dataset cleanup', async () => {
+  const datasets = { ...DATASET, versions: [{ ...DATASET.versions[0], usage: 'pr', sourceSyncId: 'sync-1' }] }
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [datasets] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (String(path).includes('/api/admin/datasets/prunable')) return Response.json({ keep: 10, versions: [{ dataset: 'mp-scikit-learn', version: 'old-pr', createdAt: NOW, references: [] }] })
+    if (String(path).endsWith('/api/admin/datasets/prune') && options?.method === 'POST') return Response.json({ deleted: [{ version: 'old-pr' }], skipped: [] })
+    return Response.json({})
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: TASK.datasetVersion }} navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '预览可清理版本' }))
+  await screen.findByText(/old-pr/)
+  await user.click(screen.getByRole('button', { name: '清理 1 个版本' }))
+  await user.click(screen.getByRole('button', { name: '确认清理' }))
+  await waitFor(() => expect(fetch.mock.calls.some(([path, init]) => String(path).endsWith('/api/admin/datasets/prune') && init?.method === 'POST')).toBe(true))
+})
+
+it('creates a training task from a dataset detail page', async () => {
+  const navigate = vi.fn()
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [DATASET] })
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [{ method: 'logistic-regression-l2-v1', name: '逻辑回归' }], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (String(path).includes('/split-preview?')) return Response.json({
+      datasetVersion: TASK.datasetVersion, schemaName: DATASET.versions[0].schema,
+      preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },
+      timezone: 'UTC', datasetRecords: 4210, eligibleRecords: 4198,
+      maturityPolicy: 'mature-only',
+      maturity: { requestedPolicy: 'mature-only', effectivePolicy: 'mature-only', excludedImmature: 12, releaseEligible: true },
+      available: true, reason: null,
+      partitions: {
+        train: { records: 2947, positives: 900, start: '2024-01-01T00:00:00Z', end: '2024-08-01T00:00:00Z' },
+        validation: { records: 632, positives: 200, start: '2024-08-01T00:00:00Z', end: '2024-10-01T00:00:00Z' },
+        test: { records: 631, positives: 201, start: '2024-10-01T00:00:00Z', end: '2024-12-31T00:00:00Z' },
+      },
+    })
+    if (String(path).endsWith('/api/v1/training-tasks') && options?.method === 'POST') {
+      return Response.json({ ...TASK, status: 'queued', stage: 'queued', metrics: null, runId: null, modelId: null, artifactRunId: null })
+    }
+    return Response.json(DATASET)
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: TASK.datasetVersion }} navigate={navigate}/>)
+  expect(await screen.findByText('4300 / 4210', {}, { timeout: 3000 })).toBeVisible()
+  expect(screen.getByText('1301')).toBeVisible()
+  expect(screen.getByText('特征为提交级聚合')).toBeVisible()
+  expect(screen.getByRole('heading', { name: '标签与 SZZ' })).toBeVisible()
+  expect(screen.getByText('修复提交')).toBeVisible()
+  expect(screen.getByText('证据对数')).toBeVisible()
+  expect(screen.getByText('修复信号')).toBeVisible()
+  expect(screen.getByText('Issue 查询')).toBeVisible()
+  await userEvent.setup().click(screen.getByRole('button', { name: '创建训练任务' }))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'training', resourceId: TASK.taskId }))
+})
+
+it('shows model metrics and compares two models without declaring a winner', async () => {
+  const models = [
+    { modelId: 'm1', name: '模型甲', method: 'lr', state: 'ready', enabled: true, isDefault: true, featureSchemaVersion: 'kamei14-git-v1', runId: 'r1', artifactRunId: 'a1', artifactDatasetVersion: 'd1' },
+    { modelId: 'm2', name: '模型乙', method: 'rf', state: 'ready', enabled: true, isDefault: false, featureSchemaVersion: 'kamei14-git-v1', runId: 'r2', artifactRunId: 'a2', artifactDatasetVersion: 'd2' },
+  ]
+  const detail = (model: typeof models[number]) => ({ ...model, metrics: { averagePrecision: { value: model.modelId === 'm1' ? 0.4 : 0.5, reason: null }, rocAuc: { value: 0.7, reason: null }, ifa: { value: null, reason: '测试正例不足' } }, trainingSeconds: 1, threshold: 0.5, metricSet: 'metric-set-v2', artifactKey: model.modelId, split: {}, source: { publisher: model.modelId }, limitations: [] })
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/models')) return Response.json({ models, methods: [], readiness: READINESS })
+    if (String(path).includes('/api/v1/models/m1')) return Response.json(detail(models[0]))
+    if (String(path).includes('/api/v1/models/m2')) return Response.json(detail(models[1]))
+    return Response.json({ candidates: [] })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'comparisons', models: ['m1', 'm2'] }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('0.4000')).toBeVisible()
+  expect(screen.getByText('0.5000')).toBeVisible()
+  expect(screen.getAllByText('测试正例不足')).toHaveLength(2)
+  expect(screen.queryByText(/最佳模型/)).not.toBeInTheDocument()
+})
+
+it('shows the documented reason when a model metric is unavailable', async () => {
+  const model = {
+    modelId: 'm1', name: '模型甲', method: 'lr', state: 'ready', enabled: true, isDefault: true,
+    featureSchemaVersion: 'kamei14-git-v1', runId: 'r1', artifactRunId: 'a1', artifactDatasetVersion: 'd1',
+    artifactKey: 'kamei14-v1', trainingSeconds: 1, threshold: 0.5, metricSet: 'metric-set-v2',
+    metrics: { averagePrecision: { value: null, reason: '测试分区没有正例' } },
+    split: {}, source: { publisher: 'collected' }, limitations: [],
+  }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => session(String(path)) ?? Response.json(model))
+  render(<AdminWorkspace route={{ name: 'admin', view: 'models', resourceId: 'm1' }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('测试分区没有正例')).toBeVisible()
+  expect(screen.getAllByText('未定义').length).toBeGreaterThan(0)
+})
+
+it('keeps an unavailable model detail error actionable', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    return Response.json({ error: { code: 'ARTIFACT_UNAVAILABLE', message: '模型产物缺失', requestId: 'model-request' } }, { status: 503 })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'models', resourceId: 'missing' }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('模型详情不可用')).toBeVisible()
+  expect(screen.getByText('模型产物缺失')).toBeVisible()
+  expect(screen.getByRole('button', { name: '返回模型列表' })).toBeVisible()
+})
+
+it('pages past the first twenty training tasks', async () => {
+  const tasks = Array.from({ length: 45 }, (_, index) => ({ ...TASK, taskId: `task-${index}`, datasetVersion: `dataset-${index}` }))
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    const url = new URL(String(path), 'http://localhost')
+    const offset = Number(url.searchParams.get('offset') ?? 0)
+    return Response.json({ tasks: tasks.slice(offset, offset + 20), total: tasks.length, limit: 20, offset })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  await userEvent.setup().click(await screen.findByRole('button', { name: '下一页' }))
+  expect(await screen.findByText('第 2 页 · 共 45 条')).toBeVisible()
+  expect(screen.getByText('dataset-20')).toBeVisible()
+  expect(fetch.mock.calls.some(([path]) => String(path).includes('offset=20'))).toBe(true)
+  await userEvent.setup().click(screen.getByRole('button', { name: '下一页' }))
+  expect(await screen.findByText('第 3 页 · 共 45 条')).toBeVisible()
+  expect(screen.getByText('dataset-40')).toBeVisible()
+  expect(screen.getByRole('button', { name: '下一页' })).toBeDisabled()
+})
+
+it('clears the previous task detail when returning to the list', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).includes(`/training-tasks/${TASK.taskId}`)) return Response.json(TASK)
+    return Response.json({ tasks: [TASK], total: 1, limit: 20, offset: 0 })
+  })
+  const view = render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
+  view.rerender(<AdminWorkspace route={{ name: 'admin', view: 'training' }} navigate={vi.fn()}/>)
+  await waitFor(() => expect(screen.queryByRole('heading', { name: '训练任务详情' })).not.toBeInTheDocument())
+  expect(await screen.findByRole('heading', { name: '训练任务' })).toBeVisible()
+})
+
+it('reissues a real request when a task read fails and the user retries', async () => {
+  let detailCalls = 0
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    detailCalls += 1
+    if (detailCalls === 1) return Response.json({ error: { code: 'STORAGE_UNAVAILABLE', message: '训练任务暂时不可用', requestId: 'task-request' } }, { status: 503 })
+    return Response.json(TASK)
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('训练任务暂时不可用')).toBeVisible()
+  await userEvent.setup().click(screen.getByRole('button', { name: '重试' }))
+  expect(await screen.findByRole('heading', { name: '训练任务详情' })).toBeVisible()
+  expect(detailCalls).toBe(2)
+})
+
+const METHODS = {
+  schema: 'kamei14-git-v1',
+  methods: [
+    { method: 'logistic-regression-l2-v1', name: '逻辑回归 · L2', label: '逻辑回归', category: 'classic',
+      available: true, supportedSchema: true, reason: null, requires: [],
+      params: [{ name: 'C', type: 'float', min: 0.01, max: 100, default: 1 }] },
+    { method: 'decision-tree-v1', name: '决策树 · CART', label: '决策树', category: 'classic',
+      available: true, supportedSchema: true, reason: null, requires: [],
+      params: [{ name: 'max_depth', type: 'int', min: 1, max: 32, default: 8 }] },
+  ],
+}
+
+const SPLIT = {
+  datasetVersion: TASK.datasetVersion, schemaName: 'kamei14-git-v1', timezone: 'UTC', datasetRecords: 4210,
+  preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },
+  available: true, reason: null,
+  partitions: {
+    train: { records: 2947, positives: 900, start: '2022-01-02T00:00:00Z', end: '2024-03-01T00:00:00Z' },
+    validation: { records: 631, positives: 200, start: '2024-03-02T00:00:00Z', end: '2024-08-01T00:00:00Z' },
+    test: { records: 632, positives: 201, start: '2024-08-02T00:00:00Z', end: '2024-12-30T00:00:00Z' },
+  },
+}
+
+it('creates a multi-method experiment with per-method parameters', async () => {
+  const navigate = vi.fn()
+  const experiment = {
+    experimentId: '55555555-5555-4555-8555-555555555555', datasetVersion: TASK.datasetVersion,
+    datasetManifest: 'data/datasets/mp-scikit-learn/manifest.json', manifestSha256: 'a'.repeat(64),
+    metricSet: 'metric-set-v2', splitPreset: 'temporal-70-15-15', classPolicy: null, seed: 2026,
+    requestId: 'request-1', createdBy: 'admin', createdAt: NOW, status: 'queued',
+    statusCounts: { queued: 2, running: 0, succeeded: 0, failed: 0, cancelled: 0, interrupted: 0 }, tasks: [],
+  }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    const auth = session(String(path))
+    if (auth) return auth
+    const value = String(path)
+    if (value.endsWith('/api/v1/datasets')) return Response.json({ datasets: [DATASET] })
+    if (value.endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (value.endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (value.includes('/training-methods')) return Response.json(METHODS)
+    if (value.includes('/split-preview')) return Response.json(SPLIT)
+    if (value.endsWith('/api/v1/training-experiments') && options?.method === 'POST') return Response.json(experiment)
+    return Response.json({})
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: DATASET.dataset, version: TASK.datasetVersion }} navigate={navigate}/>)
+  const panel = (await screen.findByText('多方法实验')).closest('section') as HTMLElement
+  const user = userEvent.setup()
+  await waitFor(() => expect(screen.getByRole('checkbox', { name: /逻辑回归/ })).toBeEnabled())
+  await user.click(screen.getByRole('checkbox', { name: /逻辑回归/ }))
+  await user.click(screen.getByRole('checkbox', { name: /决策树/ }))
+  const cInput = await screen.findByLabelText('逻辑回归 · L2 C')
+  await user.clear(cInput)
+  await user.type(cInput, '0.5')
+  await user.click(screen.getByRole('button', { name: '创建实验（2 个方法）' }))
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith({
+    name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId,
+  }))
+  expect(panel).toBeTruthy()
+})

@@ -5,12 +5,32 @@
 ## 技术栈
 
 - React 19 + TypeScript + Vite。
-- 路由：React Router 7 的 `createHashRouter`；地址继续使用 `#/projects/...`，旧链接由 `navigation.ts` 的解析器映射。
-- 样式：Tailwind CSS 4（只取 theme/utilities，不启用 preflight）+ `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把令牌映射为 Tailwind 语义色，四套主题由 `html[data-theme]` 切换。
-- 组件：Mantine 8（`@mantine/core`）。`src/ui/` 是适配层，把项目既有 API 映射到 Mantine 的 Button、TextInput、Select、Checkbox、Switch、Modal、Drawer、SegmentedControl、Menu、Tooltip、Alert 等组件；颜色、圆角与字体通过 `lib/mantineTheme.ts` 和 `styles/mantine-bridge.css` 指回设计令牌，四套主题继续生效。
-- 图标：`Icon.tsx` 的自绘 SVG 与 lucide-react。
-- 代码对比：react-diff-view + refractor；图表为手写 SVG。
+- 路由：React Router 7 的 `createHashRouter`；地址继续使用 `#/projects/...`，旧链接由 `src/app/navigation.ts` 的解析器映射。
+- 样式：Tailwind CSS 4（启用 preflight）+ `styles/tokens.css` 的设计令牌。`index.css` 的 `@theme inline` 把全部令牌映射为 Tailwind 语义色、字号、间距与圆角，四套主题由 `html[data-theme]` 切换，两档密度由 `html[data-density]` 切换。外观规则见 [界面设计规范](../docs/界面设计规范.md)；`npm run check:styles` 检查样式只从登记的位置产生。样式表只保留 `index.css`、`tokens.css`、`base.css` 与 `content.css` 四个。
+- 组件：`src/components/ui/` 由官方 shadcn/ui CLI 4.23.0、`new-york` / Radix registry 添加，配置在 `components.json`。页面直接使用标准组合接口；密码显隐、状态反馈等业务组合独立维护，基础组件不接收旧 `options/title/footer/loading/icon` 兼容参数。
+- 图标：直接使用 lucide-react，品牌标志由 `BrandLogo` 保留。
+- 代码对比：react-diff-view + refractor；项目概览和风险趋势使用 ECharts 的 SVG 渲染，专用封装位于 `components/shared/`。
 - 测试：Vitest + Testing Library（组件）与 Playwright（浏览器验收）。
+
+## 目录边界
+
+```text
+src/app/                  入口、路由、Provider 与应用级编排
+src/components/ui/        官方 shadcn/ui 基础组件
+src/components/layout/    用户区与管理区的布局外壳
+src/components/shared/    跨业务共享的展示组合与反馈
+src/features/projects/    项目、分析、仓库概览与项目数据
+src/features/reviews/     PR 预览、审查工作单与个人审查状态
+src/features/datasets/    用户数据与数据集拆分/整理请求
+src/features/training/    用户训练工作区
+src/features/models/      用户模型、模型卡与模型展示
+src/features/account/     入口、登录、账户和个人空间
+src/features/admin/       管理工作区、模型、数据、训练和实验
+src/features/research/    历史验证、趋势和研究页面
+src/lib/                  请求基础设施、领域工具和测试工具
+```
+
+业务页面、请求、契约和相邻测试放在对应 `features/<name>/` 下；`components/ui` 不依赖业务模块，`components/shared` 不反向依赖业务模块。新增模块后运行 `npm run check:modules`，不要重新建立 `src/pages`、`src/ui` 或根目录业务转发文件。
 
 ## 运行
 
@@ -31,7 +51,7 @@ npm run dev
 ## 用户流程
 
 1. 在项目页选择“新建项目”，登记公开 HTTP(S) 仓库地址；登记不会启动分析。
-2. 进入项目，展开分析选项，选择分支、日期、上限以及真实可用模型或自动策略。
+2. 进入项目，点击“发起分析”，选择分支、真实可用模型或自动策略、训练方法和时间切分预设。
 3. 发起分析后自动跟踪执行状态，完成后打开固定分析的提交明细与单条详情。
 4. 分析记录支持分页、设置当前结果、恢复失败参数后修改重试；删除记录前确认影响范围。
 5. 项目改名、删除和分析完成后，侧栏及项目数据同步更新。表单草稿在同一浏览器会话内保留。
@@ -64,6 +84,7 @@ npm run dev
 
 ```powershell
 npm run typecheck
+npm run check:modules
 npm test -- --maxWorkers=1 --no-file-parallelism
 npm run lint
 npm run build
