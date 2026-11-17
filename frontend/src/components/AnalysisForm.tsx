@@ -17,7 +17,8 @@ import { ModelCardDialog } from './ModelCardDialog'
 /** 模型来源把「用哪个现成模型」和「要不要训练」合成一个决定；其余值都是具体模型 ID。 */
 const SOURCES = ['auto', 'default', 'train'] as const
 type ModelSource = (typeof SOURCES)[number]
-type Draft = { branch?: string; choice?: string; algorithm?: string; splitPreset?: string }
+type Draft = { branch?: string; choice?: string; algorithm?: string; splitPreset?: string
+  maturityPolicy?: 'mature-only' | 'include-immature' }
 
 function choiceOf(form: { strategy?: SyncStrategy; modelId?: string }): string {
   if (form.modelId) return form.modelId
@@ -43,13 +44,17 @@ export interface AnalysisFormProps {
 export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel, initial }: AnalysisFormProps) {
   const draftKey = `jit:analysis-draft:${repositoryUrl}`
   const [saved] = useState<Draft>(() => {
-    if (initial) return { branch: initial.branch, choice: choiceOf(initial), algorithm: initial.algorithm, splitPreset: initial.splitPreset }
+    if (initial) return { branch: initial.branch, choice: choiceOf(initial), algorithm: initial.algorithm,
+      splitPreset: initial.splitPreset, maturityPolicy: initial.maturityPolicy }
     try { return JSON.parse(sessionStorage.getItem(draftKey) ?? '{}') } catch { return {} }
   })
   const [branch, setBranch] = useState(saved.branch ?? '')
   const [choice, setChoice] = useState(saved.choice ?? 'auto')
   const [algorithm, setAlgorithm] = useState(saved.algorithm ?? '')
   const [splitPreset, setSplitPreset] = useState(saved.splitPreset ?? 'temporal-70-15-15')
+  const [maturityPolicy, setMaturityPolicy] = useState<'mature-only' | 'include-immature'>(
+    saved.maturityPolicy ?? 'mature-only',
+  )
   const [methods, setMethods] = useState<MethodChoice[]>([])
   const [methodsLoaded, setMethodsLoaded] = useState(false)
   const [methodsError, setMethodsError] = useState('')
@@ -66,7 +71,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     repositoryModels(controller.signal).then(items => { if (!controller.signal.aborted) { setModels(items); setModelsLoaded(true); setModelError('') } }).catch(failure => { if (!controller.signal.aborted) setModelError(failure instanceof Error ? failure.message : '模型读取失败') })
     return () => controller.abort()
   }, [modelRevision])
-  useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice, algorithm, splitPreset })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, choice, algorithm, splitPreset])
+  useEffect(() => { try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice, algorithm, splitPreset, maturityPolicy })) } catch { /* The form remains usable without storage. */ } }, [draftKey, branch, choice, algorithm, splitPreset, maturityPolicy])
   useEffect(() => { setModelCardOpen(false) }, [choice])
   useEffect(() => {
     const controller = new AbortController()
@@ -103,6 +108,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
         branch,
         strategy,
         ...(!explicitModel ? { splitPreset } : {}),
+        ...(!explicitModel ? { maturityPolicy } : {}),
         ...(explicitModel ? { modelId: choice } : choice === 'default' ? {} : { algorithm }),
       })
       projectsChanged()
@@ -137,6 +143,10 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
           <option value="temporal-70-15-15">70 / 15 / 15（默认）</option>
           <option value="temporal-80-10-10">80 / 10 / 10</option>
           <option value="temporal-60-20-20">60 / 20 / 20</option>
+        </select></label> : null}
+        {!explicitModel ? <label>标签成熟<select aria-label="标签成熟策略" value={maturityPolicy} onChange={event => setMaturityPolicy(event.target.value as 'mature-only' | 'include-immature')}>
+          <option value="mature-only">正式：排除未成熟标签</option>
+          <option value="include-immature">敏感性：包含未成熟标签</option>
         </select></label> : null}
         {modelError ? <p className="field-error wide-field" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => setModelRevision(value => value + 1)}>重新读取</Button></p> : null}
         {methodsError ? <p className="field-error wide-field" role="alert">训练方法列表暂时不可用：{methodsError}</p> : null}

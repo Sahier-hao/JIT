@@ -1,0 +1,54 @@
+{
+  "copiedFromWorkspace": [
+    "current-schema-browser-results.json",
+    "current-schema-model-package-1280.png",
+    "model-package-cpu-verification.json",
+    "multi-project-report.json",
+    "README.md",
+    "release-audit.json",
+    "release-baseline.json",
+    "source-and-license-audit.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 8,
+  "files": [
+    {
+      "path": "current-schema-browser-results.json",
+      "sha256": "a5741307201d66c8aa55ec3c8973946101536ba08d253e2c7bd3e71ea13fd815"
+    },
+    {
+      "path": "current-schema-model-package-1280.png",
+      "sha256": "b6b606603e26a62a50d006df47c0e01e5e6ede5d4be5fcb7a7e9868fe6c71738"
+    },
+    {
+      "path": "model-package-cpu-verification.json",
+      "sha256": "e8aed00b4de8631f0c35f881719e1e619db4be620d099636234a295e3712c988"
+    },
+    {
+      "path": "multi-project-report.json",
+      "sha256": "138958bb4ab17cab0174127341f67e66fd72b582c0c35510639a9657ebbdf9a0"
+    },
+    {
+      "path": "README.md",
+      "sha256": "f8321cf2c9df476387794e11dcfe19355d957b18ca1ee863af8cf920bc5b893d"
+    },
+    {
+      "path": "release-audit.json",
+      "sha256": "59ddd34b5fdd5ca2c33352ca2c312930e59369b1a5d937dd571510af2472dbbc"
+    },
+    {
+      "path": "release-baseline.json",
+      "sha256": "6417bb6616807400a6454fe5cea18035007ba8bb8416ae20bb93f9b8f0fcb26a"
+    },
+    {
+      "path": "source-and-license-audit.json",
+      "sha256": "0eedd0b856d538f1c26972b1fd473d0214343a2d84b2a84624a9caf3a0027ecc"
+    }
+  ],
+  "frozenUtc": "2026-11-16T13:03:54.408841+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "26e151d1b08fc86cbf5c252ee23d3b0d73a1a19020a2c3b23e0a95f093d3f517",
+  "workspace": "docs/evidence/_run/freeze-current-v2"
+}

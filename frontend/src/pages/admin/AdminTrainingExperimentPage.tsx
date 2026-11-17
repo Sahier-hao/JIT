@@ -62,12 +62,12 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
     let timer: ReturnType<typeof setTimeout> | null = null
     async function load() {
       try {
-        const [next, compared] = await Promise.all([
-          fetchTrainingExperiment(experimentId, controller.signal),
-          fetchTrainingExperimentComparison(experimentId, controller.signal),
-        ])
+        const next = await fetchTrainingExperiment(experimentId, controller.signal)
         if (controller.signal.aborted) return
-        setExperiment(next); setComparison(compared); setError('')
+        setExperiment(next)
+        const compared = await fetchTrainingExperimentComparison(experimentId, controller.signal)
+        if (controller.signal.aborted) return
+        setComparison(compared); setError('')
         if (next.tasks.some(task => ACTIVE.has(task.status))) {
           timer = setTimeout(load, 3000)
         }

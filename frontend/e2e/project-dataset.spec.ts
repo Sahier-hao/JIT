@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
+import { loginOrCreateUser } from './support/user-session.ts'
+
+test.beforeEach(async ({ page }) => loginOrCreateUser(page))
 
 async function overflowMetrics(page: import('@playwright/test').Page) {
   return page.evaluate(() => {

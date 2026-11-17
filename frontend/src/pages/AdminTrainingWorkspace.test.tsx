@@ -29,6 +29,41 @@ const TASK = {
   runId: '33333333-3333-4333-8333-333333333333',
   modelId: '44444444-4444-4444-8444-444444444444',
   featureSchemaVersion: 'kamei14-git-v1',
+  splitPreset: 'temporal-70-15-15',
+  splitPolicy: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 } },
+  maturityPolicy: 'mature-only',
+  maturity: {
+    requestedPolicy: 'mature-only',
+    effectivePolicy: 'mature-only',
+    releaseEligible: true,
+    inputRecords: 4210,
+    excludedImmature: 12,
+    statusCounts: { positive: 1301, unobserved: 2885, immature: 12, unrecorded: 0 },
+    observedThroughEpoch: 1_735_689_600,
+    maturityDays: 90,
+  },
+  releasePolicy: 'jit-release-v1',
+  releaseStatus: 'qualified',
+  releaseReportId: 'f'.repeat(64),
+  release: {
+    status: 'qualified',
+    assessment: {
+      policy: { id: 'jit-release-v1' },
+      gates: [{ id: 'macro-effort', passed: true, reasons: [] }],
+      failedProjectCount: 0,
+      macro: {
+        metrics: { recall20Loc: 0.1, popt: 0.9 },
+        baselines: {
+          recall20Loc: { time: 0.2, random: 0.15 },
+          popt: { time: 0.6, random: 0.5 },
+        },
+      },
+    },
+    projects: [
+      { project: 'commons', metrics: { averagePrecision: { value: 0.4, reason: null }, rocAuc: { value: 0.7, reason: null } } },
+      { project: 'vue', metrics: { averagePrecision: { value: 0.6, reason: null }, rocAuc: { value: 0.72, reason: null } } },
+    ],
+  },
   metrics: {
     averagePrecision: { value: 0.42, reason: null },
     rocAuc: { value: 0.71, reason: null },
@@ -79,11 +114,38 @@ it('loads a successful training task with metrics and lineage', async () => {
   expect(screen.getByText('0.4200')).toBeVisible()
   expect(screen.getByText(TASK.runId)).toBeVisible()
   expect(screen.getByText(TASK.modelId)).toBeVisible()
+  expect(screen.getByText('发布合格')).toBeVisible()
+  expect(screen.getByText(/mature-only/)).toBeVisible()
+  expect(screen.getByText(/commons · 0.4000/)).toBeVisible()
+  expect(screen.getByText('-0.1000')).toBeVisible()
+  expect(screen.getByText('+0.3000')).toBeVisible()
   const user = userEvent.setup()
   await user.click(screen.getByRole('button', { name: '查看实验登记' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })
   await user.click(screen.getByRole('button', { name: '查看模型' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'models', resourceId: TASK.modelId })
+})
+
+it('keeps a successful task visibly release-unqualified', async () => {
+  const unqualified = {
+    ...TASK,
+    releaseStatus: 'unqualified',
+    release: {
+      status: 'unqualified',
+      assessment: {
+        policy: { id: 'jit-release-v1' },
+        gates: [{ id: 'project:vue', passed: false, reasons: ['rocAuc is below 0.65'] }],
+        failedProjectCount: 1,
+      },
+      projects: [],
+    },
+  }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path =>
+    session(String(path)) ?? Response.json(unqualified))
+  render(<AdminWorkspace route={{ name: 'admin', view: 'training', resourceId: TASK.taskId }} navigate={vi.fn()}/>)
+  expect(await screen.findByText('成功')).toBeVisible()
+  expect(screen.getByText('发布不合格')).toBeVisible()
+  expect(screen.getByText(/rocAuc is below 0.65/)).toBeVisible()
 })
 
 it('retries a failed task through the management API', async () => {
@@ -223,7 +285,10 @@ it('creates a training task from a dataset detail page', async () => {
     if (String(path).includes('/split-preview?')) return Response.json({
       datasetVersion: TASK.datasetVersion, schemaName: DATASET.versions[0].schema,
       preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },
-      timezone: 'UTC', datasetRecords: 4210, available: true, reason: null,
+      timezone: 'UTC', datasetRecords: 4210, eligibleRecords: 4198,
+      maturityPolicy: 'mature-only',
+      maturity: { requestedPolicy: 'mature-only', effectivePolicy: 'mature-only', excludedImmature: 12, releaseEligible: true },
+      available: true, reason: null,
       partitions: {
         train: { records: 2947, positives: 900, start: '2024-01-01T00:00:00Z', end: '2024-08-01T00:00:00Z' },
         validation: { records: 632, positives: 200, start: '2024-08-01T00:00:00Z', end: '2024-10-01T00:00:00Z' },

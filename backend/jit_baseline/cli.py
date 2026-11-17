@@ -40,6 +40,8 @@ def main():
                      help="epoch 截止时间；只把早于它的记录用于切分与训练")
     run.add_argument("--split-preset", default=None,
                      help="时间切分预设：temporal-70-15-15、temporal-80-10-10 或 temporal-60-20-20")
+    run.add_argument("--maturity-policy", choices=("mature-only", "include-immature"),
+                     default="mature-only", help="标签成熟策略；正式训练默认排除未成熟标签")
     run.add_argument("--embedding-dir", type=Path, default=None,
                      help="语义 schema 使用的嵌入表目录")
     run.add_argument("--params", default=None,
@@ -119,6 +121,38 @@ def main():
     benefit.add_argument("--random-runs", type=int, default=DEFAULT_RANDOM_RUNS,
                          help=f"随机重复次数，默认 {DEFAULT_RANDOM_RUNS}")
     benefit.add_argument("--seed", type=int, default=DEFAULT_SEED, help=f"随机种子，默认 {DEFAULT_SEED}")
+    qualify = commands.add_parser("qualify-release", help="生成模型发布资格报告")
+    qualify.add_argument("--run", type=Path, required=True, help="已校验模型产物目录")
+    qualify.add_argument("--target-manifest", type=Path, nargs="*", default=None,
+                         help="一个或四个目标项目数据集描述文件")
+    qualify.add_argument("--output", type=Path, default=None, help="报告目录或 JSON 路径")
+    qualify.add_argument("--replace", action="store_true",
+                         help="原子替换既有发布报告，仅用于按同一冻结证据重新判定")
+    release_baseline = commands.add_parser("run-current-schema-baseline",
+                                           help="训练并发布当前 14 维 schema 模型基线")
+    release_baseline.add_argument("--dataset-manifest", type=Path, nargs=4, required=True)
+    release_baseline.add_argument("--output", type=Path, required=True)
+    release_baseline.add_argument("--dataset-root", type=Path, required=True)
+    release_baseline.add_argument("--artifact-root", type=Path, required=True)
+    release_baseline.add_argument("--database", type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', None))
+    release_baseline.add_argument("--methods", nargs="*", default=None)
+    release_baseline.add_argument("--approve-default-method", default=None)
+    release_baseline.add_argument("--approved-by", default=None,
+                                  help="显式批准默认候选的人；未批准默认时省略")
+    release_baseline.add_argument("--dataset-name", default="jit-current-v2-pooled")
+    finalize_release = commands.add_parser("finalize-current-schema-baseline",
+                                           help="批准默认候选并为既有发布基线打包")
+    finalize_release.add_argument("--output", type=Path, required=True)
+    finalize_release.add_argument("--artifact-root", type=Path, required=True)
+    finalize_release.add_argument("--database", type=Path, required=True)
+    finalize_release.add_argument("--dataset-root", type=Path, required=True)
+    finalize_release.add_argument("--approve-default-method", required=True)
+    finalize_release.add_argument("--approved-by", required=True)
+    approve_release = commands.add_parser("approve-release-default",
+                                          help="记录人工批准的发布默认候选")
+    approve_release.add_argument("--run", type=Path, required=True)
+    approve_release.add_argument("--model-id", required=True)
+    approve_release.add_argument("--approved-by", required=True)
     diagnose = commands.add_parser("diagnose-model", help="从既有产物生成三档冻结诊断报告")
     diagnose.add_argument("--run", type=Path, required=True, help="已校验的模型产物目录")
     diagnose.add_argument("--output", type=Path, required=True, help="报告文件或目录")
@@ -156,6 +190,8 @@ def main():
                          help='覆盖默认仓库内置模型包路径')
     bundled.add_argument('--skip-bundled-models', action='store_true',
                          help='只初始化目录库，不导入仓库内置模型包')
+    initialize.add_argument('--skip-current-schema-models', action='store_true',
+                            help='不导入当前 14 维 schema 正式模型包')
     reset_admin = commands.add_parser('admin-reset-password', help='在本机重置管理员密码并撤销其全部会话')
     reset_admin.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     reset_admin.add_argument('--username', required=True)
@@ -261,10 +297,30 @@ def main():
         if args.command == 'catalog-init':
             from .catalog import ModelCatalog
             from .catalog_storage import CatalogStorage, VERSION
-            from .model_packages import BUNDLED_PACKAGE_PATH, import_bundled_model_package
+            from .model_packages import (
+                BUNDLED_PACKAGE_PATH,
+                CURRENT_SCHEMA_PACKAGE_PATH,
+                import_bundled_model_package,
+                import_current_schema_model_package,
+            )
             storage = CatalogStorage(args.database)
             storage.initialize()
             result = {'kind': 'catalog-initialized', 'version': VERSION}
+            if args.skip_current_schema_models or args.bundled_package is not None:
+                result['currentSchemaPackage'] = {
+                    'status': 'skipped',
+                    'reason': ('explicit-bundled-package'
+                               if args.bundled_package is not None else 'disabled-by-option'),
+                    'skipped': True,
+                }
+            else:
+                current_result = import_current_schema_model_package(
+                    ModelCatalog(storage, args.artifact_root),
+                    CURRENT_SCHEMA_PACKAGE_PATH,
+                )
+                result['currentSchemaPackage'] = current_result
+                if current_result['status'] not in ('completed', 'partial', 'skipped'):
+                    exit_code = 1
             if args.skip_bundled_models:
                 result['bundledPackage'] = {
                     'status': 'skipped',
@@ -428,6 +484,7 @@ def main():
                                  dataset_manifest=args.dataset_manifest, holdout=args.holdout,
                                  embedding_dir=args.embedding_dir,
                                  split_preset=args.split_preset, params=params,
+                                 maturity_policy=args.maturity_policy,
                                  allow_legacy_labels=args.allow_legacy_labels,
                                  allow_restricted_labels=args.allow_restricted_labels)
             result = {"runId": manifest["runId"], "output": str(args.output.resolve()), "kind": "real-frozen-retrospective-baseline"}
@@ -503,6 +560,46 @@ def main():
                       "artifact": report["artifact"]["artifactPath"],
                       "test": report["test"], "conclusion": report["conclusion"],
                       "reportPath": str(path)}
+        elif args.command == "qualify-release":
+            from .release_qualification import write_release_report
+            report, path = write_release_report(
+                args.run, args.output, target_manifests=args.target_manifest,
+                replace=args.replace,
+            )
+            result = {"kind": report["kind"], "runId": report["artifact"]["runId"],
+                      "status": report["status"], "assessment": report["assessment"],
+                      "reportPath": str(path)}
+        elif args.command == "run-current-schema-baseline":
+            from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
+            from .release_baseline import run_current_schema_baseline
+            result = run_current_schema_baseline(
+                args.dataset_manifest,
+                output_dir=args.output,
+                dataset_root=args.dataset_root,
+                artifact_root=args.artifact_root,
+                storage=CatalogStorage(args.database or DEFAULT_DATABASE),
+                methods=args.methods,
+                approve_default_method=args.approve_default_method,
+                approved_by=args.approved_by,
+                dataset_name=args.dataset_name,
+            )
+        elif args.command == "finalize-current-schema-baseline":
+            from .release_baseline import finalize_current_schema_baseline
+            result = finalize_current_schema_baseline(
+                args.output,
+                artifact_root=args.artifact_root,
+                database=args.database,
+                dataset_root=args.dataset_root,
+                approve_default_method=args.approve_default_method,
+                approved_by=args.approved_by,
+            )
+        elif args.command == "approve-release-default":
+            from .release_qualification import approve_release_default
+            approval, path = approve_release_default(
+                args.run, args.model_id, args.approved_by,
+            )
+            result = {"kind": approval["kind"], "approval": approval,
+                      "approvalPath": str(path)}
         elif args.command == "diagnose-model":
             from .model_diagnostics import generate_report, write_report
             report = generate_report(args.run, dataset_root=args.dataset_root)

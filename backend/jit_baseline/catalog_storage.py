@@ -46,7 +46,10 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (33, Path(__file__).parent / 'migrations/033_training_experiments.sql'),
               (34, Path(__file__).parent / 'migrations/034_user_accounts_and_ownership.sql'),
               (35, Path(__file__).parent / 'migrations/035_user_profile.sql'),
-              (36, Path(__file__).parent / 'migrations/036_repository_sync_degrade_reasons.sql'))
+              (36, Path(__file__).parent / 'migrations/036_repository_sync_degrade_reasons.sql'),
+              (37, Path(__file__).parent / 'migrations/037_label_maturity.sql'),
+              (38, Path(__file__).parent / 'migrations/038_model_release_qualification.sql'),
+              (39, Path(__file__).parent / 'migrations/039_model_release_channel.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
+import { loginOrCreateUser } from './support/user-session.ts'
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
+test.beforeEach(async ({ page }) => loginOrCreateUser(page))
 
 test('项目与管理端复用只读模型卡并保持分析草稿', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-1280', '模型卡闭环只跑一个浏览器项目')

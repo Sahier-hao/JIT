@@ -9,6 +9,7 @@ from .config import BACKEND
 from .data import BaselineError, sha256
 from .datasets import load_manifest, manifest_relative
 from .metrics import DEFAULT_METRIC_SET, get_metric_set
+from .label_maturity import resolve_policy
 
 
 class TrainingExecutor:
@@ -21,7 +22,8 @@ class TrainingExecutor:
 
     def run(self, dataset_manifest, algorithm, metric_set=None, *, output_key,
             channel="training-task", request_id=None, holdout=None, model_name=None,
-            class_policy=None, split_preset=None, params=None, register=True):
+              class_policy=None, split_preset=None, maturity_policy=None,
+              split_override=None, params=None, register=True):
         """执行一次训练并登记模型。
 
         `holdout` 是 epoch 截止时间：给出时只有早于该时间的记录参与时间切分、
@@ -35,6 +37,7 @@ class TrainingExecutor:
         get_algorithm(algorithm)
         metric_set = metric_set or DEFAULT_METRIC_SET
         get_metric_set(metric_set)
+        maturity_policy = resolve_policy(maturity_policy)
         if (not isinstance(output_key, str) or "/" in output_key or "\\" in output_key
                 or not output_key or output_key.startswith(".")):
             raise BaselineError("INPUT_INVALID", "训练产物 key 必须是单级安全名称")
@@ -47,7 +50,8 @@ class TrainingExecutor:
             BACKEND / "data/openstack", output, schema=dataset["schemaName"],
             algorithm=algorithm, metric_set=metric_set, dataset_manifest=manifest_path,
             holdout=holdout, model_name=model_name, class_policy=class_policy,
-            split_preset=split_preset, params=params)
+            split_preset=split_preset, maturity_policy=maturity_policy,
+            split_override=split_override, params=params)
         # Catalog registration performs full verification before publishing readiness.
         registered = (self.catalog.register_key(output_key, channel=channel, request_id=request_id)
                       if register else None)
@@ -76,5 +80,6 @@ class TrainingExecutor:
             "trainingHistory": summary.get("trainingHistory"),
             "classPolicy": summary.get("classPolicy"),
             "splitPolicy": summary.get("splitPolicy"),
+            "maturity": summary.get("maturity"),
             "snapshot": snapshot,
         }

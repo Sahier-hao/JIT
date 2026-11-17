@@ -3,6 +3,9 @@ import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import { DATABASE, LARGE_REPOSITORY } from './repository-setup.ts'
+import { loginOrCreateUser } from './support/user-session.ts'
+
+test.beforeEach(async ({ page }) => loginOrCreateUser(page))
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
 const PYTHON = resolve(process.cwd(), '../backend/.venv/Scripts/python.exe')

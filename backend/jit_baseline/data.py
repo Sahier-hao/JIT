@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .config import BASE_URL, COHORT, SOURCES
 from .errors import BaselineError
+from .label_maturity import STATUSES
 from .schemas import BLANK_ERROR, BLANK_EXCLUDE, BLANK_ZERO, DEFAULT_SCHEMA, resolve
 
 __all__ = ["BaselineError", "fetch_sources", "parse_source", "sha256", "verified_bytes"]
@@ -78,11 +79,18 @@ def parse_source(blob, schema=None, cohort=None):
         required |= {field.source for field in in_model if field.source}
         if not reader.fieldnames or len(set(reader.fieldnames)) != len(reader.fieldnames) or not required <= set(reader.fieldnames):
             raise BaselineError("DATA_INVALID", "来源字段定义无效或不完整")
+        status_columns = {"label_status", "observed_through_epoch", "maturity_days"}
+        present_status_columns = status_columns & set(reader.fieldnames)
+        if present_status_columns and present_status_columns != status_columns:
+            raise BaselineError("DATA_INVALID", "标签成熟字段必须同时提供")
+        has_label_status = present_status_columns == status_columns
         seen, records = set(), []
         quality = {"rawRows": 0, "includedRows": 0, "positiveLabels": 0, "blankLabels": 0,
                    "featureMissing": {field.name: 0 for field in in_model},
                    "excluded": dict.fromkeys(
                        ["outsideWindow", "noAddedLines", "tooMuchChurn", "tooManyFiles", "missingRequiredField"], 0)}
+        if has_label_status:
+            quality["labelStatusCounts"] = {name: 0 for name in STATUSES}
         for line, raw in enumerate(reader, start=2):
             quality["rawRows"] += 1
             if None in raw or any(raw.get(key) is None for key in required):
@@ -136,8 +144,32 @@ def parse_source(blob, schema=None, cohort=None):
                 continue
             count = 0 if raw["bugcount"] == "" else integer(raw["bugcount"], "bugcount", line)
             label = int(count > 0)
-            records.append({"id": identity, "time": time, "epoch": epoch, "sourceRow": line,
-                            "metrics": metrics, "features": [metrics[field.name] for field in in_model], "label": label})
+            record = {"id": identity, "time": time, "epoch": epoch, "sourceRow": line,
+                      "metrics": metrics, "features": [metrics[field.name] for field in in_model],
+                      "label": label, "labelStatus": "unrecorded"}
+            if has_label_status:
+                status = (raw.get("label_status") or "").strip().lower()
+                if status not in STATUSES[:-1] or status == "unrecorded":
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：标签成熟状态无效")
+                observed_through = integer(
+                    raw["observed_through_epoch"], "observed_through_epoch", line
+                )
+                maturity_days = integer(raw["maturity_days"], "maturity_days", line)
+                if observed_through < epoch:
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：观察终点早于提交时间")
+                if status == "positive" and label != 1:
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：正例标签状态与标签冲突")
+                if status != "positive" and label != 0:
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：未成熟或未观测状态与标签冲突")
+                recomputed = ("immature"
+                              if observed_through - epoch < maturity_days * 86400
+                              else "unobserved")
+                if status != "positive" and status != recomputed:
+                    raise BaselineError("DATA_INVALID", f"第 {line} 行：标签成熟状态不可重算")
+                record.update(labelStatus=status, observedThroughEpoch=observed_through,
+                              maturityDays=maturity_days)
+                quality["labelStatusCounts"][status] += 1
+            records.append(record)
             quality["positiveLabels"] += label
             quality["blankLabels"] += int(raw["bugcount"] == "")
         quality["includedRows"] = len(records)

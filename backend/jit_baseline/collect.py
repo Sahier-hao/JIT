@@ -582,6 +582,8 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         record["labelStatus"] = ("positive" if record["label"] else
                                  "immature" if observed_through - record["epoch"] < maturity_days * 86400
                                  else "unobserved")
+        record["observedThroughEpoch"] = observed_through
+        record["maturityDays"] = maturity_days
         record["labelNote"] = (None if record["label"]
                                else ("未观测到缺陷引入（完整 SZZ），不等于已证实无缺陷"
                                      if line_result is not None and szz == "full" else
@@ -590,6 +592,9 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
                                      else "未观测到缺陷引入（简化 SZZ），不等于已证实无缺陷"))
         record["features"] = [record["metrics"][name] for name in names]
 
+    status_counts = {"positive": 0, "unobserved": 0, "immature": 0}
+    for record in records:
+        status_counts[record["labelStatus"]] += 1
     status_records = [record for record in records
                       if record["metrics"]["la"] > 0
                       and record["metrics"]["la"] + record["metrics"]["ld"] <= 10000
@@ -614,7 +619,6 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         "statusRule": admission.STATUS_RULE,
         "counts": admission.count_summary(status_entries),
     }
-
     blob = _csv_bytes(records, names)
     label_kind = ("szz-full" if line_result is not None and szz == "full" else
                   "szz-line" if line_result is not None else "simplified-szz")
@@ -636,7 +640,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         "gitVersion": git_version(),
         "label": {"kind": label_kind, "rule": rule, "version": rule,
                   "observedThrough": observed_through, "maturityDays": maturity_days,
-                  "protocol": admission.PROTOCOL,
+                  "protocol": admission.PROTOCOL, "statusCounts": status_counts,
                   "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0",
                   "limitations": limitations},
         "labelEvidence": evidence,
@@ -1130,4 +1134,3 @@ def _status_sidecar(path, collected):
         requested_through=observation.get("requestedThrough"),
     )
     return status_meta, labeling
-

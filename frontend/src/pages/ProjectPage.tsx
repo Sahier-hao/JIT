@@ -221,6 +221,8 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       strategy: job.requestedStrategy,
       algorithm: job.algorithm ?? undefined,
       splitPreset: job.splitPreset ?? undefined,
+      maturityPolicy: job.maturityPolicy === 'include-immature'
+        ? 'include-immature' : 'mature-only',
       modelId: job.requestedModelId ?? (job.requestedStrategy === 'generic-model' || job.modelStrategy === 'generic-model' ? job.resolvedModelId : '') ?? '',
     } }))
   }

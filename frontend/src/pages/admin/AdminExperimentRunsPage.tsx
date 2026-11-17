@@ -14,6 +14,7 @@ import { EmptyState, LoadingNotice } from '../../Feedback'
 import { Button } from '../../ui/controls'
 import type { Route } from '../../navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from './AdminShared'
+import { ReleaseEvidence } from '../../releaseEvidence'
 
 interface Filters {
   registrationState?: string
@@ -36,6 +37,9 @@ const STATUS_LABELS: Record<string, string> = {
   registeredResult: '已登记',
   reused: '复用已有模型',
   'already-registered': '此前已登记',
+  qualified: '发布合格',
+  unqualified: '发布不合格',
+  'not-evaluated': '未评估发布资格',
 }
 
 function experimentLabel(run: ExperimentRun) {
@@ -193,7 +197,7 @@ function ExperimentList({ filters, navigate, expired }: {
             onChange={event => setSelected(current => event.target.checked ? [...current, run.candidateId] : current.filter(id => id !== run.candidateId))}/></td>
           <td><strong>{experimentLabel(run)}</strong><small>{run.datasetVersion ?? '数据集未知'} · {run.method ?? '方法未知'}</small></td>
           <td>{metricSummary(run.metrics)}</td>
-          <td><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small>{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</td>
+          <td><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small><small>发布资格：{STATUS_LABELS[run.releaseStatus]}</small>{run.releaseError ? <small>{run.releaseError.message}</small> : null}{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</td>
           <td><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></td>
           <td><div className="admin-row-actions"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })}>查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }}>登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型</Button> : null}</div></td>
         </tr>
@@ -230,10 +234,11 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
   return <section>
     <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
     <div className="admin-detail-actions"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })}>返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })}>查看模型详情</Button> : null}</div>
-    <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span></div>
+    <div className="admin-status-line"><span className="source-chip">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span><span>{STATUS_LABELS[run.releaseStatus]}</span></div>
     {run.serviceCompatibilityReason ? <p className="admin-notice">{run.serviceCompatibilityReason}</p> : null}
     {run.artifactStateReason ? <p className="field-error">{run.artifactStateReason}</p> : null}
     <MetricGrid metrics={run.metrics}/>
+    {run.releaseReport ? <ReleaseEvidence report={run.releaseReport}/> : null}
     <div className="admin-detail-grid">
       <section><h2>运行身份</h2><dl className="admin-facts">
         <div><dt>artifact run</dt><dd><code>{run.artifactRunId ?? '无'}</code></dd></div>
@@ -242,6 +247,7 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
         <div><dt>数据集</dt><dd><code>{run.datasetVersion ?? '未提供'}</code></dd></div>
         <div><dt>schema</dt><dd>{run.featureSchemaVersion ?? '未提供'}</dd></div>
         <div><dt>指标集</dt><dd>{run.metricSet ?? '未提供'}</dd></div>
+        <div><dt>发布报告</dt><dd><code>{run.releaseReportId ?? '未生成'}</code></dd></div>
       </dl></section>
       <section><h2>产物位置</h2><div className="admin-location-list">{run.locations.map(location => <div key={location.candidateId}><code>{location.artifactKey}</code><span>{STATUS_LABELS[location.artifactState]}</span>{location.reason ? <p>{location.reason}</p> : null}</div>)}</div></section>
     </div>

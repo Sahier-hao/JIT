@@ -34,6 +34,26 @@ const FULL_RUN = {
   limitations: ['提交级聚合'],
   serviceCompatibility: 'repository-analysis',
   serviceCompatibilityReason: null,
+  releaseStatus: 'qualified',
+  releaseReportId: 'e'.repeat(64),
+  releaseError: null,
+  releaseReport: {
+    status: 'qualified',
+    projects: [
+      { project: 'commons', metrics: { averagePrecision: { value: 0.4, reason: null }, rocAuc: { value: 0.7, reason: null } } },
+      { project: 'vue', metrics: { averagePrecision: { value: 0.6, reason: null }, rocAuc: { value: 0.72, reason: null } } },
+    ],
+    assessment: {
+      gates: [{ id: 'macro-effort', passed: true, reasons: [] }],
+      macro: {
+        metrics: { recall20Loc: 0.1, popt: 0.9 },
+        baselines: {
+          recall20Loc: { time: 0.2, random: 0.15 },
+          popt: { time: 0.6, random: 0.5 },
+        },
+      },
+    },
+  },
   promotable: true,
   locations: [{
     candidateId: 'a'.repeat(64),
@@ -56,6 +76,9 @@ const OFFLINE_RUN = {
   datasetVersion: 'jit-fine-v1',
   serviceCompatibility: 'offline-only',
   serviceCompatibilityReason: '该特征 schema 仅支持离线基准，不接入用户仓库分析。',
+  releaseStatus: 'not-evaluated',
+  releaseReportId: null,
+  releaseError: null,
   locations: [{
     candidateId: 'c'.repeat(64),
     artifactKey: 'suites/jit-fine/logistic-regression-l2-v1',
@@ -96,6 +119,7 @@ it('lists experiment runs and promotes an explicit batch with partial results', 
   expect(await screen.findByText('实验甲')).toBeVisible()
   expect(screen.getAllByText('AP 0.5000 · ROC-AUC 0.7000')).toHaveLength(2)
   expect(screen.getAllByText('仅离线基准').length).toBeGreaterThan(0)
+  expect(screen.getByText('发布资格：发布合格')).toBeVisible()
   expect(screen.getByText('聚合报告不含完整模型产物，不能登记为模型。')).toBeVisible()
   const user = userEvent.setup()
   const statusFilter = screen.getByLabelText('登记状态')
@@ -123,6 +147,10 @@ it('shows an experiment detail with provenance and metric limitations', async ()
   expect(screen.getByText('suites/demo/logistic-regression-l2-v1')).toBeVisible()
   expect(screen.getByText('提交级聚合')).toBeVisible()
   expect(screen.getByText(/可用于仓库分析/)).toBeVisible()
+  expect(screen.getByText('发布合格')).toBeVisible()
+  expect(screen.getByText(/commons · 0.4000/)).toBeVisible()
+  expect(screen.getByText('-0.1000')).toBeVisible()
+  expect(screen.getByText('+0.3000')).toBeVisible()
 })
 
 it('shows loading and empty states', async () => {

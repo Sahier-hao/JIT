@@ -1,8 +1,10 @@
 import { test, expect, type APIRequestContext } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
+import { loginOrCreateUser } from './support/user-session.ts'
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
+test.beforeEach(async ({ page }) => loginOrCreateUser(page))
 const timeout = 30_000
 async function expectNoOverflow(page: import('@playwright/test').Page) {
   const offenders = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('body *')]

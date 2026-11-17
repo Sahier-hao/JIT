@@ -112,11 +112,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from .benefit_reports import BenefitReportService
     benefit_reports = BenefitReportService()
     app.state.benefit_reports = benefit_reports
+    from .release_reports import ReleaseReportService, default_roots
+    release_reports = ReleaseReportService([catalog.root, *default_roots()])
+    app.state.release_reports = release_reports
     from .model_diagnostics import DiagnosticReportService
     diagnostics = DiagnosticReportService()
     app.state.model_diagnostics = diagnostics
     from .model_cards import ModelCardService
-    model_cards = ModelCardService(catalog, diagnostics, benefit_reports)
+    model_cards = ModelCardService(catalog, diagnostics, benefit_reports, release_reports)
     app.state.model_cards = model_cards
     from .repository_updates import RepositoryUpdates
     updates = RepositoryUpdates(sync_service)
@@ -309,6 +312,20 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def model_candidates():
         return {'candidates': catalog.candidates()}
 
+    def with_release_fields(model):
+        entry, report_error = release_reports.for_run(
+            model.get("artifactRunId"),
+            model_sha256=model.get("modelSha256") or model.get("sha256"),
+            schema=model.get("featureSchemaVersion"),
+        )
+        return {
+            **model,
+            "releaseStatus": entry["report"]["status"] if entry else "not-evaluated",
+            "releaseReportId": entry["reportId"] if entry else None,
+            "defaultCandidate": bool(entry and entry["report"].get("approvedDefault")),
+            "releaseError": report_error,
+        }
+
     @app.get('/api/v1/experiment-runs')
     def experiment_runs(registrationState: str | None = None, compatibility: str | None = None,
                         artifactState: str | None = None, limit: int = 50, offset: int = 0):
@@ -321,10 +338,18 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             raise RequestError('INPUT_INVALID', field='artifactState')
         if not 1 <= limit <= 100 or offset < 0:
             raise RequestError('INPUT_INVALID', field='limit' if not 1 <= limit <= 100 else 'offset')
-        return catalog.experiment_runs(registration_state=registrationState,
+        page = catalog.experiment_runs(registration_state=registrationState,
                                        compatibility=compatibility,
                                        artifact_state=artifactState,
                                        limit=limit, offset=offset)
+        for run in page["runs"]:
+            entry, report_error = release_reports.for_run(
+                run.get("artifactRunId"), schema=run.get("featureSchemaVersion"),
+            )
+            run["releaseStatus"] = entry["report"]["status"] if entry else "not-evaluated"
+            run["releaseReportId"] = entry["reportId"] if entry else None
+            run["releaseError"] = report_error
+        return page
 
     @app.post('/api/v1/experiment-runs/promote')
     async def promote_experiments(request: Request):
@@ -337,13 +362,22 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def experiment_run_detail(candidate_id: str):
         if not re.fullmatch('[0-9a-f]{64}', candidate_id):
             raise RequestError('INPUT_INVALID', field='candidateId')
-        return catalog.experiment_detail(candidate_id)
+        detail = catalog.experiment_detail(candidate_id)
+        entry, report_error = release_reports.for_run(
+            detail.get("artifactRunId"), schema=detail.get("featureSchemaVersion"),
+        )
+        detail["releaseStatus"] = entry["report"]["status"] if entry else "not-evaluated"
+        detail["releaseReportId"] = entry["reportId"] if entry else None
+        detail["releaseError"] = report_error
+        detail["releaseReport"] = entry["report"] if entry else None
+        return detail
 
     @app.post('/api/v1/models/register')
     async def register_model(request: Request):
         data = registration_input(await read_object(request))
         result = await run_in_threadpool(catalog.register, data['candidateId'], data['expectedManifestSha256'],
                                         channel='http-local', request_id=request.state.request_id)
+        result["model"] = with_release_fields(result["model"])
         request.state.business_ids = (result['model']['modelId'], result['model']['runId'], None)
         return JSONResponse(result, status_code=201 if result['created'] else 200)
 
@@ -377,7 +411,8 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                              for model in registered_models),
                         deliveredArtifacts=sum(candidate.get('method') == key for candidate in candidates))
                    for key, value in ALGORITHMS.items()]
-        return {'models': [model for model in registered_models if state is None or model['state'] == state],
+        visible = [with_release_fields(model) for model in registered_models]
+        return {'models': [model for model in visible if state is None or model['state'] == state],
                 'methods': methods, 'readiness': catalog.readiness(registered_models)}
 
     @app.get('/api/v1/models/coverage')
@@ -472,6 +507,25 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             return {'modelId': model_id, 'runId': run_id, 'available': False,
                     'reason': '尚无该模型的收益评估报告'}
         return {'modelId': model_id, 'runId': run_id, 'available': True, **entry}
+
+    @app.get('/api/v1/models/{model_id}/release')
+    def model_release(model_id: str):
+        detail = catalog.detail(model_id)
+        run_id = detail.get("artifactRunId")
+        if not run_id:
+            raise BaselineError("REPORT_INVALID", "模型没有可核对的运行身份")
+        entry, error = release_reports.for_run(
+            run_id,
+            model_sha256=detail.get("modelSha256") or detail.get("sha256"),
+            schema=detail.get("featureSchemaVersion"),
+        )
+        if error is not None:
+            raise BaselineError("REPORT_INVALID", error["message"])
+        if entry is None:
+            return {"modelId": model_id, "runId": run_id, "available": False,
+                    "status": "not-evaluated",
+                    "reason": "尚无匹配的发布资格报告"}
+        return {"modelId": model_id, "runId": run_id, "available": True, **entry}
 
     @app.get('/api/admin/multi-project-reports')
     def list_multi_project_reports():
@@ -584,9 +638,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return view
 
     @app.get('/api/admin/datasets/{dataset_version}/split-preview')
-    def dataset_split_preview_route(dataset_version: str, preset: str | None = None):
+    def dataset_split_preview_route(dataset_version: str, preset: str | None = None,
+                                    maturityPolicy: str | None = None):
         from .split_preview import dataset_split_preview
-        return dataset_split_preview(registry_root, dataset_version, preset)
+        return dataset_split_preview(registry_root, dataset_version, preset, maturityPolicy)
 
     @app.get('/api/v1/commits')
     def commit_list(version: str, module: str | None = None, limit: int = 100, offset: int = 0):
