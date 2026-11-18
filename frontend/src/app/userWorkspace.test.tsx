@@ -117,7 +117,7 @@ it('opens the active build progress dialog from a task deep link', async () => {
   render(<MyDataPage navigate={vi.fn()} onLoginRequired={vi.fn()} initialTaskId="task-1"/>)
   const dialog = await screen.findByRole('dialog', { name: '从仓库构建数据集' })
   expect(within(dialog).getByText('构建流程')).toBeVisible()
-  expect(within(dialog).getByRole('button', { name: '取消任务' })).toBeVisible()
+  expect(await within(dialog).findByRole('button', { name: '取消任务' })).toBeVisible()
 })
 
 it('previews and derives a cleaned dataset version', async () => {
