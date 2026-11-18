@@ -27,5 +27,5 @@
 
 - [x] 5.1 前端 `typecheck`、`lint`、`check:styles`、`check:modules`、`test`、`build` 通过。
 - [x] 5.2 代表 E2E 套件通过（1 passed, 45.7s）。
-- [ ] 5.3 提交到 `refactor/phase3-frontend-consolidation` 并创建 PR。
-- [ ] 5.4 归档本 change。
+- [x] 5.3 提交到 `refactor/phase3-frontend-consolidation` 并创建 PR（https://github.com/Sahier-hao/JIT/pull/69）。
+- [x] 5.4 归档本 change（`openspec/changes/archive/2026-11-19-phase3-frontend-consolidation/`）。
