@@ -31,8 +31,8 @@
 - [x] 5.1 `python backend/scripts/check_docs_links.py` 通过（0 死链）。
 - [x] 5.2 后端 `regression_scope.py --layer key` 通过（329 passed, 1 deselected）。
 - [x] 5.3 前端 `typecheck`、`lint`、`check:styles`、`check:modules`、`test`（473 passed）、`build` 通过。
-- [ ] 5.4 提交到 `refactor/phase1-docs-scope` 分支并创建 PR。
-- [ ] 5.5 归档本 change。
+- [x] 5.4 提交到 `refactor/phase1-docs-scope` 分支并创建 PR（https://github.com/Sahier-hao/JIT/pull/67）。
+- [x] 5.5 归档本 change（`openspec/changes/archive/2026-11-19-phase1-docs-scope/`）。
 
 ## Workflow follow-up
 
