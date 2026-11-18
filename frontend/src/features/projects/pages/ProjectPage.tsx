@@ -31,7 +31,8 @@ import { ProjectTrends } from '@/features/projects/components/ProjectTrends'
 import { ProjectDatasetDialog } from '@/features/projects/components/ProjectDatasetDialog'
 import { DatasetBuildDialog } from '@/features/projects/components/DatasetBuildDialog'
 import { getPRSnapshot } from '@/features/reviews/prReviewClient'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { ProjectPageSkeleton } from '@/components/shared/Skeletons'
 import { analysisRoute, repositoryRoute, type Route } from '@/app/navigation'
 import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRepositorySyncs } from '@/features/projects/projectClient'
 import { projectStatus, type ProjectTone } from '@/features/projects/projectStatus'
@@ -51,7 +52,7 @@ const PARTITION_CLASS: Record<string, string> = {
   train: 'bg-soft text-foreground-3',
 }
 
-export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositoryId: string; tab?: ProjectTab; viewId?: string; navigate: (route: Route, replace?: boolean) => void }) {
+export function ProjectPage({ repositoryId, tab, viewId, buildTaskId, navigate }: { repositoryId: string; tab?: ProjectTab; viewId?: string; buildTaskId?: string; navigate: (route: Route, replace?: boolean) => void }) {
   // 风险趋势不再是独立页签：地址仍保留 /trends[/viewId] 以支持旧链接，界面并入「分析」。
   const trendMode = tab === 'trends'
   const activeTab = trendMode ? 'analyses' : tab ?? 'overview'
@@ -121,6 +122,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const [openingPR, setOpeningPR] = useState(false)
   const [datasetOpen, setDatasetOpen] = useState(false)
   const [datasetBuildOpen, setDatasetBuildOpen] = useState(false)
+  useEffect(() => { if (buildTaskId) setDatasetBuildOpen(true) }, [buildTaskId])
   const [scopeView, setScopeView] = useState<'holdout' | 'test' | 'all'>('holdout')
   const openPRLock = useRef(false)
   const currentSyncId = detail.repository?.viewContext?.syncId
@@ -141,7 +143,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
   const priority = useAnalysisCommits(detail.repository?.viewContext?.syncId)
 
-  if (detail.state === 'loading' && !detail.repository) return <LoadingNotice label="正在读取项目"/>
+  if (detail.state === 'loading' && !detail.repository) return <ProjectPageSkeleton/>
   if (detail.state === 'error' || !detail.repository) {
     return <EmptyState title="项目读取失败" description={detail.error} tone="alert"><Button onClick={detail.retry} variant="outline" type="button">重新加载</Button><Button onClick={() => navigate({ name: 'repositories' })} variant="outline" type="button">返回项目列表</Button></EmptyState>
   }
@@ -258,34 +260,39 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   }
 
   return <section className="grid gap-4">
-    <header className="grid gap-4 border-b border-border-soft pb-4">
-      <div className="grid gap-2">
-        <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}全部项目</Button>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-sans text-xl font-semibold leading-title text-foreground" title={repository.url}>{repository.displayName}</h1>
-          <p className="inline-flex items-center gap-1.5 text-xs text-foreground-3" role="status"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</p>
+    <header className="relative overflow-hidden rounded-2xl border border-border-soft bg-card px-5 py-5 shadow-[var(--sh-2)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,var(--accent-soft),transparent_46%)] opacity-80" aria-hidden="true"/>
+      <div className="relative grid gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="grid min-w-0 gap-2">
+            <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}全部项目</Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-sans text-2xl font-semibold leading-title tracking-tight text-foreground" title={repository.url}>{repository.displayName}</h1>
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-xs text-foreground-3" role="status"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
+              <a className="text-accent underline-offset-2 hover:underline" href={repository.url} target="_blank" rel="noreferrer">{repository.url.replace(/^https?:\/\/github\.com\//i, '')}</a>
+              <span aria-hidden="true">·</span>
+              <span>默认分支 {repository.defaultBranch ?? '未登记'}</span>
+              <span aria-hidden="true">·</span>
+              <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onAnalyze={branch => analyzeBranch(branch)} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => setDatasetBuildOpen(true)} variant="outline" type="button">{<Database aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}构建数据集</Button>
+            <Button onClick={() => void openPrAnalysis()} variant="outline" type="button">分析全部 PR</Button>
+            <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
-          <a className="text-accent underline-offset-2 hover:underline" href={repository.url} target="_blank" rel="noreferrer">{repository.url.replace(/^https?:\/\/github\.com\//i, '')}</a>
-          <span aria-hidden="true">·</span>
-          <span>默认分支 {repository.defaultBranch ?? '未登记'}</span>
-          <span aria-hidden="true">·</span>
-          <RepositoryUpdates key={repositoryId} repositoryId={repositoryId} onAnalyze={branch => analyzeBranch(branch)} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
-        </div>
+        {prAnalysisError ? <p className="text-xs text-rose" role="alert">{prAnalysisError}</p> : null}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={() => setDatasetBuildOpen(true)} variant="outline" type="button">{<Database aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}构建数据集</Button>
-        <Button onClick={() => void openPrAnalysis()} variant="outline" type="button">分析全部 PR</Button>
-        <AnalysisLauncher key={retryDraft?.key ?? analysisSeed?.key ?? 'new'} initial={retryDraft?.form ?? analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
-      </div>
-      {prAnalysisError ? <p className="text-xs text-rose" role="alert">{prAnalysisError}</p> : null}
     </header>
 
     {latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? <section className="rounded-md border border-border-soft bg-card p-card" aria-label="当前分析进度">
       <JobProgress status={latest.status} stage={latest.stage} queuePosition={latest.queuePosition} startedAt={latest.startedAt}/>
     </section> : null}
 
-    <nav aria-label="项目工作台视图" className="flex gap-1 border-b border-border">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String(activeTab) === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
+    <nav aria-label="项目工作台视图" className="flex gap-1 rounded-xl border border-border-soft bg-card p-1 shadow-[var(--sh-1)]">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={cn('rounded-lg border-0 px-4', String(activeTab) === String(option.value) ? 'bg-accent-soft text-accent' : 'text-foreground-3 hover:bg-hover')}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
 
     {activeTab === 'overview' ? <>
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} onOpenAnalysis={() => navigate(repositoryRoute(repositoryId, 'analyses'))}/>
@@ -405,6 +412,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     <DatasetBuildDialog
       repositoryId={repositoryId}
       defaultBranch={repository.defaultBranch}
+      initialTaskId={buildTaskId}
       open={datasetBuildOpen}
       onOpenChange={setDatasetBuildOpen}
       navigate={navigate}

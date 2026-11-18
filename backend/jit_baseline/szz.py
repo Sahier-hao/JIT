@@ -51,8 +51,10 @@ def _env_limit(name, default, minimum=1):
 
 
 MAX_FIX_COMMITS = _env_limit("JIT_SZZ_MAX_FIX_COMMITS", 2000)
-MAX_RANGES_PER_FILE = _env_limit("JIT_SZZ_MAX_RANGES_PER_FILE", 50)
-MAX_LINES_PER_COMMIT = _env_limit("JIT_SZZ_MAX_LINES_PER_COMMIT", 2000)
+# 单个修复提交可能跨越很多不连续行；50 会让大型仓库误标为证据不完整。
+MAX_RANGES_PER_FILE = _env_limit("JIT_SZZ_MAX_RANGES_PER_FILE", 500)
+# 与纳入规则允许的最大改动量对齐，避免同一提交在 2000 行处被截断。
+MAX_LINES_PER_COMMIT = _env_limit("JIT_SZZ_MAX_LINES_PER_COMMIT", 10000)
 # 单次采集的行的回溯时间预算；超出即停止并标记截断，避免拖垮分析作业。
 MAX_SECONDS = _env_limit("JIT_SZZ_MAX_SECONDS", 120)
 ISSUE_LOOKUP_SECONDS = 5
@@ -93,9 +95,14 @@ class LineSzzResult:
     skipped_docs_only: int = 0
     outside_window: int = 0
     truncated: bool = False
+    budget_hits: dict = field(default_factory=dict)
     fix_signals: dict = field(default_factory=lambda: {"issue": 0, "issueRef": 0, "keyword": 0})
     issue_lookup: dict = field(default_factory=lambda: {"attempted": 0, "succeeded": 0, "failed": 0, "unavailable": 0})
     fix_signal_evidence: list[dict] = field(default_factory=list)
+
+    def mark_truncated(self, reason):
+        self.truncated = True
+        self.budget_hits[reason] = self.budget_hits.get(reason, 0) + 1
 
     def stats(self) -> dict:
         return {
@@ -112,6 +119,7 @@ class LineSzzResult:
             "skippedDocsOnly": self.skipped_docs_only,
             "outsideWindow": self.outside_window,
             "truncated": self.truncated,
+            "budgetHits": dict(self.budget_hits),
             "fixSignals": dict(self.fix_signals),
             "issueLookup": dict(self.issue_lookup),
         }
@@ -425,7 +433,7 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
             continue
         merged_ranges = _merge_ranges(item["ranges"])
         if len(merged_ranges) > MAX_RANGES_PER_FILE:
-            result.truncated = True
+            result.mark_truncated("ranges-per-file")
         for start, end in merged_ranges[:MAX_RANGES_PER_FILE]:
             parent_lines = _file_lines(repo, parent, item["old"], content_cache)
             parts = _substantive_ranges(parent_lines, start, end) if parent_lines is not None else [[start, end]]
@@ -434,13 +442,13 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
                 continue
             for sub_start, sub_end in parts:
                 if ranges_done >= MAX_LINES_PER_COMMIT:
-                    result.truncated = True
+                    result.mark_truncated("lines-per-commit")
                     capped = True
                     break
                 remaining = MAX_LINES_PER_COMMIT - ranges_done
                 if sub_end - sub_start + 1 > remaining:
                     sub_end = sub_start + remaining - 1
-                    result.truncated = True
+                    result.mark_truncated("lines-per-commit")
                 blamed = _blame(repo, parent, item["old"], sub_start, sub_end)
                 if blamed is None:
                     result.unresolved_ranges += 1
@@ -459,13 +467,14 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
         if capped:
             break
     evidence = []
-    for (identity, path, old_path), lines in sorted(pairs.items()):
+    for (identity, path, old_path), lines in sorted(
+            pairs.items(), key=lambda item: (item[0][0], item[0][1], item[0][2] or "")):
         line_ranges = _merge_ranges([[line, line] for line, _final in sorted(set(lines))])
         parent_ranges = _merge_ranges([[final, final] for _line, final in sorted(set(lines))])
         if len(line_ranges) > MAX_RANGES_PER_FILE:
             line_ranges = line_ranges[:MAX_RANGES_PER_FILE]
             parent_ranges = parent_ranges[:MAX_RANGES_PER_FILE]
-            result.truncated = True
+            result.mark_truncated("evidence-ranges-per-file")
         entry = {
             "introducedCommit": identity,
             "fixCommit": commit["id"],
@@ -557,13 +566,13 @@ def label_repository(repo, entries, window_ids, start=None, end=None, mode="line
             })
         fix_commits.append((commit, info))
     if len(fix_commits) > MAX_FIX_COMMITS:
-        result.truncated = True
+        result.mark_truncated("fix-commits")
         fix_commits = fix_commits[:MAX_FIX_COMMITS]
     result.fix_commits = len(fix_commits)
     deadline = time.monotonic() + MAX_SECONDS
     for commit, info in fix_commits:
         if time.monotonic() > deadline:
-            result.truncated = True
+            result.mark_truncated("seconds")
             break
         for item in commit_evidence(repo, commit, result=result, mode=mode, info=info):
             if item["introducedCommit"] not in window_ids:

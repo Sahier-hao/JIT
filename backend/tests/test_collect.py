@@ -128,14 +128,18 @@ def test_window_limit_is_rejected(tmp_path):
 
 
 def test_collect_registers_manifest_with_evidence(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage
+
     repo = _make_repo(tmp_path / "repo")
     _commit(repo, "add module", {"a.py": "a\n"}, "2024-01-01T00:00:00+00:00")
     second = _commit(repo, "fix: adjust", {"a.py": "b\n"}, "2024-01-02T00:00:00+00:00")
     registry = tmp_path / "datasets"
+    storage = CatalogStorage(tmp_path / "catalog.sqlite3")
+    storage.initialize()
 
     result = collect_repository(repo, since="2024-01-01", until="2024-01-05",
                                 output=tmp_path / "repo.csv", dataset="demo",
-                                register=True, root=registry)
+                                register=True, root=registry, storage=storage)
 
     manifest_path = result["dataset"]["path"]
     manifest = json.loads(open(manifest_path, encoding="utf-8").read())
@@ -149,6 +153,7 @@ def test_collect_registers_manifest_with_evidence(tmp_path):
     assert len(manifest["fields"]) == 14
     assert manifest["quality"]["includedRows"] == 2
     assert result["dataset"]["created"] is True
+    assert storage.dataset(manifest["version"]) is not None
 
 
 def _clear_proxy_env(monkeypatch):

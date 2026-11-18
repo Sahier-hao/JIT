@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import { fetchAdminModel, formatDate, metricReason, metricValue, valueLabel, type AdminModel } from '@/features/admin/adminContracts'
 import { fetchModelBenefit, type BenefitMetric, type BenefitReport, type ModelBenefit } from '@/features/admin/benefitContracts'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { MasterDetailSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
 import { ModelCardView } from '@/features/models/components/ModelCardView'
@@ -36,7 +37,7 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
     return () => controller.abort()
   }, [modelId, expired])
   if (error) return <EmptyState title="模型详情不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'models' })} variant="outline" type="button">返回模型列表</Button></EmptyState>
-  if (!model) return <LoadingNotice label="正在校验模型与读取指标"/>
+  if (!model) return <section className="grid gap-4"><AdminPageHeader title="模型详情"/><MasterDetailSkeleton label="正在校验模型与读取指标"/></section>
   const source = model.source ?? {}
   return <section>
     <AdminPageHeader title={model.name} meta={model.method}/>

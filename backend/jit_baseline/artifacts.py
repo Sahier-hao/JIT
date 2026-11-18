@@ -455,7 +455,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
             raise BaselineError("SPLIT_INVALID", "显式切分没有覆盖全部可训练记录")
         if any({record["label"] for record in split[name]} != {0, 1}
                for name in ("train", "test")):
-            raise BaselineError("SPLIT_INVALID", "训练与测试必须包含两类发布标签")
+            raise BaselineError("SPLIT_INVALID", "训练集或测试集只有一类标签")
         boundaries = list(split_override.get("boundaries") or [])
         split_policy = policy
         explicit_split_rule = split_override.get("rule")

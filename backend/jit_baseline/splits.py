@@ -9,8 +9,13 @@ from .data import BaselineError
 
 PRESETS = {
     "temporal-70-15-15": {"train": 70, "validation": 15, "test": 15},
+    "temporal-90-5-5": {"train": 90, "validation": 5, "test": 5},
+    "temporal-80-5-15": {"train": 80, "validation": 5, "test": 15},
     "temporal-80-10-10": {"train": 80, "validation": 10, "test": 10},
+    "temporal-70-10-20": {"train": 70, "validation": 10, "test": 20},
     "temporal-60-20-20": {"train": 60, "validation": 20, "test": 20},
+    "temporal-60-15-25": {"train": 60, "validation": 15, "test": 25},
+    "temporal-50-25-25": {"train": 50, "validation": 25, "test": 25},
 }
 DEFAULT_PRESET = "temporal-70-15-15"
 TIMEZONE = "UTC"
@@ -71,7 +76,7 @@ def policy_for_partitions(partitions, preset=None):
         }
     if any({record["label"] for record in partitions[name]} != {0, 1}
            for name in ("train", "test")):
-        raise BaselineError("SPLIT_INVALID", "训练与测试必须包含两类发布标签")
+        raise BaselineError("SPLIT_INVALID", "训练集或测试集只有一类标签")
     return {
         **preset_view(preset),
         "boundaryMode": "project-local",
@@ -83,7 +88,7 @@ def policy_for_partitions(partitions, preset=None):
     }
 
 
-def split_records(records, preset=None):
+def split_records(records, preset=None, *, require_classes=True):
     """Split unique records by sorted timestamp groups without crossing a boundary."""
     preset = resolve_preset(preset)
     if not records or len({record["id"] for record in records}) != len(records):
@@ -109,9 +114,9 @@ def split_records(records, preset=None):
         split[partition].append(record)
     if any(not part for part in split.values()):
         raise BaselineError("SPLIT_INVALID", "时间分区包含空集合")
-    if any({record["label"] for record in split[name]} != {0, 1}
-           for name in ("train", "test")):
-        raise BaselineError("SPLIT_INVALID", "训练与测试必须包含两类发布标签")
+    if require_classes and any({record["label"] for record in split[name]} != {0, 1}
+                               for name in ("train", "test")):
+        raise BaselineError("SPLIT_INVALID", "训练集或测试集只有一类标签")
     members = {name: [record["id"] for record in split[name]] for name in PARTITIONS}
     counts = {
         name: {

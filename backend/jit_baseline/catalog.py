@@ -1,6 +1,7 @@
 """Register delivered runs without retraining or rewriting their artifacts."""
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from uuid import UUID, uuid4
@@ -761,8 +762,7 @@ class ModelCatalog:
     def models(self, state=None):
         with self.store.connection() as db:
             ids = [r['id'] for r in db.execute('SELECT id FROM model_version ORDER BY id')]
-        result = []
-        for model_id in ids:
+        def load_one(model_id):
             try:
                 _, payload = self.load_model(model_id)
             except BaselineError as exc:
@@ -772,8 +772,12 @@ class ModelCatalog:
                 payload = dict(json.loads(row['payload_json']), state='invalid',
                                ownerUserId=row['owner_user_id'], **self.policy(model_id),
                                error={'code': row['error_code'], 'message': MESSAGES.get(row['error_code'], '运行不可用')})
-            if state is None or payload['state'] == state:
-                result.append(payload)
+            return payload
+        # Artifact verification is I/O-heavy; keep catalog listing responsive without
+        # changing the per-model integrity checks or their order.
+        with ThreadPoolExecutor(max_workers=min(8, max(1, len(ids)))) as pool:
+            loaded = list(pool.map(load_one, ids))
+        result = [payload for payload in loaded if state is None or payload['state'] == state]
         # All list items share one policy snapshot, even if a default changes
         # while expensive artifact validation is in progress.
         with self.store.connection() as db:

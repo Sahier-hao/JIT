@@ -624,6 +624,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             for version in dataset['versions']:
                 version['references'] = store.dataset_references(storage, version['version'])
                 version['owners'] = storage.dataset_owners(version['version'])
+                version['shared'] = storage.dataset_shared(version['version'])
         return {'datasets': datasets}
 
     @app.get('/api/v1/datasets/{name}/versions')
@@ -635,7 +636,30 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         for version in view['versions']:
             version['references'] = store.dataset_references(storage, version['version'])
             version['owners'] = storage.dataset_owners(version['version'])
+            version['shared'] = storage.dataset_shared(version['version'])
         return view
+
+    @app.put('/api/admin/datasets/{dataset_version}/sharing')
+    async def update_dataset_sharing(dataset_version: str, request: Request):
+        from .users import current_admin
+        admin = current_admin(request)
+        if not admin:
+            raise RequestError('AUTH_REQUIRED')
+        payload = await read_object(request)
+        shared = payload.get('shared') if isinstance(payload, dict) else None
+        if not isinstance(shared, bool):
+            raise RequestError('INPUT_INVALID', field='shared')
+        manifest = dataset_module.load_all(registry_root).get(dataset_version)
+        if manifest is None:
+            raise RequestError('NOT_FOUND')
+        if shared and storage.dataset(dataset_version) is None:
+            from .config import BACKEND
+            manifest_path = Path(manifest['manifestPath'])
+            if not manifest_path.is_absolute():
+                manifest_path = BACKEND / manifest_path
+            await run_in_threadpool(store.import_dataset, None, manifest_path, storage)
+        storage.set_dataset_share(dataset_version, shared, admin)
+        return {'version': dataset_version, 'shared': shared}
 
     @app.get('/api/admin/datasets/{dataset_version}/split-preview')
     def dataset_split_preview_route(dataset_version: str, preset: str | None = None,

@@ -85,11 +85,13 @@ def task_identity(task) -> str:
 class BatchCollection:
     """一个目录保存全部批次状态；每次状态变化原子写盘，进程重启后可继续。"""
 
-    def __init__(self, state_root, *, dataset_root=None, collector=collect_repository):
+    def __init__(self, state_root, *, dataset_root=None, collector=collect_repository,
+                 storage=None):
         self.root = Path(state_root)
         self.root.mkdir(parents=True, exist_ok=True)
         self.dataset_root = Path(dataset_root) if dataset_root is not None else BACKEND / "data/datasets"
         self.collector = collector
+        self.storage = storage
 
     # ---- 状态读写 -------------------------------------------------------
     def _path(self, batch_id) -> Path:
@@ -238,11 +240,15 @@ class BatchCollection:
         dataset = entry.get("dataset") or None
         output = self.root / "work" / state["batchId"] / f"{entry['index']:02d}-{dataset or 'dataset'}.csv"
         try:
+            collector_kwargs = {}
+            if self.storage is not None:
+                collector_kwargs["storage"] = self.storage
             result = self.collector(
                 entry["repo"], since=entry.get("since"), until=entry.get("until"),
                 branch=entry.get("branch") or "HEAD", output=output, dataset=dataset,
                 register=bool(state.get("register", True)), limit=entry.get("limit"),
                 root=self.dataset_root, szz=entry.get("szz") or DEFAULT_SZZ,
+                **collector_kwargs,
             )
             entry["records"] = result.get("records")
             published = result.get("dataset") or {}

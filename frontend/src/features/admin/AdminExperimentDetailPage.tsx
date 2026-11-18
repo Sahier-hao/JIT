@@ -8,7 +8,8 @@ import {
   fetchMultiProjectReport, type MultiProjectReportDetail, type ReportAggregate, type ReportProject,
   type ReportProtocol, type ReportTarget,
 } from '@/features/admin/multiProjectReportContracts'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { MasterDetailSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
@@ -117,7 +118,7 @@ export function AdminExperimentDetailPage({ reportId, navigate, expired }: {
     return () => controller.abort()
   }, [expired, reportId, revision])
 
-  if (loading) return <LoadingNotice label="正在读取多项目实验报告"/>
+  if (loading) return <section className="grid gap-4"><AdminPageHeader title="多项目实验报告" onRefresh={() => setRevision(value => value + 1)}/><MasterDetailSkeleton label="正在读取多项目实验报告"/></section>
   if (error || !report) return <EmptyState title="多项目实验报告不可用" description={error || '报告不存在'} tone="alert">
     <Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button>
     <Button onClick={() => navigate({ name: 'admin', view: 'experiments' })} variant="outline" type="button">返回实验列表</Button>

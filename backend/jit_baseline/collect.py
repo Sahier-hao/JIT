@@ -988,12 +988,14 @@ def _write_sidecar(path, blob):
 def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
                        allow_local=True, return_blob=False, with_text=False, szz="full",
-                       observe_through=None, revision=None, maturity_days=RECENT_DAYS):
+                       observe_through=None, revision=None, maturity_days=RECENT_DAYS,
+                       storage=None):
     """采集 → 写 CSV 与逐提交状态旁车 → 可选登记；远程来源克隆到临时目录并在结束时清理。
 
     `allow_local=False` 时只接受公开 HTTP(S) 地址（同步接口使用）；
     `return_blob=True` 时把 CSV 字节与逐条记录一并返回，供同步编排直接落库。
     观察终点可以晚于样本截止；`revision` 固定采集使用的提交。
+    `storage` 给出时，登记成功后同步写入目录库，供共享、训练和引用检查使用。
     """
     repo = validate_source(repo, allow_local=allow_local)
     temporary = None
@@ -1097,6 +1099,12 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                 published = store.register(
                     path, version=f"{version}-{labeling['identity'][:8]}",
                     **register_kwargs)
+            if storage is not None:
+                manifest_path = Path(published["path"])
+                if not manifest_path.is_absolute():
+                    from .config import BACKEND as _BACKEND
+                    manifest_path = _BACKEND / manifest_path
+                store.import_dataset(path, manifest_path, storage)
             result["dataset"] = published
             result["csv"] = {"path": str(path.resolve()), "bytes": len(blob)}
         return result

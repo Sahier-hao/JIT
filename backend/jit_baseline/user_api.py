@@ -1,22 +1,27 @@
 """End-user data and training API; every route is scoped to the signed-in user."""
 import io
 import json
+import re
+import tempfile
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Request
 from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
-from . import curation, datasets
+from . import curation, datasets, store
 from .catalog_input import read_object
 from .config import BACKEND
 from .data import BaselineError, sha256
+from .schemas import resolve
 from .split_preview import dataset_split_preview
 from .store import dataset_references
 from .users import current_user
 
 MAX_EXPORT_BYTES = 64 * 1024 * 1024
+MAX_IMPORT_BYTES = 64 * 1024 * 1024
 
 
 def _user(request):
@@ -39,6 +44,60 @@ def _owners(storage, version):
     return storage.dataset_owners(version)
 
 
+def _manifest_registered_at(manifest):
+    """目录库尚未导入描述文件时，用描述文件的写入时间作为登记事实。"""
+    declared = manifest.get('manifestPath')
+    if not isinstance(declared, str) or not declared:
+        return None
+    path = Path(declared)
+    if not path.is_absolute():
+        path = BACKEND / path
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat().replace('+00:00', 'Z')
+    except OSError:
+        return None
+
+
+def _manifest_integrity(storage, manifest, version):
+    """目录库已导入时读取登记哈希；仅文件登记时以描述文件内容与声明的源哈希为准。"""
+    record = storage.dataset(version) or {}
+    declared = manifest.get('manifestPath')
+    digest = record.get('manifestSha256')
+    if not digest and isinstance(declared, str) and declared:
+        path = Path(declared)
+        if not path.is_absolute():
+            path = BACKEND / path
+        try:
+            digest = sha256(path.read_bytes())
+        except OSError:
+            digest = None
+    source = record.get('sourceSha256') or (manifest.get('file') or {}).get('sha256')
+    return {'manifestSha256': digest, 'sourceSha256': source}
+
+
+def _timestamps(storage, manifest, version, username, usage):
+    """返回可核验的时间事实，不把导入、构建和归属混成一个“创建时间”。"""
+    with storage.connection() as db:
+        registered = db.execute(
+            'SELECT created_at FROM dataset_record WHERE dataset_version=?',
+            (version,)).fetchone()
+        owned = db.execute(
+            'SELECT created_at FROM dataset_owner WHERE dataset_version=? AND username=?',
+            (version, username)).fetchone()
+        built = db.execute(
+            "SELECT completed_at FROM dataset_build_task WHERE dataset_version=? "
+            "AND status='completed' AND completed_at IS NOT NULL "
+            "ORDER BY completed_at DESC LIMIT 1",
+            (version,)).fetchone()
+    registered_at = registered[0] if registered is not None else _manifest_registered_at(manifest)
+    return {
+        'registeredAt': registered_at,
+        'importedAt': registered[0] if registered is not None and usage == 'import' else None,
+        'ownedAt': owned[0] if owned is not None else None,
+        'builtAt': built[0] if built is not None else None,
+    }
+
+
 def _visible(storage, version, username, registry):
     if version not in registry:
         raise BaselineError('NOT_FOUND', '数据集版本未登记')
@@ -48,9 +107,11 @@ def _visible(storage, version, username, registry):
     return registry[version], owners
 
 
-def _view(manifest, version, owners, username):
+def _view(storage, manifest, version, owners, username):
     file = manifest.get('file') or {}
+    fields = [field for field in (manifest.get('fields') or []) if isinstance(field, dict)]
     source = manifest.get('source') or manifest
+    usage = manifest.get('usage') or 'branch'
     return {
         'version': version,
         'dataset': manifest.get('dataset'),
@@ -59,13 +120,25 @@ def _view(manifest, version, owners, username):
         'quality': manifest.get('quality'),
         'file': {'name': Path(file.get('path') or '').name, 'sha256': file.get('sha256'),
                  'bytes': file.get('bytes')},
-        'source': {'publisher': source.get('publisher'), 'url': source.get('url'),
-                   'revision': source.get('revision'), 'branch': source.get('branch'),
-                   'head': source.get('head')},
-        'labelRule': manifest.get('labelRule'),
-        'limitations': manifest.get('limitations') or [],
+        'source': store._source(manifest) if manifest.get('collection') or manifest.get('source') else {
+            'publisher': source.get('publisher'), 'url': source.get('url'),
+            'revision': source.get('revision'), 'branch': source.get('branch'),
+            'head': source.get('head')},
+        'fieldCount': sum(1 for field in fields if field.get('inModel') is not False),
+        'fieldNames': [field.get('name') for field in fields
+                       if isinstance(field.get('name'), str)],
+        'featureFields': [field.get('name') for field in fields
+                          if field.get('inModel') is not False and isinstance(field.get('name'), str)],
+        'labelRule': store._label_rule(manifest),
+        'labelMaturity': store._label_maturity(manifest),
+        'labelObservations': store._observations(manifest),
+        'limitations': store._limitations(manifest) or list(manifest.get('limitations') or []),
+        'curation': manifest.get('curation'),
+        'integrity': _manifest_integrity(storage, manifest, version),
         'mine': username in owners,
         'shared': not owners,
+        'usage': usage,
+        'timestamps': _timestamps(storage, manifest, version, username, usage),
     }
 
 
@@ -87,6 +160,29 @@ def _portable_manifest(manifest, version):
     if isinstance(nested, dict) and nested.get('path'):
         nested['path'] = Path(nested['path']).name
     return portable
+
+
+def _import_name(value, username, filename):
+    """把用户输入收敛为登记允许的 ASCII 数据名；默认带上账户隔离命名。"""
+    raw = value if isinstance(value, str) and value.strip() else Path(filename).stem
+    raw = raw.lower()
+    slug = re.sub(r'[^a-z0-9._-]+', '-', raw).strip('-._')[:64]
+    if not slug:
+        slug = 'dataset'
+    if value is None or not str(value).strip():
+        account = re.sub(r'[^a-z0-9._-]+', '-', username.lower()).strip('-._') or 'user'
+        return f'import-{account}-{slug}'[:80]
+    return slug
+
+
+def _import_provenance(username, filename):
+    source = re.sub(r'[^A-Za-z0-9._-]+', '-', Path(filename).name)[:120] or 'upload.csv'
+    return {
+        'publisher': 'user-upload',
+        'revision': '0' * 40,
+        'url': f'upload://{username}/{source}',
+        'citation': '用户导入的 CSV；未提供发布者观察与成熟声明',
+    }
 
 
 def install_user_routes(app, storage, dataset_root, training_service, catalog):
@@ -139,9 +235,10 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         owned = [version for version in storage.user_datasets(username) if usable(version)]
         versions = list(owned)
         if scope != 'mine':
+            shared_versions = set(storage.shared_dataset_versions())
             latest = {}
             for version, manifest in registry.items():
-                if version in versions or not usable(version):
+                if version in versions or version not in shared_versions or not usable(version):
                     continue
                 if _owners(storage, version):
                     continue
@@ -157,8 +254,125 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
             manifest = registry.get(version)
             if manifest is None:
                 continue
-            result.append(_view(manifest, version, _owners(storage, version), username))
+            result.append(_view(storage, manifest, version, _owners(storage, version), username))
         return {'datasets': result, 'limit': 5}
+
+    @app.post('/api/v1/user/dataset-builds')
+    async def create_user_dataset_build(request: Request):
+        username = _user(request)
+        payload = await read_object(request)
+        repository_url = payload.pop('repositoryUrl', None) if isinstance(payload, dict) else None
+        if not isinstance(repository_url, str) or not repository_url.strip():
+            raise BaselineError('INPUT_INVALID', '缺少公开仓库地址')
+        result, created = await run_in_threadpool(
+            app.state.dataset_builds.create_url, repository_url.strip(), payload,
+            getattr(request.state, 'request_id', None),
+            created_by=username, owner_user_id=username,
+        )
+        request.state.business_ids = (None, None, result.get('datasetVersion'))
+        return Response(
+            json.dumps(result, ensure_ascii=False), media_type='application/json',
+            status_code=202 if created else 200,
+        )
+
+    @app.get('/api/v1/user/dataset-builds')
+    def user_dataset_builds(request: Request, limit: int = 20, offset: int = 0):
+        return app.state.dataset_builds.user_pages(_user(request), limit, offset)
+
+    @app.get('/api/v1/user/dataset-builds/{task_id}')
+    def user_dataset_build(task_id: str, request: Request):
+        return app.state.dataset_builds.user_get(task_id, _user(request))
+
+    @app.post('/api/v1/user/dataset-builds/{task_id}/cancel')
+    def cancel_user_dataset_build(task_id: str, request: Request):
+        result = app.state.dataset_builds.user_cancel(task_id, _user(request))
+        return Response(json.dumps(result, ensure_ascii=False), media_type='application/json')
+
+    @app.post('/api/v1/user/dataset-builds/{task_id}/retry')
+    async def retry_user_dataset_build(task_id: str, request: Request):
+        username = _user(request)
+        result, created = await run_in_threadpool(
+            app.state.dataset_builds.user_retry, task_id,
+            getattr(request.state, 'request_id', None),
+            created_by=username, owner_user_id=username,
+        )
+        return Response(
+            json.dumps(result, ensure_ascii=False), media_type='application/json',
+            status_code=202 if created else 200,
+        )
+
+    @app.post('/api/v1/user/datasets/import')
+    async def import_user_dataset(request: Request):
+        """导入用户提供的原始 CSV；观察与成熟声明不会被伪造。"""
+        username = _user(request)
+        content_type = (request.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
+        if content_type not in ('text/csv', 'application/octet-stream', 'application/vnd.ms-excel'):
+            raise BaselineError('INPUT_INVALID', 'CSV 导入只接受 text/csv 或二进制 CSV 请求体')
+        try:
+            blob = await request.body()
+        except Exception as exc:
+            raise BaselineError('DATASET_UNAVAILABLE', 'CSV 请求体读取失败') from exc
+        if not blob:
+            raise BaselineError('INPUT_INVALID', 'CSV 文件为空')
+        if len(blob) > MAX_IMPORT_BYTES:
+            raise BaselineError('DATASET_IMPORT_TOO_LARGE', 'CSV 文件超过 64 MiB 上限')
+        schema_name = request.query_params.get('schema') or 'kamei14-benchmark-v1'
+        resolve(schema_name)
+        filename = request.query_params.get('filename') or 'upload.csv'
+        if not filename.lower().endswith('.csv'):
+            filename += '.csv'
+        name = _import_name(request.query_params.get('dataset'), username, filename)
+        provenance = _import_provenance(username, filename)
+        with storage.connection() as db:
+            owned = db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?', (username,)).fetchone()[0]
+        if owned >= 5:
+            raise BaselineError('QUOTA_EXCEEDED', '每人最多保留 5 个数据版本，请先清理')
+
+        with tempfile.TemporaryDirectory(prefix='jit-user-import-') as temporary:
+            source = Path(temporary) / Path(filename).name
+            source.write_bytes(blob)
+            try:
+                probe = datasets.build_manifest(
+                    source, schema=schema_name, dataset=name, provenance=provenance,
+                    extra={'usage': 'import'},
+                )
+            except (OSError, UnicodeError) as exc:
+                raise BaselineError('DATASET_INVALID', 'CSV 文件无法解析') from exc
+            version = probe['version']
+            root_path = (root or datasets.DATASETS)
+            room = root_path / name
+            existing_owners = storage.dataset_owners(version)
+            if existing_owners and username not in existing_owners:
+                raise BaselineError('DATASET_FORBIDDEN', '同内容数据集属于其他用户')
+            if not existing_owners and (room / f'{version}.json').exists():
+                raise BaselineError(
+                    'DATASET_EXISTS',
+                    '同内容数据已登记为共享版本；请更换数据集名称后再导入',
+                )
+
+            def import_after(entry, csv_path):
+                manifest_path = Path(entry['path'])
+                if not manifest_path.is_absolute():
+                    manifest_path = BACKEND / manifest_path
+                return store.import_dataset(csv_path, manifest_path, storage)
+
+            registered = store.publish_unique(
+                room, name, version, blob, schema=schema_name,
+                cohort=probe['cohort'], provenance=provenance,
+                extra={'usage': 'import'}, root=root_path, after=import_after,
+            )
+
+        storage.add_dataset_owner(registered['version'], username, limit=5)
+        manifest_path = Path(registered['path'])
+        if not manifest_path.is_absolute():
+            manifest_path = BACKEND / manifest_path
+        manifest = datasets.load_manifest(manifest_path)
+        request.state.business_ids = (None, None, registered['version'])
+        return Response(
+            json.dumps(_view(storage, manifest, registered['version'], storage.dataset_owners(
+                registered['version']), username), ensure_ascii=False),
+            media_type='application/json', status_code=201,
+        )
 
     @app.delete('/api/v1/user/datasets/{version}')
     def user_delete_dataset(version: str, request: Request):
@@ -227,7 +441,7 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         username = _user(request)
         registry = _registry(root)
         manifest, owners = _visible(storage, version, username, registry)
-        return _view(manifest, version, owners, username)
+        return _view(storage, manifest, version, owners, username)
 
     @app.get('/api/v1/user/datasets/{version}/split-preview')
     def user_split_preview(version: str, request: Request, preset: str | None = None):

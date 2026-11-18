@@ -126,7 +126,7 @@ class DatasetBuildStorage:
     def find_active(self, repository_id, branch, since, until, commit_limit, owner_user_id=None):
         with self.storage.connection() as db:
             row = db.execute(
-                "SELECT * FROM dataset_build_task WHERE repository_id=? AND branch=? "
+                "SELECT * FROM dataset_build_task WHERE repository_id IS ? AND branch=? "
                 "AND since IS ? AND until IS ? AND commit_limit=? AND owner_user_id IS ? "
                 f"AND status IN ({','.join('?' for _ in ACTIVE)}) "
                 "ORDER BY created_at DESC,id DESC LIMIT 1",
@@ -146,6 +146,29 @@ class DatasetBuildStorage:
                 (repository_id,),
             ).fetchone()[0]
         return [_view(row) for row in rows], total
+
+    def user_pages(self, username, limit=20, offset=0):
+        with self.storage.connection() as db:
+            rows = db.execute(
+                "SELECT * FROM dataset_build_task WHERE owner_user_id=? "
+                "ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
+                (username, limit, offset),
+            ).fetchall()
+            total = db.execute(
+                "SELECT COUNT(*) FROM dataset_build_task WHERE owner_user_id=?",
+                (username,),
+            ).fetchone()[0]
+        return [_view(row) for row in rows], total
+
+    def owned(self, task_id, username):
+        with self.storage.connection() as db:
+            row = db.execute(
+                "SELECT * FROM dataset_build_task WHERE id=? AND owner_user_id=?",
+                (task_id, username),
+            ).fetchone()
+        if row is None:
+            raise BaselineError("NOT_FOUND", "数据集构建任务不存在")
+        return _view(row)
 
     def start(self, task_id, timeout):
         now = datetime.now(timezone.utc)
@@ -300,6 +323,20 @@ class DatasetBuildService:
             raise BaselineError("NOT_FOUND", "数据集构建任务不存在")
         return self._positions([item])[0]
 
+    def user_get(self, task_id, username):
+        return self._positions([self.tasks.owned(task_id, username)])[0]
+
+    def user_pages(self, username, limit=20, offset=0):
+        if not 1 <= limit <= 100 or offset < 0:
+            raise BaselineError("INPUT_INVALID", "分页参数无效")
+        items, total = self.tasks.user_pages(username, limit, offset)
+        return {
+            "tasks": self._positions(items),
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+
     def pages(self, repository_id, limit=20, offset=0):
         if not 1 <= limit <= 100 or offset < 0:
             raise BaselineError("INPUT_INVALID", "分页参数无效")
@@ -339,12 +376,26 @@ class DatasetBuildService:
             "owner_user_id": owner_user_id,
         })
         self._executor.submit(self._execute, task_id)
-        return self.get(repository["id"], task_id), True
+        return self._positions([self.tasks.get(task_id)])[0], True
 
     def create(self, repository_id, payload, request_id=None, *, created_by, owner_user_id=None):
         repository = self._repository(repository_id)
         collect.validate_source(repository["url"], allow_local=self.allow_local)
         data = self._payload(payload)
+        with self._lock:
+            if self._closing.is_set():
+                raise BaselineError("TASK_SERVICE_STOPPING", "数据集构建服务正在停止")
+            if owner_user_id and self.storage.dataset_owner_count(owner_user_id) >= 5:
+                raise BaselineError("QUOTA_EXCEEDED", "每人最多保留 5 个数据版本，请先清理")
+            return self._enqueue(
+                repository, data, request_id=request_id, created_by=created_by,
+                owner_user_id=owner_user_id)
+
+    def create_url(self, repository_url, payload, request_id=None, *, created_by, owner_user_id=None):
+        """从任意公开仓库 URL 采集，不创建或修改项目记录。"""
+        collect.validate_source(repository_url, allow_local=self.allow_local)
+        data = self._payload(payload)
+        repository = {"id": None, "url": repository_url}
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "数据集构建服务正在停止")
@@ -374,6 +425,27 @@ class DatasetBuildService:
         self.get(repository_id, task_id)
         self.tasks.cancel(task_id)
         return self.get(repository_id, task_id)
+
+    def user_cancel(self, task_id, username):
+        self.user_get(task_id, username)
+        self.tasks.cancel(task_id)
+        return self.user_get(task_id, username)
+
+    def user_retry(self, task_id, request_id=None, *, created_by, owner_user_id):
+        source = self.user_get(task_id, owner_user_id)
+        if source["status"] not in RETRYABLE:
+            raise BaselineError("TASK_NOT_RETRYABLE", "只有失败、取消或中断的任务可以重试")
+        data = {
+            "branch": source["branch"],
+            "since": source["since"],
+            "until": source["until"],
+            "commitLimit": source["commitLimit"],
+        }
+        with self._lock:
+            return self._enqueue(
+                {"id": None, "url": source["repositoryUrl"]}, data,
+                request_id=request_id, created_by=created_by,
+                parent_task_id=task_id, owner_user_id=owner_user_id)
 
     def _check(self, task_id):
         row = self.tasks.raw(task_id)

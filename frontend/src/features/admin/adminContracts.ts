@@ -23,6 +23,7 @@ export interface AdminDatasetVersion {
   sourceSyncId: string | null
   references: string[]
   owners: string[]
+  shared: boolean
 }
 
 export interface AdminModel {
@@ -259,6 +260,7 @@ export interface ModelCoveragePage {
 
 const TASK_STATUSES = ['queued', 'running', 'succeeded', 'failed', 'cancelled', 'interrupted'] as const
 export const ACTIVE_TASK_STATUSES: readonly string[] = ['queued', 'running']
+const ADMIN_READ_TIMEOUT_MS = 30_000
 
 export function valueLabel(value: unknown, fallback = '未提供') {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : fallback
@@ -302,16 +304,26 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     sourceSyncId: textOrNull(value.sourceSyncId),
     references: Array.isArray(value.references) ? textList(value.references) : [],
     owners: Array.isArray(value.owners) ? textList(value.owners) : [],
+    shared: value.shared === true,
   }
 }
 
 export async function fetchAdminDatasets(signal?: AbortSignal): Promise<AdminDatasetVersion[]> {
-  const body = record(await apiRequest({ path: '/api/v1/datasets', method: 'GET', signal }))
+  const body = record(await apiRequest({ path: '/api/v1/datasets', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return recordList(body.datasets).flatMap(group => {
     const value = record(group)
     const dataset = text(value.dataset)
     return recordList(value.versions).map(version => datasetVersion(version, dataset))
   })
+}
+
+export async function setAdminDatasetSharing(version: string, shared: boolean): Promise<{ version: string; shared: boolean }> {
+  const value = record(await apiRequest({
+    path: `/api/admin/datasets/${encodeURIComponent(version)}/sharing`,
+    method: 'PUT',
+    body: { shared },
+  }))
+  return { version: text(value.version), shared: value.shared === true }
 }
 
 export interface PrunableDatasetVersion {
@@ -321,7 +333,7 @@ export interface PrunableDatasetVersion {
 }
 
 export async function fetchPrunableDatasets(keep: number, signal?: AbortSignal): Promise<PrunableDatasetVersion[]> {
-  const body = record(await apiRequest({ path: `/api/admin/datasets/prunable?keep=${encodeURIComponent(String(keep))}`, method: 'GET', signal }))
+  const body = record(await apiRequest({ path: `/api/admin/datasets/prunable?keep=${encodeURIComponent(String(keep))}`, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return recordList(body.versions).map(item => ({
     dataset: text(item.dataset), version: text(item.version), createdAt: text(item.createdAt),
   }))
@@ -333,8 +345,8 @@ export async function pruneDatasets(versions: string[], keep: number) {
 
 export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: AdminModel[]; methods: Row[]; candidates: Row[]; readiness: ModelReadiness }> {
   const [catalogBody, candidateBody] = await Promise.all([
-    apiRequest({ path: '/api/v1/models', method: 'GET', signal }),
-    apiRequest({ path: '/api/v1/model-candidates', method: 'GET', signal }),
+    apiRequest({ path: '/api/v1/models', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }),
+    apiRequest({ path: '/api/v1/model-candidates', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }),
   ])
   const catalog = record(catalogBody)
   return {
@@ -361,7 +373,7 @@ export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: 
 }
 
 export async function fetchAdminModel(modelId: string, signal?: AbortSignal): Promise<AdminModel> {
-  const body = record(await apiRequest({ path: `/api/v1/models/${encodeURIComponent(modelId)}`, method: 'GET', signal }))
+  const body = record(await apiRequest({ path: `/api/v1/models/${encodeURIComponent(modelId)}`, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return {
     modelId: text(body.modelId),
     name: text(body.name),
@@ -628,7 +640,7 @@ function packageImport(raw: unknown): ModelPackageImport {
 }
 
 export async function fetchModelCoverage(signal?: AbortSignal): Promise<ModelCoveragePage> {
-  const value = record(await apiRequest({ path: '/api/v1/models/coverage?limit=100', method: 'GET', signal }))
+  const value = record(await apiRequest({ path: '/api/v1/models/coverage?limit=100', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return {
     datasets: recordList(value.datasets).map(coverageDataset),
     total: finiteNumber(value.total),
@@ -639,7 +651,7 @@ export async function fetchModelCoverage(signal?: AbortSignal): Promise<ModelCov
 }
 
 export async function fetchTrainingTasks(limit = 20, offset = 0, signal?: AbortSignal): Promise<TrainingTaskPage> {
-  const body = record(await apiRequest({ path: `/api/v1/training-tasks?limit=${limit}&offset=${offset}`, method: 'GET', signal }))
+  const body = record(await apiRequest({ path: `/api/v1/training-tasks?limit=${limit}&offset=${offset}`, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return {
     tasks: recordList(body.tasks).map(trainingTask),
     total: finiteNumber(body.total),
@@ -649,7 +661,7 @@ export async function fetchTrainingTasks(limit = 20, offset = 0, signal?: AbortS
 }
 
 export async function fetchTrainingTask(taskId: string, signal?: AbortSignal): Promise<TrainingTask> {
-  return trainingTask(await apiRequest({ path: `/api/v1/training-tasks/${encodeURIComponent(taskId)}`, method: 'GET', signal }))
+  return trainingTask(await apiRequest({ path: `/api/v1/training-tasks/${encodeURIComponent(taskId)}`, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
 }
 
 export async function createTrainingTask(datasetVersion: string, method: string, metricSet: string,
@@ -801,14 +813,14 @@ export async function createTrainingExperiment(options: {
 
 export async function fetchTrainingExperiment(experimentId: string, signal?: AbortSignal): Promise<TrainingExperiment> {
   return trainingExperiment(await apiRequest({
-    path: `/api/v1/training-experiments/${encodeURIComponent(experimentId)}`, method: 'GET', signal,
+    path: `/api/v1/training-experiments/${encodeURIComponent(experimentId)}`, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS,
   }))
 }
 
 export async function fetchTrainingExperimentComparison(experimentId: string, signal?: AbortSignal): Promise<TrainingExperimentComparison> {
   const body = record(await apiRequest({
     path: `/api/v1/training-experiments/${encodeURIComponent(experimentId)}/comparison`,
-    method: 'GET', signal,
+    method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS,
   }))
   return {
     format: text(body.format),
@@ -845,6 +857,7 @@ export async function fetchExperimentRuns(options: {
     path: `/api/v1/experiment-runs?${params}`,
     method: 'GET',
     signal: options.signal,
+    timeoutMs: ADMIN_READ_TIMEOUT_MS,
   }))
   return {
     runs: recordList(body.runs).map(experimentRun),
@@ -863,6 +876,7 @@ export async function fetchExperimentRun(candidateId: string, signal?: AbortSign
     path: `/api/v1/experiment-runs/${encodeURIComponent(candidateId)}`,
     method: 'GET',
     signal,
+    timeoutMs: ADMIN_READ_TIMEOUT_MS,
   }))
 }
 

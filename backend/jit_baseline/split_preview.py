@@ -75,7 +75,7 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
         "admission": admission.view(evaluated),
     }
     try:
-        split, boundaries, policy = split_records(eligible, preset)
+        split, boundaries, policy = split_records(eligible, preset, require_classes=False)
     except BaselineError as exc:
         return {
             **base,
@@ -93,6 +93,24 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
         }
         for name in PARTITIONS
     }
+    invalid = [name for name in ("train", "test")
+               if {record["label"] for record in split[name]} != {0, 1}]
+    if invalid:
+        labels = {"train": "训练集", "test": "测试集"}
+        details = "；".join(
+            f"{labels[name]} {partitions[name]['records']} 行、{partitions[name]['positives']} 正例"
+            for name in invalid
+        )
+        return {
+            **base,
+            "available": False,
+            "reason": {
+                "code": "SPLIT_INVALID",
+                "message": f"切分后只有一类标签（{details}）。请更换比例或补充正/负样本。",
+            },
+            "partitions": partitions,
+            "policy": policy,
+        }
     return {
         **base,
         "available": True,

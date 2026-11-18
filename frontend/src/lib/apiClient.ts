@@ -3,9 +3,14 @@ import { parseSync, parseSyncPage, parseSyncCommitPage, syncBody, type SyncCommi
 
 export interface ApiRequest {
   path: string
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
+  /** 原始字节请求体（CSV 导入等）；设置后不会再 JSON 序列化 body。 */
+  rawBody?: BodyInit
+  contentType?: string
   signal?: AbortSignal
+  /** 只用于有明确最长等待时间的读取请求；超时按网络失败处理。 */
+  timeoutMs?: number
   /** 成功响应没有正文（例如 DELETE 的 204）：不要按 JSON 解析。 */
   expectEmpty?: boolean
 }
@@ -55,7 +60,10 @@ async function failure(response: Response): Promise<ApiError> {
 async function send(request: ApiRequest): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   let init: RequestInit = { method: request.method, headers, signal: request.signal ?? null }
-  if (request.body !== undefined) {
+  if (request.rawBody !== undefined) {
+    headers['Content-Type'] = request.contentType ?? 'application/octet-stream'
+    init = { ...init, body: request.rawBody }
+  } else if (request.body !== undefined) {
     headers['Content-Type'] = 'application/json'
     init = { ...init, body: JSON.stringify(request.body) }
   }
@@ -82,9 +90,32 @@ async function bodyOf(response: Response): Promise<unknown> {
 }
 
 export async function apiRequest(request: ApiRequest): Promise<unknown> {
-  const response = await send(request)
-  if (request.expectEmpty) return undefined
-  return bodyOf(response)
+  if (!request.timeoutMs) {
+    const response = await send(request)
+    if (request.expectEmpty) return undefined
+    return bodyOf(response)
+  }
+
+  const controller = new AbortController()
+  let timedOut = false
+  const forwardAbort = () => controller.abort()
+  if (request.signal?.aborted) controller.abort()
+  else request.signal?.addEventListener('abort', forwardAbort, { once: true })
+  const timer = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, request.timeoutMs)
+  try {
+    const response = await send({ ...request, signal: controller.signal })
+    if (request.expectEmpty) return undefined
+    return await bodyOf(response)
+  } catch (error) {
+    if (timedOut) throw new NetworkError('请求超时，请确认管理员服务正常后重试', true)
+    throw error
+  } finally {
+    clearTimeout(timer)
+    request.signal?.removeEventListener('abort', forwardAbort)
+  }
 }
 
 /** 需要区分 201（新建）与 200（复用）时使用；成功语义仍由调用方按契约判断。 */

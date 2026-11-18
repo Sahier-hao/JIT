@@ -29,7 +29,6 @@ const ProjectEvents = lazy(() => import('@/features/projects/components/ProjectA
 const MyDataPage = lazy(() => import('@/features/datasets/pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
 const MyTrainingPage = lazy(() => import('@/features/training/pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
 const MyModelsPage = lazy(() => import('@/features/models/pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
-const ProfilePage = lazy(() => import('@/features/account/pages/ProfilePage').then(module => ({ default: module.ProfilePage })))
 const LandingPage = lazy(() => import('@/features/account/pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('@/features/account/pages/LoginPage').then(module => ({ default: module.LoginPage })))
 const LineResearchPage = lazy(() => import('@/features/research/pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
@@ -72,12 +71,12 @@ function Workspace() {
   if (route.name === 'my-reviews') content = <ProjectsPage key={`${account ?? ''}:reviews`} navigate={navigate} view="reviews"/>
   else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
-  else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin}/>
-  else if (route.name === 'my-training') content = <MyTrainingPage key={route.experimentId ?? 'list'} experimentId={route.experimentId} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin} initialTab={route.view} initialTaskId={route.taskId}/>
+  else if (route.name === 'my-training') content = <MyTrainingPage key={`${route.experimentId ?? 'list'}:${route.datasetVersion ?? ''}`} experimentId={route.experimentId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
-  else if (route.name === 'profile') content = <ProfilePage navigate={navigate} onLoginRequired={requestLogin} onSessionCleared={() => setSession({ authenticated: false, username: null, status: 'anonymous' })}/>
+  else if (route.name === 'profile') content = <ProjectsPage navigate={navigate}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
-  else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
+  else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} buildTaskId={route.buildTaskId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
   else if (route.name === 'analysis') content = <ReviewWorkbench key={stateKey} repositoryId={route.repositoryId} viewSyncId={route.viewSyncId} commitId={route.commitId} stateKey={stateKey} drafts={drafts} navigate={navigate}/>
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>

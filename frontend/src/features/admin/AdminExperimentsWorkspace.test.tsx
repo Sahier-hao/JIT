@@ -96,7 +96,7 @@ it('lists real report statuses and opens a controlled report id', async () => {
   const navigate = vi.fn()
   render(<AdminWorkspace route={{ name: 'admin', view: 'experiments' }} navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: '多项目实验' })).toBeVisible()
-  expect(screen.getByText('多模型评价矩阵')).toBeVisible()
+  expect(await screen.findByText('多模型评价矩阵')).toBeVisible()
   expect(screen.getByText('已陈旧')).toBeVisible()
   expect(screen.getByText(/kamei14-git-v2-flask 描述文件已变化/)).toBeVisible()
   expect(screen.getByText(/6 个数据集 · 时间外 48 格/)).toBeVisible()
@@ -112,6 +112,7 @@ it('shows four protocols, macro mean and variance, fusion weights and failure re
   api()
   render(<AdminWorkspace route={{ name: 'admin', view: 'experiments', resourceId: REPORT_ID }} navigate={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: '多项目实验报告' })).toBeVisible()
+  expect((await screen.findAllByText('本地训练', { exact: false })).length).toBeGreaterThan(0)
   for (const label of ['本地训练', '合并训练', '留一项目', '全局+本地']) {
     expect(screen.getAllByText(label, { exact: false }).length).toBeGreaterThan(0)
   }

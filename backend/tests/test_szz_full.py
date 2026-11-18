@@ -7,6 +7,7 @@ import subprocess
 import pytest
 
 from jit_baseline.collect import _entries
+from jit_baseline import szz as szz_module
 from jit_baseline.szz import classify_message, label_repository, sample_evidence, write_sample_csv
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="系统缺少 git 命令")
@@ -145,3 +146,17 @@ def test_full_szz_ignores_version_metadata_lines(tmp_path):
     result = _full(repo)
     assert first not in result.labels
     assert result.skipped_noise_lines >= 1
+
+
+def test_full_szz_reports_range_budget_truncation(tmp_path, monkeypatch):
+    repo = _make_repo(tmp_path / "repo")
+    original = LINES
+    first = _commit(repo, "add module", {"pkg/a.py": original}, "2024-01-01T00:00:00+00:00")
+    changed = original.replace("line 2\n", "line 2 changed\n").replace("line 8\n", "line 8 changed\n")
+    _commit(repo, "fix: update two regions", {"pkg/a.py": changed}, "2024-01-02T00:00:00+00:00")
+    monkeypatch.setattr(szz_module, "MAX_RANGES_PER_FILE", 1)
+
+    result = _full(repo)
+    assert first in result.labels
+    assert result.truncated is True
+    assert result.budget_hits["ranges-per-file"] == 1

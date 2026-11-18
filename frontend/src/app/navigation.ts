@@ -5,8 +5,8 @@ export type Route =
   | { name: 'landing' }
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
-  | { name: 'my-data' }
-  | { name: 'my-training'; experimentId?: string }
+  | { name: 'my-data'; view?: 'builds'; taskId?: string }
+  | { name: 'my-training'; experimentId?: string; datasetVersion?: string }
   | { name: 'my-models' }
   | { name: 'profile' }
   | { name: 'research-line' }
@@ -14,7 +14,7 @@ export type Route =
   | { name: 'notifications' }
   | { name: 'repositories' }
   | { name: 'sources' }
-  | { name: 'repository'; repositoryId: string; tab?: 'overview' | 'prs' | 'trends' | 'analyses'; viewId?: string }
+  | { name: 'repository'; repositoryId: string; tab?: 'overview' | 'prs' | 'trends' | 'analyses'; viewId?: string; buildTaskId?: string }
   | { name: 'analysis'; repositoryId: string; viewSyncId: string; view: 'commits' | 'plan'; commitId?: string }
   | { name: 'comparison'; repositoryId: string; baseSyncId: string; targetSyncId: string }
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
@@ -63,8 +63,8 @@ export function parseHash(hash: string): Route {
     }
     if (path === '/welcome') return { name: 'landing' }
     if (path === '/reviews') return { name: 'my-reviews' }
-    if (path === '/my-data') return { name: 'my-data' }
-    if (path === '/my-training') return { name: 'my-training' }
+    if (path === '/my-data') return { name: 'my-data', ...(params.get('view') === 'builds' ? { view: 'builds' as const } : {}), ...(params.get('taskId') ? { taskId: params.get('taskId') as string } : {}) }
+    if (path === '/my-training') return { name: 'my-training', ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}) }
     if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
     if (path === '/my-models') return { name: 'my-models' }
     if (path === '/profile') return { name: 'profile' }
@@ -102,7 +102,7 @@ export function parseHash(hash: string): Route {
     if (projectRoot && parts[2] === 'prs' && parts.length === 6 && /^[A-Za-z0-9_.-]+$/.test(parts[3]) && /^[A-Za-z0-9_.-]+$/.test(parts[4]) && /^[1-9]\d*$/.test(parts[5])) return { name: 'pr-work', repositoryId: parts[1], owner: parts[3], repositoryName: parts[4], number: Number(parts[5]), ...(snapshotId ? { snapshotId } : {}), ...(mode ? { mode } : {}) }
     if (projectRoot && parts.length === 3 && ['overview', 'prs', 'trends', 'analyses'].includes(parts[2])) return { name: 'repository', repositoryId: parts[1], tab: parts[2] as 'overview' | 'prs' | 'trends' | 'analyses' }
     if (projectRoot && parts.length === 4 && parts[2] === 'trends') return { name: 'repository', repositoryId: parts[1], tab: 'trends', viewId: parts[3] }
-    if (projectRoot && parts.length === 2) return { name: 'repository', repositoryId: parts[1] }
+    if (projectRoot && parts.length === 2) return { name: 'repository', repositoryId: parts[1], ...(params.get('buildTaskId') ? { buildTaskId: params.get('buildTaskId') as string } : {}) }
     if (projectRoot && parts[2] === 'compare' && parts.length === 5) return { name: 'comparison', repositoryId: parts[1], baseSyncId: parts[3], targetSyncId: parts[4] }
     if (projectRoot && parts[2] === 'analyses' && (parts[4] === 'commits' || parts[4] === 'plan') && [5, 6].includes(parts.length)) return { name: 'analysis', repositoryId: parts[1], viewSyncId: parts[3], view: parts[4], ...(parts[5] ? { commitId: parts[5] } : {}) }
     if (parts[0] === 'legacy' && parts[1] === 'sync' && parts.length === 4 && ['commits', 'plan'].includes(parts[3])) return { name: 'legacy-sync', syncId: parts[2], view: parts[3] as 'commits' | 'plan' }
@@ -124,8 +124,16 @@ export function hashFor(route: Route): string {
       return params.size ? `#/login?${params}` : '#/login'
     }
     case 'my-reviews': return '#/reviews'
-    case 'my-data': return '#/my-data'
-    case 'my-training': return route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
+    case 'my-data': {
+      const params = new URLSearchParams()
+      if (route.view === 'builds') params.set('view', 'builds')
+      if (route.taskId) params.set('taskId', route.taskId)
+      return params.size ? `#/my-data?${params}` : '#/my-data'
+    }
+    case 'my-training': {
+      if (route.experimentId) return `#/my-training/${encodeURIComponent(route.experimentId)}`
+      return route.datasetVersion ? `#/my-training?datasetVersion=${encodeURIComponent(route.datasetVersion)}` : '#/my-training'
+    }
     case 'my-models': return '#/my-models'
     case 'profile': return '#/profile'
     case 'research-line': return '#/research/line-model'
@@ -139,7 +147,10 @@ export function hashFor(route: Route): string {
     case 'notifications': return '#/notifications'
     case 'repositories': return '#/projects'
     case 'sources': return '#/projects/new'
-    case 'repository': return `#/projects/${encodeURIComponent(route.repositoryId)}${route.tab ? `/${route.tab}${route.tab === 'trends' && route.viewId ? `/${encodeURIComponent(route.viewId)}` : ''}` : ''}`
+    case 'repository': {
+      const base = `#/projects/${encodeURIComponent(route.repositoryId)}${route.tab ? `/${route.tab}${route.tab === 'trends' && route.viewId ? `/${encodeURIComponent(route.viewId)}` : ''}` : ''}`
+      return route.buildTaskId ? `${base}?buildTaskId=${encodeURIComponent(route.buildTaskId)}` : base
+    }
     case 'comparison': return `#/projects/${encodeURIComponent(route.repositoryId)}/compare/${encodeURIComponent(route.baseSyncId)}/${encodeURIComponent(route.targetSyncId)}`
     case 'analysis': return `#/projects/${encodeURIComponent(route.repositoryId)}/analyses/${encodeURIComponent(route.viewSyncId)}/${route.view}${route.commitId ? '/'+encodeURIComponent(route.commitId) : ''}`
     case 'report': return route.runId ? `#/admin/reports/${encodeURIComponent(route.runId)}/${route.view}` : '#/admin/reports'

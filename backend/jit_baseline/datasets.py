@@ -110,7 +110,7 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=Non
             raise BaselineError("DATASET_INVALID", f"附加证据不能覆盖必需字段：{key}")
         manifest[key] = value
     usage = manifest.setdefault("usage", "branch")
-    if usage not in ("branch", "pr"):
+    if usage not in ("branch", "pr", "import"):
         raise BaselineError("DATASET_INVALID", f"数据集来源类型无效：{usage}")
     return manifest
 
@@ -159,7 +159,7 @@ def validate_manifest(manifest):
     if not isinstance(manifest["samples"], list) or not manifest["samples"]:
         raise BaselineError("DATASET_INVALID", "描述文件缺少样本")
     manifest.setdefault("usage", "branch")
-    if manifest["usage"] not in ("branch", "pr"):
+    if manifest["usage"] not in ("branch", "pr", "import"):
         raise BaselineError("DATASET_INVALID", f"数据集来源类型无效：{manifest['usage']}")
     labeling = manifest.get("labeling")
     if labeling is not None:

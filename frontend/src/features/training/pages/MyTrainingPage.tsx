@@ -13,6 +13,8 @@ import {
 
 import { EChartCanvas, useChartColors } from '@/components/shared/EChartCanvas'
 import type { Route } from '@/app/navigation'
+import { TrainingCreateDialog } from '@/features/training/components/TrainingCreateDialog'
+import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 const ACTIVE = new Set(['queued', 'running'])
 
@@ -41,8 +43,9 @@ function LossChart({ task }: { task: TrainingTask }) {
   return history ? <EChartCanvas option={option} height={200} label={`${task.method} 逐 epoch 训练损失`}/> : null
 }
 
-export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
+export function MyTrainingPage({ experimentId, initialDatasetVersion, navigate, onLoginRequired }: {
   experimentId?: string
+  initialDatasetVersion?: string
   navigate: (route: Route) => void
   onLoginRequired: () => void
 }) {
@@ -52,6 +55,7 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
   const [revision, setRevision] = useState(0)
+  const [createOpen, setCreateOpen] = useState(Boolean(initialDatasetVersion))
   const userRevision = useUserRevision()
 
   useEffect(() => {
@@ -111,15 +115,16 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
 
   if (error && !experiment && !list) return <section className="grid gap-4"><p className="text-xs text-rose" role="alert">{error}</p></section>
   if (!experimentId) return <section className="grid gap-4">
-    <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-soft pb-3"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的训练</h1><span className="text-xs text-foreground-3">单 worker · 同时最多一个活动实验</span></header>
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft pb-3"><div className="flex flex-wrap items-baseline gap-2"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的训练</h1><span className="text-xs text-foreground-3">单 worker · 同时最多一个活动实验</span></div><Button size="sm" onClick={() => setCreateOpen(true)} type="button">开始训练</Button></header>
     {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
-    {list === null ? <p className="py-6 text-center text-xs text-foreground-3">正在读取训练记录…</p> : list.length === 0
-      ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><p className="text-sm text-foreground-3">还没有训练记录。先到「我的数据」选择一个版本发起训练。</p><Button variant='default' onClick={() => navigate({ name: 'my-data' })} type="button">选择数据</Button></div>
+    {list === null ? <CardListSkeleton label="正在读取训练记录" rows={3}/> : list.length === 0
+      ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><p className="text-sm text-foreground-3">还没有训练记录。</p><div className="flex flex-wrap gap-2"><Button variant='default' onClick={() => setCreateOpen(true)} type="button">选择数据开始训练</Button><Button variant="outline" onClick={() => navigate({ name: 'my-data' })} type="button">管理我的数据</Button></div></div>
       : <div className="grid gap-2">{list.map(item => <Button variant="ghost" key={item.experimentId} className="h-auto min-w-0 w-full grid gap-0.5 rounded-sm border border-border-soft bg-card p-2.5 text-left text-xs whitespace-normal hover:bg-hover" onClick={() => navigate({ name: 'my-training', experimentId: item.experimentId })}>
         <strong className="truncate text-sm font-medium text-foreground">{item.datasetVersion}</strong><span className="text-foreground-3">{valueLabel(item.status)} · {item.tasks.length} 个方法 · {item.splitPreset}</span><code className="break-all font-mono text-[11px] text-foreground-4">{item.experimentId}</code>
       </Button>)}</div>}
+    <TrainingCreateDialog open={createOpen} onOpenChange={setCreateOpen} initialDatasetVersion={initialDatasetVersion} onCreated={experimentId => navigate({ name: 'my-training', experimentId })} onLoginRequired={onLoginRequired}/>
   </section>
-  if (!experiment) return <section className="grid gap-4"><p className="py-6 text-center text-xs text-foreground-3">正在读取实验…</p></section>
+  if (!experiment) return <section className="grid gap-4"><CardListSkeleton label="正在读取训练实验" rows={2}/></section>
 
   const historyTasks = experiment.tasks.filter(task => task.trainingHistory)
   return <section className="grid gap-4">

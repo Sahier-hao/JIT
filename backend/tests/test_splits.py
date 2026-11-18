@@ -67,11 +67,23 @@ def test_omitted_split_is_the_existing_default_and_switching_changes_identity():
     assert alternate["boundaries"] != default["boundaries"]
 
 
-@pytest.mark.parametrize("value", ["random", {"start": "2020-01-01"}, "temporal-50-25-25"])
+@pytest.mark.parametrize("value", ["random", {"start": "2020-01-01"}, "temporal-33-33-34"])
 def test_unregistered_split_rules_are_rejected(value):
     with pytest.raises(BaselineError) as error:
         split_records(records(), value)
     assert error.value.code == "SPLIT_POLICY_INVALID"
+
+
+def test_split_diagnostics_can_explain_single_class_partitions():
+    values = records()
+    for index, record in enumerate(values):
+        record["label"] = 1 if index >= 80 else 0
+    split, _, _ = split_records(values, "temporal-70-15-15", require_classes=False)
+    assert {record["label"] for record in split["train"]} == {0}
+    assert {record["label"] for record in split["test"]} == {1}
+    with pytest.raises(BaselineError) as error:
+        split_records(values, "temporal-70-15-15")
+    assert error.value.code == "SPLIT_INVALID"
 
 
 def test_split_preview_is_read_only_and_reports_partition_details(tmp_path):

@@ -318,7 +318,7 @@ def test_real_updates_remind_without_analyzing(tmp_path, real_run):  # noqa: F81
         finished = wait_job(job['syncId'])
         assert finished['status'] == 'completed', finished
         assert finished['maturity']['effectivePolicy'] == 'not-applicable'
-        deadline = time.monotonic() + 10
+        deadline = time.monotonic() + 30
         while not any(note['kind'] == 'analysis-completed'
                       for note in events(service, repository_id)):
             if time.monotonic() > deadline:

@@ -28,10 +28,24 @@ export interface UserDataset {
   quality: Row
   file: Row
   source: Row
+  fieldCount: number | null
+  fieldNames: string[]
+  featureFields: string[]
   labelRule: string | null
+  labelMaturity: Row | null
+  labelObservations: Row | null
   limitations: string[]
+  curation: Row | null
+  integrity: Row
   mine: boolean
   shared: boolean
+  usage: string
+  timestamps: {
+    registeredAt: string | null
+    importedAt: string | null
+    ownedAt: string | null
+    builtAt: string | null
+  }
 }
 export interface UserModel {
   modelId: string
@@ -44,13 +58,62 @@ export interface UserModel {
   datasetVersion: string | null
 }
 
+export interface UserSplitPreview {
+  available: boolean
+  reason: { code: string; message: string } | null
+  eligibleRecords: number
+  admission: Row | null
+  partitions: Record<'train' | 'validation' | 'test', {
+    records: number
+    positives: number
+    start: string
+    end: string
+  }> | null
+}
+
+export interface UserCurationPreview {
+  sourceVersion: string
+  recipeSha256: string
+  stats: {
+    rawRows: number
+    includedRows: number
+    excludedRows: number
+    positiveLabels: number
+    timeRange: Row | null
+    excluded: Row
+    sampleExcluded: Row[]
+  }
+}
+
+export interface UserCurationDerived {
+  version: string
+  preview: UserCurationPreview
+}
+
 function userDataset(raw: unknown): UserDataset {
   const value = record(raw)
+  const timestamps = value.timestamps == null ? null : record(value.timestamps)
   return {
     version: text(value.version), dataset: text(value.dataset), schema: text(value.schema),
     timeRange: record(value.timeRange), quality: record(value.quality), file: record(value.file),
-    source: record(value.source), labelRule: textOrNull(value.labelRule),
+    source: record(value.source),
+    fieldCount: typeof value.fieldCount === 'number' && Number.isInteger(value.fieldCount) && value.fieldCount >= 0
+      ? value.fieldCount : null,
+    fieldNames: value.fieldNames == null ? [] : textList(value.fieldNames),
+    featureFields: value.featureFields == null ? [] : textList(value.featureFields),
+    labelRule: textOrNull(value.labelRule),
+    labelMaturity: value.labelMaturity == null ? null : record(value.labelMaturity),
+    labelObservations: value.labelObservations == null ? null : record(value.labelObservations),
     limitations: textList(value.limitations), mine: value.mine === true, shared: value.shared === true,
+    curation: value.curation == null ? null : record(value.curation),
+    integrity: value.integrity == null ? {} : record(value.integrity),
+    usage: textOrNull(value.usage) ?? 'branch',
+    timestamps: {
+      registeredAt: timestamps ? textOrNull(timestamps.registeredAt) : null,
+      importedAt: timestamps ? textOrNull(timestamps.importedAt) : null,
+      ownedAt: timestamps ? textOrNull(timestamps.ownedAt) : null,
+      builtAt: timestamps ? textOrNull(timestamps.builtAt) : null,
+    },
   }
 }
 
@@ -98,21 +161,76 @@ export async function deleteUserDataset(version: string) {
   return record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}`, method: 'DELETE', expectEmpty: false }))
 }
 
+export async function importUserDataset(file: Blob, options: {
+  filename: string
+  dataset?: string
+  schema: string
+}): Promise<UserDataset> {
+  const query = new URLSearchParams({ filename: options.filename, schema: options.schema })
+  if (options.dataset?.trim()) query.set('dataset', options.dataset.trim())
+  return userDataset(await apiRequest({
+    path: `/api/v1/user/datasets/import?${query}`,
+    method: 'POST',
+    rawBody: file,
+    contentType: 'text/csv',
+  }))
+}
+
 export function exportDataset(version: string): void {
   window.location.href = `/api/v1/user/datasets/${encodeURIComponent(version)}/export`
 }
 
-export async function splitPreview(version: string, preset: string, signal?: AbortSignal) {
+export async function splitPreview(version: string, preset: string, signal?: AbortSignal): Promise<UserSplitPreview> {
   const body = record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/split-preview?preset=${encodeURIComponent(preset)}`, method: 'GET', signal }))
-  return body
+  const reason = body.reason == null ? null : record(body.reason)
+  const parts = body.partitions == null ? null : record(body.partitions)
+  const partition = (raw: unknown) => {
+    const value = record(raw)
+    return {
+      records: finiteNumber(value.records),
+      positives: finiteNumber(value.positives),
+      start: textOrNull(value.start) ?? '',
+      end: textOrNull(value.end) ?? '',
+    }
+  }
+  return {
+    available: body.available === true,
+    reason: reason ? { code: text(reason.code), message: text(reason.message) } : null,
+    eligibleRecords: finiteNumber(body.eligibleRecords ?? body.datasetRecords),
+    admission: body.admission == null ? null : record(body.admission),
+    partitions: parts == null ? null : {
+      train: partition(parts.train),
+      validation: partition(parts.validation),
+      test: partition(parts.test),
+    },
+  }
+}
+
+function curationPreview(raw: unknown): UserCurationPreview {
+  const value = record(raw)
+  const stats = record(value.stats)
+  return {
+    sourceVersion: text(value.sourceVersion),
+    recipeSha256: text(value.recipeSha256),
+    stats: {
+      rawRows: finiteNumber(stats.rawRows),
+      includedRows: finiteNumber(stats.includedRows),
+      excludedRows: finiteNumber(stats.excludedRows),
+      positiveLabels: finiteNumber(stats.positiveLabels),
+      timeRange: stats.timeRange == null ? null : record(stats.timeRange),
+      excluded: stats.excluded == null ? {} : record(stats.excluded),
+      sampleExcluded: stats.sampleExcluded == null ? [] : recordList(stats.sampleExcluded),
+    },
+  }
 }
 
 export async function previewCuration(version: string, recipe: unknown) {
-  return record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/preview`, method: 'POST', body: { recipe } }))
+  return curationPreview(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/preview`, method: 'POST', body: { recipe } }))
 }
 
-export async function deriveCuration(version: string, recipe: unknown) {
-  return record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/derive`, method: 'POST', body: { recipe } }))
+export async function deriveCuration(version: string, recipe: unknown): Promise<UserCurationDerived> {
+  const value = record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/derive`, method: 'POST', body: { recipe } }))
+  return { version: text(record(value.dataset).version), preview: curationPreview(value.preview) }
 }
 
 export async function createUserExperiment(options: {

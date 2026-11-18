@@ -219,8 +219,8 @@ def evaluate(manifest, records, *, allow_legacy=False, allow_restricted=False):
         if not allow_legacy:
             return _unavailable(
                 "LABEL_OBSERVATION_UNKNOWN",
-                "该 SZZ 版本没有可核验的观察与成熟声明；请按 mature-observed-v1 重建，"
-                "或显式选择历史协议复现", LEGACY_PROTOCOL,
+                "这份数据缺少标签成熟度记录，无法安全判断哪些提交可用于训练；"
+                "请重新采集为当前版本，或选择其他数据", LEGACY_PROTOCOL,
                 restricted=True, eligible=[],
                 counts={"originalRecords": len(records), "eligibleRecords": 0,
                         "excludedImmature": 0, "excludedUnknown": len(records),

@@ -49,7 +49,9 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (36, Path(__file__).parent / 'migrations/036_repository_sync_degrade_reasons.sql'),
               (37, Path(__file__).parent / 'migrations/037_label_maturity.sql'),
               (38, Path(__file__).parent / 'migrations/038_model_release_qualification.sql'),
-              (39, Path(__file__).parent / 'migrations/039_model_release_channel.sql'))
+              (39, Path(__file__).parent / 'migrations/039_model_release_channel.sql'),
+              (40, Path(__file__).parent / 'migrations/040_user_dataset_builds.sql'),
+              (41, Path(__file__).parent / 'migrations/041_dataset_sharing.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -337,6 +339,34 @@ class CatalogStorage:
             return [row[0] for row in db.execute(
                 'SELECT username FROM dataset_owner WHERE dataset_version=? ORDER BY username',
                 (version,))]
+
+    def dataset_shared(self, version):
+        with self.connection() as db:
+            return db.execute(
+                'SELECT 1 FROM dataset_share WHERE dataset_version=?', (version,)
+            ).fetchone() is not None
+
+    def shared_dataset_versions(self):
+        with self.connection() as db:
+            return [row[0] for row in db.execute(
+                'SELECT dataset_version FROM dataset_share ORDER BY dataset_version')]
+
+    def set_dataset_share(self, version, shared, actor):
+        """管理员显式开放/撤销共享；用户自有版本不能开放给其他人。"""
+        if self.dataset_owners(version):
+            raise BaselineError('DATASET_OWNED', '用户自有数据版本不能开放共享')
+        with self.connection(write=True) as db:
+            if shared:
+                now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+                db.execute(
+                    'INSERT INTO dataset_share(dataset_version,shared_by,shared_at) '
+                    'VALUES (?,?,?) ON CONFLICT(dataset_version) DO UPDATE SET '
+                    'shared_by=excluded.shared_by,shared_at=excluded.shared_at',
+                    (version, actor, now),
+                )
+            else:
+                db.execute('DELETE FROM dataset_share WHERE dataset_version=?', (version,))
+        return bool(shared)
 
     def dataset_owner_count(self, username):
         with self.connection() as db:

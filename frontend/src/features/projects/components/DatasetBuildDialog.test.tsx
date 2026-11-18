@@ -35,6 +35,8 @@ it('builds only a dataset, keeps project analysis untouched, and offers explicit
   render(<DatasetBuildDialog repositoryId={PROJECT} defaultBranch="main" open onOpenChange={vi.fn()} navigate={navigate}/>)
   const user = userEvent.setup()
   expect(await screen.findByLabelText('数据集构建分支')).toHaveValue('main')
+  await user.click(screen.getByRole('combobox', { name: '数据集构建采集范围' }))
+  await user.click(await screen.findByRole('option', { name: '自定义日期' }))
   await user.type(screen.getByLabelText('数据集构建开始日期'), '2024-01-01')
   await user.type(screen.getByLabelText('数据集构建结束日期'), '2025-01-01')
   await user.click(screen.getByRole('button', { name: '开始构建' }))
@@ -42,7 +44,7 @@ it('builds only a dataset, keeps project analysis untouched, and offers explicit
   expect(screen.getByText('kamei14-git-v2-project-2024-01-01_2024-12-31')).toBeVisible()
   expect(screen.getByText(/不会自动训练或替换当前模型/)).toBeVisible()
   expect(fetch.mock.calls.some(([path]) => String(path).includes('/training-tasks'))).toBe(false)
-  await user.click(screen.getByRole('button', { name: '进入管理工作区查看并训练' }))
+  await user.click(screen.getByRole('button', { name: '查看数据' }))
   expect(navigate).toHaveBeenCalledWith({
     name: 'admin', view: 'datasets', resourceId: 'kamei14-git-v2-project',
     version: 'kamei14-git-v2-project-2024-01-01_2024-12-31',
@@ -64,4 +66,35 @@ it('keeps the branch and range visible when the build fails', async () => {
   expect(await screen.findByText('分支不可读')).toBeVisible()
   expect(screen.getByLabelText('数据集构建分支')).toHaveValue('release')
   expect(screen.getByRole('button', { name: '按原参数重试' })).toBeVisible()
+})
+
+it('starts a fresh build instead of reopening a completed task', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    if (String(path).endsWith('/dataset-builds?limit=20&offset=0')) {
+      return response({ tasks: [task({
+        status: 'completed', stage: 'completed', datasetName: 'kamei14-git-v2-project',
+        datasetVersion: 'kamei14-git-v2-project-2024-01-01_2024-12-31',
+      })], total: 1, limit: 20, offset: 0 })
+    }
+    return response({})
+  })
+  render(<DatasetBuildDialog repositoryId={PROJECT} defaultBranch="main" open onOpenChange={vi.fn()} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('button', { name: '开始构建' })).toBeVisible()
+  expect(screen.getByLabelText('数据集构建分支')).toHaveValue('main')
+  expect(screen.queryByRole('button', { name: '查看数据' })).not.toBeInTheDocument()
+})
+
+it('opens the requested build task from a task deep link', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    if (String(path).endsWith('/dataset-builds?limit=20&offset=0')) {
+      return response({ tasks: [task({
+        taskId: 'build-deep-link', status: 'completed', stage: 'completed',
+        datasetName: 'kamei14-git-v2-project', datasetVersion: 'kamei14-git-v2-project-2024-01-01_2024-12-31',
+      })], total: 1, limit: 20, offset: 0 })
+    }
+    return response({})
+  })
+  render(<DatasetBuildDialog repositoryId={PROJECT} defaultBranch="main" initialTaskId="build-deep-link" open onOpenChange={vi.fn()} navigate={vi.fn()}/>)
+  expect(await screen.findByText('已完成')).toBeVisible()
+  expect(screen.getByRole('button', { name: '查看数据' })).toBeVisible()
 })
