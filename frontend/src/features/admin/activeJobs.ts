@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { ActiveJob } from '@/components/layout/ActiveJobsIndicator'
 import { fetchTrainingTasks, type TrainingTask } from '@/features/admin/adminContracts'
+import { queryKeys } from '@/lib/queryKeys'
 
 const ACTIVE = new Set(['queued', 'running'])
 const STAGE_LABELS: Record<string, string> = {
@@ -17,40 +18,17 @@ function taskJob(task: TrainingTask): ActiveJob {
   }
 }
 
+/** 管理员活跃训练任务；关闭时停止轮询，后台标签页暂停。 */
 export function useActiveAdminJobs(enabled: boolean): ActiveJob[] {
-  const [jobs, setJobs] = useState<ActiveJob[]>([])
-  useEffect(() => {
-    if (!enabled) return
-    let alive = true
-    let running = false
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const controller = new AbortController()
-    async function load() {
-      if (!alive || running) return
-      if (timer) { clearTimeout(timer); timer = null }
-      if (document.visibilityState === 'hidden') { timer = setTimeout(load, 6000); return }
-      running = true
-      try {
-        const page = await fetchTrainingTasks(50, 0, controller.signal)
-        if (alive && !controller.signal.aborted) {
-          setJobs(page.tasks.filter(task => ACTIVE.has(task.status)).map(taskJob))
-        }
-      } catch {
-        if (alive && !controller.signal.aborted) setJobs([])
-      } finally {
-        running = false
-        if (alive && !controller.signal.aborted) timer = setTimeout(load, 6000)
-      }
-    }
-    void load()
-    const onFocus = () => { if (document.visibilityState !== 'hidden') void load() }
-    window.addEventListener('focus', onFocus)
-    return () => {
-      alive = false
-      controller.abort()
-      if (timer) clearTimeout(timer)
-      window.removeEventListener('focus', onFocus)
-    }
-  }, [enabled])
-  return enabled ? jobs : []
+  const query = useQuery({
+    queryKey: queryKeys.activeAdminJobs,
+    enabled,
+    queryFn: async ({ signal }) => {
+      const page = await fetchTrainingTasks(50, 0, signal)
+      return page.tasks.filter(task => ACTIVE.has(task.status)).map(taskJob)
+    },
+    refetchInterval: 6000,
+    retry: false,
+  })
+  return enabled ? query.data ?? [] : []
 }

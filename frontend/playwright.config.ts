@@ -9,20 +9,24 @@ const frontendPort = numberFromEnv('JIT_FRONTEND_PORT', DEFAULT_FRONTEND_PORT)
 const servicePort = numberFromEnv('JIT_SERVICE_PORT', DEFAULT_SERVICE_PORT)
 const python = process.env.JIT_PYTHON ?? '.venv\\Scripts\\python.exe'
 
+const inheritedEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([, value]) => typeof value === 'string'),
+) as Record<string, string>
+// 专用预览服务与大型仓库闭环各自使用独立数据库/模型状态，不能混入共享默认套件。
+const dedicatedSpecs = [
+  '**/admin-training-workbench.spec.ts',
+  '**/experiment-model-promotion.spec.ts',
+  '**/model-package-recovery.spec.ts',
+  '**/current-schema-release.spec.ts',
+  '**/bundled-model-bootstrap.spec.ts',
+  '**/admin-multi-method-experiment.spec.ts',
+  '**/project-workspace.spec.ts',
+  '**/admin-experiments.spec.ts',
+  '**/pr-account-continuation.spec.ts',
+]
+
 export default defineConfig({
   testDir: './e2e',
-  // 专用预览服务与大型仓库闭环各自使用独立数据库/模型状态，不能混入共享默认套件。
-  testIgnore: [
-    '**/admin-multi-method-experiment.spec.ts',
-    '**/admin-training-workbench.spec.ts',
-    '**/project-workspace.spec.ts',
-    '**/admin-experiments.spec.ts',
-    '**/experiment-model-promotion.spec.ts',
-    '**/model-package-recovery.spec.ts',
-    '**/bundled-model-bootstrap.spec.ts',
-    '**/current-schema-release.spec.ts',
-    '**/pr-account-continuation.spec.ts',
-  ],
   outputDir: './test-results/default',
   globalSetup: './e2e/repository-setup.ts',
   fullyParallel: true,
@@ -36,8 +40,14 @@ export default defineConfig({
   reporter: [['list'], ['json', { outputFile: `${ensureDir(runEvidenceDir)}/browser-results.json` }]],
   use: { baseURL: frontendUrl(frontendPort), browserName: 'chromium', channel: 'msedge', trace: 'retain-on-failure' },
   projects: [
-    { name: 'desktop-1280', use: { viewport: { width: 1280, height: 720 } } },
-    { name: 'desktop-1440', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'acceptance', testIgnore: dedicatedSpecs, use: { viewport: { width: 1280, height: 720 } } },
+    { name: 'acceptance-wide', testIgnore: dedicatedSpecs, use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'admin-training', testMatch: 'admin-training-workbench.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'experiments', testMatch: 'experiment-model-promotion.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'model-package', testMatch: 'model-package-recovery.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'current-schema', testMatch: 'current-schema-release.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'bundled-models', testMatch: 'bundled-model-bootstrap.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'multi-method', testMatch: 'admin-multi-method-experiment.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
   ],
   webServer: [
     // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。
@@ -48,6 +58,7 @@ export default defineConfig({
       reuseExistingServer: false,
       // 无凭据访问，只有隔离测试允许本地 Git 路径。
       env: {
+        ...inheritedEnv,
         JIT_SYNC_ALLOW_LOCAL: '1',
         JIT_FRONTEND_PORT: String(frontendPort),
         JIT_CATALOG_DATABASE: DATABASE,

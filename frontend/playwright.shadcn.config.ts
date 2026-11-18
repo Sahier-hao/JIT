@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test'
-import regression from './playwright.regression-pr.config'
+import regression from './playwright.regression-pr.config.ts'
 
 export default defineConfig({
   ...regression,

@@ -12,13 +12,14 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:e2e": "playwright test",
-    "test:e2e:admin-training": "playwright test --config=playwright.admin-training.config.ts",
-    "test:e2e:experiments": "playwright test --config=playwright.experiment-models.config.ts",
-    "test:e2e:model-package": "playwright test --config=playwright.model-package.config.ts",
-    "test:e2e:current-schema": "playwright test --config=playwright.current-schema.config.ts",
-    "test:e2e:bundled-models": "playwright test --config=playwright.bundled-models.config.ts",
-    "test:e2e:acceptance": "playwright test"
+    "test:e2e": "node scripts/e2e.mjs acceptance",
+    "test:e2e:admin-training": "node scripts/e2e.mjs admin-training",
+    "test:e2e:experiments": "node scripts/e2e.mjs experiments",
+    "test:e2e:model-package": "node scripts/e2e.mjs model-package",
+    "test:e2e:current-schema": "node scripts/e2e.mjs current-schema",
+    "test:e2e:bundled-models": "node scripts/e2e.mjs bundled-models",
+    "test:e2e:multi-method": "node scripts/e2e.mjs multi-method",
+    "test:e2e:acceptance": "node scripts/e2e.mjs acceptance"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

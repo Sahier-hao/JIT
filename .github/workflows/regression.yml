@@ -182,7 +182,7 @@ jobs:
       - name: Browser - model package recovery
         working-directory: frontend
         shell: pwsh
-        run: npx playwright test --config=playwright.model-package.config.ts
+        run: node scripts/e2e.mjs model-package
       - name: Browser - project analysis to PR continuation
         working-directory: frontend
         shell: pwsh

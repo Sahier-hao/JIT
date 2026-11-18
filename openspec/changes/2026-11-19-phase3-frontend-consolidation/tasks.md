@@ -5,7 +5,7 @@
 - [x] 1.1 在 `playwright.config.ts` 中用 `projects` 覆盖共享服务的套件。
 - [x] 1.2 新增 `scripts/e2e.mjs` 统一设置套件环境变量。
 - [x] 1.3 删除对应的包装配置并更新 `package.json` 与 `.github/workflows/regression.yml`。
-- [ ] 1.4 至少跑通一个代表套件（进行中：regression-pr）。
+- [x] 1.4 至少跑通一个代表套件：`pr-account-continuation.spec.ts` 1 passed（45.7s）。
 
 ## 2. React Query 数据层
 
@@ -26,6 +26,6 @@
 ## 5. 验证与交付
 
 - [x] 5.1 前端 `typecheck`、`lint`、`check:styles`、`check:modules`、`test`、`build` 通过。
-- [ ] 5.2 代表 E2E 套件通过。
+- [x] 5.2 代表 E2E 套件通过（1 passed, 45.7s）。
 - [ ] 5.3 提交到 `refactor/phase3-frontend-consolidation` 并创建 PR。
 - [ ] 5.4 归档本 change。
