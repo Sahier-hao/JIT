@@ -33,5 +33,5 @@
 - [x] 5.1 后端 `regression_scope.py --layer full` 通过（922 passed）。
 - [x] 5.2 CLI 冒烟：`catalog-init`（隔离库）、`serve`（8126 + health）、`run`（隔离输出）、`register-model`（隔离库）、`collect-repository`/`pr-check-report` 帮助入口。
 - [x] 5.3 前端单测（473 passed）与构建通过。
-- [ ] 5.4 提交到 `refactor/phase2-backend-architecture` 并创建 PR。
-- [ ] 5.5 归档本 change。
+- [x] 5.4 提交到 `refactor/phase2-backend-architecture` 并创建 PR（https://github.com/Sahier-hao/JIT/pull/68）。
+- [x] 5.5 归档本 change（`openspec/changes/archive/2026-11-19-phase2-backend-architecture/`）。
