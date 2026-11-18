@@ -31,8 +31,8 @@
 
 - [x] 5.1 前端 `typecheck`、`lint`、`check:styles`、`check:modules`、`test`、`build` 通过。
 - [x] 5.2 后端 `regression_scope.py --layer key` 通过（329 passed, 1 deselected）。
-- [ ] 5.3 提交到 `refactor/phase0-hygiene` 分支并创建 PR。
-- [ ] 5.4 归档本 change 并同步主规格。
+- [x] 5.3 提交到 `refactor/phase0-hygiene` 分支并创建 PR（https://github.com/Sahier-hao/JIT/pull/66）。
+- [x] 5.4 归档本 change 并同步主规格（`openspec/changes/archive/2026-11-19-phase0-workspace-hygiene/`）。
 
 ## Workflow follow-up
 
