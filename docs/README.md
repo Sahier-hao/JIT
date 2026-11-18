@@ -12,6 +12,7 @@
 ## 架构与交付
 
 - [入口与端点分层清单](架构/入口与端点分层清单.md)：页面入口、后端端点、兼容别名与退役条件。
+- [人工 OpenAPI 契约](api/openapi.yaml)、[生成契约](api/openapi.generated.yaml)、[已知缺口清单](api/openapi-undocumented.txt)。
 - [持续回归](持续回归.md)、[开发验证](开发验证.md)、[测试计划](测试计划.md)。
 - [团队分工](团队分工.md)、[缺陷记录](缺陷记录.md)。
 

@@ -194,7 +194,7 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
     with sqlite3.connect(catalog.store.path) as db:
         # 先移除当前版本新增结构，再重建真实 v7 结构。
         for table in ('training_experiment_task', 'training_experiment',
-                      'user_session', 'dataset_owner', 'model_package_import_item',
+                      'user_session', 'dataset_owner', 'dataset_share', 'model_package_import_item',
                       'model_package_import',
                       'pr_batch_item', 'pr_batch', 'training_task', 'pr_auto_attempt',
                       'pr_auto_intent', 'project_event', 'pr_list_page', 'pr_cache', 'pr_watch',

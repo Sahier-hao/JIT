@@ -7,8 +7,8 @@ import re
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from .artifacts import DEFAULT_RUN, Snapshot
-from .data import BaselineError
+from ..artifacts import DEFAULT_RUN, Snapshot
+from ..data import BaselineError
 
 
 def _supplied_directory():
@@ -55,36 +55,38 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                 await run_in_threadpool(app.state.dataset_builds.close)
 
     app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
-    @app.get('/api/health')
+    from .schemas.common import HealthResponse
+
+    @app.get('/api/health', response_model=HealthResponse)
     def health():
         return {'status': 'ok'}
-    from .api_errors import install_errors
-    from .catalog_schema import schema_info
-    from .catalog import ModelCatalog
-    from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
-    from .catalog_input import promotion_input, read_object, registration_input
-    from .api_errors import RequestError
+    from ..api_errors import install_errors
+    from ..catalog_schema import schema_info
+    from ..catalog import ModelCatalog
+    from ..catalog_storage import CatalogStorage, DEFAULT_DATABASE
+    from ..catalog_input import promotion_input, read_object, registration_input
+    from ..api_errors import RequestError
     from starlette.concurrency import run_in_threadpool
     install_errors(app)
     database = database if database is not None else os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)
     storage = CatalogStorage(database)
-    from .admin import install_admin
+    from ..admin import install_admin
     install_admin(app, storage)
-    from .users import install_users
+    from ..users import install_users
     install_users(app, storage)
     catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
     app.state.catalog = catalog
     app.state.storage = storage
-    from . import store
-    from . import datasets as dataset_module
+    from .. import store
+    from .. import datasets as dataset_module
     dataset_root = dataset_root if dataset_root is not None else os.environ.get('JIT_DATASET_ROOT')
     registry_root = Path(dataset_root) if dataset_root else None
     # 描述文件是登记事实：缺失或校验失败即拒绝启动（DSR-06），不退回空目录。
     registered = dataset_module.load_all(registry_root)
     app.state.datasets = registered
-    from .prediction import PredictionService
+    from ..prediction import PredictionService
     prediction_service = PredictionService(catalog)
-    from .sync import SyncService
+    from ..sync import SyncService
     allow_local = (bool(getattr(sync_service, 'allow_local', False))
                    if sync_service is not None
                    else os.environ.get('JIT_SYNC_ALLOW_LOCAL') == '1')
@@ -94,42 +96,42 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                    dataset_root=registry_root, allow_local=allow_local)
     sync_service.recover()
     app.state.sync = sync_service
-    from .training_tasks import TrainingTaskService
+    from ..training_tasks import TrainingTaskService
     if training_service is None:
         training_service = TrainingTaskService(
             storage, catalog, artifact_root=catalog.root, dataset_root=registry_root)
     training_service.recover()
     app.state.training = training_service
-    from .dataset_builds import DatasetBuildService
+    from ..dataset_builds import DatasetBuildService
     if dataset_build_service is None:
         dataset_build_service = DatasetBuildService(
             storage, registry_root, allow_local=allow_local)
     dataset_build_service.recover()
     app.state.dataset_builds = dataset_build_service
-    from .multi_project_reports import MultiProjectReportService
+    from ..multi_project_reports import MultiProjectReportService
     multi_project_reports = MultiProjectReportService()
     app.state.multi_project_reports = multi_project_reports
-    from .benefit_reports import BenefitReportService
+    from ..benefit_reports import BenefitReportService
     benefit_reports = BenefitReportService()
     app.state.benefit_reports = benefit_reports
-    from .release_reports import ReleaseReportService, default_roots
+    from ..release_reports import ReleaseReportService, default_roots
     release_reports = ReleaseReportService([catalog.root, *default_roots()])
     app.state.release_reports = release_reports
-    from .model_diagnostics import DiagnosticReportService
+    from ..model_diagnostics import DiagnosticReportService
     diagnostics = DiagnosticReportService()
     app.state.model_diagnostics = diagnostics
-    from .model_cards import ModelCardService
+    from ..model_cards import ModelCardService
     model_cards = ModelCardService(catalog, diagnostics, benefit_reports, release_reports)
     app.state.model_cards = model_cards
-    from .repository_updates import RepositoryUpdates
+    from ..repository_updates import RepositoryUpdates
     updates = RepositoryUpdates(sync_service)
     app.state.updates = updates
-    from .pr_review import PullRequestReview
+    from ..pr_review import PullRequestReview
     pr_review = PullRequestReview(sync_service)
     app.state.pr_review = pr_review
-    from .pr_updates import PullRequestUpdates
-    from .project_trends import ProjectTrendService
-    from .repository_overview import RepositoryOverview
+    from ..pr_updates import PullRequestUpdates
+    from ..project_trends import ProjectTrendService
+    from ..repository_overview import RepositoryOverview
     pr_updates = PullRequestUpdates(sync_service, pr_review)
     app.state.pr_updates = pr_updates
     project_trends = ProjectTrendService(sync_service)
@@ -283,9 +285,9 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/pr-snapshots/{snapshot_id}/analyses')
     async def analyze_pull_request(snapshot_id: str, request: Request):
         return await run_in_threadpool(pr_review.analyze, snapshot_id, await read_object(request))
-    from .repository_explanation import RepositoryExplanationService
+    from ..repository_explanation import RepositoryExplanationService
     explanation_service = RepositoryExplanationService(sync_service, catalog)
-    from .analysis_comparison import AnalysisComparisonService
+    from ..analysis_comparison import AnalysisComparisonService
     comparison_service = AnalysisComparisonService(sync_service)
     from fastapi.exceptions import RequestValidationError
 
@@ -383,9 +385,9 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/training-methods')
     def training_methods(schema: str | None = None):
-        from .algorithms import ALGORITHMS, method_catalog, param_specs
-        from . import collect
-        from .schemas import resolve
+        from ..algorithms import ALGORITHMS, method_catalog, param_specs
+        from .. import collect
+        from ..schemas import resolve
         try:
             name = resolve(schema or collect.SCHEMA_NAME).name
         except BaselineError:
@@ -403,7 +405,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def models(state: str | None = None):
         if state not in (None, 'ready', 'invalid'):
             raise RequestError('INPUT_INVALID', field='state')
-        from .algorithms import ALGORITHMS
+        from ..algorithms import ALGORITHMS
         registered_models = catalog.models()
         candidates = catalog.candidates()
         methods = [dict(method=key, name=value['name'], category=value['category'],
@@ -421,7 +423,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             raise RequestError('INPUT_INVALID', field='limit' if not 1 <= limit <= 100 else 'offset')
         if datasetVersion is not None and (not datasetVersion.strip() or len(datasetVersion) > 200):
             raise RequestError('INPUT_INVALID', field='datasetVersion')
-        from .model_coverage import model_coverage
+        from ..model_coverage import model_coverage
         return model_coverage(catalog, dataset_version=datasetVersion, limit=limit, offset=offset)
 
     @app.get('/api/v1/models/{model_id}')
@@ -435,7 +437,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repository-models')
     def repository_models(request: Request):
         # Public selection metadata only: no training evidence, paths or verification reports.
-        from .users import current_admin, current_user
+        from ..users import current_admin, current_user
         viewer = current_user(request)
         admin_view = current_admin(request) is not None
         visible = [item for item in catalog.models()
@@ -527,54 +529,13 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                     "reason": "尚无匹配的发布资格报告"}
         return {"modelId": model_id, "runId": run_id, "available": True, **entry}
 
-    @app.get('/api/admin/multi-project-reports')
-    def list_multi_project_reports():
-        return multi_project_reports.list()
-
-    from .evaluation_evidence import EvaluationEvidence
+    from ..reports.evaluation_evidence import EvaluationEvidence
     evaluation_evidence = EvaluationEvidence(registry_root=registry_root)
-
-    @app.get('/api/admin/evaluation-evidence')
-    def list_evaluation_evidence():
-        return evaluation_evidence.list()
-
-    @app.get('/api/admin/evaluation-evidence/{evidence_id}')
-    def get_evaluation_evidence(evidence_id: str):
-        return evaluation_evidence.get(evidence_id)
-
-    @app.post('/api/admin/curation/preview')
-    async def curation_preview(request: Request):
-        payload = await read_object(request)
-        if not isinstance(payload, dict) or set(payload) - {'datasetVersion', 'recipe'}:
-            raise RequestError('INPUT_INVALID')
-        from . import curation
-        return await run_in_threadpool(curation.preview, payload.get('datasetVersion'),
-                                       payload.get('recipe'), dataset_root)
-
-    @app.post('/api/admin/curation/derive')
-    async def curation_derive(request: Request):
-        payload = await read_object(request)
-        if not isinstance(payload, dict) or set(payload) - {'datasetVersion', 'recipe'}:
-            raise RequestError('INPUT_INVALID')
-        from . import curation
-        return await run_in_threadpool(curation.derive, payload.get('datasetVersion'),
-                                       payload.get('recipe'), dataset_root)
-
-    @app.get('/api/admin/curation/compare')
-    def curation_compare(source: str, derived: str):
-        from . import curation
-        return curation.compare(source, derived, dataset_root)
-
-    @app.get('/api/admin/curation/export')
-    def curation_export(version: str):
-        from . import curation
-        data = curation.export_bundle(version, dataset_root)
-        return Response(content=data, media_type='application/zip',
-                        headers={'Content-Disposition': f'attachment; filename="{version}.zip"'})
-
-    @app.get('/api/admin/multi-project-reports/{report_id}')
-    def get_multi_project_report(report_id: str):
-        return multi_project_reports.get(report_id)
+    from .routers.admin import install_admin_routes
+    install_admin_routes(app, storage=storage, registry_root=registry_root,
+                         dataset_root=dataset_root, dataset_module=dataset_module,
+                         multi_project_reports=multi_project_reports,
+                         evaluation_evidence=evaluation_evidence)
 
     @app.patch('/api/v1/models/{model_id}/policy')
     async def model_policy(model_id: str, request: Request):
@@ -583,38 +544,6 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/feature-schemas/{version}')
     def feature_schema(version: str):
         return schema_info(version)
-
-    @app.get('/api/admin/datasets/prunable')
-    def dataset_prunable(keep: int | None = None):
-        registered = dataset_module.load_all(registry_root)
-        retain = keep if keep is not None else int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))
-        rows = store.prunable_datasets(storage, registered, retain)
-        return {'keep': retain,
-                'versions': [{key: value for key, value in row.items() if key != 'manifest'}
-                             for row in rows]}
-
-    @app.post('/api/admin/datasets/prune')
-    async def dataset_prune(request: Request):
-        payload = await read_object(request)
-        versions = payload.get('versions') if isinstance(payload, dict) else None
-        keep = payload.get('keep') if isinstance(payload, dict) else None
-        if (not isinstance(versions, list) or not versions
-                or any(not isinstance(version, str) or not version.strip() for version in versions)
-                or keep is not None and (type(keep) is not int or keep < 0)):
-            raise RequestError('INPUT_INVALID')
-        registered = dataset_module.load_all(registry_root)
-        retain = keep if keep is not None else int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))
-        eligible = {row['version']: row for row in store.prunable_datasets(
-            storage, registered, retain)}
-        deleted, skipped = [], []
-        for version in dict.fromkeys(versions):
-            row = eligible.get(version)
-            if row is None:
-                skipped.append({'version': version, 'reason': 'not_prunable'})
-                continue
-            result = await run_in_threadpool(store.delete_dataset_version, storage, row['manifest'])
-            deleted.append(result)
-        return {'deleted': deleted, 'skipped': skipped}
 
     @app.get('/api/v1/datasets')
     def dataset_versions_all():
@@ -638,34 +567,6 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             version['owners'] = storage.dataset_owners(version['version'])
             version['shared'] = storage.dataset_shared(version['version'])
         return view
-
-    @app.put('/api/admin/datasets/{dataset_version}/sharing')
-    async def update_dataset_sharing(dataset_version: str, request: Request):
-        from .users import current_admin
-        admin = current_admin(request)
-        if not admin:
-            raise RequestError('AUTH_REQUIRED')
-        payload = await read_object(request)
-        shared = payload.get('shared') if isinstance(payload, dict) else None
-        if not isinstance(shared, bool):
-            raise RequestError('INPUT_INVALID', field='shared')
-        manifest = dataset_module.load_all(registry_root).get(dataset_version)
-        if manifest is None:
-            raise RequestError('NOT_FOUND')
-        if shared and storage.dataset(dataset_version) is None:
-            from .config import BACKEND
-            manifest_path = Path(manifest['manifestPath'])
-            if not manifest_path.is_absolute():
-                manifest_path = BACKEND / manifest_path
-            await run_in_threadpool(store.import_dataset, None, manifest_path, storage)
-        storage.set_dataset_share(dataset_version, shared, admin)
-        return {'version': dataset_version, 'shared': shared}
-
-    @app.get('/api/admin/datasets/{dataset_version}/split-preview')
-    def dataset_split_preview_route(dataset_version: str, preset: str | None = None,
-                                    maturityPolicy: str | None = None):
-        from .split_preview import dataset_split_preview
-        return dataset_split_preview(registry_root, dataset_version, preset, maturityPolicy)
 
     @app.get('/api/v1/commits')
     def commit_list(version: str, module: str | None = None, limit: int = 100, offset: int = 0):
@@ -694,7 +595,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/repository-syncs')
     async def create_sync(request: Request):
         payload = await read_object(request)
-        from .users import current_admin, current_user
+        from ..users import current_admin, current_user
         viewer = current_user(request)
         if payload.get('modelId') and current_admin(request) is None:
             owner = catalog.model_owner(payload['modelId'])
@@ -778,7 +679,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.post('/api/v1/repositories/{repository_id}/dataset-builds')
     async def create_dataset_build(repository_id: str, request: Request):
-        from .users import current_admin, current_user
+        from ..users import current_admin, current_user
         viewer = current_user(request)
         result, created = await run_in_threadpool(
             dataset_build_service.create,
@@ -809,7 +710,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         body = await request.body()
         if body and await read_object(request):
             raise RequestError('INPUT_INVALID')
-        from .users import current_admin, current_user
+        from ..users import current_admin, current_user
         viewer = current_user(request)
         result, created = await run_in_threadpool(
             dataset_build_service.retry,
@@ -823,7 +724,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.get('/api/v1/repositories/{repository_id}/analyses/{sync_id}/dataset')
     def project_analysis_dataset(repository_id: str, sync_id: str):
-        from . import project_datasets
+        from .. import project_datasets
         resolved = project_datasets.resolve_project_dataset(
             repository_id, sync_id, sync_service, registry_root)
         return project_datasets.public_view(resolved)
@@ -832,7 +733,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def project_analysis_dataset_export(repository_id: str, sync_id: str, format: str):
         from fastapi.responses import FileResponse
         from starlette.background import BackgroundTask
-        from . import project_datasets
+        from .. import project_datasets
         if format not in ("zip", "xlsx"):
             raise RequestError('INPUT_INVALID', field='format')
         resolved = project_datasets.resolve_project_dataset(
@@ -877,9 +778,9 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repositories/{repository_id}/summary')
     def repository_summary(repository_id: str, viewSyncId: str | None = None):
         return sync_service.repository_summary(repository_id, view_sync_id=viewSyncId)
-    from .user_api import install_user_routes
+    from ..user_api import install_user_routes
     install_user_routes(app, storage, registry_root, training_service, catalog)
-    from .line_preview import install_research_routes
+    from ..line_preview import install_research_routes
     install_research_routes(app)
     app.state.snapshot, app.state.error = None, None
     try:

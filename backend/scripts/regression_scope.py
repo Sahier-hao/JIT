@@ -39,10 +39,12 @@ KEY_BACKEND = (
     "tests/test_pr_updates.py",
     "tests/test_api.py",
     "tests/test_openapi.py",
+    "tests/test_admin_route_security.py",
+    "tests/test_catalog_storage_wal.py",
 )
 FULL_BACKEND_EXTRA = ("tests",)
 BROWSER_CONFIGS = (
-    ("playwright.model-package.config.ts", "e2e/model-package-recovery.spec.ts"),
+    ("playwright.config.ts", "e2e/model-package-recovery.spec.ts"),
     ("playwright.regression-pr.config.ts", "e2e/pr-account-continuation.spec.ts"),
 )
 DESELECT_KEY = (
