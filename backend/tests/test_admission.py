@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from jit_baseline import admission, collect, datasets
+from jit_baseline.config import BACKEND
 from jit_baseline.data import BaselineError, parse_source
 from jit_baseline.schemas import resolve
 
