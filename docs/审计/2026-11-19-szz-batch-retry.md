@@ -72,7 +72,7 @@ backend/.venv/Scripts/python.exe -m jit_baseline.cli collect-batch --batch 20261
 | sub2api | `..._2026-11-16-7c5a7e85` | 2,596 | 放开提交与区间上限后完整、可训练 |
 | vite | `..._2026-11-16-0d2bfe49` | 2,897 | 仍被 1 小时时间上限截断 |
 
-除 vite 外，其余 6 个的旧截断版本均无引用、无所有者、未共享，已列入清理；vite 的新旧两个版本都仍截断。按用户决定，vite 暂不再用更长预算重跑，保留截断标记。
+除 vite 外，其余 6 个的旧截断版本均无引用、无所有者、未共享，已按同一流程删除（备份 `D:/tmp/catalog-backup-20261119-delete2.sqlite3`，文件副本在 `D:/tmp/deleted-datasets-20261119/`，`fileErrors` 全为空）。其中 scikit-learn 与 vue-core 的旧版本只在描述目录、未进入 `dataset_record`，因此目录库行数减少 4。清理后描述文件 133、`dataset_record` 100。vite 的新旧两个版本都仍截断；按用户决定，vite 暂不再用更长预算重跑，保留截断标记。
 
 ## 仍未解决
 
