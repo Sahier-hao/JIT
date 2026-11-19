@@ -18,10 +18,12 @@
 - 新增 `lib/methodParams.ts` 与 `lib/datasetMaturity.ts`：统一受控参数展示与标签成熟摘要，消除两端重复映射。
 - 新增 `app/routeTable.ts`：`createHashRouter` 改为一个无路径布局 + 45 条结构化路径；`useRoute` 优先从 `matchRoutes` 构建类型化 `Route`，`parseHash` 只保留给兼容别名、退役/未知地址与旧测试。
 - 新增 `app/routeTable.test.ts`：36 个规范路由与 8 个兼容/未知地址的等价性检查。
+- 新增 `lib/api-generated/types.gen.ts`（5,953 行，由 `@hey-api/openapi-ts` 从 `docs/api/openapi.yaml` 生成）与 `npm run types:api`、`npm run check:api-types`；生成类型与人工契约不一致时检查失败。
+- 新增 `modelCardContractCheck.ts`：编译期校验手写模型卡的标量字段仍与生成契约兼容；复杂分区字段保留手写解析。
 
 ## 验证
 
-- `npm run typecheck`、`npm run lint`、`npm run check:styles`、`npm run check:modules`：通过（228 个源码文件、1 个应用入口）。
+- `npm run typecheck`、`npm run lint`、`npm run check:styles`、`npm run check:modules`：通过（231 个源码文件、1 个应用入口）。
 - `npx playwright test --list --project=model-package`：识别 1 个测试，配置可加载。
 - VS Code 扩展测试：5 passed。
 - 前端单测：64 个文件、518 个测试全部通过（新增 45 个路由表检查）。
@@ -35,5 +37,5 @@
 - `react-router-dom` 已接管规范路径匹配；`parseHash` 仅保留为兼容别名、退役/未知地址的回退，未完全删除。
 - 已抽取 `TrainingLossChart`、`formatMethodParams`、`labelMaturityText/Items`；`MyDataPage`、`PullRequestJourney`、`ProjectPage` 等大页面仍未拆分。
 - `adminContracts.ts`（910 行）已拆为 `adminContracts/` 下 5 个域模块（common 28、datasets 87、models 297、training 317、experiments 201）+ barrel；最大单文件 317 行。
-- 未引入 OpenAPI 类型生成；依赖 Phase 2 的生成契约，列为后续。
+- OpenAPI 类型生成已落地；复杂响应字段仍由手写解析器校验，逐步迁移。
 - 专用服务套件仍保留 3 份配置；统一 `projects` 只覆盖共享服务。

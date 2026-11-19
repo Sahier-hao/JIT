@@ -79,6 +79,7 @@ jobs:
         run: |
           npm ci
           npm run typecheck
+          npm run check:api-types
           npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\frontend-unit.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run build
@@ -167,6 +168,7 @@ jobs:
         run: |
           npm ci
           npm run typecheck
+          npm run check:api-types
           npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\frontend-unit.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run build

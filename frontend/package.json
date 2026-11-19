@@ -9,6 +9,8 @@
     "lint": "oxlint",
     "check:styles": "node scripts/check-styles.mjs",
     "check:modules": "node scripts/check-module-boundaries.mjs",
+    "types:api": "node scripts/generate-api-types.mjs",
+    "check:api-types": "node scripts/check-api-types.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
@@ -42,6 +44,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
     "@playwright/test": "^1.64.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
