@@ -33,6 +33,6 @@
 
 - `react-router-dom` 结构化路由未替换 `parseHash`；兼容书签优先，列为后续独立 change。
 - 已抽取 `TrainingLossChart`、`formatMethodParams`、`labelMaturityText/Items`；`MyDataPage`、`PullRequestJourney`、`ProjectPage` 等大页面仍未拆分。
-- `adminContracts.ts` 仍未按域拆分减重；列为后续独立小步。
+- `adminContracts.ts`（910 行）已拆为 `adminContracts/` 下 5 个域模块（common 28、datasets 87、models 297、training 317、experiments 201）+ barrel；最大单文件 317 行。
 - 未引入 OpenAPI 类型生成；依赖 Phase 2 的生成契约，列为后续。
 - 专用服务套件仍保留 3 份配置；统一 `projects` 只覆盖共享服务。
