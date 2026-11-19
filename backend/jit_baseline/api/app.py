@@ -549,11 +549,14 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def dataset_versions_all():
         registered = dataset_module.load_all(registry_root)
         datasets = store.dataset_list(registered)
+        versions = [version['version'] for dataset in datasets for version in dataset['versions']]
+        metadata = storage.dataset_metadata(versions)
         for dataset in datasets:
             for version in dataset['versions']:
-                version['references'] = store.dataset_references(storage, version['version'])
-                version['owners'] = storage.dataset_owners(version['version'])
-                version['shared'] = storage.dataset_shared(version['version'])
+                info = metadata[version['version']]
+                version['references'] = info['references']
+                version['owners'] = info['owners']
+                version['shared'] = info['shared']
         return {'datasets': datasets}
 
     @app.get('/api/v1/datasets/{name}/versions')
@@ -562,10 +565,12 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         view = store.version_view(registered, name)
         if view is None:
             raise RequestError('NOT_FOUND')
+        metadata = storage.dataset_metadata([version['version'] for version in view['versions']])
         for version in view['versions']:
-            version['references'] = store.dataset_references(storage, version['version'])
-            version['owners'] = storage.dataset_owners(version['version'])
-            version['shared'] = storage.dataset_shared(version['version'])
+            info = metadata[version['version']]
+            version['references'] = info['references']
+            version['owners'] = info['owners']
+            version['shared'] = info['shared']
         return view
 
     @app.get('/api/v1/commits')

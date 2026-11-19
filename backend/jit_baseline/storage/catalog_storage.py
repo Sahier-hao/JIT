@@ -351,6 +351,47 @@ class CatalogStorage:
                 'SELECT 1 FROM dataset_share WHERE dataset_version=?', (version,)
             ).fetchone() is not None
 
+    def dataset_metadata(self, versions):
+        """批量返回引用、所有者与共享状态；列表页避免每个版本各开一次连接。"""
+        wanted = list(dict.fromkeys(versions))
+        result = {version: {'references': [], 'owners': [], 'shared': False} for version in wanted}
+        if not wanted:
+            return result
+        marks = ','.join('?' for _ in wanted)
+        with self.connection() as db:
+            rows = db.execute(
+                f'SELECT DISTINCT dataset_version FROM repository_sync WHERE dataset_version IN ({marks})',
+                tuple(wanted)).fetchall()
+            for row in rows:
+                if row[0] in result:
+                    result[row[0]]['references'].append('analysis')
+            rows = db.execute(
+                f'SELECT DISTINCT dataset_version FROM dataset_build_task WHERE dataset_version IN ({marks})',
+                tuple(wanted)).fetchall()
+            for row in rows:
+                if row[0] in result:
+                    result[row[0]]['references'].append('dataset-build')
+            rows = db.execute(
+                "SELECT json_extract(payload_json, '$.datasetVersion'), "
+                "json_extract(payload_json, '$.artifactDatasetVersion') FROM model_version").fetchall()
+            referenced = {value for row in rows for value in row if value}
+            for version in wanted:
+                if version in referenced:
+                    result[version]['references'].append('model')
+            rows = db.execute(
+                f'SELECT dataset_version, username FROM dataset_owner WHERE dataset_version IN ({marks}) '
+                'ORDER BY username', tuple(wanted)).fetchall()
+            for row in rows:
+                if row[0] in result:
+                    result[row[0]]['owners'].append(row[1])
+            rows = db.execute(
+                f'SELECT dataset_version FROM dataset_share WHERE dataset_version IN ({marks})',
+                tuple(wanted)).fetchall()
+            for row in rows:
+                if row[0] in result:
+                    result[row[0]]['shared'] = True
+        return result
+
     def shared_dataset_versions(self):
         with self.connection() as db:
             return [row[0] for row in db.execute(
