@@ -27,7 +27,6 @@
     "vitest.config.ts",
     "playwright.config.ts",
     "playwright.regression-pr.config.ts",
-    "playwright.shadcn.config.ts",
     "playwright.project-workspace.config.ts",
     "e2e/**/*.ts"
   ]

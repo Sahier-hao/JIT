@@ -1,11 +1,10 @@
 import { defineConfig } from '@playwright/test'
 
-/** 持续回归专用：真实隔离服务 + 两个账户的 PR 续审旅程。 */
+/** 持续回归专用：真实隔离服务 + 两个账户的 PR 续审旅程；shadcn 旅程复用同一隔离服务。 */
 const python = process.env.JIT_PYTHON ?? 'python'
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: 'pr-account-continuation.spec.ts',
   outputDir: '../docs/evidence/_run/regression-pr/results',
   timeout: 180_000,
   workers: 1,
@@ -21,6 +20,14 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
+  projects: [
+    { name: 'pr-account', testMatch: 'pr-account-continuation.spec.ts' },
+    {
+      name: 'shadcn',
+      testMatch: 'shadcn-workspaces.spec.ts',
+      outputDir: '../docs/evidence/_run/shadcn-ui/results',
+    },
+  ],
   webServer: [
     {
       command: `${python} tests/project_review_preview.py --port 18860`,

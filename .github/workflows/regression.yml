@@ -190,7 +190,7 @@ jobs:
         shell: pwsh
         env:
           JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
-        run: npx playwright test --config=playwright.regression-pr.config.ts
+        run: npx playwright test --config=playwright.regression-pr.config.ts --project=pr-account
       - name: Job summary
         if: always()
         shell: pwsh
