@@ -49,7 +49,9 @@ jobs:
       - name: Import the pinned model
         working-directory: backend
         run: |
-          python -m jit_baseline.cli catalog-init --skip-bundled-models \
+          # 固定分析模型由下一步单独导入；当前 schema 包的描述文件哈希绑定
+          # 本机换行，和 Linux 检出不一致，跳过它与本工作流的目标无关。
+          python -m jit_baseline.cli catalog-init --skip-bundled-models --skip-current-schema-models \
             --database "$RUNNER_TEMP/jit/catalog.sqlite3" \
             --artifact-root "$RUNNER_TEMP/jit/artifacts"
           python -m jit_baseline.cli import-models ../model-package.zip \
