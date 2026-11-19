@@ -46,11 +46,18 @@ backend/.venv/Scripts/python.exe -m jit_baseline.cli collect-batch --batch 20261
 
 - express，`JIT_SZZ_MAX_SECONDS=600`：新版本 `kamei14-git-v2-express-2009-06-26_2026-11-02-9c7d9ef4`，纳入 5,485 行、808 正例，成熟准入通过；批次 `20261119-041857-865ac6ef`。
 - redis，`JIT_SZZ_MAX_SECONDS=3600`：新版本 `kamei14-git-v2-redis-2022-01-01_2026-10-30-a535fe6a`，纳入 2,514 行、570 正例，SZZ 完整（`truncated=false`），成熟准入通过；用时 19 分 29 秒；批次 `20261119-054021-4db7a53b`。
-- 两个原截断版本（express 406 正例、redis 40 正例）保留在登记表中，无分析、模型或构建引用，未删除。
+- 两个原截断版本（express 406 正例、redis 40 正例）在完整版本登记后复核：无分析、模型或构建引用，无所有者、未共享，随后删除。
 
-目录库 `dataset_record` 96，描述文件 131，`model_version` 30、`dataset_share` 0 未变。
+目录库 `dataset_record` 94，描述文件 129，`model_version` 30、`dataset_share` 0 未变。
+
+## 截断版本清理
+
+删除前重新检查 `dataset_references`、所有者与共享状态（均为空），并对目录库做一致性备份 `D:/tmp/catalog-backup-20261119-delete.sqlite3`。通过 `store.delete_dataset_version` 移除两个版本的登记、提交记录、文件与描述文件；描述文件、CSV 与两个旁车文件先复制到 `D:/tmp/deleted-datasets-20261119/<version>/` 作为可恢复副本，原文件随后移除，`fileErrors` 为空。
+
+删除时发现 `delete_dataset_version` 原先不删除描述文件，清理后会留下仍在登记目录里的 JSON；已补上 `manifestPath` 并新增回归测试，管理端 prune 路径同步受益。
+
+清理后两个完整版本仍通过成熟准入：express 测试集 817 行/78 正例，redis 测试集 352 行/68 正例。
 
 ## 仍未解决
 
 - 默认 `JIT_SZZ_MAX_SECONDS=120` 对长历史仓库仍会截断；本次通过单次环境变量覆盖完成重采，是否调整默认值或按仓库配置仍需单独决定。
-- 两个截断版本仍出现在数据集列表中，可在确认无引用后清理；本次未删除。

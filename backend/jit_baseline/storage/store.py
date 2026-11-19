@@ -160,6 +160,10 @@ def delete_dataset_version(storage, manifest):
     """两阶段删除数据集：先移除登记与提交记录，再删除描述、CSV 与旁注文件。"""
     version = manifest['version']
     files = []
+    declared = manifest.get('manifestPath')
+    if declared:
+        path = Path(declared)
+        files.append(path if path.is_absolute() else BACKEND / path)
     for entry in (manifest.get('file'), manifest.get('text'), manifest.get('labelEvidenceFile'),
                   manifest.get('labelStatusFile')):
         if isinstance(entry, dict) and entry.get('path'):
