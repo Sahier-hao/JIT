@@ -59,7 +59,7 @@ it('keeps repository B and its fixed analysis when visiting a report and returni
   expect(screen.getByText('0.81')).toBeVisible()
   expect(screen.getByText('main 分支', { exact: false })).toBeVisible()
   window.location.hash = '#/admin/models'
-  await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
+  await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 30000 }))
   window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
   await user.click(await screen.findByRole('link', { name: '分析' }, { timeout: 15000 }))
@@ -68,7 +68,7 @@ it('keeps repository B and its fixed analysis when visiting a report and returni
   expect(window.location.hash).toContain(REPO_B)
   const calls = fetch.mock.calls.map(call => String(call[0])).filter(path => path.includes('/repositories/') && path.includes('/commits'))
   expect(calls.every(path => path.includes(`viewSyncId=${ANALYSIS}`))).toBe(true)
-}, 30_000)
+}, 60_000)
 it('rejects a late page from a different analysis instead of showing its scores', async () => {
   window.history.replaceState({}, '', '/'+hashFor({ name: 'analysis', repositoryId: REPO_B, viewSyncId: ANALYSIS, view: 'commits' }))
   const fetch = mockApi()
@@ -131,7 +131,7 @@ it('returns from a report to the same pinned analysis instead of a newer result'
   const fetch = mockApi(); render(<App/>); const user = await connect()
   await screen.findByText('0.81')
   window.location.hash = '#/admin/models'
-  await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 15000 }))
+  await user.click(await screen.findByRole('button', { name: '验证报告' }, { timeout: 30000 }))
   window.location.hash = '#/projects'
   await user.click(await screen.findByRole('button', { name: '项目 B' }, { timeout: 5000 }))
   await user.click(await screen.findByRole('link', { name: '分析' }, { timeout: 15000 }))

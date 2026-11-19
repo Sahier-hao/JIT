@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@/lib/test-utils'
+import { render, screen, waitFor, within } from '@/lib/test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '@/app/App'
@@ -23,6 +23,39 @@ it('opens projects immediately without a credential or role step', async () => {
   expect(screen.queryByRole('button', { name: '验证报告' })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '我的数据' })).toBeVisible()
   for (const [, options] of fetch.mock.calls) expect(new Headers(options?.headers).has('Authorization')).toBe(false)
+})
+it('opens account settings in a dialog instead of a full personal-center page', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const path = String(input)
+    if (path.includes('/api/user/session')) return Response.json({ authenticated: true, username: 'reader' })
+    if (path.includes('/api/v1/user/profile')) return Response.json({
+      username: 'reader', displayName: null, createdAt: 1760000000,
+      datasetCount: 0, experimentCount: 0, modelCount: 0,
+    })
+    return Response.json({ repositories: [], total: 0, offset: 0, limit: 100 })
+  })
+  render(<App />); const user = userEvent.setup()
+  await screen.findByRole('heading', { name: '项目' })
+  expect(screen.queryByRole('button', { name: '个人空间' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'reader' }))
+  expect(await screen.findByRole('menuitem', { name: '个人中心' })).toBeVisible()
+  expect(screen.getByRole('menuitem', { name: '退出登录' })).toBeVisible()
+  expect(screen.queryByRole('menuitem', { name: '我的数据' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('menuitem', { name: '我的训练' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('menuitem', { name: '我的模型' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('menuitem', { name: '个人中心' }))
+  const dialog = await screen.findByRole('dialog')
+  expect(within(dialog).getByRole('heading', { name: '个人中心' })).toBeVisible()
+  expect(within(dialog).getByText('数据版本')).toBeVisible()
+  expect(within(dialog).getByText('训练实验')).toBeVisible()
+  expect(within(dialog).getByText('模型')).toBeVisible()
+  await user.click(within(dialog).getByRole('tab', { name: '账户设置' }))
+  expect(within(dialog).getByLabelText('显示名称')).toBeVisible()
+  expect(within(dialog).getByLabelText('当前密码')).toBeVisible()
+  expect(within(dialog).getByLabelText('新密码')).toBeVisible()
+  expect(window.location.hash).toBe('#/projects')
+  await user.click(within(dialog).getByRole('button', { name: '关闭' }))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
 })
 it.each(['#/models', '#/predict', '#/predictions/11111111-1111-4111-8111-111111111111', '#/lab/demo/commits', '#/settings/connection'])('retires the old tool at %s', async hash => {
   emptyApi(); window.history.replaceState({}, '', '/'+hash); render(<App />)

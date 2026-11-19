@@ -1,13 +1,17 @@
-"""领域错误：带稳定 code，供 CLI 与 HTTP 层报告。
+"""Compatibility proxy; the canonical module is `core.errors`."""
+import sys
+import types
+from .core import errors as _target
 
-单独成模块以便 `schemas` 与 `data` 共用同一错误类型而不产生循环导入；
-`data.BaselineError` 继续作为既有导入路径的再导出。
-"""
+
+class _ModuleProxy(types.ModuleType):
+    def __getattr__(self, attribute):
+        return getattr(_target, attribute)
+
+    def __setattr__(self, attribute, value):
+        if attribute.startswith('__') and attribute.endswith('__'):
+            return super().__setattr__(attribute, value)
+        setattr(_target, attribute, value)
 
 
-class BaselineError(ValueError):
-    """带稳定错误码的领域错误。"""
-
-    def __init__(self, code, message):
-        super().__init__(message)
-        self.code = code
+sys.modules[__name__].__class__ = _ModuleProxy

@@ -144,3 +144,33 @@ def test_user_profile_and_password_change(client):
     client.post('/api/user/logout')
     assert client.post('/api/user/login', json=ACCOUNT).status_code == 401
     assert client.post('/api/user/login', json={**ACCOUNT, 'password': 'new-reader-pass'}).status_code == 200
+
+
+def test_user_dataset_view_exposes_provenance_quality_and_timestamps(tmp_path):
+    from jit_baseline import datasets
+    from jit_baseline.config import BACKEND
+
+    csv = BACKEND / 'data/openstack/openstack.csv'
+    if not csv.exists():
+        pytest.skip('开放数据集未取得')
+    registry = tmp_path / 'registry'
+    registry.mkdir()
+    copied = registry / 'openstack.csv'
+    copied.write_bytes(csv.read_bytes())
+    registered = datasets.register(copied, root=registry)
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    with TestClient(create_app(tmp_path / 'missing', database=storage.path,
+                               artifact_root=tmp_path / 'artifacts', dataset_root=registry)) as client:
+        assert client.post('/api/user/register', json=ACCOUNT).status_code == 201
+        storage.add_dataset_owner(registered['version'], 'reader')
+        response = client.get('/api/v1/user/datasets?scope=mine')
+        assert response.status_code == 200, response.text
+        body = response.json()['datasets'][0]
+        assert body['fieldCount'] > 0
+        assert body['timestamps']['registeredAt']
+        assert body['timestamps']['importedAt'] is None
+        assert body['timestamps']['ownedAt']
+        assert body['integrity']['manifestSha256']
+        assert body['labelMaturity']['available'] is False
+        assert body['source']['url']

@@ -4,7 +4,7 @@ import { flag, record, recordList, text, textOrNull } from '@/lib/apiContract'
 export type DatasetBuildStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'interrupted'
 export interface DatasetBuildTask {
   taskId: string
-  repositoryId: string
+  repositoryId: string | null
   repositoryUrl: string
   branch: string
   since: string | null
@@ -32,15 +32,16 @@ function countOrNull(value: unknown): number | null {
   return value
 }
 
-export function parseDatasetBuild(raw: unknown, repositoryId: string): DatasetBuildTask {
+export function parseDatasetBuild(raw: unknown, repositoryId?: string): DatasetBuildTask {
   const value = record(raw)
-  if (value.repositoryId !== repositoryId) throw new Error('数据集任务不属于当前项目')
+  const actualRepositoryId = textOrNull(value.repositoryId)
+  if (repositoryId !== undefined && actualRepositoryId !== repositoryId) throw new Error('数据集任务不属于当前项目')
   const status = text(value.status)
   if (!['queued', 'running', 'completed', 'failed', 'cancelled', 'interrupted'].includes(status)) throw new Error('数据集任务状态未登记')
   const error = value.error == null ? null : record(value.error)
   return {
     taskId: text(value.taskId),
-    repositoryId,
+    repositoryId: actualRepositoryId,
     repositoryUrl: text(value.repositoryUrl),
     branch: text(value.branch),
     since: textOrNull(value.since),
@@ -70,6 +71,43 @@ export async function createDatasetBuild(repositoryId: string, body: { branch: s
     method: 'POST',
     body,
   }), repositoryId)
+}
+
+export async function createUserDatasetBuild(body: {
+  repositoryUrl: string
+  branch: string
+  since?: string
+  until?: string
+  commitLimit?: number
+}) {
+  return parseDatasetBuild(await apiRequest({
+    path: '/api/v1/user/dataset-builds', method: 'POST', body,
+  }))
+}
+
+export async function getUserDatasetBuild(taskId: string, signal?: AbortSignal) {
+  return parseDatasetBuild(await apiRequest({
+    path: `/api/v1/user/dataset-builds/${encodeURIComponent(taskId)}`, method: 'GET', signal,
+  }))
+}
+
+export async function listUserDatasetBuilds(signal?: AbortSignal) {
+  const value = record(await apiRequest({
+    path: '/api/v1/user/dataset-builds?limit=20&offset=0', method: 'GET', signal,
+  }))
+  return recordList(value.tasks).map(item => parseDatasetBuild(item))
+}
+
+export async function cancelUserDatasetBuild(taskId: string) {
+  return parseDatasetBuild(await apiRequest({
+    path: `/api/v1/user/dataset-builds/${encodeURIComponent(taskId)}/cancel`, method: 'POST',
+  }))
+}
+
+export async function retryUserDatasetBuild(taskId: string) {
+  return parseDatasetBuild(await apiRequest({
+    path: `/api/v1/user/dataset-builds/${encodeURIComponent(taskId)}/retry`, method: 'POST',
+  }))
 }
 
 export async function getDatasetBuild(repositoryId: string, taskId: string, signal?: AbortSignal) {

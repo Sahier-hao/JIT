@@ -2,7 +2,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { ChevronRight, LoaderCircle } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import { formatDate, valueLabel, type Row, type TrainingExperiment, type TrainingExperimentComparison, type TrainingTask } from '@/features/admin/adminContracts'
 import {
@@ -11,8 +11,11 @@ import {
 } from '@/features/account/userClient'
 
 
-import { EChartCanvas, useChartColors } from '@/components/shared/EChartCanvas'
+import { TrainingLossChart } from '@/components/shared/TrainingLossChart'
+import { formatMethodParams } from '@/lib/methodParams'
 import type { Route } from '@/app/navigation'
+import { TrainingCreateDialog } from '@/features/training/components/TrainingCreateDialog'
+import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 const ACTIVE = new Set(['queued', 'running'])
 
@@ -23,26 +26,10 @@ function metric(metrics: Row | null, key: string): string {
   const value = (item as Row).value
   return typeof value === 'number' ? value.toFixed(3) : '未定义'
 }
-function paramsText(parameters: Row | null): string {
-  if (!parameters) return '默认参数'
-  return Object.entries(parameters).filter(([key]) => !['threads', 'seed', 'solver', 'tol', 'regularization', 'class_weight'].includes(key))
-    .map(([key, value]) => `${key}=${Array.isArray(value) ? `[${value.join(',')}]` : value}`).join(' · ')
-}
-function LossChart({ task }: { task: TrainingTask }) {
-  const colors = useChartColors()
-  const history = task.trainingHistory
-  const option = useMemo(() => ({
-    grid: { left: 46, right: 16, top: 16, bottom: 28 },
-    tooltip: { trigger: 'axis' as const, backgroundColor: colors.surface, borderColor: colors.border, textStyle: { color: colors.textStrong } },
-    xAxis: { type: 'category' as const, data: history?.entries.map(item => String(item.epoch)) ?? [], axisLabel: { color: colors.text }, name: 'epoch', nameTextStyle: { color: colors.text } },
-    yAxis: { type: 'value' as const, scale: true, axisLabel: { color: colors.text }, splitLine: { lineStyle: { color: colors.grid } }, name: 'train loss', nameTextStyle: { color: colors.text } },
-    series: [{ type: 'line' as const, symbolSize: 4, data: history?.entries.map(item => item.trainLoss), lineStyle: { color: colors.series }, itemStyle: { color: colors.series } }],
-  }), [colors, history])
-  return history ? <EChartCanvas option={option} height={200} label={`${task.method} 逐 epoch 训练损失`}/> : null
-}
 
-export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
+export function MyTrainingPage({ experimentId, initialDatasetVersion, navigate, onLoginRequired }: {
   experimentId?: string
+  initialDatasetVersion?: string
   navigate: (route: Route) => void
   onLoginRequired: () => void
 }) {
@@ -52,6 +39,7 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
   const [revision, setRevision] = useState(0)
+  const [createOpen, setCreateOpen] = useState(Boolean(initialDatasetVersion))
   const userRevision = useUserRevision()
 
   useEffect(() => {
@@ -111,15 +99,16 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
 
   if (error && !experiment && !list) return <section className="grid gap-4"><p className="text-xs text-rose" role="alert">{error}</p></section>
   if (!experimentId) return <section className="grid gap-4">
-    <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-soft pb-3"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的训练</h1><span className="text-xs text-foreground-3">单 worker · 同时最多一个活动实验</span></header>
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft pb-3"><div className="flex flex-wrap items-baseline gap-2"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的训练</h1><span className="text-xs text-foreground-3">单 worker · 同时最多一个活动实验</span></div><Button size="sm" onClick={() => setCreateOpen(true)} type="button">开始训练</Button></header>
     {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
-    {list === null ? <p className="py-6 text-center text-xs text-foreground-3">正在读取训练记录…</p> : list.length === 0
-      ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><p className="text-sm text-foreground-3">还没有训练记录。先到「我的数据」选择一个版本发起训练。</p><Button variant='default' onClick={() => navigate({ name: 'my-data' })} type="button">选择数据</Button></div>
+    {list === null ? <CardListSkeleton label="正在读取训练记录" rows={3}/> : list.length === 0
+      ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><p className="text-sm text-foreground-3">还没有训练记录。</p><div className="flex flex-wrap gap-2"><Button variant='default' onClick={() => setCreateOpen(true)} type="button">选择数据开始训练</Button><Button variant="outline" onClick={() => navigate({ name: 'my-data' })} type="button">管理我的数据</Button></div></div>
       : <div className="grid gap-2">{list.map(item => <Button variant="ghost" key={item.experimentId} className="h-auto min-w-0 w-full grid gap-0.5 rounded-sm border border-border-soft bg-card p-2.5 text-left text-xs whitespace-normal hover:bg-hover" onClick={() => navigate({ name: 'my-training', experimentId: item.experimentId })}>
         <strong className="truncate text-sm font-medium text-foreground">{item.datasetVersion}</strong><span className="text-foreground-3">{valueLabel(item.status)} · {item.tasks.length} 个方法 · {item.splitPreset}</span><code className="break-all font-mono text-[11px] text-foreground-4">{item.experimentId}</code>
       </Button>)}</div>}
+    <TrainingCreateDialog open={createOpen} onOpenChange={setCreateOpen} initialDatasetVersion={initialDatasetVersion} onCreated={experimentId => navigate({ name: 'my-training', experimentId })} onLoginRequired={onLoginRequired}/>
   </section>
-  if (!experiment) return <section className="grid gap-4"><p className="py-6 text-center text-xs text-foreground-3">正在读取实验…</p></section>
+  if (!experiment) return <section className="grid gap-4"><CardListSkeleton label="正在读取训练实验" rows={2}/></section>
 
   const historyTasks = experiment.tasks.filter(task => task.trainingHistory)
   return <section className="grid gap-4">
@@ -133,7 +122,7 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
     </dl>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">子任务</h2>
       {experiment.tasks.map(task => <div key={task.taskId} className="grid gap-1.5 border-t border-border-soft pt-2 first:border-t-0 first:pt-0">
-        <div className="flex flex-wrap items-baseline gap-2"><strong className="text-sm font-medium text-foreground">{task.method}</strong><span className="text-xs text-foreground-3">{valueLabel(task.status)}</span><code className="break-all font-mono text-[11px] text-foreground-4">{paramsText(task.parameters)}</code></div>
+        <div className="flex flex-wrap items-baseline gap-2"><strong className="text-sm font-medium text-foreground">{task.method}</strong><span className="text-xs text-foreground-3">{valueLabel(task.status)}</span><code className="break-all font-mono text-[11px] text-foreground-4">{formatMethodParams(task.parameters)}</code></div>
         {task.error ? <p className="text-xs text-rose">{task.error.code} · {task.error.message}</p> : null}
         {task.metrics ? <p className="text-xs tabular-nums text-foreground-3">PR-AUC {metric(task.metrics, 'averagePrecision')} · ROC-AUC {metric(task.metrics, 'rocAuc')} · F1 {metric(task.metrics, 'f1')} · P/R {metric(task.metrics, 'precision')}/{metric(task.metrics, 'recall')}</p> : null}
         {task.trainingHistory ? null : task.status === 'succeeded' ? <p className="text-xs text-foreground-4">该方法是单次拟合，无逐 epoch 曲线。</p> : null}
@@ -145,11 +134,11 @@ export function MyTrainingPage({ experimentId, navigate, onLoginRequired }: {
       </div>)}
       <Button variant='default' disabled={Boolean(!experiment.tasks.some(task => task.status === 'succeeded' && !task.modelId)) || Boolean(busy === 'register')} onClick={() => void register()} type="button">{busy === 'register' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}登记本次模型</Button>
     </section>
-    {historyTasks.length ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">训练曲线</h2>{historyTasks.map(task => <div key={task.taskId} className="grid gap-1"><p className="text-xs text-foreground-3">{task.method}</p><LossChart task={task}/></div>)}</section> : null}
+    {historyTasks.length ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">训练曲线</h2>{historyTasks.map(task => <div key={task.taskId} className="grid gap-1"><p className="text-xs text-foreground-3">{task.method}</p><TrainingLossChart history={task.trainingHistory} method={task.method}/></div>)}</section> : null}
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2 className="text-base font-semibold text-foreground">比较</h2>
       {comparison?.notes.map(note => <p key={note} className="text-xs text-foreground-3">{note}</p>)}
       {comparison ? <div className="overflow-x-auto"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><TableHeader><TableRow><TableHead>方法</TableHead><TableHead>参数</TableHead><TableHead>PR-AUC</TableHead><TableHead>ROC-AUC</TableHead><TableHead>F1</TableHead><TableHead>耗时</TableHead><TableHead>状态</TableHead></TableRow></TableHeader><TableBody>
-        {comparison.methods.map(row => <TableRow key={row.taskId}><TableCell>{row.methodName}</TableCell><TableCell>{paramsText(row.parameters)}</TableCell><TableCell>{metric(row.metrics, 'averagePrecision')}</TableCell><TableCell>{metric(row.metrics, 'rocAuc')}</TableCell><TableCell>{metric(row.metrics, 'f1')}</TableCell><TableCell>{row.trainingSeconds == null ? '未记录' : `${row.trainingSeconds.toFixed(2)}s`}</TableCell><TableCell>{row.error ? row.error.code : valueLabel(row.status)}</TableCell></TableRow>)}
+        {comparison.methods.map(row => <TableRow key={row.taskId}><TableCell>{row.methodName}</TableCell><TableCell>{formatMethodParams(row.parameters)}</TableCell><TableCell>{metric(row.metrics, 'averagePrecision')}</TableCell><TableCell>{metric(row.metrics, 'rocAuc')}</TableCell><TableCell>{metric(row.metrics, 'f1')}</TableCell><TableCell>{row.trainingSeconds == null ? '未记录' : `${row.trainingSeconds.toFixed(2)}s`}</TableCell><TableCell>{row.error ? row.error.code : valueLabel(row.status)}</TableCell></TableRow>)}
       </TableBody></Table></div> : null}
       <div className="flex flex-wrap items-center gap-2"><Button onClick={exportComparison} disabled={!comparison} variant="outline" type="button">导出比较</Button></div>
     </section>

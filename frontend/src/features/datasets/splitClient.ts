@@ -3,8 +3,13 @@ import { finiteNumber, record, text, textOrNull } from '@/lib/apiContract'
 
 export const SPLIT_PRESETS = [
   { value: 'temporal-70-15-15', label: '70 / 15 / 15（默认）' },
+  { value: 'temporal-90-5-5', label: '90 / 5 / 5（更多训练）' },
+  { value: 'temporal-80-5-15', label: '80 / 5 / 15（少验证）' },
   { value: 'temporal-80-10-10', label: '80 / 10 / 10' },
+  { value: 'temporal-70-10-20', label: '70 / 10 / 20' },
+  { value: 'temporal-60-15-25', label: '60 / 15 / 25' },
   { value: 'temporal-60-20-20', label: '60 / 20 / 20' },
+  { value: 'temporal-50-25-25', label: '50 / 25 / 25（更多测试）' },
 ] as const
 
 export interface SplitPreview {

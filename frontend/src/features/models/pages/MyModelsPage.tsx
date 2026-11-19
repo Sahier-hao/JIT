@@ -2,7 +2,8 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import { userModels, useUserRevision, type UserModel } from '@/features/account/userClient'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 import { ModelCardDialog } from '@/features/models/components/ModelCardDialog'
 import type { Route } from '@/app/navigation'
@@ -32,8 +33,12 @@ export function MyModelsPage({ navigate, onLoginRequired }: {
     return () => controller.abort()
   }, [onLoginRequired, userRevision])
   if (models === null) return <section className="grid gap-4">
+    <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-soft pb-3">
+      <h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的模型</h1>
+      <span className="text-xs text-foreground-3">{error ? '读取失败' : '正在读取…'}</span>
+    </header>
     {error ? <div className="grid justify-items-start gap-2"><p className="text-xs text-rose" role="alert">{error}</p><Button onClick={onLoginRequired} variant="outline" type="button">登录后重试</Button></div>
-      : <LoadingNotice label="正在读取我的模型"/>}
+      : <CardListSkeleton label="正在读取我的模型" rows={3}/>}
   </section>
   return <section className="grid gap-4">
     <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border-soft pb-3"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">我的模型</h1><span className="text-xs text-foreground-3">{models.length} 个已登记模型 · 只在本人项目可选</span></header>

@@ -15,6 +15,7 @@ import { type Commit, type Query, toCommit } from '@/lib/domain'
 import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '@/lib/apiClient'
+import { queryKeys } from '@/lib/queryKeys'
 import { parseSync, parseSyncCommit, type SyncCommit, type SyncView } from '@/features/projects/repositoryContract'
 import { PROJECTS_CHANGED } from '@/features/projects/projectEvents'
 
@@ -323,7 +324,7 @@ export interface RepositoryListLoad {
 export function useRepositories(): RepositoryListLoad {
   useRepositoryInvalidation()
   const query = useQuery({
-    queryKey: ['repositories'],
+    queryKey: queryKeys.repositories,
     queryFn: async ({ signal }) => {
       const items: RepositoryView[] = []
       let total = 0
@@ -350,7 +351,7 @@ function useRepositoryInvalidation() {
   const client = useQueryClient()
   useEffect(() => {
     const refresh = () => {
-      void client.invalidateQueries({ queryKey: ['repositories'] })
+      void client.invalidateQueries({ queryKey: queryKeys.repositories })
       void client.invalidateQueries({ queryKey: ['repository'] })
     }
     window.addEventListener(PROJECTS_CHANGED, refresh)
@@ -368,7 +369,7 @@ export interface RepositoryLoad {
 export function useRepository(repositoryId: string, viewSyncId?: string): RepositoryLoad {
   useRepositoryInvalidation()
   const query = useQuery({
-    queryKey: ['repository', repositoryId, viewSyncId ?? ''],
+    queryKey: queryKeys.repository(repositoryId, viewSyncId ?? ''),
     enabled: repositoryId !== '',
     queryFn: async ({ signal }) => {
       const repository = parseRepositoryDetail(await apiRequest({ path: `/api/v1/repositories/${encodeURIComponent(repositoryId)}${viewSyncId ? `?viewSyncId=${encodeURIComponent(viewSyncId)}` : ''}`, method: 'GET', signal }))

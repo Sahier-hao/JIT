@@ -314,6 +314,24 @@ def test_dataset_source_marks_and_pr_scoped_cleanup(tmp_path):
         assert db.execute('SELECT COUNT(*) FROM commit_record').fetchone()[0] == 0
 
 
+def test_delete_dataset_version_removes_manifest_file(tmp_path):
+    from jit_baseline import store as store_module
+    from jit_baseline.catalog_storage import CatalogStorage
+    storage = CatalogStorage(tmp_path / 'catalog.sqlite3')
+    storage.initialize()
+    csv = tmp_path / 'demo.csv'
+    csv.write_text('demo', encoding='utf-8')
+    manifest_path = tmp_path / 'demo-pr-v1.json'
+    manifest_path.write_text('{}', encoding='utf-8')
+    manifest = {'version': 'demo-pr-v1', 'dataset': 'demo', 'manifestPath': str(manifest_path),
+                'file': {'sha256': 'x', 'path': str(csv)}}
+
+    result = store_module.delete_dataset_version(storage, manifest)
+
+    assert result['deleted'] is True and result['fileErrors'] == []
+    assert not csv.exists() and not manifest_path.exists()
+
+
 def test_prunable_skips_referenced_and_branch_datasets(tmp_path):
     from jit_baseline import store as store_module
     from jit_baseline.catalog_storage import CatalogStorage

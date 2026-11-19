@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { ECharts } from 'echarts/core'
 
 import { EChartCanvas, chartTooltip, escapeHtml, useChartColors, type ChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
-import { FailureNotice, LoadingNotice } from '@/components/shared/Feedback'
+import { FailureNotice } from '@/components/shared/Feedback'
+import { RepositoryOverviewSkeleton } from '@/components/shared/Skeletons'
 import { displayTime } from '@/lib/domain'
 import { getRepositoryOverview, type RepositoryOverview, type RepositoryOverviewActivity, type RepositoryOverviewLanguage } from '@/features/projects/repositoryOverviewClient'
 import { cacheKey, readCache, writeCache } from '@/lib/localCache'
@@ -200,30 +201,30 @@ export function RepositoryOverviewView({ repositoryId, repository, onOpenAnalysi
         {hasAnalysis ? <Button size="sm" onClick={onOpenAnalysis} variant="outline" type="button">查看分析结果</Button> : null}
       </div>
     </div>
-    {loading && !overview ? <LoadingNotice label="正在读取仓库概览"/> : null}
+    {loading && !overview ? <RepositoryOverviewSkeleton/> : null}
     {error ? <FailureNotice error={error} onRetry={() => setAttempt(value => value + 1)}/> : null}
     {overview && !overview.supported ? <div className="grid gap-1 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">此项目不支持 GitHub 仓库概览</h2><p className="text-xs leading-body text-foreground-3">分支分析和风险趋势仍可使用。仓库概览只读取公开 GitHub 元数据，不访问私有来源。</p></div> : null}
     {overview?.supported && !metadata ? <div className="grid justify-items-start gap-2 rounded-sm border border-border-soft p-4"><h2 className="text-sm font-semibold text-foreground">仓库概览暂时不可用</h2><p className="text-xs leading-body text-foreground-3">{overview.errorCode === 'PR_RATE_LIMITED' ? 'GitHub 匿名额度受限，稍后重试；不影响项目分析。' : '无法读取 GitHub 仓库信息，可以稍后重试；不影响项目分析。'}</p><Button onClick={() => setAttempt(value => value + 1)} variant="outline" type="button">重新读取概览</Button></div> : null}
     {overview?.stale ? <p className="text-xs text-amber-deep">显示上次缓存的概览（读取于 {compact(overview.fetchedAt)}），GitHub 暂时不可用。</p> : null}
     {overview && metadata ? <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.stars.toLocaleString()}</b><span className="text-xs text-foreground-3">stars</span></div>
-        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.forks.toLocaleString()}</b><span className="text-xs text-foreground-3">forks</span></div>
-        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.openIssues.toLocaleString()}</b><span className="text-xs text-foreground-3">开放 issue/PR</span></div>
-        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{metadata.watchers.toLocaleString()}</b><span className="text-xs text-foreground-3">watchers</span></div>
-        <div className="grid gap-0.5 rounded-sm border border-border-soft p-3"><b className="text-lg font-semibold tabular-nums text-foreground">{compact(metadata.pushedAt)}</b><span className="text-xs text-foreground-3">最近推送</span></div>
-      </div>
+      <dl className="grid grid-cols-2 divide-x divide-y divide-border-soft overflow-hidden rounded-2xl border border-border-soft bg-card shadow-[var(--sh-2)] sm:grid-cols-5 sm:divide-y-0">
+        <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">stars</dt><dd className="m-0 text-xl font-semibold tabular-nums text-foreground">{metadata.stars.toLocaleString()}</dd></div>
+        <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">forks</dt><dd className="m-0 text-xl font-semibold tabular-nums text-foreground">{metadata.forks.toLocaleString()}</dd></div>
+        <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">开放 issue/PR</dt><dd className="m-0 text-xl font-semibold tabular-nums text-foreground">{metadata.openIssues.toLocaleString()}</dd></div>
+        <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">watchers</dt><dd className="m-0 text-xl font-semibold tabular-nums text-foreground">{metadata.watchers.toLocaleString()}</dd></div>
+        <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">最近推送</dt><dd className="m-0 text-sm font-semibold tabular-nums text-foreground">{compact(metadata.pushedAt)}</dd></div>
+      </dl>
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
-        <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="仓库活跃度">
+        <section className="grid gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="仓库活跃度">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">仓库活跃度</h2><span className="text-xs text-foreground-3">{overview.activityCoverage === 'last-52-weeks' ? '近一年 · 按周' : '最近 12 周'}</span></div>
           <ActivityChart activity={overview.activity} coverage={overview.activityCoverage} fetchedAt={overview.fetchedAt}/>
         </section>
-        <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="语言构成">
+        <section className="grid gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="语言构成">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">语言构成</h2><span className="text-xs text-foreground-3">GitHub 字节统计</span></div>
           {overview.languages.length ? <LanguageChart languages={overview.languages}/> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回语言统计。</p>}
         </section>
       </div>
-      <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card" aria-label="最近提交">
+      <section className="grid gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="最近提交">
         <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">最近提交</h2><span className="text-xs text-foreground-3">最多 10 条</span></div>
         {overview.recentCommits.length ? <ul className="grid gap-1">{overview.recentCommits.map(commit => <li key={commit.sha} className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-soft py-1.5 text-sm"><a className="min-w-0 truncate text-foreground-2 hover:text-foreground" href={commit.url} target="_blank" rel="noreferrer"><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 7)}</code> {commit.message}</a><span className="shrink-0 text-xs text-foreground-4">{commit.author} · {compact(commit.date)}</span></li>)}</ul> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回最近提交。</p>}
       </section>

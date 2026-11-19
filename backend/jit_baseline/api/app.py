@@ -1,0 +1,809 @@
+"""Local project analysis, model catalog and historical verification API."""
+from pathlib import Path
+from contextlib import asynccontextmanager
+import os
+import re
+
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
+
+from ..artifacts import DEFAULT_RUN, Snapshot
+from ..data import BaselineError
+
+
+def _supplied_directory():
+    """所供给的运行目录：默认既有固定运行，可用 `JIT_RUN_DIR` 指向另一个已校验的运行。
+
+    指定的目录与默认目录走**同一个**准入路径（`Snapshot.load`），因此未通过校验的
+    目录只会得到明确的不可用状态，不会退回原运行冒充成功（PDB-08）。
+    """
+    configured = os.environ.get("JIT_RUN_DIR")
+    return Path(configured) if configured else DEFAULT_RUN
+
+
+def create_app(directory: Path | None = None, *, database=None, artifact_root=None,
+               sync_service=None, dataset_root=None, training_service=None,
+               dataset_build_service=None):
+    directory = Path(directory) if directory is not None else _supplied_directory()
+    owns_sync = sync_service is None
+    owns_training = training_service is None
+    owns_dataset_builds = dataset_build_service is None
+
+    @asynccontextmanager
+    async def lifespan(app):
+        app.state.updates.start()
+        app.state.pr_updates.start()
+        if os.environ.get('JIT_PR_DATASET_AUTO_PRUNE', '').strip().lower() in ('1', 'true', 'yes'):
+            try:
+                registry = dataset_module.load_all(registry_root)
+                for row in store.prunable_datasets(
+                        storage, registry, int(os.environ.get('JIT_PR_DATASET_KEEP', '10'))):
+                    store.delete_dataset_version(storage, row['manifest'])
+            except Exception:
+                pass
+        try:
+            yield
+        finally:
+            from starlette.concurrency import run_in_threadpool
+            await run_in_threadpool(app.state.pr_updates.close)
+            await run_in_threadpool(app.state.updates.close)
+            if owns_sync:
+                await run_in_threadpool(app.state.sync.close)
+            if owns_training:
+                await run_in_threadpool(app.state.training.close)
+            if owns_dataset_builds:
+                await run_in_threadpool(app.state.dataset_builds.close)
+
+    app = FastAPI(title="JIT 历史回放", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    from .schemas.common import HealthResponse
+
+    @app.get('/api/health', response_model=HealthResponse)
+    def health():
+        return {'status': 'ok'}
+    from ..api_errors import install_errors
+    from ..catalog_schema import schema_info
+    from ..catalog import ModelCatalog
+    from ..catalog_storage import CatalogStorage, DEFAULT_DATABASE
+    from ..catalog_input import promotion_input, read_object, registration_input
+    from ..api_errors import RequestError
+    from starlette.concurrency import run_in_threadpool
+    install_errors(app)
+    database = database if database is not None else os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)
+    storage = CatalogStorage(database)
+    from ..admin import install_admin
+    install_admin(app, storage)
+    from ..users import install_users
+    install_users(app, storage)
+    catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
+    app.state.catalog = catalog
+    app.state.storage = storage
+    from .. import store
+    from .. import datasets as dataset_module
+    dataset_root = dataset_root if dataset_root is not None else os.environ.get('JIT_DATASET_ROOT')
+    registry_root = Path(dataset_root) if dataset_root else None
+    # 描述文件是登记事实：缺失或校验失败即拒绝启动（DSR-06），不退回空目录。
+    registered = dataset_module.load_all(registry_root)
+    app.state.datasets = registered
+    from ..prediction import PredictionService
+    prediction_service = PredictionService(catalog)
+    from ..sync import SyncService
+    allow_local = (bool(getattr(sync_service, 'allow_local', False))
+                   if sync_service is not None
+                   else os.environ.get('JIT_SYNC_ALLOW_LOCAL') == '1')
+    if sync_service is None:
+        # 本地仓库只用于验收与测试；默认只接受公开 HTTP(S) 地址。
+        sync_service = SyncService(storage, catalog, artifact_root=catalog.root,
+                                   dataset_root=registry_root, allow_local=allow_local)
+    sync_service.recover()
+    app.state.sync = sync_service
+    from ..training_tasks import TrainingTaskService
+    if training_service is None:
+        training_service = TrainingTaskService(
+            storage, catalog, artifact_root=catalog.root, dataset_root=registry_root)
+    training_service.recover()
+    app.state.training = training_service
+    from ..dataset_builds import DatasetBuildService
+    if dataset_build_service is None:
+        dataset_build_service = DatasetBuildService(
+            storage, registry_root, allow_local=allow_local)
+    dataset_build_service.recover()
+    app.state.dataset_builds = dataset_build_service
+    from ..multi_project_reports import MultiProjectReportService
+    multi_project_reports = MultiProjectReportService()
+    app.state.multi_project_reports = multi_project_reports
+    from ..benefit_reports import BenefitReportService
+    benefit_reports = BenefitReportService()
+    app.state.benefit_reports = benefit_reports
+    from ..release_reports import ReleaseReportService, default_roots
+    release_reports = ReleaseReportService([catalog.root, *default_roots()])
+    app.state.release_reports = release_reports
+    from ..model_diagnostics import DiagnosticReportService
+    diagnostics = DiagnosticReportService()
+    app.state.model_diagnostics = diagnostics
+    from ..model_cards import ModelCardService
+    model_cards = ModelCardService(catalog, diagnostics, benefit_reports, release_reports)
+    app.state.model_cards = model_cards
+    from ..repository_updates import RepositoryUpdates
+    updates = RepositoryUpdates(sync_service)
+    app.state.updates = updates
+    from ..pr_review import PullRequestReview
+    pr_review = PullRequestReview(sync_service)
+    app.state.pr_review = pr_review
+    from ..pr_updates import PullRequestUpdates
+    from ..project_trends import ProjectTrendService
+    from ..repository_overview import RepositoryOverview
+    pr_updates = PullRequestUpdates(sync_service, pr_review)
+    app.state.pr_updates = pr_updates
+    project_trends = ProjectTrendService(sync_service)
+    app.state.project_trends = project_trends
+    repository_overview = RepositoryOverview(sync_service)
+    app.state.repository_overview = repository_overview
+
+    @app.get('/api/v1/project-events')
+    def project_events(limit: int = 20, offset: int = 0):
+        return pr_updates.events(limit=limit, offset=offset)
+
+    @app.get('/api/v1/repositories/{repository_id}/overview')
+    async def repository_overview_route(repository_id: str, refresh: bool = False):
+        return await run_in_threadpool(repository_overview.get, repository_id, refresh=refresh)
+
+    @app.get('/api/v1/repositories/{repository_id}/events')
+    def repository_events(repository_id: str, limit: int = 20, offset: int = 0):
+        return pr_updates.events(repository_id, limit=limit, offset=offset)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-requests')
+    def repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
+        return pr_updates.list_prs(repository_id, state=state, page=page)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-requests/count')
+    def count_repository_pull_requests(repository_id: str):
+        return pr_updates.open_count(repository_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-requests/refresh')
+    def refresh_repository_pull_requests(repository_id: str, state: str = 'open', page: int = 1):
+        return pr_updates.refresh_list(repository_id, state=state, page=page)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-requests/analyze')
+    async def analyze_all_repository_pull_requests(repository_id: str, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if (set(payload) - {'modelId', 'scope'}
+                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())):
+            raise RequestError('INPUT_INVALID')
+        result = await run_in_threadpool(pr_updates.analyze_all_prs, repository_id,
+                                         payload.get('modelId'),
+                                         getattr(request.state, 'request_id', None),
+                                         payload.get('scope'))
+        return JSONResponse(result, status_code=202)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-request-batches/latest')
+    def latest_pull_request_batch(repository_id: str):
+        return pr_updates.latest_batch(repository_id)
+
+    @app.get('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}')
+    def pull_request_batch(repository_id: str, batch_id: str):
+        return pr_updates.batch(repository_id, batch_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/retry')
+    async def retry_pull_request_batch(repository_id: str, batch_id: str, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'kind'} or 'kind' in payload and payload['kind'] not in ('failed', 'interrupted'):
+            raise RequestError('INPUT_INVALID')
+        result = await run_in_threadpool(pr_updates.retry_batch, repository_id, batch_id,
+                                         getattr(request.state, 'request_id', None),
+                                         payload.get('kind', 'failed'))
+        return JSONResponse(result, status_code=202)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-request-batches/{batch_id}/cancel')
+    async def cancel_pull_request_batch(repository_id: str, batch_id: str, request: Request):
+        body = await request.body()
+        if body:
+            raise RequestError('INPUT_INVALID')
+        result = await run_in_threadpool(pr_updates.cancel_batch, repository_id, batch_id)
+        return JSONResponse(result, status_code=202)
+
+    @app.post('/api/v1/repositories/{repository_id}/pull-requests/{number}/analyze')
+    async def analyze_repository_pull_request(repository_id: str, number: int, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if (set(payload) - {'modelId', 'retry'}
+                or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())
+                or 'retry' in payload and type(payload['retry']) is not bool):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number,
+                                       payload.get('modelId'), bool(payload.get('retry', False)))
+
+    @app.get('/api/v1/repositories/{repository_id}/pr-tracking')
+    def pr_tracking(repository_id: str):
+        return pr_updates.get(repository_id)
+
+    @app.patch('/api/v1/repositories/{repository_id}/pr-tracking')
+    async def configure_pr_tracking(repository_id: str, request: Request):
+        return await run_in_threadpool(pr_updates.configure, repository_id, await read_object(request))
+
+    @app.post('/api/v1/repositories/{repository_id}/pr-tracking/check')
+    def check_project_pull_requests(repository_id: str):
+        return JSONResponse(pr_updates.request(repository_id), status_code=202)
+
+    @app.get('/api/v1/repositories/{repository_id}/trend-groups')
+    def project_trend_groups(repository_id: str):
+        return project_trends.groups(repository_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/trend-views')
+    async def create_project_trend_view(repository_id: str, request: Request):
+        return await run_in_threadpool(project_trends.create, repository_id, await read_object(request))
+
+    @app.get('/api/v1/repositories/{repository_id}/trend-views/{view_id}')
+    def project_trend_view(repository_id: str, view_id: str):
+        return project_trends.get(repository_id, view_id)
+
+    @app.get('/api/v1/repositories/{repository_id}/trend-views/{view_id}/commits')
+    def project_trend_commits(repository_id: str, view_id: str, limit: int = 50, offset: int = 0,
+                             start: str | None = None, end: str | None = None):
+        return project_trends.commits(repository_id, view_id, limit=limit, offset=offset, start=start, end=end)
+
+    @app.post('/api/v1/review-sources')
+    async def review_source(request: Request):
+        return await run_in_threadpool(pr_review.intake, await read_object(request))
+
+    @app.post('/api/v1/pr-sources/{owner}/{name}/{number}/refresh')
+    async def refresh_pull_request(owner: str, name: str, number: int, request: Request):
+        body = await request.body()
+        payload = await read_object(request) if body else {}
+        if set(payload) - {'repositoryId'} or 'repositoryId' in payload and not isinstance(payload['repositoryId'], str):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_review.refresh, owner, name, number, payload.get('repositoryId'))
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}')
+    def pull_request_snapshot(snapshot_id: str):
+        return pr_review.get(snapshot_id)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/context')
+    def pull_request_context(snapshot_id: str, path: str, side: str = 'head'):
+        return pr_review.context(snapshot_id, path, side)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/analyses')
+    def pull_request_analyses(snapshot_id: str):
+        return pr_review.analyses(snapshot_id)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/candidates')
+    def pull_request_candidates(snapshot_id: str):
+        return pr_review.stored_candidates(snapshot_id)
+
+    @app.post('/api/v1/pr-snapshots/{snapshot_id}/candidates')
+    async def analyze_pull_request_candidates(snapshot_id: str, request: Request):
+        payload = await read_object(request)
+        if not isinstance(payload, dict) or set(payload) - {'paths', 'side'}:
+            raise RequestError('INPUT_INVALID')
+        paths = payload.get('paths')
+        if paths is not None and (not isinstance(paths, list) or not all(isinstance(p, str) for p in paths)):
+            raise RequestError('INPUT_INVALID')
+        return await run_in_threadpool(pr_review.candidates, snapshot_id, paths,
+                                       payload.get('side', 'head'))
+
+    @app.post('/api/v1/pr-snapshots/{snapshot_id}/analyses')
+    async def analyze_pull_request(snapshot_id: str, request: Request):
+        return await run_in_threadpool(pr_review.analyze, snapshot_id, await read_object(request))
+    from ..repository_explanation import RepositoryExplanationService
+    explanation_service = RepositoryExplanationService(sync_service, catalog)
+    from ..analysis_comparison import AnalysisComparisonService
+    comparison_service = AnalysisComparisonService(sync_service)
+    from fastapi.exceptions import RequestValidationError
+
+    @app.exception_handler(RequestValidationError)
+    def invalid_request(request: Request, exc: RequestValidationError):
+        """查询参数类型或范围不合法时也保持 `{"error": {...}}` 结构（API-R-02）。"""
+        return JSONResponse({'error': {'code': 'INPUT_INVALID', 'message': '请求格式或字段值无效',
+                                       'requestId': getattr(request.state, 'request_id', None)}},
+                            status_code=422)
+
+    @app.post('/api/v1/predictions')
+    async def create_prediction(request: Request):
+        result = await run_in_threadpool(prediction_service.create, await read_object(request))
+        request.state.business_ids = (result['model']['modelId'], result['runId'], result['batchId'])
+        return JSONResponse(result, status_code=201)
+
+    @app.get('/api/v1/prediction-batches/{batch_id}')
+    def prediction_batch(batch_id: str, request: Request):
+        result = prediction_service.get(batch_id)
+        request.state.business_ids = (result['model']['modelId'], result['runId'], result['batchId'])
+        return result
+
+    @app.get('/api/v1/model-candidates')
+    def model_candidates():
+        return {'candidates': catalog.candidates()}
+
+    def with_release_fields(model):
+        entry, report_error = release_reports.for_run(
+            model.get("artifactRunId"),
+            model_sha256=model.get("modelSha256") or model.get("sha256"),
+            schema=model.get("featureSchemaVersion"),
+        )
+        return {
+            **model,
+            "releaseStatus": entry["report"]["status"] if entry else "not-evaluated",
+            "releaseReportId": entry["reportId"] if entry else None,
+            "defaultCandidate": bool(entry and entry["report"].get("approvedDefault")),
+            "releaseError": report_error,
+        }
+
+    @app.get('/api/v1/experiment-runs')
+    def experiment_runs(registrationState: str | None = None, compatibility: str | None = None,
+                        artifactState: str | None = None, limit: int = 50, offset: int = 0):
+        if registrationState not in (None, 'registered', 'unregistered'):
+            raise RequestError('INPUT_INVALID', field='registrationState')
+        if compatibility not in (None, 'repository-analysis', 'offline-only',
+                                 'input-unsupported', 'schema-incompatible'):
+            raise RequestError('INPUT_INVALID', field='compatibility')
+        if artifactState not in (None, 'complete', 'invalid', 'failed'):
+            raise RequestError('INPUT_INVALID', field='artifactState')
+        if not 1 <= limit <= 100 or offset < 0:
+            raise RequestError('INPUT_INVALID', field='limit' if not 1 <= limit <= 100 else 'offset')
+        page = catalog.experiment_runs(registration_state=registrationState,
+                                       compatibility=compatibility,
+                                       artifact_state=artifactState,
+                                       limit=limit, offset=offset)
+        for run in page["runs"]:
+            entry, report_error = release_reports.for_run(
+                run.get("artifactRunId"), schema=run.get("featureSchemaVersion"),
+            )
+            run["releaseStatus"] = entry["report"]["status"] if entry else "not-evaluated"
+            run["releaseReportId"] = entry["reportId"] if entry else None
+            run["releaseError"] = report_error
+        return page
+
+    @app.post('/api/v1/experiment-runs/promote')
+    async def promote_experiments(request: Request):
+        items = promotion_input(await read_object(request))
+        result = await run_in_threadpool(catalog.promote_experiments, items,
+                                         request_id=request.state.request_id)
+        return result
+
+    @app.get('/api/v1/experiment-runs/{candidate_id}')
+    def experiment_run_detail(candidate_id: str):
+        if not re.fullmatch('[0-9a-f]{64}', candidate_id):
+            raise RequestError('INPUT_INVALID', field='candidateId')
+        detail = catalog.experiment_detail(candidate_id)
+        entry, report_error = release_reports.for_run(
+            detail.get("artifactRunId"), schema=detail.get("featureSchemaVersion"),
+        )
+        detail["releaseStatus"] = entry["report"]["status"] if entry else "not-evaluated"
+        detail["releaseReportId"] = entry["reportId"] if entry else None
+        detail["releaseError"] = report_error
+        detail["releaseReport"] = entry["report"] if entry else None
+        return detail
+
+    @app.post('/api/v1/models/register')
+    async def register_model(request: Request):
+        data = registration_input(await read_object(request))
+        result = await run_in_threadpool(catalog.register, data['candidateId'], data['expectedManifestSha256'],
+                                        channel='http-local', request_id=request.state.request_id)
+        result["model"] = with_release_fields(result["model"])
+        request.state.business_ids = (result['model']['modelId'], result['model']['runId'], None)
+        return JSONResponse(result, status_code=201 if result['created'] else 200)
+
+    @app.get('/api/v1/training-methods')
+    def training_methods(schema: str | None = None):
+        from ..algorithms import ALGORITHMS, method_catalog, param_specs
+        from .. import collect
+        from ..schemas import resolve
+        try:
+            name = resolve(schema or collect.SCHEMA_NAME).name
+        except BaselineError:
+            raise RequestError('INPUT_INVALID', field='schema')
+        methods = method_catalog(name)
+        for item in methods:
+            defaults = ALGORITHMS[item['method']]['params']
+            item['params'] = [
+                {'name': key, **declaration, 'default': defaults.get(key)}
+                for key, declaration in param_specs(item['method']).items()
+            ]
+        return {'schema': name, 'methods': methods}
+
+    @app.get('/api/v1/models')
+    def models(state: str | None = None):
+        if state not in (None, 'ready', 'invalid'):
+            raise RequestError('INPUT_INVALID', field='state')
+        from ..algorithms import ALGORITHMS
+        registered_models = catalog.models()
+        candidates = catalog.candidates()
+        methods = [dict(method=key, name=value['name'], category=value['category'],
+                        registeredModels=sum(model['method'] == key and model['state'] == 'ready'
+                                             for model in registered_models),
+                        deliveredArtifacts=sum(candidate.get('method') == key for candidate in candidates))
+                   for key, value in ALGORITHMS.items()]
+        visible = [with_release_fields(model) for model in registered_models]
+        return {'models': [model for model in visible if state is None or model['state'] == state],
+                'methods': methods, 'readiness': catalog.readiness(registered_models)}
+
+    @app.get('/api/v1/models/coverage')
+    def model_coverage_route(datasetVersion: str | None = None, limit: int = 50, offset: int = 0):
+        if not 1 <= limit <= 100 or offset < 0:
+            raise RequestError('INPUT_INVALID', field='limit' if not 1 <= limit <= 100 else 'offset')
+        if datasetVersion is not None and (not datasetVersion.strip() or len(datasetVersion) > 200):
+            raise RequestError('INPUT_INVALID', field='datasetVersion')
+        from ..model_coverage import model_coverage
+        return model_coverage(catalog, dataset_version=datasetVersion, limit=limit, offset=offset)
+
+    @app.get('/api/v1/models/{model_id}')
+    def model_detail(model_id: str):
+        return dict(catalog.detail(model_id), card=model_cards.get(model_id))
+
+    @app.get('/api/v1/model-cards/{model_id}')
+    def model_card(model_id: str):
+        return model_cards.get(model_id)
+
+    @app.get('/api/v1/repository-models')
+    def repository_models(request: Request):
+        # Public selection metadata only: no training evidence, paths or verification reports.
+        from ..users import current_admin, current_user
+        viewer = current_user(request)
+        admin_view = current_admin(request) is not None
+        visible = [item for item in catalog.models()
+                   if admin_view or item.get('ownerUserId') in (None, viewer)]
+        return {'models': [dict(modelId=item['modelId'], name=item['name'], method=item['method'],
+                                featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
+                                enabled=item['enabled'], isDefault=item['isDefault'],
+                                mine=bool(viewer and item.get('ownerUserId') == viewer),
+                                repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
+                                ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')) for item in visible]}
+
+    @app.post('/api/v1/training-tasks')
+    async def create_training_task(request: Request):
+        result, created = await run_in_threadpool(
+            training_service.create, await read_object(request), request.state.request_id,
+            created_by=request.state.admin_username)
+        request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.post('/api/v1/training-experiments')
+    async def create_training_experiment(request: Request):
+        result, created = await run_in_threadpool(
+            training_service.create_experiment, await read_object(request),
+            request.state.request_id, created_by=request.state.admin_username)
+        request.state.business_ids = (None, None, result.get('experimentId'))
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/training-experiments/{experiment_id}')
+    def training_experiment_detail(experiment_id: str):
+        return training_service.get_experiment(experiment_id)
+
+    @app.get('/api/v1/training-experiments/{experiment_id}/comparison')
+    def training_experiment_comparison(experiment_id: str):
+        return training_service.compare_experiment(experiment_id)
+
+    @app.get('/api/v1/training-tasks')
+    def training_task_list(limit: int = 20, offset: int = 0):
+        return training_service.pages(limit, offset)
+
+    @app.get('/api/v1/training-tasks/{task_id}')
+    def training_task_detail(task_id: str):
+        return training_service.get(task_id)
+
+    @app.post('/api/v1/training-tasks/{task_id}/cancel')
+    def cancel_training_task(task_id: str):
+        result = training_service.cancel(task_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
+
+    @app.post('/api/v1/training-tasks/{task_id}/retry')
+    async def retry_training_task(task_id: str, request: Request):
+        body = await request.body()
+        if body:
+            payload = await read_object(request)
+            if payload:
+                raise RequestError('INPUT_INVALID')
+        result, created = await run_in_threadpool(
+            training_service.retry, task_id, request.state.request_id,
+            created_by=request.state.admin_username)
+        request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/models/{model_id}/benefit')
+    def model_benefit(model_id: str):
+        run_id = catalog.artifact_run_id(model_id)
+        entry, error = benefit_reports.for_run(run_id)
+        if error is not None:
+            raise BaselineError('REPORT_INVALID', error['message'])
+        if entry is None:
+            return {'modelId': model_id, 'runId': run_id, 'available': False,
+                    'reason': '尚无该模型的收益评估报告'}
+        return {'modelId': model_id, 'runId': run_id, 'available': True, **entry}
+
+    @app.get('/api/v1/models/{model_id}/release')
+    def model_release(model_id: str):
+        detail = catalog.detail(model_id)
+        run_id = detail.get("artifactRunId")
+        if not run_id:
+            raise BaselineError("REPORT_INVALID", "模型没有可核对的运行身份")
+        entry, error = release_reports.for_run(
+            run_id,
+            model_sha256=detail.get("modelSha256") or detail.get("sha256"),
+            schema=detail.get("featureSchemaVersion"),
+        )
+        if error is not None:
+            raise BaselineError("REPORT_INVALID", error["message"])
+        if entry is None:
+            return {"modelId": model_id, "runId": run_id, "available": False,
+                    "status": "not-evaluated",
+                    "reason": "尚无匹配的发布资格报告"}
+        return {"modelId": model_id, "runId": run_id, "available": True, **entry}
+
+    from ..reports.evaluation_evidence import EvaluationEvidence
+    evaluation_evidence = EvaluationEvidence(registry_root=registry_root)
+    from .routers.admin import install_admin_routes
+    install_admin_routes(app, storage=storage, registry_root=registry_root,
+                         dataset_root=dataset_root, dataset_module=dataset_module,
+                         multi_project_reports=multi_project_reports,
+                         evaluation_evidence=evaluation_evidence)
+
+    @app.patch('/api/v1/models/{model_id}/policy')
+    async def model_policy(model_id: str, request: Request):
+        return await run_in_threadpool(catalog.update_policy, model_id, await read_object(request))
+
+    @app.get('/api/v1/feature-schemas/{version}')
+    def feature_schema(version: str):
+        return schema_info(version)
+
+    @app.get('/api/v1/datasets')
+    def dataset_versions_all():
+        registered = dataset_module.load_all(registry_root)
+        datasets = store.dataset_list(registered)
+        versions = [version['version'] for dataset in datasets for version in dataset['versions']]
+        metadata = storage.dataset_metadata(versions)
+        for dataset in datasets:
+            for version in dataset['versions']:
+                info = metadata[version['version']]
+                version['references'] = info['references']
+                version['owners'] = info['owners']
+                version['shared'] = info['shared']
+        return {'datasets': datasets}
+
+    @app.get('/api/v1/datasets/{name}/versions')
+    def dataset_versions(name: str):
+        registered = dataset_module.load_all(registry_root)
+        view = store.version_view(registered, name)
+        if view is None:
+            raise RequestError('NOT_FOUND')
+        metadata = storage.dataset_metadata([version['version'] for version in view['versions']])
+        for version in view['versions']:
+            info = metadata[version['version']]
+            version['references'] = info['references']
+            version['owners'] = info['owners']
+            version['shared'] = info['shared']
+        return view
+
+    @app.get('/api/v1/commits')
+    def commit_list(version: str, module: str | None = None, limit: int = 100, offset: int = 0):
+        if storage.dataset(version) is None:
+            raise RequestError('NOT_FOUND')
+        if not 1 <= limit <= 500:
+            raise RequestError('INPUT_INVALID', field='limit')
+        if offset < 0:
+            raise RequestError('INPUT_INVALID', field='offset')
+        if module:
+            total = storage.count_by_entity('module', module, version=version)
+            records = storage.commits_by_entity('module', module, limit, offset, summary=True, version=version)
+        else:
+            total = storage.count_commits(version)
+            records = storage.commits(version, limit, offset, summary=True)
+        return {'datasetVersion': version, 'total': total, 'limit': limit, 'offset': offset,
+                'commits': records}
+
+    @app.get('/api/v1/commits/{commit_id}')
+    def commit_detail(commit_id: str, version: str):
+        record = store.commit_view(storage, version, commit_id)
+        if record is None:
+            raise RequestError('NOT_FOUND')
+        return record
+
+    @app.post('/api/v1/repository-syncs')
+    async def create_sync(request: Request):
+        payload = await read_object(request)
+        from ..users import current_admin, current_user
+        viewer = current_user(request)
+        if payload.get('modelId') and current_admin(request) is None:
+            owner = catalog.model_owner(payload['modelId'])
+            if owner is not None and owner != viewer:
+                raise RequestError('MODEL_FORBIDDEN')
+        result, created = await run_in_threadpool(sync_service.create, payload,
+                                                  request.state.request_id)
+        request.state.business_ids = (result.get('modelId'), result.get('runId'), None)
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/repository-syncs')
+    def sync_list(limit: int = 20, offset: int = 0):
+        return sync_service.pages(limit, offset)
+
+    @app.get('/api/v1/repository-syncs/{sync_id}')
+    def sync_detail(sync_id: str):
+        return sync_service.get(sync_id)
+
+    @app.delete('/api/v1/repository-syncs/{sync_id}')
+    def sync_delete(sync_id: str):
+        sync_service.delete_sync(sync_id)
+        return Response(status_code=204)
+
+    @app.post('/api/v1/repository-syncs/{sync_id}/cancel')
+    def sync_cancel(sync_id: str):
+        result = sync_service.cancel(sync_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
+
+    @app.get('/api/v1/repository-syncs/{sync_id}/commits')
+    def sync_commits(sync_id: str, limit: int = 100, offset: int = 0, search: str | None = None,
+                     start: str | None = None, end: str | None = None, sort: str = 'risk'):
+        return sync_service.commits(sync_id, limit, offset, search=search, start=start,
+                                    end=end, sort=sort)
+
+    @app.get('/api/v1/repository-syncs/{sync_id}/commits/{commit_id}')
+    def sync_commit(sync_id: str, commit_id: str):
+        return sync_service.commit(sync_id, commit_id)
+
+    @app.get('/api/v1/repositories')
+    def repository_list(limit: int = 50, offset: int = 0):
+        return sync_service.repositories(limit, offset)
+
+    @app.post('/api/v1/repositories')
+    async def repository_create(request: Request):
+        payload = await read_object(request)
+        if 'autoUpdate' in payload and not isinstance(payload['autoUpdate'], bool):
+            raise RequestError('INPUT_INVALID', field='autoUpdate')
+        result, created = await run_in_threadpool(sync_service.create_repository,
+                                                  payload)
+        if created and payload.get('autoUpdate', True):
+            await run_in_threadpool(updates.enroll, result['repositoryId'])
+        return JSONResponse(result, status_code=201 if created else 200)
+
+    @app.get('/api/v1/repositories/{repository_id}/updates')
+    def repository_updates(repository_id: str):
+        return updates.get(repository_id)
+
+    @app.patch('/api/v1/repositories/{repository_id}/updates')
+    async def configure_repository_updates(repository_id: str, request: Request):
+        return await run_in_threadpool(updates.configure, repository_id, await read_object(request))
+
+    @app.post('/api/v1/repositories/{repository_id}/refresh')
+    def refresh_repository(repository_id: str):
+        return JSONResponse(updates.request(repository_id), status_code=202)
+
+    @app.patch('/api/v1/repositories/{repository_id}')
+    async def repository_update(repository_id: str, request: Request):
+        payload = await read_object(request)
+        if isinstance(payload, dict) and "viewSyncId" in payload:
+            return await run_in_threadpool(sync_service.select_view, repository_id, payload)
+        return await run_in_threadpool(sync_service.rename_repository, repository_id, payload)
+
+    @app.delete('/api/v1/repositories/{repository_id}')
+    def repository_delete(repository_id: str):
+        sync_service.delete_repository(repository_id)
+        return Response(status_code=204)
+
+    @app.get('/api/v1/repositories/{repository_id}/syncs')
+    def repository_syncs(repository_id: str, limit: int = 20, offset: int = 0):
+        return sync_service.repository_syncs(repository_id, limit, offset, exclude_pr=True)
+
+    @app.post('/api/v1/repositories/{repository_id}/dataset-builds')
+    async def create_dataset_build(repository_id: str, request: Request):
+        from ..users import current_admin, current_user
+        viewer = current_user(request)
+        result, created = await run_in_threadpool(
+            dataset_build_service.create,
+            repository_id,
+            await read_object(request),
+            request.state.request_id,
+            created_by=current_admin(request) or viewer or 'project',
+            owner_user_id=viewer,
+        )
+        request.state.business_ids = (None, None, result.get('datasetVersion'))
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/repositories/{repository_id}/dataset-builds')
+    def dataset_builds(repository_id: str, limit: int = 20, offset: int = 0):
+        return dataset_build_service.pages(repository_id, limit, offset)
+
+    @app.get('/api/v1/repositories/{repository_id}/dataset-builds/{task_id}')
+    def dataset_build(repository_id: str, task_id: str):
+        return dataset_build_service.get(repository_id, task_id)
+
+    @app.post('/api/v1/repositories/{repository_id}/dataset-builds/{task_id}/cancel')
+    def cancel_dataset_build(repository_id: str, task_id: str):
+        result = dataset_build_service.cancel(repository_id, task_id)
+        return JSONResponse(result, status_code=200 if result['status'] == 'cancelled' else 202)
+
+    @app.post('/api/v1/repositories/{repository_id}/dataset-builds/{task_id}/retry')
+    async def retry_dataset_build(repository_id: str, task_id: str, request: Request):
+        body = await request.body()
+        if body and await read_object(request):
+            raise RequestError('INPUT_INVALID')
+        from ..users import current_admin, current_user
+        viewer = current_user(request)
+        result, created = await run_in_threadpool(
+            dataset_build_service.retry,
+            repository_id,
+            task_id,
+            request.state.request_id,
+            created_by=current_admin(request) or viewer or 'project',
+            owner_user_id=viewer,
+        )
+        return JSONResponse(result, status_code=202 if created else 200)
+
+    @app.get('/api/v1/repositories/{repository_id}/analyses/{sync_id}/dataset')
+    def project_analysis_dataset(repository_id: str, sync_id: str):
+        from .. import project_datasets
+        resolved = project_datasets.resolve_project_dataset(
+            repository_id, sync_id, sync_service, registry_root)
+        return project_datasets.public_view(resolved)
+
+    @app.get('/api/v1/repositories/{repository_id}/analyses/{sync_id}/dataset/export/{format}')
+    def project_analysis_dataset_export(repository_id: str, sync_id: str, format: str):
+        from fastapi.responses import FileResponse
+        from starlette.background import BackgroundTask
+        from .. import project_datasets
+        if format not in ("zip", "xlsx"):
+            raise RequestError('INPUT_INVALID', field='format')
+        resolved = project_datasets.resolve_project_dataset(
+            repository_id, sync_id, sync_service, registry_root)
+        if format == "zip":
+            path, filename = project_datasets.export_zip(resolved)
+            media_type = "application/zip"
+        else:
+            path, filename = project_datasets.export_xlsx(resolved)
+            media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        return FileResponse(path, media_type=media_type, filename=filename,
+                            background=BackgroundTask(path.unlink, missing_ok=True))
+
+    @app.get('/api/v1/repositories/{repository_id}')
+    def repository_detail(repository_id: str, viewSyncId: str | None = None):
+        return sync_service.repository(repository_id, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits')
+    def repository_commits(repository_id: str, limit: int = 50, offset: int = 0,
+                           search: str | None = None, start: str | None = None,
+                           end: str | None = None, sort: str = 'risk', viewSyncId: str | None = None):
+        return sync_service.repository_commits(repository_id, limit, offset, search=search,
+                                               start=start, end=end, sort=sort, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}')
+    def repository_commit(repository_id: str, commit_id: str, viewSyncId: str | None = None):
+        return sync_service.repository_commit(repository_id, commit_id, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
+    def repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
+        return explanation_service.get(repository_id, commit_id, viewSyncId)
+
+    @app.post('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
+    def generate_repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
+        return explanation_service.generate(repository_id, commit_id, viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/comparison')
+    def compare_repository_analyses(repository_id: str, baseSyncId: str, targetSyncId: str,
+                                   limit: int = 20, offset: int = 0, change: str = 'all'):
+        return comparison_service.get(repository_id, baseSyncId, targetSyncId, limit=limit, offset=offset, change=change)
+
+    @app.get('/api/v1/repositories/{repository_id}/summary')
+    def repository_summary(repository_id: str, viewSyncId: str | None = None):
+        return sync_service.repository_summary(repository_id, view_sync_id=viewSyncId)
+    from ..user_api import install_user_routes
+    install_user_routes(app, storage, registry_root, training_service, catalog)
+    from ..line_preview import install_research_routes
+    install_research_routes(app)
+    app.state.snapshot, app.state.error = None, None
+    try:
+        app.state.snapshot = Snapshot.load(directory)
+    except BaselineError as exc:
+        app.state.error = {"code": exc.code, "message": str(exc)}
+    except Exception:
+        app.state.error = {"code": "ARTIFACT_INVALID", "message": "运行产物无效，请核验后重启服务"}
+
+    @app.get("/api/review-batch")
+    def review_batch():
+        if app.state.snapshot is None:
+            return JSONResponse({"error": app.state.error}, status_code=503)
+        try:
+            return JSONResponse(app.state.snapshot.batch(), headers={"Cache-Control": "no-store"})
+        except Exception:
+            return JSONResponse({"error": {"code": "INFERENCE_ERROR", "message": "模型推理失败，请核验产物并重启服务后重试"}}, status_code=500)
+    return app
+
+
+app = create_app()

@@ -69,6 +69,14 @@ function job(overrides: Record<string, unknown> = {}) {
 function response(body: unknown, status = 200) {
   return new Response(body === null ? null : JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
+
+it('uses a project-shaped skeleton while the project is loading', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}))
+  render(<ProjectPage repositoryId={REPO} navigate={vi.fn()}/>)
+  expect(await screen.findByText('正在读取项目')).toBeInTheDocument()
+  expect(document.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(5)
+})
+
 function mockApi(options: { onDeleteRecord?: () => void; onPost?: (body: unknown) => void; onSelect?: (body: unknown) => void } = {}) {
   let name = 'demo-project'
   let view = SYNC

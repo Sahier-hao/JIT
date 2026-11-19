@@ -45,9 +45,11 @@ export type PlainData = string | number | boolean | null | PlainData[] | { [key:
 
 /** 网络层失败：请求没有拿到可解析的响应，与「服务端拒绝了请求」是两回事。 */
 export class NetworkError extends Error {
-  constructor(message = '无法连接后端服务，请确认服务正在运行后重试') {
+  readonly timedOut: boolean
+  constructor(message = '无法连接后端服务，请确认服务正在运行后重试', timedOut = false) {
     super(message)
     this.name = 'NetworkError'
+    this.timedOut = timedOut
   }
 }
 

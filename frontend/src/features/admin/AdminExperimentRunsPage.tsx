@@ -15,7 +15,8 @@ import {
   type ExperimentRunPage,
   type Row,
 } from '@/features/admin/adminContracts'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { CardListSkeleton, MasterDetailSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
@@ -189,7 +190,7 @@ function ExperimentList({ filters, navigate, expired }: {
       <FilterSelect label="服务兼容性" value={filters.compatibility ?? ''} onChange={value => setFilter('compatibility', value)} options={options('全部兼容性', [['repository-analysis', '可用于仓库分析'], ['offline-only', '仅离线基准'], ['input-unsupported', '当前输入不支持'], ['schema-incompatible', 'schema 不兼容']])}/>
       <FilterSelect label="产物状态" value={filters.artifactState ?? ''} onChange={value => setFilter('artifactState', value)} options={options('全部产物状态', [['complete', '完整'], ['invalid', '产物无效'], ['failed', '训练失败']])}/>
     </div>
-    {loading ? <LoadingNotice label="正在盘点实验运行"/> : null}
+    {loading ? <CardListSkeleton label="正在盘点实验运行" rows={4}/> : null}
     {!loading && !page?.runs.length ? <p className="text-xs text-foreground-3">当前筛选没有实验运行。</p> : null}
     {page?.runs.length ? <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-experiment-table">
       <TableHeader><TableRow><TableHead><span className="sr-only">选择</span></TableHead><TableHead>数据集 / 方法</TableHead><TableHead>指标</TableHead><TableHead>状态</TableHead><TableHead>运行</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
@@ -233,7 +234,7 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
     return () => controller.abort()
   }, [candidateId, expired])
   if (error) return <EmptyState title="实验运行不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button></EmptyState>
-  if (!run) return <LoadingNotice label="正在读取实验运行详情"/>
+  if (!run) return <section className="grid gap-4"><AdminPageHeader title="实验运行"/><MasterDetailSkeleton label="正在读取实验运行详情"/></section>
   return <section>
     <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
     <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型详情</Button> : null}</div>
