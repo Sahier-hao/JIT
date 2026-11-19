@@ -1,3 +1,4 @@
+// Sprint2 fast-unit coverage for domain-only behavior.
 import { describe, expect, it } from 'vitest'
 import {
   applyQuery,

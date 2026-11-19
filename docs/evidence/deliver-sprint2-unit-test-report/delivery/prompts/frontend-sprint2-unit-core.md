@@ -26,13 +26,13 @@ React 渲染、浏览器、真实 HTTP 或开发机存储的领域与契约纯�
 
 ## 采用范围
 
-- 新增 `frontend/src/sprint2Core.test.ts`。
+- 新增 `frontend/src/lib/sprint2Core.test.ts`。
 - 新增 `frontend/vitest.sprint2.config.ts` 与 `npm run test:unit:sprint2`。
 - 未修改产品页面、API 客户端、状态管理或既有完整回归配置。
 - AI 新增的每个正式用例名称均带 `[AI生成]` 标记。
 
 ## 测试文件与定位
 
-- 测试文件：`frontend/src/sprint2Core.test.ts`
+- 测试文件：`frontend/src/lib/sprint2Core.test.ts`
 - 用例到核心函数的映射：`docs/test-delivery/sprint2-unit-test/core-tests.json`
 - 人工审核待办：`docs/test-delivery/sprint2-unit-test/manual-review.json`

@@ -21,10 +21,10 @@
     },
     "frontend": {
       "suiteFiles": [
-        "src/sprint2Core.test.ts"
+        "src/lib/sprint2Core.test.ts"
       ],
       "coverageFiles": [
-        "src/domain.ts"
+        "src/lib/domain.ts"
       ],
       "excluded": [
         "React 组件",
@@ -38,7 +38,7 @@
     "tool": "OpenAI Codex",
     "promptFiles": {
       "tests/test_sprint2_unit_core.py": "docs/test-delivery/sprint2-unit-test/prompts/backend-sprint2-unit-core.md",
-      "src/sprint2Core.test.ts": "docs/test-delivery/sprint2-unit-test/prompts/frontend-sprint2-unit-core.md"
+      "src/lib/sprint2Core.test.ts": "docs/test-delivery/sprint2-unit-test/prompts/frontend-sprint2-unit-core.md"
     }
   },
   "functions": [
@@ -370,9 +370,9 @@
     {
       "id": "frontend.contextKey",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "contextKey",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["contextKey 正常组合区分数据来源与运行 [AI生成]"],
         "boundary": ["contextKey 边界忽略无关可变字段 [AI生成]"],
@@ -383,9 +383,9 @@
     {
       "id": "frontend.parseDataset",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "parseDataset",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["parseDataset 正常保留必填字段与可选度量 [AI生成]"],
         "boundary": ["parseDataset 边界接受空集合 [AI生成]"],
@@ -396,9 +396,9 @@
     {
       "id": "frontend.validRisk",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "validRisk",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["validRisk 正常接受闭区间内的有限数 [AI生成]"],
         "boundary": ["validRisk 边界接受 0 与 1 [AI生成]"],
@@ -409,9 +409,9 @@
     {
       "id": "frontend.riskLabel",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "riskLabel",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["riskLabel 正常格式化为两位小数 [AI生成]"],
         "boundary": ["riskLabel 边界区分 0 与缺失值 [AI生成]"],
@@ -422,9 +422,9 @@
     {
       "id": "frontend.shanghaiDate",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "shanghaiDate",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["shanghaiDate 正常把 UTC 转成上海日期 [AI生成]"],
         "boundary": ["shanghaiDate 边界保留跨日界线前一天 [AI生成]"],
@@ -435,9 +435,9 @@
     {
       "id": "frontend.displayTime",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "displayTime",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["displayTime 正常输出带日期的上海时间 [AI生成]"],
         "boundary": ["displayTime 边界使用 24 小时制午夜 [AI生成]"],
@@ -448,9 +448,9 @@
     {
       "id": "frontend.queryCommits",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "queryCommits",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["queryCommits 正常按风险稳定排序 [AI生成]"],
         "boundary": ["queryCommits 边界组合搜索与包含端点的日期 [AI生成]"],
@@ -461,9 +461,9 @@
     {
       "id": "frontend.applyQuery",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "applyQuery",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["applyQuery 正常接受有效日期范围 [AI生成]"],
         "boundary": ["applyQuery 边界允许清空日期 [AI生成]"],
@@ -474,9 +474,9 @@
     {
       "id": "frontend.readSeedQuery",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "readSeedQuery",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["readSeedQuery 正常读取地址中的日期 [AI生成]"],
         "boundary": ["readSeedQuery 边界忽略无关参数 [AI生成]"],
@@ -487,9 +487,9 @@
     {
       "id": "frontend.toCommit",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "toCommit",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["toCommit 正常映射同步提交与度量 [AI生成]"],
         "boundary": ["toCommit 边界把 epoch 0 转成可比较时间 [AI生成]"],
@@ -500,9 +500,9 @@
     {
       "id": "frontend.parseRepository",
       "side": "frontend",
-      "module": "src/domain.ts",
+      "module": "src/lib/domain.ts",
       "function": "parseRepository",
-      "testFile": "src/sprint2Core.test.ts",
+      "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["parseRepository 正常返回同步来源与首屏记录 [AI生成]"],
         "boundary": ["parseRepository 边界接受空提交页 [AI生成]"],

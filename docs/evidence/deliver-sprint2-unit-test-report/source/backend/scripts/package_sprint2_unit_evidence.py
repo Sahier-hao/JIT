@@ -57,7 +57,7 @@ def main():
         ROOT / "frontend/package.json",
         ROOT / "frontend/package-lock.json",
         ROOT / "frontend/vitest.sprint2.config.ts",
-        ROOT / "frontend/src/sprint2Core.test.ts",
+        ROOT / "frontend/src/lib/sprint2Core.test.ts",
     ]
     for path in source_files:
         _copy(path, DEST / "source" / path.relative_to(ROOT))

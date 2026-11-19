@@ -21,10 +21,10 @@
     },
     "frontend": {
       "suiteFiles": [
-        "src/sprint2Core.test.ts"
+        "src/lib/sprint2Core.test.ts"
       ],
       "coverageFiles": [
-        "src/domain.ts"
+        "src/lib/domain.ts"
       ],
       "excluded": [
         "React 组件",

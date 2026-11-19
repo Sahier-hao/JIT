@@ -1,44 +1,16 @@
 {
   "kind": "sprint2-clean-checkout-verification",
   "passed": true,
-  "sourceCommit": "684ed9149ee67924b0d17fdfe289aa3e9f30cc46",
-  "checkout": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\.cache\\sprint2-clean-0w9cirqh",
-  "backendAndFrontendProcessSeconds": 11.657051199996204,
-  "reportSha256": "00fa354f1dba65c42ad8c4b988c8f8c26b30b7e23ac8895e640620e14135123b",
+  "sourceCommit": "a505859ff70f16a31c2a1e914b2598e1fef07146",
+  "checkout": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\.cache\\sprint2-clean-kkvp9qm7",
+  "backendAndFrontendProcessSeconds": 12.24213719999534,
+  "reportSha256": "bbe66da7d52e4728236fb5bb485d72d77626db7317577d7c2eb5198140823c1e",
   "copiedModified": [
-    ".gitignore",
-    "backend/requirements.txt",
-    "backend/tests/test_admission.py",
-    "frontend/package-lock.json",
-    "frontend/package.json"
-  ],
-  "copiedUntracked": [
-    "backend/pytest.sprint2.ini",
-    "backend/scripts/package_sprint2_unit_evidence.py",
-    "backend/scripts/run_sprint2_clean_checkout.py",
-    "backend/scripts/run_sprint2_unit.py",
-    "backend/scripts/sprint2_unit_report.py",
-    "backend/scripts/validate_sprint2_unit_inventory.py",
-    "backend/tests/test_sprint2_unit_core.py",
-    "backend/tests/test_sprint2_unit_report.py",
-    "docs/test-delivery/sprint2-unit-test/README.md",
     "docs/test-delivery/sprint2-unit-test/core-tests.json",
     "docs/test-delivery/sprint2-unit-test/generated/backend-coverage.png",
-    "docs/test-delivery/sprint2-unit-test/generated/clean-checkout-report.json",
-    "docs/test-delivery/sprint2-unit-test/generated/clean-checkout-report.md",
-    "docs/test-delivery/sprint2-unit-test/generated/clean-checkout.json",
     "docs/test-delivery/sprint2-unit-test/generated/frontend-coverage.png",
     "docs/test-delivery/sprint2-unit-test/generated/report.json",
-    "docs/test-delivery/sprint2-unit-test/generated/report.md",
-    "docs/test-delivery/sprint2-unit-test/manual-review.json",
-    "docs/test-delivery/sprint2-unit-test/prompts/backend-sprint2-unit-core.md",
-    "docs/test-delivery/sprint2-unit-test/prompts/frontend-sprint2-unit-core.md",
-    "frontend/src/sprint2Core.test.ts",
-    "frontend/vitest.sprint2.config.ts",
-    "openspec/changes/deliver-sprint2-unit-test-report/.openspec.yaml",
-    "openspec/changes/deliver-sprint2-unit-test-report/design.md",
-    "openspec/changes/deliver-sprint2-unit-test-report/proposal.md",
-    "openspec/changes/deliver-sprint2-unit-test-report/specs/unit-test-delivery/spec.md",
-    "openspec/changes/deliver-sprint2-unit-test-report/tasks.md"
-  ]
+    "docs/test-delivery/sprint2-unit-test/generated/report.md"
+  ],
+  "copiedUntracked": []
 }

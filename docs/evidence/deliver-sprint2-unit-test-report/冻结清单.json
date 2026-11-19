@@ -55,7 +55,7 @@
     "source/backend/tests/test_sprint2_unit_report.py",
     "source/frontend/package-lock.json",
     "source/frontend/package.json",
-    "source/frontend/src/sprint2Core.test.ts",
+    "source/frontend/src/lib/sprint2Core.test.ts",
     "source/frontend/vitest.sprint2.config.ts"
   ],
   "excluded": [
@@ -69,7 +69,7 @@
     },
     {
       "path": "coverage/backend-html/class_index.html",
-      "sha256": "4dd94219221524535dfbdb81b824a4333e7c20540f54b41ffcd1b15dd0de080e"
+      "sha256": "ff79f9984934df1f508f3dbd7936eb1f709bdec45aff6c76b85df3529d37daa7"
     },
     {
       "path": "coverage/backend-html/coverage_html_cb_c74880ea.js",
@@ -81,11 +81,11 @@
     },
     {
       "path": "coverage/backend-html/function_index.html",
-      "sha256": "2480d6505b3a4633355210c71507adf65187b3ab25a5f2349df3fdf8a65a0f7d"
+      "sha256": "9890c1b11a48644315add088330401d662ad1a8c70c29c9944a22a75dabe0cac"
     },
     {
       "path": "coverage/backend-html/index.html",
-      "sha256": "2cc4d7828a2ee162952d34f57a492f43f01a69efb35cb8a620fc8be2649f3e50"
+      "sha256": "599eb3c095467a7cd79fd38ed1706d8c2acb03c10cf33a8e4c3e41353a5611d1"
     },
     {
       "path": "coverage/backend-html/keybd_closed_cb_900cfef5.png",
@@ -125,11 +125,11 @@
     },
     {
       "path": "coverage/frontend-html/coverage-final.json",
-      "sha256": "ab6a57e925627e0ecbbcd83a8c96e603f5f4c9e8faa7403e3b78c990f754c766"
+      "sha256": "c8ea8c653b2abdfbe7a53cebd14e846603fd83412abf5b6b591e97f7add1fd35"
     },
     {
       "path": "coverage/frontend-html/domain.ts.html",
-      "sha256": "8469b084030bd12c67a1465ad8f66cfb687b93df8e9f8d4af7bcb9e004b40bf2"
+      "sha256": "1b92fcd1a51e766f6f440a010d48f483122614cc5b87a81009872ddd1b25e5b8"
     },
     {
       "path": "coverage/frontend-html/favicon.png",
@@ -137,7 +137,7 @@
     },
     {
       "path": "coverage/frontend-html/index.html",
-      "sha256": "3f612d04807a239f91e34249a6c2a76afaa1878835ee726a17530b40539a5a71"
+      "sha256": "eac1875e7393ef1f2c4b0f3cac52407c0c5f6cbb243f0977b65cfdcf612fefd4"
     },
     {
       "path": "coverage/frontend-html/prettify.css",
@@ -169,35 +169,35 @@
     },
     {
       "path": "delivery/core-tests.json",
-      "sha256": "326e068c65338c0ef3febc6c6e1575470e9366bd50c5ed53a48c67a1265bfd27"
+      "sha256": "6126ffcf1d917d72383f94a36eaed4058f8a6de1df95833ddf3055065a8bdf49"
     },
     {
       "path": "delivery/generated/backend-coverage.png",
-      "sha256": "ee3a6f230d0762ae8afff798ada0141fb45aeb63150a9859d2b7eb29bf336259"
+      "sha256": "30fe95b95bf7100fd758e2ef96ddf10d5e51adc221208ccafb53b113b5058095"
     },
     {
       "path": "delivery/generated/clean-checkout-report.json",
-      "sha256": "00fa354f1dba65c42ad8c4b988c8f8c26b30b7e23ac8895e640620e14135123b"
+      "sha256": "bbe66da7d52e4728236fb5bb485d72d77626db7317577d7c2eb5198140823c1e"
     },
     {
       "path": "delivery/generated/clean-checkout-report.md",
-      "sha256": "5210e4a364decd6e031854031bc7921337bca38f686b9ae90fb8f8d114de8b01"
+      "sha256": "509e620c48ac1b78a21ddc971106129b925155aa146475cb36568d860e1ac311"
     },
     {
       "path": "delivery/generated/clean-checkout.json",
-      "sha256": "f1ce82a5e184ee1e13f9ba44d76e9991ada138c52fb4aa6ed999d4e83bd5d6d2"
+      "sha256": "ba6914bb3b6c8d72ee12c06d0d7839fd74f4953387087d66b2bae8cb82010579"
     },
     {
       "path": "delivery/generated/frontend-coverage.png",
-      "sha256": "7b21eccba2b27328d1b11100716318592f9f6098384bad1dd7ed658920550e9e"
+      "sha256": "bb5a1fe598e619489a4d26d05a797267db51b77ac2fd8f0443ac54e9e250671f"
     },
     {
       "path": "delivery/generated/report.json",
-      "sha256": "2e484e9741dd5c863a188e22e1cb5bc08c4658c3225d28bf49e5d9f53e875c37"
+      "sha256": "ef77b602f7fa7990b66143fd092a917da13070d5b42f170842efdc5787a0b433"
     },
     {
       "path": "delivery/generated/report.md",
-      "sha256": "f551f1d2b78209c7f1ff5641d23381839af6c87b669f2be72206c2a66b7c8383"
+      "sha256": "f7c2d0e145fb6b2aa3a014b6237aaeb9a3d008b335ee4b4cc8f97dc5e2f99bcd"
     },
     {
       "path": "delivery/manual-review.json",
@@ -209,7 +209,7 @@
     },
     {
       "path": "delivery/prompts/frontend-sprint2-unit-core.md",
-      "sha256": "7fab8a26b49809a038da47d9301160ffa3d702ffc200c16363c6e739591c937d"
+      "sha256": "01cca79aa2d4e28b6cb3380670d14c69a3f80cef825b775737a2c15f016be461"
     },
     {
       "path": "delivery/README.md",
@@ -217,27 +217,27 @@
     },
     {
       "path": "package.json",
-      "sha256": "6ade93fea13b7b41a87cd2cbff79aa6b968a5270e4d219f418bae814a7095d37"
+      "sha256": "a89513028e058c900f3b20c92a89ceac2f3c535612af0836ddc667343b7effe2"
     },
     {
       "path": "raw/backend-coverage.json",
-      "sha256": "46fe5f0a1c26eee5ff6ab52ad287d618a4602d84c5d9911d9da569a8637b2966"
+      "sha256": "e80e74dcd1db307bf5dffce4ea65eb78defded2f2124f9de450c1af418bd6fe7"
     },
     {
       "path": "raw/backend-junit.xml",
-      "sha256": "406e48cb9f44440ccbeb5b63bcf3a180d4c123d210cf295e93b9c1f703655943"
+      "sha256": "f607c2479134097948ba2e0423db83a4140df54e719b2544a664076aab52d5e3"
     },
     {
       "path": "raw/frontend-coverage-final.json",
-      "sha256": "ab6a57e925627e0ecbbcd83a8c96e603f5f4c9e8faa7403e3b78c990f754c766"
+      "sha256": "c8ea8c653b2abdfbe7a53cebd14e846603fd83412abf5b6b591e97f7add1fd35"
     },
     {
       "path": "raw/frontend-results.json",
-      "sha256": "eb166b58518752ec104185d32f997836a8b031de39ed146a5dd9050fe4d92b42"
+      "sha256": "d946a5d37904c999e8c3ac3b097a45eda3fa25c35af3a445ff2116a4679887c6"
     },
     {
       "path": "raw/run-meta.json",
-      "sha256": "3f6ace47dac3d5f59b5b8658798c24245258d0b8bda61acfa01d0458ea39739c"
+      "sha256": "899f5b43378e3bc54543dec188304118d4d63eae56623d1ca88644991811f1a5"
     },
     {
       "path": "source/backend/pytest.sprint2.ini",
@@ -249,7 +249,7 @@
     },
     {
       "path": "source/backend/scripts/package_sprint2_unit_evidence.py",
-      "sha256": "fa906632e976be1284f5c4f82c95b507d8eac2e24bde18f71bb54c7b55d54985"
+      "sha256": "e9758b3c003b6552fc94480612204221b0f9906af53a1c80f61ca0d86d3c2834"
     },
     {
       "path": "source/backend/scripts/run_sprint2_clean_checkout.py",
@@ -277,23 +277,23 @@
     },
     {
       "path": "source/frontend/package-lock.json",
-      "sha256": "66a27e9a908b162f8479543640376e148aaa77d03cc47e51ef628a48657f5799"
+      "sha256": "f9d9fe433af201a3d6b93a46e970ea13a01b4206ba69cb34045453f733e4bdab"
     },
     {
       "path": "source/frontend/package.json",
-      "sha256": "51f28c094ed28359d601989bd7ccbac36d682a73e4e63c8e31a702f163744ffb"
+      "sha256": "22423a291c5c44b2d32ff50b66987fabf692d86cae0ff7fadde95bd941b908cf"
     },
     {
-      "path": "source/frontend/src/sprint2Core.test.ts",
-      "sha256": "d3eb62965ede3498e871439a1c9d99155503da7da8bc61fa49b301dc534bef56"
+      "path": "source/frontend/src/lib/sprint2Core.test.ts",
+      "sha256": "f2833ba915afc8fe9a153154ae713da5d4553368230e07eeae8d5786b3738e91"
     },
     {
       "path": "source/frontend/vitest.sprint2.config.ts",
-      "sha256": "f201a9c7c8a1af7251f037e1e26de7ba86d22a1a485de8c892d32d19a59ecb67"
+      "sha256": "df5db7158956521146bdc02cbdade75c438da6e539cb4cb27ecad38a8e62b5cf"
     }
   ],
-  "frozenUtc": "2026-11-19T12:59:29.212883+00:00",
+  "frozenUtc": "2026-11-19T13:10:06.063638+00:00",
   "kind": "verification-evidence-freeze",
-  "sourceRunId": "44d75f1cd341a43f19b21bdea741bcfb44397df9ce946dfff7ce23cefbaf1aef",
+  "sourceRunId": "03b2118d91574081520a4d0e6f036acf9a95a462754a0dd1ed3733078df30e85",
   "workspace": "docs/evidence/_run/sprint2-unit-test-delivery"
 }
