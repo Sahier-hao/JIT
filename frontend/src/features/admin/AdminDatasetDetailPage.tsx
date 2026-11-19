@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
+import { labelMaturityText } from '@/lib/datasetMaturity'
 import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, setAdminDatasetSharing, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '@/features/admin/adminContracts'
 import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '@/features/datasets/curationClient'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
@@ -228,7 +229,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, navi
         <div><dt>CSV SHA-256</dt><dd><code>{valueLabel(selected.file.sha256)}</code></dd></div>
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
-        <div><dt>标签成熟</dt><dd>{selected.labelMaturity?.available ? Object.entries((selected.labelMaturity.statusCounts ?? {}) as Row).map(([name, count]) => `${name} ${valueLabel(count)}`).join(' · ') : valueLabel(selected.labelMaturity?.reason, '成熟状态未记录')}</dd></div>
+        <div><dt>标签成熟</dt><dd>{labelMaturityText(selected.labelMaturity)}</dd></div>
       </dl></section>
       <section><h2>标签与 SZZ</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>

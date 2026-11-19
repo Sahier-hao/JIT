@@ -13,6 +13,7 @@ import {
   userDatasets, useUserRevision, type UserDataset, type UserSplitPreview,
 } from '@/features/account/userClient'
 import { formatDate, valueLabel, type Row } from '@/features/admin/adminContracts'
+import { labelMaturityItems } from '@/lib/datasetMaturity'
 import { EmptyState } from '@/components/shared/Feedback'
 import { MasterDetailSkeleton } from '@/components/shared/Skeletons'
 import type { Route } from '@/app/navigation'
@@ -38,9 +39,6 @@ const EXCLUSION_LABELS: Record<string, string> = {
   empty: '空提交', merges: '合并提交', outsideWindow: '时间窗口外', unparsed: '无法解析',
   noAddedLines: '无新增行', tooManyFiles: '文件过多', tooMuchChurn: '改动过大',
   missingRequiredField: '缺少必需字段',
-}
-const LABEL_STATUS_LABELS: Record<string, string> = {
-  positive: '正例', immature: '未成熟', unobserved: '观察后未见修复', unknown: '状态未知',
 }
 type DatasetTab = 'mine' | 'shared' | 'builds'
 
@@ -397,10 +395,7 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
     : null
   const maturityDays = numeric(observations?.maturityDays) ?? numeric(maturity?.maturityDays)
   const statusCounts = asRow(maturity?.statusCounts)
-  const statusItems = statusCounts ? Object.entries(statusCounts).flatMap(([key, value]) => {
-    const count = numeric(value)
-    return count == null ? [] : [{ label: LABEL_STATUS_LABELS[key] ?? key, value: count }]
-  }) : []
+  const statusItems = labelMaturityItems(statusCounts)
   const sourceUrl = typeof current?.source.url === 'string' ? current.source.url : ''
   const branch = typeof current?.source.branch === 'string' ? current.source.branch : ''
   const head = typeof current?.source.head === 'string'

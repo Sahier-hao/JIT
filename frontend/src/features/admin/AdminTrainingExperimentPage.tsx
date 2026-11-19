@@ -3,7 +3,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button'
 import { ChevronRight, LoaderCircle } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
   cancelTrainingTask, fetchTrainingExperiment, fetchTrainingExperimentComparison,
@@ -12,7 +12,8 @@ import {
 } from '@/features/admin/adminContracts'
 
 
-import { EChartCanvas, useChartColors } from '@/components/shared/EChartCanvas'
+import { TrainingLossChart } from '@/components/shared/TrainingLossChart'
+import { formatMethodParams } from '@/lib/methodParams'
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
 
@@ -28,27 +29,6 @@ function metric(metrics: Row | null, key: string): string {
   return typeof (item as Row).reason === 'string' ? String((item as Row).reason) : '未定义'
 }
 
-function paramsText(parameters: Row | null): string {
-  if (!parameters) return '默认参数'
-  return Object.entries(parameters)
-    .filter(([key]) => !['threads', 'seed', 'solver', 'tol', 'regularization', 'class_weight'].includes(key))
-    .map(([key, value]) => `${key}=${Array.isArray(value) ? `[${value.join(',')}]` : value}`)
-    .join(' · ')
-}
-
-function LossChart({ task }: { task: TrainingTask }) {
-  const colors = useChartColors()
-  const history = task.trainingHistory
-  const option = useMemo(() => ({
-    grid: { left: 46, right: 16, top: 16, bottom: 28 },
-    tooltip: { trigger: 'axis' as const, backgroundColor: colors.surface, borderColor: colors.border, textStyle: { color: colors.textStrong } },
-    xAxis: { type: 'category' as const, data: history?.entries.map(item => String(item.epoch)) ?? [], axisLabel: { color: colors.text }, axisLine: { lineStyle: { color: colors.axis } }, name: 'epoch', nameTextStyle: { color: colors.text } },
-    yAxis: { type: 'value' as const, scale: true, axisLabel: { color: colors.text }, splitLine: { lineStyle: { color: colors.grid } }, name: 'train loss', nameTextStyle: { color: colors.text } },
-    series: [{ type: 'line' as const, smooth: false, showSymbol: true, symbolSize: 4, data: history?.entries.map(item => item.trainLoss), lineStyle: { color: colors.series }, itemStyle: { color: colors.series } }],
-  }), [colors, history])
-  if (!history) return null
-  return <EChartCanvas option={option} height={200} label={`${task.method} 逐 epoch 训练损失`}/>
-}
 
 export function AdminTrainingExperimentPage({ experimentId, navigate, expired }: {
   experimentId: string
@@ -152,7 +132,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <strong>{task.method}</strong>
           <span>{valueLabel(task.status)}{task.queuePosition ? ` · 队列第 ${task.queuePosition} 位` : ''}</span>
-          <span className="text-xs leading-body text-foreground-3">{paramsText(task.parameters)}</span>
+          <span className="text-xs leading-body text-foreground-3">{formatMethodParams(task.parameters)}</span>
         </div>
         {task.error ? <p className="text-xs text-rose">{task.error.code} · {task.error.message}</p> : null}
         {task.metrics ? <p className="text-xs leading-body text-foreground-3">
@@ -173,7 +153,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
       <div className="flex flex-wrap items-end gap-3">
         <Select value={selectedHistory?.taskId ?? '' == null ? '' : String(selectedHistory?.taskId ?? '')} onValueChange={nextValue => (setHistoryMethod)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练曲线方法"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(historyTasks.map(task => ({ value: task.taskId, label: task.method }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       </div>
-      {selectedHistory ? <LossChart task={selectedHistory}/> : null}
+      {selectedHistory ? <TrainingLossChart history={selectedHistory.trainingHistory} method={selectedHistory.method}/> : null}
     </section> : null}
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>同一口径比较</h2>
       {comparison ? <>
@@ -182,7 +162,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
           <TableHeader><TableRow><TableHead>方法</TableHead><TableHead>参数</TableHead><TableHead>PR-AUC</TableHead><TableHead>ROC-AUC</TableHead><TableHead>F1</TableHead><TableHead>P / R</TableHead><TableHead>Recall@20%LOC</TableHead><TableHead>MCC</TableHead><TableHead>耗时</TableHead><TableHead>状态</TableHead></TableRow></TableHeader>
           <TableBody>{comparison.methods.map(row => <TableRow key={row.taskId}>
             <TableCell>{row.methodName}</TableCell>
-            <TableCell>{paramsText(row.parameters)}</TableCell>
+            <TableCell>{formatMethodParams(row.parameters)}</TableCell>
             <TableCell>{metric(row.metrics, 'averagePrecision')}</TableCell>
             <TableCell>{metric(row.metrics, 'rocAuc')}</TableCell>
             <TableCell>{metric(row.metrics, 'f1')}</TableCell>
