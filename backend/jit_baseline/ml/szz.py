@@ -55,8 +55,11 @@ MAX_FIX_COMMITS = _env_limit("JIT_SZZ_MAX_FIX_COMMITS", 2000)
 MAX_RANGES_PER_FILE = _env_limit("JIT_SZZ_MAX_RANGES_PER_FILE", 500)
 # 与纳入规则允许的最大改动量对齐，避免同一提交在 2000 行处被截断。
 MAX_LINES_PER_COMMIT = _env_limit("JIT_SZZ_MAX_LINES_PER_COMMIT", 10000)
-# 单次采集的行的回溯时间预算；超出即停止并标记截断，避免拖垮分析作业。
+# 单次采集的行的回溯时间预算下限；显式设置 JIT_SZZ_MAX_SECONDS 时作为固定上限。
 MAX_SECONDS = _env_limit("JIT_SZZ_MAX_SECONDS", 120)
+# 未显式指定预算时，按候选修复提交的改动量自动放宽，避免长历史仓库被固定 120 秒截断。
+AUTO_MAX_SECONDS = _env_limit("JIT_SZZ_AUTO_MAX_SECONDS", 3600)
+SECONDS_OVERRIDE = "JIT_SZZ_MAX_SECONDS" in os.environ
 ISSUE_LOOKUP_SECONDS = 5
 SZZ_LINE_LIMITATIONS = (
     "标签由行级 SZZ 生成：按修复关键词与 issue 引用识别修复提交，删除/修改行用 git blame 回溯到引入提交。",
@@ -99,6 +102,7 @@ class LineSzzResult:
     fix_signals: dict = field(default_factory=lambda: {"issue": 0, "issueRef": 0, "keyword": 0})
     issue_lookup: dict = field(default_factory=lambda: {"attempted": 0, "succeeded": 0, "failed": 0, "unavailable": 0})
     fix_signal_evidence: list[dict] = field(default_factory=list)
+    budget_seconds: int = 0
 
     def mark_truncated(self, reason):
         self.truncated = True
@@ -118,6 +122,7 @@ class LineSzzResult:
             "skippedNoiseLines": self.skipped_noise_lines,
             "skippedDocsOnly": self.skipped_docs_only,
             "outsideWindow": self.outside_window,
+            "budgetSeconds": self.budget_seconds,
             "truncated": self.truncated,
             "budgetHits": dict(self.budget_hits),
             "fixSignals": dict(self.fix_signals),
@@ -318,6 +323,13 @@ def _parse_hunks(diff_text):
     return files
 
 
+def auto_budget(candidates):
+    """按候选修复提交的改动行数估算预算；只是上限，提前完成不会被等待。"""
+    changes = sum(item.get("added", 0) + item.get("deleted", 0)
+                  for commit in candidates for item in commit.get("files") or [])
+    return min(AUTO_MAX_SECONDS, max(MAX_SECONDS, 60 + changes // 250))
+
+
 def _evidence_order(item):
     """按引入提交、路径与旧路径排序；旧路径可能缺失，不能与字符串直接比较。"""
     (identity, path, old_path) = item[0]
@@ -506,7 +518,8 @@ def _iso(value):
     return str(value)
 
 
-def label_repository(repo, entries, window_ids, start=None, end=None, mode="line", resolver=None):
+def label_repository(repo, entries, window_ids, start=None, end=None, mode="line", resolver=None,
+                     max_seconds=None):
     """对观察窗口内的修复提交做回溯；只把窗口内提交标为正例。
 
     `end` 是实际观察到的最后时刻（含），因此位于固定 revision 的修复提交也能为更早的
@@ -528,6 +541,9 @@ def label_repository(repo, entries, window_ids, start=None, end=None, mode="line
         candidates.append(commit)
     if mode == "full" and resolver is None:
         result.issue_lookup["unavailable"] = 1
+    budget = (max_seconds if max_seconds is not None else
+              MAX_SECONDS if SECONDS_OVERRIDE else auto_budget(candidates))
+    result.budget_seconds = budget
     bodies = commit_bodies(repo, [commit["id"] for commit in candidates]) if mode == "full" else {}
     fix_commits = []
     for commit in candidates:
@@ -574,7 +590,7 @@ def label_repository(repo, entries, window_ids, start=None, end=None, mode="line
         result.mark_truncated("fix-commits")
         fix_commits = fix_commits[:MAX_FIX_COMMITS]
     result.fix_commits = len(fix_commits)
-    deadline = time.monotonic() + MAX_SECONDS
+    deadline = time.monotonic() + budget
     for commit, info in fix_commits:
         if time.monotonic() > deadline:
             result.mark_truncated("seconds")

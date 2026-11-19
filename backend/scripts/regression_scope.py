@@ -42,6 +42,7 @@ KEY_BACKEND = (
     "tests/test_admin_route_security.py",
     "tests/test_catalog_storage_wal.py",
     "tests/test_szz_evidence_order.py",
+    "tests/test_szz_budget.py",
 )
 FULL_BACKEND_EXTRA = ("tests",)
 BROWSER_CONFIGS = (
