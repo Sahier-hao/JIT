@@ -237,17 +237,19 @@ it('shows an error state and keeps its recovery action keyboard focusable', asyn
 it('filters datasets by branch or PR origin', async () => {
   const branch = { ...DATASET, dataset: 'branch-set', versions: [{ ...DATASET.versions[0], usage: 'branch' }] }
   const pr = { ...DATASET, versions: [{ ...DATASET.versions[0], usage: 'pr', sourceSyncId: 'sync-1' }] }
+  let modelRequested = false
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     const auth = session(String(path))
     if (auth) return auth
     if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [branch, pr] })
-    if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/models')) { modelRequested = true; return new Promise<Response>(() => {}) }
     if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
     return Response.json({})
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'datasets' }} navigate={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: 'branch-set' })).toBeVisible()
   expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+  expect(modelRequested).toBe(false)
   await userEvent.setup().click(screen.getByText('PR 分析'))
   await waitFor(() => expect(screen.queryByRole('heading', { name: 'branch-set' })).not.toBeInTheDocument())
   expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
@@ -282,6 +284,7 @@ it('creates a training task from a dataset detail page', async () => {
     if (String(path).endsWith('/api/v1/datasets')) return Response.json({ datasets: [DATASET] })
     if (String(path).endsWith('/api/v1/models')) return Response.json({ models: [], methods: [{ method: 'logistic-regression-l2-v1', name: '逻辑回归' }], readiness: READINESS })
     if (String(path).endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
+    if (String(path).includes('/training-methods')) return Response.json(METHODS)
     if (String(path).includes('/split-preview?')) return Response.json({
       datasetVersion: TASK.datasetVersion, schemaName: DATASET.versions[0].schema,
       preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },

@@ -11,6 +11,7 @@ import { projectsChanged } from '@/features/projects/projectEvents'
 import { FailureNotice } from '@/components/shared/Feedback'
 import type { SyncStrategy, SyncView } from '@/features/projects/repositoryContract'
 import { ModelCardDialog } from '@/features/models/components/ModelCardDialog'
+import { SPLIT_PRESETS } from '@/features/datasets/splitClient'
 
 /** 模型来源把「用哪个现成模型」和「要不要训练」合成一个决定；其余值都是具体模型 ID。 */
 const SOURCES = ['auto', 'default', 'train'] as const
@@ -130,7 +131,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
           {explicitModel && selected ? <Button type="button" size="sm" className="justify-self-start" onClick={() => setModelCardOpen(true)} variant="outline">查看模型卡</Button> : null}
         </div>
         {!explicitModel ? <label className={fieldLabel}><span className={labelText}>训练方法</span><NativeSelect aria-label="训练方法" value={algorithm} onChange={event => setAlgorithm(event.target.value)}>{methods.map(item => <option key={item.method} value={item.method} disabled={!item.available}>{item.name}{item.available ? '' : `（${item.reason ?? '不可用'}）`}</option>)}</NativeSelect></label> : null}
-        {!explicitModel ? <label className={fieldLabel}><span className={labelText}>时间切分</span><NativeSelect aria-label="时间切分预设" value={splitPreset} onChange={event => setSplitPreset(event.target.value)}><option value="temporal-70-15-15">70 / 15 / 15（默认）</option><option value="temporal-80-10-10">80 / 10 / 10</option><option value="temporal-60-20-20">60 / 20 / 20</option></NativeSelect></label> : null}
+        {!explicitModel ? <label className={fieldLabel}><span className={labelText}>时间切分</span><NativeSelect aria-label="时间切分预设" value={splitPreset} onChange={event => setSplitPreset(event.target.value)}>{SPLIT_PRESETS.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</NativeSelect></label> : null}
         {!explicitModel ? <label className={fieldLabel}><span className={labelText}>标签成熟</span><NativeSelect aria-label="标签成熟策略" value={maturityPolicy} onChange={event => setMaturityPolicy(event.target.value as 'mature-only' | 'include-immature')}>
           <option value="mature-only">正式：排除未成熟标签</option>
           <option value="include-immature">敏感性：包含未成熟标签</option>

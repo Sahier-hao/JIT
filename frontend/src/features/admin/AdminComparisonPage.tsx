@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import { fetchAdminModel, fetchAdminModels, type AdminModel } from '@/features/admin/adminContracts'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, MetricComparison } from '@/features/admin/AdminShared'
@@ -51,7 +52,7 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
       })
     return () => controller.abort()
   }, [first, second, expired])
-  if (loading) return <LoadingNotice label="正在读取可比模型"/>
+  if (loading) return <section className="grid gap-4"><AdminPageHeader title="模型比较"/><CardListSkeleton label="正在读取可比模型" rows={3}/></section>
   if (error && !models.length) return <EmptyState title="模型比较不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'models' })} variant="outline" type="button">返回模型列表</Button></EmptyState>
   const comparison = result?.first === first && result.second === second ? result : null
   const left = comparison?.left ?? null

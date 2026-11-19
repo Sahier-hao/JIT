@@ -39,7 +39,7 @@ def main():
     run.add_argument("--holdout", type=int, default=None,
                      help="epoch 截止时间；只把早于它的记录用于切分与训练")
     run.add_argument("--split-preset", default=None,
-                     help="时间切分预设：temporal-70-15-15、temporal-80-10-10 或 temporal-60-20-20")
+                     help="已注册的时间切分预设；省略时使用 temporal-70-15-15")
     run.add_argument("--maturity-policy", choices=("mature-only", "include-immature"),
                      default="mature-only", help="标签成熟策略；正式训练默认排除未成熟标签")
     run.add_argument("--embedding-dir", type=Path, default=None,
@@ -246,6 +246,8 @@ def main():
     batch.add_argument('--cancel', action='store_true', help='请求取消批次；停止后续仓库')
     batch.add_argument('--status', action='store_true', help='只输出状态，不执行')
     batch.add_argument('--no-register', action='store_true', help='只采集 CSV，不登记数据集')
+    batch.add_argument('--database', type=Path, default=None,
+                       help='目录库；默认使用 JIT_CATALOG_DATABASE 或 backend/storage/catalog.sqlite3')
     freeze = commands.add_parser("freeze-evidence")
     freeze.add_argument("target", type=Path)
     freeze.add_argument("--workspace", type=Path, default=None)
@@ -389,9 +391,14 @@ def main():
                                                                  if args.maturity_days is not None else 90))
         elif args.command == 'collect-batch':
             from .batch_collection import BatchCollection
+            from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
             from .config import BACKEND as _BACKEND
-            service = BatchCollection(args.state_root or _BACKEND / 'artifacts/collection-batches',
-                                      dataset_root=args.root)
+            database = args.database or os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE)
+            service = BatchCollection(
+                args.state_root or _BACKEND / 'artifacts/collection-batches',
+                dataset_root=args.root,
+                storage=None if args.no_register else CatalogStorage(database),
+            )
             created = None
             if args.cancel:
                 if not args.batch:

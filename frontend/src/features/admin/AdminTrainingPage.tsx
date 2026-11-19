@@ -6,7 +6,8 @@ import {
   ACTIVE_TASK_STATUSES, cancelTrainingTask, fetchTrainingTask, fetchTrainingTasks,
   retryTrainingTask, formatDate, valueLabel, type Row, type TrainingTask,
 } from '@/features/admin/adminContracts'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { CardListSkeleton, MasterDetailSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
@@ -85,7 +86,7 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
     finally { setBusy('') }
   }
 
-  if (loading) return <LoadingNotice label="正在读取训练任务"/>
+  if (loading) return <section className="grid gap-4"><AdminPageHeader title="训练任务" onRefresh={retryLoad}/>{taskId ? <MasterDetailSkeleton label="正在读取训练任务详情"/> : <CardListSkeleton label="正在读取训练任务" rows={5}/>}</section>
   if (error && !taskId && !tasks.length) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad} variant="outline" type="button">重试</Button></EmptyState>
   if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad} variant="outline" type="button">重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })} variant="outline" type="button">返回任务列表</Button></EmptyState>
   if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })} openRuns={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })} openExperiment={id => navigate({ name: 'admin', view: 'training-experiment', resourceId: id })}/>

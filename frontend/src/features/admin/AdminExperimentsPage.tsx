@@ -5,7 +5,8 @@ import { ApiError } from '@/lib/apiContract'
 import { formatDate } from '@/features/admin/adminContracts'
 import { fetchMultiProjectReports, type MultiProjectReportStatus, type MultiProjectReportSummary } from '@/features/admin/multiProjectReportContracts'
 import { fetchEvaluationEvidence, type EvaluationEvidenceEntry, type EvidenceStatus } from '@/features/admin/evaluationEvidenceClient'
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
@@ -67,7 +68,7 @@ export function AdminExperimentsPage({ navigate, expired }: {
     return () => controller.abort()
   }, [expired, revision])
 
-  if (loading) return <LoadingNotice label="正在读取多项目实验报告"/>
+  if (loading) return <section className="grid gap-4"><AdminPageHeader title="多项目实验" onRefresh={() => setRevision(value => value + 1)}/><CardListSkeleton label="正在读取多项目实验报告" rows={4}/></section>
   if (error && !reports.length) return <EmptyState title="多项目实验报告不可用" description={error}>
     <Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button>
   </EmptyState>

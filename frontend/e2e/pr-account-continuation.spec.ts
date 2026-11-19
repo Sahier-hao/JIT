@@ -72,8 +72,8 @@ test('同一浏览器两个账户的个人工作单隔离并可分别续审', as
   await page.getByText('调整审查示例 1', { exact: false }).first().click()
   await expect(page.getByLabel('个人笔记')).toHaveValue('A 的回归旅程笔记')
 
-  await page.goto('/#/profile')
-  await page.getByRole('button', { name: '退出登录' }).click()
+  await page.getByRole('button', { name: userA }).click()
+  await page.getByRole('menuitem', { name: '退出登录' }).click()
   await expect(page).toHaveURL(/#\/$/)
 
   await register(page, userB, password)
@@ -82,8 +82,8 @@ test('同一浏览器两个账户的个人工作单隔离并可分别续审', as
   await enterWork(page)
   await seedNote(page, 'B 的独立回归笔记')
 
-  await page.goto('/#/profile')
-  await page.getByRole('button', { name: '退出登录' }).click()
+  await page.getByRole('button', { name: userB }).click()
+  await page.getByRole('menuitem', { name: '退出登录' }).click()
   await login(page, userA, password)
   await openPreview(page, repositoryId)
   await enterWork(page)

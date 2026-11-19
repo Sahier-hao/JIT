@@ -60,6 +60,21 @@ def test_run_persists_stage_and_records_dataset_identity(tmp_path, manifest_qual
     assert len(calls) == 1
 
 
+def test_batch_forwards_catalog_storage_to_collector(tmp_path, manifest_quality):
+    seen = {}
+
+    def collector(repo, **kwargs):
+        seen.update(kwargs)
+        return {"records": 1, "dataset": {"version": "dataset-a"}}
+
+    storage = object()
+    service = BatchCollection(tmp_path / "state", dataset_root=tmp_path / "datasets",
+                              collector=collector, storage=storage)
+    state, _ = service.create([_task("https://example.com/a")])
+    service.run(state["batchId"])
+    assert seen["storage"] is storage
+
+
 def test_failure_is_isolated_and_retry_only_reruns_failed(tmp_path, manifest_quality):
     calls = []
     failing = {"https://example.com/b"}

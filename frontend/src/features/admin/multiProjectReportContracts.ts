@@ -3,6 +3,7 @@ import { contractFailed, finiteNumber, record, recordList, text, textList, textO
 import type { Row } from '@/features/admin/adminContracts'
 
 const REPORT_PATH = '/api/admin/multi-project-reports'
+const ADMIN_READ_TIMEOUT_MS = 30_000
 const STATUSES = ['complete', 'partial', 'failed', 'invalid'] as const
 export type MultiProjectReportStatus = typeof STATUSES[number]
 
@@ -241,9 +242,9 @@ function parseDetail(raw: unknown, reportId: string): MultiProjectReportDetail {
 }
 
 export async function fetchMultiProjectReports(signal?: AbortSignal) {
-  const body = record(await apiRequest({ path: REPORT_PATH, method: 'GET', signal }))
+  const body = record(await apiRequest({ path: REPORT_PATH, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return { reports: recordList(body.reports).map(parseMultiProjectReportSummary), total: finiteNumber(body.total) }
 }
 export async function fetchMultiProjectReport(reportId: string, signal?: AbortSignal) {
-  return parseDetail(await apiRequest({ path: `${REPORT_PATH}/${encodeURIComponent(reportId)}`, method: 'GET', signal }), reportId)
+  return parseDetail(await apiRequest({ path: `${REPORT_PATH}/${encodeURIComponent(reportId)}`, method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }), reportId)
 }

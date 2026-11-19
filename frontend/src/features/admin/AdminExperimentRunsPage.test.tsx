@@ -154,16 +154,16 @@ it('shows an experiment detail with provenance and metric limitations', async ()
 })
 
 it('shows loading and empty states', async () => {
-  let release: ((response: Response) => void) | undefined
+  const releases: ((response: Response) => void)[] = []
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     const auth = session(String(path))
     if (auth) return auth
-    return new Promise(resolve => { release = resolve })
+    return new Promise(resolve => { releases.push(resolve) })
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs' }} navigate={vi.fn()}/>)
   expect(await screen.findByText('正在盘点实验运行')).toBeVisible()
   await act(async () => {
-    release?.(Response.json({ runs: [], reports: [], total: 0, limit: 20, offset: 0 }))
+    releases.forEach(release => release(Response.json({ runs: [], reports: [], total: 0, limit: 20, offset: 0 })))
     await Promise.resolve()
   })
   expect(await screen.findByText('当前筛选没有实验运行。')).toBeVisible()

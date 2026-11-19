@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
-import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '@/features/admin/adminContracts'
+import { labelMaturityText } from '@/lib/datasetMaturity'
+import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, setAdminDatasetSharing, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '@/features/admin/adminContracts'
 import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '@/features/datasets/curationClient'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
 
@@ -19,16 +21,15 @@ import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
 
 const DEFAULT_RECIPE = '{\n  "version": 1,\n  "rules": [\n    { "id": "max-value", "field": "la", "value": 10000 }\n  ]\n}'
 
-export function AdminDatasetDetailPage({ dataset, versions, initialVersion, methods, navigate, expired }: {
+export function AdminDatasetDetailPage({ dataset, versions, initialVersion, navigate, expired }: {
   dataset: string
   versions: AdminDatasetVersion[]
   initialVersion?: string
-  methods: Row[]
   navigate: (route: Route) => void
   expired: () => void
 }) {
   const [version, setVersion] = useState(initialVersion ?? versions.at(-1)?.version ?? '')
-  const [method, setMethod] = useState(methods[0]?.method ? valueLabel(methods[0].method, '') : '')
+  const [method, setMethod] = useState('')
   const [metricSet, setMetricSet] = useState('metric-set-v2')
   const [classPolicy, setClassPolicy] = useState<'none' | 'weights' | 'sample'>('none')
   const [splitPreset, setSplitPreset] = useState('temporal-70-15-15')
@@ -57,7 +58,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const [paramValues, setParamValues] = useState<Record<string, Record<string, string>>>({})
   const [experimentBusy, setExperimentBusy] = useState(false)
   const [experimentError, setExperimentError] = useState('')
+  const [shared, setShared] = useState(false)
+  const [sharingBusy, setSharingBusy] = useState(false)
   const selected = versions.find(item => item.version === version) ?? versions.at(-1)
+  useEffect(() => { setShared(selected?.shared === true) }, [selected?.version, selected?.shared])
   useEffect(() => {
     if (!selected) return
     const controller = new AbortController()
@@ -66,6 +70,10 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       .catch(failure => { if (!controller.signal.aborted) setExperimentError(failure instanceof Error ? failure.message : '训练方法读取失败') })
     return () => controller.abort()
   }, [selected?.schema])
+  useEffect(() => {
+    if (!experimentMethods.length) return
+    setMethod(current => experimentMethods.some(item => item.method === current) ? current : experimentMethods[0].method)
+  }, [experimentMethods])
   useEffect(() => {
     if (!selected) return
     const controller = new AbortController()
@@ -85,7 +93,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
   const observations = selected.labelObservations
   const observedThrough = typeof observations?.observedThroughIso === 'string'
     ? observations.observedThroughIso.slice(0, 10) : null
-  const selectedMethod = methods.some(item => item.method === method) ? method : valueLabel(methods[0]?.method, '')
+  const selectedMethod = experimentMethods.some(item => item.method === method) ? method : experimentMethods[0]?.method ?? ''
   async function train() {
     setBusy(true); setError('')
     try {
@@ -97,6 +105,19 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       if (failure instanceof ApiError && failure.status === 401) expired()
       else setError(failure instanceof Error ? failure.message : '训练任务创建失败')
     } finally { setBusy(false) }
+  }
+  async function updateSharing(next: boolean) {
+    if (!selected || sharingBusy) return
+    setSharingBusy(true); setError('')
+    try {
+      const result = await setAdminDatasetSharing(selected.version, next)
+      setShared(result.shared)
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) expired()
+      else setError(failure instanceof Error ? failure.message : '共享状态更新失败')
+    } finally {
+      setSharingBusy(false)
+    }
   }
   function toggleMethod(method: string) {
     setSelectedMethods(current => {
@@ -188,6 +209,16 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     <AdminPageHeader title={dataset} meta={selected.schema}/>
     <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })} variant="outline" type="button">返回数据集列表</Button></div>
     <div className="flex flex-wrap items-end gap-2"><span>版本</span><Select value={version == null ? '' : String(version)} onValueChange={nextValue => (setVersion)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="数据集版本"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(versions.map(item => ({ value: item.version, label: item.version }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft bg-card p-3">
+      <div className="grid gap-0.5">
+        <strong className="text-sm font-medium text-foreground">开放给普通用户</strong>
+        <p className="text-xs text-foreground-3">{selected.owners.length ? '用户自有版本不能开放共享。' : shared ? '会出现在普通用户的“共享数据”中。' : '当前仅管理员可见。'}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className={shared ? 'text-xs font-medium text-teal-deep' : 'text-xs text-foreground-3'}>{shared ? '已共享' : '未共享'}</span>
+        <Switch aria-label="开放给普通用户" checked={shared} disabled={selected.owners.length > 0 || sharingBusy} onCheckedChange={next => void updateSharing(next)}/>
+      </div>
+    </div>
     <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
       <section><h2>版本与质量</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>schema</dt><dd>{selected.schema}</dd></div>
@@ -198,7 +229,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
         <div><dt>CSV SHA-256</dt><dd><code>{valueLabel(selected.file.sha256)}</code></dd></div>
         <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
         <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
-        <div><dt>标签成熟</dt><dd>{selected.labelMaturity?.available ? Object.entries((selected.labelMaturity.statusCounts ?? {}) as Row).map(([name, count]) => `${name} ${valueLabel(count)}`).join(' · ') : valueLabel(selected.labelMaturity?.reason, '成熟状态未记录')}</dd></div>
+        <div><dt>标签成熟</dt><dd>{labelMaturityText(selected.labelMaturity)}</dd></div>
       </dl></section>
       <section><h2>标签与 SZZ</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
@@ -242,8 +273,8 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>清洗与派生</h2><ErrorNotice>{curationError}</ErrorNotice>
       <Textarea aria-label="清洗配方" value={recipeText} onChange={event => { setRecipeText(event.target.value); setCurationPreview(null); setDerivedVersion('') }}/>
       <div className="flex flex-wrap items-end gap-3">
-        <Button onClick={() => void previewCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览清洗</Button>
-        <Button onClick={() => void deriveCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成派生版本</Button>
+        <Button onClick={() => void previewCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览结果</Button>
+        <Button onClick={() => void deriveCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成新版本</Button>
       </div>
       {curationPreview ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
         <section><h2>清洗前后</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
@@ -258,7 +289,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
           {!Object.keys((curationPreview.stats.excluded as Row | undefined) ?? {}).length ? <div><dt>无</dt><dd>没有记录被排除</dd></div> : null}
         </dl></section>
       </div> : null}
-      {derivedVersion ? <p className="text-xs leading-body text-foreground-3">已生成派生版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
+      {derivedVersion ? <p className="text-xs leading-body text-foreground-3">已生成新版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
     </section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
       <div className="flex flex-wrap items-end gap-3">
@@ -313,7 +344,7 @@ export function AdminDatasetDetailPage({ dataset, versions, initialVersion, meth
       {!splitPreview?.available && splitPreview ? <p className="text-xs leading-body text-foreground-3">当前切分预设不可用，不能创建实验。</p> : null}
     </section>
     <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="flex flex-wrap items-end gap-3">
-      <Select value={selectedMethod == null ? '' : String(selectedMethod)} onValueChange={nextValue => (setMethod)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练方法"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(methods.map(item => ({ value: valueLabel(item.method, ''), label: `${valueLabel(item.name)} · ${valueLabel(item.method)}` }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+      <Select value={selectedMethod == null ? '' : String(selectedMethod)} onValueChange={nextValue => (setMethod)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练方法"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{experimentMethods.map(item => <SelectItem key={item.method} value={item.method}>{item.label || `${item.name} · ${item.method}`}</SelectItem>)}</SelectContent></Select>
       <Select value={metricSet == null ? '' : String(metricSet)} onValueChange={nextValue => (setMetricSet)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="指标集"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       <Select value={classPolicy == null ? '' : String(classPolicy)} onValueChange={nextValue => (value => setClassPolicy(value as 'none' | 'weights' | 'sample'))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练分区类别策略"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       <Select value={splitPreset == null ? '' : String(splitPreset)} onValueChange={nextValue => (setSplitPreset)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="时间切分预设"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([...SPLIT_PRESETS]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>

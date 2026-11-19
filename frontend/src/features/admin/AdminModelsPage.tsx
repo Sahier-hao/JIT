@@ -12,7 +12,8 @@ import {
   type Row,
 } from '@/features/admin/adminContracts'
 
-import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
+import { EmptyState } from '@/components/shared/Feedback'
+import { CardListSkeleton } from '@/components/shared/Skeletons'
 import type { Route } from '@/app/navigation'
 import { ModelPolicyCards } from '@/features/models/pages/ModelPolicyCards'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
@@ -29,6 +30,7 @@ export function AdminModelsPage({ navigate, expired }: {
   const [readiness, setReadiness] = useState<ModelReadiness | null>(null)
   const [coverage, setCoverage] = useState<ModelCoveragePage | null>(null)
   const [coverageError, setCoverageError] = useState('')
+  const [coverageLoading, setCoverageLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -38,36 +40,42 @@ export function AdminModelsPage({ navigate, expired }: {
 
   useEffect(() => {
     const controller = new AbortController()
-    Promise.allSettled([
-      fetchAdminModels(controller.signal),
-      fetchModelCoverage(controller.signal),
-    ]).then(([catalogResult, coverageResult]) => {
-      if (controller.signal.aborted) return
-      if (catalogResult.status === 'fulfilled') {
-        const result = catalogResult.value
+    setLoading(true)
+    fetchAdminModels(controller.signal)
+      .then(result => {
+        if (controller.signal.aborted) return
         setModels(result.models as unknown as Row[])
         setMethods(result.methods)
         setCandidates(result.candidates)
         setReadiness(result.readiness)
         setError('')
-      } else {
-        const failure = catalogResult.reason
+      })
+      .catch(failure => {
+        if (controller.signal.aborted) return
         if (failure instanceof ApiError && failure.status === 401) expired()
-        else if (failure instanceof NetworkError) setError('无法连接模型后端，请检查服务后重试。')
+        else if (failure instanceof NetworkError) setError(failure.timedOut ? failure.message : '无法连接模型后端，请检查服务后重试。')
         else setError(failure instanceof Error ? failure.message : '读取模型目录失败')
-      }
-      if (coverageResult.status === 'fulfilled') {
-        setCoverage(coverageResult.value)
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [revision, expired])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setCoverageLoading(true)
+    fetchModelCoverage(controller.signal)
+      .then(value => {
+        if (controller.signal.aborted) return
+        setCoverage(value)
         setCoverageError('')
-      } else {
-        const failure = coverageResult.reason
+      })
+      .catch(failure => {
+        if (controller.signal.aborted) return
         if (failure instanceof ApiError && failure.status === 401) expired()
-        else setCoverageError(failure instanceof NetworkError
-          ? '无法连接训练覆盖接口。'
-          : failure instanceof Error ? failure.message : '读取训练覆盖失败')
-      }
-      setLoading(false)
-    })
+        else if (failure instanceof NetworkError) setCoverageError(failure.timedOut ? failure.message : '无法连接训练覆盖接口。')
+        else setCoverageError(failure instanceof Error ? failure.message : '读取训练覆盖失败')
+      })
+      .finally(() => { if (!controller.signal.aborted) setCoverageLoading(false) })
     return () => controller.abort()
   }, [revision, expired])
 
@@ -118,7 +126,7 @@ export function AdminModelsPage({ navigate, expired }: {
 
   if (loading) return <section>
     <AdminPageHeader title="模型管理" onRefresh={() => setRevision(value => value + 1)}/>
-    <LoadingNotice label="正在读取模型目录"/>
+    <div className="mt-4"><CardListSkeleton label="正在读取模型目录" rows={4}/></div>
   </section>
   if (error && !models.length) return <EmptyState title="无法读取模型目录" description={error}><Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button></EmptyState>
   return <section>
@@ -135,6 +143,7 @@ export function AdminModelsPage({ navigate, expired }: {
     </section> : null}
     {readiness ? <CatalogState readiness={readiness} imported={coverage?.latestImport ?? null}
       coverageKnown={coverage !== null}/> : null}
+    {coverageLoading ? <section aria-label="正在读取训练覆盖"><CardListSkeleton label="正在读取训练覆盖" rows={1}/></section> : null}
     {coverageError ? <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card text-xs text-rose" aria-label="训练覆盖读取失败">
       <strong>训练覆盖暂不可用</strong><p>{coverageError}</p>
       <Button size="sm" onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button>

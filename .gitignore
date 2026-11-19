@@ -5,10 +5,13 @@ frontend/playwright-report/
 *.local
 backend/.venv/
 backend/.cache/
-# 原始数据集可由 fetch 重新取得，不提交；数据集描述文件是登记事实，必须提交
+# 原始数据集可由 fetch 重新取得，不提交；经评审的数据集描述文件是登记事实，必须提交
 backend/data/*
 !backend/data/datasets/
 !backend/data/datasets/**
+# 本机按批次重新采集的数据版本（大体积 CSV 与描述文件）不进入 Git；已跟踪的冻结基线不受影响
+backend/data/datasets/kamei14-git-v2-*/
+backend/data/datasets/kamei14-git-v1-cc-switch/*2025-08-04_2026-10-31*
 # 本机运行目录整体忽略（可由命令重新取得）；仅放开交付的外部运行，见 artifacts/external/README.md
 backend/artifacts/*
 !backend/artifacts/external/
@@ -22,7 +25,12 @@ backend/tests/.tmp/
 .cache/
 .dsh-tmp/
 .memsearch/
+temp/
 **/__pycache__/
 docs/evidence/_run/
 backend/.tmp-verify/
 backend/storage/
+# 本地助手会话日志与图表工具产物
+.claude/logs/
+.archify/
+backend/.claude/

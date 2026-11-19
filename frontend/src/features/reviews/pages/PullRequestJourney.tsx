@@ -8,10 +8,8 @@ import { LoaderCircle, X, ArrowLeft, Eye, RefreshCw, FileText, ExternalLink, Sea
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { NativeSelect } from '@/components/ui/native-select'
 
 import { useEffect, useRef, useState } from 'react'
 
@@ -20,96 +18,24 @@ import { useEffect, useRef, useState } from 'react'
 
 
 
-import { repositoryRoute, type Route } from '@/app/navigation'
+import { repositoryRoute } from '@/app/navigation'
 import { CodeDiff } from '@/features/reviews/components/CodeDiff'
-import { LoadingNotice } from '@/components/shared/Feedback'
-import { ContractError } from '@/lib/apiContract'
 import { PRModelClues } from '@/features/reviews/components/PRModelClues'
 import { Markdown } from '@/components/shared/Markdown'
 import { useSnapshotAnalyses } from '@/features/projects/useSnapshotAnalyses'
 import { ProgressBar } from '@/features/projects/components/JobProgress'
 import { PullRequestPreview } from '@/features/reviews/components/PullRequestPreview'
+import { ReviewCandidates } from '@/features/reviews/components/ReviewCandidates'
+import { ReviewCommitTable } from '@/features/reviews/components/ReviewCommitTable'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '@/features/reviews/components/WorkPanels'
 import { displayTime } from '@/lib/domain'
 import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '@/features/reviews/prReviewClient'
-import { reviewStatusLabels, adoptVersion, backupText, candidateQuestion, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '@/features/reviews/prReview'
-import { canWriteReview, requireAccount, useReviewAccount } from '@/features/reviews/reviewAccount'
+import { reviewStatusLabels, adoptVersion, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '@/features/reviews/prReview'
+import { canWriteReview, useReviewAccount } from '@/features/reviews/reviewAccount'
 import { cn } from '@/lib/utils'
+import { backup, changeLabels, FILE_FLAG, message, splitPath, validateProjectSource, type Navigate } from '@/features/reviews/pages/reviewShared'
 
-
-type Navigate = (route: Route) => void
-const message = (error: unknown) => error instanceof Error ? error.message : '读取失败，请重试'
-const changeLabels: Record<string, string> = { added: '新增', removed: '删除', modified: '修改', renamed: '重命名', copied: '复制', changed: '内容变化', unchanged: '未变化' }
-const FILE_FLAG: Record<string, string> = { added: 'bg-teal', removed: 'bg-rose', modified: 'bg-amber', renamed: 'bg-blue', copied: 'bg-blue', changed: 'bg-amber', unchanged: 'bg-foreground-4' }
-/** 文件行把路径拆成"目录 + 文件名"：目录可以被省略号吃掉，文件名必须始终完整。 */
-function splitPath(path: string) {
-  const index = path.lastIndexOf('/')
-  return index < 0 ? { dir: '', name: path } : { dir: path.slice(0, index + 1), name: path.slice(index + 1) }
-}
-function backup(work: PRWork, account: string | null) { downloadText(`review-${work.owner}-${work.name}-${work.number}.json`, backupText(work, account), 'application/json') }
-
-function validateProjectSource(source: PRSnapshot, owner: string, name: string, number: number, repositoryId?: string) {
-  if (source.owner.toLowerCase() !== owner.toLowerCase() || source.name.toLowerCase() !== name.toLowerCase() || source.number !== number || repositoryId && source.repositoryId !== repositoryId) throw new ContractError('PR 固定来源与项目上下文不一致，未修改个人草稿')
-}
-
-/** 提醒只读打开固定快照，进入工作必须由用户明确执行。 */
-export function FixedPRSnapshot({ owner, repositoryName, number, repositoryId, snapshotId, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId: string; navigate: Navigate }) {
-  const reviewAccount = useReviewAccount()
-  const account = reviewAccount.account
-  const [source, setSource] = useState<PRSnapshot | null>(null), [error, setError] = useState<unknown>(null), [attempt, setAttempt] = useState(0), [fileIndex, setFileIndex] = useState(0)
-  const analysis = useSnapshotAnalyses(snapshotId)
-  const [personal] = useState(() => { try { return { works: account ? readWorks(account) : [], error: '' } } catch (failure) { return { works: [], error: message(failure) } } })
-  const existing = personal.works.find(w => w.key === workKey(owner, repositoryName, number))
-  useEffect(() => {
-    const controller = new AbortController()
-    setSource(null); setError(null)
-    getPRSnapshot(snapshotId, controller.signal).then(value => { if (controller.signal.aborted) return; validateProjectSource(value, owner, repositoryName, number, repositoryId); setSource(value) }).catch(failure => { if (!controller.signal.aborted) setError(failure) })
-    return () => controller.abort()
-  }, [snapshotId, owner, repositoryName, number, repositoryId, attempt])
-  function enter() {
-    if (!source) return
-    try {
-      const account = requireAccount(reviewAccount)
-      const current = readWorks(account).find(w => w.key === workKey(owner, repositoryName, number))
-      let next = current ?? createWork(source)
-      if (current && !current.rounds[source.snapshotId]) {
-        if (Date.parse(source.capturedAt) >= Date.parse(current.rounds[current.latestSnapshotId].source.capturedAt)) next = adoptVersion(current, source)
-        else next = { ...current, rounds: { ...current.rounds, [source.snapshotId]: createWork(source).rounds[source.snapshotId] } }
-      }
-      saveWork(account, { ...next, viewedSnapshotId: source.snapshotId })
-      navigate({ name: 'pr-work', repositoryId: repositoryId ?? source.repositoryId, owner, repositoryName, number })
-    } catch (failure) { setError(failure) }
-  }
-  const file = source?.files[fileIndex]
-  return <section className="grid gap-4 pr-fixed-preview" data-testid="pr-fixed-preview">
-    <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'notifications' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} />}返回{repositoryId ? '项目 PR' : '站内提醒'}</Button>
-    <header className="grid gap-1 border-b border-border-soft pb-3">
-      <h1 className="font-sans text-xl font-semibold leading-title text-foreground">固定快照 · PR #{number}</h1>
-      <p className="text-xs text-foreground-3">{owner}/{repositoryName} · 版本 {snapshotId}</p>
-    </header>
-    <div className="grid gap-1 rounded-sm border border-amber/30 bg-amber-soft p-3 text-xs text-amber-deep">
-      <strong className="text-sm">固定来源只读预览</strong>
-      <p>不承诺是远端最新版本；不会新建个人工作单，也不会改变正在阅读的轮次。</p>
-      {existing ? <p>本浏览器原阅读轮次 {existing.viewedSnapshotId.slice(0, 12)}；最近已知轮次 {existing.latestSnapshotId.slice(0, 12)}。</p> : null}
-    </div>
-    {personal.error ? <p className="text-xs text-rose" role="alert">{personal.error}；现有存储未清空。</p> : null}
-    {error ? <Alert variant="destructive"><AlertTitle>{message(error)}</AlertTitle><div className="col-start-2 flex flex-wrap gap-2">{<Button size="sm" onClick={() => setAttempt(v => v + 1)} variant="outline" type="button">重新读取</Button>}</div></Alert> : null}
-    {!source && !error ? <LoadingNotice label="读取提醒绑定的固定快照"/> : null}
-    {source ? <>
-      <h2 className="text-base font-semibold text-foreground">{source.title}</h2>
-      <p className="text-xs text-foreground-3">{source.author} · 保存于 {displayTime(source.capturedAt)} · 基准 {source.baseSha.slice(0, 12)} / 目标 {source.headSha.slice(0, 12)}</p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant='default' disabled={Boolean(personal.error)} onClick={enter} type="button">{existing ? existing.rounds[snapshotId] ? '明确进入此保存轮次' : Date.parse(source.capturedAt) < Date.parse(existing.rounds[existing.latestSnapshotId].source.capturedAt) ? '明确进入历史复盘轮次' : '明确开始此版本新一轮' : '开始审查此固定版本'}</Button>
-        {existing ? <Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })} variant="outline" type="button">返回原阅读轮次</Button> : null}
-        <a className="text-xs text-accent underline-offset-2 hover:underline" href={source.url} target="_blank" rel="noreferrer">核对远端 PR</a>
-      </div>
-      <PRModelClues analysis={analysis}/>
-      <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">预览文件</span><NativeSelect aria-label="固定快照预览文件" value={fileIndex} onChange={e => setFileIndex(Number(e.target.value))}>{source.files.map((f, i) => <option key={f.path} value={i}>{f.path}</option>)}</NativeSelect></label>
-      {file?.patch ? <div className="overflow-auto rounded-sm border border-border-soft"><CodeDiff file={file} view="unified" onAnchor={() => {}}/></div> : <p className="text-xs text-foreground-3">没有可展示的完整 Diff，未视作空文件。可以进入此轮次后读取固定上下文。</p>}
-      {!source.filesComplete ? <p className="text-xs text-amber-deep">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}
-    </> : null}
-  </section>
-}
+export { FixedPRSnapshot } from '@/features/reviews/pages/FixedPRSnapshot'
 
 export function PullRequestWork({ owner, repositoryName, number, repositoryId, preview = false, navigate }: { owner: string; repositoryName: string; number: number; repositoryId?: string; preview?: boolean; navigate: Navigate }) {
   const reviewAccount = useReviewAccount()
@@ -337,13 +263,6 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
   }
   const readPercent = live.totalFiles ? Math.round((readCount / live.totalFiles) * 100) : 0
   const needle = filter.trim().toLowerCase()
-  const commitRows = commitOrder === 'order' ? live.commits : [...live.commits].sort((a, b) => {
-    const left = commitRisks[a.sha]?.risk, right = commitRisks[b.sha]?.risk
-    if (left == null && right == null) return 0
-    if (left == null) return 1
-    if (right == null) return -1
-    return right - left
-  })
   const scoredCommits = live.commits.filter(commit => commitRisks[commit.sha] != null).length
   const selectedFiles = selectedCommit ? commitRisks[selectedCommit]?.files ?? [] : null
   const scopedFiles = selectedFiles && selectedFiles.length ? live.files.filter(file => selectedFiles.includes(file.path)) : live.files
@@ -400,21 +319,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
 
     <PRModelClues key={`model:${version}`} analysis={analysis}/>
 
-    {reviewView === 'commits' ? <section className="grid gap-2" aria-label="PR 提交风险排序">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-foreground">提交风险排序</h2>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
-          <span>{scoredCommits}/{live.commits.length} 有分数</span>
-          <ToggleGroup type="single" value={String(commitOrder)} onValueChange={nextValue => { if (nextValue) (value => setCommitOrder(value as 'risk' | 'order'))(nextValue as typeof commitOrder); }} aria-label="提交排序">{([{ label: '按风险', value: 'risk' }, { label: '按提交顺序', value: 'order' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
-        </div>
-      </div>
-      <Table><TableHeader><TableRow><TableHead>提交 / 改动</TableHead><TableHead>模型分数</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commitRows.map(commit => {
-            const info = commitRisks[commit.sha]
-            const lines = info ? (info.addedLines ?? 0) + (info.deletedLines ?? 0) : null
-            return <TableRow key={commit.sha} tabIndex={0} className="cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => selectCommit(commit.sha)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectCommit(commit.sha) } }}><TableCell><div className="flex min-w-0 flex-wrap items-baseline gap-2"><span className="truncate text-sm font-medium text-foreground">{commit.message.split('\n')[0]}</span><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 12)}</code></div></TableCell><TableCell><span className={cn('tabular-nums', info ? 'text-foreground' : 'text-foreground-4')}>{info ? info.risk.toFixed(2) : '未评分'}</span></TableCell><TableCell className="text-right tabular-nums">{lines == null ? '—' : lines.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{info?.fileCount ?? '—'}</TableCell></TableRow>
-          })}</TableBody></Table>
-      {!live.commitsComplete ? <p className="text-xs text-foreground-3">仅显示已加载的 {live.commits.length}/{live.totalCommits} 条提交。</p> : null}
-    </section> : null}
+    {reviewView === 'commits' ? <ReviewCommitTable commits={live.commits} commitRisks={commitRisks} order={commitOrder} onOrder={setCommitOrder} onSelect={selectCommit} commitsComplete={live.commitsComplete} totalCommits={live.totalCommits}/> : null}
 
     {reviewView === 'files' && evidenceError ? <Alert variant="destructive"><AlertTitle>{evidenceError}</AlertTitle></Alert> : null}
     {reviewView === 'files' ? <div className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:h-[calc(100vh-260px)] lg:min-h-[560px] lg:grid-cols-[260px_minmax(0,1fr)_320px]">
@@ -459,7 +364,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
               <Tooltip><TooltipTrigger asChild><Button size="sm" onClick={() => void loadContext()} variant="outline" disabled={Boolean(contextBusy)} type="button">{contextBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}完整上下文</Button></TooltipTrigger><TooltipContent>{"读取基准与目标的完整文件内容"}</TooltipContent></Tooltip>
               <Button size="sm" onClick={() => { if (!file) return; setCandidateBusy(true); setCandidateError(''); void analyzePRCandidates(live.snapshotId, [file.path], 'head').then(result => setCandidates(result.candidates)).catch(error => setCandidateError(message(error))).finally(() => setCandidateBusy(false)) }} variant="outline" disabled={Boolean(candidateBusy)} type="button">{candidateBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}分析代码候选</Button>
               <Button size="sm" variant={round.progress[path]?.state === 'read' ? 'outline' : 'default'} disabled={!readable} onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))} type="button">标记已阅读</Button>
-              <Select value={round.progress[path]?.state ?? 'unread' == null ? '' : String(round.progress[path]?.state ?? 'unread')} onValueChange={nextValue => (value => commit(setFileState(current.current!, version, path, value as FileState, readable)))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="文件阅读状态" className="w-28" size="sm"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+              <Select value={String(round.progress[path]?.state ?? 'unread')} onValueChange={nextValue => (value => commit(setFileState(current.current!, version, path, value as FileState, readable)))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="文件阅读状态" className="w-28" size="sm"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
             </div>
           </div>
           {file.patchComplete ? null : <p className="border-b border-border-soft px-3 py-2 text-xs text-amber-deep">Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。</p>}
@@ -467,37 +372,7 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
             <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
           </div>
           {candidateError ? <div className="border-t border-border-soft p-2"><Alert variant="destructive"><AlertTitle>{candidateError}</AlertTitle></Alert></div> : null}
-          {candidates.length ? <section className="grid max-h-72 gap-2 overflow-auto border-t border-border-soft p-3" aria-label="代码候选">
-            <h3 className="text-sm font-semibold text-foreground">代码候选</h3>
-            <p className="text-xs text-foreground-3">候选只作线索，不是缺陷概率或行级缺陷结论。</p>
-            {candidates.filter(item => item.path === file.path).map((item, index) => {
-              const key = `${item.side}:${item.path}:${item.line}:${item.ruleId}:${item.ruleVersion}`
-              const decision = round.candidateDecisions?.[key]
-              const set = (status: 'confirmed' | 'rejected' | 'deferred') => {
-                const reason = decision?.reason ?? ''
-                if (status !== 'confirmed' && !reason.trim()) { setCandidateError('先填写候选处理理由'); return }
-                setCandidateError('')
-                changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status, reason } } }))
-              }
-              return <div key={`${key}:${index}`} className="grid gap-1 rounded-sm border border-border-soft p-2 text-xs">
-                <code className="font-mono text-foreground-2">{item.path}:{item.line}</code> · {item.ruleId} · {item.message}
-                {item.evidence ? <pre className="overflow-auto rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{item.evidence}</pre> : null}
-                {item.suggestion ? <div className="grid gap-1 rounded-sm bg-soft p-2">
-                  <strong className="text-foreground">{item.suggestion.title}</strong>
-                  <p className="text-foreground-3">{item.suggestion.rationale}</p>
-                  {item.suggestion.manualChecks.length ? <ul className="list-disc pl-4 text-foreground-3">{item.suggestion.manualChecks.map(check => <li key={check}>{check}</li>)}</ul> : null}
-                  {item.suggestion.example ? <pre className="overflow-auto rounded-sm bg-dark p-2 font-mono text-[11px] text-on-dark">{`${item.suggestion.example.before}\n→\n${item.suggestion.example.after}`}</pre> : null}
-                </div> : null}
-                <div className="flex items-center flex-wrap gap-2" style={{gap: 8}}>{(['confirmed', 'rejected', 'deferred'] as const).map(status => <Button key={status} size="sm" variant={decision?.status === status ? 'default' : 'outline'} onClick={() => set(status)} type="button">{status === 'confirmed' ? '确认' : status === 'rejected' ? '驳回' : '暂缓'}</Button>)}<Input className="h-8 flex-1 rounded-sm border border-input bg-card px-2 text-xs text-foreground" aria-label="候选处理理由" value={decision?.reason ?? ''} onChange={event => changeRound(r => ({ ...r, candidateDecisions: { ...(r.candidateDecisions ?? {}), [key]: { status: decision?.status ?? 'deferred', reason: event.target.value } } }))} placeholder="处理理由"/><Button size="sm" onClick={() => {
-                    const exists = round.questions.some(item2 => item2.kind === 'suggestion' && item2.relatedFiles[0] === item.path && item2.body.includes(`${item.ruleId}@${item.ruleVersion}`) && item2.body.includes(`${item.path}:${item.line}`))
-                    if (exists) { setCandidateError('该候选建议已在问题草稿中'); return }
-                    const created = candidateQuestion(live, item)
-                    changeRound(r => ({ ...r, questions: [...r.questions, created], selectedQuestionId: created.id }))
-                    setSelectedId(created.id); setCandidateError('')
-                  }} variant="outline" type="button">加入问题草稿</Button></div>
-              </div>
-            })}
-          </section> : null}
+          {candidates.length ? <ReviewCandidates source={live} file={file} candidates={candidates} onError={setCandidateError} round={round} apply={changeRound} onSelectQuestion={setSelectedId}/> : null}
           <details className="border-t border-border-soft">
             <summary className="cursor-pointer px-3 py-2 text-xs text-foreground-2">作者原始说明</summary>
             <pre className="max-h-48 overflow-auto border-t border-border-soft p-3 font-mono text-[11px] leading-body text-foreground-2">{live.body || '作者没有填写说明'}</pre>

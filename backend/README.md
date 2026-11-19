@@ -341,7 +341,7 @@ $env:HF_HOME = (Join-Path $PWD ".cache/huggingface")
 `JIT-Fine / JIT-Defect4J` 发布包提供一个固定 revision、21 个项目、提交级的
 Kamei 14 维专家特征数据。它补充了 OpenStack 六字段基线之外的完整 14 维评价，
 但仅用于离线实验，不注册为默认模型，也不改变用户仓库分析。字段、标签和许可证审计见
-[`docs/audits/add-large-jit-benchmark.md`](../docs/audits/add-large-jit-benchmark.md)。
+[`docs/审计/add-large-jit-benchmark.md`](../docs/审计/add-large-jit-benchmark.md)。
 
 来源固定为：
 

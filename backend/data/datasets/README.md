@@ -49,6 +49,10 @@ python -m jit_baseline.cli collect-repository --repo https://github.com/apache/a
 
 ## 提交规则
 
-描述文件**必须随仓库提交**（`.gitignore` 的 `backend/data/*` 排除原始 CSV，但不排除
-`backend/data/datasets/`）。原始 CSV 体积大且可重新取得，不提交；描述文件很小，是跨机器复现
-与评审的登记事实，必须提交。
+经评审的冻结基线描述文件**必须随仓库提交**（`.gitignore` 的 `backend/data/*` 排除原始 CSV，
+但不排除 `backend/data/datasets/`）。原始 CSV 体积大且可重新取得，不提交；描述文件很小，是跨机器
+复现与评审的登记事实。
+
+本机按批次重新采集的 `kamei14-git-v2-*/` 目录（以及 `kamei14-git-v1-cc-switch` 的 2025-08-04 至
+2026-10-31 新版本）由 `.gitignore` 整体排除：它们属于可重建的本地采集缓存，不与冻结基线混在
+同一次提交里。需要长期保留的版本应先评审描述文件与来源，再显式调整忽略规则并单独提交。

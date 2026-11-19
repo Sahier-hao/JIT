@@ -79,6 +79,7 @@ jobs:
         run: |
           npm ci
           npm run typecheck
+          npm run check:api-types
           npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\frontend-unit.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run build
@@ -167,6 +168,7 @@ jobs:
         run: |
           npm ci
           npm run typecheck
+          npm run check:api-types
           npm test 2>&1 | Tee-Object -FilePath "$env:JIT_REGRESSION_ROOT\logs\frontend-unit.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run build
@@ -182,13 +184,13 @@ jobs:
       - name: Browser - model package recovery
         working-directory: frontend
         shell: pwsh
-        run: npx playwright test --config=playwright.model-package.config.ts
+        run: node scripts/e2e.mjs model-package
       - name: Browser - project analysis to PR continuation
         working-directory: frontend
         shell: pwsh
         env:
           JIT_PREVIEW_BASELINE: ${{ runner.temp }}\jit-regression\artifacts\baseline
-        run: npx playwright test --config=playwright.regression-pr.config.ts
+        run: npx playwright test --config=playwright.regression-pr.config.ts --project=pr-account
       - name: Job summary
         if: always()
         shell: pwsh

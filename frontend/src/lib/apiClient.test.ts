@@ -27,6 +27,13 @@ it('distinguishes cancellation from network failure', async () => {
   const controller = new AbortController(); controller.abort()
   await expect(apiRequest({ path: '/api/v1/repositories', method: 'GET', signal: controller.signal })).rejects.toBeInstanceOf(CancelledError)
 })
+it('turns an admin read timeout into an actionable network error', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation((_input, init) => new Promise<Response>((_resolve, reject) => {
+    init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true })
+  }))
+  await expect(apiRequest({ path: '/api/v1/models', method: 'GET', timeoutMs: 10 }))
+    .rejects.toThrow('请求超时')
+})
 it('retains a structured API error', async () => {
   const error = new ApiError({ status: 404, code: 'REPOSITORY_UNKNOWN', message: '仓库不存在', requestId: 'request-3' })
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(error)

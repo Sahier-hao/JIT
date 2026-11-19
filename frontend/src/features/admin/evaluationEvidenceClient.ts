@@ -2,6 +2,7 @@ import { apiRequest } from '@/lib/apiClient'
 import { record, recordList, text, textOrNull } from '@/lib/apiContract'
 
 export type EvidenceStatus = 'available' | 'stale' | 'invalid'
+const ADMIN_READ_TIMEOUT_MS = 30_000
 
 export interface EvaluationEvidenceEntry {
   evidenceId: string
@@ -19,7 +20,7 @@ function status(value: unknown): EvidenceStatus {
 }
 
 export async function fetchEvaluationEvidence(signal?: AbortSignal): Promise<EvaluationEvidenceEntry[]> {
-  const body = record(await apiRequest({ path: '/api/admin/evaluation-evidence', method: 'GET', signal }))
+  const body = record(await apiRequest({ path: '/api/admin/evaluation-evidence', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }))
   return recordList(body.evidence).map(item => {
     const value = record(item)
     return {

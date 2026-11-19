@@ -1,6 +1,7 @@
 import { type LucideIcon, SlidersHorizontal, List, TrendingUp, ArrowUpDown, Download } from 'lucide-react'
 import { BrandLogo } from '@/components/shared/BrandLogo'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/apiClient'
 import { record } from '@/lib/apiContract'
@@ -9,6 +10,8 @@ import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 import { hashFor, type Route } from '@/app/navigation'
 import { VerificationReport } from '@/features/research/VerificationReport'
 import { AppearanceControl } from '@/components/layout/AppearanceControl'
+import { ActiveJobsIndicator } from '@/components/layout/ActiveJobsIndicator'
+import { useActiveAdminJobs } from '@/features/admin/activeJobs'
 
 import { AdminComparisonPage } from '@/features/admin/AdminComparisonPage'
 import { AdminDatasetsPage } from '@/features/admin/AdminDatasetsPage'
@@ -47,9 +50,11 @@ export function AdminWorkspace({ route, navigate }: {
   const [sessionError, setSessionError] = useState('')
   const [revision, setRevision] = useState(0)
   const expired = useCallback(() => setSession({ authenticated: false, username: null, setupRequired: false }), [])
+  const onTrainingPage = route.name === 'admin' && (route.view === 'training' || route.view === 'training-experiment')
+  const activeJobs = useActiveAdminJobs(session?.authenticated === true && !onTrainingPage)
   useEffect(() => {
     const controller = new AbortController()
-    const read = () => apiRequest({ path: '/api/admin/session', method: 'GET', signal: controller.signal }).then(body => {
+    const read = () => apiRequest({ path: '/api/admin/session', method: 'GET', signal: controller.signal, timeoutMs: 15_000 }).then(body => {
       const value = record(body)
       if (!controller.signal.aborted) {
         setSession({ authenticated: value.authenticated === true, setupRequired: value.setupRequired === true, username: typeof value.username === 'string' ? value.username : null })
@@ -102,23 +107,24 @@ export function AdminWorkspace({ route, navigate }: {
   else content = <AdminComparisonPage modelIds={route.models} navigate={navigate} expired={expired}/>
   return <div className="min-h-screen bg-background lg:grid lg:grid-cols-[236px_minmax(0,1fr)]">
     <a className="fixed left-2.5 top-[-60px] z-[100] rounded-sm border border-border bg-card px-3.5 py-2.5 text-sm text-foreground focus:top-2.5" href="#admin-main">跳到主要内容</a>
-    <aside className="flex flex-col border-b border-border bg-rail px-3.5 py-4 lg:border-b-0 lg:border-r">
+    <aside className="flex flex-col border-b border-border bg-rail px-3.5 py-4 lg:sticky lg:top-0 lg:h-screen lg:self-start lg:overflow-hidden lg:border-b-0 lg:border-r">
       <Button variant="ghost" type="button" className="h-auto flex items-center gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'landing' })}><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><BrandLogo aria-hidden="true" focusable="false" strokeWidth={1.5} size={18}/></span><span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span></Button>
       <nav className="mt-4 flex gap-1 overflow-x-auto lg:grid" aria-label="管理导航">
         {NAV.map(item => <Button variant="ghost" key={item.view} type="button" aria-current={active(item.view)} className="flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground" onClick={() => navigate({ name: 'admin', view: item.view })}><item.icon aria-hidden="true" focusable="false" strokeWidth={1.5} size={17}/><span>{item.label}</span></Button>)}
         <Button variant="ghost" type="button" aria-current={route.name === 'report' ? 'page' : undefined} className="flex h-9 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground" onClick={() => navigate({ name: 'report', view: 'overview' })}><Download aria-hidden="true" focusable="false" strokeWidth={1.5} size={17}/><span>验证报告</span></Button>
       </nav>
-      <div className="mt-auto grid gap-2 border-t border-border-soft pt-3">
-        <div className="flex items-baseline justify-between gap-2 px-2 text-xs"><span className="truncate text-foreground">{label(session.username, '管理员')}</span><span className="text-foreground-4">管理员</span></div>
-        <div className="flex flex-wrap gap-2 px-1">
-          <Button variant="ghost" size="sm" onClick={() => void logout()} type="button">退出管理</Button>
-        </div>
-      </div>
     </aside>
     <div className="min-w-0">
       <header className="flex h-12 items-center justify-between gap-3 border-b border-border bg-background px-5 sm:h-13 sm:px-6">
         <nav className="flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[.1em] text-foreground-4" aria-label="面包屑"><span>管理工作区</span><span aria-hidden="true">/</span><b className="font-medium text-foreground">{section}</b></nav>
-        <AppearanceControl/>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <ActiveJobsIndicator jobs={activeJobs} navigate={navigate}/>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild><Button className="max-w-[min(40vw,180px)] truncate" variant="ghost" size="sm" type="button">{label(session.username, '管理员')}</Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end"><DropdownMenuItem variant="destructive" onSelect={() => void logout()}>退出管理</DropdownMenuItem></DropdownMenuContent>
+          </DropdownMenu>
+          <AppearanceControl/>
+        </div>
       </header>
       <main className="mx-auto w-full max-w-[1440px] px-page-x py-6 pb-14 outline-none" id="admin-main" tabIndex={-1}>
         {sessionError ? <p role="alert" className="text-xs text-rose">{sessionError}</p> : null}
