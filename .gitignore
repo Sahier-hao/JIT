@@ -17,6 +17,8 @@ backend/artifacts/*
 !backend/artifacts/external/
 # 原始模型目录仍忽略；经校验的不可变发布包位于 backend/model-packages/ 并随仓库提交
 backend/.pytest_cache/
+backend/.coverage
+backend/.coverage.*
 backend/.pytest-tmp/
 backend/tests/.tmp/
 # 本地工具链与验证脚本的临时目录，可由命令重新生成

@@ -1,0 +1,299 @@
+{
+  "copiedFromWorkspace": [
+    "coverage/backend-html/.gitignore",
+    "coverage/backend-html/class_index.html",
+    "coverage/backend-html/coverage_html_cb_c74880ea.js",
+    "coverage/backend-html/favicon_32_cb_c827f16f.png",
+    "coverage/backend-html/function_index.html",
+    "coverage/backend-html/index.html",
+    "coverage/backend-html/keybd_closed_cb_900cfef5.png",
+    "coverage/backend-html/status.json",
+    "coverage/backend-html/style_cb_0853b3de.css",
+    "coverage/backend-html/z_fb31413b84834d1c_algorithms_py.html",
+    "coverage/backend-html/z_fb31413b84834d1c_data_py.html",
+    "coverage/backend-html/z_fb31413b84834d1c_metrics_py.html",
+    "coverage/backend-html/z_fb31413b84834d1c_splits_py.html",
+    "coverage/frontend-html/base.css",
+    "coverage/frontend-html/block-navigation.js",
+    "coverage/frontend-html/coverage-final.json",
+    "coverage/frontend-html/domain.ts.html",
+    "coverage/frontend-html/favicon.png",
+    "coverage/frontend-html/index.html",
+    "coverage/frontend-html/prettify.css",
+    "coverage/frontend-html/prettify.js",
+    "coverage/frontend-html/readex-pro-license.txt",
+    "coverage/frontend-html/readex-pro.woff2",
+    "coverage/frontend-html/sort-arrow-sprite.png",
+    "coverage/frontend-html/sorter.js",
+    "coverage/frontend-html/theme.js",
+    "delivery/core-tests.json",
+    "delivery/generated/backend-coverage.png",
+    "delivery/generated/clean-checkout-report.json",
+    "delivery/generated/clean-checkout-report.md",
+    "delivery/generated/clean-checkout.json",
+    "delivery/generated/frontend-coverage.png",
+    "delivery/generated/report.json",
+    "delivery/generated/report.md",
+    "delivery/manual-review.json",
+    "delivery/prompts/backend-sprint2-unit-core.md",
+    "delivery/prompts/frontend-sprint2-unit-core.md",
+    "delivery/README.md",
+    "package.json",
+    "raw/backend-coverage.json",
+    "raw/backend-junit.xml",
+    "raw/frontend-coverage-final.json",
+    "raw/frontend-results.json",
+    "raw/run-meta.json",
+    "source/backend/pytest.sprint2.ini",
+    "source/backend/requirements.txt",
+    "source/backend/scripts/package_sprint2_unit_evidence.py",
+    "source/backend/scripts/run_sprint2_clean_checkout.py",
+    "source/backend/scripts/run_sprint2_unit.py",
+    "source/backend/scripts/sprint2_unit_report.py",
+    "source/backend/scripts/validate_sprint2_unit_inventory.py",
+    "source/backend/tests/test_sprint2_unit_core.py",
+    "source/backend/tests/test_sprint2_unit_report.py",
+    "source/frontend/package-lock.json",
+    "source/frontend/package.json",
+    "source/frontend/src/lib/sprint2Core.test.ts",
+    "source/frontend/vitest.sprint2.config.ts"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 57,
+  "files": [
+    {
+      "path": "coverage/backend-html/.gitignore",
+      "sha256": "962528463ab78acaec8811f7ce0f0b63058b4ec537c4fe6be4bec532c9b1451f"
+    },
+    {
+      "path": "coverage/backend-html/class_index.html",
+      "sha256": "ff79f9984934df1f508f3dbd7936eb1f709bdec45aff6c76b85df3529d37daa7"
+    },
+    {
+      "path": "coverage/backend-html/coverage_html_cb_c74880ea.js",
+      "sha256": "344f30d7f3a0671e236e37465d4d9df9ba01763cba160eeec83d534ddccef9ae"
+    },
+    {
+      "path": "coverage/backend-html/favicon_32_cb_c827f16f.png",
+      "sha256": "bc8100fa8743c11bd243eb3259f4b012758651612fd9bf93bf8b734d17f02561"
+    },
+    {
+      "path": "coverage/backend-html/function_index.html",
+      "sha256": "9890c1b11a48644315add088330401d662ad1a8c70c29c9944a22a75dabe0cac"
+    },
+    {
+      "path": "coverage/backend-html/index.html",
+      "sha256": "599eb3c095467a7cd79fd38ed1706d8c2acb03c10cf33a8e4c3e41353a5611d1"
+    },
+    {
+      "path": "coverage/backend-html/keybd_closed_cb_900cfef5.png",
+      "sha256": "7d9bf8ae66370e4349b4f423ac5279501384e4374da1fde675e099582ed33a8a"
+    },
+    {
+      "path": "coverage/backend-html/status.json",
+      "sha256": "6558a55dbe30936c6046761f8485e2c66bbc53f76810ff06c9c417377e24abe8"
+    },
+    {
+      "path": "coverage/backend-html/style_cb_0853b3de.css",
+      "sha256": "e813e80589ecd2b575695be7842800eda382b9e9cd3034f7980e628884c3c048"
+    },
+    {
+      "path": "coverage/backend-html/z_fb31413b84834d1c_algorithms_py.html",
+      "sha256": "b301a3ebe60266d2040453c675f6874b157e69588d2028081dea790207c239f2"
+    },
+    {
+      "path": "coverage/backend-html/z_fb31413b84834d1c_data_py.html",
+      "sha256": "2b5fd33eaf4da16b0979673d41a148101852a1d749b826e479a39465bd2a819a"
+    },
+    {
+      "path": "coverage/backend-html/z_fb31413b84834d1c_metrics_py.html",
+      "sha256": "b2689d5fc6953344ee32d56c0c8449d2d79e5d3b93f439d4e19034ef6362b85d"
+    },
+    {
+      "path": "coverage/backend-html/z_fb31413b84834d1c_splits_py.html",
+      "sha256": "b6e3781779f70ad8c77aa3621fe130e47669b8c5d860e33299ba18ee26201053"
+    },
+    {
+      "path": "coverage/frontend-html/base.css",
+      "sha256": "bb41cbcaae9bd07c78ffb933e562b9a776bf6a11b15d2fbc4e46df9cca48899e"
+    },
+    {
+      "path": "coverage/frontend-html/block-navigation.js",
+      "sha256": "c964530b19f1fd3290fa53bbc185af53b2f55132ba1e13528e09fb67657b763c"
+    },
+    {
+      "path": "coverage/frontend-html/coverage-final.json",
+      "sha256": "c8ea8c653b2abdfbe7a53cebd14e846603fd83412abf5b6b591e97f7add1fd35"
+    },
+    {
+      "path": "coverage/frontend-html/domain.ts.html",
+      "sha256": "1b92fcd1a51e766f6f440a010d48f483122614cc5b87a81009872ddd1b25e5b8"
+    },
+    {
+      "path": "coverage/frontend-html/favicon.png",
+      "sha256": "5b0cfd52dc0bfbe544f4e1a9c77aa46b8629b0e0aad6c54f95eef457b86c2a89"
+    },
+    {
+      "path": "coverage/frontend-html/index.html",
+      "sha256": "eac1875e7393ef1f2c4b0f3cac52407c0c5f6cbb243f0977b65cfdcf612fefd4"
+    },
+    {
+      "path": "coverage/frontend-html/prettify.css",
+      "sha256": "31c66a00ede9f0a6ac6dfc0c3819a6cb925ebb771cde59d8228ec8bc8595a91b"
+    },
+    {
+      "path": "coverage/frontend-html/prettify.js",
+      "sha256": "5b36332f32c5a4781348fb2c63f5f672c01497eb9508989ff1c8ac3795061386"
+    },
+    {
+      "path": "coverage/frontend-html/readex-pro-license.txt",
+      "sha256": "3c9ee4cebc80a5fbdffbdbee28290ce0d3f359dbf4262fec4f80f6eb81a67ff7"
+    },
+    {
+      "path": "coverage/frontend-html/readex-pro.woff2",
+      "sha256": "7074eeb987a25349069ed5c784e204904b928f4c878e9c3c88d636c01081ae52"
+    },
+    {
+      "path": "coverage/frontend-html/sort-arrow-sprite.png",
+      "sha256": "42c895355f9838ede83fdfdca90127d8471aefed5ecf5342374f65ec7c3f10ab"
+    },
+    {
+      "path": "coverage/frontend-html/sorter.js",
+      "sha256": "e281b0b47445030f6e26cbf7ab1187498516694b8716ed1351c875129d567c0c"
+    },
+    {
+      "path": "coverage/frontend-html/theme.js",
+      "sha256": "86af6f748e43b56e91ee114ee869b546a31386ae68590eb0d3975cfed0b1839f"
+    },
+    {
+      "path": "delivery/core-tests.json",
+      "sha256": "6126ffcf1d917d72383f94a36eaed4058f8a6de1df95833ddf3055065a8bdf49"
+    },
+    {
+      "path": "delivery/generated/backend-coverage.png",
+      "sha256": "30fe95b95bf7100fd758e2ef96ddf10d5e51adc221208ccafb53b113b5058095"
+    },
+    {
+      "path": "delivery/generated/clean-checkout-report.json",
+      "sha256": "bbe66da7d52e4728236fb5bb485d72d77626db7317577d7c2eb5198140823c1e"
+    },
+    {
+      "path": "delivery/generated/clean-checkout-report.md",
+      "sha256": "509e620c48ac1b78a21ddc971106129b925155aa146475cb36568d860e1ac311"
+    },
+    {
+      "path": "delivery/generated/clean-checkout.json",
+      "sha256": "ba6914bb3b6c8d72ee12c06d0d7839fd74f4953387087d66b2bae8cb82010579"
+    },
+    {
+      "path": "delivery/generated/frontend-coverage.png",
+      "sha256": "bb5a1fe598e619489a4d26d05a797267db51b77ac2fd8f0443ac54e9e250671f"
+    },
+    {
+      "path": "delivery/generated/report.json",
+      "sha256": "ef77b602f7fa7990b66143fd092a917da13070d5b42f170842efdc5787a0b433"
+    },
+    {
+      "path": "delivery/generated/report.md",
+      "sha256": "f7c2d0e145fb6b2aa3a014b6237aaeb9a3d008b335ee4b4cc8f97dc5e2f99bcd"
+    },
+    {
+      "path": "delivery/manual-review.json",
+      "sha256": "8ba5ef927071275b91fb2a7165e34a6af5bbb2a338e8ae5b25d04e7c1c6beef3"
+    },
+    {
+      "path": "delivery/prompts/backend-sprint2-unit-core.md",
+      "sha256": "1ee989fa63ed47ff252d271fda24c4a52ebdf2e8caf68d92728fd0bf93e88226"
+    },
+    {
+      "path": "delivery/prompts/frontend-sprint2-unit-core.md",
+      "sha256": "01cca79aa2d4e28b6cb3380670d14c69a3f80cef825b775737a2c15f016be461"
+    },
+    {
+      "path": "delivery/README.md",
+      "sha256": "dd5dcae54b752934ebe4a8c41333c58e5e1383b6de0b6a399f6b4583967fc1a4"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a89513028e058c900f3b20c92a89ceac2f3c535612af0836ddc667343b7effe2"
+    },
+    {
+      "path": "raw/backend-coverage.json",
+      "sha256": "e80e74dcd1db307bf5dffce4ea65eb78defded2f2124f9de450c1af418bd6fe7"
+    },
+    {
+      "path": "raw/backend-junit.xml",
+      "sha256": "f607c2479134097948ba2e0423db83a4140df54e719b2544a664076aab52d5e3"
+    },
+    {
+      "path": "raw/frontend-coverage-final.json",
+      "sha256": "c8ea8c653b2abdfbe7a53cebd14e846603fd83412abf5b6b591e97f7add1fd35"
+    },
+    {
+      "path": "raw/frontend-results.json",
+      "sha256": "d946a5d37904c999e8c3ac3b097a45eda3fa25c35af3a445ff2116a4679887c6"
+    },
+    {
+      "path": "raw/run-meta.json",
+      "sha256": "899f5b43378e3bc54543dec188304118d4d63eae56623d1ca88644991811f1a5"
+    },
+    {
+      "path": "source/backend/pytest.sprint2.ini",
+      "sha256": "3a96691d04bf8bcfc7ad3f7c4c57ad6479a915e80972118978ff4a015381eba0"
+    },
+    {
+      "path": "source/backend/requirements.txt",
+      "sha256": "e3268fafc27c0003e0d1390412385f556be9462ccdc13167bc4925f96e892fa3"
+    },
+    {
+      "path": "source/backend/scripts/package_sprint2_unit_evidence.py",
+      "sha256": "e9758b3c003b6552fc94480612204221b0f9906af53a1c80f61ca0d86d3c2834"
+    },
+    {
+      "path": "source/backend/scripts/run_sprint2_clean_checkout.py",
+      "sha256": "67af956007af994236d0f1dce6a32f101cf82c9699b3ab3e2350eb6913ab3284"
+    },
+    {
+      "path": "source/backend/scripts/run_sprint2_unit.py",
+      "sha256": "5086f8c18d59b8631acd0149a0362271aa5834b220831dd7c3d5bbe541e893aa"
+    },
+    {
+      "path": "source/backend/scripts/sprint2_unit_report.py",
+      "sha256": "c122279eaca2e1b4850d91ba8d912a5ba55a867941982eec70bede9708daa791"
+    },
+    {
+      "path": "source/backend/scripts/validate_sprint2_unit_inventory.py",
+      "sha256": "3e1ad91fa77184cc202d9b1681f64cd21b7140220a0eeb0a1339c05a5b8345cc"
+    },
+    {
+      "path": "source/backend/tests/test_sprint2_unit_core.py",
+      "sha256": "7d570cc95cd1a9d805070af375a4c2e73af278c4c51d60f8b8eeedb9868100ca"
+    },
+    {
+      "path": "source/backend/tests/test_sprint2_unit_report.py",
+      "sha256": "e8ee7812f261284472b4ce7b1428718073cdb39120f17112ff850c49eaacda56"
+    },
+    {
+      "path": "source/frontend/package-lock.json",
+      "sha256": "f9d9fe433af201a3d6b93a46e970ea13a01b4206ba69cb34045453f733e4bdab"
+    },
+    {
+      "path": "source/frontend/package.json",
+      "sha256": "22423a291c5c44b2d32ff50b66987fabf692d86cae0ff7fadde95bd941b908cf"
+    },
+    {
+      "path": "source/frontend/src/lib/sprint2Core.test.ts",
+      "sha256": "f2833ba915afc8fe9a153154ae713da5d4553368230e07eeae8d5786b3738e91"
+    },
+    {
+      "path": "source/frontend/vitest.sprint2.config.ts",
+      "sha256": "df5db7158956521146bdc02cbdade75c438da6e539cb4cb27ecad38a8e62b5cf"
+    }
+  ],
+  "frozenUtc": "2026-11-19T13:10:06.063638+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "03b2118d91574081520a4d0e6f036acf9a95a462754a0dd1ed3733078df30e85",
+  "workspace": "docs/evidence/_run/sprint2-unit-test-delivery"
+}

@@ -1,0 +1,514 @@
+{
+  "version": 1,
+  "scope": {
+    "backend": {
+      "suiteFiles": [
+        "tests/test_sprint2_unit_core.py"
+      ],
+      "coverageFiles": [
+        "jit_baseline/data.py",
+        "jit_baseline/metrics.py",
+        "jit_baseline/splits.py",
+        "jit_baseline/algorithms.py"
+      ],
+      "excluded": [
+        "真实模型训练",
+        "SQLite 与 HTTP 接口",
+        "React 组件",
+        "Playwright 浏览器旅程",
+        "需要网络或正式数据库的集成测试"
+      ]
+    },
+    "frontend": {
+      "suiteFiles": [
+        "src/lib/sprint2Core.test.ts"
+      ],
+      "coverageFiles": [
+        "src/lib/domain.ts"
+      ],
+      "excluded": [
+        "React 组件",
+        "API 客户端网络调用",
+        "Playwright 浏览器旅程",
+        "依赖开发机存储或真实后端的集成测试"
+      ]
+    }
+  },
+  "provenance": {
+    "tool": "OpenAI Codex",
+    "promptFiles": {
+      "tests/test_sprint2_unit_core.py": "docs/test-delivery/sprint2-unit-test/prompts/backend-sprint2-unit-core.md",
+      "src/lib/sprint2Core.test.ts": "docs/test-delivery/sprint2-unit-test/prompts/frontend-sprint2-unit-core.md"
+    }
+  },
+  "functions": [
+    {
+      "id": "backend.sha256",
+      "side": "backend",
+      "module": "jit_baseline/data.py",
+      "function": "sha256",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_sha256_normal_returns_lowercase_digest"],
+        "boundary": ["test_sha256_boundary_hashes_empty_bytes"],
+        "error": ["test_sha256_error_rejects_text_input"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.integer",
+      "side": "backend",
+      "module": "jit_baseline/data.py",
+      "function": "integer",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_integer_normal_parses_decimal_text"],
+        "boundary": ["test_integer_boundary_accepts_zero"],
+        "error": ["test_integer_error_rejects_signed_or_fractional_values"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.parse_source",
+      "side": "backend",
+      "module": "jit_baseline/data.py",
+      "function": "parse_source",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_parse_source_normal_returns_allowlisted_features_and_label"],
+        "boundary": [
+          "test_parse_source_boundary_uses_inclusive_cohort_limits",
+          "test_parse_source_boundary_materializes_blank_kamei_binary_feature",
+          "test_parse_source_boundary_records_recomputable_observation_status"
+        ],
+        "error": [
+          "test_parse_source_error_rejects_invalid_commit_identity",
+          "test_parse_source_error_rejects_incomplete_header",
+          "test_parse_source_error_requires_all_label_maturity_columns",
+          "test_parse_source_error_rejects_duplicate_identity_before_cohort_filter",
+          "test_parse_source_error_rejects_unrepresentable_timestamp",
+          "test_parse_source_error_rejects_blank_required_feature",
+          "test_parse_source_error_rejects_non_numeric_feature",
+          "test_parse_source_error_rejects_negative_feature",
+          "test_parse_source_error_rejects_invalid_unicode"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.verified_bytes",
+      "side": "backend",
+      "module": "jit_baseline/data.py",
+      "function": "verified_bytes",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_verified_bytes_normal_returns_verified_payload"],
+        "boundary": ["test_verified_bytes_boundary_accepts_empty_file"],
+        "error": [
+          "test_verified_bytes_error_rejects_tampered_payload",
+          "test_verified_bytes_error_reports_missing_file"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.fetch_sources",
+      "side": "backend",
+      "module": "jit_baseline/data.py",
+      "function": "fetch_sources",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_fetch_sources_normal_downloads_only_verified_files"],
+        "boundary": ["test_fetch_sources_boundary_reuses_verified_local_files"],
+        "error": [
+          "test_fetch_sources_error_rejects_oversized_payload",
+          "test_fetch_sources_error_reports_unavailable_download"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.classification",
+      "side": "backend",
+      "module": "jit_baseline/metrics.py",
+      "function": "classification",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_classification_normal_returns_hand_computed_confusion_and_scores"],
+        "boundary": ["test_classification_boundary_returns_reasons_without_positive_samples"],
+        "error": ["test_classification_error_rejects_mismatched_lengths"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.evaluate",
+      "side": "backend",
+      "module": "jit_baseline/metrics.py",
+      "function": "evaluate",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_evaluate_normal_returns_declared_metrics"],
+        "boundary": ["test_evaluate_boundary_reports_undefined_auc_for_single_class"],
+        "error": ["test_evaluate_error_rejects_out_of_range_risk"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.get_metric_set",
+      "side": "backend",
+      "module": "jit_baseline/metrics.py",
+      "function": "get_metric_set",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_get_metric_set_normal_returns_registered_metrics"],
+        "boundary": ["test_get_metric_set_boundary_returns_frozen_first_set"],
+        "error": ["test_get_metric_set_error_rejects_unknown_name"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.split_records",
+      "side": "backend",
+      "module": "jit_baseline/splits.py",
+      "function": "split_records",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_split_records_normal_keeps_timestamp_groups_and_preserves_members"],
+        "boundary": ["test_split_records_boundary_omitted_preset_keeps_default_identity"],
+        "error": [
+          "test_split_records_error_rejects_unknown_preset",
+          "test_split_records_error_rejects_empty_input",
+          "test_split_records_error_rejects_non_integer_epoch",
+          "test_split_records_error_rejects_too_few_timestamp_groups",
+          "test_split_records_error_rejects_single_class_partition"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.resolve_preset",
+      "side": "backend",
+      "module": "jit_baseline/splits.py",
+      "function": "resolve_preset",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_resolve_preset_normal_returns_registered_name"],
+        "boundary": ["test_resolve_preset_boundary_uses_legacy_default"],
+        "error": ["test_resolve_preset_error_rejects_aliases"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.preset_view",
+      "side": "backend",
+      "module": "jit_baseline/splits.py",
+      "function": "preset_view",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_preset_view_normal_returns_frozen_ratios"],
+        "boundary": ["test_preset_view_boundary_default_is_independent_copy"],
+        "error": ["test_preset_view_error_rejects_unknown_preset"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.policy_for_partitions",
+      "side": "backend",
+      "module": "jit_baseline/splits.py",
+      "function": "policy_for_partitions",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_policy_for_partitions_normal_reports_project_local_members"],
+        "boundary": ["test_policy_for_partitions_boundary_requires_both_labels"],
+        "error": ["test_policy_for_partitions_error_rejects_duplicate_members"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.rule_text",
+      "side": "backend",
+      "module": "jit_baseline/splits.py",
+      "function": "rule_text",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_rule_text_normal_describes_selected_preset"],
+        "boundary": ["test_rule_text_boundary_uses_default_preset"],
+        "error": ["test_rule_text_error_rejects_unknown_preset"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.resolve_params",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "resolve_params",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_resolve_params_normal_returns_declared_override"],
+        "boundary": ["test_resolve_params_boundary_returns_frozen_defaults"],
+        "error": ["test_resolve_params_error_rejects_out_of_range_value"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.param_specs",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "param_specs",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_param_specs_normal_returns_controlled_parameter_declarations"],
+        "boundary": ["test_param_specs_boundary_returns_empty_for_fixed_method"],
+        "error": ["test_param_specs_error_rejects_unknown_method"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.validate_declared_params",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "validate_declared_params",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_validate_declared_params_normal_accepts_frozen_declaration"],
+        "boundary": ["test_validate_declared_params_boundary_accepts_declared_override"],
+        "error": ["test_validate_declared_params_error_rejects_missing_keys"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.params_display",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "params_display",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_params_display_normal_lists_only_changed_values"],
+        "boundary": ["test_params_display_boundary_returns_empty_for_frozen_values"],
+        "error": ["test_params_display_error_rejects_unknown_method"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.get_algorithm",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "get_algorithm",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_get_algorithm_normal_returns_registered_entry"],
+        "boundary": ["test_get_algorithm_boundary_returns_last_registered_entry"],
+        "error": ["test_get_algorithm_error_rejects_unregistered_name"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.resolve_algorithm",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "resolve_algorithm",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_resolve_algorithm_normal_returns_explicit_method"],
+        "boundary": ["test_resolve_algorithm_boundary_uses_frozen_default"],
+        "error": ["test_resolve_algorithm_error_rejects_unknown_method"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.method_missing_dependencies",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "method_missing_dependencies",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_method_missing_dependencies_normal_returns_none_when_installed"],
+        "boundary": ["test_method_missing_dependencies_boundary_reports_missing_package"],
+        "error": ["test_method_missing_dependencies_error_rejects_unknown_method"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.method_catalog",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "method_catalog",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_method_catalog_normal_marks_classic_methods_available"],
+        "boundary": ["test_method_catalog_boundary_marks_semantic_only_schema_unsupported"],
+        "error": ["test_method_catalog_error_rejects_unknown_schema"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.check_method",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "check_method",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_check_method_normal_returns_compatible_method"],
+        "boundary": ["test_check_method_boundary_rejects_semantic_only_schema"],
+        "error": ["test_check_method_error_reports_missing_dependency"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.model_descriptor",
+      "side": "backend",
+      "module": "jit_baseline/algorithms.py",
+      "function": "model_descriptor",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_model_descriptor_normal_preserves_known_identity"],
+        "boundary": ["test_model_descriptor_boundary_derives_custom_identity"],
+        "error": ["test_model_descriptor_error_rejects_unknown_method"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.contextKey",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "contextKey",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["contextKey 正常组合区分数据来源与运行 [AI生成]"],
+        "boundary": ["contextKey 边界忽略无关可变字段 [AI生成]"],
+        "error": ["contextKey 异常数据仍只使用稳定来源字段 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.parseDataset",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "parseDataset",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["parseDataset 正常保留必填字段与可选度量 [AI生成]"],
+        "boundary": ["parseDataset 边界接受空集合 [AI生成]"],
+        "error": ["parseDataset 异常拒绝重复提交身份 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.validRisk",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "validRisk",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["validRisk 正常接受闭区间内的有限数 [AI生成]"],
+        "boundary": ["validRisk 边界接受 0 与 1 [AI生成]"],
+        "error": ["validRisk 异常拒绝 NaN、越界和字符串 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.riskLabel",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "riskLabel",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["riskLabel 正常格式化为两位小数 [AI生成]"],
+        "boundary": ["riskLabel 边界区分 0 与缺失值 [AI生成]"],
+        "error": ["riskLabel 异常不把坏风险显示成数值 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.shanghaiDate",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "shanghaiDate",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["shanghaiDate 正常把 UTC 转成上海日期 [AI生成]"],
+        "boundary": ["shanghaiDate 边界保留跨日界线前一天 [AI生成]"],
+        "error": ["shanghaiDate 异常拒绝不可解析时间 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.displayTime",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "displayTime",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["displayTime 正常输出带日期的上海时间 [AI生成]"],
+        "boundary": ["displayTime 边界使用 24 小时制午夜 [AI生成]"],
+        "error": ["displayTime 异常拒绝不可解析时间 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.queryCommits",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "queryCommits",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["queryCommits 正常按风险稳定排序 [AI生成]"],
+        "boundary": ["queryCommits 边界组合搜索与包含端点的日期 [AI生成]"],
+        "error": ["queryCommits 异常风险数据排在有效风险之后 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.applyQuery",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "applyQuery",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["applyQuery 正常接受有效日期范围 [AI生成]"],
+        "boundary": ["applyQuery 边界允许清空日期 [AI生成]"],
+        "error": ["applyQuery 异常保留最近有效查询并解释错误 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.readSeedQuery",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "readSeedQuery",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["readSeedQuery 正常读取地址中的日期 [AI生成]"],
+        "boundary": ["readSeedQuery 边界忽略无关参数 [AI生成]"],
+        "error": ["readSeedQuery 异常整体忽略非法日期 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.toCommit",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "toCommit",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["toCommit 正常映射同步提交与度量 [AI生成]"],
+        "boundary": ["toCommit 边界把 epoch 0 转成可比较时间 [AI生成]"],
+        "error": ["toCommit 异常拒绝不可表示的时间值 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.parseRepository",
+      "side": "frontend",
+      "module": "src/lib/domain.ts",
+      "function": "parseRepository",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["parseRepository 正常返回同步来源与首屏记录 [AI生成]"],
+        "boundary": ["parseRepository 边界接受空提交页 [AI生成]"],
+        "error": ["parseRepository 异常拒绝同步与分页身份不一致 [AI生成]"]
+      },
+      "source": "ai"
+    }
+  ]
+}

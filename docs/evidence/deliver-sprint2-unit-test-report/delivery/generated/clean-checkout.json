@@ -1,0 +1,16 @@
+{
+  "kind": "sprint2-clean-checkout-verification",
+  "passed": true,
+  "sourceCommit": "a505859ff70f16a31c2a1e914b2598e1fef07146",
+  "checkout": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\.cache\\sprint2-clean-kkvp9qm7",
+  "backendAndFrontendProcessSeconds": 12.24213719999534,
+  "reportSha256": "bbe66da7d52e4728236fb5bb485d72d77626db7317577d7c2eb5198140823c1e",
+  "copiedModified": [
+    "docs/test-delivery/sprint2-unit-test/core-tests.json",
+    "docs/test-delivery/sprint2-unit-test/generated/backend-coverage.png",
+    "docs/test-delivery/sprint2-unit-test/generated/frontend-coverage.png",
+    "docs/test-delivery/sprint2-unit-test/generated/report.json",
+    "docs/test-delivery/sprint2-unit-test/generated/report.md"
+  ],
+  "copiedUntracked": []
+}

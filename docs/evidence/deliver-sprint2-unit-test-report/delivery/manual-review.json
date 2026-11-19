@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "status": "completed",
+  "reviewer": "徐卓航",
+  "reviewedAt": "2026-11-19",
+  "scope": "Sprint2 正式快速单元套件的核心业务断言",
+  "decisions": [
+    {
+      "function": "backend.sha256",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.integer",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.parse_source",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.verified_bytes",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.fetch_sources",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.classification",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.evaluate",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.get_metric_set",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.split_records",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.resolve_preset",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.preset_view",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.policy_for_partitions",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.rule_text",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.resolve_params",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.param_specs",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.validate_declared_params",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.params_display",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.get_algorithm",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.resolve_algorithm",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.method_missing_dependencies",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.method_catalog",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.check_method",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.model_descriptor",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.contextKey",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.parseDataset",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.validRisk",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.riskLabel",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.shanghaiDate",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.displayTime",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.queryCommits",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.applyQuery",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.readSeedQuery",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.toCommit",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "frontend.parseRepository",
+      "verdict": "reviewed",
+      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    }
+  ]
+}
