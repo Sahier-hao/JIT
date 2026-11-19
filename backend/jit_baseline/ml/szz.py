@@ -318,6 +318,12 @@ def _parse_hunks(diff_text):
     return files
 
 
+def _evidence_order(item):
+    """按引入提交、路径与旧路径排序；旧路径可能缺失，不能与字符串直接比较。"""
+    (identity, path, old_path) = item[0]
+    return identity, path, old_path or ""
+
+
 def _merge_ranges(ranges):
     merged = []
     for start, end in sorted(ranges):
@@ -467,8 +473,7 @@ def commit_evidence(repo, commit, *, result: LineSzzResult, mode="line", info=No
         if capped:
             break
     evidence = []
-    for (identity, path, old_path), lines in sorted(
-            pairs.items(), key=lambda item: (item[0][0], item[0][1], item[0][2] or "")):
+    for (identity, path, old_path), lines in sorted(pairs.items(), key=_evidence_order):
         line_ranges = _merge_ranges([[line, line] for line, _final in sorted(set(lines))])
         parent_ranges = _merge_ranges([[final, final] for _line, final in sorted(set(lines))])
         if len(line_ranges) > MAX_RANGES_PER_FILE:
