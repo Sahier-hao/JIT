@@ -1,5 +1,6 @@
 import { useCallback, type MouseEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { routeFromLocation } from '@/app/routeTable'
 
 export type Route =
   | { name: 'landing' }
@@ -192,8 +193,8 @@ export function linkTo(route: Route, navigate: (route: Route) => void) {
 export function useRoute() {
   const location = useLocation()
   const navigate = useNavigate()
-  // HashRouter 把 `#/projects/...` 解析为 pathname；解析器仍以带 `#` 的地址工作，旧解析逻辑不变。
-  const route = parseHash(`#${location.pathname}${location.search}`)
+  // 规范路径由结构化 route table 匹配；兼容别名、退役与未知地址回退到 parseHash。
+  const route = routeFromLocation(location) ?? parseHash(`#${location.pathname}${location.search}`)
   const go = useCallback((next: Route, replace = false) => {
     navigate(hashFor(next).replace(/^#/, ''), { replace })
   }, [navigate])

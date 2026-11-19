@@ -16,22 +16,23 @@
 - 删除 `playwright.admin-training.config.ts`、`bundled-models`、`current-schema`、`experiment-models`、`model-package`、`multi-method` 六份包装配置；Playwright 配置从 10 份降到 4 份（基座 + 3 个专用服务）。
 - 新增 `components/shared/TrainingLossChart.tsx`：用户端与管理端复用同一逐 epoch 损失曲线；无历史时不渲染。
 - 新增 `lib/methodParams.ts` 与 `lib/datasetMaturity.ts`：统一受控参数展示与标签成熟摘要，消除两端重复映射。
+- 新增 `app/routeTable.ts`：`createHashRouter` 改为一个无路径布局 + 45 条结构化路径；`useRoute` 优先从 `matchRoutes` 构建类型化 `Route`，`parseHash` 只保留给兼容别名、退役/未知地址与旧测试。
+- 新增 `app/routeTable.test.ts`：36 个规范路由与 8 个兼容/未知地址的等价性检查。
 
 ## 验证
 
-- `npm run typecheck`、`npm run lint`、`npm run check:styles`、`npm run check:modules`：通过（218 个源码文件、1 个应用入口）。
+- `npm run typecheck`、`npm run lint`、`npm run check:styles`、`npm run check:modules`：通过（228 个源码文件、1 个应用入口）。
 - `npx playwright test --list --project=model-package`：识别 1 个测试，配置可加载。
-- 前端生产构建：通过。
 - VS Code 扩展测试：5 passed。
-- 前端单测：63 个文件、473 个测试全部通过。
-- 前端生产构建：通过（共享组件抽取后重跑）。
+- 前端单测：64 个文件、518 个测试全部通过（新增 45 个路由表检查）。
+- 前端生产构建：通过（共享组件抽取与结构化路由后重跑）。
 - 代表 E2E：`pr-account-continuation.spec.ts` 1 passed（45.7s）。
 - E2E 使用 `JIT_PYTHON=backend/.venv/Scripts/python.exe` 与 `JIT_PREVIEW_BASELINE` 指向本地构建的基线，避免系统 Python 的 fastapi 版本与冻结产物不一致。
 - `pr-account-continuation.spec.ts` 的退出登录步骤改为打开账户菜单后选择“退出登录”，与 2026-11-17 的个人中心对话框一致。
 
 ## 未完成与边界
 
-- `react-router-dom` 结构化路由未替换 `parseHash`；兼容书签优先，列为后续独立 change。
+- `react-router-dom` 已接管规范路径匹配；`parseHash` 仅保留为兼容别名、退役/未知地址的回退，未完全删除。
 - 已抽取 `TrainingLossChart`、`formatMethodParams`、`labelMaturityText/Items`；`MyDataPage`、`PullRequestJourney`、`ProjectPage` 等大页面仍未拆分。
 - `adminContracts.ts`（910 行）已拆为 `adminContracts/` 下 5 个域模块（common 28、datasets 87、models 297、training 317、experiments 201）+ barrel；最大单文件 317 行。
 - 未引入 OpenAPI 类型生成；依赖 Phase 2 的生成契约，列为后续。

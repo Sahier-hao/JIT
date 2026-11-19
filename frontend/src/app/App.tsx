@@ -1,13 +1,14 @@
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { createHashRouter, RouterProvider } from 'react-router-dom'
+import { createHashRouter, Outlet, RouterProvider } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { AppShell } from '@/components/layout/AppShell'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
 import { analysisRoute, hashFor, useRoute, type Route } from '@/app/navigation'
+import { ROUTES } from '@/app/routeTable'
 import { useUserSession } from '@/features/account/userClient'
 import { ReviewAccountProvider, type ReviewAccountStatus } from '@/features/reviews/reviewAccount'
 import { useRepositories } from '@/features/projects/repositoryWorkspace'
@@ -34,7 +35,10 @@ const LoginPage = lazy(() => import('@/features/account/pages/LoginPage').then(m
 const LineResearchPage = lazy(() => import('@/features/research/pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
 
 export default function App() {
-  const [router] = useState(() => createHashRouter([{ path: '*', element: <Workspace/> }]))
+  const [router] = useState(() => createHashRouter([{
+    element: <Workspace/>,
+    children: ROUTES.map(route => ({ ...route, element: <Outlet/> })),
+  }]))
   return <QueryClientProvider client={queryClient}><TooltipProvider delayDuration={200}><RouterProvider router={router}/></TooltipProvider></QueryClientProvider>
 }
 
