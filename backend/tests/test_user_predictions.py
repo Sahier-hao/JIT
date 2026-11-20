@@ -179,7 +179,7 @@ def test_user_prediction_routes_are_registered(prediction_fixture):
         artifact_root=prediction_fixture["artifact_root"],
         dataset_root=prediction_fixture["dataset_root"],
     )
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
     assert "/api/v1/user/prediction-models" in paths
     assert "/api/v1/user/prediction-batches" in paths
     assert "/api/v1/user/prediction-batches/{batch_id}" in paths

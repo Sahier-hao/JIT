@@ -23,6 +23,7 @@
 
 - `backend`：`python -m pytest tests/test_user_predictions.py -q`，3 passed。
 - `backend`：`python -m pytest tests/test_curation.py::test_preview_derive_and_compare_keep_source_unchanged -q`，1 passed。
+- `backend`：`python -m pytest tests/test_schemas.py tests/test_user_predictions.py tests/test_pr_updates.py -q`，61 passed。
 - `frontend`：聚焦测试 5 files、117 tests passed；完整 `npm test` 68 files、581 tests passed。
 - `frontend`：`npm run typecheck`、`npm run check:api-types` 通过。
 - `frontend`：`npm run build` 通过；`npm run check:styles` 与 `npm run check:modules` 通过。
