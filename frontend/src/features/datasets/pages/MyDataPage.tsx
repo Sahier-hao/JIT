@@ -9,12 +9,12 @@ import {
   deleteUserDataset, exportDataset, splitPreview,
   userDatasets, useUserRevision, type UserDataset, type UserSplitPreview,
 } from '@/features/account/userClient'
-import { EmptyState } from '@/components/shared/Feedback'
-import { MasterDetailSkeleton } from '@/components/shared/Skeletons'
+import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 import type { Route } from '@/app/navigation'
 import { DatasetImportDialog } from '@/features/datasets/components/DatasetImportDialog'
 import { DatasetCurationDialog } from '@/features/datasets/components/DatasetCurationDialog'
 import { RepositoryDatasetBuildDialog } from '@/features/datasets/components/RepositoryDatasetBuildDialog'
+import { useRepository } from '@/features/projects/repositoryWorkspace'
 import {
   cancelUserDatasetBuild, listUserDatasetBuilds, retryUserDatasetBuild, type DatasetBuildTask,
 } from '@/features/datasets/datasetBuildClient'
@@ -24,15 +24,16 @@ import {
   BUILD_ACTIVE, DEFAULT_PRESET, matchesQuery, type DatasetTab,
 } from '@/features/datasets/mydata/format'
 
-export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskId }: {
-  navigate: (route: Route) => void
+export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskId, buildProjectId }: {
+  navigate: (route: Route, replace?: boolean) => void
   onLoginRequired: () => void
   initialTab?: 'builds'
   initialTaskId?: string
+  buildProjectId?: string
 }) {
   const [datasets, setDatasets] = useState<UserDataset[] | null>(null)
   const [selected, setSelected] = useState('')
-  const [preferred, setPreferred] = useState('')
+  const [preferred, setPreferred] = useState<{ version: string; fromBuild?: boolean } | null>(null)
   const [tab, setTab] = useState<DatasetTab>(initialTab ?? 'mine')
   const [query, setQuery] = useState('')
   const [error, setError] = useState('')
@@ -50,28 +51,46 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
   const [importOpen, setImportOpen] = useState(false)
   const [buildOpen, setBuildOpen] = useState(false)
   const [buildSeed, setBuildSeed] = useState<{ repositoryUrl: string; branch: string } | null>(null)
+  const projectSeed = useRepository(buildOpen && buildProjectId && !initialTaskId ? buildProjectId : '')
   const [curationOpen, setCurationOpen] = useState(false)
   const completedTasks = useRef(new Set<string>())
   const tabInitialized = useRef(false)
+  const viewingDatasets = tab !== 'builds'
 
   useEffect(() => {
+    if (!viewingDatasets) return
     const controller = new AbortController()
     userDatasets('usable', controller.signal).then(value => {
       if (controller.signal.aborted) return
       setDatasets(value)
-      if (!tabInitialized.current && !initialTab) {
+      setError('')
+      if (!tabInitialized.current) {
         setTab(value.some(item => item.mine) ? 'mine' : 'shared')
         tabInitialized.current = true
       }
-      setSelected(current => value.find(item => item.version === preferred)?.version
+      const requested = value.find(item => item.version === preferred?.version)
+      if (preferred?.fromBuild) {
+        if (requested) {
+          setTab(requested.mine ? 'mine' : 'shared')
+          setNotice('已打开构建完成的数据')
+        } else {
+          setSelected('')
+          setNotice('当前账户的数据列表中没有这份构建产物。')
+          return
+        }
+      }
+      setSelected(current => requested?.version
         ?? (value.some(item => item.version === current) ? current : (value.find(item => item.mine) ?? value[0])?.version ?? ''))
     }).catch(failure => {
       if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
-      else setError(failure instanceof Error ? failure.message : '数据读取失败')
+      else {
+        if (preferred?.fromBuild) setNotice('')
+        setError(failure instanceof Error ? failure.message : '数据读取失败')
+      }
     })
     return () => controller.abort()
-  }, [initialTab, onLoginRequired, userRevision, reload, preferred])
+  }, [viewingDatasets, onLoginRequired, userRevision, reload, preferred])
 
   useEffect(() => {
     if (!initialTab) return
@@ -80,11 +99,12 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
   }, [initialTab])
 
   useEffect(() => {
-    if (!initialTaskId) return
+    if (!initialTaskId && !buildProjectId) return
     tabInitialized.current = true
     setTab('builds')
+    setBuildSeed(null)
     setBuildOpen(true)
-  }, [initialTaskId])
+  }, [initialTaskId, buildProjectId])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -125,7 +145,7 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
     .filter(item => matchesQuery(item, normalizedQuery)), [mine, normalizedQuery, shared, tab])
 
   useEffect(() => {
-    if (!current) {
+    if (!current || tab === 'builds') {
       setPreview(null)
       setPreviewError('')
       return
@@ -139,9 +159,11 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
       if (!controller.signal.aborted) setPreviewError(failure instanceof Error ? failure.message : '训练准入读取失败')
     })
     return () => controller.abort()
-  }, [current?.version])
+  }, [current?.version, tab])
 
   function changeTab(next: DatasetTab) {
+    tabInitialized.current = true
+    setPreferred(null)
     setTab(next)
     if (next === 'builds') return
     const pool = next === 'mine' ? mine : shared
@@ -156,7 +178,7 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
     setConfirmDelete(false)
     try {
       await deleteUserDataset(current.version)
-      setPreferred('')
+      setPreferred(null)
       setReload(value => value + 1)
       setPreview(null)
       setNotice('数据版本已删除')
@@ -183,23 +205,51 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
   }
 
   function imported(dataset: UserDataset) {
-    setPreferred(dataset.version)
+    setPreferred({ version: dataset.version })
     setTab('mine')
     setReload(value => value + 1)
     setNotice('CSV 已导入')
   }
 
   function openBuiltDataset(version: string) {
-    setPreferred(version)
+    setError('')
+    setPreferred({ version, fromBuild: true })
     setTab('mine')
-    setReload(value => value + 1)
-    setNotice('已定位到构建完成的数据')
+    setNotice('正在定位构建产物…')
   }
+
+  function closeBuild() {
+    setBuildOpen(false)
+    setBuildSeed(null)
+    setTaskRevision(value => value + 1)
+    if (buildProjectId || initialTaskId) navigate({ name: 'my-data' }, true)
+  }
+
+  const waitingForProject = Boolean(buildProjectId && !initialTaskId && !projectSeed.repository)
+  const buildDialog = buildOpen && !waitingForProject ? <RepositoryDatasetBuildDialog
+    key={initialTaskId ?? buildProjectId ?? 'new'}
+    open={buildOpen}
+    initialTaskId={initialTaskId}
+    projectId={buildProjectId}
+    onOpenChange={open => { if (!open) closeBuild() }}
+    onCompleted={openBuiltDataset}
+    onRetried={taskId => navigate({ name: 'my-data', view: 'builds', taskId, ...(buildProjectId ? { buildProjectId } : {}) }, true)}
+    onLoginRequired={onLoginRequired}
+    initialRepositoryUrl={projectSeed.repository?.url ?? buildSeed?.repositoryUrl}
+    initialBranch={projectSeed.repository ? projectSeed.repository.defaultBranch ?? 'HEAD' : buildSeed?.branch}
+  /> : null
+  const projectStatus = buildOpen && waitingForProject ? <div className="flex flex-wrap items-center gap-2 text-sm text-foreground-3">
+    {projectSeed.state === 'error' ? <>
+      <p role="alert">项目读取失败。{projectSeed.error}</p>
+      <Button type="button" variant="outline" size="sm" onClick={projectSeed.retry}>重试读取项目</Button>
+    </> : <p role="status">正在读取项目仓库…</p>}
+    <Button type="button" variant="ghost" size="sm" onClick={closeBuild}>取消预填</Button>
+  </div> : null
 
   const header = <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border-soft pb-4">
     <div className="flex items-baseline gap-3">
       <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">我的数据</h1>
-      <span className="text-xs text-foreground-3">自有 {mine.length}/5</span>
+      {datasets ? <span className="text-xs text-foreground-3">自有 {mine.length}/5</span> : null}
     </div>
     <div className="flex flex-wrap gap-2">
       <Button type="button" variant="outline" size="sm" onClick={() => setImportOpen(true)}><Upload aria-hidden="true" size={15}/>导入 CSV</Button>
@@ -207,72 +257,65 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
     </div>
   </header>
 
-  if (datasets === null) return <section className="grid gap-4">
-    {header}
-    {error ? <div className="grid justify-items-start gap-2"><p className="text-xs text-rose" role="alert">{error}</p><Button onClick={onLoginRequired} variant="outline" type="button">登录后重试</Button></div>
-      : <MasterDetailSkeleton label="正在读取我的数据"/>}
-  </section>
-
   return <section className="flex flex-col gap-4 lg:h-[calc(100vh-8.25rem)] lg:overflow-hidden">
     {header}
-    {error ? <div className="rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep" role="alert">{error}</div> : null}
+    {projectStatus}
     {notice ? <div className="rounded-lg border border-teal/20 bg-teal-soft px-3 py-2 text-xs text-teal-deep" role="status">{notice}</div> : null}
-    {taskError ? <div className="rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep" role="alert">{taskError}</div> : null}
-    {!datasets.length && tab !== 'builds' ? <EmptyState title="还没有数据" description="导入自己的 CSV，或从任意公开仓库构建数据集；这两条路径都不会自动建立项目或开始训练。"/> : <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[310px_minmax(0,1fr)] xl:grid-cols-[330px_minmax(0,1fr)]">
+    {viewingDatasets && error ? <div className="flex flex-wrap items-center gap-2 rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep">
+      <p role="alert">{error}</p>
+      <Button onClick={() => { setError(''); setReload(value => value + 1) }} variant="outline" size="sm" type="button">重新读取数据</Button>
+    </div> : null}
+    {!viewingDatasets && taskError ? <div className="flex flex-wrap items-center gap-2 rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep">
+      <p role="alert">{taskError}</p>
+      <Button onClick={() => { setTaskError(''); setTaskRevision(value => value + 1) }} variant="outline" size="sm" type="button">重新读取任务</Button>
+    </div> : null}
+    <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[310px_minmax(0,1fr)] xl:grid-cols-[330px_minmax(0,1fr)]">
       <aside className="min-h-0">
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border-soft bg-card shadow-sm">
           <div className="grid gap-2 border-b border-border-soft p-2">
             <div className="grid grid-cols-3 gap-1 rounded-lg bg-sunken p-1" role="tablist" aria-label="数据视图">
               {([
-                ['mine', '我的', mine.length],
-                ['shared', '共享', shared.length],
-                ['builds', '构建', buildTasks?.length ?? 0],
+                ['mine', '我的', datasets ? mine.length : null],
+                ['shared', '共享', datasets ? shared.length : null],
+                ['builds', '构建', buildTasks?.length ?? null],
               ] as const).map(([id, label, count]) => <button key={id} type="button" role="tab" aria-selected={tab === id}
                 className={cn('rounded-md px-2 py-1.5 text-xs font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
                   tab === id ? 'bg-card text-foreground shadow-sm' : 'text-foreground-3 hover:text-foreground')}
                 onClick={() => changeTab(id)}>
-                {label}<span className={cn('ml-1 text-[10px]', tab === id ? 'text-foreground-3' : 'text-foreground-4')}>{count}</span>
+                {label}{count !== null ? <span className={cn('ml-1 text-[10px]', tab === id ? 'text-foreground-3' : 'text-foreground-4')}>{count}</span> : null}
               </button>)}
             </div>
-            {tab !== 'builds' ? <div className="relative">
+            {viewingDatasets && Boolean(datasets?.length) ? <div className="relative">
               <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-4" size={14}/>
               <Input value={query} onChange={event => setQuery(event.target.value)} className="h-8 pl-8 text-xs" placeholder="搜索数据集" aria-label="搜索数据集"/>
             </div> : null}
           </div>
           <div className="min-h-0 flex-1 overflow-auto overscroll-contain p-2">
             {tab === 'builds'
-              ? buildTasks === null ? <p className="px-3 py-8 text-center text-xs text-foreground-3">正在读取构建任务…</p>
-                : <BuildTaskList tasks={buildTasks} busyTaskId={taskBusy} onOpen={openBuiltDataset} onAction={(task, action) => void actOnBuild(task, action)}/>
-              : <DatasetRowList items={visibleDatasets} selected={selected} onSelect={setSelected}/>}
+              ? buildTasks === null ? taskError ? null : <LoadingNotice label="正在读取构建任务" prefix={false}/>
+                : <BuildTaskList tasks={buildTasks} busyTaskId={taskBusy} onOpen={openBuiltDataset}
+                  onInspect={taskId => navigate({ name: 'my-data', view: 'builds', taskId })}
+                  onAction={(task, action) => void actOnBuild(task, action)}/>
+              : datasets === null ? error ? null : <LoadingNotice label="正在读取我的数据" prefix={false}/>
+              : datasets.length ? <DatasetRowList items={visibleDatasets} selected={selected} onSelect={version => { setPreferred(null); setSelected(version) }}/> : null}
           </div>
-          <div className="border-t border-border-soft px-3 py-2 text-[11px] text-foreground-4">每人最多保留 5 个自有版本</div>
         </div>
       </aside>
-      <div className="grid min-h-0 min-w-0 auto-rows-max content-start gap-4 overflow-x-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-gutter:stable]" data-scroll-region="dataset-detail" tabIndex={0} aria-label="数据详情">
-        {current ? <DatasetDetail dataset={current} preview={preview} previewError={previewError} busy={busy} actions={{
+      <div className="grid min-h-0 min-w-0 auto-rows-max content-start gap-4 overflow-x-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-gutter:stable]" data-scroll-region="dataset-detail" tabIndex={0} role="region" aria-label={tab === 'builds' ? '构建任务' : '数据详情'}>
+        {tab === 'builds' ? <EmptyState title="构建任务" description="选择任务查看进度、重试或打开已生成的数据。"/> : current ? <DatasetDetail dataset={current} preview={preview} previewError={previewError} busy={busy} actions={{
           onTrain: () => navigate({ name: 'my-training', datasetVersion: current.version }),
           onExport: () => exportDataset(current.version),
           onCuration: () => setCurationOpen(true),
           onDelete: () => setConfirmDelete(true),
           onRebuild: (repositoryUrl, branch) => { setBuildSeed({ repositoryUrl, branch }); setBuildOpen(true) },
-        }}/> : <EmptyState title="选择一个数据版本" description="从左侧查看来源、质量、标签、文件与训练准入。"/>}
+        }}/> : datasets?.length === 0 ? <EmptyState title="还没有数据" description="可以导入 CSV 或从公开仓库构建。"/>
+          : datasets ? <EmptyState title="选择一个数据版本"/> : null}
       </div>
-    </div>}
+    </div>
     <DatasetImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={imported} onLoginRequired={onLoginRequired}/>
-    <RepositoryDatasetBuildDialog initialTaskId={initialTaskId} open={buildOpen} onOpenChange={open => {
-      setBuildOpen(open)
-      if (!open) {
-        setTaskRevision(value => value + 1)
-        setBuildSeed(null)
-      }
-    }} onCompleted={version => {
-      setPreferred(version)
-      setTab('mine')
-      setReload(value => value + 1)
-      setNotice('仓库数据集已完成')
-    }} onLoginRequired={onLoginRequired} initialRepositoryUrl={buildSeed?.repositoryUrl} initialBranch={buildSeed?.branch}/>
+    {buildDialog}
     <DatasetCurationDialog open={curationOpen} onOpenChange={setCurationOpen} dataset={current} onDerived={version => {
-      setPreferred(version)
+      setPreferred({ version })
       setTab('mine')
       setReload(value => value + 1)
       setNotice('已生成清洗版本')

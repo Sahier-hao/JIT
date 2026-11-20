@@ -321,10 +321,11 @@ export interface RepositoryListLoad {
   retry: () => void
 }
 
-export function useRepositories(): RepositoryListLoad {
+export function useRepositories(enabled = true): RepositoryListLoad {
   useRepositoryInvalidation()
   const query = useQuery({
     queryKey: queryKeys.repositories,
+    enabled,
     queryFn: async ({ signal }) => {
       const items: RepositoryView[] = []
       let total = 0

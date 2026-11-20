@@ -86,6 +86,16 @@ function api(list = [summary()], detail = { ...summary({ status: 'partial', repo
   })
 }
 
+it('renders reports while the independent evidence request is still pending', async () => {
+  const fetch = api()
+  const original = fetch.getMockImplementation()!
+  fetch.mockImplementation((path, options) => String(path).endsWith('/api/admin/evaluation-evidence')
+    ? new Promise<Response>(() => {}) : original(path, options))
+  render(<AdminWorkspace route={{ name: 'admin', view: 'experiments' }} navigate={vi.fn()}/>)
+  expect(await screen.findByText(summary().source)).toBeVisible()
+  expect(screen.getByText('正在读取评价证据')).toBeVisible()
+})
+
 it('lists real report statuses and opens a controlled report id', async () => {
   const list = [
     summary(),

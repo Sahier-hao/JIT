@@ -30,8 +30,8 @@ test('项目与管理端复用只读模型卡并保持分析草稿', async ({ pa
   expect(JSON.stringify(card)).not.toContain('artifactPath')
   expect(JSON.stringify(card)).not.toContain('sqlite')
 
-  await page.goto(`/#/projects/${project.repositoryId}`)
-  await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
+  await page.goto(`/#/projects/${project.repositoryId}/analyses`)
+  await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
   const branch = page.getByLabel('分支', { exact: true })
   await branch.fill('model-card-draft')
   await page.getByLabel('模型来源', { exact: true }).selectOption(model!.modelId)

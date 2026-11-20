@@ -27,6 +27,7 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
 }) {
   const [model, setModel] = useState<AdminModel | null>(null)
   const [error, setError] = useState('')
+  const backToCatalog = () => navigate({ name: 'admin', view: 'models', selectedModelId: modelId })
   useEffect(() => {
     const controller = new AbortController()
     fetchAdminModel(modelId, controller.signal).then(setModel).catch(failure => {
@@ -36,12 +37,12 @@ export function AdminModelDetailPage({ modelId, navigate, expired }: {
     })
     return () => controller.abort()
   }, [modelId, expired])
-  if (error) return <EmptyState title="模型详情不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'models' })} variant="outline" type="button">返回模型列表</Button></EmptyState>
+  if (error) return <EmptyState title="模型详情不可用" description={error}><Button onClick={backToCatalog} variant="outline" type="button">返回模型列表</Button></EmptyState>
   if (!model) return <section className="grid gap-4"><AdminPageHeader title="模型详情"/><MasterDetailSkeleton label="正在校验模型与读取指标"/></section>
   const source = model.source ?? {}
   return <section>
     <AdminPageHeader title={model.name} meta={model.method}/>
-    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'models' })} variant="outline" type="button">返回模型列表</Button><Button onClick={() => navigate({ name: 'admin', view: 'comparisons', models: [model.modelId] })} variant="outline" type="button">加入比较</Button></div>
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={backToCatalog} variant="outline" type="button">返回模型列表</Button><Button onClick={() => navigate({ name: 'admin', view: 'comparisons', models: [model.modelId] })} variant="outline" type="button">加入比较</Button></div>
     <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{model.state === 'ready' ? '已校验' : '不可用'}</span><span>{model.enabled ? '已启用' : '已停用'}</span>{model.isDefault ? <strong>默认模型</strong> : null}</div>
     {model.card ? <ModelCardView card={model.card}/> : <><MetricGrid metrics={model.metrics}/><BenefitSection modelId={modelId} expired={expired}/></>}
     <ModelEvaluationEvidence method={model.card?.method ?? model.method ?? null} expired={expired}/>

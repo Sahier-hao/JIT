@@ -24,9 +24,7 @@ function buildJob(task: DatasetBuildTask): ActiveJob {
     kind: 'collection',
     label: `采集 · ${repositoryLabel(task.repositoryUrl)}`,
     detail: task.queuePosition ? `${detail} · 队列 ${task.queuePosition}` : detail,
-    route: task.repositoryId
-      ? { name: 'repository', repositoryId: task.repositoryId, buildTaskId: task.taskId }
-      : { name: 'my-data', view: 'builds', taskId: task.taskId },
+    route: { name: 'my-data', view: 'builds', taskId: task.taskId },
   }
 }
 

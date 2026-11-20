@@ -64,14 +64,14 @@ export function EmptyState({
   children,
 }: {
   title: string
-  description: ReactNode
+  description?: ReactNode
   tone?: 'empty' | 'alert'
   children?: ReactNode
 }) {
   return (
     <Card className={cn('grid justify-items-start gap-1.5', tone === 'alert' && 'border-rose/30 bg-rose-soft')} data-state={tone} role={tone === 'alert' ? 'alert' : undefined}>
       <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      <p className="text-xs leading-body text-foreground-3">{description}</p>
+      {description == null ? null : <p className="text-xs leading-body text-foreground-3">{description}</p>}
       {children === undefined ? null : <div className="mt-1 flex flex-wrap gap-2">{children}</div>}
     </Card>
   )

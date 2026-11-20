@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { applyQuery, displayTime, emptyQuery, readSeedQuery, validRisk, type Commit, type Dataset, type Query, toCommit } from '@/lib/domain'
 import { CommitDetail } from '@/features/projects/components/CommitDetail'
+import { CommitEvidenceBadge } from '@/features/projects/components/CommitEvidenceBadge'
 
 import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 
@@ -89,7 +90,7 @@ function RepositoryHead({ repository, total }: { repository: RepositoryDetail; t
 
 function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: string, trigger: HTMLButtonElement) => void }) {
   return (
-    <Table><caption className="sr-only">仓库提交风险列表，按模型分数从高到低</caption><TableHeader><TableRow><TableHead>提交 / 改动</TableHead><TableHead>模型分数</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commits.map(commit => {
+    <Table><caption className="sr-only">分支提交及缺陷引入证据</caption><TableHeader><TableRow><TableHead>提交</TableHead><TableHead>模型分数</TableHead><TableHead>缺陷引入证据</TableHead><TableHead className="text-right tabular-nums">变更行</TableHead><TableHead className="text-right tabular-nums">文件</TableHead></TableRow></TableHeader><TableBody>{commits.map(commit => {
           const tone = riskTone(safeRisk(commit.risk))
           return (
             <TableRow key={commit.id} data-tone={tone}><TableCell><div className="flex items-start gap-2">
@@ -117,7 +118,7 @@ function ReviewTable({ commits, onOpen }: { commits: Commit[]; onOpen: (id: stri
                   <span className="h-1 w-16 overflow-hidden rounded-full bg-strong" aria-hidden="true">
                     <i className={cn('block h-full rounded-full', TONE_FILL[tone])} style={{ width: `${Math.round((safeRisk(commit.risk) ?? 0) * 100)}%` }} />
                   </span>
-                </div></TableCell><TableCell className="text-right tabular-nums">{commit.lines === undefined ? '—' : commit.lines.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{commit.files === undefined ? '—' : commit.files.toLocaleString()}</TableCell></TableRow>
+                </div></TableCell><TableCell><CommitEvidenceBadge status={commit.labelStatus}/></TableCell><TableCell className="text-right tabular-nums">{commit.lines === undefined ? '—' : commit.lines.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{commit.files === undefined ? '—' : commit.files.toLocaleString()}</TableCell></TableRow>
           )
         })}</TableBody></Table>
   )
@@ -165,7 +166,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       degradeReason: repository.repository.degradeReason ?? null,
       trainRecords: null,
       trainPositives: null,
-      labelNote: '标签由完整 SZZ 从后续修复提交倒推',
+      labelNote: '缺陷引入证据由历史修复回溯收集',
     } : undefined,
   }), [repository.repository, repositoryId, viewSyncId])
   useEffect(() => { reviewDrafts.set(stateKey, { ...queryState, offset }) }, [stateKey, queryState, offset, reviewDrafts])
@@ -210,7 +211,6 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
   }
 
   const repo = repository.repository
-  const scope = repo.viewContext?.scope ?? null
   const first = page.total === 0 ? 0 : offset + 1
   const last = Math.min(offset + PAGE_SIZE, page.total)
   const fieldLabel = 'grid gap-1'
@@ -237,9 +237,7 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
       {repo.latestSync?.syncId !== viewSyncId ? <p className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">最近作业：{repo.latestSync ? STATUS_LABELS[repo.latestSync.status] : '未提供'}。当前仍查看固定的成功分析。
         {repo.latestSync?.status === 'completed' ? <><Button variant="link" size="sm" onClick={() => navigate({ name: 'analysis', repositoryId, viewSyncId: repo.latestSync!.syncId, view: 'commits' })} type="button">打开新结果</Button><Button variant="link" size="sm" onClick={() => navigate({ name: 'comparison', repositoryId, baseSyncId: viewSyncId, targetSyncId: repo.latestSync!.syncId })} type="button">对比新结果</Button></> : <Button variant="link" size="sm" onClick={() => navigate(repositoryRoute(repositoryId))} type="button">检查最新成功分析</Button>}
       </p> : null}
-      <p className="text-xs leading-body text-foreground-3">{modelName ? `分析模型 ${modelName}。` : ''}{scope?.dataset && scope.split
-        ? `数据集 ${scope.dataset.quality.includedRows ?? '—'} / ${scope.dataset.quality.rawRows ?? '—'} 条纳入，训练 ${scope.split.train.count ?? '—'} / 验证 ${scope.split.validation.count ?? '—'} / 测试 ${scope.split.test.count ?? '—'}，留出 ${scope.split.holdout.count ?? '—'} 条只打分。`
-        : ''}分数只用于排序参考，未经仓库概率校准，不代表已确认缺陷。</p>
+      <p className="text-xs leading-body text-foreground-3">{modelName ? `模型 ${modelName} · ` : ''}模型分数用于排序，缺陷引入证据来自后续修复回溯。</p>
 
       <section className="grid gap-3" aria-label="已分析提交">
         <div className="flex flex-wrap items-end gap-2" role="search" aria-label="提交筛选">
@@ -280,10 +278,11 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
                   </span>
                 </nav>
               </>}
-        <p className="text-xs text-foreground-4">点击提交查看原始度量，并可主动生成原模型解释</p>
       </section>
 
-      <Dialog open={selected !== null} onOpenChange={open => { if (!open) closeDetail() }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${720}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"提交详情"}</DialogTitle></DialogHeader>{selected ? (
+      <Dialog open={selected !== null} onOpenChange={open => { if (!open) closeDetail() }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${720}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"提交详情"}</DialogTitle></DialogHeader>{selected && (detailRecords.state === 'loading' || detailRecords.state === 'idle') ? (
+        <LoadingNotice label="正在读取提交及修复证据"/>
+      ) : selected ? (
           <CommitDetail
             data={dataset}
             id={selected}

@@ -11,6 +11,8 @@ export interface AdminModel {
   enabled: boolean
   isDefault: boolean
   featureSchemaVersion: string
+  repositorySchemaCompatible?: boolean
+  validationMessage?: string
   runId: string
   artifactRunId: string
   artifactDatasetVersion: string
@@ -118,14 +120,20 @@ export interface ModelCoveragePage {
 }
 
 
-export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: AdminModel[]; methods: Row[]; candidates: Row[]; readiness: ModelReadiness }> {
-  const [catalogBody, candidateBody] = await Promise.all([
-    apiRequest({ path: '/api/v1/models', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }),
-    apiRequest({ path: '/api/v1/model-candidates', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS }),
-  ])
-  const catalog = record(catalogBody)
+export async function fetchModelDiagnostics(signal?: AbortSignal): Promise<{ models: AdminModel[]; methods: Row[]; candidates: Row[]; readiness: ModelReadiness }> {
+  const catalog = record(await apiRequest({
+    path: '/api/v1/models?view=diagnostics', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS,
+  }))
   return {
-    models: recordList(catalog.models).map(raw => {
+    models: registeredModels(catalog),
+    methods: recordList(catalog.methods),
+    candidates: recordList(catalog.candidates),
+    readiness: modelReadiness(catalog.readiness),
+  }
+}
+
+function registeredModels(catalog: Row): AdminModel[] {
+  return recordList(catalog.models).map(raw => {
       const value = record(raw)
       return {
         modelId: text(value.modelId),
@@ -135,16 +143,20 @@ export async function fetchAdminModels(signal?: AbortSignal): Promise<{ models: 
         enabled: value.enabled === true,
         isDefault: value.isDefault === true,
         featureSchemaVersion: text(value.featureSchemaVersion),
+        repositorySchemaCompatible: typeof value.repositorySchemaCompatible === 'boolean' ? value.repositorySchemaCompatible : undefined,
+        validationMessage: value.error == null ? undefined : textOrNull(record(value.error).message) ?? undefined,
         runId: typeof value.runId === 'string' ? value.runId : '',
         artifactRunId: typeof value.artifactRunId === 'string' ? value.artifactRunId : '',
         artifactDatasetVersion: typeof value.artifactDatasetVersion === 'string' ? value.artifactDatasetVersion : '',
         limitations: Array.isArray(value.limitations) ? textList(value.limitations) : [],
       }
-    }),
-    methods: recordList(catalog.methods),
-    candidates: recordList(record(candidateBody).candidates),
-    readiness: modelReadiness(catalog.readiness),
-  }
+  })
+}
+
+export async function fetchRegisteredAdminModels(signal?: AbortSignal): Promise<AdminModel[]> {
+  return registeredModels(record(await apiRequest({
+    path: '/api/v1/models?view=registered', method: 'GET', signal, timeoutMs: ADMIN_READ_TIMEOUT_MS,
+  })))
 }
 
 export async function fetchAdminModel(modelId: string, signal?: AbortSignal): Promise<AdminModel> {

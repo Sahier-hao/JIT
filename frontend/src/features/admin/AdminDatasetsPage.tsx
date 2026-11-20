@@ -1,34 +1,64 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
+import { linkTo, type Route } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { useEffect, useMemo, useState } from 'react'
-import { ApiError } from '@/lib/apiContract'
-import { fetchAdminDatasets, formatDate, type AdminDatasetVersion } from '@/features/admin/adminContracts'
 import { EmptyState } from '@/components/shared/Feedback'
-import { CardListSkeleton } from '@/components/shared/Skeletons'
-
-
-import type { Route } from '@/app/navigation'
+import { MasterDetailSkeleton } from '@/components/shared/Skeletons'
+import { ApiError } from '@/lib/apiContract'
+import { fetchAdminDatasets, type AdminDatasetVersion } from '@/features/admin/adminContracts'
+import { AdminCatalogLayout, CatalogSearch, catalogRowClass } from '@/features/admin/AdminCatalogLayout'
 import { AdminDatasetDetailPage } from '@/features/admin/AdminDatasetDetailPage'
+import { AdminDatasetCleanupDialog } from '@/features/admin/AdminDatasetTools'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
+
+const SOURCES = [
+  { value: 'all', label: '全部' },
+  { value: 'branch', label: '分支采集' },
+  { value: 'pr', label: 'PR 采集' },
+  { value: 'import', label: 'CSV 导入' },
+] as const
+
+function groupVersions(versions: AdminDatasetVersion[]) {
+  const groups = new Map<string, AdminDatasetVersion[]>()
+  for (const item of versions) {
+    const group = groups.get(item.dataset)
+    if (group) group.push(item)
+    else groups.set(item.dataset, [item])
+  }
+  for (const group of groups.values()) {
+    group.sort((a, b) => String(b.timeRange.end ?? '').localeCompare(String(a.timeRange.end ?? ''))
+      || b.version.localeCompare(a.version))
+  }
+  return new Map([...groups].sort(([a], [b]) => a.localeCompare(b)))
+}
 
 export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
   dataset?: string
   version?: string
-  navigate: (route: Route) => void
+  navigate: (route: Route, replace?: boolean) => void
   expired: () => void
 }) {
-  const [datasets, setDatasets] = useState<AdminDatasetVersion[]>([])
+  const [catalog, setCatalog] = useState<AdminDatasetVersion[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
-  const [usageFilter, setUsageFilter] = useState<'all' | 'branch' | 'pr'>('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
+  const [query, setQuery] = useState('')
+  const [cleanupOpen, setCleanupOpen] = useState(false)
+  const detailRef = useRef<HTMLDivElement>(null)
+  const jumpOnSelect = useRef(false)
+  const refresh = () => {
+    setLoading(true)
+    setRevision(value => value + 1)
+  }
 
   useEffect(() => {
     const controller = new AbortController()
+    setLoading(true)
+    setError('')
     fetchAdminDatasets(controller.signal).then(versions => {
-      if (controller.signal.aborted) return
-      setDatasets(versions)
-      setError('')
+      if (!controller.signal.aborted) setCatalog(versions)
     }).catch(failure => {
       if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) expired()
@@ -37,32 +67,87 @@ export function AdminDatasetsPage({ dataset, version, navigate, expired }: {
     return () => controller.abort()
   }, [revision, expired])
 
-  const grouped = useMemo(() => {
-    const values = new Map<string, AdminDatasetVersion[]>()
-    datasets.filter(item => usageFilter === 'all' || item.usage === usageFilter)
-      .forEach(item => values.set(item.dataset, [...(values.get(item.dataset) ?? []), item]))
-    return [...values.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [datasets, usageFilter])
+  const groups = useMemo(() => groupVersions(catalog ?? []), [catalog])
+  const term = query.trim().toLowerCase()
+  const matches = [...groups].flatMap(([name, items]) => {
+    const visible = items.filter(item => (sourceFilter === 'all' || item.usage === sourceFilter)
+      && (!term || `${item.dataset} ${item.version} ${item.schema} ${item.source.url ?? ''}`.toLowerCase().includes(term)))
+    if (!visible.length) return []
+    const target = visible.find(item => item.version.toLowerCase() === term) ?? visible[0]
+    return [{ name, versions: visible, target }]
+  })
+  const activeName = dataset ?? matches[0]?.name
+  const options = activeName ? groups.get(activeName) ?? [] : []
+  const selected = version ? options.find(item => item.version === version)
+    : matches.find(group => group.name === activeName)?.target ?? options[0]
 
-  if (loading) return <section className="grid gap-4">
-    <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
-    <CardListSkeleton label="正在读取数据集版本" rows={6}/>
-  </section>
-  if (error && !datasets.length) return <EmptyState title="数据集不可用" description={error}><Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button></EmptyState>
-  if (dataset) {
-    const versions = datasets.filter(item => item.dataset === dataset)
-    if (!versions.length) return <EmptyState title="数据集不存在" description={dataset}><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })} variant="outline" type="button">返回数据集列表</Button></EmptyState>
-    return <AdminDatasetDetailPage key={`${dataset}:${version ?? ''}`} dataset={dataset} versions={versions} initialVersion={version} navigate={navigate} expired={expired}/>
+  useEffect(() => {
+    const panel = detailRef.current
+    if (!panel) return
+    panel.scrollTop = 0
+    if (jumpOnSelect.current && window.matchMedia?.('(max-width: 1023px)').matches) panel.scrollIntoView?.({ block: 'start' })
+    jumpOnSelect.current = false
+  }, [selected?.version])
+
+  function selectVersion(item: AdminDatasetVersion) {
+    navigate({ name: 'admin', view: 'datasets', resourceId: item.dataset, version: item.version })
   }
-  return <section className="grid gap-4">
-    <AdminPageHeader title="数据集" onRefresh={() => setRevision(value => value + 1)}/>
+
+  function shareVersion(id: string, shared: boolean) {
+    setCatalog(previous => previous?.map(item => item.version === id ? { ...item, shared } : item) ?? null)
+  }
+
+  return <section className="flex min-w-0 flex-col gap-4 lg:h-[calc(100dvh-10rem)] lg:min-h-[28rem]">
+    <AdminPageHeader title="数据集" meta={catalog ? `${groups.size} 个数据集 · ${catalog.length} 个版本` : undefined}
+      onRefresh={refresh}
+      actions={<Button type="button" variant="outline" size="sm" onClick={() => setCleanupOpen(true)}>清理 PR 版本</Button>}/>
     <ErrorNotice>{error}</ErrorNotice>
-    <div className="flex flex-wrap items-end gap-2"><ToggleGroup type="single" value={String(usageFilter)} onValueChange={nextValue => { if (nextValue) (value => setUsageFilter(value as 'all' | 'branch' | 'pr'))(nextValue as typeof usageFilter); }} aria-label="数据集来源">{([
-      { label: '全部', value: 'all' }, { label: '分支分析', value: 'branch' }, { label: 'PR 分析', value: 'pr' },
-    ]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup></div>
-    {!grouped.length ? <p className="text-xs text-foreground-3">尚无已登记数据集</p> : <div className="grid max-h-[70vh] content-start gap-2 overflow-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">{grouped.map(([name, versions]) => <article className="admin-dataset-card grid gap-2 rounded-md border border-border-soft bg-card p-card" key={name}>
-      <div className="grid gap-0.5"><h2 className="text-sm font-semibold text-foreground">{name}</h2><p className="text-xs text-foreground-3">{versions.length} 个版本 · {versions.at(-1)?.schema}</p><p className="text-xs text-foreground-4">最新数据 {versions.at(-1)?.timeRange.start ? formatDate(versions.at(-1)?.timeRange.start) : '未提供'} · {versions.filter(item => item.usage === 'pr').length} 个 PR 版本 · {versions.filter(item => item.shared).length} 个已共享</p></div>
-      <Button className="justify-self-start" onClick={() => navigate({ name: 'admin', view: 'datasets', resourceId: name, version: versions.at(-1)?.version })} variant="outline" type="button">查看详情</Button>
-    </article>)}</div>}
+    {catalog === null ? loading ? <MasterDetailSkeleton label="正在读取数据集版本"/>
+      : <EmptyState title="数据集暂不可用"><Button type="button" variant="outline" onClick={refresh}>重新读取</Button></EmptyState>
+      : <AdminCatalogLayout directoryLabel="数据集目录" listLabel="数据集列表" detailLabel="数据集详情" detailRef={detailRef}
+        filters={<>
+          <CatalogSearch label="搜索数据集" placeholder="搜索名称、版本或仓库" value={query} onChange={setQuery}/>
+          <ToggleGroup type="single" value={sourceFilter} onValueChange={value => {
+            if (!value) return
+            setSourceFilter(value)
+            if (dataset && value !== 'all' && selected?.usage !== value) navigate({ name: 'admin', view: 'datasets' }, true)
+          }} aria-label="数据集来源" className="flex w-full flex-wrap justify-start gap-1">
+            {SOURCES.map(source => <ToggleGroupItem key={source.value} value={source.value} size="sm" className="h-7 px-2 text-[11px]">{source.label}</ToggleGroupItem>)}
+          </ToggleGroup>
+        </>}
+        list={matches.length ? <ul className="grid gap-1">
+          {matches.map(({ name, versions, target: item }) => {
+            const active = name === activeName
+            const route: Route = { name: 'admin', view: 'datasets', resourceId: name, version: item.version }
+            return <li key={name} className="min-w-0">
+              <a {...linkTo(route, next => {
+                jumpOnSelect.current = true
+                navigate(next)
+                if (item.version === selected?.version) {
+                  jumpOnSelect.current = false
+                  if (window.matchMedia?.('(max-width: 1023px)').matches) detailRef.current?.scrollIntoView?.({ block: 'start' })
+                }
+              })} aria-current={active ? 'page' : undefined} className={catalogRowClass}>
+                <div className="min-w-0">
+                  <strong className="block truncate text-sm font-medium text-foreground" title={name}>{name}</strong>
+                  <p className="mt-1 truncate text-[11px] text-foreground-3">{versions.length} 个版本 · {item.schema}</p>
+                </div>
+                {active ? <ChevronRight aria-hidden="true" className="text-foreground-3" size={14}/> : null}
+              </a>
+            </li>
+          })}
+        </ul> : <p className="px-3 py-8 text-center text-sm text-foreground-3">{catalog.length ? '没有匹配的数据集' : '尚无已登记数据集'}</p>}
+        detail={selected ? <AdminDatasetDetailPage key={selected.version} selected={selected}
+          versions={options} onSelect={selectVersion} onShared={shareVersion} onDerived={id => {
+            refresh()
+            navigate({ name: 'admin', view: 'datasets', resourceId: selected.dataset, version: id })
+          }} navigate={navigate} expired={expired}/>
+          : loading ? <p className="text-sm text-foreground-3" role="status">正在读取版本…</p>
+          : dataset ? <EmptyState title={options.length ? '找不到这个版本' : '找不到这个数据集'} description={version ?? dataset}>
+            <Button type="button" variant="outline" onClick={() => navigate({ name: 'admin', view: 'datasets' }, true)}>查看目录</Button>
+          </EmptyState> : <EmptyState title="选择数据集查看详情"/>}
+      />}
+
+    {cleanupOpen ? <AdminDatasetCleanupDialog onClose={() => setCleanupOpen(false)} onChanged={refresh} expired={expired}/> : null}
   </section>
 }

@@ -6,7 +6,7 @@ export type Route =
   | { name: 'landing' }
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
-  | { name: 'my-data'; view?: 'builds'; taskId?: string }
+  | { name: 'my-data'; view?: 'builds'; taskId?: string; buildProjectId?: string }
   | { name: 'my-training'; experimentId?: string; datasetVersion?: string }
   | { name: 'my-models' }
   | { name: 'profile' }
@@ -21,8 +21,9 @@ export type Route =
   | { name: 'report'; runId?: string; view: 'overview' | 'commits' | 'trends' }
   | {
       name: 'admin'
-      view: 'models' | 'datasets' | 'training' | 'training-experiment' | 'comparisons' | 'experiments' | 'experiment-runs'
+      view: 'models' | 'datasets' | 'training' | 'training-experiment' | 'evaluation' | 'comparisons' | 'experiments' | 'experiment-runs'
       resourceId?: string
+      selectedModelId?: string
       version?: string
       models?: string[]
       registrationState?: 'registered' | 'unregistered'
@@ -64,7 +65,12 @@ export function parseHash(hash: string): Route {
     }
     if (path === '/welcome') return { name: 'landing' }
     if (path === '/reviews') return { name: 'my-reviews' }
-    if (path === '/my-data') return { name: 'my-data', ...(params.get('view') === 'builds' ? { view: 'builds' as const } : {}), ...(params.get('taskId') ? { taskId: params.get('taskId') as string } : {}) }
+    if (path === '/my-data') return {
+      name: 'my-data',
+      ...(params.get('view') === 'builds' ? { view: 'builds' as const } : {}),
+      ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
+      ...(params.get('buildProjectId') ? { buildProjectId: params.get('buildProjectId')! } : {}),
+    }
     if (path === '/my-training') return { name: 'my-training', ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}) }
     if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
     if (path === '/my-models') return { name: 'my-models' }
@@ -75,7 +81,11 @@ export function parseHash(hash: string): Route {
     if (['/projects', '/repositories'].includes(path)) return { name: 'repositories' }
     if (['/projects/new', '/connect', '/sources'].includes(path)) return { name: 'sources' }
     const comparisonModels = (params.get('models') ?? '').split(',').map(value => value.trim()).filter(Boolean)
-    if (path === '/admin' || path === '/admin/models') return { name: 'admin', view: 'models' }
+    if (path === '/admin' || path === '/admin/models') {
+      const selectedModelId = params.get('selected')
+      return { name: 'admin', view: 'models', ...(selectedModelId ? { selectedModelId } : {}) }
+    }
+    if (path === '/admin/evaluation') return { name: 'admin', view: 'evaluation' }
     if (parts[0] === 'admin' && parts[1] === 'models' && parts.length === 3) return { name: 'admin', view: 'models', resourceId: parts[2] }
     if (path === '/admin/datasets') return { name: 'admin', view: 'datasets' }
     if (parts[0] === 'admin' && parts[1] === 'datasets' && [3, 4].includes(parts.length)) return { name: 'admin', view: 'datasets', resourceId: parts[2], ...(parts[3] ? { version: parts[3] } : {}) }
@@ -129,6 +139,7 @@ export function hashFor(route: Route): string {
       const params = new URLSearchParams()
       if (route.view === 'builds') params.set('view', 'builds')
       if (route.taskId) params.set('taskId', route.taskId)
+      if (route.buildProjectId) params.set('buildProjectId', route.buildProjectId)
       return params.size ? `#/my-data?${params}` : '#/my-data'
     }
     case 'my-training': {
@@ -158,6 +169,7 @@ export function hashFor(route: Route): string {
     case 'admin': {
       const base = `#/admin/${route.view}`
       if (route.view === 'models' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
+      if (route.view === 'models' && route.selectedModelId) return `${base}?selected=${encodeURIComponent(route.selectedModelId)}`
       if (route.view === 'datasets' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}${route.version ? `/${encodeURIComponent(route.version)}` : ''}`
       if (route.view === 'training' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'training-experiment' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`

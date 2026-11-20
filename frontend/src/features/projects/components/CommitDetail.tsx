@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { displayTime, validRisk, type Commit, type Dataset } from '@/lib/domain'
 import { RepositoryExplanation } from '@/features/projects/components/RepositoryExplanation'
+import { CommitEvidenceBadge } from '@/features/projects/components/CommitEvidenceBadge'
 import { Risk } from '@/components/shared/Risk'
 
 import { EmptyState } from '@/components/shared/Feedback'
@@ -28,10 +29,30 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
       </div>
       {copied ? <p className="text-xs text-foreground-3" role="status">{copied}</p> : null}
     </div>
-    <div className="flex flex-wrap items-start justify-between gap-3 rounded-sm border border-border-soft bg-soft p-3">
+    <div className="grid gap-3 rounded-sm border border-border-soft bg-soft p-3 sm:grid-cols-2">
       <div className="grid gap-1"><span className="text-xs text-foreground-3">模型分数</span><Risk risk={record.risk} large/></div>
-      <p className="max-w-sm text-xs leading-body text-foreground-3">用于排序参考，未经概率校准，不代表已确认缺陷。</p>
+      {data.mode === 'repository' ? <div className="grid justify-items-start gap-1">
+        <span className="text-xs text-foreground-3">缺陷引入证据</span>
+        <CommitEvidenceBadge status={record.labelStatus}/>
+        {record.observedThrough ? <span className="text-xs text-foreground-3">观察到 {displayTime(record.observedThrough).slice(0, 10)}</span> : null}
+      </div> : null}
     </div>
+    {data.mode === 'repository' && record.labelStatus === 'positive' ? <section aria-label="后续修复记录" className="grid gap-2">
+      <h3 className="text-sm font-medium text-foreground">后续修复记录</h3>
+      {record.labelEvidence?.length ? <ul className="grid gap-1.5">
+        {record.labelEvidence.slice(0, 8).map(evidence => {
+          const fixUrl = safeOriginal && /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i.test(evidence.fixCommit)
+            ? safeOriginal.slice(0, -id.length) + evidence.fixCommit : null
+          return <li key={`${evidence.fixCommit}:${evidence.path}`} className="min-w-0 rounded-sm border border-border-soft px-3 py-2 text-xs">
+            {fixUrl ? <a href={fixUrl} target="_blank" rel="noopener noreferrer" className="font-mono text-accent underline-offset-2 hover:underline">{evidence.fixCommit.slice(0, 12)}</a>
+              : <code>{evidence.fixCommit.slice(0, 12)}</code>}
+            <span className="ml-2 break-all text-foreground-2">{evidence.path}</span>
+            {evidence.fixTime ? <time className="ml-2 text-foreground-3" dateTime={evidence.fixTime}>{displayTime(evidence.fixTime).slice(0, 10)}</time> : null}
+          </li>
+        })}
+        {record.labelEvidence.length > 8 ? <li className="text-xs text-foreground-3">显示前 8 项，共 {record.labelEvidence.length} 项。</li> : null}
+      </ul> : <p className="text-xs text-foreground-3">这份分析保存了正例标签，修复记录明细缺失。</p>}
+    </section> : null}
     <div className="grid grid-cols-2 gap-3">
       <div className="grid gap-0.5"><span className="text-xs text-foreground-3">变更行</span><strong className="text-lg font-semibold text-foreground">{record.lines ?? '未提供'}</strong></div>
       <div className="grid gap-0.5"><span className="text-xs text-foreground-3">文件</span><strong className="text-lg font-semibold text-foreground">{record.files ?? '未提供'}</strong></div>

@@ -134,10 +134,13 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
   const legacyAvailable = Boolean(account) && hasLegacyWorks()
     && legacyImportReceipt(account ?? '') !== legacyWorksHash()
   return <section className="grid gap-4" aria-label="我的审查">
-    <div className="flex flex-wrap gap-2">
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft pb-3">
+      <h1 className="text-xl font-semibold">我的审查</h1>
+      <div className="flex flex-wrap gap-2">
       <Button variant='outline' onClick={() => void checkAll()} disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <RefreshCw aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}{busy ? '正在读取远端…' : '刷新我的工作'}</Button>
       {legacyAvailable ? <Button variant="ghost" onClick={previewLegacy} type="button">{<Upload aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}导入本机旧工作单</Button> : null}
-    </div>
+      </div>
+    </header>
     {legacy ? <section className="grid gap-2 rounded-sm border border-amber/30 bg-amber-soft p-3 text-xs text-amber-deep" aria-label="旧工作单导入">
       <h2 className="text-sm font-semibold">导入本机旧工作单到 {account}</h2>
       <p className="leading-body">{legacy.entries.length} 个旧工作单；原数据不会删除，也不会自动归给其他账户。</p>

@@ -256,6 +256,18 @@ def test_same_sha_refresh_exposes_current_metadata_without_mutating_snapshot(rev
     assert service.refresh('example', 'project', 12)['draft'] is False
 
 
+@pytest.mark.parametrize('code', ['PR_RATE_LIMITED', 'PR_SOURCE_UNAVAILABLE'])
+def test_remote_failure_reuses_the_last_saved_snapshot(review, code):
+    service, _, _, _, _ = review
+    first = service.refresh('example', 'project', 12)
+    service.request = lambda _path: (_ for _ in ()).throw(
+        BaselineError(code, 'limited'))
+    cached = service.refresh('example', 'project', 12)
+    assert cached['snapshot'] == first['snapshot']
+    assert cached['checkedAt'] == first['checkedAt']
+    assert cached['pullRequest']['title'] == first['snapshot']['title']
+
+
 def test_duplicate_case_projects_keep_scoped_snapshots_and_old_identity(review):
     from uuid import uuid4
     from jit_baseline.catalog_storage import utc_now
@@ -283,7 +295,18 @@ def test_project_context_mismatch_and_private_source_are_rejected_before_snapsho
     pr['base']['repo']['private'] = True
     with pytest.raises(BaselineError) as failure:
         service.refresh('example', 'project', 12)
-    assert failure.value.code == 'PR_SOURCE_UNAVAILABLE'
+    assert failure.value.code == 'PR_PRIVATE_REPOSITORY'
+
+
+def test_authenticated_private_repository_can_be_read(review):
+    service, pr, _, _, _ = review
+    service.allow_private = True
+    pr['base']['repo']['private'] = True
+    pr['head']['repo']['private'] = True
+    listed = service.intake({'url': 'https://github.com/example/project'})
+    assert listed['pullRequests'][0]['number'] == 12
+    source = service.refresh('example', 'project', 12)['snapshot']
+    assert source['files'][0]['patchComplete'] is True
 
 
 def test_public_analysis_cannot_inject_internal_source_kind(bound_review):

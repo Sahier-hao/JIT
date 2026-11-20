@@ -1,7 +1,7 @@
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { createHashRouter, Outlet, RouterProvider } from 'react-router-dom'
+import { createHashRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { AppShell } from '@/components/layout/AppShell'
@@ -20,6 +20,7 @@ import { requestLogin } from '@/features/account/components/UserAccount'
 
 // 页面按路由拆包：首屏只加载项目列表与外壳，其余工作台按需下载。
 const ProjectsPage = lazy(() => import('@/features/projects/pages/ProjectsPage').then(module => ({ default: module.ProjectsPage })))
+const PersonalWorks = lazy(() => import('@/features/reviews/components/PersonalWorks').then(module => ({ default: module.PersonalWorks })))
 const ProjectPage = lazy(() => import('@/features/projects/pages/ProjectPage').then(module => ({ default: module.ProjectPage })))
 const ReviewWorkbench = lazy(() => import('@/features/reviews/ReviewWorkbench').then(module => ({ default: module.ReviewWorkbench })))
 const AdminWorkspace = lazy(() => import('@/features/admin/AdminWorkspace').then(module => ({ default: module.AdminWorkspace })))
@@ -44,8 +45,9 @@ export default function App() {
 
 function Workspace() {
   const { route, navigate } = useRoute()
-  const repositories = useRepositories()
   const { session, setSession, generation, verifying } = useUserSession()
+  const administrative = route.name === 'admin' || route.name === 'report'
+  const repositories = useRepositories(session?.authenticated === true && !administrative && route.name !== 'landing' && route.name !== 'login')
   const account = session?.authenticated ? session.username : null
   const accountStatus: ReviewAccountStatus = session === null || verifying ? 'verifying' : session.status
   const accountValue = { status: accountStatus, account, generation }
@@ -71,16 +73,20 @@ function Workspace() {
       <LoginPage route={{ name: 'login', role: 'user', next: hashFor(route) }} session={session} navigate={navigate} onUser={setSession}/>
     </Suspense></ErrorBoundary>
   }
+  if (route.name === 'repository' && route.buildTaskId) {
+    const target = hashFor({ name: 'my-data', view: 'builds', buildProjectId: route.repositoryId, taskId: route.buildTaskId })
+    return <Navigate to={target.slice(1)} replace/>
+  }
   let content
-  if (route.name === 'my-reviews') content = <ProjectsPage key={`${account ?? ''}:reviews`} navigate={navigate} view="reviews"/>
+  if (route.name === 'my-reviews') content = <PersonalWorks key={`${account ?? ''}:reviews`} navigate={navigate}/>
   else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
-  else if (route.name === 'my-data') content = <MyDataPage navigate={navigate} onLoginRequired={requestLogin} initialTab={route.view} initialTaskId={route.taskId}/>
+  else if (route.name === 'my-data') content = <MyDataPage key={account} navigate={navigate} onLoginRequired={requestLogin} initialTab={route.view} initialTaskId={route.taskId} buildProjectId={route.buildProjectId}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={`${route.experimentId ?? 'list'}:${route.datasetVersion ?? ''}`} experimentId={route.experimentId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'profile') content = <ProjectsPage navigate={navigate}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
-  else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} buildTaskId={route.buildTaskId} navigate={navigate}/>
+  else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>
   else if (route.name === 'comparison') content = <AnalysisComparison key={`${route.repositoryId}:${route.baseSyncId}:${route.targetSyncId}`} repositoryId={route.repositoryId} baseSyncId={route.baseSyncId} targetSyncId={route.targetSyncId} navigate={navigate}/>
   else if (route.name === 'analysis') content = <ReviewWorkbench key={stateKey} repositoryId={route.repositoryId} viewSyncId={route.viewSyncId} commitId={route.commitId} stateKey={stateKey} drafts={drafts} navigate={navigate}/>
   else if (route.name === 'legacy-sync') content = <LegacySync key={route.syncId} route={route} navigate={navigate}/>

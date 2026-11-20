@@ -126,7 +126,7 @@ class TorchTabularClassifier(ClassifierMixin, BaseEstimator):
         self.classes_ = np.array([0, 1])
         self.module_ = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, *, history_callback=None, evaluation_sets=None):
         features = np.asarray(X, dtype=np.float32)
         labels = np.asarray(y, dtype=np.float32)
         if features.ndim != 2 or len(features) != len(labels):
@@ -146,6 +146,10 @@ class TorchTabularClassifier(ClassifierMixin, BaseEstimator):
         self.module_.train()
         history = {"unit": "epoch", "epochs": int(self.params["epochs"]),
                    "complete": True, "entries": []}
+        evaluation_sets = {
+            name: (torch.as_tensor(x, dtype=torch.float32), torch.as_tensor(y, dtype=torch.float32))
+            for name, (x, y) in (evaluation_sets or {}).items()
+        }
         for epoch in range(1, int(self.params["epochs"]) + 1):
             started = time.perf_counter()
             total, batches = 0.0, 0
@@ -156,11 +160,28 @@ class TorchTabularClassifier(ClassifierMixin, BaseEstimator):
                 optimiser.step()
                 total += float(loss.item())
                 batches += 1
-            history["entries"].append({
+            point = {
                 "epoch": epoch,
                 "trainLoss": round(total / batches, 8) if batches else None,
-                "seconds": round(time.perf_counter() - started, 6),
-            })
+            }
+            if evaluation_sets:
+                self.module_.eval()
+                try:
+                    with torch.inference_mode():
+                        for name, (x, y) in evaluation_sets.items():
+                            loss_sum = sum(
+                                nn.functional.binary_cross_entropy_with_logits(
+                                    self.module_(x[start:start + 2048]), y[start:start + 2048], reduction="sum",
+                                ).item()
+                                for start in range(0, len(y), 2048)
+                            )
+                            point[name] = round(loss_sum / len(y), 8)
+                finally:
+                    self.module_.train()
+            point["seconds"] = round(time.perf_counter() - started, 6)
+            history["entries"].append(point)
+            if history_callback is not None:
+                history_callback(history)
         self.training_history_ = history
         self.module_.eval()
         return self

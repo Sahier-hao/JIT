@@ -29,7 +29,8 @@ async function login(page: import('@playwright/test').Page, user: string, passwo
 
 async function openPreview(page: import('@playwright/test').Page, repositoryId: string) {
   await page.goto(`/#/projects/${repositoryId}/prs`)
-  await page.getByRole('button', { name: /#1 修正审查示例/ }).first().click()
+  const row = page.getByRole('article').filter({ has: page.getByRole('heading', { name: /^#1 修正审查示例/ }) })
+  await row.getByRole('button', { name: /^(查看 PR|继续审查)$/ }).click({ timeout: 20_000 })
 }
 
 async function enterWork(page: import('@playwright/test').Page) {

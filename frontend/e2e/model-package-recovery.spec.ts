@@ -62,22 +62,33 @@ test('空目录库恢复九模型并显示部分导入的真实原因', async ({
   await page.goto('/#/admin/models')
   await expect(page.getByRole('heading', { name: '模型管理', exact: true }))
     .toBeVisible({ timeout: 30000 })
+  await page.getByRole('button', { name: '查看产物诊断' }).click()
+  await page.getByRole('tab', { name: '训练覆盖' }).click()
   await expect(page.getByLabel('数据集与方法训练覆盖')).toBeVisible({ timeout: 30000 })
   await expect(page.getByText('公开大型 JIT 基准')).toBeVisible({ timeout: 30000 })
+  await page.getByRole('tab', { name: '模型包' }).click()
   const packagePanel = page.getByLabel('模型包交付')
   await expect(packagePanel).toContainText('部分导入', { timeout: 30000 })
   for (const item of evidence.mixed.items.filter((entry: { status: string }) =>
     entry.status === 'conflict' || entry.status === 'failed')) {
     await expect(packagePanel).toContainText(item.message)
   }
+  await page.getByRole('tab', { name: '目录状态' }).click()
   await expect(page.getByText('10 个已登记', { exact: true })).toBeVisible()
   await expect(page.getByText(`${publicSelectable.length} 个用户可选`, { exact: true })).toBeVisible()
+  await page.getByRole('tab', { name: '训练覆盖' }).click()
+  for (const summary of await page.getByLabel('数据集与方法训练覆盖').locator('details > summary').all()) {
+    if (await page.getByRole('button', { name: /查看模型详情$/ }).count()) break
+    if (await summary.locator('..').getAttribute('open') === null) await summary.click()
+  }
   const detail = page.getByRole('button', { name: /查看模型详情$/ }).first()
   await detail.focus()
   await expect(detail).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/#\/admin\/models\/[^/]+$/)
   await page.goto('/#/admin/models')
+  await page.getByRole('button', { name: '查看产物诊断' }).click()
+  await page.getByRole('tab', { name: '模型包' }).click()
   await expect(page.getByLabel('模型包交付')).toContainText('部分导入', { timeout: 30000 })
 
   for (const [width, height] of [[1280, 720], [1440, 900], [390, 844]] as const) {

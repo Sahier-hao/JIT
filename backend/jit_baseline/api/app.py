@@ -402,9 +402,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return {'schema': name, 'methods': methods}
 
     @app.get('/api/v1/models')
-    def models(state: str | None = None):
+    def models(state: str | None = None, view: str | None = None):
         if state not in (None, 'ready', 'invalid'):
             raise RequestError('INPUT_INVALID', field='state')
+        if view not in (None, 'registered', 'diagnostics'):
+            raise RequestError('INPUT_INVALID', field='view')
+        if view == 'registered':
+            from ..sync import SCORING_SCHEMAS
+            return {'models': [dict(model, repositorySchemaCompatible=model['featureSchemaVersion'] in SCORING_SCHEMAS)
+                               for model in catalog.registered_models(state)]}
         from ..algorithms import ALGORITHMS
         registered_models = catalog.models()
         candidates = catalog.candidates()
@@ -413,9 +419,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                              for model in registered_models),
                         deliveredArtifacts=sum(candidate.get('method') == key for candidate in candidates))
                    for key, value in ALGORITHMS.items()]
-        visible = [with_release_fields(model) for model in registered_models]
-        return {'models': [model for model in visible if state is None or model['state'] == state],
-                'methods': methods, 'readiness': catalog.readiness(registered_models)}
+        visible = [model for model in registered_models if state is None or model['state'] == state]
+        summary = {'methods': methods, 'readiness': catalog.readiness(registered_models)}
+        if view == 'diagnostics':
+            return {'models': visible, 'candidates': candidates, **summary}
+        return {'models': [with_release_fields(model) for model in visible], **summary}
 
     @app.get('/api/v1/models/coverage')
     def model_coverage_route(datasetVersion: str | None = None, limit: int = 50, offset: int = 0):
@@ -438,6 +446,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def repository_models(request: Request):
         # Public selection metadata only: no training evidence, paths or verification reports.
         from ..users import current_admin, current_user
+        from ..sync import SCORING_SCHEMAS
         viewer = current_user(request)
         admin_view = current_admin(request) is not None
         visible = [item for item in catalog.models()
@@ -447,7 +456,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                                 enabled=item['enabled'], isDefault=item['isDefault'],
                                 mine=bool(viewer and item.get('ownerUserId') == viewer),
                                 repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
-                                ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')) for item in visible]}
+                                SCORING_SCHEMAS) for item in visible]}
 
     @app.post('/api/v1/training-tasks')
     async def create_training_task(request: Request):

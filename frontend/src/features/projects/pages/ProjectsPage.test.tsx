@@ -2,6 +2,7 @@ import { render, screen, waitFor, TEST_REVIEW_ACCOUNT } from '@/lib/test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsPage } from '@/features/projects/pages/ProjectsPage'
+import { PersonalWorks } from '@/features/reviews/components/PersonalWorks'
 import { createWork, saveWork } from '@/features/reviews/prReview'
 
 import { snapshot } from '@/features/reviews/prReview.fixture'
@@ -90,7 +91,7 @@ it('asks for confirmation before deleting a project', async () => {
   expect(deleted).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: '确认删除' }))
   await waitFor(() => expect(deleted).toHaveBeenCalled())
-  expect(await screen.findByText('从一个仓库开始')).toBeVisible()
+  expect(await screen.findByText('还没有项目')).toBeVisible()
 })
 
 it('opens the project from the card body', async () => {
@@ -115,27 +116,23 @@ it('shows the cross-project personal works view without the project list', async
   const work = createWork(snapshot())
   work.rounds.v1.progress['src/token.py'].state = 'read'
   saveWork(TEST_REVIEW_ACCOUNT, work)
-  render(<ProjectsPage navigate={vi.fn()} view="reviews"/>)
+  render(<PersonalWorks navigate={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: '我的审查' })).toBeVisible()
   expect(await screen.findByRole('heading', { name: /继续审查/ })).toBeVisible()
   expect(screen.queryByRole('button', { name: '新建项目' })).not.toBeInTheDocument()
   expect(screen.queryByRole('textbox', { name: '仓库或 PR 地址' })).not.toBeInTheDocument()
 })
 
-it('navigates between projects and personal works through the page tabs', async () => {
+it('keeps personal works out of the project content', async () => {
   mockApi()
-  const navigate = vi.fn(), user = userEvent.setup()
-  render(<ProjectsPage navigate={navigate}/>)
+  render(<ProjectsPage navigate={vi.fn()}/>)
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click(screen.getByRole('link', { name: '我的审查' }))
-  expect(navigate).toHaveBeenCalledWith({ name: 'my-reviews' })
-  await user.click(screen.getByRole('link', { name: '项目' }))
-  expect(navigate).toHaveBeenCalledWith({ name: 'repositories' })
+  expect(screen.queryByRole('link', { name: '我的审查' })).not.toBeInTheDocument()
 })
 
 it('explains the empty personal works view without an intake form', async () => {
   mockApi()
-  render(<ProjectsPage navigate={vi.fn()} view="reviews"/>)
+  render(<PersonalWorks navigate={vi.fn()}/>)
   expect(await screen.findByText('还没有审查工作')).toBeVisible()
   expect(screen.queryByRole('textbox', { name: '仓库或 PR 地址' })).not.toBeInTheDocument()
 })

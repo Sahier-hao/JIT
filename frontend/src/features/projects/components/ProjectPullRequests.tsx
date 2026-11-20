@@ -1,5 +1,6 @@
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { NativeSelect } from '@/components/ui/native-select'
 import { LoaderCircle, ChevronDown } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -20,21 +21,46 @@ import { cacheKey, readCache, writeCache } from '@/lib/localCache'
 import { readWorks, remoteStateLabels as remoteLabel, workKey } from '@/features/reviews/prReview'
 import { useReviewAccount } from '@/features/reviews/reviewAccount'
 import type { Route } from '@/app/navigation'
-import { PR_BATCH_CHANGED } from '@/features/projects/projectEvents'
+import { PRBatchLauncher } from '@/features/projects/components/PRBatchLauncher'
 import { PRTrackingPanel } from '@/features/reviews/components/PRTrackingPanel'
 import { ProgressBar } from '@/features/projects/components/JobProgress'
 import { cn } from '@/lib/utils'
 
-const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', scoring: '评分中' }
+const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', registering: '登记中', training: '处理中', scoring: '评分中' }
 const batchLabel: Record<string, string> = { discovering: '正在获取 PR 范围', running: '正在提交分析', completed: '提交完成', partial: '部分完成', failed: '未能开始', interrupted: '已中断', cancelled: '已取消' }
+const ANALYSIS_FILTERS = [
+  { value: 'all', label: '全部状态' },
+  { value: 'unscored', label: '未分析' },
+  { value: 'running', label: '分析中' },
+  { value: 'failed', label: '可重试' },
+  { value: 'completed', label: '已分析' },
+] as const
+type AnalysisFilter = typeof ANALYSIS_FILTERS[number]['value']
 
-/** 项目 PR 审查：只负责发现、筛选与打开 PR；后台自动分析在工具栏的「自动分析」里配置。 */
-export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navigate }: { repositoryId: string; modelId?: string; onPageChange?: (page: number) => void; navigate: (r: Route) => void }) {
+function analysisGroup(status: string | null): Exclude<AnalysisFilter, 'all'> {
+  if (status === 'completed') return 'completed'
+  if (['queued', 'running', 'checking', 'collecting', 'registering', 'training', 'scoring'].includes(status ?? '')) return 'running'
+  if (['failed', 'cancelled', 'interrupted'].includes(status ?? '')) return 'failed'
+  return 'unscored'
+}
+
+export function ProjectPullRequests({ repositoryId, modelId, batchModelId = modelId, navigate }: {
+  repositoryId: string
+  modelId?: string
+  batchModelId?: string | null
+  navigate: (r: Route) => void
+}) {
   const [state, setState] = useState<PRState>('open')
+  const [analysisFilter, setAnalysisFilter] = useState<AnalysisFilter>('all')
   const [sortBy, setSortBy] = useState<'updated' | 'risk'>('updated')
   const [page, setPage] = useState(1)
   const [attempt, setAttempt] = useState(0)
-  const [result, setResult] = useState<ProjectPRPage | null>(() => readCache(cacheKey('prs', repositoryId, 'open', 1), 10 * 60_000))
+  const listKey = cacheKey('prs', repositoryId, state, page)
+  const [loaded, setLoaded] = useState<{ key: string; value: ProjectPRPage } | null>(() => {
+    const cached = readCache<ProjectPRPage>(listKey, 10 * 60_000)
+    return cached ? { key: listKey, value: cached } : null
+  })
+  const result = loaded?.key === listKey ? loaded.value : null
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
   const [tracking, setTracking] = useState<PRTracking | null>(null)
@@ -51,22 +77,23 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
   const [reanalyzeBusy, setReanalyzeBusy] = useState(false)
   const [models, setModels] = useState<ModelChoice[]>([])
   const automatic = useRef(new Set<string>()), refreshRequested = useRef(false)
-  useEffect(() => { onPageChange?.(page) }, [page, onPageChange])
   useEffect(() => {
     const controller = new AbortController(); setBusy(true); setError(null)
-    const cache = cacheKey('prs', repositoryId, state, page)
-    const cached = readCache<ProjectPRPage>(cache, 10 * 60_000)
-    if (cached) setResult(cached)
+    const cached = readCache<ProjectPRPage>(listKey, 10 * 60_000)
+    if (cached) setLoaded(previous => previous?.key === listKey ? previous : { key: listKey, value: cached })
     const refresh = refreshRequested.current; refreshRequested.current = false
     async function load() {
       let value = await projectPRs(repositoryId, state, page, refresh, controller.signal)
       const key = `${repositoryId}:${state}:${page}`
       if (!refresh && value.supported && !value.checkedAt && !value.errorCode && !automatic.current.has(key)) { automatic.current.add(key); value = await projectPRs(repositoryId, state, page, true, controller.signal) }
-      if (!controller.signal.aborted) { setResult(value); if (value.supported && !value.errorCode) writeCache(cache, value) }
+      if (!controller.signal.aborted) {
+        setLoaded({ key: listKey, value })
+        if (value.supported && !value.errorCode) writeCache(listKey, value)
+      }
     }
     void load().catch(e => { if (!controller.signal.aborted) setError(e) }).finally(() => { if (!controller.signal.aborted) setBusy(false) })
     return () => controller.abort()
-  }, [repositoryId, state, page, attempt])
+  }, [repositoryId, state, page, listKey, attempt])
   useEffect(() => {
     const controller = new AbortController()
     getTracking(repositoryId, controller.signal).then(value => { if (!controller.signal.aborted) setTracking(value) }).catch(() => { if (!controller.signal.aborted) setTracking(null) })
@@ -86,16 +113,6 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
       .catch(failure => { if (!controller.signal.aborted) setBatchError(failure instanceof Error ? failure.message : '批次进度读取失败') })
     return () => controller.abort()
   }, [repositoryId, attempt])
-  useEffect(() => {
-    if (!batchPolling) return
-    const timer = setInterval(() => setAttempt(value => value + 1), 4000)
-    return () => clearInterval(timer)
-  }, [batchPolling])
-  useEffect(() => {
-    const bump = () => setAttempt(value => value + 1)
-    window.addEventListener(PR_BATCH_CHANGED, bump)
-    return () => window.removeEventListener(PR_BATCH_CHANGED, bump)
-  }, [])
   async function retryItems(kind: 'failed' | 'interrupted') {
     if (!batch) return
     setBatchBusy(true); setBatchError('')
@@ -134,7 +151,7 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
     if (analyzingNumber !== null) return
     setAnalyzingNumber(pr.number); setAnalysisError('')
     try {
-      const retry = ['failed', 'cancelled', 'interrupted'].includes(pr.analysisStatus ?? '')
+      const retry = analysisGroup(pr.analysisStatus) === 'failed'
       await analyzeProjectPR(repositoryId, pr.number, modelId, retry)
       setAttempt(value => value + 1)
     } catch (failure) {
@@ -146,37 +163,42 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
     ? models.filter(model => model.state === 'ready' && model.enabled && model.repositoryPredictionSupported && model.modelId !== reanalyzing.modelId)
       .map(model => ({ value: model.modelId, label: model.name }))
     : []
-  const hasRunning = Boolean(result?.pullRequests.some(pr => ['queued', 'running', 'checking', 'collecting'].includes(pr.analysisStatus ?? '')))
+  const hasRunning = Boolean(result?.pullRequests.some(pr => analysisGroup(pr.analysisStatus) === 'running'))
   useEffect(() => {
-    if (!hasRunning) return
-    const timer = setInterval(() => setAttempt(value => value + 1), 4000)
-    return () => clearInterval(timer)
-  }, [hasRunning])
+    if (busy || (!hasRunning && !batchPolling)) return
+    const timer = setTimeout(() => setAttempt(value => value + 1), 4000)
+    return () => clearTimeout(timer)
+  }, [busy, hasRunning, batchPolling, attempt])
   let localWorks: Set<string> = new Set()
   const { account } = useReviewAccount()
   try { localWorks = account ? new Set(readWorks(account).map(work => work.key)) : new Set() } catch { /* 本地存储损坏时仍允许查看远端 PR */ }
   const refresh = () => { refreshRequested.current = true; setAttempt(v => v + 1) }
   const rows = result ? (sortBy === 'risk' ? [...result.pullRequests].sort((a, b) => (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt)) : result.pullRequests) : []
-  const summary = rows.reduce((acc, pr) => {
-    if (pr.analysisStatus === 'completed') acc.completed += 1
-    else if (['queued', 'running', 'checking'].includes(pr.analysisStatus ?? '')) acc.running += 1
-    else if (['failed', 'cancelled', 'interrupted'].includes(pr.analysisStatus ?? '')) acc.failed += 1
-    else acc.none += 1
-    return acc
-  }, { completed: 0, running: 0, failed: 0, none: 0 })
-  const statusRank = (status?: string | null) => ['running', 'queued', 'checking'].includes(status ?? '') ? 0 : ['failed', 'cancelled', 'interrupted'].includes(status ?? '') ? 1 : 2
-  const pendingRows = rows.filter(pr => pr.analysisStatus !== 'completed').sort((a, b) => statusRank(a.analysisStatus) - statusRank(b.analysisStatus) || (b.maxRisk ?? -1) - (a.maxRisk ?? -1) || b.updatedAt.localeCompare(a.updatedAt))
+  const summary = { all: rows.length, completed: 0, running: 0, failed: 0, unscored: 0 }
+  for (const pr of rows) summary[analysisGroup(pr.analysisStatus)] += 1
+  const visible = analysisFilter === 'all' ? rows : rows.filter(pr => analysisGroup(pr.analysisStatus) === analysisFilter)
+  const privateRepository = result?.errorCode === 'PR_PRIVATE_REPOSITORY'
   return <section className="grid gap-4" aria-label="项目 PR 审查">
     <h2 className="sr-only">PR 审查</h2>
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-      <div className="grid min-w-0 gap-3">
+    <div className="grid min-w-0 gap-3">
         {result?.supported === false ? null : <>
           <div className="flex flex-wrap items-center gap-2">
             <ToggleGroup type="single" value={String(state)} onValueChange={nextValue => { if (nextValue) (value => { setState(value as PRState); setPage(1) })(nextValue as typeof state); }} aria-label="PR 范围">{([{ label: '开放', value: 'open' }, { label: '已结束', value: 'closed' }, { label: '全部', value: 'all' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
+            <label className="flex flex-wrap items-center gap-1.5 text-xs text-foreground-3 [&_[data-slot=native-select-wrapper]]:w-auto">
+              本页分析状态
+              <NativeSelect aria-label="本页分析状态" size="sm" disabled={!result} value={analysisFilter} onChange={event => setAnalysisFilter(event.target.value as AnalysisFilter)}>
+                {ANALYSIS_FILTERS.map(filter => <option key={filter.value} value={filter.value}>{filter.label}{result ? `（${summary[filter.value]}）` : ''}</option>)}
+              </NativeSelect>
+            </label>
             <DropdownMenu modal={false}><DropdownMenuTrigger asChild><Button variant="ghost" size="sm" aria-haspopup="menu" aria-label={`排序方式：${sortBy === 'updated' ? '按最近更新' : '按风险最高'}`} type="button">排序：{sortBy === 'updated' ? '按最近更新' : '按风险最高'}{<ChevronDown aria-hidden="true" focusable="false" strokeWidth={1.5} size={13}/>}</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{([{ key: 'updated', label: '按最近更新' }, { key: 'risk', label: '按风险最高' }]).map(item => <DropdownMenuItem key={item.key} disabled={'disabled' in item && item.disabled === true} variant={'danger' in item && item.danger ? 'destructive' : 'default'} onSelect={() => (key => setSortBy(key as 'updated' | 'risk'))(item.key)}>{item.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              {tracking?.supported === false ? null : <Button onClick={() => setTrackingOpen(true)} variant="outline" type="button">{<span className={cn('size-1.5 rounded-full', tracking?.enabled ? 'bg-teal' : 'bg-foreground-4')} aria-hidden="true"/>}{tracking?.enabled ? '自动分析已开启' : '自动分析'}</Button>}
-              <Button variant='default' disabled={busy} onClick={refresh} type="button">{busy ? '正在检查…' : '检查远端 PR'}</Button>
+              {tracking?.supported === false ? null : <Button onClick={() => setTrackingOpen(true)} variant="outline" type="button">
+                PR 自动打分设置{tracking ? <span className="text-xs text-foreground-3">{tracking.enabled ? '已开启' : '未开启'}</span> : null}
+              </Button>}
+              {result?.supported ? <PRBatchLauncher key={repositoryId} repositoryId={repositoryId} modelId={batchModelId ?? undefined}
+                openPage={state === 'open' ? page : undefined}
+                onStarted={next => { setBatch(next); setBatchError(''); setAttempt(value => value + 1) }}/> : null}
+              <Button variant="default" disabled={busy} onClick={refresh} type="button">{busy ? '正在读取…' : '同步 PR 列表'}</Button>
             </div>
           </div>
         </>}
@@ -203,15 +225,16 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
         {error ? <FailureNotice error={error} onRetry={refresh}/> : null}
         {busy && !result ? <LoadingNotice label="正在读取项目 PR 清单"/> : null}
         {result && !result.supported ? <EmptyState title="此项目不是公开 GitHub 来源" description="PR 发现和自动分析只读取公开 GitHub；分支分析和风险趋势仍可使用。"/> : null}
-        {busy && result ? <ProgressBar value={null} state="queued" label="正在检查远端 PR"/> : null}
+        {busy && result ? <ProgressBar value={null} state="queued" label="正在读取 PR 列表"/> : null}
 
         {result?.supported ? <div className="grid gap-3">
           {analysisError ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><span>{analysisError}</span></div> : null}
-          {result.errorCode ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="alert"><span>远端检查未完成（{result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。</span><Button size="sm" disabled={busy} onClick={refresh} variant="outline" type="button">重试检查</Button></div> : null}
-          {rows.length ? <div className="grid gap-2">{rows.map(pr => {
+          {result.errorCode ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="alert"><span>{privateRepository ? '这是私有仓库，需要先关联有权限的 GitHub 账户后才能同步 PR。' : `远端检查未完成（${result.errorCode}）；以下是上次缓存，缺失条目不能认定为已关闭。`}</span><Button size="sm" disabled={busy && !privateRepository} onClick={privateRepository ? () => navigate({ name: 'profile' }) : refresh} variant="outline" type="button">{privateRepository ? '关联 GitHub' : '重试检查'}</Button></div> : null}
+          {visible.length ? <div className="grid gap-2">{visible.map(pr => {
             const hasWork = Boolean(result.owner && result.name && localWorks.has(workKey(result.owner, result.name, pr.number)))
-            const rowRunning = ['queued', 'running', 'checking', 'collecting', 'scoring'].includes(pr.analysisStatus ?? '')
-            const rowLabel = analyzingNumber === pr.number ? '提交中…' : rowRunning ? '分析中…' : ['failed', 'cancelled', 'interrupted'].includes(pr.analysisStatus ?? '') ? '重试分析' : '分析'
+            const group = analysisGroup(pr.analysisStatus)
+            const rowRunning = group === 'running'
+            const rowLabel = analyzingNumber === pr.number ? '提交中…' : rowRunning ? '分析中…' : group === 'failed' ? '重试分析' : '分析'
             return <article className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-border-soft bg-card p-3" key={pr.number}>
               <div className="grid min-w-0 flex-1 gap-1">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -235,27 +258,18 @@ export function ProjectPullRequests({ repositoryId, modelId, onPageChange, navig
                 </> : <a className="text-xs text-accent underline-offset-2 hover:underline" href={pr.url} target="_blank" rel="noreferrer">在 GitHub 核对</a>}
               </div>
             </article>
-          })}</div> : <p className="py-8 text-center text-sm text-muted-foreground">{"当前范围没有 PR"}</p>}
+          })}</div> : <p className="py-8 text-center text-sm text-muted-foreground">{rows.length ? '本页没有符合分析状态的 PR' : '当前范围没有 PR'}</p>}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-3">
-            <span>{result.checkedAt ? `检查于 ${displayTime(result.checkedAt)}` : '尚未检查远端'}{rows.length ? ` · 本页 ${rows.length} 个` : ''}{result.hasMore ? ' · 还有更多页' : ''}{state === 'closed' ? ' · 已结束含已合并' : ''}</span>
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>{result.checkedAt ? `同步于 ${displayTime(result.checkedAt)}` : '尚未同步远端'}</span>
+              <span role="status">{analysisFilter === 'all' ? `本页 ${rows.length} 个` : `本页显示 ${visible.length} / ${rows.length} 个`}</span>
+            </span>
             {page > 1 || result.hasMore ? <nav className="flex items-center gap-2" aria-label="PR 分页"><Button size="sm" disabled={busy || page <= 1} onClick={() => setPage(v => v - 1)} variant="outline" type="button">上一页</Button><span>第 {page} 页</span><Button size="sm" disabled={busy || !result.hasMore} onClick={() => setPage(v => v + 1)} variant="outline" type="button">下一页</Button></nav> : null}
           </div>
         </div> : null}
-      </div>
-
-      {result?.supported ? <aside className="grid min-w-0 content-start gap-2 rounded-md border border-border-soft bg-card p-3" aria-label="待处理 PR">
-        <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">待处理 PR</h2><span className="text-xs text-foreground-4">{pendingRows.length} 个</span></div>
-        <p className="text-xs text-foreground-3">分析中 {summary.running} · 失败 {summary.failed} · 未分析 {summary.none}</p>
-        <div className="grid gap-1.5">
-          {pendingRows.length === 0 ? <p className="py-4 text-center text-xs text-foreground-3">没有待处理 PR</p> : pendingRows.map(pr => <Button variant="ghost" key={pr.number} type="button" className="h-auto min-w-0 w-full block whitespace-normal rounded-sm border border-border-soft bg-card p-2 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => { if (result.owner && result.name) navigate({ name: 'pr-work', repositoryId, owner: result.owner, repositoryName: result.name, number: pr.number }) }}>
-            <span className="block truncate text-sm font-medium text-foreground"><b className="font-mono text-xs text-foreground-3">#{pr.number}</b> {pr.title}</span>
-            <span className="mt-0.5 block text-xs text-foreground-3">{pr.analysisStatus ? analysisLabel[pr.analysisStatus] ?? pr.analysisStatus : '尚无分析'}{pr.modelId ? ` · ${modelName(pr.modelId)}` : ''}{pr.maxRisk != null ? ` · 最高 ${pr.maxRisk.toFixed(3)}` : ''} · {displayTime(pr.updatedAt)}</span>
-          </Button>)}
-        </div>
-      </aside> : null}
     </div>
 
-    <Dialog open={trackingOpen} onOpenChange={setTrackingOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${620}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"PR 自动分析"}</DialogTitle></DialogHeader><PRTrackingPanel repositoryId={repositoryId} onTracking={setTracking}/></DialogContent></Dialog>
+    <Dialog open={trackingOpen} onOpenChange={setTrackingOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${620}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>PR 自动打分设置</DialogTitle></DialogHeader><PRTrackingPanel repositoryId={repositoryId} onTracking={setTracking}/></DialogContent></Dialog>
     <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${440}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"取消这次批量分析？"}</AlertDialogTitle><AlertDialogDescription>{"将停止提交后续条目；已入队的单 PR 任务继续执行并保留结果。"}</AlertDialogDescription></AlertDialogHeader><div className="flex justify-end gap-2">
         <Button onClick={() => setCancelOpen(false)} variant="outline" type="button">返回</Button>
         <Button variant='destructive' onClick={() => void cancelBatch()} disabled={Boolean(cancelBusy)} type="button">{cancelBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认取消</Button>

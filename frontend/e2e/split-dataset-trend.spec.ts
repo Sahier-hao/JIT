@@ -64,13 +64,13 @@ test('large repository builds a dataset, trains with a preset, and renders verif
   const project = await projectResponse.json()
 
   await page.goto(`/#/projects/${project.repositoryId}`)
-  await page.getByRole('button', { name: '构建数据集' }).click()
-  const buildDialog = page.getByRole('dialog', { name: '从当前项目构建数据集' })
+  await page.getByRole('link', { name: '在我的数据中构建' }).click()
+  const buildDialog = page.getByRole('dialog', { name: '从仓库构建数据集' })
   await expect(buildDialog).toBeVisible()
-  await buildDialog.getByLabel('数据集构建分支').fill('main')
+  await buildDialog.getByLabel('构建分支').fill('main')
   await buildDialog.getByRole('button', { name: '开始构建' }).click()
   await expect(buildDialog.getByText('已完成', { exact: true })).toBeVisible({ timeout: 120_000 })
-  await expect(buildDialog.getByText(/不会自动训练或替换当前模型/)).toBeVisible()
+  await expect(buildDialog.getByRole('button', { name: '查看数据' })).toBeVisible()
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/dataset-build-complete-1280.png`, fullPage: true })
 
   const builds = await (await request.get(
@@ -116,16 +116,12 @@ test('large repository builds a dataset, trains with a preset, and renders verif
   expect(training.splitPreset).toBe('temporal-80-10-10')
   expect(training.splitPolicy.id).toBe('temporal-80-10-10')
 
-  const startResponsePromise = page.waitForResponse(response =>
-    response.url().endsWith('/api/v1/repository-syncs')
-    && response.request().method() === 'POST'
-    && response.ok())
-  await page.goto(`/#/projects/${project.repositoryId}`)
-  await page.getByRole('button', { name: '发起分析' }).first().click()
-  await page.getByLabel('模型来源').selectOption('train')
-  await page.getByLabel('时间切分预设').selectOption('temporal-80-10-10')
-  await page.getByRole('button', { name: '开始分析' }).click()
-  const sync = await (await startResponsePromise).json()
+  // 通过兼容接口生成一条自训旧结果，覆盖历史趋势的冻结分区展示。
+  const startResponse = await request.post('/api/v1/repository-syncs', {
+    data: { repositoryUrl: LARGE_REPOSITORY.replaceAll('\\', '/'), strategy: 'force-train', splitPreset: 'temporal-80-10-10' },
+  })
+  expect(startResponse.ok()).toBeTruthy()
+  const sync = await startResponse.json()
   const completedSync = await waitTask(request, `/api/v1/repository-syncs/${sync.syncId}`, 300_000)
   expect(completedSync.modelStrategy).toBe('repository-trained')
   expect(completedSync.splitPreset).toBe('temporal-80-10-10')

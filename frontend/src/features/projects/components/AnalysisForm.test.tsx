@@ -19,38 +19,13 @@ it('explains the administrator default and blocks a saved disabled selection unt
     { modelId: 'lr', name: '逻辑回归', method: 'lr', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
     { modelId: 'dt', name: '决策树', method: 'dt', state: 'ready', enabled: false, isDefault: false, repositoryPredictionSupported: false },
   ] }), { status: 200 }))
-  render(<AnalysisForm repositoryUrl="https://github.com/example/policy" initial={{ modelId: 'dt', strategy: 'generic-model' }} onStarted={vi.fn()}/>);
+  render(<AnalysisForm repositoryUrl="https://github.com/example/policy" initial={{ modelId: 'dt' }} onStarted={vi.fn()}/>);
   expect(await screen.findByRole('option', { name: '使用默认模型：逻辑回归' })).toBeInTheDocument()
   expect(await screen.findByText(/原选模型已停用或不可用/)).toBeVisible()
   expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
   expect(fetch.mock.calls.every(([, options]) => options?.method !== 'POST')).toBe(true)
-  await userEvent.setup().selectOptions(screen.getByLabelText('模型来源'), 'auto')
+  await userEvent.setup().selectOptions(screen.getByLabelText('模型来源'), 'default')
   expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled()
-})
-
-it('offers available training methods and sends the selected algorithm', async () => {
-  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
-    if (options?.method === 'POST') return new Response('{}', { status: 422 })
-    if (String(path).includes('/training-methods')) return new Response(JSON.stringify({
-      schema: 'kamei14-git-v2',
-      methods: [
-        { method: 'logistic-regression-l2-v1', name: '逻辑回归 · L2', label: '逻辑回归', category: 'classic', available: true, supportedSchema: true, requires: [], reason: null },
-        { method: 'mlp-v1', name: 'MLP', label: 'MLP', category: 'deep', available: false, supportedSchema: true, requires: ['torch'], reason: '缺少依赖：torch' },
-      ],
-    }), { status: 200 })
-    return new Response(JSON.stringify({ models: [
-      { modelId: 'lr', name: '逻辑回归', method: 'logistic-regression-l2-v1', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
-    ] }), { status: 200 })
-  })
-  render(<AnalysisForm repositoryUrl="https://github.com/example/method" onStarted={vi.fn()}/>)
-  const user = userEvent.setup()
-  const select = await screen.findByLabelText('训练方法')
-  expect(select).toHaveValue('logistic-regression-l2-v1')
-  expect(screen.getByRole('option', { name: /MLP（缺少依赖：torch）/ })).toBeDisabled()
-  await user.click(screen.getByRole('button', { name: '开始分析' }))
-  await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
-  const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!
-  expect(JSON.parse(String(call[1]?.body))).toMatchObject({ strategy: 'auto', algorithm: 'logistic-regression-l2-v1' })
 })
 
 it('offers real registered models and sends the explicitly selected model', async () => {
@@ -70,7 +45,7 @@ it('offers real registered models and sends the explicitly selected model', asyn
   expect(JSON.parse(String(call[1]?.body))).toMatchObject({ modelId: 'dt', strategy: 'generic-model' })
 })
 
-it('uses the administrator default without sending a training algorithm', async () => {
+it('scores with the displayed default model and omits all training settings', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
     if (options?.method === 'POST') return new Response('{}', { status: 202 })
     if (String(path).includes('/training-methods')) return new Response(JSON.stringify({
@@ -85,14 +60,17 @@ it('uses the administrator default without sending a training algorithm', async 
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/default" onStarted={vi.fn()}/>)
   const user = userEvent.setup()
-  await user.selectOptions(await screen.findByLabelText('模型来源'), 'default')
+  expect(await screen.findByRole('option', { name: '使用默认模型：决策树' })).toBeInTheDocument()
+  expect(screen.queryByLabelText('训练方法')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('时间切分预设')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('标签成熟策略')).not.toBeInTheDocument()
+  expect(screen.queryByRole('option', { name: /自动.*训练|训练新模型/ })).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
   const call = fetch.mock.calls.find(([, options]) => options?.method === 'POST')!
   const body = JSON.parse(String(call[1]?.body))
-  expect(body).toMatchObject({ strategy: 'generic-model' })
-  expect(body).not.toHaveProperty('algorithm')
-  expect(body).not.toHaveProperty('modelId')
+  expect(body).toEqual({ strategy: 'generic-model', repositoryUrl: 'https://github.com/example/default', modelId: 'dt' })
+  expect(fetch.mock.calls.some(([path]) => String(path).includes('/training-methods'))).toBe(false)
 })
 
 it('opens a read-only model card without changing the selected model or draft', async () => {

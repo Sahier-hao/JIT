@@ -83,6 +83,45 @@ it('shows real batch progress and retries only failed items', async () => {
   await user.click(screen.getByRole('button', { name: '仅重试失败项' }))
   await waitFor(() => expect(fetch.mock.calls.some(([path, init]) => String(path).endsWith('/retry') && init?.method === 'POST' && JSON.parse(String(init.body)).kind === 'failed')).toBe(true))
 })
+it('submits a limited batch from the PR toolbar and preserves the chosen model on retry', async () => {
+  const submitted: unknown[] = []
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, init) => {
+    const url = new URL(String(path), 'http://localhost')
+    if (url.pathname.endsWith('/pull-requests/count')) return response({ count: 10 })
+    if (url.pathname.endsWith('/pull-requests/analyze')) {
+      submitted.push(JSON.parse(String(init?.body)))
+      if (submitted.length === 1) return response({ error: { code: 'TEMP', message: '暂时无法提交批次', requestId: 'fixture' } }, 503)
+      return response(prBatch({ modelId: 'model-new', scope: { kind: 'limit', limit: 2 } }), 202)
+    }
+    if (url.pathname.endsWith('/pull-request-batches/latest')) {
+      return response(submitted.length === 2 ? prBatch({ modelId: 'model-new' }) : null)
+    }
+    if (url.pathname.endsWith('/repository-models')) return response({ models: modelChoices })
+    if (url.pathname.endsWith('/pull-requests')) return response(prPage())
+    return response(tracking())
+  })
+  render(<ProjectPullRequests repositoryId={PROJECT} modelId="model-original" navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '批量分析 PR' }))
+  const dialog = await screen.findByRole('dialog', { name: '批量分析 PR' })
+  expect(await within(dialog).findByText(/开放 PR 共 10 个/)).toBeVisible()
+  await user.click(within(dialog).getByRole('combobox', { name: '批量分析模型' }))
+  await user.click(await screen.findByRole('option', { name: /新默认模型/ }))
+  await user.click(within(dialog).getByRole('combobox', { name: '批量分析范围' }))
+  await user.click(await screen.findByRole('option', { name: '前 N 个开放 PR' }))
+  const limit = within(dialog).getByRole('spinbutton', { name: '批量分析数量' })
+  await user.clear(limit)
+  await user.type(limit, '2')
+  const submit = within(dialog).getByRole('button', { name: '提交批量分析' })
+  await user.click(submit)
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('暂时无法提交批次')
+  await user.click(submit)
+  await waitFor(() => expect(dialog).not.toBeInTheDocument())
+  expect(submitted).toEqual(Array(2).fill({ modelId: 'model-new', scope: { kind: 'limit', limit: 2 } }))
+  expect(await screen.findByText(/模型 新默认模型/)).toBeVisible()
+  expect(fetch.mock.calls.some(([path]) => String(path).includes('/repository-syncs'))).toBe(false)
+})
+
 it('submits a single unanalyzed PR with the project model', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path) => {
     if (String(path).includes('pull-request-batches')) return response(null)
@@ -146,21 +185,38 @@ it('does not silently substitute a disabled fixed model and pauses without sendi
   await waitFor(() => expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(true))
   expect(JSON.parse(String(fetch.mock.calls.find(([, init]) => init?.method === 'PATCH')?.[1]?.body))).toEqual({ enabled: false })
 })
-it('keeps only pending pull requests in the side rail', async () => {
+it('filters analysis status in the main list with page-local counts', async () => {
   const completed = { ...prPage().pullRequests[0] }
   const failed = { ...completed, number: 13, title: '失败的分析', analysisStatus: 'failed' }
   const pending = { ...completed, number: 14, title: '等待分析', analysisStatus: null }
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).includes('pull-request-batches') ? response(null) : response(prPage({ pullRequests: [completed, failed, pending] })))
   render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
-  const rail = await screen.findByRole('complementary', { name: '待处理 PR' })
-  expect(within(rail).getByText(/#13/)).toBeVisible()
-  expect(within(rail).getByText(/#14/)).toBeVisible()
-  expect(within(rail).queryByText(/#12/)).not.toBeInTheDocument()
-  expect(within(rail).getByText('失败 1 · 未分析 1', { exact: false })).toBeVisible()
+  await screen.findByRole('heading', { name: '#13 失败的分析' })
+  const filter = await screen.findByRole('combobox', { name: '本页分析状态' })
+  expect(screen.queryByRole('complementary', { name: '待处理 PR' })).not.toBeInTheDocument()
+  const user = userEvent.setup()
+  await user.selectOptions(filter, 'failed')
+  expect(screen.getByRole('heading', { name: '#13 失败的分析' })).toBeVisible()
+  expect(screen.queryByRole('heading', { name: '#14 等待分析' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: '#12 修复边界' })).not.toBeInTheDocument()
+  expect(screen.getByText('本页显示 1 / 3 个')).toBeVisible()
+  await user.selectOptions(filter, 'all')
+  expect(screen.getByRole('heading', { name: '#14 等待分析' })).toBeVisible()
 })
-it('shows an empty pending rail when every pull request is analyzed', async () => {
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).includes('pull-request-batches') ? response(null) : response(prPage()))
+it('keeps pagination available when the status filter is empty on this page', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const url = new URL(String(path), 'http://localhost')
+    if (url.pathname.includes('pull-request-batches')) return response(null)
+    const page = Number(url.searchParams.get('page')) || 1
+    const pr = prPage().pullRequests[0]
+    return response(prPage({ page, hasMore: page === 1, pullRequests: [page === 1 ? pr : { ...pr, analysisStatus: null }] }))
+  })
   render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
-  const rail = await screen.findByRole('complementary', { name: '待处理 PR' })
-  expect(within(rail).getByText('没有待处理 PR')).toBeVisible()
+  const user = userEvent.setup()
+  await screen.findByRole('heading', { name: '#12 修复边界' })
+  await user.selectOptions(await screen.findByRole('combobox', { name: '本页分析状态' }), 'unscored')
+  expect(screen.getByText('本页没有符合分析状态的 PR')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '下一页' }))
+  expect(await screen.findByRole('heading', { name: '#12 修复边界' })).toBeVisible()
+  expect(screen.getByRole('combobox', { name: '本页分析状态' })).toHaveValue('unscored')
 })

@@ -247,12 +247,12 @@ it('filters datasets by branch or PR origin', async () => {
     return Response.json({})
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'datasets' }} navigate={vi.fn()}/>)
-  expect(await screen.findByRole('heading', { name: 'branch-set' })).toBeVisible()
-  expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+  expect(await screen.findByRole('link', { name: /branch-set/ })).toBeVisible()
+  expect(screen.getByRole('link', { name: /mp-scikit-learn/ })).toBeVisible()
   expect(modelRequested).toBe(false)
-  await userEvent.setup().click(screen.getByText('PR 分析'))
-  await waitFor(() => expect(screen.queryByRole('heading', { name: 'branch-set' })).not.toBeInTheDocument())
-  expect(screen.getByRole('heading', { name: 'mp-scikit-learn' })).toBeVisible()
+  await userEvent.setup().click(screen.getByRole('radio', { name: 'PR 采集' }))
+  expect(screen.queryByRole('link', { name: /branch-set/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /mp-scikit-learn/ })).toBeVisible()
 })
 
 it('previews and confirms PR dataset cleanup', async () => {
@@ -269,11 +269,39 @@ it('previews and confirms PR dataset cleanup', async () => {
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: TASK.datasetVersion }} navigate={vi.fn()}/>)
   const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '清理 PR 版本' }))
   await user.click(await screen.findByRole('button', { name: '预览可清理版本' }))
   await screen.findByText(/old-pr/)
   await user.click(screen.getByRole('button', { name: '清理 1 个版本' }))
   await user.click(screen.getByRole('button', { name: '确认清理' }))
   await waitFor(() => expect(fetch.mock.calls.some(([path, init]) => String(path).endsWith('/api/admin/datasets/prune') && init?.method === 'POST')).toBe(true))
+})
+
+it('searches older versions and keeps the directory beside a fixed version link', async () => {
+  const older = { ...DATASET.versions[0], version: 'older-2023', timeRange: { start: '2023-01-01', end: '2023-12-31' } }
+  const similar = { ...older, version: 'older-2023-ab12' }
+  const navigate = vi.fn()
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(String(path))
+    if (auth) return auth
+    if (String(path).endsWith('/api/v1/datasets')) {
+      return Response.json({ datasets: [{ ...DATASET, versions: [older, similar, DATASET.versions[0]] }] })
+    }
+    return Response.json({})
+  })
+  const { rerender } = render(<AdminWorkspace route={{ name: 'admin', view: 'datasets' }} navigate={navigate}/>)
+  const user = userEvent.setup()
+  await user.type(await screen.findByRole('textbox', { name: '搜索数据集' }), 'older-2023')
+  await user.click(screen.getByRole('link', { name: /mp-scikit-learn/ }))
+  const selected = { name: 'admin', view: 'datasets', resourceId: DATASET.dataset, version: older.version } as const
+  expect(navigate).toHaveBeenCalledWith(selected)
+  rerender(<AdminWorkspace route={selected} navigate={navigate}/>)
+  expect(screen.getByRole('combobox', { name: '数据集版本' })).toHaveTextContent(older.version)
+  expect(screen.getByRole('navigation', { name: '数据集列表' })).toBeVisible()
+  expect(fetch.mock.calls.some(([path]) => /training-methods|split-preview/.test(String(path)))).toBe(false)
+  rerender(<AdminWorkspace route={{ ...selected, version: 'missing-version' }} navigate={navigate}/>)
+  expect(await screen.findByRole('heading', { name: '找不到这个版本' })).toBeVisible()
+  expect(screen.queryByRole('button', { name: '用于训练' })).not.toBeInTheDocument()
 })
 
 it('creates a training task from a dataset detail page', async () => {
@@ -304,15 +332,22 @@ it('creates a training task from a dataset detail page', async () => {
     return Response.json(DATASET)
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: 'mp-scikit-learn', version: TASK.datasetVersion }} navigate={navigate}/>)
-  expect(await screen.findByText('4300 / 4210', {}, { timeout: 3000 })).toBeVisible()
-  expect(screen.getByText('1301')).toBeVisible()
+  expect(await screen.findByText('4,300')).toBeVisible()
+  expect(screen.getByText('1,301')).toBeVisible()
   expect(screen.getByText('特征为提交级聚合')).toBeVisible()
-  expect(screen.getByRole('heading', { name: '标签与 SZZ' })).toBeVisible()
+  const user = userEvent.setup()
+  const audit = screen.getByText('标签回溯明细').closest('details')
+  expect(audit).not.toHaveAttribute('open')
+  await user.click(screen.getByText('标签回溯明细'))
   expect(screen.getByText('修复提交')).toBeVisible()
   expect(screen.getByText('证据对数')).toBeVisible()
-  expect(screen.getByText('修复信号')).toBeVisible()
-  expect(screen.getByText('Issue 查询')).toBeVisible()
-  await userEvent.setup().click(screen.getByRole('button', { name: '创建训练任务' }))
+  expect(screen.getByText('修复信号 · Issue')).toBeVisible()
+  expect(screen.getByText('Issue 查询成功')).toBeVisible()
+  expect(screen.queryByLabelText('训练方法')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: '用于训练' }))
+  const submit = await screen.findByRole('button', { name: '创建训练任务' })
+  await waitFor(() => expect(submit).toBeEnabled())
+  await user.click(submit)
   await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'training', resourceId: TASK.taskId }))
 })
 
@@ -325,7 +360,7 @@ it('shows model metrics and compares two models without declaring a winner', asy
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     const auth = session(String(path))
     if (auth) return auth
-    if (String(path).endsWith('/api/v1/models')) return Response.json({ models, methods: [], readiness: READINESS })
+    if (String(path).endsWith('/api/v1/models?view=registered')) return Response.json({ models, methods: [], readiness: READINESS })
     if (String(path).includes('/api/v1/models/m1')) return Response.json(detail(models[0]))
     if (String(path).includes('/api/v1/models/m2')) return Response.json(detail(models[1]))
     return Response.json({ candidates: [] })
@@ -458,8 +493,9 @@ it('creates a multi-method experiment with per-method parameters', async () => {
     return Response.json({})
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'datasets', resourceId: DATASET.dataset, version: TASK.datasetVersion }} navigate={navigate}/>)
-  const panel = (await screen.findByText('多方法实验')).closest('section') as HTMLElement
   const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '用于训练' }))
+  await user.click(screen.getByRole('radio', { name: '多方法实验' }))
   await waitFor(() => expect(screen.getByRole('checkbox', { name: /逻辑回归/ })).toBeEnabled())
   await user.click(screen.getByRole('checkbox', { name: /逻辑回归/ }))
   await user.click(screen.getByRole('checkbox', { name: /决策树/ }))
@@ -470,5 +506,4 @@ it('creates a multi-method experiment with per-method parameters', async () => {
   await waitFor(() => expect(navigate).toHaveBeenCalledWith({
     name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId,
   }))
-  expect(panel).toBeTruthy()
 })

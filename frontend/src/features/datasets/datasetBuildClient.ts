@@ -119,16 +119,6 @@ export async function getDatasetBuild(repositoryId: string, taskId: string, sign
   }), repositoryId)
 }
 
-export async function listDatasetBuilds(repositoryId: string, signal?: AbortSignal) {
-  const id = encodeURIComponent(repositoryId)
-  const value = record(await apiRequest({
-    path: `/api/v1/repositories/${id}/dataset-builds?limit=20&offset=0`,
-    method: 'GET',
-    signal,
-  }))
-  return recordList(value.tasks).map(item => parseDatasetBuild(item, repositoryId))
-}
-
 export async function cancelDatasetBuild(repositoryId: string, taskId: string) {
   const id = encodeURIComponent(repositoryId)
   return parseDatasetBuild(await apiRequest({

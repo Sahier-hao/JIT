@@ -3,6 +3,7 @@ import json
 import sys
 import tempfile
 import threading
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -262,6 +263,14 @@ class TrainingTaskStorage:
                     task_id,
                 ),
             ).rowcount == 1
+
+    def record_history(self, task_id, history):
+        with self.storage.connection(write=True) as db:
+            db.execute(
+                "UPDATE training_task SET history_json=?,updated_at=? "
+                "WHERE id=? AND status='running' AND cancel_requested_at IS NULL",
+                (json.dumps(history, ensure_ascii=False, allow_nan=False), utc_now(), task_id),
+            )
 
     def cancel(self, task_id):
         with self.storage.connection(write=True) as db:
@@ -807,6 +816,21 @@ class TrainingTaskService:
                     extra["params"] = overrides
             # 多方法实验只产出并校验运行；显式登记由管理员在实验登记页完成。
             extra["register"] = item["experiment_id"] is None
+            if self._runner is None:
+                extra["include_threshold_preview"] = True
+            if self._runner is None and get_algorithm(item["algorithm"])["category"] == "deep":
+                last_report = None
+
+                def publish_history(history):
+                    nonlocal last_report
+                    now = time.monotonic()
+                    if (last_report is None or now - last_report >= 1
+                            or len(history["entries"]) == history["epochs"]):
+                        self.tasks.record_history(
+                            task_id, dict(history, complete=False, method=item["algorithm"]))
+                        last_report = now
+
+                extra["history_callback"] = publish_history
             result = runner(
                 manifest_path,
                 item["algorithm"],

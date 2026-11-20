@@ -61,12 +61,15 @@ test('空仓标准初始化后九个仓库内置模型直接可见', async ({ pa
   await page.goto('/#/admin/models')
   await expect(page.getByRole('heading', { name: '模型管理', exact: true }))
     .toBeVisible({ timeout: 30000 })
+  await page.getByRole('button', { name: '查看产物诊断' }).click()
+  await expect(page.getByText('9 个已登记', { exact: true })).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('9 个用户可选', { exact: true })).toBeVisible()
+  await page.getByRole('tab', { name: '模型包' }).click()
   const packagePanel = page.getByLabel('模型包交付')
   await expect(packagePanel).toContainText('导入完成', { timeout: 30000 })
   await expect(packagePanel).toContainText(evidence.packageSha256)
-  await expect(page.getByText('9 个已登记', { exact: true })).toBeVisible()
-  await expect(page.getByText('9 个用户可选', { exact: true })).toBeVisible()
-  await expect(page.getByLabel('数据集与方法训练覆盖')).toBeVisible()
+  await page.getByRole('tab', { name: '训练覆盖' }).click()
+  await expect(page.getByLabel('数据集与方法训练覆盖')).toBeVisible({ timeout: 30000 })
 
   for (const [width, height] of [[1280, 720], [1440, 900], [390, 844]] as const) {
     await page.setViewportSize({ width, height })

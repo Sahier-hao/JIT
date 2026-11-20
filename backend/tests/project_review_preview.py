@@ -25,6 +25,7 @@ from jit_baseline.catalog import ModelCatalog
 from jit_baseline.catalog_storage import CatalogStorage
 from jit_baseline.collect import collect_repository
 from jit_baseline.config import BACKEND
+from jit_baseline.dataset_builds import DatasetBuildService
 from jit_baseline.sync import SyncService
 
 URL = 'https://github.com/preview/project'
@@ -85,8 +86,9 @@ def build_preview(parent):
 
     service = SyncService(storage, catalog, dataset_root=room / 'datasets', artifact_root=root,
                           collect_fn=collect)
+    builds = DatasetBuildService(storage, room / 'datasets', collect_fn=collect)
     app = create_app(database=storage.path, artifact_root=root, sync_service=service,
-                     dataset_root=room / 'datasets')
+                     dataset_root=room / 'datasets', dataset_build_service=builds)
 
     def overview_request(path):
         if path.endswith('/languages'):
@@ -117,6 +119,8 @@ def build_preview(parent):
             raise BaselineError('PR_SOURCE_UNAVAILABLE', '验收模拟：公开来源暂时不可用')
         parsed, index = urlparse(path), state['index']
         query = parse_qs(parsed.query)
+        if parsed.path == '/search/issues' and query.get('q') == ['repo:preview/project type:pr state:open']:
+            return {'total_count': int(state['remoteState'] == 'open')}
         if '/compare/' in path:
             return dict(status='ahead')
         if '/contents/' in path:
@@ -186,3 +190,4 @@ if __name__ == '__main__':
         uvicorn.run(application, host='127.0.0.1', port=options.port)
     finally:
         sync.close()
+        application.state.dataset_builds.close()

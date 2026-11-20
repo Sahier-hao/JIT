@@ -5,7 +5,7 @@ import { ApiError } from '@/lib/apiContract'
 import { formatDate } from '@/features/admin/adminContracts'
 import { fetchMultiProjectReports, type MultiProjectReportStatus, type MultiProjectReportSummary } from '@/features/admin/multiProjectReportContracts'
 import { fetchEvaluationEvidence, type EvaluationEvidenceEntry, type EvidenceStatus } from '@/features/admin/evaluationEvidenceClient'
-import { EmptyState } from '@/components/shared/Feedback'
+
 import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 import type { Route } from '@/app/navigation'
@@ -49,15 +49,18 @@ export function AdminExperimentsPage({ navigate, expired }: {
   const [evidence, setEvidence] = useState<EvaluationEvidenceEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [evidenceLoading, setEvidenceLoading] = useState(true)
+  const [evidenceError, setEvidenceError] = useState('')
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
-    Promise.all([fetchMultiProjectReports(controller.signal), fetchEvaluationEvidence(controller.signal)])
-      .then(([result, items]) => {
+    setEvidenceLoading(true)
+    fetchMultiProjectReports(controller.signal)
+      .then(result => {
         if (controller.signal.aborted) return
-        setReports(result.reports); setEvidence(items); setError('')
+        setReports(result.reports); setError('')
       })
       .catch(failure => {
         if (controller.signal.aborted) return
@@ -65,17 +68,21 @@ export function AdminExperimentsPage({ navigate, expired }: {
         else setError(failure instanceof Error ? failure.message : '多项目实验报告读取失败')
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    fetchEvaluationEvidence(controller.signal)
+      .then(items => { if (!controller.signal.aborted) { setEvidence(items); setEvidenceError('') } })
+      .catch(failure => {
+        if (controller.signal.aborted) return
+        if (failure instanceof ApiError && failure.status === 401) expired()
+        else setEvidenceError(failure instanceof Error ? failure.message : '评价证据读取失败')
+      })
+      .finally(() => { if (!controller.signal.aborted) setEvidenceLoading(false) })
     return () => controller.abort()
   }, [expired, revision])
 
-  if (loading) return <section className="grid gap-4"><AdminPageHeader title="多项目实验" onRefresh={() => setRevision(value => value + 1)}/><CardListSkeleton label="正在读取多项目实验报告" rows={4}/></section>
-  if (error && !reports.length) return <EmptyState title="多项目实验报告不可用" description={error}>
-    <Button onClick={() => setRevision(value => value + 1)} variant="outline" type="button">重试</Button>
-  </EmptyState>
   return <section>
     <AdminPageHeader title="多项目实验" onRefresh={() => setRevision(value => value + 1)}/>
     <ErrorNotice>{error}</ErrorNotice>
-    {!reports.length ? <p className="text-xs text-foreground-3">报告目录中没有多项目实验报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
+    {!reports.length ? loading ? <CardListSkeleton label="正在读取多项目实验报告" rows={3}/> : error ? null : <p className="text-xs text-foreground-3">报告目录中没有多项目实验报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
       <TableHeader><TableRow><TableHead>生成时间</TableHead><TableHead>状态</TableHead><TableHead>方法与口径</TableHead><TableHead>项目</TableHead><TableHead>失败</TableHead><TableHead>来源</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
       <TableBody>{reports.map(report => <TableRow key={report.reportId}>
         <TableCell>{formatDate(report.generatedUtc)}</TableCell>
@@ -89,7 +96,8 @@ export function AdminExperimentsPage({ navigate, expired }: {
     </Table></div>}
     <section aria-label="评价证据">
       <h2>评价证据</h2>
-      {!evidence.length ? <p className="text-xs text-foreground-3">固定目录中没有评价矩阵或候选集报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
+      <ErrorNotice>{evidenceError}</ErrorNotice>
+      {!evidence.length ? evidenceLoading ? <CardListSkeleton label="正在读取评价证据" rows={1}/> : evidenceError ? null : <p className="text-xs text-foreground-3">固定目录中没有评价矩阵或候选集报告。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
         <TableHeader><TableRow><TableHead>类型</TableHead><TableHead>状态</TableHead><TableHead>事实</TableHead><TableHead>内容 SHA-256</TableHead><TableHead>来源</TableHead></TableRow></TableHeader>
         <TableBody>{evidence.map(entry => <TableRow key={entry.evidenceId}>
           <TableCell>{EVIDENCE_KINDS[entry.kind] ?? entry.kind}</TableCell>

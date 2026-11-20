@@ -14,10 +14,22 @@ from ...auth.dependencies import require_admin
 from ...catalog_input import read_object
 from ...core.api_errors import RequestError
 from ...core.config import BACKEND
+from ...errors import BaselineError
 from ...ml import curation
 from ...ml.split_preview import dataset_split_preview
 from ...storage import store
 from ..schemas.common import SharingResponse, SharingUpdate
+
+
+def require_trainable_dataset(registry_root, dataset_version):
+    """Shared data must be usable for the same split/training path shown to users."""
+    try:
+        preview = dataset_split_preview(registry_root, dataset_version)
+    except BaselineError as exc:
+        raise RequestError(exc.code) from exc
+    if not preview.get('available'):
+        raise RequestError('DATASET_NOT_TRAINABLE')
+    return preview
 
 
 def install_admin_routes(app, *, storage, registry_root, dataset_root, dataset_module,
@@ -104,6 +116,8 @@ def install_admin_routes(app, *, storage, registry_root, dataset_root, dataset_m
         manifest = dataset_module.load_all(registry_root).get(dataset_version)
         if manifest is None:
             raise RequestError('NOT_FOUND')
+        if payload.shared:
+            await run_in_threadpool(require_trainable_dataset, registry_root, dataset_version)
         if payload.shared and storage.dataset(dataset_version) is None:
             manifest_path = Path(manifest['manifestPath'])
             if not manifest_path.is_absolute():

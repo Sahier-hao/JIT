@@ -8,7 +8,7 @@ import { CalendarDays, ChevronRight, Database, FlaskConical, KeyRound, Layers3, 
 import { useEffect, useState, type FormEvent } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  changeUserPassword, updateUserProfile, userExperiments, userModels, userProfile,
+  changeUserPassword, linkUserGitHub, updateUserProfile, userExperiments, userModels, userProfile,
   type UserModel, type UserProfile,
 } from '@/features/account/userClient'
 import type { TrainingExperiment } from '@/features/admin/adminContracts'
@@ -55,6 +55,7 @@ function ProfileSettings({ onLoginRequired, navigate, onClose }: {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState('')
+  const [githubBusy, setGithubBusy] = useState(false)
   const [tab, setTab] = useState('overview')
 
   useEffect(() => {
@@ -115,6 +116,22 @@ function ProfileSettings({ onLoginRequired, navigate, onClose }: {
     }
   }
 
+  async function connectGitHub() {
+    setGithubBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const result = await linkUserGitHub()
+      setProfile(value => value ? { ...value, github: result } : value)
+      setNotice(result.login ? `GitHub 已关联：@${result.login}` : 'GitHub 关联已检测')
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
+      else setError(failure instanceof Error ? failure.message : 'GitHub 关联失败')
+    } finally {
+      setGithubBusy(false)
+    }
+  }
+
   const name = profile?.displayName || profile?.username || ''
   const readyModels = models.filter(modelReady).length
   return <>
@@ -151,6 +168,20 @@ function ProfileSettings({ onLoginRequired, navigate, onClose }: {
               <span className="flex items-center justify-between text-xs text-foreground-3">查看记录<ChevronRight aria-hidden="true" size={14}/></span>
             </button>)}
           </div>
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft bg-card px-3 py-3">
+            <div className="grid min-w-0 gap-0.5">
+              <span className="text-sm font-medium text-foreground">GitHub 关联</span>
+              <span className="text-xs text-foreground-3">
+                {profile.github.connected
+                  ? (profile.github.login ? `已关联 @${profile.github.login}，可读取有权限的私有仓库。` : '已检测到 GitHub 授权，可读取有权限的私有仓库。')
+                  : '私有仓库的 PR 同步前需要先关联 GitHub。'}
+              </span>
+            </div>
+            <Button type="button" variant="outline" size="sm" disabled={githubBusy} onClick={() => void connectGitHub()}>
+              {githubBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}
+              {profile.github.connected ? '检测账号' : '关联 GitHub'}
+            </Button>
+          </section>
           <section className="grid gap-2">
             <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">最近训练</h2><Button type="button" variant="ghost" size="sm" onClick={() => { onClose(); navigate({ name: 'my-training' }) }}>全部训练<ChevronRight aria-hidden="true"/></Button></div>
             {recent.length ? recent.map(item => <button key={item.experimentId} type="button" className="flex min-w-0 items-center justify-between gap-3 rounded-sm border border-border-soft bg-card px-3 py-2.5 text-left transition-colors hover:bg-hover" onClick={() => { onClose(); navigate({ name: 'my-training', experimentId: item.experimentId }) }}>

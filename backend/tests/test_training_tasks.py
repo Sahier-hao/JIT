@@ -434,6 +434,43 @@ def test_real_training_with_class_policy_records_summary(tmp_path):
         service.close()
 
 
+def test_isolated_deep_worker_persists_epoch_history_before_completion(storage, tmp_path):
+    service = TrainingTaskService(storage, artifact_root=tmp_path / "artifacts", timeout=90)
+    try:
+        task, _ = service.create(payload("wide-deep-v1"), created_by="admin")
+
+        def first_point():
+            current = service.get(task["taskId"])
+            if current["status"] in ("failed", "interrupted"):
+                pytest.fail(str(current.get("error")))
+            return current if current["status"] == "running" and current["trainingHistory"] else None
+
+        active = wait_for(first_point, timeout=45)
+        assert active["trainingHistory"]["complete"] is False
+        assert active["trainingHistory"]["entries"][0]["trainLoss"] > 0
+        assert active["trainingHistory"]["entries"][0]["trainEvalLoss"] > 0
+        assert active["trainingHistory"]["entries"][0]["validationLoss"] > 0
+        result = wait_for(
+            lambda: (lambda item: item if item["status"] not in ("queued", "running") else None)(
+                service.get(task["taskId"])),
+            timeout=40,
+        )
+        assert result["status"] == "succeeded", result.get("error")
+        assert result["trainingHistory"]["complete"] is True
+        history = result["trainingHistory"]
+        assert [entry["epoch"] for entry in history["entries"]] == list(range(1, history["epochs"] + 1))
+        partitions = result["metricsByPartition"]
+        validation = partitions["validation"]
+        preview = validation["thresholdPreview"]
+        default_tick = round(preview["defaultThreshold"] * 100)
+        assert preview["truePositives"][default_tick] == validation["confusion"]["tp"]
+        assert preview["falsePositives"][default_tick] == validation["confusion"]["fp"]
+        assert preview["positives"] + preview["negatives"] == validation["counts"]["records"]
+        assert "thresholdPreview" not in partitions["test"]
+    finally:
+        service.close()
+
+
 def test_parameter_overrides_are_validated_and_part_of_reuse_identity(service):
     release = threading.Event()
     service._executor.submit(release.wait)

@@ -75,6 +75,41 @@ def _create(harness, repo, **overrides):
     return view
 
 
+def test_explicit_scoring_skips_training_and_reads_saved_fix_evidence(harness, monkeypatch):
+    from jit_baseline.services import sync
+
+    def reject_split(*_args, **_kwargs):
+        pytest.fail("已有模型打分不应计算训练分区")
+
+    repo = _small_repo(harness["root"].parent)
+    service = harness["service"]
+    stages = []
+    real_step = service._step
+
+    def watch_step(sync_id, stage, started):
+        stages.append(stage)
+        return real_step(sync_id, stage, started)
+
+    monkeypatch.setattr(sync, "choose_model", reject_split)
+    monkeypatch.setattr(service, "_step", watch_step)
+    model_id = harness["catalog"].default_model_id()
+    job = _create(harness, repo, strategy="generic-model", modelId=model_id)
+    done = _wait(service, job["syncId"])
+    assert done["status"] == "completed", done["error"]
+    assert done["modelId"] == model_id and done["splitPolicy"] is None
+    assert done["trainRecords"] is None and "training" not in stages
+
+    rows = service.commits(done["syncId"])["commits"]
+    positive = next(row for row in rows if row["labelStatus"] == "positive")
+    detail = service.repository_commit(done["repositoryId"], positive["commitId"],
+                                       view_sync_id=done["syncId"])
+    assert detail["labelEvidence"]
+    assert all(len(evidence["fixCommit"]) == 40 for evidence in detail["labelEvidence"])
+    assert all(row["labelStatus"] in ("unobserved", "immature", "unknown")
+               for row in rows if row["label"] == 0)
+    service.close()
+
+
 def test_sync_degrades_to_generic_model_and_scores_commits(harness):
     repo = _small_repo(harness["root"].parent)
     view = _create(harness, repo)
@@ -102,7 +137,7 @@ def test_sync_degrades_to_generic_model_and_scores_commits(harness):
         first = commits["commits"][0]
         assert set(first) == {"commitId", "epoch", "risk", "addedLines", "deletedLines",
                                   "files", "features", "label", "labelNote", "subject", "authorName",
-                                  "partition"}
+                                  "partition", "labelStatus"}
         assert len(first["features"]) == 14
         assert first["subject"]
         detail = client.get(f"/api/v1/repository-syncs/{done['syncId']}/commits/"

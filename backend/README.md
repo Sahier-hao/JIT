@@ -590,8 +590,8 @@ PR 来源数据集默认保留最近 `JIT_PR_DATASET_KEEP`（默认 10）个版�
 2026-10-29 起，后端在原有分支同步之外增加三类服务，仍由 `create_app` lifespan 启停，维持单后端实例、单分析 worker：
 
 - `RepositoryUpdates`：分支提醒，只检查远端 HEAD；发现新 HEAD 写 `branch-updated` 事件，不创建分析。
-- `PullRequestUpdates`：项目级 PR 自动检查与入队，使用独立单线程检查 executor；`JIT_GITHUB_TOKEN` 只从服务端环境读取，仅支持公开 GitHub。
-- `RepositoryOverview` 的 GitHub 请求同样只读服务端 `JIT_GITHUB_TOKEN`。本机可先 `gh auth login`，再在启动后端前设置 `$env:JIT_GITHUB_TOKEN = & 'C:\Program Files\GitHub CLI\gh.exe' auth token`；令牌只进入进程环境，不写入仓库、数据库、浏览器或日志。
+- `PullRequestUpdates`：项目级 PR 自动检查与入队，使用独立单线程检查 executor；服务端按 `JIT_GITHUB_TOKEN`、`GITHUB_TOKEN`、`GH_TOKEN`、`gh auth token` 的顺序读取令牌。公开仓库可直接读取；私有仓库只有在有效 token 有权访问时才读取，未关联时返回 `PR_PRIVATE_REPOSITORY` 并引导用户在个人中心关联 GitHub。
+- `RepositoryOverview` 的 GitHub 请求使用同一令牌顺序。本机可先 `gh auth login`，服务会自动复用 GitHub CLI 的凭据；令牌只进入进程内存，不写入仓库、数据库、浏览器或日志。匿名额度耗尽时，已保存的 PR 快照仍可打开，新 PR 需要有效令牌或等待额度恢复。
 - `ProjectTrendService`：按请求生成或读取固定趋势视图，不加载模型、不读标签、不复制分数。
 - `RepositoryOverview`：读取并缓存公开 GitHub 元数据、语言、最近 100 条提交与最近 12 周活跃度；不加载模型、不读标签。
 

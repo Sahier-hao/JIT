@@ -13,12 +13,13 @@ const STAGES = [
 
 const ACTIVE: readonly string[] = ['queued', 'collecting', 'registering', 'training', 'scoring']
 const RUNNING: readonly string[] = ['collecting', 'registering', 'training', 'scoring']
+const SCORING_STAGES = STAGES.filter(stage => stage.key !== 'training')
 
-function stageIndex(status: SyncStatus, stage: SyncStatus) {
-  if (status === 'completed') return STAGES.length
+function stageIndex(status: SyncStatus, stage: SyncStatus, stages: ReadonlyArray<typeof STAGES[number]>) {
+  if (status === 'completed') return stages.length
   if (status === 'queued') return 0
   const current = (RUNNING.includes(status) ? status : stage) as string
-  const index = STAGES.findIndex(item => item.key === current)
+  const index = stages.findIndex(item => item.key === current)
   return index < 0 ? 0 : index
 }
 
@@ -37,12 +38,13 @@ const NODE_CLASS = {
 } as const
 
 /** 分析作业的阶段进度：排队、采集、登记、训练、评分，只展示服务端真实阶段。 */
-export function JobProgress({ status, stage, queuePosition, startedAt, compact }: {
+export function JobProgress({ status, stage, queuePosition, startedAt, compact, scoresOnly }: {
   status: SyncStatus
   stage: SyncStatus
   queuePosition?: number | null
   startedAt?: string | null
   compact?: boolean
+  scoresOnly?: boolean
 }) {
   const [tick, setTick] = useState(0)
   const running = ACTIVE.includes(status)
@@ -51,11 +53,12 @@ export function JobProgress({ status, stage, queuePosition, startedAt, compact }
     const timer = setInterval(() => setTick(value => value + 1), 1000)
     return () => clearInterval(timer)
   }, [running, startedAt])
-  const index = stageIndex(status, stage)
+  const stages = scoresOnly && status !== 'training' && stage !== 'training' ? SCORING_STAGES : STAGES
+  const index = stageIndex(status, stage, stages)
   const done = status === 'completed'
   const failed = status === 'failed'
   const stopped = status === 'cancelled' || status === 'interrupted'
-  const value = done ? 100 : index === 0 ? 0 : Math.round((index / (STAGES.length - 1)) * 100)
+  const value = done ? 100 : index === 0 ? 0 : Math.round((index / (stages.length - 1)) * 100)
   const fill = done ? '[&_[data-slot=progress-indicator]]:bg-teal' : failed ? '[&_[data-slot=progress-indicator]]:bg-rose' : stopped ? '[&_[data-slot=progress-indicator]]:bg-foreground-4' : '[&_[data-slot=progress-indicator]]:bg-accent'
   const meta = status === 'queued' && queuePosition
     ? `排队第 ${queuePosition} 位`
@@ -68,14 +71,14 @@ export function JobProgress({ status, stage, queuePosition, startedAt, compact }
     </div> : null}
     <div className="relative">
       <Progress value={value} className={cn('h-1.5 bg-strong', fill)} aria-label={compact ? `分析进度：${STATUS_LABELS[status]}` : undefined}/>
-      {STAGES.map((item, position) => {
+      {stages.map((item, position) => {
         const nodeState = done || position < index ? 'done' : failed && position === index ? 'failed' : position === index ? 'active' : 'pending'
         return <span key={item.key} className={cn('absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border', NODE_CLASS[nodeState])}
-          style={{ left: `${(position / (STAGES.length - 1)) * 100}%` }}/>
+          style={{ left: `${(position / (stages.length - 1)) * 100}%` }}/>
       })}
     </div>
     {!compact ? <div className="flex justify-between text-[11px] text-foreground-4">
-      {STAGES.map((item, position) => {
+      {stages.map((item, position) => {
         const nodeState = done || position < index ? 'done' : failed && position === index ? 'failed' : position === index ? 'active' : 'pending'
         return <span key={item.key} className={cn(nodeState === 'active' && 'font-medium text-foreground', nodeState === 'failed' && 'text-rose')}>{item.label}</span>
       })}

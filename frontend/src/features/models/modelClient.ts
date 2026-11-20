@@ -30,15 +30,16 @@ export async function repositoryModels(signal?: AbortSignal): Promise<ModelChoic
 }
 
 /** 项目可选模型：按缓存共享，避免每个组件各自请求同一列表。 */
-export function useRepositoryModels() {
+export function useRepositoryModels(enabled = true) {
   return useQuery({
     queryKey: ['repository-models'],
     queryFn: ({ signal }) => repositoryModels(signal),
     staleTime: 60_000,
+    enabled,
   })
 }
 
 export function useModelName(modelId: string | null | undefined): string | null {
-  const models = useRepositoryModels()
+  const models = useRepositoryModels(Boolean(modelId))
   return modelId ? models.data?.find(model => model.modelId === modelId)?.name ?? null : null
 }

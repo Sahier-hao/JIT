@@ -14,11 +14,12 @@ async function completeSync(request: APIRequestContext, syncId: string) {
   return job
 }
 
-async function startAnalysis(page: Page, source: 'default' | 'auto' | 'train') {
-  await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
+async function startAnalysis(page: Page) {
+  await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  await dialog.getByLabel('模型来源', { exact: true }).selectOption(source)
+  await dialog.getByLabel('模型来源', { exact: true }).selectOption('default')
+  await expect(dialog.getByLabel('时间切分预设')).toHaveCount(0)
   const response = page.waitForResponse(item => item.url().endsWith('/api/v1/repository-syncs') && item.request().method() === 'POST')
   await dialog.getByRole('button', { name: '开始分析', exact: true }).click()
   return (await response).json()
@@ -33,21 +34,29 @@ test('大型仓库完成现成模型、自动训练、强制训练和管理员�
   const project = await (await page.request.post('/api/v1/repositories', {
     data: { repositoryUrl: LARGE_REPOSITORY.replaceAll('\\', '/') },
   })).json()
-  await page.goto(`/#/projects/${project.repositoryId}`)
+  await page.goto(`/#/projects/${project.repositoryId}/analyses`)
 
-  const generic = await startAnalysis(page, 'default')
+  const generic = await startAnalysis(page)
   const genericDone = await completeSync(page.request, generic.syncId)
   expect(genericDone.modelStrategy).toBe('generic-model')
   expect(genericDone.modelId).toBeTruthy()
 
-  const automatic = await startAnalysis(page, 'auto')
+  // 旧策略只用于回归历史训练和管理员回看。项目界面只发起现成模型打分。
+  const legacyTraining = async (strategy: 'auto' | 'force-train') => {
+    const response = await page.request.post('/api/v1/repository-syncs', {
+      data: { repositoryUrl: LARGE_REPOSITORY.replaceAll('\\', '/'), strategy },
+    })
+    expect(response.ok()).toBeTruthy()
+    return response.json()
+  }
+  const automatic = await legacyTraining('auto')
   const automaticDone = await completeSync(page.request, automatic.syncId)
   expect(automaticDone.modelStrategy).toBe('repository-trained')
   expect(Number(automaticDone.trainRecords)).toBeGreaterThanOrEqual(200)
   expect(Number(automaticDone.trainPositives)).toBeGreaterThanOrEqual(20)
   expect(automaticDone.modelId).toBeTruthy()
 
-  const forced = await startAnalysis(page, 'train')
+  const forced = await legacyTraining('force-train')
   const forcedDone = await completeSync(page.request, forced.syncId)
   expect(forcedDone.modelStrategy).toBe('repository-trained')
   expect(forcedDone.modelId).toBeTruthy()
@@ -73,6 +82,7 @@ test('大型仓库完成现成模型、自动训练、强制训练和管理员�
 
   await page.goto(`/#/admin/datasets/kamei14-git-v2-e2e-large-repo/${automaticDone.datasetVersion}`)
   await expect(page.getByText('提交级聚合', { exact: false }).first()).toBeVisible({ timeout: 30000 })
+  await page.getByRole('button', { name: '用于训练', exact: true }).click()
   const trainingResponse = page.waitForResponse(item => item.url().endsWith('/api/v1/training-tasks') && item.request().method() === 'POST')
   await page.getByRole('button', { name: '创建训练任务', exact: true }).click()
   const training = await (await trainingResponse).json()

@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
-import { fetchAdminModel, fetchAdminModels, type AdminModel } from '@/features/admin/adminContracts'
+import { fetchAdminModel, fetchRegisteredAdminModels, type AdminModel } from '@/features/admin/adminContracts'
 import { EmptyState } from '@/components/shared/Feedback'
 import { CardListSkeleton } from '@/components/shared/Skeletons'
 
@@ -23,26 +23,25 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
   const [result, setResult] = useState<{ first: string; second: string; left: AdminModel; right: AdminModel } | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [retry, setRetry] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
-    fetchAdminModels(controller.signal).then(result => {
+    setLoading(true)
+    setError('')
+    fetchRegisteredAdminModels(controller.signal).then(items => {
       if (controller.signal.aborted) return
-      setModels(result.models)
-      if (!requestedFirst && !requestedSecond) {
-        const ready = result.models.filter(model => model.state === 'ready')
-        setFirst(ready[0]?.modelId ?? '')
-        setSecond(ready.find(model => model.modelId !== ready[0]?.modelId)?.modelId ?? '')
-      }
+      setModels(items)
     }).catch(failure => {
       if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) expired()
       else setError(failure instanceof Error ? failure.message : '模型列表读取失败')
     }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
-  }, [expired, requestedFirst, requestedSecond])
+  }, [expired, retry])
   useEffect(() => {
     if (!first || !second || first === second) return
     const controller = new AbortController()
+    setError('')
     Promise.all([fetchAdminModel(first, controller.signal), fetchAdminModel(second, controller.signal)])
       .then(([a, b]) => { if (!controller.signal.aborted) { setResult({ first, second, left: a, right: b }); setError('') } })
       .catch(failure => {
@@ -53,7 +52,11 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
     return () => controller.abort()
   }, [first, second, expired])
   if (loading) return <section className="grid gap-4"><AdminPageHeader title="模型比较"/><CardListSkeleton label="正在读取可比模型" rows={3}/></section>
-  if (error && !models.length) return <EmptyState title="模型比较不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'models' })} variant="outline" type="button">返回模型列表</Button></EmptyState>
+  if (error && !models.length) return <EmptyState title="模型比较不可用" description={error}><Button onClick={() => setRetry(value => value + 1)} variant="outline" type="button">重新读取</Button></EmptyState>
+  if (models.length < 2) return <section className="grid gap-4">
+    <AdminPageHeader title="模型比较"/>
+    <EmptyState title="至少需要两个已登记模型"><Button onClick={() => navigate({ name: 'admin', view: 'models' })} variant="outline" type="button">返回模型管理</Button></EmptyState>
+  </section>
   const comparison = result?.first === first && result.second === second ? result : null
   const left = comparison?.left ?? null
   const right = comparison?.right ?? null
@@ -64,7 +67,9 @@ export function AdminComparisonPage({ modelIds = [], navigate, expired }: {
       <Select value={first == null ? '' : String(first)} onValueChange={nextValue => (setFirst)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="模型 A"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(options).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
       <Select value={second == null ? '' : String(second)} onValueChange={nextValue => (setSecond)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="模型 B"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(options).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
     </div>
-    {first && !second ? <p className="text-xs text-foreground-3" role="status">请选择模型 B 进行比较。</p> : null}
+    {!first || !second ? <p className="text-xs text-foreground-3" role="status">选择两个模型查看对比。</p> : first === second
+      ? <p className="text-xs text-foreground-3" role="status">请选择两个不同的模型。</p>
+      : !comparison && !error ? <p className="text-xs text-foreground-3" role="status">正在读取模型详情…</p> : null}
     {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
     {left && right ? <>
       {left.featureSchemaVersion !== right.featureSchemaVersion || left.artifactDatasetVersion !== right.artifactDatasetVersion ? <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2" role="status">两个模型的数据版本或特征 schema 不同，指标只能并列，不能据此排名。</p> : null}
