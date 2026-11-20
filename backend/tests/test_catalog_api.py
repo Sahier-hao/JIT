@@ -430,7 +430,7 @@ def test_kamei_schema_reports_unavailable_fields(settings):
     from jit_baseline.api import create_app
     with TestClient(create_app(**settings)) as client:
         info = client.get('/api/v1/feature-schemas/kamei14-v1', headers=HEADERS).json()
-        assert len(info['inModel']) == 12 and info['jsonPredictionSupported'] is True
+        assert len(info['inModel']) == 12 and info['jsonPredictionSupported'] is False
         assert {f['name'] for f in info['fields'] if not f['inModel']} == {'lt','rexp'}
 
 

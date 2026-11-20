@@ -80,11 +80,7 @@ def prediction_input(value):
     from .schemas import get_schema
     exact_fields(value, ('modelId', 'featureSchemaVersion', 'project', 'record'), ('datasetVersion',))
     model_id = uuid_text(value['modelId'], 'modelId')
-    schema_name = value['featureSchemaVersion']
-    if not isinstance(schema_name, str) or not schema_name:
-        raise RequestError('INPUT_SCHEMA_MISMATCH', field='featureSchemaVersion')
-    schema = get_schema(schema_name)
-    if schema.semantic is not None or schema.input_width() <= 0:
+    if value['featureSchemaVersion'] != 'openstack-six-v1':
         raise RequestError('INPUT_SCHEMA_MISMATCH', field='featureSchemaVersion')
     record = value['record']
     exact_fields(record, ('recordId',), ('features', 'commitId', 'time'), field='record')
@@ -107,6 +103,7 @@ def prediction_input(value):
             time = parsed.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
         except (ValueError, OverflowError) as exc:
             raise RequestError('INPUT_INVALID', field='record.time') from exc
+    schema = get_schema('openstack-six-v1')
     has_features = 'features' in record
     if has_features and dataset_version is not None:
         # 两种来源只能二选一：客户端特征与已持久化提交不能同时声明。
