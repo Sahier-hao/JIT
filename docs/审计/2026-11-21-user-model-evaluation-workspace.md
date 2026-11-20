@@ -29,6 +29,7 @@
 - `frontend`：`npm run lint` 通过，保留仓库既有的 React effect/fast-refresh 警告；新增文件未产生错误。
 - `vscode-extension`：`npm test`，7 tests passed。
 - `backend`：对改动文件运行 Ruff，全部通过。
+- `backend/scripts/regression_scope.py --layer key` 通过；新增用户预测、清洗和 ZIP 导入测试已纳入 key 层。
 - `git diff --check` 通过（仅提示 Windows 换行转换）。
 - `openspec validate "add-user-model-evaluation-workspace" --strict` 通过；归档后四个变更能力的主规格 strict 校验通过。
 - OpenSpec change 已归档为 `openspec/changes/archive/2026-11-21-add-user-model-evaluation-workspace/`，主规格同步 4 个新增要求、7 个修改要求。
