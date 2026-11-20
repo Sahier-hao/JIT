@@ -23,7 +23,7 @@
 
 - `backend`：`python -m pytest tests/test_user_predictions.py -q`，3 passed。
 - `backend`：`python -m pytest tests/test_curation.py::test_preview_derive_and_compare_keep_source_unchanged -q`，1 passed。
-- `frontend`：`npx vitest run src/features/predictions/predictionPage.test.tsx src/features/training/algorithmLibrary.test.tsx src/app/userWorkspace.test.tsx src/app/routeTable.test.ts src/app/workspaceRoutes.test.ts`，5 files、117 tests passed。
+- `frontend`：聚焦测试 5 files、117 tests passed；完整 `npm test` 68 files、581 tests passed。
 - `frontend`：`npm run typecheck`、`npm run check:api-types` 通过。
 - `frontend`：`npm run build` 通过；`npm run check:styles` 与 `npm run check:modules` 通过。
 - `frontend`：`npm run lint` 通过，保留仓库既有的 React effect/fast-refresh 警告；新增文件未产生错误。
@@ -38,6 +38,7 @@
 - 当前执行机没有安装 `torch`，`test_catalog_api` 中依赖现场重建冻结运行的 fixture 与 `test_curation.py::test_derived_version_can_train` 无法在本机完成；这不是新增用户预测测试的失败。完整回归工作流会安装 CPU PyTorch 后运行这些用例。
 - 本机未启动 VS Code 扩展宿主，未重复执行 `scripts/smoke.js`；本轮验证覆盖扩展编译、报告解析和命令生成单测，VSIX 打包由 CI 工作流验证。
 - 未运行真实浏览器端到端旅程；本轮用户页面验证为组件/路由测试加类型检查与构建检查。
+- 管理端数据集详情改为按需检查训练准入，浏览旧版本不再自动请求训练方法或切分预览。
 
 ## 交付边界
 
