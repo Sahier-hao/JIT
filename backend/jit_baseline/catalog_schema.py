@@ -22,7 +22,7 @@ def schema_info(name):
     schema = get_schema(name)
     return {'featureSchemaVersion': schema.name, 'state': 'ready',
             'schemaSha256': identity(_identity_claims(schema)), 'inModel': list(schema.in_model_names()),
-            'jsonPredictionSupported': name == 'openstack-six-v1',
+            'jsonPredictionSupported': schema.semantic is None and schema.input_width() > 0,
             'fields': [{'name': field.name, 'type': 'boolean' if field.binary else
                         'integer' if field.integer else 'number',
                         'unit': '发布者原生单位', 'description': field.reason or field.name,

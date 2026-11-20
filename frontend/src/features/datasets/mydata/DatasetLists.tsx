@@ -6,7 +6,7 @@ import type { UserDataset } from '@/features/account/userClient'
 import type { DatasetBuildTask } from '@/features/datasets/datasetBuildClient'
 import {
   BUILD_ACTIVE, BUILD_RETRYABLE, BUILD_STAGE_LABELS, BUILD_STATUS_LABELS,
-  numberText, repositoryLabel, timestampLabel, usageLabel,
+  datasetTitle, numberText, repositoryLabel, timestampLabel, usageLabel,
 } from '@/features/datasets/mydata/format'
 
 export function DatasetRowList({ items, selected, onSelect }: {
@@ -29,16 +29,14 @@ export function DatasetRowList({ items, selected, onSelect }: {
         onClick={() => onSelect(item.version)}>
         {active ? <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-accent" aria-hidden="true"/> : null}
         <span className="flex items-start justify-between gap-2">
-          <strong className="min-w-0 truncate text-sm font-medium text-foreground">{item.dataset}</strong>
+          <strong className="min-w-0 truncate text-sm font-medium text-foreground">{datasetTitle(item)}</strong>
           <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-foreground-4">
-            {numberText(item.quality.includedRows)}
+            {numberText(item.quality.includedRows)} 行
             {active ? <ChevronRight aria-hidden="true" size={13}/> : null}
           </span>
         </span>
         <span className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-foreground-3">
-          <span>{usageLabel(item.usage)}</span>
-          <span className="text-foreground-4">·</span>
-          <span>{numberText(item.quality.includedRows)} 行</span>
+          <span>{usageLabel(item.usage, item)}</span>
           <span className="text-foreground-4">·</span>
           <span>{numberText(item.quality.positiveLabels)} 正例</span>
         </span>

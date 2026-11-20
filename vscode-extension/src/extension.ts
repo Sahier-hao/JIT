@@ -7,6 +7,7 @@ import {
   identity, parseReport, validLine, type AnalysisCandidate, type AnalysisCommit,
   type CommitAnalysisReport, type IdentityResult,
 } from './report'
+import { buildAnalyzeCommand } from './command'
 
 const run = promisify(execFile)
 const REPORT_KEY = 'jitReport.path'
@@ -195,6 +196,39 @@ async function importReport(pathValue?: string): Promise<void> {
   catch (error) { vscode.window.showErrorMessage(`导入失败：${error instanceof Error ? error.message : String(error)}`) }
 }
 
+async function input(title: string, value?: string, prompt?: string): Promise<string | undefined> {
+  return vscode.window.showInputBox({ title, value, prompt, ignoreFocusOut: true })
+}
+
+async function copyAnalyzeCommand(): Promise<void> {
+  const folder = workspaceFolder()?.uri.fsPath ?? process.cwd()
+  const backend = await input('后端目录', `${folder}/backend`)
+  if (backend === undefined) return
+  const python = await input('Python 可执行文件', process.platform === 'win32' ? 'python' : 'python3')
+  if (python === undefined) return
+  const base = await input('基准提交', 'HEAD~10')
+  if (base === undefined) return
+  const head = await input('目标提交', 'HEAD')
+  if (head === undefined) return
+  const modelId = await input('已登记模型 ID', '', '从管理工作区的模型详情复制真实 modelId')
+  if (modelId === undefined) return
+  const database = await input('目录库路径', `${backend}/storage/catalog.sqlite3`)
+  if (database === undefined) return
+  const artifactRoot = await input('模型产物根目录', `${backend}/artifacts`)
+  if (artifactRoot === undefined) return
+  const output = await input('报告输出路径', `${folder}/jit-report.json`)
+  if (output === undefined) return
+  try {
+    const command = buildAnalyzeCommand({
+      backend, python, repo: folder, base, head, modelId, database, artifactRoot, output,
+    })
+    await vscode.env.clipboard.writeText(command)
+    vscode.window.showInformationMessage('报告生成命令已复制。请在后端 Python 环境运行，再用「JIT: 导入提交分析报告」导入结果。')
+  } catch (error) {
+    vscode.window.showErrorMessage(`无法生成命令：${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): {
   importReport: (path: string) => Promise<void>
   getState: () => object
@@ -215,6 +249,7 @@ export function activate(context: vscode.ExtensionContext): {
       await context.workspaceState.update(REPORT_KEY, undefined)
       tree.refresh()
     }),
+    vscode.commands.registerCommand('jitReport.copyGenerateCommand', copyAnalyzeCommand),
     vscode.commands.registerCommand('jitReport.openCommit', async (commit: AnalysisCommit) => {
       const first = commit.filePaths[0]
       if (!first) { vscode.window.showInformationMessage('该提交没有可打开的文件路径。'); return }

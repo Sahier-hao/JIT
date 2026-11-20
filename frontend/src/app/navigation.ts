@@ -6,9 +6,10 @@ export type Route =
   | { name: 'landing' }
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
-  | { name: 'my-data'; view?: 'builds'; taskId?: string; buildProjectId?: string }
+  | { name: 'my-data'; view?: 'builds' | 'imports'; taskId?: string; buildProjectId?: string }
   | { name: 'my-training'; experimentId?: string; datasetVersion?: string }
   | { name: 'my-models' }
+  | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
   | { name: 'profile' }
   | { name: 'research-line' }
   | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string; mode?: 'preview' }
@@ -68,12 +69,18 @@ export function parseHash(hash: string): Route {
     if (path === '/my-data') return {
       name: 'my-data',
       ...(params.get('view') === 'builds' ? { view: 'builds' as const } : {}),
+      ...(params.get('view') === 'imports' ? { view: 'imports' as const } : {}),
       ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
       ...(params.get('buildProjectId') ? { buildProjectId: params.get('buildProjectId')! } : {}),
     }
     if (path === '/my-training') return { name: 'my-training', ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}) }
     if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
     if (path === '/my-models') return { name: 'my-models' }
+    if (path === '/my-predictions') return {
+      name: 'my-predictions',
+      ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}),
+    }
+    if (parts[0] === 'my-predictions' && parts.length === 2) return { name: 'my-predictions', batchId: parts[1] }
     if (path === '/profile') return { name: 'profile' }
     if (path === '/research/line-model') return { name: 'research-line' }
     if (path === '/notifications') return { name: 'notifications' }
@@ -137,7 +144,7 @@ export function hashFor(route: Route): string {
     case 'my-reviews': return '#/reviews'
     case 'my-data': {
       const params = new URLSearchParams()
-      if (route.view === 'builds') params.set('view', 'builds')
+      if (route.view) params.set('view', route.view)
       if (route.taskId) params.set('taskId', route.taskId)
       if (route.buildProjectId) params.set('buildProjectId', route.buildProjectId)
       return params.size ? `#/my-data?${params}` : '#/my-data'
@@ -147,6 +154,12 @@ export function hashFor(route: Route): string {
       return route.datasetVersion ? `#/my-training?datasetVersion=${encodeURIComponent(route.datasetVersion)}` : '#/my-training'
     }
     case 'my-models': return '#/my-models'
+    case 'my-predictions': {
+      if (route.batchId) return `#/my-predictions/${encodeURIComponent(route.batchId)}`
+      return route.datasetVersion
+        ? `#/my-predictions?datasetVersion=${encodeURIComponent(route.datasetVersion)}`
+        : '#/my-predictions'
+    }
     case 'profile': return '#/profile'
     case 'research-line': return '#/research/line-model'
     case 'pr-work': {

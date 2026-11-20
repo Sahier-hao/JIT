@@ -31,6 +31,7 @@ const ProjectEvents = lazy(() => import('@/features/projects/components/ProjectA
 const MyDataPage = lazy(() => import('@/features/datasets/pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
 const MyTrainingPage = lazy(() => import('@/features/training/pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
 const MyModelsPage = lazy(() => import('@/features/models/pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
+const MyPredictionsPage = lazy(() => import('@/features/predictions/pages/MyPredictionsPage').then(module => ({ default: module.MyPredictionsPage })))
 const LandingPage = lazy(() => import('@/features/account/pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('@/features/account/pages/LoginPage').then(module => ({ default: module.LoginPage })))
 const LineResearchPage = lazy(() => import('@/features/research/pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
@@ -81,9 +82,12 @@ function Workspace() {
   if (route.name === 'my-reviews') content = <PersonalWorks key={`${account ?? ''}:reviews`} navigate={navigate}/>
   else if (route.name === 'pr-work') content = route.snapshotId ? <FixedPRSnapshot key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.snapshotId}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} snapshotId={route.snapshotId} navigate={navigate}/> : <PullRequestWork key={`${account ?? ''}:${route.repositoryId ?? ''}:${route.owner}/${route.repositoryName}/${route.number}`} owner={route.owner} repositoryName={route.repositoryName} number={route.number} repositoryId={route.repositoryId} preview={route.mode === 'preview'} navigate={navigate}/>
   else if (route.name === 'notifications') content = <ProjectEvents navigate={navigate}/>
-  else if (route.name === 'my-data') content = <MyDataPage key={account} navigate={navigate} onLoginRequired={requestLogin} initialTab={route.view} initialTaskId={route.taskId} buildProjectId={route.buildProjectId}/>
+  else if (route.name === 'my-data') content = <MyDataPage key={account} account={session.username} navigate={navigate} onLoginRequired={requestLogin}
+    initialTab={route.view === 'builds' ? 'builds' : undefined} initialTaskId={route.view !== 'imports' ? route.taskId : undefined}
+    importHistory={route.view === 'imports'} importTaskId={route.view === 'imports' ? route.taskId : undefined} buildProjectId={route.buildProjectId}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={`${route.experimentId ?? 'list'}:${route.datasetVersion ?? ''}`} experimentId={route.experimentId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-predictions') content = <MyPredictionsPage key={`${route.batchId ?? 'new'}:${route.datasetVersion ?? ''}`} batchId={route.batchId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'profile') content = <ProjectsPage navigate={navigate}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>

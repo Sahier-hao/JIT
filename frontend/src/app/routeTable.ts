@@ -17,7 +17,8 @@ function loginRoute(query: URLSearchParams): Route {
 }
 
 function myDataRoute(query: URLSearchParams): Route {
-  const view = query.get('view') === 'builds' ? 'builds' as const : undefined
+  const requested = query.get('view')
+  const view = requested === 'builds' || requested === 'imports' ? requested : undefined
   const taskId = text(query.get('taskId'))
   const buildProjectId = text(query.get('buildProjectId'))
   return { name: 'my-data', ...(view ? { view } : {}), ...(taskId ? { taskId } : {}), ...(buildProjectId ? { buildProjectId } : {}) }
@@ -89,6 +90,11 @@ export const ROUTES: RouteObject[] = [
   }) },
   { path: '/my-training/:experimentId', handle: build(params => ({ name: 'my-training', experimentId: params.experimentId })) },
   { path: '/my-models', handle: build(() => ({ name: 'my-models' })) },
+  { path: '/my-predictions', handle: build((_params, query) => {
+    const datasetVersion = text(query.get('datasetVersion'))
+    return { name: 'my-predictions', ...(datasetVersion ? { datasetVersion } : {}) }
+  }) },
+  { path: '/my-predictions/:batchId', handle: build(params => ({ name: 'my-predictions', batchId: params.batchId })) },
   { path: '/profile', handle: build(() => ({ name: 'profile' })) },
   { path: '/research/line-model', handle: build(() => ({ name: 'research-line' })) },
   { path: '/notifications', handle: build(() => ({ name: 'notifications' })) },

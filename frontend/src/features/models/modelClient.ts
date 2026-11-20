@@ -3,8 +3,34 @@ import { record, recordList, text } from '@/lib/apiContract'
 import { useQuery } from '@tanstack/react-query'
 
 export interface ModelChoice { modelId: string; name: string; method: string; state: string; featureSchemaVersion?: string; repositoryPredictionSupported: boolean; enabled: boolean; isDefault: boolean }
-export interface MethodParam { name: string; type: 'int' | 'float'; min: number; max: number; default: number | null }
-export interface MethodChoice { method: string; name: string; label: string; category: string; available: boolean; supportedSchema: boolean; reason: string | null; requires: string[]; params: MethodParam[] }
+export interface MethodParam {
+  name: string
+  label: string
+  description: string
+  type: 'int' | 'float'
+  min: number
+  max: number
+  default: number | null
+}
+export interface MethodGuide {
+  summary: string
+  strengths: string[]
+  tradeoffs: string[]
+  whenToUse: string
+}
+export interface MethodChoice {
+  method: string
+  name: string
+  label: string
+  category: string
+  available: boolean
+  supportedSchema: boolean
+  reason: string | null
+  requires: string[]
+  detail: string
+  guide: MethodGuide
+  params: MethodParam[]
+}
 export async function trainingMethods(schema?: string, signal?: AbortSignal): Promise<{ schema: string; methods: MethodChoice[] }> {
   const query = schema ? `?schema=${encodeURIComponent(schema)}` : ''
   const body = record(await apiRequest({ path: `/api/v1/training-methods${query}`, method: 'GET', signal }))
@@ -15,8 +41,20 @@ export async function trainingMethods(schema?: string, signal?: AbortSignal): Pr
       available: raw.available === true, supportedSchema: raw.supportedSchema === true,
       reason: raw.reason == null ? null : text(raw.reason),
       requires: Array.isArray(raw.requires) ? raw.requires.map(item => text(item)) : [],
+      detail: raw.detail == null ? '' : text(raw.detail),
+      guide: (() => {
+        const guide = raw.guide == null ? {} : record(raw.guide)
+        return {
+          summary: guide.summary == null ? '' : text(guide.summary),
+          strengths: Array.isArray(guide.strengths) ? guide.strengths.map(item => text(item)) : [],
+          tradeoffs: Array.isArray(guide.tradeoffs) ? guide.tradeoffs.map(item => text(item)) : [],
+          whenToUse: guide.whenToUse == null ? '' : text(guide.whenToUse),
+        }
+      })(),
       params: Array.isArray(raw.params) ? recordList(raw.params).map(param => ({
         name: text(param.name),
+        label: param.label == null ? text(param.name) : text(param.label),
+        description: param.description == null ? '' : text(param.description),
         type: text(param.type) === 'int' ? 'int' : 'float',
         min: Number(param.min), max: Number(param.max),
         default: typeof param.default === 'number' ? param.default : null,

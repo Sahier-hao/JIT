@@ -16,7 +16,7 @@ from ..artifacts import Snapshot, check_reference_predictions, environment, read
 from .. import budget as review_budget
 
 from ..config import BACKEND
-from ..data import BaselineError, sha256
+from ..data import BaselineError, review_cost, sha256
 from ..metrics import normalized_effort_area
 from ..model import predict_risks
 
@@ -80,7 +80,7 @@ def _load(run_dir):
         if (isinstance(risk, bool) or not isinstance(risk, (int, float))
                 or not 0 <= risk <= 1):
             raise BaselineError('ARTIFACT_INVALID', '收益评估风险必须为 0 到 1 的有限数')
-        cost = record['metrics']['la'] + record['metrics']['ld']
+        cost = review_cost(record)
         if not isinstance(cost, (int, float)) or cost < 0:
             raise BaselineError('ARTIFACT_INVALID', '收益评估工作量无效')
         evaluation.append(dict(record, label=value, risk=float(risk), cost=cost))

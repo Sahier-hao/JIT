@@ -29,7 +29,11 @@ def test_training_method_catalog_exposes_schema_and_dependency_status(settings):
         methods = {item['method']: item for item in body['methods']}
         assert {'logistic-regression-l2-v1', 'decision-tree-v1'} <= set(methods)
         assert methods['logistic-regression-l2-v1']['available'] is True
-        assert {'category', 'requires', 'supportedSchema', 'reason'} <= set(methods['decision-tree-v1'])
+        assert {'category', 'requires', 'supportedSchema', 'reason', 'detail',
+                'preprocess', 'explanation', 'guide', 'params'} <= set(methods['decision-tree-v1'])
+        guide = methods['decision-tree-v1']['guide']
+        assert guide['summary'] and guide['strengths'] and guide['tradeoffs'] and guide['whenToUse']
+        assert methods['decision-tree-v1']['params'][0]['label']
         assert client.get('/api/v1/training-methods?schema=missing', headers=HEADERS).status_code == 422
 
 
@@ -426,7 +430,7 @@ def test_kamei_schema_reports_unavailable_fields(settings):
     from jit_baseline.api import create_app
     with TestClient(create_app(**settings)) as client:
         info = client.get('/api/v1/feature-schemas/kamei14-v1', headers=HEADERS).json()
-        assert len(info['inModel']) == 12 and info['jsonPredictionSupported'] is False
+        assert len(info['inModel']) == 12 and info['jsonPredictionSupported'] is True
         assert {f['name'] for f in info['fields'] if not f['inModel']} == {'lt','rexp'}
 
 

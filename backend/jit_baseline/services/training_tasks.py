@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ..algorithms import get_algorithm, param_specs, resolve_params
-from ..catalog import ModelCatalog
+from ..catalog import ModelCatalog, OFFLINE_SCHEMAS, REPOSITORY_SCHEMAS
 from ..catalog_storage import CatalogStorage, utc_now
 from ..config import BACKEND
 from ..data import BaselineError, sha256
@@ -26,6 +26,7 @@ ACTIVE = ("queued", "running")
 TERMINAL = ("succeeded", "failed", "cancelled", "interrupted")
 RETRYABLE = ("failed", "cancelled", "interrupted")
 TRAINING_TIMEOUT = 1800
+TRAINING_SCHEMAS = (*REPOSITORY_SCHEMAS, *OFFLINE_SCHEMAS, "kamei14-v1")
 
 COLUMNS = (
     "id", "dataset_version", "dataset_manifest", "manifest_sha256", "algorithm",
@@ -460,9 +461,7 @@ class TrainingTaskService:
                  parent_task_id=None, class_policy=None, split_preset=None, params=None,
                  maturity_policy="mature-only", experiment_id=None, owner_user_id=None):
         dataset, path, digest = self._dataset(dataset_version)
-        if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
-                                          "kamei14-git-v1", "kamei14-git-v2",
-                                          "kamei14-benchmark-v1"):
+        if dataset["schemaName"] not in TRAINING_SCHEMAS:
             raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
         maturity_policy = resolve_policy(maturity_policy)
         validate_dataset_split(self.dataset_root, dataset_version, split_preset,
@@ -678,9 +677,7 @@ class TrainingTaskService:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
             dataset, path, digest = self._dataset(dataset_version)
-            if dataset["schemaName"] not in ("openstack-six-v1", "kamei14-v1",
-                                              "kamei14-git-v1", "kamei14-git-v2",
-                                              "kamei14-benchmark-v1"):
+            if dataset["schemaName"] not in TRAINING_SCHEMAS:
                 raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
             validate_dataset_split(self.dataset_root, dataset_version, split_preset,
                                    maturity_policy)

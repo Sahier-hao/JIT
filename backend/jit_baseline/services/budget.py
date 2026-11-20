@@ -72,7 +72,7 @@ def prepare(records):
     for record in records:
         if "metrics" in record:
             metrics = record.get("metrics") or {}
-            cost = metrics.get("la", 0) + metrics.get("ld", 0)
+            cost = (metrics.get("la", 0) + metrics.get("ld", 0)) * record.get("costScale", 1)
         else:
             cost = record.get("cost", 0)
         if isinstance(cost, bool) or not isinstance(cost, (int, float)) or not math.isfinite(cost) or cost < 0:

@@ -24,13 +24,15 @@ cd backend
   --output ../report.json --markdown ../report.md
 ```
 
-2. 安装扩展：`code --install-extension vscode-extension/jit-commit-analysis-0.1.0.vsix --force`
+也可在资源管理器「JIT 提交分析」视图点击「JIT: 复制报告生成命令」，按提示填写基准/目标提交、真实模型 ID、目录库和产物根目录；扩展只复制命令，不执行命令。运行后把生成的 `jit-report.json` 通过「JIT: 导入提交分析报告」导入。
+
+2. 安装扩展：`code --install-extension vscode-extension/jit-commit-analysis-0.2.0.vsix --force`
    （开发调试也可在 VS Code 打开 `vscode-extension/` 后按 F5 启动扩展宿主。）
 3. 用 VS Code 打开被分析仓库的根目录，在资源管理器「JIT 提交分析」视图点击「JIT: 导入提交分析报告」，选择 `report.json`。
 4. 点提交或候选条目跳转到文件；报告目标提交与当前 `HEAD` 不一致时只读展示并拒绝定位。
 
 ## 验证范围
 
-- `npm test`：报告格式、路径越界拒绝、身份 match/stale/unknown、行号边界。
-- 扩展宿主冒烟：`node scripts/smoke.js`（需本机安装 VS Code，可设 `JIT_VSCODE_EXE`）实际加载并激活扩展，确认 5 个命令注册并执行只读命令。
+- `npm test`：报告格式、路径越界拒绝、身份 match/stale/unknown、行号边界与命令生成校验。
+- 扩展宿主冒烟：`node scripts/smoke.js`（需本机安装 VS Code，可设 `JIT_VSCODE_EXE`）实际加载并激活扩展，确认 6 个命令注册并执行只读命令。
 - 未做：报告在真实大型仓库中的逐条跳转巡览；导入过期报告后文件内容变化的完整人工旅程。

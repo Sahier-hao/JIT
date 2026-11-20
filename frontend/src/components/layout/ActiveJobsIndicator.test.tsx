@@ -33,3 +33,15 @@ it('lets the user choose between simultaneous jobs', async () => {
   await user.click(await screen.findByRole('menuitem', { name: /训练 · demo-2024/ }))
   expect(navigate).toHaveBeenCalledWith({ name: 'my-training', experimentId: 'experiment-1' })
 })
+
+it('shows measured import progress and reopens the matching task', async () => {
+  const navigate = vi.fn()
+  const route = { name: 'my-data', view: 'imports', taskId: 'import-1' } as const
+  render(<ActiveJobsIndicator navigate={navigate} jobs={[{
+    id: 'import:1', kind: 'import', label: '导入 · jit.zip', detail: '写入数据 · 1/2',
+    progress: 50, route,
+  }]}/>)
+  expect(screen.getByRole('progressbar', { name: '数据集导入进度' })).toHaveAttribute('aria-valuenow', '50')
+  await userEvent.setup().click(screen.getByRole('button', { name: '返回导入任务：导入 · jit.zip' }))
+  expect(navigate).toHaveBeenCalledWith(route)
+})

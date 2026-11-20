@@ -4,10 +4,10 @@
 方法以具名条目声明类别、冻结超参、所需依赖、复现口径与解释口径；校验按运行声明的
 方法比对超参，不再与模块级常量比较；方法标识由 schema 与方法共同决定。
 """
+import importlib.util
+
 from ..config import MODEL_CONFIG
 from ..errors import BaselineError
-
-import importlib.util
 
 CLASSIC = "classic"
 DEEP = "deep"
@@ -163,27 +163,97 @@ PARAMETER_CONTRACT = "training-params-v1"
 # 值声明类型（int/float）与闭区间 [min, max]；不支持任意 estimator 或表达式。
 PARAM_SPECS = {
     "logistic-regression-l2-v1": {
-        "C": {"type": "float", "min": 0.01, "max": 100.0},
-        "max_iter": {"type": "int", "min": 100, "max": 5000},
+        "C": {"type": "float", "min": 0.01, "max": 100.0,
+              "label": "正则强度倒数 C", "description": "值越大限制越弱；先围绕 1 调整。"},
+        "max_iter": {"type": "int", "min": 100, "max": 5000,
+                     "label": "最大迭代次数", "description": "不足时训练可能不收敛；不要用它代替调参。"},
     },
     "decision-tree-v1": {
-        "max_depth": {"type": "int", "min": 1, "max": 32},
-        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000},
+        "max_depth": {"type": "int", "min": 1, "max": 32,
+                      "label": "最大深度", "description": "越大越容易记住训练集噪声。"},
+        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000,
+                             "label": "叶节点最少样本", "description": "增大后树更保守、叶子更少。"},
     },
     "random-forest-v1": {
-        "n_estimators": {"type": "int", "min": 10, "max": 1000},
-        "max_depth": {"type": "int", "min": 1, "max": 32},
-        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000},
+        "n_estimators": {"type": "int", "min": 10, "max": 1000,
+                         "label": "树数量", "description": "更多树通常更稳定，但训练和加载更慢。"},
+        "max_depth": {"type": "int", "min": 1, "max": 32,
+                      "label": "最大深度", "description": "控制单棵树复杂度。"},
+        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000,
+                             "label": "叶节点最少样本", "description": "增大后减少小样本叶子。"},
     },
     "gradient-boosting-v1": {
-        "n_estimators": {"type": "int", "min": 10, "max": 1000},
-        "max_depth": {"type": "int", "min": 1, "max": 16},
-        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000},
+        "n_estimators": {"type": "int", "min": 10, "max": 1000,
+                         "label": "提升轮数", "description": "轮数越多拟合越强，也更容易过拟合。"},
+        "max_depth": {"type": "int", "min": 1, "max": 16,
+                      "label": "单树深度", "description": "通常保持较小，再观察验证集变化。"},
+        "min_samples_leaf": {"type": "int", "min": 1, "max": 5000,
+                             "label": "叶节点最少样本", "description": "降低噪声叶子的影响。"},
     },
     "mlp-v1": {
-        "epochs": {"type": "int", "min": 1, "max": 200},
-        "lr": {"type": "float", "min": 1e-5, "max": 1e-1},
-        "batch_size": {"type": "int", "min": 16, "max": 2048},
+        "epochs": {"type": "int", "min": 1, "max": 200,
+                   "label": "训练轮数", "description": "结合验证损失判断是否继续。"},
+        "lr": {"type": "float", "min": 1e-5, "max": 1e-1,
+               "label": "学习率", "description": "过大可能震荡，过小则收敛慢。"},
+        "batch_size": {"type": "int", "min": 16, "max": 2048,
+                       "label": "批大小", "description": "受内存与训练稳定性约束。"},
+    },
+}
+
+ALGORITHM_GUIDES = {
+    "logistic-regression-l2-v1": {
+        "summary": "线性基线，按特征加权后输出风险分。",
+        "strengths": ["训练快、稳定", "系数和归因容易解释"],
+        "tradeoffs": ["难以自动表达复杂交互", "需要标准化"],
+        "whenToUse": "先建立可比基线，或数据量较小、需要稳定上线时。",
+    },
+    "decision-tree-v1": {
+        "summary": "用一组阈值规则递归划分提交。",
+        "strengths": ["规则直观", "不需要标准化"],
+        "tradeoffs": ["单树方差大", "容易拟合训练集噪声"],
+        "whenToUse": "需要快速理解规则形状，或作为树集成方法的对照。",
+    },
+    "random-forest-v1": {
+        "summary": "多棵随机决策树投票，降低单树波动。",
+        "strengths": ["对异常值较稳健", "通常比单树泛化好"],
+        "tradeoffs": ["模型更大", "参数和训练时间随树数增加"],
+        "whenToUse": "表格特征存在非线性关系、又不想引入深度依赖时。",
+    },
+    "gaussian-naive-bayes-v1": {
+        "summary": "假设各特征条件独立的高斯概率模型。",
+        "strengths": ["训练极快", "样本较少时可作简单对照"],
+        "tradeoffs": ["独立性假设通常不成立", "风险分可能偏激进"],
+        "whenToUse": "需要低成本基线，并明确披露独立假设时。",
+    },
+    "gradient-boosting-v1": {
+        "summary": "逐轮拟合残差的小树集成。",
+        "strengths": ["常能捕捉非线性与交互", "表格任务表现稳健"],
+        "tradeoffs": ["训练更慢", "轮数和深度需要谨慎控制"],
+        "whenToUse": "有足够样本和验证集，需要更强的表格模型时。",
+    },
+    "mlp-v1": {
+        "summary": "两层全连接网络，学习特征的非线性组合。",
+        "strengths": ["表达能力强", "可按 epoch 观察训练"],
+        "tradeoffs": ["依赖 torch", "对学习率和轮数更敏感"],
+        "whenToUse": "经典模型已建立基线，且环境具备深度依赖时。",
+    },
+    "tabular-resnet-v1": {
+        "summary": "带残差连接的表格网络。",
+        "strengths": ["较深网络更容易优化", "适合连续表格特征"],
+        "tradeoffs": ["依赖 torch", "比线性模型更难复现和解释"],
+        "whenToUse": "需要深度模型对照，并接受更长训练时间时。",
+    },
+    "ft-transformer-v1": {
+        "summary": "把每个字段当作 token 的表格 Transformer。",
+        "strengths": ["可学习字段间交互", "结构适合特征集合"],
+        "tradeoffs": ["依赖 torch", "小数据上不一定优于树模型"],
+        "whenToUse": "样本量较大，且希望研究字段交互建模时。",
+    },
+    "wide-deep-v1": {
+        "summary": "线性宽塔与多层深塔并联。",
+        "strengths": ["兼顾线性记忆与非线性表达", "结构清晰"],
+        "tradeoffs": ["依赖 torch", "参数量与调参成本更高"],
+        "whenToUse": "需要深度方法对照，同时保留线性分量时。",
     },
 }
 
@@ -310,6 +380,9 @@ def method_catalog(schema):
         result.append({
             'method': name, 'name': entry['name'], 'label': entry['label'],
             'category': entry['category'], 'requires': list(entry['requires']),
+            'detail': entry['detail'], 'preprocess': list(entry['preprocess']),
+            'explanation': dict(entry['explanation']),
+            'guide': dict(ALGORITHM_GUIDES[name]),
             'available': not missing and supported,
             'supportedSchema': supported,
             'reason': ('缺少依赖：' + '、'.join(missing)) if missing

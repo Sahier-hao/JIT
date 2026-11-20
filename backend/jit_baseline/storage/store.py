@@ -302,7 +302,7 @@ def _limitations(manifest):
     return list(declared.get("limitations") or collection.get("limitations") or [])
 
 
-def import_dataset(csv_path, manifest_path, storage):
+def import_dataset(csv_path, manifest_path, storage, *, progress=None):
     """读描述文件与原始 CSV，单事务导入提交级数据（CMP-01..CMP-06）。
 
     `csv_path` 省略时按描述文件的 `file.path` 定位（绝对路径直接使用，相对路径相对 `backend/`）。
@@ -329,6 +329,8 @@ def import_dataset(csv_path, manifest_path, storage):
             if set(record["metrics"]) != in_model:
                 raise BaselineError("DATASET_INVALID",
                                     f"提交 {record['id']} 的特征字段与 schema 声明不一致")
+        if progress:
+            return storage.import_dataset(manifest, records, progress=progress)
         return storage.import_dataset(manifest, records)
     except BaselineError as exc:
         storage.record_import_failure(manifest["version"], exc.code, started)

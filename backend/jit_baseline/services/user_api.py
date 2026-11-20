@@ -1,8 +1,6 @@
 """End-user data and training API; every route is scoped to the signed-in user."""
 import io
 import json
-import re
-import tempfile
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,20 +8,22 @@ from pathlib import Path
 from fastapi import Request
 from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
+from starlette.requests import ClientDisconnect
 
 from .. import curation, datasets, store
-
 from ..catalog_input import read_object
-from ..config import BACKEND
+from ..config import BACKEND, USER_DATASET_LIMIT
 from ..data import BaselineError, sha256
-from ..schemas import resolve
+from ..schemas import KAMEI_2013_SCHEMA, resolve
 from ..split_preview import dataset_split_preview
 from ..store import dataset_references
 from ..users import current_user
+from .dataset_import_jobs import DatasetImportJobs, import_csv, upload_name
 from .pr_review import github_request, github_token
+from .published_dataset_imports import MAX_UPLOAD_BYTES, import_projects
+from .user_predictions import UserPredictionService
 
 MAX_EXPORT_BYTES = 64 * 1024 * 1024
-MAX_IMPORT_BYTES = 64 * 1024 * 1024
 
 
 def _user(request):
@@ -104,6 +104,8 @@ def _visible(storage, version, username, registry):
     if version not in registry:
         raise BaselineError('NOT_FOUND', '数据集版本未登记')
     owners = _owners(storage, version)
+    if registry[version].get('benchmark') and not owners:
+        raise BaselineError('NOT_FOUND', '数据集版本未登记')
     if owners and username not in owners:
         raise BaselineError('DATASET_FORBIDDEN', '该数据版本属于其他用户')
     return registry[version], owners
@@ -113,6 +115,7 @@ def _view(storage, manifest, version, owners, username):
     file = manifest.get('file') or {}
     fields = [field for field in (manifest.get('fields') or []) if isinstance(field, dict)]
     source = manifest.get('source') or manifest
+    benchmark = manifest.get('benchmark')
     usage = manifest.get('usage') or 'branch'
     return {
         'version': version,
@@ -122,10 +125,11 @@ def _view(storage, manifest, version, owners, username):
         'quality': manifest.get('quality'),
         'file': {'name': Path(file.get('path') or '').name, 'sha256': file.get('sha256'),
                  'bytes': file.get('bytes')},
-        'source': store._source(manifest) if manifest.get('collection') or manifest.get('source') else {
-            'publisher': source.get('publisher'), 'url': source.get('url'),
-            'revision': source.get('revision'), 'branch': source.get('branch'),
-            'head': source.get('head')},
+        'source': ({'publisher': manifest['publisher'], **benchmark} if benchmark else
+                   store._source(manifest) if manifest.get('collection') or manifest.get('source') else {
+                       'publisher': source.get('publisher'), 'url': source.get('url'),
+                       'revision': source.get('revision'), 'branch': source.get('branch'),
+                       'head': source.get('head')}),
         'fieldCount': sum(1 for field in fields if field.get('inModel') is not False),
         'fieldNames': [field.get('name') for field in fields
                        if isinstance(field.get('name'), str)],
@@ -164,31 +168,28 @@ def _portable_manifest(manifest, version):
     return portable
 
 
-def _import_name(value, username, filename):
-    """把用户输入收敛为登记允许的 ASCII 数据名；默认带上账户隔离命名。"""
-    raw = value if isinstance(value, str) and value.strip() else Path(filename).stem
-    raw = raw.lower()
-    slug = re.sub(r'[^a-z0-9._-]+', '-', raw).strip('-._')[:64]
-    if not slug:
-        slug = 'dataset'
-    if value is None or not str(value).strip():
-        account = re.sub(r'[^a-z0-9._-]+', '-', username.lower()).strip('-._') or 'user'
-        return f'import-{account}-{slug}'[:80]
-    return slug
-
-
-def _import_provenance(username, filename):
-    source = re.sub(r'[^A-Za-z0-9._-]+', '-', Path(filename).name)[:120] or 'upload.csv'
-    return {
-        'publisher': 'user-upload',
-        'revision': '0' * 40,
-        'url': f'upload://{username}/{source}',
-        'citation': '用户导入的 CSV；未提供发布者观察与成熟声明',
-    }
+async def _upload(request):
+    blob = bytearray()
+    try:
+        async for chunk in request.stream():
+            if len(chunk) > MAX_UPLOAD_BYTES - len(blob):
+                raise BaselineError('DATASET_IMPORT_TOO_LARGE', '上传文件超过 64 MiB 上限')
+            blob.extend(chunk)
+    except BaselineError:
+        raise
+    except (OSError, RuntimeError, ClientDisconnect) as exc:
+        raise BaselineError('DATASET_UNAVAILABLE', '上传文件读取失败') from exc
+    if not blob:
+        raise BaselineError('INPUT_INVALID', '上传文件为空')
+    return bytes(blob)
 
 
 def install_user_routes(app, storage, dataset_root, training_service, catalog):
     root = Path(dataset_root) if dataset_root is not None else None
+    predictions = UserPredictionService(storage, catalog)
+    imports = DatasetImportJobs(storage, root)
+    imports.recover()
+    app.state.dataset_imports = imports
 
     @app.get('/api/v1/user/profile')
     def user_profile(request: Request):
@@ -237,7 +238,7 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         username = _user(request)
         registry = _registry(root)
         supported = {'openstack-six-v1', 'kamei14-v1', 'kamei14-git-v1',
-                     'kamei14-git-v2', 'kamei14-benchmark-v1'}
+                     'kamei14-git-v2', 'kamei14-benchmark-v1', KAMEI_2013_SCHEMA}
 
         def usable(version):
             manifest = registry.get(version)
@@ -269,7 +270,7 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
             if manifest is None:
                 continue
             result.append(_view(storage, manifest, version, _owners(storage, version), username))
-        return {'datasets': result, 'limit': 5}
+        return {'datasets': result, 'limit': USER_DATASET_LIMIT}
 
     @app.post('/api/v1/user/dataset-builds')
     async def create_user_dataset_build(request: Request):
@@ -322,71 +323,61 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         content_type = (request.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
         if content_type not in ('text/csv', 'application/octet-stream', 'application/vnd.ms-excel'):
             raise BaselineError('INPUT_INVALID', 'CSV 导入只接受 text/csv 或二进制 CSV 请求体')
-        try:
-            blob = await request.body()
-        except Exception as exc:
-            raise BaselineError('DATASET_UNAVAILABLE', 'CSV 请求体读取失败') from exc
-        if not blob:
-            raise BaselineError('INPUT_INVALID', 'CSV 文件为空')
-        if len(blob) > MAX_IMPORT_BYTES:
-            raise BaselineError('DATASET_IMPORT_TOO_LARGE', 'CSV 文件超过 64 MiB 上限')
+        blob = await _upload(request)
         schema_name = request.query_params.get('schema') or 'kamei14-benchmark-v1'
         resolve(schema_name)
-        filename = request.query_params.get('filename') or 'upload.csv'
-        if not filename.lower().endswith('.csv'):
-            filename += '.csv'
-        name = _import_name(request.query_params.get('dataset'), username, filename)
-        provenance = _import_provenance(username, filename)
-        with storage.connection() as db:
-            owned = db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?', (username,)).fetchone()[0]
-        if owned >= 5:
-            raise BaselineError('QUOTA_EXCEEDED', '每人最多保留 5 个数据版本，请先清理')
+        filename = upload_name(request.query_params.get('filename'), 'csv')
+        manifests, created = await run_in_threadpool(
+            import_csv, storage, root, username, filename, blob, schema=schema_name,
+            dataset=request.query_params.get('dataset'))
+        manifest = manifests[0]
+        version = manifest['version']
+        request.state.business_ids = (None, None, version)
+        return Response(json.dumps(_view(storage, manifest, version, [username], username),
+                                   ensure_ascii=False),
+                        media_type='application/json',
+                        status_code=201 if created or schema_name != KAMEI_2013_SCHEMA else 200)
 
-        with tempfile.TemporaryDirectory(prefix='jit-user-import-') as temporary:
-            source = Path(temporary) / Path(filename).name
-            source.write_bytes(blob)
-            try:
-                probe = datasets.build_manifest(
-                    source, schema=schema_name, dataset=name, provenance=provenance,
-                    extra={'usage': 'import'},
-                )
-            except (OSError, UnicodeError) as exc:
-                raise BaselineError('DATASET_INVALID', 'CSV 文件无法解析') from exc
-            version = probe['version']
-            root_path = (root or datasets.DATASETS)
-            room = root_path / name
-            existing_owners = storage.dataset_owners(version)
-            if existing_owners and username not in existing_owners:
-                raise BaselineError('DATASET_FORBIDDEN', '同内容数据集属于其他用户')
-            if not existing_owners and (room / f'{version}.json').exists():
-                raise BaselineError(
-                    'DATASET_EXISTS',
-                    '同内容数据已登记为共享版本；请更换数据集名称后再导入',
-                )
+    @app.post('/api/v1/user/datasets/import-zip')
+    async def import_user_dataset_zip(request: Request):
+        username = _user(request)
+        content_type = (request.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
+        if content_type not in ('application/zip', 'application/x-zip-compressed', 'application/octet-stream'):
+            raise BaselineError('INPUT_INVALID', '请选择 ZIP 文件')
+        blob = await _upload(request)
+        filename = upload_name(request.query_params.get('filename'), 'zip')
+        manifests, created = await run_in_threadpool(
+            import_projects, storage, root, username, filename, blob, zipped=True)
+        items = [_view(storage, manifest, manifest['version'], [username], username) for manifest in manifests]
+        return Response(json.dumps({'datasets': items, 'createdCount': created}, ensure_ascii=False),
+                        media_type='application/json', status_code=201 if created else 200)
 
-            def import_after(entry, csv_path):
-                manifest_path = Path(entry['path'])
-                if not manifest_path.is_absolute():
-                    manifest_path = BACKEND / manifest_path
-                return store.import_dataset(csv_path, manifest_path, storage)
+    @app.post('/api/v1/user/dataset-imports', status_code=202)
+    async def start_dataset_import(request: Request, format: str, filename: str | None = None,
+                                   schema: str | None = None, dataset: str | None = None):
+        username = _user(request)
+        content_type = (request.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
+        allowed = {
+            'csv': ('text/csv', 'application/octet-stream', 'application/vnd.ms-excel'),
+            'zip': ('application/zip', 'application/octet-stream', 'application/x-zip-compressed'),
+        }
+        if format not in allowed or content_type not in allowed[format]:
+            raise BaselineError('INPUT_INVALID', '请选择 CSV 或 ZIP 文件')
+        if format == 'csv':
+            schema = resolve(schema or 'kamei14-benchmark-v1').name
+        else:
+            schema = dataset = None
+        blob = await _upload(request)
+        return await run_in_threadpool(imports.create, username, blob, filename=upload_name(filename, format),
+                                       kind=format, schema=schema, dataset=dataset)
 
-            registered = store.publish_unique(
-                room, name, version, blob, schema=schema_name,
-                cohort=probe['cohort'], provenance=provenance,
-                extra={'usage': 'import'}, root=root_path, after=import_after,
-            )
+    @app.get('/api/v1/user/dataset-imports')
+    def list_dataset_imports(request: Request, activeOnly: bool = False):
+        return {'tasks': imports.list(_user(request), activeOnly)}
 
-        storage.add_dataset_owner(registered['version'], username, limit=5)
-        manifest_path = Path(registered['path'])
-        if not manifest_path.is_absolute():
-            manifest_path = BACKEND / manifest_path
-        manifest = datasets.load_manifest(manifest_path)
-        request.state.business_ids = (None, None, registered['version'])
-        return Response(
-            json.dumps(_view(storage, manifest, registered['version'], storage.dataset_owners(
-                registered['version']), username), ensure_ascii=False),
-            media_type='application/json', status_code=201,
-        )
+    @app.get('/api/v1/user/dataset-imports/{task_id}')
+    def get_dataset_import(task_id: str, request: Request):
+        return imports.get(_user(request), task_id)
 
     @app.delete('/api/v1/user/datasets/{version}')
     def user_delete_dataset(version: str, request: Request):
@@ -522,7 +513,7 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         result = await run_in_threadpool(curation.derive, version, data.get('recipe'), root)
         derived = (result.get('dataset') or {}).get('version')
         if derived:
-            storage.add_dataset_owner(derived, username, limit=5)
+            storage.add_dataset_owner(derived, username, limit=USER_DATASET_LIMIT)
         return result
 
     @app.post('/api/v1/user/training-experiments')
@@ -622,3 +613,46 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
             'enabled': model['enabled'], 'parameters': model.get('parameters'),
             'datasetVersion': model.get('artifactDatasetVersion'),
         } for model in mine]}
+
+    @app.get('/api/v1/user/prediction-models')
+    def user_prediction_models(request: Request, datasetVersion: str):
+        username = _user(request)
+        registry = _registry(root)
+        manifest, _ = _visible(storage, datasetVersion, username, registry)
+        return predictions.models(username, manifest['schemaName'])
+
+    @app.get('/api/v1/user/prediction-batches')
+    def user_prediction_batches(request: Request, limit: int = 20, offset: int = 0):
+        return predictions.list(_user(request), limit, offset)
+
+    @app.post('/api/v1/user/prediction-batches', status_code=201)
+    async def create_user_prediction_batch(request: Request):
+        username = _user(request)
+        data = await read_object(request)
+        if set(data) - {'datasetVersion', 'modelId', 'threshold'}:
+            raise BaselineError('INPUT_INVALID', '预测请求包含未声明字段')
+        version = data.get('datasetVersion')
+        model_id = data.get('modelId')
+        if not isinstance(version, str) or not version.strip():
+            raise BaselineError('INPUT_INVALID', '缺少数据版本')
+        if not isinstance(model_id, str) or not model_id.strip():
+            raise BaselineError('INPUT_INVALID', '缺少模型')
+        registry = _registry(root)
+        manifest, _ = _visible(storage, version.strip(), username, registry)
+        result = await run_in_threadpool(
+            predictions.create, username, version.strip(), manifest, model_id.strip(),
+            data.get('threshold', 0.5),
+        )
+        request.state.business_ids = (
+            result['model']['modelId'], result['model']['runId'], result['batchId'],
+        )
+        return result
+
+    @app.get('/api/v1/user/prediction-batches/{batch_id}')
+    def user_prediction_batch(batch_id: str, request: Request, limit: int = 100,
+                              offset: int = 0, sort: str = 'risk'):
+        result = predictions.get(_user(request), batch_id, limit, offset, sort)
+        request.state.business_ids = (
+            result['model']['modelId'], result['model']['runId'], result['batchId'],
+        )
+        return result

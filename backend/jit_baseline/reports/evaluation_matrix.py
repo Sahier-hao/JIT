@@ -17,7 +17,7 @@ from .. import admission, budget as review_budget
 
 from ..algorithms import ALGORITHMS, get_algorithm
 from ..config import BACKEND
-from ..data import BaselineError, parse_source, sha256
+from ..data import BaselineError, parse_source, review_cost, sha256
 from ..datasets import load_manifest
 from ..metrics import evaluate, get_metric_set
 from ..model import fit_model, predict_risks
@@ -190,7 +190,7 @@ def _baseline_risks(test_records, kind, seed=None):
     """基线只产生检查顺序：用同序合成分数交给同一套整提交预算评价。"""
     count = len(test_records)
     if kind == "churn":
-        keys = [-(record["metrics"]["la"] + record["metrics"]["ld"]) for record in test_records]
+        keys = [-review_cost(record) for record in test_records]
     elif kind == "time":
         keys = [-record["epoch"] for record in test_records]
     elif kind == "random":

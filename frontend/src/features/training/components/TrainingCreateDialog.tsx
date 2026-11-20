@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
+import { BookOpenText, Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/features/account/userClient'
 import { SPLIT_PRESETS } from '@/features/datasets/splitClient'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
+import { AlgorithmLibraryDialog } from '@/features/training/components/AlgorithmLibraryDialog'
 
 const PARTITION_LABELS = { train: '训练', validation: '验证', test: '测试' } as const
 
@@ -36,6 +37,7 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
   const [params, setParams] = useState<Record<string, Record<string, string>>>({})
   const [preview, setPreview] = useState<UserSplitPreview | null>(null)
   const [methodsOpen, setMethodsOpen] = useState(false)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -48,7 +50,8 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
     setPreview(null)
     setMethods([])
     setMethodsOpen(false)
-    userDatasets('usable', controller.signal).then(value => {
+    setLibraryOpen(false)
+    userDatasets('usable', controller.signal).then(({ datasets: value }) => {
       if (controller.signal.aborted) return
       setDatasets(value)
       const preferred = value.find(item => item.version === initialDatasetVersion) ?? value[0]
@@ -171,7 +174,10 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
           <section className="grid gap-2">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="text-xs font-medium text-foreground-2">训练方法</h2>
-              <span className="text-[11px] text-foreground-4">已选 {chosen.length}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-foreground-4">已选 {chosen.length}</span>
+                <Button type="button" size="xs" variant="ghost" disabled={!methods.length} onClick={() => setLibraryOpen(true)}><BookOpenText aria-hidden="true" size={13}/>算法库</Button>
+              </div>
             </div>
             <Popover open={methodsOpen} onOpenChange={setMethodsOpen}>
               <PopoverTrigger asChild>
@@ -201,8 +207,9 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
             {selectedMethods.filter(choice => choice.params.length).map(choice => <div key={choice.method} className="grid gap-2 rounded-lg border border-border-soft p-3">
               <strong className="text-xs font-medium text-foreground-2">{choice.name} 参数</strong>
               <div className="grid gap-2 sm:grid-cols-2">
-                {choice.params.map(spec => <label key={spec.name} className="grid gap-1 text-xs text-foreground-3">{spec.name}（{spec.min}–{spec.max}）
+                {choice.params.map(spec => <label key={spec.name} className="grid gap-1 text-xs text-foreground-3">{spec.label}（{spec.min}–{spec.max}）
                   <Input aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any" value={params[choice.method]?.[spec.name] ?? ''} onChange={event => setParams(values => ({ ...values, [choice.method]: { ...(values[choice.method] ?? {}), [spec.name]: event.target.value } }))} type="number"/>
+                  {spec.description ? <span className="text-[10px] leading-4 text-foreground-4">{spec.description}</span> : null}
                 </label>)}
               </div>
             </div>)}
@@ -214,5 +221,6 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
         <Button type="button" disabled={!current || !chosen.length || !preview?.available || busy} onClick={() => void submit()}>{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}开始训练（{chosen.length} 个方法）</Button>
       </DialogFooter>
     </DialogContent>
+    <AlgorithmLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} methods={methods} schema={current?.schema ?? '—'}/>
   </Dialog>
 }

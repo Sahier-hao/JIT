@@ -4,7 +4,7 @@ import math
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from ..config import THRESHOLD
-from ..data import BaselineError
+from ..data import BaselineError, review_cost
 
 # 具名指标集：运行声明自己按哪一套指标评价，校验按该声明重算（PDB-12）。
 # 新增指标时新增一个集合版本，既有运行仍按自身声明的集合重算，不因新增指标失效。
@@ -71,7 +71,7 @@ def normalized_effort_area(records, order, *, ordering, name="Popt (normalized c
     归一化；`ordering` 只记录本结果采用的检查顺序，不改变标签或归一化口径。
     """
     labels = [r["label"] for r in records]
-    costs = [r["metrics"]["la"] + r["metrics"]["ld"] for r in records]
+    costs = [review_cost(record) for record in records]
     total = sum(costs)
     positives = sum(labels)
     detail = {"name": name,
@@ -104,7 +104,7 @@ def effort_metrics(records, risks):
     零成本、无正例或 oracle 与 worst 面积相等时返回 null 与原因。
     """
     labels = [r["label"] for r in records]
-    costs = [r["metrics"]["la"] + r["metrics"]["ld"] for r in records]
+    costs = [review_cost(record) for record in records]
     risk_order = sorted(range(len(records)),
                         key=lambda i: (-risks[i], -records[i]["epoch"], records[i]["id"]))
     first_positive = next((position for position, i in enumerate(risk_order) if labels[i] == 1), None)
@@ -130,7 +130,7 @@ def evaluate(records, risks, metric_set=None):
     two_classes = set(labels) == {0, 1}
     result["rocAuc"] = metric(float(roc_auc_score(labels, risks))) if two_classes else metric(reason="测试集不包含两类标签")
     result["averagePrecision"] = metric(float(average_precision_score(labels, risks))) if two_classes else metric(reason="测试集不包含两类标签")
-    costs = [r["metrics"]["la"] + r["metrics"]["ld"] for r in records]
+    costs = [review_cost(record) for record in records]
     if any(not math.isfinite(c) or c < 0 for c in costs):
         raise BaselineError("EVALUATION_INVALID", "工作量必须为非负有限值")
     total = sum(costs)

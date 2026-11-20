@@ -3,7 +3,7 @@
 见 align-feature-and-model-definitions 的 design D2/D3 与规格 FSV-01..FSV-03：
 schema 是特征集合的唯一声明来源；运行按其声明解析与校验；未知 schema 与不可得字段必须被拒绝。
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .errors import BaselineError
 
@@ -144,9 +144,17 @@ _BENCHMARK14 = Schema("kamei14-benchmark-v1", (
     Field("sexp", "sexp", transform=LOG1P),
 ))
 
+KAMEI_2013_SCHEMA = "kamei14-2013-v1"
+_KAMEI_2013_COLUMNS = {"nd": "nm", "age": "pd", "nuc": "npt"}
+_KAMEI_2013 = Schema(KAMEI_2013_SCHEMA, tuple(
+    replace(field, source=_KAMEI_2013_COLUMNS.get(field.name, field.source),
+            blank=BLANK_ERROR, integer=field.integer and field.name not in ("la", "ld", "nuc"))
+    for field in _BENCHMARK14.fields
+))
+
 SCHEMAS = {schema.name: schema
            for schema in (_SIX, _KAMEI14, _GIT14, _GIT14_V2,
-                          _GIT14_SEMANTIC, _SEMANTIC_ONLY, _BENCHMARK14)}
+                          _GIT14_SEMANTIC, _SEMANTIC_ONLY, _BENCHMARK14, _KAMEI_2013)}
 DEFAULT_SCHEMA = "openstack-six-v1"
 
 

@@ -2,7 +2,7 @@
 import json
 import sqlite3
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,7 +51,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (38, Path(__file__).parent / 'migrations/038_model_release_qualification.sql'),
               (39, Path(__file__).parent / 'migrations/039_model_release_channel.sql'),
               (40, Path(__file__).parent / 'migrations/040_user_dataset_builds.sql'),
-              (41, Path(__file__).parent / 'migrations/041_dataset_sharing.sql'))
+              (41, Path(__file__).parent / 'migrations/041_dataset_sharing.sql'),
+              (42, Path(__file__).parent / 'migrations/042_user_predictions.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -174,7 +175,7 @@ class CatalogStorage:
     def _manifest_dump(manifest):
         return json.dumps(manifest, ensure_ascii=False, sort_keys=True, allow_nan=False, indent=2) + '\n'
 
-    def import_dataset(self, manifest, records):
+    def import_dataset(self, manifest, records, *, connection=None, progress=None):
         """单事务导入一个数据集版本；同版本同内容幂等，内容不同拒绝覆盖。"""
         version = manifest['version']
         text = self._manifest_dump(manifest)
@@ -188,7 +189,7 @@ class CatalogStorage:
         label_binarization = label.get('binarizationRule') or LABEL_RULE
         observed_through = label.get('observedThrough')
         maturity_days = label.get('maturityDays')
-        with self.connection(write=True) as db:
+        with (self.connection(write=True) if connection is None else nullcontext(connection)) as db:
             row = db.execute('SELECT manifest_sha256 FROM dataset_record WHERE dataset_version=?',
                              (version,)).fetchone()
             if row is not None:
@@ -205,12 +206,19 @@ class CatalogStorage:
                         len(records), started, label_origin, label_version, label_binarization,
                         observed_through, maturity_days, manifest.get('usage') or 'branch',
                         manifest.get('sourceSyncId')))
+            # 按主键顺序写入，避免大批量导入时随机修改索引页。
+            records_by_id = sorted(records, key=lambda record: record['id'])
             db.executemany('INSERT INTO commit_record VALUES (?,?,?,?,?)',
-                           [(version, record['id'], record['time'], record['label'], LABEL_RULE)
-                            for record in records])
-            db.executemany('INSERT INTO feature_record VALUES (?,?,?,?)',
-                           [(version, record['id'], field, json.dumps(value, allow_nan=False))
-                            for record in records for field, value in sorted(record['metrics'].items())])
+                           ((version, record['id'], record['time'], record['label'], label_binarization)
+                            for record in records_by_id))
+            batch_size = 2000 if progress else max(len(records_by_id), 1)
+            for start in range(0, len(records_by_id), batch_size):
+                batch = records_by_id[start:start + batch_size]
+                db.executemany('INSERT INTO feature_record VALUES (?,?,?,?)',
+                               ((version, record['id'], field, json.dumps(value, allow_nan=False))
+                                for record in batch for field, value in sorted(record['metrics'].items())))
+                if progress:
+                    progress(start + len(batch))
             # 证据只能指向本版本实际纳入的提交；采集窗口内的修复提交可能因纳入规则
             #（如无新增行）没有进入数据集，这类证据不写入，避免外键失败整批导入。
             included = {record['id'] for record in records}
@@ -318,12 +326,12 @@ class CatalogStorage:
                  'sourceSha256': row['source_sha256'], 'rowCount': row['row_count'],
                  'importedAt': row['created_at']} for row in rows]
 
-    def add_dataset_owner(self, version, username, *, limit=None):
+    def add_dataset_owner(self, version, username, *, limit=None, connection=None):
         """记录数据集所有者；全局共享版本没有所有者行。"""
         if not isinstance(username, str) or not username:
             raise BaselineError('INPUT_INVALID', '缺少数据集所有者')
         now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        with self.connection(write=True) as db:
+        with (self.connection(write=True) if connection is None else nullcontext(connection)) as db:
             exists = db.execute(
                 'SELECT 1 FROM dataset_owner WHERE dataset_version=? AND username=?',
                 (version, username)).fetchone()
