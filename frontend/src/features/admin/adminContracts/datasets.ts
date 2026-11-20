@@ -17,7 +17,7 @@ export interface AdminDatasetVersion {
   szz: Row
   labelObservations: Row | null
   limitations: string[]
-  usage: 'branch' | 'pr'
+  usage: 'branch' | 'pr' | 'import'
   sourceSyncId: string | null
   references: string[]
   owners: string[]
@@ -42,7 +42,7 @@ function datasetVersion(raw: unknown, dataset: string): AdminDatasetVersion {
     szz: value.szz === undefined ? {} : record(value.szz),
     labelObservations: value.labelObservations == null ? null : record(value.labelObservations),
     limitations: textList(value.limitations),
-    usage: value.usage === 'pr' ? 'pr' : 'branch',
+    usage: value.usage === 'pr' || value.usage === 'import' ? value.usage : 'branch',
     sourceSyncId: textOrNull(value.sourceSyncId),
     references: Array.isArray(value.references) ? textList(value.references) : [],
     owners: Array.isArray(value.owners) ? textList(value.owners) : [],

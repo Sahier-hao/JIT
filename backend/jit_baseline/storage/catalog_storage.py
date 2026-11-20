@@ -471,6 +471,10 @@ class CatalogStorage:
             evidence = self._evidence(db, version, commit_id)
         return self._commit_row(row, features[commit_id], meta, evidence)
 
+    def commit_label_evidence(self, version, commit_id):
+        with self.connection() as db:
+            return self._evidence(db, version, commit_id)
+
     def commits_by_entity(self, entity_type, entity_value, limit=None, offset=0, summary=False, version=None):
         """按已经持久化的文件或模块引用查提交（CMP-03）；测试用查询入口。"""
         with self.connection() as db:

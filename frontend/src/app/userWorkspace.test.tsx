@@ -94,9 +94,10 @@ it('opens the build queue even before the first dataset exists', async () => {
     }] })
     return Response.json({})
   })
-  render(<MyDataPage navigate={vi.fn()} onLoginRequired={vi.fn()} initialTab="builds"/>)
-  expect(await screen.findByText('最近构建')).toBeVisible()
-  expect(screen.getByText('example/first')).toBeVisible()
+  render(<MyDataPage navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  expect(await screen.findByText('还没有数据')).toBeVisible()
+  await userEvent.click(screen.getByRole('tab', { name: /构建/ }))
+  expect(await screen.findByText('example/first')).toBeVisible()
   expect(screen.getByText('采集中')).toBeVisible()
 })
 
@@ -104,20 +105,88 @@ it('opens the active build progress dialog from a task deep link', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const value = String(input)
     if (value.includes('/api/v1/user/datasets?scope=')) return Response.json({ datasets: [] })
-    if (value.includes('/api/v1/user/dataset-builds?')) return Response.json({ tasks: [{
+    if (value.endsWith('/api/v1/user/dataset-builds/task-1')) return Response.json({
       taskId: 'task-1', repositoryId: null, repositoryUrl: 'https://github.com/example/first',
       branch: 'main', since: null, until: null, commitLimit: 2000, status: 'running',
       stage: 'collecting', error: null, parentTaskId: null, datasetName: null,
       datasetVersion: null, manifestSha256: null, quality: null, reused: false,
       headCommit: null, createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:01:00Z',
       completedAt: null, queuePosition: null,
-    }] })
+    })
+    if (value.includes('/api/v1/user/dataset-builds?')) return Response.json({ tasks: [] })
     return Response.json({})
   })
   render(<MyDataPage navigate={vi.fn()} onLoginRequired={vi.fn()} initialTaskId="task-1"/>)
-  const dialog = await screen.findByRole('dialog', { name: '从仓库构建数据集' })
-  expect(within(dialog).getByText('构建流程')).toBeVisible()
+  const dialog = await screen.findByRole('dialog', { name: '数据集构建任务' })
+  expect(await within(dialog).findByText('构建流程')).toBeVisible()
   expect(await within(dialog).findByRole('button', { name: '取消任务' })).toBeVisible()
+})
+
+it('keeps active training distinct and filters the history by method and status', async () => {
+  const facts = {
+    datasetVersion: DATASET.version, datasetManifest: 'demo.json', manifestSha256: 'a'.repeat(64),
+    metricSet: 'metric-set-v2', createdBy: 'demo', createdAt: '2026-10-01T00:00:00Z',
+    seed: 7, splitPreset: 'temporal-70-15-15',
+  }
+  const makeExperiment = (id: string, method: string, status: string) => ({
+    ...facts, experimentId: id, status,
+    tasks: [{ ...facts, taskId: id, method, status, stage: status, error: null,
+      metrics: null, updatedAt: facts.createdAt, queuePosition: null }],
+  })
+  const navigate = vi.fn()
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ experiments: [
+    makeExperiment('live', 'wide-deep-v1', 'running'),
+    makeExperiment('finished', 'decision-tree-v1', 'succeeded'),
+    makeExperiment('failed', 'logistic-regression-l2-v1', 'failed'),
+  ] }))
+  render(<MyTrainingPage navigate={navigate} onLoginRequired={vi.fn()}/>)
+  const live = within(await screen.findByRole('region', { name: '当前训练' }))
+  const records = within(screen.getByRole('region', { name: '训练记录' }))
+  expect(records.queryByText('宽深双塔')).not.toBeInTheDocument()
+  const user = userEvent.setup()
+  await user.type(records.getByRole('textbox', { name: '搜索训练记录' }), 'decision-tree')
+  expect(records.getAllByRole('link')).toHaveLength(1)
+  await user.click(records.getByRole('link', { name: /决策树/ }))
+  expect(navigate).toHaveBeenLastCalledWith({ name: 'my-training', experimentId: 'finished' })
+  await user.clear(records.getByRole('textbox'))
+  await user.click(records.getByRole('radio', { name: '异常与中止' }))
+  expect(records.getAllByRole('link')).toHaveLength(1)
+  expect(records.getByRole('link', { name: /逻辑回归/ })).toBeVisible()
+  await user.click(live.getByRole('link', { name: '查看训练' }))
+  expect(navigate).toHaveBeenLastCalledWith({ name: 'my-training', experimentId: 'live' })
+})
+
+it('follows real epoch updates and hides comparison while fewer than two tasks have succeeded', async () => {
+  const facts = {
+    datasetVersion: DATASET.version, datasetManifest: 'demo.json', manifestSha256: 'a'.repeat(64),
+    metricSet: 'metric-set-v2', createdBy: 'demo', createdAt: '2026-10-01T00:00:00Z',
+  }
+  let reads = 0
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+    const active = ++reads === 1
+    return Response.json({
+      ...facts, experimentId: 'demo-exp', status: active ? 'running' : 'succeeded',
+      seed: 7, splitPreset: 'temporal-70-15-15',
+      tasks: [{ ...facts, taskId: 'demo-task', method: 'wide-deep-v1',
+        status: active ? 'running' : 'succeeded', stage: active ? 'running' : 'completed',
+        error: null, metrics: active ? null : { averagePrecision: { value: 0.42 } }, updatedAt: facts.createdAt, queuePosition: null,
+        trainingHistory: {
+          unit: 'epoch', epochs: 2, complete: !active,
+          entries: active ? [{ epoch: 1, trainLoss: 0.71, seconds: 1 }] : [
+            { epoch: 1, trainLoss: 0.71, seconds: 1 }, { epoch: 2, trainLoss: 0.65, seconds: 1 },
+          ],
+        } }],
+    })
+  })
+  render(<MyTrainingPage experimentId="demo-exp" navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  expect(await screen.findByRole('button', { name: '取消' })).toBeVisible()
+  expect(screen.getByRole('progressbar', { name: '训练轮次进度' })).toHaveAttribute('aria-valuenow', '50')
+  expect(screen.queryByRole('button', { name: '登记本次模型' })).not.toBeInTheDocument()
+  await waitFor(() => expect(screen.getByRole('button', { name: '登记本次模型' })).toBeEnabled(), { timeout: 6_000 })
+  expect(screen.getByRole('progressbar', { name: '训练轮次进度' })).toHaveAttribute('aria-valuenow', '100')
+  expect(screen.getByText('0.420')).toBeVisible()
+  expect(fetch.mock.calls.some(([input]) => String(input).endsWith('/comparison'))).toBe(false)
+  expect(reads).toBeGreaterThanOrEqual(2)
 })
 
 it('previews and derives a cleaned dataset version', async () => {

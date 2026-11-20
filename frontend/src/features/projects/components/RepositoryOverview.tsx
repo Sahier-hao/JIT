@@ -1,6 +1,7 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { RefreshCw } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { ECharts } from 'echarts/core'
 
 import { EChartCanvas, chartTooltip, escapeHtml, useChartColors, type ChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
@@ -169,7 +170,7 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
   </>
 }
 
-export function RepositoryOverviewView({ repositoryId, repository, onOpenAnalysis }: { repositoryId: string; repository: RepositoryView; onOpenAnalysis: () => void }) {
+export function RepositoryOverviewView({ repositoryId, repository, actions }: { repositoryId: string; repository: RepositoryView; actions?: ReactNode }) {
   const cache = cacheKey('overview-v2', repositoryId)
   const [overview, setOverview] = useState<RepositoryOverview | null>(() => readCache<RepositoryOverview>(cache, 7 * 24 * 60 * 60_000))
   const [error, setError] = useState<unknown>(null)
@@ -189,16 +190,17 @@ export function RepositoryOverviewView({ repositoryId, repository, onOpenAnalysi
     return () => controller.abort()
   }, [repositoryId, attempt])
   const metadata = overview?.metadata ?? null
-  const hasAnalysis = Boolean(repository.viewSyncId)
   return <section className="grid gap-4" aria-label="仓库概览">
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <p className="text-sm leading-body text-foreground-3">{metadata?.description || '公开仓库概览。这里只展示仓库事实，不是模型分数或缺陷率。'}</p>
+    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+      <div className="min-w-0 flex-1 basis-64">
+        {metadata?.description ? <p className="text-sm leading-body text-foreground-3">{metadata.description}</p> : null}
         {metadata ? <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3"><span>{metadata.fullName}</span><span>{metadata.defaultBranch ? `默认分支 ${metadata.defaultBranch}` : '默认分支未知'}</span><span>{metadata.private ? '私有' : '公开'}</span>{metadata.license ? <span>{metadata.license}</span> : null}<a href={metadata.htmlUrl} target="_blank" rel="noreferrer">在 GitHub 打开</a></p> : <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3"><span>{repository.url}</span><a href={repository.url} target="_blank" rel="noreferrer">在 GitHub 打开</a></p>}
       </div>
-      <div className="flex flex-wrap gap-2">
-        {overview ? <Button size="sm" onClick={() => setAttempt(value => value + 1)} variant="outline" type="button">刷新</Button> : null}
-        {hasAnalysis ? <Button size="sm" onClick={onOpenAnalysis} variant="outline" type="button">查看分析结果</Button> : null}
+      <div className="flex min-w-0 flex-wrap items-center gap-1">
+        {metadata ? <Button size="sm" variant="ghost" disabled={loading} onClick={() => setAttempt(value => value + 1)} type="button">
+          <RefreshCw aria-hidden="true" className={loading ? 'animate-spin' : ''}/>{loading ? '正在刷新…' : '刷新仓库信息'}
+        </Button> : null}
+        {actions}
       </div>
     </div>
     {loading && !overview ? <RepositoryOverviewSkeleton/> : null}

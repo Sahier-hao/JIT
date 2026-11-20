@@ -206,7 +206,8 @@ def apply_class_policy(records, policy):
     raise BaselineError("CLASS_POLICY_INVALID", "未知的类别处理策略")
 
 
-def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None, params=None):
+def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None, params=None,
+              history_callback=None, validation_records=None):
     """按 schema 的变换与方法的声明构造流水线。
 
     `counts` 由 schema 决定、方法不得覆盖；是否标准化与估计器由方法声明。
@@ -230,10 +231,27 @@ def fit_model(train_records, *, schema=None, algorithm=None, class_policy=None, 
     steps.append(("model", build_estimator(entry, params)))
     pipeline = Pipeline(steps)
     fit_kwargs = {"model__sample_weight": sample_weight} if sample_weight is not None else {}
+    if history_callback is not None and entry["category"] == "deep":
+        fit_kwargs["model__history_callback"] = history_callback
     try:
         with threadpool_limits(limits=1), warnings.catch_warnings():
             warnings.simplefilter("error", ConvergenceWarning)
-            pipeline.fit(matrix, labels, **fit_kwargs)
+            if validation_records and entry["category"] == "deep" and sample_weight is None:
+                preprocess = pipeline[:-1]
+                transformed = preprocess.fit_transform(matrix, labels)
+                evaluation_sets = {
+                    name: (preprocess.transform(feature_matrix(partition, schema)),
+                           [record["label"] for record in partition])
+                    for name, partition in (
+                        ("trainEvalLoss", train_records),
+                        ("validationLoss", validation_records),
+                    )
+                }
+                pipeline.named_steps["model"].fit(
+                    transformed, labels, history_callback=history_callback, evaluation_sets=evaluation_sets,
+                )
+            else:
+                pipeline.fit(matrix, labels, **fit_kwargs)
     except ConvergenceWarning as exc:
         raise BaselineError("MODEL_NOT_CONVERGED", "方法按自身声明未收敛，不能发布有效产物") from exc
     except (TypeError, ValueError) as exc:

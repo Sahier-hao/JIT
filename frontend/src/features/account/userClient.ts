@@ -338,15 +338,26 @@ export interface UserProfile {
   datasetCount: number
   modelCount: number
   experimentCount: number
+  github: { connected: boolean; login: string | null }
 }
 
 export async function userProfile(signal?: AbortSignal): Promise<UserProfile> {
   const body = record(await apiRequest({ path: '/api/v1/user/profile', method: 'GET', signal }))
+  const github = body.github == null ? null : record(body.github)
   return {
     username: text(body.username), displayName: textOrNull(body.displayName),
     createdAt: finiteNumber(body.createdAt), datasetCount: finiteNumber(body.datasetCount),
     modelCount: finiteNumber(body.modelCount), experimentCount: finiteNumber(body.experimentCount),
+    github: {
+      connected: github?.connected === true,
+      login: github ? textOrNull(github.login) : null,
+    },
   }
+}
+
+export async function linkUserGitHub(): Promise<{ connected: boolean; login: string | null }> {
+  const body = record(await apiRequest({ path: '/api/v1/user/github/link', method: 'POST' }))
+  return { connected: body.connected === true, login: textOrNull(body.login) }
 }
 
 export async function updateUserProfile(displayName: string): Promise<{ displayName: string | null }> {

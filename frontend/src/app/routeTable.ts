@@ -19,7 +19,8 @@ function loginRoute(query: URLSearchParams): Route {
 function myDataRoute(query: URLSearchParams): Route {
   const view = query.get('view') === 'builds' ? 'builds' as const : undefined
   const taskId = text(query.get('taskId'))
-  return { name: 'my-data', ...(view ? { view } : {}), ...(taskId ? { taskId } : {}) }
+  const buildProjectId = text(query.get('buildProjectId'))
+  return { name: 'my-data', ...(view ? { view } : {}), ...(taskId ? { taskId } : {}), ...(buildProjectId ? { buildProjectId } : {}) }
 }
 
 function prWorkRoute(params: Params, query: URLSearchParams): Route {
@@ -44,6 +45,11 @@ function repositoryRoot(params: Params, query: URLSearchParams): Route {
 function adminComparisons(query: URLSearchParams): Route {
   const models = (query.get('models') ?? '').split(',').map(value => value.trim()).filter(Boolean)
   return { name: 'admin', view: 'comparisons', ...(models.length ? { models } : {}) }
+}
+
+function adminModels(query: URLSearchParams): Route {
+  const selectedModelId = text(query.get('selected'))
+  return { name: 'admin', view: 'models', ...(selectedModelId ? { selectedModelId } : {}) }
 }
 
 function adminExperimentRuns(params: Params, query: URLSearchParams): Route {
@@ -113,8 +119,8 @@ export const ROUTES: RouteObject[] = [
   { path: '/legacy/sync/:syncId/:view', handle: build(params => ({
     name: 'legacy-sync', syncId: params.syncId ?? '', view: params.view === 'plan' ? 'plan' : 'commits',
   })) },
-  { path: '/admin', handle: build(() => ({ name: 'admin', view: 'models' })) },
-  { path: '/admin/models', handle: build(() => ({ name: 'admin', view: 'models' })) },
+  { path: '/admin', handle: build((_, query) => adminModels(query)) },
+  { path: '/admin/models', handle: build((_, query) => adminModels(query)) },
   { path: '/admin/models/:modelId', handle: build(params => ({ name: 'admin', view: 'models', resourceId: params.modelId })) },
   { path: '/admin/datasets', handle: build(() => ({ name: 'admin', view: 'datasets' })) },
   { path: '/admin/datasets/:name', handle: build(params => ({ name: 'admin', view: 'datasets', resourceId: params.name })) },
@@ -122,6 +128,7 @@ export const ROUTES: RouteObject[] = [
   { path: '/admin/training', handle: build(() => ({ name: 'admin', view: 'training' })) },
   { path: '/admin/training/:taskId', handle: build(params => ({ name: 'admin', view: 'training', resourceId: params.taskId })) },
   { path: '/admin/training-experiment/:experimentId', handle: build(params => ({ name: 'admin', view: 'training-experiment', resourceId: params.experimentId })) },
+  { path: '/admin/evaluation', handle: build(() => ({ name: 'admin', view: 'evaluation' })) },
   { path: '/admin/comparisons', handle: build((_params, query) => adminComparisons(query)) },
   { path: '/admin/experiments', handle: build(() => ({ name: 'admin', view: 'experiments' })) },
   { path: '/admin/experiments/:reportId', handle: build(params => ({ name: 'admin', view: 'experiments', resourceId: params.reportId })) },

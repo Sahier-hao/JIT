@@ -1620,7 +1620,12 @@ paths:
           - ready
           - invalid
           default: ready
-      description: 当前后端操作；本机使用，无需凭据。原历史 GET 保持独立，其他 planned 操作尚未实现。
+      - name: view
+        in: query
+        required: false
+        description: registered 读取已保存的校验状态和当前策略，diagnostics 进行产物诊断并返回候选产物。
+        schema: {type: string, enum: [registered, diagnostics]}
+      description: 管理员读取登记模型。缺省视图包含产物诊断。
       security:
       - AdminSession: []
   /api/v1/models/coverage:
@@ -5448,6 +5453,8 @@ components:
       - TREND_SOURCE_UNAVAILABLE
       - PR_SOURCE_UNAVAILABLE
       - PR_RATE_LIMITED
+              - PR_PRIVATE_REPOSITORY
+              - GITHUB_CONNECTION_REQUIRED
       - PR_VERSION_CHANGED
       - PR_SOURCE_TOO_LARGE
       - PR_CONTENT_UNAVAILABLE
@@ -6475,6 +6482,17 @@ components:
       - limit
       - offset
       additionalProperties: false
+    RepositoryLabelEvidence:
+      type: object
+      properties:
+        fixCommit: {type: string}
+        path: {type: string}
+        fixTime: {type: [string, 'null']}
+        ruleVersion: {type: [string, 'null']}
+        lineRanges: {type: [array, 'null'], items: {}}
+        parentRanges: {type: [array, 'null'], items: {}}
+      required: [fixCommit, path, fixTime, ruleVersion]
+      additionalProperties: false
     RepositorySyncCommit:
       type: object
       properties:
@@ -6515,6 +6533,17 @@ components:
           type:
           - string
           - 'null'
+        labelStatus:
+          type: string
+          enum: [positive, unobserved, immature, unknown]
+        observedThrough:
+          type: [string, 'null']
+          description: 这次分析记录的观察截止时间，仅在详情返回。
+        labelEvidence:
+          type: array
+          description: 指向该提交的后续修复记录，仅在详情返回。
+          items:
+            $ref: '#/components/schemas/RepositoryLabelEvidence'
         partition:
           $ref: '#/components/schemas/CommitPartition'
       required:
@@ -7206,6 +7235,17 @@ components:
           type:
           - string
           - 'null'
+        labelStatus:
+          type: string
+          enum: [positive, unobserved, immature, unknown]
+        observedThrough:
+          type: [string, 'null']
+          description: 这次分析记录的观察截止时间，仅在详情返回。
+        labelEvidence:
+          type: array
+          description: 指向该提交的后续修复记录，仅在详情返回。
+          items:
+            $ref: '#/components/schemas/RepositoryLabelEvidence'
         partition:
           $ref: '#/components/schemas/CommitPartition'
       required:
@@ -7539,6 +7579,7 @@ components:
     ModelInfo:
       type: object
       properties:
+        repositorySchemaCompatible: {type: boolean, description: 当前分支与 PR 打分是否支持该特征 schema}
         enabled:
           type: boolean
         isDefault:
@@ -8182,10 +8223,12 @@ components:
             additionalProperties: false
         readiness:
           $ref: '#/components/schemas/ModelReadiness'
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelCandidate'
       required:
       - models
-      - methods
-      - readiness
       additionalProperties: false
     ModelCoverageCell:
       type: object

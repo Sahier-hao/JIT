@@ -8,7 +8,6 @@ const highlighted: Route[] = [
   { name: 'repository', repositoryId: 'repo-a' },
   { name: 'analysis', repositoryId: 'repo-a', viewSyncId: 'sync-a', view: 'commits' },
   { name: 'comparison', repositoryId: 'repo-a', baseSyncId: 'sync-a', targetSyncId: 'sync-b' },
-  { name: 'my-reviews' },
   { name: 'pr-work', repositoryId: 'repo-a', owner: 'o', repositoryName: 'r', number: 1 },
 ]
 
@@ -18,6 +17,7 @@ const quiet: Route[] = [
   { name: 'my-data' },
   { name: 'my-training' },
   { name: 'my-models' },
+  { name: 'my-reviews' },
   { name: 'profile' },
   { name: 'notifications' },
   { name: 'research-line' },

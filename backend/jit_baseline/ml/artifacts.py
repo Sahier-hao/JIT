@@ -174,13 +174,15 @@ def limitations(schema):
     return [first, *LIMITATIONS]
 
 
-def partition_diagnostics(pipeline, split, schema, metric_set):
+def partition_diagnostics(pipeline, split, schema, metric_set, validation_callback=None):
     """按原始唯一分区成员评价；训练采样副本不进入分母。"""
     result = {}
     for name in PARTITIONS:
         records = split[name]
         risks = predict_risks(pipeline, records, schema)
         result[name] = evaluate(records, risks, metric_set)
+        if name == "validation" and validation_callback is not None:
+            validation_callback(records, risks)
     return result
 
 
@@ -342,7 +344,7 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
               holdout=None, embedding_dir=None, model_name=None, class_policy=None,
               split_preset=None, maturity_policy=None, split_override=None, params=None,
               allow_legacy_labels=False,
-              allow_restricted_labels=False):
+              allow_restricted_labels=False, history_callback=None, validation_callback=None):
     """跑一次冻结复现；`dataset_manifest` 指定描述文件时改读该数据集而不是 OpenStack 快照。
 
     `holdout` 给出 epoch 截止时间时，只把 `epoch < holdout` 的记录用于时间切分、训练与
@@ -479,14 +481,16 @@ def build_run(source_dir, output, schema=None, algorithm=None, metric_set=None, 
     started = time.perf_counter()
     _, _, class_summary = apply_class_policy(split["train"], class_policy)
     pipeline = fit_model(split["train"], schema=schema, algorithm=algorithm_version,
-                         class_policy=class_policy, params=resolved_params)
+                         class_policy=class_policy, params=resolved_params,
+                         **({"history_callback": history_callback, "validation_records": split["validation"]}
+                            if history_callback is not None else {}))
     training_seconds = round(time.perf_counter() - started, 6)
     estimator = pipeline.named_steps.get("model") if hasattr(pipeline, "named_steps") else None
     training_history = getattr(estimator, "training_history_", None)
     if training_history is not None:
         training_history = dict(training_history)
         training_history["method"] = algorithm_version
-    partitioned_metrics = partition_diagnostics(pipeline, split, schema, metric_set)
+    partitioned_metrics = partition_diagnostics(pipeline, split, schema, metric_set, validation_callback)
     risks = predict_risks(pipeline, split["test"], schema)
     metrics = partitioned_metrics["test"]
     # 时间桶聚合在离线产生（design D1/D10）：产物里只有聚合值，服务不必读测试标签。

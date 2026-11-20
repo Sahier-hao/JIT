@@ -30,7 +30,7 @@ export function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect
       {switchable ? <Button variant="ghost" type="button" className="h-auto min-w-0 flex-1 whitespace-normal border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</Button> : text}
       <RecordMenu pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>
     </div>
-    {active ? <div className="mt-2"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt}/></div> : null}
+    {active ? <div className="mt-2"><JobProgress compact status={job.status} stage={job.stage} queuePosition={job.queuePosition} startedAt={job.startedAt} scoresOnly={job.requestedStrategy === 'generic-model'}/></div> : null}
     {job.error ? <p className="mt-1.5 flex items-start gap-1 text-xs text-rose" title={job.error.message}><AlertTriangle aria-hidden="true" focusable="false" strokeWidth={1.5} size={13} className="mt-0.5 shrink-0"/>{failureText(job.error)}</p> : job.status === 'cancelled' ? <p className="mt-1.5 text-xs text-foreground-3">已取消，可用原参数重新分析。</p> : null}
   </article>
 }

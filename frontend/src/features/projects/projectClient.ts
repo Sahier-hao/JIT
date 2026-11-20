@@ -180,7 +180,7 @@ export function useRepositorySyncs(repositoryId: string, limit = 20, offset = 0)
       controller.abort()
     }
   }, [repositoryId, limit, offset, attempt])
-  const running = state.syncs.some(job => ['queued', 'collecting', 'registering', 'training', 'scoring'].includes(job.status))
+  const running = Boolean(repositoryId) && state.syncs.some(job => ['queued', 'collecting', 'registering', 'training', 'scoring'].includes(job.status))
   useEffect(() => {
     if (!running) return
     const timer = setInterval(() => { if (document.visibilityState !== 'hidden') setAttempt(value => value + 1) }, 1500)

@@ -37,7 +37,13 @@ export interface TrainingTask {
   experimentId: string | null
   ownerUserId?: string | null
   parameters: Row | null
-  trainingHistory: { unit: string; epochs: number; complete: boolean; method?: string | null; entries: { epoch: number; trainLoss: number | null; seconds: number }[] } | null
+  trainingHistory: {
+    unit: string
+    epochs: number
+    complete: boolean
+    method?: string | null
+    entries: { epoch: number; trainLoss: number | null; trainEvalLoss?: number | null; validationLoss?: number | null; seconds: number }[]
+  } | null
   classPolicy: Row | null
   classPolicySummary: Row | null
   createdAt: string
@@ -63,6 +69,8 @@ function trainingHistory(raw: unknown): TrainingTask['trainingHistory'] {
   const entries = recordList(value.entries).map(entry => ({
     epoch: finiteNumber(entry.epoch),
     trainLoss: entry.trainLoss == null ? null : finiteNumber(entry.trainLoss),
+    trainEvalLoss: entry.trainEvalLoss == null ? null : finiteNumber(entry.trainEvalLoss),
+    validationLoss: entry.validationLoss == null ? null : finiteNumber(entry.validationLoss),
     seconds: finiteNumber(entry.seconds),
   }))
   return {

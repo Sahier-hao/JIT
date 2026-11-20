@@ -86,7 +86,7 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
     {conflict ? <div role="alert" className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep"><p>同 SHA 的保存观测存在冲突，未自动选另一组或丢弃样本。请在“来源范围”明确选择一次分析后重新生成。</p>{error.details.some(detail => detail.commitId) ? <ul>{error.details.filter(detail => detail.commitId).map(detail => <li key={`${detail.commitId}:${detail.sourceSyncIds?.join(',')}`}><code>{detail.commitId}</code> · 冲突来源 {detail.sourceSyncIds?.join('、')} · 字段 {detail.conflictingFields?.join('、')}</li>)}</ul> : null}</div> : null}
     {busy && !view ? <LoadingNotice label="正在准备固定趋势来源"/> : null}
     {preparing && !view ? <LoadingNotice label="正在按当前口径准备默认固定视图"/> : null}
-    {!view && !busy && !preparing && !error && groupsReady && !groupsError ? <p className="py-6 text-center text-xs text-foreground-3">{groups.length ? '暂未生成趋势视图。核对口径后可手动生成，地址可用于返回同一份来源。' : '尚无可比较的成功分支分析。请到分析记录发起分支分析；PR 与旧来源不自动拼入主线。'}</p> : null}
+    {!view && !busy && !preparing && !error && groupsReady && !groupsError ? <p className="py-6 text-center text-xs text-foreground-3">{groups.length ? '暂未生成趋势视图。核对口径后可手动生成，地址可用于返回同一份来源。' : '尚无可比较的分支分析结果。点击「分析分支提交」可发起分析。'}</p> : null}
     {view ? <div className="grid gap-3" aria-busy={busy}>
       {view.hasNewSources ? <p className="rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="status"><strong>有新的分支分析来源，当前视图保持不变。</strong></p> : null}
       <dl className="grid border-y border-border-soft sm:grid-cols-2 lg:grid-cols-4">

@@ -89,3 +89,22 @@ def test_training_history_records_every_epoch_with_real_loss():
     losses = [entry["trainLoss"] for entry in history["entries"]]
     assert all(isinstance(value, float) and value > 0 for value in losses)
     assert all(entry["seconds"] >= 0 for entry in history["entries"])
+
+
+def test_checkpoint_diagnostics_measure_validation_without_changing_predictions():
+    from jit_baseline.deep import torch_mlp
+    features, labels = synthetic(128)
+    training, validation = features[:96], features[96:]
+    target_train, target_validation = labels[:96], labels[96:]
+    options = dict(hidden=[8, 4], dropout=0.2, epochs=3)
+    normal = torch_mlp(**options).fit(training, target_train)
+    monitored = torch_mlp(**options).fit(
+        training, target_train, evaluation_sets={
+            "trainEvalLoss": (training, target_train),
+            "validationLoss": (validation, target_validation),
+        })
+    probabilities = monitored.predict_proba(validation)[:, 1]
+    assert np.allclose(probabilities, normal.predict_proba(validation)[:, 1], atol=1e-8, rtol=0)
+    expected = -(target_validation * np.log(probabilities)
+                 + (1 - target_validation) * np.log1p(-probabilities)).mean()
+    assert monitored.training_history_["entries"][-1]["validationLoss"] == pytest.approx(expected)

@@ -1,5 +1,4 @@
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { linkTo } from '@/app/navigation'
 
 import { Button } from '@/components/ui/button'
 import { LoaderCircle, Plus, Folder, ArrowRight, Settings } from 'lucide-react'
@@ -18,7 +17,6 @@ import { projectStatus, type ProjectTone } from '@/features/projects/projectStat
 import { useRepositories, type RepositoryView } from '@/features/projects/repositoryWorkspace'
 import { displayTime } from '@/lib/domain'
 import { ACTIVE_STATUSES } from '@/features/projects/repositoryContract'
-import { PersonalWorks } from '@/features/reviews/components/PersonalWorks'
 import { NewProjectDialog } from '@/features/projects/components/NewProjectDialog'
 
 import { cn } from '@/lib/utils'
@@ -30,7 +28,7 @@ const TONE_DOT: Record<ProjectTone, string> = {
   muted: 'bg-foreground-4',
 }
 
-export function ProjectsPage({ navigate, view = 'projects', createOpen = false }: { navigate: (route: Route, replace?: boolean) => void; view?: 'projects' | 'reviews'; createOpen?: boolean }) {
+export function ProjectsPage({ navigate, createOpen = false }: { navigate: (route: Route, replace?: boolean) => void; createOpen?: boolean }) {
   const repositories = useRepositories()
   const [menuFor, setMenuFor] = useState('')
   const [renamingId, setRenamingId] = useState('')
@@ -99,11 +97,11 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
   }
 
   return <section className="grid gap-4">
-    <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3"><div><h1 className="text-xl font-semibold">{view === 'reviews' ? '我的审查' : '项目'}</h1><p className="mt-1 text-sm text-muted-foreground">{view === 'reviews' ? '草稿只保存在当前浏览器。' : undefined}</p></div><div className="flex flex-wrap gap-2">{view === 'projects' ? <Button aria-label="新建项目" variant='default' onClick={() => setCreating(true)} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}新建项目</Button> : undefined}</div></header>
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+      <h1 className="text-xl font-semibold">项目</h1>
+      <Button variant="default" onClick={() => setCreating(true)} type="button"><Plus aria-hidden="true" size={15}/>新建项目</Button>
+    </header>
 
-    <nav aria-label="项目与个人工作" className="flex gap-1 border-b border-border">{([{ value: 'projects', label: '项目' }, { value: 'reviews', label: '我的审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String(view) === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo({ name: option.value === 'projects' ? 'repositories' : 'my-reviews' }, navigate)} aria-current={String(view) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
-
-    {view === 'reviews' ? <PersonalWorks navigate={navigate}/> : <>
       {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry} variant="outline" type="button">重新加载</Button></EmptyState> : items.length ? <>
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs text-foreground-3">
           <span className="text-sm font-medium text-foreground-2">全部项目</span>
@@ -151,18 +149,7 @@ export function ProjectsPage({ navigate, view = 'projects', createOpen = false }
             </AlertDialogContent></AlertDialog> : null}
           </article>
         })}</div>
-      </> : <div className="grid justify-items-center gap-4 rounded-lg border border-border bg-card px-6 py-14 text-center">
-        <div className="flex items-center gap-4 text-accent" aria-hidden="true"><span className="h-px w-12 bg-border-strong"/><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={44} className="rounded-xl border border-border-strong bg-card p-4"/><span className="h-px w-12 bg-border-strong"/></div>
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground">从一个仓库开始</h2>
-        <p className="max-w-md text-sm leading-body text-foreground-3">接入仓库后自动准备首次分析，并持续跟进新提交；结果与审查记录会一直保留。</p>
-        <Button aria-label="新建项目" variant='default' size="lg" onClick={() => setCreating(true)} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}新建项目</Button>
-        <div className="mt-2 flex flex-wrap justify-center gap-6 border-t border-border-soft pt-4 text-xs text-foreground-3">
-          <span><b className="mr-1.5 font-mono text-foreground">01</b>接入仓库</span>
-          <span><b className="mr-1.5 font-mono text-foreground">02</b>自动分析</span>
-          <span><b className="mr-1.5 font-mono text-foreground">03</b>安排审查</span>
-        </div>
-      </div>}
-    </>}
+      </> : <EmptyState title="还没有项目" description="通过「新建项目」登记一个公开仓库，开始查看分支和 PR。"/>}
 
     <NewProjectDialog open={creating} onOpenChange={next => { setCreating(next); if (!next && createOpen) navigate({ name: 'repositories' }, true) }} navigate={navigate}/>
   </section>

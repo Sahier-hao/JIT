@@ -30,6 +30,20 @@ function renderDetail(dataset = data, id = SHA) {
 }
 afterEach(() => vi.restoreAllMocks())
 
+it('shows a saved fix link next to the defect evidence for a scored commit', () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(response(empty))
+  const fix = 'f'.repeat(40)
+  renderDetail({ ...data, records: [{ ...data.records[0],
+    originalCommitUrl: `https://github.com/example/repo/commit/${SHA}`,
+    labelStatus: 'positive',
+    observedThrough: '2024-04-01T00:00:00Z',
+    labelEvidence: [{ fixCommit: fix, path: 'src/example.py', fixTime: '2024-03-01T00:00:00Z', ruleVersion: 'szz-full-v1' }],
+  }] })
+  expect(screen.getByText('有引入证据')).toBeVisible()
+  expect(screen.getByText('src/example.py')).toBeVisible()
+  expect(screen.getByRole('link', { name: fix.slice(0, 12) })).toHaveAttribute('href', `https://github.com/example/repo/commit/${fix}`)
+})
+
 it('reads without inferring and generates a pinned model explanation only after a click', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => response(init?.method === 'POST' ? supported : empty))
   renderDetail()

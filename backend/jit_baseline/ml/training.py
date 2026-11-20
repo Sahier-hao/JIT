@@ -1,4 +1,5 @@
 """Shared training execution used by admin jobs and repository sync."""
+from bisect import bisect_left
 from pathlib import Path
 
 from . import artifacts
@@ -9,8 +10,25 @@ from .catalog import ModelCatalog
 from ..config import BACKEND
 from ..data import BaselineError, sha256
 from .datasets import load_manifest, manifest_relative
-from .metrics import DEFAULT_METRIC_SET, get_metric_set
+from .metrics import DEFAULT_METRIC_SET, THRESHOLD, get_metric_set
 from .label_maturity import resolve_policy
+
+
+def validation_threshold_preview(records, risks):
+    """Exact aggregate counts at the 101 supported thresholds, without per-commit scores."""
+    positives, negatives = [], []
+    for record, risk in zip(records, risks, strict=True):
+        (positives if record["label"] == 1 else negatives).append(risk)
+    positives.sort()
+    negatives.sort()
+    thresholds = [index / 100 for index in range(101)]
+    return {
+        "positives": len(positives),
+        "negatives": len(negatives),
+        "defaultThreshold": THRESHOLD,
+        "truePositives": [len(positives) - bisect_left(positives, threshold) for threshold in thresholds],
+        "falsePositives": [len(negatives) - bisect_left(negatives, threshold) for threshold in thresholds],
+    }
 
 
 class TrainingExecutor:
@@ -24,7 +42,8 @@ class TrainingExecutor:
     def run(self, dataset_manifest, algorithm, metric_set=None, *, output_key,
             channel="training-task", request_id=None, holdout=None, model_name=None,
               class_policy=None, split_preset=None, maturity_policy=None,
-              split_override=None, params=None, register=True):
+              split_override=None, params=None, register=True, history_callback=None,
+              include_threshold_preview=False):
         """执行一次训练并登记模型。
 
         `holdout` 是 epoch 截止时间：给出时只有早于该时间的记录参与时间切分、
@@ -47,16 +66,27 @@ class TrainingExecutor:
             raise BaselineError("INPUT_INVALID", "训练产物路径越界")
         if output.exists():
             raise BaselineError("OUTPUT_EXISTS", "训练产物目录已存在，请为新任务使用新标识")
+        preview = None
+
+        def collect_validation(records, risks):
+            nonlocal preview
+            preview = validation_threshold_preview(records, risks)
+
         built = artifacts.build_run(
             BACKEND / "data/openstack", output, schema=dataset["schemaName"],
             algorithm=algorithm, metric_set=metric_set, dataset_manifest=manifest_path,
             holdout=holdout, model_name=model_name, class_policy=class_policy,
             split_preset=split_preset, maturity_policy=maturity_policy,
-            split_override=split_override, params=params)
+            split_override=split_override, params=params,
+            **({"history_callback": history_callback} if history_callback is not None else {}),
+            **({"validation_callback": collect_validation} if include_threshold_preview else {}))
         # Catalog registration performs full verification before publishing readiness.
         registered = (self.catalog.register_key(output_key, channel=channel, request_id=request_id)
                       if register else None)
         summary = read_json(output / "summary.json")
+        partitions = summary.get("metricsByPartition")
+        if preview is not None:
+            partitions["validation"]["thresholdPreview"] = preview
         snapshot = Snapshot.load(output)
         return {
             "artifactKey": output_key,
@@ -70,7 +100,7 @@ class TrainingExecutor:
             "featureSchemaVersion": snapshot.schema.name,
             "metricSet": metric_set,
             "metrics": summary["metrics"],
-            "metricsByPartition": summary.get("metricsByPartition"),
+            "metricsByPartition": partitions,
             "split": summary.get("split"),
             "splitRule": summary.get("splitRule"),
             "dataScale": summary.get("dataScale"),

@@ -106,6 +106,9 @@ export interface SyncCommit {
   files: number
   label: 0 | 1
   labelNote: string | null
+  labelStatus?: CommitLabelStatus
+  observedThrough?: string | null
+  labelEvidence?: CommitLabelEvidence[]
   /** 仓库接口会带提交标题；同步作业的旧接口没有，统一为 null。 */
   subject: string | null
   authorName?: string | null
@@ -113,6 +116,15 @@ export interface SyncCommit {
   metrics: Record<string, number>
   /** 项目分析分区；旧接口没有时为 null。 */
   partition: CommitPartition | null
+}
+
+const COMMIT_LABEL_STATUSES = ['positive', 'unobserved', 'immature', 'unknown'] as const
+export type CommitLabelStatus = (typeof COMMIT_LABEL_STATUSES)[number]
+export interface CommitLabelEvidence {
+  fixCommit: string
+  path: string
+  fixTime: string | null
+  ruleVersion: string | null
 }
 
 export const COMMIT_PARTITIONS = ['train', 'validation', 'test', 'holdout', 'excluded', 'notIncluded', 'unassigned', 'scored', 'unknown'] as const
@@ -265,6 +277,12 @@ export function parseSyncCommit(value: unknown): SyncCommit {
     files: count(raw.files),
     label,
     labelNote: textOrNull(raw.labelNote),
+    labelStatus: raw.labelStatus == null ? (label === 1 ? 'positive' : 'unknown') : oneOf(raw.labelStatus, COMMIT_LABEL_STATUSES),
+    observedThrough: textOrNull(raw.observedThrough),
+    labelEvidence: raw.labelEvidence == null ? [] : recordList(raw.labelEvidence).map(item => ({
+      fixCommit: text(item.fixCommit), path: text(item.path),
+      fixTime: textOrNull(item.fixTime), ruleVersion: textOrNull(item.ruleVersion),
+    })),
     subject: textOrNull(raw.subject),
     authorName: textOrNull(raw.authorName),
     originalCommitUrl: textOrNull(raw.originalCommitUrl),

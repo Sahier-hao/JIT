@@ -759,6 +759,25 @@ class ModelCatalog:
         row = self._row(model_id)
         return row['owner_user_id']
 
+    def registered_models(self, state=None):
+        """Read the saved verification state and current policy in one catalog snapshot."""
+        with self.store.connection() as db:
+            rows = db.execute(
+                'SELECT m.payload_json,m.state,m.error_code,m.owner_user_id,'
+                'COALESCE(p.enabled,1) AS enabled,d.model_id=m.id AS is_default '
+                'FROM model_version m LEFT JOIN model_policy p ON p.model_id=m.id '
+                'CROSS JOIN model_default d WHERE (? IS NULL OR m.state=?) ORDER BY m.id',
+                (state, state),
+            ).fetchall()
+        models = []
+        for row in rows:
+            model = dict(json.loads(row['payload_json']), state=row['state'], ownerUserId=row['owner_user_id'],
+                         enabled=bool(row['enabled']), isDefault=bool(row['is_default']))
+            if row['state'] == 'invalid':
+                model['error'] = {'code': row['error_code'], 'message': MESSAGES.get(row['error_code'], '运行不可用')}
+            models.append(model)
+        return models
+
     def models(self, state=None):
         with self.store.connection() as db:
             ids = [r['id'] for r in db.execute('SELECT id FROM model_version ORDER BY id')]

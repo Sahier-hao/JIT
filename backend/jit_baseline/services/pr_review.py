@@ -3,10 +3,13 @@ import base64
 import json
 import os
 import re
+import shutil
 import socket
+import subprocess
 import threading
 import time
 import uuid
+from functools import lru_cache
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -19,6 +22,31 @@ from . import candidate
 
 NAME = re.compile(r'^[A-Za-z0-9_.-]{1,100}$')
 SHA = re.compile(r'^[a-f0-9]{40,64}$')
+
+
+@lru_cache(maxsize=1)
+def _cli_github_token():
+    executable = shutil.which('gh')
+    if executable is None:
+        return None
+    try:
+        result = subprocess.run(
+            [executable, 'auth', 'token', '--hostname', 'github.com'],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    token = result.stdout.strip() if result.returncode == 0 else ''
+    return token or None
+
+
+def github_token():
+    """Read a server-side token without sending credentials to the browser."""
+    for name in ('JIT_GITHUB_TOKEN', 'GITHUB_TOKEN', 'GH_TOKEN'):
+        value = os.environ.get(name)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return _cli_github_token()
 
 
 def github_source(url):
@@ -44,7 +72,7 @@ def github_request(path):
     request = Request('https://api.github.com' + path, headers={
         'Accept': 'application/vnd.github+json', 'User-Agent': 'JIT-Personal-Review',
         'X-GitHub-Api-Version': '2022-11-28'})
-    token = os.environ.get('JIT_GITHUB_TOKEN')
+    token = github_token()
     if token:
         request.add_header('Authorization', 'Bearer ' + token)
     try:
@@ -78,10 +106,11 @@ def summary(pr, owner, name):
 
 
 class PullRequestReview:
-    def __init__(self, sync_service, *, request=None):
+    def __init__(self, sync_service, *, request=None, allow_private=None):
         self.sync = sync_service
         self.storage = sync_service.sync.storage
         self.request = request or github_request
+        self.allow_private = bool(github_token()) if allow_private is None else allow_private
         self.lock = threading.Lock()
 
     def _repository(self, owner, name, repository_id=None):
@@ -95,12 +124,39 @@ class PullRequestReview:
             return repository
         return self.sync.create_repository({'repositoryUrl': f'https://github.com/{owner.lower()}/{name.lower()}'})[0]
 
+    def _cached_latest(self, repository_id, owner, name, number):
+        """Return the last saved snapshot before a remote refresh removes access."""
+        query = ('SELECT l.snapshot_id,l.remote_state,l.checked_at,p.payload_json '
+                 'FROM pr_latest l JOIN pr_snapshot p ON p.id=l.snapshot_id '
+                 'WHERE lower(l.owner)=? AND lower(l.name)=? AND l.number=?')
+        params = [owner.lower(), name.lower(), number]
+        if repository_id is not None:
+            query += ' AND l.repository_id=?'
+            params.append(repository_id)
+        query += ' ORDER BY l.checked_at DESC LIMIT 1'
+        with self.storage.connection() as db:
+            row = db.execute(query, params).fetchone()
+        if row is None:
+            return None
+        snapshot = json.loads(row['payload_json'])
+        remote_state = row['remote_state'] or snapshot.get('remoteState') or 'open'
+        public = {key: snapshot.get(key) for key in
+                  ('number', 'title', 'author', 'url', 'updatedAt', 'draft', 'remoteState')}
+        public['remoteState'] = remote_state
+        return {
+            'snapshot': snapshot,
+            'remoteState': remote_state,
+            'checkedAt': row['checked_at'] or snapshot.get('capturedAt'),
+            'draft': bool(snapshot.get('draft')),
+            'pullRequest': public,
+        }
+
     def _list(self, owner, name, state, page, repository):
         if state not in ('open', 'closed', 'all') or type(page) is not int or not 1 <= page <= 100:
             raise BaselineError('INPUT_INVALID', 'PR 列表参数无效')
         metadata = self.request(f'/repos/{owner}/{name}')
-        if metadata.get('private'):
-            raise BaselineError('PR_SOURCE_UNAVAILABLE', '只支持公开仓库')
+        if metadata.get('private') and not self.allow_private:
+            raise BaselineError('PR_PRIVATE_REPOSITORY', '私有仓库需要先关联 GitHub 账户')
         items = self.request(f'/repos/{owner}/{name}/pulls?state={state}&sort=updated&direction=desc&per_page=30&page={page}')
         if not isinstance(items, list):
             raise BaselineError('PR_SOURCE_UNAVAILABLE', '无法读取 PR 列表')
@@ -150,11 +206,21 @@ class PullRequestReview:
             self._repository(owner, name, repository_id)
         with self.lock:
             prefix = f'/repos/{owner}/{name}/pulls/{number}'
-            pr = self.request(prefix)
+            try:
+                pr = self.request(prefix)
+            except BaselineError as exc:
+                if exc.code in ('PR_RATE_LIMITED', 'PR_SOURCE_UNAVAILABLE'):
+                    cached = self._cached_latest(repository_id, owner, name, number)
+                    if cached is not None:
+                        return cached
+                raise
             public_pr = summary(pr, owner, name)
-            if (pr['base']['repo'].get('private') or (pr['head'].get('repo') or {}).get('private')
-                    or pr['base']['repo']['full_name'].lower() != f'{owner}/{name}'):
-                raise BaselineError('PR_SOURCE_UNAVAILABLE', '只支持属于该项目的公开 PR')
+            private = bool(pr['base']['repo'].get('private')
+                           or (pr['head'].get('repo') or {}).get('private'))
+            if private and not self.allow_private:
+                raise BaselineError('PR_PRIVATE_REPOSITORY', '私有仓库需要先关联 GitHub 账户')
+            if pr['base']['repo']['full_name'].lower() != f'{owner}/{name}':
+                raise BaselineError('PR_SOURCE_UNAVAILABLE', '只支持属于该项目的 PR')
             base, head = pr['base']['sha'], pr['head']['sha']
             if not SHA.fullmatch(base) or not SHA.fullmatch(head):
                 raise BaselineError('PR_SOURCE_UNAVAILABLE', '远端版本无效')

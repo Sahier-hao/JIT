@@ -20,6 +20,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from .. import artifacts, collect, store
+from ..admission import maturity_status
 
 from .. import model_lineage
 
@@ -44,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_NAME = collect.SCHEMA_NAME
 GENERIC_SCHEMA = "openstack-six-v1"
+SCORING_SCHEMAS = (GENERIC_SCHEMA, SCHEMA_NAME)
 # 14 维采集记录投影到通用模型 6 个入模字段；`ent` 对应采集器的 `entropy`。
 GENERIC_PROJECTION = {"ent": "entropy"}
 STRATEGIES = ("auto", "generic-model", "force-train")
@@ -657,6 +659,17 @@ def choose_model(records, strategy, holdout, split_preset=None):
     return dict(base, modelStrategy=GENERIC, degradeReason=reason)
 
 
+def _commit_label_status(record, observation):
+    if record["label"] == 1:
+        return "positive"
+    if (observation.get("historyStatus") != "complete"
+            or (observation.get("coverage") or {}).get("complete") is not True):
+        return "unknown"
+    maturity = maturity_status(record["epoch"], observation.get("observedThrough"),
+                               observation.get("maturityDays"))
+    return "unobserved" if maturity == "mature" else maturity
+
+
 def generic_inputs(records, fields):
     """把 14 维采集记录投影成通用模型的入模特征（仅列名不同：`ent` ← `entropy`）。"""
     return [{"features": [record["metrics"][GENERIC_PROJECTION.get(name, name)] for name in fields]}
@@ -996,8 +1009,10 @@ class SyncService:
                                         start=since, end=until, sort=sort)
         scope = self.analysis_scope(sync_id)
         labels = self._lineage(item)[1]
+        observation = self._label_observation(item.get("datasetVersion")) if rows else {}
         for row in rows:
             row["partition"] = partition_for(scope, row["commitId"], row.get("epoch"), labels)
+            row["labelStatus"] = _commit_label_status(row, observation)
         return {"syncId": sync_id, "status": item["status"], "total": total, "limit": limit,
                 "offset": offset, "search": text or None, "start": start, "end": end,
                 "sort": sort, "commits": rows}
@@ -1010,7 +1025,20 @@ class SyncService:
         scope = self.analysis_scope(sync_id)
         labels = self._lineage(item)[1]
         record["partition"] = partition_for(scope, record["commitId"], record.get("epoch"), labels)
+        self._add_commit_evidence(record, item.get("datasetVersion"))
         return record
+
+    def _label_observation(self, version):
+        dataset = self.sync.storage.dataset(version) if version else None
+        return ((dataset or {}).get("manifest") or {}).get("labeling") or {}
+
+    def _add_commit_evidence(self, record, version):
+        observation = self._label_observation(version)
+        record["labelStatus"] = _commit_label_status(record, observation)
+        record["observedThrough"] = observation.get("observedThroughIso")
+        record["labelEvidence"] = (
+            self.sync.storage.commit_label_evidence(version, record["commitId"])
+            if version and record["label"] == 1 else [])
 
     def repositories(self, limit=50, offset=0):
         if not 1 <= limit <= 100:
@@ -1186,6 +1214,9 @@ class SyncService:
         rows, total = self.sync.commits(repo["viewSyncId"], limit, offset, search=text or None,
                                         start=since, end=until, sort=sort)
         labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
+        observation = self._label_observation(repo.get("datasetVersion")) if rows else {}
+        for row in rows:
+            row["labelStatus"] = _commit_label_status(row, observation)
         return {"repositoryId": repository_id, "viewSyncId": repo["viewSyncId"], "total": total,
                 "limit": limit, "offset": offset, "search": text or None, "start": start,
                 "end": end, "sort": sort,
@@ -1206,6 +1237,7 @@ class SyncService:
         if record is None:
             raise BaselineError("NOT_FOUND", "该仓库里没有这个提交")
         labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
+        self._add_commit_evidence(record, repo.get("datasetVersion"))
         return self._display_commit(repo, record, labels)
 
     def repository_summary(self, repository_id, *, view_sync_id=None):
@@ -1299,7 +1331,7 @@ class SyncService:
         if not self.catalog.policy(model_id)['enabled']:
             raise BaselineError('MODEL_DISABLED', '所选模型已停用，请重新选择')
         snapshot, payload = self.catalog.load_model(model_id)
-        if payload.get('featureSchemaVersion') not in (GENERIC_SCHEMA, SCHEMA_NAME):
+        if payload.get('featureSchemaVersion') not in SCORING_SCHEMAS:
             raise BaselineError('INPUT_SCHEMA_MISMATCH', '所选模型无法读取仓库采集特征，请选择兼容模型')
         return snapshot, payload
 
@@ -1385,13 +1417,15 @@ class SyncService:
                 maturity_json=json.dumps(maturity, ensure_ascii=False, sort_keys=True),
             )
 
-            self._step(sync_id, "training", started)
-            if not trainable:
+            holdout = None
+            if item["requestedStrategy"] == GENERIC:
+                decision = {"modelStrategy": GENERIC, "degradeReason": None,
+                            "trainRecords": None, "trainPositives": None}
+            elif not trainable:
                 if item["requestedStrategy"] == "force-train":
                     reason = (admission_view.get("reason") or {}).get("message") or "成熟样本准入后没有可用训练记录"
                     raise BaselineError("SPLIT_INVALID",
                                         f"{reason}；请改用现成模型或等待观察期")
-                holdout = None
                 decision = {"modelStrategy": GENERIC,
                             "degradeReason": "noMatureRecords",
                             "trainRecords": 0, "trainPositives": 0, "holdout": None}
@@ -1406,6 +1440,7 @@ class SyncService:
                              train_records=decision["trainRecords"],
                              train_positives=decision["trainPositives"])
             if decision["modelStrategy"] == TRAINED:
+                self._step(sync_id, "training", started)
                 method = item.get('algorithm') or DEFAULT_ALGORITHM
                 dataset_schema = resolve(SCHEMA_NAME)
                 trained = self.training.run(

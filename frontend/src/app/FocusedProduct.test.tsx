@@ -21,7 +21,7 @@ it('opens projects immediately without a credential or role step', async () => {
   expect(screen.queryByText('设置团队连接')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '实验室' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '验证报告' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '我的数据' })).toBeVisible()
+  expect(screen.getByRole('link', { name: '我的数据' })).toBeVisible()
   for (const [, options] of fetch.mock.calls) expect(new Headers(options?.headers).has('Authorization')).toBe(false)
 })
 it('opens account settings in a dialog instead of a full personal-center page', async () => {
@@ -87,8 +87,9 @@ it('shows deep methods separately from models that still lack delivered artifact
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
     const body = path.includes('/api/admin/session') ? { authenticated: true, username: 'admin' }
-      : path.endsWith('/api/v1/models') ? {
+      : path.includes('/api/v1/models') ? {
         models: [],
+        candidates: [],
         methods: [
           { method: 'mlp-v1', name: '多层感知机', category: 'deep', registeredModels: 1, deliveredArtifacts: 1 },
           { method: 'random-forest-v1', name: '随机森林', category: 'classic', registeredModels: 0, deliveredArtifacts: 0 },
@@ -103,6 +104,9 @@ it('shows deep methods separately from models that still lack delivered artifact
   })
   window.history.replaceState({}, '', '/#/admin')
   render(<App/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '查看产物诊断' }))
+  await user.click(await screen.findByText('支持的训练方法'))
   expect(await screen.findByText('多层感知机')).toBeVisible()
   expect(screen.getByText('深度学习')).toBeVisible()
   expect(screen.getByText('无已交付产物')).toBeVisible()

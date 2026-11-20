@@ -1,372 +1,222 @@
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { LoaderCircle } from 'lucide-react'
-
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { useEffect, useState } from 'react'
+import { AlertTriangle, CheckCircle2, ChevronDown, GitBranch, ShieldAlert } from 'lucide-react'
+import type { Route } from '@/app/navigation'
+import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { ApiError } from '@/lib/apiContract'
 import { labelMaturityText } from '@/lib/datasetMaturity'
-import { createTrainingExperiment, createTrainingTask, fetchPrunableDatasets, formatDate, pruneDatasets, setAdminDatasetSharing, valueLabel, type AdminDatasetVersion, type PrunableDatasetVersion, type Row } from '@/features/admin/adminContracts'
-import { deriveCuration, compareCuration, exportCuration, previewCuration, type CurationPreview } from '@/features/datasets/curationClient'
-import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
+import { formatDate, setAdminDatasetSharing, type AdminDatasetVersion } from '@/features/admin/adminContracts'
+import { ErrorNotice } from '@/features/admin/AdminShared'
+import { AdminDatasetCompareDialog, AdminDatasetCurationDialog } from '@/features/admin/AdminDatasetTools'
+import { AdminDatasetTrainingDialog } from '@/features/admin/AdminDatasetTrainingDialog'
+import { exportCuration } from '@/features/datasets/curationClient'
+import { DatasetFact, DatasetMetric, DatasetSection } from '@/features/datasets/DatasetPresentation'
+import { previewDatasetSplit, type SplitPreview } from '@/features/datasets/splitClient'
+import { asRow, bytesText, EXCLUSION_LABELS, numberText, numeric, ratioText, usageLabel } from '@/features/datasets/mydata/format'
 
+const REFERENCE_LABELS: Record<string, string> = {
+  model: '模型', analysis: '项目分析', trend: '风险趋势', 'dataset-build': '构建任务',
+}
 
-import type { Route } from '@/app/navigation'
-import { previewDatasetSplit, SPLIT_PRESETS, type SplitPreview } from '@/features/datasets/splitClient'
-import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
+function AuditFacts({ title, facts }: { title: string; facts: Array<[string, unknown]> }) {
+  const recorded = facts.filter(([, value]) => (typeof value === 'string' && Boolean(value)) || typeof value === 'number')
+  if (!recorded.length) return null
+  return <details className="group min-w-0 rounded-xl border border-border-soft bg-card">
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium text-foreground marker:content-none">
+      {title}<ChevronDown aria-hidden="true" size={15} className="shrink-0 text-foreground-3 group-open:rotate-180"/>
+    </summary>
+    <div className="border-t border-border-soft p-4">
+      <dl className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
+        {recorded.map(([label, value]) => <DatasetFact key={label} label={label}>{typeof value === 'number' ? numberText(value) : String(value)}</DatasetFact>)}
+      </dl>
+    </div>
+  </details>
+}
 
-const DEFAULT_RECIPE = '{\n  "version": 1,\n  "rules": [\n    { "id": "max-value", "field": "la", "value": 10000 }\n  ]\n}'
-
-export function AdminDatasetDetailPage({ dataset, versions, initialVersion, navigate, expired }: {
-  dataset: string
+export function AdminDatasetDetailPage({ selected, versions, onSelect, onShared, onDerived, navigate, expired }: {
+  selected: AdminDatasetVersion
   versions: AdminDatasetVersion[]
-  initialVersion?: string
+  onSelect: (item: AdminDatasetVersion) => void
+  onShared: (id: string, shared: boolean) => void
+  onDerived: (id: string) => void
   navigate: (route: Route) => void
   expired: () => void
 }) {
-  const [version, setVersion] = useState(initialVersion ?? versions.at(-1)?.version ?? '')
-  const [method, setMethod] = useState('')
-  const [metricSet, setMetricSet] = useState('metric-set-v2')
-  const [classPolicy, setClassPolicy] = useState<'none' | 'weights' | 'sample'>('none')
-  const [splitPreset, setSplitPreset] = useState('temporal-70-15-15')
-  const [maturityPolicy, setMaturityPolicy] = useState<'mature-only' | 'include-immature'>('mature-only')
-  const [splitPreview, setSplitPreview] = useState<SplitPreview | null>(null)
-  const [splitPreviewError, setSplitPreviewError] = useState('')
-  const [splitPreviewBusy, setSplitPreviewBusy] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [recipeText, setRecipeText] = useState(DEFAULT_RECIPE)
-  const [curationBusy, setCurationBusy] = useState(false)
-  const [curationError, setCurationError] = useState('')
-  const [curationPreview, setCurationPreview] = useState<CurationPreview | null>(null)
-  const [derivedVersion, setDerivedVersion] = useState('')
-  const [compareVersion, setCompareVersion] = useState('')
-  const [comparison, setComparison] = useState<Record<string, unknown> | null>(null)
-  const [compareError, setCompareError] = useState('')
-  const [keep, setKeep] = useState('10')
-  const [prunable, setPrunable] = useState<PrunableDatasetVersion[] | null>(null)
-  const [cleanupBusy, setCleanupBusy] = useState(false)
-  const [cleanupError, setCleanupError] = useState('')
-  const [cleanupResult, setCleanupResult] = useState('')
-  const [confirmCleanup, setConfirmCleanup] = useState(false)
-  const [experimentMethods, setExperimentMethods] = useState<MethodChoice[]>([])
-  const [selectedMethods, setSelectedMethods] = useState<string[]>([])
-  const [paramValues, setParamValues] = useState<Record<string, Record<string, string>>>({})
-  const [experimentBusy, setExperimentBusy] = useState(false)
-  const [experimentError, setExperimentError] = useState('')
-  const [shared, setShared] = useState(false)
+  const [tool, setTool] = useState<'training' | 'curation' | 'compare' | null>(null)
   const [sharingBusy, setSharingBusy] = useState(false)
-  const selected = versions.find(item => item.version === version) ?? versions.at(-1)
-  useEffect(() => { setShared(selected?.shared === true) }, [selected?.version, selected?.shared])
+  const [exporting, setExporting] = useState(false)
+  const [error, setError] = useState('')
+  const [trainingPreview, setTrainingPreview] = useState<SplitPreview | null>(null)
+  const [trainingError, setTrainingError] = useState('')
+  const [trainingBusy, setTrainingBusy] = useState(true)
+  const closeTool = () => setTool(null)
+
   useEffect(() => {
-    if (!selected) return
     const controller = new AbortController()
-    trainingMethods(selected.schema, controller.signal)
-      .then(value => { if (!controller.signal.aborted) setExperimentMethods(value.methods.filter(item => item.supportedSchema)) })
-      .catch(failure => { if (!controller.signal.aborted) setExperimentError(failure instanceof Error ? failure.message : '训练方法读取失败') })
-    return () => controller.abort()
-  }, [selected?.schema])
-  useEffect(() => {
-    if (!experimentMethods.length) return
-    setMethod(current => experimentMethods.some(item => item.method === current) ? current : experimentMethods[0].method)
-  }, [experimentMethods])
-  useEffect(() => {
-    if (!selected) return
-    const controller = new AbortController()
-    setSplitPreviewBusy(true); setSplitPreviewError(''); setSplitPreview(null)
-    previewDatasetSplit(selected.version, splitPreset, controller.signal, maturityPolicy)
-      .then(value => { if (!controller.signal.aborted) setSplitPreview(value) })
-      .catch(failure => { if (!controller.signal.aborted) setSplitPreviewError(failure instanceof Error ? failure.message : '切分预览失败') })
-      .finally(() => { if (!controller.signal.aborted) setSplitPreviewBusy(false) })
-    return () => controller.abort()
-  }, [selected?.version, splitPreset, maturityPolicy])
-  if (!selected) return null
-  const quality = selected.quality
-  const szz = selected.szz, label = selected.label
-  const signals = szz.fixSignals as Row | undefined
-  const lookup = szz.issueLookup as Row | undefined
-  const szzNumber = (key: string) => szz[key] ?? (szz.unresolved as Row | undefined)?.[key] ?? '—'
-  const observations = selected.labelObservations
-  const observedThrough = typeof observations?.observedThroughIso === 'string'
-    ? observations.observedThroughIso.slice(0, 10) : null
-  const selectedMethod = experimentMethods.some(item => item.method === method) ? method : experimentMethods[0]?.method ?? ''
-  async function train() {
-    setBusy(true); setError('')
-    try {
-      const task = await createTrainingTask(selected!.version, selectedMethod, metricSet,
-                                            classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
-                                            splitPreset, maturityPolicy)
-      navigate({ name: 'admin', view: 'training', resourceId: task.taskId })
-    } catch (failure) {
+    setTrainingPreview(null)
+    setTrainingError('')
+    setTrainingBusy(true)
+    previewDatasetSplit(selected.version, 'temporal-70-15-15', controller.signal).then(preview => {
+      if (!controller.signal.aborted) setTrainingPreview(preview)
+    }).catch(failure => {
+      if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) expired()
-      else setError(failure instanceof Error ? failure.message : '训练任务创建失败')
-    } finally { setBusy(false) }
-  }
+      else setTrainingError(failure instanceof Error ? failure.message : '训练准入读取失败')
+    }).finally(() => {
+      if (!controller.signal.aborted) setTrainingBusy(false)
+    })
+    return () => controller.abort()
+  }, [selected.version, expired])
+
   async function updateSharing(next: boolean) {
-    if (!selected || sharingBusy) return
-    setSharingBusy(true); setError('')
+    if (sharingBusy || selected.owners.length) return
+    if (next && (!trainingPreview?.available || trainingBusy)) {
+      setError(trainingPreview?.reason?.message ?? (trainingError || '请先完成训练准入检查'))
+      return
+    }
+    setSharingBusy(true)
+    setError('')
     try {
       const result = await setAdminDatasetSharing(selected.version, next)
-      setShared(result.shared)
+      onShared(result.version, result.shared)
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) expired()
       else setError(failure instanceof Error ? failure.message : '共享状态更新失败')
-    } finally {
-      setSharingBusy(false)
-    }
+    } finally { setSharingBusy(false) }
   }
-  function toggleMethod(method: string) {
-    setSelectedMethods(current => {
-      if (current.includes(method)) return current.filter(item => item !== method)
-      const choice = experimentMethods.find(item => item.method === method)
-      setParamValues(values => values[method] ? values : {
-        ...values,
-        [method]: Object.fromEntries((choice?.params ?? []).map(param => [param.name, param.default == null ? '' : String(param.default)])),
-      })
-      return [...current, method]
-    })
+
+  async function exportVersion() {
+    setExporting(true)
+    setError('')
+    try { await exportCuration(selected.version) }
+    catch (failure) { setError(failure instanceof Error ? failure.message : '导出失败') }
+    finally { setExporting(false) }
   }
-  function setParam(method: string, name: string, value: string) {
-    setParamValues(values => ({ ...values, [method]: { ...(values[method] ?? {}), [name]: value } }))
-  }
-  async function runExperiment() {
-    setExperimentBusy(true); setExperimentError('')
-    try {
-      const methods = selectedMethods.map(method => {
-        const choice = experimentMethods.find(item => item.method === method)
-        const params: Row = {}
-        for (const spec of choice?.params ?? []) {
-          const raw = paramValues[method]?.[spec.name]
-          if (raw == null || raw.trim() === '') continue
-          const numeric = Number(raw)
-          if (!Number.isFinite(numeric)) throw new Error(`${choice?.name ?? method} 的参数 ${spec.name} 不是数值`)
-          if (spec.type === 'int' && !Number.isInteger(numeric)) throw new Error(`${choice?.name ?? method} 的参数 ${spec.name} 必须是整数`)
-          params[spec.name] = numeric
-        }
-        return { method, params }
-      })
-      if (!methods.length) throw new Error('至少选择一个训练方法')
-      const experiment = await createTrainingExperiment({
-        datasetVersion: selected!.version, methods, metricSet,
-        classPolicy: classPolicy === 'none' ? undefined : { kind: classPolicy, seed: 0 },
-        splitPreset, maturityPolicy,
-      })
-      navigate({ name: 'admin', view: 'training-experiment', resourceId: experiment.experimentId })
-    } catch (failure) {
-      if (failure instanceof ApiError && failure.status === 401) expired()
-      else setExperimentError(failure instanceof Error ? failure.message : '实验创建失败')
-    } finally { setExperimentBusy(false) }
-  }
-  function recipe() {
-    try { return JSON.parse(recipeText) } catch { throw new Error('清洗配方不是合法 JSON') }
-  }
-  async function previewCurationAction() {
-    setCurationBusy(true); setCurationError(''); setDerivedVersion('')
-    try { setCurationPreview(await previewCuration(selected!.version, recipe())) }
-    catch (failure) { if (failure instanceof ApiError && failure.status === 401) expired(); else setCurationError(failure instanceof Error ? failure.message : '清洗预览失败') }
-    finally { setCurationBusy(false) }
-  }
-  async function deriveCurationAction() {
-    setCurationBusy(true); setCurationError('')
-    try {
-      const result = await deriveCuration(selected!.version, recipe())
-      setCurationPreview(result.preview); setDerivedVersion(result.version)
-    } catch (failure) {
-      if (failure instanceof ApiError && failure.status === 401) expired()
-      else setCurationError(failure instanceof Error ? failure.message : '派生版本生成失败')
-    } finally { setCurationBusy(false) }
-  }
-  async function compareAction() {
-    setCompareError('')
-    try { setComparison(await compareCuration(selected!.version, compareVersion)) }
-    catch (failure) { setCompareError(failure instanceof Error ? failure.message : '版本对比失败') }
-  }
-  async function previewCleanup() {
-    setCleanupBusy(true); setCleanupError(''); setCleanupResult('')
-    try { setPrunable(await fetchPrunableDatasets(Number(keep))) }
-    catch (failure) { if (failure instanceof ApiError && failure.status === 401) expired(); else setCleanupError(failure instanceof Error ? failure.message : '清理预览失败') }
-    finally { setCleanupBusy(false) }
-  }
-  async function runCleanup() {
-    if (!prunable?.length) return
-    setCleanupBusy(true); setCleanupError('')
-    try {
-      const result = await pruneDatasets(prunable.map(item => item.version), Number(keep))
-      const deleted = Array.isArray(result.deleted) ? result.deleted.length : 0
-      const skipped = Array.isArray(result.skipped) ? result.skipped.length : 0
-      setCleanupResult(`已删除 ${deleted} 个版本，跳过 ${skipped} 个`)
-      setPrunable([]); setConfirmCleanup(false)
-    } catch (failure) {
-      if (failure instanceof ApiError && failure.status === 401) expired()
-      else setCleanupError(failure instanceof Error ? failure.message : '清理失败')
-    } finally { setCleanupBusy(false) }
-  }
-  return <section>
-    <AdminPageHeader title={dataset} meta={selected.schema}/>
-    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'datasets' })} variant="outline" type="button">返回数据集列表</Button></div>
-    <div className="flex flex-wrap items-end gap-2"><span>版本</span><Select value={version == null ? '' : String(version)} onValueChange={nextValue => (setVersion)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="数据集版本"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(versions.map(item => ({ value: item.version, label: item.version }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select></div>
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft bg-card p-3">
-      <div className="grid gap-0.5">
-        <strong className="text-sm font-medium text-foreground">开放给普通用户</strong>
-        <p className="text-xs text-foreground-3">{selected.owners.length ? '用户自有版本不能开放共享。' : shared ? '会出现在普通用户的“共享数据”中。' : '当前仅管理员可见。'}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className={shared ? 'text-xs font-medium text-teal-deep' : 'text-xs text-foreground-3'}>{shared ? '已共享' : '未共享'}</span>
-        <Switch aria-label="开放给普通用户" checked={shared} disabled={selected.owners.length > 0 || sharingBusy} onCheckedChange={next => void updateSharing(next)}/>
-      </div>
-    </div>
-    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-      <section><h2>版本与质量</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-        <div><dt>schema</dt><dd>{selected.schema}</dd></div>
-        <div><dt>时间范围</dt><dd>{formatDate(selected.timeRange.start)} — {formatDate(selected.timeRange.end)}</dd></div>
-        <div><dt>原始/纳入</dt><dd>{valueLabel(quality.rawRows)} / {valueLabel(quality.includedRows)}</dd></div>
-        <div><dt>正例</dt><dd>{valueLabel(quality.positiveLabels)}</dd></div>
-        <div><dt>空标签</dt><dd>{valueLabel(quality.blankLabels)}</dd></div>
-        <div><dt>CSV SHA-256</dt><dd><code>{valueLabel(selected.file.sha256)}</code></dd></div>
-        <div><dt>文件字节</dt><dd>{valueLabel(selected.file.bytes)}</dd></div>
-        <div><dt>标签规则</dt><dd>{selected.labelRule ?? '未声明'}</dd></div>
-        <div><dt>标签成熟</dt><dd>{labelMaturityText(selected.labelMaturity)}</dd></div>
-      </dl></section>
-      <section><h2>标签与 SZZ</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-        <div><dt>修复提交</dt><dd>{valueLabel(szzNumber('fixCommits'))}</dd></div>
-        <div><dt>被标为引入</dt><dd>{valueLabel(szzNumber('labeledCommits'))}</dd></div>
-        <div><dt>证据对数</dt><dd>{valueLabel(szzNumber('evidencePairs'))}</dd></div>
-        {signals ? <div><dt>修复信号</dt><dd>issue {valueLabel(signals.issue)} · 关键词 {valueLabel(signals.keyword)}</dd></div> : null}
-        {lookup ? <div><dt>Issue 查询</dt><dd>成功 {valueLabel(lookup.succeeded)} · 失败 {valueLabel(lookup.failed)} · 不可用 {valueLabel(lookup.unavailable)}</dd></div> : null}
-        <div><dt>未回溯行区间</dt><dd>{valueLabel(szzNumber('unresolvedRanges'))}</dd></div>
-        <div><dt>跳过文件</dt><dd>{valueLabel(szzNumber('skippedFiles'))}</dd></div>
-        {szz.mode ? <div><dt>跳过</dt><dd>排除 {valueLabel(szzNumber('skippedExcluded'))} · 空白 {valueLabel(szzNumber('skippedWhitespace'))} · 仅文档 {valueLabel(szzNumber('skippedDocsOnly'))} · 元数据行 {valueLabel(szzNumber('skippedNoiseLines'))}</dd></div> : null}
-        <div><dt>窗口外引入</dt><dd>{valueLabel(szzNumber('outsideWindow'))}</dd></div>
-        <div><dt>成熟期</dt><dd>{observations?.maturityDays ? `${valueLabel(observations.maturityDays)} 天` : label.maturityDays ? `${valueLabel(label.maturityDays)} 天` : '—'}</dd></div>
-        <div><dt>观察终点</dt><dd>{observedThrough ?? '—'}</dd></div>
-        <div><dt>观察协议</dt><dd>{valueLabel(observations?.protocol ?? 'legacy-unobserved-v1')}</dd></div>
-        <div><dt>样本/合格</dt><dd>{valueLabel((observations?.counts as Row | undefined)?.originalRecords ?? quality.includedRows)} / {valueLabel((observations?.counts as Row | undefined)?.eligibleRecords ?? quality.includedRows)}</dd></div>
-        <div><dt>未成熟排除</dt><dd>{valueLabel((observations?.counts as Row | undefined)?.excludedImmature ?? 0)}</dd></div>
-        <div><dt>历史状态</dt><dd>{valueLabel(observations?.historyStatus ?? 'unknown')}</dd></div>
-        <div><dt>标签版本</dt><dd>{valueLabel(observations?.version ?? label.rule ?? selected.labelRule)}</dd></div>
-        {observations?.truncated === true ? <div><dt>证据截断</dt><dd>是（回溯时间预算用尽，正例只覆盖部分历史）</dd></div> : null}
-        {szz.truncated === true && observations?.truncated !== true ? <div><dt>截断</dt><dd>是（超过回溯上限）</dd></div> : null}
-      </dl></section>
-    </div>
-    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-      <section><h2>来源</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-        <div><dt>发布者</dt><dd>{valueLabel(selected.source.publisher)}</dd></div>
-        <div><dt>地址</dt><dd>{valueLabel(selected.source.url)}</dd></div>
-        <div><dt>修订</dt><dd><code>{valueLabel(selected.source.revision)}</code></dd></div>
-        <div><dt>分支</dt><dd>{valueLabel(selected.source.branch)}</dd></div>
-        <div><dt>HEAD</dt><dd><code>{valueLabel(selected.source.head)}</code></dd></div>
-        <div><dt>来源类型</dt><dd>{selected.usage === 'pr' ? 'PR 分析' : '分支分析'}</dd></div>
-        <div><dt>来源分析</dt><dd><code>{selected.sourceSyncId ?? '未记录'}</code></dd></div>
-        <div><dt>引用</dt><dd>{selected.references.length ? selected.references.join('、') : '无'}</dd></div>
-        <div><dt>所有者</dt><dd>{selected.owners.length ? selected.owners.join('、') : '共享'}</dd></div>
-      </dl></section>
-    </div>
-    <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-      <section><h2>字段缺失</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">{Object.entries(quality.featureMissing ?? {}).map(([field, count]) => <div key={field}><dt>{field}</dt><dd>{valueLabel(count)}</dd></div>)}</dl></section>
-      <section><h2>排除统计</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">{Object.entries(quality.excluded ?? {}).map(([reason, count]) => <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}</dl></section>
-    </div>
-    <section><h2>训练限制</h2><ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{selected.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>清洗与派生</h2><ErrorNotice>{curationError}</ErrorNotice>
-      <Textarea aria-label="清洗配方" value={recipeText} onChange={event => { setRecipeText(event.target.value); setCurationPreview(null); setDerivedVersion('') }}/>
-      <div className="flex flex-wrap items-end gap-3">
-        <Button onClick={() => void previewCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览结果</Button>
-        <Button onClick={() => void deriveCurationAction()} variant="outline" disabled={Boolean(curationBusy)} type="button">{curationBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成新版本</Button>
-      </div>
-      {curationPreview ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-        <section><h2>清洗前后</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-          <div><dt>原始 / 纳入 / 排除</dt><dd>{valueLabel(curationPreview.stats.rawRows)} / {valueLabel(curationPreview.stats.includedRows)} / {valueLabel(curationPreview.stats.excludedRows)}</dd></div>
-          <div><dt>正例</dt><dd>{valueLabel(curationPreview.stats.positiveLabels)}{typeof curationPreview.stats.includedRows === 'number' && typeof curationPreview.stats.positiveLabels === 'number' && curationPreview.stats.includedRows > 0 ? ` · ${(Number(curationPreview.stats.positiveLabels) / Number(curationPreview.stats.includedRows) * 100).toFixed(1)}%` : ''}</dd></div>
-          <div><dt>时间范围</dt><dd>{curationPreview.stats.timeRange ? `${formatDate((curationPreview.stats.timeRange as Row).start)} — ${formatDate((curationPreview.stats.timeRange as Row).end)}` : '—'}</dd></div>
-          <div><dt>配方哈希</dt><dd><code>{curationPreview.recipeSha256}</code></dd></div>
-        </dl></section>
-        <section><h2>排除原因</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-          {Object.entries((curationPreview.stats.excluded as Row | undefined) ?? {}).map(([reason, count]) =>
-            <div key={reason}><dt>{reason}</dt><dd>{valueLabel(count)}</dd></div>)}
-          {!Object.keys((curationPreview.stats.excluded as Row | undefined) ?? {}).length ? <div><dt>无</dt><dd>没有记录被排除</dd></div> : null}
-        </dl></section>
-      </div> : null}
-      {derivedVersion ? <p className="text-xs leading-body text-foreground-3">已生成新版本 {derivedVersion}；返回数据集列表可查看并训练该版本。</p> : null}
-    </section>
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>对比与导出</h2><ErrorNotice>{compareError}</ErrorNotice>
-      <div className="flex flex-wrap items-end gap-3">
-        <Select value={compareVersion == null ? '' : String(compareVersion)} onValueChange={nextValue => (setCompareVersion)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="对比派生版本"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{(versions.filter(item => item.version !== selected.version).map(item => ({ value: item.version, label: item.version }))).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
-        <Button disabled={!compareVersion} onClick={() => void compareAction()} variant="outline" type="button">对比版本</Button>
-        <Button onClick={() => void exportCuration(selected.version)} variant="outline" type="button">导出当前版本</Button>
-      </div>
-      {comparison ? <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-        {(['source', 'derived'] as const).map(key => {
-          const side = comparison[key] as Row | undefined
-          if (!side) return null
-          const quality = (side.quality ?? {}) as Row
-          const range = (side.timeRange ?? {}) as Row
-          return <section key={key}><h2>{key === 'source' ? '来源版本' : '派生版本'}</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-            <div><dt>版本</dt><dd><code>{valueLabel(side.version)}</code></dd></div>
-            <div><dt>纳入行</dt><dd>{valueLabel(quality.includedRows)}</dd></div>
-            <div><dt>正例行</dt><dd>{valueLabel(quality.positiveLabels)}</dd></div>
-            <div><dt>时间范围</dt><dd>{range.start ? `${formatDate(range.start)} — ${formatDate(range.end)}` : '—'}</dd></div>
-          </dl></section>
-        })}
-      </div> : null}
-    </section>
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>PR 数据集清理</h2><ErrorNotice>{cleanupError}</ErrorNotice>
-      <div className="flex flex-wrap items-end gap-3">
-        <Input aria-label="保留 PR 版本数" min={0} value={keep} onChange={event => setKeep(event.target.value)} type="number"/>
-        <Button onClick={() => void previewCleanup()} variant="outline" disabled={Boolean(cleanupBusy)} type="button">{cleanupBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览可清理版本</Button>
-      </div>
-      {prunable === null ? null : prunable.length ? <>
-        <ul className="mt-2 list-disc pl-5 text-xs leading-body text-foreground-2">{prunable.map(item => <li key={item.version}><code>{item.version}</code> · {item.createdAt.slice(0, 10)}</li>)}</ul>
-        <Button variant='destructive' onClick={() => setConfirmCleanup(true)} type="button">清理 {prunable.length} 个版本</Button>
-      </> : <p className="text-xs leading-body text-foreground-3">没有超出保留数量且无引用的 PR 版本。</p>}
-      {cleanupResult ? <p className="text-xs leading-body text-foreground-3">{cleanupResult}</p> : null}
-    </section>
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>多方法实验</h2><ErrorNotice>{experimentError}</ErrorNotice>
-      <div className="grid gap-2.5">
-        {experimentMethods.map(choice => {
-          const checked = selectedMethods.includes(choice.method)
-          const blocked = !choice.available || splitPreviewBusy || !splitPreview?.available
-          return <div key={choice.method} className="grid gap-2 rounded-md border border-border-soft p-3">
-            <label className="inline-flex items-start gap-2 text-sm"><Checkbox checked={checked} disabled={blocked} onCheckedChange={() => toggleMethod(choice.method)}/><span>{choice.name} · <code>{choice.method}</code>{choice.reason ? ` · ${choice.reason}` : ''}</span></label>
-            {checked && choice.params.length ? <div className="flex flex-wrap gap-2.5 [&_label]:grid [&_label]:gap-1 [&_label]:text-xs [&_label]:text-foreground-3 [&_input]:w-28">
-              {choice.params.map(spec => <label key={spec.name}>{spec.name}（{spec.type} {spec.min}–{spec.max}）
-                <Input aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any" value={paramValues[choice.method]?.[spec.name] ?? ''} onChange={event => setParam(choice.method, spec.name, event.target.value)} type="number"/>
-              </label>)}
-            </div> : null}
+
+  const { quality, source, szz, label, labelObservations: observations } = selected
+  const signals = asRow(szz.fixSignals)
+  const lookup = asRow(szz.issueLookup)
+  const counts = asRow(observations?.counts)
+  const szzNumber = (key: string) => szz[key] ?? asRow(szz.unresolved)?.[key]
+  const rawRows = numeric(quality.rawRows)
+  const includedRows = numeric(quality.includedRows)
+  const positives = numeric(quality.positiveLabels)
+  const observedUntil = typeof observations?.observedThroughIso === 'string' ? observations.observedThroughIso.slice(0, 10) : null
+  const maturityDays = numeric(observations?.maturityDays) ?? numeric(label.maturityDays)
+  const missing = Object.entries(asRow(quality.featureMissing) ?? {}).filter(([, count]) => (numeric(count) ?? 0) > 0)
+  const excluded = Object.entries(asRow(quality.excluded) ?? {}).filter(([, count]) => (numeric(count) ?? 0) > 0)
+  const sourceUrl = typeof source.url === 'string' ? source.url : null
+  const canShare = selected.shared || trainingPreview?.available === true
+
+  return <>
+    <section className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-card shadow-sm" aria-label="数据版本概览">
+      <div className="grid gap-4 px-5 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="break-words text-xl font-semibold tracking-tight text-foreground [overflow-wrap:anywhere]">{selected.dataset}</h2>
+            <p className="mt-1 text-xs text-foreground-3">{usageLabel(selected.usage)} · {selected.schema}</p>
           </div>
-        })}
-      </div>
-      <div className="flex flex-wrap items-end gap-3">
-        <Button variant='default' disabled={Boolean(!selectedMethods.length || splitPreviewBusy || !splitPreview?.available) || Boolean(experimentBusy)} onClick={() => void runExperiment()} type="button">{experimentBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}创建实验（{selectedMethods.length} 个方法）</Button>
-      </div>
-      {!splitPreview?.available && splitPreview ? <p className="text-xs leading-body text-foreground-3">当前切分预设不可用，不能创建实验。</p> : null}
-    </section>
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>用此版本训练</h2><ErrorNotice>{error}</ErrorNotice><div className="flex flex-wrap items-end gap-3">
-      <Select value={selectedMethod == null ? '' : String(selectedMethod)} onValueChange={nextValue => (setMethod)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练方法"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{experimentMethods.map(item => <SelectItem key={item.method} value={item.method}>{item.label || `${item.name} · ${item.method}`}</SelectItem>)}</SelectContent></Select>
-      <Select value={metricSet == null ? '' : String(metricSet)} onValueChange={nextValue => (setMetricSet)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="指标集"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'metric-set-v2', label: 'metric-set-v2' }, { value: 'metric-set-v1', label: 'metric-set-v1' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
-      <Select value={classPolicy == null ? '' : String(classPolicy)} onValueChange={nextValue => (value => setClassPolicy(value as 'none' | 'weights' | 'sample'))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="训练分区类别策略"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'none', label: '不处理类别' }, { value: 'weights', label: '训练分区加权' }, { value: 'sample', label: '训练分区采样' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
-      <Select value={splitPreset == null ? '' : String(splitPreset)} onValueChange={nextValue => (setSplitPreset)(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="时间切分预设"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([...SPLIT_PRESETS]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
-      <Select value={maturityPolicy} onValueChange={nextValue => setMaturityPolicy(nextValue as 'mature-only' | 'include-immature')}><SelectTrigger aria-label="标签成熟策略"><SelectValue placeholder="请选择"/></SelectTrigger><SelectContent>{([{ value: 'mature-only', label: '正式：排除未成熟标签' }, { value: 'include-immature', label: '敏感性：包含未成熟标签' }]).map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>
-      <Button variant='default' disabled={Boolean(!selectedMethod || !version || splitPreviewBusy || !splitPreview?.available) || Boolean(busy)} onClick={() => void train()} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}创建训练任务</Button>
-    </div></section>
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>切分预览</h2><ErrorNotice>{splitPreviewError}</ErrorNotice>
-      {splitPreviewBusy ? <p className="text-xs leading-body text-foreground-3">正在按原始唯一成员计算三档边界…</p> : splitPreview ? <>
-        {!splitPreview.available ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep" role="alert"><strong>{splitPreview.reason?.code ?? 'SPLIT_INVALID'}</strong><p>{splitPreview.reason?.message ?? '该预设不可用'}</p></div> : <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-          <p className="text-xs leading-body text-foreground-3">样本 {valueLabel(splitPreview.datasetRecords)} · 成熟合格 {valueLabel(splitPreview.eligibleRecords)}</p>
-          {(['train', 'validation', 'test'] as const).map(name => {
-            const part = splitPreview.partitions?.[name]
-            return <section key={name}><h2>{{ train: '训练', validation: '验证', test: '测试' }[name]}</h2><dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-              <div><dt>样本 / 正例</dt><dd>{part?.records ?? '—'} / {part?.positives ?? '—'}</dd></div>
-              <div><dt>开始</dt><dd>{part?.start ? formatDate(part.start) : '—'}</dd></div>
-              <div><dt>结束</dt><dd>{part?.end ? formatDate(part.end) : '—'}</dd></div>
-            </dl></section>
-          })}
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" type="button" onClick={() => setTool('training')}>用于训练</Button>
+            <Button size="sm" type="button" variant="outline" disabled={exporting} onClick={() => void exportVersion()}>{exporting ? '正在导出…' : '导出'}</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button size="sm" type="button" variant="ghost">更多操作 <ChevronDown aria-hidden="true" size={14}/></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setTool('curation')}>清洗与派生</DropdownMenuItem>
+                <DropdownMenuItem disabled={versions.length < 2} onSelect={() => setTool('compare')}>对比版本</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="grid min-w-0 max-w-lg flex-1 gap-1">
+            <span className="text-xs font-medium text-foreground-3">版本</span>
+            {versions.length === 1 ? <code className="break-all py-1 text-xs text-foreground-2">{selected.version}</code>
+              : <Select value={selected.version} onValueChange={id => {
+              const item = versions.find(candidate => candidate.version === id)
+              if (item) onSelect(item)
+            }}>
+              <SelectTrigger aria-label="数据集版本" className="h-8 w-full min-w-0 max-w-full font-mono text-xs [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate"><SelectValue/></SelectTrigger>
+              <SelectContent position="popper" className="max-w-[min(85vw,44rem)]">
+                {versions.map(item => <SelectItem key={item.version} value={item.version}>{item.version}</SelectItem>)}
+              </SelectContent>
+            </Select>}
+          </div>
+          <div className="flex min-h-8 flex-wrap items-center gap-2 text-xs">
+            {selected.owners.length ? <span title={selected.owners.join('、')} className="text-foreground-3">用户自有版本</span> : <label className="flex items-center gap-2 text-foreground-2">
+              <span>开放给普通用户</span>
+              <Switch aria-label="开放给普通用户" checked={selected.shared} disabled={sharingBusy || trainingBusy || !canShare} onCheckedChange={next => void updateSharing(next)}/>
+            </label>}
+          </div>
+        </div>
+        {selected.owners.length ? null : <div className="flex min-h-5 flex-wrap items-center gap-1.5 text-xs">
+          {trainingBusy ? <span className="text-foreground-3">检查训练准入…</span>
+            : trainingPreview?.available ? <span className="inline-flex items-center gap-1 text-teal-deep"><CheckCircle2 aria-hidden="true" size={13}/>可用于训练</span>
+            : <span className="inline-flex items-center gap-1 text-rose-deep" title={trainingPreview?.reason?.message ?? trainingError}><AlertTriangle aria-hidden="true" size={13}/>不可训练</span>}
+          {trainingPreview?.reason?.message ? <span className="min-w-0 break-words text-rose-deep [overflow-wrap:anywhere]">· {trainingPreview.reason.message}</span> : null}
+          {trainingError ? <span className="text-rose-deep">· {trainingError}</span> : null}
         </div>}
-        <p className="text-xs leading-body text-foreground-3">时区 {splitPreview.timezone}；同一时间组不会跨分区。预览不创建任务、产物或模型，测试成员在训练运行中只读。</p>
-      </> : null}
+        <ErrorNotice>{error}</ErrorNotice>
+      </div>
+      <dl className="grid grid-cols-2 divide-x divide-border-soft border-t border-border-soft sm:grid-cols-4 [&>div:nth-child(n+3)]:max-sm:border-t [&>div:nth-child(n+3)]:max-sm:border-border-soft">
+        <DatasetMetric label="原始行数" value={numberText(rawRows)}/>
+        <DatasetMetric label="纳入行数" value={numberText(includedRows)} note={ratioText(includedRows, rawRows)}/>
+        <DatasetMetric label="正例" value={numberText(positives)} note={ratioText(positives, includedRows)}/>
+        <DatasetMetric label="空标签" value={numberText(quality.blankLabels)}/>
+      </dl>
     </section>
-    <AlertDialog open={confirmCleanup} onOpenChange={setConfirmCleanup}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${460}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"确认清理 PR 数据集？"}</AlertDialogTitle><AlertDialogDescription>{"将删除选中的数据集登记、提交记录与文件；此操作不可恢复，被模型、分析或趋势引用的版本不会出现在列表中。"}</AlertDialogDescription></AlertDialogHeader>{null}<AlertDialogFooter>{<><Button onClick={() => setConfirmCleanup(false)} variant="outline" type="button">取消</Button><Button variant='destructive' onClick={() => void runCleanup()} disabled={Boolean(cleanupBusy)} type="button">{cleanupBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}确认清理</Button></>}</AlertDialogFooter></AlertDialogContent></AlertDialog>
-  </section>
+
+    <div className="grid min-w-0 gap-3 2xl:grid-cols-2 2xl:items-start">
+      <DatasetSection title="来源与时间" icon={GitBranch}>
+        <dl className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
+          {sourceUrl ? <DatasetFact label="来源" className="sm:col-span-2">
+            {/^(https?):\/\//i.test(sourceUrl) ? <a className="text-accent underline-offset-2 hover:underline" href={sourceUrl} target="_blank" rel="noreferrer">{sourceUrl}</a> : sourceUrl}
+          </DatasetFact> : null}
+          <DatasetFact label="数据起点">{formatDate(selected.timeRange.start)}</DatasetFact>
+          <DatasetFact label="数据终点">{formatDate(selected.timeRange.end)}</DatasetFact>
+          {typeof source.branch === 'string' && source.branch ? <DatasetFact label="分支">{source.branch}</DatasetFact> : null}
+        </dl>
+      </DatasetSection>
+      <DatasetSection title="标签与限制" icon={ShieldAlert}>
+        <dl className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
+          <DatasetFact label="标签规则">{selected.labelRule ?? '未声明'}</DatasetFact>
+          <DatasetFact label="标签成熟">{labelMaturityText(selected.labelMaturity)}</DatasetFact>
+          {observedUntil ? <DatasetFact label="观察截止">{observedUntil}</DatasetFact> : null}
+          {maturityDays !== null ? <DatasetFact label="成熟期">{maturityDays} 天</DatasetFact> : null}
+        </dl>
+        {observations?.truncated === true || szz.truncated === true ? <p className="mt-3 text-xs text-amber-deep">缺陷证据覆盖不完整，部分提交未完成回溯。</p> : null}
+        {selected.limitations.length ? <ul className="mt-3 list-disc space-y-1 pl-4 text-xs leading-relaxed text-foreground-3">
+          {selected.limitations.map(item => <li key={item}>{item}</li>)}
+        </ul> : null}
+      </DatasetSection>
+    </div>
+
+    <AuditFacts title="数据质量与排除" facts={[
+      ...missing.map(([field, count]): [string, unknown] => [`字段缺失 · ${field}`, count]),
+      ...excluded.map(([reason, count]): [string, unknown] => [EXCLUSION_LABELS[reason] ?? reason, count]),
+    ]}/>
+    <AuditFacts title="标签回溯明细" facts={[
+      ['修复提交', szzNumber('fixCommits')], ['被标为引入', szzNumber('labeledCommits')], ['证据对数', szzNumber('evidencePairs')],
+      ['修复信号 · Issue', signals?.issue], ['修复信号 · 关键词', signals?.keyword],
+      ['Issue 查询成功', lookup?.succeeded], ['Issue 查询失败', lookup?.failed], ['Issue 查询不可用', lookup?.unavailable],
+      ['未回溯行区间', szzNumber('unresolvedRanges')], ['跳过文件', szzNumber('skippedFiles')],
+      ['排除文件', szzNumber('skippedExcluded')], ['空白变动', szzNumber('skippedWhitespace')],
+      ['仅文档', szzNumber('skippedDocsOnly')], ['元数据行', szzNumber('skippedNoiseLines')],
+      ['窗口外引入', szzNumber('outsideWindow')], ['观察协议', observations?.protocol],
+      ['原始样本', counts?.originalRecords], ['成熟合格样本', counts?.eligibleRecords], ['未成熟排除', counts?.excludedImmature],
+      ['历史覆盖', observations?.historyStatus], ['标签版本', observations?.version ?? label.rule],
+    ]}/>
+    <AuditFacts title="文件、归属与引用" facts={[
+      ['发布者', source.publisher], ['修订', source.revision], ['HEAD', source.head], ['来源分析', selected.sourceSyncId],
+      ['CSV SHA-256', selected.file.sha256], ['文件大小', selected.file.bytes == null ? null : bytesText(selected.file.bytes)],
+      ['描述文件', selected.manifestPath], ['所有者', selected.owners.length ? selected.owners.join('、') : '管理员管理'],
+      ['引用', selected.references.length ? selected.references.map(item => REFERENCE_LABELS[item] ?? item).join('、') : '无'],
+    ]}/>
+
+    {tool === 'training' ? <AdminDatasetTrainingDialog selected={selected} onClose={closeTool} navigate={navigate} expired={expired}/> : null}
+    {tool === 'curation' ? <AdminDatasetCurationDialog version={selected.version} onClose={closeTool} onDerived={onDerived} expired={expired}/> : null}
+    {tool === 'compare' ? <AdminDatasetCompareDialog selected={selected} versions={versions} onClose={closeTool} expired={expired}/> : null}
+  </>
 }

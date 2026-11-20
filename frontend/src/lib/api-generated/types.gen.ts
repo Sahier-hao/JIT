@@ -854,7 +854,7 @@ export type HistoricalBatch = {
 /**
  * 码名与HTTP／任务语义的唯一文字定义见../全局错误码表.md；枚举含当前HTTP、相关CLI及候选新接口。
  */
-export type GlobalErrorCode = 'ARTIFACT_UNAVAILABLE' | 'INTEGRITY_ERROR' | 'ARTIFACT_INVALID' | 'MODEL_INVALID' | 'INFERENCE_ERROR' | 'SOURCE_UNAVAILABLE' | 'DATA_INVALID' | 'OUTPUT_EXISTS' | 'SPLIT_INVALID' | 'FEATURES_INVALID' | 'MODEL_NOT_CONVERGED' | 'EVALUATION_INVALID' | 'REPRODUCTION_FAILED' | 'SCHEMA_UNKNOWN' | 'SCHEMA_FIELD_UNAVAILABLE' | 'ALGORITHM_UNKNOWN' | 'NOT_FOUND' | 'SOURCE_HASH_MISMATCH' | 'INPUT_SCHEMA_MISMATCH' | 'INPUT_INVALID' | 'INPUT_LIMIT_EXCEEDED' | 'CONTEXT_MISMATCH' | 'MODEL_NOT_READY' | 'MODEL_DISABLED' | 'DEFAULT_MODEL_REQUIRED' | 'RUN_NOT_READY' | 'EXPLANATION_FAILED' | 'STORAGE_UNAVAILABLE' | 'REPOSITORY_UNKNOWN' | 'REPOSITORY_ANALYSIS_UNKNOWN' | 'REPOSITORY_ANALYSIS_UNAVAILABLE' | 'SYNC_NOT_ACTIVE' | 'SYNC_SERVICE_STOPPING' | 'SYNC_CANCELLED' | 'SYNC_TIMEOUT' | 'SYNC_INTERRUPTED' | 'SYNC_WORKER_EXITED' | 'TREND_SOURCE_CONFLICT' | 'TREND_SOURCE_UNAVAILABLE' | 'PR_SOURCE_UNAVAILABLE' | 'PR_RATE_LIMITED' | 'PR_VERSION_CHANGED' | 'PR_SOURCE_TOO_LARGE' | 'PR_CONTENT_UNAVAILABLE' | 'REPOSITORY_UNAVAILABLE' | 'REPOSITORY_CHECK_TIMEOUT' | 'CONFLICT_ACTIVE_SYNC';
+export type GlobalErrorCode = 'ARTIFACT_UNAVAILABLE' | 'INTEGRITY_ERROR' | 'ARTIFACT_INVALID' | 'MODEL_INVALID' | 'INFERENCE_ERROR' | 'SOURCE_UNAVAILABLE' | 'DATA_INVALID' | 'OUTPUT_EXISTS' | 'SPLIT_INVALID' | 'FEATURES_INVALID' | 'MODEL_NOT_CONVERGED' | 'EVALUATION_INVALID' | 'REPRODUCTION_FAILED' | 'SCHEMA_UNKNOWN' | 'SCHEMA_FIELD_UNAVAILABLE' | 'ALGORITHM_UNKNOWN' | 'NOT_FOUND' | 'SOURCE_HASH_MISMATCH' | 'INPUT_SCHEMA_MISMATCH' | 'INPUT_INVALID' | 'INPUT_LIMIT_EXCEEDED' | 'CONTEXT_MISMATCH' | 'MODEL_NOT_READY' | 'MODEL_DISABLED' | 'DEFAULT_MODEL_REQUIRED' | 'RUN_NOT_READY' | 'EXPLANATION_FAILED' | 'STORAGE_UNAVAILABLE' | 'REPOSITORY_UNKNOWN' | 'REPOSITORY_ANALYSIS_UNKNOWN' | 'REPOSITORY_ANALYSIS_UNAVAILABLE' | 'SYNC_NOT_ACTIVE' | 'SYNC_SERVICE_STOPPING' | 'SYNC_CANCELLED' | 'SYNC_TIMEOUT' | 'SYNC_INTERRUPTED' | 'SYNC_WORKER_EXITED' | 'TREND_SOURCE_CONFLICT' | 'TREND_SOURCE_UNAVAILABLE' | 'PR_SOURCE_UNAVAILABLE' | 'PR_RATE_LIMITED' | 'PR_PRIVATE_REPOSITORY' | 'GITHUB_CONNECTION_REQUIRED' | 'PR_VERSION_CHANGED' | 'PR_SOURCE_TOO_LARGE' | 'PR_CONTENT_UNAVAILABLE' | 'REPOSITORY_UNAVAILABLE' | 'REPOSITORY_CHECK_TIMEOUT' | 'CONFLICT_ACTIVE_SYNC';
 
 export type CurrentError = {
     error: {
@@ -1232,6 +1232,15 @@ export type RepositorySyncPage = {
     offset: number;
 };
 
+export type RepositoryLabelEvidence = {
+    fixCommit: string;
+    path: string;
+    fixTime: string | null;
+    ruleVersion: string | null;
+    lineRanges?: Array<unknown> | null;
+    parentRanges?: Array<unknown> | null;
+};
+
 /**
  * 仓库采集出的提交。`label` 由简化 SZZ 倒推：1 表示后来有修复提交指认它引入缺陷，0 只表示未观测到，不等于已证实无缺陷。`subject` 是提交标题的首行，旧数据为空。
  */
@@ -1247,6 +1256,15 @@ export type RepositorySyncCommit = {
     label: 0 | 1;
     labelNote: string | null;
     subject: string | null;
+    labelStatus?: 'positive' | 'unobserved' | 'immature' | 'unknown';
+    /**
+     * 这次分析记录的观察截止时间，仅在详情返回。
+     */
+    observedThrough?: string | null;
+    /**
+     * 指向该提交的后续修复记录，仅在详情返回。
+     */
+    labelEvidence?: Array<RepositoryLabelEvidence>;
     partition: CommitPartition;
 };
 
@@ -1495,6 +1513,15 @@ export type RepositoryCommit = {
     features: CollectedFeatures;
     label: 0 | 1;
     labelNote: string | null;
+    labelStatus?: 'positive' | 'unobserved' | 'immature' | 'unknown';
+    /**
+     * 这次分析记录的观察截止时间，仅在详情返回。
+     */
+    observedThrough?: string | null;
+    /**
+     * 指向该提交的后续修复记录，仅在详情返回。
+     */
+    labelEvidence?: Array<RepositoryLabelEvidence>;
     partition: CommitPartition;
 };
 
@@ -1601,6 +1628,10 @@ export type ExperimentRun = {
 };
 
 export type ModelInfo = {
+    /**
+     * 当前分支与 PR 打分是否支持该特征 schema
+     */
+    repositorySchemaCompatible?: boolean;
     enabled: boolean;
     isDefault: boolean;
     modelId: Uuid;
@@ -1890,14 +1921,15 @@ export type ModelReadiness = {
 
 export type ModelList = {
     models: Array<ModelInfo>;
-    methods: Array<{
+    methods?: Array<{
         method: string;
         name: string;
         category: 'classic' | 'deep';
         registeredModels: number;
         deliveredArtifacts: number;
     }>;
-    readiness: ModelReadiness;
+    readiness?: ModelReadiness;
+    candidates?: Array<ModelCandidate>;
 };
 
 export type ModelCoverageCell = {
@@ -4146,6 +4178,10 @@ export type ListModelsData = {
     path?: never;
     query?: {
         state?: 'ready' | 'invalid';
+        /**
+         * registered 读取已保存的校验状态和当前策略，diagnostics 进行产物诊断并返回候选产物。
+         */
+        view?: 'registered' | 'diagnostics';
     };
     url: '/api/v1/models';
 };

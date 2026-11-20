@@ -85,6 +85,37 @@ def test_admin_model_detail_returns_verified_metrics_and_lineage(settings):
         assert public.get(f"/api/v1/models/{model['modelId']}").status_code == 401
 
 
+def test_registered_model_directory_reads_saved_state_without_opening_artifacts(settings, monkeypatch):
+    from jit_baseline.api import create_app
+
+    app = create_app(**settings)
+    catalog = app.state.catalog
+    with TestClient(app) as client:
+        model_id = catalog.register_key('baseline')['model']['modelId']
+        catalog.update_policy(model_id, {'isDefault': True})
+        load_model = catalog.load_model
+
+        def unexpected_load(_model_id):
+            raise AssertionError('读取已登记模型目录不应打开模型产物')
+
+        monkeypatch.setattr(catalog, 'load_model', unexpected_load)
+        response = client.get('/api/v1/models?view=registered')
+        assert response.status_code == 200
+        body = response.json()
+        assert [item['modelId'] for item in body['models']] == [model_id]
+        assert body['models'][0]['isDefault'] is True
+        assert body['models'][0]['enabled'] is True
+        assert body['models'][0]['state'] == 'ready'
+        assert 'readiness' not in body
+
+        monkeypatch.setattr(catalog, 'load_model', load_model)
+        (settings['artifact_root'] / 'baseline/model.joblib').unlink()
+        assert client.get('/api/v1/models?view=registered').json()['models'][0]['state'] == 'ready'
+        rejected = client.patch(f'/api/v1/models/{model_id}/policy', json={'isDefault': True})
+        assert rejected.json()['error']['code'] == 'ARTIFACT_UNAVAILABLE'
+        assert client.get('/api/v1/models?view=registered&state=invalid').json()['models'][0]['state'] == 'invalid'
+
+
 def test_public_model_card_reuses_diagnostics_and_hides_admin_artifacts(settings):
     from fastapi.testclient import TestClient as PublicTestClient
     from jit_baseline.api import create_app

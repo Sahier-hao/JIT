@@ -1,10 +1,9 @@
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import {
   AlertTriangle, CheckCircle2, Clock3, Database, ExternalLink, FileArchive,
   GitBranch, ShieldAlert, Trash2,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { DatasetFact as Fact, DatasetMetric as HeroMetric, DatasetSection as DetailSection } from '@/features/datasets/DatasetPresentation'
 import { formatDate, valueLabel } from '@/features/admin/adminContracts'
 import type { UserDataset, UserSplitPreview } from '@/features/account/userClient'
 import { labelMaturityItems } from '@/lib/datasetMaturity'
@@ -13,32 +12,16 @@ import {
   ratioText, usageLabel,
 } from '@/features/datasets/mydata/format'
 
-const MATURITY_REASON = /成熟声明|mature-observed-v1/
+const REBUILD_REASON_CODES = new Set([
+  'LABEL_OBSERVATION_UNKNOWN',
+  'LABEL_STATUS_MISSING',
+  'LABEL_STATUS_INVALID',
+  'LABEL_EVIDENCE_TRUNCATED',
+])
 
-function HeroMetric({ label, value, note }: { label: string; value: string; note?: string | null }) {
-  return <div className="min-w-0 px-4 py-3">
-    <dt className="text-[11px] font-medium uppercase tracking-[.08em] text-foreground-4">{label}</dt>
-    <dd className="m-0 mt-1 flex flex-wrap items-baseline gap-2">
-      <strong className="text-xl font-semibold tabular-nums tracking-tight text-foreground">{value}</strong>
-      {note ? <span className="text-[11px] text-foreground-3">{note}</span> : null}
-    </dd>
-  </div>
-}
-
-function Fact({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div className={cn('min-w-0', className)}>
-    <dt className="text-[11px] font-medium uppercase tracking-[.08em] text-foreground-4">{label}</dt>
-    <dd className="m-0 mt-1 min-w-0 break-words text-sm leading-relaxed text-foreground [overflow-wrap:anywhere]">{children}</dd>
-  </div>
-}
-
-function DetailSection({ title, icon: Icon, children }: { title: string; icon: typeof Database; children: ReactNode }) {
-  return <section className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-card p-5 shadow-sm">
-    <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-      <Icon aria-hidden="true" className="text-accent" size={16} strokeWidth={1.6}/>{title}
-    </h2>
-    <div className="mt-4">{children}</div>
-  </section>
+export function datasetNeedsRebuild(preview: Pick<UserSplitPreview, 'available' | 'reason'> | null): boolean {
+  return preview !== null && !preview.available
+    && REBUILD_REASON_CODES.has(preview.reason?.code ?? '')
 }
 
 /** 单个数据版本的可读详情：来源、质量、标签、文件谱系与训练准入。 */
@@ -87,8 +70,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
   const recipeHash = typeof dataset.curation?.recipeSha256 === 'string' ? dataset.curation.recipeSha256 : ''
   const manifestHash = typeof dataset.integrity.manifestSha256 === 'string' ? dataset.integrity.manifestSha256 : ''
   const sourceHash = typeof dataset.integrity.sourceSha256 === 'string' ? dataset.integrity.sourceSha256 : ''
-  const needsRebuild = preview !== null && !preview.available
-    && MATURITY_REASON.test(preview.reason?.message ?? '')
+  const needsRebuild = datasetNeedsRebuild(preview)
   const inclusionRatio = ratioText(includedRows, rawRows)
   const inclusionPercent = includedRows != null && rawRows != null && rawRows > 0
     ? Math.max(0, Math.min(100, includedRows / rawRows * 100)) : 0

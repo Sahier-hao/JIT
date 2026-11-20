@@ -48,10 +48,11 @@ export function DatasetRowList({ items, selected, onSelect }: {
   </div>
 }
 
-export function BuildTaskList({ tasks, busyTaskId, onOpen, onAction }: {
+export function BuildTaskList({ tasks, busyTaskId, onOpen, onInspect, onAction }: {
   tasks: DatasetBuildTask[]
   busyTaskId: string
   onOpen: (version: string) => void
+  onInspect: (taskId: string) => void
   onAction: (task: DatasetBuildTask, action: 'cancel' | 'retry') => void
 }) {
   if (!tasks.length) return <div className="grid justify-items-center gap-2 px-3 py-10 text-center">
@@ -75,6 +76,7 @@ export function BuildTaskList({ tasks, busyTaskId, onOpen, onAction }: {
         {active ? <span className="text-[11px] text-foreground-3">{BUILD_STAGE_LABELS[task.stage] ?? task.stage}{task.queuePosition ? ` · 队列 ${task.queuePosition}` : ''}</span> : null}
         {task.error ? <span className="break-all text-[11px] text-rose">{task.error.code}</span> : null}
         <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" variant="ghost" type="button" onClick={() => onInspect(task.taskId)}>任务详情</Button>
           {task.status === 'completed' && task.datasetVersion ? <Button size="sm" variant="outline" type="button" onClick={() => onOpen(task.datasetVersion!)}>查看数据</Button> : null}
           {active ? <Button size="sm" variant="destructive" type="button" disabled={busyTaskId === task.taskId} onClick={() => onAction(task, 'cancel')}>{busyTaskId === task.taskId ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}取消</Button> : null}
           {retryable ? <Button size="sm" variant="outline" type="button" disabled={busyTaskId === task.taskId} onClick={() => onAction(task, 'retry')}>{busyTaskId === task.taskId ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}重试</Button> : null}

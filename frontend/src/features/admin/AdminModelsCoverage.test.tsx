@@ -78,13 +78,31 @@ function session(path: unknown) {
     ? Response.json({ authenticated: true, username: 'admin' }) : null
 }
 
+it('waits for a chosen model pair before reading comparison details', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const auth = session(path)
+    if (auth) return auth
+    const id = String(path).split('/').at(-1)
+    const model = (modelId: string, name: string) => ({
+      modelId, name, method: 'logistic-regression-l2-v1', state: 'ready', enabled: true, isDefault: false,
+      featureSchemaVersion: 'kamei14-git-v2', artifactDatasetVersion: 'test', metrics: {},
+      runId: 'run', artifactRunId: 'run',
+    })
+    if (id === 'a' || id === 'b') return Response.json(model(id, id === 'a' ? '模型甲' : '模型乙'))
+    return Response.json({ models: [model('a', '模型甲'), model('b', '模型乙')] })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'comparisons' }} navigate={vi.fn()}/>)
+  expect(await screen.findByRole('combobox', { name: '模型 A' })).toBeVisible()
+  const captured = () => fetch.mock.calls.filter(([path]) => /\/api\/v1\/models\/[ab]$/.test(String(path)))
+  expect(captured()).toHaveLength(0)
+})
+
 it('shows the nine-method coverage matrix and opens registered model details', async () => {
   const navigate = vi.fn()
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
     const auth = session(path)
     if (auth) return auth
     const url = String(path)
-    if (url.endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
     if (url.includes('/api/v1/models/coverage')) return Response.json(coverage())
     return Response.json({
       models: [{
@@ -93,20 +111,28 @@ it('shows the nine-method coverage matrix and opens registered model details', a
         runId: 'run-1', artifactRunId: 'run-1', artifactDatasetVersion: 'jit-v1',
       }],
       methods: [],
+      candidates: [],
       readiness: READINESS,
     })
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'models' }} navigate={navigate}/>)
 
+  expect(await screen.findByRole('heading', { name: /已登记模型/ })).toBeVisible()
+  expect(screen.getByText('上次校验通过')).toBeVisible()
+  expect(fetch.mock.calls.some(([path]) => /models\/coverage|model-candidates|view=diagnostics/.test(String(path)))).toBe(false)
+  await userEvent.click(screen.getByRole('button', { name: '查看产物诊断' }))
+  expect(await screen.findByText('1 个已登记')).toBeVisible()
+  expect(screen.getByText('1 个可用模型')).toBeVisible()
+  expect(screen.getByText('1 个用户可选')).toBeVisible()
+  expect(screen.getByText('8 个完整未登记')).toBeVisible()
+  await userEvent.click(screen.getByRole('tab', { name: '训练覆盖' }))
   const matrix = await screen.findByLabelText('数据集与方法训练覆盖')
   expect(within(matrix).getByText('仓库 JIT 基准')).toBeVisible()
   for (const [, name] of METHODS) expect(within(matrix).getByText(name)).toBeVisible()
   expect(within(matrix).getByText('训练未收敛')).toBeVisible()
   expect(within(matrix).getByText('模型文件校验失败')).toBeVisible()
-  expect(screen.getByText('1 个已登记')).toBeVisible()
-  expect(screen.getByText('1 个可用模型')).toBeVisible()
-  expect(screen.getByText('1 个用户可选')).toBeVisible()
-  expect(screen.getByText('8 个完整未登记')).toBeVisible()
+  expect(fetch.mock.calls.filter(([path]) => String(path).includes('view=diagnostics'))).toHaveLength(1)
+  expect(fetch.mock.calls.some(([path]) => String(path).endsWith('/model-candidates'))).toBe(false)
 
   await userEvent.setup().click(screen.getByRole('button', {
     name: '逻辑回归：可用，查看模型详情',
@@ -121,9 +147,11 @@ it('shows package import failures and maintenance commands', async () => {
     const url = String(path)
     if (url.endsWith('/api/v1/model-candidates')) return Response.json({ candidates: [] })
     if (url.includes('/api/v1/models/coverage')) return Response.json(coverage())
-    return Response.json({ models: [], methods: [], readiness: { ...READINESS, registeredModels: 0, readyModels: 0 } })
+    return Response.json({ models: [], methods: [], candidates: [], readiness: { ...READINESS, registeredModels: 0, readyModels: 0 } })
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'models' }} navigate={vi.fn()}/>)
+  await userEvent.click(await screen.findByRole('button', { name: '查看产物诊断' }))
+  await userEvent.click(screen.getByRole('tab', { name: '模型包' }))
   const panel = await screen.findByLabelText('模型包交付')
   expect(within(panel).getByText('jit-models.zip')).toBeVisible()
   expect(within(panel).getByText('部分导入')).toBeVisible()
@@ -144,7 +172,7 @@ it('distinguishes an empty new environment from development artifacts', async ()
       return Response.json({ datasets: [], total: 0, limit: 100, offset: 0, latestImport: null })
     }
     return Response.json({
-      models: [], methods: [],
+      models: [], methods: [], candidates: [],
       readiness: {
         ...READINESS, ready: false, completeArtifacts: 0, unregisteredExperiments: 0,
         completeUnregisteredExperiments: 0, registeredModels: 0, readyModels: 0,
@@ -154,8 +182,10 @@ it('distinguishes an empty new environment from development artifacts', async ()
     })
   })
   render(<AdminWorkspace route={{ name: 'admin', view: 'models' }} navigate={vi.fn()}/>)
+  await userEvent.click(await screen.findByRole('button', { name: '查看产物诊断' }))
   expect(await screen.findByText('当前部署环境没有模型包导入记录，也没有已登记模型。')).toBeVisible()
   expect(screen.queryByText('仓库 JIT 基准')).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('tab', { name: '训练覆盖' }))
   expect(screen.getByText('没有训练覆盖记录')).toBeVisible()
 })
 
@@ -165,7 +195,7 @@ it('keeps network failure separate from an empty catalog and retries real reques
     const auth = session(path)
     if (auth) return auth
     const url = String(path)
-    if (url.endsWith('/api/v1/models')) {
+    if (url.endsWith('/api/v1/models?view=registered')) {
       modelCalls += 1
       if (modelCalls === 1) throw new TypeError('connection refused')
     }

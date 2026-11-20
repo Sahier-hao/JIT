@@ -1,8 +1,13 @@
 import type { BaselineSummary, Mode } from '@/features/research/historicalContract'
-import { parseSync, parseSyncCommitPage, repositoryName, type SyncCommit } from '@/features/projects/repositoryContract'
+import { parseSync, parseSyncCommitPage, repositoryName, type SyncCommit, type CommitLabelEvidence, type CommitLabelStatus } from '@/features/projects/repositoryContract'
 export { parseHistorical } from '@/features/research/historicalContract'
 export type { BaselineSummary, Mode, Score } from '@/features/research/historicalContract'
-export interface Commit { id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string; authorName?: string | null; originalCommitUrl?: string | null; metrics?: Record<string, number>; explanation?: string[]; partition?: string | null }
+export interface Commit {
+  id: string; time: string; risk?: unknown; lines?: number; files?: number; title?: string
+  authorName?: string | null; originalCommitUrl?: string | null; metrics?: Record<string, number>
+  explanation?: string[]; partition?: string | null
+  labelStatus?: CommitLabelStatus; observedThrough?: string | null; labelEvidence?: CommitLabelEvidence[]
+}
 /** 仓库来源的上下文：同步作业身份与它实际采用的打分模型，供界面如实标注来源（RCL-08/09）。 */
 export interface RepositoryMeta {
   modelId?: string | null
@@ -126,6 +131,9 @@ export function toCommit(commit: SyncCommit): Commit {
     originalCommitUrl: commit.originalCommitUrl,
     metrics: commit.metrics,
     partition: commit.partition,
+    labelStatus: commit.labelStatus,
+    observedThrough: commit.observedThrough,
+    labelEvidence: commit.labelEvidence,
   }
 }
 

@@ -96,11 +96,11 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
   return <>
     <Button variant="ghost" type="button" className="inline-flex items-center gap-1.5 rounded-sm border border-border-soft bg-card px-2 py-1 text-xs text-foreground-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => setOpen(true)} aria-haspopup="dialog">
       <span className={cn('size-1.5 rounded-full', TONE_DOT[tone])} aria-hidden="true"/>
-      <b className="font-medium">分支提醒</b>
-      <span className="text-foreground-3">{state ? SHORT[state.status] : '读取中'}</span>
+      <b className="font-medium">订阅分支更新</b>
+      <span className="text-foreground-3">{state ? state.enabled && state.status === 'idle' ? '已开启' : SHORT[state.status] : '读取中'}</span>
       <ChevronRight aria-hidden="true" focusable="false" strokeWidth={1.5} size={13} className="text-foreground-4"/>
     </Button>
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${560}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"分支提醒与仓库检查"}</DialogTitle></DialogHeader>{error ? <FailureNotice error={error}/> : null}{!state || error ? <div className="grid justify-items-start gap-2">
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${560}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>订阅分支更新</DialogTitle></DialogHeader>{error ? <FailureNotice error={error}/> : null}{!state || error ? <div className="grid justify-items-start gap-2">
         <p className="text-sm text-foreground-3">提醒状态暂时不可用。</p>
         <Button size="sm" disabled={busy} onClick={() => setAttempt(value => value + 1)} variant="outline" type="button">重新读取</Button>
       </div> : <div className="grid gap-3">
@@ -113,7 +113,7 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
         <p className="text-xs leading-body text-foreground-3">{state.status === 'error' ? (ERRORS[state.errorCode ?? ''] ?? `检查未完成（${state.errorCode ?? '未知原因'}），请重试；已有分析记录仍可查看。`) : detail}</p>
         {state.status === 'updated' && onAnalyze ? <div className="flex justify-end"><Button variant='default' size="sm" onClick={() => { setOpen(false); onAnalyze(state.resolvedBranch ?? (state.branch === 'HEAD' ? '' : state.branch)) }} type="button">分析这次更新</Button></div> : null}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft pt-2 text-xs text-foreground-3">
-          <span className="inline-flex items-center gap-2"><Switch checked={state.enabled} disabled={busy} onCheckedChange={checked => (checked => void act('configure', { enabled: checked }))(checked === true)} aria-label="分支提醒"/><span>分支提醒</span></span>
+          <span className="inline-flex items-center gap-2"><Switch checked={state.enabled} disabled={busy} onCheckedChange={checked => (checked => void act('configure', { enabled: checked }))(checked === true)} aria-label="订阅分支更新"/><span>订阅</span></span>
           <span>{`每 ${state.intervalSeconds / 60} 分钟检查一次`}</span>
         </div>
         <form className="grid gap-2 border-t border-border-soft pt-3" onSubmit={save}>

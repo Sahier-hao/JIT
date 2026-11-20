@@ -83,6 +83,9 @@ function mockApi(options: { onDeleteRecord?: () => void; onPost?: (body: unknown
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = new URL(String(input), 'http://localhost')
     const method = init?.method ?? 'GET'
+    if (url.pathname === '/api/v1/repository-models') return response({ models: [
+      { modelId: 'registered-default', name: '默认模型', method: 'lr', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
+    ] })
     if (url.pathname === `/api/v1/repositories/${REPO}/syncs`) return response({ repositoryId: REPO, syncs: [job(), job({ syncId: OTHER, createdAt: '2026-10-21T12:00:00Z' })], total: 2, limit: 10, offset: 0 })
     if (url.pathname === `/api/v1/repositories/${REPO}` && method === 'PATCH') {
       const body = JSON.parse(String(init?.body)) as { displayName?: string; viewSyncId?: string }
@@ -154,13 +157,18 @@ it('reports how many of the top holdout commits carry defect evidence', async ()
     }
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
-  expect(await screen.findByText('模型没见过的提交里，分数最高的三条')).toBeVisible()
-  expect(await screen.findByText('留出 4 条 · 2 条有缺陷证据 · 分数最高的三条命中 2 条')).toBeVisible()
-  expect(screen.getByText(/分支分析用于回放与复盘/)).toBeVisible()
+  const navigate = vi.fn()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
+  expect(await screen.findByText('优先回查的提交')).toBeVisible()
+  expect(await screen.findByText('留出 4 条 · 2 条有缺陷证据 · 前 3 条有 2 条')).toBeVisible()
+  const highest = screen.getByRole('button', { name: /holdout-1/ })
+  expect(within(highest).getByText('有引入证据')).toBeVisible()
+  expect(within(screen.getByRole('button', { name: /holdout-2/ })).getByText('观察覆盖未知')).toBeVisible()
+  await userEvent.click(highest)
+  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ viewSyncId: SYNC, commitId: '1'.repeat(40) }))
 })
 
-it('retries a cancelled analysis with branch and strategy but without a hidden date window', async () => {
+it('turns a cancelled legacy training request into scoring after explicit model selection', async () => {
   sessionStorage.clear()
   let posted: unknown = null
   const fetch = mockApi({ onPost: value => { posted = value } }); const original = fetch.getMockImplementation()!
@@ -173,9 +181,12 @@ it('retries a cancelled analysis with branch and strategy but without a hidden d
   await user.click(await screen.findByRole('menuitem', { name: '用这些参数重试' }))
   expect(await screen.findByRole('group', { name: '分析选项' })).toBeInTheDocument()
   expect(screen.queryByLabelText('起始日期')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
+  await screen.findByRole('option', { name: '使用默认模型：默认模型' })
+  await user.selectOptions(screen.getByLabelText('模型来源'), 'default')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(posted).not.toBeNull())
-  expect(posted).toMatchObject({ branch: 'main', strategy: 'auto' })
+  expect(posted).toMatchObject({ branch: 'main', strategy: 'generic-model', modelId: 'registered-default' })
   expect(posted).not.toHaveProperty('since')
   expect(posted).not.toHaveProperty('until')
   expect(posted).not.toHaveProperty('commitLimit')
@@ -240,7 +251,7 @@ it('shows the current result and opens the pinned review', async () => {
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: 'demo-project' })).toBeVisible()
   expect(screen.getByRole('heading', { name: '当前分析结果' })).toBeVisible()
-  expect(screen.getAllByText('data-1')[0]).toBeVisible()
+  expect(screen.getByRole('button', { name: '数据来源' })).toBeVisible()
   await userEvent.setup().click(screen.getByRole('button', { name: '查看提交明细' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'analysis', repositoryId: REPO, viewSyncId: SYNC, view: 'commits' })
 })
@@ -280,12 +291,12 @@ it('posts a new analysis with the chosen branch and the default strategy', async
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
   const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click(screen.getByRole('button', { name: '发起分析' }))
+  await user.click(screen.getByRole('button', { name: '分析分支提交' }))
   expect(await screen.findByRole('group', { name: '分析选项' })).toBeInTheDocument()
   await user.type(screen.getByRole('textbox', { name: '分支' }), 'release')
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(posted).not.toBeNull())
-  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/demo', branch: 'release', strategy: 'auto', splitPreset: 'temporal-70-15-15', maturityPolicy: 'mature-only' })
+  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/demo', branch: 'release', strategy: 'generic-model', modelId: 'registered-default' })
 })
 
 it('returns to the project list from the back link', async () => {
@@ -341,7 +352,8 @@ it('keeps following a queued job until the result is available', async () => {
   })
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click(screen.getByRole('button', { name: '发起分析' }))
+  await user.click(screen.getByRole('button', { name: '分析分支提交' }))
+  await screen.findByRole('option', { name: '使用默认模型：默认模型' })
   await user.click(await screen.findByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(document.querySelectorAll('[data-current]').length).toBeGreaterThan(0), { timeout: 7000 })
 })
@@ -395,6 +407,25 @@ it('switches project subviews without dropping project identity', async () => {
   expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'trends' })
 })
 
+it('keeps branch launch and branch progress on the branch analysis tab', async () => {
+  const fetch = mockApi(), original = fetch.getMockImplementation()!
+  const active = job({ status: 'scoring', stage: 'scoring', sourceKind: 'branch', requestedStrategy: 'generic-model' })
+  fetch.mockImplementation(async (input, init) => {
+    const path = new URL(String(input), 'http://localhost').pathname
+    if (path === `/api/v1/repositories/${REPO}`) return response({ ...detail(), latestSync: active })
+    if (path.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [active], total: 1, limit: 10, offset: 0 })
+    return original(input, init)
+  })
+  const navigate = vi.fn()
+  const { rerender } = render(<ProjectPage repositoryId={REPO} tab="prs" navigate={navigate}/>)
+  await screen.findByRole('heading', { name: 'demo-project' })
+  expect(screen.queryByRole('button', { name: '分析分支提交' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: '当前分析进度' })).not.toBeInTheDocument()
+  rerender(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
+  expect(await screen.findByRole('button', { name: '分析分支提交' })).toBeVisible()
+  expect(await screen.findByRole('region', { name: '当前分析进度' })).toBeVisible()
+})
+
 it('opens a PR-sourced record at its fixed snapshot and never offers branch retry', async () => {
   const SNAP = '55555555-5555-4555-8555-555555555555'
   const source = snapshot(SNAP); source.repositoryId = REPO
@@ -441,6 +472,47 @@ function overviewPayload() {
 function updateState() {
   return { repositoryId: REPO, enabled: false, branch: 'HEAD', intervalSeconds: 300, status: 'idle', lastAttemptAt: null, lastCheckedAt: null, nextCheckAt: null, remoteHead: null, resolvedBranch: null, errorCode: null }
 }
+
+it('opens a branch update in the branch analysis tab with the discovered branch', async () => {
+  const fetch = mockApi(), original = fetch.getMockImplementation()!
+  fetch.mockImplementation(async (input, init) => {
+    const path = new URL(String(input), 'http://localhost').pathname
+    if (path.endsWith('/overview')) return response(overviewPayload())
+    if (path.endsWith('/updates')) return response({ ...updateState(), enabled: true, status: 'updated', resolvedBranch: 'release' })
+    return original(input, init)
+  })
+  const navigate = vi.fn(), user = userEvent.setup()
+  const { rerender } = render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  await user.click(await screen.findByRole('button', { name: /订阅分支更新/ }))
+  await user.click(await screen.findByRole('button', { name: '分析这次更新' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'analyses' })
+  rerender(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
+  expect(await screen.findByRole('textbox', { name: '分支' })).toHaveValue('release')
+})
+
+it('keeps overview refresh with repository details and uses the branch tab for existing results', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = new URL(String(input), 'http://localhost')
+    if (url.pathname.endsWith('/overview')) return response(overviewPayload())
+    if (url.pathname.endsWith('/updates')) return response(updateState())
+    if (url.pathname.endsWith('/syncs')) return response({ repositoryId: REPO, syncs: [job()], total: 1, limit: 10, offset: 0 })
+    return response(detail())
+  })
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  const overview = await screen.findByRole('region', { name: '仓库概览' })
+  await screen.findByText('Demo repository')
+  expect(within(overview).queryByRole('button', { name: '查看分析结果' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /分析全部 PR|批量分析 PR/ })).not.toBeInTheDocument()
+  await user.click(within(overview).getByRole('button', { name: '刷新仓库信息' }))
+  await waitFor(() => expect(fetch.mock.calls.some(([path]) => String(path).endsWith('/overview?refresh=true'))).toBe(true))
+  await user.click(screen.getByRole('link', { name: '分支分析' }))
+  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ repositoryId: REPO, tab: 'analyses' }))
+  await user.click(within(overview).getByRole('link', { name: '在我的数据中构建' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'my-data', view: 'builds', buildProjectId: REPO })
+  expect(fetch.mock.calls.some(([path, init]) => String(path).includes('dataset-builds') && init?.method === 'POST')).toBe(false)
+})
+
 it('lands on the repository overview before any analysis and starts analysis explicitly', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const url = new URL(String(input), 'http://localhost')
@@ -451,14 +523,18 @@ it('lands on the repository overview before any analysis and starts analysis exp
     return response({})
   })
   const navigate = vi.fn(), user = userEvent.setup()
-  render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
+  const { rerender } = render(<ProjectPage repositoryId={REPO} navigate={navigate}/>)
   expect(await screen.findByRole('region', { name: '仓库概览' })).toBeVisible()
   expect(await screen.findByText('仓库活跃度')).toBeVisible()
   expect(await screen.findByText('语言构成')).toBeVisible()
   expect(screen.queryByText('分析记录')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '发起第一次分析' })).not.toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: '发起分析' }))
-  expect(await screen.findByRole('dialog')).toHaveTextContent('发起分析')
+  expect(screen.queryByRole('button', { name: '分析分支提交' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('link', { name: '分支分析' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'repository', repositoryId: REPO, tab: 'analyses' })
+  rerender(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
+  await user.click(screen.getByRole('button', { name: '分析分支提交' }))
+  expect(await screen.findByRole('dialog')).toHaveTextContent('分析分支提交')
 })
 it('renders the 52-week activity curve, the language donut, and aggregates extra languages', async () => {
   localStorage.clear()

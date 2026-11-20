@@ -27,7 +27,8 @@ export function useActiveAdminJobs(enabled: boolean): ActiveJob[] {
       const page = await fetchTrainingTasks(50, 0, signal)
       return page.tasks.filter(task => ACTIVE.has(task.status)).map(taskJob)
     },
-    refetchInterval: 6000,
+    staleTime: 6000,
+    refetchInterval: query => query.state.data?.length ? 6000 : 60000,
     retry: false,
   })
   return enabled ? query.data ?? [] : []

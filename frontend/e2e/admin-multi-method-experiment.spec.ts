@@ -14,13 +14,12 @@ test.describe('多方法实验与项目使用', () => {
     }
 
     await page.goto('/#/admin/datasets')
-    const card = page.locator('.admin-dataset-card').filter({
-      has: page.getByRole('heading', { name: 'kamei14-git-v2-claude-scholar', exact: true }),
-    })
-    await card.getByRole('button', { name: '查看详情' }).click()
+    await page.getByRole('link', { name: /^kamei14-git-v2-claude-scholar \d/ }).click()
     await page.getByRole('combobox', { name: '数据集版本' }).click()
     await page.getByRole('option', { name: 'kamei14-git-v2-claude-scholar-2026-01-25_2026-10-19' }).click()
-    const panel = page.locator('section.admin-train-panel').filter({ hasText: '多方法实验' })
+    await page.getByRole('button', { name: '用于训练' }).click()
+    const panel = page.getByRole('dialog', { name: '用于训练' })
+    await panel.getByRole('radio', { name: '多方法实验' }).click()
     await expect(panel.getByRole('checkbox', { name: /逻辑回归/ })).toBeEnabled()
     await panel.getByRole('checkbox', { name: /逻辑回归/ }).check()
     await panel.getByRole('checkbox', { name: /决策树/ }).check()
@@ -69,8 +68,8 @@ test.describe('多方法实验与项目使用', () => {
     const project = await (await page.request.post('/api/v1/repositories', {
       data: { repositoryUrl: LARGE_REPOSITORY.replaceAll('\\', '/') },
     })).json()
-    await page.goto(`/#/projects/${project.repositoryId}`)
-    await page.getByRole('button', { name: '发起分析', exact: true }).first().click()
+    await page.goto(`/#/projects/${project.repositoryId}/analyses`)
+    await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
     const option = dialog.getByLabel('模型来源').locator('option', { hasText: 'C=0.5' })

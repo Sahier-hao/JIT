@@ -1,9 +1,9 @@
-import { type LucideIcon, Folder, List, TrendingUp, SlidersHorizontal } from 'lucide-react'
+import { type LucideIcon, ClipboardCheck, Folder, List, TrendingUp, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BrandLogo } from '@/components/shared/BrandLogo'
 import type { ReactNode } from 'react'
 
-import { repositoryRoute, type Route } from '@/app/navigation'
+import { linkTo, repositoryRoute, type Route } from '@/app/navigation'
 import { projectsNavActive } from '@/components/layout/navActive'
 import type { RepositoryView } from '@/features/projects/repositoryWorkspace'
 import type { UserSession } from '@/features/account/userClient'
@@ -14,11 +14,16 @@ import { useActiveUserJobs } from '@/features/account/activeJobs'
 import { UserAccount } from '@/features/account/components/UserAccount'
 import { cn } from '@/lib/utils'
 
-const NAV: { label: string; icon: LucideIcon; route: Route }[] = [
-  { label: '项目', icon: Folder, route: { name: 'repositories' } },
-  { label: '我的数据', icon: List, route: { name: 'my-data' } },
-  { label: '我的训练', icon: TrendingUp, route: { name: 'my-training' } },
-  { label: '我的模型', icon: SlidersHorizontal, route: { name: 'my-models' } },
+const NAV: { label: string; items: { label: string; icon: LucideIcon; route: Route }[] }[] = [
+  { label: '审查', items: [
+    { label: '项目', icon: Folder, route: { name: 'repositories' } },
+    { label: '我的审查', icon: ClipboardCheck, route: { name: 'my-reviews' } },
+  ] },
+  { label: '数据与模型', items: [
+    { label: '我的数据', icon: List, route: { name: 'my-data' } },
+    { label: '我的训练', icon: TrendingUp, route: { name: 'my-training' } },
+    { label: '我的模型', icon: SlidersHorizontal, route: { name: 'my-models' } },
+  ] },
 ]
 
 export function AppShell({ route, navigate, repositories, session, onSession, children }: { route: Route; navigate: (route: Route) => void; repositories: RepositoryView[]; session: UserSession | null; onSession: (session: UserSession) => void; children: ReactNode }) {
@@ -38,20 +43,20 @@ export function AppShell({ route, navigate, repositories, session, onSession, ch
           <span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span>
         </Button>
 
-        <p className="mb-2 mt-4 hidden px-3 text-xs font-medium tracking-wide text-foreground-4 sm:block">工作空间</p>
-        <nav className="flex gap-1 overflow-x-auto sm:grid" aria-label="主导航">
-          {NAV.map(item => {
-            const active = item.route.name === 'repositories' ? projectsActive : route.name === item.route.name
-            return <Button variant="ghost"
-              key={item.label}
-              type="button"
-              aria-current={active ? 'page' : undefined}
-              onClick={() => navigate(item.route)}
-              className={cn(
-                'flex h-9 min-w-0 shrink-0 items-center gap-2.5 rounded-sm border-0 bg-transparent px-3 text-sm text-foreground-2 transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground',
-              )}
-            ><item.icon aria-hidden="true" focusable="false" strokeWidth={1.5} size={18} className={cn('opacity-60', active && 'opacity-90')}/>{item.label}</Button>
-          })}
+        <nav className="mt-3 grid gap-2 sm:gap-4" aria-label="主导航">
+          {NAV.map(group => <div key={group.label} className="flex flex-wrap gap-1 sm:grid">
+            <p className="mb-1 hidden px-3 text-xs font-medium text-foreground-4 sm:block">{group.label}</p>
+            {group.items.map(item => {
+              const active = item.route.name === 'repositories' ? projectsActive
+                : route.name === item.route.name || (item.route.name === 'my-reviews' && route.name === 'pr-work' && !route.repositoryId)
+              return <Button variant="ghost" size="sm" asChild key={item.label}
+                className="flex h-9 min-w-0 justify-start gap-2 rounded-sm px-3 text-sm text-foreground-2 aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground">
+                <a {...linkTo(item.route, navigate)} aria-current={active ? 'page' : undefined}>
+                  <item.icon aria-hidden="true" size={16} className={cn('opacity-60', active && 'opacity-90')}/>{item.label}
+                </a>
+              </Button>
+            })}
+          </div>)}
         </nav>
 
         {repositories.length ? <div className="mt-6 hidden min-h-0 flex-1 overflow-y-auto sm:block">

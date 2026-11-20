@@ -20,6 +20,7 @@ from ..schemas import resolve
 from ..split_preview import dataset_split_preview
 from ..store import dataset_references
 from ..users import current_user
+from .pr_review import github_request, github_token
 
 MAX_EXPORT_BYTES = 64 * 1024 * 1024
 MAX_IMPORT_BYTES = 64 * 1024 * 1024
@@ -204,7 +205,19 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         if row is None:
             raise BaselineError('NOT_FOUND', '用户账户不存在')
         return {'username': row[0], 'displayName': row[1], 'createdAt': row[2],
-                'datasetCount': datasets, 'modelCount': models, 'experimentCount': experiments}
+                'datasetCount': datasets, 'modelCount': models, 'experimentCount': experiments,
+                'github': {'connected': bool(github_token()), 'login': None}}
+
+    @app.post('/api/v1/user/github/link')
+    async def link_user_github(request: Request):
+        _user(request)
+        if not github_token():
+            raise BaselineError('GITHUB_CONNECTION_REQUIRED', '请先在本机完成 GitHub 登录')
+        profile = await run_in_threadpool(github_request, '/user')
+        login = profile.get('login') if isinstance(profile, dict) else None
+        if not isinstance(login, str) or not login:
+            raise BaselineError('PR_SOURCE_UNAVAILABLE', '无法读取 GitHub 账户')
+        return {'connected': True, 'login': login}
 
     @app.patch('/api/v1/user/profile')
     async def update_user_profile(request: Request):
