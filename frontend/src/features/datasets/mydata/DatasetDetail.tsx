@@ -1,15 +1,17 @@
 import { Button } from '@/components/ui/button'
 import {
   AlertTriangle, CheckCircle2, Clock3, Database, ExternalLink, FileArchive,
-  GitBranch, ShieldAlert, Trash2,
+  Gauge, GitBranch, ShieldAlert, Trash2,
 } from 'lucide-react'
 import { DatasetFact as Fact, DatasetMetric as HeroMetric, DatasetSection as DetailSection } from '@/features/datasets/DatasetPresentation'
 import { formatDate, valueLabel } from '@/features/admin/adminContracts'
 import type { UserDataset, UserSplitPreview } from '@/features/account/userClient'
 import { labelMaturityItems } from '@/lib/datasetMaturity'
+import { BenchmarkFieldsDialog } from '@/features/datasets/components/BenchmarkFieldsDialog'
+import { KAMEI_2013_SCHEMA } from '@/features/datasets/components/datasetImportFormats'
 import {
   EXCLUSION_LABELS, asRow, bytesText, commitText, numeric, numberText,
-  ratioText, usageLabel,
+  datasetTitle, ratioText, usageLabel,
 } from '@/features/datasets/mydata/format'
 
 const REBUILD_REASON_CODES = new Set([
@@ -32,6 +34,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
   busy: boolean
   actions: {
     onTrain: () => void
+    onPredict: () => void
     onExport: () => void
     onCuration: () => void
     onDelete: () => void
@@ -62,6 +65,8 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
   const maturityDays = numeric(observations?.maturityDays) ?? numeric(maturity?.maturityDays)
   const statusItems = labelMaturityItems(asRow(maturity?.statusCounts))
   const sourceUrl = typeof dataset.source.url === 'string' ? dataset.source.url : ''
+  const sourceUpload = typeof dataset.source.upload === 'string' ? dataset.source.upload : ''
+  const sourceMember = typeof dataset.source.member === 'string' ? dataset.source.member : ''
   const branch = typeof dataset.source.branch === 'string' ? dataset.source.branch : ''
   const head = typeof dataset.source.head === 'string'
     ? dataset.source.head
@@ -83,10 +88,10 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] font-medium text-foreground-3 shadow-sm">
               <Database aria-hidden="true" size={13}/>数据版本
             </div>
-            <h2 className="mt-3 truncate text-2xl font-semibold tracking-tight text-foreground">{dataset.dataset}</h2>
+            <h2 className="mt-3 truncate text-2xl font-semibold tracking-tight text-foreground">{datasetTitle(dataset)}</h2>
             <code className="mt-1 block break-all font-mono text-[11px] text-foreground-4">{dataset.version}</code>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] text-foreground-2">{usageLabel(dataset.usage)}</span>
+              <span className="rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] text-foreground-2">{usageLabel(dataset.usage, dataset)}</span>
               <span className="rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] text-foreground-2">{dataset.mine ? '我的数据' : '共享数据'}</span>
               {preview == null
                 ? <span className="inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] text-foreground-3"><Clock3 aria-hidden="true" size={12}/>检查训练准入</span>
@@ -97,6 +102,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={actions.onTrain} disabled={!preview?.available} type="button">用于训练</Button>
+            <Button size="sm" onClick={actions.onPredict} variant="outline" type="button"><Gauge aria-hidden="true" size={14}/>模型试算</Button>
             <Button size="sm" onClick={actions.onExport} variant="outline" type="button">导出</Button>
             {dataset.mine ? <Button size="sm" variant="outline" onClick={actions.onCuration} type="button">清洗数据</Button> : null}
             {dataset.mine ? <Button size="sm" variant="ghost" onClick={actions.onDelete} disabled={busy} type="button" aria-label="删除数据版本"><Trash2 aria-hidden="true" size={15}/>删除</Button> : null}
@@ -117,16 +123,18 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
       <div className="grid min-w-0 gap-4">
         <DetailSection title="来源与时间" icon={GitBranch}>
           <dl className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-            <Fact label="来源" className="sm:col-span-2">{usageLabel(dataset.usage)}{sourceUrl ? <span className="text-foreground-3"> · </span> : null}
+            <Fact label="来源" className="sm:col-span-2">{usageLabel(dataset.usage, dataset)}{sourceUrl ? <span className="text-foreground-3"> · </span> : null}
               {sourceUrl ? (/^https?:\/\//.test(sourceUrl)
                 ? <a className="inline-flex max-w-full items-center gap-1 align-bottom text-accent hover:underline" href={sourceUrl} target="_blank" rel="noreferrer"><span className="truncate">{sourceUrl}</span><ExternalLink aria-hidden="true" className="shrink-0" size={12}/></a>
                 : <code className="break-all font-mono text-[11px]">{sourceUrl}</code>) : null}</Fact>
             <Fact label="字段规范"><code className="rounded bg-soft px-1.5 py-0.5 font-mono text-[11px]">{dataset.schema}</code></Fact>
+            {sourceUpload ? <Fact label="上传文件">{sourceUpload}</Fact> : null}
+            {sourceMember && sourceMember !== sourceUpload ? <Fact label="项目 CSV">{sourceMember}</Fact> : null}
             {branch ? <Fact label="分支">{branch}</Fact> : null}
             {head ? <Fact label="提交"><code className="font-mono text-[11px]" title={head}>{commitText(head)}</code></Fact> : null}
             <Fact label="数据范围" className="sm:col-span-2">{formatDate(dataset.timeRange.start)} — {formatDate(dataset.timeRange.end)}</Fact>
             {dataset.timestamps.builtAt ? <Fact label="构建完成">{formatDate(dataset.timestamps.builtAt)}</Fact> : null}
-            {dataset.timestamps.importedAt ? <Fact label="CSV 导入">{formatDate(dataset.timestamps.importedAt)}</Fact> : null}
+            {dataset.timestamps.importedAt ? <Fact label="导入时间">{formatDate(dataset.timestamps.importedAt)}</Fact> : null}
             {!dataset.timestamps.builtAt && !dataset.timestamps.importedAt && dataset.timestamps.registeredAt
               ? <Fact label="登记时间">{formatDate(dataset.timestamps.registeredAt)}</Fact> : null}
             {dataset.timestamps.ownedAt ? <Fact label="归属登记">{formatDate(dataset.timestamps.ownedAt)}</Fact> : null}
@@ -177,6 +185,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
               <span className="flex flex-wrap gap-1.5">{statusItems.map(item => <span key={item.label} className="rounded-md bg-soft px-2 py-1 text-[11px] text-foreground-2">{item.label} {numberText(item.value)}</span>)}</span>
             </Fact> : null}
           </dl>
+          {dataset.schema === KAMEI_2013_SCHEMA ? <div className="mt-3"><BenchmarkFieldsDialog/></div> : null}
           <div className="mt-4 rounded-lg bg-sunken p-3">
             <div className="flex items-center gap-1.5 text-xs font-medium text-foreground-3"><ShieldAlert aria-hidden="true" size={13}/>限制</div>
             {dataset.limitations.length ? <ul className="mt-2 grid gap-2 text-xs leading-relaxed text-foreground-2">

@@ -7,6 +7,7 @@ it.each<Route>([
   { name: 'repositories' }, { name: 'sources' }, { name: 'repository', repositoryId: 'repo-B' },
   { name: 'repository', repositoryId: 'repo-B', buildTaskId: 'build-1' },
   { name: 'my-reviews' }, { name: 'my-data', view: 'builds', taskId: 'build-1' }, { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12 },
+  { name: 'my-predictions' }, { name: 'my-predictions', datasetVersion: 'data-1' }, { name: 'my-predictions', batchId: 'batch-1' },
   { name: 'pr-work', owner: 'example', repositoryName: 'project', number: 12, mode: 'preview' },
   { name: 'analysis', repositoryId: 'repo-B', viewSyncId: 'analysis-1', view: 'commits', commitId: 'a'.repeat(40) },
   { name: 'analysis', repositoryId: 'repo-B', viewSyncId: 'analysis-1', view: 'plan' },

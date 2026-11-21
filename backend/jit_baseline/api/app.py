@@ -45,6 +45,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
             yield
         finally:
             from starlette.concurrency import run_in_threadpool
+            await run_in_threadpool(app.state.dataset_imports.close)
             await run_in_threadpool(app.state.pr_updates.close)
             await run_in_threadpool(app.state.updates.close)
             if owns_sync:

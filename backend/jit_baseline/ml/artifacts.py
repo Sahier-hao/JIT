@@ -20,12 +20,12 @@ from ..config import BACKEND, BASE_URL, COHORT, LIMITATIONS, REVISION, SOURCES, 
 from ..core.source_fingerprint import source_hashes
 from . import admission
 
-from ..data import BaselineError, parse_source, sha256, verified_bytes
+from ..data import BaselineError, parse_source, published_cost_scale, review_cost, sha256, verified_bytes
 from .datasets import load_manifest, manifest_relative
 from .label_maturity import apply_label_maturity, resolve_policy, status_counts
 from .metrics import DEFAULT_METRIC_SET, declared_metric_set, evaluate
 from .model import apply_class_policy, feature_matrix, fit_model, predict_risks
-from ..schemas import DEFAULT_SCHEMA, get_schema, resolve
+from ..schemas import DEFAULT_SCHEMA, KAMEI_2013_SCHEMA, get_schema, resolve
 from .splits import DEFAULT_PRESET, resolve_preset, rule_text, split_records
 
 DEFAULT_RUN = BACKEND / "artifacts/baseline"
@@ -774,11 +774,14 @@ class Snapshot:
             ) from exc
         except Exception as exc:
             raise BaselineError("MODEL_INVALID", "模型无法加载或类型无效") from exc
+        if schema.name == KAMEI_2013_SCHEMA:
+            for record in records:
+                record["costScale"] = published_cost_scale(record["metrics"])
         return cls(model, records, summary, manifest, schema)
 
     def batch(self):
         risks = predict_risks(self.model, self.records, self.schema)
-        records = [{"id": r["id"], "time": r["time"], "risk": p, "lines": r["metrics"]["la"] + r["metrics"]["ld"],
+        records = [{"id": r["id"], "time": r["time"], "risk": p, "lines": review_cost(r),
                     "files": r["metrics"]["nf"], "metrics": r["metrics"]} for r, p in zip(self.records, risks, strict=True)]
         label = self.summary.get("model") or model_descriptor(self.schema.name, self.manifest["config"].get("algorithmVersion"))
         return {"contractVersion": 1, "mode": "historical", "project": "OpenStack", "version": self.summary["datasetVersion"],

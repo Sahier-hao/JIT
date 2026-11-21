@@ -11,7 +11,7 @@ from pathlib import Path
 from .. import collect
 
 from ..catalog_storage import CatalogStorage, utc_now
-from ..config import BACKEND
+from ..config import BACKEND, USER_DATASET_LIMIT
 from ..data import BaselineError, sha256
 from ..datasets import load_manifest
 from .repository_datasets import dataset_manifest_path, persist_collected_dataset
@@ -386,8 +386,8 @@ class DatasetBuildService:
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "数据集构建服务正在停止")
-            if owner_user_id and self.storage.dataset_owner_count(owner_user_id) >= 5:
-                raise BaselineError("QUOTA_EXCEEDED", "每人最多保留 5 个数据版本，请先清理")
+            if owner_user_id and self.storage.dataset_owner_count(owner_user_id) >= USER_DATASET_LIMIT:
+                raise BaselineError("QUOTA_EXCEEDED", f"每人最多保留 {USER_DATASET_LIMIT} 个数据版本，请先清理")
             return self._enqueue(
                 repository, data, request_id=request_id, created_by=created_by,
                 owner_user_id=owner_user_id)
@@ -400,8 +400,8 @@ class DatasetBuildService:
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "数据集构建服务正在停止")
-            if owner_user_id and self.storage.dataset_owner_count(owner_user_id) >= 5:
-                raise BaselineError("QUOTA_EXCEEDED", "每人最多保留 5 个数据版本，请先清理")
+            if owner_user_id and self.storage.dataset_owner_count(owner_user_id) >= USER_DATASET_LIMIT:
+                raise BaselineError("QUOTA_EXCEEDED", f"每人最多保留 {USER_DATASET_LIMIT} 个数据版本，请先清理")
             return self._enqueue(
                 repository, data, request_id=request_id, created_by=created_by,
                 owner_user_id=owner_user_id)
@@ -481,7 +481,7 @@ class DatasetBuildService:
             manifest = load_manifest(dataset_manifest_path(manifest_path))
             # 只有本次新生成的版本归属用户；复用已登记版本保持原有共享范围。
             if created and row["owner_user_id"]:
-                self.storage.add_dataset_owner(version, row["owner_user_id"], limit=5)
+                self.storage.add_dataset_owner(version, row["owner_user_id"], limit=USER_DATASET_LIMIT)
             self.tasks.finish(
                 task_id, "completed", None, None, stage="completed",
                 dataset_name=manifest["dataset"],

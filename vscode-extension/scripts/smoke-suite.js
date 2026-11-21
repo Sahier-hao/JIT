@@ -9,7 +9,7 @@ exports.run = async function run() {
   if (!extension) throw new Error('扩展 local.jit-commit-analysis 未加载')
   await extension.activate()
   const commands = await vscode.commands.getCommands(true)
-  const needed = ['jitReport.import', 'jitReport.refresh', 'jitReport.clear', 'jitReport.openCommit', 'jitReport.openCandidate']
+  const needed = ['jitReport.import', 'jitReport.refresh', 'jitReport.clear', 'jitReport.copyGenerateCommand', 'jitReport.openCommit', 'jitReport.openCandidate']
   const missing = needed.filter(name => !commands.includes(name))
   if (missing.length) throw new Error('缺少命令：' + missing.join(','))
   const api = extension.exports

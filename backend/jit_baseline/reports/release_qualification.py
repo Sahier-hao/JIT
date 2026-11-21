@@ -20,7 +20,7 @@ from .benefit import (
     _time_order,
 )
 from ..config import BACKEND
-from ..data import BaselineError, parse_source, sha256
+from ..data import BaselineError, parse_source, review_cost, sha256
 from ..datasets import load_manifest
 from ..label_maturity import apply_label_maturity
 from ..metrics import evaluate, get_metric_set
@@ -187,7 +187,7 @@ def _project_evaluation(snapshot, records, project, metadata=None):
     metrics = evaluate(records, risks, metric_set)
     evaluation = [
         dict(record, risk=float(risk),
-             cost=record["metrics"]["la"] + record["metrics"]["ld"])
+             cost=review_cost(record))
         for record, risk in zip(records, risks, strict=True)
     ]
     total = sum(record["cost"] for record in evaluation)

@@ -14,6 +14,7 @@ from ..config import BACKEND
 from ..data import sha256
 from ..errors import BaselineError
 from ..api_errors import MESSAGES, RequestError
+from ..schemas import KAMEI_2013_SCHEMA
 
 
 def encoded(value):
@@ -21,7 +22,7 @@ def encoded(value):
 
 
 REPOSITORY_SCHEMAS = ('openstack-six-v1', 'kamei14-git-v1', 'kamei14-git-v2')
-OFFLINE_SCHEMAS = ('kamei14-benchmark-v1',)
+OFFLINE_SCHEMAS = ('kamei14-benchmark-v1', KAMEI_2013_SCHEMA)
 SEMANTIC_SCHEMAS = ('code-semantic-codebert-v1', 'kamei14-semantic-codebert-v1')
 EXPERIMENT_REPORT_NAMES = ('multi-project-report.json',)
 METRIC_KEYS = ('averagePrecision', 'rocAuc', 'recall20Loc', 'popt', 'f1', 'ifa')

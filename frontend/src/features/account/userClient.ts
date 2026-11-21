@@ -71,18 +71,40 @@ export interface UserSplitPreview {
   }> | null
 }
 
+export interface UserCurationStats {
+  rawRows: number
+  includedRows: number
+  excludedRows: number
+  positiveLabels: number
+  timeRange: Row | null
+  excluded: Row
+  sampleExcluded: Row[]
+}
+
+export interface UserCurationFeatureStats {
+  records: number
+  present: number
+  missing: number
+  mean: number | null
+  median: number | null
+  min: number | null
+  max: number | null
+  bucketCounts: number[]
+}
+
+export interface UserCurationFeatureComparison {
+  field: string
+  bins: { start: number; end: number }[]
+  before: UserCurationFeatureStats
+  after: UserCurationFeatureStats
+}
+
 export interface UserCurationPreview {
   sourceVersion: string
   recipeSha256: string
-  stats: {
-    rawRows: number
-    includedRows: number
-    excludedRows: number
-    positiveLabels: number
-    timeRange: Row | null
-    excluded: Row
-    sampleExcluded: Row[]
-  }
+  stats: UserCurationStats
+  beforeStats: UserCurationStats | null
+  featureComparison: UserCurationFeatureComparison[]
 }
 
 export interface UserCurationDerived {
@@ -139,9 +161,15 @@ export async function userLogout(): Promise<void> {
   markSessionChanged()
 }
 
-export async function userDatasets(scope: 'mine' | 'usable' = 'usable', signal?: AbortSignal): Promise<UserDataset[]> {
+export async function userDatasets(scope: 'mine' | 'usable' = 'usable', signal?: AbortSignal): Promise<{
+  datasets: UserDataset[]
+  limit: number | null
+}> {
   const body = record(await apiRequest({ path: `/api/v1/user/datasets?scope=${scope}`, method: 'GET', signal }))
-  return recordList(body.datasets).map(userDataset)
+  return {
+    datasets: recordList(body.datasets).map(userDataset),
+    limit: body.limit == null ? null : finiteNumber(body.limit),
+  }
 }
 
 export async function userModels(signal?: AbortSignal): Promise<UserModel[]> {
@@ -159,21 +187,6 @@ export async function userModels(signal?: AbortSignal): Promise<UserModel[]> {
 
 export async function deleteUserDataset(version: string) {
   return record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}`, method: 'DELETE', expectEmpty: false }))
-}
-
-export async function importUserDataset(file: Blob, options: {
-  filename: string
-  dataset?: string
-  schema: string
-}): Promise<UserDataset> {
-  const query = new URLSearchParams({ filename: options.filename, schema: options.schema })
-  if (options.dataset?.trim()) query.set('dataset', options.dataset.trim())
-  return userDataset(await apiRequest({
-    path: `/api/v1/user/datasets/import?${query}`,
-    method: 'POST',
-    rawBody: file,
-    contentType: 'text/csv',
-  }))
 }
 
 export function exportDataset(version: string): void {
@@ -209,18 +222,50 @@ export async function splitPreview(version: string, preset: string, signal?: Abo
 function curationPreview(raw: unknown): UserCurationPreview {
   const value = record(raw)
   const stats = record(value.stats)
+  const statsView = (rawStats: unknown): UserCurationStats => {
+    const item = record(rawStats)
+    return {
+      rawRows: finiteNumber(item.rawRows),
+      includedRows: finiteNumber(item.includedRows),
+      excludedRows: finiteNumber(item.excludedRows),
+      positiveLabels: finiteNumber(item.positiveLabels),
+      timeRange: item.timeRange == null ? null : record(item.timeRange),
+      excluded: item.excluded == null ? {} : record(item.excluded),
+      sampleExcluded: item.sampleExcluded == null ? [] : recordList(item.sampleExcluded),
+    }
+  }
+  const compareView = (rawItem: unknown) => {
+    const item = record(rawItem)
+    const before = record(item.before)
+    const after = record(item.after)
+    const featureStats = (rawStats: Row) => ({
+      records: finiteNumber(rawStats.records),
+      present: finiteNumber(rawStats.present),
+      missing: finiteNumber(rawStats.missing),
+      mean: rawStats.mean == null ? null : finiteNumber(rawStats.mean),
+      median: rawStats.median == null ? null : finiteNumber(rawStats.median),
+      min: rawStats.min == null ? null : finiteNumber(rawStats.min),
+      max: rawStats.max == null ? null : finiteNumber(rawStats.max),
+      bucketCounts: Array.isArray(rawStats.bucketCounts)
+        ? rawStats.bucketCounts.map(item => finiteNumber(item)) : [],
+    })
+    return {
+      field: text(item.field),
+      bins: recordList(item.bins).map(bin => ({
+        start: finiteNumber(bin.start),
+        end: finiteNumber(bin.end),
+      })),
+      before: featureStats(before),
+      after: featureStats(after),
+    }
+  }
   return {
     sourceVersion: text(value.sourceVersion),
     recipeSha256: text(value.recipeSha256),
-    stats: {
-      rawRows: finiteNumber(stats.rawRows),
-      includedRows: finiteNumber(stats.includedRows),
-      excludedRows: finiteNumber(stats.excludedRows),
-      positiveLabels: finiteNumber(stats.positiveLabels),
-      timeRange: stats.timeRange == null ? null : record(stats.timeRange),
-      excluded: stats.excluded == null ? {} : record(stats.excluded),
-      sampleExcluded: stats.sampleExcluded == null ? [] : recordList(stats.sampleExcluded),
-    },
+    stats: statsView(stats),
+    beforeStats: value.beforeStats == null ? null : statsView(value.beforeStats),
+    featureComparison: value.featureComparison == null ? []
+      : recordList(value.featureComparison).map(compareView),
   }
 }
 

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { GitBranch, LoaderCircle, Search, Upload } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { ApiError } from '@/lib/apiContract'
 import {
   deleteUserDataset, exportDataset, splitPreview,
@@ -12,6 +13,8 @@ import {
 import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 import type { Route } from '@/app/navigation'
 import { DatasetImportDialog } from '@/features/datasets/components/DatasetImportDialog'
+import { DatasetImportStatusDialog } from '@/features/datasets/components/DatasetImportStatusDialog'
+import { datasetImportJobsKey, useDatasetImportJobs, type DatasetImportTask } from '@/features/datasets/datasetImportClient'
 import { DatasetCurationDialog } from '@/features/datasets/components/DatasetCurationDialog'
 import { RepositoryDatasetBuildDialog } from '@/features/datasets/components/RepositoryDatasetBuildDialog'
 import { useRepository } from '@/features/projects/repositoryWorkspace'
@@ -24,18 +27,26 @@ import {
   BUILD_ACTIVE, DEFAULT_PRESET, matchesQuery, type DatasetTab,
 } from '@/features/datasets/mydata/format'
 
-export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskId, buildProjectId }: {
+export function MyDataPage({ account = null, navigate, onLoginRequired, initialTab, initialTaskId, buildProjectId, importHistory, importTaskId }: {
+  account?: string | null
   navigate: (route: Route, replace?: boolean) => void
   onLoginRequired: () => void
   initialTab?: 'builds'
   initialTaskId?: string
   buildProjectId?: string
+  importHistory?: boolean
+  importTaskId?: string
 }) {
+  const queryClient = useQueryClient()
+  const importJobs = useDatasetImportJobs(account)
+  const latestImported = importJobs.data?.find(task => task.status === 'completed')?.taskId
+  const importBackendTooOld = importJobs.error instanceof ApiError && [404, 405].includes(importJobs.error.status)
   const [datasets, setDatasets] = useState<UserDataset[] | null>(null)
   const [selected, setSelected] = useState('')
   const [preferred, setPreferred] = useState<{ version: string; fromBuild?: boolean } | null>(null)
   const [tab, setTab] = useState<DatasetTab>(initialTab ?? 'mine')
   const [query, setQuery] = useState('')
+  const [datasetLimit, setDatasetLimit] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [preview, setPreview] = useState<UserSplitPreview | null>(null)
@@ -60,15 +71,16 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
   useEffect(() => {
     if (!viewingDatasets) return
     const controller = new AbortController()
-    userDatasets('usable', controller.signal).then(value => {
+    userDatasets('usable', controller.signal).then(({ datasets: items, limit }) => {
       if (controller.signal.aborted) return
-      setDatasets(value)
+      setDatasets(items)
+      setDatasetLimit(limit)
       setError('')
       if (!tabInitialized.current) {
-        setTab(value.some(item => item.mine) ? 'mine' : 'shared')
+        setTab(items.some(item => item.mine) ? 'mine' : 'shared')
         tabInitialized.current = true
       }
-      const requested = value.find(item => item.version === preferred?.version)
+      const requested = items.find(item => item.version === preferred?.version)
       if (preferred?.fromBuild) {
         if (requested) {
           setTab(requested.mine ? 'mine' : 'shared')
@@ -80,7 +92,7 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
         }
       }
       setSelected(current => requested?.version
-        ?? (value.some(item => item.version === current) ? current : (value.find(item => item.mine) ?? value[0])?.version ?? ''))
+        ?? (items.some(item => item.version === current) ? current : (items.find(item => item.mine) ?? items[0])?.version ?? ''))
     }).catch(failure => {
       if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
@@ -90,7 +102,7 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
       }
     })
     return () => controller.abort()
-  }, [viewingDatasets, onLoginRequired, userRevision, reload, preferred])
+  }, [viewingDatasets, onLoginRequired, userRevision, reload, preferred, latestImported])
 
   useEffect(() => {
     if (!initialTab) return
@@ -204,11 +216,25 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
     }
   }
 
-  function imported(dataset: UserDataset) {
-    setPreferred({ version: dataset.version })
+  function openImportTask(taskId?: string) {
+    navigate({ name: 'my-data', view: 'imports', ...(taskId ? { taskId } : {}) })
+  }
+
+  function importStarted(task: DatasetImportTask) {
+    const key = datasetImportJobsKey(account)
+    queryClient.setQueryData([...key, task.taskId], task)
+    queryClient.setQueryData<DatasetImportTask[]>(key, items =>
+      [task, ...(items ?? []).filter(item => item.taskId !== task.taskId)])
+    void queryClient.invalidateQueries({ queryKey: key })
+    openImportTask(task.taskId)
+  }
+
+  function openImportedVersion(version: string) {
+    setPreferred({ version })
+    setQuery('')
     setTab('mine')
     setReload(value => value + 1)
-    setNotice('CSV 已导入')
+    navigate({ name: 'my-data' }, true)
   }
 
   function openBuiltDataset(version: string) {
@@ -249,10 +275,11 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
   const header = <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border-soft pb-4">
     <div className="flex items-baseline gap-3">
       <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">我的数据</h1>
-      {datasets ? <span className="text-xs text-foreground-3">自有 {mine.length}/5</span> : null}
+      {datasets ? <span className="text-xs text-foreground-3">自有 {mine.length}{datasetLimit != null ? `/${datasetLimit}` : ''}</span> : null}
     </div>
     <div className="flex flex-wrap gap-2">
-      <Button type="button" variant="outline" size="sm" onClick={() => setImportOpen(true)}><Upload aria-hidden="true" size={15}/>导入 CSV</Button>
+      <Button type="button" variant="ghost" size="sm" onClick={() => openImportTask()}>导入记录</Button>
+      <Button type="button" variant="outline" size="sm" onClick={() => setImportOpen(true)}><Upload aria-hidden="true" size={15}/>导入数据集</Button>
       <Button type="button" size="sm" onClick={() => { setBuildSeed(null); setBuildOpen(true) }}><GitBranch aria-hidden="true" size={15}/>从仓库构建</Button>
     </div>
   </header>
@@ -304,15 +331,21 @@ export function MyDataPage({ navigate, onLoginRequired, initialTab, initialTaskI
       <div className="grid min-h-0 min-w-0 auto-rows-max content-start gap-4 overflow-x-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-gutter:stable]" data-scroll-region="dataset-detail" tabIndex={0} role="region" aria-label={tab === 'builds' ? '构建任务' : '数据详情'}>
         {tab === 'builds' ? <EmptyState title="构建任务" description="选择任务查看进度、重试或打开已生成的数据。"/> : current ? <DatasetDetail dataset={current} preview={preview} previewError={previewError} busy={busy} actions={{
           onTrain: () => navigate({ name: 'my-training', datasetVersion: current.version }),
+          onPredict: () => navigate({ name: 'my-predictions', datasetVersion: current.version }),
           onExport: () => exportDataset(current.version),
           onCuration: () => setCurationOpen(true),
           onDelete: () => setConfirmDelete(true),
           onRebuild: (repositoryUrl, branch) => { setBuildSeed({ repositoryUrl, branch }); setBuildOpen(true) },
-        }}/> : datasets?.length === 0 ? <EmptyState title="还没有数据" description="可以导入 CSV 或从公开仓库构建。"/>
+        }}/> : datasets?.length === 0 ? <EmptyState title="还没有数据" description="可以导入 CSV、Kamei 2013 ZIP，或从公开仓库构建。"/>
           : datasets ? <EmptyState title="选择一个数据版本"/> : null}
       </div>
     </div>
-    <DatasetImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={imported} onLoginRequired={onLoginRequired}/>
+    <DatasetImportDialog open={importOpen} onOpenChange={setImportOpen} onStarted={importStarted}
+      onLoginRequired={onLoginRequired} backendTooOld={importBackendTooOld}/>
+    {importHistory ? <DatasetImportStatusDialog account={account} taskId={importTaskId} onLoginRequired={onLoginRequired}
+      onClose={() => navigate({ name: 'my-data' }, true)} onInspect={openImportTask} onHistory={() => openImportTask()}
+      onChooseFile={() => { navigate({ name: 'my-data' }, true); setImportOpen(true) }}
+      onViewVersion={openImportedVersion}/> : null}
     {buildDialog}
     <DatasetCurationDialog open={curationOpen} onOpenChange={setCurationOpen} dataset={current} onDerived={version => {
       setPreferred({ version })

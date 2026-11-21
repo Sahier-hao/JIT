@@ -199,6 +199,13 @@ it('previews and derives a cleaned dataset version', async () => {
     if (value.includes('/curation/preview') && options?.method === 'POST') return Response.json({
       sourceVersion: DATASET.version, recipeSha256: 'c'.repeat(64),
       stats: { rawRows: 20, includedRows: 18, excludedRows: 2, positiveLabels: 5, timeRange: null, excluded: { duplicate: 2 }, sampleExcluded: [] },
+      beforeStats: { rawRows: 20, includedRows: 20, excludedRows: 0, positiveLabels: 6, timeRange: null, excluded: {}, sampleExcluded: [] },
+      featureComparison: [{
+        field: 'la',
+        bins: [{ start: 1, end: 10 }, { start: 10, end: 20 }],
+        before: { records: 20, present: 20, missing: 0, mean: 9, median: 8, min: 1, max: 20, bucketCounts: [12, 8] },
+        after: { records: 18, present: 18, missing: 0, mean: 8, median: 7, min: 1, max: 18, bucketCounts: [11, 7] },
+      }],
     })
     if (value.includes('/curation/derive') && options?.method === 'POST') return Response.json({
       dataset: { version: 'demo-cleaned' },
@@ -213,6 +220,7 @@ it('previews and derives a cleaned dataset version', async () => {
   const dialog = await screen.findByRole('dialog')
   await user.click(within(dialog).getByRole('button', { name: '预览结果' }))
   expect(await screen.findByText('清洗预览')).toBeVisible()
+  expect(screen.getByText('指定特征前后变化')).toBeVisible()
   await user.click(within(dialog).getByRole('button', { name: '生成新版本' }))
   expect(await screen.findByText('已生成清洗版本')).toBeVisible()
 })

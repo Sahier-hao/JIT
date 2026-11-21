@@ -20,8 +20,23 @@ export const EXCLUSION_LABELS: Record<string, string> = {
 
 export type DatasetTab = 'mine' | 'shared' | 'builds'
 
-export function usageLabel(usage: string): string {
-  return usage === 'import' ? 'CSV 导入' : usage === 'pr' ? 'PR 采集' : '仓库采集'
+export function usageLabel(usage: string, details?: Pick<UserDataset, 'curation' | 'source'>): string {
+  if (details?.curation) return '清洗派生'
+  if (usage === 'import') {
+    const upload = details?.source.upload
+    return typeof upload === 'string' && upload.toLowerCase().endsWith('.zip') ? 'ZIP 导入' : 'CSV 导入'
+  }
+  return usage === 'pr' ? 'PR 采集' : '仓库采集'
+}
+
+const PROJECT_NAMES: Readonly<Record<string, string>> = Object.freeze({
+  bugzilla: 'Bugzilla', columba: 'Columba', jdt: 'Eclipse JDT',
+  mozilla: 'Mozilla', platform: 'Eclipse Platform', postgres: 'PostgreSQL',
+})
+
+export function datasetTitle(item: UserDataset): string {
+  const project = item.source.project
+  return typeof project === 'string' ? (Object.hasOwn(PROJECT_NAMES, project) ? PROJECT_NAMES[project] : project) : item.dataset
 }
 
 export function timestampLabel(item: UserDataset): string {
@@ -74,5 +89,5 @@ export function repositoryLabel(url: string): string {
 export function matchesQuery(item: UserDataset, query: string): boolean {
   if (!query) return true
   const source = typeof item.source.url === 'string' ? item.source.url : ''
-  return `${item.dataset} ${item.version} ${source}`.toLowerCase().includes(query)
+  return `${datasetTitle(item)} ${item.dataset} ${item.version} ${source}`.toLowerCase().includes(query)
 }

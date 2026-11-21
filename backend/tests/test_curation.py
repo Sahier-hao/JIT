@@ -37,6 +37,13 @@ def test_preview_derive_and_compare_keep_source_unchanged(tmp_path):
     preview = curation.preview(registered['version'], recipe, root)
     assert preview['stats']['includedRows'] == 3
     assert preview['stats']['excluded'] == {'max-value': 1}
+    assert preview['beforeStats']['includedRows'] == 4
+    la = next(item for item in preview['featureComparison'] if item['field'] == 'la')
+    assert la['before']['records'] == 4
+    assert la['after']['records'] == 3
+    assert la['before']['max'] == 1000
+    assert sum(la['before']['bucketCounts']) == 4
+    assert sum(la['after']['bucketCounts']) == 3
 
     derived = curation.derive(registered['version'], recipe, root)
     assert derived['dataset']['version'].startswith('demo-')

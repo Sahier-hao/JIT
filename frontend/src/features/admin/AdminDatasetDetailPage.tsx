@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AlertTriangle, CheckCircle2, ChevronDown, GitBranch, ShieldAlert } from 'lucide-react'
 import type { Route } from '@/app/navigation'
 import { Button } from '@/components/ui/button'
@@ -50,31 +50,35 @@ export function AdminDatasetDetailPage({ selected, versions, onSelect, onShared,
   const [error, setError] = useState('')
   const [trainingPreview, setTrainingPreview] = useState<SplitPreview | null>(null)
   const [trainingError, setTrainingError] = useState('')
-  const [trainingBusy, setTrainingBusy] = useState(true)
+  const [trainingBusy, setTrainingBusy] = useState(false)
   const closeTool = () => setTool(null)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    setTrainingPreview(null)
-    setTrainingError('')
+  async function checkTraining(): Promise<SplitPreview | null> {
+    if (trainingPreview) return trainingPreview
     setTrainingBusy(true)
-    previewDatasetSplit(selected.version, 'temporal-70-15-15', controller.signal).then(preview => {
-      if (!controller.signal.aborted) setTrainingPreview(preview)
-    }).catch(failure => {
-      if (controller.signal.aborted) return
+    setTrainingError('')
+    const controller = new AbortController()
+    try {
+      const preview = await previewDatasetSplit(selected.version, 'temporal-70-15-15', controller.signal)
+      setTrainingPreview(preview)
+      return preview
+    } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) expired()
       else setTrainingError(failure instanceof Error ? failure.message : '训练准入读取失败')
-    }).finally(() => {
-      if (!controller.signal.aborted) setTrainingBusy(false)
-    })
-    return () => controller.abort()
-  }, [selected.version, expired])
+      return null
+    } finally {
+      setTrainingBusy(false)
+    }
+  }
 
   async function updateSharing(next: boolean) {
     if (sharingBusy || selected.owners.length) return
-    if (next && (!trainingPreview?.available || trainingBusy)) {
-      setError(trainingPreview?.reason?.message ?? (trainingError || '请先完成训练准入检查'))
-      return
+    if (next && !trainingPreview?.available) {
+      const checked = await checkTraining()
+      if (!checked?.available) {
+        setError(checked?.reason?.message ?? (trainingError || '训练准入检查未通过'))
+        return
+      }
     }
     setSharingBusy(true)
     setError('')
@@ -108,8 +112,6 @@ export function AdminDatasetDetailPage({ selected, versions, onSelect, onShared,
   const missing = Object.entries(asRow(quality.featureMissing) ?? {}).filter(([, count]) => (numeric(count) ?? 0) > 0)
   const excluded = Object.entries(asRow(quality.excluded) ?? {}).filter(([, count]) => (numeric(count) ?? 0) > 0)
   const sourceUrl = typeof source.url === 'string' ? source.url : null
-  const canShare = selected.shared || trainingPreview?.available === true
-
   return <>
     <section className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-card shadow-sm" aria-label="数据版本概览">
       <div className="grid gap-4 px-5 py-4">
@@ -147,14 +149,15 @@ export function AdminDatasetDetailPage({ selected, versions, onSelect, onShared,
           <div className="flex min-h-8 flex-wrap items-center gap-2 text-xs">
             {selected.owners.length ? <span title={selected.owners.join('、')} className="text-foreground-3">用户自有版本</span> : <label className="flex items-center gap-2 text-foreground-2">
               <span>开放给普通用户</span>
-              <Switch aria-label="开放给普通用户" checked={selected.shared} disabled={sharingBusy || trainingBusy || !canShare} onCheckedChange={next => void updateSharing(next)}/>
+              <Switch aria-label="开放给普通用户" checked={selected.shared} disabled={sharingBusy || trainingBusy} onCheckedChange={next => void updateSharing(next)}/>
             </label>}
           </div>
         </div>
         {selected.owners.length ? null : <div className="flex min-h-5 flex-wrap items-center gap-1.5 text-xs">
           {trainingBusy ? <span className="text-foreground-3">检查训练准入…</span>
             : trainingPreview?.available ? <span className="inline-flex items-center gap-1 text-teal-deep"><CheckCircle2 aria-hidden="true" size={13}/>可用于训练</span>
-            : <span className="inline-flex items-center gap-1 text-rose-deep" title={trainingPreview?.reason?.message ?? trainingError}><AlertTriangle aria-hidden="true" size={13}/>不可训练</span>}
+            : trainingPreview ? <span className="inline-flex items-center gap-1 text-rose-deep" title={trainingPreview.reason?.message ?? trainingError}><AlertTriangle aria-hidden="true" size={13}/>不可训练</span>
+            : <button type="button" className="text-xs text-accent underline-offset-2 hover:underline" onClick={() => void checkTraining()}>检查训练准入</button>}
           {trainingPreview?.reason?.message ? <span className="min-w-0 break-words text-rose-deep [overflow-wrap:anywhere]">· {trainingPreview.reason.message}</span> : null}
           {trainingError ? <span className="text-rose-deep">· {trainingError}</span> : null}
         </div>}

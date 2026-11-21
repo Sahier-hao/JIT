@@ -1,17 +1,16 @@
 """Preview and derive curated dataset versions without modifying the source."""
+import csv
 import hashlib
 import io
 import json
+import math
 import zipfile
 from pathlib import Path
 
-from . import admission, datasets
-
-from .. import store
-
 from ..config import BACKEND
 from ..data import BaselineError, parse_source, sha256
-from ..schemas import resolve
+from ..schemas import KAMEI_2013_SCHEMA, resolve
+from . import admission, datasets
 
 
 def _canonical(value):
@@ -99,6 +98,90 @@ def _stats(records, excluded, total):
     }
 
 
+def _number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if not math.isfinite(float(value)):
+        return None
+    return float(value)
+
+
+def _quantiles(values, count=10):
+    ordered = sorted(values)
+    if not ordered:
+        return []
+    edges = []
+    for index in range(1, count):
+        position = (len(ordered) - 1) * index / count
+        lower = int(position)
+        upper = min(lower + 1, len(ordered) - 1)
+        fraction = position - lower
+        edges.append(ordered[lower] + (ordered[upper] - ordered[lower]) * fraction)
+    unique = []
+    for edge in edges:
+        if not unique or edge > unique[-1]:
+            unique.append(edge)
+    return unique
+
+
+def _feature_summary(records, kept_ids, field):
+    before_values, after_values = [], []
+    before_missing = after_missing = 0
+    for record in records:
+        value = _number((record.get("metrics") or {}).get(field))
+        if value is None:
+            before_missing += 1
+        else:
+            before_values.append(value)
+            if record["id"] in kept_ids:
+                after_values.append(value)
+        if record["id"] in kept_ids and value is None:
+            after_missing += 1
+    if not before_values:
+        return None
+    edges = _quantiles(before_values)
+    labels = []
+    starts = [min(before_values), *edges]
+    ends = [*edges, max(before_values)]
+    for start, end in zip(starts, ends, strict=True):
+        labels.append({"start": start, "end": end})
+    before_counts = [0] * len(labels)
+    after_counts = [0] * len(labels)
+
+    def bucket(value):
+        if not labels:
+            return 0
+        for index, item in enumerate(labels):
+            if value <= item["end"] or index == len(labels) - 1:
+                return index
+        return len(labels) - 1
+
+    for value in before_values:
+        before_counts[bucket(value)] += 1
+    for value in after_values:
+        after_counts[bucket(value)] += 1
+
+    def summary(values, missing):
+        ordered = sorted(values)
+        return {
+            "records": len(values) + missing,
+            "present": len(values),
+            "missing": missing,
+            "mean": sum(values) / len(values) if values else None,
+            "median": ordered[len(ordered) // 2] if ordered else None,
+            "min": ordered[0] if ordered else None,
+            "max": ordered[-1] if ordered else None,
+        }
+
+    return {
+        "field": field,
+        "bins": labels,
+        "before": {**summary(before_values, before_missing),
+                   "bucketCounts": before_counts},
+        "after": {**summary(after_values, after_missing),
+                  "bucketCounts": after_counts},
+    }
+
 def preview(dataset_version, recipe, root=None):
     manifest, csv_path = _manifest(dataset_version, root)
     normalized = normalize(recipe)
@@ -110,9 +193,18 @@ def preview(dataset_version, recipe, root=None):
     kept, excluded = apply(records, normalized)
     if not kept:
         raise BaselineError("DATASET_INVALID", "清洗后没有保留记录")
+    before_stats = _stats(records, [], len(records))
+    fields = resolve(manifest["schemaName"]).in_model_names()
+    feature_comparison = [
+        item for item in (_feature_summary(records, {record["id"] for record in kept}, field)
+                          for field in fields)
+        if item is not None
+    ]
     return {"sourceVersion": dataset_version, "recipe": normalized,
             "recipeSha256": sha256(_canonical(normalized).encode("utf-8")),
-            "stats": _stats(kept, excluded, len(records))}
+            "stats": _stats(kept, excluded, len(records)),
+            "beforeStats": before_stats,
+            "featureComparison": feature_comparison}
 
 
 def derive(dataset_version, recipe, root=None):
@@ -129,11 +221,12 @@ def derive(dataset_version, recipe, root=None):
     room = root / manifest["dataset"]
     room.mkdir(parents=True, exist_ok=True)
     target = room / f"{version}.csv"
+    derived_bytes = _csv(kept, manifest["schemaName"], blob)
     if target.exists():
-        if target.read_bytes() != _csv(kept, manifest["schemaName"]):
+        if target.read_bytes() != derived_bytes:
             raise BaselineError("DATASET_EXISTS", "派生版本已存在且内容不同，不覆盖")
     else:
-        target.write_bytes(_csv(kept, manifest["schemaName"]))
+        target.write_bytes(derived_bytes)
     decisions_path = target.with_name(target.stem + ".curation.jsonl")
     decisions_bytes = (b"\n".join(json.dumps(item, ensure_ascii=False, sort_keys=True).encode("utf-8")
                                   for item in excluded) + b"\n") if excluded else b""
@@ -149,10 +242,16 @@ def derive(dataset_version, recipe, root=None):
                     "url": manifest["url"], "citation": "由已登记数据集清洗生成"},
         extra={"curation": {"sourceVersion": dataset_version, "recipe": normalized,
                             "recipeSha256": result["recipeSha256"],
-                            "decisions": _stats(kept, excluded, len(records)),
+                            "decisions": {
+                                **_stats(kept, excluded, len(records)),
+                                "beforeStats": result["beforeStats"],
+                                "featureComparison": result["featureComparison"],
+                            },
                             "decisionsFile": ({"path": datasets.manifest_relative(decisions_path),
                                                "sha256": hashlib.sha256(decisions_bytes).hexdigest(),
                                                "records": len(excluded)} if decisions_bytes else None)},
+               **{key: manifest[key] for key in ("benchmark", "label")
+                  if manifest.get("benchmark") and key in manifest},
                **_derived_labeling(manifest, room, kept)})
     return {"dataset": registered, "preview": result}
 
@@ -224,6 +323,14 @@ def compare(source_version, derived_version, root=None):
             "recipe": curation.get("recipe"), "recipeSha256": curation.get("recipeSha256")}
 
 
-def _csv(records, schema_name):
+def _csv(records, schema_name, source_blob=None):
+    if schema_name == KAMEI_2013_SCHEMA:
+        kept_rows = {record["sourceRow"] for record in records}
+        output = io.StringIO()
+        reader = csv.reader(io.StringIO(source_blob.decode("utf-8-sig")))
+        writer = csv.writer(output, lineterminator="\n")
+        writer.writerow(next(reader))
+        writer.writerows(row for index, row in enumerate(reader, 2) if index in kept_rows)
+        return output.getvalue().encode("utf-8")
     from .collect import _csv_bytes
     return _csv_bytes(records, resolve(schema_name).in_model_names())

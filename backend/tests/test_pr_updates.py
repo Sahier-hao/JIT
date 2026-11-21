@@ -201,7 +201,7 @@ def test_list_refresh_is_project_bound_public_only_and_preserves_stale_cache(env
     stale = env.watcher.refresh_list(repo)
     assert stale['pullRequests'] == listed['pullRequests']
     assert stale['checkedAt'] == listed['checkedAt']
-    assert stale['errorCode'] == 'PR_SOURCE_UNAVAILABLE'
+    assert stale['errorCode'] == 'PR_PRIVATE_REPOSITORY'
     assert env.jobs(repo) == []
 
 
@@ -629,7 +629,7 @@ def test_snapshot_public_source_failure_keeps_old_cache_and_does_not_clone_inten
     first = env.jobs(repo)[0]
     pr['head']['repo']['private'] = True
     state = env.check(repo)
-    assert state['errorCode'] == 'PR_SOURCE_UNAVAILABLE'
+    assert state['errorCode'] == 'PR_PRIVATE_REPOSITORY'
     assert len(env.jobs(repo)) == 1
     assert env.watcher.list_prs(repo)['pullRequests'][0]['snapshotId'] == first['sourceSnapshotId']
     with env.watcher.storage.connection() as db:
@@ -674,7 +674,7 @@ def test_single_failed_source_advances_cursor_so_other_prs_are_not_starved(env):
     env.github.add(number=2)
     first['head']['repo']['private'] = True
     env.enable(repo)
-    assert env.check(repo)['errorCode'] == 'PR_SOURCE_UNAVAILABLE'
+    assert env.check(repo)['errorCode'] == 'PR_PRIVATE_REPOSITORY'
     with env.watcher.storage.connection() as db:
         assert db.execute('SELECT deep_cursor FROM pr_watch').fetchone()[0] == 2
     assert len(env.jobs(repo)) == 1

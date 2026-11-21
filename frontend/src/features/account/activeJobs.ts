@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ActiveJob } from '@/components/layout/ActiveJobsIndicator'
 import { userExperiments } from '@/features/account/userClient'
 import { listUserDatasetBuilds, type DatasetBuildTask } from '@/features/datasets/datasetBuildClient'
+import { importIsActive, importPercent, importStage, useDatasetImportJobs } from '@/features/datasets/datasetImportClient'
 import type { TrainingExperiment } from '@/features/admin/adminContracts'
 import { queryKeys } from '@/lib/queryKeys'
 
@@ -40,7 +41,8 @@ function trainingJob(experiment: TrainingExperiment): ActiveJob {
 }
 
 /** 活跃任务每 6 秒轮询；后台标签页暂停，卸载自动取消。 */
-export function useActiveUserJobs(): ActiveJob[] {
+export function useActiveUserJobs(account: string | null): ActiveJob[] {
+  const imports = useDatasetImportJobs(account)
   const query = useQuery({
     queryKey: queryKeys.activeUserJobs,
     queryFn: async ({ signal }) => {
@@ -59,5 +61,13 @@ export function useActiveUserJobs(): ActiveJob[] {
     refetchInterval: 6000,
     retry: false,
   })
-  return query.data ?? []
+  const importsInProgress: ActiveJob[] = (imports.data ?? []).filter(importIsActive).map(task => ({
+    id: `import:${task.taskId}`,
+    kind: 'import',
+    label: `导入 · ${task.filename}`,
+    detail: task.total == null ? importStage(task) : `${importStage(task)} · ${task.processed}/${task.total}`,
+    progress: importPercent(task),
+    route: { name: 'my-data', view: 'imports', taskId: task.taskId },
+  }))
+  return [...importsInProgress, ...(query.data ?? [])]
 }

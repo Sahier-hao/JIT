@@ -13,9 +13,9 @@ from pathlib import Path
 from . import admission
 
 from ..config import BACKEND, BASE_URL, COHORT, REVISION, SOURCES
-from ..data import parse_source, sha256
+from ..data import KAMEI_2013_COHORT, parse_source, sha256
 from ..errors import BaselineError
-from ..schemas import DEFAULT_SCHEMA, resolve
+from ..schemas import DEFAULT_SCHEMA, KAMEI_2013_SCHEMA, resolve
 
 MANIFEST_SCHEMA = 1
 DATASETS = BACKEND / "data" / "datasets"
@@ -44,20 +44,6 @@ def field_definitions(schema):
             for field in resolve(schema).fields]
 
 
-def _source_file(csv_path):
-    """描述文件里的来源路径：优先相对 backend 根目录，便于跨机器复现。"""
-    resolved = Path(csv_path).resolve()
-    try:
-        relative = resolved.relative_to(BACKEND.resolve()).as_posix()
-    except ValueError:
-        relative = resolved.as_posix()
-    try:
-        blob = resolved.read_bytes()
-    except OSError as exc:
-        raise BaselineError("DATASET_INVALID", f"来源不可用：{resolved.name}") from exc
-    return resolved, relative, blob
-
-
 def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=None, provenance=None,
                    extra=None):
     """从原始 CSV 生成描述文件内容；不写盘。
@@ -66,8 +52,24 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=Non
     `provenance` 可覆盖发布者、revision、URL 与引用，默认保持原公开数据集元信息。
     `extra` 附加来源证据（如采集记录），不得覆盖必需字段。
     """
+    csv_path = Path(csv_path)
+    try:
+        blob = csv_path.read_bytes()
+    except OSError as exc:
+        raise BaselineError("DATASET_INVALID", f"来源不可用：{csv_path.name}") from exc
+    manifest, _ = describe_source(blob, csv_path, schema=schema, dataset=dataset, version=version,
+                                  cohort=cohort, provenance=provenance, extra=extra)
+    return manifest
+
+
+def describe_source(blob, csv_path, *, schema=None, dataset=None, version=None, cohort=None,
+                    provenance=None, extra=None, version_stamp=None):
+    """校验 CSV 并返回描述文件与入库记录，可用于先校验再发布的导入。"""
     schema = resolve(schema if schema is not None else DEFAULT_SCHEMA)
-    resolved, relative, blob = _source_file(csv_path)
+    resolved = Path(csv_path).resolve()
+    relative = manifest_relative(resolved)
+    if cohort is None:
+        cohort = KAMEI_2013_COHORT if schema.name == KAMEI_2013_SCHEMA else COHORT
     records, quality = parse_source(blob, schema, cohort)
     if not records:
         raise BaselineError("DATASET_INVALID", "没有纳入记录，无法登记数据集")
@@ -77,7 +79,7 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=Non
     start, end = records[0]["time"][:10], records[-1]["time"][:10]
     computed = f"{name}-{start}_{end}"
     if version is None:
-        version = computed
+        version = f"{computed}-{version_stamp}" if version_stamp else computed
     match = VERSION_PATTERN.fullmatch(version or "")
     if not match or match["dataset"] != name:
         raise BaselineError("DATASET_INVALID", f"版本名须为 <数据集>-<起始日>_<结束日>：{version}")
@@ -99,7 +101,7 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=Non
         "schemaName": schema.name,
         "file": {"name": resolved.name, "path": relative, "sha256": sha256(blob), "bytes": len(blob)},
         "fields": field_definitions(schema),
-        "cohort": dict(COHORT if cohort is None else cohort),
+        "cohort": dict(cohort),
         "quality": quality,
         "timeRange": {"start": records[0]["time"], "end": records[-1]["time"],
                       "startEpoch": records[0]["epoch"], "endEpoch": records[-1]["epoch"]},
@@ -113,7 +115,7 @@ def build_manifest(csv_path, schema=None, dataset=None, version=None, cohort=Non
     usage = manifest.setdefault("usage", "branch")
     if usage not in ("branch", "pr", "import"):
         raise BaselineError("DATASET_INVALID", f"数据集来源类型无效：{usage}")
-    return manifest
+    return manifest, records
 
 
 def validate_manifest(manifest):

@@ -6173,12 +6173,54 @@ components:
           items:
             type: object
             additionalProperties: false
-            required: [method, name, label, category, requires, available, supportedSchema, reason]
+            required: [method, name, label, category, requires, available, supportedSchema, reason, detail, preprocess, explanation, guide, params]
             properties:
               method: {type: string}
               name: {type: string}
               label: {type: string}
               category: {type: string}
+              detail: {type: string}
+              preprocess:
+                type: array
+                items: {type: string}
+              explanation:
+                type: object
+                additionalProperties: false
+                required: [method, reason]
+                properties:
+                  method: {type: string}
+                  reason:
+                    type: [string, 'null']
+              guide:
+                type: object
+                additionalProperties: false
+                required: [summary, strengths, tradeoffs, whenToUse]
+                properties:
+                  summary: {type: string}
+                  strengths:
+                    type: array
+                    items: {type: string}
+                  tradeoffs:
+                    type: array
+                    items: {type: string}
+                  whenToUse: {type: string}
+              params:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [name, label, description, type, min, max, default]
+                  properties:
+                    name: {type: string}
+                    label: {type: string}
+                    description: {type: string}
+                    type:
+                      type: string
+                      enum: [int, float]
+                    min: {type: number}
+                    max: {type: number}
+                    default:
+                      type: [number, 'null']
               requires:
                 type: array
                 items: {type: string}

@@ -17,6 +17,7 @@ SOURCES = {
 }
 COHORT = {"startEpochInclusive": 1322599384, "endEpochExclusive": 1393590700,
           "addedLinesGreaterThan": 0, "maxChurnInclusive": 10000, "maxFilesInclusive": 100}
+USER_DATASET_LIMIT = 12
 MODEL_CONFIG = {"regularization": "L2", "C": 1.0, "solver": "lbfgs", "max_iter": 1000,
                 "tol": 1e-4, "class_weight": None, "seed": 2026, "threads": 1}
 THRESHOLD = 0.5

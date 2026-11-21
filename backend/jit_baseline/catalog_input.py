@@ -1,7 +1,7 @@
 """Bound and validate JSON before any model computation."""
 import json
-import re
 import math
+import re
 from datetime import datetime, timezone
 from uuid import UUID
 
