@@ -89,6 +89,7 @@ export const ROUTES: RouteObject[] = [
     return { name: 'my-training', ...(datasetVersion ? { datasetVersion } : {}) }
   }) },
   { path: '/my-training/:experimentId', handle: build(params => ({ name: 'my-training', experimentId: params.experimentId })) },
+  { path: '/algorithms', handle: build(() => ({ name: 'algorithms' })) },
   { path: '/my-models', handle: build(() => ({ name: 'my-models' })) },
   { path: '/my-predictions', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))

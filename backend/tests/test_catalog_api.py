@@ -33,6 +33,13 @@ def test_training_method_catalog_exposes_schema_and_dependency_status(settings):
                 'preprocess', 'explanation', 'guide', 'params'} <= set(methods['decision-tree-v1'])
         guide = methods['decision-tree-v1']['guide']
         assert guide['summary'] and guide['strengths'] and guide['tradeoffs'] and guide['whenToUse']
+        assert guide['visual']['kind'] == 'tree'
+        assert guide['visual']['input'] and guide['visual']['output']
+        assert len(guide['visual']['stages']) == 3
+        assert {
+            item['guide']['visual']['kind'] for item in methods.values()
+        } == {'linear', 'tree', 'forest', 'probabilistic', 'boosting',
+              'mlp', 'resnet', 'transformer', 'wide-deep'}
         assert methods['decision-tree-v1']['params'][0]['label']
         assert client.get('/api/v1/training-methods?schema=missing', headers=HEADERS).status_code == 422
 
