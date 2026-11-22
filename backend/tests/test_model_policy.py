@@ -183,6 +183,7 @@ def test_model_policy_contract_matches_real_responses(policy, tmp_path):
         assert doc['paths']['/api/v1/models/{modelId}/policy']['patch']['security'] == [{'AdminSession': []}]
 
 
+# [AI生成-人工修改]
 def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(policy, tmp_path):
     import sqlite3
     catalog, first, second = policy
@@ -196,6 +197,7 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
         for table in ('training_experiment_task', 'training_experiment',
                       'user_session', 'dataset_owner', 'dataset_share', 'model_package_import_item',
                       'model_package_import',
+                          'user_prediction_record', 'user_prediction_batch',
                       'pr_batch_item', 'pr_batch', 'training_task', 'pr_auto_attempt',
                       'pr_auto_intent', 'project_event', 'pr_list_page', 'pr_cache', 'pr_watch',
                       'project_trend_view', 'pr_analysis_intent', 'pr_legacy_analysis_binding',

@@ -64,6 +64,8 @@ MESSAGES = {
     'MODEL_DEPENDENCY_UNAVAILABLE': '模型运行依赖不可用，请安装依赖后重新校验',
     'MODEL_NOT_READY': '模型不可用，请重新校验登记',
     'MODEL_DISABLED': '所选模型已停用，请刷新模型列表并重新选择；历史结果仍可查看',
+    'EXPLANATION_METHOD_UNKNOWN': '所选解释方法未注册，请刷新可用方法后重试',
+    'EXPLANATION_METHOD_UNSUPPORTED': '所选解释方法不适用于原分析模型',
     'DEFAULT_MODEL_REQUIRED': '请管理员先设置另一个可用的默认模型；也可明确选择已启用模型',
     'INFERENCE_ERROR': '所选模型推理失败，未保存预测',
     'REPOSITORY_UNAVAILABLE': '仓库不可用：请检查地址、分支或网络后重试',
@@ -110,6 +112,7 @@ STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILA
           'DATASET_IMPORT_TOO_LARGE': 413, 'DATASET_IMPORT_INVALID': 422,
           'PREDICTION_TOO_LARGE': 413,
           'MODEL_DISABLED': 409, 'DEFAULT_MODEL_REQUIRED': 409,
+          'EXPLANATION_METHOD_UNKNOWN': 422, 'EXPLANATION_METHOD_UNSUPPORTED': 422,
           'SCHEMA_UNKNOWN': 404, 'REPOSITORY_UNKNOWN': 404,
           'ALGORITHM_UNKNOWN': 404, 'METHOD_DEPENDENCY_UNAVAILABLE': 503,
           'METHOD_SCHEMA_MISMATCH': 422, 'METRIC_SET_UNKNOWN': 404,
@@ -148,7 +151,7 @@ def managed_path(path):
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions|/split-preview)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/explanation)?)?|summary|syncs|updates|refresh|comparison|analyses/[^/]+/dataset(?:/export/[^/]+)?))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/(?:explanation|explanations|explanation-methods))?)?|summary|syncs|updates|refresh|comparison|analyses/[^/]+/dataset(?:/export/[^/]+)?))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

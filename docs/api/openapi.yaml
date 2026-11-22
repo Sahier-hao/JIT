@@ -3050,6 +3050,13 @@ paths:
         type: string
         minLength: 1
       description: 必须明确指定本项目的成功分析，不自动取当前结果。
+    - name: method
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+      description: 解释方法标识；省略时使用 occlusion-mean-v1，保持旧调用口径。
     get:
       operationId: getRepositoryExplanation
       summary: 读取固定分析提交的保存解释，不触发推理
@@ -3083,6 +3090,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RepositoryExplanation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/commits/{commitId}/explanations:
+    parameters:
+    - name: repositoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    - name: commitId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    - name: viewSyncId
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    get:
+      operationId: listRepositoryExplanations
+      summary: 列出固定分析提交已保存的全部解释
+      description: 每种方法独立返回且不重新推理；模型后来不可用时，已保存内容仍可读取。
+      x-implementation-status: implemented
+      security: []
+      responses:
+        '200':
+          description: 已保存解释列表，按注册方法顺序稳定排序。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryExplanationList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation-methods:
+    parameters:
+    - name: repositoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    - name: commitId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    - name: viewSyncId
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    get:
+      operationId: listRepositoryExplanationMethods
+      summary: 查询固定分析模型实际可用的解释方法
+      description: 只返回输入 schema 和已加载估计器实际支持的方法；不兼容方法不会出现在目录中。
+      x-implementation-status: implemented
+      security: []
+      responses:
+        '200':
+          description: 当前可用方法及已保存方法摘要。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryExplanationMethods'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -8581,7 +8668,7 @@ components:
     RepositoryExplanation:
       type: object
       additionalProperties: false
-      required: [repositoryId, viewSyncId, commitId, modelId, runId, datasetVersion, risk, explanationStatus, explanation, explanationMethod, explanationSummary, explanationReason, reasonCode, baselineSource, baselineDatasetVersion, missingBaselineFeatures, featureSchemaVersion, modelSha256, generatedAt, limitations]
+      required: [repositoryId, viewSyncId, commitId, modelId, runId, datasetVersion, risk, explanationStatus, explanation, explanationMethod, explanationUnit, explanationSummary, explanationReason, reasonCode, contributionTotal, baselineSource, baselineDatasetVersion, missingBaselineFeatures, featureSchemaVersion, modelSha256, generatedAt, limitations]
       properties:
         repositoryId:
           $ref: '#/components/schemas/Uuid'
@@ -8606,9 +8693,11 @@ components:
           type: array
           maxItems: 5
           items:
-            $ref: '#/components/schemas/PredictionExplanation'
+            $ref: '#/components/schemas/RepositoryExplanationItem'
         explanationMethod:
           type: [string, 'null']
+        explanationUnit:
+          enum: [probability, logit]
         explanationSummary:
           type: [string, 'null']
         explanationReason:
@@ -8616,6 +8705,9 @@ components:
         reasonCode:
           type: [string, 'null']
           description: 生成失败的领域原因；不包含内部路径和异常详情。
+        contributionTotal:
+          type: [number, 'null']
+          description: 仅可相加的线性分解提供总贡献；遮挡法为 null。
         baselineSource:
           enum: [zero, mixed, model-dataset-mean, training-partition-mean, null]
         baselineDatasetVersion:
@@ -8660,6 +8752,124 @@ components:
           type: array
           items:
             type: string
+    RepositoryExplanationList:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, viewSyncId, commitId, modelId, runId, datasetVersion, explanations]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          $ref: '#/components/schemas/Uuid'
+        commitId:
+          type: string
+          minLength: 1
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        explanations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepositoryExplanation'
+    RepositoryExplanationMethods:
+      type: object
+      additionalProperties: false
+      required: [repositoryId, viewSyncId, commitId, modelId, runId, datasetVersion, defaultMethod, modelAvailable, reasonCode, methods, savedMethods]
+      properties:
+        repositoryId:
+          $ref: '#/components/schemas/Uuid'
+        viewSyncId:
+          $ref: '#/components/schemas/Uuid'
+        commitId:
+          type: string
+          minLength: 1
+        modelId:
+          type: [string, 'null']
+        runId:
+          type: [string, 'null']
+        datasetVersion:
+          type: [string, 'null']
+        defaultMethod:
+          type: string
+          minLength: 1
+        modelAvailable:
+          type: boolean
+        reasonCode:
+          type: [string, 'null']
+        modelSha256:
+          type: [string, 'null']
+        methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplanationMethod'
+        savedMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/SavedExplanationMethod'
+    ExplanationMethod:
+      type: object
+      additionalProperties: false
+      required: [method, name, applicableModels, unit, baseline, cost, deterministic, limitations]
+      properties:
+        method:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        applicableModels:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+        unit:
+          enum: [probability, logit]
+        baseline:
+          enum: [training-partition-mean]
+        cost:
+          type: string
+          minLength: 1
+        deterministic:
+          type: boolean
+        limitations:
+          type: array
+          minItems: 1
+          items:
+            type: string
+    SavedExplanationMethod:
+      type: object
+      additionalProperties: false
+      required: [method, status, generatedAt]
+      properties:
+        method:
+          type: string
+          minLength: 1
+        status:
+          enum: [supported, not-supported]
+        generatedAt:
+          type: [string, 'null']
+          format: date-time
+    RepositoryExplanationItem:
+      type: object
+      description: 单特征归因项；delta 的单位由 explanationUnit 声明。
+      properties:
+        feature:
+          type: string
+          minLength: 1
+        value:
+          type: number
+        baseline:
+          type: number
+        delta:
+          type: number
+        direction:
+          enum: [increases, decreases]
+      required: [feature, value, baseline, delta, direction]
+      additionalProperties: false
     PredictionExplanation:
       type: object
       description: 单特征归因项；`delta` 是当前取值相对基线的风险变化，正值表示把风险推高。

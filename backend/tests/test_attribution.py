@@ -112,3 +112,93 @@ def test_feature_means_average_and_missing_fields(tmp_path):
     assert storage.feature_means('missing', ('ns',)) == {}
     assert storage.feature_means('demo-v1', ()) == {}
     assert store_module.feature_means(storage, 'demo-v1', ('nd',)) == {'nd': 3.0}
+
+
+# [AI生成]
+def test_explanation_catalog_returns_only_methods_supported_by_the_fitted_model():
+    import numpy as np
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import FunctionTransformer, StandardScaler
+    from sklearn.tree import DecisionTreeClassifier
+    from jit_baseline.ml import explanations
+
+    matrix = np.asarray([[0.0, 1.0], [1.0, 2.0], [2.0, 1.0], [3.0, 4.0]])
+    labels = [0, 0, 1, 1]
+    logistic = Pipeline([
+        ("counts", FunctionTransformer(np.log1p)),
+        ("scale", StandardScaler()),
+        ("model", LogisticRegression()),
+    ]).fit(matrix, labels)
+    tree = Pipeline([
+        ("counts", FunctionTransformer(np.log1p)),
+        ("model", DecisionTreeClassifier(random_state=1)),
+    ]).fit(matrix, labels)
+
+    assert [item["method"] for item in explanations.applicable_methods("kamei14-git-v1", logistic)] == [
+        explanations.DEFAULT_METHOD,
+        explanations.LINEAR_METHOD,
+    ]
+    assert explanations.METHODS[explanations.LINEAR_METHOD]["applicableModels"] == (
+        "logistic-regression",
+    )
+    assert [item["method"] for item in explanations.applicable_methods("kamei14-git-v1", tree)] == [
+        explanations.DEFAULT_METHOD,
+    ]
+    assert explanations.applicable_methods("code-semantic-codebert-v1", logistic) == []
+
+
+# [AI生成]
+def test_linear_logodds_uses_fitted_preprocessing_and_exactly_matches_logit_difference():
+    import numpy as np
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import FunctionTransformer, StandardScaler
+    from jit_baseline.ml import explanations
+
+    matrix = np.asarray([
+        [1.0, 2.0],
+        [2.0, 1.0],
+        [4.0, 5.0],
+        [5.0, 4.0],
+        [8.0, 9.0],
+        [9.0, 8.0],
+    ])
+    labels = [0, 0, 1, 1, 1, 0]
+    pipeline = Pipeline([
+        ("counts", FunctionTransformer(np.log1p)),
+        ("scale", StandardScaler()),
+        ("model", LogisticRegression(C=0.7, max_iter=1000)),
+    ]).fit(matrix, labels)
+    current = [6.0, 7.0]
+    baseline = {"ns": 3.0, "nd": 4.0}
+    result = explanations.linear_logodds(
+        pipeline, current, baseline, ["ns", "nd"], top_k=5,
+    )
+
+    scores = pipeline.decision_function(np.asarray([current, [3.0, 4.0]]))
+    assert result["unit"] == "logit"
+    assert result["contributionTotal"] == pytest.approx(scores[0] - scores[1], abs=1e-12)
+    assert sum(item["delta"] for item in result["items"]) == pytest.approx(
+        scores[0] - scores[1], abs=1e-5,
+    )
+    assert result["currentLogit"] == pytest.approx(scores[0], abs=1e-12)
+    assert result["baselineLogit"] == pytest.approx(scores[1], abs=1e-12)
+
+
+# [AI生成]
+def test_linear_logodds_is_rejected_for_a_compatible_schema_with_the_wrong_estimator():
+    import numpy as np
+    from sklearn.pipeline import Pipeline
+    from sklearn.tree import DecisionTreeClassifier
+    from jit_baseline.ml import explanations
+    from jit_baseline.errors import BaselineError
+
+    pipeline = Pipeline([
+        ("model", DecisionTreeClassifier(random_state=1)),
+    ]).fit(np.asarray([[0.0], [1.0]]), [0, 1])
+    with pytest.raises(BaselineError) as error:
+        explanations.require_applicable(
+            explanations.LINEAR_METHOD, "kamei14-git-v1", pipeline,
+        )
+    assert error.value.code == "EXPLANATION_METHOD_UNSUPPORTED"
