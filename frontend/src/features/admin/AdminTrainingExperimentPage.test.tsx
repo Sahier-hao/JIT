@@ -30,7 +30,11 @@ function task(id: string, method: string, parameters: Record<string, unknown>, h
     modelId: `model-${id}`,
     featureSchemaVersion: 'kamei14-git-v1',
     metrics: { averagePrecision: { value: 0.5, reason: null }, rocAuc: { value: 0.7, reason: null }, f1: { value: 0.4, reason: null }, precision: { value: 0.6, reason: null }, recall: { value: 0.3, reason: null } },
-    metricsByPartition: { test: {} },
+    metricsByPartition: {
+      train: { counts: { records: 7, positive: 3 }, averagePrecision: { value: 0.8, reason: null }, rocAuc: { value: 0.9, reason: null }, f1: { value: 0.7, reason: null } },
+      validation: { counts: { records: 2, positive: 1 }, averagePrecision: { value: 0.6, reason: null }, rocAuc: { value: 0.7, reason: null }, f1: { value: 0.5, reason: null } },
+      test: { counts: { records: 1, positive: 1 }, averagePrecision: { value: null, reason: '测试集缺少负例' }, rocAuc: { value: null, reason: '测试集不包含两类标签' }, f1: { value: 0.4, reason: null } },
+    },
     split: { test: {} },
     splitPreset: 'temporal-70-15-15',
     splitPolicy: SPLIT_POLICY,
@@ -112,4 +116,8 @@ it('shows experiment comparison and the real epoch history', async () => {
   await waitFor(() => expect(screen.getByText('训练曲线')).toBeVisible())
   expect(screen.getByText('该方法是单次拟合，无逐 epoch 曲线。')).toBeVisible()
   expect(screen.getByText(/各方法使用相同数据与切分成员/)).toBeVisible()
+  expect(screen.getByRole('heading', { name: '三档结果比较' })).toBeVisible()
+  expect(screen.getAllByText('训练档').length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/记录 7 · 正例 3/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText('测试集缺少负例').length).toBeGreaterThan(0)
 })

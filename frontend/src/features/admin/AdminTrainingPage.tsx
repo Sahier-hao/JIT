@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
   ACTIVE_TASK_STATUSES, cancelTrainingTask, fetchTrainingTask, fetchTrainingTasks,
-  retryTrainingTask, formatDate, valueLabel, type Row, type TrainingTask,
+  retryTrainingTask, formatDate, valueLabel, type TrainingTask,
 } from '@/features/admin/adminContracts'
 import { EmptyState } from '@/components/shared/Feedback'
 import { CardListSkeleton, MasterDetailSkeleton } from '@/components/shared/Skeletons'
@@ -12,6 +12,7 @@ import { CardListSkeleton, MasterDetailSkeleton } from '@/components/shared/Skel
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
 import { ReleaseEvidence } from '@/releaseEvidence'
+import { TrainingPartitionMetrics } from '@/features/training/components/TrainingComparisonResults'
 
 const STATUS_LABELS: Record<string, string> = {
   queued: '排队中', running: '训练中', succeeded: '成功', failed: '失败',
@@ -149,7 +150,7 @@ function TrainingTaskDetail({ task, error, busy, act, retry, back, openRuns, ope
       {task.classPolicy ? <div><dt>训练分区策略</dt><dd><code>{JSON.stringify(task.classPolicy)}</code></dd></div> : null}
       {task.classPolicySummary ? <div><dt>策略前后数量</dt><dd><code>{JSON.stringify(task.classPolicySummary)}</code></dd></div> : null}
     </dl>
-    {task.metricsByPartition ? <TrainingPartitions metrics={task.metricsByPartition}/> : null}
+    {task.metricsByPartition ? <TrainingPartitionMetrics metrics={task.metricsByPartition}/> : null}
     {task.trainingHistory ? <section className="grid gap-2"><h2>训练过程</h2>
       <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all">
         <TableHeader><TableRow><TableHead>epoch</TableHead><TableHead>训练损失</TableHead><TableHead>耗时</TableHead></TableRow></TableHeader>
@@ -178,18 +179,4 @@ function releaseLabel(status: TrainingTask['releaseStatus']) {
   if (status === 'qualified') return '发布合格'
   if (status === 'unqualified') return '发布不合格'
   return '未评估'
-}
-
-function TrainingPartitions({ metrics }: { metrics: Row }) {
-  const partitions = [
-    ['train', '拟合诊断'],
-    ['validation', '模型选择背景'],
-    ['test', '冻结泛化评价'],
-  ] as const
-  return <section className="grid gap-2"><h2>分区指标</h2><div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
-    {partitions.map(([name, label]) => {
-      const part = metrics[name]
-      return <section key={name}><h2>{label}</h2>{part && typeof part === 'object' ? <MetricGrid metrics={part as Row}/> : <p className="text-xs text-foreground-3">未记录</p>}</section>
-    })}
-  </div></section>
 }

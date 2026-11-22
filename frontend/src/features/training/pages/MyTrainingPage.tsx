@@ -1,4 +1,3 @@
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, LoaderCircle, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -10,14 +9,15 @@ import {
 } from '@/features/account/userClient'
 
 
-import { formatMethodParams } from '@/lib/methodParams'
 import type { Route } from '@/app/navigation'
 import { TrainingCreateDialog } from '@/features/training/components/TrainingCreateDialog'
 import { TrainingExperimentList } from '@/features/training/components/TrainingExperimentList'
-import { TrainingExperimentMonitor, trainingMetric } from '@/features/training/components/TrainingExperimentMonitor'
+import { TrainingExperimentMonitor } from '@/features/training/components/TrainingExperimentMonitor'
 import { CardListSkeleton } from '@/components/shared/Skeletons'
 import { EmptyState } from '@/components/shared/Feedback'
-import { isActiveTraining, trainingStatus } from '@/features/training/trainingPresentation'
+import { isActiveTraining } from '@/features/training/trainingPresentation'
+import { TrainingComparisonResults } from '@/features/training/components/TrainingComparisonResults'
+import { comparisonExportText } from '@/features/training/trainingComparison'
 
 export function MyTrainingPage({ experimentId, initialDatasetVersion, navigate, onLoginRequired }: {
   experimentId?: string
@@ -109,7 +109,7 @@ export function MyTrainingPage({ experimentId, initialDatasetVersion, navigate, 
   }
   function exportComparison() {
     if (!comparison) return
-    const blob = new Blob([JSON.stringify(comparison, null, 2)], { type: 'application/json' })
+    const blob = new Blob([comparisonExportText(comparison)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url; anchor.download = `my-experiment-${comparison.experimentId}.json`; anchor.click()
@@ -145,17 +145,8 @@ export function MyTrainingPage({ experimentId, initialDatasetVersion, navigate, 
       registration={pendingRegistration ? <Button className="justify-self-start" size="sm" disabled={!!busy} onClick={() => void register()} type="button">
         {busy === 'register' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : null}登记本次模型
       </Button> : null}/>
-    {comparisonKey !== null ? <section className="grid min-w-0 gap-3 rounded-xl border border-border-soft bg-card p-4 sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">测试集结果比较</h2>
-        {comparison ? <Button onClick={exportComparison} variant="outline" size="sm" type="button">导出比较</Button> : null}
-      </div>
-      {comparisonError ? <div className="flex flex-wrap items-center gap-2 text-xs text-rose"><p role="alert">{comparisonError}</p><Button size="sm" onClick={() => setComparisonRevision(value => value + 1)} variant="outline" type="button">重试比较</Button></div> : null}
-      {!comparison && !comparisonError ? <p role="status" className="text-xs text-foreground-3">正在读取比较结果…</p> : null}
-      {comparison?.notes.map(note => <p key={note} className="text-xs text-foreground-3">{note}</p>)}
-      {comparison ? <div className="overflow-x-auto"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5"><TableHeader><TableRow><TableHead>方法</TableHead><TableHead>参数</TableHead><TableHead>PR-AUC</TableHead><TableHead>ROC-AUC</TableHead><TableHead>F1</TableHead><TableHead>耗时</TableHead><TableHead>状态</TableHead></TableRow></TableHeader><TableBody>
-        {comparison.methods.filter(row => row.status === 'succeeded').map(row => <TableRow key={row.taskId}><TableCell>{row.methodName}</TableCell><TableCell>{formatMethodParams(row.parameters)}</TableCell><TableCell>{trainingMetric(row.metrics, 'averagePrecision')}</TableCell><TableCell>{trainingMetric(row.metrics, 'rocAuc')}</TableCell><TableCell>{trainingMetric(row.metrics, 'f1')}</TableCell><TableCell>{row.trainingSeconds == null ? '—' : `${row.trainingSeconds.toFixed(2)}s`}</TableCell><TableCell>{trainingStatus[row.status].label}</TableCell></TableRow>)}
-      </TableBody></Table></div> : null}
-    </section> : null}
+    {comparisonError ? <div className="flex flex-wrap items-center gap-2 text-xs text-rose"><p role="alert">{comparisonError}</p><Button size="sm" onClick={() => setComparisonRevision(value => value + 1)} variant="outline" type="button">重试比较</Button></div> : null}
+    {comparisonKey !== null && comparison ? <TrainingComparisonResults comparison={comparison} onExport={exportComparison}/> : comparisonKey !== null && !comparisonError
+      ? <p role="status" className="text-xs text-foreground-3">正在读取比较结果…</p> : null}
   </section>
 }
