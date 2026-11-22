@@ -95,8 +95,8 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
       }}><RefreshCw aria-hidden="true"/>重试</Button>
     </div> : null}
 
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[330px_minmax(0,1fr)]">
-      <aside className="min-w-0 self-start overflow-hidden rounded-lg border border-border-soft bg-card">
+    <div className="grid min-w-0 gap-4 lg:h-[calc(100dvh-13rem)] lg:grid-cols-[300px_minmax(0,1fr)] lg:items-stretch xl:grid-cols-[330px_minmax(0,1fr)]">
+      <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-border-soft bg-card lg:h-full">
         <div className="border-b border-border-soft p-3">
           <ToggleGroup type="single" value={category} aria-label="算法分类"
             onValueChange={value => { if (value) setCategory(value as typeof category) }}>
@@ -105,14 +105,14 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
             <ToggleGroupItem value="deep" size="sm">深度 {counts.deep}</ToggleGroupItem>
           </ToggleGroup>
         </div>
-        <div className="grid max-h-[calc(100vh-220px)] gap-1 overflow-y-auto p-2">
+        <div className="grid max-h-[460px] min-h-0 flex-1 content-start auto-rows-max gap-1 overflow-y-auto p-2 lg:max-h-none">
           {visible.length ? visible.map(method => <MethodListItem key={method.method} method={method}
             selected={selectedMethod?.method === method.method}
             onSelect={() => setSelected(method.method)}/>) : <p className="px-3 py-5 text-center text-xs text-foreground-3">该分类没有方法。</p>}
         </div>
       </aside>
 
-      {selectedMethod ? <article className="grid min-w-0 content-start gap-4 rounded-lg border border-border-soft bg-card p-4 sm:p-5">
+      {selectedMethod ? <article className="grid min-w-0 content-start gap-4 rounded-lg border border-border-soft bg-card p-4 sm:p-5 lg:h-full lg:overflow-y-auto">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[10px] font-medium uppercase tracking-[.12em] text-foreground-4">{CATEGORY_LABELS[selectedMethod.category] ?? selectedMethod.category}</span>
