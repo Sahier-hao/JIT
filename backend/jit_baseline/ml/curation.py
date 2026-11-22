@@ -5,6 +5,7 @@ import io
 import json
 import math
 import zipfile
+from datetime import date
 from pathlib import Path
 
 from ..config import BACKEND
@@ -30,12 +31,48 @@ def _manifest(dataset_version, root=None):
     return manifest, csv_path
 
 
-def normalize(recipe):
+def _finite_number(value, message):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        raise BaselineError("INPUT_INVALID", message)
+    return value
+
+
+def _schema_fields(schema):
+    if schema is None:
+        return None
+    return set(resolve(schema).in_model_names())
+
+
+def _validated_field(field, allowed):
+    if not isinstance(field, str) or not field:
+        raise BaselineError("INPUT_INVALID", "清洗规则需要字段名")
+    if allowed is not None and field not in allowed:
+        raise BaselineError("INPUT_INVALID", f"字段 {field} 不属于当前特征 schema")
+    return field
+
+
+def _date_value(value, name):
+    if not isinstance(value, str):
+        raise BaselineError("INPUT_INVALID", f"{name} 必须是 YYYY-MM-DD 日期")
+    try:
+        parsed = date.fromisoformat(value)
+    except ValueError as exc:
+        raise BaselineError("INPUT_INVALID", f"{name} 必须是 YYYY-MM-DD 日期") from exc
+    if parsed.isoformat() != value:
+        raise BaselineError("INPUT_INVALID", f"{name} 必须是 YYYY-MM-DD 日期")
+    return value
+
+
+def normalize(recipe, schema=None):
     if not isinstance(recipe, dict) or set(recipe) - {"version", "rules"}:
         raise BaselineError("INPUT_INVALID", "清洗配方无效")
+    version = recipe.get("version", 1)
+    if version not in (1, 2):
+        raise BaselineError("INPUT_INVALID", "清洗配方版本无效")
     rules = recipe.get("rules")
     if not isinstance(rules, list) or not rules:
         raise BaselineError("INPUT_INVALID", "清洗配方至少需要一条规则")
+    allowed_fields = _schema_fields(schema)
     normalized = []
     for rule in rules:
         if not isinstance(rule, dict):
@@ -45,43 +82,138 @@ def normalize(recipe):
             fields = rule.get("fields")
             if not isinstance(fields, list) or not fields or not all(isinstance(f, str) for f in fields):
                 raise BaselineError("INPUT_INVALID", "drop-missing 需要字段列表")
-            normalized.append({"id": rule_id, "fields": fields})
+            if len(fields) != len(set(fields)):
+                raise BaselineError("INPUT_INVALID", "drop-missing 字段不能重复")
+            normalized.append({"id": rule_id, "fields": [
+                _validated_field(field, allowed_fields) for field in fields
+            ]})
         elif rule_id == "max-value":
             field, value = rule.get("field"), rule.get("value")
             if not isinstance(field, str) or isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise BaselineError("INPUT_INVALID", "max-value 需要字段和数值")
-            normalized.append({"id": rule_id, "field": field, "value": value})
+            normalized.append({"id": rule_id, "field": _validated_field(field, allowed_fields),
+                               "value": _finite_number(value, "max-value 需要有限数值")})
         elif rule_id == "drop-duplicates":
             normalized.append({"id": rule_id})
+        elif version == 1:
+            raise BaselineError("INPUT_INVALID", f"未知清洗规则：{rule_id}")
+        elif rule_id == "min-value":
+            field, value = rule.get("field"), rule.get("value")
+            if not isinstance(field, str):
+                raise BaselineError("INPUT_INVALID", "min-value 需要字段和数值")
+            normalized.append({"id": rule_id, "field": _validated_field(field, allowed_fields),
+                               "value": _finite_number(value, "min-value 需要有限数值")})
+        elif rule_id == "keep-range":
+            field = _validated_field(rule.get("field"), allowed_fields)
+            minimum = rule.get("min")
+            maximum = rule.get("max")
+            if minimum is None and maximum is None:
+                raise BaselineError("INPUT_INVALID", "keep-range 至少需要一个边界")
+            item = {"id": rule_id, "field": field}
+            if minimum is not None:
+                item["min"] = _finite_number(minimum, "keep-range 下界必须是有限数值")
+            if maximum is not None:
+                item["max"] = _finite_number(maximum, "keep-range 上界必须是有限数值")
+            if "min" in item and "max" in item and item["min"] > item["max"]:
+                raise BaselineError("INPUT_INVALID", "keep-range 下界不能大于上界")
+            normalized.append(item)
+        elif rule_id == "quantile-range":
+            field = _validated_field(rule.get("field"), allowed_fields)
+            lower = _finite_number(rule.get("lower"), "quantile-range 下分位必须是 0 到 1 的数值")
+            upper = _finite_number(rule.get("upper"), "quantile-range 上分位必须是 0 到 1 的数值")
+            if not 0 <= lower < upper <= 1:
+                raise BaselineError("INPUT_INVALID", "quantile-range 分位须满足 0 ≤ lower < upper ≤ 1")
+            normalized.append({"id": rule_id, "field": field, "lower": lower, "upper": upper})
+        elif rule_id == "keep-date":
+            start = rule.get("start")
+            end = rule.get("end")
+            if start is None and end is None:
+                raise BaselineError("INPUT_INVALID", "keep-date 至少需要一个日期边界")
+            item = {"id": rule_id}
+            if start is not None:
+                item["start"] = _date_value(start, "start")
+            if end is not None:
+                item["end"] = _date_value(end, "end")
+            if "start" in item and "end" in item and item["start"] > item["end"]:
+                raise BaselineError("INPUT_INVALID", "keep-date 开始日期不能晚于结束日期")
+            normalized.append(item)
         else:
             raise BaselineError("INPUT_INVALID", f"未知清洗规则：{rule_id}")
-    return {"version": 1, "rules": normalized}
+    return {"version": version, "rules": normalized}
 
 
-def apply(records, recipe):
+def _apply_rule(records, rule):
     kept, excluded = [], []
-    seen = set()
+    seen = set() if rule["id"] == "drop-duplicates" else None
+    quantile_bounds = None
+    if rule["id"] == "quantile-range":
+        values = [
+            value for value in (_number((record.get("metrics") or {}).get(rule["field"]))
+                                for record in records)
+            if value is not None
+        ]
+        if not values:
+            raise BaselineError("DATASET_INVALID", f"字段 {rule['field']} 没有可计算的分位值")
+        ordered = sorted(values)
+
+        def quantile(fraction):
+            position = (len(ordered) - 1) * fraction
+            lower = int(position)
+            upper = min(lower + 1, len(ordered) - 1)
+            return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
+
+        quantile_bounds = {"min": quantile(rule["lower"]), "max": quantile(rule["upper"]),
+                           "lower": rule["lower"], "upper": rule["upper"]}
     for record in records:
         reason = None
-        for rule in recipe["rules"]:
-            if rule["id"] == "drop-duplicates":
-                if record["id"] in seen:
-                    reason = "duplicate"
-                    break
+        rule_id = rule["id"]
+        if rule_id == "drop-duplicates":
+            if record["id"] in seen:
+                reason = "duplicate"
+            else:
                 seen.add(record["id"])
-            elif rule["id"] == "drop-missing":
-                if any(record["metrics"].get(field) in (None, "") for field in rule["fields"]):
-                    reason = "missing"
-                    break
-            elif rule["id"] == "max-value":
-                value = record["metrics"].get(rule["field"])
-                if isinstance(value, (int, float)) and value > rule["value"]:
-                    reason = "max-value"
-                    break
+        elif rule_id == "drop-missing":
+            if any(record["metrics"].get(field) in (None, "") for field in rule["fields"]):
+                reason = "missing"
+        elif rule_id == "max-value":
+            value = record["metrics"].get(rule["field"])
+            if isinstance(value, (int, float)) and value > rule["value"]:
+                reason = "max-value"
+        elif rule_id == "min-value":
+            value = record["metrics"].get(rule["field"])
+            if isinstance(value, (int, float)) and value < rule["value"]:
+                reason = "min-value"
+        elif rule_id == "keep-range":
+            value = _number(record["metrics"].get(rule["field"]))
+            if value is None:
+                reason = "missing"
+            elif "min" in rule and value < rule["min"]:
+                reason = "below-min"
+            elif "max" in rule and value > rule["max"]:
+                reason = "above-max"
+        elif rule_id == "quantile-range":
+            value = _number(record["metrics"].get(rule["field"]))
+            if value is None:
+                reason = "missing"
+            elif value < quantile_bounds["min"]:
+                reason = "below-quantile"
+            elif value > quantile_bounds["max"]:
+                reason = "above-quantile"
+        elif rule_id == "keep-date":
+            day = record["time"][:10]
+            if "start" in rule and day < rule["start"]:
+                reason = "before-date"
+            elif "end" in rule and day > rule["end"]:
+                reason = "after-date"
         if reason:
             excluded.append({"id": record["id"], "reason": reason})
         else:
             kept.append(record)
+    return kept, excluded, quantile_bounds
+
+
+def apply(records, recipe):
+    kept, excluded, _ = apply_steps(records, recipe)
     return kept, excluded
 
 
@@ -182,29 +314,59 @@ def _feature_summary(records, kept_ids, field):
                   "bucketCounts": after_counts},
     }
 
+
+def apply_steps(records, recipe, fields=None):
+    """按顺序执行规则，并为每一步保留在应用当刻的前后事实。"""
+    field_names = list(fields) if fields is not None else (
+        list((records[0].get("metrics") or {})) if records else []
+    )
+    current = list(records)
+    all_excluded = []
+    steps = []
+    for index, rule in enumerate(recipe["rules"], start=1):
+        next_records, excluded, details = _apply_rule(current, rule)
+        before_stats = _stats(current, [], len(current))
+        after_stats = _stats(next_records, excluded, len(current))
+        feature_comparison = [
+            item for item in (_feature_summary(
+                current, {record["id"] for record in next_records}, field
+            ) for field in field_names)
+            if item is not None
+        ]
+        steps.append({
+            "index": index,
+            "rule": rule,
+            "details": ({rule["field"]: details} if rule["id"] == "quantile-range" and details else {}),
+            "beforeStats": before_stats,
+            "afterStats": after_stats,
+            "featureComparison": feature_comparison,
+        })
+        current = next_records
+        all_excluded.extend(excluded)
+    return current, all_excluded, steps
+
+
 def preview(dataset_version, recipe, root=None):
     manifest, csv_path = _manifest(dataset_version, root)
-    normalized = normalize(recipe)
+    schema = manifest["schemaName"]
+    normalized = normalize(recipe, schema)
     try:
         blob = csv_path.read_bytes()
     except OSError as exc:
         raise BaselineError("DATASET_UNAVAILABLE", "来源 CSV 不可读") from exc
-    records, _ = parse_source(blob, manifest["schemaName"], manifest["cohort"])
-    kept, excluded = apply(records, normalized)
+    records, _ = parse_source(blob, schema, manifest["cohort"])
+    fields = list(resolve(schema).in_model_names())
+    kept, excluded, steps = apply_steps(records, normalized, fields)
     if not kept:
         raise BaselineError("DATASET_INVALID", "清洗后没有保留记录")
     before_stats = _stats(records, [], len(records))
-    fields = resolve(manifest["schemaName"]).in_model_names()
-    feature_comparison = [
-        item for item in (_feature_summary(records, {record["id"] for record in kept}, field)
-                          for field in fields)
-        if item is not None
-    ]
+    feature_comparison = steps[-1]["featureComparison"] if steps else []
     return {"sourceVersion": dataset_version, "recipe": normalized,
             "recipeSha256": sha256(_canonical(normalized).encode("utf-8")),
             "stats": _stats(kept, excluded, len(records)),
             "beforeStats": before_stats,
-            "featureComparison": feature_comparison}
+            "featureComparison": feature_comparison,
+            "steps": steps}
 
 
 def derive(dataset_version, recipe, root=None):
@@ -213,7 +375,9 @@ def derive(dataset_version, recipe, root=None):
     normalized = result["recipe"]
     blob = csv_path.read_bytes()
     records, _ = parse_source(blob, manifest["schemaName"], manifest["cohort"])
-    kept, excluded = apply(records, normalized)
+    kept, excluded, steps = apply_steps(
+        records, normalized, resolve(manifest["schemaName"]).in_model_names()
+    )
     kept = sorted(kept, key=lambda record: (record["time"], record["id"]))
     days = [record["time"][:10] for record in kept]
     version = f"{manifest['dataset']}-{min(days)}_{max(days)}-{result['recipeSha256'][:8]}"
@@ -246,6 +410,7 @@ def derive(dataset_version, recipe, root=None):
                                 **_stats(kept, excluded, len(records)),
                                 "beforeStats": result["beforeStats"],
                                 "featureComparison": result["featureComparison"],
+                                "steps": steps,
                             },
                             "decisionsFile": ({"path": datasets.manifest_relative(decisions_path),
                                                "sha256": hashlib.sha256(decisions_bytes).hexdigest(),
@@ -320,7 +485,8 @@ def compare(source_version, derived_version, root=None):
                        "timeRange": source["timeRange"]},
             "derived": {"version": derived_version, "quality": derived["quality"],
                         "timeRange": derived["timeRange"]},
-            "recipe": curation.get("recipe"), "recipeSha256": curation.get("recipeSha256")}
+            "recipe": curation.get("recipe"), "recipeSha256": curation.get("recipeSha256"),
+            "decisions": curation.get("decisions")}
 
 
 def _csv(records, schema_name, source_blob=None):

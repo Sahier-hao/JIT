@@ -206,6 +206,19 @@ it('previews and derives a cleaned dataset version', async () => {
         before: { records: 20, present: 20, missing: 0, mean: 9, median: 8, min: 1, max: 20, bucketCounts: [12, 8] },
         after: { records: 18, present: 18, missing: 0, mean: 8, median: 7, min: 1, max: 18, bucketCounts: [11, 7] },
       }],
+      steps: [{
+        index: 1,
+        rule: { id: 'quantile-range', field: 'la', lower: 0.05, upper: 0.95 },
+        details: { la: { min: 1, max: 20, lower: 0.05, upper: 0.95 } },
+        beforeStats: { rawRows: 20, includedRows: 20, excludedRows: 0, positiveLabels: 6, timeRange: null, excluded: {}, sampleExcluded: [] },
+        afterStats: { rawRows: 20, includedRows: 18, excludedRows: 2, positiveLabels: 5, timeRange: null, excluded: { duplicate: 2 }, sampleExcluded: [] },
+        featureComparison: [{
+          field: 'la',
+          bins: [{ start: 1, end: 10 }, { start: 10, end: 20 }],
+          before: { records: 20, present: 20, missing: 0, mean: 9, median: 8, min: 1, max: 20, bucketCounts: [12, 8] },
+          after: { records: 18, present: 18, missing: 0, mean: 8, median: 7, min: 1, max: 18, bucketCounts: [11, 7] },
+        }],
+      }],
     })
     if (value.includes('/curation/derive') && options?.method === 'POST') return Response.json({
       dataset: { version: 'demo-cleaned' },
@@ -220,9 +233,43 @@ it('previews and derives a cleaned dataset version', async () => {
   const dialog = await screen.findByRole('dialog')
   await user.click(within(dialog).getByRole('button', { name: '预览结果' }))
   expect(await screen.findByText('清洗预览')).toBeVisible()
-  expect(screen.getByText('指定特征前后变化')).toBeVisible()
+  expect(screen.getByText('数据集变化')).toBeVisible()
+  expect(screen.getByText('指定特征变化')).toBeVisible()
+  expect(screen.getByRole('img', { name: '每一步清洗前后的记录数' })).toBeVisible()
+  expect(screen.getByRole('img', { name: 'la 在步骤 1 前后的分布' })).toBeVisible()
+  const lower = within(dialog).getByLabelText('下分位百分比')
+  await user.clear(lower)
+  await user.type(lower, '10')
+  expect(screen.getByText('操作已变化，请重新预览。')).toBeVisible()
+  expect(within(dialog).getByRole('button', { name: '生成新版本' })).toBeDisabled()
+  await user.click(within(dialog).getByRole('button', { name: '预览结果' }))
+  await waitFor(() => expect(within(dialog).getByRole('button', { name: '生成新版本' })).toBeEnabled())
   await user.click(within(dialog).getByRole('button', { name: '生成新版本' }))
   expect(await screen.findByText('已生成清洗版本')).toBeVisible()
+})
+
+it('adds and reorders dataset preprocessing operations', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const value = String(input)
+    if (value.includes('/api/v1/user/datasets?scope=')) return Response.json({ datasets: [DATASET] })
+    if (value.includes('/api/v1/user/dataset-builds?')) return Response.json({ tasks: [] })
+    if (value.includes('/split-preview')) return Response.json(SPLIT)
+    return Response.json({})
+  })
+  render(<MyDataPage navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '清洗数据' }))
+  const dialog = await screen.findByRole('dialog')
+  expect(within(dialog).getAllByRole('article')).toHaveLength(1)
+  await user.click(within(dialog).getByRole('button', { name: '添加操作' }))
+  await user.click(await screen.findByRole('menuitem', { name: '保留日期范围' }))
+  expect(within(dialog).getAllByRole('article')).toHaveLength(2)
+  expect(within(dialog).getByLabelText('开始日期')).toHaveValue('2026-01-01')
+  await user.click(within(dialog).getAllByRole('button', { name: '上移' })[1])
+  expect(within(dialog).getAllByRole('article')[0]).toHaveTextContent('保留日期范围')
+  await user.click(within(dialog).getAllByRole('button', { name: '删除操作' })[0])
+  expect(within(dialog).getAllByRole('article')).toHaveLength(1)
+  expect(within(dialog).getByText('保留分位区间')).toBeVisible()
 })
 
 it('starts a new experiment from my training', async () => {

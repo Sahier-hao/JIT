@@ -6,6 +6,17 @@ import {
   type Row, type TrainingExperiment, type TrainingExperimentComparison,
   type TrainingExperimentMethodResult, type TrainingTask,
 } from '@/features/admin/adminContracts'
+import {
+  parseCurationPreview,
+  type CurationPreview,
+} from '@/features/datasets/curationContract'
+
+export type {
+  CurationFeatureComparison as UserCurationFeatureComparison,
+  CurationFeatureStats as UserCurationFeatureStats,
+  CurationPreview as UserCurationPreview,
+  CurationStats as UserCurationStats,
+} from '@/features/datasets/curationContract'
 
 export interface UserSession {
   authenticated: boolean
@@ -71,45 +82,9 @@ export interface UserSplitPreview {
   }> | null
 }
 
-export interface UserCurationStats {
-  rawRows: number
-  includedRows: number
-  excludedRows: number
-  positiveLabels: number
-  timeRange: Row | null
-  excluded: Row
-  sampleExcluded: Row[]
-}
-
-export interface UserCurationFeatureStats {
-  records: number
-  present: number
-  missing: number
-  mean: number | null
-  median: number | null
-  min: number | null
-  max: number | null
-  bucketCounts: number[]
-}
-
-export interface UserCurationFeatureComparison {
-  field: string
-  bins: { start: number; end: number }[]
-  before: UserCurationFeatureStats
-  after: UserCurationFeatureStats
-}
-
-export interface UserCurationPreview {
-  sourceVersion: string
-  recipeSha256: string
-  stats: UserCurationStats
-  beforeStats: UserCurationStats | null
-  featureComparison: UserCurationFeatureComparison[]
-}
-
 export interface UserCurationDerived {
   version: string
-  preview: UserCurationPreview
+  preview: CurationPreview
 }
 
 function userDataset(raw: unknown): UserDataset {
@@ -219,63 +194,13 @@ export async function splitPreview(version: string, preset: string, signal?: Abo
   }
 }
 
-function curationPreview(raw: unknown): UserCurationPreview {
-  const value = record(raw)
-  const stats = record(value.stats)
-  const statsView = (rawStats: unknown): UserCurationStats => {
-    const item = record(rawStats)
-    return {
-      rawRows: finiteNumber(item.rawRows),
-      includedRows: finiteNumber(item.includedRows),
-      excludedRows: finiteNumber(item.excludedRows),
-      positiveLabels: finiteNumber(item.positiveLabels),
-      timeRange: item.timeRange == null ? null : record(item.timeRange),
-      excluded: item.excluded == null ? {} : record(item.excluded),
-      sampleExcluded: item.sampleExcluded == null ? [] : recordList(item.sampleExcluded),
-    }
-  }
-  const compareView = (rawItem: unknown) => {
-    const item = record(rawItem)
-    const before = record(item.before)
-    const after = record(item.after)
-    const featureStats = (rawStats: Row) => ({
-      records: finiteNumber(rawStats.records),
-      present: finiteNumber(rawStats.present),
-      missing: finiteNumber(rawStats.missing),
-      mean: rawStats.mean == null ? null : finiteNumber(rawStats.mean),
-      median: rawStats.median == null ? null : finiteNumber(rawStats.median),
-      min: rawStats.min == null ? null : finiteNumber(rawStats.min),
-      max: rawStats.max == null ? null : finiteNumber(rawStats.max),
-      bucketCounts: Array.isArray(rawStats.bucketCounts)
-        ? rawStats.bucketCounts.map(item => finiteNumber(item)) : [],
-    })
-    return {
-      field: text(item.field),
-      bins: recordList(item.bins).map(bin => ({
-        start: finiteNumber(bin.start),
-        end: finiteNumber(bin.end),
-      })),
-      before: featureStats(before),
-      after: featureStats(after),
-    }
-  }
-  return {
-    sourceVersion: text(value.sourceVersion),
-    recipeSha256: text(value.recipeSha256),
-    stats: statsView(stats),
-    beforeStats: value.beforeStats == null ? null : statsView(value.beforeStats),
-    featureComparison: value.featureComparison == null ? []
-      : recordList(value.featureComparison).map(compareView),
-  }
-}
-
 export async function previewCuration(version: string, recipe: unknown) {
-  return curationPreview(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/preview`, method: 'POST', body: { recipe } }))
+  return parseCurationPreview(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/preview`, method: 'POST', body: { recipe } }))
 }
 
 export async function deriveCuration(version: string, recipe: unknown): Promise<UserCurationDerived> {
   const value = record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/curation/derive`, method: 'POST', body: { recipe } }))
-  return { version: text(record(value.dataset).version), preview: curationPreview(value.preview) }
+  return { version: text(record(value.dataset).version), preview: parseCurationPreview(value.preview) }
 }
 
 export async function createUserExperiment(options: {

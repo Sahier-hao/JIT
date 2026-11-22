@@ -9,10 +9,14 @@ import { ApiError } from '@/lib/apiContract'
 import { fetchPrunableDatasets, formatDate, pruneDatasets, type AdminDatasetVersion, type PrunableDatasetVersion } from '@/features/admin/adminContracts'
 import { ErrorNotice } from '@/features/admin/AdminShared'
 import { compareCuration, deriveCuration, previewCuration, type CurationPreview } from '@/features/datasets/curationClient'
+import { CurationPreviewPanel } from '@/features/datasets/components/CurationPreviewPanel'
 import { DatasetFact } from '@/features/datasets/DatasetPresentation'
-import { asRow, EXCLUSION_LABELS, numberText } from '@/features/datasets/mydata/format'
+import { asRow, numberText } from '@/features/datasets/mydata/format'
 
-const DEFAULT_RECIPE = JSON.stringify({ version: 1, rules: [{ id: 'max-value', field: 'la', value: 10000 }] }, null, 2)
+const DEFAULT_RECIPE = JSON.stringify({
+  version: 2,
+  rules: [{ id: 'quantile-range', field: 'la', lower: 0.05, upper: 0.95 }],
+}, null, 2)
 
 function DatasetToolDialog({ title, description, busy, onClose, children }: {
   title: string
@@ -72,18 +76,7 @@ export function AdminDatasetCurationDialog({ version, onClose, onDerived, expire
         onChange={event => { setRecipe(event.target.value); setPreview(null); setError('') }}/>
     </label>
     <ErrorNotice>{error}</ErrorNotice>
-    {preview ? <section className="grid gap-3 rounded-lg border border-border-soft p-3">
-      <h3 className="text-sm font-semibold">清洗预览</h3>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <DatasetFact label="原始">{numberText(preview.stats.rawRows)}</DatasetFact>
-        <DatasetFact label="纳入">{numberText(preview.stats.includedRows)}</DatasetFact>
-        <DatasetFact label="排除">{numberText(preview.stats.excludedRows)}</DatasetFact>
-        <DatasetFact label="正例">{numberText(preview.stats.positiveLabels)}</DatasetFact>
-      </dl>
-      {Object.entries(asRow(preview.stats.excluded) ?? {}).map(([reason, count]) =>
-        <p key={reason} className="text-xs text-foreground-3">{EXCLUSION_LABELS[reason] ?? reason} · {numberText(count)}</p>)}
-      <details><summary className="cursor-pointer text-xs">配方哈希</summary><code className="break-all text-xs">{preview.recipeSha256}</code></details>
-    </section> : null}
+    {preview ? <CurationPreviewPanel key={preview.recipeSha256} preview={preview}/> : null}
     <div className="flex flex-wrap justify-end gap-2">
       <Button type="button" variant="outline" disabled={busy} onClick={() => void curate(false)}>预览结果</Button>
       <Button type="button" disabled={busy} onClick={() => void curate(true)}>生成新版本</Button>
