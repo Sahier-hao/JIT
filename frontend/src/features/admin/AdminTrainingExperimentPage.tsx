@@ -1,4 +1,3 @@
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { ChevronRight, LoaderCircle } from 'lucide-react'
@@ -16,6 +15,8 @@ import { TrainingLossChart } from '@/components/shared/TrainingLossChart'
 import { formatMethodParams } from '@/lib/methodParams'
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
+import { TrainingComparisonResults } from '@/features/training/components/TrainingComparisonResults'
+import { comparisonExportText } from '@/features/training/trainingComparison'
 
 const ACTIVE = new Set(['queued', 'running'])
 
@@ -84,7 +85,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
   }
   function exportComparison() {
     if (!comparison) return
-    const blob = new Blob([JSON.stringify(comparison, null, 2)], { type: 'application/json' })
+    const blob = new Blob([comparisonExportText(comparison)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
@@ -155,32 +156,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
       </div>
       {selectedHistory ? <TrainingLossChart history={selectedHistory.trainingHistory} method={selectedHistory.method}/> : null}
     </section> : null}
-    <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card"><h2>同一口径比较</h2>
-      {comparison ? <>
-        {comparison.notes.map(note => <p key={note} className="text-xs leading-body text-foreground-3">{note}</p>)}
-        <Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:tabular-nums">
-          <TableHeader><TableRow><TableHead>方法</TableHead><TableHead>参数</TableHead><TableHead>PR-AUC</TableHead><TableHead>ROC-AUC</TableHead><TableHead>F1</TableHead><TableHead>P / R</TableHead><TableHead>Recall@20%LOC</TableHead><TableHead>MCC</TableHead><TableHead>耗时</TableHead><TableHead>状态</TableHead></TableRow></TableHeader>
-          <TableBody>{comparison.methods.map(row => <TableRow key={row.taskId}>
-            <TableCell>{row.methodName}</TableCell>
-            <TableCell>{formatMethodParams(row.parameters)}</TableCell>
-            <TableCell>{metric(row.metrics, 'averagePrecision')}</TableCell>
-            <TableCell>{metric(row.metrics, 'rocAuc')}</TableCell>
-            <TableCell>{metric(row.metrics, 'f1')}</TableCell>
-            <TableCell>{metric(row.metrics, 'precision')} / {metric(row.metrics, 'recall')}</TableCell>
-            <TableCell>{metric(row.metrics, 'recall20Loc')}</TableCell>
-            <TableCell>未定义</TableCell>
-            <TableCell>{row.trainingSeconds == null ? '未记录' : `${row.trainingSeconds.toFixed(2)}s`}</TableCell>
-            <TableCell>{row.error ? `${row.error.code} · ${row.error.message}` : valueLabel(row.status)}</TableCell>
-          </TableRow>)}</TableBody>
-        </Table>
-        <p className="text-xs leading-body text-foreground-3">
-          口径：{comparison.datasetVersion} · {comparison.splitPreset} · {comparison.metricSet} ·
-          manifest {comparison.manifestSha256.slice(0, 12)}…
-          {comparison.comparable ? '；各方法使用相同数据与切分成员。' : '；口径不一致，不可直接比较。'}
-          MCC 未纳入当前指标集。
-        </p>
-      </> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
-    </section>
+    {comparison ? <TrainingComparisonResults comparison={comparison} onExport={exportComparison}/> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
     <Collapsible className="group/collapsible"><div className="flex items-center gap-2"><CollapsibleTrigger asChild><Button type="button" variant="ghost" className="justify-start"><ChevronRight aria-hidden="true" className="group-data-[state=open]/collapsible:rotate-90"/>{"比较口径与限制"}</Button></CollapsibleTrigger></div><CollapsibleContent><p className="text-xs leading-body text-foreground-3">
         三档指标来自各自运行的冻结分区；训练档只用于拟合诊断，验证档是模型选择背景，测试档承担冻结泛化评价。
         单次实验不按测试指标选择参数或方法，训练成功仍需在「登记实验运行」中显式登记，项目分析也只使用显式选择的已登记模型。
