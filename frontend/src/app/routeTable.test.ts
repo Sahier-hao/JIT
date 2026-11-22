@@ -18,6 +18,7 @@ const CANONICAL: Route[] = [
   { name: 'admin', view: 'evaluation' },
   { name: 'my-training', datasetVersion: 'data-1' },
   { name: 'my-training', experimentId: 'experiment-1' },
+  { name: 'algorithms' },
   { name: 'my-models' },
   { name: 'my-predictions' },
   { name: 'my-predictions', datasetVersion: 'data-1' },
