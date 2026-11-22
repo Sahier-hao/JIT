@@ -16,6 +16,10 @@ export const EXCLUSION_LABELS: Record<string, string> = {
   empty: '空提交', merges: '合并提交', outsideWindow: '时间窗口外', unparsed: '无法解析',
   noAddedLines: '无新增行', tooManyFiles: '文件过多', tooMuchChurn: '改动过大',
   missingRequiredField: '缺少必需字段',
+  duplicate: '重复提交', missing: '缺少字段', 'max-value': '超过数值上限',
+  'min-value': '低于数值下限', 'below-min': '低于区间下界', 'above-max': '超过区间上界',
+  'below-quantile': '低于分位下界', 'above-quantile': '超过分位上界',
+  'before-date': '早于开始日期', 'after-date': '晚于结束日期',
 }
 
 export type DatasetTab = 'mine' | 'shared' | 'builds'

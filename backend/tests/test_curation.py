@@ -70,6 +70,76 @@ def test_invalid_recipe_is_rejected(tmp_path):
     assert error.value.code == 'INPUT_INVALID'
 
 
+def test_v1_recipe_shape_remains_compatible():
+    recipe = {'version': 1, 'rules': [
+        {'id': 'drop-duplicates'},
+        {'id': 'drop-missing', 'fields': ['la']},
+        {'id': 'max-value', 'field': 'nf', 'value': 100},
+    ]}
+    assert curation.normalize(recipe) == recipe
+
+
+def test_v2_preview_records_changes_after_each_step(tmp_path):
+    root = tmp_path / 'datasets'
+    source = tmp_path / 'source.csv'
+    fields = resolve('kamei14-git-v2').in_model_names()
+    records = [{
+        'id': f'{index:040x}',
+        'epoch': 1704067200 + index * 86400,
+        'time': f'2024-01-{index + 1:02d}T00:00:00Z',
+        'label': index % 2,
+        'metrics': {
+            'ns': 1, 'nd': 2, 'nf': 3, 'entropy': 0.5,
+            'la': index + 1, 'ld': 1, 'lt': 100, 'fix': 0,
+            'ndev': 2, 'age': 3, 'nuc': 2, 'exp': 4, 'rexp': 1, 'sexp': 2,
+        },
+    } for index in range(10)]
+    source.write_bytes(collect._csv_bytes(records, fields))
+    registered = datasets.register(
+        source, schema='kamei14-git-v2', dataset='steps', root=root,
+        cohort=collect.cohort('2024-01-01', '2024-01-31'),
+    )
+    recipe = {'version': 2, 'rules': [
+        {'id': 'keep-date', 'start': '2024-01-03', 'end': '2024-01-09'},
+        {'id': 'keep-range', 'field': 'la', 'min': 3, 'max': 7},
+        {'id': 'quantile-range', 'field': 'la', 'lower': 0.1, 'upper': 0.9},
+    ]}
+
+    preview = curation.preview(registered['version'], recipe, root)
+
+    assert [step['index'] for step in preview['steps']] == [1, 2, 3]
+    assert [step['afterStats']['includedRows'] for step in preview['steps']] == [7, 5, 3]
+    assert preview['steps'][0]['afterStats']['excluded'] == {'before-date': 2, 'after-date': 1}
+    assert preview['steps'][1]['afterStats']['excluded'] == {'above-max': 2}
+    assert preview['steps'][2]['afterStats']['excluded'] == {
+        'below-quantile': 1, 'above-quantile': 1,
+    }
+    bounds = preview['steps'][2]['details']['la']
+    assert 3 < bounds['min'] < 4
+    assert 6 < bounds['max'] < 7
+    la_step = next(item for item in preview['steps'][1]['featureComparison'] if item['field'] == 'la')
+    assert la_step['before']['mean'] == 6
+    assert la_step['after']['mean'] == 5
+    assert la_step['before']['records'] == 7
+    assert la_step['after']['records'] == 5
+
+    derived = curation.derive(registered['version'], recipe, root)
+    compared = curation.compare(registered['version'], derived['dataset']['version'], root)
+    assert len(compared['decisions']['steps']) == 3
+    assert compared['decisions']['steps'][2]['afterStats']['includedRows'] == 3
+
+
+def test_v2_rejects_fields_outside_schema():
+    import pytest
+    from jit_baseline.errors import BaselineError
+    with pytest.raises(BaselineError) as error:
+        curation.normalize(
+            {'version': 2, 'rules': [{'id': 'keep-range', 'field': 'missing', 'min': 0}]},
+            'kamei14-git-v2',
+        )
+    assert error.value.code == 'INPUT_INVALID'
+
+
 def test_curation_requires_admin(settings):  # noqa: F811
     app = create_app(**settings)
     with TestClient(app) as client:

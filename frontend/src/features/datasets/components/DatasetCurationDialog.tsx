@@ -1,31 +1,196 @@
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import { Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  ArrowDown, ArrowUp, CalendarDays, Check, ChevronDown, CopyX, LoaderCircle,
+  Plus, Rows3, SlidersHorizontal, Trash2, X,
+} from 'lucide-react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
   deriveCuration, previewCuration,
   type UserCurationPreview, type UserDataset,
 } from '@/features/account/userClient'
+import { CurationPreviewPanel } from '@/features/datasets/components/CurationPreviewPanel'
+import { CURATION_RULE_LABELS, type CurationRule } from '@/features/datasets/curationContract'
+import { numberText } from '@/features/datasets/mydata/format'
 
-const EXCLUSION_LABELS: Record<string, string> = {
-  duplicate: '重复提交',
-  missing: '缺少字段',
-  'max-value': '超过提交规模上限',
+type CurationRuleInput = CurationRule & {
+  id: 'drop-duplicates' | 'drop-missing' | 'keep-range' | 'quantile-range' | 'keep-date'
 }
 
-type CurationRule =
-  | { id: 'drop-duplicates' }
-  | { id: 'drop-missing'; fields: string[] }
-  | { id: 'max-value'; field: string; value: number }
+interface EditorStep {
+  key: string
+  rule: CurationRuleInput
+}
 
-function numberText(value: unknown): string {
-  return typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('zh-CN') : '—'
+type Operation = CurationRuleInput['id']
+
+const OPERATIONS: { id: Operation; label: string; icon: typeof CopyX }[] = [
+  { id: 'quantile-range', label: '保留分位区间', icon: SlidersHorizontal },
+  { id: 'keep-range', label: '保留数值区间', icon: Rows3 },
+  { id: 'keep-date', label: '保留日期范围', icon: CalendarDays },
+  { id: 'drop-missing', label: '删除缺失字段', icon: CopyX },
+  { id: 'drop-duplicates', label: '删除重复提交', icon: CopyX },
+]
+
+function fieldDefault(dataset: UserDataset | null): string {
+  if (!dataset?.featureFields.length) return ''
+  return dataset.featureFields.includes('la') ? 'la' : dataset.featureFields[0]
+}
+
+function initialSteps(dataset: UserDataset | null): EditorStep[] {
+  const field = fieldDefault(dataset)
+  return field ? [{
+    key: `initial-${field}`,
+    rule: { id: 'quantile-range', field, lower: 0.05, upper: 0.95 },
+  }] : []
+}
+
+function nextRule(operation: Operation, dataset: UserDataset | null): CurationRuleInput {
+  const field = fieldDefault(dataset)
+  if (operation === 'drop-duplicates') return { id: operation }
+  if (operation === 'drop-missing') return { id: operation, fields: field ? [field] : [] }
+  if (operation === 'keep-date') {
+    const start = typeof dataset?.timeRange.start === 'string' ? dataset.timeRange.start.slice(0, 10) : undefined
+    const end = typeof dataset?.timeRange.end === 'string' ? dataset.timeRange.end.slice(0, 10) : undefined
+    return { id: operation, start, end }
+  }
+  if (operation === 'quantile-range') return { id: operation, field, lower: 0.05, upper: 0.95 }
+  return { id: operation, field, min: 0, max: 1000 }
+}
+
+function recipeRule(rule: CurationRuleInput): CurationRule {
+  if (rule.id === 'drop-duplicates') return { id: rule.id }
+  if (rule.id === 'drop-missing') return { id: rule.id, fields: rule.fields ?? [] }
+  if (rule.id === 'keep-date') return {
+    id: rule.id,
+    ...(rule.start ? { start: rule.start } : {}),
+    ...(rule.end ? { end: rule.end } : {}),
+  }
+  if (rule.id === 'quantile-range') return {
+    id: rule.id, field: rule.field ?? '', lower: rule.lower ?? 0.05, upper: rule.upper ?? 0.95,
+  }
+  return {
+    id: rule.id, field: rule.field ?? '',
+    ...(rule.min == null ? {} : { min: rule.min }),
+    ...(rule.max == null ? {} : { max: rule.max }),
+  }
+}
+
+function validRule(rule: CurationRuleInput): boolean {
+  if (rule.id === 'drop-duplicates') return true
+  if (rule.id === 'drop-missing') return Boolean(rule.fields?.length)
+  if (rule.id === 'keep-date') return Boolean(rule.start || rule.end)
+  if (!rule.field) return false
+  if (rule.id === 'quantile-range') {
+    return rule.lower != null && rule.upper != null && rule.lower >= 0 && rule.lower < rule.upper && rule.upper <= 1
+  }
+  return rule.min != null || rule.max != null
+}
+
+function IconToolButton({ label, disabled, onClick, children }: {
+  label: string
+  disabled?: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return <Tooltip><TooltipTrigger asChild>
+    <Button type="button" variant="ghost" size="icon-sm" aria-label={label} disabled={disabled} onClick={onClick}>{children}</Button>
+  </TooltipTrigger><TooltipContent>{label}</TooltipContent></Tooltip>
+}
+
+function MissingFieldsEditor({ dataset, fields, onChange }: {
+  dataset: UserDataset
+  fields: string[]
+  onChange: (fields: string[]) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const toggle = (field: string) => onChange(fields.includes(field)
+    ? fields.filter(item => item !== field)
+    : [...fields, field])
+  return <div className="grid gap-2">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" className="h-9 w-full justify-between gap-2 text-sm font-normal" disabled={!dataset.featureFields.length}>
+          <span className={fields.length ? 'text-foreground' : 'text-foreground-3'}>{fields.length ? `已选择 ${fields.length} 个字段` : '选择字段'}</span>
+          <ChevronDown aria-hidden="true" className="text-foreground-4" size={15}/>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-[min(88vw,360px)] p-1.5">
+        <div className="max-h-64 overflow-auto">
+          {dataset.featureFields.map(field => <label key={field} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sunken">
+            <Checkbox checked={fields.includes(field)} onCheckedChange={() => toggle(field)}/>
+            <code className="font-mono text-[11px]">{field}</code>
+          </label>)}
+        </div>
+        <div className="mt-1.5 flex justify-end border-t border-border-soft pt-1.5">
+          <Button size="sm" type="button" onClick={() => setOpen(false)}><Check aria-hidden="true" size={14}/>完成</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+    {fields.length ? <div className="flex flex-wrap gap-1.5">{fields.map(field => <span key={field} className="inline-flex items-center gap-1 rounded-md bg-soft px-2 py-1 font-mono text-[11px] text-foreground-2">
+      {field}
+      <button type="button" className="text-foreground-4 hover:text-rose" aria-label={`移除字段 ${field}`} onClick={() => toggle(field)}><X aria-hidden="true" size={12}/></button>
+    </span>)}</div> : null}
+  </div>
+}
+
+function StepEditor({ step, dataset, onChange }: {
+  step: EditorStep
+  dataset: UserDataset
+  onChange: (rule: CurationRuleInput) => void
+}) {
+  const rule = step.rule
+  if (rule.id === 'drop-duplicates') return <p className="text-xs text-foreground-3">按提交 ID 去重。</p>
+  if (rule.id === 'drop-missing') return <MissingFieldsEditor dataset={dataset} fields={rule.fields ?? []} onChange={fields => onChange({ ...rule, fields })}/>
+  if (rule.id === 'keep-date') return <div className="grid gap-2 sm:grid-cols-2">
+    <label className="grid gap-1 text-[11px] text-foreground-3">开始日期
+      <Input type="date" value={rule.start ?? ''} onChange={event => onChange({ ...rule, start: event.target.value || undefined })}/>
+    </label>
+    <label className="grid gap-1 text-[11px] text-foreground-3">结束日期
+      <Input type="date" value={rule.end ?? ''} onChange={event => onChange({ ...rule, end: event.target.value || undefined })}/>
+    </label>
+  </div>
+  if (rule.id === 'quantile-range') return <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_110px_110px]">
+    <label className="grid gap-1 text-[11px] text-foreground-3">特征
+      <Select value={rule.field ?? ''} onValueChange={field => onChange({ ...rule, field })}>
+        <SelectTrigger aria-label="分位区间特征"><SelectValue/></SelectTrigger>
+        <SelectContent>{dataset.featureFields.map(field => <SelectItem key={field} value={field}>{field}</SelectItem>)}</SelectContent>
+      </Select>
+    </label>
+    <label className="grid gap-1 text-[11px] text-foreground-3">下分位 %
+      <Input aria-label="下分位百分比" type="number" min={0} max={99} step={1}
+        value={rule.lower == null ? '' : rule.lower * 100}
+        onChange={event => onChange({ ...rule, lower: Number(event.target.value) / 100 })}/>
+    </label>
+    <label className="grid gap-1 text-[11px] text-foreground-3">上分位 %
+      <Input aria-label="上分位百分比" type="number" min={1} max={100} step={1}
+        value={rule.upper == null ? '' : rule.upper * 100}
+        onChange={event => onChange({ ...rule, upper: Number(event.target.value) / 100 })}/>
+    </label>
+  </div>
+  return <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_1fr_1fr]">
+    <label className="grid gap-1 text-[11px] text-foreground-3">特征
+      <Select value={rule.field ?? ''} onValueChange={field => onChange({ ...rule, field })}>
+        <SelectTrigger aria-label="数值区间特征"><SelectValue/></SelectTrigger>
+        <SelectContent>{dataset.featureFields.map(field => <SelectItem key={field} value={field}>{field}</SelectItem>)}</SelectContent>
+      </Select>
+    </label>
+    <label className="grid gap-1 text-[11px] text-foreground-3">最小值
+      <Input aria-label="数值区间最小值" type="number" value={rule.min ?? ''}
+        onChange={event => onChange({ ...rule, min: event.target.value === '' ? undefined : Number(event.target.value) })}/>
+    </label>
+    <label className="grid gap-1 text-[11px] text-foreground-3">最大值
+      <Input aria-label="数值区间最大值" type="number" value={rule.max ?? ''}
+        onChange={event => onChange({ ...rule, max: event.target.value === '' ? undefined : Number(event.target.value) })}/>
+    </label>
+  </div>
 }
 
 export function DatasetCurationDialog({ open, onOpenChange, dataset, onDerived, onLoginRequired }: {
@@ -35,64 +200,50 @@ export function DatasetCurationDialog({ open, onOpenChange, dataset, onDerived, 
   onDerived: (version: string) => void
   onLoginRequired: () => void
 }) {
-  const [dedupe, setDedupe] = useState(true)
-  const [dropMissing, setDropMissing] = useState<string[]>([])
-  const [missingOpen, setMissingOpen] = useState(false)
-  const [fileLimitEnabled, setFileLimitEnabled] = useState(false)
-  const [fileLimit, setFileLimit] = useState('100')
-  const [lineLimitEnabled, setLineLimitEnabled] = useState(false)
-  const [lineLimit, setLineLimit] = useState('10000')
+  const [steps, setSteps] = useState<EditorStep[]>(() => initialSteps(dataset))
   const [preview, setPreview] = useState<UserCurationPreview | null>(null)
-  const [selectedFeature, setSelectedFeature] = useState('')
   const [previewRecipe, setPreviewRecipe] = useState('')
   const [busy, setBusy] = useState<'preview' | 'derive' | ''>('')
   const [error, setError] = useState('')
+  const sequence = useRef(0)
 
-  useEffect(() => {
-    if (!open) return
-    setDedupe(true)
-    setDropMissing([])
-    setMissingOpen(false)
-    setFileLimitEnabled(false)
-    setFileLimit('100')
-    setLineLimitEnabled(false)
-    setLineLimit('10000')
-    setPreview(null)
-    setSelectedFeature('')
-    setPreviewRecipe('')
-    setError('')
-  }, [open, dataset?.version])
-
-  const rules: CurationRule[] = []
-  if (dedupe) rules.push({ id: 'drop-duplicates' })
-  if (dropMissing.length) rules.push({ id: 'drop-missing', fields: dropMissing })
-  if (fileLimitEnabled && dataset?.featureFields.includes('nf')) {
-    const value = Number(fileLimit)
-    if (Number.isFinite(value) && value >= 0) rules.push({ id: 'max-value', field: 'nf', value })
-  }
-  if (lineLimitEnabled && dataset?.featureFields.includes('la')) {
-    const value = Number(lineLimit)
-    if (Number.isFinite(value) && value >= 0) rules.push({ id: 'max-value', field: 'la', value })
-  }
-  const recipe = { version: 1, rules }
+  const ready = steps.length > 0 && steps.every(step => validRule(step.rule))
+  const recipe = useMemo(() => ({
+    version: 2,
+    rules: steps.map(step => recipeRule(step.rule)),
+  }), [steps])
   const recipeText = JSON.stringify(recipe)
   const stale = preview !== null && previewRecipe !== recipeText
 
-  function toggleMissing(field: string) {
-    setDropMissing(values => values.includes(field)
-      ? values.filter(item => item !== field)
-      : [...values, field])
+  function addStep(operation: Operation) {
+    sequence.current += 1
+    const key = `${operation}-${sequence.current}`
+    setSteps(items => [...items, { key, rule: nextRule(operation, dataset) }])
+    setError('')
+  }
+
+  function updateStep(key: string, rule: CurationRuleInput) {
+    setSteps(items => items.map(step => step.key === key ? { ...step, rule } : step))
+    setError('')
+  }
+
+  function moveStep(index: number, direction: -1 | 1) {
+    setSteps(items => {
+      const target = index + direction
+      if (target < 0 || target >= items.length) return items
+      const next = [...items]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
   }
 
   async function runPreview() {
-    if (!dataset || !rules.length || busy) return
+    if (!dataset || !ready || busy) return
     setBusy('preview')
     setError('')
     try {
       const result = await previewCuration(dataset.version, recipe)
       setPreview(result)
-      setSelectedFeature(current => result.featureComparison.some(item => item.field === current)
-        ? current : result.featureComparison[0]?.field ?? '')
       setPreviewRecipe(recipeText)
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
@@ -118,122 +269,62 @@ export function DatasetCurationDialog({ open, onOpenChange, dataset, onDerived, 
     }
   }
 
-  const excluded = preview?.stats.excluded ?? {}
-  const excludedItems = Object.entries(excluded).flatMap(([key, value]) => {
-    const count = typeof value === 'number' ? value : null
-    return count && count > 0 ? [{ label: EXCLUSION_LABELS[key] ?? key, count }] : []
-  })
-  const comparison = preview?.featureComparison.find(item => item.field === selectedFeature)
-    ?? preview?.featureComparison[0] ?? null
-  const comparisonMax = comparison
-    ? Math.max(1, ...comparison.before.bucketCounts, ...comparison.after.bucketCounts)
-    : 1
-
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-y-auto" style={{ width: 'min(94vw, 680px)', maxWidth: 'none' }}>
-      <DialogHeader><DialogTitle>清洗数据</DialogTitle></DialogHeader>
+    <DialogContent aria-describedby={undefined} className="max-h-[92dvh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0" style={{ width: 'min(96vw, 920px)', maxWidth: 'none' }}>
+      <DialogHeader className="border-b border-border-soft px-5 py-4 pr-12 sm:px-6"><DialogTitle>清洗与预处理</DialogTitle></DialogHeader>
+      <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6">
       {!dataset ? <p className="py-6 text-center text-xs text-foreground-3">选择一个数据版本后再清洗。</p> : <div className="grid gap-4">
-        <div className="rounded-lg bg-sunken p-3">
-          <strong className="block truncate text-sm text-foreground">{dataset.dataset}</strong>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-foreground-3">
-            <span>{numberText(dataset.quality.includedRows)} 行</span>
-            <span>{numberText(dataset.quality.positiveLabels)} 正例</span>
-            <span className="font-mono text-[11px]">{dataset.version}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-sunken px-3 py-2.5">
+          <div className="min-w-0">
+            <strong className="block truncate text-sm text-foreground">{dataset.dataset}</strong>
+            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-foreground-3">
+              <span>{numberText(dataset.quality.includedRows)} 行</span>
+              <span>{numberText(dataset.quality.positiveLabels)} 正例</span>
+              <span className="font-mono text-[10px]">{dataset.version}</span>
+            </div>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" disabled={Boolean(busy)}><Plus aria-hidden="true"/>添加操作</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {OPERATIONS.map(operation => {
+                const Icon = operation.icon
+                const needsField = operation.id !== 'drop-duplicates' && operation.id !== 'keep-date'
+                return <DropdownMenuItem key={operation.id} disabled={needsField && !dataset.featureFields.length}
+                  onSelect={() => addStep(operation.id)}>
+                  <Icon aria-hidden="true"/>{operation.label}
+                </DropdownMenuItem>
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <section className="grid gap-3 rounded-lg border border-border-soft p-3">
-          <h2 className="text-xs font-medium text-foreground-2">清洗规则</h2>
-          <label className="flex items-start gap-2 text-sm">
-            <Checkbox checked={dedupe} onCheckedChange={value => setDedupe(value === true)}/>
-            <span><span className="block">删除重复提交</span><span className="mt-0.5 block text-xs text-foreground-3">同一提交只保留一次。</span></span>
-          </label>
-          <div className="grid gap-2">
-            <span className="text-sm">删除缺失字段</span>
-            <Popover open={missingOpen} onOpenChange={setMissingOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" className="h-9 w-full justify-between gap-2 text-sm font-normal hover:bg-sunken hover:text-foreground" disabled={!dataset.featureFields.length}>
-                  <span className={dropMissing.length ? 'text-foreground' : 'text-foreground-3'}>{dropMissing.length ? `已选择 ${dropMissing.length} 个字段` : '选择字段'}</span>
-                  <ChevronDown aria-hidden="true" className="text-foreground-4" size={15}/>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(92vw,380px)] p-1.5">
-                <div className="max-h-64 overflow-auto">
-                  {dataset.featureFields.map(field => <label key={field} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sunken">
-                    <Checkbox checked={dropMissing.includes(field)} onCheckedChange={() => toggleMissing(field)}/>
-                    <code className="font-mono text-[11px]">{field}</code>
-                  </label>)}
-                </div>
-                <div className="mt-1.5 flex justify-end border-t border-border-soft pt-1.5">
-                  <Button size="sm" type="button" onClick={() => setMissingOpen(false)}><Check aria-hidden="true" size={14}/>完成</Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-            {dropMissing.length ? <div className="flex flex-wrap gap-1.5">{dropMissing.map(field => <span key={field} className="inline-flex items-center gap-1 rounded-md bg-soft px-2 py-1 font-mono text-[11px] text-foreground-2">
-              {field}
-              <button type="button" className="text-foreground-4 hover:text-rose" aria-label={`移除字段 ${field}`} onClick={() => toggleMissing(field)}><X aria-hidden="true" size={12}/></button>
-            </span>)}</div> : null}
+
+        <section className="grid gap-2" aria-labelledby="curation-operations">
+          <div className="flex items-center justify-between gap-2">
+            <h2 id="curation-operations" className="text-xs font-medium text-foreground-2">操作序列</h2>
+            <span className="text-[11px] text-foreground-4">{steps.length} 步</span>
           </div>
-          <div className="grid gap-2 border-t border-border-soft pt-3">
-            <span className="text-sm">提交规模上限</span>
-            {dataset.featureFields.includes('nf') ? <div className="grid grid-cols-[minmax(0,1fr)_120px] items-center gap-2">
-              <label className="flex items-center gap-2 text-xs text-foreground-2"><Checkbox checked={fileLimitEnabled} onCheckedChange={value => setFileLimitEnabled(value === true)}/>文件数不超过</label>
-              <Input aria-label="文件数上限" type="number" min="0" value={fileLimit} onChange={event => setFileLimit(event.target.value)} disabled={!fileLimitEnabled}/>
-            </div> : null}
-            {dataset.featureFields.includes('la') ? <div className="grid grid-cols-[minmax(0,1fr)_120px] items-center gap-2">
-              <label className="flex items-center gap-2 text-xs text-foreground-2"><Checkbox checked={lineLimitEnabled} onCheckedChange={value => setLineLimitEnabled(value === true)}/>新增行数不超过</label>
-              <Input aria-label="新增行数上限" type="number" min="0" value={lineLimit} onChange={event => setLineLimit(event.target.value)} disabled={!lineLimitEnabled}/>
-            </div> : null}
-            <p className="text-[11px] text-foreground-4">超过上限的提交会被排除，不会修改原始版本。</p>
-          </div>
+          {steps.length ? <div className="grid gap-2">{steps.map((step, index) => <article key={step.key} className="grid gap-3 rounded-lg border border-border-soft p-3">
+            <header className="flex min-w-0 items-center gap-2">
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-soft text-[11px] tabular-nums text-foreground-2">{index + 1}</span>
+              <strong className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{CURATION_RULE_LABELS[step.rule.id] ?? step.rule.id}</strong>
+              <IconToolButton label="上移" disabled={index === 0 || Boolean(busy)} onClick={() => moveStep(index, -1)}><ArrowUp aria-hidden="true"/></IconToolButton>
+              <IconToolButton label="下移" disabled={index === steps.length - 1 || Boolean(busy)} onClick={() => moveStep(index, 1)}><ArrowDown aria-hidden="true"/></IconToolButton>
+              <IconToolButton label="删除操作" disabled={Boolean(busy)} onClick={() => setSteps(items => items.filter(item => item.key !== step.key))}><Trash2 aria-hidden="true"/></IconToolButton>
+            </header>
+            <StepEditor step={step} dataset={dataset} onChange={rule => updateStep(step.key, rule)}/>
+          </article>)}</div> : <p className="border-t border-border-soft py-4 text-xs text-foreground-3">添加至少一个操作后预览。</p>}
         </section>
-        {preview ? <div className={cn('grid gap-3 rounded-lg border p-3', stale ? 'border-amber/30 bg-amber-soft' : 'border-teal/20 bg-teal-soft/50')}>
-          <div className="flex items-center justify-between gap-2"><strong className="text-sm text-foreground">清洗预览</strong>{stale ? <span className="text-[11px] text-amber-deep">规则已变化，请重新预览</span> : <span className="text-[11px] text-teal-deep">可生成新版本</span>}</div>
-          <div className="grid grid-cols-3 gap-2">
-            <div><span className="block text-[11px] text-foreground-4">原始</span><strong className="mt-0.5 block text-sm tabular-nums">{numberText(preview.stats.rawRows)}</strong></div>
-            <div><span className="block text-[11px] text-foreground-4">保留</span><strong className="mt-0.5 block text-sm tabular-nums">{numberText(preview.stats.includedRows)}</strong></div>
-            <div><span className="block text-[11px] text-foreground-4">排除</span><strong className="mt-0.5 block text-sm tabular-nums">{numberText(preview.stats.excludedRows)}</strong></div>
-          </div>
-          <div className="text-xs text-foreground-3">正例 {numberText(preview.beforeStats?.positiveLabels ?? null)} → {numberText(preview.stats.positiveLabels)} 个。</div>
-          {excludedItems.length ? <div className="flex flex-wrap gap-1.5">{excludedItems.map(item => <span key={item.label} className="rounded-md bg-card px-2 py-1 text-[11px] text-foreground-2">{item.label} {numberText(item.count)}</span>)}</div> : null}
-          {comparison ? <div className="grid gap-3 rounded-lg border border-border-soft bg-card p-3" aria-label={`${comparison.field} 清洗前后分布`}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <strong className="block text-xs font-medium text-foreground">指定特征前后变化</strong>
-                <span className="mt-0.5 block text-[11px] text-foreground-4">按清洗前的分位区间对比保留与排除后的记录数</span>
-              </div>
-              <Select value={comparison.field} onValueChange={setSelectedFeature}>
-                <SelectTrigger aria-label="对比特征" className="h-8 w-[150px] font-mono text-[11px]"><SelectValue/></SelectTrigger>
-                <SelectContent>{preview.featureComparison.map(item => <SelectItem key={item.field} value={item.field}>{item.field}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-[11px] text-foreground-3">
-              <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-sm bg-foreground-4"/>清洗前</span>
-              <span className="inline-flex items-center gap-1"><span className="size-2.5 rounded-sm bg-accent"/>清洗后</span>
-            </div>
-            <div className="grid gap-1.5">
-              {comparison.bins.map((bin, index) => <div key={`${bin.start}-${bin.end}`} className="grid grid-cols-[86px_minmax(0,1fr)] items-center gap-2">
-                <span className="truncate font-mono text-[10px] tabular-nums text-foreground-4">
-                  {index === 0 ? '≤ ' : ''}{numberText(bin.end)}
-                </span>
-                <div className="grid gap-0.5">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-sunken"><span className="block h-full rounded-full bg-foreground-4" style={{ width: `${comparison.before.bucketCounts[index] / comparisonMax * 100}%` }}/></div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-sunken"><span className="block h-full rounded-full bg-accent" style={{ width: `${comparison.after.bucketCounts[index] / comparisonMax * 100}%` }}/></div>
-                </div>
-              </div>)}
-            </div>
-            <div className="grid grid-cols-2 gap-2 border-t border-border-soft pt-2 text-[11px] text-foreground-3 sm:grid-cols-4">
-              <span>记录 {numberText(comparison.before.records)} → {numberText(comparison.after.records)}</span>
-              <span>缺失 {numberText(comparison.before.missing)} → {numberText(comparison.after.missing)}</span>
-              <span>均值 {numberText(comparison.before.mean)} → {numberText(comparison.after.mean)}</span>
-              <span>最大 {numberText(comparison.before.max)} → {numberText(comparison.after.max)}</span>
-            </div>
-          </div> : null}
-        </div> : null}
+
+        {preview ? stale ? <div className="border-t border-amber/30 pt-3 text-xs text-amber-deep">操作已变化，请重新预览。</div>
+          : <CurationPreviewPanel key={preview.recipeSha256} preview={preview}/> : null}
         {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
       </div>}
-      <DialogFooter>
+      </div>
+      <DialogFooter className="border-t border-border-soft bg-background px-4 py-3 sm:px-6">
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-        <Button type="button" variant="outline" onClick={() => void runPreview()} disabled={!dataset || !rules.length || Boolean(busy)}>{busy === 'preview' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览结果</Button>
+        <Button type="button" variant="outline" onClick={() => void runPreview()} disabled={!dataset || !ready || Boolean(busy)}>{busy === 'preview' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览结果</Button>
         <Button type="button" onClick={() => void derive()} disabled={!dataset || !preview || stale || Boolean(busy)}>{busy === 'derive' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成新版本</Button>
       </DialogFooter>
     </DialogContent>

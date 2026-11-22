@@ -1,32 +1,23 @@
 import { apiRequest } from '@/lib/apiClient'
 import { record, text } from '@/lib/apiContract'
+import { parseCurationPreview, type CurationPreview } from '@/features/datasets/curationContract'
 
-export interface CurationPreview {
-  sourceVersion: string
-  recipeSha256: string
-  stats: Record<string, unknown>
-}
+export type { CurationPreview } from '@/features/datasets/curationContract'
 
 export interface CurationDerived {
   version: string
   preview: CurationPreview
 }
 
-function preview(raw: unknown): CurationPreview {
-  const value = record(raw)
-  return { sourceVersion: text(value.sourceVersion), recipeSha256: text(value.recipeSha256),
-           stats: record(value.stats) }
-}
-
 export async function previewCuration(datasetVersion: string, recipe: unknown): Promise<CurationPreview> {
-  return preview(await apiRequest({ path: '/api/admin/curation/preview', method: 'POST',
-                                    body: { datasetVersion, recipe } }))
+  return parseCurationPreview(await apiRequest({ path: '/api/admin/curation/preview', method: 'POST',
+                                                  body: { datasetVersion, recipe } }))
 }
 
 export async function deriveCuration(datasetVersion: string, recipe: unknown): Promise<CurationDerived> {
   const value = record(await apiRequest({ path: '/api/admin/curation/derive', method: 'POST',
                                           body: { datasetVersion, recipe } }))
-  return { version: text(record(value.dataset).version), preview: preview(value.preview) }
+  return { version: text(record(value.dataset).version), preview: parseCurationPreview(value.preview) }
 }
 
 export async function compareCuration(source: string, derived: string): Promise<Record<string, unknown>> {

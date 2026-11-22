@@ -3,14 +3,14 @@
  * 页面只负责把数据编译成 option，并补充各自的键盘与下钻行为。
  */
 import { useEffect, useRef, useState } from 'react'
-import { LineChart, PieChart, type LineSeriesOption, type PieSeriesOption } from 'echarts/charts'
+import { BarChart, LineChart, PieChart, type BarSeriesOption, type LineSeriesOption, type PieSeriesOption } from 'echarts/charts'
 import { AxisPointerComponent, GridComponent, MarkAreaComponent, TooltipComponent, type AxisPointerComponentOption, type GridComponentOption, type TooltipComponentOption } from 'echarts/components'
 import { init, use as registerCharts, type ComposeOption, type ECharts } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
 
-registerCharts([LineChart, PieChart, GridComponent, TooltipComponent, AxisPointerComponent, MarkAreaComponent, SVGRenderer])
+registerCharts([BarChart, LineChart, PieChart, GridComponent, TooltipComponent, AxisPointerComponent, MarkAreaComponent, SVGRenderer])
 
-export type ChartOption = ComposeOption<LineSeriesOption | PieSeriesOption | GridComponentOption | TooltipComponentOption | AxisPointerComponentOption>
+export type ChartOption = ComposeOption<BarSeriesOption | LineSeriesOption | PieSeriesOption | GridComponentOption | TooltipComponentOption | AxisPointerComponentOption>
 
 export interface ChartColors {
   series: string

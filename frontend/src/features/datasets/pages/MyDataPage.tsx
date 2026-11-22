@@ -347,7 +347,7 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
       onChooseFile={() => { navigate({ name: 'my-data' }, true); setImportOpen(true) }}
       onViewVersion={openImportedVersion}/> : null}
     {buildDialog}
-    <DatasetCurationDialog open={curationOpen} onOpenChange={setCurationOpen} dataset={current} onDerived={version => {
+    <DatasetCurationDialog key={`${current?.version ?? 'none'}:${curationOpen ? 'open' : 'closed'}`} open={curationOpen} onOpenChange={setCurationOpen} dataset={current} onDerived={version => {
       setPreferred({ version })
       setTab('mine')
       setReload(value => value + 1)
