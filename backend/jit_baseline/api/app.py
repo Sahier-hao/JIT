@@ -286,7 +286,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/pr-snapshots/{snapshot_id}/analyses')
     async def analyze_pull_request(snapshot_id: str, request: Request):
         return await run_in_threadpool(pr_review.analyze, snapshot_id, await read_object(request))
-    from ..repository_explanation import RepositoryExplanationService
+    from ..services.repository_explanation import RepositoryExplanationService
     explanation_service = RepositoryExplanationService(sync_service, catalog)
     from ..analysis_comparison import AnalysisComparisonService
     comparison_service = AnalysisComparisonService(sync_service)
@@ -778,12 +778,22 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         return sync_service.repository_commit(repository_id, commit_id, view_sync_id=viewSyncId)
 
     @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
-    def repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
-        return explanation_service.get(repository_id, commit_id, viewSyncId)
+    def repository_explanation(repository_id: str, commit_id: str, viewSyncId: str,
+                               method: str | None = None):
+        return explanation_service.get(repository_id, commit_id, viewSyncId, method)
 
     @app.post('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
-    def generate_repository_explanation(repository_id: str, commit_id: str, viewSyncId: str):
-        return explanation_service.generate(repository_id, commit_id, viewSyncId)
+    def generate_repository_explanation(repository_id: str, commit_id: str, viewSyncId: str,
+                                        method: str | None = None):
+        return explanation_service.generate(repository_id, commit_id, viewSyncId, method)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanations')
+    def repository_explanations(repository_id: str, commit_id: str, viewSyncId: str):
+        return explanation_service.list_saved(repository_id, commit_id, viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation-methods')
+    def repository_explanation_methods(repository_id: str, commit_id: str, viewSyncId: str):
+        return explanation_service.methods(repository_id, commit_id, viewSyncId)
 
     @app.get('/api/v1/repositories/{repository_id}/comparison')
     def compare_repository_analyses(repository_id: str, baseSyncId: str, targetSyncId: str,

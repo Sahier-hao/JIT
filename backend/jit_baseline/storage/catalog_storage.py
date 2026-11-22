@@ -52,7 +52,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (39, Path(__file__).parent / 'migrations/039_model_release_channel.sql'),
               (40, Path(__file__).parent / 'migrations/040_user_dataset_builds.sql'),
               (41, Path(__file__).parent / 'migrations/041_dataset_sharing.sql'),
-              (42, Path(__file__).parent / 'migrations/042_user_predictions.sql'))
+              (42, Path(__file__).parent / 'migrations/042_user_predictions.sql'),
+              (43, Path(__file__).parent / 'migrations/043_repository_explanation_method.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 

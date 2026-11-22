@@ -1,6 +1,7 @@
 """Public, explicitly generated explanations remain bound to a saved analysis."""
 import json
 import shutil
+import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
@@ -60,11 +61,201 @@ def test_read_does_not_infer_and_explicit_generation_saves_exact_model_explanati
     assert 0 < len(body['explanation']) <= 5
     assert all(item['feature'] in ('ns', 'nd', 'nf', 'ent', 'la', 'ld') for item in body['explanation'])
     assert c['client'].get(c['path'], params=c['params']).json() == body
-    monkeypatch.setattr(c['catalog'], 'load_model', lambda *_: pytest.fail('saved explanation must not infer'))
+    monkeypatch.setattr(c['catalog'], 'load_model', lambda *_: pytest.fail(
+        'saved explanation must not infer',
+    ))
     assert c['client'].post(c['path'], params=c['params']).json() == body
     assert c['client'].get(c['path'], params=c['params']).json() == body
 
 
+# [AI生成]
+def test_method_catalog_and_independent_generation_preserve_each_saved_explanation(context, monkeypatch):
+    c = context
+    root = c['path'].removesuffix('/explanation')
+    methods = c['client'].get(
+        root + '/explanation-methods', params=c['params'],
+    ).json()
+    assert methods['modelAvailable'] is True
+    assert [item['method'] for item in methods['methods']] == [
+        'occlusion-mean-v1',
+        'linear-logodds-v1',
+    ]
+    assert methods['methods'][0]['unit'] == 'probability'
+    assert methods['methods'][1]['unit'] == 'logit'
+    assert methods['methods'][1]['applicableModels'] == ['logistic-regression']
+    assert methods['savedMethods'] == []
+
+    probability = c['client'].post(c['path'], params=c['params']).json()
+    assert probability['explanationUnit'] == 'probability'
+    assert probability['contributionTotal'] is None
+    linear = c['client'].post(
+        c['path'],
+        params={**c['params'], 'method': 'linear-logodds-v1'},
+    ).json()
+    assert linear['explanationStatus'] == 'supported', linear
+    assert linear['explanationMethod'] == 'linear-logodds-v1'
+    assert linear['explanationUnit'] == 'logit'
+    assert isinstance(linear['contributionTotal'], float)
+    assert linear['stability']['status'] in ('stable', 'unstable')
+
+    saved = c['client'].get(root + '/explanations', params=c['params']).json()
+    assert [item['explanationMethod'] for item in saved['explanations']] == [
+        'occlusion-mean-v1',
+        'linear-logodds-v1',
+    ]
+    assert saved['explanations'][0] == probability
+    assert saved['explanations'][1] == linear
+
+    monkeypatch.setattr(c['catalog'], 'load_model', lambda *_: pytest.fail(
+        'saved explanations must not reload the model',
+    ))
+    assert c['client'].post(
+        c['path'],
+        params={**c['params'], 'method': 'linear-logodds-v1'},
+    ).json() == linear
+    assert c['client'].get(
+        c['path'],
+        params={**c['params'], 'method': 'linear-logodds-v1'},
+    ).json() == linear
+
+
+# [AI生成]
+def test_unknown_explanation_method_is_rejected_without_saving_a_substitute(context):
+    c = context
+    response = c['client'].post(
+        c['path'],
+        params={**c['params'], 'method': 'not-a-method'},
+    )
+    assert response.status_code == 422
+    assert response.json()['error']['code'] == 'EXPLANATION_METHOD_UNKNOWN'
+    with c['storage'].connection() as db:
+        assert db.execute('SELECT count(*) FROM repository_explanation').fetchone()[0] == 0
+
+
+# [AI生成]
+def test_storage_failure_does_not_publish_an_explanation_or_change_risk(context, monkeypatch):
+    from jit_baseline.errors import BaselineError
+
+    c = context
+    original = c['storage'].connection
+
+    def fail_write(*, write=False):
+        if write:
+            raise BaselineError('STORAGE_UNAVAILABLE', 'fixture write failure')
+        return original(write=write)
+
+    monkeypatch.setattr(c['storage'], 'connection', fail_write)
+    response = c['client'].post(c['path'], params=c['params'])
+    assert response.status_code == 503
+    assert response.json()['error']['code'] == 'STORAGE_UNAVAILABLE'
+    monkeypatch.setattr(c['storage'], 'connection', original)
+    assert c['service'].sync.commit(c['params']['viewSyncId'], 'a' * 40)['risk'] == c['risk']
+    with c['storage'].connection() as db:
+        assert db.execute('SELECT count(*) FROM repository_explanation').fetchone()[0] == 0
+
+
+# [AI生成]
+def test_method_catalog_excludes_linear_for_a_decision_tree_model(context):
+    from jit_baseline.artifacts import build_run
+    from jit_baseline.config import BACKEND
+
+    c = context
+    tree_root = c['root'] / 'decision-tree'
+    build_run(BACKEND / 'data/openstack', tree_root, algorithm='decision-tree-v1')
+    tree = c['catalog'].register_key('decision-tree')['model']
+    snapshot, _ = c['catalog'].load_model(tree['modelId'])
+    record = c['service'].sync.commit(c['params']['viewSyncId'], 'a' * 40)
+    names = snapshot.schema.in_model_names()
+    features = [
+        record['features']['entropy'] if name == 'ent' else record['features'][name]
+        for name in names
+    ]
+    risk = predict_risks(
+        snapshot.model,
+        [{'features': features}],
+        snapshot.schema,
+    )[0]
+    with c['storage'].connection(write=True) as db:
+        db.execute(
+            'UPDATE repository_sync SET model_id=?,run_id=?',
+            (tree['modelId'], tree['runId']),
+        )
+        db.execute('UPDATE repository_commit SET risk=?', (risk,))
+
+    root = c['path'].removesuffix('/explanation')
+    methods = c['client'].get(
+        root + '/explanation-methods',
+        params=c['params'],
+    ).json()
+    assert [item['method'] for item in methods['methods']] == ['occlusion-mean-v1']
+    response = c['client'].post(
+        c['path'],
+        params={**c['params'], 'method': 'linear-logodds-v1'},
+    )
+    assert response.status_code == 422
+    assert response.json()['error']['code'] == 'EXPLANATION_METHOD_UNSUPPORTED'
+    with c['storage'].connection() as db:
+        assert db.execute('SELECT count(*) FROM repository_explanation').fetchone()[0] == 0
+
+
+# [AI生成]
+def test_migration_043_preserves_legacy_payloads_and_supports_multiple_methods(tmp_path):
+    from jit_baseline.catalog_storage import MIGRATIONS
+
+    database = tmp_path / 'explanation-methods.sqlite3'
+    payloads = [
+        ('legacy-explicit', '{"explanationMethod":"occlusion-mean-v1","value":1}'),
+        ('legacy-default', '{"explanationStatus":"not-supported","value":2}'),
+        ('legacy-linear', '{"explanationMethod":"linear-logodds-v1","value":3}'),
+    ]
+    with sqlite3.connect(database) as db:
+        for number, path in MIGRATIONS:
+            if number <= 42:
+                db.executescript(path.read_text(encoding='utf-8'))
+        db.execute("INSERT INTO schema_migration VALUES (42,'fixture')")
+        db.execute(
+            "INSERT INTO repository_sync(id,repository_url,branch,requested_strategy,status,stage,"
+            "created_at,updated_at) VALUES "
+            "('sync','https://github.com/example/legacy','main','generic-model','completed',"
+            "'completed','fixture','fixture')",
+        )
+        for commit_id, payload in payloads:
+            db.execute(
+                "INSERT INTO repository_commit(sync_id,commit_id,epoch,risk,added_lines,"
+                "deleted_lines,files,features_json,label) VALUES (?,?,?,?,?,?,?,?,?)",
+                ('sync', commit_id, 1, .2, 1, 0, 1, '{}', 0),
+            )
+            db.execute(
+                'INSERT INTO repository_explanation VALUES (?,?,?)',
+                ('sync', commit_id, payload),
+            )
+
+    storage = CatalogStorage(database)
+    storage.initialize()
+    storage.initialize()
+    with storage.connection() as db:
+        rows = db.execute(
+            'SELECT commit_id,method,payload_json FROM repository_explanation ORDER BY commit_id',
+        ).fetchall()
+        assert [tuple(row) for row in rows] == [
+            ('legacy-default', 'occlusion-mean-v1', payloads[1][1]),
+            ('legacy-explicit', 'occlusion-mean-v1', payloads[0][1]),
+            ('legacy-linear', 'linear-logodds-v1', payloads[2][1]),
+        ]
+        assert db.execute('PRAGMA foreign_key_check').fetchall() == []
+    with storage.connection(write=True) as db:
+        db.execute(
+            'INSERT INTO repository_explanation VALUES (?,?,?,?)',
+            ('sync', 'legacy-explicit', 'linear-logodds-v1', '{"second":true}'),
+        )
+    with storage.connection() as db:
+        assert db.execute(
+            "SELECT count(*) FROM repository_explanation "
+            "WHERE sync_id='sync' AND commit_id='legacy-explicit'",
+        ).fetchone()[0] == 2
+
+
+# [AI生成-人工修改]
 def test_repository_explanation_matches_published_contract(context):
     from pathlib import Path
     yaml = pytest.importorskip('yaml')
@@ -72,13 +263,32 @@ def test_repository_explanation_matches_published_contract(context):
     document = yaml.safe_load((Path(__file__).resolve().parents[2] / 'docs/api/openapi.yaml').read_text(encoding='utf-8'))
     endpoint = document['paths']['/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation']
     assert any(p['name'] == 'viewSyncId' and p['required'] for p in endpoint['parameters'])
+    assert any(p['name'] == 'method' and p['required'] is False for p in endpoint['parameters'])
     assert endpoint['get']['security'] == endpoint['post']['security'] == []
     validator = jsonschema.Draft202012Validator({'$ref': '#/components/schemas/RepositoryExplanation', 'components': document['components']})
     c = context
     validator.validate(c['client'].get(c['path'], params=c['params']).json())
     validator.validate(c['client'].post(c['path'], params=c['params']).json())
+    linear = c['client'].post(
+        c['path'],
+        params={**c['params'], 'method': 'linear-logodds-v1'},
+    ).json()
+    validator.validate(linear)
+    assert linear['explanationUnit'] == 'logit'
+    root = c['path'].removesuffix('/explanation')
+    methods_validator = jsonschema.Draft202012Validator({
+        '$ref': '#/components/schemas/RepositoryExplanationMethods',
+        'components': document['components'],
+    })
+    methods_validator.validate(c['client'].get(root + '/explanation-methods', params=c['params']).json())
+    listing_validator = jsonschema.Draft202012Validator({
+        '$ref': '#/components/schemas/RepositoryExplanationList',
+        'components': document['components'],
+    })
+    listing_validator.validate(c['client'].get(root + '/explanations', params=c['params']).json())
 
 
+# [AI生成-人工修改]
 def test_explanation_requires_pinned_analysis_and_rejects_cross_project_context(context):
     c = context
     assert c['client'].post(c['path']).status_code == 422
@@ -86,6 +296,9 @@ def test_explanation_requires_pinned_analysis_and_rejects_cross_project_context(
     other, _ = c['service'].create_repository({'repositoryUrl': 'https://github.com/example/other'})
     foreign = c['path'].replace(c['service'].get(c['params']['viewSyncId'])['repositoryId'], other['repositoryId'])
     assert c['client'].post(foreign, params=c['params']).status_code == 404
+    root = foreign.removesuffix('/explanation')
+    assert c['client'].get(root + '/explanations', params=c['params']).status_code == 404
+    assert c['client'].get(root + '/explanation-methods', params=c['params']).status_code == 404
 
 
 def test_mismatched_saved_score_is_not_explained_with_a_new_prediction(context):

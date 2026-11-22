@@ -1,0 +1,74 @@
+{
+  "status": "completed",
+  "reviewer": "徐卓航",
+  "reviewedAt": "2026-11-22",
+  "method": "项目负责人先行逐项确认；Codex 再按业务结果作独立二次技术复核",
+  "decisions": [
+    {
+      "test": "test_explanation_catalog_returns_only_methods_supported_by_the_fitted_model",
+      "function": "explanations.applicable_methods",
+      "verdict": "reviewed",
+      "comment": "确认逻辑回归、决策树和语义 schema 三个分支均按真实适用条件断言。"
+    },
+    {
+      "test": "test_linear_logodds_uses_fitted_preprocessing_and_exactly_matches_logit_difference",
+      "function": "explanations.linear_logodds",
+      "verdict": "reviewed",
+      "comment": "确认使用实际 Pipeline 预处理，并以决策函数差核对全部贡献。"
+    },
+    {
+      "test": "test_linear_logodds_is_rejected_for_a_compatible_schema_with_the_wrong_estimator",
+      "function": "explanations.require_applicable",
+      "verdict": "reviewed",
+      "comment": "确认非逻辑回归即使 schema 兼容也会返回明确不兼容错误。"
+    },
+    {
+      "test": "test_method_catalog_and_independent_generation_preserve_each_saved_explanation",
+      "function": "RepositoryExplanationService.generate",
+      "verdict": "reviewed",
+      "comment": "确认两种单位独立保存、旧结果不变，重复请求不再加载模型。"
+    },
+    {
+      "test": "test_unknown_explanation_method_is_rejected_without_saving_a_substitute",
+      "function": "RepositoryExplanationService.generate.unknown",
+      "verdict": "reviewed",
+      "comment": "确认未知方法返回专用 422 错误且不保存替代解释。"
+    },
+    {
+      "test": "test_storage_failure_does_not_publish_an_explanation_or_change_risk",
+      "function": "RepositoryExplanationService.generate.storage-failure",
+      "verdict": "reviewed",
+      "comment": "确认写入失败返回 503，原风险和解释记录均未被改写。"
+    },
+    {
+      "test": "test_method_catalog_excludes_linear_for_a_decision_tree_model",
+      "function": "RepositoryExplanationService.methods",
+      "verdict": "reviewed",
+      "comment": "确认使用真实决策树产物验证目录过滤和不兼容请求拒绝。"
+    },
+    {
+      "test": "test_migration_043_preserves_legacy_payloads_and_supports_multiple_methods",
+      "function": "migration.043_repository_explanation_method",
+      "verdict": "reviewed",
+      "comment": "确认旧 payload 不变、默认方法回填、幂等初始化和多方法共存在位。"
+    },
+    {
+      "test": "test_repository_explanation_matches_published_contract",
+      "function": "test_repository_explanation_matches_published_contract",
+      "verdict": "reviewed",
+      "comment": "确认遮挡、线性、方法目录和已保存列表均通过严格 OpenAPI schema。"
+    },
+    {
+      "test": "test_explanation_requires_pinned_analysis_and_rejects_cross_project_context",
+      "function": "test_explanation_requires_pinned_analysis_and_rejects_cross_project_context",
+      "verdict": "reviewed",
+      "comment": "确认单数解释、已保存列表和方法目录都拒绝跨项目上下文。"
+    },
+    {
+      "test": "test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default",
+      "function": "test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default",
+      "verdict": "reviewed",
+      "comment": "确认测试先还原真实 v7 结构再重放迁移，清理表不会掩盖数据保留断言。"
+    }
+  ]
+}
