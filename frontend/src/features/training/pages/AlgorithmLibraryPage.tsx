@@ -72,8 +72,8 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
 
   if (methods === null && !error) return <LoadingNotice label="正在读取算法库"/>
 
-  return <section className="grid gap-5">
-    <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-4">
+  return <section className="flex min-h-0 flex-col gap-5 lg:h-[calc(100dvh-8.25rem)] lg:overflow-hidden">
+    <header className="flex shrink-0 flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-4">
       <div>
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-foreground">
           <BookOpenText aria-hidden="true" size={22}/>算法库
@@ -86,7 +86,7 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
       </div>
     </header>
 
-    {error ? <div className="flex flex-wrap items-center gap-2 border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep">
+    {error ? <div className="flex shrink-0 flex-wrap items-center gap-2 border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep">
       <p role="alert">{error}</p>
       <Button type="button" size="sm" variant="outline" onClick={() => {
         setMethods(null)
@@ -95,7 +95,7 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
       }}><RefreshCw aria-hidden="true"/>重试</Button>
     </div> : null}
 
-    <div className="grid min-w-0 gap-4 lg:h-[calc(100dvh-13rem)] lg:grid-cols-[300px_minmax(0,1fr)] lg:items-stretch xl:grid-cols-[330px_minmax(0,1fr)]">
+    <div className="grid min-w-0 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-stretch xl:grid-cols-[330px_minmax(0,1fr)]">
       <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-border-soft bg-card lg:h-full">
         <div className="border-b border-border-soft p-3">
           <ToggleGroup type="single" value={category} aria-label="算法分类"
@@ -112,7 +112,7 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
         </div>
       </aside>
 
-      {selectedMethod ? <article className="grid min-w-0 content-start gap-4 rounded-lg border border-border-soft bg-card p-4 sm:p-5 lg:h-full lg:overflow-y-auto">
+      {selectedMethod ? <article className="grid min-w-0 content-start gap-4 rounded-lg border border-border-soft bg-card p-4 sm:p-5 lg:h-full lg:overflow-y-auto lg:overscroll-contain">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[10px] font-medium uppercase tracking-[.12em] text-foreground-4">{CATEGORY_LABELS[selectedMethod.category] ?? selectedMethod.category}</span>
