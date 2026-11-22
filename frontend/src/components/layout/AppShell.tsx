@@ -1,4 +1,4 @@
-import { type LucideIcon, ClipboardCheck, Folder, List, TrendingUp, SlidersHorizontal, Gauge } from 'lucide-react'
+import { type LucideIcon, BookOpenText, ClipboardCheck, Folder, List, TrendingUp, SlidersHorizontal, Gauge } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BrandLogo } from '@/components/shared/BrandLogo'
 import type { ReactNode } from 'react'
@@ -22,6 +22,7 @@ const NAV: { label: string; items: { label: string; icon: LucideIcon; route: Rou
   { label: '数据与模型', items: [
     { label: '我的数据', icon: List, route: { name: 'my-data' } },
     { label: '我的训练', icon: TrendingUp, route: { name: 'my-training' } },
+    { label: '算法库', icon: BookOpenText, route: { name: 'algorithms' } },
     { label: '我的模型', icon: SlidersHorizontal, route: { name: 'my-models' } },
     { label: '模型试算', icon: Gauge, route: { name: 'my-predictions' } },
   ] },
@@ -31,7 +32,7 @@ export function AppShell({ route, navigate, repositories, session, onSession, ch
   const activeJobs = useActiveUserJobs(session?.username ?? null)
   const label = route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查'
     : route.name === 'my-data' ? '我的数据' : route.name === 'my-training' ? '我的训练'
-    : route.name === 'my-models' ? '我的模型' : route.name === 'profile' ? '个人中心' : route.name === 'pr-work' ? 'PR 审查'
+    : route.name === 'algorithms' ? '算法库' : route.name === 'my-models' ? '我的模型' : route.name === 'profile' ? '个人中心' : route.name === 'pr-work' ? 'PR 审查'
     : route.name === 'my-predictions' ? '模型试算'
     : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细'
     : route.name === 'comparison' ? '分析对比' : '项目'

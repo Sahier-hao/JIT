@@ -17,6 +17,12 @@ export interface MethodGuide {
   strengths: string[]
   tradeoffs: string[]
   whenToUse: string
+  visual: {
+    kind: string
+    input: string
+    output: string
+    stages: string[]
+  } | null
 }
 export interface MethodChoice {
   method: string
@@ -28,6 +34,8 @@ export interface MethodChoice {
   reason: string | null
   requires: string[]
   detail: string
+  preprocess: string[]
+  explanation: { method: string; reason: string | null } | null
   guide: MethodGuide
   params: MethodParam[]
 }
@@ -42,13 +50,29 @@ export async function trainingMethods(schema?: string, signal?: AbortSignal): Pr
       reason: raw.reason == null ? null : text(raw.reason),
       requires: Array.isArray(raw.requires) ? raw.requires.map(item => text(item)) : [],
       detail: raw.detail == null ? '' : text(raw.detail),
+      preprocess: Array.isArray(raw.preprocess) ? raw.preprocess.map(item => text(item)) : [],
+      explanation: (() => {
+        if (raw.explanation == null) return null
+        const explanation = record(raw.explanation)
+        return {
+          method: explanation.method == null ? '' : text(explanation.method),
+          reason: explanation.reason == null ? null : text(explanation.reason),
+        }
+      })(),
       guide: (() => {
         const guide = raw.guide == null ? {} : record(raw.guide)
+        const visual = guide.visual == null ? null : record(guide.visual)
         return {
           summary: guide.summary == null ? '' : text(guide.summary),
           strengths: Array.isArray(guide.strengths) ? guide.strengths.map(item => text(item)) : [],
           tradeoffs: Array.isArray(guide.tradeoffs) ? guide.tradeoffs.map(item => text(item)) : [],
           whenToUse: guide.whenToUse == null ? '' : text(guide.whenToUse),
+          visual: visual ? {
+            kind: visual.kind == null ? 'unknown' : text(visual.kind),
+            input: visual.input == null ? '' : text(visual.input),
+            output: visual.output == null ? '' : text(visual.output),
+            stages: Array.isArray(visual.stages) ? visual.stages.map(item => text(item)) : [],
+          } : null,
         }
       })(),
       params: Array.isArray(raw.params) ? recordList(raw.params).map(param => ({

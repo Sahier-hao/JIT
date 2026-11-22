@@ -30,6 +30,7 @@ const FixedPRSnapshot = lazy(() => import('@/features/reviews/pages/PullRequestJ
 const ProjectEvents = lazy(() => import('@/features/projects/components/ProjectActivity').then(module => ({ default: module.ProjectEvents })))
 const MyDataPage = lazy(() => import('@/features/datasets/pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
 const MyTrainingPage = lazy(() => import('@/features/training/pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
+const AlgorithmLibraryPage = lazy(() => import('@/features/training/pages/AlgorithmLibraryPage').then(module => ({ default: module.AlgorithmLibraryPage })))
 const MyModelsPage = lazy(() => import('@/features/models/pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
 const MyPredictionsPage = lazy(() => import('@/features/predictions/pages/MyPredictionsPage').then(module => ({ default: module.MyPredictionsPage })))
 const LandingPage = lazy(() => import('@/features/account/pages/LandingPage').then(module => ({ default: module.LandingPage })))
@@ -86,6 +87,7 @@ function Workspace() {
     initialTab={route.view === 'builds' ? 'builds' : undefined} initialTaskId={route.view !== 'imports' ? route.taskId : undefined}
     importHistory={route.view === 'imports'} importTaskId={route.view === 'imports' ? route.taskId : undefined} buildProjectId={route.buildProjectId}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={`${route.experimentId ?? 'list'}:${route.datasetVersion ?? ''}`} experimentId={route.experimentId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'algorithms') content = <AlgorithmLibraryPage onLoginRequired={requestLogin}/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-predictions') content = <MyPredictionsPage key={`${route.batchId ?? 'new'}:${route.datasetVersion ?? ''}`} batchId={route.batchId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'profile') content = <ProjectsPage navigate={navigate}/>

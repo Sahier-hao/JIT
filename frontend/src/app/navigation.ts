@@ -8,6 +8,7 @@ export type Route =
   | { name: 'my-reviews' }
   | { name: 'my-data'; view?: 'builds' | 'imports'; taskId?: string; buildProjectId?: string }
   | { name: 'my-training'; experimentId?: string; datasetVersion?: string }
+  | { name: 'algorithms' }
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
   | { name: 'profile' }
@@ -75,6 +76,7 @@ export function parseHash(hash: string): Route {
     }
     if (path === '/my-training') return { name: 'my-training', ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}) }
     if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
+    if (path === '/algorithms') return { name: 'algorithms' }
     if (path === '/my-models') return { name: 'my-models' }
     if (path === '/my-predictions') return {
       name: 'my-predictions',
@@ -153,6 +155,7 @@ export function hashFor(route: Route): string {
       if (route.experimentId) return `#/my-training/${encodeURIComponent(route.experimentId)}`
       return route.datasetVersion ? `#/my-training?datasetVersion=${encodeURIComponent(route.datasetVersion)}` : '#/my-training'
     }
+    case 'algorithms': return '#/algorithms'
     case 'my-models': return '#/my-models'
     case 'my-predictions': {
       if (route.batchId) return `#/my-predictions/${encodeURIComponent(route.batchId)}`
