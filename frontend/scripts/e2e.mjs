@@ -15,6 +15,7 @@ const suites = {
   'current-schema': { JIT_E2E_CURRENT_SCHEMA_MODE: '1' },
   'bundled-models': { JIT_E2E_BUNDLED_MODEL_MODE: '1' },
   'multi-method': { JIT_FRONTEND_PORT: '18821', JIT_SERVICE_PORT: '18820' },
+  'multi-method-explanations': { JIT_FRONTEND_PORT: '18823', JIT_SERVICE_PORT: '18822' },
 }
 
 const name = process.argv[2]

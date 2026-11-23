@@ -20,6 +20,7 @@ const dedicatedSpecs = [
   '**/current-schema-release.spec.ts',
   '**/bundled-model-bootstrap.spec.ts',
   '**/admin-multi-method-experiment.spec.ts',
+  '**/explanation-methods.spec.ts',
   '**/project-workspace.spec.ts',
   '**/admin-experiments.spec.ts',
   '**/pr-account-continuation.spec.ts',
@@ -48,6 +49,7 @@ export default defineConfig({
     { name: 'current-schema', testMatch: 'current-schema-release.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
     { name: 'bundled-models', testMatch: 'bundled-model-bootstrap.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
     { name: 'multi-method', testMatch: 'admin-multi-method-experiment.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
+    { name: 'multi-method-explanations', testMatch: 'explanation-methods.spec.ts', use: { viewport: { width: 1440, height: 900 } } },
   ],
   webServer: [
     // 用反斜杠的相对命令（cwd 为 ../backend），避免 Windows cmd 把正斜杠路径当成无法识别的命令。

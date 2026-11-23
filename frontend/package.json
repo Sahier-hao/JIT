@@ -22,6 +22,7 @@
     "test:e2e:current-schema": "node scripts/e2e.mjs current-schema",
     "test:e2e:bundled-models": "node scripts/e2e.mjs bundled-models",
     "test:e2e:multi-method": "node scripts/e2e.mjs multi-method",
+    "test:e2e:explanations": "node scripts/e2e.mjs multi-method-explanations",
     "test:e2e:acceptance": "node scripts/e2e.mjs acceptance"
   },
   "dependencies": {
