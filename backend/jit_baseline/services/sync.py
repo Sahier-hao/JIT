@@ -314,6 +314,23 @@ class SyncStorage:
                 raise ValueError('未知作业字段')
             assignments = ','.join(f'{name}=?' for name in fields)
             db.execute(f'UPDATE repository_sync SET {assignments} WHERE id=?', (*fields.values(), sync_id))
+            if status == 'failed':
+                self._write_analysis_event(
+                    db, row, 'analysis-failed', '分析失败', message, fields.get('model_id', row['model_id']),
+                    now, {'errorCode': code})
+
+    @staticmethod
+    def _write_analysis_event(db, source, kind, title, message, model_id, now, payload=None):
+        if source['source_kind'] == 'pr' or not source['repository_id']:
+            return
+        sync_id = source['id']
+        key = f'{kind}:{sync_id}'
+        db.execute(
+            'INSERT INTO project_event (id,repository_id,kind,dedupe_key,sync_id,model_id,'
+            'title,message,payload_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,?) '
+            'ON CONFLICT(dedupe_key) DO NOTHING',
+            (str(uuid.uuid5(uuid.NAMESPACE_URL, key)), source['repository_id'], kind, key,
+             sync_id, model_id, title, message, json.dumps(payload or {}, ensure_ascii=False), now))
 
     def advance(self, sync_id, stage):
         with self.storage.connection(write=True) as db:
@@ -396,6 +413,9 @@ class SyncStorage:
                            "medium_count=?,low_count=?,unknown_count=?,distribution_rule=?,updated_at=? WHERE id=?",
                            (sync_id, head_commit, len(rows), counts['high'], counts['medium'], counts['low'],
                             counts['unknown'], DISTRIBUTION_RULE, now, repository_id))
+            self._write_analysis_event(
+                db, source, 'analysis-completed', '分析完成',
+                f'{source["branch"]} · {len(rows)} 个提交已评分', model_id, now)
 
     def commits(self, sync_id, limit=100, offset=0, *, search=None, start=None, end=None,
                 sort="risk"):
@@ -870,11 +890,9 @@ class SyncService:
                         if datetime.now(timezone.utc) >= datetime.fromisoformat(item['deadlineAt']):
                             process.close()
                             self.sync.finish(sync_id, 'failed', 'SYNC_TIMEOUT', '分析超过执行时限，已停止；请稍后重试')
-                            self._event(sync_id, 'analysis-failed', '分析失败', '分析超过执行时限，已停止', payload={'errorCode': 'SYNC_TIMEOUT'})
                             return
                         if process.poll() is not None:
                             self.sync.finish(sync_id, 'failed', 'SYNC_WORKER_EXITED', '分析进程意外退出，请重新分析')
-                            self._event(sync_id, 'analysis-failed', '分析失败', '分析进程意外退出，请重新分析', payload={'errorCode': 'SYNC_WORKER_EXITED'})
                             return
                         self._closing.wait(.1)
                 finally:
@@ -1248,21 +1266,6 @@ class SyncService:
                 "low": dist["low"], "unknown": dist["unknown"],
                 "distributionRule": repo["distributionRule"] or DISTRIBUTION_RULE}
 
-    def _event(self, sync_id, kind, title, message, *, model_id=None, payload=None):
-        """分支分析的终态写一条站内提醒；PR 分析由 PR 跟踪写自己的提醒。"""
-        item = self.sync.get(sync_id)
-        if item is None or item.get('sourceKind') == 'pr' or not item.get('repositoryId'):
-            return
-        expected = {'analysis-completed': 'completed', 'analysis-failed': 'failed'}.get(kind)
-        if expected and item.get('status') != expected:
-            return
-        key = f'{kind}:{sync_id}'
-        with self.sync.storage.connection(write=True) as db:
-            db.execute('INSERT OR IGNORE INTO project_event VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-                       (str(uuid.uuid5(uuid.NAMESPACE_URL, key)), item['repositoryId'], kind, key, None, None,
-                        sync_id, model_id or item.get('modelId'), title, message,
-                        json.dumps(payload or {}, ensure_ascii=False), utc_now()))
-
     def _step(self, sync_id, stage, started):
         if time.monotonic() - started > self.timeout:
             raise BaselineError("SYNC_TIMEOUT",
@@ -1495,8 +1498,6 @@ class SyncService:
                 analysis_branch=collected['collection']['repository'].get('resolvedBranch'),
                 dataset_version=version, run_id=run_id, model_id=model_id,
                 feature_schema_version=schema.name, split_policy_json=split_policy_json)
-            self._event(sync_id, 'analysis-completed', '分析完成',
-                        f'{item["branch"]} · {len(records)} 个提交已评分', model_id=model_id)
         except BaselineError as exc:
             degrade = (decision or {}).get("degradeReason")
             if exc.code in ("MODEL_NOT_READY", "DEFAULT_MODEL_REQUIRED"):
@@ -1504,10 +1505,7 @@ class SyncService:
             self.sync.finish(sync_id, 'cancelled' if exc.code == 'SYNC_CANCELLED' else 'failed', exc.code, str(exc),
                              **(_degrade_fields(degrade) if degrade else {}),
                              **({"dataset_version": version} if version else {}))
-            if exc.code != 'SYNC_CANCELLED':
-                self._event(sync_id, 'analysis-failed', '分析失败', str(exc), payload={'errorCode': exc.code})
         except Exception:
             logger.exception("仓库同步出现未预期错误：sync=%s", sync_id)
             self.sync.finish(sync_id, 'failed', 'INTERNAL_ERROR',
                              '同步过程中出现未预期错误，请重试；如果反复失败请联系维护者')
-            self._event(sync_id, 'analysis-failed', '分析失败', '同步过程中出现未预期错误，请重试', payload={'errorCode': 'INTERNAL_ERROR'})

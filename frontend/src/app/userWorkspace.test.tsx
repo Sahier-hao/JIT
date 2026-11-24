@@ -59,6 +59,19 @@ it('shows data details and sends training to the training workspace', async () =
   expect(navigate).toHaveBeenCalledWith({ name: 'my-training', datasetVersion: DATASET.version })
 })
 
+it('opens the data version linked by a training record, including shared data', async () => {
+  const shared = { ...DATASET, dataset: 'shared data', version: 'shared-version', mine: false, shared: true }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = String(input)
+    if (url.includes('/api/v1/user/datasets?scope=')) return Response.json({ datasets: [DATASET, shared] })
+    if (url.includes('/split-preview')) return Response.json(SPLIT)
+    return Response.json({ tasks: [] })
+  })
+  render(<MyDataPage initialDatasetVersion={shared.version} navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  expect(await screen.findByRole('heading', { name: 'shared data' })).toBeVisible()
+  expect(screen.queryByRole('heading', { name: 'demo' })).not.toBeInTheDocument()
+})
+
 it('shows recent repository builds and their retry actions', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const value = String(input)

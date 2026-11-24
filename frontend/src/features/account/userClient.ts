@@ -208,9 +208,9 @@ export async function createUserExperiment(options: {
   methods: { method: string; params?: Row }[]
   splitPreset?: string
   metricSet?: string
-}): Promise<TrainingExperiment> {
+}, signal?: AbortSignal): Promise<TrainingExperiment> {
   return trainingExperiment(await apiRequest({
-    path: '/api/v1/user/training-experiments', method: 'POST',
+    path: '/api/v1/user/training-experiments', method: 'POST', signal, timeoutMs: 45_000,
     body: { datasetVersion: options.datasetVersion, methods: options.methods,
       splitPreset: options.splitPreset ?? 'temporal-70-15-15', metricSet: options.metricSet ?? 'metric-set-v2' },
   }))

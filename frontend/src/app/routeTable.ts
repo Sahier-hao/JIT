@@ -21,7 +21,8 @@ function myDataRoute(query: URLSearchParams): Route {
   const view = requested === 'builds' || requested === 'imports' ? requested : undefined
   const taskId = text(query.get('taskId'))
   const buildProjectId = text(query.get('buildProjectId'))
-  return { name: 'my-data', ...(view ? { view } : {}), ...(taskId ? { taskId } : {}), ...(buildProjectId ? { buildProjectId } : {}) }
+  const datasetVersion = text(query.get('datasetVersion'))
+  return { name: 'my-data', ...(view ? { view } : {}), ...(taskId ? { taskId } : {}), ...(buildProjectId ? { buildProjectId } : {}), ...(datasetVersion ? { datasetVersion } : {}) }
 }
 
 function prWorkRoute(params: Params, query: URLSearchParams): Route {
@@ -86,9 +87,13 @@ export const ROUTES: RouteObject[] = [
   { path: '/my-data', handle: build((_params, query) => myDataRoute(query)) },
   { path: '/my-training', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))
-    return { name: 'my-training', ...(datasetVersion ? { datasetVersion } : {}) }
+    const historyDatasetVersion = text(query.get('historyDatasetVersion'))
+    return { name: 'my-training', ...(datasetVersion ? { datasetVersion } : {}), ...(historyDatasetVersion ? { historyDatasetVersion } : {}) }
   }) },
-  { path: '/my-training/:experimentId', handle: build(params => ({ name: 'my-training', experimentId: params.experimentId })) },
+  { path: '/my-training/:experimentId', handle: build((params, query) => {
+    const historyDatasetVersion = text(query.get('historyDatasetVersion'))
+    return { name: 'my-training', experimentId: params.experimentId, ...(historyDatasetVersion ? { historyDatasetVersion } : {}) }
+  }) },
   { path: '/algorithms', handle: build(() => ({ name: 'algorithms' })) },
   { path: '/my-models', handle: build(() => ({ name: 'my-models' })) },
   { path: '/my-predictions', handle: build((_params, query) => {

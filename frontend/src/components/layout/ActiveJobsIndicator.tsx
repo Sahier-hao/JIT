@@ -12,10 +12,12 @@ export interface ActiveJob {
   label: string
   detail: string
   progress?: number | null
+  statusLabel?: string
   route: Route
 }
 
 function kindLabel(job: ActiveJob) {
+  if (job.statusLabel) return job.statusLabel
   return job.kind === 'import' ? '导入中' : job.kind === 'collection' ? '采集中' : '训练中'
 }
 
@@ -46,7 +48,8 @@ export function ActiveJobsIndicator({ jobs, navigate }: {
     >
       {job.kind === 'import' ? <JobIcon kind={job.kind}/> : <LoaderCircle aria-hidden="true" className="animate-spin text-accent" size={14}/>}
       <span className="hidden sm:inline">{kindLabel(job)}</span>
-      {job.kind === 'import' ? <Progress inline value={job.progress} className="inline-block h-1 w-8 sm:w-12" aria-label="数据集导入进度"/>
+      {job.kind === 'import' || job.progress != null ? <Progress inline value={job.progress} className="inline-block h-1 w-8 sm:w-12"
+        aria-label={job.kind === 'import' ? '数据集导入进度' : '训练轮次进度'}/>
         : <span className="size-1.5 rounded-full bg-accent sm:hidden" aria-hidden="true"/>}
     </Button>
   }
@@ -67,7 +70,8 @@ export function ActiveJobsIndicator({ jobs, navigate }: {
         <span className="grid min-w-0 flex-1 gap-0.5">
           <span className="truncate text-sm text-foreground">{job.label}</span>
           <span className="truncate text-[11px] text-foreground-3">{job.detail}</span>
-          {job.kind === 'import' ? <Progress inline value={job.progress} className="mt-1 h-1" aria-label="数据集导入进度"/> : null}
+          {job.kind === 'import' || job.progress != null ? <Progress inline value={job.progress} className="mt-1 h-1"
+            aria-label={job.kind === 'import' ? '数据集导入进度' : '训练轮次进度'}/> : null}
         </span>
       </DropdownMenuItem>)}
     </DropdownMenuContent>

@@ -6,8 +6,8 @@ export type Route =
   | { name: 'landing' }
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
-  | { name: 'my-data'; view?: 'builds' | 'imports'; taskId?: string; buildProjectId?: string }
-  | { name: 'my-training'; experimentId?: string; datasetVersion?: string }
+  | { name: 'my-data'; view?: 'builds' | 'imports'; datasetVersion?: string; taskId?: string; buildProjectId?: string }
+  | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string }
   | { name: 'algorithms' }
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
@@ -73,9 +73,17 @@ export function parseHash(hash: string): Route {
       ...(params.get('view') === 'imports' ? { view: 'imports' as const } : {}),
       ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
       ...(params.get('buildProjectId') ? { buildProjectId: params.get('buildProjectId')! } : {}),
+      ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion')! } : {}),
     }
-    if (path === '/my-training') return { name: 'my-training', ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}) }
-    if (parts[0] === 'my-training' && parts.length === 2) return { name: 'my-training', experimentId: parts[1] }
+    if (path === '/my-training') return {
+      name: 'my-training',
+      ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion')! } : {}),
+      ...(params.get('historyDatasetVersion') ? { historyDatasetVersion: params.get('historyDatasetVersion')! } : {}),
+    }
+    if (parts[0] === 'my-training' && parts.length === 2) {
+      const historyDatasetVersion = params.get('historyDatasetVersion')
+      return { name: 'my-training', experimentId: parts[1], ...(historyDatasetVersion ? { historyDatasetVersion } : {}) }
+    }
     if (path === '/algorithms') return { name: 'algorithms' }
     if (path === '/my-models') return { name: 'my-models' }
     if (path === '/my-predictions') return {
@@ -149,11 +157,15 @@ export function hashFor(route: Route): string {
       if (route.view) params.set('view', route.view)
       if (route.taskId) params.set('taskId', route.taskId)
       if (route.buildProjectId) params.set('buildProjectId', route.buildProjectId)
+      if (route.datasetVersion) params.set('datasetVersion', route.datasetVersion)
       return params.size ? `#/my-data?${params}` : '#/my-data'
     }
     case 'my-training': {
-      if (route.experimentId) return `#/my-training/${encodeURIComponent(route.experimentId)}`
-      return route.datasetVersion ? `#/my-training?datasetVersion=${encodeURIComponent(route.datasetVersion)}` : '#/my-training'
+      const path = route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
+      const params = new URLSearchParams()
+      if (!route.experimentId && route.datasetVersion) params.set('datasetVersion', route.datasetVersion)
+      if (route.historyDatasetVersion) params.set('historyDatasetVersion', route.historyDatasetVersion)
+      return params.size ? `${path}?${params}` : path
     }
     case 'algorithms': return '#/algorithms'
     case 'my-models': return '#/my-models'

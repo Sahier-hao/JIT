@@ -4919,7 +4919,7 @@ export type RegisterExistingModelResponses = {
 
 export type RegisterExistingModelResponse = RegisterExistingModelResponses[keyof RegisterExistingModelResponses];
 
-export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsData = {
+export type EvaluateTrainingExperimentThresholdsData = {
     body: TrainingThresholdEvaluationRequest;
     path: {
         experimentId: string;
@@ -4928,7 +4928,7 @@ export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsData =
     url: '/api/v1/training-experiments/{experimentId}/comparison/thresholds';
 };
 
-export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsErrors = {
+export type EvaluateTrainingExperimentThresholdsErrors = {
     /**
      * 需要管理员会话
      */
@@ -4943,16 +4943,16 @@ export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsErrors
     422: unknown;
 };
 
-export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponses = {
+export type EvaluateTrainingExperimentThresholdsResponses = {
     /**
      * 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
      */
     200: TrainingThresholdEvaluation;
 };
 
-export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponse = PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponses[keyof PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponses];
+export type EvaluateTrainingExperimentThresholdsResponse = EvaluateTrainingExperimentThresholdsResponses[keyof EvaluateTrainingExperimentThresholdsResponses];
 
-export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsData = {
+export type EvaluateUserTrainingExperimentThresholdsData = {
     body: TrainingThresholdEvaluationRequest;
     path: {
         experimentId: string;
@@ -4961,7 +4961,7 @@ export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsDa
     url: '/api/v1/user/training-experiments/{experimentId}/comparison/thresholds';
 };
 
-export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsErrors = {
+export type EvaluateUserTrainingExperimentThresholdsErrors = {
     /**
      * 需要用户会话
      */
@@ -4976,14 +4976,14 @@ export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsEr
     422: unknown;
 };
 
-export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponses = {
+export type EvaluateUserTrainingExperimentThresholdsResponses = {
     /**
      * 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
      */
     200: TrainingThresholdEvaluation;
 };
 
-export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponse = PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponses[keyof PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponses];
+export type EvaluateUserTrainingExperimentThresholdsResponse = EvaluateUserTrainingExperimentThresholdsResponses[keyof EvaluateUserTrainingExperimentThresholdsResponses];
 
 export type ListTrainingTasksData = {
     body?: never;
