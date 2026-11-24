@@ -1,0 +1,65 @@
+{
+  "schemaBefore": 42,
+  "schemaAfter": 43,
+  "source": {
+    "kind": "read-only historical v42 backup",
+    "sha256": "5b6e91851f6475b243f69852f6e49f3afd636759611342f6bb0c3cf7c7e145ae",
+    "unchanged": true
+  },
+  "migrationSha256": "88f8584a2b8927c35e34728434e1b2e0d8241bb6968c517716cf1fdd43bacefd",
+  "retained": {
+    "training_task": {
+      "rows": 10,
+      "sha256": "9c50c8cb11a9597ea2177312b8d5f62c9b2301a93dffd21d82f8ed2783873971"
+    },
+    "training_experiment": {
+      "rows": 4,
+      "sha256": "9b9f9028ee18de063e1c5f29a2844746eef687dcce01140b5bc0179a00c06a99"
+    },
+    "training_experiment_task": {
+      "rows": 10,
+      "sha256": "6fd780c979477d86609e3ef4e19357e11a243cfcf989eccc8e3616e8f90d72db"
+    },
+    "experiment_run": {
+      "rows": 31,
+      "sha256": "21805f50fb895f05fb75b7f5f21a69222755993e3ad52580c022a4f75a06bc7e"
+    },
+    "run_location": {
+      "rows": 31,
+      "sha256": "de14ef9ef092d7ef53bdc9bbaa24aa1d4bb7b179d83eb5bda476dba82a7c3a22"
+    },
+    "model_version": {
+      "rows": 31,
+      "sha256": "a0caab0da3730d6203f3fd2722588ec693e7049c0c649df93e4c3d07129142a4"
+    },
+    "model_policy": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "model_default": {
+      "rows": 1,
+      "sha256": "677e6f66f9e342eaec7d4ee60cee44a1482af3b6db1c97696dbe00b67a069230"
+    },
+    "repository_sync": {
+      "rows": 255,
+      "sha256": "a9c3edb96a10c5ec14b94dfa31d8ee6940f72e063b9bdc7b7bc2df4eedbdbe1a"
+    },
+    "repository_commit": {
+      "rows": 25245,
+      "sha256": "77cdafa870678ca9a0481bb2771306efbff1e9f77fa9d5744e0cacc5c2eafb54"
+    },
+    "prediction_batch": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "repository_explanation": {
+      "rows": 9,
+      "sha256": "2507112dc4d5b7be6a7bf80aa47d1b817dd81ed7e749d839df5d4c761222d573"
+    }
+  },
+  "methodKeysPreserved": 9,
+  "foreignKeyViolationsBefore": 0,
+  "foreignKeyViolationsAfter": 0,
+  "backupVerified": true,
+  "repeatInitializeIdempotent": true
+}

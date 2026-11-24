@@ -1,0 +1,90 @@
+{
+  "copiedFromWorkspace": [
+    "explanation-methods-multi-method-explanations.png",
+    "explanation-narrow-multi-method-explanations.png",
+    "explanation-occlusion-multi-method-explanations.png",
+    "explanation-requests.json",
+    "migration-043-audit.json",
+    "model-package-recovery-1280.png",
+    "model-package-recovery-1440.png",
+    "model-package-recovery-390.png",
+    "README.md",
+    "threshold-comparison.json",
+    "threshold-results.png",
+    "verified-results.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 16,
+  "files": [
+    {
+      "path": "explanation-methods-multi-method-explanations.png",
+      "sha256": "e940ed88c0327b0edabdfb4a2d08a2d53ed6b46cd6d1cf71598ac612e5a9e139"
+    },
+    {
+      "path": "explanation-narrow-multi-method-explanations.png",
+      "sha256": "607b4c88ce1fc9f8c917ea07aa205e2692d2ab5076a046db55480870cb42b9a0"
+    },
+    {
+      "path": "explanation-occlusion-multi-method-explanations.png",
+      "sha256": "2b8935abbc43863f627258073dfcca1c6c3c0c0b2a28de30972cddfeec1b87c8"
+    },
+    {
+      "path": "explanation-requests.json",
+      "sha256": "a92493254332c7fdbc4d95507cd2a3b79571c67dfc9e6f6ae6d6192c7aba3f60"
+    },
+    {
+      "path": "migration-043-audit.json",
+      "sha256": "435e4ef5ed69648d6d6f6dcdba7ebef7e5ad68a8c0890b3b7a6f4c2088ba7a55"
+    },
+    {
+      "path": "model-package-recovery-1280.png",
+      "sha256": "a702a1f0fa49c0cadffcf6f78bfb8edcf795a42b874262d3d0fd3453eaf4e62b"
+    },
+    {
+      "path": "model-package-recovery-1440.png",
+      "sha256": "4966ac2f055272236046804491849d88ca291dcee77b870bc242bc4d6b5648cc"
+    },
+    {
+      "path": "model-package-recovery-390.png",
+      "sha256": "465012da19a23076ced486d2f7dbfd0006612084344294fddc536235fb321631"
+    },
+    {
+      "path": "pr2-ai-test-provenance/manifest.json",
+      "sha256": "5b9ad1bf211d448a59a7f8c354dc0dadef1484b478507c155b9d0ebbb9a3df5d"
+    },
+    {
+      "path": "pr2-ai-test-provenance/manual-review.json",
+      "sha256": "21f1587aec2c86df1519a9bd0b29a6b6393dc36a8635186bbf9c92d18934d944"
+    },
+    {
+      "path": "pr2-ai-test-provenance/manual-review.md",
+      "sha256": "9a4eddf684298a83cfe5b5a2500eb051c3cfaffef18749aed0745ceb6feeccf2"
+    },
+    {
+      "path": "pr2-ai-test-provenance/prompt.md",
+      "sha256": "8948971e226144e4999c0c0dc81948d3c322e697fa24e821001f646abcb8699e"
+    },
+    {
+      "path": "README.md",
+      "sha256": "559cbd593910d00faf96ce8e793fb4e2290e88b5fa53f8a09a007ff54d8f0ba9"
+    },
+    {
+      "path": "threshold-comparison.json",
+      "sha256": "79518a03ad4b52df5bf11582801a03c0d02d236858bb0748f62fea2e70499552"
+    },
+    {
+      "path": "threshold-results.png",
+      "sha256": "b0ab9d635262e9319f6ee6120151a6b0c367c300c84987d76d8895e12d53b86d"
+    },
+    {
+      "path": "verified-results.json",
+      "sha256": "b4673f97790423f0eda9f135ba1c3bd9b2cf4d0ca18c5aca0ca2c44469a486d8"
+    }
+  ],
+  "frozenUtc": "2026-11-24T10:31:14.290549+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "05fe4b85e7f95474ecf4cb747b7d813fdca51a2acaacd5974b3c429cf0f444a7",
+  "workspace": "docs/evidence/_run/model-training-explanations-closeout"
+}

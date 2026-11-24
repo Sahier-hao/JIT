@@ -1,0 +1,47 @@
+[
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e",
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e&method=occlusion-mean-v1",
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e&method=linear-logodds-v1",
+    "status": null
+  },
+  {
+    "method": "POST",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e&method=linear-logodds-v1",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/443db133636573a11312b7d9548597b0e510084b/explanations?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/3821e11f-1cf6-5c97-99b0-f0db51173751/commits/443db133636573a11312b7d9548597b0e510084b/explanation-methods?viewSyncId=46021f54-d071-46ea-b4d9-933aae971f6e",
+    "status": 200
+  }
+]
