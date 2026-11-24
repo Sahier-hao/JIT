@@ -21,6 +21,7 @@ from ..training import TrainingExecutor
 from ..splits import resolve_preset
 from ..split_preview import validate_dataset_split
 from ..label_maturity import resolve_policy
+from .training_evaluation import evaluate_thresholds, split_member_sha
 
 ACTIVE = ("queued", "running")
 TERMINAL = ("succeeded", "failed", "cancelled", "interrupted")
@@ -126,7 +127,8 @@ class TrainingTaskStorage:
     def __init__(self, storage=None):
         self.storage = storage if storage is not None else CatalogStorage()
 
-    def create(self, row):
+    @staticmethod
+    def _insert_task(db, row):
         row = {
             "maturity_policy": "mature-only",
             "release_status": "not-evaluated",
@@ -135,12 +137,15 @@ class TrainingTaskStorage:
         unknown = set(row) - set(COLUMNS)
         if unknown:
             raise ValueError(f"未知训练任务字段：{sorted(unknown)}")
+        db.execute(
+            f"INSERT INTO training_task ({','.join(COLUMNS)}) "
+            f"VALUES ({','.join('?' for _ in COLUMNS)})",
+            tuple(row.get(name) for name in COLUMNS),
+        )
+
+    def create(self, row):
         with self.storage.connection(write=True) as db:
-            db.execute(
-                f"INSERT INTO training_task ({','.join(COLUMNS)}) "
-                f"VALUES ({','.join('?' for _ in COLUMNS)})",
-                tuple(row.get(name) for name in COLUMNS),
-            )
+            self._insert_task(db, row)
 
     def update(self, task_id, **fields):
         if not fields:
@@ -180,7 +185,7 @@ class TrainingTaskStorage:
             ).fetchone()
         return _view(row) if row is not None else None
 
-    def experiment_create(self, row):
+    def experiment_create(self, row, tasks):
         unknown = set(row) - set(EXPERIMENT_COLUMNS)
         if unknown:
             raise ValueError(f"未知实验字段：{sorted(unknown)}")
@@ -190,6 +195,14 @@ class TrainingTaskStorage:
                 f"VALUES ({','.join('?' for _ in EXPERIMENT_COLUMNS)})",
                 tuple(row.get(name) for name in EXPERIMENT_COLUMNS),
             )
+            for task_id, task_row in tasks:
+                if task_row is not None:
+                    self._insert_task(db, task_row)
+                db.execute(
+                    "INSERT INTO training_experiment_task (experiment_id, task_id, created_at) "
+                    "VALUES (?, ?, ?)",
+                    (row["id"], task_id, utc_now()),
+                )
 
     def experiment_get(self, experiment_id):
         with self.storage.connection() as db:
@@ -214,20 +227,19 @@ class TrainingTaskStorage:
                 (owner_user_id,)).fetchone()[0]
         return [dict(row) for row in rows], total
 
-    def experiment_link(self, experiment_id, task_id, created_at):
-        with self.storage.connection(write=True) as db:
-            db.execute(
-                "INSERT OR IGNORE INTO training_experiment_task "
-                "(experiment_id, task_id, created_at) VALUES (?, ?, ?)",
-                (experiment_id, task_id, created_at),
-            )
-
     def experiment_tasks(self, experiment_id):
         with self.storage.connection() as db:
             rows = db.execute(
                 "SELECT t.* FROM training_experiment_task e "
-                "JOIN training_task t ON t.id=e.task_id "
-                "WHERE e.experiment_id=? ORDER BY e.created_at, t.rowid", (experiment_id,)
+                "JOIN training_task original ON original.id=e.task_id "
+                "JOIN training_task t ON t.id=("
+                "  SELECT attempt.id FROM training_task attempt WHERE attempt.id=original.id "
+                "  OR (attempt.experiment_id=e.experiment_id AND attempt.algorithm=original.algorithm "
+                "      AND attempt.parent_task_id IS NOT NULL) "
+                "  ORDER BY CASE WHEN attempt.status IN ('queued','running') THEN 0 "
+                "    WHEN attempt.status='succeeded' THEN 1 ELSE 2 END, "
+                "    attempt.created_at DESC, attempt.rowid DESC LIMIT 1"
+                ") WHERE e.experiment_id=? ORDER BY e.created_at, original.rowid", (experiment_id,)
             ).fetchall()
         return [_view(row) for row in rows]
 
@@ -457,17 +469,19 @@ class TrainingTaskService:
         return {key: value for key, value in (params or {}).items()
                 if key in specs and defaults.get(key) != value}
 
-    def _enqueue(self, *, dataset_version, method, metric_set, created_by, request_id,
-                 parent_task_id=None, class_policy=None, split_preset=None, params=None,
-                 maturity_policy="mature-only", experiment_id=None, owner_user_id=None):
+    def _prepare_dataset(self, dataset_version, split_preset, maturity_policy):
         dataset, path, digest = self._dataset(dataset_version)
         if dataset["schemaName"] not in TRAINING_SCHEMAS:
             raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
-        maturity_policy = resolve_policy(maturity_policy)
         validate_dataset_split(self.dataset_root, dataset_version, split_preset,
-                               maturity_policy)
+                               maturity_policy, manifest=dataset)
+        return manifest_relative(path), digest
+
+    def _plan_task(self, *, dataset_version, manifest_path, digest, method, metric_set,
+                   created_by, request_id, split_preset, maturity_policy,
+                   parent_task_id=None, class_policy=None, params=None,
+                   experiment_id=None, owner_user_id=None):
         class_policy_json = json.dumps(class_policy, ensure_ascii=False, sort_keys=True) if class_policy else None
-        split_preset = resolve_preset(split_preset)
         overrides = self._overrides(method, params)
         params_json = (json.dumps(params, ensure_ascii=False, sort_keys=True)
                        if overrides else None)
@@ -475,13 +489,13 @@ class TrainingTaskService:
                                         split_preset, maturity_policy, params_json,
                                         owner_user_id)
         if active is not None:
-            return self.get(active["taskId"]), False
+            return active["taskId"], None
         task_id = str(uuid.uuid4())
         now = utc_now()
-        self.tasks.create({
+        return task_id, {
             "id": task_id,
             "dataset_version": dataset_version,
-            "dataset_manifest": manifest_relative(path),
+            "dataset_manifest": manifest_path,
             "manifest_sha256": digest,
             "algorithm": method,
             "metric_set": metric_set,
@@ -499,9 +513,20 @@ class TrainingTaskService:
             "experiment_id": experiment_id,
             "params_json": params_json,
             "owner_user_id": owner_user_id,
-        })
-        self._executor.submit(self._execute, task_id)
-        return self.get(task_id), True
+        }
+
+    def _enqueue(self, *, dataset_version, split_preset=None, maturity_policy="mature-only", **task):
+        split_preset = resolve_preset(split_preset)
+        maturity_policy = resolve_policy(maturity_policy)
+        manifest_path, digest = self._prepare_dataset(dataset_version, split_preset, maturity_policy)
+        task_id, row = self._plan_task(
+            dataset_version=dataset_version, manifest_path=manifest_path, digest=digest,
+            split_preset=split_preset, maturity_policy=maturity_policy, **task,
+        )
+        if row is not None:
+            self.tasks.create(row)
+            self._executor.submit(self._execute, task_id)
+        return self.get(task_id), row is not None
 
     def create(self, payload, request_id=None, *, created_by, owner_user_id=None):
         (dataset_version, method, metric_set, class_policy, split_preset,
@@ -523,17 +548,25 @@ class TrainingTaskService:
             )
 
     def retry(self, task_id, request_id=None, *, created_by):
-        source = self.get(task_id)
-        if source["status"] not in RETRYABLE:
-            raise BaselineError("TASK_NOT_RETRYABLE", "只有失败、取消或中断的训练任务可以重试")
         with self._lock:
+            if self._closing.is_set():
+                raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
+            source = self.get(task_id)
+            if source["status"] not in RETRYABLE:
+                raise BaselineError("TASK_NOT_RETRYABLE", "只有失败、取消或中断的训练任务可以重试")
+            if source["experimentId"]:
+                current = next((task for task in self.tasks.experiment_tasks(source["experimentId"])
+                                if task["method"] == source["method"]), source)
+                if current["status"] not in RETRYABLE:
+                    return self.get(current["taskId"]), False
+                source = current
             return self._enqueue(
                 dataset_version=source["datasetVersion"],
                 method=source["method"],
                 metric_set=source["metricSet"],
                 created_by=created_by,
                 request_id=request_id,
-                parent_task_id=task_id,
+                parent_task_id=source["taskId"],
                 class_policy=source.get("classPolicy"),
                 split_preset=source.get("splitPreset"),
                 maturity_policy=source.get("maturityPolicy"),
@@ -676,11 +709,7 @@ class TrainingTaskService:
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
-            dataset, path, digest = self._dataset(dataset_version)
-            if dataset["schemaName"] not in TRAINING_SCHEMAS:
-                raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
-            validate_dataset_split(self.dataset_root, dataset_version, split_preset,
-                                   maturity_policy)
+            manifest_path, digest = self._prepare_dataset(dataset_version, split_preset, maturity_policy)
             signature = self._experiment_signature(dataset_version, digest, metric_set,
                                                    class_policy, split_preset,
                                                    maturity_policy, items,
@@ -693,10 +722,21 @@ class TrainingTaskService:
             self._check_user_limits(owner_user_id, items)
             experiment_id = str(uuid.uuid4())
             now = utc_now()
+            tasks = [
+                self._plan_task(
+                    dataset_version=dataset_version, manifest_path=manifest_path, digest=digest,
+                    method=item["method"], metric_set=metric_set,
+                    created_by=created_by, request_id=request_id,
+                    class_policy=class_policy, split_preset=split_preset,
+                    maturity_policy=maturity_policy, params=item["params"],
+                    experiment_id=experiment_id, owner_user_id=owner_user_id,
+                )
+                for item in items
+            ]
             self.tasks.experiment_create({
                 "id": experiment_id,
                 "dataset_version": dataset_version,
-                "dataset_manifest": manifest_relative(path),
+                "dataset_manifest": manifest_path,
                 "manifest_sha256": digest,
                 "metric_set": metric_set,
                 "split_preset": split_preset,
@@ -708,25 +748,11 @@ class TrainingTaskService:
                 "created_by": created_by,
                 "created_at": now,
                 "owner_user_id": owner_user_id,
-            })
-            created = False
-            for item in items:
-                task, is_new = self._enqueue(
-                    dataset_version=dataset_version,
-                    method=item["method"],
-                    metric_set=metric_set,
-                    created_by=created_by,
-                    request_id=request_id,
-                    class_policy=class_policy,
-                    split_preset=split_preset,
-                    maturity_policy=maturity_policy,
-                    params=item["params"],
-                    experiment_id=experiment_id,
-                    owner_user_id=owner_user_id,
-                )
-                created = created or is_new
-                self.tasks.experiment_link(experiment_id, task["taskId"], utc_now())
-            return self._experiment_view(self.tasks.experiment_get(experiment_id)), created
+            }, tasks)
+            new_tasks = [task_id for task_id, row in tasks if row is not None]
+            for task_id in new_tasks:
+                self._executor.submit(self._execute, task_id)
+            return self._experiment_view(self.tasks.experiment_get(experiment_id)), bool(new_tasks)
 
     def get_experiment(self, experiment_id):
         row = self.tasks.experiment_get(experiment_id)
@@ -748,11 +774,12 @@ class TrainingTaskService:
         rows = []
         for task in view["tasks"]:
             performance = task.get("trainingPerformance") or {}
+            algorithm = get_algorithm(task["method"])
             rows.append({
                 "taskId": task["taskId"],
                 "method": task["method"],
-                "methodName": get_algorithm(task["method"])["name"],
-                "category": get_algorithm(task["method"])["category"],
+                "methodName": algorithm["label"],
+                "category": algorithm["category"],
                 "parameters": task.get("parameters"),
                 "status": task["status"],
                 "stage": task["stage"],
@@ -761,8 +788,10 @@ class TrainingTaskService:
                 "metricsByPartition": task.get("metricsByPartition"),
                 "trainingSeconds": performance.get("durationSeconds"),
                 "runId": task.get("runId"),
+                "artifactRunId": task.get("artifactRunId"),
                 "modelId": task.get("modelId"),
                 "manifestSha256": task["manifestSha256"],
+                "splitMemberSha256": split_member_sha(task),
                 "splitPreset": task.get("splitPreset"),
                 "maturityPolicy": task.get("maturityPolicy"),
                 "classPolicy": task.get("classPolicy"),
@@ -771,7 +800,8 @@ class TrainingTaskService:
         successful = [row for row in rows if row["status"] == "succeeded"]
         fingerprints = {(row["manifestSha256"], row["splitPreset"], row["metricSet"],
                          json.dumps(row["classPolicy"], sort_keys=True)) for row in successful}
-        comparable = len(fingerprints) <= 1
+        member_sets = {row["splitMemberSha256"] for row in successful if row["splitMemberSha256"]}
+        comparable = len(fingerprints) <= 1 and len(member_sets) <= 1
         notes = []
         if len(successful) < 2:
             notes.append("成功子任务少于两个，比较表仅作状态记录")
@@ -792,6 +822,9 @@ class TrainingTaskService:
             "notes": notes,
             "methods": rows,
         }
+
+    def evaluate_experiment_thresholds(self, experiment_id, request):
+        return evaluate_thresholds(self.get_experiment(experiment_id), request, self.artifact_root)
 
     def _run(self, task_id):
         item = self.tasks.raw(task_id)

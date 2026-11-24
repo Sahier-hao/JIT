@@ -274,6 +274,48 @@ def test_recover_marks_active_tasks_interrupted(storage, tmp_path):
         service.close()
 
 
+def test_building_app_waits_for_lifespan_before_recovering_training(service, tmp_path):
+    from jit_baseline.api import create_app
+
+    release = threading.Event()
+    service._executor.submit(release.wait)
+    try:
+        task, _ = service.create(payload(), created_by="admin")
+        app = create_app(tmp_path / "missing-run", database=service.storage.path,
+                         artifact_root=tmp_path / "artifacts", training_service=service)
+        assert service.get(task["taskId"])["status"] == "queued"
+        with TestClient(app) as client:
+            assert client.get("/api/health").is_success
+            assert service.get(task["taskId"])["status"] == "interrupted"
+    finally:
+        release.set()
+
+
+def test_experiment_shows_retry_and_reuses_it_when_an_old_task_is_submitted(service):
+    release = threading.Event()
+    service._executor.submit(release.wait)
+    try:
+        view, _ = service.create_experiment({
+            "datasetVersion": DATASET_VERSION,
+            "methods": [{"method": "logistic-regression-l2-v1"}, {"method": "decision-tree-v1"}],
+        }, created_by="admin")
+        original, second = view["tasks"]
+        service.tasks.finish(original["taskId"], "interrupted", "TRAINING_INTERRUPTED", "interrupted")
+        retry, created = service.retry(original["taskId"], created_by="admin")
+        assert created and retry["parentTaskId"] == original["taskId"]
+        refreshed = service.get_experiment(view["experimentId"])
+        assert [task["taskId"] for task in refreshed["tasks"]] == [retry["taskId"], second["taskId"]]
+        assert service.get(original["taskId"])["status"] == "interrupted"
+
+        # 重放旧按钮的请求时继续使用已成功的重试。
+        service.tasks.finish(retry["taskId"], "succeeded", stage="completed")
+        again, created = service.retry(original["taskId"], created_by="admin")
+        assert not created and again["taskId"] == retry["taskId"]
+        assert service.pages()["total"] == 3
+    finally:
+        release.set()
+
+
 def test_admin_training_api_requires_auth_and_returns_task(service, tmp_path):
     from jit_baseline.api import create_app
     app = create_app(tmp_path / "missing-run", database=service.storage.path,
@@ -552,6 +594,45 @@ def test_experiment_groups_same_identity_tasks_and_reuses_active(service):
         release.set()
 
 
+def test_experiment_validates_shared_split_once(service, monkeypatch):
+    from jit_baseline.services import training_tasks
+
+    calls = []
+    validate = training_tasks.validate_dataset_split
+
+    def check(*args, **kwargs):
+        calls.append((args, kwargs))
+        return validate(*args, **kwargs)
+
+    monkeypatch.setattr(training_tasks, "validate_dataset_split", check)
+    view, _ = service.create_experiment({
+        "datasetVersion": DATASET_VERSION,
+        "methods": [{"method": "logistic-regression-l2-v1"}, {"method": "decision-tree-v1"}],
+    }, created_by="admin")
+
+    assert len(view["tasks"]) == 2
+    assert len(calls) == 1
+
+
+def test_experiment_does_not_publish_partial_tasks_on_storage_failure(service, storage):
+    with storage.connection(write=True) as db:
+        db.execute("""
+            CREATE TRIGGER refuse_second_training_task BEFORE INSERT ON training_task
+            WHEN NEW.algorithm = 'decision-tree-v1' BEGIN
+                SELECT RAISE(ABORT, 'test write failure');
+            END
+        """)
+
+    with pytest.raises(BaselineError):
+        service.create_experiment({
+            "datasetVersion": DATASET_VERSION,
+            "methods": [{"method": "logistic-regression-l2-v1"}, {"method": "decision-tree-v1"}],
+        }, created_by="admin")
+
+    assert service.pages()["total"] == 0
+    assert service.experiments(None)["total"] == 0
+
+
 def test_experiment_rejects_duplicate_or_unknown_methods(service):
     base = {"datasetVersion": DATASET_VERSION,
             "methods": [{"method": "logistic-regression-l2-v1"},
@@ -588,6 +669,68 @@ def test_experiment_comparison_reports_identity_and_parameters(tmp_path, storage
                 row["parameters"]["max_depth"] for row in comparison["methods"]} == {0.5, 4}
         assert all(row["metrics"]["averagePrecision"]["value"] == 0.42
                    for row in comparison["methods"])
+    finally:
+        service.close()
+
+
+def test_experiment_evaluates_validation_thresholds_on_frozen_test(tmp_path, storage):
+    service = TrainingTaskService(storage, artifact_root=tmp_path / "artifacts", timeout=60)
+    try:
+        view, _ = service.create_experiment({
+            "datasetVersion": DATASET_VERSION,
+            "methods": [{"method": "logistic-regression-l2-v1"},
+                        {"method": "random-forest-v1", "params": {"n_estimators": 12}}],
+        }, created_by="admin")
+        identity = view["experimentId"]
+        request = {"taskIds": [task["taskId"] for task in view["tasks"]], "strategy": "max-f1"}
+        terminal = wait_for(
+            lambda: (item if (item := service.get_experiment(identity))["status"] not in ("queued", "running") else None),
+            timeout=70,
+        )
+        assert terminal["status"] == "succeeded", [task["error"] for task in terminal["tasks"]]
+        result = service.evaluate_experiment_thresholds(identity, request)
+        assert result["experimentId"] == identity
+        assert result["selection"] == {"strategy": "max-f1"}
+        for task, method in zip(terminal["tasks"], result["methods"], strict=True):
+            assert method["artifactRunId"] == task["artifactRunId"]
+            snapshot = service.artifact_root / task["artifactKey"]
+            scores = json.loads((snapshot / "reference-predictions.json").read_text(encoding="utf-8"))
+            labels = json.loads((snapshot / "test-labels.json").read_text(encoding="utf-8"))
+            preview = task["metricsByPartition"]["validation"]["thresholdPreview"]
+            tick = round(method["threshold"] * 100)
+            tp, fp = preview["truePositives"][tick], preview["falsePositives"][tick]
+            f1 = 2 * tp / (tp + fp + preview["positives"])
+            assert f1 == max(2 * hits / (hits + errors + preview["positives"])
+                             for hits, errors in zip(preview["truePositives"], preview["falsePositives"]))
+            expected_hits = sum(p["risk"] >= method["threshold"] and y["label"] == 1
+                                for p, y in zip(scores, labels, strict=True))
+            assert method["validation"]["confusion"]["tp"] == tp
+            assert method["test"]["confusion"]["tp"] == expected_hits
+            assert method["defaultTest"]["confusion"] == task["metrics"]["confusion"]
+        identical = service.evaluate_experiment_thresholds(identity, {
+            **request, "strategy": "fixed", "threshold": .5,
+        })
+        assert all(row["test"] == row["defaultTest"] for row in identical["methods"])
+        goal = service.evaluate_experiment_thresholds(identity, {
+            **request, "strategy": "target-recall", "targetRecall": .8,
+        })
+        assert all(row["validation"]["recall"]["value"] >= .8 for row in goal["methods"])
+
+        with storage.connection(write=True) as db:
+            task = terminal["tasks"][0]
+            changed_split = {**task["splitPolicy"], "memberSha256": "d" * 64}
+            db.execute("UPDATE training_task SET split_policy_json=? WHERE id=?",
+                       (json.dumps(changed_split), task["taskId"]))
+        with pytest.raises(BaselineError, match="分区成员"):
+            service.evaluate_experiment_thresholds(identity, request)
+        with storage.connection(write=True) as db:
+            db.execute("UPDATE training_task SET split_policy_json=? WHERE id=?",
+                       (json.dumps(task["splitPolicy"]), task["taskId"]))
+        lost = service.artifact_root / task["artifactKey"] / "reference-predictions.json"
+        lost.write_text("[]", encoding="utf-8")
+        with pytest.raises(BaselineError, match="产物") as error:
+            service.evaluate_experiment_thresholds(identity, request)
+        assert error.value.code == "INTEGRITY_ERROR"
     finally:
         service.close()
 

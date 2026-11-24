@@ -2241,6 +2241,44 @@ paths:
       description: 201 新模型，200 复用原 runId；仅选择候选，不接受路径／URL／上传。
       security:
       - AdminSession: []
+  /api/v1/training-experiments/{experimentId}/comparison/thresholds:
+    post:
+      summary: 按验证集选择阈值并复核冻结测试（管理员）
+      parameters:
+      - name: experimentId
+        in: path
+        required: true
+        schema: {type: string}
+      requestBody:
+        $ref: '#/components/requestBodies/TrainingThresholdEvaluationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TrainingThresholdEvaluationResult'
+        '401':
+          description: 需要管理员会话
+        '404':
+          description: 实验不存在
+        '422':
+          description: 任务、阈值、分区或冻结产物无法用于复核
+  /api/v1/user/training-experiments/{experimentId}/comparison/thresholds:
+    post:
+      summary: 按验证集选择阈值并复核自有实验的冻结测试
+      parameters:
+      - name: experimentId
+        in: path
+        required: true
+        schema: {type: string}
+      requestBody:
+        $ref: '#/components/requestBodies/TrainingThresholdEvaluationRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TrainingThresholdEvaluationResult'
+        '401':
+          description: 需要用户会话
+        '404':
+          description: 实验不存在或不属于当前用户
+        '422':
+          description: 任务、阈值、分区或冻结产物无法用于复核
   /api/v1/training-tasks:
     post:
       operationId: createTrainingTask
@@ -3448,6 +3486,65 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
 components:
   schemas:
+    TrainingThresholdSelection:
+      type: object
+      required: [strategy]
+      properties:
+        strategy:
+          enum: [fixed, max-f1, target-recall]
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+          multipleOf: 0.01
+          description: fixed 时必填，所有模型使用该阈值。
+        targetRecall:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+          description: target-recall 时必填，各模型在验证集上达到该召回率。
+    TrainingThresholdMetrics:
+      type: object
+      required: [precision, recall, f1, confusion]
+      properties:
+        precision: {$ref: '#/components/schemas/TrainingThresholdMetric'}
+        recall: {$ref: '#/components/schemas/TrainingThresholdMetric'}
+        f1: {$ref: '#/components/schemas/TrainingThresholdMetric'}
+        confusion:
+          type: object
+          required: [tp, fp, tn, fn]
+          additionalProperties: {type: integer, minimum: 0}
+    TrainingThresholdMetric:
+      type: object
+      required: [value, reason]
+      properties:
+        value: {type: [number, 'null'], minimum: 0, maximum: 1}
+        reason: {type: [string, 'null']}
+    TrainingThresholdEvaluation:
+      type: object
+      required: [format, experimentId, datasetVersion, manifestSha256, splitMemberSha256, selection, methods]
+      properties:
+        format: {const: training-threshold-evaluation-v1}
+        experimentId: {type: string}
+        datasetVersion: {type: string}
+        manifestSha256: {type: string}
+        splitMemberSha256: {type: string}
+        selection: {$ref: '#/components/schemas/TrainingThresholdSelection'}
+        methods:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: object
+            required: [taskId, artifactRunId, threshold, validation, test, defaultThreshold, defaultTest]
+            properties:
+              taskId: {type: string}
+              artifactRunId: {type: string}
+              threshold: {type: number, minimum: 0, maximum: 1}
+              validation: {$ref: '#/components/schemas/TrainingThresholdMetrics'}
+              test: {$ref: '#/components/schemas/TrainingThresholdMetrics'}
+              defaultThreshold: {type: number, const: 0.5}
+              defaultTest: {$ref: '#/components/schemas/TrainingThresholdMetrics'}
     ProjectEvent:
       type: object
       additionalProperties: false
@@ -9722,7 +9819,30 @@ components:
         minimum: 1
         maximum: 100
         default: 1
+  requestBodies:
+    TrainingThresholdEvaluationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/TrainingThresholdSelection'
+            - type: object
+              required: [taskIds]
+              properties:
+                taskIds:
+                  type: array
+                  minItems: 2
+                  maxItems: 2
+                  uniqueItems: true
+                  items: {type: string}
   responses:
+    TrainingThresholdEvaluationResult:
+      description: 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TrainingThresholdEvaluation'
     ProjectEvents:
       description: 公开项目与PR事件的固定引用，不包含个人记录；当前性在读取时重新核对。
       headers:

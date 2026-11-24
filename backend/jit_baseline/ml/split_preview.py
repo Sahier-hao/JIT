@@ -27,17 +27,19 @@ def _records(manifest):
 
 
 def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
-                          allow_legacy=False, allow_restricted=False):
+                          allow_legacy=False, allow_restricted=False, manifest=None):
     """Return a no-write preview; invalid membership is data, not a failed request."""
     preset = resolve_preset(preset)
     maturity_policy = resolve_policy(maturity_policy)
-    registered = load_all(dataset_root)
-    dataset = registered.get(dataset_version)
-    if dataset is None:
-        raise BaselineError("DATASET_INVALID", "数据集版本未登记")
-    declared = Path(dataset["manifestPath"])
-    manifest_path = declared if declared.is_absolute() else BACKEND / declared
-    manifest = load_manifest(manifest_path)
+    if manifest is None:
+        dataset = load_all(dataset_root).get(dataset_version)
+        if dataset is None:
+            raise BaselineError("DATASET_INVALID", "数据集版本未登记")
+        declared = Path(dataset["manifestPath"])
+        manifest_path = declared if declared.is_absolute() else BACKEND / declared
+        manifest = load_manifest(manifest_path)
+    if manifest["version"] != dataset_version:
+        raise BaselineError("DATASET_INVALID", "描述文件的数据集版本已变化")
     records = _records(manifest)
     try:
         eligible, maturity, evaluated = _label_admission(
@@ -122,10 +124,10 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
 
 
 def validate_dataset_split(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
-                           allow_legacy=False, allow_restricted=False):
+                           allow_legacy=False, allow_restricted=False, manifest=None):
     preview = dataset_split_preview(dataset_root, dataset_version, preset,
                                      maturity_policy, allow_legacy=allow_legacy,
-                                     allow_restricted=allow_restricted)
+                                     allow_restricted=allow_restricted, manifest=manifest)
     if not preview["available"]:
         reason = preview["reason"]
         raise BaselineError(reason["code"], reason["message"])

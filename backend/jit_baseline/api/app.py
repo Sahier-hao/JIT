@@ -31,6 +31,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @asynccontextmanager
     async def lifespan(app):
+        # 只有服务真正启动时才恢复遗留任务，导入应用或生成接口文档不能中断在线任务。
+        await run_in_threadpool(app.state.sync.recover)
+        await run_in_threadpool(app.state.training.recover)
+        await run_in_threadpool(app.state.dataset_builds.recover)
+        await run_in_threadpool(app.state.dataset_imports.recover)
         app.state.updates.start()
         app.state.pr_updates.start()
         if os.environ.get('JIT_PR_DATASET_AUTO_PRUNE', '').strip().lower() in ('1', 'true', 'yes'):
@@ -44,7 +49,6 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         try:
             yield
         finally:
-            from starlette.concurrency import run_in_threadpool
             await run_in_threadpool(app.state.dataset_imports.close)
             await run_in_threadpool(app.state.pr_updates.close)
             await run_in_threadpool(app.state.updates.close)
@@ -95,19 +99,16 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         # 本地仓库只用于验收与测试；默认只接受公开 HTTP(S) 地址。
         sync_service = SyncService(storage, catalog, artifact_root=catalog.root,
                                    dataset_root=registry_root, allow_local=allow_local)
-    sync_service.recover()
     app.state.sync = sync_service
     from ..training_tasks import TrainingTaskService
     if training_service is None:
         training_service = TrainingTaskService(
             storage, catalog, artifact_root=catalog.root, dataset_root=registry_root)
-    training_service.recover()
     app.state.training = training_service
     from ..dataset_builds import DatasetBuildService
     if dataset_build_service is None:
         dataset_build_service = DatasetBuildService(
             storage, registry_root, allow_local=allow_local)
-    dataset_build_service.recover()
     app.state.dataset_builds = dataset_build_service
     from ..multi_project_reports import MultiProjectReportService
     multi_project_reports = MultiProjectReportService()
@@ -482,6 +483,11 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/training-experiments/{experiment_id}/comparison')
     def training_experiment_comparison(experiment_id: str):
         return training_service.compare_experiment(experiment_id)
+
+    @app.post('/api/v1/training-experiments/{experiment_id}/comparison/thresholds')
+    async def training_experiment_thresholds(experiment_id: str, request: Request):
+        return await run_in_threadpool(training_service.evaluate_experiment_thresholds,
+                                       experiment_id, await read_object(request))
 
     @app.get('/api/v1/training-tasks')
     def training_task_list(limit: int = 20, offset: int = 0):

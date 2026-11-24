@@ -92,6 +92,16 @@ def test_user_training_quota_and_owner(storage, tmp_path):
             created_by='other', owner_user_id='other')
         assert created_other and other['ownerUserId'] == 'other'
         assert other['experimentId'] != first['experimentId']
+        app = create_app(tmp_path / 'missing', database=storage.path,
+                         artifact_root=tmp_path / 'artifacts', training_service=service)
+        suffix = f"/training-experiments/{other['experimentId']}/comparison/thresholds"
+        with TestClient(app) as client:
+            assert client.post('/api/v1/user' + suffix, json={}).status_code == 401
+            assert client.post('/api/user/register', json=ACCOUNT).status_code == 201
+            assert client.post('/api/v1/user' + suffix, json={}).status_code == 404
+            assert client.post('/api/v1' + suffix, json={}).status_code == 401
+            owned = suffix.replace(other['experimentId'], first['experimentId'])
+            assert client.post('/api/v1/user' + owned, json={}).json()['error']['code'] == 'INPUT_INVALID'
     finally:
         release.set()
         service.close()

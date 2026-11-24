@@ -1,33 +1,69 @@
+import { Activity, BookOpenText, Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ApiError, NetworkError } from '@/lib/apiContract'
 import { cn } from '@/lib/utils'
-import { BookOpenText, Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { ApiError } from '@/lib/apiContract'
 import {
   createUserExperiment, splitPreview, userDatasets,
   type UserDataset, type UserSplitPreview,
 } from '@/features/account/userClient'
+import type { TrainingExperiment } from '@/features/admin/adminContracts'
 import { SPLIT_PRESETS } from '@/features/datasets/splitClient'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
 import { AlgorithmLibraryDialog } from '@/features/training/components/AlgorithmLibraryDialog'
 
-const PARTITION_LABELS = { train: '训练', validation: '验证', test: '测试' } as const
+const PARTITIONS = [
+  { key: 'train', label: '训练', color: 'bg-accent' },
+  { key: 'validation', label: '验证', color: 'bg-accent/60' },
+  { key: 'test', label: '测试', color: 'bg-accent/30' },
+] as const
+const MAX_METHODS = 4
 
-function countText(value: unknown): string {
-  return typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('zh-CN') : '—'
+function SplitSummary({ preview }: { preview: UserSplitPreview }) {
+  const partitions = preview.partitions
+
+  return <div className="grid gap-2.5 border-t border-border-soft pt-3.5">
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <h3 className="text-xs font-medium">切分预览</h3>
+      <span className={cn('text-xs tabular-nums', preview.available ? 'text-accent' : 'text-rose-deep')}>
+        {preview.available ? preview.eligibleRecords.toLocaleString('zh-CN') + ' 行可训练' : '不可训练'}
+      </span>
+    </div>
+    {partitions ? <>
+      <div className="flex h-1.5 overflow-hidden rounded-full bg-soft" aria-hidden="true">
+        {PARTITIONS.map(part => <div key={part.key} className={part.color} style={{ flexGrow: partitions[part.key].records }}/>)}
+      </div>
+      <table className="w-full table-fixed text-left text-xs tabular-nums">
+        <thead className="text-foreground-3">
+          <tr><th scope="col" className="pb-1 font-normal">分区</th><th scope="col" className="pb-1 text-right font-normal">行数</th><th scope="col" className="pb-1 text-right font-normal">正例</th></tr>
+        </thead>
+        <tbody className="divide-y divide-border-soft">
+          {PARTITIONS.map(part => <tr key={part.key}>
+            <th scope="row" className="py-1.5 font-medium">{part.label}</th>
+            <td className="text-right">{partitions[part.key].records.toLocaleString('zh-CN')}</td>
+            <td className="text-right">{partitions[part.key].positives.toLocaleString('zh-CN')}</td>
+          </tr>)}
+        </tbody>
+      </table>
+    </> : null}
+    {preview.available ? null : <p className="text-xs leading-body text-rose-deep" role="alert">
+      {preview.reason?.message ?? '该数据不能进入训练'}
+    </p>}
+  </div>
 }
 
-export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion, onCreated, onLoginRequired }: {
+export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion, onCreated, onLoginRequired, onOpenData }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialDatasetVersion?: string
-  onCreated: (experimentId: string) => void
+  onCreated: (experiment: TrainingExperiment) => void
   onLoginRequired: () => void
+  onOpenData: () => void
 }) {
   const [datasets, setDatasets] = useState<UserDataset[] | null>(null)
   const [selected, setSelected] = useState('')
@@ -40,187 +76,229 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const submission = useRef<AbortController | null>(null)
+
+  useEffect(() => () => submission.current?.abort(), [])
+
+  function reportFailure(failure: unknown, fallback: string) {
+    if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
+    else setError(failure instanceof Error ? failure.message : fallback)
+  }
 
   useEffect(() => {
     if (!open) return
     const controller = new AbortController()
     setError('')
-    setChosen([])
-    setParams({})
-    setPreview(null)
-    setMethods([])
+    setDatasets(null)
+    setSelected('')
     setMethodsOpen(false)
     setLibraryOpen(false)
     userDatasets('usable', controller.signal).then(({ datasets: value }) => {
       if (controller.signal.aborted) return
-      setDatasets(value)
       const preferred = value.find(item => item.version === initialDatasetVersion) ?? value[0]
+      setDatasets(value)
       setSelected(preferred?.version ?? '')
     }).catch(failure => {
-      if (controller.signal.aborted) return
-      if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
-      else setError(failure instanceof Error ? failure.message : '数据读取失败')
+      if (!controller.signal.aborted) reportFailure(failure, '数据读取失败')
     })
     return () => controller.abort()
   }, [open, initialDatasetVersion, onLoginRequired])
 
-  const current = datasets?.find(item => item.version === selected) ?? null
+  const current = datasets?.find(item => item.version === selected)
+  const version = current?.version
+  const schema = current?.schema
+
   useEffect(() => {
-    if (!open || !current) return
-    const controller = new AbortController()
-    setPreview(null)
     setMethods([])
     setChosen([])
     setParams({})
-    trainingMethods(current.schema, controller.signal).then(value => {
+    if (!open || !schema) return
+    const controller = new AbortController()
+    trainingMethods(schema, controller.signal).then(value => {
       if (!controller.signal.aborted) setMethods(value.methods.filter(item => item.supportedSchema))
     }).catch(failure => {
-      if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : '训练方法读取失败')
-    })
-    splitPreview(current.version, preset, controller.signal).then(value => {
-      if (!controller.signal.aborted) setPreview(value)
-    }).catch(failure => {
-      if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : '时间切分读取失败')
+      if (!controller.signal.aborted) reportFailure(failure, '训练方法读取失败')
     })
     return () => controller.abort()
-  }, [open, current?.version, current?.schema, preset])
+  }, [open, schema, onLoginRequired])
 
-  function toggle(method: string) {
-    setChosen(values => values.includes(method) ? values.filter(item => item !== method) : [...values, method])
-    const choice = methods.find(item => item.method === method)
-    setParams(values => values[method] ? values : {
-      ...values,
-      [method]: Object.fromEntries((choice?.params ?? []).map(param => [param.name, param.default == null ? '' : String(param.default)])),
+  useEffect(() => {
+    setPreview(null)
+    if (!open || !version) return
+    const controller = new AbortController()
+    splitPreview(version, preset, controller.signal).then(value => {
+      if (!controller.signal.aborted) setPreview(value)
+    }).catch(failure => {
+      if (!controller.signal.aborted) reportFailure(failure, '时间切分读取失败')
     })
-  }
-
-  async function submit() {
-    if (!current || !chosen.length || busy) return
-    setBusy(true)
-    setError('')
-    try {
-      const payload = chosen.map(method => {
-        const values: Record<string, number> = {}
-        for (const spec of methods.find(item => item.method === method)?.params ?? []) {
-          const raw = params[method]?.[spec.name]
-          if (raw == null || raw.trim() === '') continue
-          const numeric = Number(raw)
-          if (!Number.isFinite(numeric)) throw new Error(`${method} 的参数 ${spec.name} 不是数值`)
-          values[spec.name] = numeric
-        }
-        return { method, params: values }
-      })
-      const experiment = await createUserExperiment({ datasetVersion: current.version, methods: payload, splitPreset: preset })
-      onCreated(experiment.experimentId)
-      onOpenChange(false)
-    } catch (failure) {
-      if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
-      else setError(failure instanceof Error ? failure.message : '实验创建失败')
-    } finally {
-      setBusy(false)
-    }
-  }
+    return () => controller.abort()
+  }, [open, version, preset, onLoginRequired])
 
   const selectedMethods = chosen.flatMap(method => {
     const choice = methods.find(item => item.method === method)
     return choice ? [choice] : []
   })
-  const partitionEntries = preview?.partitions
-    ? (['train', 'validation', 'test'] as const).map(name => [name, preview.partitions![name]] as const)
-    : []
 
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-y-auto" style={{ width: 'min(94vw, 680px)', maxWidth: 'none' }}>
-      <DialogHeader><DialogTitle>开始训练</DialogTitle></DialogHeader>
-      {datasets === null ? <p className="py-6 text-center text-xs text-foreground-3">正在读取可用数据…</p> : datasets.length === 0
-        ? <div className="grid gap-2 rounded-lg border border-border-soft p-4"><p className="text-sm text-foreground-2">还没有可用于训练的数据。</p><p className="text-xs text-foreground-3">先到「我的数据」导入 CSV 或从公开仓库构建数据集。</p></div>
-        : <div className="grid gap-4">
-          <label className="grid gap-1.5">
-            <span className="text-xs font-medium text-foreground-2">数据版本</span>
-            <Select value={selected} onValueChange={setSelected}>
-              <SelectTrigger aria-label="训练数据版本"><SelectValue placeholder="选择数据"/></SelectTrigger>
-              <SelectContent>{datasets.map(item => <SelectItem key={item.version} value={item.version}>{item.dataset} · {item.mine ? '我的数据' : '共享数据'} · {item.schema}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>
-          <label className="grid gap-1.5">
-            <span className="text-xs font-medium text-foreground-2">时间切分</span>
-            <Select value={preset} onValueChange={setPreset}>
-              <SelectTrigger aria-label="时间切分"><SelectValue/></SelectTrigger>
-              <SelectContent>{SPLIT_PRESETS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>
-          {current ? <div className="grid grid-cols-3 gap-2 rounded-lg bg-sunken p-3">
-            <div><span className="block text-[11px] text-foreground-4">数据行数</span><strong className="mt-0.5 block text-sm tabular-nums text-foreground">{countText(current.quality.includedRows)}</strong></div>
-            <div><span className="block text-[11px] text-foreground-4">正例</span><strong className="mt-0.5 block text-sm tabular-nums text-foreground">{countText(current.quality.positiveLabels)}</strong></div>
-            <div><span className="block text-[11px] text-foreground-4">准入后</span><strong className="mt-0.5 block text-sm tabular-nums text-foreground">{preview ? countText(preview.eligibleRecords) : '检查中'}</strong></div>
-          </div> : null}
-          {partitionEntries.length ? <div className="grid gap-2 rounded-lg border border-border-soft p-3">
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <span className="font-medium text-foreground-2">切分预览</span>
-              <span className={preview?.available ? 'text-teal-deep' : 'text-rose-deep'}>{preview?.available ? '可训练' : '不可训练'}</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {partitionEntries.map(([name, part]) => <div key={name} className="rounded-md bg-sunken px-2 py-1.5">
-                <span className="block text-[11px] text-foreground-4">{PARTITION_LABELS[name]}</span>
-                <strong className="mt-0.5 block text-xs tabular-nums text-foreground">{countText(part.records)} 行 · {countText(part.positives)} 正例</strong>
-              </div>)}
-            </div>
-          </div> : null}
-          {preview && !preview.available ? <div className="rounded-lg border border-rose/20 bg-rose-soft p-3 text-xs text-rose-deep" role="alert">
-            <strong className="block">为什么不能训练</strong>
-            <p className="mt-1">{preview.reason?.message ?? '该数据不能进入训练'}</p>
-            <p className="mt-1 text-rose-deep/80">可以更换切分比例，或补充更多正/负样本后重建数据。</p>
-          </div> : null}
-          <section className="grid gap-2">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="text-xs font-medium text-foreground-2">训练方法</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-foreground-4">已选 {chosen.length}</span>
-                <Button type="button" size="xs" variant="ghost" disabled={!methods.length} onClick={() => setLibraryOpen(true)}><BookOpenText aria-hidden="true" size={13}/>算法库</Button>
+  function toggle(choice: MethodChoice) {
+    setChosen(values => {
+      if (values.includes(choice.method)) return values.filter(item => item !== choice.method)
+      return values.length < MAX_METHODS && choice.available ? [...values, choice.method] : values
+    })
+    setParams(values => values[choice.method] ? values : {
+      ...values,
+      [choice.method]: Object.fromEntries(choice.params.map(param => [param.name, param.default == null ? '' : String(param.default)])),
+    })
+  }
+
+  async function submit() {
+    if (!current || !preview?.available || !selectedMethods.length || submission.current) return
+    const controller = new AbortController()
+    submission.current = controller
+    setBusy(true)
+    setError('')
+    try {
+      const payload = selectedMethods.map(choice => {
+        const values: Record<string, number> = {}
+        for (const spec of choice.params) {
+          const raw = params[choice.method]?.[spec.name]
+          if (raw == null || raw.trim() === '') continue
+          const value = Number(raw)
+          if (!Number.isFinite(value)) throw new Error(choice.name + '的' + spec.label + '需要填写数值')
+          values[spec.name] = value
+        }
+        return { method: choice.method, params: values }
+      })
+      const experiment = await createUserExperiment({
+        datasetVersion: current.version, methods: payload, splitPreset: preset,
+      }, controller.signal)
+      if (controller.signal.aborted) return
+      onCreated(experiment)
+      onOpenChange(false)
+    } catch (failure) {
+      if (controller.signal.aborted) return
+      if (failure instanceof NetworkError && failure.timedOut) setError('等待确认超时。请先查看训练记录，确认任务状态。')
+      else reportFailure(failure, '训练提交失败')
+    } finally {
+      submission.current = null
+      if (!controller.signal.aborted) setBusy(false)
+    }
+  }
+
+  return <Dialog open={open} onOpenChange={next => { if (!submission.current) onOpenChange(next) }}>
+    <DialogContent aria-describedby={undefined} showCloseButton={!busy}
+      className="max-h-[min(90dvh,48rem)] max-w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl p-0 sm:max-w-[56rem]">
+      <DialogHeader className="flex-row items-center gap-3 border-b border-border-soft px-5 py-4 text-left sm:px-6">
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent"><Activity size={19} aria-hidden="true"/></span>
+        <DialogTitle>开始训练</DialogTitle>
+      </DialogHeader>
+
+      <div className="min-h-0 overflow-y-auto" aria-busy={busy}>
+        {datasets === null ? <p className="px-5 py-8 text-sm text-foreground-3" role="status">{error ? '数据暂不可用' : '正在读取可用数据…'}</p>
+          : datasets.length === 0 ? <p className="px-5 py-8 text-sm text-foreground-3">先导入或构建一个数据集，再开始训练。</p>
+          : <div className="grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <section className="grid min-w-0 content-start gap-4 border-b border-border-soft bg-sunken/50 p-5 sm:px-6 md:border-r md:border-b-0" aria-label="数据与切分">
+              <h2 className="text-sm font-semibold">数据与切分</h2>
+              <div className="grid gap-1.5">
+                <label htmlFor="training-data-version" className="text-xs font-medium text-foreground-2">数据版本</label>
+                <Select value={selected} disabled={busy} onValueChange={value => { setPreview(null); setError(''); setSelected(value) }}>
+                  <SelectTrigger id="training-data-version" aria-label="训练数据版本" className="bg-card">
+                    <SelectValue placeholder="选择数据">{current?.dataset}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-w-[min(90vw,36rem)]">
+                    {datasets.map(item => <SelectItem key={item.version} value={item.version}>
+                      <span className="block min-w-0 [overflow-wrap:anywhere]">{item.dataset} · {item.version}</span>
+                    </SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {current ? <div className="grid gap-1 text-xs text-foreground-3">
+                  <p className="truncate font-mono" title={current.version}>{current.version}</p>
+                  <p>{current.mine ? '我的数据' : '共享数据'} · {current.schema}</p>
+                </div> : null}
               </div>
-            </div>
-            <Popover open={methodsOpen} onOpenChange={setMethodsOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" className="h-9 w-full justify-between gap-2 text-sm font-normal hover:bg-sunken hover:text-foreground" disabled={!methods.length} aria-label="选择训练方法">
-                  <span className={chosen.length ? 'text-foreground' : 'text-foreground-3'}>{chosen.length ? `已选择 ${chosen.length} 个方法` : '选择训练方法'}</span>
-                  <ChevronDown aria-hidden="true" className="text-foreground-4" size={15}/>
+              <div className="grid gap-1.5">
+                <label htmlFor="training-split" className="text-xs font-medium text-foreground-2">时间切分</label>
+                <Select value={preset} disabled={busy} onValueChange={value => { setPreview(null); setError(''); setPreset(value) }}>
+                  <SelectTrigger id="training-split" className="bg-card"><SelectValue/></SelectTrigger>
+                  <SelectContent>{SPLIT_PRESETS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              {preview ? <SplitSummary preview={preview}/> : current && !error ? <p role="status" className="text-xs text-foreground-3">正在检查时间切分…</p> : null}
+            </section>
+
+            <section className="grid min-w-0 content-start gap-3 p-5 sm:px-6" aria-label="训练方法">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">训练方法</h2>
+                <Button type="button" size="xs" variant="ghost" disabled={!methods.length || busy} onClick={() => setLibraryOpen(true)}>
+                  <BookOpenText aria-hidden="true" size={13}/>算法库
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(92vw,420px)] p-1.5">
-                <div className="max-h-72 overflow-auto">
-                  {methods.map(choice => <label key={choice.method} className={cn('flex items-start gap-2 rounded-md px-2 py-2 text-sm', choice.available ? 'cursor-pointer hover:bg-sunken' : 'cursor-not-allowed opacity-50')}>
-                    <Checkbox checked={chosen.includes(choice.method)} disabled={!choice.available} onCheckedChange={() => toggle(choice.method)}/>
-                    <span className="min-w-0"><span className="block">{choice.name}</span>{choice.available ? null : <span className="mt-0.5 block text-[11px] text-foreground-3">{choice.reason ?? '当前不可用'}</span>}</span>
-                  </label>)}
-                </div>
-                <div className="mt-1.5 flex justify-end border-t border-border-soft pt-1.5">
-                  <Button size="sm" type="button" onClick={() => setMethodsOpen(false)}><Check aria-hidden="true" size={14}/>完成</Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-            {selectedMethods.length ? <div className="flex flex-wrap gap-1.5">
-              {selectedMethods.map(choice => <span key={choice.method} className="inline-flex items-center gap-1 rounded-md bg-soft px-2 py-1 text-xs text-foreground-2">
-                {choice.name}
-                <button type="button" className="text-foreground-4 hover:text-rose" aria-label={`移除 ${choice.name}`} onClick={() => toggle(choice.method)}><X aria-hidden="true" size={12}/></button>
-              </span>)}
-            </div> : <p className="text-xs text-foreground-3">选择一个或多个训练方法。</p>}
-            {selectedMethods.filter(choice => choice.params.length).map(choice => <div key={choice.method} className="grid gap-2 rounded-lg border border-border-soft p-3">
-              <strong className="text-xs font-medium text-foreground-2">{choice.name} 参数</strong>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {choice.params.map(spec => <label key={spec.name} className="grid gap-1 text-xs text-foreground-3">{spec.label}（{spec.min}–{spec.max}）
-                  <Input aria-label={`${choice.name} ${spec.name}`} min={spec.min} max={spec.max} step="any" value={params[choice.method]?.[spec.name] ?? ''} onChange={event => setParams(values => ({ ...values, [choice.method]: { ...(values[choice.method] ?? {}), [spec.name]: event.target.value } }))} type="number"/>
-                  {spec.description ? <span className="text-[10px] leading-4 text-foreground-4">{spec.description}</span> : null}
-                </label>)}
               </div>
-            </div>)}
-          </section>
-          {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
-        </div>}
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-        <Button type="button" disabled={!current || !chosen.length || !preview?.available || busy} onClick={() => void submit()}>{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}开始训练（{chosen.length} 个方法）</Button>
+              <Popover open={methodsOpen} onOpenChange={setMethodsOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full justify-between font-normal" disabled={!methods.length || busy} aria-label="选择训练方法">
+                    选择训练方法<ChevronDown aria-hidden="true" className="text-foreground-3" size={15}/>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(88vw,25rem)] p-2">
+                  <div className="max-h-64 overflow-auto">
+                    {methods.map(choice => {
+                      const checked = chosen.includes(choice.method)
+                      const disabled = !choice.available || (!checked && chosen.length >= MAX_METHODS)
+                      return <label key={choice.method} className={cn('flex items-start gap-2 rounded-md px-2 py-2 text-sm', disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-sunken')}>
+                        <Checkbox checked={checked} disabled={disabled} onCheckedChange={() => toggle(choice)}/>
+                        <span className="min-w-0">{choice.name}{!choice.available && choice.reason ? <span className="block text-xs text-foreground-3">{choice.reason}</span> : null}</span>
+                      </label>
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between border-t border-border-soft pt-2">
+                    <span className="px-2 text-xs text-foreground-3">已选 {chosen.length} / {MAX_METHODS}</span>
+                    <Button size="sm" type="button" onClick={() => setMethodsOpen(false)}><Check aria-hidden="true" size={14}/>完成</Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {selectedMethods.length ? <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
+                {selectedMethods.map(choice => <li key={choice.method} className="px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Check className="size-3.5 shrink-0 text-accent" aria-hidden="true"/>
+                    <span className="min-w-0 flex-1 text-sm font-medium [overflow-wrap:anywhere]">{choice.name}</span>
+                    <Button type="button" size="icon-xs" variant="ghost" disabled={busy} aria-label={'移除 ' + choice.name} onClick={() => toggle(choice)}>
+                      <X aria-hidden="true"/>
+                    </Button>
+                  </div>
+                  {choice.params.length ? <details className="group mt-0.5 pl-5.5">
+                    <summary className="flex w-fit cursor-pointer list-none items-center gap-1 py-1 text-xs font-medium text-foreground-3 hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                      参数<ChevronDown className="size-3 group-open:rotate-180" aria-hidden="true"/>
+                    </summary>
+                    <div className="grid gap-x-3 gap-y-2.5 pb-1 pt-2 sm:grid-cols-2">
+                      {choice.params.map(spec => <label key={spec.name} className="grid min-w-0 gap-1 text-xs text-foreground-2">
+                        {spec.label}<Input aria-label={choice.name + ' ' + spec.name} min={spec.min} max={spec.max} step="any"
+                          disabled={busy} value={params[choice.method]?.[spec.name] ?? ''} type="number"
+                          onChange={event => {
+                            const value = event.target.value
+                            setParams(values => ({ ...values, [choice.method]: { ...values[choice.method], [spec.name]: value } }))
+                          }}/>
+                      </label>)}
+                    </div>
+                  </details> : null}
+                </li>)}
+              </ul> : null}
+            </section>
+          </div>}
+      </div>
+
+      <DialogFooter className="flex-col-reverse gap-3 border-t border-border-soft bg-card px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="min-w-0 flex-1 text-xs">
+          {error ? <p role="alert" className="leading-body text-rose-deep">{error}</p> : null}
+          {busy ? <p role="status" className="text-foreground-3">正在等待队列确认</p> : null}
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>取消</Button>
+          {datasets?.length === 0 ? <Button type="button" onClick={onOpenData}>打开我的数据</Button> : <Button type="button" disabled={!current || !selectedMethods.length || !preview?.available || busy} onClick={() => void submit()}>
+            {busy ? <><LoaderCircle className="animate-spin" aria-hidden="true"/>正在提交训练…</>
+              : selectedMethods.length ? '开始训练（' + selectedMethods.length + ' 个方法）' : '开始训练'}
+          </Button>}
+        </div>
       </DialogFooter>
     </DialogContent>
-    <AlgorithmLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} methods={methods} schema={current?.schema ?? '—'}/>
+    <AlgorithmLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} methods={methods} schema={schema ?? '—'}/>
   </Dialog>
 }

@@ -40,6 +40,10 @@ def classification(labels, decisions):
     fp = sum(y == 0 and p for y, p in zip(labels, decisions, strict=True))
     fn = sum(y == 1 and not p for y, p in zip(labels, decisions, strict=True))
     tn = len(labels) - tp - fp - fn
+    return classification_counts(tp, fp, tn, fn)
+
+
+def classification_counts(tp, fp, tn, fn):
     return {
         "precision": metric(tp / (tp + fp)) if tp + fp else metric(reason="没有预测为正的提交"),
         "recall": metric(tp / (tp + fn)) if tp + fn else metric(reason="没有正标签提交"),
