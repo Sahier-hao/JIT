@@ -17,8 +17,7 @@ async function expectNoOverflow(page: import('@playwright/test').Page) {
   expect(size.scrollWidth, JSON.stringify(size)).toBeLessThanOrEqual(size.innerWidth)
 }
 
-test('空目录库恢复九模型并显示部分导入的真实原因', async ({ page }, info) => {
-  test.skip(info.project.name !== 'desktop-1280', '模型包恢复闭环只跑一个浏览器项目')
+test('空目录库恢复九模型并显示部分导入的真实原因', async ({ page }) => {
   test.setTimeout(180000)
   const evidence = JSON.parse(readFileSync(evidencePath, 'utf-8'))
   const setup = await page.request.post('/api/admin/setup', { data: account })
