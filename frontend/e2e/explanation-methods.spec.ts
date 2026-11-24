@@ -4,7 +4,7 @@ import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runEvidenceDir, runScreenshotDir } from '../evidence.ts'
 import { loginOrCreateUser } from './support/user-session.ts'
 
-const explanationCalls: { method: string; url: string; status: number }[] = []
+const explanationCalls: { method: string; url: string; status: number | null }[] = []
 
 test.beforeEach(async ({ page }) => {
   explanationCalls.length = 0
@@ -17,6 +17,12 @@ test.beforeEach(async ({ page }) => {
         url: new URL(url).pathname + new URL(url).search,
         status: response.status(),
       })
+    }
+  })
+  page.on('requestfailed', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('/explanation') && request.method() === 'POST') {
+      explanationCalls.push({ method: request.method(), url: url.pathname + url.search, status: null })
     }
   })
 })
@@ -78,6 +84,12 @@ test('固定分析生成两种解释并刷新重开、切换提交和窄屏核�
 
   // 显式生成逻辑回归 log-odds 解释（logit），不覆盖遮挡解释。
   await selector.selectOption('linear-logodds-v1')
+  await page.route((url) => url.pathname.endsWith(`/commits/${sha}/explanation`)
+    && url.searchParams.get('method') === 'linear-logodds-v1', async (route) => {
+    await route.abort('failed')
+  }, { times: 1 })
+  await detail.getByRole('button', { name: '生成模型解释' }).click()
+  await expect(detail.getByRole('alert')).toBeVisible()
   await detail.getByRole('button', { name: '生成模型解释' }).click()
   await expect(detail.getByRole('button', { name: '生成模型解释' })).toBeHidden({ timeout: 90000 })
   await expect(detail.getByText(/贡献合计：.*（log-odds）/)).toBeVisible()
@@ -97,12 +109,20 @@ test('固定分析生成两种解释并刷新重开、切换提交和窄屏核�
   // 刷新重开：关闭后重新打开同一提交，保存的解释仍可读。
   await page.keyboard.press('Escape')
   await expect(detail).not.toBeVisible()
+  await page.reload()
   await page.getByRole('button', { name: `查看 ${sha}` }).click()
   const reopened = page.getByRole('dialog', { name: '提交详情' })
   await expect(reopened).toBeVisible()
   await expect(reopened.getByLabel('解释方法')).toBeVisible()
   await reopened.getByLabel('解释方法').selectOption('linear-logodds-v1')
   await expect(reopened.getByText(/贡献合计：.*（log-odds）/)).toBeVisible()
+  await expect(reopened.getByRole('table', { name: /linear-logodds-v1/ }).getByRole('rowheader').first()).toBeVisible()
+  expect(explanationCalls.filter((call) => call.method === 'POST')).toHaveLength(postsBeforeSwitch)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await noOverflow(page)
+  await expect(reopened.getByRole('columnheader', { name: /log-odds/ })).toBeVisible()
+  await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/explanation-narrow-${info.project.name}.png`, fullPage: false })
 
   // 切换提交：另一提交尚未生成解释，不应读到前一提交的结果。
   await page.keyboard.press('Escape')
@@ -113,14 +133,10 @@ test('固定分析生成两种解释并刷新重开、切换提交和窄屏核�
   await expect(other).toBeVisible()
   await expect(other.getByText(/尚未生成该方法的模型解释/)).toBeVisible()
 
-  // 窄屏查看，确认没有横向溢出。
-  await page.setViewportSize({ width: 390, height: 844 })
-  await noOverflow(page)
-  await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/explanation-narrow-${info.project.name}.png`, fullPage: false })
-
   writeFileSync(`${ensureDir(runEvidenceDir)}/explanation-requests.json`, `${JSON.stringify(explanationCalls, null, 2)}\n`, 'utf-8')
-  expect(explanationCalls.some((call) => call.method === 'POST' && call.url.includes('method=occlusion-mean-v1'))).toBe(true)
-  expect(explanationCalls.some((call) => call.method === 'POST' && call.url.includes('method=linear-logodds-v1'))).toBe(true)
+  expect(explanationCalls.some((call) => call.method === 'POST' && call.status === 200 && call.url.includes('method=occlusion-mean-v1'))).toBe(true)
+  expect(explanationCalls.some((call) => call.method === 'POST' && call.status === 200 && call.url.includes('method=linear-logodds-v1'))).toBe(true)
+  expect(explanationCalls.some((call) => call.method === 'POST' && call.status === null && call.url.includes('method=linear-logodds-v1'))).toBe(true)
   expect(explanationCalls.some((call) => call.url.includes('/explanation-methods?'))).toBe(true)
   expect(explanationCalls.some((call) => call.url.includes('/explanations?'))).toBe(true)
 })

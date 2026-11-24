@@ -22,6 +22,11 @@ const FEATURE_LABELS: Record<string, string> = {
   age: '变更间隔', nuc: '历史变更数', exp: '作者经验', rexp: '作者近期经验', sexp: '子系统经验',
 }
 
+const SAVED_METHOD_LABELS: Record<string, string> = {
+  'occlusion-mean-v1': '遮挡均值基线',
+  'linear-logodds-v1': '逻辑回归 log-odds 分解',
+}
+
 function featureLabel(feature: string): string {
   return `${FEATURE_LABELS[feature] ?? feature}（${feature}）`
 }
@@ -68,17 +73,17 @@ function ExplanationTable({ result }: { result: Explanation }) {
         </caption>
         <TableHeader>
           <TableRow>
-            <TableHead>特征</TableHead>
-            <TableHead>本次值</TableHead>
-            <TableHead>基线值</TableHead>
-            <TableHead>带符号贡献（{unitLabel(result.explanationUnit)}）</TableHead>
-            <TableHead>方向</TableHead>
+            <TableHead scope="col">特征</TableHead>
+            <TableHead scope="col">本次值</TableHead>
+            <TableHead scope="col">基线值</TableHead>
+            <TableHead scope="col">带符号贡献（{unitLabel(result.explanationUnit)}）</TableHead>
+            <TableHead scope="col">方向</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {result.explanation.map((item) => (
             <TableRow key={item.feature}>
-              <TableHead>{featureLabel(item.feature)}</TableHead>
+              <TableHead scope="row">{featureLabel(item.feature)}</TableHead>
               <TableCell className="tabular-nums">{item.value.toLocaleString(undefined, { maximumFractionDigits: 6 })}</TableCell>
               <TableCell className="tabular-nums">{item.baseline.toLocaleString(undefined, { maximumFractionDigits: 6 })}</TableCell>
               <TableCell className="tabular-nums"><b>{item.delta > 0 ? '+' : ''}{item.delta.toFixed(6)}</b></TableCell>
@@ -96,7 +101,7 @@ function MethodMetadata({ result, meta, context }: { result: Explanation; meta?:
     <details className="rounded-sm border border-border-soft">
       <summary>解释方法与来源</summary>
       <dl className="grid gap-1 text-xs [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1 [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-        <div><dt>方法</dt><dd>{meta?.name ?? result.explanationMethod}</dd></div>
+        <div><dt>方法</dt><dd>{meta?.name ?? SAVED_METHOD_LABELS[result.explanationMethod ?? ''] ?? result.explanationMethod}</dd></div>
         <div><dt>单位</dt><dd>{unitLabel(result.explanationUnit)}</dd></div>
         <div><dt>数据口径</dt><dd>{result.featureSchemaVersion}</dd></div>
         <div><dt>基线数据</dt><dd>{result.baselineDatasetVersion}</dd></div>
@@ -121,11 +126,11 @@ function Comparison({ explanations, methods }: { explanations: Explanation[]; me
         <caption className="sr-only">同一提交多种解释方法的主要特征、方向、稳定性与限制</caption>
         <TableHeader>
           <TableRow>
-            <TableHead>方法</TableHead>
-            <TableHead>单位</TableHead>
-            <TableHead>主要特征</TableHead>
-            <TableHead>方向</TableHead>
-            <TableHead>排序稳定性</TableHead>
+            <TableHead scope="col">方法</TableHead>
+            <TableHead scope="col">单位</TableHead>
+            <TableHead scope="col">主要特征</TableHead>
+            <TableHead scope="col">方向</TableHead>
+            <TableHead scope="col">排序稳定性</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -133,11 +138,11 @@ function Comparison({ explanations, methods }: { explanations: Explanation[]; me
             const meta = methods.find((method) => method.method === item.explanationMethod)
             return (
               <TableRow key={item.explanationMethod}>
-                <TableHead>{meta?.name ?? item.explanationMethod}</TableHead>
+                <TableHead scope="row">{meta?.name ?? SAVED_METHOD_LABELS[item.explanationMethod ?? ''] ?? item.explanationMethod}</TableHead>
                 <TableCell>{unitLabel(item.explanationUnit)}</TableCell>
                 <TableCell>{item.explanation.slice(0, 3).map((feature) => featureLabel(feature.feature)).join('、')}</TableCell>
                 <TableCell>{item.explanation[0]?.direction === 'increases' ? '推高分数' : item.explanation[0] ? '拉低分数' : '—'}</TableCell>
-                <TableCell>{item.stability?.status === 'unstable' ? '不稳定' : '稳定'}</TableCell>
+                <TableCell>{item.stability ? (item.stability.status === 'unstable' ? '不稳定' : '稳定') : '未记录'}</TableCell>
               </TableRow>
             )
           })}
@@ -166,17 +171,9 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
   const key = JSON.stringify(context)
   const [state, setState] = useState<State>({ key: '', loading: true, saved: [] })
   const [attempt, setAttempt] = useState(0)
-  const locked = useRef(false)
   const generation = useRef<AbortController | null>(null)
-  const activeKey = useRef(key)
-  const selectedRef = useRef<string | undefined>(undefined)
-  activeKey.current = key
   useEffect(() => {
     const controller = new AbortController()
-    generation.current?.abort()
-    locked.current = false
-    if (activeKey.current !== key) selectedRef.current = undefined
-    setState((previous) => ({ ...previous, key, loading: true, error: undefined, busy: false }))
     Promise.all([
       requestRepositoryExplanationMethods(context, controller.signal),
       requestRepositoryExplanations(context, controller.signal),
@@ -184,19 +181,20 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
       .then(([directory, list]) => {
         if (controller.signal.aborted) return
         const methods = directory.methods
-        const previous = selectedRef.current
-        const selected = previous && methods.some((method) => method.method === previous)
-          ? previous
-          : list.explanations.find((item) => item.explanationStatus === 'supported')?.explanationMethod
-            ?? (methods.some((method) => method.method === directory.defaultMethod) ? directory.defaultMethod : methods[0]?.method)
-        selectedRef.current = selected
+        const selected = list.explanations.find((item) => item.explanationStatus === 'supported')?.explanationMethod
+          ?? (methods.some((method) => method.method === directory.defaultMethod) ? directory.defaultMethod : methods[0]?.method)
         setState({ key, loading: false, directory, saved: list.explanations, selectedMethod: selected })
       })
       .catch((failure: unknown) => {
         if (controller.signal.aborted) return
-        setState((previous) => ({ ...previous, key, loading: false, error: failure instanceof Error ? failure.message : '解释读取失败' }))
+        const error = failure instanceof Error ? failure.message : '解释读取失败'
+        setState({ key, loading: false, saved: [], error })
       })
-    return () => { controller.abort() }
+    return () => {
+      controller.abort()
+      generation.current?.abort()
+      generation.current = null
+    }
     // 序列化后的 context 已包含全部来源身份，父组件重渲染不重复请求。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, attempt])
@@ -205,51 +203,56 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
   const loadError = current && !current.loading && !current.directory ? current.error : undefined
   const methods = current?.directory?.methods ?? []
   const saved = current?.saved ?? []
+  const options = methods.map(({ method, name, unit }) => ({ method, name, unit }))
+  for (const item of saved) {
+    const method = item.explanationMethod
+    if (!method || item.explanationStatus !== 'supported' || options.some((option) => option.method === method)) continue
+    options.push({ method, name: SAVED_METHOD_LABELS[method] ?? method, unit: item.explanationUnit })
+  }
   const selectedMethod = current?.selectedMethod
   const selectedMeta = methods.find((method) => method.method === selectedMethod)
   const selectedSaved = saved.find((item) => item.explanationMethod === selectedMethod)
   async function generate(method: string) {
-    if (locked.current || !method) return
-    locked.current = true
+    if (generation.current || !methods.some((item) => item.method === method)) return
     const controller = new AbortController()
     generation.current = controller
     setState((previous) => ({ ...previous, busy: true, error: undefined }))
     try {
       const result = await requestRepositoryExplanation(context, { generate: true, method, signal: controller.signal })
-      if (controller.signal.aborted || activeKey.current !== key) return
+      if (controller.signal.aborted) return
       setState((previous) => {
         const exists = previous.saved.some((item) => item.explanationMethod === method)
         const nextSaved = exists
           ? previous.saved.map((item) => (item.explanationMethod === method ? result : item))
           : [...previous.saved, result]
-        selectedRef.current = method
-        return { ...previous, busy: false, saved: nextSaved, selectedMethod: method }
+        return { ...previous, busy: false, saved: nextSaved }
       })
     } catch (failure) {
-      if (controller.signal.aborted || activeKey.current !== key) return
+      if (controller.signal.aborted) return
       setState((previous) => ({ ...previous, busy: false, error: failure instanceof Error ? failure.message : '解释生成失败' }))
     } finally {
-      if (activeKey.current === key) locked.current = false
+      if (generation.current === controller) generation.current = null
     }
   }
   const noMethods = current?.directory ? methods.length === 0 : false
   return (
-    <section className="repository-explanation grid gap-2" aria-label="模型解释" aria-busy={loading}>
+    <section className="repository-explanation grid gap-2" aria-label="模型解释" aria-busy={loading || current?.busy === true}>
       {heading ? <h3>模型解释</h3> : null}
       <p className="text-xs leading-body text-foreground-3">单特征敏感度，不是缺陷结论、因果解释或代码定位；保存的模型分数不会改变。</p>
       {loading ? <p role="status">正在读取模型解释…</p> : null}
       {loadError ? <div role="alert"><p>{loadError}</p><Button variant="link" size="sm" onClick={() => { setState({ key: '', loading: true, saved: [] }); setAttempt((value) => value + 1) }} type="button">重新读取解释</Button></div> : null}
       {current && !loading && !loadError ? (
         <>
-          {methods.length > 0 ? (
+          {options.length > 0 ? (
             <label className="grid gap-1">
               <span className="text-xs text-foreground-3">解释方法</span>
               <NativeSelect
                 aria-label="解释方法"
                 value={selectedMethod ?? ''}
+                disabled={current.busy}
                 onChange={(event) => setState((previous) => ({ ...previous, selectedMethod: event.target.value, error: undefined }))}
               >
-                {methods.map((method) => (
+                {options.map((method) => (
                   <NativeSelectOption key={method.method} value={method.method}>
                     {method.name}（{unitLabel(method.unit)}）
                   </NativeSelectOption>
@@ -273,12 +276,12 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
           ) : selectedMethod && selectedSaved && selectedSaved.explanationStatus === 'not-supported' ? (
             <div className="grid gap-1">
               <p role="status">{selectedSaved.explanationReason ?? '本次暂不能提供解释，原分数保持不变。'}</p>
-              <Button variant="link" size="sm" className="justify-self-start" onClick={() => void generate(selectedMethod)} type="button">{current.busy ? '正在生成模型解释…' : '重新尝试生成'}</Button>
+              <Button variant="link" size="sm" className="justify-self-start" onClick={() => void generate(selectedMethod)} disabled={current.busy || !selectedMeta} type="button">{current.busy ? '正在生成模型解释…' : '重新尝试生成'}</Button>
             </div>
           ) : selectedMethod && selectedMeta ? (
             <div className="grid gap-1">
               <p>尚未生成该方法的模型解释，生成后会随此分析独立保存，不会覆盖其他方法的解释。</p>
-              <Button variant="link" size="sm" className="justify-self-start" onClick={() => void generate(selectedMethod)} type="button">{current.busy ? '正在生成模型解释…' : '生成模型解释'}</Button>
+              <Button variant="link" size="sm" className="justify-self-start" onClick={() => void generate(selectedMethod)} disabled={current.busy || !selectedMeta} type="button">{current.busy ? '正在生成模型解释…' : '生成模型解释'}</Button>
             </div>
           ) : null}
           {current.error ? <p className="text-xs text-rose" role="alert">{current.error}</p> : null}

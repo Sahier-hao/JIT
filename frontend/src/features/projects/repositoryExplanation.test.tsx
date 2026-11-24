@@ -92,6 +92,25 @@ it('switches between saved methods without posting or mixing units', async () =>
   expect(fetch.mock.calls.every(([, init]) => (init as RequestInit)?.method !== 'POST')).toBe(true)
 })
 
+it('opens each saved explanation after the original model becomes unavailable', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) {
+      return response(methodsBody({ methods: [], modelAvailable: false, reasonCode: 'MODEL_NOT_READY' }))
+    }
+    return response(listBody([occlusionSupported, linearSupported]))
+  })
+  renderDetail()
+  expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
+  const selector = screen.getByLabelText('解释方法')
+  await userEvent.setup().selectOptions(selector, 'linear-logodds-v1')
+  const table = await screen.findByRole('table', { name: /linear-logodds-v1/ })
+  expect(within(table).getByRole('rowheader', { name: /la/ })).toBeVisible()
+  expect(within(table).getByRole('columnheader', { name: /log-odds/ })).toBeVisible()
+  expect(screen.queryByRole('button', { name: /生成/ })).not.toBeInTheDocument()
+  expect(fetch.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true)
+})
+
 it('compares multiple saved methods side by side without summing or auto-selecting', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input)
