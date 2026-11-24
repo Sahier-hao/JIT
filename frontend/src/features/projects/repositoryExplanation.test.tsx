@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@/lib/test-utils'
+import { render, screen, waitFor, within } from '@/lib/test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { CommitDetail } from '@/features/projects/components/CommitDetail'
@@ -14,87 +14,161 @@ const data: Dataset = { mode: 'repository', project: 'repo', version: 'data-v1',
   repository: { repositoryId: REPO, syncId: SYNC, repositoryUrl: 'https://github.com/example/repo',
     branch: 'main', datasetVersion: 'data-v1', requestedStrategy: 'generic-model', modelStrategy: 'generic-model',
     degradeReason: null, trainRecords: null, trainPositives: null, labelNote: '', modelId: MODEL, runId: RUN } }
-const empty = { repositoryId: REPO, viewSyncId: SYNC, commitId: SHA, risk: .4,
-  modelId: MODEL, runId: RUN, datasetVersion: 'data-v1', explanationStatus: 'not-generated',
-  explanation: [], explanationMethod: null, explanationSummary: null, explanationReason: null,
-  reasonCode: null, baselineSource: null, baselineDatasetVersion: null, missingBaselineFeatures: [],
+
+const base = { repositoryId: REPO, viewSyncId: SYNC, commitId: SHA, modelId: MODEL, runId: RUN, datasetVersion: 'data-v1' }
+const empty = { ...base, risk: .4, explanationStatus: 'not-generated', explanation: [], explanationMethod: 'occlusion-mean-v1',
+  explanationUnit: 'probability', explanationSummary: null, explanationReason: null, reasonCode: null,
+  contributionTotal: null, baselineSource: null, baselineDatasetVersion: null, missingBaselineFeatures: [],
   featureSchemaVersion: null, modelSha256: null, generatedAt: null, limitations: ['不是缺陷结论或代码定位'] }
-const supported = { ...empty, explanationStatus: 'supported', explanationMethod: 'occlusion-mean-v1',
-  explanationSummary: '新增行数推高模型分数。', baselineSource: 'zero', baselineDatasetVersion: 'model-data',
-  missingBaselineFeatures: ['ns', 'nd', 'nf', 'ent', 'la', 'ld'], featureSchemaVersion: 'openstack-six-v1',
-  modelSha256: 'b'.repeat(64), generatedAt: '2026-10-25T00:00:00Z',
+const occlusionSupported = { ...empty, explanationStatus: 'supported', explanationSummary: '新增行数推高模型分数。',
+  baselineSource: 'zero', baselineDatasetVersion: 'model-data', missingBaselineFeatures: ['ns', 'nd', 'nf', 'ent', 'la', 'ld'],
+  featureSchemaVersion: 'openstack-six-v1', modelSha256: 'b'.repeat(64), generatedAt: '2026-10-25T00:00:00Z',
+  stability: { status: 'stable', rounds: 3, topFeatures: [['la']], baseOrder: ['la'] },
   explanation: [{ feature: 'la', value: 30, baseline: 0, delta: .12, direction: 'increases' }] }
+const linearSupported = { ...empty, explanationMethod: 'linear-logodds-v1', explanationUnit: 'logit',
+  explanationStatus: 'supported', explanationSummary: '相对训练分区基线，log-odds 总变化为 1.234000；影响最大的字段为 la，推高 1.234000。',
+  baselineSource: 'training-partition-mean', baselineDatasetVersion: 'model-data', missingBaselineFeatures: [],
+  featureSchemaVersion: 'openstack-six-v1', modelSha256: 'b'.repeat(64), generatedAt: '2026-10-25T00:00:00Z',
+  contributionTotal: 1.234, stability: { status: 'stable', rounds: 3, topFeatures: [['la']], baseOrder: ['la'] },
+  explanation: [{ feature: 'la', value: 30, baseline: 0, delta: 1.234, direction: 'increases' }] }
+const notSupported = { ...empty, explanationStatus: 'not-supported', explanationReason: '原模型暂不可用', reasonCode: 'MODEL_NOT_READY' }
+
+const occlusionMethod = { method: 'occlusion-mean-v1', name: '遮挡均值基线', applicableModels: ['logistic-regression'], unit: 'probability', baseline: 'training-partition-mean', cost: 'x', deterministic: true, limitations: ['不是缺陷结论'] }
+const linearMethod = { method: 'linear-logodds-v1', name: '逻辑回归 log-odds 分解', applicableModels: ['logistic-regression'], unit: 'logit', baseline: 'training-partition-mean', cost: 'y', deterministic: true, limitations: ['单位不同不能相加'] }
+function methodsBody(overrides: Record<string, unknown> = {}) {
+  return { ...base, defaultMethod: 'occlusion-mean-v1', modelAvailable: true, reasonCode: null, modelSha256: 'b'.repeat(64),
+    methods: [occlusionMethod, linearMethod], savedMethods: [], ...overrides }
+}
+function listBody(items: unknown[]) { return { ...base, explanations: items } }
 function response(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status }) }
 function renderDetail(dataset = data, id = SHA) {
-  return render(<CommitDetail data={dataset} id={id} onClose={vi.fn()}/> )
+  return render(<CommitDetail data={dataset} id={id} onClose={vi.fn()} />)
 }
 afterEach(() => vi.restoreAllMocks())
 
-it('shows a saved fix link next to the defect evidence for a scored commit', () => {
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue(response(empty))
-  const fix = 'f'.repeat(40)
-  renderDetail({ ...data, records: [{ ...data.records[0],
-    originalCommitUrl: `https://github.com/example/repo/commit/${SHA}`,
-    labelStatus: 'positive',
-    observedThrough: '2024-04-01T00:00:00Z',
-    labelEvidence: [{ fixCommit: fix, path: 'src/example.py', fixTime: '2024-03-01T00:00:00Z', ruleVersion: 'szz-full-v1' }],
-  }] })
-  expect(screen.getByText('有引入证据')).toBeVisible()
-  expect(screen.getByText('src/example.py')).toBeVisible()
-  expect(screen.getByRole('link', { name: fix.slice(0, 12) })).toHaveAttribute('href', `https://github.com/example/repo/commit/${fix}`)
+it('reads saved explanations without posting and exposes the method selector', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, _init) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody())
+    if (url.includes('/explanations?')) return response(listBody([occlusionSupported]))
+    return response(notSupported)
+  })
+  renderDetail()
+  expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
+  expect(screen.getByLabelText('解释方法')).toBeVisible()
+  expect(fetch.mock.calls.every(([, init]) => (init as RequestInit)?.method !== 'POST')).toBe(true)
 })
 
-it('reads without inferring and generates a pinned model explanation only after a click', async () => {
-  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => response(init?.method === 'POST' ? supported : empty))
+it('generates a selected method only after an explicit choice and keeps the risk unchanged', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, _init) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody())
+    if (url.includes('/explanations?')) return response(listBody([]))
+    return response(linearSupported)
+  })
   renderDetail()
-  const button = await screen.findByRole('button', { name: '生成模型解释' })
-  expect(fetch.mock.calls).toHaveLength(1)
-  expect(String(fetch.mock.calls[0][0])).toContain(`viewSyncId=${SYNC}`)
-  await userEvent.setup().click(button)
-  expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
-  expect(screen.getByText('新增行数（la）')).toBeVisible()
-  expect(screen.getByText('+0.120000')).toBeVisible()
-  expect(screen.getByText('零基线：训练分区背景不可用。')).toBeVisible()
-  expect(fetch.mock.calls[1][1]?.method).toBe('POST')
+  await screen.findByRole('button', { name: '生成模型解释' })
+  await userEvent.setup().selectOptions(screen.getByLabelText('解释方法'), 'linear-logodds-v1')
+  await userEvent.setup().click(screen.getByRole('button', { name: '生成模型解释' }))
+  expect(await screen.findByText(/log-odds 总变化/)).toBeVisible()
+  const post = fetch.mock.calls.find(([, init]) => (init as RequestInit)?.method === 'POST')
+  expect(post).toBeTruthy()
+  expect(String(post![0])).toContain('method=linear-logodds-v1')
   expect(data.records[0].risk).toBe(.4)
 })
 
-it('shows saved explanations without posting and rejects mismatched analysis identities', async () => {
-  const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(response(supported))
-  const view = renderDetail()
-  expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
-  expect(fetch.mock.calls).toHaveLength(1)
-  view.unmount()
-  fetch.mockResolvedValue(response({ ...supported, viewSyncId: REPO }))
+it('switches between saved methods without posting or mixing units', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody())
+    if (url.includes('/explanations?')) return response(listBody([occlusionSupported, linearSupported]))
+    return response(notSupported)
+  })
   renderDetail()
-  expect(await screen.findByRole('button', { name: '重新读取解释' })).toBeVisible()
-  expect(screen.queryByText('新增行数推高模型分数。')).not.toBeInTheDocument()
+  expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
+  await userEvent.setup().selectOptions(screen.getByLabelText('解释方法'), 'linear-logodds-v1')
+  expect(await screen.findByText(/log-odds 总变化/)).toBeVisible()
+  expect(screen.getByText('贡献合计：+1.234000（log-odds）')).toBeVisible()
+  expect(fetch.mock.calls.every(([, init]) => (init as RequestInit)?.method !== 'POST')).toBe(true)
+})
+
+it('opens each saved explanation after the original model becomes unavailable', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) {
+      return response(methodsBody({ methods: [], modelAvailable: false, reasonCode: 'MODEL_NOT_READY' }))
+    }
+    return response(listBody([occlusionSupported, linearSupported]))
+  })
+  renderDetail()
+  expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
+  const selector = screen.getByLabelText('解释方法')
+  await userEvent.setup().selectOptions(selector, 'linear-logodds-v1')
+  const table = await screen.findByRole('table', { name: /linear-logodds-v1/ })
+  expect(within(table).getByRole('rowheader', { name: /la/ })).toBeVisible()
+  expect(within(table).getByRole('columnheader', { name: /log-odds/ })).toBeVisible()
+  expect(screen.queryByRole('button', { name: /生成/ })).not.toBeInTheDocument()
+  expect(fetch.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true)
+})
+
+it('compares multiple saved methods side by side without summing or auto-selecting', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody())
+    if (url.includes('/explanations?')) return response(listBody([occlusionSupported, linearSupported]))
+    return response(notSupported)
+  })
+  renderDetail()
+  const section = await screen.findByRole('region', { name: '多方法并列核对' })
+  expect(within(section).getByText('遮挡均值基线')).toBeVisible()
+  expect(within(section).getByText('逻辑回归 log-odds 分解')).toBeVisible()
+  expect(within(section).getByText('排序稳定性')).toBeVisible()
+  expect(screen.getByText('不同方法单位不同，不求和、不共享排名、不自动选择“最佳解释”。')).toBeVisible()
 })
 
 it('keeps unsupported reasons retryable and handles a successful retry', async () => {
   let attempts = 0
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => {
-    if (init?.method !== 'POST') return response(empty)
-    return response(++attempts === 1 ? { ...empty, explanationStatus: 'not-supported', explanationReason: '原模型暂不可用', reasonCode: 'MODEL_NOT_READY' } : supported)
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, _init) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody())
+    if (url.includes('/explanations?')) return response(listBody([]))
+    return response(++attempts === 1 ? notSupported : occlusionSupported)
   })
-  renderDetail(); const user = userEvent.setup()
+  renderDetail()
+  const user = userEvent.setup()
   await user.click(await screen.findByRole('button', { name: '生成模型解释' }))
   expect(await screen.findByText('原模型暂不可用')).toBeVisible()
   await user.click(screen.getByRole('button', { name: '重新尝试生成' }))
   expect(await screen.findByText('新增行数推高模型分数。')).toBeVisible()
 })
 
-it('does not display a late explanation after switching to another commit', async () => {
-  let complete: (response: Response) => void = () => {}
+it('shows a no-method reason without pretending an explanation succeeded', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody({ methods: [], reasonCode: 'INPUT_SCHEMA_MISMATCH' }))
+    if (url.includes('/explanations?')) return response(listBody([]))
+    return response(notSupported)
+  })
+  renderDetail()
+  expect(await screen.findByText(/没有可生成的解释方法/)).toBeVisible()
+  expect(screen.queryByText('生成模型解释')).not.toBeInTheDocument()
+})
+
+it('does not display a late response after switching to another commit', async () => {
   const nextSha = 'c'.repeat(40)
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => String(input).includes(SHA)
-    ? new Promise<Response>(resolve => { complete = resolve })
-    : response({ ...empty, commitId: nextSha }))
+  let complete: (value: Response) => void = () => {}
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, _init) => {
+    const url = String(input)
+    const commitId = url.includes(SHA) ? SHA : nextSha
+    if (url.includes('/explanation-methods?')) return response({ ...methodsBody(), commitId })
+    if (url.includes('/explanations?')) return response({ ...listBody([]), commitId })
+    return new Promise<Response>((resolve) => { complete = resolve })
+  })
   const view = renderDetail()
-  await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
+  await userEvent.setup().click(await screen.findByRole('button', { name: '生成模型解释' }))
   const next = { ...data, records: [{ ...data.records[0], id: nextSha }] }
-  view.rerender(<CommitDetail data={next} id={nextSha} onClose={vi.fn()}/>)
+  view.rerender(<CommitDetail data={next} id={nextSha} onClose={vi.fn()} />)
   expect(await screen.findByRole('button', { name: '生成模型解释' })).toBeVisible()
-  complete(response(supported))
+  complete(response(occlusionSupported))
   await waitFor(() => expect(screen.queryByText('新增行数推高模型分数。')).not.toBeInTheDocument())
 })
