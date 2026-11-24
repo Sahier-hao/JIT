@@ -21,12 +21,30 @@ function explanation(commitId: string, risk: number) {
     explanationStatus: 'not-generated', explanation: [], explanationReason: null, explanationMethod: null, explanationSummary: null,
     baselineSource: null, baselineDatasetVersion: null, missingBaselineFeatures: [], featureSchemaVersion: null, generatedAt: null, limitations: [] }
 }
+function explanationMethods(commitId: string) {
+  return { repositoryId: PROJECT, viewSyncId: SYNC, commitId, modelId: 'model-original', runId: null, datasetVersion: 'data-1',
+    defaultMethod: 'occlusion-mean-v1', modelAvailable: true, reasonCode: null, modelSha256: null,
+    methods: [{ method: 'occlusion-mean-v1', name: '遮挡均值基线', applicableModels: ['logistic-regression'], unit: 'probability',
+      baseline: 'training-partition-mean', cost: 'x', deterministic: true, limitations: ['不是缺陷结论'] }],
+    savedMethods: [] }
+}
+function explanationList(commitId: string) {
+  return { repositoryId: PROJECT, viewSyncId: SYNC, commitId, modelId: 'model-original', runId: null, datasetVersion: 'data-1', explanations: [] }
+}
 afterEach(() => vi.restoreAllMocks())
 it('searches commits and explains one commit without leaving the read-only detail', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
     if (path.endsWith('/repository-models')) return response({ models: modelChoices })
-    if (path.includes('/explanation')) {
+    if (path.includes('/explanation-methods?')) {
+      const commitId = path.includes(SHA_B) ? SHA_B : SHA_A
+      return response(explanationMethods(commitId))
+    }
+    if (path.includes('/explanations?')) {
+      const commitId = path.includes(SHA_B) ? SHA_B : SHA_A
+      return response(explanationList(commitId))
+    }
+    if (path.includes('/explanation?')) {
       const commitId = path.includes(SHA_B) ? SHA_B : SHA_A
       return response(explanation(commitId, commitId === SHA_B ? 0.3 : 0.8))
     }
@@ -48,13 +66,13 @@ it('searches commits and explains one commit without leaving the read-only detai
   await user.click(screen.getByText('handle expiry'))
   await user.click(screen.getByRole('button', { name: '模型解释' }))
   expect(await screen.findByRole('dialog')).toBeVisible()
-  expect(await screen.findByText(/尚未生成该提交的模型解释/)).toBeVisible()
-  expect(fetch.mock.calls.some(([path]) => String(path).includes(`/commits/${SHA_A}/explanation?viewSyncId=${SYNC}`))).toBe(true)
+  expect(await screen.findByText(/尚未生成该方法的模型解释/)).toBeVisible()
+  expect(fetch.mock.calls.some(([path]) => String(path).includes(`/commits/${SHA_A}/explanation-methods?viewSyncId=${SYNC}`))).toBe(true)
 
   await user.click(screen.getByRole('button', { name: '关闭' }))
   await user.click(screen.getByRole('button', { name: '提交列表' }))
   await user.click(screen.getByText('docs note'))
-  expect(screen.queryByText(/尚未生成该提交的模型解释/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/尚未生成该方法的模型解释/)).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '模型解释' })).toBeVisible()
 
   await user.click(screen.getByText('作者说明'))
