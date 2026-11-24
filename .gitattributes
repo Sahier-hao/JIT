@@ -3,6 +3,7 @@ docs/evidence/complete-admin-training-workbench/** -text whitespace=cr-at-eol
 docs/evidence/register-promotable-experiment-models/** -text whitespace=cr-at-eol
 docs/evidence/separate-run-evidence-from-archive/** -text
 docs/evidence/register-existing-models-and-predict-json/** -text whitespace=cr-at-eol
+docs/evidence/review-model-training-results-and-explanations/** -text whitespace=cr-at-eol
 
 docs/evidence/add-repository-workspace-closeout-20261019/** -text whitespace=-blank-at-eof,cr-at-eol
 docs/evidence/restyle-review-workbench-closeout-20261019/** -text whitespace=-blank-at-eof,cr-at-eol

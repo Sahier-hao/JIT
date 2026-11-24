@@ -1,0 +1,46 @@
+{
+  "candidateHead": "9a4f70e0b47b7b7676f4befcc9b6ed20bf5bb75c",
+  "frontendUnit": {
+    "passed": 604,
+    "failed": 0,
+    "skipped": 0,
+    "files": 72,
+    "sourceSha256": "03c6fbff107748ec586740748d57b0ba3a20d8b6b14108113a7a1ab53113006c"
+  },
+  "explanationBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 168931,
+    "sourceSha256": "b77adb7b22f765396400186cfe4d32bcd816257f14b034ef04ff8653aeb2cf3a"
+  },
+  "prAccountBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 66222,
+    "sourceSha256": "8aa9c2be898861e4f608f997147d648ea088e9f3adcb78ddbcb8cbf5051f5ce8"
+  },
+  "modelPackageBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 141929,
+    "sourceSha256": "011d59310d603c89ca5b39cd964eb8e3b19d03f0e0245f1335b07579587fc4aa"
+  },
+  "backendFull": {
+    "candidateHead": "2692116dabc1bfa37a4bdf5dfea838b593a5260a",
+    "passed": 1054,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "warnings": 4,
+    "durationSeconds": 1087.38,
+    "sourceSha256": "1a6261063999e9b6d59c562e81f1e801e287b65e552e7c3b8a45c7981473dafd"
+  },
+  "mergedProduct": {
+    "mainCommit": "115072fa07afad5321b73d72db49e67ef2a3364e",
+    "mainTree": "9d64995ff170addabc131276a5e1f738e2b5ff77",
+    "comparison": "Main product tree matches the tested frontend candidate. The full backend candidate adds two test-only corrections and two documentation updates."
+  }
+}

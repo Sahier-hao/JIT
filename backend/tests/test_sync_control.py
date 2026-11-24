@@ -132,12 +132,13 @@ def test_cancel_endpoint_public_idempotent_and_has_error_envelope(service):
     from jit_baseline.api import create_app
     app = create_app(database=service.sync.storage.path, artifact_root=service.artifact_root,
                      sync_service=service)
-    seed(service, 'queued')
-    seed(service, 'completed', 'completed')
-    seed(service, 'running', 'collecting')
     with TestClient(app) as client:
+        # Create live jobs after startup recovery has processed interrupted jobs.
+        seed(service, 'queued')
+        seed(service, 'completed', 'completed')
+        seed(service, 'running', 'collecting')
         response = client.post('/api/v1/repository-syncs/queued/cancel')
-        assert response.status_code == 200
+        assert response.status_code == 200, response.json()
         assert response.json()['status'] == 'cancelled'
         assert client.post('/api/v1/repository-syncs/queued/cancel').status_code == 200
         pending = client.post('/api/v1/repository-syncs/running/cancel')
