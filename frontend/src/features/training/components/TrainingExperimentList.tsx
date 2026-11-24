@@ -2,6 +2,7 @@ import { Activity, ArrowUpRight, ChevronRight, Search } from 'lucide-react'
 import { useState } from 'react'
 import { linkTo, type Route } from '@/app/navigation'
 import { formatDate, type TrainingExperiment } from '@/features/admin/adminContracts'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Progress } from '@/components/ui/progress'
@@ -14,14 +15,15 @@ function methodNames(experiment: TrainingExperiment) {
 
 function ExperimentStatus({ experiment }: { experiment: TrainingExperiment }) {
   const status = trainingStatus[experiment.status]
-  return <span className={cn('inline-flex items-center gap-1.5 text-xs', status?.color)}>
+  return <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-current/20 px-2 py-0.5 text-xs font-medium', status?.color)}>
     <span className={cn('size-1.5 rounded-full', status?.dot ?? 'bg-foreground-4')} aria-hidden="true"/>
     {status?.label ?? experiment.status}
   </span>
 }
 
-export function TrainingExperimentList({ records, navigate }: {
+export function TrainingExperimentList({ records, navigate, historyDatasetVersion }: {
   records: TrainingExperiment[]
+  historyDatasetVersion?: string
   navigate: (route: Route) => void
 }) {
   const [query, setQuery] = useState('')
@@ -31,6 +33,9 @@ export function TrainingExperimentList({ records, navigate }: {
   const history = runningTask?.trainingHistory
   const epoch = history?.entries.at(-1)?.epoch
   const term = query.trim().toLowerCase()
+  const openExperiment = (experimentId: string) => linkTo({ name: 'my-training', experimentId,
+    ...(historyDatasetVersion ? { historyDatasetVersion } : {}),
+  }, navigate)
   const past = records.filter(item => !isActiveTraining(item.status))
   const visible = past.filter(item => (filter === 'all' || (filter === 'completed') === (item.status === 'succeeded'))
     && `${item.datasetVersion} ${methodNames(item)} ${item.tasks.map(task => task.method).join(' ')}`.toLowerCase().includes(term))
@@ -50,7 +55,7 @@ export function TrainingExperimentList({ records, navigate }: {
             <p className="mt-1 font-mono text-xs text-foreground-3 [overflow-wrap:anywhere]">{active.datasetVersion}</p>
           </div>
         </div>
-        <a {...linkTo({ name: 'my-training', experimentId: active.experimentId }, navigate)}
+        <a {...openExperiment(active.experimentId)}
           className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium text-accent hover:bg-card focus-visible:outline-2 focus-visible:outline-accent">
           查看训练<ArrowUpRight size={14} aria-hidden="true"/>
         </a>
@@ -80,15 +85,15 @@ export function TrainingExperimentList({ records, navigate }: {
         </div> : null}
       </div>
       {visible.length > 0 ? <>
-        <div aria-hidden="true" className="hidden grid-cols-[minmax(0,1.6fr)_minmax(0,0.85fr)_7rem_1rem] gap-4 border-y border-border-soft bg-sunken/50 px-5 py-2 text-xs text-foreground-3 lg:grid">
+        <div aria-hidden="true" className="hidden grid-cols-[minmax(0,1fr)_minmax(9rem,0.42fr)_8rem_1rem] gap-4 border-y border-border-soft bg-sunken/50 px-5 py-2 text-xs text-foreground-3 lg:grid">
           <span>方法与数据版本</span><span>创建时间</span><span>状态</span><span/>
         </div>
         <ul className="divide-y divide-border-soft max-lg:border-t max-lg:border-border-soft">
           {visible.map(item => {
             const registered = item.tasks.filter(task => task.modelId).length
             return <li key={item.experimentId} className="min-w-0">
-              <a {...linkTo({ name: 'my-training', experimentId: item.experimentId }, navigate)}
-                className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 hover:bg-sunken/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:px-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.85fr)_7rem_1rem]">
+              <a {...openExperiment(item.experimentId)}
+                className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 hover:bg-sunken/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:px-5 lg:grid-cols-[minmax(0,1fr)_minmax(9rem,0.42fr)_8rem_1rem]">
                 <div className="min-w-0 max-lg:col-span-2">
                   <strong className="block text-sm font-semibold [overflow-wrap:anywhere]">{methodNames(item)}</strong>
                   <span className="mt-0.5 block truncate font-mono text-xs text-foreground-3" title={item.datasetVersion}>{item.datasetVersion}</span>
@@ -103,9 +108,10 @@ export function TrainingExperimentList({ records, navigate }: {
             </li>
           })}
         </ul>
-      </> : <p className="border-t border-border-soft px-4 py-9 text-center text-sm text-foreground-3">
-        {past.length ? '没有符合条件的训练记录' : '暂无历史训练记录'}
-      </p>}
+      </> : <div className="grid justify-items-start gap-2 border-t border-border-soft px-4 py-6 text-sm text-foreground-3 sm:px-5">
+        <p>{past.length ? '没有符合条件的训练记录' : '暂无历史训练记录'}</p>
+        {past.length > 0 ? <Button type="button" variant="outline" size="sm" onClick={() => { setQuery(''); setFilter('all') }}>清除筛选</Button> : null}
+      </div>}
     </section>
   </div>
 }

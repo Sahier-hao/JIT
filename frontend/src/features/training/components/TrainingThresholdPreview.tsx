@@ -1,29 +1,13 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import type { Row } from '@/features/admin/adminContracts'
-
-function counts(value: unknown, max: number): value is number[] {
-  return Array.isArray(value) && value.length === 101
-    && value.every(count => Number.isInteger(count) && count >= 0 && count <= max)
-}
-
-function parsePreview(raw: unknown) {
-  if (!raw || typeof raw !== 'object') return null
-  const { positives, negatives, defaultThreshold, truePositives, falsePositives } = raw as Row
-  if (typeof positives !== 'number' || !Number.isInteger(positives) || positives < 0
-    || typeof negatives !== 'number' || !Number.isInteger(negatives) || negatives < 0
-    || positives + negatives === 0 || typeof defaultThreshold !== 'number'
-    || defaultThreshold < 0 || defaultThreshold > 1 || !Number.isFinite(defaultThreshold)
-    || !counts(truePositives, positives) || !counts(falsePositives, negatives)) return null
-  return { positives, negatives, defaultTick: Math.round(defaultThreshold * 100), truePositives, falsePositives }
-}
+import { parseTrainingThresholdPreview } from '../trainingComparison'
 
 function ratio(count: number, total: number) {
   return total ? count / total * 100 : 0
 }
 
 export function TrainingThresholdPreview({ data }: { data: unknown }) {
-  const preview = parsePreview(data)
+  const preview = parseTrainingThresholdPreview(data)
   const [choice, setChoice] = useState<number>()
   if (!preview) return <section className="rounded-xl border border-border-soft bg-card px-4 py-3 text-sm text-foreground-3 sm:px-5">
     此次训练未保存验证集阈值试算数据。

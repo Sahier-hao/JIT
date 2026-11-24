@@ -201,8 +201,10 @@ export interface TrainingExperimentMethodResult {
   metricsByPartition: Row | null
   trainingSeconds: number | null
   runId: string | null
+  artifactRunId?: string | null
   modelId: string | null
   manifestSha256: string
+  splitMemberSha256?: string | null
   splitPreset: string
   classPolicy: Row | null
   metricSet: string
@@ -267,8 +269,10 @@ export function experimentMethodResult(raw: unknown): TrainingExperimentMethodRe
     metricsByPartition: value.metricsByPartition == null ? null : record(value.metricsByPartition),
     trainingSeconds: value.trainingSeconds == null ? null : finiteNumber(value.trainingSeconds),
     runId: textOrNull(value.runId),
+    artifactRunId: textOrNull(value.artifactRunId),
     modelId: textOrNull(value.modelId),
     manifestSha256: text(value.manifestSha256),
+    splitMemberSha256: textOrNull(value.splitMemberSha256),
     splitPreset: text(value.splitPreset),
     classPolicy: value.classPolicy == null ? null : record(value.classPolicy),
     metricSet: text(value.metricSet),

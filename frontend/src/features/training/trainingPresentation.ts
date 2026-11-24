@@ -1,4 +1,4 @@
-import type { TrainingExperimentStatus } from '@/features/admin/adminContracts'
+import type { TrainingExperimentStatus, TrainingTask } from '@/features/admin/adminContracts'
 
 export const trainingStatus: Record<TrainingExperimentStatus, { label: string; color: string; dot: string }> = {
   queued: { label: '排队中', color: 'text-foreground-3', dot: 'bg-foreground-4' },
@@ -9,6 +9,14 @@ export const trainingStatus: Record<TrainingExperimentStatus, { label: string; c
   cancelled: { label: '已取消', color: 'text-foreground-3', dot: 'bg-foreground-4' },
   interrupted: { label: '已中断', color: 'text-rose', dot: 'bg-rose' },
   empty: { label: '无任务', color: 'text-foreground-3', dot: 'bg-foreground-4' },
+}
+
+export function trainingPhase(task: TrainingTask): 0 | 1 | 2 | 3 | null {
+  if (task.status === 'queued') return 0
+  if (task.status === 'succeeded') return 3
+  if (task.status !== 'running') return null
+  const history = task.trainingHistory
+  return history && history.epochs > 0 && (history.entries.at(-1)?.epoch ?? 0) >= history.epochs ? 2 : 1
 }
 
 const METHOD_NAMES: Record<string, string> = {
@@ -23,8 +31,8 @@ const METHOD_NAMES: Record<string, string> = {
   'ft-transformer-v1': 'FT-Transformer',
 }
 
-export function trainingMethodName(method: string) {
-  return METHOD_NAMES[method] ?? method
+export function trainingMethodName(method: string, fallback = method) {
+  return METHOD_NAMES[method] ?? fallback
 }
 
 export function isActiveTraining(status: TrainingExperimentStatus) {

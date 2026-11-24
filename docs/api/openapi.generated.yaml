@@ -1143,6 +1143,29 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/v1/training-experiments/{experiment_id}/comparison/thresholds:
+    post:
+      summary: Training Experiment Thresholds
+      operationId: training_experiment_thresholds_api_v1_training_experiments__experiment_id__comparison_thresholds_post
+      parameters:
+      - name: experiment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Experiment Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/training-tasks:
     post:
       summary: Create Training Task
@@ -2520,6 +2543,14 @@ paths:
         schema:
           type: string
           title: Viewsyncid
+      - name: method
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Method
       responses:
         '200':
           description: Successful Response
@@ -2535,6 +2566,84 @@ paths:
     post:
       summary: Generate Repository Explanation
       operationId: generate_repository_explanation_api_v1_repositories__repository_id__commits__commit_id__explanation_post
+      parameters:
+      - name: repository_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Repository Id
+      - name: commit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Commit Id
+      - name: viewSyncId
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Viewsyncid
+      - name: method
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Method
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/repositories/{repository_id}/commits/{commit_id}/explanations:
+    get:
+      summary: Repository Explanations
+      operationId: repository_explanations_api_v1_repositories__repository_id__commits__commit_id__explanations_get
+      parameters:
+      - name: repository_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Repository Id
+      - name: commit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Commit Id
+      - name: viewSyncId
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Viewsyncid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/repositories/{repository_id}/commits/{commit_id}/explanation-methods:
+    get:
+      summary: Repository Explanation Methods
+      operationId: repository_explanation_methods_api_v1_repositories__repository_id__commits__commit_id__explanation_methods_get
       parameters:
       - name: repository_id
         in: path
@@ -3028,6 +3137,29 @@ paths:
     get:
       summary: User Experiment Comparison
       operationId: user_experiment_comparison_api_v1_user_training_experiments__experiment_id__comparison_get
+      parameters:
+      - name: experiment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Experiment Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/training-experiments/{experiment_id}/comparison/thresholds:
+    post:
+      summary: User Experiment Thresholds
+      operationId: user_experiment_thresholds_api_v1_user_training_experiments__experiment_id__comparison_thresholds_post
       parameters:
       - name: experiment_id
         in: path

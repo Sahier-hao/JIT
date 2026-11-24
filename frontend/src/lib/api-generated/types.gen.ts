@@ -4,6 +4,61 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type TrainingThresholdSelection = {
+    strategy: 'fixed' | 'max-f1' | 'target-recall';
+    /**
+     * fixed 时必填，所有模型使用该阈值。
+     */
+    threshold?: number;
+    /**
+     * target-recall 时必填，各模型在验证集上达到该召回率。
+     */
+    targetRecall?: number;
+};
+
+export type TrainingThresholdMetrics = {
+    precision: TrainingThresholdMetric;
+    recall: TrainingThresholdMetric;
+    f1: TrainingThresholdMetric;
+    confusion: {
+        [key: string]: number;
+    };
+};
+
+export type TrainingThresholdMetric = {
+    value: number | null;
+    reason: string | null;
+};
+
+export type TrainingThresholdEvaluation = {
+    format: 'training-threshold-evaluation-v1';
+    experimentId: string;
+    datasetVersion: string;
+    manifestSha256: string;
+    splitMemberSha256: string;
+    selection: TrainingThresholdSelection;
+    methods: [
+        {
+            taskId: string;
+            artifactRunId: string;
+            threshold: number;
+            validation: TrainingThresholdMetrics;
+            test: TrainingThresholdMetrics;
+            defaultThreshold: 0.5;
+            defaultTest: TrainingThresholdMetrics;
+        },
+        {
+            taskId: string;
+            artifactRunId: string;
+            threshold: number;
+            validation: TrainingThresholdMetrics;
+            test: TrainingThresholdMetrics;
+            defaultThreshold: 0.5;
+            defaultTest: TrainingThresholdMetrics;
+        }
+    ];
+};
+
 export type ProjectEvent = unknown & {
     eventId: Uuid;
     repositoryId: Uuid;
@@ -2108,14 +2163,19 @@ export type RepositoryExplanation = {
     datasetVersion: string | null;
     risk: number;
     explanationStatus: 'not-generated' | 'supported' | 'not-supported';
-    explanation: Array<PredictionExplanation>;
+    explanation: Array<RepositoryExplanationItem>;
     explanationMethod: string | null;
+    explanationUnit: 'probability' | 'logit';
     explanationSummary: string | null;
     explanationReason: string | null;
     /**
      * 生成失败的领域原因；不包含内部路径和异常详情。
      */
     reasonCode: string | null;
+    /**
+     * 仅可相加的线性分解提供总贡献；遮挡法为 null。
+     */
+    contributionTotal: number | null;
     baselineSource: 'zero' | 'mixed' | 'model-dataset-mean' | 'training-partition-mean';
     baselineDatasetVersion: string | null;
     baselineHash?: string | null;
@@ -2131,6 +2191,59 @@ export type RepositoryExplanation = {
     modelSha256: string | null;
     generatedAt: string | null;
     limitations: Array<string>;
+};
+
+export type RepositoryExplanationList = {
+    repositoryId: Uuid;
+    viewSyncId: Uuid;
+    commitId: string;
+    modelId: string | null;
+    runId: string | null;
+    datasetVersion: string | null;
+    explanations: Array<RepositoryExplanation>;
+};
+
+export type RepositoryExplanationMethods = {
+    repositoryId: Uuid;
+    viewSyncId: Uuid;
+    commitId: string;
+    modelId: string | null;
+    runId: string | null;
+    datasetVersion: string | null;
+    defaultMethod: string;
+    modelAvailable: boolean;
+    reasonCode: string | null;
+    modelSha256?: string | null;
+    methods: Array<ExplanationMethod>;
+    savedMethods: Array<SavedExplanationMethod>;
+};
+
+export type ExplanationMethod = {
+    method: string;
+    name: string;
+    applicableModels: Array<string>;
+    unit: 'probability' | 'logit';
+    baseline: 'training-partition-mean';
+    cost: string;
+    deterministic: boolean;
+    limitations: Array<string>;
+};
+
+export type SavedExplanationMethod = {
+    method: string;
+    status: 'supported' | 'not-supported';
+    generatedAt: string | null;
+};
+
+/**
+ * 单特征归因项；delta 的单位由 explanationUnit 声明。
+ */
+export type RepositoryExplanationItem = {
+    feature: string;
+    value: number;
+    baseline: number;
+    delta: number;
+    direction: 'increases' | 'decreases';
 };
 
 /**
@@ -2457,6 +2570,13 @@ export type ProjectOffset = number;
 export type ProjectPrState = 'open' | 'closed' | 'all';
 
 export type ProjectPrPage = number;
+
+export type TrainingThresholdEvaluationRequest = TrainingThresholdSelection & {
+    taskIds: [
+        string,
+        string
+    ];
+};
 
 export type ListProjectEventsData = {
     body?: never;
@@ -4799,6 +4919,72 @@ export type RegisterExistingModelResponses = {
 
 export type RegisterExistingModelResponse = RegisterExistingModelResponses[keyof RegisterExistingModelResponses];
 
+export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsData = {
+    body: TrainingThresholdEvaluationRequest;
+    path: {
+        experimentId: string;
+    };
+    query?: never;
+    url: '/api/v1/training-experiments/{experimentId}/comparison/thresholds';
+};
+
+export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsErrors = {
+    /**
+     * 需要管理员会话
+     */
+    401: unknown;
+    /**
+     * 实验不存在
+     */
+    404: unknown;
+    /**
+     * 任务、阈值、分区或冻结产物无法用于复核
+     */
+    422: unknown;
+};
+
+export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponses = {
+    /**
+     * 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
+     */
+    200: TrainingThresholdEvaluation;
+};
+
+export type PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponse = PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponses[keyof PostApiV1TrainingExperimentsByExperimentIdComparisonThresholdsResponses];
+
+export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsData = {
+    body: TrainingThresholdEvaluationRequest;
+    path: {
+        experimentId: string;
+    };
+    query?: never;
+    url: '/api/v1/user/training-experiments/{experimentId}/comparison/thresholds';
+};
+
+export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsErrors = {
+    /**
+     * 需要用户会话
+     */
+    401: unknown;
+    /**
+     * 实验不存在或不属于当前用户
+     */
+    404: unknown;
+    /**
+     * 任务、阈值、分区或冻结产物无法用于复核
+     */
+    422: unknown;
+};
+
+export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponses = {
+    /**
+     * 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
+     */
+    200: TrainingThresholdEvaluation;
+};
+
+export type PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponse = PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponses[keyof PostApiV1UserTrainingExperimentsByExperimentIdComparisonThresholdsResponses];
+
 export type ListTrainingTasksData = {
     body?: never;
     path?: never;
@@ -5566,6 +5752,10 @@ export type GetRepositoryExplanationData = {
          * 必须明确指定本项目的成功分析，不自动取当前结果。
          */
         viewSyncId: string;
+        /**
+         * 解释方法标识；省略时使用 occlusion-mean-v1，保持旧调用口径。
+         */
+        method?: string;
     };
     url: '/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation';
 };
@@ -5611,6 +5801,10 @@ export type GenerateRepositoryExplanationData = {
          * 必须明确指定本项目的成功分析，不自动取当前结果。
          */
         viewSyncId: string;
+        /**
+         * 解释方法标识；省略时使用 occlusion-mean-v1，保持旧调用口径。
+         */
+        method?: string;
     };
     url: '/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation';
 };
@@ -5644,6 +5838,90 @@ export type GenerateRepositoryExplanationResponses = {
 };
 
 export type GenerateRepositoryExplanationResponse = GenerateRepositoryExplanationResponses[keyof GenerateRepositoryExplanationResponses];
+
+export type ListRepositoryExplanationsData = {
+    body?: never;
+    path: {
+        repositoryId: Uuid;
+        commitId: string;
+    };
+    query: {
+        viewSyncId: string;
+    };
+    url: '/api/v1/repositories/{repositoryId}/commits/{commitId}/explanations';
+};
+
+export type ListRepositoryExplanationsErrors = {
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+     */
+    409: unknown;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+    /**
+     * 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+     */
+    503: SharedError;
+};
+
+export type ListRepositoryExplanationsError = ListRepositoryExplanationsErrors[keyof ListRepositoryExplanationsErrors];
+
+export type ListRepositoryExplanationsResponses = {
+    /**
+     * 已保存解释列表，按注册方法顺序稳定排序。
+     */
+    200: RepositoryExplanationList;
+};
+
+export type ListRepositoryExplanationsResponse = ListRepositoryExplanationsResponses[keyof ListRepositoryExplanationsResponses];
+
+export type ListRepositoryExplanationMethodsData = {
+    body?: never;
+    path: {
+        repositoryId: Uuid;
+        commitId: string;
+    };
+    query: {
+        viewSyncId: string;
+    };
+    url: '/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation-methods';
+};
+
+export type ListRepositoryExplanationMethodsErrors = {
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * REPOSITORY_ANALYSIS_UNAVAILABLE，指定分析尚未成功。
+     */
+    409: unknown;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+    /**
+     * 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+     */
+    503: SharedError;
+};
+
+export type ListRepositoryExplanationMethodsError = ListRepositoryExplanationMethodsErrors[keyof ListRepositoryExplanationMethodsErrors];
+
+export type ListRepositoryExplanationMethodsResponses = {
+    /**
+     * 当前可用方法及已保存方法摘要。
+     */
+    200: RepositoryExplanationMethods;
+};
+
+export type ListRepositoryExplanationMethodsResponse = ListRepositoryExplanationMethodsResponses[keyof ListRepositoryExplanationMethodsResponses];
 
 export type CompareSavedRepositoryAnalysesData = {
     body?: never;

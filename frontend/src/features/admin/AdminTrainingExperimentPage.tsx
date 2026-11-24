@@ -16,7 +16,7 @@ import { formatMethodParams } from '@/lib/methodParams'
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
 import { TrainingComparisonResults } from '@/features/training/components/TrainingComparisonResults'
-import { comparisonExportText } from '@/features/training/trainingComparison'
+import { comparisonExportText, fetchThresholdEvaluation, type ThresholdEvaluation, type ThresholdRequest } from '@/features/training/trainingComparison'
 
 const ACTIVE = new Set(['queued', 'running'])
 
@@ -83,9 +83,19 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
       else setError(failure instanceof Error ? failure.message : '重试失败')
     } finally { setBusy('') }
   }
-  function exportComparison() {
+  async function evaluateThresholds(request: ThresholdRequest, signal: AbortSignal) {
+    if (!comparison || comparison.experimentId !== experimentId) throw new Error('训练实验已切换，请重新选择')
+    try {
+      return await fetchThresholdEvaluation(comparison, 'admin', request, signal)
+    } catch (failure) {
+      if (!signal.aborted && failure instanceof ApiError && failure.status === 401) expired()
+      throw failure
+    }
+  }
+
+  function exportComparison(evaluation?: ThresholdEvaluation) {
     if (!comparison) return
-    const blob = new Blob([comparisonExportText(comparison)], { type: 'application/json' })
+    const blob = new Blob([comparisonExportText(comparison, evaluation)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
@@ -108,7 +118,6 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
     <div className="flex flex-wrap items-center gap-2">
       <Button onClick={() => navigate({ name: 'admin', view: 'datasets' })} variant="outline" type="button">返回数据集</Button>
       <Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">登记实验运行</Button>
-      <Button onClick={exportComparison} disabled={!comparison} variant="outline" type="button">导出比较</Button>
     </div>
     <ErrorNotice>{error}</ErrorNotice>
     <div className="grid items-start gap-4 lg:grid-cols-2 [&>section]:rounded-md [&>section]:border [&>section]:border-border-soft [&>section]:bg-card [&>section]:p-card [&_h2]:text-sm [&_h2]:font-semibold">
@@ -156,7 +165,8 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
       </div>
       {selectedHistory ? <TrainingLossChart history={selectedHistory.trainingHistory} method={selectedHistory.method}/> : null}
     </section> : null}
-    {comparison ? <TrainingComparisonResults comparison={comparison} onExport={exportComparison}/> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
+    {comparison?.experimentId === experimentId ? <TrainingComparisonResults key={experimentId} comparison={comparison}
+      onExport={exportComparison} onEvaluateThresholds={evaluateThresholds}/> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
     <Collapsible className="group/collapsible"><div className="flex items-center gap-2"><CollapsibleTrigger asChild><Button type="button" variant="ghost" className="justify-start"><ChevronRight aria-hidden="true" className="group-data-[state=open]/collapsible:rotate-90"/>{"比较口径与限制"}</Button></CollapsibleTrigger></div><CollapsibleContent><p className="text-xs leading-body text-foreground-3">
         三档指标来自各自运行的冻结分区；训练档只用于拟合诊断，验证档是模型选择背景，测试档承担冻结泛化评价。
         单次实验不按测试指标选择参数或方法，训练成功仍需在「登记实验运行」中显式登记，项目分析也只使用显式选择的已登记模型。

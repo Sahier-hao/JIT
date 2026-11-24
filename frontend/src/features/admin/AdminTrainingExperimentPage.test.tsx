@@ -93,6 +93,7 @@ const COMPARISON = {
   notes: [],
   methods: EXPERIMENT.tasks.map(item => ({
     taskId: item.taskId, method: item.method, methodName: item.method === 'mlp-v1' ? '多层感知机（2 隐层）' : '逻辑回归 · L2',
+    splitMemberSha256: 'c'.repeat(64),
     category: item.method === 'mlp-v1' ? 'deep' : 'classic', parameters: item.parameters, status: 'succeeded',
     stage: 'completed', error: null, metrics: item.metrics, metricsByPartition: item.metricsByPartition,
     trainingSeconds: 1.5, runId: item.runId, modelId: item.modelId,

@@ -188,7 +188,6 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
     root = Path(dataset_root) if dataset_root is not None else None
     predictions = UserPredictionService(storage, catalog)
     imports = DatasetImportJobs(storage, root)
-    imports.recover()
     app.state.dataset_imports = imports
 
     @app.get('/api/v1/user/profile')
@@ -520,14 +519,17 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
     async def user_create_experiment(request: Request):
         username = _user(request)
         payload = await read_object(request)
-        registry = _registry(root)
         version = payload.get('datasetVersion')
         if not isinstance(version, str):
             raise BaselineError('INPUT_INVALID', '缺少数据集版本')
-        _visible(storage, version, username, registry)
-        result, created = await run_in_threadpool(
-            training_service.create_experiment, payload, getattr(request.state, 'request_id', None),
-            created_by=username, owner_user_id=username)
+        request_id = getattr(request.state, 'request_id', None)
+
+        def create_visible_experiment():
+            _visible(storage, version, username, _registry(root))
+            return training_service.create_experiment(payload, request_id, created_by=username,
+                                                      owner_user_id=username)
+
+        result, created = await run_in_threadpool(create_visible_experiment)
         request.state.business_ids = (None, None, result.get('experimentId'))
         return Response(json.dumps(result, ensure_ascii=False),
                         media_type='application/json', status_code=202 if created else 200)
@@ -551,6 +553,12 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
     def user_experiment_comparison(experiment_id: str, request: Request):
         _owned_experiment(experiment_id, _user(request))
         return training_service.compare_experiment(experiment_id)
+
+    @app.post('/api/v1/user/training-experiments/{experiment_id}/comparison/thresholds')
+    async def user_experiment_thresholds(experiment_id: str, request: Request):
+        _owned_experiment(experiment_id, _user(request))
+        return await run_in_threadpool(training_service.evaluate_experiment_thresholds,
+                                       experiment_id, await read_object(request))
 
     @app.post('/api/v1/user/training-experiments/{experiment_id}/register')
     async def user_register_experiment(experiment_id: str, request: Request):
