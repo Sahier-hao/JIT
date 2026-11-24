@@ -1,0 +1,135 @@
+{
+  "copiedFromWorkspace": [
+    "backend-full-junit.xml",
+    "backend-full.log",
+    "browser-e2e.log",
+    "browser-results.json",
+    "docs-check.log",
+    "explanation-requests.json",
+    "frontend-api-types.log",
+    "frontend-build.log",
+    "frontend-lint.log",
+    "frontend-modules.log",
+    "frontend-styles.log",
+    "frontend-typecheck.log",
+    "frontend-unit-results.json",
+    "frontend-unit.log",
+    "migration-audit.json",
+    "provenance.json",
+    "regression-scope-full.json",
+    "screenshots/explanation-methods-multi-method-explanations.png",
+    "screenshots/explanation-narrow-multi-method-explanations.png",
+    "screenshots/explanation-occlusion-multi-method-explanations.png",
+    "verification.json"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 25,
+  "files": [
+    {
+      "path": "backend-full-junit.xml",
+      "sha256": "5435334406e64c221d18c3dfc4142414cb7b3b6ab5899a240e943cb7fa0b1e88"
+    },
+    {
+      "path": "backend-full.log",
+      "sha256": "4b3733b64e21de4c17977b779fc551d65eabad1cbffe33c1ac1e15c0590d4f6a"
+    },
+    {
+      "path": "browser-e2e.log",
+      "sha256": "2e6a3aa53bd2afb6b703011cdeaa87adaba52b40cd46a98cc27a3d3c0ad8f6e0"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "8ce2d0e01eb557cc03121179e627dd0ee818afea22167318d28fe7a4d73262fe"
+    },
+    {
+      "path": "docs-check.log",
+      "sha256": "dcc8967c93b396ce757b2c22737e54311d0e386e85b40bc72dec1f189364db0f"
+    },
+    {
+      "path": "explanation-requests.json",
+      "sha256": "ffe486b00dcc59397023431f564c74b3f94227549b362026722fd0b80898b0d4"
+    },
+    {
+      "path": "frontend-api-types.log",
+      "sha256": "433a0bd519bc4a93d5a50393b59167a86b990405396bfacecb846d4077deea05"
+    },
+    {
+      "path": "frontend-build.log",
+      "sha256": "9cdc94cca5a541ec3e053549cf243c9e5b57bbef1aadeb010f083c6456d6e656"
+    },
+    {
+      "path": "frontend-lint.log",
+      "sha256": "56de2ce8e4d19919e1a099c8c977cd281560102214e6d474de80d83560ea1365"
+    },
+    {
+      "path": "frontend-modules.log",
+      "sha256": "70dbfc337646c0769fa650b598666ecde04c1c36b0cefd5c501a4528ea73db40"
+    },
+    {
+      "path": "frontend-styles.log",
+      "sha256": "341b78976c864b3615aafcf2658f8be38ac311eebe6572cde541bac85e841510"
+    },
+    {
+      "path": "frontend-typecheck.log",
+      "sha256": "e9bc038005fe01f9ad79d1a91c7bf4071fd6460dd3c2e61df5ce1a33776d4b47"
+    },
+    {
+      "path": "frontend-unit-results.json",
+      "sha256": "ac26a5383411a333eb2e7f0f874e62494458013a20b61bbeb482f01d737eabd5"
+    },
+    {
+      "path": "frontend-unit.log",
+      "sha256": "1a8b327a2b0bfc01e8ecd0b05fa1483a33d2eab8aabd6cd8b63cffd64774bb44"
+    },
+    {
+      "path": "migration-audit.json",
+      "sha256": "9979e24de8e9819e37ab755a41046e5c816148fe7d897fe463e57b637fdbbd3a"
+    },
+    {
+      "path": "pr2-ai-test-provenance/manifest.json",
+      "sha256": "5b9ad1bf211d448a59a7f8c354dc0dadef1484b478507c155b9d0ebbb9a3df5d"
+    },
+    {
+      "path": "pr2-ai-test-provenance/manual-review.json",
+      "sha256": "21f1587aec2c86df1519a9bd0b29a6b6393dc36a8635186bbf9c92d18934d944"
+    },
+    {
+      "path": "pr2-ai-test-provenance/manual-review.md",
+      "sha256": "9a4eddf684298a83cfe5b5a2500eb051c3cfaffef18749aed0745ceb6feeccf2"
+    },
+    {
+      "path": "pr2-ai-test-provenance/prompt.md",
+      "sha256": "8948971e226144e4999c0c0dc81948d3c322e697fa24e821001f646abcb8699e"
+    },
+    {
+      "path": "provenance.json",
+      "sha256": "fc22c5f904177dfe4345aa43626d7d08d6e5ab68c5438cf410a0212010846d20"
+    },
+    {
+      "path": "regression-scope-full.json",
+      "sha256": "ebcfa713b65a765f2602d7432cdc433361c5a4164a41fb3e964f951a6984e0f0"
+    },
+    {
+      "path": "screenshots/explanation-methods-multi-method-explanations.png",
+      "sha256": "67bc570de31b177342f36dacb2c72226f78ba39891b9cd9d2899ad0d630402cf"
+    },
+    {
+      "path": "screenshots/explanation-narrow-multi-method-explanations.png",
+      "sha256": "0473bc0afe8644c8774cd26321a7af8b35a6bd72ea2809a9e9ad42a1baa0e1d0"
+    },
+    {
+      "path": "screenshots/explanation-occlusion-multi-method-explanations.png",
+      "sha256": "5964d0269e62a9ba0b41a6fb9060f69199ef0800e0ef28bcb0404f12ca3792b4"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "8088548e1d35ee88559b90a8c041b132cefc994c022b5f36fad43a902850602c"
+    }
+  ],
+  "frozenUtc": "2026-11-24T11:25:56.177773+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "90194300c466a392249eaaead7b9c52d8cde2d346b0eb229b24c53bcce6ca538",
+  "workspace": "docs/evidence/_run/review-model-training-results-and-explanations-closeout"
+}

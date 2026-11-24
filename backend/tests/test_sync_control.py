@@ -132,10 +132,11 @@ def test_cancel_endpoint_public_idempotent_and_has_error_envelope(service):
     from jit_baseline.api import create_app
     app = create_app(database=service.sync.storage.path, artifact_root=service.artifact_root,
                      sync_service=service)
-    seed(service, 'queued')
-    seed(service, 'completed', 'completed')
-    seed(service, 'running', 'collecting')
     with TestClient(app) as client:
+        # lifespan 启动会中断遗留的进行中作业；活动作业必须在服务启动后创建。
+        seed(service, 'queued')
+        seed(service, 'completed', 'completed')
+        seed(service, 'running', 'collecting')
         response = client.post('/api/v1/repository-syncs/queued/cancel')
         assert response.status_code == 200
         assert response.json()['status'] == 'cancelled'

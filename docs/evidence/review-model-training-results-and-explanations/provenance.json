@@ -1,0 +1,39 @@
+{
+  "kind": "change-closeout-provenance",
+  "change": "review-model-training-results-and-explanations",
+  "generatedUtc": "2026-11-24T11:14:57.387077+00:00",
+  "gitHead": "b458e226a7e918bf98176594063fe602d150c99d",
+  "branch": "feature/multi-method-explanations-closeout",
+  "prs": [
+    75,
+    76,
+    80
+  ],
+  "environment": {
+    "python": "3.12.4",
+    "node": "v22.23.1",
+    "npm": "10.9.8"
+  },
+  "pr2AiTestProvenance": {
+    "directory": "docs/evidence/review-model-training-results-and-explanations/pr2-ai-test-provenance",
+    "humanReview": "manual-review.md???? ????2026-11-22?",
+    "files": [
+      {
+        "path": "docs/evidence/review-model-training-results-and-explanations/pr2-ai-test-provenance/manifest.json",
+        "sha256": "5b9ad1bf211d448a59a7f8c354dc0dadef1484b478507c155b9d0ebbb9a3df5d"
+      },
+      {
+        "path": "docs/evidence/review-model-training-results-and-explanations/pr2-ai-test-provenance/manual-review.json",
+        "sha256": "21f1587aec2c86df1519a9bd0b29a6b6393dc36a8635186bbf9c92d18934d944"
+      },
+      {
+        "path": "docs/evidence/review-model-training-results-and-explanations/pr2-ai-test-provenance/manual-review.md",
+        "sha256": "9a4eddf684298a83cfe5b5a2500eb051c3cfaffef18749aed0745ceb6feeccf2"
+      },
+      {
+        "path": "docs/evidence/review-model-training-results-and-explanations/pr2-ai-test-provenance/prompt.md",
+        "sha256": "8948971e226144e4999c0c0dc81948d3c322e697fa24e821001f646abcb8699e"
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+﻿{
+  "layer": "full",
+  "backend": [
+    "tests"
+  ],
+  "backendCount": 1,
+  "frontend": {
+    "commands": [
+      "npm ci",
+      "npm run typecheck",
+      "npm test",
+      "npm run build"
+    ]
+  },
+  "extension": {
+    "commands": [
+      "npm ci",
+      "npm test"
+    ]
+  },
+  "browser": [
+    {
+      "config": "playwright.config.ts",
+      "spec": "e2e/model-package-recovery.spec.ts"
+    },
+    {
+      "config": "playwright.regression-pr.config.ts",
+      "spec": "e2e/pr-account-continuation.spec.ts"
+    }
+  ],
+  "deselected": [],
+  "python": "3.12.4",
+  "missing": {
+    "backend": [],
+    "browser": []
+  }
+}

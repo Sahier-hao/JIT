@@ -50,7 +50,10 @@ def test_verification_reports_protected_changes_even_when_a_check_fails(tmp_path
     bootstrap = ("[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n"
                  "$OutputEncoding = [Console]::OutputEncoding\n")
     script.write_text(bootstrap + source, encoding="utf-8")
-    result = subprocess.run([shutil.which("pwsh"), "-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(script)],
+    pwsh = shutil.which("pwsh")
+    if pwsh is None:
+        pytest.skip("需要 PowerShell 7 (pwsh) 运行验证守卫契约")
+    result = subprocess.run([pwsh, "-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(script)],
                             capture_output=True, timeout=30)
     # 捕获原始字节后严格解码，编码错误必须直接失败，不能在线程中变成 stderr=None。
     stderr = result.stderr.decode("utf-8")

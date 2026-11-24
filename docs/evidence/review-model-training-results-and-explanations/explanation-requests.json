@@ -1,0 +1,42 @@
+[
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0",
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0&method=occlusion-mean-v1",
+    "status": 200
+  },
+  {
+    "method": "POST",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0&method=linear-logodds-v1",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/443db133636573a11312b7d9548597b0e510084b/explanations?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/443db133636573a11312b7d9548597b0e510084b/explanation-methods?viewSyncId=ffc37d49-17c6-42bf-9172-f9f12c9b40a0",
+    "status": 200
+  }
+]

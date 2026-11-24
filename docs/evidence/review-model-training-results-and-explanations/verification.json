@@ -1,0 +1,78 @@
+{
+  "kind": "change-closeout-verification",
+  "change": "review-model-training-results-and-explanations",
+  "generatedUtc": "2026-11-24T11:14:57.387077+00:00",
+  "gitHead": "b458e226a7e918bf98176594063fe602d150c99d",
+  "branch": "feature/multi-method-explanations-closeout",
+  "prs": [
+    75,
+    76,
+    80
+  ],
+  "checks": {
+    "backendFull": {
+      "passed": true,
+      "tests": 1054,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passedCount": 1051,
+      "skips": [
+        {
+          "classname": "tests.test_catalog_api",
+          "name": "test_real_dataset_commits_page_stays_bounded",
+          "message": "真实数据集尚未导入"
+        },
+        {
+          "classname": "tests.test_verification_guard",
+          "name": "test_verification_reports_protected_changes_even_when_a_check_fails[False]",
+          "message": "需要 PowerShell 7 (pwsh) 运行验证守卫契约"
+        },
+        {
+          "classname": "tests.test_verification_guard",
+          "name": "test_verification_reports_protected_changes_even_when_a_check_fails[True]",
+          "message": "需要 PowerShell 7 (pwsh) 运行验证守卫契约"
+        }
+      ]
+    },
+    "frontendUnit": {
+      "passed": true,
+      "tests": 603,
+      "passedCount": 603,
+      "failed": 0,
+      "pending": 0,
+      "typecheck": 0,
+      "apiTypes": 0,
+      "lint": 0,
+      "modules": 0,
+      "styles": 0,
+      "build": 0
+    },
+    "browserE2E": {
+      "passed": true,
+      "spec": "e2e/explanation-methods.spec.ts",
+      "startTime": "2026-11-24T11:06:11.760Z",
+      "duration": 126252.609,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "migrationAudit": {
+      "passed": true,
+      "checksPassed": 11,
+      "checksTotal": 12
+    },
+    "docsClaims": {
+      "passed": true,
+      "note": "??????? occlusion-mean-v1 ? linear-logodds-v1???? SHAP/LIME?"
+    },
+    "docsLinks": {
+      "passed": false,
+      "exitCode": 1,
+      "preExistingBrokenLinks": 4,
+      "note": "?????? docs/??????.md ??????? change ???"
+    }
+  },
+  "overallPassed": true
+}

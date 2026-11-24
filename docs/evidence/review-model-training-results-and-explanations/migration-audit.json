@@ -1,0 +1,521 @@
+{
+  "kind": "repository-explanation-migration-43-audit",
+  "startedUtc": "2026-11-24T10:23:43.277751+00:00",
+  "finishedUtc": "2026-11-24T10:23:43.396212+00:00",
+  "source": "backend/storage/catalog.sqlite3",
+  "sourceSha256": "3369ed5a34587aa63085b2cc3cc5ba2905805443a76d0b3ce61824b77a4d7450",
+  "setup": {
+    "sourceVersion": 39,
+    "setupMigrations": [
+      40,
+      41,
+      42
+    ]
+  },
+  "injected": {
+    "trainingTasks": 1,
+    "trainingExperiments": 1,
+    "repositorySyncs": 1,
+    "repositoryCommits": 3,
+    "legacyExplanations": 3
+  },
+  "before": {
+    "version": 42,
+    "tables": {
+      "training_task": {
+        "count": 1,
+        "sha256": "67f6cfd02d78240599cec24bd0537de089a92cf90c49178bf9e083923d19a411",
+        "columns": [
+          "id",
+          "dataset_version",
+          "dataset_manifest",
+          "manifest_sha256",
+          "algorithm",
+          "metric_set",
+          "status",
+          "stage",
+          "error_code",
+          "error_message",
+          "parent_task_id",
+          "created_by",
+          "request_id",
+          "artifact_key",
+          "artifact_run_id",
+          "run_id",
+          "model_id",
+          "feature_schema_version",
+          "metrics_json",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "deadline_at",
+          "cancel_requested_at",
+          "completed_at",
+          "class_policy_json",
+          "class_policy_summary_json",
+          "metrics_by_partition_json",
+          "split_json",
+          "split_rule",
+          "data_scale_json",
+          "training_performance_json",
+          "split_preset",
+          "split_policy_json",
+          "experiment_id",
+          "params_json",
+          "history_json",
+          "owner_user_id",
+          "maturity_policy",
+          "maturity_json",
+          "release_policy",
+          "release_status",
+          "release_report_id",
+          "release_json"
+        ]
+      },
+      "training_experiment": {
+        "count": 1,
+        "sha256": "fa26a225bc5778bc280e90742c870ea59f25a7960fd3edd163ddc27b3c14a854",
+        "columns": [
+          "id",
+          "dataset_version",
+          "dataset_manifest",
+          "manifest_sha256",
+          "metric_set",
+          "split_preset",
+          "class_policy_json",
+          "seed",
+          "signature",
+          "request_id",
+          "created_by",
+          "created_at",
+          "owner_user_id"
+        ]
+      },
+      "training_experiment_task": {
+        "count": 1,
+        "sha256": "b2b28c282d2458fef7954678324c0b165612403dc0feb5b289eef5091172215a",
+        "columns": [
+          "experiment_id",
+          "task_id",
+          "created_at"
+        ]
+      },
+      "repository_sync": {
+        "count": 1,
+        "sha256": "c3ecac7b437bb0e6e3a101b15a6c054bfd9a7bf30489891e08a99cb07dd82aeb",
+        "columns": [
+          "id",
+          "repository_url",
+          "branch",
+          "since",
+          "until",
+          "commit_limit",
+          "requested_strategy",
+          "status",
+          "stage",
+          "error_code",
+          "error_message",
+          "dataset_version",
+          "run_id",
+          "model_id",
+          "model_strategy",
+          "degrade_reason",
+          "train_records",
+          "train_positives",
+          "request_id",
+          "created_at",
+          "updated_at",
+          "repository_id",
+          "completed_at",
+          "head_commit",
+          "analysis_branch",
+          "requested_model_id",
+          "resolved_model_id",
+          "started_at",
+          "deadline_at",
+          "cancel_requested_at",
+          "source_kind",
+          "source_snapshot_id",
+          "origin",
+          "feature_schema_version",
+          "distribution_rule",
+          "feature_source_json",
+          "algorithm",
+          "split_preset",
+          "split_policy_json",
+          "admission_degrade_reason",
+          "maturity_policy",
+          "maturity_json"
+        ]
+      },
+      "repository_commit": {
+        "count": 3,
+        "sha256": "31669407a65462fafebba1ee5d889b41d1e057c68091f4a57fcf19be6ab55176",
+        "columns": [
+          "sync_id",
+          "commit_id",
+          "epoch",
+          "risk",
+          "added_lines",
+          "deleted_lines",
+          "files",
+          "features_json",
+          "label",
+          "label_note",
+          "subject",
+          "author_name",
+          "file_paths_json"
+        ]
+      },
+      "experiment_run": {
+        "count": 17,
+        "sha256": "fd5f8fc0ffb1b925a728a85a5950dc0775dfb43c3404ceaaa8e672af33db0512",
+        "columns": [
+          "id",
+          "artifact_run_id",
+          "dataset_id",
+          "config_json",
+          "schema_json"
+        ]
+      },
+      "model_version": {
+        "count": 17,
+        "sha256": "fa415f709e02de4e4ee6269d269df6e8b034b23eeddc8a805bc76ff66f87d975",
+        "columns": [
+          "id",
+          "run_id",
+          "preferred_location_id",
+          "state",
+          "error_code",
+          "payload_json",
+          "owner_user_id"
+        ]
+      },
+      "run_location": {
+        "count": 17,
+        "sha256": "a07d41cf2228e5433c0ec19238760d4fd9d15d99cd43e512fa3725cf3080fec2",
+        "columns": [
+          "id",
+          "run_id",
+          "relative_key",
+          "manifest_json",
+          "summary_json",
+          "verification_json",
+          "verified_at"
+        ]
+      },
+      "project_trend_view": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "columns": [
+          "id",
+          "repository_id",
+          "signature",
+          "payload_json",
+          "created_at"
+        ]
+      },
+      "prediction": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "columns": [
+          "id",
+          "batch_id",
+          "record_id",
+          "risk",
+          "features_json"
+        ]
+      },
+      "prediction_batch": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "columns": [
+          "id",
+          "model_id",
+          "payload_json",
+          "created_at"
+        ]
+      }
+    },
+    "explanations": [
+      {
+        "syncId": "audit-sync",
+        "commitId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": "{\"explanationMethod\":\"occlusion-mean-v1\",\"explanationStatus\":\"supported\",\"delta\":0.1}"
+      },
+      {
+        "syncId": "audit-sync",
+        "commitId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "payload": "{\"explanationStatus\":\"not-supported\",\"value\":2}"
+      },
+      {
+        "syncId": "audit-sync",
+        "commitId": "cccccccccccccccccccccccccccccccccccccccc",
+        "payload": "{\"explanationMethod\":\"linear-logodds-v1\",\"explanationStatus\":\"supported\",\"delta\":1.2}"
+      }
+    ]
+  },
+  "after": {
+    "version": 43,
+    "tables": {
+      "training_task": {
+        "count": 1,
+        "sha256": "67f6cfd02d78240599cec24bd0537de089a92cf90c49178bf9e083923d19a411",
+        "columns": [
+          "id",
+          "dataset_version",
+          "dataset_manifest",
+          "manifest_sha256",
+          "algorithm",
+          "metric_set",
+          "status",
+          "stage",
+          "error_code",
+          "error_message",
+          "parent_task_id",
+          "created_by",
+          "request_id",
+          "artifact_key",
+          "artifact_run_id",
+          "run_id",
+          "model_id",
+          "feature_schema_version",
+          "metrics_json",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "deadline_at",
+          "cancel_requested_at",
+          "completed_at",
+          "class_policy_json",
+          "class_policy_summary_json",
+          "metrics_by_partition_json",
+          "split_json",
+          "split_rule",
+          "data_scale_json",
+          "training_performance_json",
+          "split_preset",
+          "split_policy_json",
+          "experiment_id",
+          "params_json",
+          "history_json",
+          "owner_user_id",
+          "maturity_policy",
+          "maturity_json",
+          "release_policy",
+          "release_status",
+          "release_report_id",
+          "release_json"
+        ]
+      },
+      "training_experiment": {
+        "count": 1,
+        "sha256": "fa26a225bc5778bc280e90742c870ea59f25a7960fd3edd163ddc27b3c14a854",
+        "columns": [
+          "id",
+          "dataset_version",
+          "dataset_manifest",
+          "manifest_sha256",
+          "metric_set",
+          "split_preset",
+          "class_policy_json",
+          "seed",
+          "signature",
+          "request_id",
+          "created_by",
+          "created_at",
+          "owner_user_id"
+        ]
+      },
+      "training_experiment_task": {
+        "count": 1,
+        "sha256": "b2b28c282d2458fef7954678324c0b165612403dc0feb5b289eef5091172215a",
+        "columns": [
+          "experiment_id",
+          "task_id",
+          "created_at"
+        ]
+      },
+      "repository_sync": {
+        "count": 1,
+        "sha256": "c3ecac7b437bb0e6e3a101b15a6c054bfd9a7bf30489891e08a99cb07dd82aeb",
+        "columns": [
+          "id",
+          "repository_url",
+          "branch",
+          "since",
+          "until",
+          "commit_limit",
+          "requested_strategy",
+          "status",
+          "stage",
+          "error_code",
+          "error_message",
+          "dataset_version",
+          "run_id",
+          "model_id",
+          "model_strategy",
+          "degrade_reason",
+          "train_records",
+          "train_positives",
+          "request_id",
+          "created_at",
+          "updated_at",
+          "repository_id",
+          "completed_at",
+          "head_commit",
+          "analysis_branch",
+          "requested_model_id",
+          "resolved_model_id",
+          "started_at",
+          "deadline_at",
+          "cancel_requested_at",
+          "source_kind",
+          "source_snapshot_id",
+          "origin",
+          "feature_schema_version",
+          "distribution_rule",
+          "feature_source_json",
+          "algorithm",
+          "split_preset",
+          "split_policy_json",
+          "admission_degrade_reason",
+          "maturity_policy",
+          "maturity_json"
+        ]
+      },
+      "repository_commit": {
+        "count": 3,
+        "sha256": "31669407a65462fafebba1ee5d889b41d1e057c68091f4a57fcf19be6ab55176",
+        "columns": [
+          "sync_id",
+          "commit_id",
+          "epoch",
+          "risk",
+          "added_lines",
+          "deleted_lines",
+          "files",
+          "features_json",
+          "label",
+          "label_note",
+          "subject",
+          "author_name",
+          "file_paths_json"
+        ]
+      },
+      "experiment_run": {
+        "count": 17,
+        "sha256": "fd5f8fc0ffb1b925a728a85a5950dc0775dfb43c3404ceaaa8e672af33db0512",
+        "columns": [
+          "id",
+          "artifact_run_id",
+          "dataset_id",
+          "config_json",
+          "schema_json"
+        ]
+      },
+      "model_version": {
+        "count": 17,
+        "sha256": "fa415f709e02de4e4ee6269d269df6e8b034b23eeddc8a805bc76ff66f87d975",
+        "columns": [
+          "id",
+          "run_id",
+          "preferred_location_id",
+          "state",
+          "error_code",
+          "payload_json",
+          "owner_user_id"
+        ]
+      },
+      "run_location": {
+        "count": 17,
+        "sha256": "a07d41cf2228e5433c0ec19238760d4fd9d15d99cd43e512fa3725cf3080fec2",
+        "columns": [
+          "id",
+          "run_id",
+          "relative_key",
+          "manifest_json",
+          "summary_json",
+          "verification_json",
+          "verified_at"
+        ]
+      },
+      "project_trend_view": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "columns": [
+          "id",
+          "repository_id",
+          "signature",
+          "payload_json",
+          "created_at"
+        ]
+      },
+      "prediction": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "columns": [
+          "id",
+          "batch_id",
+          "record_id",
+          "risk",
+          "features_json"
+        ]
+      },
+      "prediction_batch": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "columns": [
+          "id",
+          "model_id",
+          "payload_json",
+          "created_at"
+        ]
+      }
+    },
+    "explanations": [
+      {
+        "syncId": "audit-sync",
+        "commitId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": "{\"explanationMethod\":\"occlusion-mean-v1\",\"explanationStatus\":\"supported\",\"delta\":0.1}"
+      },
+      {
+        "syncId": "audit-sync",
+        "commitId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "payload": "{\"explanationStatus\":\"not-supported\",\"value\":2}"
+      },
+      {
+        "syncId": "audit-sync",
+        "commitId": "cccccccccccccccccccccccccccccccccccccccc",
+        "payload": "{\"explanationMethod\":\"linear-logodds-v1\",\"explanationStatus\":\"supported\",\"delta\":1.2}"
+      }
+    ]
+  },
+  "checks": {
+    "tableUnchanged": {
+      "training_task": true,
+      "training_experiment": true,
+      "training_experiment_task": true,
+      "repository_sync": true,
+      "repository_commit": true,
+      "experiment_run": true,
+      "model_version": true,
+      "run_location": true,
+      "project_trend_view": true,
+      "prediction": true,
+      "prediction_batch": true
+    },
+    "trainingTasksUnchanged": true,
+    "modelsUnchanged": true,
+    "risksUnchanged": true,
+    "historyUnchanged": true,
+    "explanationPayloadsPreserved": true,
+    "legacyDefaultMethodBackfilled": true,
+    "explicitMethodPreserved": true,
+    "schemaVersion43": true,
+    "foreignKeysValid": true,
+    "idempotentInitialize": true,
+    "sourceDatabaseUnchanged": true
+  },
+  "passed": true
+}
