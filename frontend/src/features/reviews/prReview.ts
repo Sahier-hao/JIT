@@ -1,8 +1,9 @@
-import { parseSnapshot, type PRSnapshot } from '@/features/reviews/prReviewClient'
+import { parseSnapshot, type PRCandidate, type PRSnapshot } from '@/features/reviews/prReviewClient'
 
 export type FileState = 'unread' | 'read' | 'recheck' | 'uncovered'
 export const readStatusLabels: Record<FileState, string> = { unread: '未阅读', read: '已阅读', recheck: '需要复核', uncovered: '暂未覆盖' }
 export const remoteStateLabels = { open: '开放中', closed: '已关闭', merged: '已合并' }
+export const codeSideLabels = { base: '基准', head: '目标' } as const
 export const reviewStatusLabels = { open: '待核对', resolved: '人工标记已解决', deferred: '暂不处理', withdrawn: '已撤回' }
 export function parsePatchLines(patch: string): { text: string; side: 'base' | 'head'; line: number | null; kind: 'hunk' | 'add' | 'delete' | 'context' }[] {
   let old = 0, next = 0
@@ -21,11 +22,13 @@ export interface ReviewQuestion {
   id: string; body: string; kind: 'question' | 'finding' | 'suggestion'; source: 'author' | 'change' | 'manual'
   originSnapshotId: string; relatedFiles: string[]; evidence: Evidence[]; status: 'open' | 'resolved' | 'deferred' | 'withdrawn'
   judgment: string; reason: string; requiresRecheck: boolean; feedback: '' | 'helpful' | 'irrelevant' | 'more-evidence'; feedbackReason: string
+  candidateKey?: string
 }
 export type CandidateDecision = { status: 'confirmed' | 'rejected' | 'deferred'; reason: string }
 export interface ReviewRound {
   source: PRSnapshot; progress: Record<string, { state: FileState; originSnapshotId: string }>; questions: ReviewQuestion[]
   currentFile: string; scratch: string; conclusion: { kind: Conclusion; note: string; markdown: string; createdAt: string } | null
+  reviewView?: 'commits' | 'files'
   location?: { side: 'base' | 'head'; line: number }
   modelId?: string
   historyNotice?: string
@@ -55,14 +58,20 @@ export function question(source: PRSnapshot, body = '', origin: ReviewQuestion['
   return { id: crypto.randomUUID(), body, source: origin, kind: 'question', originSnapshotId: source.snapshotId, relatedFiles: [], evidence: [], status: 'open', judgment: '', reason: '', requiresRecheck: false, feedback: '', feedbackReason: '' }
 }
 
-export function candidateQuestion(source: PRSnapshot, candidate: {
-  path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string
-  suggestion?: { title: string; rationale: string; manualChecks: string[]; example: { before: string; after: string } | null } | null
-}): ReviewQuestion {
+export function candidateKey(candidate: PRCandidate): string {
+  return `${candidate.side}:${candidate.path}:${candidate.line}:${candidate.ruleId}:${candidate.ruleVersion}`
+}
+
+const candidateLocationText = (candidate: PRCandidate) =>
+  `位置：${candidate.path}:${candidate.line}（规则 ${candidate.ruleId}@${candidate.ruleVersion}）`
+
+export function candidateQuestion(source: PRSnapshot, candidate: PRCandidate): ReviewQuestion {
+  const file = source.files.find(item => item.path === candidate.path)
+  if (!file) throw new Error('可疑行所在文件不属于此审查版本')
   const suggestion = candidate.suggestion
   const parts = [
     suggestion?.title ?? `处理候选 ${candidate.ruleId}`,
-    `位置：${candidate.path}:${candidate.line}（规则 ${candidate.ruleId}@${candidate.ruleVersion}）`,
+    candidateLocationText(candidate),
     suggestion?.rationale ?? candidate.message,
     candidate.evidence ? `证据：${candidate.evidence}` : '',
     suggestion?.manualChecks.length ? `人工确认：${suggestion.manualChecks.join('；')}` : '',
@@ -71,7 +80,26 @@ export function candidateQuestion(source: PRSnapshot, candidate: {
   const created = question(source, parts.join('\n\n'), 'manual')
   created.kind = 'suggestion'
   created.relatedFiles = [candidate.path]
+  created.candidateKey = candidateKey(candidate)
+  created.evidence = [{ snapshotId: source.snapshotId, path: candidate.path, side: candidate.side,
+    line: candidate.line, blobSha: file.blobSha, note: candidate.evidence }]
   return created
+}
+
+export function addCandidateToRound(round: ReviewRound, candidate: PRCandidate): ReviewRound {
+  const created = candidateQuestion(round.source, candidate)
+  const previous = round.questions.find(item => item.kind === 'suggestion' && item.originSnapshotId === round.source.snapshotId
+    && (item.candidateKey === created.candidateKey || !item.candidateKey && candidate.side === 'head'
+      && item.body.split('\n').includes(candidateLocationText(candidate))))
+  const evidence = created.evidence[0]
+  const questions = previous ? round.questions.map(item => {
+    if (item.id !== previous.id) return item
+    const anchored = item.evidence.some(anchor => anchor.path === evidence.path && anchor.side === evidence.side
+      && anchor.line === evidence.line && anchor.snapshotId === evidence.snapshotId)
+    return { ...item, candidateKey: created.candidateKey, evidence: anchored ? item.evidence : [...item.evidence, evidence] }
+  }) : [...round.questions, created]
+  return { ...round, questions, selectedQuestionId: previous?.id ?? created.id, currentFile: candidate.path,
+    location: { side: candidate.side, line: candidate.line } }
 }
 
 function localSource(source: PRSnapshot): PRSnapshot { return { ...source, files: source.files.map(file => ({ ...file, patch: null, patchComplete: false })) } }
@@ -83,6 +111,15 @@ function round(source: PRSnapshot): ReviewRound {
 export function createWork(source: PRSnapshot): PRWork {
   return { key: workKey(source.owner, source.name, source.number), owner: source.owner, name: source.name, number: source.number, latestSnapshotId: source.snapshotId, viewedSnapshotId: source.snapshotId,
     remoteState: source.remoteState, checkedAt: source.capturedAt, checkError: '', interest: 'active', rounds: { [source.snapshotId]: round(source) }, revision: 0, savedAt: '' }
+}
+
+export function openReviewVersion(work: PRWork | undefined, source: PRSnapshot): PRWork {
+  if (!work) return createWork(source)
+  if (work.rounds[source.snapshotId]) return { ...work, viewedSnapshotId: source.snapshotId }
+  const latest = work.rounds[work.latestSnapshotId].source
+  const next = Date.parse(source.capturedAt) >= Date.parse(latest.capturedAt) ? adoptVersion(work, source)
+    : { ...work, rounds: { ...work.rounds, [source.snapshotId]: round(source) } }
+  return { ...next, viewedSnapshotId: source.snapshotId }
 }
 export function adoptVersion(work: PRWork, source: PRSnapshot): PRWork {
   if (work.key !== workKey(source.owner, source.name, source.number)) throw new Error('工作单来源不一致')
@@ -130,11 +167,12 @@ function validWork(raw: unknown): PRWork {
     if (item.scratch === undefined) item.scratch = ''
     if (item.selectedQuestionId !== undefined && typeof item.selectedQuestionId !== 'string' || item.historyNotice !== undefined && typeof item.historyNotice !== 'string'
       || item.scratchOriginSnapshotId !== undefined && typeof item.scratchOriginSnapshotId !== 'string'
+      || item.reviewView !== undefined && !['commits', 'files'].includes(item.reviewView)
       || item.location && (!['base', 'head'].includes(item.location.side) || !Number.isInteger(item.location.line) || item.location.line < 1)) throw new Error('工作单位置或版本说明无效')
     if (id !== source.snapshotId || workKey(source.owner, source.name, source.number) !== work.key || typeof item.scratch !== 'string' || !Array.isArray(item.questions) || item.questions.length > 500) throw new Error('工作单版本或记录无效')
     const ids = new Set<string>()
     for (const q of item.questions) {
-      if (!q.id || ids.has(q.id) || typeof q.body !== 'string' || typeof q.reason !== 'string' || typeof q.judgment !== 'string' || typeof q.feedbackReason !== 'string' || typeof q.requiresRecheck !== 'boolean' || !['question', 'finding', 'suggestion'].includes(q.kind) || !['author', 'change', 'manual'].includes(q.source) || !['open', 'resolved', 'deferred', 'withdrawn'].includes(q.status) || !['', 'helpful', 'irrelevant', 'more-evidence'].includes(q.feedback) || !Array.isArray(q.relatedFiles) || !q.relatedFiles.every(p => typeof p === 'string') || !Array.isArray(q.evidence)) throw new Error('审查问题格式无效')
+      if (!q.id || ids.has(q.id) || typeof q.body !== 'string' || typeof q.reason !== 'string' || typeof q.judgment !== 'string' || typeof q.feedbackReason !== 'string' || typeof q.requiresRecheck !== 'boolean' || !['question', 'finding', 'suggestion'].includes(q.kind) || !['author', 'change', 'manual'].includes(q.source) || !['open', 'resolved', 'deferred', 'withdrawn'].includes(q.status) || !['', 'helpful', 'irrelevant', 'more-evidence'].includes(q.feedback) || !Array.isArray(q.relatedFiles) || !q.relatedFiles.every(p => typeof p === 'string') || !Array.isArray(q.evidence) || q.candidateKey !== undefined && typeof q.candidateKey !== 'string') throw new Error('审查问题格式无效')
       ids.add(q.id)
       for (const e of q.evidence) if (typeof e.snapshotId !== 'string' || typeof e.path !== 'string' || !['base', 'head'].includes(e.side) || e.line !== null && (!Number.isInteger(e.line) || e.line < 1) || typeof e.note !== 'string' || typeof e.blobSha !== 'string') throw new Error('证据位置无效')
     }

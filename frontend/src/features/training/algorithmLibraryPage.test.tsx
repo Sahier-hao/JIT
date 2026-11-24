@@ -51,7 +51,7 @@ it('browses visual algorithm structures and method details', async () => {
   render(<AlgorithmLibraryPage onLoginRequired={vi.fn()}/>)
 
   expect(await screen.findByRole('heading', { name: '算法库', level: 1 })).toBeVisible()
-  expect(screen.getByText('9 个方法')).toBeVisible()
+  expect(await screen.findByText('9 个方法')).toBeVisible()
   expect(screen.getByRole('img', { name: /逻辑回归 · L2 算法结构图/ })).toBeVisible()
   expect(screen.getByText('正则强度倒数 C')).toBeVisible()
 

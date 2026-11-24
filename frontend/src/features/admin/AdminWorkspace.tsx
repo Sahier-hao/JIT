@@ -1,7 +1,9 @@
+import { WorkspaceNavigation } from '@/components/layout/WorkspaceNavigation'
+import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { type LucideIcon, SlidersHorizontal, List, TrendingUp, ChartNoAxesCombined, ChevronRight } from 'lucide-react'
 import { BrandLogo } from '@/components/shared/BrandLogo'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { AccountMenu } from '@/components/layout/AccountMenu'
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/apiClient'
 import { record } from '@/lib/apiContract'
@@ -102,10 +104,10 @@ export function AdminWorkspace({ route, navigate }: {
   let content
   if (route.name === 'report') content = <VerificationReport route={route} navigate={navigate}/>
   else if (route.view === 'evaluation') content = <section className="grid gap-4">
-    <h1 className="text-xl font-semibold">模型评估</h1>
+    <WorkspacePageHeader title="模型评估"/>
     <div className="grid gap-3 md:grid-cols-3">
       {EVALUATION_LINKS.map(link => <a key={link.label} {...linkTo(link.route, navigate)}
-        className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 rounded-lg border border-border-soft bg-card p-4 hover:bg-hover">
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 rounded-lg border border-border-soft bg-card p-4 hover:border-foreground-4 hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent">
         <span className="text-base font-semibold text-foreground">{link.label}</span>
         <ChevronRight className="mt-0.5 size-4 text-foreground-3" aria-hidden="true"/>
         <span className="col-span-2 text-sm text-foreground-3">{link.detail}</span>
@@ -122,31 +124,32 @@ export function AdminWorkspace({ route, navigate }: {
     compatibility: route.compatibility,
     artifactState: route.artifactState,
     offset: route.offset,
+    focusCandidateId: route.focusCandidateId,
   }} navigate={navigate} expired={expired}/>
   else if (route.view === 'experiments' && route.resourceId) content = <AdminExperimentDetailPage reportId={route.resourceId} navigate={navigate} expired={expired}/>
   else if (route.view === 'experiments') content = <AdminExperimentsPage navigate={navigate} expired={expired}/>
   else content = <AdminComparisonPage key={route.models?.join(',') ?? ''} modelIds={route.models} navigate={navigate} expired={expired}/>
-  return <div className="min-h-screen bg-background lg:grid lg:grid-cols-[236px_minmax(0,1fr)]">
-    <a className="fixed left-2.5 top-[-60px] z-[100] rounded-sm border border-border bg-card px-3.5 py-2.5 text-sm text-foreground focus:top-2.5" href="#admin-main">跳到主要内容</a>
-    <aside className="flex flex-col border-b border-border bg-rail px-3.5 py-4 lg:sticky lg:top-0 lg:h-screen lg:self-start lg:overflow-hidden lg:border-b-0 lg:border-r">
-      <Button variant="ghost" type="button" className="h-auto flex items-center gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'landing' })}><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><BrandLogo aria-hidden="true" focusable="false" strokeWidth={1.5} size={18}/></span><span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span></Button>
-      <nav className="mt-4 flex flex-wrap items-center gap-1 lg:grid" aria-label="管理导航">
-        {NAV.map(item => <Button variant="ghost" key={item.view} type="button" aria-current={active(item.view) ? 'page' : undefined}
-          className="flex h-9 shrink-0 justify-start gap-2.5 rounded-sm px-3 text-sm text-foreground-2 aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground"
-          onClick={() => navigate({ name: 'admin', view: item.view })}>
-          <item.icon aria-hidden="true" strokeWidth={1.5} size={17}/>{item.label}
-        </Button>)}
-      </nav>
+  const primaryNav = <nav className="grid gap-1" aria-label="管理导航">
+    {NAV.map(item => <Button variant="ghost" key={item.view} type="button" aria-current={active(item.view) ? 'page' : undefined}
+      className="flex h-9 shrink-0 justify-start gap-2.5 rounded-sm px-3 text-sm text-foreground-2 aria-[current=page]:bg-sunken aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+      onClick={() => navigate({ name: 'admin', view: item.view })}>
+      <item.icon aria-hidden="true" strokeWidth={1.5} size={17}/>{item.label}
+    </Button>)}
+  </nav>
+  return <div className="min-h-screen bg-background lg:grid lg:grid-cols-[220px_minmax(0,1fr)]">
+    <a className="sr-only z-[100] rounded-sm border border-border bg-card px-3.5 py-2.5 text-sm text-foreground focus:not-sr-only focus:fixed focus:left-2.5 focus:top-2.5"
+      href="#admin-main" onClick={event => { event.preventDefault(); document.getElementById('admin-main')?.focus() }}>跳到主要内容</a>
+    <aside className="hidden flex-col border-r border-border bg-rail px-3.5 py-4 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:self-start lg:overflow-hidden">
+      <Button variant="ghost" type="button" className="h-auto flex items-center justify-start gap-3 border-0 border-b border-border-soft bg-transparent px-2 pb-3.5 text-left" onClick={() => navigate({ name: 'landing' })}><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><BrandLogo aria-hidden="true" focusable="false" strokeWidth={1.5} size={18}/></span><span className="flex flex-col leading-none"><span className="font-display text-xl font-bold tracking-tight text-foreground">JIT</span><span className="mt-1 font-mono text-[10px] font-medium tracking-[.13em] text-foreground-4">REVIEW</span></span></Button>
+      <div className="mt-4">{primaryNav}</div>
     </aside>
     <div className="min-w-0">
-      <header className="flex h-12 items-center justify-between gap-3 border-b border-border bg-background px-5 sm:h-13 sm:px-6">
-        <nav className="flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[.1em] text-foreground-4" aria-label="面包屑"><span>管理工作区</span><span aria-hidden="true">/</span><b className="font-medium text-foreground">{section}</b></nav>
-        <div className="flex min-w-0 items-center gap-1.5">
+      <header className="sticky top-0 z-30 flex min-h-12 min-w-0 items-center justify-between gap-2 border-b border-border-soft bg-card px-3 py-1.5 sm:min-h-14 sm:px-6">
+        <WorkspaceNavigation label={section}>{primaryNav}</WorkspaceNavigation>
+        <nav className="hidden min-w-0 items-center gap-2 text-xs font-medium text-foreground-3 lg:flex" aria-label="面包屑"><span>管理工作区</span><span aria-hidden="true">/</span><b className="font-medium text-foreground">{section}</b></nav>
+        <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
           <ActiveJobsIndicator jobs={activeJobs} navigate={navigate}/>
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild><Button className="max-w-[min(40vw,180px)] truncate" variant="ghost" size="sm" type="button">{label(session.username, '管理员')}</Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end"><DropdownMenuItem variant="destructive" onSelect={() => void logout()}>退出管理</DropdownMenuItem></DropdownMenuContent>
-          </DropdownMenu>
+          <AccountMenu username={label(session.username, '管理员')} role="admin" onLogout={() => void logout()}/>
           <AppearanceControl/>
         </div>
       </header>
@@ -155,7 +158,7 @@ export function AdminWorkspace({ route, navigate }: {
         {evaluationView ? <nav className="mb-4 flex flex-wrap items-center gap-1 border-b border-border-soft pb-2" aria-label="模型评估视图">
           {EVALUATION_LINKS.map(link => {
             const selected = evaluationView === (link.route.name === 'report' ? 'report' : link.route.view)
-            return <Button key={link.label} variant="ghost" size="sm" asChild className="aria-[current=page]:bg-sunken">
+            return <Button key={link.label} variant="ghost" size="sm" asChild className="aria-[current=page]:bg-accent-soft aria-[current=page]:text-accent">
               <a {...linkTo(link.route, navigate)} aria-current={selected ? 'page' : undefined}>{link.label}</a>
             </Button>
           })}

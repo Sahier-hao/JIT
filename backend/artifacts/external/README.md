@@ -14,7 +14,7 @@
 ## 交付约定（产方）
 
 1. **以分支 + PR 提交**：开 `feature/` 分支，把整个产物目录放到本目录下（如
-   `backend/artifacts/external/<方法名>/`），在 PR 说明方法与产方环境，由非作者席位审阅。
+   `backend/artifacts/external/<方法名>/`），在 PR 说明方法与产方环境，由非作者成员审阅。
 2. **提交整个目录**：`manifest.json`、`model.joblib`、`test-input.json`、`test-labels.json`、
    `reference-predictions.json`、`metrics.json`、`source.json`、`split.json`、`summary.json`
    缺一不可——校验按其中的完整性清单逐项核对。

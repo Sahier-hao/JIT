@@ -44,10 +44,24 @@ async function enterWork(page: import('@playwright/test').Page) {
   else await create.click()
 }
 
+async function openNote(page: import('@playwright/test').Page) {
+  const noteField = page.getByLabel('个人笔记')
+  if (await noteField.count()) return noteField
+  const commit = page.getByText('调整审查示例 1', { exact: false }).first()
+  if (await commit.count()) await commit.click()
+  if (!(await noteField.count())) await page.getByRole('option').filter({ hasText: 'review.py' }).first().click()
+  return noteField
+}
+
 async function seedNote(page: import('@playwright/test').Page, note: string) {
-  await page.getByText('调整审查示例 1', { exact: false }).first().click()
-  await page.getByLabel('个人笔记').fill(note)
+  const noteField = await openNote(page)
+  await noteField.fill(note)
   await expect(page.getByText('草稿已保存', { exact: false })).toBeVisible()
+}
+
+async function expectNote(page: import('@playwright/test').Page, note: string) {
+  const noteField = await openNote(page)
+  await expect(noteField).toHaveValue(note)
 }
 
 test('同一浏览器两个账户的个人工作单隔离并可分别续审', async ({ page, request }) => {
@@ -62,16 +76,14 @@ test('同一浏览器两个账户的个人工作单隔离并可分别续审', as
   await seedNote(page, 'A 的回归旅程笔记')
 
   await page.reload()
-  await page.getByText('调整审查示例 1', { exact: false }).first().click()
-  await expect(page.getByLabel('个人笔记')).toHaveValue('A 的回归旅程笔记')
+  await expectNote(page, 'A 的回归旅程笔记')
 
   const advanced = await request.post(`${API}/__test/remote`, { data: { index: 26 } })
   expect(advanced.ok()).toBeTruthy()
   await page.getByRole('button', { name: '检查 PR 更新' }).click()
   await page.getByRole('button', { name: '开始复核新版本' }).click()
   await expect(page.getByText('版本 26', { exact: false }).first()).toBeVisible()
-  await page.getByText('调整审查示例 1', { exact: false }).first().click()
-  await expect(page.getByLabel('个人笔记')).toHaveValue('A 的回归旅程笔记')
+  await expectNote(page, 'A 的回归旅程笔记')
 
   await page.getByRole('button', { name: userA }).click()
   await page.getByRole('menuitem', { name: '退出登录' }).click()
@@ -88,7 +100,55 @@ test('同一浏览器两个账户的个人工作单隔离并可分别续审', as
   await login(page, userA, password)
   await openPreview(page, repositoryId)
   await enterWork(page)
-  await page.getByText('调整审查示例 1', { exact: false }).first().click()
-  await expect(page.getByLabel('个人笔记')).toHaveValue('A 的回归旅程笔记')
+  await expectNote(page, 'A 的回归旅程笔记')
   await expect(page.getByText('B 的独立回归笔记')).toHaveCount(0)
+})
+
+test('从项目 PR 标记跳到源码并保留跨版本草稿证据', async ({ page, request }, testInfo) => {
+  const { repositoryId } = await context(request)
+  expect((await request.post(`${API}/__test/remote`, { data: { index: 25 } })).ok()).toBeTruthy()
+  await register(page, `candidate${Date.now()}`, 'regression-pass-1')
+  await openPreview(page, repositoryId)
+  await page.getByText('调整审查示例 1', { exact: true }).first().click()
+  await page.getByRole('button', { name: '检查当前文件' }).click()
+  const inDiff = page.locator('.diff').getByRole('button', { name: '查看目标第 2 行的可疑项' })
+  await expect(inDiff).toBeVisible()
+  await inDiff.click()
+  const sidebar = page.getByRole('complementary', { name: '审查侧栏' })
+  await expect(sidebar.getByRole('heading', { name: '把可变默认参数改为 None 并在函数体内创建' })).toBeVisible()
+
+  await page.getByRole('button', { name: '定位目标第 34 行' }).click()
+  const original = page.getByRole('region', { name: '目标源码' }).locator('[data-code-line="head:34"]')
+  await expect(original).toContainText('def remember(previous={}):')
+  await page.getByRole('button', { name: '加入问题草稿' }).click()
+  const evidence = page.getByRole('button', { name: 'review.py:34 · 目标 · 原版本' })
+  await expect(evidence).toBeVisible()
+  await expect(original).toHaveAttribute('data-focused', 'true')
+  await page.getByRole('tab', { name: '检查结果' }).click()
+  await page.getByRole('button', { name: '加入问题草稿' }).click()
+  await expect(evidence).toHaveCount(1)
+  await page.reload()
+  await expect(evidence).toBeVisible()
+  await page.getByRole('tab', { name: '检查结果' }).click()
+  await expect(page.getByRole('button', { name: '定位目标第 34 行' })).toBeVisible()
+  const codeBox = await page.getByRole('region', { name: '源码阅读区' }).boundingBox()
+  const inspectorBox = await sidebar.boundingBox()
+  expect(inspectorBox!.x).toBeGreaterThan(codeBox!.x)
+  expect(await page.getByRole('region', { name: '目标源码' }).locator('..').evaluate(element => element.clientHeight)).toBeGreaterThan(260)
+  await expect(original).toBeInViewport()
+  await page.getByRole('region', { name: '文件审查工作区' }).screenshot({ path: testInfo.outputPath('pr-candidate-source.png') })
+
+  expect((await request.post(`${API}/__test/remote`, { data: { index: 26 } })).ok()).toBeTruthy()
+  await page.getByRole('button', { name: '检查 PR 更新' }).click()
+  await page.getByRole('button', { name: '开始复核新版本' }).click()
+  await page.getByText('调整审查示例 1', { exact: true }).first().click()
+  await expect(page.getByRole('button', { name: '定位目标第 34 行' })).toHaveCount(0)
+  await evidence.click()
+  await expect(original).toHaveAttribute('data-focused', 'true')
+  await expect(original).toContainText('def remember(previous={}):')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: '问题与检查' }).click()
+  await page.getByRole('tab', { name: '检查结果' }).click()
+  await expect(sidebar.getByRole('button', { name: '定位目标第 34 行' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
 })

@@ -344,6 +344,7 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialD
       <div className="grid min-h-0 min-w-0 auto-rows-max content-start gap-4 overflow-x-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-gutter:stable]" data-scroll-region="dataset-detail" tabIndex={0} role="region" aria-label={tab === 'builds' ? '构建任务' : '数据详情'}>
         {tab === 'builds' ? <EmptyState title="构建任务" description="选择任务查看进度、重试或打开已生成的数据。"/> : current ? <DatasetDetail dataset={current} preview={preview} previewError={previewError} busy={busy} actions={{
           onTrain: () => navigate({ name: 'my-training', datasetVersion: current.version }),
+          onHistory: () => navigate({ name: 'my-training', historyDatasetVersion: current.version }),
           onPredict: () => navigate({ name: 'my-predictions', datasetVersion: current.version }),
           onExport: () => exportDataset(current.version),
           onCuration: () => setCurationOpen(true),

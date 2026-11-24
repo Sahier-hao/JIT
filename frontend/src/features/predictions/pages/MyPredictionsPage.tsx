@@ -1,3 +1,4 @@
+import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EChartCanvas, chartTooltip, useChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
@@ -49,30 +50,40 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
   const [threshold, setThreshold] = useState(0.5)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [historyError, setHistoryError] = useState('')
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
-    setError('')
-    Promise.all([userDatasets('usable', controller.signal), predictionBatches(controller.signal)])
-      .then(([datasetResult, batchResult]) => {
-        if (controller.signal.aborted) return
-        setDatasets(datasetResult.datasets)
-        setBatches(batchResult)
-        const preferred = datasetResult.datasets.find(item => item.version === datasetVersion)
-          ?? datasetResult.datasets[0]
-        setDatasetVersion(current => current || preferred?.version || '')
-      })
-      .catch(failure => {
-        if (controller.signal.aborted) return
-        if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
-        else setError(failure instanceof Error ? failure.message : '模型试算数据读取失败')
-      })
+    setHistoryError('')
+    predictionBatches(controller.signal).then(result => {
+      if (!controller.signal.aborted) setBatches(result)
+    }).catch(failure => {
+      if (controller.signal.aborted) return
+      if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
+      else setHistoryError(failure instanceof Error ? failure.message : '试算记录读取失败')
+    })
     return () => controller.abort()
-  }, [datasetVersion, onLoginRequired, revision])
+  }, [onLoginRequired, revision])
 
   useEffect(() => {
-    if (!datasetVersion) {
+    if (batchId) return
+    const controller = new AbortController()
+    setError('')
+    userDatasets('usable', controller.signal).then(({ datasets: items }) => {
+      if (controller.signal.aborted) return
+      setDatasets(items)
+      setDatasetVersion(current => current || items[0]?.version || '')
+    }).catch(failure => {
+      if (controller.signal.aborted) return
+      if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
+      else setError(failure instanceof Error ? failure.message : '模型试算数据读取失败')
+    })
+    return () => controller.abort()
+  }, [batchId, onLoginRequired, revision])
+
+  useEffect(() => {
+    if (batchId || !datasetVersion) {
       setModels(null)
       setModelId('')
       return
@@ -92,7 +103,7 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
         else setError(failure instanceof Error ? failure.message : '兼容模型读取失败')
       })
     return () => controller.abort()
-  }, [datasetVersion, onLoginRequired, revision])
+  }, [batchId, datasetVersion, onLoginRequired, revision])
 
   async function submit() {
     if (!datasetVersion || !modelId || busy) return
@@ -111,23 +122,34 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
   }
 
   const selectedDataset = datasets?.find(item => item.version === datasetVersion) ?? null
-  return <section className="grid min-w-0 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+  return <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+    <div className="grid min-w-0 content-start gap-4">
+      <WorkspacePageHeader title="模型试算" meta="使用已登记模型为数据集打分，并试算分类阈值。"
+        actions={<Button variant="outline" size="sm" type="button" onClick={() => navigate({ name: 'my-predictions' })}>新建试算</Button>}/>
+      {error ? <div className="flex flex-wrap items-center gap-2 rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep" role="alert">
+        <span>{error}</span><Button size="sm" variant="outline" type="button" onClick={() => setRevision(value => value + 1)}>重试</Button>
+      </div> : null}
+      {batchId ? <PredictionDetail batchId={batchId} onLoginRequired={onLoginRequired}/>
+        : <PredictionSetup datasets={datasets} selectedDataset={selectedDataset} datasetVersion={datasetVersion}
+          models={models} modelId={modelId} threshold={threshold} busy={busy}
+          onDataset={setDatasetVersion} onModel={setModelId} onThreshold={setThreshold} onSubmit={() => void submit()}/>}
+    </div>
     <aside className="min-w-0 rounded-xl border border-border-soft bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold text-foreground">试算记录</h2>
-          <p className="mt-0.5 text-[11px] text-foreground-4">固定数据与模型，可重复打开</p>
         </div>
         <Button size="icon" variant="ghost" type="button" onClick={() => setRevision(value => value + 1)} aria-label="刷新试算记录">
           <RefreshCw aria-hidden="true" size={15}/>
         </Button>
       </div>
       <div className="max-h-[68vh] overflow-y-auto p-2">
-        {batches === null ? <LoadingNotice label="正在读取试算记录" prefix={false}/>
+        {historyError ? <p className="px-2 py-2 text-xs text-rose-deep" role="alert">{historyError}</p> : null}
+        {batches === null ? historyError ? null : <LoadingNotice label="正在读取试算记录" prefix={false}/>
           : batches.length === 0 ? <p className="px-2 py-8 text-center text-xs text-foreground-3">还没有试算记录。</p>
           : <div className="grid gap-1">
-            {batches.map(item => <button key={item.batchId} type="button"
-              className={cn('rounded-lg border px-3 py-2.5 text-left transition-colors',
+            {batches.map(item => <button key={item.batchId} type="button" aria-current={item.batchId === batchId ? 'page' : undefined}
+              className={cn('min-w-0 rounded-lg border px-3 py-2.5 text-left transition-colors',
                 item.batchId === batchId ? 'border-accent/35 bg-accent-soft' : 'border-transparent hover:bg-sunken')}
               onClick={() => navigate({ name: 'my-predictions', batchId: item.batchId })}>
               <span className="flex items-center justify-between gap-2">
@@ -143,23 +165,6 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
           </div>}
       </div>
     </aside>
-
-    <div className="grid min-w-0 content-start gap-4">
-      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">模型试算</h1>
-          <p className="mt-1 max-w-2xl text-xs leading-5 text-foreground-3">用已登记模型为选定数据版本批量打分，并按现有标签试算阈值、误报与漏报。</p>
-        </div>
-        <Button variant="outline" size="sm" type="button" onClick={() => navigate({ name: 'my-predictions' })}>新建试算</Button>
-      </header>
-      {error ? <div className="flex flex-wrap items-center gap-2 rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep" role="alert">
-        <span>{error}</span><Button size="sm" variant="outline" type="button" onClick={() => setRevision(value => value + 1)}>重试</Button>
-      </div> : null}
-      {batchId ? <PredictionDetail batchId={batchId} onLoginRequired={onLoginRequired}/>
-        : <PredictionSetup datasets={datasets} selectedDataset={selectedDataset} datasetVersion={datasetVersion}
-          models={models} modelId={modelId} threshold={threshold} busy={busy}
-          onDataset={setDatasetVersion} onModel={setModelId} onThreshold={setThreshold} onSubmit={() => void submit()}/>}
-    </div>
   </section>
 }
 
@@ -211,7 +216,7 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
         <strong className="text-sm tabular-nums text-foreground">{threshold.toFixed(2)}</strong>
       </div>
       <input id="new-prediction-threshold" type="range" min={0} max={100} step={1} value={Math.round(threshold * 100)}
-        onChange={event => onThreshold(event.currentTarget.valueAsNumber / 100)} className="h-5 w-full cursor-pointer accent-accent"/>
+        onChange={event => onThreshold(event.currentTarget.valueAsNumber / 100)} className="h-5 w-full cursor-pointer accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"/>
     </div>
     {selectedDataset && models && models.length === 0 ? <div className="flex gap-2 rounded-lg border border-amber/25 bg-amber-soft px-3 py-2 text-xs text-amber-deep" role="status">
       <ShieldAlert aria-hidden="true" className="mt-0.5 shrink-0" size={14}/>
@@ -255,7 +260,8 @@ function PredictionDetail({ batchId, onLoginRequired }: { batchId: string; onLog
 }
 
 function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
-  const [tick, setTick] = useState(Math.round(detail.threshold * 100))
+  const savedTick = Math.round(detail.threshold * 100)
+  const [tick, setTick] = useState(savedTick)
   const [metric, setMetric] = useState<Metric>('precision')
   const preview = detail.thresholdPreview
   const hit = preview.truePositives[tick]
@@ -265,17 +271,13 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
   const precision = hit + falseAlarm ? hit / (hit + falseAlarm) : 0
   const recall = preview.positives ? hit / preview.positives : 0
   const f1 = precision + recall ? 2 * precision * recall / (precision + recall) : 0
-  const metricValue = metric === 'precision' ? precision : metric === 'recall' ? recall : f1
   const labelTotal = Object.values(detail.labelStatusCounts).reduce((sum, value) => sum + value, 0)
   return <>
     <section className="overflow-hidden rounded-xl border border-border-soft bg-card shadow-sm">
-      <div className="bg-[linear-gradient(135deg,var(--accent-soft),var(--card)_64%)] px-5 py-5">
+      <div className="px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] text-foreground-3">
-              <Activity aria-hidden="true" size={13}/>用户模型试算
-            </span>
-            <h2 className="mt-3 truncate text-2xl font-semibold tracking-tight">{detail.dataset}</h2>
+            <h2 className="text-2xl [overflow-wrap:anywhere] font-semibold tracking-tight">{detail.dataset}</h2>
             <code className="mt-1 block break-all font-mono text-[11px] text-foreground-4">{detail.datasetVersion}</code>
           </div>
           <div className="text-right text-xs text-foreground-3">
@@ -288,7 +290,7 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
       <dl className="grid grid-cols-2 divide-x divide-y divide-border-soft border-t border-border-soft sm:grid-cols-4 sm:divide-y-0">
         <MetricCell label="试算提交" value={countText(detail.counts.records)}/>
         <MetricCell label="现有正例" value={countText(detail.counts.positives)}/>
-        <MetricCell label="当前告警" value={countText(flagged)}/>
+        <MetricCell label="初始阈值" value={detail.threshold.toFixed(2)}/>
         <MetricCell label="归因覆盖" value={`${detail.explanationCoverage.recorded}/${detail.explanationCoverage.limit}`}/>
       </dl>
     </section>
@@ -296,31 +298,34 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
     <section className="grid gap-5 rounded-xl border border-border-soft bg-card p-5" aria-labelledby="prediction-threshold-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 id="prediction-threshold-title" className="text-sm font-semibold">阈值与指标</h2><p className="mt-0.5 text-[11px] text-foreground-4">分数达到阈值的提交计入告警</p></div>
-        <div className="rounded-lg bg-sunken px-3 py-1.5 text-xs tabular-nums text-foreground-2">阈值 <strong className="text-foreground">{(tick / 100).toFixed(2)}</strong></div>
+        <div className="flex items-center gap-2">
+          <output className="rounded-lg bg-sunken px-3 py-1.5 text-sm font-semibold tabular-nums" htmlFor="prediction-threshold">阈值 {(tick / 100).toFixed(2)}</output>
+          {tick !== savedTick ? <Button variant="ghost" size="sm" type="button" onClick={() => setTick(savedTick)}>重置为初始值</Button> : null}
+        </div>
       </div>
-      <input type="range" min={0} max={100} step={1} value={tick}
+      <input id="prediction-threshold" type="range" min={0} max={100} step={1} value={tick}
         aria-label="风险分数阈值" aria-valuetext={(tick / 100).toFixed(2)}
         onChange={event => setTick(event.currentTarget.valueAsNumber)}
-        className="h-5 w-full cursor-pointer accent-accent"/>
-      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        className="h-5 w-full cursor-pointer accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"/>
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 [&>div]:rounded-lg [&>div]:bg-sunken">
         <MetricCell label="告警" value={countText(flagged)}/>
         <MetricCell label="命中" value={countText(hit)}/>
         <MetricCell label="误报" value={countText(falseAlarm)}/>
         <MetricCell label="漏报" value={countText(missed)}/>
         <MetricCell label="精确率" value={ratio(precision)}/>
         <MetricCell label="召回率" value={ratio(recall)}/>
-      </div>
+      </dl>
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
-        <ThresholdCurve detail={detail} metric={metric}/>
+        <ThresholdCurve detail={detail} metric={metric} tick={tick}/>
         <div className="grid gap-2">
           <span className="text-xs font-medium text-foreground-2">选择指标</span>
           {([['precision', '精确率'], ['recall', '召回率'], ['f1', 'F1']] as const).map(([id, label]) =>
-            <button key={id} type="button" onClick={() => setMetric(id)}
+            <button key={id} type="button" aria-pressed={metric === id} onClick={() => setMetric(id)}
               className={cn('flex items-center justify-between rounded-lg border px-3 py-2 text-xs',
                 metric === id ? 'border-accent/35 bg-accent-soft text-foreground' : 'border-border-soft hover:bg-sunken')}>
               <span>{label}</span><strong className="tabular-nums">{id === 'precision' ? ratio(precision) : id === 'recall' ? ratio(recall) : ratio(f1)}</strong>
             </button>)}
-          <p className="text-[11px] leading-5 text-foreground-4">当前阈值指标：{metricValue.toFixed(4)}。以现有标签计算，仅用于选择工作点。</p>
+          <p className="text-xs text-foreground-3">按现有标签计算。</p>
         </div>
       </div>
       {labelTotal ? <div className="flex flex-wrap gap-1.5">
@@ -375,7 +380,7 @@ function MetricCell({ label, value }: { label: string; value: string }) {
   return <div className="px-4 py-3"><dt className="text-[10px] text-foreground-4">{label}</dt><dd className="mt-1 text-base font-semibold tabular-nums text-foreground">{value}</dd></div>
 }
 
-function ThresholdCurve({ detail, metric }: { detail: PredictionBatchDetail; metric: Metric }) {
+function ThresholdCurve({ detail, metric, tick }: { detail: PredictionBatchDetail; metric: Metric; tick: number }) {
   const colors = useChartColors()
   const preview = detail.thresholdPreview
   const series = useMemo(() => preview.thresholds.map((_, index) => {
@@ -406,6 +411,8 @@ function ThresholdCurve({ detail, metric }: { detail: PredictionBatchDetail; met
     series: [{
       type: 'line', name: metric === 'precision' ? '精确率' : metric === 'recall' ? '召回率' : 'F1',
       data: series, showSymbol: false, smooth: false, lineStyle: { width: 2 },
+      markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: colors.axis }, data: [{ xAxis: preview.thresholds[tick].toFixed(2) }] },
+      markPoint: { silent: true, symbol: 'circle', symbolSize: 9, label: { show: false }, data: [{ name: '当前阈值', coord: [preview.thresholds[tick].toFixed(2), series[tick]] }] },
     }],
   }
   return <EChartCanvas option={option} height={260} label="随风险阈值变化的指标曲线"/>

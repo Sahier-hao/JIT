@@ -56,8 +56,8 @@ it('resumes the question being edited after leaving and reopening', async () => 
   await user.type(screen.getByRole('textbox', { name: '审查问题内容' }), 'Continue checking the boundary test')
   first.unmount()
   render(<PullRequestWork owner="example" repositoryName="project" number={12} navigate={vi.fn()}/>)
-  await user.click(await screen.findByText('handle expiry'))
-  expect(screen.getByRole('textbox', { name: '审查问题内容' })).toHaveValue('Continue checking the boundary test')
+  expect(await screen.findByRole('textbox', { name: '审查问题内容' })).toHaveValue('Continue checking the boundary test')
+  expect(screen.getByRole('option', { name: /token.py/, selected: true })).toHaveAttribute('aria-selected', 'true')
 })
 it('uses current remote state when directly opening a cached code version', async () => {
   const source = snapshot(), checkedAt = '2026-10-27T00:00:00Z'

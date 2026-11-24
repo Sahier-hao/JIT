@@ -32,6 +32,7 @@ export type Route =
       compatibility?: 'repository-analysis' | 'offline-only' | 'input-unsupported' | 'schema-incompatible'
       artifactState?: 'complete' | 'invalid' | 'failed'
       offset?: number
+      focusCandidateId?: string
     }
   | { name: 'legacy-sync'; syncId: string; view: 'commits' | 'plan' }
   | { name: 'retired'; hash: string }
@@ -110,8 +111,10 @@ export function parseHash(hash: string): Route {
     if (parts[0] === 'admin' && parts[1] === 'training' && parts.length === 3) return { name: 'admin', view: 'training', resourceId: parts[2] }
     if (parts[0] === 'admin' && parts[1] === 'training-experiment' && parts.length === 3) return { name: 'admin', view: 'training-experiment', resourceId: parts[2] }
     if (path === '/admin/comparisons') return { name: 'admin', view: 'comparisons', ...(comparisonModels.length ? { models: comparisonModels } : {}) }
-    if (path === '/admin/experiment-runs') return {
+    if (parts[0] === 'admin' && parts[1] === 'experiment-runs' && [2, 3].includes(parts.length)) return {
       name: 'admin', view: 'experiment-runs',
+      ...(parts[2] ? { resourceId: parts[2] } : {}),
+      ...(!parts[2] && params.get('focus') ? { focusCandidateId: params.get('focus')! } : {}),
       ...(['registered', 'unregistered'].includes(params.get('registrationState') ?? '')
         ? { registrationState: params.get('registrationState') as 'registered' | 'unregistered' } : {}),
       ...(['repository-analysis', 'offline-only', 'input-unsupported', 'schema-incompatible'].includes(params.get('compatibility') ?? '')
@@ -122,7 +125,6 @@ export function parseHash(hash: string): Route {
     }
     if (path === '/admin/experiments') return { name: 'admin', view: 'experiments' }
     if (parts[0] === 'admin' && parts[1] === 'experiments' && parts.length === 3) return { name: 'admin', view: 'experiments', resourceId: parts[2] }
-    if (parts[0] === 'admin' && parts[1] === 'experiment-runs' && parts.length === 3) return { name: 'admin', view: 'experiment-runs', resourceId: parts[2] }
     if (path === '/admin/reports') return { name: 'report', view: 'overview' }
     if (parts[0] === 'admin' && parts[1] === 'reports' && parts.length === 4 && ['overview', 'commits', 'trends'].includes(parts[3])) return { name: 'report', runId: parts[2], view: parts[3] as 'overview' | 'commits' | 'trends' }
     if (['/reports', '/validation', '/trends'].includes(path)) return { name: 'report', view: path === '/trends' ? 'trends' : 'overview' }
@@ -202,7 +204,6 @@ export function hashFor(route: Route): string {
       if (route.view === 'training' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'training-experiment' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'experiments' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
-      if (route.view === 'experiment-runs' && route.resourceId) return `${base}/${encodeURIComponent(route.resourceId)}`
       if (route.view === 'comparisons' && route.models?.length) return `${base}?models=${encodeURIComponent(route.models.join(','))}`
       if (route.view === 'experiment-runs') {
         const params = new URLSearchParams()
@@ -210,7 +211,9 @@ export function hashFor(route: Route): string {
         if (route.compatibility) params.set('compatibility', route.compatibility)
         if (route.artifactState) params.set('artifactState', route.artifactState)
         if (route.offset) params.set('offset', String(route.offset))
-        return params.size ? `${base}?${params}` : base
+        if (!route.resourceId && route.focusCandidateId) params.set('focus', route.focusCandidateId)
+        const path = route.resourceId ? `${base}/${encodeURIComponent(route.resourceId)}` : base
+        return params.size ? `${path}?${params}` : path
       }
       return base
     }

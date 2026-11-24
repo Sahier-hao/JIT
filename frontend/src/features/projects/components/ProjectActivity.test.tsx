@@ -1,7 +1,7 @@
-import { render, screen, waitFor, TEST_REVIEW_ACCOUNT } from '@/lib/test-utils'
+import { render, screen, within, TEST_REVIEW_ACCOUNT } from '@/lib/test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
-import { EVENT_READ_KEY, ProjectEvents, eventRoute } from '@/features/projects/components/ProjectActivity'
+import { EVENT_READ_KEY, NotificationEntry, ProjectEvents, eventRoute } from '@/features/projects/components/ProjectActivity'
 import { accountWorkKey, createWork, readWorks, saveWork } from '@/features/reviews/prReview'
 
 import { snapshot } from '@/features/reviews/prReview.fixture'
@@ -31,7 +31,23 @@ it('keeps malformed local read storage untouched and surfaces recovery instead o
   vi.spyOn(globalThis, 'fetch').mockResolvedValue(response({ events: [event()], total: 1, limit: 20, offset: 0 }))
   render(<ProjectEvents navigate={vi.fn()}/>); const user = userEvent.setup()
   await screen.findByText('新版本分析就绪')
-  await user.click(screen.getByRole('button', { name: '标为已读' }))
-  await waitFor(() => expect(localStorage.getItem(EVENT_READ_KEY)).toBe('malformed'))
+  expect(screen.queryByRole('button', { name: '标为已读' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: '查看固定来源' }))
+  expect(localStorage.getItem(EVENT_READ_KEY)).toBe('malformed')
   expect(screen.getAllByRole('alert').length).toBeGreaterThan(0)
+})
+
+it('previews recent notifications without leaving the current page', async () => {
+  const navigate = vi.fn()
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+    response({ events: [event()], total: 1, limit: 20, offset: 0 }))
+  render(<NotificationEntry navigate={navigate}/>)
+  const user = userEvent.setup()
+  await user.click(screen.getByRole('button', { name: '站内提醒' }))
+  const panel = await screen.findByRole('dialog', { name: '最近提醒' })
+  expect(await within(panel).findByText('新版本分析就绪')).toBeVisible()
+  expect(navigate).not.toHaveBeenCalled()
+  await user.click(within(panel).getByRole('button', { name: /新版本分析就绪/ }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'pr-work', repositoryId: PROJECT, owner: 'example', repositoryName: 'project', number: 12, snapshotId: 'v2' })
+  expect(JSON.parse(localStorage.getItem(EVENT_READ_KEY)!)).toEqual(['event-1'])
 })
