@@ -135,7 +135,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(service, '_generic_model', lambda model_id: ({}, {'featureSchemaVersion': 'kamei14-git-v1'}))
     monkeypatch.setattr(service, '_execute', lambda sync_id: None)
     github, clock, worker = GitHub(), Clock(), Worker()
-    review = PullRequestReview(service, request=github)
+    review = PullRequestReview(service, request=github, allow_private=False)
     watcher = PullRequestUpdates(service, review, clock=clock, executor=worker)
     yield Environment(watcher, service, github, clock, worker, review)
     watcher.close()

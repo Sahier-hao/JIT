@@ -2243,6 +2243,7 @@ paths:
       - AdminSession: []
   /api/v1/training-experiments/{experimentId}/comparison/thresholds:
     post:
+      operationId: evaluateTrainingExperimentThresholds
       summary: 按验证集选择阈值并复核冻结测试（管理员）
       parameters:
       - name: experimentId
@@ -2262,6 +2263,7 @@ paths:
           description: 任务、阈值、分区或冻结产物无法用于复核
   /api/v1/user/training-experiments/{experimentId}/comparison/thresholds:
     post:
+      operationId: evaluateUserTrainingExperimentThresholds
       summary: 按验证集选择阈值并复核自有实验的冻结测试
       parameters:
       - name: experimentId

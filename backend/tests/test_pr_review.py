@@ -36,7 +36,7 @@ def review(tmp_path):
         if '/pulls?' in path:
             return [deepcopy(pr)]
         return deepcopy(pr)
-    service = PullRequestReview(sync, request=request)
+    service = PullRequestReview(sync, request=request, allow_private=False)
     yield service, pr, files, calls, storage
     sync.close()
 

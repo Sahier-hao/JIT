@@ -58,6 +58,35 @@ def manual_analysis(service, repository_id, head):
     return job['syncId']
 
 
+@pytest.mark.parametrize('status', ['completed', 'failed', 'cancelled'])
+def test_branch_result_and_reminder_are_published_together(updates, status):
+    _, service, repository_id, _ = updates
+    job, _ = service.create({
+        'repositoryUrl': service.sync.repository_get(repository_id)['url'],
+        'branch': 'main', 'strategy': 'generic-model', 'modelId': 'model-original',
+    })
+    sync_id = job['syncId']
+    service.sync.start(sync_id, 60)
+
+    if status == 'completed':
+        service.sync.complete(sync_id, repository_id, [], head_commit='a' * 40,
+                              dataset_version=None, run_id=None, model_id='model-original')
+    else:
+        service.sync.finish(sync_id, status, 'TEST_ERROR', 'test failure', model_id='model-original')
+
+    assert service.get(sync_id)['status'] == status
+    notes = events(service, repository_id)
+    if status == 'cancelled':
+        assert notes == []
+    else:
+        assert len(notes) == 1
+        assert notes[0]['kind'] == f'analysis-{status}'
+        assert notes[0]['sync_id'] == sync_id
+        assert notes[0]['model_id'] == 'model-original'
+        if status == 'failed':
+            assert json.loads(notes[0]['payload_json']) == {'errorCode': 'TEST_ERROR'}
+
+
 def test_first_check_reminds_without_creating_an_analysis(updates):
     watcher, service, repo, heads = updates
     assert watcher.get(repo)['enabled'] is False
@@ -318,14 +347,8 @@ def test_real_updates_remind_without_analyzing(tmp_path, real_run):  # noqa: F81
         finished = wait_job(job['syncId'])
         assert finished['status'] == 'completed', finished
         assert finished['maturity']['effectivePolicy'] == 'not-applicable'
-        # 完成事件由后台线程写入；CI 上同时有模型加载与 Git 采集，30 秒会偶发超时。
-        deadline = time.monotonic() + 120
-        while not any(note['kind'] == 'analysis-completed'
-                      for note in events(service, repository_id)):
-            if time.monotonic() > deadline:
-                break
-            time.sleep(.05)
-        assert any(note['kind'] == 'analysis-completed' for note in events(service, repository_id))
+        completed = [note for note in events(service, repository_id) if note['kind'] == 'analysis-completed']
+        assert [note['sync_id'] for note in completed] == [job['syncId']]
         old = service.repository_commits(repository_id, view_sync_id=job['syncId'])
         assert old['total'] == 2
         _commit(source, 'add service', {'pkg/service.py': 'service = True\n' * 20}, now.isoformat())

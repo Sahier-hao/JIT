@@ -27,10 +27,11 @@ import {
   BUILD_ACTIVE, DEFAULT_PRESET, matchesQuery, type DatasetTab,
 } from '@/features/datasets/mydata/format'
 
-export function MyDataPage({ account = null, navigate, onLoginRequired, initialTab, initialTaskId, buildProjectId, importHistory, importTaskId }: {
+export function MyDataPage({ account = null, navigate, onLoginRequired, initialDatasetVersion, initialTab, initialTaskId, buildProjectId, importHistory, importTaskId }: {
   account?: string | null
   navigate: (route: Route, replace?: boolean) => void
   onLoginRequired: () => void
+  initialDatasetVersion?: string
   initialTab?: 'builds'
   initialTaskId?: string
   buildProjectId?: string
@@ -66,7 +67,7 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
   const [curationOpen, setCurationOpen] = useState(false)
   const completedTasks = useRef(new Set<string>())
   const tabInitialized = useRef(false)
-  const viewingDatasets = tab !== 'builds'
+  const viewingDatasets = tab !== 'builds' || Boolean(initialDatasetVersion && !initialTab)
 
   useEffect(() => {
     if (!viewingDatasets) return
@@ -80,7 +81,13 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
         setTab(items.some(item => item.mine) ? 'mine' : 'shared')
         tabInitialized.current = true
       }
-      const requested = items.find(item => item.version === preferred?.version)
+      const requested = items.find(item => item.version === (preferred?.version ?? initialDatasetVersion))
+      if (initialDatasetVersion && !preferred) {
+        setTab(requested?.mine || (!requested && items.some(item => item.mine)) ? 'mine' : 'shared')
+        setSelected(requested?.version ?? '')
+        tabInitialized.current = true
+        return
+      }
       if (preferred?.fromBuild) {
         if (requested) {
           setTab(requested.mine ? 'mine' : 'shared')
@@ -102,7 +109,7 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
       }
     })
     return () => controller.abort()
-  }, [viewingDatasets, onLoginRequired, userRevision, reload, preferred, latestImported])
+  }, [viewingDatasets, onLoginRequired, userRevision, reload, preferred, initialDatasetVersion, latestImported])
 
   useEffect(() => {
     if (!initialTab) return
@@ -149,7 +156,8 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
     }
   }, [onLoginRequired, reload, taskRevision, userRevision])
 
-  const current = useMemo(() => datasets?.find(item => item.version === selected) ?? null, [datasets, selected])
+  const current = useMemo(() => datasets?.find(item => item.version === (preferred?.version ?? initialDatasetVersion ?? selected)) ?? null,
+    [datasets, initialDatasetVersion, preferred?.version, selected])
   const mine = useMemo(() => datasets?.filter(item => item.mine) ?? [], [datasets])
   const shared = useMemo(() => datasets?.filter(item => !item.mine) ?? [], [datasets])
   const normalizedQuery = query.trim().toLowerCase()
@@ -177,6 +185,7 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
     tabInitialized.current = true
     setPreferred(null)
     setTab(next)
+    if (initialDatasetVersion) navigate({ name: 'my-data' }, true)
     if (next === 'builds') return
     const pool = next === 'mine' ? mine : shared
     setSelected(pool.some(item => item.version === selected) ? selected : pool[0]?.version ?? '')
@@ -324,7 +333,11 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
                   onInspect={taskId => navigate({ name: 'my-data', view: 'builds', taskId })}
                   onAction={(task, action) => void actOnBuild(task, action)}/>
               : datasets === null ? error ? null : <LoadingNotice label="正在读取我的数据" prefix={false}/>
-              : datasets.length ? <DatasetRowList items={visibleDatasets} selected={selected} onSelect={version => { setPreferred(null); setSelected(version) }}/> : null}
+              : datasets.length ? <DatasetRowList items={visibleDatasets} selected={selected} onSelect={version => {
+                setPreferred(null)
+                setSelected(version)
+                if (initialDatasetVersion) navigate({ name: 'my-data', datasetVersion: version }, true)
+              }}/> : null}
           </div>
         </div>
       </aside>
@@ -336,7 +349,9 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialT
           onCuration: () => setCurationOpen(true),
           onDelete: () => setConfirmDelete(true),
           onRebuild: (repositoryUrl, branch) => { setBuildSeed({ repositoryUrl, branch }); setBuildOpen(true) },
-        }}/> : datasets?.length === 0 ? <EmptyState title="还没有数据" description="可以导入 CSV、Kamei 2013 ZIP，或从公开仓库构建。"/>
+        }}/> : initialDatasetVersion && datasets ? <EmptyState title="这个数据版本当前不可用" description={<code className="font-mono text-xs">{initialDatasetVersion}</code>}>
+          <Button type="button" variant="outline" size="sm" onClick={() => navigate({ name: 'my-data' }, true)}>查看可用数据版本</Button>
+        </EmptyState> : datasets?.length === 0 ? <EmptyState title="还没有数据" description="可以导入 CSV、Kamei 2013 ZIP，或从公开仓库构建。"/>
           : datasets ? <EmptyState title="选择一个数据版本"/> : null}
       </div>
     </div>
