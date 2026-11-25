@@ -78,11 +78,9 @@ export function EChartCanvas({ option, height = 240, label, onChart, className =
   useEffect(() => {
     const element = host.current
     if (!element) return
-    // ECharts 会把容器尺寸写成内联样式；量父元素才能跟着布局收缩，否则窗口变窄后画布保持旧宽度。
-    const measure = () => {
-      const box = element.parentElement?.getBoundingClientRect() ?? element.getBoundingClientRect()
-      return Math.max(320, Math.round(box.width) || 640)
-    }
+    // 量图表自身：父元素可能是整个栅格容器（例如 160px 图表列旁边还有图例），按其宽度会把图画到列外。
+    // 容器自带 min-w-0 与 overflow-hidden，窗口变窄时自身宽度会跟着布局变化。
+    const measure = () => Math.max(160, Math.round(element.getBoundingClientRect().width) || 640)
     const width = measure()
     const chart = init(element, undefined, { renderer: 'svg', width, height })
     instance.current = chart
@@ -93,7 +91,7 @@ export function EChartCanvas({ option, height = 240, label, onChart, className =
     }
     window.addEventListener('resize', resize)
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resize)
-    if (element.parentElement) observer?.observe(element.parentElement)
+    observer?.observe(element)
     return () => { observer?.disconnect(); window.removeEventListener('resize', resize); chart.dispose(); instance.current = null }
   }, [height])
   useEffect(() => { instance.current?.setOption(option, { notMerge: true }) }, [option])

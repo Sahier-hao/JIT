@@ -86,8 +86,8 @@ export function AnalysisResultCard({ syncId, scope, distribution, activeView, hi
     ? [scope.model.name ?? '模型身份未记录', scope.model.algorithmName, scope.model.featureSchemaVersion, scope.strategy === 'repository-trained' ? '项目自训模型' : '现成模型'].filter(Boolean).join(' · ')
     : '现成模型 · 没有在本项目训练，也没有本地训练/测试集', note].filter(Boolean).join(' · ')
 
-  return <section className="grid gap-4 rounded-md border border-border-soft bg-card p-card" aria-label="当前分析结果">
-    <div className="grid gap-2">
+  return <section className="grid min-w-0 grid-cols-1 gap-4 rounded-md border border-border-soft bg-card p-card" aria-label="当前分析结果">
+    <div className="grid min-w-0 grid-cols-1 gap-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">模型分数分布
           {historical ? <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] font-normal text-foreground-3">历史固定结果</span> : null}
@@ -113,7 +113,7 @@ export function AnalysisResultCard({ syncId, scope, distribution, activeView, hi
       </ul>
     </div>
 
-    <div className="grid gap-2 border-t border-border-soft pt-3">
+    <div className="grid min-w-0 grid-cols-1 gap-2 border-t border-border-soft pt-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="grid gap-0.5">
           <h3 className="text-base font-semibold text-foreground">优先回查的提交</h3>
@@ -143,7 +143,7 @@ export function AnalysisResultCard({ syncId, scope, distribution, activeView, hi
         </ul> : <p className="text-sm text-foreground-3">当前范围没有提交。</p>}
     </div>
 
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft pt-3">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft pt-3">
       <h3 className="shrink-0 text-base font-semibold text-foreground">模型与数据来源</h3>
       <p className="min-w-0 flex-1 truncate text-xs text-foreground-3" title={sourceLine}>{sourceLine}</p>
       {scope ? <Button size="sm" variant="ghost" onClick={() => setSourceOpen(true)} type="button">查看完整口径</Button>

@@ -177,7 +177,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     })}
   </nav>
 
-  return <section className="grid gap-4">
+  return <section className="grid grid-cols-1 gap-4">
     <header className="grid min-w-0 gap-2 rounded-xl border border-border-soft bg-card px-4 py-4 [overflow-wrap:anywhere] sm:px-5">
             <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}全部项目</Button>
             <div className="flex flex-wrap items-center gap-3">
@@ -215,14 +215,14 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
       <JobProgress status={activeJob.status} stage={activeJob.stage} queuePosition={activeJob.queuePosition} startedAt={activeJob.startedAt} scoresOnly={activeJob.requestedStrategy === 'generic-model'}/>
     </section> : null}
     {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate}/> : <>
-    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
       <div className={cn('min-w-0', context && 'lg:relative lg:min-h-[24rem]')}>
         <ProjectAnalysisHistory records={records} currentNotice={currentNotice} recordError={recordError} stretch={Boolean(context)}>
           {records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }
         </ProjectAnalysisHistory>
       </div>
 
-      <div className="grid min-w-0 content-start gap-3">
+      <div className="grid min-w-0 grid-cols-1 content-start gap-3">
         {context ? <AnalysisResultCard key={context.syncId} syncId={context.syncId} scope={scope} distribution={shownDistribution} activeView={activeView}
           historical={Boolean(latestCompletedId && context.syncId !== latestCompletedId)}
           notice={context.sourceKind === 'pr' ? '当前结果来自旧 PR 分析，不代表分支主线趋势。' : undefined}
