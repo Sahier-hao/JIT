@@ -59,14 +59,18 @@ class UserPredictionService:
 
     def models(self, username, schema_name):
         result = []
-        for model in self.catalog.models():
-            if model.get("state") != "ready" or not model.get("enabled"):
+        # 选择列表读取已保存的校验状态，避免为每次页面加载完整校验全部模型产物；
+        # 真正打分前 create() 会加载并重新校验所选模型。
+        for model in self.catalog.registered_models(state="ready"):
+            if not model.get("enabled"):
                 continue
-            if model.get("ownerUserId") not in (None, username):
+            if not (model.get("shared") or model.get("ownerUserId") == username):
                 continue
             if model.get("featureSchemaVersion") != schema_name:
                 continue
-            result.append(_model_view(model))
+            result.append(dict(_model_view(model),
+                               mine=model.get("ownerUserId") == username,
+                               shared=bool(model.get("shared"))))
         result.sort(key=lambda item: (not item["isDefault"], item["name"] or "", item["modelId"]))
         return {"models": result, "maxRecords": MAX_RECORDS}
 
@@ -163,8 +167,8 @@ class UserPredictionService:
             )
         snapshot, model = self.catalog.load_model(model_id)
         owner = model.get("ownerUserId")
-        if owner not in (None, username):
-            raise BaselineError("MODEL_FORBIDDEN", "该模型属于其他用户，不能使用")
+        if not (model.get("shared") or owner == username):
+            raise BaselineError("MODEL_FORBIDDEN", "该模型未对当前账户开放，不能使用")
         if snapshot.schema.name != manifest.get("schemaName"):
             raise BaselineError(
                 "INPUT_SCHEMA_MISMATCH",

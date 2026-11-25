@@ -131,6 +131,54 @@ def test_disabled_or_incompatible_model_cannot_become_default(policy):
     assert catalog.default_model_id() == second
 
 
+def test_model_sharing_controls_user_visibility_and_requires_admin(policy, tmp_path):
+    catalog, first, second = policy
+    app = create_app(tmp_path / 'missing', database=catalog.store.path, artifact_root=catalog.root)
+    with TestClient(app) as client:
+        assert client.put(f'/api/v1/models/{first}/sharing', json={'shared': True}).status_code == 401
+        assert client.post('/api/admin/setup', json={
+            'username': 'admin', 'password': 'model-sharing-test-password'}).status_code == 201
+        assert client.put(f'/api/v1/models/{first}/sharing', json={'shared': 1}).status_code == 422
+        response = client.put(f'/api/v1/models/{first}/sharing', json={'shared': True})
+        assert response.status_code == 200, response.text
+        assert response.json() == {'modelId': first, 'shared': True}
+        assert next(model for model in catalog.registered_models()
+                    if model['modelId'] == first)['shared'] is True
+        assert client.post('/api/admin/logout').status_code == 204
+
+        registration = client.post('/api/user/register', json={
+            'username': 'reader', 'password': 'reader-password'})
+        assert registration.status_code == 201, registration.text
+        assert client.get('/api/user/session').json()['authenticated'] is True
+        mine = client.get('/api/v1/user/models').json()['models']
+        assert [(model['modelId'], model['mine'], model['shared']) for model in mine] == [
+            (first, False, True)]
+        choices = client.get('/api/v1/repository-models').json()['models']
+        assert [(model['modelId'], model['mine'], model['shared']) for model in choices] == [
+            (first, False, True)]
+        with catalog.store.connection(write=True) as db:
+            db.execute('UPDATE model_version SET owner_user_id=? WHERE id=?', ('reader', second))
+        catalog.set_shared(second, True, 'admin')
+        mine = client.get('/api/v1/user/models').json()['models']
+        by_id = {model['modelId']: model for model in mine}
+        assert by_id[second]['mine'] is True and by_id[second]['shared'] is True
+        assert by_id[first]['mine'] is False and by_id[first]['shared'] is True
+
+        catalog.set_shared(first, False, 'admin')
+        catalog.set_shared(second, False, 'admin')
+        mine = client.get('/api/v1/user/models').json()['models']
+        assert [(model['modelId'], model['mine']) for model in mine] == [(second, True)]
+        client.post('/api/user/logout')
+        assert client.post('/api/user/register', json={
+            'username': 'other', 'password': 'other-password'}).status_code == 201
+        assert client.get('/api/v1/user/models').json()['models'] == []
+        assert client.get('/api/v1/repository-models').json()['models'] == []
+        denied = client.post('/api/v1/repository-syncs', json={
+            'repositoryUrl': 'https://github.com/example/denied.git', 'modelId': first})
+        assert denied.status_code == 403
+        assert denied.json()['error']['code'] == 'MODEL_FORBIDDEN'
+
+
 def test_policy_api_authorization_public_metadata_and_validation(policy, tmp_path):
     catalog, first, second = policy
     app = create_app(tmp_path / 'missing', database=catalog.store.path, artifact_root=catalog.root)
@@ -195,7 +243,8 @@ def test_upgrade_from_v7_preserves_models_and_history_and_sets_initial_default(p
     with sqlite3.connect(catalog.store.path) as db:
         # 先移除当前版本新增结构，再重建真实 v7 结构。
         for table in ('training_experiment_task', 'training_experiment',
-                      'user_session', 'dataset_owner', 'dataset_share', 'model_package_import_item',
+                      'user_session', 'dataset_owner', 'dataset_share', 'model_share',
+                      'model_package_import_item',
                       'model_package_import',
                           'user_prediction_record', 'user_prediction_batch',
                       'pr_batch_item', 'pr_batch', 'training_task', 'pr_auto_attempt',

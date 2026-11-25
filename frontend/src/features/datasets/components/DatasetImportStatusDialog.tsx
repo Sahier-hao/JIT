@@ -84,14 +84,14 @@ export function DatasetImportStatusDialog({ account, taskId, onClose, onInspect,
         </> : null}
       </div> : null}
       {!taskId && history.data ? <div className="grid gap-1">
-        {history.data.length ? history.data.map(item => <button key={item.taskId} type="button"
-          className="grid gap-1 rounded-lg border border-border-soft px-3 py-2 text-left hover:bg-sunken"
+        {history.data.length ? history.data.map(item => <Button key={item.taskId} type="button" variant="ghost"
+          className="grid h-auto w-full gap-1 rounded-lg border border-border-soft px-3 py-2 text-left hover:bg-sunken"
           onClick={() => onInspect(item.taskId)}>
           <span className="flex justify-between gap-2 text-sm"><strong className="truncate">{item.filename}</strong>
             <span className="shrink-0 text-foreground-3">{importStage(item)}</span></span>
           {importIsActive(item) ? <Progress inline value={importPercent(item)} aria-label={`${item.filename} 导入进度`}/>
             : <span className="text-xs text-foreground-3">{formatDate(item.createdAt)}</span>}
-        </button>) : <p className="text-sm text-foreground-3">还没有导入记录</p>}
+        </Button>) : <p className="text-sm text-foreground-3">还没有导入记录</p>}
       </div> : null}
       <DialogFooter>
         {taskId ? <Button type="button" variant="ghost" onClick={onHistory}><ArrowLeft size={15} aria-hidden="true"/>导入记录</Button> : null}

@@ -53,7 +53,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (40, Path(__file__).parent / 'migrations/040_user_dataset_builds.sql'),
               (41, Path(__file__).parent / 'migrations/041_dataset_sharing.sql'),
               (42, Path(__file__).parent / 'migrations/042_user_predictions.sql'),
-              (43, Path(__file__).parent / 'migrations/043_repository_explanation_method.sql'))
+              (43, Path(__file__).parent / 'migrations/043_repository_explanation_method.sql'),
+              (44, Path(__file__).parent / 'migrations/044_model_sharing.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -427,6 +428,33 @@ class CatalogStorage:
         with self.connection() as db:
             return db.execute('SELECT COUNT(*) FROM dataset_owner WHERE username=?',
                               (username,)).fetchone()[0]
+
+    # --- 模型共享（管理员显式开放） --------------------------------------------------------
+    def model_shared(self, model_id):
+        with self.connection() as db:
+            return db.execute('SELECT 1 FROM model_share WHERE model_id=?',
+                              (model_id,)).fetchone() is not None
+
+    def shared_model_ids(self):
+        with self.connection() as db:
+            return [row[0] for row in db.execute(
+                'SELECT model_id FROM model_share ORDER BY model_id')]
+
+    def set_model_share(self, model_id, shared, actor):
+        """管理员显式开放或撤销模型；未开放的无归属模型不进入用户可选范围。"""
+        with self.connection(write=True) as db:
+            if db.execute('SELECT 1 FROM model_version WHERE id=?', (model_id,)).fetchone() is None:
+                raise BaselineError('NOT_FOUND', '模型不存在')
+            if shared:
+                now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+                db.execute(
+                    'INSERT INTO model_share(model_id,shared_by,shared_at) VALUES (?,?,?) '
+                    'ON CONFLICT(model_id) DO UPDATE SET shared_by=excluded.shared_by,'
+                    'shared_at=excluded.shared_at',
+                    (model_id, actor, now))
+            else:
+                db.execute('DELETE FROM model_share WHERE model_id=?', (model_id,))
+        return bool(shared)
 
     def user_datasets(self, username):
         with self.connection() as db:

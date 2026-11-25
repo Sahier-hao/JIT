@@ -5,6 +5,7 @@ import { LoaderCircle, RefreshCw, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { FailureNotice } from '@/components/shared/Feedback'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { adoptVersion, hasLegacyWorks, legacyImportReceipt, legacyWorksHash, markLegacyImported, mergeBackup, parseBackupInfo, readLegacyWorks, readWorks, remoteStateLabels as remoteLabel, saveWork, type PRWork } from '@/features/reviews/prReview'
 import { refreshPR, verifyBackupSources } from '@/features/reviews/prReviewClient'
 import { canWriteReview, useReviewAccount } from '@/features/reviews/reviewAccount'
@@ -33,6 +34,7 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
   const [personal, setPersonal] = useState(() => loadPersonal(account))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
+  const [pendingImport, setPendingImport] = useState<ReturnType<typeof parseBackupInfo> | null>(null)
   const [legacy, setLegacy] = useState<{ hash: string; entries: { work: PRWork; exists: boolean; conflicts: number }[] } | null>(null)
   const [legacyError, setLegacyError] = useState('')
   const [legacyResult, setLegacyResult] = useState('')
@@ -107,8 +109,39 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
       setLegacyError(''); setLegacyResult('')
     } catch (failure) { setLegacyError(message(failure)) }
   }
-  function importLegacy() {
-    if (!account || !legacy) return
+  async function restoreBackup(info: ReturnType<typeof parseBackupInfo>) {
+    const incoming = info.work
+    await verifyBackupSources(incoming)
+    const old = readWorks(account ?? '').find(work => work.key === incoming.key)
+    if (old) {
+      navigate(routeFor(old))
+      throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录')
+    }
+    const restored = saveWork(account ?? '', { ...incoming, revision: 0 })
+    navigate(routeFor(restored))
+  }
+
+  async function importBackup(file: File) {
+    try {
+      if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB')
+      const info = parseBackupInfo(await file.text())
+      if (info.accountHint && info.accountHint !== account) {
+        setPendingImport(info)
+        return
+      }
+      await restoreBackup(info)
+    } catch (failure) {
+      setError(failure)
+    }
+  }
+
+  function importPendingBackup() {
+    const info = pendingImport
+    setPendingImport(null)
+    if (info) void restoreBackup(info).catch(setError)
+  }
+
+  function importLegacy() {    if (!account || !legacy) return
     let imported = 0
     const failures: string[] = []
     for (const { work: source } of legacy.entries) {
@@ -195,6 +228,9 @@ export function PersonalWorks({ navigate }: { navigate: (route: Route) => void }
       <p className="text-xs text-foreground-3">到「项目」选择一个 PR 开始审查。</p>
     </div> : null}
     <Button className="justify-self-start" variant="ghost" size="sm" onClick={() => restoreInput.current?.click()} aria-label="从完整草稿备份恢复工作" type="button">{<Upload aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}从完整草稿备份恢复工作</Button>
-    <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; try { if (file.size > 1024 * 1024) throw new Error('备份超过1 MiB'); const info = parseBackupInfo(await file.text()); const incoming = info.work; if (info.accountHint && info.accountHint !== account && !window.confirm(`备份归属 ${info.accountHint}，将导入当前账户 ${account}。继续？`)) return; await verifyBackupSources(incoming); const old = readWorks(account ?? '').find(w => w.key === incoming.key); if (old) { navigate(routeFor(old)); throw new Error('此 PR 已有工作单，请在工作单内预览并合并备份，不覆盖原记录') } const restored = saveWork(account ?? '', { ...incoming, revision: 0 }); navigate(routeFor(restored)) } catch (failure) { setError(failure) } }}/>
+    <input ref={restoreInput} type="file" hidden accept=".json,application/json" aria-label="恢复工作单备份" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void importBackup(file) }}/>
+    <ConfirmDialog open={pendingImport !== null} title="备份归属不同"
+      description={pendingImport ? `备份归属 ${pendingImport.accountHint}，将导入当前账户 ${account ?? '未登录'}。继续？` : ''}
+      confirmLabel="继续导入" onCancel={() => setPendingImport(null)} onConfirm={importPendingBackup}/>
   </section>
 }

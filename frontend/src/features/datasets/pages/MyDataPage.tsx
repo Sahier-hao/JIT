@@ -1,7 +1,7 @@
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GitBranch, LoaderCircle, Search, Upload } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -309,18 +309,17 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialD
       <aside className="min-h-0">
         <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border-soft bg-card shadow-sm">
           <div className="grid gap-2 border-b border-border-soft p-2">
-            <div className="grid grid-cols-3 gap-1 rounded-lg bg-sunken p-1" role="tablist" aria-label="数据视图">
-              {([
-                ['mine', '我的', datasets ? mine.length : null],
-                ['shared', '共享', datasets ? shared.length : null],
-                ['builds', '构建', buildTasks?.length ?? null],
-              ] as const).map(([id, label, count]) => <button key={id} type="button" role="tab" aria-selected={tab === id}
-                className={cn('rounded-md px-2 py-1.5 text-xs font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-                  tab === id ? 'bg-card text-foreground shadow-sm' : 'text-foreground-3 hover:text-foreground')}
-                onClick={() => changeTab(id)}>
-                {label}{count !== null ? <span className={cn('ml-1 text-[10px]', tab === id ? 'text-foreground-3' : 'text-foreground-4')}>{count}</span> : null}
-              </button>)}
-            </div>
+            <Tabs value={tab} onValueChange={value => changeTab(value as DatasetTab)}>
+              <TabsList className="grid w-full grid-cols-3" aria-label="数据视图">
+                {([
+                  ['mine', '我的', datasets ? mine.length : null],
+                  ['shared', '共享', datasets ? shared.length : null],
+                  ['builds', '构建', buildTasks?.length ?? null],
+                ] as const).map(([id, label, count]) => <TabsTrigger key={id} value={id} className="text-xs">
+                  {label}{count !== null ? <span className="ml-1 text-[11px] tabular-nums text-foreground-3">{count}</span> : null}
+                </TabsTrigger>)}
+              </TabsList>
+            </Tabs>
             {viewingDatasets && Boolean(datasets?.length) ? <div className="relative">
               <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-4" size={14}/>
               <Input value={query} onChange={event => setQuery(event.target.value)} className="h-8 pl-8 text-xs" placeholder="搜索数据集" aria-label="搜索数据集"/>

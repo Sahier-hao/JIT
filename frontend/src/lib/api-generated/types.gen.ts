@@ -675,6 +675,15 @@ export type ModelPolicy = {
     isDefault: boolean;
 };
 
+export type ModelSharingUpdate = {
+    shared: boolean;
+};
+
+export type ModelSharing = {
+    modelId: Uuid;
+    shared: boolean;
+};
+
 export type ModelChoiceList = {
     models: Array<{
         modelId: Uuid;
@@ -686,6 +695,7 @@ export type ModelChoiceList = {
         isDefault: boolean;
         repositoryPredictionSupported: boolean;
         mine: boolean;
+        shared: boolean;
     }>;
 };
 
@@ -1748,6 +1758,7 @@ export type ModelInfo = {
         [key: string]: unknown;
     } | null;
     ownerUserId?: string | null;
+    shared?: boolean;
     error?: {
         code: GlobalErrorCode;
         message: string;
@@ -1854,6 +1865,7 @@ export type ModelDetail = {
         [key: string]: unknown;
     } | null;
     ownerUserId?: string | null;
+    shared?: boolean;
     error?: {
         code: GlobalErrorCode;
         message: string;
@@ -6205,6 +6217,53 @@ export type UpdateModelPolicyResponses = {
 
 export type UpdateModelPolicyResponse = UpdateModelPolicyResponses[keyof UpdateModelPolicyResponses];
 
+export type UpdateModelSharingData = {
+    body: ModelSharingUpdate;
+    path: {
+        modelId: Uuid;
+    };
+    query?: never;
+    url: '/api/v1/models/{modelId}/sharing';
+};
+
+export type UpdateModelSharingErrors = {
+    /**
+     * 管理员会话缺失或过期
+     */
+    401: unknown;
+    /**
+     * 跨来源写入被拒绝
+     */
+    403: unknown;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * MODEL_NOT_READY，未更改共享状态
+     */
+    409: unknown;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+    /**
+     * 产物或存储不可用，未更改共享状态
+     */
+    503: unknown;
+};
+
+export type UpdateModelSharingError = UpdateModelSharingErrors[keyof UpdateModelSharingErrors];
+
+export type UpdateModelSharingResponses = {
+    /**
+     * 已保存的共享状态
+     */
+    200: ModelSharing;
+};
+
+export type UpdateModelSharingResponse = UpdateModelSharingResponses[keyof UpdateModelSharingResponses];
+
 export type RepositoryModelChoicesData = {
     body?: never;
     path?: never;
@@ -6214,7 +6273,7 @@ export type RepositoryModelChoicesData = {
 
 export type RepositoryModelChoicesResponses = {
     /**
-     * Registered model choices and compatibility, including disabled historical identities
+     * 本人模型与管理员已开放的模型，含不可用或停用的历史身份
      */
     200: ModelChoiceList;
 };

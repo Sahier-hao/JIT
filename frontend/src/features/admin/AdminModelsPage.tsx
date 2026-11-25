@@ -15,6 +15,7 @@ import { AdminPageHeader, ErrorNotice } from '@/features/admin/AdminShared'
 
 const STATUS_FILTERS = [
   { value: 'all', label: '全部状态' },
+  { value: 'shared', label: '已开放' },
   { value: 'selectable', label: '可用于仓库打分' },
   { value: 'disabled', label: '已停用' },
   { value: 'unavailable', label: '不可用' },
@@ -102,9 +103,26 @@ export function AdminModelsPage({ selectedModelId, navigate, expired }: {
     } finally { lock.current = false; setBusy('') }
   }
 
+  async function updateSharing(modelId: string, shared: boolean) {
+    if (lock.current || loading) return
+    lock.current = true
+    setBusy(modelId)
+    setSaveError(null)
+    setNotice('')
+    try {
+      const saved = record(await apiRequest({ path: `/api/v1/models/${encodeURIComponent(modelId)}/sharing`, method: 'PUT', body: { shared } }))
+      setModels(previous => previous?.map(model => model.modelId === modelId
+        ? { ...model, shared: saved.shared === true } : model) ?? null)
+      setNotice(shared ? '模型已对用户开放。' : '已停止开放，历史结果保留。')
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) expired()
+      else setSaveError({ id: modelId, message: failure instanceof Error ? failure.message : '模型共享设置保存失败' })
+    } finally { lock.current = false; setBusy('') }
+  }
+
   const term = query.trim().toLowerCase()
   const visible = (models ?? []).filter(model =>
-    (filter === 'all' || catalogStatus(model) === filter)
+    (filter === 'all' || (filter === 'shared' ? model.shared : catalogStatus(model) === filter))
     && [model.name, model.method, model.featureSchemaVersion, model.artifactDatasetVersion, model.modelId].some(value => value.toLowerCase().includes(term)))
     .sort((a, b) => Number(b.isDefault) - Number(a.isDefault) || a.name.localeCompare(b.name))
   const selected = selectedModelId ? visible.find(model => model.modelId === selectedModelId) : visible[0]
@@ -133,7 +151,8 @@ export function AdminModelsPage({ selectedModelId, navigate, expired }: {
           {visible.map(model => {
             const active = model.modelId === selected?.modelId
             const status = catalogStatus(model)
-            const remark = model.isDefault ? '默认' : status === 'unavailable' ? '不可用' : status === 'disabled' ? '已停用' : null
+            const remark = [model.isDefault ? '默认' : null, model.shared ? '开放' : null].filter(Boolean).join(' · ')
+              || (status === 'unavailable' ? '不可用' : status === 'disabled' ? '已停用' : null)
             const target: Route = { name: 'admin', view: 'models', selectedModelId: model.modelId }
             return <li key={model.modelId} className="min-w-0">
               <a {...linkTo(target, route => {
@@ -154,7 +173,7 @@ export function AdminModelsPage({ selectedModelId, navigate, expired }: {
         </ul> : <p className="px-3 py-8 text-center text-sm text-foreground-3">{models.length ? '没有匹配的模型' : '尚无已登记模型'}</p>}
         detail={selected ? <>
           {saveError?.id === selected.modelId ? <ErrorNotice>{saveError.message}</ErrorNotice> : null}
-          <AdminModelPolicyPanel key={selected.modelId} model={selected} busy={loading || !!busy} saving={busy === selected.modelId} update={updatePolicy}
+          <AdminModelPolicyPanel key={selected.modelId} model={selected} busy={loading || !!busy} saving={busy === selected.modelId} update={updatePolicy} updateSharing={updateSharing}
             open={() => navigate({ name: 'admin', view: 'models', resourceId: selected.modelId })}/>
         </> : missing ? <EmptyState title="找不到这个模型">
           <Button type="button" variant="outline" onClick={() => navigate({ name: 'admin', view: 'models' })}>查看模型目录</Button>

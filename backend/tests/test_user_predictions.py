@@ -69,6 +69,7 @@ def prediction_fixture(tmp_path):
     storage.import_dataset(dataset_manifest, records)
     catalog = ModelCatalog(storage, root)
     model = catalog.register_key("baseline")["model"]
+    storage.set_model_share(model["modelId"], True, "admin")
     return {
         "storage": storage,
         "catalog": catalog,
@@ -153,6 +154,7 @@ def test_private_model_stays_out_of_other_users_scope(prediction_fixture):
 
     storage = prediction_fixture["storage"]
     model = prediction_fixture["model"]
+    storage.set_model_share(model["modelId"], False, "admin")
     with storage.connection(write=True) as db:
         db.execute(
             "UPDATE model_version SET owner_user_id=? WHERE id=?",

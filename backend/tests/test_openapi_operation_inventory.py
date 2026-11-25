@@ -7,14 +7,14 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 # [AI生成]
-def test_real_inventory_has_95_business_operations_and_four_admin_auth():
+def test_real_inventory_counts_and_four_admin_auth():
     data = inventory.build_inventory(inventory.DEFAULT_OPENAPI)
-    assert data["totalOperations"] == 99
-    assert data["businessOperations"] == 95
+    assert data["totalOperations"] == 100
+    assert data["businessOperations"] == 96
     assert {item["operationId"] for item in data["adminAuthOperations"]} == {
         "adminSetup", "adminLogin", "adminSession", "adminLogout",
     }
-    assert len({item["key"] for item in data["operations"]}) == 95
+    assert len({item["key"] for item in data["operations"]}) == 96
     for item in data["operations"]:
         assert item["method"] and item["path"] and item["operationId"]
         assert item["riskDomain"] and item["riskTier"] in {"high", "medium", "low"}

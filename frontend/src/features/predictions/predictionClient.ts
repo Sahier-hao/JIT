@@ -12,6 +12,8 @@ export interface PredictionModel {
   featureSchemaVersion: string
   artifactDatasetVersion: string | null
   isDefault: boolean
+  mine: boolean
+  shared: boolean
 }
 
 export interface PredictionModelList {
@@ -90,6 +92,8 @@ function model(raw: unknown): PredictionModel {
     featureSchemaVersion: text(value.featureSchemaVersion),
     artifactDatasetVersion: textOrNull(value.artifactDatasetVersion),
     isDefault: value.isDefault === true,
+    mine: value.mine === true,
+    shared: value.shared === true,
   }
 }
 

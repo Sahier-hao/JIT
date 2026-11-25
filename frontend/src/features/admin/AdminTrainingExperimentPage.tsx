@@ -146,7 +146,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
         </div>
         {task.error ? <p className="text-xs text-rose">{task.error.code} · {task.error.message}</p> : null}
         {task.metrics ? <p className="text-xs leading-body text-foreground-3">
-          PR-AUC {metric(task.metrics, 'averagePrecision')} · ROC-AUC {metric(task.metrics, 'rocAuc')} ·
+          AP {metric(task.metrics, 'averagePrecision')} · ROC-AUC {metric(task.metrics, 'rocAuc')} ·
           F1 {metric(task.metrics, 'f1')} · P {metric(task.metrics, 'precision')} / R {metric(task.metrics, 'recall')} ·
           耗时 {task.trainingPerformance?.durationSeconds == null ? '未记录' : `${Number(task.trainingPerformance.durationSeconds).toFixed(2)}s`}
         </p> : null}
@@ -168,7 +168,7 @@ export function AdminTrainingExperimentPage({ experimentId, navigate, expired }:
     {comparison?.experimentId === experimentId ? <TrainingComparisonResults key={experimentId} comparison={comparison}
       onExport={exportComparison} onEvaluateThresholds={evaluateThresholds}/> : <p className="text-xs leading-body text-foreground-3">正在读取比较结果…</p>}
     <Collapsible className="group/collapsible"><div className="flex items-center gap-2"><CollapsibleTrigger asChild><Button type="button" variant="ghost" className="justify-start"><ChevronRight aria-hidden="true" className="group-data-[state=open]/collapsible:rotate-90"/>{"比较口径与限制"}</Button></CollapsibleTrigger></div><CollapsibleContent><p className="text-xs leading-body text-foreground-3">
-        三档指标来自各自运行的冻结分区；训练档只用于拟合诊断，验证档是模型选择背景，测试档承担冻结泛化评价。
+        训练集、验证集和测试集指标来自各自运行的冻结分区；训练集只用于拟合，验证集用于选择阈值，测试集用于最终评估。
         单次实验不按测试指标选择参数或方法，训练成功仍需在「登记实验运行」中显式登记，项目分析也只使用显式选择的已登记模型。
         分数未经当前仓库概率校准，不能视为缺陷概率。
       </p></CollapsibleContent></Collapsible>

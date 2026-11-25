@@ -198,8 +198,8 @@ it('follows real epoch updates and hides comparison while fewer than two tasks h
   render(<MyTrainingPage experimentId="demo-exp" navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
   expect(await screen.findByRole('button', { name: '取消' })).toBeVisible()
   expect(screen.getByRole('progressbar', { name: '训练轮次进度' })).toHaveAttribute('aria-valuenow', '50')
-  expect(screen.queryByRole('button', { name: '登记本次模型' })).not.toBeInTheDocument()
-  await waitFor(() => expect(screen.getByRole('button', { name: '登记本次模型' })).toBeEnabled(), { timeout: 6_000 })
+  expect(screen.queryByRole('button', { name: '登记为可用模型' })).not.toBeInTheDocument()
+  await waitFor(() => expect(screen.getByRole('button', { name: '登记为可用模型' })).toBeEnabled(), { timeout: 6_000 })
   expect(screen.getByRole('progressbar', { name: '训练轮次进度' })).toHaveAttribute('aria-valuenow', '100')
   expect(screen.getByText('0.420')).toBeVisible()
   expect(screen.getByText('第 1 轮 · 0.4800')).toBeVisible()
@@ -310,7 +310,7 @@ it('adds and reorders dataset preprocessing operations', async () => {
   await user.click(within(dialog).getByRole('button', { name: '添加操作' }))
   await user.click(await screen.findByRole('menuitem', { name: '保留日期范围' }))
   expect(within(dialog).getAllByRole('article')).toHaveLength(2)
-  expect(within(dialog).getByLabelText('开始日期')).toHaveValue('2026-01-01')
+  expect(within(dialog).getByLabelText('开始日期')).toHaveTextContent('2026-01-01')
   await user.click(within(dialog).getAllByRole('button', { name: '上移' })[1])
   expect(within(dialog).getAllByRole('article')[0]).toHaveTextContent('保留日期范围')
   await user.click(within(dialog).getAllByRole('button', { name: '删除操作' })[0])
@@ -353,8 +353,30 @@ it('lists only the signed-in user models', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json({ models: [{
     modelId: 'm1', name: '逻辑回归 · kamei14-git-v2（C=0.6）', method: 'logistic-regression-l2-v1',
     featureSchemaVersion: 'kamei14-git-v2', state: 'ready', enabled: true,
-    parameters: { C: 0.6, seed: 2026 }, datasetVersion: 'demo',
+    parameters: { C: 0.6, seed: 2026 }, datasetVersion: 'demo', mine: true, shared: false,
   }] }))
   render(<MyModelsPage navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
   expect((await screen.findAllByText(/逻辑回归/)).length).toBeGreaterThan(0)
+})
+
+it('separates my models from administrator-opened models', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json({ models: [
+    {
+      modelId: 'mine', name: '我的逻辑回归', method: 'logistic-regression-l2-v1',
+      featureSchemaVersion: 'kamei14-git-v2', state: 'ready', enabled: true,
+      parameters: { C: 0.6 }, datasetVersion: 'demo', mine: true, shared: true,
+    },
+    {
+      modelId: 'shared', name: '管理员决策树', method: 'decision-tree-v1',
+      featureSchemaVersion: 'kamei14-git-v2', state: 'ready', enabled: true,
+      parameters: { max_depth: 4 }, datasetVersion: 'shared-data', mine: false, shared: true,
+    },
+  ] }))
+  render(<MyModelsPage navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  const mine = await screen.findByRole('region', { name: '我的模型' })
+  const shared = await screen.findByRole('region', { name: '管理员开放的模型' })
+  expect(within(mine).getByText('我的逻辑回归')).toBeVisible()
+  expect(within(mine).getByText('已开放')).toBeVisible()
+  expect(within(shared).getByText('管理员决策树')).toBeVisible()
+  expect(within(shared).queryByText('打开训练数据')).not.toBeInTheDocument()
 })

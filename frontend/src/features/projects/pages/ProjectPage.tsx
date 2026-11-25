@@ -194,11 +194,13 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
             </div>
     </header>
 
-    <nav aria-label="项目工作台视图" className="flex flex-wrap gap-1 rounded-xl border border-border-soft bg-card p-1 shadow-[var(--sh-1)]">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分支分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={cn('rounded-lg border-0 px-4', String(activeTab) === String(option.value) ? 'bg-accent-soft text-accent' : 'text-foreground-3 hover:bg-hover')}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-soft bg-card p-1 shadow-[var(--sh-1)]">
+      <nav aria-label="项目工作台视图" className="flex flex-wrap gap-1">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分支分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={cn('rounded-lg border-0 px-4', String(activeTab) === String(option.value) ? 'bg-accent-soft text-accent' : 'text-foreground-3 hover:bg-hover')}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
+      <RepositoryUpdates repositoryId={repositoryId} onAnalyze={analyzeBranch} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
+    </div>
 
     {activeTab === 'overview' ? <>
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} actions={<>
-        <RepositoryUpdates repositoryId={repositoryId} onAnalyze={analyzeBranch} onUpdated={() => { detail.retry(); records.retry(); projectsChanged() }}/>
         <Button variant="ghost" size="sm" asChild><a {...linkTo({ name: 'my-data', view: 'builds', buildProjectId: repositoryId }, navigate)}>
           <Database aria-hidden="true" size={15}/>在我的数据中构建
         </a></Button>

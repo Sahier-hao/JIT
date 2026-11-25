@@ -157,7 +157,7 @@ export function AdminDatasetDetailPage({ selected, versions, onSelect, onShared,
           {trainingBusy ? <span className="text-foreground-3">检查训练准入…</span>
             : trainingPreview?.available ? <span className="inline-flex items-center gap-1 text-teal-deep"><CheckCircle2 aria-hidden="true" size={13}/>可用于训练</span>
             : trainingPreview ? <span className="inline-flex items-center gap-1 text-rose-deep" title={trainingPreview.reason?.message ?? trainingError}><AlertTriangle aria-hidden="true" size={13}/>不可训练</span>
-            : <button type="button" className="text-xs text-accent underline-offset-2 hover:underline" onClick={() => void checkTraining()}>检查训练准入</button>}
+            : <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => void checkTraining()}>检查训练准入</Button>}
           {trainingPreview?.reason?.message ? <span className="min-w-0 break-words text-rose-deep [overflow-wrap:anywhere]">· {trainingPreview.reason.message}</span> : null}
           {trainingError ? <span className="text-rose-deep">· {trainingError}</span> : null}
         </div>}

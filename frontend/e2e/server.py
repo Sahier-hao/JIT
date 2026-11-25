@@ -171,6 +171,8 @@ def _bundled_model_setup():
     imported = import_bundled_model_package(catalog)
     if imported["status"] != "completed":
         raise RuntimeError(f"仓库内置模型包初始化失败：{imported}")
+    for model in catalog.registered_models():
+        storage.set_model_share(model["modelId"], True, "e2e-admin")
     suite = ARTIFACT_ROOT / "suites" / "jit-bundled"
     suite.mkdir(parents=True)
     (suite / "suite.json").write_text(json.dumps({
@@ -220,6 +222,8 @@ def _current_schema_setup():
     imported = import_current_schema_model_package(catalog, CURRENT_SCHEMA_PACKAGE_PATH)
     if imported["status"] != "completed" or not imported.get("defaultModelId"):
         raise RuntimeError(f"当前 schema 模型包初始化失败：{imported}")
+    for model in catalog.registered_models():
+        storage.set_model_share(model["modelId"], True, "e2e-admin")
     evidence = {
         "packageName": CURRENT_SCHEMA_PACKAGE_PATH.name,
         "import": imported,
@@ -280,6 +284,12 @@ def main():
         if not EXPERIMENT_MODE:
             for name in MODELS:
                 catalog.register_key(name)
+    if not EXPERIMENT_MODE:
+        # 用户端只显示本人或管理员显式开放的模型；隔离验收把夹具模型全部开放。
+        storage = CatalogStorage(DATABASE)
+        catalog = ModelCatalog(storage, ARTIFACT_ROOT)
+        for model in catalog.registered_models():
+            storage.set_model_share(model["modelId"], True, "e2e-admin")
     uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=int(sys.argv[1]), workers=1)
 
 

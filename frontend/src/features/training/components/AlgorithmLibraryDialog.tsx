@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 import { ArrowRight, BookOpenText, CheckCircle2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -45,11 +46,10 @@ export function AlgorithmLibraryDialog({ open, onOpenChange, methods, schema, in
         </section>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex gap-1 rounded-lg bg-sunken p-1" role="group" aria-label="算法分类">
+          <ToggleGroup type="single" size="sm" value={category} onValueChange={value => { if (value) setCategory(value as 'all' | 'classic' | 'deep') }} className="rounded-lg bg-sunken p-1" aria-label="算法分类">
             {([['all', '全部'], ['classic', '经典'], ['deep', '深度']] as const).map(([id, label]) =>
-              <button key={id} type="button" onClick={() => setCategory(id)}
-                className={cn('rounded-md px-3 py-1.5 text-xs', category === id ? 'bg-card font-medium text-foreground shadow-sm' : 'text-foreground-3')}>{label}</button>)}
-          </div>
+              <ToggleGroupItem key={id} value={id} className="text-xs">{label}</ToggleGroupItem>)}
+          </ToggleGroup>
           <span className="text-[11px] text-foreground-4">{visible.length} 个方法</span>
         </div>
 

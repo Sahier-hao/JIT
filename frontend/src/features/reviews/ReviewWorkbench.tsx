@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -246,12 +247,12 @@ export function ReviewWorkbench({ repositoryId, viewSyncId, commitId, stateKey, 
             <Search aria-hidden="true" focusable="false" strokeWidth={1.5} size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground-4"/>
             <Input className="pl-8" aria-label="搜索提交标题或 SHA" placeholder="搜索提交标题或 SHA" value={queryState.draft.search} onChange={event => updateQuery({ search: event.target.value })}/>
           </label>
-          <label className={fieldLabel}><span className={labelText}>起始日期</span>
-            <Input className="w-36" aria-label="起始日期" inputMode="numeric" placeholder="YYYY-MM-DD" value={queryState.draft.start} aria-invalid={!!queryState.error} onChange={event => updateQuery({ start: event.target.value })}/>
-          </label>
-          <label className={fieldLabel}><span className={labelText}>结束日期</span>
-            <Input className="w-36" aria-label="结束日期" inputMode="numeric" placeholder="YYYY-MM-DD" value={queryState.draft.end} aria-invalid={!!queryState.error} onChange={event => updateQuery({ end: event.target.value })}/>
-          </label>
+          <div className={fieldLabel}><span className={labelText}>起始日期</span>
+            <DatePicker className="w-40" ariaLabel="起始日期" placeholder="选择日期" value={queryState.draft.start} max={queryState.draft.end || undefined} invalid={!!queryState.error} onChange={value => updateQuery({ start: value })}/>
+          </div>
+          <div className={fieldLabel}><span className={labelText}>结束日期</span>
+            <DatePicker className="w-40" ariaLabel="结束日期" placeholder="选择日期" value={queryState.draft.end} min={queryState.draft.start || undefined} invalid={!!queryState.error} onChange={value => updateQuery({ end: value })}/>
+          </div>
           <label className={fieldLabel}><span className={labelText}>排序</span>
             <NativeSelect className="w-40" aria-label="排序" value={queryState.draft.sort} onChange={event => updateQuery({ sort: event.target.value as Query['sort'] })}><option value="risk">风险从高到低</option><option value="time">时间从新到旧</option></NativeSelect>
           </label>

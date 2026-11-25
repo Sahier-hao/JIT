@@ -19,7 +19,9 @@ import { TrainingExperimentList } from '@/features/training/components/TrainingE
 import { TrainingExperimentMonitor } from '@/features/training/components/TrainingExperimentMonitor'
 import { CardListSkeleton } from '@/components/shared/Skeletons'
 import { EmptyState } from '@/components/shared/Feedback'
-import { isActiveTraining } from '@/features/training/trainingPresentation'
+import { cn } from '@/lib/utils'
+import { datasetVersionLabel, splitPresetLabel } from '@/lib/datasetLabel'
+import { isActiveTraining, trainingStatus } from '@/features/training/trainingPresentation'
 import { TrainingComparisonResults } from '@/features/training/components/TrainingComparisonResults'
 import { comparisonExportText, fetchThresholdEvaluation, type ThresholdEvaluation, type ThresholdRequest } from '@/features/training/trainingComparison'
 
@@ -182,10 +184,14 @@ export function MyTrainingPage({ account = null, experimentId, initialDatasetVer
 
   const pendingRegistration = experiment.tasks.some(task => task.status === 'succeeded' && !task.modelId)
   const registeredCount = experiment.tasks.filter(task => task.modelId).length
+  const methodCount = new Set(experiment.tasks.map(task => task.method)).size
+  const succeededCount = experiment.tasks.filter(task => task.status === 'succeeded').length
+  const dataset = datasetVersionLabel(experiment.datasetVersion)
+  const status = trainingStatus[experiment.status]
   const compared = comparisonKey !== null && comparison?.experimentId === experimentId ? comparison : null
   const showComparisonFirst = experiment.status === 'succeeded' && compared !== null
   const registration = pendingRegistration ? <Button className="justify-self-start" size="sm" disabled={!!busy} onClick={() => void register()} type="button">
-    {busy === 'register' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : null}登记本次模型
+    {busy === 'register' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : null}登记为可用模型
   </Button> : null
   const comparisonPanel = compared
     ? <TrainingComparisonResults key={`comparison-${experimentId}`} comparison={compared}
@@ -197,14 +203,41 @@ export function MyTrainingPage({ account = null, experimentId, initialDatasetVer
     onOpenAlgorithm={method => navigate({ name: 'algorithms', method })}
     onAction={(task, action) => void act(task, action)} registration={showComparisonFirst ? null : registration}/>
 
+  const overview = <section aria-label="实验概览" className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-card">
+    <dl className="grid grid-cols-1 gap-px bg-border-soft sm:grid-cols-2 xl:grid-cols-4 [&>div]:min-w-0 [&>div]:bg-card [&>div]:px-4 [&>div]:py-3">
+      <div>
+        <dt className="text-xs text-foreground-3">数据</dt>
+        <dd className="mt-0.5 text-sm font-medium [overflow-wrap:anywhere]" title={experiment.datasetVersion}>{dataset.name}</dd>
+        {dataset.range ? <dd className="mt-0.5 text-xs text-foreground-3">{dataset.range}</dd> : null}
+      </div>
+      <div>
+        <dt className="text-xs text-foreground-3">时间切分</dt>
+        <dd className="mt-0.5 text-sm tabular-nums">{splitPresetLabel(experiment.splitPreset)}</dd>
+      </div>
+      <div>
+        <dt className="text-xs text-foreground-3">模型</dt>
+        <dd className="mt-0.5 text-sm">{methodCount} 个，已完成 {succeededCount} 个</dd>
+      </div>
+      <div>
+        <dt className="text-xs text-foreground-3">登记</dt>
+        <dd className="mt-0.5 text-sm">{registeredCount ? `已登记 ${registeredCount} 个` : '尚未登记'}</dd>
+      </div>
+    </dl>
+  </section>
+
   return <section className="grid min-w-0 grid-cols-1 gap-5">
-    <WorkspacePageHeader title="训练实验" meta={<span>创建于 {formatDate(experiment.createdAt)}
-      {registeredCount ? <span role="status" className="ml-2 font-medium text-accent">已登记 {registeredCount} 个模型</span> : null}
+    <WorkspacePageHeader title="训练实验" meta={<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className={cn('inline-flex items-center gap-1.5 font-medium', status.color)}>
+        <span className={cn('size-1.5 rounded-full', status.dot)} aria-hidden="true"/>
+        {status.label}
+      </span>
+      <span>创建于 {formatDate(experiment.createdAt)}</span>
     </span>} actions={<>
       <Button variant="ghost" size="sm" onClick={returnToList} type="button"><ArrowLeft aria-hidden="true"/>返回训练列表</Button>
       {registeredCount ? <Button variant="outline" size="sm" onClick={() => navigate({ name: 'my-models' })} type="button">查看我的模型</Button> : null}
       {showComparisonFirst ? registration : null}
     </>}/>
+    {overview}
     {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
     {comparisonError ? <div className="flex flex-wrap items-center gap-2 text-xs text-rose"><p role="alert">{comparisonError}</p><Button size="sm" onClick={() => setComparisonRevision(value => value + 1)} variant="outline" type="button">重试比较</Button></div> : null}
     {showComparisonFirst ? [comparisonPanel, <details key="training-monitor" className="group min-w-0 rounded-xl border border-border-soft bg-card">

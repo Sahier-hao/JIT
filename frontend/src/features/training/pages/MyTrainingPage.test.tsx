@@ -38,7 +38,7 @@ function task(id: string, method: string) {
   }
 }
 
-it('shows all three partitions in the user-owned experiment comparison', async () => {
+it('shows the test comparison and collapsible train/validation partitions', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
     if (path.endsWith('/comparison')) return Response.json({
@@ -79,10 +79,10 @@ it('shows all three partitions in the user-owned experiment comparison', async (
   const navigate = vi.fn()
   render(<MyTrainingPage experimentId="exp-1" navigate={navigate} onLoginRequired={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: '训练实验' })).toBeVisible()
-  expect(await screen.findByRole('heading', { name: '三档结果比较' })).toBeVisible()
-  await waitFor(() => expect(screen.getAllByText('训练档').length).toBeGreaterThan(0))
-  expect(screen.getAllByText('验证档').length).toBeGreaterThan(0)
-  expect(screen.getAllByText('测试档').length).toBeGreaterThan(0)
+  expect(await screen.findByRole('heading', { name: '模型对比' })).toBeVisible()
+  await waitFor(() => expect(screen.getAllByText('训练集').length).toBeGreaterThan(0))
+  expect(screen.getAllByText('验证集').length).toBeGreaterThan(0)
+  expect(screen.getByText(/测试集 2 条 · 正例 1 条/)).toBeVisible()
   expect(screen.getAllByText(/记录 8 · 正例 4/).length).toBeGreaterThan(0)
   expect(screen.getAllByText('测试集缺少负例').length).toBeGreaterThan(0)
 

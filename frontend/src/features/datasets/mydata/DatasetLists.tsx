@@ -21,9 +21,9 @@ export function DatasetRowList({ items, selected, onSelect }: {
   return <div className="grid gap-1" role="listbox" aria-label="数据版本">
     {items.map(item => {
       const active = item.version === selected
-      return <button key={item.version} type="button" role="option" aria-selected={active}
+      return <Button key={item.version} variant="ghost" type="button" role="option" aria-selected={active}
         className={cn(
-          'group relative w-full rounded-lg px-3 py-2.5 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+          'group relative flex h-auto w-full min-w-0 flex-col items-stretch gap-0 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
           active ? 'bg-accent-soft/70' : 'hover:bg-sunken',
         )}
         onClick={() => onSelect(item.version)}>
@@ -41,7 +41,7 @@ export function DatasetRowList({ items, selected, onSelect }: {
           <span>{numberText(item.quality.positiveLabels)} 正例</span>
         </span>
         <span className="mt-0.5 block truncate text-[11px] text-foreground-4">{timestampLabel(item)}</span>
-      </button>
+      </Button>
     })}
   </div>
 }

@@ -8,7 +8,7 @@ import { TrainingLossChart } from '@/components/shared/TrainingLossChart'
 import { formatMethodParams } from '@/lib/methodParams'
 import { cn } from '@/lib/utils'
 import type { Row, TrainingExperiment, TrainingTask } from '@/features/admin/adminContracts'
-import { SPLIT_PRESETS } from '@/features/datasets/splitClient'
+import { datasetVersionLabel, splitPresetLabel } from '@/lib/datasetLabel'
 import { isActiveTraining, trainingMethodName, trainingPhase, trainingStatus } from '@/features/training/trainingPresentation'
 import { TrainingThresholdPreview } from '@/features/training/components/TrainingThresholdPreview'
 
@@ -85,7 +85,8 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
   const eta = selected?.status === 'running' && !selected.cancelRequestedAt ? remainingFitTime(history ?? null) : null
   const hasLoss = history?.entries.some(entry => entry.trainLoss != null || entry.trainEvalLoss != null || entry.validationLoss != null)
   const method = selected && trainingMethodName(selected.method)
-  const split = SPLIT_PRESETS.find(preset => preset.value === experiment.splitPreset)?.label ?? experiment.splitPreset
+  const split = splitPresetLabel(experiment.splitPreset)
+  const dataset = datasetVersionLabel(experiment.datasetVersion)
   const active = selected ? isActiveTraining(selected.status) : false
   const phase = selected ? trainingPhase(selected) : null
   const retryable = selected ? RETRYABLE.has(selected.status) : false
@@ -107,7 +108,7 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
     <section ref={monitor} tabIndex={-1} aria-label="训练可视化" className="grid min-w-0 grid-cols-1 content-start gap-4 rounded-xl border border-border-soft bg-card p-4 outline-none sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-medium text-foreground-3">训练监控</h2>
+          <h2 className="text-sm font-medium text-foreground-3">训练过程</h2>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <p className="text-xl font-semibold [overflow-wrap:anywhere]">{method ?? '等待训练任务'}</p>
             {selected && onOpenAlgorithm ? <Button type="button" size="xs" variant="ghost" onClick={() => onOpenAlgorithm(selected.method)}>
@@ -176,7 +177,8 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
         </li>)}
       </ul>
       <dl className="grid gap-3 border-t border-border-soft pt-3 [&_dd]:mt-0.5 [&_dt]:text-xs [&_dt]:text-foreground-3">
-        <div><dt>数据版本</dt><dd className="font-mono text-xs [overflow-wrap:anywhere]">{experiment.datasetVersion}</dd>
+        <div><dt>数据</dt><dd className="text-xs [overflow-wrap:anywhere]" title={experiment.datasetVersion}>{dataset.name}</dd>
+          {dataset.range ? <dd className="mt-0.5 text-xs text-foreground-3">{dataset.range}</dd> : null}
           {onOpenDataset ? <Button variant="link" size="sm" className="mt-1 h-auto p-0 text-xs" onClick={onOpenDataset} type="button">打开训练数据</Button> : null}
         </div>
         <div><dt>时间切分</dt><dd className="text-sm">{split}</dd></div>
@@ -193,7 +195,7 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
         </ToggleGroup> : null}
       </div>
       <dl className="grid grid-cols-2 divide-x divide-y divide-border-soft rounded-xl border border-border-soft bg-card sm:grid-cols-4 sm:divide-y-0">
-        {([['PR-AUC', 'averagePrecision'], ['ROC-AUC', 'rocAuc'], ['F1', 'f1'], ['召回率', 'recall']] as const).map(([label, key]) =>
+        {([['AP', 'averagePrecision'], ['ROC-AUC', 'rocAuc'], ['F1', 'f1'], ['召回率', 'recall']] as const).map(([label, key]) =>
           <div key={key} className="space-y-1 px-4 py-3"><dt className="text-xs text-foreground-3">{label}</dt><dd className="text-xl font-semibold tabular-nums">{trainingMetric(partition.metrics, key)}</dd></div>)}
       </dl>
     </section> : null}

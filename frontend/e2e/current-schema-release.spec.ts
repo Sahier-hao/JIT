@@ -50,8 +50,8 @@ test('当前 v2 正式包、项目分析、模型卡与发布报告形成真实�
   await page.goto(`/#/projects/${project.repositoryId}/analyses`)
   await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('模型来源', { exact: true }).selectOption('default')
-  await expect(dialog.getByLabel('模型来源', { exact: true })).toHaveValue('default')
+  await expect(dialog.getByRole('button', { name: '开始分析', exact: true })).toBeEnabled()
+  await expect(dialog.getByRole('combobox', { name: '模型来源' })).toContainText(model.name)
   const response = page.waitForResponse(item =>
     item.url().endsWith('/api/v1/repository-syncs') && item.request().method() === 'POST')
   await dialog.getByRole('button', { name: '开始分析', exact: true }).click()

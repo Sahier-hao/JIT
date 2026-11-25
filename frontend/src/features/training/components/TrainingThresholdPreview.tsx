@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
 import { parseTrainingThresholdPreview } from '../trainingComparison'
 
 function ratio(count: number, total: number) {
@@ -27,12 +28,10 @@ export function TrainingThresholdPreview({ data }: { data: unknown }) {
     <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
       <div className="grid content-start gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <label htmlFor="training-threshold-range" className="text-sm">风险分数阈值 <strong className="ml-1 tabular-nums">{threshold}</strong></label>
+          <span className="text-sm">风险分数阈值 <strong className="ml-1 tabular-nums">{threshold}</strong></span>
           <Button type="button" variant="ghost" size="xs" disabled={tick === preview.defaultTick} onClick={() => setChoice(undefined)}>恢复默认</Button>
         </div>
-        <input id="training-threshold-range" type="range" min={0} max={100} step={1} value={tick}
-          aria-valuetext={threshold} onChange={event => setChoice(event.currentTarget.valueAsNumber)}
-          className="h-5 w-full cursor-pointer accent-accent"/>
+        <Slider label="风险分数阈值" value={[tick]} onValueChange={values => setChoice(values[0])}/>
         <p className="text-xs text-foreground-3">分数达到阈值的提交会被列入告警。</p>
       </div>
       <div className="grid gap-3 text-xs text-foreground-3">

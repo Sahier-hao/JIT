@@ -82,6 +82,24 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     catalog = ModelCatalog(storage, artifact_root if artifact_root is not None else os.environ.get('JIT_ARTIFACT_ROOT'))
     app.state.catalog = catalog
     app.state.storage = storage
+
+    def authorize_model(model_id, request):
+        """显式选择的模型须为本人或管理员已开放；管理员不受限。"""
+        if not model_id:
+            return model_id
+        from ..users import current_admin, current_user
+        if current_admin(request) is not None:
+            return model_id
+        try:
+            allowed = catalog.can_use_model(model_id, current_user(request))
+        except RequestError as exc:
+            # 不存在的模型交给实际任务报告，保持既有错误语义。
+            if exc.code == 'NOT_FOUND':
+                return model_id
+            raise
+        if not allowed:
+            raise RequestError('MODEL_FORBIDDEN')
+        return model_id
     from .. import store
     from .. import datasets as dataset_module
     dataset_root = dataset_root if dataset_root is not None else os.environ.get('JIT_DATASET_ROOT')
@@ -172,8 +190,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         if (set(payload) - {'modelId', 'scope'}
                 or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())):
             raise RequestError('INPUT_INVALID')
+        model_id = payload.get('modelId') or catalog.default_model_id()
+        authorize_model(model_id, request)
         result = await run_in_threadpool(pr_updates.analyze_all_prs, repository_id,
-                                         payload.get('modelId'),
+                                         model_id,
                                          getattr(request.state, 'request_id', None),
                                          payload.get('scope'))
         return JSONResponse(result, status_code=202)
@@ -213,8 +233,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
                 or 'modelId' in payload and (not isinstance(payload['modelId'], str) or not payload['modelId'].strip())
                 or 'retry' in payload and type(payload['retry']) is not bool):
             raise RequestError('INPUT_INVALID')
+        model_id = payload.get('modelId') or catalog.default_model_id()
+        authorize_model(model_id, request)
         return await run_in_threadpool(pr_updates.analyze_pr, repository_id, number,
-                                       payload.get('modelId'), bool(payload.get('retry', False)))
+                                       model_id, bool(payload.get('retry', False)))
 
     @app.get('/api/v1/repositories/{repository_id}/pr-tracking')
     def pr_tracking(repository_id: str):
@@ -222,7 +244,15 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
 
     @app.patch('/api/v1/repositories/{repository_id}/pr-tracking')
     async def configure_pr_tracking(repository_id: str, request: Request):
-        return await run_in_threadpool(pr_updates.configure, repository_id, await read_object(request))
+        payload = await read_object(request)
+        if isinstance(payload, dict):
+            target = payload.get('modelId')
+            if not (isinstance(target, str) and target.strip()) and payload.get('enabled') is True:
+                current = await run_in_threadpool(pr_updates.get, repository_id)
+                target = current.get('modelId') or catalog.default_model_id()
+            if isinstance(target, str) and target.strip():
+                authorize_model(target, request)
+        return await run_in_threadpool(pr_updates.configure, repository_id, payload)
 
     @app.post('/api/v1/repositories/{repository_id}/pr-tracking/check')
     def check_project_pull_requests(repository_id: str):
@@ -451,14 +481,20 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
         from ..sync import SCORING_SCHEMAS
         viewer = current_user(request)
         admin_view = current_admin(request) is not None
-        visible = [item for item in catalog.models()
-                   if admin_view or item.get('ownerUserId') in (None, viewer)]
+        # 选择列表读取已保存的校验状态；实际分析加载模型时会重新校验产物。
+        # 用户只看到本人模型和管理员已开放的模型；未开放的无归属模型不在用户范围。
+        def visible(item):
+            if viewer is None:
+                return admin_view or item.get('ownerUserId') is None or item.get('shared')
+            return item.get('ownerUserId') == viewer or item.get('shared')
+        selected = [item for item in catalog.registered_models() if visible(item)]
         return {'models': [dict(modelId=item['modelId'], name=item['name'], method=item['method'],
                                 featureSchemaVersion=item['featureSchemaVersion'], state=item['state'],
                                 enabled=item['enabled'], isDefault=item['isDefault'],
                                 mine=bool(viewer and item.get('ownerUserId') == viewer),
+                                shared=bool(item.get('shared')),
                                 repositoryPredictionSupported=item['enabled'] and item['state'] == 'ready' and item['featureSchemaVersion'] in
-                                SCORING_SCHEMAS) for item in visible]}
+                                SCORING_SCHEMAS) for item in selected]}
 
     @app.post('/api/v1/training-tasks')
     async def create_training_task(request: Request):
@@ -557,6 +593,16 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     async def model_policy(model_id: str, request: Request):
         return await run_in_threadpool(catalog.update_policy, model_id, await read_object(request))
 
+    @app.put('/api/v1/models/{model_id}/sharing')
+    async def model_sharing(model_id: str, request: Request):
+        payload = await read_object(request)
+        if (not isinstance(payload, dict) or set(payload) != {'shared'}
+                or type(payload['shared']) is not bool):
+            raise RequestError('INPUT_INVALID')
+        shared = await run_in_threadpool(catalog.set_shared, model_id, payload['shared'],
+                                         request.state.admin_username)
+        return {'modelId': model_id, 'shared': shared}
+
     @app.get('/api/v1/feature-schemas/{version}')
     def feature_schema(version: str):
         return schema_info(version)
@@ -616,12 +662,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.post('/api/v1/repository-syncs')
     async def create_sync(request: Request):
         payload = await read_object(request)
-        from ..users import current_admin, current_user
-        viewer = current_user(request)
-        if payload.get('modelId') and current_admin(request) is None:
-            owner = catalog.model_owner(payload['modelId'])
-            if owner is not None and owner != viewer:
-                raise RequestError('MODEL_FORBIDDEN')
+        authorize_model(payload.get('modelId'), request)
         result, created = await run_in_threadpool(sync_service.create, payload,
                                                   request.state.request_id)
         request.state.business_ids = (result.get('modelId'), result.get('runId'), None)

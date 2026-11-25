@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -136,7 +137,7 @@ function MissingFieldsEditor({ dataset, fields, onChange }: {
     </Popover>
     {fields.length ? <div className="flex flex-wrap gap-1.5">{fields.map(field => <span key={field} className="inline-flex items-center gap-1 rounded-md bg-soft px-2 py-1 font-mono text-[11px] text-foreground-2">
       {field}
-      <button type="button" className="text-foreground-4 hover:text-rose" aria-label={`移除字段 ${field}`} onClick={() => toggle(field)}><X aria-hidden="true" size={12}/></button>
+      <Button type="button" variant="ghost" size="icon-xs" className="text-foreground-4 hover:text-rose" aria-label={`移除字段 ${field}`} onClick={() => toggle(field)}><X aria-hidden="true" size={12}/></Button>
     </span>)}</div> : null}
   </div>
 }
@@ -150,12 +151,12 @@ function StepEditor({ step, dataset, onChange }: {
   if (rule.id === 'drop-duplicates') return <p className="text-xs text-foreground-3">按提交 ID 去重。</p>
   if (rule.id === 'drop-missing') return <MissingFieldsEditor dataset={dataset} fields={rule.fields ?? []} onChange={fields => onChange({ ...rule, fields })}/>
   if (rule.id === 'keep-date') return <div className="grid gap-2 sm:grid-cols-2">
-    <label className="grid gap-1 text-[11px] text-foreground-3">开始日期
-      <Input type="date" value={rule.start ?? ''} onChange={event => onChange({ ...rule, start: event.target.value || undefined })}/>
-    </label>
-    <label className="grid gap-1 text-[11px] text-foreground-3">结束日期
-      <Input type="date" value={rule.end ?? ''} onChange={event => onChange({ ...rule, end: event.target.value || undefined })}/>
-    </label>
+    <div className="grid gap-1 text-[11px] text-foreground-3"><span>开始日期</span>
+      <DatePicker ariaLabel="开始日期" placeholder="选择日期" size="sm" value={rule.start ?? ''} max={rule.end} onChange={value => onChange({ ...rule, start: value || undefined })}/>
+    </div>
+    <div className="grid gap-1 text-[11px] text-foreground-3"><span>结束日期</span>
+      <DatePicker ariaLabel="结束日期" placeholder="选择日期" size="sm" value={rule.end ?? ''} min={rule.start} onChange={value => onChange({ ...rule, end: value || undefined })}/>
+    </div>
   </div>
   if (rule.id === 'quantile-range') return <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_110px_110px]">
     <label className="grid gap-1 text-[11px] text-foreground-3">特征

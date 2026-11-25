@@ -49,6 +49,7 @@ def mixed_coverage(tmp_path, real_run):
     catalog = ModelCatalog(store, root)
     ready = _register(catalog, f"suites/matrix/{ready_method}")["model"]
     disabled = _register(catalog, f"suites/matrix/{disabled_method}")["model"]
+    store.set_model_share(ready["modelId"], True, "admin")
     catalog.update_policy(disabled["modelId"], {"enabled": False})
     (runs[corrupt_method] / "model.joblib").write_bytes(b"corrupt")
     entries = [

@@ -2,9 +2,9 @@ import { ArrowRight, LoaderCircle } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { NativeSelect } from '@/components/ui/native-select'
 import { FailureNotice } from '@/components/shared/Feedback'
 import { ModelCardDialog } from '@/features/models/components/ModelCardDialog'
+import { ModelSelect, usableModel } from '@/features/models/components/ModelSelect'
 import { repositoryModels, type ModelChoice } from '@/features/models/modelClient'
 import { projectsChanged } from '@/features/projects/projectEvents'
 import type { SyncView } from '@/features/projects/repositoryContract'
@@ -28,24 +28,21 @@ function readDraft(key: string): { branch?: string; choice?: string } {
     const draft = JSON.parse(sessionStorage.getItem(key) ?? '{}')
     return {
       branch: typeof draft?.branch === 'string' ? draft.branch : undefined,
-      choice: typeof draft?.choice === 'string' && !['auto', 'train'].includes(draft.choice) ? draft.choice : undefined,
+      choice: typeof draft?.choice === 'string' && draft.choice && !['auto', 'train', 'default'].includes(draft.choice)
+        ? draft.choice : undefined,
     }
   } catch {
     return {}
   }
 }
 
-function usable(model?: ModelChoice) {
-  return Boolean(model?.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
-}
-
 export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel, initial }: AnalysisFormProps) {
   const draftKey = `jit:analysis-draft:${repositoryUrl}`
   const [saved] = useState(() => initial ? {
-    branch: initial.branch, choice: initial.modelId === null ? '' : initial.modelId,
+    branch: initial.branch, choice: initial.modelId ?? undefined,
   } : readDraft(draftKey))
   const [branch, setBranch] = useState(saved.branch ?? '')
-  const [choice, setChoice] = useState(saved.choice ?? 'default')
+  const [choice, setChoice] = useState(saved.choice ?? '')
   const [models, setModels] = useState<ModelChoice[] | null>(null)
   const [modelError, setModelError] = useState('')
   const [revision, setRevision] = useState(0)
@@ -67,10 +64,16 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     try { sessionStorage.setItem(draftKey, JSON.stringify({ branch, choice })) } catch { /* 存储不可用时仍可提交 */ }
   }, [draftKey, branch, choice])
 
-  const defaultModel = models?.find(model => model.isDefault)
-  const selected = choice === 'default' ? defaultModel : models?.find(model => model.modelId === choice)
-  const savedSelection = Boolean(choice && choice !== 'default')
-  const blocked = Boolean(modelError) || !usable(selected)
+  const selected = models?.find(model => model.modelId === choice)
+  const savedSelection = Boolean(saved.choice)
+  const blocked = Boolean(modelError) || !usableModel(selected)
+
+  // 没有原选模型时自动落到默认模型，再退到第一个可选模型；原选模型不可用时不静默替换。
+  useEffect(() => {
+    if (!models || choice) return
+    const preferred = models.find(model => model.isDefault && usableModel(model)) ?? models.find(usableModel)
+    if (preferred) setChoice(preferred.modelId)
+  }, [models, choice])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -92,6 +95,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
     }
   }
 
+  const noneUsable = models !== null && !models.some(usableModel)
   return <>
     <form className="grid gap-4" onSubmit={submit}>
       <fieldset className="m-0 grid gap-3 border-0 p-0 sm:grid-cols-2" aria-label="分析选项" disabled={busy}>
@@ -100,24 +104,19 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
           <Input aria-label="分支" placeholder={defaultBranch ? `默认：${defaultBranch}` : '默认分支'} value={branch} onChange={event => setBranch(event.target.value)}/>
         </label>
         <div className="grid min-w-0 content-start gap-1.5">
-          <label className="grid min-w-0 gap-1.5">
-            <span className="text-xs font-medium text-foreground-2">模型来源</span>
-            <NativeSelect aria-label="模型来源" value={choice} onChange={event => setChoice(event.target.value)}>
-              <option value="" disabled>选择已有模型</option>
-              <option value="default" disabled={models !== null && !usable(defaultModel)}>使用默认模型{defaultModel ? `：${defaultModel.name}` : ''}</option>
-              {savedSelection && !selected ? <option value={choice} disabled>{models ? '原选模型（已不存在）' : '正在核对原选模型…'}</option> : null}
-              {models?.length ? <optgroup label="指定已有模型">{models.map(model =>
-                <option key={model.modelId} value={model.modelId} disabled={!usable(model)}>
-                  {model.name}{model.enabled ? usable(model) ? '' : '（不可用）' : '（已停用）'}
-                </option>)}</optgroup> : null}
-            </NativeSelect>
-          </label>
+          <div className="grid min-w-0 gap-1.5">
+            <span className="text-xs font-medium text-foreground-2">模型</span>
+            <ModelSelect models={models ?? []} value={choice} onValueChange={setChoice} label="模型来源"
+              disabled={busy || models === null}
+              placeholder={models === null ? '正在读取模型' : noneUsable ? '没有可用模型' : '选择模型'}
+              missingLabel={models === null ? '正在核对原选模型…' : '原选模型（已停用或不可用）'}/>
+          </div>
           {selected ? <Button type="button" size="sm" className="justify-self-start" onClick={() => setModelCardOpen(true)} variant="ghost">查看模型卡</Button> : null}
         </div>
         {modelError ? <p className="text-xs text-rose sm:col-span-2" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => { setModelError(''); setModels(null); setRevision(value => value + 1) }} type="button">重新读取</Button></p>
-          : models && !models.some(usable) ? <p className="text-xs text-rose sm:col-span-2" role="alert">没有可用的兼容模型。可在「我的训练」完成训练并登记模型后再回来。</p>
-          : models && savedSelection && !usable(selected) ? <p className="text-xs text-rose sm:col-span-2" role="alert">原选模型已停用或不可用，请重新选择。</p>
-          : models && choice === 'default' && !usable(defaultModel) ? <p className="text-xs text-foreground-3 sm:col-span-2">默认模型不可用，请选一个已有模型。</p>
+          : noneUsable ? <p className="text-xs text-rose sm:col-span-2" role="alert">没有可用的模型。可在「我的训练」完成训练并登记模型，或请管理员开放模型。</p>
+          : models && savedSelection && !usableModel(selected) ? <p className="text-xs text-rose sm:col-span-2" role="alert">原选模型已停用、未开放或不可用，请重新选择。</p>
+          : models && !choice ? <p className="text-xs text-foreground-3 sm:col-span-2">请选择一个模型。</p>
           : null}
       </fieldset>
       {error ? <FailureNotice error={error}/> : null}

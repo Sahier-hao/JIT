@@ -1,15 +1,17 @@
 import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { Button } from '@/components/ui/button'
+import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EChartCanvas, chartTooltip, useChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
 import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 import { ApiError } from '@/lib/apiContract'
 import { cn } from '@/lib/utils'
+import { datasetVersionLabel } from '@/lib/datasetLabel'
 import { Activity, Gauge, LoaderCircle, RefreshCw, ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { Route } from '@/app/navigation'
-import { userDatasets, type UserDataset } from '@/features/account/userClient'
-import { formatDate } from '@/features/admin/adminContracts'
+import { userDatasets, userExperiments, userModels, type UserDataset, type UserModel } from '@/features/account/userClient'
+import { formatDate, type TrainingExperiment } from '@/features/admin/adminContracts'
 import {
   createPredictionBatch, predictionBatch, predictionBatches, predictionModels,
   type PredictionBatch, type PredictionBatchDetail, type PredictionModel,
@@ -46,6 +48,8 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
   const [batches, setBatches] = useState<PredictionBatch[] | null>(null)
   const [datasetVersion, setDatasetVersion] = useState(initialDatasetVersion ?? '')
   const [models, setModels] = useState<PredictionModel[] | null>(null)
+  const [registeredModels, setRegisteredModels] = useState<UserModel[] | null>(null)
+  const [experiments, setExperiments] = useState<TrainingExperiment[] | null>(null)
   const [modelId, setModelId] = useState('')
   const [threshold, setThreshold] = useState(0.5)
   const [busy, setBusy] = useState(false)
@@ -105,6 +109,22 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
     return () => controller.abort()
   }, [batchId, datasetVersion, onLoginRequired, revision])
 
+  useEffect(() => {
+    if (batchId || !models || models.length > 0) {
+      setRegisteredModels(null)
+      setExperiments(null)
+      return
+    }
+    const controller = new AbortController()
+    Promise.allSettled([userModels(controller.signal), userExperiments(controller.signal)])
+      .then(([modelResult, experimentResult]) => {
+        if (controller.signal.aborted) return
+        setRegisteredModels(modelResult.status === 'fulfilled' ? modelResult.value : [])
+        setExperiments(experimentResult.status === 'fulfilled' ? experimentResult.value : [])
+      })
+    return () => controller.abort()
+  }, [batchId, models])
+
   async function submit() {
     if (!datasetVersion || !modelId || busy) return
     setBusy(true)
@@ -122,6 +142,13 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
   }
 
   const selectedDataset = datasets?.find(item => item.version === datasetVersion) ?? null
+  const registeredSchemas = registeredModels === null ? null
+    : [...new Set(registeredModels.filter(model => model.enabled && model.state === 'ready')
+        .map(model => model.featureSchemaVersion))]
+  const pendingExperiment = experiments?.find(experiment => experiment.tasks.some(task =>
+    task.status === 'succeeded' && !task.modelId && task.featureSchemaVersion === selectedDataset?.schema)) ?? null
+  const pendingCount = pendingExperiment?.tasks.filter(task =>
+    task.status === 'succeeded' && !task.modelId && task.featureSchemaVersion === selectedDataset?.schema).length ?? 0
   return <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
     <div className="grid min-w-0 content-start gap-4">
       <WorkspacePageHeader title="模型试算" meta="使用已登记模型为数据集打分，并试算分类阈值。"
@@ -132,6 +159,9 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
       {batchId ? <PredictionDetail batchId={batchId} onLoginRequired={onLoginRequired}/>
         : <PredictionSetup datasets={datasets} selectedDataset={selectedDataset} datasetVersion={datasetVersion}
           models={models} modelId={modelId} threshold={threshold} busy={busy}
+          registeredSchemas={registeredSchemas} pendingCount={pendingCount}
+          onRegister={pendingExperiment ? () => navigate({ name: 'my-training', experimentId: pendingExperiment.experimentId }) : null}
+          onTrain={() => navigate({ name: 'my-training', datasetVersion })}
           onDataset={setDatasetVersion} onModel={setModelId} onThreshold={setThreshold} onSubmit={() => void submit()}/>}
     </div>
     <aside className="min-w-0 rounded-xl border border-border-soft bg-card shadow-sm">
@@ -148,8 +178,8 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
         {batches === null ? historyError ? null : <LoadingNotice label="正在读取试算记录" prefix={false}/>
           : batches.length === 0 ? <p className="px-2 py-8 text-center text-xs text-foreground-3">还没有试算记录。</p>
           : <div className="grid gap-1">
-            {batches.map(item => <button key={item.batchId} type="button" aria-current={item.batchId === batchId ? 'page' : undefined}
-              className={cn('min-w-0 rounded-lg border px-3 py-2.5 text-left transition-colors',
+            {batches.map(item => <Button key={item.batchId} variant="ghost" type="button" aria-current={item.batchId === batchId ? 'page' : undefined}
+              className={cn('flex h-auto w-full min-w-0 flex-col items-stretch gap-0 rounded-lg border px-3 py-2.5 text-left transition-colors',
                 item.batchId === batchId ? 'border-accent/35 bg-accent-soft' : 'border-transparent hover:bg-sunken')}
               onClick={() => navigate({ name: 'my-predictions', batchId: item.batchId })}>
               <span className="flex items-center justify-between gap-2">
@@ -161,14 +191,14 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
                 <span>{countText(item.counts.records)} 条</span>
                 <span>阈值 {item.threshold.toFixed(2)}</span>
               </span>
-            </button>)}
+            </Button>)}
           </div>}
       </div>
     </aside>
   </section>
 }
 
-function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, modelId, threshold, busy, onDataset, onModel, onThreshold, onSubmit }: {
+function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, modelId, threshold, busy, registeredSchemas, pendingCount, onRegister, onTrain, onDataset, onModel, onThreshold, onSubmit }: {
   datasets: UserDataset[] | null
   selectedDataset: UserDataset | null
   datasetVersion: string
@@ -176,6 +206,10 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
   modelId: string
   threshold: number
   busy: boolean
+  registeredSchemas: string[] | null
+  pendingCount: number
+  onRegister: (() => void) | null
+  onTrain: () => void
   onDataset: (value: string) => void
   onModel: (value: string) => void
   onThreshold: (value: number) => void
@@ -194,14 +228,14 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
         <span className="text-xs font-medium text-foreground-2">数据版本</span>
         <Select value={datasetVersion} onValueChange={onDataset}>
           <SelectTrigger aria-label="试算数据版本"><SelectValue placeholder="选择数据"/></SelectTrigger>
-          <SelectContent>{datasets.map(item => <SelectItem key={item.version} value={item.version}>{item.dataset} · {item.mine ? '我的数据' : '共享数据'}</SelectItem>)}</SelectContent>
+          <SelectContent>{datasets.map(item => <SelectItem key={item.version} value={item.version}>{datasetVersionLabel(item.version).name} · {item.mine ? '我的数据' : '共享数据'}</SelectItem>)}</SelectContent>
         </Select>
       </label>
       <label className="grid gap-1.5">
         <span className="text-xs font-medium text-foreground-2">固定模型</span>
         <Select value={modelId} onValueChange={onModel} disabled={!models?.length}>
-          <SelectTrigger aria-label="试算模型"><SelectValue placeholder={models ? '没有兼容模型' : '正在读取模型'}/></SelectTrigger>
-          <SelectContent>{(models ?? []).map(item => <SelectItem key={item.modelId} value={item.modelId}>{item.name}{item.isDefault ? ' · 默认' : ''}</SelectItem>)}</SelectContent>
+          <SelectTrigger aria-label="试算模型"><SelectValue placeholder={models ? '没有兼容的已启用模型' : '正在读取模型'}/></SelectTrigger>
+          <SelectContent>{(models ?? []).map(item => <SelectItem key={item.modelId} value={item.modelId}>{item.name}{item.mine ? ' · 我的' : item.shared ? ' · 共享' : ''}{item.isDefault ? ' · 默认' : ''}</SelectItem>)}</SelectContent>
         </Select>
       </label>
     </div>
@@ -212,15 +246,26 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
     </dl> : null}
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor="new-prediction-threshold" className="text-xs font-medium text-foreground-2">初始风险阈值</label>
+        <span className="text-xs font-medium text-foreground-2">初始风险阈值</span>
         <strong className="text-sm tabular-nums text-foreground">{threshold.toFixed(2)}</strong>
       </div>
-      <input id="new-prediction-threshold" type="range" min={0} max={100} step={1} value={Math.round(threshold * 100)}
-        onChange={event => onThreshold(event.currentTarget.valueAsNumber / 100)} className="h-5 w-full cursor-pointer accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"/>
+      <Slider label="初始风险阈值" value={[Math.round(threshold * 100)]} onValueChange={values => onThreshold(values[0] / 100)}/>
     </div>
-    {selectedDataset && models && models.length === 0 ? <div className="flex gap-2 rounded-lg border border-amber/25 bg-amber-soft px-3 py-2 text-xs text-amber-deep" role="status">
-      <ShieldAlert aria-hidden="true" className="mt-0.5 shrink-0" size={14}/>
-      该数据版本没有 schema 兼容且已启用的模型。可先完成训练并登记，或选择其他数据版本。
+    {selectedDataset && models && models.length === 0 ? <div className="grid gap-2 rounded-lg border border-amber/25 bg-amber-soft px-3 py-2 text-xs text-amber-deep" role="status">
+      <div className="flex gap-2">
+        <ShieldAlert aria-hidden="true" className="mt-0.5 shrink-0" size={14}/>
+        <div className="grid min-w-0 gap-1 [overflow-wrap:anywhere]">
+          <p>该数据版本需要 <code className="font-mono">{selectedDataset.schema}</code> 特征的已启用模型。</p>
+          <p>你已启用模型的 schema：{registeredSchemas === null ? '正在读取…' : registeredSchemas.length
+            ? <code className="font-mono">{registeredSchemas.join('、')}</code>
+            : '暂无'}</p>
+          <p>{pendingCount > 0 ? `有 ${pendingCount} 个使用相同 schema 的训练完成模型尚未登记。` : '还没有使用相同 schema 的训练完成模型。'}</p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 pl-5">
+        {onRegister ? <Button size="sm" type="button" onClick={onRegister}>去登记 {pendingCount} 个模型</Button> : null}
+        <Button size="sm" type="button" variant={onRegister ? 'outline' : 'default'} onClick={onTrain}>{onRegister ? '训练新模型' : '去训练'}</Button>
+      </div>
     </div> : null}
     {model ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border-soft px-3 py-2 text-xs text-foreground-3">
       <span>模型运行 <code className="font-mono text-[11px]">{model.runId?.slice(0, 12) ?? '未提供'}</code></span>
@@ -303,10 +348,7 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
           {tick !== savedTick ? <Button variant="ghost" size="sm" type="button" onClick={() => setTick(savedTick)}>重置为初始值</Button> : null}
         </div>
       </div>
-      <input id="prediction-threshold" type="range" min={0} max={100} step={1} value={tick}
-        aria-label="风险分数阈值" aria-valuetext={(tick / 100).toFixed(2)}
-        onChange={event => setTick(event.currentTarget.valueAsNumber)}
-        className="h-5 w-full cursor-pointer accent-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"/>
+      <Slider label="风险分数阈值" value={[tick]} onValueChange={values => setTick(values[0])}/>
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 [&>div]:rounded-lg [&>div]:bg-sunken">
         <MetricCell label="告警" value={countText(flagged)}/>
         <MetricCell label="命中" value={countText(hit)}/>
@@ -320,11 +362,11 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
         <div className="grid gap-2">
           <span className="text-xs font-medium text-foreground-2">选择指标</span>
           {([['precision', '精确率'], ['recall', '召回率'], ['f1', 'F1']] as const).map(([id, label]) =>
-            <button key={id} type="button" aria-pressed={metric === id} onClick={() => setMetric(id)}
-              className={cn('flex items-center justify-between rounded-lg border px-3 py-2 text-xs',
+            <Button key={id} type="button" variant="ghost" aria-pressed={metric === id} onClick={() => setMetric(id)}
+              className={cn('flex h-auto w-full items-center justify-between rounded-lg border px-3 py-2 text-xs',
                 metric === id ? 'border-accent/35 bg-accent-soft text-foreground' : 'border-border-soft hover:bg-sunken')}>
               <span>{label}</span><strong className="tabular-nums">{id === 'precision' ? ratio(precision) : id === 'recall' ? ratio(recall) : ratio(f1)}</strong>
-            </button>)}
+            </Button>)}
           <p className="text-xs text-foreground-3">按现有标签计算。</p>
         </div>
       </div>
