@@ -45,7 +45,7 @@ test('建立项目只登记地址，不产生分析', async ({ page }, info) => 
   await expect(page.getByRole('button', { name: '分析分支提交', exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: '分支分析', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: '等待分析' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '当前分析结果', exact: true })).toBeVisible()
+  await expect(page.getByText(/还没有可用的分析结果/)).toBeVisible()
   await expect(page.getByText('还没有分析记录。发起第一次分析后，这里按时间排列。')).toBeVisible()
   await expect(page.getByRole('button', { name: '分析分支提交', exact: true }).first()).toBeVisible()
 })
