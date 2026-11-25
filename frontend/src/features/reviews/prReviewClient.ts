@@ -22,9 +22,11 @@ export interface PRSuggestion {
   example: { before: string; after: string } | null
 }
 export interface PRCandidate { side: 'base' | 'head'; path: string; line: number; ruleId: string; ruleVersion: string; message: string; evidence: string; suggestion?: PRSuggestion | null }
+export type PRCodeLocation = Pick<PRCandidate, 'side' | 'line'>
+export interface PRFileCoverage { path: string; side: PRCandidate['side']; reason: string | null }
 export interface PRCandidates {
   snapshotId: string
-  coverage: { analyzed: string[]; skipped: { path: string; reason: string }[]; analyzerVersion: string; side: string; selected: number; totalFiles: number } | null
+  coverage: { files: PRFileCoverage[]; analyzerVersion: string } | null
   candidates: PRCandidate[]
 }
 const string = (v: unknown) => typeof v === 'string' ? v : contractFailed()
@@ -95,25 +97,29 @@ function suggestion(raw: unknown): PRSuggestion | null {
   }
 }
 
+function candidateSide(value: unknown): PRCandidate['side'] {
+  if (value !== 'base' && value !== 'head') contractFailed('无法识别候选代码侧别')
+  return value as PRCandidate['side']
+}
+
 function candidates(raw: unknown, snapshotId: string): PRCandidates {
   const b = record(raw)
   if (b.snapshotId !== snapshotId) contractFailed('候选位置不属于当前快照')
   const coverage = b.coverage == null ? null : record(b.coverage)
-  return {
-    snapshotId,
-    coverage: coverage === null ? null : {
-      analyzed: Array.isArray(coverage.analyzed) ? coverage.analyzed.map(value => text(value)) : [],
-      skipped: recordList(coverage.skipped).map(item => ({ path: text(item.path), reason: text(item.reason) })),
-      analyzerVersion: text(coverage.analyzerVersion), side: text(coverage.side),
-      selected: integer(coverage.selected), totalFiles: integer(coverage.totalFiles),
-    },
-    candidates: recordList(b.candidates).map(item => ({
-      side: text(item.side) as PRCandidate['side'], path: text(item.path), line: integer(item.line),
-      ruleId: text(item.ruleId), ruleVersion: text(item.ruleVersion),
-      message: text(item.message), evidence: text(item.evidence),
-      suggestion: suggestion(item.suggestion),
-    })),
-  }
+  const items = recordList(b.candidates).map(item => {
+    const side = candidateSide(item.side), path = text(item.path), line = integer(item.line)
+    const ruleId = text(item.ruleId), ruleVersion = text(item.ruleVersion), advice = suggestion(item.suggestion)
+    if (line === 0 || advice && (advice.location.side !== side || advice.location.path !== path || advice.location.line !== line
+      || advice.ruleId !== ruleId || advice.ruleVersion !== ruleVersion)) contractFailed('修复建议与候选位置不一致')
+    return { side, path, line, ruleId, ruleVersion, message: text(item.message), evidence: text(item.evidence), suggestion: advice }
+  })
+  if (!coverage) return { snapshotId, coverage: null, candidates: items }
+  const side = candidateSide(coverage.side)
+  const files = coverage.files === undefined ? [
+    ...(Array.isArray(coverage.analyzed) ? coverage.analyzed.map(path => ({ path: text(path), side, reason: null })) : []),
+    ...recordList(coverage.skipped).map(item => ({ path: text(item.path), side, reason: text(item.reason) })),
+  ] : recordList(coverage.files).map(item => ({ path: text(item.path), side: candidateSide(item.side), reason: textOrNull(item.reason) }))
+  return { snapshotId, coverage: { files, analyzerVersion: text(coverage.analyzerVersion) }, candidates: items }
 }
 
 export async function getPRCandidates(snapshotId: string, signal?: AbortSignal): Promise<PRCandidates> {

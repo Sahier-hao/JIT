@@ -403,21 +403,30 @@ class PullRequestReview:
             if context.get('absent'):
                 skipped.append({'path': file['path'], 'reason': 'absent'})
                 continue
+            if context.get('complete') is False:
+                skipped.append({'path': file['path'], 'reason': 'incomplete-content'})
+                continue
             items, error = candidate.analyze(file['path'], side, context['content'])
             if error:
                 skipped.append({'path': file['path'], 'reason': error})
                 continue
             analyzed.append(file['path'])
-            results.extend(dict(item, suggestion=candidate.suggestion(item)) for item in items)
+            unique_rules = {(item['line'], item['ruleId'], item['ruleVersion']): item for item in items}
+            results.extend(dict(item, suggestion=candidate.suggestion(item)) for item in unique_rules.values())
         coverage = {'analyzerVersion': candidate.ANALYZER_VERSION, 'side': side,
                     'analyzed': analyzed, 'skipped': skipped,
                     'selected': len(selected), 'totalFiles': len(files)}
         with self.storage.connection(write=True) as db:
+            previous = db.execute('SELECT coverage_json FROM pr_candidate_run WHERE snapshot_id=? AND analyzer_version=?',
+                                  (snapshot_id, candidate.ANALYZER_VERSION)).fetchone()
+            saved_files = self._candidate_file_coverage(json.loads(previous[0])) if previous else {}
+            saved_files.update(self._candidate_file_coverage(coverage))
+            persisted_coverage = dict(coverage, files=list(saved_files.values()))
             db.execute('INSERT INTO pr_candidate_run VALUES (?,?,?,?,?) '
                        'ON CONFLICT(snapshot_id,analyzer_version) DO UPDATE SET '
                        'status=excluded.status,coverage_json=excluded.coverage_json,created_at=excluded.created_at',
                        (snapshot_id, candidate.ANALYZER_VERSION, 'complete',
-                        json.dumps(coverage, ensure_ascii=False), utc_now()))
+                        json.dumps(persisted_coverage, ensure_ascii=False), utc_now()))
             for item in results:
                 db.execute('INSERT OR IGNORE INTO pr_candidate VALUES (?,?,?,?,?,?,?,?,?)',
                            (snapshot_id, candidate.ANALYZER_VERSION, item['side'], item['path'],
@@ -425,14 +434,31 @@ class PullRequestReview:
                             item['evidence']))
         return {'snapshotId': snapshot_id, 'coverage': coverage, 'candidates': results}
 
+    @staticmethod
+    def _candidate_file_coverage(coverage):
+        files = coverage.get('files')
+        if files is None:
+            side = coverage['side']
+            files = [dict(path=path, side=side, reason=None) for path in coverage['analyzed']]
+            files.extend(dict(item, side=side) for item in coverage['skipped'])
+        return {(item['path'], item['side']): item for item in files}
+
     def stored_candidates(self, snapshot_id):
         self.get(snapshot_id)
+        key = (snapshot_id, candidate.ANALYZER_VERSION)
         with self.storage.connection() as db:
-            run = db.execute('SELECT * FROM pr_candidate_run WHERE snapshot_id=?', (snapshot_id,)).fetchone()
-            rows = db.execute('SELECT * FROM pr_candidate WHERE snapshot_id=? ORDER BY path, line, rule_id',
-                              (snapshot_id,)).fetchall()
+            run = db.execute('SELECT coverage_json FROM pr_candidate_run WHERE snapshot_id=? AND analyzer_version=?', key).fetchone()
+            rows = db.execute('SELECT * FROM pr_candidate WHERE snapshot_id=? AND analyzer_version=? ORDER BY path, line, rule_id',
+                              key).fetchall()
+        coverage = json.loads(run[0]) if run else None
+        if coverage is not None:
+            files = self._candidate_file_coverage(coverage)
+            for row in rows:
+                files.setdefault((row['path'], row['side']), dict(path=row['path'], side=row['side'], reason=None))
+            coverage['files'] = list(files.values())
+            rows = [row for row in rows if files[row['path'], row['side']]['reason'] is None]
         return {'snapshotId': snapshot_id,
-                'coverage': json.loads(run['coverage_json']) if run else None,
+                'coverage': coverage,
                 'candidates': [dict({
                     'side': row['side'], 'path': row['path'], 'line': row['line'],
                     'ruleId': row['rule_id'], 'ruleVersion': row['rule_version'],

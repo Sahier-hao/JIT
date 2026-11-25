@@ -48,11 +48,13 @@ def test_candidates_are_persisted_and_coverage_is_reported(tmp_path, monkeypatch
     storage.initialize()
     snapshot = {'owner': 'example', 'name': 'repo', 'number': 1, 'title': 'demo',
                 'url': 'https://github.com/example/repo/pull/1', 'baseSha': 'a' * 40,
-                'headSha': 'b' * 40, 'totalFiles': 1, 'filesComplete': True,
+                'headSha': 'b' * 40, 'totalFiles': 4, 'filesComplete': True,
                 'commits': [], 'totalCommits': 0,
                 'files': [{'path': 'pkg/a.py', 'previousPath': None, 'blobSha': 'c' * 40,
                            'status': 'modified', 'additions': 1, 'deletions': 0,
                            'patch': None, 'patchComplete': False}]}
+    for path in ('pkg/clean.py', 'pkg/truncated.py', 'pkg/unsupported.js'):
+        snapshot['files'].append(dict(snapshot['files'][0], path=path))
     with storage.connection(write=True) as db:
         db.execute("INSERT INTO repository(id,url,display_name,default_branch,commit_count,high_count,"
                    "medium_count,low_count,unknown_count,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
@@ -63,13 +65,26 @@ def test_candidates_are_persisted_and_coverage_is_reported(tmp_path, monkeypatch
                    ('snap1', 'repo1', 'example', 'repo', 1, 'a' * 40, 'b' * 40,
                     json.dumps(snapshot), utc_now()))
     review = PullRequestReview(SimpleNamespace(sync=SimpleNamespace(storage=storage)))
-    monkeypatch.setattr(review, 'context', lambda snapshot_id, path, side:
-                        {'absent': False, 'content': 'def f(items=[]):\n    pass\n'})
+    def context(snapshot_id, path, side):
+        content = 'x = 1\n' if path == 'pkg/clean.py' or side == 'base' else 'def f(items=[], cache={}):\n    pass\n'
+        return {'absent': False, 'content': content, 'complete': path != 'pkg/truncated.py'}
+
+    monkeypatch.setattr(review, 'context', context)
     result = review.candidates('snap1', ['pkg/a.py'], 'head')
     assert result['coverage']['analyzed'] == ['pkg/a.py']
+    assert len(result['candidates']) == 1
     assert result['candidates'][0]['ruleId'] == 'py-mutable-default'
     assert result['candidates'][0]['suggestion']['title']
     stored = review.stored_candidates('snap1')
     assert stored['coverage']['analyzed'] == ['pkg/a.py']
     assert len(stored['candidates']) == 1
     assert stored['candidates'][0]['suggestion']['manualChecks']
+    review.candidates('snap1', ['pkg/clean.py'], 'head')
+    review.candidates('snap1', ['pkg/a.py'], 'base')
+    review.candidates('snap1', ['pkg/truncated.py', 'pkg/unsupported.js'], 'head')
+    stored = review.stored_candidates('snap1')
+    files = {(item['path'], item['side']): item['reason'] for item in stored['coverage']['files']}
+    assert files == {('pkg/a.py', 'head'): None, ('pkg/a.py', 'base'): None,
+                     ('pkg/clean.py', 'head'): None, ('pkg/truncated.py', 'head'): 'incomplete-content',
+                     ('pkg/unsupported.js', 'head'): 'unsupported-language'}
+    assert [(item['path'], item['side']) for item in stored['candidates']] == [('pkg/a.py', 'head')]

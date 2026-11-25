@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Diff, parseDiff, tokenize, type ChangeData, type GutterOptions } from 'react-diff-view'
 import 'react-diff-view/style/index.css'
@@ -72,11 +72,12 @@ function headLine(change: ChangeData) {
 }
 
 /** 真实 GitHub patch 交给 react-diff-view：行号、语法高亮、统一/并排切换都由它负责。 */
-export function CodeDiff({ file, view, onAnchor, location }: {
+export function CodeDiff({ file, view, onAnchor, location, renderMarker }: {
   file: PRFile
   view: 'unified' | 'split'
-  onAnchor: (side: Side, line: number) => void
+  onAnchor?: (side: Side, line: number) => void
   location?: { side: Side; line: number }
+  renderMarker?: (side: Side, line: number) => ReactNode
 }) {
   const parsed = useMemo(() => {
     try {
@@ -110,13 +111,17 @@ export function CodeDiff({ file, view, onAnchor, location }: {
     const number = side === 'old' ? baseLine(change) : headLine(change)
     if (number == null) return null
     const target: 'base' | 'head' = side === 'old' ? 'base' : 'head'
-    return <Button variant="ghost"
-      type="button"
-      className="wb-gutter-number h-auto w-full rounded-none shadow-none cursor-pointer border-0 bg-transparent px-1 text-right font-mono text-[11px] text-foreground-4 hover:text-accent"
-      data-focused={focused(change) ? 'true' : undefined}
-      aria-label={`关联 ${file.path}:${target}:${number}`}
-      onClick={() => onAnchor(target, number)}
-    >{number}</Button>
+    const active = location?.side === target && location.line === number
+    return <span className="flex items-center justify-end" data-code-line={`${target}:${number}`}>
+      {renderMarker?.(target, number)}
+      {onAnchor ? <Button variant="ghost"
+        type="button"
+        className="wb-gutter-number h-auto min-h-0 rounded-none border-0 bg-transparent px-1 text-right font-mono text-[11px] text-foreground-4 shadow-none hover:text-accent"
+        data-focused={active ? 'true' : undefined}
+        aria-label={`关联 ${file.path}:${target}:${number}`}
+        onClick={() => onAnchor(target, number)}
+      >{number}</Button> : <span className="px-1 font-mono text-[11px] text-foreground-4">{number}</span>}
+    </span>
   }
   /* react-diff-view 不渲染 @@ 块头，也没有折叠区间；每块单独成表并在上面标出位置。 */
   return <div className="overflow-auto">
@@ -138,13 +143,6 @@ export function CodeDiff({ file, view, onAnchor, location }: {
           return base == null ? undefined : `line-base-${base}`
         }}
         generateLineClassName={({ changes }) => changes.some(change => focused(change)) ? 'is-focused' : undefined}
-        gutterEvents={{
-          onClick: ({ change, side }) => {
-            if (!change || !side) return
-            const line = side === 'old' ? baseLine(change) : headLine(change)
-            if (line != null) onAnchor(side === 'old' ? 'base' : 'head', line)
-          },
-        }}
       />
     </div>)}
   </div>

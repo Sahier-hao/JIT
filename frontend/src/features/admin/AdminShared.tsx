@@ -1,3 +1,4 @@
+import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import type { ReactNode } from 'react'
@@ -6,10 +7,9 @@ import type { ReactNode } from 'react'
 import { metricReason, metricValue, type Row } from '@/features/admin/adminContracts'
 
 export function AdminPageHeader({ title, meta, actions, onRefresh }: { title: string; meta?: ReactNode; actions?: ReactNode; onRefresh?: () => void }) {
-  return <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-3">
-    <div className="grid min-w-0 gap-1"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">{title}</h1>{meta ? <p className="text-xs text-foreground-3">{meta}</p> : null}</div>
-    <div className="flex flex-wrap items-center gap-2">{actions}{onRefresh ? <Button onClick={onRefresh} variant="outline" type="button">刷新</Button> : null}</div>
-  </header>
+  return <WorkspacePageHeader title={title} meta={meta} actions={actions || onRefresh ? <>
+      {actions}{onRefresh ? <Button onClick={onRefresh} variant="outline" size="sm" type="button">刷新</Button> : null}
+    </> : undefined}/>
 }
 
 const METRICS = [

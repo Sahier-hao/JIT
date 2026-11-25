@@ -55,6 +55,8 @@ const CANONICAL: Route[] = [
   { name: 'admin', view: 'experiments', resourceId: 'report-1' },
   { name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', compatibility: 'repository-analysis', artifactState: 'complete', offset: 20 },
   { name: 'admin', view: 'experiment-runs', resourceId: 'candidate-1' },
+  { name: 'admin', view: 'experiment-runs', resourceId: 'run-20', registrationState: 'unregistered', offset: 20 },
+  { name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', offset: 20, focusCandidateId: 'run-20' },
   { name: 'report', runId: 'run-1', view: 'trends' },
 ]
 

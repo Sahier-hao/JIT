@@ -69,7 +69,12 @@ it('creates a fixed dataset/model prediction and opens its result', async () => 
 })
 
 it('reopens saved thresholds, metrics and top-risk attribution', async () => {
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json(DETAIL))
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = String(input)
+    if (url.includes('/prediction-batches?')) return Response.json({ batches: [BATCH] })
+    if (url.includes(`/prediction-batches/${BATCH.batchId}`)) return Response.json(DETAIL)
+    throw new Error('打开历史试算无需读取配置')
+  })
   render(<MyPredictionsPage batchId={BATCH.batchId} navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
   const user = userEvent.setup()
   expect(await screen.findByRole('heading', { name: 'demo' })).toBeVisible()
@@ -81,4 +86,7 @@ it('reopens saved thresholds, metrics and top-risk attribution', async () => {
   const metric = screen.getByRole('button', { name: /召回率/ })
   await user.click(metric)
   expect(within(screen.getByRole('button', { name: /召回率/ })).getByText(/%/)).toBeVisible()
+  expect(fetch.mock.calls.every(([input]) => String(input).includes('/prediction-batches'))).toBe(true)
+  await user.click(screen.getByRole('button', { name: '重置为初始值' }))
+  expect(slider).toHaveValue('50')
 })

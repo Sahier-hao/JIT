@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -5,13 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { LoaderCircle, X, ArrowLeft, Eye, RefreshCw, FileText, ExternalLink, Search, Plus, Save } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 
 
@@ -19,21 +19,21 @@ import { useEffect, useRef, useState } from 'react'
 
 
 import { repositoryRoute } from '@/app/navigation'
-import { CodeDiff } from '@/features/reviews/components/CodeDiff'
+import { ReviewCode } from '@/features/reviews/components/ReviewCode'
 import { PRModelClues } from '@/features/reviews/components/PRModelClues'
 import { Markdown } from '@/components/shared/Markdown'
 import { useSnapshotAnalyses } from '@/features/projects/useSnapshotAnalyses'
 import { ProgressBar } from '@/features/projects/components/JobProgress'
 import { PullRequestPreview } from '@/features/reviews/components/PullRequestPreview'
-import { ReviewCandidates } from '@/features/reviews/components/ReviewCandidates'
 import { ReviewCommitTable } from '@/features/reviews/components/ReviewCommitTable'
 import { DeliveryForm, FeedbackCases, QuestionEditor, WorkBackup } from '@/features/reviews/components/WorkPanels'
 import { displayTime } from '@/lib/domain'
-import { analyzePRCandidates, getPRContext, getPRSnapshot, refreshPR, type PRCandidate, type PRContext, samePRSource, type PRSnapshot } from '@/features/reviews/prReviewClient'
-import { reviewStatusLabels, adoptVersion, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '@/features/reviews/prReview'
+import { getPRSnapshot, refreshPR, type PRCandidate, samePRSource, type PRSnapshot } from '@/features/reviews/prReviewClient'
+import { reviewStatusLabels, adoptVersion, addCandidateToRound, clearRecovery, conclusionLabels, createWork, downloadText, exportReview, question, readRecovery, readStatusLabels as fileLabel, readWorks, remoteStateLabels as remoteLabel, saveRecovery, saveWork, setFileState, workKey, type Conclusion, type Evidence, type FileState, type PRWork, type ReviewQuestion } from '@/features/reviews/prReview'
 import { canWriteReview, useReviewAccount } from '@/features/reviews/reviewAccount'
+import { usePRCandidateChecks } from '@/features/reviews/usePRCandidateChecks'
 import { cn } from '@/lib/utils'
-import { backup, changeLabels, FILE_FLAG, message, splitPath, validateProjectSource, type Navigate } from '@/features/reviews/pages/reviewShared'
+import { backup, FILE_FLAG, message, splitPath, validateProjectSource, type Navigate } from '@/features/reviews/pages/reviewShared'
 
 export { FixedPRSnapshot } from '@/features/reviews/pages/FixedPRSnapshot'
 
@@ -66,29 +66,29 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
   const lock = useRef(false)
   const [attempt, setAttempt] = useState(0)
   const [selectedId, setSelectedId] = useState('')
-  const [contexts, setContexts] = useState<Record<string, PRContext>>({})
-  const [contextError, setContextError] = useState('')
-  const [contextBusy, setContextBusy] = useState(false)
+  const [locationRequest, setLocationRequest] = useState(0)
   const [evidenceError, setEvidenceError] = useState('')
   const evidenceJump = useRef(false)
   const [delivery, setDelivery] = useState<{ kind: Conclusion; note: string; preview: string; checked: boolean; oldConfirmed: boolean } | null>(null)
   const [drawer, setDrawer] = useState<'source' | 'delivery' | 'backup' | null>(null)
   const [filter, setFilter] = useState('')
+  const [fileStateFilter, setFileStateFilter] = useState('all')
+  const [filesOpen, setFilesOpen] = useState(false)
+  const filesPanelId = useId()
   const [fileOrder, setFileOrder] = useState<'risk' | 'path'>('risk')
   const [selectedCommit, setSelectedCommit] = useState<string | null>(null)
   const [reviewView, setReviewView] = useState<'commits' | 'files'>('commits')
   const [commitOrder, setCommitOrder] = useState<'risk' | 'order'>('risk')
   const [diffView, setDiffView] = useState<'unified' | 'split'>('unified')
-  const [candidates, setCandidates] = useState<PRCandidate[]>([])
-  const [candidateBusy, setCandidateBusy] = useState(false)
-  const [candidateError, setCandidateError] = useState('')
   const version = work?.viewedSnapshotId ?? ''
+  const checks = usePRCandidateChecks(reviewView === 'files' && !preview ? version : '')
   const analysis = useSnapshotAnalyses(version)
   const { fileRisks, commitRisks } = analysis
   useEffect(() => {
-    setSelectedCommit(null); setCandidates([]); setCandidateError('')
-    if (evidenceJump.current) { evidenceJump.current = false; setReviewView('files') }
-    else setReviewView('commits')
+    setSelectedCommit(null)
+    const round = current.current?.rounds[version]
+    setReviewView(evidenceJump.current ? 'files' : round?.reviewView ?? (round?.location ? 'files' : 'commits'))
+    evidenceJump.current = false
   }, [version])
   function commit(next: PRWork) {
     const ownerAccount = accountRef.current
@@ -142,22 +142,6 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     }
     return () => controller.abort()
   }, [owner, repositoryName, number, repositoryId, version, attempt])
-  const savedLocation = work?.rounds[version]?.location
-  const savedPath = work?.rounds[version]?.currentFile
-  const savedSide = savedLocation?.side, savedLine = savedLocation?.line
-  useEffect(() => {
-    if (!savedSide || !savedLine || !savedPath) return
-    const node = document.querySelector<HTMLElement>(`.pr-code [data-code-line="${savedSide}:${savedLine}"], .pr-code #line-${savedSide}-${savedLine}`)
-    if (node) { node.scrollIntoView?.({ block: 'center', behavior: 'smooth' }); return }
-    if (!source || source.snapshotId !== version) return
-    const key = `${version}:${savedPath}:`
-    if (contexts[key + 'base'] && contexts[key + 'head']) { Promise.resolve().then(() => setContextError('原位置不在可读取的代码范围内，保留原位置与版本；未冒用其他版本的代码。')); return }
-    let active = true
-    Promise.all(['base', 'head'].map(side => getPRContext(source, savedPath, side as 'base' | 'head')))
-      .then(values => { if (active) setContexts(previous => ({ ...previous, ...Object.fromEntries(values.map(v => [`${v.snapshotId}:${v.path}:${v.side}`, v])) })) })
-      .catch(error => { if (active) setContextError('原位置暂时不可读取：' + message(error)) })
-    return () => { active = false }
-  }, [version, savedLine, savedSide, savedPath, source, contexts])
   function begin() {
     if (!source) return
     commit({ ...createWork(source), remoteState: remoteState ?? source.remoteState, checkedAt: remoteCheckedAt ?? source.capturedAt })
@@ -172,7 +156,9 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     const failed = Boolean(readError || initial.error)
     if (!failed && source) {
       const toWork = () => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number })
-      return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={work ? toWork : begin} startLabel={work ? '进入工作单' : undefined} back={work ? { label: '返回工作单', onClick: toWork } : undefined}/>
+      return <PullRequestPreview source={source} remoteState={remoteState} repositoryId={repositoryId} navigate={navigate} onStart={work ? toWork : begin}
+        onDraft={next => { commit(next); setReviewView('files'); if (preview) toWork() }}
+        startLabel={work ? '进入工作单' : undefined} back={work ? { label: '返回工作单', onClick: toWork } : undefined}/>
     }
     const detail = failed ? message(readError ?? new Error(initial.error)) : '正在拉取 PR 文件与固定代码版本。'
     const back = () => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })
@@ -183,9 +169,6 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
   }
   const round = work.rounds[version], live = source?.snapshotId === version ? source : round.source
   const path = round.currentFile, file = live.files.find(f => f.path === path)
-  const cacheKey = `${version}:${path}:`
-  const baseContext = contexts[cacheKey + 'base'], headContext = contexts[cacheKey + 'head']
-  const readable = Boolean(file?.patchComplete || baseContext?.complete && headContext?.complete)
   const selected = round.questions.find(q => q.id === selectedId) ?? round.questions.find(q => q.id === round.selectedQuestionId) ?? round.questions[0]
   const readCount = Object.values(round.progress).filter(p => p.state === 'read').length
   const recheckCount = Object.values(round.progress).filter(p => p.state === 'recheck').length
@@ -195,28 +178,46 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     commit({ ...active, rounds: { ...active.rounds, [version]: update(active.rounds[version]) } })
   }
   function updateQuestion(value: ReviewQuestion) { changeRound(r => ({ ...r, questions: r.questions.map(q => q.id === value.id ? value : q) })) }
-  function chooseFile(value: string) { changeRound(r => ({ ...r, currentFile: value, location: undefined })); setContextError('') }
+  function chooseFile(value: string) {
+    changeRound(r => ({ ...r, reviewView: 'files', currentFile: value, location: r.currentFile === value ? r.location : undefined }))
+    setFilesOpen(false)
+    setEvidenceError('')
+  }
+  function addCandidate(item: PRCandidate) {
+    const next = addCandidateToRound(current.current!.rounds[version], item)
+    changeRound(() => next)
+    setSelectedId(next.selectedQuestionId ?? '')
+  }
   function selectCommit(sha: string | null) {
     setSelectedCommit(sha)
     setReviewView('files')
     const files = sha ? commitRisks[sha]?.files ?? [] : []
     if (sha && files.length && !files.includes(path)) chooseFile(files[0])
+    else if (round.reviewView !== 'files') changeRound(r => ({ ...r, reviewView: 'files' }))
   }
-  function showCommitList() { setReviewView('commits'); setSelectedCommit(null) }
+  function showCommitList() {
+    setReviewView('commits')
+    setSelectedCommit(null)
+    if (round.reviewView !== 'commits') changeRound(r => ({ ...r, reviewView: 'commits' }))
+  }
   function switchVersion(value: string, targetPath?: string, location?: { side: 'base' | 'head'; line: number }, options?: { evidence?: boolean }) {
     const active = current.current!
     const evidence = Boolean(options?.evidence && targetPath)
     if (evidence) {
       const readable = active.rounds[value]?.source.files.some(item => item.path === targetPath)
       setEvidenceError(readable ? '' : '证据文件不在该版本的文件列表中；原版本与位置已保留。')
+      setLocationRequest(request => request + 1)
+      setSelectedCommit(null)
+      setFilter('')
+      setFileStateFilter('all')
     } else {
       setEvidenceError('')
     }
     if (evidence && value === version) setReviewView('files')
     evidenceJump.current = evidence && value !== version
-    commit({ ...active, viewedSnapshotId: value, rounds: targetPath ? { ...active.rounds, [value]: { ...active.rounds[value], currentFile: targetPath, location } } : active.rounds })
+    commit({ ...active, viewedSnapshotId: value, rounds: targetPath ? { ...active.rounds, [value]: { ...active.rounds[value], currentFile: targetPath, location, reviewView: 'files' } } : active.rounds })
     if (value !== version) setSource(null)
-    setReadError(null); setContextError(''); setDelivery(null)
+    setReadError(null); setDelivery(null)
     if (!evidence) evidenceJump.current = false
   }
   async function check(): Promise<PRWork | null> {
@@ -230,22 +231,14 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     } catch (error) { commit({ ...current.current!, checkError: message(error) }); setReadError(error); return null }
     finally { lock.current = false; setBusy(false) }
   }
-  async function loadContext() {
-    if (contextBusy || !file) return
-    setContextBusy(true); setContextError('')
-    try {
-      const values = await Promise.all(['base', 'head'].map(side => getPRContext(live, path, side as 'base' | 'head')))
-      setContexts(previous => ({ ...previous, ...Object.fromEntries(values.map(value => [`${value.snapshotId}:${value.path}:${value.side}`, value])) }))
-    } catch (error) { setContextError(message(error)) }
-    finally { setContextBusy(false) }
-  }
   function anchor(side: 'base' | 'head', line: number) {
     if (!file) return
     const q = selected ?? question(live)
     const value: Evidence = { snapshotId: version, path, side, line, blobSha: file.blobSha, note: '' }
-    if (q.evidence.some(e => e.snapshotId === version && e.path === path && e.side === side && e.line === line)) return
-    const next = { ...q, relatedFiles: [...new Set([...q.relatedFiles, path])], evidence: [...q.evidence, value] }
-    if (selected) updateQuestion(next); else changeRound(r => ({ ...r, questions: [...r.questions, next] }))
+    const exists = q.evidence.some(e => e.snapshotId === version && e.path === path && e.side === side && e.line === line)
+    const next = exists ? q : { ...q, relatedFiles: [...new Set([...q.relatedFiles, path])], evidence: [...q.evidence, value] }
+    changeRound(r => ({ ...r, location: { side, line }, selectedQuestionId: q.id,
+      questions: selected ? r.questions.map(entry => entry.id === q.id ? next : entry) : [...r.questions, next] }))
     setSelectedId(q.id)
   }
   async function prepareDelivery(kind: Conclusion, note: string) {
@@ -266,14 +259,35 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
   const scoredCommits = live.commits.filter(commit => commitRisks[commit.sha] != null).length
   const selectedFiles = selectedCommit ? commitRisks[selectedCommit]?.files ?? [] : null
   const scopedFiles = selectedFiles && selectedFiles.length ? live.files.filter(file => selectedFiles.includes(file.path)) : live.files
-  const filteredFiles = needle ? scopedFiles.filter(f => f.path.toLowerCase().includes(needle)) : scopedFiles
+  const filesWithDrafts = new Set(round.questions.filter(q => q.status === 'open' || q.requiresRecheck)
+    .flatMap(q => [...q.relatedFiles, ...q.evidence.filter(e => e.snapshotId === version).map(e => e.path)]))
+  const filteredFiles = scopedFiles.filter(file => file.path.toLowerCase().includes(needle)
+    && (fileStateFilter === 'all' || (fileStateFilter === 'draft' ? filesWithDrafts.has(file.path)
+      : (round.progress[file.path]?.state ?? 'unread') === fileStateFilter)))
   const visibleFiles = fileOrder === 'path' ? filteredFiles : [...filteredFiles].sort((a, b) => (fileRisks[b.path] ?? -1) - (fileRisks[a.path] ?? -1))
   const stale = work.latestSnapshotId !== version
   const paneHead = 'flex items-center justify-between gap-2 border-b border-border-soft px-3 py-2'
+  const drafts = <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label="问题与人工记录">
+    <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">问题</h2><Button aria-label="新建" size="sm" variant="ghost" onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} />}新建</Button></div>
+    <div className="max-h-32 shrink-0 overflow-auto border-b border-border-soft p-1.5">
+      {round.questions.map(q => <Button variant="ghost" key={q.id} className={cn('h-auto min-w-0 block w-full whitespace-normal rounded-sm border-0 bg-transparent px-2 py-1.5 text-left text-xs', selected?.id === q.id ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
+        <span className="block truncate font-medium">{q.body.slice(0, 60) || '未填写的问题'}</span>
+        <span className="block text-[11px] text-foreground-4">{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化待复核' : ''}{q.evidence.length ? ` · ${q.evidence.length} 条证据` : ''}</span>
+      </Button>)}
+      {!round.questions.length ? <p className="py-3 text-center text-xs text-foreground-3">还没有问题记录。新建一条，或点击代码行把位置关联进来。</p> : null}
+    </div>
+    <div className="min-h-0 flex-1 overflow-auto p-3">
+      {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setEvidenceError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined, { evidence: true }) }} work={work}/> : null}
+    </div>
+    <label className="grid shrink-0 gap-1 border-t border-border-soft p-3">
+      <span className="text-xs text-foreground-2">个人笔记{round.scratchOriginSnapshotId ? <small className="ml-1 text-foreground-4">沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}</span>
+      <Textarea className="min-h-16 w-full rounded-sm border border-input bg-card p-2 text-xs text-foreground placeholder:text-foreground-4" aria-label="个人笔记" value={round.scratch} onChange={e => changeRound(r => ({ ...r, scratch: e.target.value, scratchOriginSnapshotId: undefined }))} placeholder="读到哪里、还待核对什么；不会附到对外意见里。"/>
+    </label>
+  </section>
   return <section className="grid gap-3">
-    <header className="grid gap-2 border-b border-border-soft pb-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid min-w-0 gap-1">
+    <header className="grid min-w-0 gap-3 border-b border-border-soft pb-4">
+      <div className="grid min-w-0 gap-3">
+        <div className="grid min-w-0 gap-1.5 [overflow-wrap:anywhere]">
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-foreground-3">
             <Button aria-label={repositoryId ? '返回项目 PR 审查' : '我的审查'} variant="ghost" size="sm" onClick={() => navigate(repositoryId ? repositoryRoute(repositoryId, 'prs') : { name: 'my-reviews' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} />}{repositoryId ? '返回项目 PR 审查' : '我的审查'}</Button>
             <span aria-hidden="true">/</span>
@@ -281,9 +295,8 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
             <span aria-hidden="true">·</span>
             <span>#{number}</span>
             <Badge variant="secondary">{remoteLabel[work.remoteState]}</Badge>
-            <Badge variant="secondary">个人工作单</Badge>
           </div>
-          <h1 className="font-sans text-xl font-semibold leading-title text-foreground" title={round.source.title}>{round.source.title}</h1>
+          <h1 className="font-sans text-xl font-semibold leading-title tracking-tight text-foreground sm:text-2xl" title={round.source.title}>{round.source.title}</h1>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-3">
             <span>{round.source.author}</span>
             <span aria-hidden="true">·</span>
@@ -296,12 +309,12 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
             <span className={saveError ? 'text-rose' : 'text-foreground-4'}>{saveError ? '草稿尚未保存' : work.savedAt ? `草稿已保存 ${displayTime(work.savedAt)}` : '草稿尚未保存'}</span>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本" variant="outline" type="button">{<Eye aria-hidden="true" focusable="false" strokeWidth={1.5} />}查看只读版本</Button>
-          <Button onClick={() => void check()} aria-label="检查 PR 更新" variant="outline" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <RefreshCw aria-hidden="true" focusable="false" strokeWidth={1.5} />}检查 PR 更新</Button>
-          <Select value={work.interest == null ? '' : String(work.interest)} onValueChange={nextValue => (value => commit({ ...current.current!, interest: value as PRWork['interest'] }))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="个人关注状态" className="w-28"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'active', label: '关注中' }, { value: 'paused', label: '已暂停' }, { value: 'ended', label: '已结束' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
-          <Button onClick={() => setDrawer('source')} aria-label="版本与说明" variant="outline" type="button">{<FileText aria-hidden="true" focusable="false" strokeWidth={1.5} />}版本与说明</Button>
-          <Button variant='default' onClick={() => setDrawer('delivery')} aria-label="输出意见" type="button">{<ExternalLink aria-hidden="true" focusable="false" strokeWidth={1.5} />}输出意见</Button>
+        <div role="group" aria-label="审查操作" className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-lg bg-sunken p-1.5">
+          <Button size="sm" onClick={() => navigate({ name: 'pr-work', repositoryId, owner, repositoryName, number, mode: 'preview' })} aria-label="查看只读版本" variant="ghost" type="button">{<Eye aria-hidden="true" focusable="false" strokeWidth={1.5} />}查看只读版本</Button>
+          <Button size="sm" onClick={() => void check()} aria-label="检查 PR 更新" variant="ghost" disabled={Boolean(busy)} type="button">{busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <RefreshCw aria-hidden="true" focusable="false" strokeWidth={1.5} />}检查 PR 更新</Button>
+          <Select value={work.interest == null ? '' : String(work.interest)} onValueChange={nextValue => (value => commit({ ...current.current!, interest: value as PRWork['interest'] }))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="个人关注状态" size="sm" className="w-28"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'active', label: '关注中' }, { value: 'paused', label: '已暂停' }, { value: 'ended', label: '已结束' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+          <Button size="sm" onClick={() => setDrawer('source')} aria-label="版本与说明" variant="ghost" type="button">{<FileText aria-hidden="true" focusable="false" strokeWidth={1.5} />}版本与说明</Button>
+          <Button size="sm" onClick={() => setDrawer('delivery')} aria-label="输出意见" className="sm:ml-auto" type="button">{<ExternalLink aria-hidden="true" focusable="false" strokeWidth={1.5} />}输出意见</Button>
         </div>
       </div>
       <div className="h-1 overflow-hidden rounded-full bg-strong" aria-hidden="true"><span className="block h-full rounded-full bg-accent" style={{ width: `${readPercent}%` }}/></div>
@@ -322,19 +335,32 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
     {reviewView === 'commits' ? <ReviewCommitTable commits={live.commits} commitRisks={commitRisks} order={commitOrder} onOrder={setCommitOrder} onSelect={selectCommit} commitsComplete={live.commitsComplete} totalCommits={live.totalCommits}/> : null}
 
     {reviewView === 'files' && evidenceError ? <Alert variant="destructive"><AlertTitle>{evidenceError}</AlertTitle></Alert> : null}
-    {reviewView === 'files' ? <div className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:h-[calc(100vh-260px)] lg:min-h-[560px] lg:grid-cols-[260px_minmax(0,1fr)_320px]">
-      <aside className="flex min-h-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="提交与文件">
+    {reviewView === 'files' ? <section aria-label="文件审查工作区" className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:grid-cols-[minmax(156px,18%)_minmax(0,1fr)] xl:h-[clamp(436px,calc(100dvh-280px),790px)]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-b border-border-soft px-3 py-2 lg:hidden">
+        <Button type="button" size="sm" variant="outline" aria-expanded={filesOpen} aria-controls={filesPanelId} onClick={() => setFilesOpen(open => !open)}>
+          {filesOpen ? '收起文件列表' : '文件列表'}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={showCommitList}>返回提交列表</Button>
+      </div>
+      <aside id={filesPanelId} className={cn('min-h-0 flex-col border-b border-border-soft lg:flex lg:border-r lg:border-b-0', filesOpen ? 'flex' : 'hidden')} aria-label="提交与文件">
         <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">文件</h2><span className="text-xs text-foreground-3">{selectedCommit ? `${scopedFiles.length} 个文件` : `${live.files.length}/${live.totalFiles}`}</span></div>
         <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
-          <Button size="sm" onClick={showCommitList} variant="outline" type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} />}提交列表</Button>
+          <Button size="sm" onClick={showCommitList} variant="ghost" type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} />}提交列表</Button>
           {selectedCommit ? <><code className="font-mono text-foreground-3">{selectedCommit.slice(0, 12)}</code><Button variant="link" size="sm" onClick={() => selectCommit(null)} type="button">全部文件</Button></> : <span className="text-foreground-3">全部文件</span>}
         </div>
         {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="px-3 pb-2 text-xs text-amber-deep">{scoredCommits === 0 ? '此版本尚未分析，无法按提交筛选文件；下方显示全部文件。' : '这条提交没有文件映射（旧分析），下方仍显示全部文件。'}</p> : null}
         <div className="grid gap-2 px-3 pb-2">
           <div className="relative"><span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">{<Search aria-hidden="true" focusable="false" strokeWidth={1.5} />}</span><Input placeholder="筛选路径" value={filter} onChange={e => setFilter(e.target.value)} aria-label="筛选文件路径" className={["h-8", "pl-9 pr-9"].filter(Boolean).join(' ')}/>{filter ? <Button type="button" variant="ghost" size="icon-xs" aria-label="清除" className="absolute right-1 top-1/2 -translate-y-1/2" onClick={() => setFilter('')}><X aria-hidden="true"/></Button> : null}</div>
+          <NativeSelect aria-label="文件阅读筛选" size="sm" value={fileStateFilter} onChange={event => setFileStateFilter(event.currentTarget.value)}>
+            <option value="all">全部阅读状态</option>
+            <option value="unread">未阅读</option>
+            <option value="read">已阅读</option>
+            <option value="recheck">待复核</option>
+            <option value="draft">有草稿</option>
+          </NativeSelect>
           <ToggleGroup type="single" value={String(fileOrder)} onValueChange={nextValue => { if (nextValue) (value => setFileOrder(value as 'risk' | 'path'))(nextValue as typeof fileOrder); }} aria-label="文件排序">{([{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-1.5 pb-2" role="listbox" aria-label="改动文件">
+        <div className="max-h-44 min-h-0 flex-1 overflow-auto px-2 pb-2 lg:max-h-none" role="listbox" aria-label="改动文件">
           {visibleFiles.map(f => {
             const state = round.progress[f.path]?.state ?? 'unread'
             const { dir, name } = splitPath(f.path)
@@ -344,6 +370,8 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
               <span className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] tabular-nums">
                 <span className="flex gap-1">{f.additions ? <em className="not-italic text-teal-deep">+{f.additions}</em> : null}{f.deletions ? <em className="not-italic text-rose-deep">−{f.deletions}</em> : null}{fileRisks[f.path] != null ? <em className="not-italic text-foreground-3" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[f.path].toFixed(3)}</em> : null}</span>
                 <span className={cn(state === 'read' ? 'text-teal-deep' : state === 'recheck' ? 'text-amber-deep' : 'text-foreground-4')}>{fileLabel[state]}</span>
+                {filesWithDrafts.has(f.path) ? <span className="font-medium text-accent">有草稿</span> : null}
+                {checks.fileResult(f.path).label ? <span className="text-amber-deep">{checks.fileResult(f.path).label}</span> : null}
               </span>
             </Button>
           })}
@@ -352,57 +380,28 @@ export function PullRequestWork({ owner, repositoryName, number, repositoryId, p
         {!live.filesComplete ? <p className="border-t border-border-soft px-3 py-2 text-xs text-amber-deep">还有 {live.totalFiles - live.files.length} 个文件未覆盖，请在 GitHub 核对超出接口上限的范围。</p> : null}
       </aside>
 
-      <section className="pr-code flex min-h-0 min-w-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="PR 代码阅读">
-        {file ? <>
-          <div className="grid gap-2 border-b border-border-soft px-3 py-2">
-            <div className="min-w-0">
-              <code className="block truncate font-mono text-xs text-foreground-2">{file.path}</code>
-              <span className="text-[11px] text-foreground-3">{changeLabels[file.status] ?? file.status} · <em className="not-italic text-teal-deep">+{file.additions}</em> <em className="not-italic text-rose-deep">−{file.deletions}</em>{file.previousPath ? ` · 重命名自 ${file.previousPath}` : ''}</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ToggleGroup type="single" value={String(diffView)} onValueChange={nextValue => { if (nextValue) (value => setDiffView(value as 'unified' | 'split'))(nextValue as typeof diffView); }} aria-label="视图">{([{ label: '统一', value: 'unified' }, { label: '并排', value: 'split' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
-              <Tooltip><TooltipTrigger asChild><Button size="sm" onClick={() => void loadContext()} variant="outline" disabled={Boolean(contextBusy)} type="button">{contextBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}完整上下文</Button></TooltipTrigger><TooltipContent>{"读取基准与目标的完整文件内容"}</TooltipContent></Tooltip>
-              <Button size="sm" onClick={() => { if (!file) return; setCandidateBusy(true); setCandidateError(''); void analyzePRCandidates(live.snapshotId, [file.path], 'head').then(result => setCandidates(result.candidates)).catch(error => setCandidateError(message(error))).finally(() => setCandidateBusy(false)) }} variant="outline" disabled={Boolean(candidateBusy)} type="button">{candidateBusy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}分析代码候选</Button>
-              <Button size="sm" variant={round.progress[path]?.state === 'read' ? 'outline' : 'default'} disabled={!readable} onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))} type="button">标记已阅读</Button>
-              <Select value={String(round.progress[path]?.state ?? 'unread')} onValueChange={nextValue => (value => commit(setFileState(current.current!, version, path, value as FileState, readable)))(nextValue === '__jit_empty__' ? '' : nextValue)}><SelectTrigger aria-label="文件阅读状态" className="w-28" size="sm"><SelectValue placeholder={"请选择"}/></SelectTrigger><SelectContent>{([{ value: 'unread', label: '未阅读' }, { value: 'read', label: '已阅读' }, { value: 'recheck', label: '需要复查' }, { value: 'uncovered', label: '暂未覆盖' }]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
-            </div>
-          </div>
-          {file.patchComplete ? null : <p className="border-b border-border-soft px-3 py-2 text-xs text-amber-deep">Diff 未完整提供（二进制或过大文件）；读取完整上下文后才能标记已阅读。</p>}
-          <div className="min-h-0 flex-1 overflow-auto">
-            <CodeDiff file={file} view={diffView} onAnchor={anchor} location={round.location}/>
-          </div>
-          {candidateError ? <div className="border-t border-border-soft p-2"><Alert variant="destructive"><AlertTitle>{candidateError}</AlertTitle></Alert></div> : null}
-          {candidates.length ? <ReviewCandidates source={live} file={file} candidates={candidates} onError={setCandidateError} round={round} apply={changeRound} onSelectQuestion={setSelectedId}/> : null}
-          <details className="border-t border-border-soft">
-            <summary className="cursor-pointer px-3 py-2 text-xs text-foreground-2">作者原始说明</summary>
-            <pre className="max-h-48 overflow-auto border-t border-border-soft p-3 font-mono text-[11px] leading-body text-foreground-2">{live.body || '作者没有填写说明'}</pre>
-          </details>
-          {contextError ? <div className="border-t border-border-soft p-2"><Alert variant="destructive"><AlertTitle>{contextError}</AlertTitle></Alert></div> : null}
-          {[baseContext, headContext].filter((c): c is PRContext => Boolean(c)).map(c => <details key={c.side} className="border-t border-border-soft" open>
-            <summary className="cursor-pointer px-3 py-2 text-xs text-foreground-2">{c.side === 'base' ? '基准' : '目标'}上下文 · {c.absent ? '该侧不存在此文件' : c.complete ? `${c.totalLines} 行完整文本` : `仅前 10000/${c.totalLines} 行，未完整覆盖`}</summary>
-            <div className="max-h-64 overflow-auto border-t border-border-soft font-mono text-[11px]">{c.content.split('\n').map((line, i) => <Button variant="ghost" key={i} type="button" data-code-line={`${c.side}:${i + 1}`} data-focused={round.location?.side === c.side && round.location.line === i + 1 ? 'true' : undefined} onClick={() => anchor(c.side, i + 1)} aria-label={`关联 ${file.path}:${c.side}:${i + 1}`} className="flex w-full gap-2 border-0 bg-transparent px-2 py-0.5 text-left text-foreground-2 hover:bg-hover data-[focused=true]:bg-accent-soft"><span className="w-9 shrink-0 text-right tabular-nums text-foreground-4">{i + 1}</span><code className="truncate font-mono">{line || ' '}</code></Button>)}</div>
-          </details>)}
-        </> : <div className="grid place-items-center p-8 text-center"><p className="text-xs text-foreground-3">这个版本没有可展示的文件，请核对 GitHub 来源。</p></div>}
+      <section className="pr-code flex min-h-0 min-w-0 flex-col" aria-label="PR 代码阅读">
+        {file ? <ReviewCode key={JSON.stringify([version, file.path])} source={live} file={file} checks={checks}
+          view={diffView} onViewChange={setDiffView} drafts={drafts} compactInspector
+          location={round.location} locationRequest={locationRequest} onAnchor={anchor} onAdd={addCandidate}
+          decisions={round.candidateDecisions}
+          onDecision={(key, decision) => changeRound(r => ({ ...r, candidateDecisions: { ...r.candidateDecisions, [key]: decision } }))}
+          actions={readable => <>
+            <Button size="sm" variant="ghost" disabled={!readable}
+              onClick={() => commit(setFileState(current.current!, version, path, 'read', readable))} type="button">标记已阅读</Button>
+            <Select value={round.progress[path]?.state ?? 'unread'}
+              onValueChange={value => commit(setFileState(current.current!, version, path, value as FileState, readable))}>
+              <SelectTrigger aria-label="文件阅读状态" className="w-28" size="sm"><SelectValue/></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unread">未阅读</SelectItem>
+                <SelectItem value="read" disabled={!readable}>已阅读</SelectItem>
+                <SelectItem value="recheck">需要复查</SelectItem>
+                <SelectItem value="uncovered">暂未覆盖</SelectItem>
+              </SelectContent>
+            </Select>
+          </>}/> : <><p className="p-4 text-sm text-foreground-3">这个版本没有可展示的文件。</p>{drafts}</>}
       </section>
-
-      <aside className="flex min-h-0 flex-col" aria-label="问题与人工记录">
-        <div className={paneHead}><h2 className="text-sm font-semibold text-foreground">问题</h2><Button aria-label="新建" size="sm" variant="ghost" onClick={() => { const next = question(live); changeRound(r => ({ ...r, questions: [...r.questions, next], selectedQuestionId: next.id })); setSelectedId(next.id) }} type="button">{<Plus aria-hidden="true" focusable="false" strokeWidth={1.5} />}新建</Button></div>
-        <div className="max-h-40 shrink-0 overflow-auto border-b border-border-soft p-1.5">
-          {round.questions.map(q => <Button variant="ghost" key={q.id} className={cn('h-auto min-w-0 block w-full whitespace-normal rounded-sm border-0 bg-transparent px-2 py-1.5 text-left text-xs', selected?.id === q.id ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} aria-pressed={selected?.id === q.id} onClick={() => { setSelectedId(q.id); changeRound(r => ({ ...r, selectedQuestionId: q.id })) }}>
-            <span className="block truncate font-medium">{q.body.slice(0, 60) || '未填写的问题'}</span>
-            <span className="block text-[11px] text-foreground-4">{reviewStatusLabels[q.status]}{q.requiresRecheck ? ' · 代码变化待复核' : ''}{q.evidence.length ? ` · ${q.evidence.length} 条证据` : ''}</span>
-          </Button>)}
-          {!round.questions.length ? <p className="py-3 text-center text-xs text-foreground-3">还没有问题记录。新建一条，或点击代码行把位置关联进来。</p> : null}
-        </div>
-        <div className="min-h-0 flex-1 overflow-auto p-3">
-          {selected ? <QuestionEditor key={selected.id + version} value={selected} source={live} onChange={updateQuestion} onJump={anchor => { if (!work.rounds[anchor.snapshotId]) { setContextError('原版本无法读取，原位置已保留'); return } switchVersion(anchor.snapshotId, anchor.path, anchor.line ? { side: anchor.side, line: anchor.line } : undefined, { evidence: true }) }} work={work}/> : null}
-        </div>
-        <label className="grid shrink-0 gap-1 border-t border-border-soft p-2">
-          <span className="text-xs text-foreground-2">个人笔记{round.scratchOriginSnapshotId ? <small className="ml-1 text-foreground-4">沿用原版本 {round.scratchOriginSnapshotId.slice(0, 12)} 的笔记，请结合当前代码核对。</small> : null}</span>
-          <Textarea className="min-h-16 w-full rounded-sm border border-input bg-card p-2 text-xs text-foreground placeholder:text-foreground-4" aria-label="个人笔记" value={round.scratch} onChange={e => changeRound(r => ({ ...r, scratch: e.target.value, scratchOriginSnapshotId: undefined }))} placeholder="读到哪里、还待核对什么；不会附到对外意见里。"/>
-        </label>
-      </aside>
-    </div> : null}
+    </section> : null}
 
     <Sheet open={drawer === 'source'} onOpenChange={next => {  if (!next) (() => setDrawer(null))(); }}><SheetContent side="right" aria-describedby={undefined} className="max-h-[90vh] overflow-auto h-full max-h-none" style={{width: `min(100vw, ${600}px)`, maxWidth: 'none'}}><SheetHeader><SheetTitle>{"代码版本与作者说明"}</SheetTitle></SheetHeader><div className="grid gap-3">
         <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">正在阅读的版本</span>

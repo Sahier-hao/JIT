@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { AccountMenu } from '@/components/layout/AccountMenu'
 import type { Route } from '@/app/navigation'
 import { type UserSession, notifyUserChanged, userLogout } from '@/features/account/userClient'
 import { ProfileDialog } from '@/features/account/components/ProfileDialog'
@@ -39,13 +39,8 @@ export function UserAccount({ session, onChange, navigate, route }: {
   }
   if (session?.authenticated) {
     return <>
-      <DropdownMenu modal={false}><DropdownMenuTrigger asChild><Button className="max-w-[min(40vw,180px)] truncate" variant="ghost" size="sm" type="button">{session.username}</Button></DropdownMenuTrigger><DropdownMenuContent align="end">{([
-        { key: 'profile', label: '个人中心' },
-        { key: 'logout', label: '退出登录', danger: true },
-      ]).map(item => <DropdownMenuItem key={item.key} disabled={'disabled' in item && item.disabled === true} variant={'danger' in item && item.danger ? 'destructive' : 'default'} onSelect={() => (key => {
-        if (key === 'profile') setProfileOpen(true)
-        else void logout()
-      })(item.key)}>{item.label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>
+      <AccountMenu username={session.username ?? '我的账户'} role="user"
+        onProfile={() => setProfileOpen(true)} onLogout={() => void logout()}/>
       <ProfileDialog open={showProfile} onOpenChange={changeProfileOpen} onLoginRequired={requestLogin} navigate={navigate}/>
     </>
   }

@@ -13,12 +13,12 @@ export function EntryPage({ children }: { children: ReactNode }) {
 }
 
 export function EntryHeader({ onHome, right }: { onHome: () => void; right?: ReactNode }) {
-  return <header className="flex h-[66px] shrink-0 items-center justify-between gap-4 border-b border-border bg-card px-5 sm:px-10">
-    <Button variant="ghost" type="button" className="inline-flex items-center gap-2.5 border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={onHome}>
+  return <header className="flex min-h-15 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border-soft bg-card px-4 py-2 sm:px-10">
+    <Button variant="ghost" type="button" className="inline-flex items-center gap-2.5 border-0 bg-transparent px-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={onHome}>
       <span className="grid size-8 place-items-center rounded-[10px] bg-primary text-primary-foreground"><BrandLogo aria-hidden="true" focusable="false" strokeWidth={1.5} size={16}/></span>
       <span className="font-display text-xl font-bold tracking-tight text-foreground">JIT<span className="ml-1.5 font-mono text-[10px] font-medium tracking-[.16em] text-foreground-4">REVIEW</span></span>
     </Button>
-    <div className="flex items-center gap-3">{right}</div>
+    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{right}</div>
   </header>
 }
 

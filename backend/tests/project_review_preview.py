@@ -52,7 +52,9 @@ def build_preview(parent):
     revisions, dates = [], []
     for index in range(27):
         moment = (first+timedelta(hours=index)).isoformat()
-        (repository / 'review.py').write_text(f'value = {index}\n'+'# 验收代码\n'*30, encoding='utf-8')
+        text = (f'value = {index}\ndef collect(items=[]):\n    return items\n'
+                + '# 验收代码\n' * 30 + 'def remember(previous={}):\n    return previous\n')
+        (repository / 'review.py').write_text(text, encoding='utf-8')
         git('add', 'review.py')
         git('commit', '-q', '-m', f'调整审查示例 {index}', moment=moment)
         revisions.append(git('rev-parse', 'HEAD'))
@@ -132,8 +134,10 @@ def build_preview(parent):
             wanted = query.get('state', ['open'])[0]
             return [deepcopy(public_pr())] if wanted in ('all', state['remoteState']) and query.get('page', ['1']) == ['1'] else []
         if '/files?' in path:
+            diff = git('diff', revisions[0], revisions[index], '--', 'review.py')
+            patch = diff[diff.index('@@ '):]
             return [dict(filename='review.py', sha=git('rev-parse', revisions[index]+':review.py'), status='modified',
-                         additions=1, deletions=1, patch=f'@@ -1,1 +1,1 @@\n-value = 0\n+value = {index}')]
+                         additions=1, deletions=1, patch=patch)]
         if '/commits?' in path:
             return [dict(sha=revisions[i], commit=dict(message=f'调整审查示例 {i}', author=dict(date=dates[i])))
                     for i in range(1, index+1)]

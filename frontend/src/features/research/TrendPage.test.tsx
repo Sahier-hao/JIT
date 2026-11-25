@@ -124,8 +124,7 @@ it('DTD-01 加载中先给文字状态，随后显示趋势', async () => {
     }),
   )
   render(<TrendPage />)
-  expect(screen.getByText('正在读取')).toBeVisible()
-  expect(screen.getByText(/正在读取真实历史运行的摘要与趋势聚合/)).toBeVisible()
+  expect(screen.getByRole('status')).toHaveTextContent('正在读取真实历史运行的摘要与趋势聚合。')
   await screen.findByRole('heading', { name: '历史趋势' })
 })
 

@@ -3,7 +3,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Button } from '@/components/ui/button'
 import { LoaderCircle } from 'lucide-react'
 import { NativeSelect } from '@/components/ui/native-select'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
   fetchExperimentRun,
@@ -22,12 +22,7 @@ import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
 import { ReleaseEvidence } from '@/releaseEvidence'
 
-interface Filters {
-  registrationState?: string
-  compatibility?: string
-  artifactState?: string
-  offset?: number
-}
+type Filters = Pick<Extract<Route, { name: 'admin' }>, 'registrationState' | 'compatibility' | 'artifactState' | 'offset' | 'focusCandidateId'>
 
 const PAGE_SIZE = 20
 const STATUS_LABELS: Record<string, string> = {
@@ -74,7 +69,8 @@ export function AdminExperimentRunsPage({ candidateId, filters, navigate, expire
   navigate: (route: Route) => void
   expired: () => void
 }) {
-  if (candidateId) return <ExperimentDetail candidateId={candidateId} navigate={navigate} expired={expired}/>
+  if (candidateId) return <ExperimentDetail key={candidateId} candidateId={candidateId} navigate={navigate} expired={expired}
+    onBack={() => navigate({ ...filters, name: 'admin', view: 'experiment-runs', focusCandidateId: candidateId })}/>
   return <ExperimentList filters={filters} navigate={navigate} expired={expired}/>
 }
 
@@ -91,6 +87,16 @@ function ExperimentList({ filters, navigate, expired }: {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
   const [results, setResults] = useState<ExperimentPromotionItem[]>([])
+  const restored = useRef('')
+  useEffect(() => {
+    const id = filters.focusCandidateId
+    if (!loading && id && id !== restored.current && page?.runs.some(run => run.candidateId === id)) {
+      const row = document.getElementById(`experiment-run-${id}`)
+      row?.scrollIntoView?.({ block: 'nearest' })
+      row?.querySelector<HTMLButtonElement>('[data-open-run]')?.focus({ preventScroll: true })
+      restored.current = id
+    }
+  }, [filters.focusCandidateId, loading, page])
 
   const fail = useCallback((failure: unknown, fallback: string) => {
     if (failure instanceof ApiError && failure.status === 401) expired()
@@ -196,14 +202,14 @@ function ExperimentList({ filters, navigate, expired }: {
       <TableHeader><TableRow><TableHead><span className="sr-only">选择</span></TableHead><TableHead>数据集 / 方法</TableHead><TableHead>指标</TableHead><TableHead>状态</TableHead><TableHead>运行</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
       <TableBody>{page.runs.map(run => {
         const checked = selected.includes(run.candidateId)
-        return <TableRow key={run.candidateId}>
+        return <TableRow id={`experiment-run-${run.candidateId}`} key={run.candidateId}>
           <TableCell><Checkbox aria-label={`选择实验 ${run.artifactRunId ?? run.displayName}`} checked={checked} disabled={!run.promotable || !run.manifestSha256}
             onCheckedChange={checked => setSelected(current => checked === true ? [...current, run.candidateId] : current.filter(id => id !== run.candidateId))}/></TableCell>
-          <TableCell><strong>{experimentLabel(run)}</strong><small>{run.datasetVersion ?? '数据集未知'} · {run.method ?? '方法未知'}</small></TableCell>
+          <TableCell><strong className="block min-w-28 text-foreground">{experimentLabel(run)}</strong><small className="max-w-56 truncate" title={run.datasetVersion ?? undefined}>{run.datasetVersion ?? '数据集未知'}</small></TableCell>
           <TableCell>{metricSummary(run.metrics)}</TableCell>
           <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><small>{STATUS_LABELS[run.artifactState]} · {STATUS_LABELS[run.serviceCompatibility]}</small><small>发布资格：{STATUS_LABELS[run.releaseStatus]}</small>{run.releaseError ? <small>{run.releaseError.message}</small> : null}{run.serviceCompatibilityReason ? <small>{run.serviceCompatibilityReason}</small> : null}{run.artifactStateReason ? <small>{run.artifactStateReason}</small> : null}</TableCell>
-          <TableCell><code>{run.artifactRunId ?? '无运行身份'}</code><small>{run.featureSchemaVersion ?? 'schema 未知'} · {run.locations.length} 个位置</small></TableCell>
-          <TableCell><div className="flex flex-wrap items-center gap-1.5"><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })} variant="outline" type="button">查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }} variant="outline" type="button">登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型</Button> : null}</div></TableCell>
+          <TableCell><code className="block max-w-32 truncate text-foreground-3" title={run.artifactRunId ?? undefined}>{run.artifactRunId ?? '无运行身份'}</code><small>{run.locations.length} 个产物位置</small></TableCell>
+          <TableCell><div className="flex flex-wrap items-center gap-1.5"><Button size="sm" data-open-run="" onClick={() => navigate({ ...filters, name: 'admin', view: 'experiment-runs', resourceId: run.candidateId })} variant="outline" type="button">查看</Button>{run.promotable ? <Button size="sm" onClick={() => { setSelected([run.candidateId]); setConfirming(true) }} variant="outline" type="button">登记实验运行</Button> : run.modelId ? <Button size="sm" onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型</Button> : null}</div></TableCell>
         </TableRow>
       })}</TableBody>
     </Table></div> : null}
@@ -217,10 +223,11 @@ function ExperimentList({ filters, navigate, expired }: {
   </section>
 }
 
-function ExperimentDetail({ candidateId, navigate, expired }: {
+function ExperimentDetail({ candidateId, navigate, expired, onBack }: {
   candidateId: string
   navigate: (route: Route) => void
   expired: () => void
+  onBack: () => void
 }) {
   const [run, setRun] = useState<ExperimentRun | null>(null)
   const [error, setError] = useState('')
@@ -233,11 +240,11 @@ function ExperimentDetail({ candidateId, navigate, expired }: {
     })
     return () => controller.abort()
   }, [candidateId, expired])
-  if (error) return <EmptyState title="实验运行不可用" description={error}><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button></EmptyState>
+  if (error) return <EmptyState title="实验运行不可用" description={error}><Button onClick={onBack} variant="outline" type="button">返回实验运行</Button></EmptyState>
   if (!run) return <section className="grid gap-4"><AdminPageHeader title="实验运行"/><MasterDetailSkeleton label="正在读取实验运行详情"/></section>
   return <section>
     <AdminPageHeader title={experimentLabel(run)} meta={`${run.datasetVersion ?? '数据集未知'} · ${run.method ?? '方法未知'}`}/>
-    <div className="flex flex-wrap items-center gap-2"><Button onClick={() => navigate({ name: 'admin', view: 'experiment-runs' })} variant="outline" type="button">返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型详情</Button> : null}</div>
+    <div className="flex flex-wrap items-center gap-2"><Button onClick={onBack} variant="outline" type="button">返回实验运行</Button>{run.modelId ? <Button onClick={() => navigate({ name: 'admin', view: 'models', resourceId: run.modelId! })} variant="outline" type="button">查看模型详情</Button> : null}</div>
     <div className="flex flex-wrap items-center gap-2.5 text-xs text-foreground-3"><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[run.registrationState]}</span><span>{STATUS_LABELS[run.artifactState]}</span><span>{STATUS_LABELS[run.serviceCompatibility]}</span><span>{STATUS_LABELS[run.releaseStatus]}</span></div>
     {run.serviceCompatibilityReason ? <p className="rounded-sm border border-border-soft bg-sunken p-2.5 text-xs text-foreground-2">{run.serviceCompatibilityReason}</p> : null}
     {run.artifactStateReason ? <p className="text-xs text-rose">{run.artifactStateReason}</p> : null}

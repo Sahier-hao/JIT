@@ -10,7 +10,7 @@ SUGGESTIONS = {
     "py-mutable-default": {
         "title": "把可变默认参数改为 None 并在函数体内创建",
         "rationale": "列表、字典或集合作为默认参数只求值一次，会在调用之间共享状态。",
-        "manualChecks": ["确认默认值不依赖跨调用共享", "确认调用方传入 None 时语义不变"],
+        "manualChecks": ["按原默认值的类型和内容初始化参数", "确认默认值不依赖跨调用共享", "确认调用方传入 None 时语义不变"],
         "example": {"before": "def handle(items=[]):", "after": "def handle(items=None):\n    items = [] if items is None else items"},
     },
     "py-bare-except": {

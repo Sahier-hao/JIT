@@ -1,3 +1,4 @@
+import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
 import { Button } from '@/components/ui/button'
@@ -97,25 +98,24 @@ export function ProjectsPage({ navigate, createOpen = false }: { navigate: (rout
   }
 
   return <section className="grid gap-4">
-    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-      <h1 className="text-xl font-semibold">项目</h1>
+    <WorkspacePageHeader title="项目" actions={<>
       <Button variant="default" onClick={() => setCreating(true)} type="button"><Plus aria-hidden="true" size={15}/>新建项目</Button>
-    </header>
+    </>}/>
 
       {repositories.state === 'loading' && !items.length ? <LoadingNotice label="正在读取项目"/> : repositories.state === 'error' ? <EmptyState title="项目读取失败" description={repositories.error} tone="alert"><Button onClick={repositories.retry} variant="outline" type="button">重新加载</Button></EmptyState> : items.length ? <>
         <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs text-foreground-3">
           <span className="text-sm font-medium text-foreground-2">全部项目</span>
           <span>{items.length} 个项目 · {commits.toLocaleString()} 个已分析提交{high ? ` · ${high.toLocaleString()} 个高风险` : ''}{running ? ` · ${running} 个正在分析` : ''}</span>
         </div>
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">{items.map(repo => {
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">{items.map(repo => {
           const job = repo.latestSync
           const status = projectStatus(repo, job)
           const editing = renamingId === repo.repositoryId
           const confirming = confirmingId === repo.repositoryId
-          return <article className={cn('relative min-w-0 rounded-md border bg-card p-card', editing || confirming ? 'border-accent' : 'border-border-soft')} key={repo.repositoryId}>
+          return <article className={cn('relative min-w-0 rounded-xl border bg-card p-card hover:border-foreground-4', editing || confirming ? 'border-accent' : 'border-border-soft')} key={repo.repositoryId}>
             <Button variant="ghost" type="button" className="h-auto min-w-0 block w-full whitespace-normal border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => navigate(repositoryRoute(repo.repositoryId))} aria-label={`打开项目 ${repo.displayName}`}>
               <div className="flex items-center justify-between gap-2 pr-10">
-                <span className="grid size-10 shrink-0 place-items-center rounded-md border border-border-soft bg-sunken text-foreground-2"><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={20}/></span>
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent"><Folder aria-hidden="true" focusable="false" strokeWidth={1.5} size={20}/></span>
                 <span className="inline-flex items-center gap-1.5 text-xs text-foreground-3"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</span>
               </div>
               <h2 className="mt-3 truncate text-base font-semibold text-foreground">{repo.displayName}</h2>

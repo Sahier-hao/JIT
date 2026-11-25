@@ -1,10 +1,11 @@
+import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { LoadingNotice } from '@/components/shared/Feedback'
 import { ApiError } from '@/lib/apiContract'
 import { cn } from '@/lib/utils'
 import {
-  BookOpenText, Boxes, CheckCircle2, Cpu, RefreshCw, ShieldCheck, TriangleAlert,
+  Boxes, CheckCircle2, Cpu, RefreshCw, ShieldCheck, TriangleAlert,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
@@ -70,21 +71,10 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
     deep: methods?.filter(method => method.category === 'deep').length ?? 0,
   }), [methods])
 
-  if (methods === null && !error) return <LoadingNotice label="正在读取算法库"/>
+  if (methods === null && !error) return <section className="grid gap-4"><WorkspacePageHeader title="算法库"/><LoadingNotice label="正在读取算法库"/></section>
 
   return <section className="grid gap-5">
-    <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border-soft pb-4">
-      <div>
-        <h1 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-foreground">
-          <BookOpenText aria-hidden="true" size={22}/>算法库
-        </h1>
-        <p className="mt-1 text-xs text-foreground-3">按训练方法查看结构、适用边界与参数。</p>
-      </div>
-      <div className="flex flex-wrap gap-2 text-[11px] text-foreground-3">
-        <span className="rounded-md bg-sunken px-2 py-1 font-mono">{schema || '特征 schema'}</span>
-        <span className="rounded-md bg-sunken px-2 py-1">{counts.all} 个方法</span>
-      </div>
-    </header>
+    <WorkspacePageHeader title="算法库" meta={methods ? <><span>{counts.all} 个方法</span>{schema ? <span className="ml-2 font-mono text-xs">{schema}</span> : null}</> : undefined}/>
 
     {error ? <div className="flex flex-wrap items-center gap-2 border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep">
       <p role="alert">{error}</p>

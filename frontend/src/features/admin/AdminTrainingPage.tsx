@@ -1,6 +1,6 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
   ACTIVE_TASK_STATUSES, cancelTrainingTask, fetchTrainingTask, fetchTrainingTasks,
@@ -12,6 +12,7 @@ import { CardListSkeleton, MasterDetailSkeleton } from '@/components/shared/Skel
 import type { Route } from '@/app/navigation'
 import { AdminPageHeader, ErrorNotice, MetricGrid } from '@/features/admin/AdminShared'
 import { ReleaseEvidence } from '@/releaseEvidence'
+import { trainingMethodName, trainingPhase, trainingStatus } from '@/features/training/trainingPresentation'
 import { TrainingPartitionMetrics } from '@/features/training/components/TrainingComparisonResults'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -33,6 +34,18 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
   const [revision, setRevision] = useState(0)
+  const returnTo = useRef('')
+  useEffect(() => {
+    if (taskId || loading || !returnTo.current) return
+    const frame = requestAnimationFrame(() => {
+      const row = document.getElementById(`training-task-${returnTo.current}`)
+      if (!row) return
+      row.scrollIntoView?.({ block: 'nearest' })
+      row.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true })
+      returnTo.current = ''
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [taskId, loading])
 
   const handleFailure = useCallback((failure: unknown, fallback: string) => {
     if (failure instanceof ApiError && failure.status === 401) expired()
@@ -92,17 +105,17 @@ export function AdminTrainingPage({ taskId, navigate, expired }: {
   if (error && taskId && task?.taskId !== taskId) return <EmptyState title="训练任务不可用" description={error}><Button onClick={retryLoad} variant="outline" type="button">重试</Button><Button onClick={() => navigate({ name: 'admin', view: 'training' })} variant="outline" type="button">返回任务列表</Button></EmptyState>
   if (taskId && task?.taskId === taskId) return <TrainingTaskDetail task={task} error={error} busy={busy} act={act} retry={retryLoad} back={() => navigate({ name: 'admin', view: 'training' })} openRuns={() => navigate({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', artifactState: 'complete' })} openModel={modelId => navigate({ name: 'admin', view: 'models', resourceId: modelId })} openExperiment={id => navigate({ name: 'admin', view: 'training-experiment', resourceId: id })}/>
   return <section>
-    <AdminPageHeader title="训练任务" onRefresh={retryLoad}/>
+    <AdminPageHeader title="训练任务" meta={`共 ${total} 条`} onRefresh={retryLoad}/>
     <ErrorNotice>{error}</ErrorNotice>
     {error ? <div className="flex flex-wrap items-center gap-2"><Button size="sm" onClick={retryLoad} variant="outline" type="button">重新读取</Button></div> : null}
     {!tasks.length ? <p className="text-xs text-foreground-3">尚无训练任务。请从数据集详情创建。</p> : <div className="overflow-x-auto rounded-md border border-border-soft"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_thead_th]:bg-sunken [&_td]:border-b [&_td]:border-border-soft [&_td]:px-3 [&_td]:py-2 [&_td]:align-middle [&_tbody_tr:hover]:bg-hover [&_td_small]:mt-0.5 [&_td_small]:block [&_td_small]:text-foreground-3 [&_code]:break-all admin-task-table">
       <TableHeader><TableRow><TableHead>数据集</TableHead><TableHead>方法</TableHead><TableHead>状态</TableHead><TableHead>时间</TableHead><TableHead><span className="sr-only">操作</span></TableHead></TableRow></TableHeader>
-      <TableBody>{tasks.map(item => <TableRow key={item.taskId}>
-        <TableCell><strong>{item.datasetVersion}</strong><small>{item.metricSet}</small></TableCell>
-        <TableCell>{item.method}</TableCell>
-        <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{STATUS_LABELS[item.status]}</span>{item.status === 'succeeded' ? <small>发布资格：{releaseLabel(item.releaseStatus)}</small> : null}{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{item.stage}</small> : item.error ? <small>{item.error.message}</small> : null}</TableCell>
+      <TableBody>{tasks.map(item => <TableRow id={`training-task-${item.taskId}`} key={item.taskId}>
+        <TableCell><strong className="block max-w-56 truncate text-foreground" title={item.datasetVersion}>{item.datasetVersion}</strong></TableCell>
+        <TableCell className="min-w-24">{trainingMethodName(item.method)}</TableCell>
+        <TableCell><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px]"><span className={trainingStatus[item.status].color}>{STATUS_LABELS[item.status]}</span></span>{item.status === 'succeeded' ? <small>发布资格：{releaseLabel(item.releaseStatus)}</small> : null}{item.queuePosition ? <small>队列 {item.queuePosition}</small> : item.status === 'running' ? <small>{trainingPhase(item) === 2 ? '评估与保存' : '正在训练'}</small> : item.error ? <small>{item.error.message}</small> : null}</TableCell>
         <TableCell>{formatDate(item.createdAt)}</TableCell>
-        <TableCell><Button size="sm" onClick={() => navigate({ name: 'admin', view: 'training', resourceId: item.taskId })} variant="outline" type="button">查看</Button></TableCell>
+        <TableCell><Button size="sm" onClick={() => { returnTo.current = item.taskId; navigate({ name: 'admin', view: 'training', resourceId: item.taskId }) }} variant="outline" type="button">查看</Button></TableCell>
       </TableRow>)}</TableBody>
     </Table></div>}
     {total > PAGE_SIZE ? <div className="flex flex-wrap items-center gap-2">

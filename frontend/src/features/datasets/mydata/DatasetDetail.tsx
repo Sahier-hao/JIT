@@ -1,3 +1,4 @@
+import { CopyIdentifier } from '@/components/shared/CopyIdentifier'
 import { Button } from '@/components/ui/button'
 import {
   AlertTriangle, CheckCircle2, Clock3, Database, ExternalLink, FileArchive,
@@ -34,6 +35,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
   busy: boolean
   actions: {
     onTrain: () => void
+    onHistory?: () => void
     onPredict: () => void
     onExport: () => void
     onCuration: () => void
@@ -82,14 +84,11 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
 
   return <>
     <section className="overflow-hidden rounded-xl border border-border-soft bg-card shadow-sm">
-      <div className="bg-[linear-gradient(135deg,var(--accent-soft),var(--card)_58%)] px-5 py-5">
+      <div className="px-4 py-4 sm:px-5 sm:py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] font-medium text-foreground-3 shadow-sm">
-              <Database aria-hidden="true" size={13}/>数据版本
-            </div>
-            <h2 className="mt-3 truncate text-2xl font-semibold tracking-tight text-foreground">{datasetTitle(dataset)}</h2>
-            <code className="mt-1 block break-all font-mono text-[11px] text-foreground-4">{dataset.version}</code>
+            <h2 className="text-2xl [overflow-wrap:anywhere] font-semibold tracking-tight text-foreground">{datasetTitle(dataset)}</h2>
+            <CopyIdentifier value={dataset.version} label="数据版本"/>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] text-foreground-2">{usageLabel(dataset.usage, dataset)}</span>
               <span className="rounded-full border border-border-soft bg-card/80 px-2.5 py-1 text-[11px] text-foreground-2">{dataset.mine ? '我的数据' : '共享数据'}</span>
@@ -102,6 +101,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={actions.onTrain} disabled={!preview?.available} type="button">用于训练</Button>
+            {actions.onHistory ? <Button size="sm" onClick={actions.onHistory} variant="ghost" type="button">查看训练记录</Button> : null}
             <Button size="sm" onClick={actions.onPredict} variant="outline" type="button"><Gauge aria-hidden="true" size={14}/>模型试算</Button>
             <Button size="sm" onClick={actions.onExport} variant="outline" type="button">导出</Button>
             {dataset.mine ? <Button size="sm" variant="outline" onClick={actions.onCuration} type="button">清洗数据</Button> : null}

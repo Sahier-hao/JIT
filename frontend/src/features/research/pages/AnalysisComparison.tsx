@@ -1,3 +1,4 @@
+import { WorkspacePageHeader } from '@/components/layout/WorkspacePageHeader'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -33,7 +34,7 @@ export function AnalysisComparison({repositoryId,baseSyncId,targetSyncId,navigat
   function open(syncId:string,commitId:string) {navigate({name:'analysis',repositoryId,viewSyncId:syncId,view:'commits',commitId})}
   return <section className="grid gap-4">
     <Button aria-label="返回项目" variant="ghost" size="sm" className="justify-self-start" onClick={()=>navigate({name:'repository',repositoryId})} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={15}/>}返回项目</Button>
-    <header className="grid gap-1 border-b border-border-soft pb-3"><h1 className="font-sans text-xl font-semibold leading-title text-foreground">分析对比</h1><p className="text-sm leading-body text-foreground-3">对照两次已保存的分析，查看覆盖范围与提交分数。</p></header>
+    <WorkspacePageHeader title="分析对比" meta="对照两次已保存的分析，查看覆盖范围与提交分数。"/>
     {current?.error?<EmptyState title="对比读取失败" description={current.error} tone="alert"><Button onClick={()=>{setState({key:''});setAttempt(value=>value+1)}} variant="outline" type="button">重新读取对比</Button></EmptyState>:!data?<LoadingNotice label="正在读取两次固定分析"/>:<>
       <div className="grid gap-3 sm:grid-cols-2"><Source title="基准分析" source={data.base}/><Source title="目标分析" source={data.target}/></div>
       {!data.sameModel?<p className="text-xs text-amber-deep" role="status">模型身份不同或未记录，分数只作来源对照，不能据此判断模型优劣或风险改善。</p>:<p className="text-xs text-foreground-3">两侧使用同一已保存模型及运行；度量和覆盖变化仍需分别核对。</p>}
