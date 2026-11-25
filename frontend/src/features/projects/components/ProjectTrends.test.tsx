@@ -123,7 +123,7 @@ it('shows verified partition boundaries as text in the chart legend and equivale
 it('keeps branch, model, query window and source count together in the trend header', async () => {
   api()
   render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={vi.fn()}/>)
-  const heading = await screen.findByRole('heading', { name: '风险走势' })
+  const heading = await screen.findByRole('heading', { name: '风险趋势' })
   const meta = heading.parentElement?.textContent ?? ''
   expect(meta).toContain('main')
   expect(meta).toContain('model-original')
