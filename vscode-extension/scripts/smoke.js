@@ -9,7 +9,7 @@ runTests({
   vscodeExecutablePath: process.env.JIT_VSCODE_EXE || undefined,
   extensionDevelopmentPath,
   extensionTestsPath,
-  launchArgs: ['--no-sandbox', '--disable-gpu',
+  launchArgs: ['--no-sandbox', '--disable-gpu', '--window-size=1500,950', '--window-position=80,80',
     `--user-data-dir=${process.env.JIT_SMOKE_USER || path.resolve(__dirname, '.smoke-user')}`,
     `--extensions-dir=${process.env.JIT_SMOKE_EXT || path.resolve(__dirname, '.smoke-ext')}`,
     ...(process.env.JIT_SMOKE_WORKSPACE ? [process.env.JIT_SMOKE_WORKSPACE] : [])],

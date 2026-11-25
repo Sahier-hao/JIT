@@ -1,0 +1,5 @@
+
+> jit-review-workbench@0.0.0 check:modules
+> node scripts/check-module-boundaries.mjs
+
+模块边界检查通过：278 个源码文件、1 个应用入口、基础层无业务反向依赖。

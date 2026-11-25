@@ -1,0 +1,281 @@
+{
+  "kind": "integration-test-delivery-report",
+  "change": "deliver-ide-handoff-and-integration-tests",
+  "generatedAt": "2026-11-25T04:57:28.075878+00:00",
+  "gitHead": "bf2f42eaec0bce3fe046a8392412c68c07e4bb7c",
+  "branch": "feature/ide-handoff-and-integration-tests",
+  "inventory": {
+    "totalOperations": 99,
+    "businessOperations": 95,
+    "adminAuthOperations": 4,
+    "highRiskOperations": 73
+  },
+  "matrix": {
+    "operations": 95,
+    "highRiskOperations": 73,
+    "highRiskAllFourScenariosPassed": true,
+    "notApplicableOperations": 10,
+    "notApplicable": [
+      {
+        "operation": "GET /api/v1/commits",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/commits/{commitId}",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/project-events",
+        "riskDomain": "project-events",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories/{repositoryId}",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories/{repositoryId}/commits",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories/{repositoryId}/commits/{commitId}",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories/{repositoryId}/events",
+        "riskDomain": "project-events",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories/{repositoryId}/overview",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      },
+      {
+        "operation": "GET /api/v1/repositories/{repositoryId}/summary",
+        "riskDomain": "repository-read",
+        "scenarios": [
+          "boundary",
+          "concurrency"
+        ],
+        "reasons": [
+          "只读或契约级接口；无共享可变写入，不适用并发。",
+          "只读或契约级接口；输入与响应边界由 OpenAPI 契约校验，无独立可变状态。"
+        ],
+        "reviewedBy": [
+          "徐卓航"
+        ],
+        "reviewedOn": [
+          "2026-11-25"
+        ]
+      }
+    ],
+    "scenarios": {
+      "normal": {
+        "test": 95
+      },
+      "boundary": {
+        "test": 85,
+        "not-applicable": 10
+      },
+      "error": {
+        "test": 95
+      },
+      "concurrency": {
+        "test": 85,
+        "not-applicable": 10
+      }
+    }
+  },
+  "tests": {
+    "matrix": {
+      "tests": 90,
+      "passed": 90,
+      "failures": 0,
+      "skipped": 0
+    },
+    "backendFull": {
+      "tests": 1068,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    "frontendUnit": {
+      "tests": 609,
+      "passed": 609,
+      "failed": 0,
+      "pending": 0
+    },
+    "vscodeExtension": {
+      "passed": 8,
+      "failed": 0
+    },
+    "browserE2E": {
+      "expected": 1,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    "handoffValidation": {
+      "passed": true,
+      "problems": []
+    }
+  },
+  "provenance": {
+    "tests": 15,
+    "prompt": "docs/evidence/deliver-ide-handoff-and-integration-tests/ai-test-provenance/prompt.md",
+    "review": {
+      "status": "completed",
+      "reviewer": "徐卓航",
+      "reviewedAt": "2026-11-25"
+    }
+  },
+  "machineChecksPassed": true,
+  "humanReviewComplete": true,
+  "notApplicableReviewComplete": true,
+  "passed": true,
+  "knownLimitations": [
+    "VS Code 宿主冒烟已通过并截取 Extension Development Host 窗口；截图展示工作区与本机 VS Code 1.147.0，JIT 报告树未在截图中展开（报告导入、身份、命令由宿主冒烟断言验证）。",
+    "Eclipse 与 Visual Studio 只交付可行性结论，未交付插件。",
+    "只读 GET 的边界与并发场景使用人工复核的不适用理由，详见 notApplicable。"
+  ],
+  "evidence": {
+    "inventory": "api-inventory.json",
+    "matrix": "scenario-matrix.json",
+    "matrixResults": "matrix-results.json",
+    "backendJunit": "backend-full-junit.xml",
+    "frontendUnit": "frontend-unit-results.json",
+    "browser": "browser-results.json",
+    "handoffValidation": "handoff-validation.json",
+    "vscodeHostSmoke": "smoke-host.log",
+    "vscodeScreenshotSmoke": "smoke-screenshot.log",
+    "vscodeHostScreenshot": "screenshots/vscode-extension-host.png"
+  }
+}

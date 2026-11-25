@@ -1,0 +1,10 @@
+
+> jit-review-workbench@0.0.0 check:api-types
+> node scripts/check-api-types.mjs
+
+[90m@hey-api/openapi-ts v0.99.0[39m
+
+[90m[Job 1] [39m[90m~[39m [36mGenerating...[39m
+[90m[Job 1] [39m[36m  [1] [39m../docs/api/openapi.yaml
+[90m[Job 1] [39m[32m✓[39m [96m./src\lib\.api-generated-check[39m [90m· 2 files · 652ms[39m
+OpenAPI 生成类型与 docs/api/openapi.yaml 一致。

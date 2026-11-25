@@ -1,0 +1,61 @@
+C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Scripts\python.exe -m pytest tests -q --basetemp C:\Users\fgdvf\AppData\Local\Temp\jit-integration-full-merged\pytest-basetemp --junitxml=C:\Users\fgdvf\AppData\Local\Temp\jit-integration-full-merged\backend-full-junit.xml
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................................................s............... [ 20%]
+........................................................................ [ 26%]
+........................................................................ [ 33%]
+........................................................................ [ 40%]
+........................................................................ [ 47%]
+........................................................................ [ 53%]
+........................................................................ [ 60%]
+........................................................................ [ 67%]
+........................................................................ [ 74%]
+........................................................................ [ 80%]
+........................................................................ [ 87%]
+........................................................................ [ 94%]
+............................................................             [100%]
+============================== warnings summary ===============================
+tests/test_deep.py::test_adapter_fits_predicts_and_round_trips[ft-transformer-kwargs2]
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\jit_baseline\ml\deep.py:73: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=layers)
+
+tests/test_model_packages.py::test_archive_control_entries_are_rejected[duplicate]
+  E:\Anaconda\Lib\zipfile\__init__.py:1607: UserWarning: Duplicate name: 'models/000/model.joblib'
+    return self._open_to_write(zinfo, force_zip64=force_zip64)
+
+tests/test_project_datasets.py::test_arbitrary_dataset_or_export_format_is_rejected
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <generator object WriteOnlyWorksheet._write_rows at 0x00000180E1E63790>
+  
+  Traceback (most recent call last):
+    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\openpyxl\worksheet\_write_only.py", line 66, in _write_rows
+      with xf.element("sheetData"):
+    File "E:\Anaconda\Lib\contextlib.py", line 144, in __exit__
+      next(self.gen)
+    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\et_xmlfile\xmlfile.py", line 91, in element
+      self._file(f"</{tag}>")
+  ValueError: I/O operation on closed file.
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+tests/test_project_datasets.py::test_arbitrary_dataset_or_export_format_is_rejected
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <generator object WriteOnlyWorksheet._write_rows at 0x00000180E1E604F0>
+  
+  Traceback (most recent call last):
+    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\openpyxl\worksheet\_write_only.py", line 66, in _write_rows
+      with xf.element("sheetData"):
+    File "E:\Anaconda\Lib\contextlib.py", line 144, in __exit__
+      next(self.gen)
+    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\et_xmlfile\xmlfile.py", line 91, in element
+      self._file(f"</{tag}>")
+  ValueError: I/O operation on closed file.
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_catalog_api.py:535: ��ʵ���ݼ���δ����
+1067 passed, 1 skipped, 4 warnings in 1189.19s (0:19:49)

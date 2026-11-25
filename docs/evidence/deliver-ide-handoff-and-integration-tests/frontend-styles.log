@@ -1,0 +1,5 @@
+
+> jit-review-workbench@0.0.0 check:styles
+> node scripts/check-styles.mjs
+
+样式来源检查通过：4 个样式表、3 个入口导入、0 个待迁移 Mantine 引用。

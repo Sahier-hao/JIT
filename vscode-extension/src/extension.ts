@@ -86,9 +86,21 @@ function workspaceFolder(): vscode.WorkspaceFolder | undefined {
   return vscode.workspace.workspaceFolders?.[0]
 }
 
+/** 本地只读 Git 核对不继承宿主注入的命令行配置，避免 GIT_CONFIG_* 污染解析。 */
+function gitEnv(): NodeJS.ProcessEnv {
+  const env = { ...process.env }
+  for (const key of Object.keys(env)) {
+    if (key === 'GIT_CONFIG_PARAMETERS' || key === 'GIT_CONFIG_COUNT'
+      || key.startsWith('GIT_CONFIG_KEY_') || key.startsWith('GIT_CONFIG_VALUE_')) {
+      delete env[key]
+    }
+  }
+  return env
+}
+
 async function gitHead(folder: string): Promise<string | null> {
   try {
-    const { stdout } = await run('git', ['-C', folder, 'rev-parse', 'HEAD'])
+    const { stdout } = await run('git', ['-C', folder, 'rev-parse', 'HEAD'], { env: gitEnv() })
     return stdout.trim() || null
   } catch {
     return null
@@ -97,7 +109,7 @@ async function gitHead(folder: string): Promise<string | null> {
 
 async function gitDirty(folder: string): Promise<boolean | null> {
   try {
-    const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain'])
+    const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain'], { env: gitEnv() })
     return stdout.trim().length > 0
   } catch {
     // 读不到工作树状态时不能当作“干净”：宁可拒绝定位，也不在可能已改动的代码上标注。
@@ -108,7 +120,7 @@ async function gitDirty(folder: string): Promise<boolean | null> {
 /** 单个路径在工作树中的状态；空表示与 HEAD 一致。 */
 async function gitPathStatus(folder: string, relativePath: string): Promise<string> {
   try {
-    const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain', '--', relativePath])
+    const { stdout } = await run('git', ['-C', folder, 'status', '--porcelain', '--', relativePath], { env: gitEnv() })
     return stdout.trim()
   } catch {
     return 'git-status-failed'

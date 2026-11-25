@@ -1,0 +1,4 @@
+
+> jit-commit-analysis@0.2.0 compile
+> tsc -p .
+
