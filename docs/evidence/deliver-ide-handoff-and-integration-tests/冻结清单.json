@@ -62,23 +62,23 @@
     },
     {
       "path": "backend-full-junit.xml",
-      "sha256": "56e83fd3e612cb7e502a81c86fa0092e6cb0335aba5426df5f1c52a05b2e348a"
+      "sha256": "1a3a6743e101e334d106146e62a7bc06cce817f7454f650d45c70a0917b6f568"
     },
     {
       "path": "backend-full.log",
-      "sha256": "3d0a6da9c5a04a0900f2296b4df796414fd5bab1165de8dd2b58a8f7a9fa4510"
+      "sha256": "c477a01f720ed847d719f3448638045c48e9a3a19e52695a08f5ac3a55eba6f7"
     },
     {
       "path": "browser-e2e.log",
-      "sha256": "61a21c1c67f703a392d021661461bf6be09d8279893e6a513db60e2de235aa54"
+      "sha256": "bc9c4baa01c3c9fdc63e06ec93aabde322c1692121be603e22bf4e918b918acf"
     },
     {
       "path": "browser-results.json",
-      "sha256": "51a2563aaee93f3237ac639fcbf9350285828563f77b476fa289712f17c9d42b"
+      "sha256": "f97b06554e486b0f651bad01d611f70387e6f880c54b06a1560bffda957e09f0"
     },
     {
       "path": "explanation-requests.json",
-      "sha256": "69370d5fda4123fedb31473c1a0389a48c94c65966d82bacff30f885fb67ab3a"
+      "sha256": "129d2186d3c7b9f86aa2e8d07e0b25a29e69a92c70e92c884880d4a152b21a5d"
     },
     {
       "path": "extension-compile.log",
@@ -90,15 +90,15 @@
     },
     {
       "path": "frontend-build.log",
-      "sha256": "7adba94eaf180fb6ab4128d9fbb6f68905135ec9cf0584fe0a579ac1911d289c"
+      "sha256": "4ed15fe088ccb173bd86a1c83839bec96725f6e787642bf1fb214f6a92a070cc"
     },
     {
       "path": "frontend-lint.log",
-      "sha256": "a1cf2dcb715f51ec4bc5d732c59f177c4fb3f35fa707c66697a38c63158556ce"
+      "sha256": "0300669972a0e26f9aa2696f4648955b92a9f7a1f3a9854f7cd74e48ab2d01da"
     },
     {
       "path": "frontend-modules.log",
-      "sha256": "1bb4c7ae158966707d4411734a79228acbbdfc606ed7afaafc3e8cbb65803ce8"
+      "sha256": "e9fc6c932b67478385d208b61d489e34ab5a4a1937c31c821ea7e8690ef438a4"
     },
     {
       "path": "frontend-styles.log",
@@ -114,11 +114,11 @@
     },
     {
       "path": "frontend-unit-results.json",
-      "sha256": "36966c6ec15ef031b41fc8b7ae9f0e16eb13f17297e9e5d1e0149254a8fdbc5e"
+      "sha256": "aecc53a234a6977c6f87b8962ed813e48b7577386532c51128d4d45a346b0ee0"
     },
     {
       "path": "frontend-unit.log",
-      "sha256": "cf37e5d06628b642c5d86a6eb8dd4a4ac6d01fc03a646b6c59b5f2564cba616c"
+      "sha256": "66e31fa80a1f97c5c4966a51d28541ed7f7fa047d27b07886728a2b82f7fa486"
     },
     {
       "path": "handoff-validation.json",
@@ -130,15 +130,15 @@
     },
     {
       "path": "integration-report.json",
-      "sha256": "a406bd1a2c673651b775c73df695add0327c03edc3754e6cbb4d097ded195897"
+      "sha256": "58729a2ff74d59b24e7ca82f08101de60a385708cd4b8790094be3e14e83ff68"
     },
     {
       "path": "integration-report.md",
-      "sha256": "1464f5ba2fa4361b496d51c4f4dfe389bca11c5ca5f887245f4796814568570e"
+      "sha256": "80d231edc4a384ac8fb9a979d341ed428d307597f73f13e0b101aa790cff54bf"
     },
     {
       "path": "matrix-junit.xml",
-      "sha256": "0d7492d8e0a08f9a527bc17c8c020825a7859eabf6034138d45a081c9daf9feb"
+      "sha256": "dcfc2bf3c0b6612c56ce489b1f28f471a562ef4eb6fecbb450c2e085dd91dbbb"
     },
     {
       "path": "matrix-results.json",
@@ -154,7 +154,7 @@
     },
     {
       "path": "real-repository-test.log",
-      "sha256": "d86f5cf92412b8f489c0c80882a9b8567483bbd31c88fd73875a2c66054f1598"
+      "sha256": "83ccd6b2da85ee00ac92c798ebd60ce7abe9469fa1c6402048bfc02435110107"
     },
     {
       "path": "recheck-js-test.log",
@@ -174,15 +174,15 @@
     },
     {
       "path": "screenshots/explanation-methods-multi-method-explanations.png",
-      "sha256": "cd4f997fa493ef889dafe67e1287226fdf34089b3be3e3a6f4408740658dfc4b"
+      "sha256": "d46a5efbd19308917ac22fa6ce765c2deb5d1dd96fa85d3e784198e3bb18fd76"
     },
     {
       "path": "screenshots/explanation-narrow-multi-method-explanations.png",
-      "sha256": "e208b7d8cdfa199d040a12168d818462cf4ad6851b5ddb851be9950e820c4783"
+      "sha256": "c093a15bf37d7f5ad8e04d5418f20b479448f7557b11dfe0d15a4b80246d4f94"
     },
     {
       "path": "screenshots/explanation-occlusion-multi-method-explanations.png",
-      "sha256": "5964d0269e62a9ba0b41a6fb9060f69199ef0800e0ef28bcb0404f12ca3792b4"
+      "sha256": "2497244388a1a3be0933d42b0a73b797aedefbc2ee6dc51b3cb85f528bf265da"
     },
     {
       "path": "screenshots/vscode-extension-host.png",
@@ -210,11 +210,11 @@
     },
     {
       "path": "vscode-extension-tests.log",
-      "sha256": "08dbdc2183302b88263b1c79ca08f287d6d34da378212b67656328d4cf589866"
+      "sha256": "f60948bfe6c3b2a05596cd9b36b46457b16f288c634ae3d95306b62e6176922b"
     }
   ],
-  "frozenUtc": "2026-11-25T04:28:47.442803+00:00",
+  "frozenUtc": "2026-11-25T04:57:31.398143+00:00",
   "kind": "verification-evidence-freeze",
-  "sourceRunId": "2b37f83ee9d39ca9783ce8c900038ae82fbab8811f19b3ee3648b0e5e3c1d4f0",
+  "sourceRunId": "49f396830dc8e1df168398222ad57076b1ddc07ce20ac72159ce0cddc9e8f432",
   "workspace": "docs/evidence/_run/deliver-ide-handoff-and-integration-tests"
 }

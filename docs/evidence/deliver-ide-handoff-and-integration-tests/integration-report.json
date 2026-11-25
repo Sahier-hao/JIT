@@ -1,8 +1,8 @@
 {
   "kind": "integration-test-delivery-report",
   "change": "deliver-ide-handoff-and-integration-tests",
-  "generatedAt": "2026-11-25T04:28:33.202651+00:00",
-  "gitHead": "91fb0d4967e7b58e446fe0f119576fe9822eba09",
+  "generatedAt": "2026-11-25T04:57:28.075878+00:00",
+  "gitHead": "bf2f42eaec0bce3fe046a8392412c68c07e4bb7c",
   "branch": "feature/ide-handoff-and-integration-tests",
   "inventory": {
     "totalOperations": 99,
@@ -228,8 +228,8 @@
       "skipped": 1
     },
     "frontendUnit": {
-      "tests": 604,
-      "passed": 604,
+      "tests": 609,
+      "passed": 609,
       "failed": 0,
       "pending": 0
     },

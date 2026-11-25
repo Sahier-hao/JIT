@@ -1,4 +1,4 @@
-C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Scripts\python.exe -m pytest tests -q --basetemp C:\Users\fgdvf\AppData\Local\Temp\jit-integration-full\pytest-basetemp --junitxml=C:\Users\fgdvf\AppData\Local\Temp\jit-integration-full\backend-full-junit.xml
+C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Scripts\python.exe -m pytest tests -q --basetemp C:\Users\fgdvf\AppData\Local\Temp\jit-integration-full-merged\pytest-basetemp --junitxml=C:\Users\fgdvf\AppData\Local\Temp\jit-integration-full-merged\backend-full-junit.xml
 ........................................................................ [  6%]
 ........................................................................ [ 13%]
 ........................................................s............... [ 20%]
@@ -24,17 +24,7 @@ tests/test_model_packages.py::test_archive_control_entries_are_rejected[duplicat
     return self._open_to_write(zinfo, force_zip64=force_zip64)
 
 tests/test_project_datasets.py::test_arbitrary_dataset_or_export_format_is_rejected
-  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <generator object WriteOnlyWorksheet._write_rows at 0x000001ECF826FB50>
-  
-  Traceback (most recent call last):
-    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\pydantic\type_adapter.py", line 251, in _init_core_attrs
-      self.core_schema = _getattr_no_parents(self._type, '__pydantic_core_schema__')
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\pydantic\type_adapter.py", line 55, in _getattr_no_parents
-      raise AttributeError(attribute)
-  AttributeError: __pydantic_core_schema__
-  
-  During handling of the above exception, another exception occurred:
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <generator object WriteOnlyWorksheet._write_rows at 0x00000180E1E63790>
   
   Traceback (most recent call last):
     File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\openpyxl\worksheet\_write_only.py", line 66, in _write_rows
@@ -50,17 +40,7 @@ tests/test_project_datasets.py::test_arbitrary_dataset_or_export_format_is_rejec
     warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
 
 tests/test_project_datasets.py::test_arbitrary_dataset_or_export_format_is_rejected
-  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <generator object WriteOnlyWorksheet._write_rows at 0x000001ED01CB46D0>
-  
-  Traceback (most recent call last):
-    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\pydantic\type_adapter.py", line 251, in _init_core_attrs
-      self.core_schema = _getattr_no_parents(self._type, '__pydantic_core_schema__')
-                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\pydantic\type_adapter.py", line 55, in _getattr_no_parents
-      raise AttributeError(attribute)
-  AttributeError: __pydantic_core_schema__
-  
-  During handling of the above exception, another exception occurred:
+  C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <generator object WriteOnlyWorksheet._write_rows at 0x00000180E1E604F0>
   
   Traceback (most recent call last):
     File "C:\Users\fgdvf\Desktop\openspec\JIT\backend\.venv\Lib\site-packages\openpyxl\worksheet\_write_only.py", line 66, in _write_rows
@@ -78,4 +58,4 @@ tests/test_project_datasets.py::test_arbitrary_dataset_or_export_format_is_rejec
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ===========================
 SKIPPED [1] tests\test_catalog_api.py:535: ��ʵ���ݼ���δ����
-1067 passed, 1 skipped, 4 warnings in 1183.67s (0:19:43)
+1067 passed, 1 skipped, 4 warnings in 1189.19s (0:19:49)

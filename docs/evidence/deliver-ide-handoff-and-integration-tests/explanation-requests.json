@@ -1,47 +1,47 @@
 [
   {
     "method": "GET",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d",
     "status": 200
   },
   {
     "method": "GET",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d",
     "status": 200
   },
   {
     "method": "POST",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a&method=occlusion-mean-v1",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d&method=occlusion-mean-v1",
     "status": 200
   },
   {
     "method": "POST",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a&method=linear-logodds-v1",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d&method=linear-logodds-v1",
     "status": null
   },
   {
     "method": "POST",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a&method=linear-logodds-v1",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d&method=linear-logodds-v1",
     "status": 200
   },
   {
     "method": "GET",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanations?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d",
     "status": 200
   },
   {
     "method": "GET",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/f8717e020aea9fd4ee8f33358f3d91e06217541c/explanation-methods?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d",
     "status": 200
   },
   {
     "method": "GET",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/443db133636573a11312b7d9548597b0e510084b/explanations?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/443db133636573a11312b7d9548597b0e510084b/explanations?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d",
     "status": 200
   },
   {
     "method": "GET",
-    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/443db133636573a11312b7d9548597b0e510084b/explanation-methods?viewSyncId=eccc0da0-c1e0-4cc0-99a4-8729252ff37a",
+    "url": "/api/v1/repositories/578cc8eb-b42d-5e3a-86ab-4636f71f186f/commits/443db133636573a11312b7d9548597b0e510084b/explanation-methods?viewSyncId=d414acdf-7581-4b7f-b62d-67352591668d",
     "status": 200
   }
 ]

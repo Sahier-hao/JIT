@@ -4,82 +4,80 @@
 
 vite v8.3.4 building client environment for production...
 transforming...
-✓ 3191 modules transformed.
+✓ 3195 modules transformed.
 rendering chunks...
 computing gzip size...
-dist/index.html                                        2.21 kB │ gzip:   0.92 kB
+dist/index.html                                        2.04 kB │ gzip:   0.88 kB
 dist/assets/PullRequestJourney-legcy4jI.css            3.48 kB │ gzip:   0.75 kB
-dist/assets/index-DiQgInGs.css                       108.92 kB │ gzip:  19.75 kB
-dist/assets/chevron-down-D5rJoYlI.js                   0.16 kB │ gzip:   0.16 kB
-dist/assets/plus-Cq5xLEYc.js                           0.19 kB │ gzip:   0.17 kB
-dist/assets/arrow-down-D2R3p53N.js                     0.20 kB │ gzip:   0.18 kB
-dist/assets/arrow-left-Ba6O38C4.js                     0.20 kB │ gzip:   0.18 kB
-dist/assets/arrow-right-DfNe03vj.js                    0.20 kB │ gzip:   0.18 kB
-dist/assets/clock-3-CfwmBGXz.js                        0.20 kB │ gzip:   0.19 kB
-dist/assets/search-DR4xf52g.js                         0.21 kB │ gzip:   0.19 kB
-dist/assets/circle-check-lCjFGtlJ.js                   0.25 kB │ gzip:   0.21 kB
-dist/assets/git-branch-DqgaNCoM.js                     0.26 kB │ gzip:   0.22 kB
-dist/assets/download-B7Tyr6x1.js                       0.27 kB │ gzip:   0.22 kB
-dist/assets/external-link-BQp0Qjyw.js                  0.29 kB │ gzip:   0.23 kB
-dist/assets/triangle-alert-BfYLnRPW.js                 0.33 kB │ gzip:   0.25 kB
-dist/assets/refresh-cw-ghPA6Ey6.js                     0.36 kB │ gzip:   0.25 kB
-dist/assets/shield-alert-fTYuxeoc.js                   0.39 kB │ gzip:   0.28 kB
-dist/assets/CommitEvidenceBadge-ZgxA1xGr.js            0.44 kB │ gzip:   0.35 kB
-dist/assets/textarea-D2qJ_73O.js                       0.64 kB │ gzip:   0.39 kB
+dist/assets/index-D1MldTmH.css                       112.68 kB │ gzip:  20.38 kB
+dist/assets/check-C-W27Tu7.js                          0.16 kB │ gzip:   0.16 kB
+dist/assets/plus-DxLT2tRO.js                           0.19 kB │ gzip:   0.17 kB
+dist/assets/arrow-down-DuGCpbm9.js                     0.20 kB │ gzip:   0.18 kB
+dist/assets/arrow-left-CkHOclFt.js                     0.20 kB │ gzip:   0.18 kB
+dist/assets/clock-3-DDngUtc6.js                        0.20 kB │ gzip:   0.19 kB
+dist/assets/search-aoYnEIp9.js                         0.21 kB │ gzip:   0.19 kB
+dist/assets/circle-check-_NlwlSI3.js                   0.25 kB │ gzip:   0.21 kB
+dist/assets/git-branch-BLTvP_dK.js                     0.26 kB │ gzip:   0.22 kB
+dist/assets/download-C89Q-69s.js                       0.27 kB │ gzip:   0.22 kB
+dist/assets/copy-DnkYUxif.js                           0.27 kB │ gzip:   0.23 kB
+dist/assets/external-link-BdC5W_YH.js                  0.29 kB │ gzip:   0.23 kB
+dist/assets/triangle-alert-w7aHmcqO.js                 0.33 kB │ gzip:   0.25 kB
+dist/assets/shield-alert-CHfaodF5.js                   0.39 kB │ gzip:   0.28 kB
+dist/assets/CommitEvidenceBadge-CWKNIe1Y.js            0.44 kB │ gzip:   0.35 kB
+dist/assets/textarea-D3GxnZL9.js                       0.64 kB │ gzip:   0.39 kB
 dist/assets/common-EFNLhWQE.js                         0.66 kB │ gzip:   0.40 kB
-dist/assets/ModelCardDialog-C61-jgec.js                1.06 kB │ gzip:   0.65 kB
-dist/assets/badge-BRuIHguJ.js                          1.27 kB │ gzip:   0.60 kB
-dist/assets/table-BQrtR6uP.js                          1.28 kB │ gzip:   0.49 kB
-dist/assets/native-select-6skIMmUk.js                  1.33 kB │ gzip:   0.66 kB
-dist/assets/EntryChrome-CJEgfHWM.js                    1.35 kB │ gzip:   0.63 kB
-dist/assets/modelClient-E2JtstsV.js                    2.23 kB │ gzip:   0.94 kB
-dist/assets/projectStatus-B7nQQLb4.js                  2.69 kB │ gzip:   1.26 kB
-dist/assets/JobProgress-Dxj_MZlN.js                    3.01 kB │ gzip:   1.35 kB
-dist/assets/createLucideIcon-BSo1KyKj.js               3.08 kB │ gzip:   1.47 kB
-dist/assets/MyModelsPage-CCigCYRo.js                   3.61 kB │ gzip:   1.54 kB
-dist/assets/alert-dialog-DYoFnEq3.js                   4.14 kB │ gzip:   1.31 kB
-dist/assets/dist-CUJExAlj.js                           4.20 kB │ gzip:   1.84 kB
-dist/assets/prReviewClient-BsooPHIc.js                 4.25 kB │ gzip:   1.77 kB
+dist/assets/CopyIdentifier-B_F-PWzi.js                 0.97 kB │ gzip:   0.59 kB
+dist/assets/ModelCardDialog-D9Q_qRtE.js                1.06 kB │ gzip:   0.65 kB
+dist/assets/badge-Btol7AZQ.js                          1.27 kB │ gzip:   0.60 kB
+dist/assets/table-CRurvH22.js                          1.28 kB │ gzip:   0.49 kB
+dist/assets/native-select-Bo5J96Y8.js                  1.33 kB │ gzip:   0.66 kB
+dist/assets/EntryChrome-BCgA23FG.js                    1.42 kB │ gzip:   0.64 kB
+dist/assets/modelClient-BhlbA2c1.js                    2.23 kB │ gzip:   0.95 kB
+dist/assets/projectStatus-BssCH79_.js                  2.69 kB │ gzip:   1.25 kB
+dist/assets/dist-Sv5OJZ4l.js                           2.73 kB │ gzip:   1.18 kB
+dist/assets/JobProgress-BfLKPTsP.js                    3.01 kB │ gzip:   1.35 kB
+dist/assets/createLucideIcon-D6TgrUTg.js               3.08 kB │ gzip:   1.47 kB
+dist/assets/MyModelsPage-BITK7X-u.js                   3.17 kB │ gzip:   1.55 kB
+dist/assets/dist-BWy0OyP9.js                           4.20 kB │ gzip:   1.84 kB
+dist/assets/alert-dialog-C_sJdpoz.js                   4.26 kB │ gzip:   1.35 kB
 dist/assets/multiProjectReportContracts-1qPa52pf.js    4.31 kB │ gzip:   1.63 kB
-dist/assets/switch-DddMAx4F.js                         4.62 kB │ gzip:   1.91 kB
-dist/assets/checkbox-DHDqGsQh.js                       4.82 kB │ gzip:   2.01 kB
-dist/assets/toggle-group-DfctVVKu.js                   4.88 kB │ gzip:   1.87 kB
-dist/assets/AdminComparisonPage-BLpoh1eL.js            5.29 kB │ gzip:   1.98 kB
-dist/assets/AdminExperimentsPage-CmnWSn8G.js           6.04 kB │ gzip:   2.10 kB
-dist/assets/LandingPage-BA3AJ1aq.js                    6.79 kB │ gzip:   2.34 kB
-dist/assets/curationContract-CLvPsca4.js               7.37 kB │ gzip:   2.40 kB
-dist/assets/Skeletons-CZltk0Up.js                      7.45 kB │ gzip:   1.14 kB
-dist/assets/LoginPage-B_Hiy98p.js                      7.48 kB │ gzip:   2.72 kB
-dist/assets/dist-CLY6VhDj.js                           8.61 kB │ gzip:   3.01 kB
+dist/assets/switch-G09FWcqf.js                         4.62 kB │ gzip:   1.91 kB
+dist/assets/checkbox-Z41aGRYv.js                       4.82 kB │ gzip:   2.00 kB
+dist/assets/toggle-group-BxjQETa-.js                   4.88 kB │ gzip:   1.88 kB
+dist/assets/AdminComparisonPage-BbblRhP9.js            5.29 kB │ gzip:   1.98 kB
+dist/assets/AdminExperimentsPage-BpyprkAs.js           6.04 kB │ gzip:   2.10 kB
+dist/assets/LoginPage-DbMscv3N.js                      6.19 kB │ gzip:   2.42 kB
+dist/assets/LandingPage-DxyX0ddZ.js                    6.79 kB │ gzip:   2.34 kB
+dist/assets/Skeletons-DfJ6Hj_J.js                      7.55 kB │ gzip:   1.17 kB
+dist/assets/dist-gARgc8zC.js                           8.61 kB │ gzip:   3.01 kB
 dist/assets/apiClient-BD3Mkpgw.js                      8.83 kB │ gzip:   3.68 kB
-dist/assets/dist-E3D7I0Tm.js                           9.19 kB │ gzip:   3.42 kB
-dist/assets/AnalysisComparison-DEeemQoR.js             9.56 kB │ gzip:   3.82 kB
-dist/assets/CommitDetail-bYVFeZVj.js                   9.62 kB │ gzip:   3.01 kB
-dist/assets/PersonalWorks-CZIvOJ3L.js                  9.91 kB │ gzip:   3.93 kB
-dist/assets/LineResearchPage-CI7PJH6T.js              10.34 kB │ gzip:   3.82 kB
-dist/assets/prReview-BDylgWHu.js                      13.09 kB │ gzip:   5.38 kB
-dist/assets/DatasetPresentation-CayRyiA9.js           13.95 kB │ gzip:   4.48 kB
-dist/assets/AdminExperimentDetailPage-BzBE1EBW.js     14.17 kB │ gzip:   4.08 kB
-dist/assets/ReviewWorkbench-CHDat8_2.js               14.45 kB │ gzip:   4.99 kB
-dist/assets/RepositoryExplanation-td1-kJcW.js         16.48 kB │ gzip:   5.67 kB
-dist/assets/ModelCardView-fskuN0dQ.js                 17.89 kB │ gzip:   4.67 kB
-dist/assets/AlgorithmLibraryPage-ea28N1q7.js          20.37 kB │ gzip:   5.50 kB
-dist/assets/MyPredictionsPage-CRTxjHTk.js             21.72 kB │ gzip:   6.66 kB
-dist/assets/useQuery-BRfFI7-C.js                      22.69 kB │ gzip:   7.55 kB
-dist/assets/select-DJpZH2tV.js                        23.36 kB │ gzip:   7.91 kB
-dist/assets/es2015-OYzpZ71x.js                        25.77 kB │ gzip:   9.17 kB
-dist/assets/TrainingLossChart-i-TiLz4P.js             26.85 kB │ gzip:   8.36 kB
-dist/assets/dist-R8xWF4gN.js                          27.23 kB │ gzip:  10.49 kB
-dist/assets/VerificationReport-HqkZ5tc8.js            41.69 kB │ gzip:  12.16 kB
-dist/assets/button-BD6vOBU4.js                        41.89 kB │ gzip:  14.18 kB
-dist/assets/ProjectsPage-D9XiK0c9.js                  43.36 kB │ gzip:  15.48 kB
-dist/assets/MyTrainingPage-j9QwkvQM.js                45.02 kB │ gzip:  12.51 kB
-dist/assets/MyDataPage-lsxQAdb2.js                    68.66 kB │ gzip:  19.11 kB
-dist/assets/ProjectPage-BWao4BzR.js                  124.41 kB │ gzip:  34.10 kB
-dist/assets/AdminWorkspace-DsU7kD41.js               135.30 kB │ gzip:  34.83 kB
-dist/assets/PullRequestJourney-DSF4v0Hq.js           406.22 kB │ gzip: 126.80 kB
-dist/assets/index-B89PRJ7Q.js                        462.51 kB │ gzip: 142.03 kB
-dist/assets/EChartCanvas-Chii8neg.js                 570.25 kB │ gzip: 194.20 kB
+dist/assets/dist-CpWdNV_i.js                           9.19 kB │ gzip:   3.41 kB
+dist/assets/AnalysisComparison-26xlaDA0.js             9.33 kB │ gzip:   3.77 kB
+dist/assets/CommitDetail-CJ2qDxw_.js                   9.63 kB │ gzip:   2.99 kB
+dist/assets/PersonalWorks-CC30tu0Y.js                  9.67 kB │ gzip:   3.86 kB
+dist/assets/LineResearchPage-C3NBmW0L.js              10.34 kB │ gzip:   3.82 kB
+dist/assets/DatasetPresentation-DfVFTFvF.js           13.94 kB │ gzip:   4.47 kB
+dist/assets/AdminExperimentDetailPage-B_Jjjq0x.js     14.17 kB │ gzip:   4.08 kB
+dist/assets/ReviewWorkbench-7CS-e_1i.js               14.45 kB │ gzip:   4.99 kB
+dist/assets/prReview-B3MDoyzZ.js                      14.49 kB │ gzip:   5.81 kB
+dist/assets/RepositoryExplanation-Bpqh8UF2.js         16.48 kB │ gzip:   5.67 kB
+dist/assets/ModelCardView-JamQKSlR.js                 17.89 kB │ gzip:   4.67 kB
+dist/assets/AlgorithmLibraryPage-CWze13Pe.js          19.55 kB │ gzip:   5.26 kB
+dist/assets/MyPredictionsPage-C1URmc6K.js             21.88 kB │ gzip:   6.66 kB
+dist/assets/es2015-BGu7DnH0.js                        23.12 kB │ gzip:   8.29 kB
+dist/assets/select-wA_VHnV0.js                        23.35 kB │ gzip:   7.89 kB
+dist/assets/TrainingLossChart-lBVsBMYP.js             26.77 kB │ gzip:   8.33 kB
+dist/assets/dist-DkhWSuRF.js                          27.23 kB │ gzip:  10.48 kB
+dist/assets/VerificationReport-CEZqPAQD.js            41.05 kB │ gzip:  12.12 kB
+dist/assets/button-1cyxISTJ.js                        41.99 kB │ gzip:  14.19 kB
+dist/assets/ProjectsPage-B21PyR9y.js                  43.22 kB │ gzip:  15.46 kB
+dist/assets/MyTrainingPage-B2Xq2tAz.js                44.08 kB │ gzip:  12.24 kB
+dist/assets/MyDataPage-DfVRPpF8.js                    68.47 kB │ gzip:  19.08 kB
+dist/assets/ProjectPage-DRsYbKSK.js                  124.30 kB │ gzip:  34.06 kB
+dist/assets/AdminWorkspace-C08eUuCq.js               135.94 kB │ gzip:  35.36 kB
+dist/assets/PullRequestJourney-5iIPfjel.js           411.20 kB │ gzip: 129.88 kB
+dist/assets/index-BPUgwNOE.js                        505.91 kB │ gzip: 154.64 kB
+dist/assets/EChartCanvas-Hznr0HdA.js                 570.25 kB │ gzip: 194.20 kB
 
 [plugin builtin:vite-reporter] 
 (!) Some chunks are larger than 500 kB after minification. Consider:
@@ -88,4 +86,4 @@ dist/assets/EChartCanvas-Chii8neg.js                 570.25 kB │ gzip: 194.20 
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 [INEFFECTIVE_DYNAMIC_IMPORT] src/features/projects/components/ProjectActivity.tsx is dynamically imported by src/app/App.tsx but also statically imported by src/components/layout/AppShell.tsx, dynamic import will not move module into another chunk.
 
-✓ built in 1.32s
+✓ built in 1.59s

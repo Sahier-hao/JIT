@@ -1,8 +1,8 @@
 # 集成测试交付报告
 
 - change：`deliver-ide-handoff-and-integration-tests`
-- 提交：`91fb0d4967e7b58e446fe0f119576fe9822eba09`（`feature/ide-handoff-and-integration-tests`）
-- 生成时间：2026-11-25T04:28:33.202651+00:00
+- 提交：`bf2f42eaec0bce3fe046a8392412c68c07e4bb7c`（`feature/ide-handoff-and-integration-tests`）
+- 生成时间：2026-11-25T04:57:28.075878+00:00
 - 机器检查：通过
 - 人工复核：完成
 - 不适用格复核：完成
@@ -19,7 +19,7 @@
 | 高风险四类全部实际通过 | 是 |
 | 矩阵测试 | 90 passed / 0 failed / 0 skipped |
 | 后端完整回归 | 1067 passed / 0 failed / 1 skipped |
-| 前端单测 | 604/604 passed / 0 failed |
+| 前端单测 | 609/609 passed / 0 failed |
 | VS Code 扩展 | 8 passed / 0 failed |
 | 真实 E2E | 1 passed / 0 unexpected |
 | 报告交接校验 | 通过 |
