@@ -88,14 +88,24 @@ export const ROUTES: RouteObject[] = [
   { path: '/my-data', handle: build((_params, query) => myDataRoute(query)) },
   { path: '/my-training', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))
+    const method = text(query.get('method'))
     const historyDatasetVersion = text(query.get('historyDatasetVersion'))
-    return { name: 'my-training', ...(datasetVersion ? { datasetVersion } : {}), ...(historyDatasetVersion ? { historyDatasetVersion } : {}) }
+    return {
+      name: 'my-training',
+      ...(datasetVersion ? { datasetVersion } : {}),
+      ...(method ? { method } : {}),
+      ...(historyDatasetVersion ? { historyDatasetVersion } : {}),
+    }
   }) },
   { path: '/my-training/:experimentId', handle: build((params, query) => {
     const historyDatasetVersion = text(query.get('historyDatasetVersion'))
     return { name: 'my-training', experimentId: params.experimentId, ...(historyDatasetVersion ? { historyDatasetVersion } : {}) }
   }) },
-  { path: '/algorithms', handle: build(() => ({ name: 'algorithms' })) },
+  { path: '/algorithms', handle: build((_params, query) => {
+    const method = text(query.get('method'))
+    return { name: 'algorithms', ...(method ? { method } : {}) }
+  }) },
+  { path: '/algorithms/:method', handle: build(params => ({ name: 'algorithms', method: params.method ?? '' })) },
   { path: '/my-models', handle: build(() => ({ name: 'my-models' })) },
   { path: '/my-predictions', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))

@@ -1,4 +1,4 @@
-import { Activity, Check, CircleAlert, Clock3, LoaderCircle } from 'lucide-react'
+import { Activity, BookOpenText, Check, CircleAlert, Clock3, LoaderCircle } from 'lucide-react'
 import { useRef, useState, type ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -63,12 +63,13 @@ function remainingFitTime(history: TrainingTask['trainingHistory']) {
   return seconds < 60 ? `约 ${seconds} 秒` : `约 ${Math.ceil(seconds / 60)} 分钟`
 }
 
-export function TrainingExperimentMonitor({ experiment, busy, onAction, registration, onOpenDataset }: {
+export function TrainingExperimentMonitor({ experiment, busy, onAction, registration, onOpenDataset, onOpenAlgorithm }: {
   experiment: TrainingExperiment
   busy: string
   onAction: (task: TrainingTask, action: 'cancel' | 'retry') => void
   registration: ReactNode
   onOpenDataset?: () => void
+  onOpenAlgorithm?: (method: string) => void
 }) {
   const [selectedMethod, setSelectedMethod] = useState<string>()
   const [partitionKey, setPartitionKey] = useState('test')
@@ -107,7 +108,12 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-sm font-medium text-foreground-3">训练监控</h2>
-          <p className="mt-1 text-xl font-semibold [overflow-wrap:anywhere]">{method ?? '等待训练任务'}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="text-xl font-semibold [overflow-wrap:anywhere]">{method ?? '等待训练任务'}</p>
+            {selected && onOpenAlgorithm ? <Button type="button" size="xs" variant="ghost" onClick={() => onOpenAlgorithm(selected.method)}>
+              <BookOpenText aria-hidden="true" size={13}/>算法说明
+            </Button> : null}
+          </div>
         </div>
         {selected ? <Badge variant="outline"><TaskStatus task={selected}/></Badge> : null}
       </div>

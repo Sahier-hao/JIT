@@ -7,8 +7,8 @@ export type Route =
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
   | { name: 'my-data'; view?: 'builds' | 'imports'; datasetVersion?: string; taskId?: string; buildProjectId?: string }
-  | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string }
-  | { name: 'algorithms' }
+  | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string; method?: string }
+  | { name: 'algorithms'; method?: string }
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
   | { name: 'profile' }
@@ -79,13 +79,17 @@ export function parseHash(hash: string): Route {
     if (path === '/my-training') return {
       name: 'my-training',
       ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion')! } : {}),
+      ...(params.get('method') ? { method: params.get('method')! } : {}),
       ...(params.get('historyDatasetVersion') ? { historyDatasetVersion: params.get('historyDatasetVersion')! } : {}),
     }
     if (parts[0] === 'my-training' && parts.length === 2) {
       const historyDatasetVersion = params.get('historyDatasetVersion')
       return { name: 'my-training', experimentId: parts[1], ...(historyDatasetVersion ? { historyDatasetVersion } : {}) }
     }
-    if (path === '/algorithms') return { name: 'algorithms' }
+    if (parts[0] === 'algorithms' && [1, 2].includes(parts.length)) {
+      const method = parts[1] || params.get('method') || undefined
+      return { name: 'algorithms', ...(method ? { method } : {}) }
+    }
     if (path === '/my-models') return { name: 'my-models' }
     if (path === '/my-predictions') return {
       name: 'my-predictions',
@@ -166,10 +170,11 @@ export function hashFor(route: Route): string {
       const path = route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
       const params = new URLSearchParams()
       if (!route.experimentId && route.datasetVersion) params.set('datasetVersion', route.datasetVersion)
+      if (!route.experimentId && route.method) params.set('method', route.method)
       if (route.historyDatasetVersion) params.set('historyDatasetVersion', route.historyDatasetVersion)
       return params.size ? `${path}?${params}` : path
     }
-    case 'algorithms': return '#/algorithms'
+    case 'algorithms': return route.method ? `#/algorithms/${encodeURIComponent(route.method)}` : '#/algorithms'
     case 'my-models': return '#/my-models'
     case 'my-predictions': {
       if (route.batchId) return `#/my-predictions/${encodeURIComponent(route.batchId)}`

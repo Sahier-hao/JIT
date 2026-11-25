@@ -67,3 +67,39 @@ it('browses visual algorithm structures and method details', async () => {
   expect(screen.getByText('特征标准化')).toBeVisible()
   expect(fetch).toHaveBeenCalledTimes(1)
 })
+
+it('opens the method named by the address and hands it to training', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    if (String(input).includes('/training-methods')) return Response.json({
+      schema: 'kamei14-git-v2',
+      methods: DEFINITIONS.map(method),
+    })
+    return Response.json({})
+  })
+  const navigate = vi.fn()
+  render(<AlgorithmLibraryPage method="random-forest-v1" navigate={navigate} onLoginRequired={vi.fn()}/>)
+
+  expect(await screen.findByRole('heading', { name: '随机森林 · 200 棵 CART', level: 2 })).toBeVisible()
+  expect(screen.getByRole('img', { name: /随机森林 · 200 棵 CART 算法结构图/ })).toBeVisible()
+
+  const user = userEvent.setup()
+  await user.click(screen.getByRole('button', { name: '以此方法训练' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'my-training', method: 'random-forest-v1' })
+
+  await user.click(screen.getByRole('button', { name: /决策树 · CART/ }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'algorithms', method: 'decision-tree-v1' })
+})
+
+it('keeps an unavailable method from starting a training', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    if (String(input).includes('/training-methods')) return Response.json({
+      schema: 'kamei14-git-v2',
+      methods: DEFINITIONS.map(method),
+    })
+    return Response.json({})
+  })
+  render(<AlgorithmLibraryPage method="tabular-resnet-v1" navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+
+  expect(await screen.findByRole('heading', { name: '表格残差网络', level: 2 })).toBeVisible()
+  expect(screen.queryByRole('button', { name: '以此方法训练' })).not.toBeInTheDocument()
+})

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
@@ -97,22 +98,28 @@ function ExplanationTable({ result }: { result: Explanation }) {
 }
 
 function MethodMetadata({ result, meta, context }: { result: Explanation; meta?: ExplanationMethod; context: ExplanationContext }) {
-  return (
-    <details className="rounded-sm border border-border-soft">
-      <summary>解释方法与来源</summary>
-      <dl className="grid gap-1 text-xs [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1 [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
-        <div><dt>方法</dt><dd>{meta?.name ?? SAVED_METHOD_LABELS[result.explanationMethod ?? ''] ?? result.explanationMethod}</dd></div>
-        <div><dt>单位</dt><dd>{unitLabel(result.explanationUnit)}</dd></div>
-        <div><dt>数据口径</dt><dd>{result.featureSchemaVersion}</dd></div>
-        <div><dt>基线数据</dt><dd>{result.baselineDatasetVersion}</dd></div>
-        {result.baselineHash ? <div><dt>基线哈希</dt><dd><code>{result.baselineHash}</code></dd></div> : null}
-        {result.trainingPartitionSize != null ? <div><dt>训练分区</dt><dd>{result.trainingPartitionSize} 条</dd></div> : null}
-        {result.missingBaselineFeatures.length ? <div><dt>零基线字段</dt><dd>{result.missingBaselineFeatures.join('、')}</dd></div> : null}
-        <div><dt>模型</dt><dd><code>{context.modelId}</code></dd></div>
-      </dl>
-      {result.limitations.map((note, index) => <p className="text-xs leading-body text-foreground-3" key={index}>{note}</p>)}
-    </details>
-  )
+  const [open, setOpen] = useState(false)
+  return <>
+    <Button type="button" size="sm" variant="outline" className="justify-self-start" onClick={() => setOpen(true)}>解释方法与来源</Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent aria-describedby={undefined} className="max-h-[80vh] overflow-auto" style={{ width: 'min(92vw, 520px)', maxWidth: 'none' }}>
+        <DialogHeader><DialogTitle>解释方法与来源</DialogTitle></DialogHeader>
+        <div className="grid gap-2">
+          <dl className="grid gap-1 text-xs [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1 [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
+            <div><dt>方法</dt><dd>{meta?.name ?? SAVED_METHOD_LABELS[result.explanationMethod ?? ''] ?? result.explanationMethod}</dd></div>
+            <div><dt>单位</dt><dd>{unitLabel(result.explanationUnit)}</dd></div>
+            <div><dt>数据口径</dt><dd>{result.featureSchemaVersion}</dd></div>
+            <div><dt>基线数据</dt><dd>{result.baselineDatasetVersion}</dd></div>
+            {result.baselineHash ? <div><dt>基线哈希</dt><dd><code>{result.baselineHash}</code></dd></div> : null}
+            {result.trainingPartitionSize != null ? <div><dt>训练分区</dt><dd>{result.trainingPartitionSize} 条</dd></div> : null}
+            {result.missingBaselineFeatures.length ? <div><dt>零基线字段</dt><dd>{result.missingBaselineFeatures.join('、')}</dd></div> : null}
+            <div><dt>模型</dt><dd><code>{context.modelId}</code></dd></div>
+          </dl>
+          {result.limitations.map((note, index) => <p className="text-xs leading-body text-foreground-3" key={index}>{note}</p>)}
+        </div>
+      </DialogContent>
+    </Dialog>
+  </>
 }
 
 function Comparison({ explanations, methods }: { explanations: Explanation[]; methods: ExplanationMethod[] }) {

@@ -16,7 +16,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { BranchAnalysisSeed } from '@/features/projects/components/AnalysisForm'
 import { ACTIVE_STATUSES, DEGRADE_LABELS, type SyncView } from '@/features/projects/repositoryContract'
 import { projectsChanged } from '@/features/projects/projectEvents'
-import { useModelName } from '@/features/models/modelClient'
 import { AnalysisLauncher } from '@/features/projects/components/AnalysisLauncher'
 import { RepositoryUpdates } from '@/features/projects/components/RepositoryUpdates'
 import { RepositoryOverviewView } from '@/features/projects/components/RepositoryOverview'
@@ -25,7 +24,7 @@ import { ProjectAnalysisHistory } from '@/features/projects/components/ProjectAn
 import { JobProgress } from '@/features/projects/components/JobProgress'
 import { ProjectTrends } from '@/features/projects/components/ProjectTrends'
 import { ProjectDatasetDialog } from '@/features/projects/components/ProjectDatasetDialog'
-import { PriorityCommits } from '@/features/projects/components/PriorityCommits'
+import { AnalysisResultCard } from '@/features/projects/components/AnalysisResultCard'
 import { RecordDetails, RecordRow } from '@/features/projects/components/AnalysisRecords'
 import { getPRSnapshot } from '@/features/reviews/prReviewClient'
 import { EmptyState } from '@/components/shared/Feedback'
@@ -35,8 +34,6 @@ import { cancelRepositorySync, deleteRepositorySync, selectRepositoryView, useRe
 import { projectStatus, type ProjectTone } from '@/features/projects/projectStatus'
 
 import { useRepository } from '@/features/projects/repositoryWorkspace'
-import { AnalysisScopeCard } from '@/features/projects/components/AnalysisScopeCard'
-import { displayTime } from '@/lib/domain'
 import { cn } from '@/lib/utils'
 
 type ProjectTab = 'overview' | 'prs' | 'trends' | 'analyses'
@@ -49,9 +46,8 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   const activeTab = trendMode ? 'analyses' : tab ?? 'overview'
   const branchView = activeTab === 'analyses'
   const detail = useRepository(repositoryId)
-  const modelName = useModelName(branchView ? detail.repository?.viewContext?.modelId ?? detail.repository?.modelId : null)
-  const [page, setPage] = useState(0)
-  const records = useRepositorySyncs(branchView ? repositoryId : '', 10, page * 10)
+  // 记录在卡片内滚动查看：一次取最近 100 次，避免在卡片里翻页打断阅读。
+  const records = useRepositorySyncs(branchView ? repositoryId : '', 100, 0)
   const refreshRecords = records.retry
   const [recordError, setRecordError] = useState('')
   const [selectingId, setSelectingId] = useState('')
@@ -88,7 +84,6 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     refreshRecords()
     if (!ACTIVE_STATUSES.includes(latestStatus as typeof ACTIVE_STATUSES[number])) projectsChanged()
   }, [latestStatus, latestId, refreshRecords])
-  useEffect(() => { if (records.state === 'ready' && page > 0 && page * 10 >= records.total) setPage(Math.max(0, Math.ceil(records.total / 10) - 1)) }, [records.state, records.total, page])
 
   if (detail.state === 'loading' && !detail.repository) return <ProjectPageSkeleton/>
   if (detail.state === 'error' || !detail.repository) {
@@ -173,6 +168,15 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     }
   }
 
+  const analysisViewNav = <nav aria-label="分析视图" className="flex gap-1 border-b border-border">
+    {([{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]).map(option => {
+      const active = (trendMode ? 'trends' : 'analyses') === option.value
+      return <Button key={option.value} asChild variant="ghost" className={cn('rounded-none border-b-2', active ? 'border-primary' : 'border-transparent')}>
+        <a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={active ? 'page' : undefined}>{option.label}</a>
+      </Button>
+    })}
+  </nav>
+
   return <section className="grid gap-4">
     <header className="grid min-w-0 gap-2 rounded-xl border border-border-soft bg-card px-4 py-4 [overflow-wrap:anywhere] sm:px-5">
             <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}全部项目</Button>
@@ -183,6 +187,10 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
               <a className="text-accent underline-offset-2 hover:underline" href={repository.url} target="_blank" rel="noreferrer">{repository.url.replace(/^https?:\/\/github\.com\//i, '')}</a>
               <span aria-hidden="true">·</span>
               <span>默认分支 {repository.defaultBranch ?? '未登记'}</span>
+              {branchView && !activeJob ? <>
+                <span aria-hidden="true">·</span>
+                <span className="inline-flex items-center gap-1.5" role="status"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])} aria-hidden="true"/>{status.label}</span>
+              </> : null}
             </div>
     </header>
 
@@ -199,51 +207,37 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
 
     {branchView ? <>
     <div className="flex flex-wrap items-center justify-between gap-2">
-      {!activeJob ? <p className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-card px-2.5 py-1 text-xs text-foreground-3" role="status"><span className={cn('size-1.5 rounded-full', TONE_DOT[status.tone])}/>{status.label}</p> : null}
-      <div className="ml-auto">
-        <AnalysisLauncher key={analysisSeed?.key ?? 'new'} initial={analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch}
-          onClose={() => setAnalysisSeed(null)} onStarted={() => { setPage(0); records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
-      </div>
+      {analysisViewNav}
+      <AnalysisLauncher key={analysisSeed?.key ?? 'new'} initial={analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch}
+        onClose={() => setAnalysisSeed(null)} onStarted={() => { records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
     </div>
     {activeJob ? <section className="rounded-md border border-border-soft bg-card p-card" aria-label="当前分析进度">
       <JobProgress status={activeJob.status} stage={activeJob.stage} queuePosition={activeJob.queuePosition} startedAt={activeJob.startedAt} scoresOnly={activeJob.requestedStrategy === 'generic-model'}/>
     </section> : null}
-    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate} switchSlot={
-      <nav aria-label="分析视图" className="flex gap-1 border-b border-border">{([{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String("trends") === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String("trends") === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
-    }/> : <>
-    <div className="flex flex-wrap justify-end">
-      <nav aria-label="分析视图" className="flex gap-1 border-b border-border">{([{ value: 'analyses', label: '分析结果' }, { value: 'trends', label: '风险趋势' }]).map(option => <Button key={option.value} asChild variant="ghost" className={`rounded-none border-b-2 ${String("analyses") === String(option.value) ? 'border-primary' : 'border-transparent'}`}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String("analyses") === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
-    </div>
-    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
-      <ProjectAnalysisHistory records={records} currentNotice={currentNotice} recordError={recordError} page={page} setPage={setPage}>
-        {records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }
-      </ProjectAnalysisHistory>
+    {trendMode ? <ProjectTrends repositoryId={repositoryId} viewId={viewId} currentSyncId={context?.syncId} navigate={navigate}/> : <>
+    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className={cn('min-w-0', context && 'lg:relative lg:min-h-[24rem]')}>
+        <ProjectAnalysisHistory records={records} currentNotice={currentNotice} recordError={recordError} stretch={Boolean(context)}>
+          {records.syncs.map(job => <RecordRow key={job.syncId} job={job} current={job.syncId === context?.syncId} selecting={selectingId !== ''} onOpen={() => navigate(analysisRoute(repositoryId, job.syncId))} onCompare={context && job.status === 'completed' && job.syncId !== context.syncId ? () => navigate({ name: 'comparison', repositoryId, baseSyncId: job.syncId, targetSyncId: context.syncId }) : undefined} onSelect={() => void makeCurrent(job)} onDelete={() => setDeleteJob(job)} onDetail={() => setDetailJob(job)} onRetry={() => retryRecord(job)} onOpenPR={job.sourceKind === 'pr' && job.sourceSnapshotId ? () => void openPRRecord(job) : undefined} openingPR={openingPR} onCancel={() => setCancelJob(job)} deleteBusy={deleteBusy} cancelBusy={cancelBusy}/>) }
+        </ProjectAnalysisHistory>
+      </div>
 
       <div className="grid min-w-0 content-start gap-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">当前分析结果{context && latestCompletedId && context.syncId !== latestCompletedId ? <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] font-normal text-foreground-3">历史固定结果</span> : null}</h2>
-          <span className="text-xs text-foreground-3">{context ? [context.completedAt ? displayTime(context.completedAt) : '', modelName ?? ''].filter(Boolean).join(' · ') : ''}</span>
-        </div>
-        {context && context.sourceKind === 'pr' ? <p className="text-xs text-foreground-3">当前结果来自旧 PR 分析，不代表分支主线趋势。</p> : null}
-        {context ? <div className="grid gap-3">
-          {scope?.split ? <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="查看提交范围">
+        {context ? <AnalysisResultCard key={context.syncId} syncId={context.syncId} scope={scope} distribution={shownDistribution} activeView={activeView}
+          historical={Boolean(latestCompletedId && context.syncId !== latestCompletedId)}
+          notice={context.sourceKind === 'pr' ? '当前结果来自旧 PR 分析，不代表分支主线趋势。' : undefined}
+          note={repository.degradeReason ? DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason : undefined}
+          viewSwitch={scope?.split ? <div className="flex flex-wrap items-center gap-2 text-xs" role="group" aria-label="查看提交范围">
             <ToggleGroup type="single" value={String(activeView)} onValueChange={nextValue => { if (nextValue) (setScopeView)(nextValue as typeof activeView); }} aria-label="视图">{([
               { value: 'holdout', label: `留出 ${scope.split.holdout.count ?? 0}` },
               { value: 'test', label: `测试 ${scope.split.test.count ?? 0}` },
               { value: 'all', label: `全部 ${repository.commitCount}` },
             ]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup>
             <span className="text-foreground-3">{activeView === 'all' ? '含训练、验证、测试、留出与未纳入数据集的提交' : '模型没见过的提交'}</span>
-          </div> : null}
-
-          <PriorityCommits key={context.syncId} syncId={context.syncId} scope={scope} distribution={shownDistribution} activeView={activeView}
-            onOpenCommit={commitId => navigate(analysisRoute(repositoryId, context.syncId, { commitId }))}
-            onOpenAll={() => navigate(analysisRoute(repositoryId, context.syncId))}/>
-          {scope ? <details className="rounded-md border border-border-soft bg-card">
-            <summary className="cursor-pointer px-card py-2 text-sm text-foreground-2">模型与数据来源</summary>
-            <AnalysisScopeCard scope={scope} onOpenDataset={() => setDatasetOpen(true)}/>
-            {repository.degradeReason ? <p className="px-card pb-2 text-xs text-foreground-3">{DEGRADE_LABELS[repository.degradeReason] ?? repository.degradeReason}</p> : null}
-          </details> : <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => setDatasetOpen(true)} type="button">数据来源</Button>}
-        </div> : <div className="rounded-md border border-dashed border-border p-6 text-sm text-foreground-3">
+          </div> : undefined}
+          onOpenCommit={commitId => navigate(analysisRoute(repositoryId, context.syncId, { commitId }))}
+          onOpenAll={() => navigate(analysisRoute(repositoryId, context.syncId))}
+          onOpenDataset={() => setDatasetOpen(true)}/> : <div className="rounded-md border border-dashed border-border p-6 text-sm text-foreground-3">
           <p>还没有可用的分析结果。{latest?.status === 'failed' ? '最近一次分析失败，修正后重新发起。' : latest && (ACTIVE_STATUSES as readonly string[]).includes(latest.status) ? '分析进行中，完成后这里会出现结果。' : '点击「分析分支提交」，选择要回查的分支。'}</p>
         </div>}
       </div>

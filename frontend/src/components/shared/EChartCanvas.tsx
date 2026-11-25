@@ -78,21 +78,26 @@ export function EChartCanvas({ option, height = 240, label, onChart, className =
   useEffect(() => {
     const element = host.current
     if (!element) return
-    const width = Math.max(320, Math.round(element.getBoundingClientRect().width) || 640)
+    // ECharts 会把容器尺寸写成内联样式；量父元素才能跟着布局收缩，否则窗口变窄后画布保持旧宽度。
+    const measure = () => {
+      const box = element.parentElement?.getBoundingClientRect() ?? element.getBoundingClientRect()
+      return Math.max(320, Math.round(box.width) || 640)
+    }
+    const width = measure()
     const chart = init(element, undefined, { renderer: 'svg', width, height })
     instance.current = chart
     ready.current?.(chart)
     const resize = () => {
-      const next = Math.round(element.getBoundingClientRect().width)
-      chart.resize({ width: next > 0 ? next : width, height })
+      const next = measure()
+      chart.resize({ width: next, height })
     }
     window.addEventListener('resize', resize)
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resize)
-    observer?.observe(element)
+    if (element.parentElement) observer?.observe(element.parentElement)
     return () => { observer?.disconnect(); window.removeEventListener('resize', resize); chart.dispose(); instance.current = null }
   }, [height])
   useEffect(() => { instance.current?.setOption(option, { notMerge: true }) }, [option])
-  return <div ref={host} className={className} style={{ height }} role="img" aria-label={label}/>
+  return <div ref={host} className={`${className} min-w-0 overflow-hidden`} style={{ height }} role="img" aria-label={label}/>
 }
 
 /** 提示框与坐标轴共用同一套主题；只接受已校验的数字与日期文本。 */
