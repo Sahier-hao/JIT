@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@/lib/test-utils'
+import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { MyTrainingPage } from '@/features/training/pages/MyTrainingPage'
 
@@ -75,7 +76,8 @@ it('shows all three partitions in the user-owned experiment comparison', async (
       tasks: [task('t1', 'logistic-regression-l2-v1'), task('t2', 'decision-tree-v1')],
     })
   })
-  render(<MyTrainingPage experimentId="exp-1" navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  const navigate = vi.fn()
+  render(<MyTrainingPage experimentId="exp-1" navigate={navigate} onLoginRequired={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: '训练实验' })).toBeVisible()
   expect(await screen.findByRole('heading', { name: '三档结果比较' })).toBeVisible()
   await waitFor(() => expect(screen.getAllByText('训练档').length).toBeGreaterThan(0))
@@ -83,4 +85,8 @@ it('shows all three partitions in the user-owned experiment comparison', async (
   expect(screen.getAllByText('测试档').length).toBeGreaterThan(0)
   expect(screen.getAllByText(/记录 8 · 正例 4/).length).toBeGreaterThan(0)
   expect(screen.getAllByText('测试集缺少负例').length).toBeGreaterThan(0)
+
+  const user = userEvent.setup()
+  await user.click(screen.getByRole('button', { name: '算法说明' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'algorithms', method: 'logistic-regression-l2-v1' })
 })

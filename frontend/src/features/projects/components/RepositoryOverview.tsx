@@ -88,7 +88,7 @@ function ActivityChart({ activity, coverage, fetchedAt }: { activity: Repository
     else if (event.key === 'Escape') { setActive(null); chart.current?.dispatchAction({ type: 'downplay', seriesIndex: 0 }); chart.current?.dispatchAction({ type: 'hideTip' }) }
   }
   const current = active == null ? null : activity[active]
-  return <div className="repo-chart">
+  return <div className="repo-chart min-w-0">
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground-3">
       <span><b>{total.toLocaleString()}</b>个提交</span>
       <span><b>{max.toLocaleString()}</b>单周峰值</span>
@@ -157,12 +157,12 @@ function LanguageChart({ languages }: { languages: RepositoryOverviewLanguage[] 
   return <>
     <div className="grid items-center gap-3 sm:grid-cols-[160px_minmax(0,1fr)]">
       <EChartCanvas option={option} height={216} label="语言构成环形图；各语言名称、占比与字节数见旁边图例和等价数据表" className="ui-chart"/>
-      <ul className="repo-language-legend grid gap-1 text-xs">
-        {slices.map(item => <li key={item.name}>
-          <span className="size-2.5 shrink-0 rounded-sm" style={{ background: item.color }} aria-hidden="true"/>
-          <span className="truncate text-foreground-2">{item.name}</span>
-          <b>{languagePercent(item)}</b>
-          <small className="text-foreground-4">{item.bytes.toLocaleString()} 字节</small>
+      <ul className="repo-language-legend grid gap-1.5 text-xs">
+        {slices.map(item => <li key={item.name} className="grid grid-cols-[10px_minmax(0,1fr)_auto_auto] items-center gap-x-2">
+          <span className="size-2.5 rounded-sm" style={{ background: item.color }} aria-hidden="true"/>
+          <span className="truncate text-foreground-2" title={item.name}>{item.name}</span>
+          <b className="font-medium tabular-nums text-foreground-2">{languagePercent(item)}</b>
+          <small className="tabular-nums text-foreground-4">{item.bytes.toLocaleString()} 字节</small>
         </li>)}
       </ul>
     </div>
@@ -190,7 +190,7 @@ export function RepositoryOverviewView({ repositoryId, repository, actions }: { 
     return () => controller.abort()
   }, [repositoryId, attempt])
   const metadata = overview?.metadata ?? null
-  return <section className="grid gap-4" aria-label="仓库概览">
+  return <section className="grid min-w-0 grid-cols-1 gap-4" aria-label="仓库概览">
     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
       <div className="min-w-0 flex-1 basis-64">
         {metadata?.description ? <p className="text-sm leading-body text-foreground-3">{metadata.description}</p> : null}
@@ -216,19 +216,19 @@ export function RepositoryOverviewView({ repositoryId, repository, actions }: { 
         <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">watchers</dt><dd className="m-0 text-xl font-semibold tabular-nums text-foreground">{metadata.watchers.toLocaleString()}</dd></div>
         <div className="grid gap-1 px-4 py-4"><dt className="text-xs text-foreground-3">最近推送</dt><dd className="m-0 text-sm font-semibold tabular-nums text-foreground">{compact(metadata.pushedAt)}</dd></div>
       </dl>
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
-        <section className="grid gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="仓库活跃度">
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
+        <section className="grid min-w-0 grid-cols-1 gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="仓库活跃度">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">仓库活跃度</h2><span className="text-xs text-foreground-3">{overview.activityCoverage === 'last-52-weeks' ? '近一年 · 按周' : '最近 12 周'}</span></div>
           <ActivityChart activity={overview.activity} coverage={overview.activityCoverage} fetchedAt={overview.fetchedAt}/>
         </section>
-        <section className="grid gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="语言构成">
+        <section className="grid min-w-0 grid-cols-1 gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="语言构成">
           <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">语言构成</h2><span className="text-xs text-foreground-3">GitHub 字节统计</span></div>
           {overview.languages.length ? <LanguageChart languages={overview.languages}/> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回语言统计。</p>}
         </section>
       </div>
-      <section className="grid gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="最近提交">
+      <section className="grid min-w-0 grid-cols-1 gap-3 rounded-2xl border border-border-soft bg-card p-5 shadow-[var(--sh-2)]" aria-label="最近提交">
         <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 className="text-base font-semibold text-foreground">最近提交</h2><span className="text-xs text-foreground-3">最多 10 条</span></div>
-        {overview.recentCommits.length ? <ul className="grid gap-1">{overview.recentCommits.map(commit => <li key={commit.sha} className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-soft py-1.5 text-sm"><a className="min-w-0 truncate text-foreground-2 hover:text-foreground" href={commit.url} target="_blank" rel="noreferrer"><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 7)}</code> {commit.message}</a><span className="shrink-0 text-xs text-foreground-4">{commit.author} · {compact(commit.date)}</span></li>)}</ul> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回最近提交。</p>}
+        {overview.recentCommits.length ? <ul className="grid min-w-0 grid-cols-1 gap-1">{overview.recentCommits.map(commit => <li key={commit.sha} className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-soft py-1.5 text-sm"><a className="min-w-0 truncate text-foreground-2 hover:text-foreground" href={commit.url} target="_blank" rel="noreferrer"><code className="font-mono text-xs text-foreground-3">{commit.sha.slice(0, 7)}</code> {commit.message}</a><span className="shrink-0 text-xs text-foreground-4">{commit.author} · {compact(commit.date)}</span></li>)}</ul> : <p className="py-6 text-center text-xs text-foreground-3">GitHub 没有返回最近提交。</p>}
       </section>
       {metadata.topics.length ? <p className="flex flex-wrap gap-1">{metadata.topics.map(topic => <span key={topic} className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{topic}</span>)}</p> : null}
       <p className="text-xs text-foreground-4">读取于 {compact(overview.fetchedAt)}</p>

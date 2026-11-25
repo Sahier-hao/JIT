@@ -2,19 +2,31 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { ArrowRight, BookOpenText, CheckCircle2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MethodChoice } from '@/features/models/modelClient'
 
 const CATEGORY: Record<string, string> = { classic: '经典模型', deep: '深度模型' }
 
-export function AlgorithmLibraryDialog({ open, onOpenChange, methods, schema }: {
+export function AlgorithmLibraryDialog({ open, onOpenChange, methods, schema, initialMethod }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   methods: MethodChoice[]
   schema: string
+  initialMethod?: string
 }) {
   const [category, setCategory] = useState<'all' | 'classic' | 'deep'>('all')
-  const visible = methods.filter(item => category === 'all' || item.category === category)
+  const [focused, setFocused] = useState<string>()
+
+  useEffect(() => {
+    if (!open) { setFocused(undefined); return }
+    const target = initialMethod ? methods.find(item => item.method === initialMethod) : undefined
+    setFocused(target?.method)
+    if (target) setCategory(target.category === 'deep' ? 'deep' : target.category === 'classic' ? 'classic' : 'all')
+  }, [open, initialMethod, methods])
+
+  const visible = methods
+    .filter(item => category === 'all' || item.category === category)
+    .sort((a, b) => (a.method === focused ? -1 : b.method === focused ? 1 : 0))
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent aria-describedby={undefined} className="max-h-[92vh] overflow-y-auto" style={{ width: 'min(96vw, 980px)', maxWidth: 'none' }}>
       <DialogHeader>
@@ -42,11 +54,14 @@ export function AlgorithmLibraryDialog({ open, onOpenChange, methods, schema }: 
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          {visible.map(item => <article key={item.method} className={cn('grid gap-3 rounded-xl border border-border-soft p-4', !item.available && 'bg-sunken/60')}>
+          {visible.map(item => <article key={item.method} className={cn('grid gap-3 rounded-xl border border-border-soft p-4', !item.available && 'bg-sunken/60', item.method === focused && 'border-accent/40 bg-accent-soft/30')}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="text-[10px] font-medium uppercase tracking-[.12em] text-foreground-4">{CATEGORY[item.category] ?? item.category}</span>
-                <h3 className="mt-1 text-sm font-semibold text-foreground">{item.name}</h3>
+                <h3 className="mt-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+                  {item.name}
+                  {item.method === focused ? <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 text-[10px] font-normal text-accent">本次所选</span> : null}
+                </h3>
                 <p className="mt-1 text-xs leading-5 text-foreground-3">{item.guide.summary}</p>
               </div>
               <span className={cn('shrink-0 rounded-full px-2 py-1 text-[10px]', item.available ? 'bg-teal-soft text-teal-deep' : 'bg-amber-soft text-amber-deep')}>

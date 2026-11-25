@@ -89,8 +89,7 @@ it('does not offer a foreign source when a drilldown response violates the froze
   expect(screen.queryByRole('button', { name: /原分析提交/ })).not.toBeInTheDocument()
 })
 
-it('shows verified partition boundaries as text in the chart legend and equivalent table', async () => {
-  const payload = trendView({
+it('shows verified partition boundaries as text in the chart legend and equivalent table', async () => {  const payload = trendView({
     partitionCoverage: {
       status: 'verified', reason: null, preset: 'temporal-70-15-15', timezone: 'UTC',
       boundaries: [
@@ -119,4 +118,36 @@ it('shows verified partition boundaries as text in the chart legend and equivale
   expect(screen.getAllByText('训练 22')).toHaveLength(1)
   expect(screen.getAllByText('验证 20')).toHaveLength(1)
   expect(screen.getAllByText('测试 20')).toHaveLength(1)
+})
+
+it('keeps branch, model, query window and source count together in the trend header', async () => {
+  api()
+  render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={vi.fn()}/>)
+  const heading = await screen.findByRole('heading', { name: '风险走势' })
+  const meta = heading.parentElement?.textContent ?? ''
+  expect(meta).toContain('main')
+  expect(meta).toContain('model-original')
+  expect(meta).toContain('查询窗口 2026-10-01 — 2026-10-29')
+  expect(meta).toContain('2 次分析')
+})
+
+it('explains a project without comparable sources instead of leaving an unusable form', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/trend-groups')
+    ? response({ repositoryId: PROJECT, groups: [], limitations: ['仅列出用途为分支且具有完整冻结口径的成功分析。'] })
+    : response({}))
+  render(<ProjectTrends repositoryId={PROJECT} navigate={vi.fn()}/>)
+  expect(await screen.findByText('这个项目还没有可拼接的趋势来源')).toBeVisible()
+  const notice = screen.getByRole('region', { name: '趋势来源不足' })
+  expect(notice).toHaveTextContent('仅列出用途为分支且具有完整冻结口径的成功分析。')
+  expect(screen.queryByLabelText('趋势分析口径')).not.toBeInTheDocument()
+})
+
+it('states the external-model limit once without repeating the heading', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => String(path).endsWith('/trend-groups')
+    ? response({ repositoryId: PROJECT, groups: [GROUP], limitations: [] })
+    : response(trendView({ partitionCoverage: { status: 'external', reason: '外部模型，无本项目切分标签', preset: null, timezone: null, boundaries: [], partitions: {} } })))
+  render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={vi.fn()}/>)
+  const notice = await screen.findByRole('region', { name: '训练分区覆盖' })
+  expect(notice.textContent!.match(/外部模型，无本项目切分标签/g)).toHaveLength(1)
+  expect(notice).toHaveTextContent('分数来自外部模型，不标注训练、验证或测试成员，也不改变提交排序。')
 })

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 import type { AnalysisScope } from '@/features/projects/repositoryWorkspace'
 
@@ -9,9 +10,11 @@ const shortHash = (value: string | null) => value ? value.slice(0, 12) : null
 const identityText = (label: string, value: string) => label === '数据' ? value : shortHash(value) ?? value
 
 /** 结果卡顶部的分析口径：谁训练、用哪份数据、哪些提交是模型没见过的。 */
-export function AnalysisScopeCard({ scope, onOpenDataset }: {
+export function AnalysisScopeCard({ scope, onOpenDataset, bare = false }: {
   scope: AnalysisScope
   onOpenDataset: () => void
+  /** 嵌入对话框或合并卡片时不重复外框。 */
+  bare?: boolean
 }) {
   const trained = scope.strategy === 'repository-trained'
   const split = scope.split
@@ -29,7 +32,7 @@ export function AnalysisScopeCard({ scope, onOpenDataset }: {
     ['无信息 AP', decimal(metrics.referenceAp)],
     ['F1', decimal(metrics.f1)],
   ] : []
-  return <section className="grid gap-3 rounded-md border border-border-soft bg-card p-card" aria-label="分析口径">
+  return <section className={cn('grid gap-3', !bare && 'rounded-md border border-border-soft bg-card p-card')} aria-label="分析口径">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="flex items-start gap-2">
         <span className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${trained ? 'bg-blue-soft text-blue-deep' : 'bg-soft text-foreground-3'}`}>

@@ -8,6 +8,7 @@ import { EmptyState, FailureNotice } from '@/components/shared/Feedback'
 import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 import { ModelCardDialog } from '@/features/models/components/ModelCardDialog'
+import { trainingMethodName } from '@/features/training/trainingPresentation'
 import type { Route } from '@/app/navigation'
 
 function paramsText(parameters: Record<string, unknown> | null): string {
@@ -46,7 +47,7 @@ export function MyModelsPage({ navigate, onLoginRequired }: {
     {!models.length ? <EmptyState title="还没有自己的模型" description="完成训练后，登记结果即可在这里查看。">
       <Button variant='default' onClick={() => navigate({ name: 'my-training' })} type="button">去训练</Button>
     </EmptyState> : <div className="grid gap-2">{models.map(model => <article key={model.modelId} className="grid gap-1.5 rounded-xl border border-border-soft bg-card p-card">
-      <div className="flex flex-wrap items-baseline justify-between gap-2"><strong className="text-sm font-medium text-foreground">{model.name}</strong><span className="text-xs text-foreground-3">{model.method} · {model.featureSchemaVersion}</span></div>
+      <div className="flex flex-wrap items-baseline justify-between gap-2"><strong className="text-sm font-medium text-foreground">{model.name}</strong><span className="text-xs text-foreground-3"><Button size="sm" variant="link" className="h-auto p-0 text-xs font-normal" onClick={() => navigate({ name: 'algorithms', method: model.method })} type="button">{trainingMethodName(model.method)}</Button> · {model.featureSchemaVersion}</span></div>
       <code className="break-all font-mono text-[11px] text-foreground-3">{paramsText(model.parameters)}</code>
       <div className="flex flex-wrap items-center gap-2"><span className={model.state === 'ready' ? 'rounded-sm bg-teal-soft px-1.5 py-0.5 text-[11px] text-teal-deep' : 'rounded-sm bg-rose-soft px-1.5 py-0.5 text-[11px] text-rose-deep'}>{model.state === 'ready' ? '已校验' : '不可用'}</span><span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{model.enabled ? '已启用' : '已停用'}</span><Button size="sm" variant="ghost" onClick={() => setCardId(model.modelId)} type="button">查看模型卡</Button></div>
       {model.datasetVersion ? <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 border-t border-border-soft pt-1.5">

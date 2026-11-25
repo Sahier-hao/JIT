@@ -250,7 +250,7 @@ it('shows the current result and opens the pinned review', async () => {
   const navigate = vi.fn()
   render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: 'demo-project' })).toBeVisible()
-  expect(screen.getByRole('heading', { name: '当前分析结果' })).toBeVisible()
+  expect(screen.getByRole('region', { name: '当前分析结果' })).toBeVisible()
   expect(screen.getByRole('button', { name: '数据来源' })).toBeVisible()
   await userEvent.setup().click(screen.getByRole('button', { name: '查看提交明细' }))
   expect(navigate).toHaveBeenCalledWith({ name: 'analysis', repositoryId: REPO, viewSyncId: SYNC, view: 'commits' })
@@ -358,20 +358,23 @@ it('keeps following a queued job until the result is available', async () => {
   await waitFor(() => expect(document.querySelectorAll('[data-current]').length).toBeGreaterThan(0), { timeout: 7000 })
 })
 
-it('lets users reach an older analysis beyond the first ten', async () => {
+it('keeps recent analyses inside the scrollable record card', async () => {
   const fetch = mockApi(); const original = fetch.getMockImplementation()!
   fetch.mockImplementation(async (input, init) => {
     const url = new URL(String(input), 'http://localhost')
     if (url.pathname.endsWith('/syncs')) {
-      const offset = Number(url.searchParams.get('offset'))
-      return response({ repositoryId: REPO, syncs: offset ? [job({ syncId: OTHER })] : Array.from({ length: 10 }, (_, i) => job({ syncId: `${i.toString(16).padStart(8, '0')}-1111-4111-8111-111111111111` })), total: 11, limit: 10, offset })
+      const syncs = Array.from({ length: 12 }, (_, i) => job({ syncId: `${i.toString(16).padStart(8, '0')}-1111-4111-8111-111111111111` }))
+      return response({ repositoryId: REPO, syncs, total: 12, limit: 100, offset: 0 })
     }
     return original(input, init)
   })
-  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>); const user = userEvent.setup()
+  render(<ProjectPage repositoryId={REPO} tab="analyses" navigate={vi.fn()}/>)
   await screen.findByRole('heading', { name: 'demo-project' })
-  await user.click(screen.getByRole('button', { name: '下一页' }))
-  expect(await screen.findByRole('article', { name: `分析记录 ${OTHER}` })).toBeVisible()
+  const cards = await screen.findAllByRole('article', { name: /^分析记录 / })
+  expect(cards).toHaveLength(12)
+  expect(screen.getByText('共 12 次分析')).toBeVisible()
+  expect(screen.queryByRole('button', { name: '下一页' })).not.toBeInTheDocument()
+  expect(screen.getByLabelText('分析记录').querySelector('.overflow-y-auto')).not.toBeNull()
 })
 
 it('restores the bound fallback model on retry even if the administrator default changed', async () => {

@@ -25,7 +25,7 @@ export function RecordRow({ job, current, selecting, onOpen, onCompare, onSelect
     </p>
     <p className="mt-0.5 text-xs text-foreground-3">{meta}{selecting && switchable ? ' · 正在切换…' : ''}</p>
   </div>
-  return <article className={cn('rounded-sm border p-2.5', current ? 'border-accent bg-accent-soft/40' : 'border-border-soft bg-card')} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
+  return <article className={cn('rounded-sm border p-2.5 transition-colors', current ? 'border-accent bg-accent-soft/40 hover:bg-accent-soft/60' : 'border-border-soft bg-card hover:border-foreground-4/40 hover:bg-sunken/60')} data-current={current || undefined} aria-label={`分析记录 ${job.syncId}`}>
     <div className="flex items-start justify-between gap-2">
       {switchable ? <Button variant="ghost" type="button" className="h-auto min-w-0 flex-1 whitespace-normal border-0 bg-transparent text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" disabled={selecting} onClick={onSelect} aria-label={`将 ${shortId} 设为当前结果`}>{text}</Button> : text}
       <RecordMenu pendingCancel={pendingCancel} onOpen={isPR ? onOpenPR : completed ? onOpen : undefined} openLabel={isPR ? '查看原 PR 快照' : '打开结果'} openBusy={isPR ? openingPR : undefined} onCompare={onCompare} onRetry={!active && !completed && !isPR ? onRetry : undefined} onCancel={active && !pendingCancel ? onCancel : undefined} onDetail={onDetail} onSelect={completed && !current && !isPR ? onSelect : undefined} onDelete={!active ? onDelete : undefined} cancelBusy={cancelBusy} deleteBusy={deleteBusy}/>

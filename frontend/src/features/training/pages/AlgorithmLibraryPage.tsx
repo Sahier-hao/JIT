@@ -10,6 +10,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
 import { AlgorithmDiagram } from '@/features/training/components/AlgorithmDiagram'
+import type { Route } from '@/app/navigation'
 
 const CATEGORY_LABELS: Record<string, string> = { classic: '经典模型', deep: '深度模型' }
 const PREPROCESS_LABELS: Record<string, string> = { scale: '特征标准化' }
@@ -38,7 +39,11 @@ function MethodListItem({ method, selected, onSelect }: {
   </button>
 }
 
-export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () => void }) {
+export function AlgorithmLibraryPage({ onLoginRequired, method, navigate }: {
+  onLoginRequired: () => void
+  method?: string
+  navigate?: (route: Route) => void
+}) {
   const [methods, setMethods] = useState<MethodChoice[] | null>(null)
   const [schema, setSchema] = useState('')
   const [category, setCategory] = useState<'all' | 'classic' | 'deep'>('all')
@@ -62,6 +67,14 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
     return () => controller.abort()
   }, [onLoginRequired, reload])
 
+  useEffect(() => {
+    if (!methods || !method) return
+    const target = methods.find(item => item.method === method)
+    if (!target) return
+    setSelected(target.method)
+    setCategory(current => current === 'all' || current === target.category ? current : 'all')
+  }, [method, methods])
+
   const visible = useMemo(() => (methods ?? []).filter(method => category === 'all' || method.category === category),
     [category, methods])
   const selectedMethod = visible.find(method => method.method === selected) ?? visible[0] ?? null
@@ -70,6 +83,11 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
     classic: methods?.filter(method => method.category === 'classic').length ?? 0,
     deep: methods?.filter(method => method.category === 'deep').length ?? 0,
   }), [methods])
+
+  function select(methodId: string) {
+    setSelected(methodId)
+    if (methodId !== method) navigate?.({ name: 'algorithms', method: methodId })
+  }
 
   if (methods === null && !error) return <section className="grid gap-4"><WorkspacePageHeader title="算法库"/><LoadingNotice label="正在读取算法库"/></section>
 
@@ -99,7 +117,7 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
         <div className="grid max-h-[460px] min-h-0 flex-1 content-start auto-rows-max gap-1 overflow-y-auto p-2 lg:max-h-none">
           {visible.length ? visible.map(method => <MethodListItem key={method.method} method={method}
             selected={selectedMethod?.method === method.method}
-            onSelect={() => setSelected(method.method)}/>) : <p className="px-3 py-5 text-center text-xs text-foreground-3">该分类没有方法。</p>}
+            onSelect={() => select(method.method)}/>) : <p className="px-3 py-5 text-center text-xs text-foreground-3">该分类没有方法。</p>}
         </div>
       </aside>
       </div>
@@ -111,9 +129,14 @@ export function AlgorithmLibraryPage({ onLoginRequired }: { onLoginRequired: () 
             <h2 className="mt-1 text-xl font-semibold text-foreground">{selectedMethod.name}</h2>
             <p className="mt-1 max-w-[720px] text-sm leading-6 text-foreground-3">{selectedMethod.guide.summary}</p>
           </div>
-          <span className={cn('shrink-0 rounded-md px-2.5 py-1 text-[11px]', selectedMethod.available ? 'bg-teal-soft text-teal-deep' : 'bg-amber-soft text-amber-deep')}>
-            {selectedMethod.available ? '当前可训练' : selectedMethod.reason ?? '当前不可用'}
-          </span>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <span className={cn('rounded-md px-2.5 py-1 text-[11px]', selectedMethod.available ? 'bg-teal-soft text-teal-deep' : 'bg-amber-soft text-amber-deep')}>
+              {selectedMethod.available ? '当前可训练' : selectedMethod.reason ?? '当前不可用'}
+            </span>
+            {navigate && selectedMethod.available ? <Button type="button" size="sm" onClick={() => navigate({ name: 'my-training', method: selectedMethod.method })}>
+              以此方法训练
+            </Button> : null}
+          </div>
         </div>
 
         <section className="grid gap-2" aria-labelledby="algorithm-structure">

@@ -10,6 +10,7 @@ import { FailureNotice, LoadingNotice } from '@/components/shared/Feedback'
 import { ApiError } from '@/lib/apiContract'
 import { createTrendView, getTrendView, trendCommits, trendGroups, type TrendBucket, type TrendCommit, type TrendGroup, type TrendPartitionCounts, type TrendPartitionCoverage, type TrendView } from '@/features/projects/projectActivityClient'
 import { analysisRoute, repositoryRoute, type Route } from '@/app/navigation'
+import { useModelName } from '@/features/models/modelClient'
 import { displayTime } from '@/lib/domain'
 
 const number = (v: number | null) => v == null ? '未知' : v.toLocaleString()
@@ -25,7 +26,7 @@ export function partitionCountsText(counts: TrendPartitionCounts | null): string
 }
 export function rateReason(reason: string | null): string { return reason ? ({ insufficient_sample: '已评分样本不足 20', small_sample: '已评分样本不足 20', no_scored_commits: '无已评分提交', uncovered: '未覆盖', no_commits: '无提交', insufficientSample: '已评分样本不足 20', noScoredCommits: '无已评分提交' }[reason] ?? reason) : '比例不可用' }
 export function coverageLabel(value: unknown): string { if (value == null) return '未知覆盖'; if (typeof value === 'string') return ({ complete: '完整覆盖', partial: '部分覆盖', unknown: '未知覆盖', uncovered: '未覆盖', observed: '仅已保存观测' }[value] ?? value); return JSON.stringify(value) }
-export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, switchSlot }: { repositoryId: string; viewId?: string; currentSyncId?: string; navigate: (r: Route, replace?: boolean) => void; switchSlot?: React.ReactNode }) {
+export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate }: { repositoryId: string; viewId?: string; currentSyncId?: string; navigate: (r: Route, replace?: boolean) => void }) {
   const [groups, setGroups] = useState<TrendGroup[]>([]), [limitations, setLimitations] = useState<string[]>([]), [groupId, setGroupId] = useState(''), [sourceId, setSourceId] = useState('')
   const [start, setStart] = useState(''), [end, setEnd] = useState(''), [grain, setGrain] = useState<TrendView['grain']>('week')
   const [view, setView] = useState<TrendView | null>(null), [error, setError] = useState<unknown>(null), [groupsError, setGroupsError] = useState<unknown>(null), [busy, setBusy] = useState(false), [attempt, setAttempt] = useState(0)
@@ -62,22 +63,28 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
     } catch (e) { setError(e) } finally { lock.current = false; setBusy(false) }
   }
   const selected = groups.find(g => g.groupId === groupId) ?? (view?.group.groupId === groupId ? view.group : null)
+  const modelName = useModelName(view?.group.modelId)
   const conflict = error instanceof ApiError && error.code === 'TREND_SOURCE_CONFLICT'
   const pendingFilters = view && (start !== view.start.slice(0, 10) || end !== view.end.slice(0, 10) || grain !== view.grain || groupId !== (view.group.groupId ?? '') || sourceId !== (view.mode === 'single' ? view.sourceSyncIds[0] ?? '' : ''))
   return <section className="project-trends grid gap-3"><header className="flex flex-wrap items-start justify-between gap-3 border-b border-border-soft pb-3">
     <div className="grid gap-0.5">
       <h2 className="text-base font-semibold text-foreground">风险走势</h2>
       {view
-        ? <p className="text-xs text-foreground-3"><span>{view.group.branch ?? '未登记分支'}</span><span className="mx-1.5 text-foreground-4" aria-hidden="true">·</span><span>{GRAIN_LABELS[view.grain]}</span><span className="mx-1.5 text-foreground-4" aria-hidden="true">·</span><span>{view.start.slice(0, 10)} — {view.end.slice(0, 10)}</span></p>
+        ? <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-foreground-3">
+          <span>{view.group.branch ?? '未登记分支'}</span><span aria-hidden="true" className="text-foreground-4">·</span>
+          <span>{modelName ?? view.group.modelId ?? '未登记模型'}</span><span aria-hidden="true" className="text-foreground-4">·</span>
+          <span>{GRAIN_LABELS[view.grain]}</span><span aria-hidden="true" className="text-foreground-4">·</span>
+          <span>查询窗口 {view.start.slice(0, 10)} — {view.end.slice(0, 10)}</span><span aria-hidden="true" className="text-foreground-4">·</span>
+          <span>{view.sourceSyncIds.length} 次分析</span>
+        </p>
         : <p className="text-xs text-foreground-3">按分支与模型口径聚合的提交风险走势。</p>}
     </div>
     {view ? <div className="flex flex-wrap items-center gap-2">
-      {switchSlot}
       {view.hasNewSources && !filtersOpen && !pendingFilters ? <Button size="sm" variant='default' onClick={() => void generate()} type="button">生成新的固定视图</Button> : null}
       <Button size="sm" variant="ghost" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(open => !open)} type="button">{filtersOpen ? '收起筛选' : '调整口径'}</Button>
     </div> : null}
   </header>
-    {!view || filtersOpen ? <><form className="flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); void generate() }}><label className="grid gap-1"><span className="text-xs text-foreground-3">开始日期</span><Input type="date" aria-label="趋势开始日期" value={start} onChange={e => setStart(e.target.value)}/></label><label className="grid gap-1"><span className="text-xs text-foreground-3">结束日期（不含）</span><Input type="date" aria-label="趋势结束日期（不含）" value={end} min={start || undefined} onChange={e => setEnd(e.target.value)}/></label><label className="grid gap-1"><span className="text-xs text-foreground-3">聚合</span><NativeSelect aria-label="趋势聚合粒度" value={grain} onChange={e => setGrain(e.target.value as TrendView['grain'])}><option value="day">按日</option><option value="week">按周</option><option value="month">按月</option></NativeSelect></label><label className="grid gap-1"><span className="text-xs text-foreground-3">可比分析口径</span><NativeSelect aria-label="趋势分析口径" value={groupId} onChange={e => { setGroupId(e.target.value); setSourceId('') }}><option value="">请选择分支与模型口径</option>{view && view.group.groupId && !groups.some(g => g.groupId === view.group.groupId) ? <option value={view.group.groupId}>原视图：{view.group.branch} / {view.group.modelId}</option> : null}{groups.map(g => <option key={g.groupId ?? g.sourceSyncIds.join(',')} value={g.groupId ?? ''}>{g.branch} / {g.modelId} / 运行 {g.runId?.slice(0, 8) ?? '未登记'} / {g.featureSchemaVersion} / {g.distributionRule}</option>)}</NativeSelect></label><label className="grid gap-1"><span className="text-xs text-foreground-3">来源范围</span><NativeSelect aria-label="趋势来源范围" value={sourceId} onChange={e => setSourceId(e.target.value)}><option value="">合并同口径分析（按 SHA 去重）</option>{selected?.sourceSyncIds.map(id => <option key={id} value={id}>仅单次分析 {id}</option>)}</NativeSelect></label><details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">手动指定分析</summary><label className="grid gap-1 p-2.5"><span className="text-xs text-foreground-3">单次固定分析（可选）</span><Input aria-label="单次固定分析标识" value={sourceId} onChange={e => setSourceId(e.target.value.trim())} placeholder="粘贴原 syncId，单独查看旧来源"/></label></details><Button type="submit" variant='default' disabled={busy || preparing || (!groupId && !sourceId) || Boolean(start && end && start >= end)}>{busy ? '正在读取…' : preparing ? '正在准备…' : view ? '生成新的固定视图' : '生成固定趋势'}</Button></form>
+    {filtersOpen || (!view && groups.length) ? <><form className="flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); void generate() }}><label className="grid gap-1"><span className="text-xs text-foreground-3">开始日期</span><Input type="date" aria-label="趋势开始日期" value={start} onChange={e => setStart(e.target.value)}/></label><label className="grid gap-1"><span className="text-xs text-foreground-3">结束日期（不含）</span><Input type="date" aria-label="趋势结束日期（不含）" value={end} min={start || undefined} onChange={e => setEnd(e.target.value)}/></label><label className="grid gap-1"><span className="text-xs text-foreground-3">聚合</span><NativeSelect aria-label="趋势聚合粒度" value={grain} onChange={e => setGrain(e.target.value as TrendView['grain'])}><option value="day">按日</option><option value="week">按周</option><option value="month">按月</option></NativeSelect></label><label className="grid gap-1"><span className="text-xs text-foreground-3">可比分析口径</span><NativeSelect aria-label="趋势分析口径" value={groupId} onChange={e => { setGroupId(e.target.value); setSourceId('') }}><option value="">请选择分支与模型口径</option>{view && view.group.groupId && !groups.some(g => g.groupId === view.group.groupId) ? <option value={view.group.groupId}>原视图：{view.group.branch} / {view.group.modelId}</option> : null}{groups.map(g => <option key={g.groupId ?? g.sourceSyncIds.join(',')} value={g.groupId ?? ''}>{g.branch} / {g.modelId} / 运行 {g.runId?.slice(0, 8) ?? '未登记'} / {g.featureSchemaVersion} / {g.distributionRule}</option>)}</NativeSelect></label><label className="grid gap-1"><span className="text-xs text-foreground-3">来源范围</span><NativeSelect aria-label="趋势来源范围" value={sourceId} onChange={e => setSourceId(e.target.value)}><option value="">合并同口径分析（按 SHA 去重）</option>{selected?.sourceSyncIds.map(id => <option key={id} value={id}>仅单次分析 {id}</option>)}</NativeSelect></label><details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">手动指定分析</summary><label className="grid gap-1 p-2.5"><span className="text-xs text-foreground-3">单次固定分析（可选）</span><Input aria-label="单次固定分析标识" value={sourceId} onChange={e => setSourceId(e.target.value.trim())} placeholder="粘贴原 syncId，单独查看旧来源"/></label></details><Button type="submit" variant='default' disabled={busy || preparing || (!groupId && !sourceId) || Boolean(start && end && start >= end)}>{busy ? '正在读取…' : preparing ? '正在准备…' : view ? '生成新的固定视图' : '生成固定趋势'}</Button></form>
     {pendingFilters ? <p className="text-xs text-amber-deep" role="status">筛选尚未应用。图表和数据表仍属于原固定视图；生成新的固定视图后才采用这些条件。</p> : null}
     </> : null}
     {sourceId && selected && !selected.sourceSyncIds.includes(sourceId) ? <p className="text-xs text-amber-deep" role="status">手动指定的分析不在当前口径列表中；生成固定视图时只读取该分析。<Button size="sm" variant="link" onClick={() => setSourceId('')} type="button">清除手动指定</Button></p> : null}
@@ -86,7 +93,12 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
     {conflict ? <div role="alert" className="rounded-sm border border-rose/30 bg-rose-soft p-2.5 text-xs text-rose-deep"><p>同 SHA 的保存观测存在冲突，未自动选另一组或丢弃样本。请在“来源范围”明确选择一次分析后重新生成。</p>{error.details.some(detail => detail.commitId) ? <ul>{error.details.filter(detail => detail.commitId).map(detail => <li key={`${detail.commitId}:${detail.sourceSyncIds?.join(',')}`}><code>{detail.commitId}</code> · 冲突来源 {detail.sourceSyncIds?.join('、')} · 字段 {detail.conflictingFields?.join('、')}</li>)}</ul> : null}</div> : null}
     {busy && !view ? <LoadingNotice label="正在准备固定趋势来源"/> : null}
     {preparing && !view ? <LoadingNotice label="正在按当前口径准备默认固定视图"/> : null}
-    {!view && !busy && !preparing && !error && groupsReady && !groupsError ? <p className="py-6 text-center text-xs text-foreground-3">{groups.length ? '暂未生成趋势视图。核对口径后可手动生成，地址可用于返回同一份来源。' : '尚无可比较的分支分析结果。点击「分析分支提交」可发起分析。'}</p> : null}
+    {!view && !busy && !preparing && !error && groupsReady && !groupsError && groups.length ? <p className="py-6 text-center text-xs text-foreground-3">暂未生成趋势视图。核对口径后可手动生成，地址可用于返回同一份来源。</p> : null}
+    {!view && !busy && !preparing && groupsReady && !groupsError && !groups.length ? <section className="grid gap-2 rounded-sm border border-border-soft p-3" aria-label="趋势来源不足">
+      <strong className="text-sm font-semibold text-foreground">这个项目还没有可拼接的趋势来源</strong>
+      <p className="text-xs leading-body text-foreground-3">只有分支用途且冻结口径完整的成功分析才计入趋势；当前分析结果不受影响，可在「分析结果」继续查看。</p>
+      {limitations.length ? <ul className="grid gap-1 text-xs text-foreground-4">{limitations.map((value, index) => <li key={index}>{value}</li>)}</ul> : null}
+    </section> : null}
     {view ? <div className="grid gap-3" aria-busy={busy}>
       {view.hasNewSources ? <p className="rounded-sm border border-amber/30 bg-amber-soft p-2.5 text-xs text-amber-deep" role="status"><strong>有新的分支分析来源，当前视图保持不变。</strong></p> : null}
       <dl className="grid border-y border-border-soft sm:grid-cols-2 lg:grid-cols-4">
@@ -96,12 +108,7 @@ export function ProjectTrends({ repositoryId, viewId, currentSyncId, navigate, s
         <div className="grid gap-0.5 px-3 py-2"><dt className="text-xs text-foreground-3">高分占比</dt><dd className="text-2xl font-semibold tabular-nums text-foreground">{percent(view.summary.highRate)}</dd><small className="text-[11px] text-foreground-4">{view.summary.highRate == null ? rateReason(view.summary.rateReason) : '占已评分提交'}</small></div>
       </dl>
       <PartitionCoverage coverage={view.partitionCoverage}/>
-      {view.buckets.length ? <div className="grid gap-1.5">
-        <div className="trend-coverage flex h-2 gap-px overflow-hidden rounded-full bg-strong" aria-hidden="true">
-          {view.buckets.map(b => <span key={b.start} className="flex-1 data-[state=scored]:bg-accent data-[state=unknown]:bg-strong" data-state={(b.scoredCount ?? 0) > 0 ? 'scored' : 'unknown'} title={`${b.start.slice(0, 10)} 至 ${b.end.slice(0, 10)}：${(b.scoredCount ?? 0) > 0 ? `已评分 ${b.scoredCount} 条` : '无已评分提交'}`}/>) }
-        </div>
-        <p className="text-xs text-foreground-3">{view.buckets.filter(b => (b.scoredCount ?? 0) > 0).length} 个时间段有已评分提交；其余 {view.buckets.filter(b => (b.scoredCount ?? 0) === 0).length} 个未证明覆盖，按未知处理，不画成 0。</p>
-      </div> : null}
+      {view.buckets.length ? <p className="text-xs text-foreground-3">{view.buckets.filter(b => (b.scoredCount ?? 0) > 0).length} 个时间段有已评分提交；其余 {view.buckets.filter(b => (b.scoredCount ?? 0) === 0).length} 个未证明覆盖，按未知处理，不画成 0。</p> : null}
       {view.buckets.length ? <div className="grid gap-3 lg:grid-cols-2"><TrendPlot key={`risk:${view.viewId}`} buckets={view.buckets} kind="risk" coverage={view.partitionCoverage} onBucket={setBucket}/><TrendPlot key={`rate:${view.viewId}`} buckets={view.buckets} kind="rate" coverage={view.partitionCoverage} onBucket={setBucket}/></div> : <p className="py-6 text-center text-xs text-foreground-3">此固定范围没有可展示的时间桶；未推断为零。</p>}
       <details className="rounded-sm border border-border-soft"><summary className="cursor-pointer px-3 py-2 text-sm font-medium text-foreground-2">逐周数据（{view.buckets.length} 行）</summary><div className="overflow-x-auto"><Table className="admin-table w-full border-collapse text-xs [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2 [&_td]:py-1.5 [&_td]:tabular-nums"><caption className="px-2 py-1.5 text-left text-xs text-foreground-3">趋势等价数据表：风险分为模型估计，高分占比不是缺陷率；分区计数只表示模型训练成员覆盖</caption><TableHeader><TableRow><TableHead scope="col">时间段（结束不含）</TableHead><TableHead scope="col">已分析</TableHead><TableHead scope="col">已评分</TableHead><TableHead scope="col">未知分数</TableHead><TableHead scope="col">高分</TableHead><TableHead scope="col">高分占比</TableHead><TableHead scope="col">平均风险分</TableHead><TableHead scope="col">训练分区覆盖</TableHead><TableHead scope="col">覆盖 / 比例说明</TableHead><TableHead scope="col">固定来源下钻</TableHead></TableRow></TableHeader><TableBody>{view.buckets.map(b => <TableRow key={b.start}><TableHead scope="row">{b.start.slice(0, 10)} 至 {b.end.slice(0, 10)}</TableHead><TableCell>{number(b.commitCount)}</TableCell><TableCell>{number(b.scoredCount)}</TableCell><TableCell>{number(b.unknownCount)}</TableCell><TableCell>{number(b.highCount)}</TableCell><TableCell>{percent(b.highRate)}</TableCell><TableCell>{score(b.riskMean)}</TableCell><TableCell>{partitionCountsText(b.partitions)}</TableCell><TableCell>{coverageLabel(b.coverage)}{b.highRate == null ? `；${rateReason(b.rateReason)}` : ''}</TableCell><TableCell><Button type="button" onClick={() => setBucket(b)} variant="outline">查看提交</Button></TableCell></TableRow>)}</TableBody></Table></div></details>
       {bucket ? <TrendDrilldown key={`${view.viewId}:${bucket.start}`} repositoryId={repositoryId} view={view} bucket={bucket} navigate={navigate} onClose={() => setBucket(null)}/> : null}
@@ -121,9 +128,15 @@ const PLOT_TITLES = { risk: '平均模型风险分', rate: '高分提交占已�
 
 function PartitionCoverage({ coverage }: { coverage: TrendPartitionCoverage }) {
   if (coverage.status !== 'verified') {
+    const title = coverage.status === 'external' ? '外部模型，无本项目切分标签' : '训练分区未知'
+    const detail = coverage.reason && coverage.reason !== title
+      ? coverage.reason
+      : coverage.status === 'external'
+        ? '分数来自外部模型，不标注训练、验证或测试成员，也不改变提交排序。'
+        : '缺少可核对的模型运行、数据版本或成员谱系，不从日期或模型名称猜测。'
     return <section className="grid gap-2 rounded-sm border border-border-soft p-3" aria-label="训练分区覆盖">
-      <strong className="text-sm font-semibold text-foreground">{coverage.status === 'external' ? '外部模型，无本项目切分标签' : '训练分区未知'}</strong>
-      <p className="text-xs leading-body text-foreground-3">{coverage.reason ?? '缺少可核对的模型运行、数据版本或成员谱系，不从日期或模型名称猜测。'}</p>
+      <strong className="text-sm font-semibold text-foreground">{title}</strong>
+      <p className="text-xs leading-body text-foreground-3">{detail}</p>
     </section>
   }
   const rows = [
@@ -225,8 +238,8 @@ export function trendOption(buckets: TrendBucket[], kind: 'risk' | 'rate', color
       ...(missing.length ? {
         markArea: {
           silent: true,
-          itemStyle: { color: colors.axis, opacity: 0.22 },
-          label: { show: true, position: 'insideTop' as const, distance: 6, color: colors.text, fontSize: 11, formatter: '无已评分提交' },
+          itemStyle: { color: colors.axis, opacity: 0.12 },
+          label: { show: true, position: 'insideTop' as const, distance: 6, color: colors.text, fontSize: 10, formatter: '无已评分提交' },
           data: missing.map(([from, to]) => [{ xAxis: from }, { xAxis: to }]),
         },
       } : {}),
@@ -258,8 +271,8 @@ function TrendPlot({ buckets, kind, coverage, onBucket }: { buckets: TrendBucket
     else if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (active != null) data.current.onBucket(buckets[active]) }
     else if (event.key === 'Escape') { setActive(null); chart.current?.dispatchAction({ type: 'downplay', seriesIndex: 0 }); chart.current?.dispatchAction({ type: 'hideTip' }) }
   }
-  return <figure className="project-trend-figure grid gap-2 rounded-sm border border-border-soft p-3"><figcaption className="grid gap-0.5"><h3 className="text-sm font-semibold text-foreground">{title}</h3><p className="text-xs text-foreground-3">{kind === 'risk' ? '单轴折线图；按已评分提交取平均，空白表示该时间段没有已评分提交' : '单轴折线图；样本不足或无评分时断开，不画成 0'}</p></figcaption>
-    <div className="trend-plot outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" tabIndex={0} role="group" aria-label={`${title}折线图，共 ${buckets.length} 个时间段；左右方向键选择时间段，回车查看提交`} onKeyDown={keys} onFocus={() => { if (active === null) show(buckets.length - 1) }} onBlur={() => { setActive(null); chart.current?.dispatchAction({ type: 'hideTip' }) }}>
+  return <figure className="project-trend-figure grid min-w-0 gap-2 rounded-sm border border-border-soft p-3"><figcaption className="grid gap-0.5"><h3 className="text-sm font-semibold text-foreground">{title}</h3><p className="text-xs text-foreground-3">{kind === 'risk' ? '单轴折线图；按已评分提交取平均，空白表示该时间段没有已评分提交' : '单轴折线图；样本不足或无评分时断开，不画成 0'}</p></figcaption>
+    <div className="trend-plot min-w-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" tabIndex={0} role="group" aria-label={`${title}折线图，共 ${buckets.length} 个时间段；左右方向键选择时间段，回车查看提交`} onKeyDown={keys} onFocus={() => { if (active === null) show(buckets.length - 1) }} onBlur={() => { setActive(null); chart.current?.dispatchAction({ type: 'hideTip' }) }}>
       <EChartCanvas option={option} height={240} label={`${title}折线图`} onChart={instance => {
         chart.current = instance
         instance.on('click', params => {

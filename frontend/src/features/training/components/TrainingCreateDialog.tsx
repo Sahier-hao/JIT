@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ApiError, NetworkError } from '@/lib/apiContract'
 import { cn } from '@/lib/utils'
@@ -57,10 +56,11 @@ function SplitSummary({ preview }: { preview: UserSplitPreview }) {
   </div>
 }
 
-export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion, onCreated, onLoginRequired, onOpenData }: {
+export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion, initialMethod, onCreated, onLoginRequired, onOpenData }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialDatasetVersion?: string
+  initialMethod?: string
   onCreated: (experiment: TrainingExperiment) => void
   onLoginRequired: () => void
   onOpenData: () => void
@@ -72,8 +72,9 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
   const [chosen, setChosen] = useState<string[]>([])
   const [params, setParams] = useState<Record<string, Record<string, string>>>({})
   const [preview, setPreview] = useState<UserSplitPreview | null>(null)
-  const [methodsOpen, setMethodsOpen] = useState(false)
+  const [initialNote, setInitialNote] = useState('')
   const [libraryOpen, setLibraryOpen] = useState(false)
+  const [libraryMethod, setLibraryMethod] = useState<string>()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const submission = useRef<AbortController | null>(null)
@@ -91,8 +92,8 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
     setError('')
     setDatasets(null)
     setSelected('')
-    setMethodsOpen(false)
     setLibraryOpen(false)
+    setLibraryMethod(undefined)
     userDatasets('usable', controller.signal).then(({ datasets: value }) => {
       if (controller.signal.aborted) return
       const preferred = value.find(item => item.version === initialDatasetVersion) ?? value[0]
@@ -112,15 +113,25 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
     setMethods([])
     setChosen([])
     setParams({})
+    setInitialNote('')
     if (!open || !schema) return
     const controller = new AbortController()
     trainingMethods(schema, controller.signal).then(value => {
-      if (!controller.signal.aborted) setMethods(value.methods.filter(item => item.supportedSchema))
+      if (controller.signal.aborted) return
+      const usable = value.methods.filter(item => item.supportedSchema)
+      setMethods(usable)
+      const candidate = value.methods.find(item => item.method === initialMethod)
+      if (candidate && candidate.supportedSchema && candidate.available) {
+        setChosen([candidate.method])
+        setParams(values => values[candidate.method] ? values : { ...values, [candidate.method]: paramsFor(candidate) })
+      } else if (candidate) {
+        setInitialNote(candidate.supportedSchema ? candidate.reason ?? '该方法当前不可用' : '该方法不支持当前数据的特征规范')
+      }
     }).catch(failure => {
       if (!controller.signal.aborted) reportFailure(failure, '训练方法读取失败')
     })
     return () => controller.abort()
-  }, [open, schema, onLoginRequired])
+  }, [open, schema, initialMethod, onLoginRequired])
 
   useEffect(() => {
     setPreview(null)
@@ -139,6 +150,10 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
     return choice ? [choice] : []
   })
 
+  function paramsFor(choice: MethodChoice) {
+    return Object.fromEntries(choice.params.map(param => [param.name, param.default == null ? '' : String(param.default)]))
+  }
+
   function toggle(choice: MethodChoice) {
     setChosen(values => {
       if (values.includes(choice.method)) return values.filter(item => item !== choice.method)
@@ -146,7 +161,7 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
     })
     setParams(values => values[choice.method] ? values : {
       ...values,
-      [choice.method]: Object.fromEntries(choice.params.map(param => [param.name, param.default == null ? '' : String(param.default)])),
+      [choice.method]: paramsFor(choice),
     })
   }
 
@@ -228,42 +243,43 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
             <section className="grid min-w-0 content-start gap-3 p-5 sm:px-6" aria-label="训练方法">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold">训练方法</h2>
-                <Button type="button" size="xs" variant="ghost" disabled={!methods.length || busy} onClick={() => setLibraryOpen(true)}>
-                  <BookOpenText aria-hidden="true" size={13}/>算法库
-                </Button>
-              </div>
-              <Popover open={methodsOpen} onOpenChange={setMethodsOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" className="w-full justify-between font-normal" disabled={!methods.length || busy} aria-label="选择训练方法">
-                    选择训练方法<ChevronDown aria-hidden="true" className="text-foreground-3" size={15}/>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs tabular-nums text-foreground-3">{`已选 ${chosen.length} / ${MAX_METHODS}`}</span>
+                  <Button type="button" size="xs" variant="ghost" disabled={!methods.length || busy}
+                    onClick={() => { setLibraryMethod(undefined); setLibraryOpen(true) }}>
+                    <BookOpenText aria-hidden="true" size={13}/>算法库
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-[min(88vw,25rem)] p-2">
-                  <div className="max-h-64 overflow-auto">
-                    {methods.map(choice => {
-                      const checked = chosen.includes(choice.method)
-                      const disabled = !choice.available || (!checked && chosen.length >= MAX_METHODS)
-                      return <label key={choice.method} className={cn('flex items-start gap-2 rounded-md px-2 py-2 text-sm', disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-sunken')}>
-                        <Checkbox checked={checked} disabled={disabled} onCheckedChange={() => toggle(choice)}/>
-                        <span className="min-w-0">{choice.name}{!choice.available && choice.reason ? <span className="block text-xs text-foreground-3">{choice.reason}</span> : null}</span>
-                      </label>
-                    })}
-                  </div>
-                  <div className="flex items-center justify-between border-t border-border-soft pt-2">
-                    <span className="px-2 text-xs text-foreground-3">已选 {chosen.length} / {MAX_METHODS}</span>
-                    <Button size="sm" type="button" onClick={() => setMethodsOpen(false)}><Check aria-hidden="true" size={14}/>完成</Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                </div>
+              </div>
+              {methods.length ? <div role="group" aria-label="选择训练方法"
+                className="grid max-h-[12rem] grid-cols-1 gap-1 overflow-y-auto rounded-lg border border-border-soft p-1 sm:grid-cols-2">
+                {methods.map(choice => {
+                  const checked = chosen.includes(choice.method)
+                  const disabled = !choice.available || (!checked && chosen.length >= MAX_METHODS)
+                  return <label key={choice.method} title={choice.available ? choice.name : choice.reason ?? '当前不可用'}
+                    className={cn('flex min-w-0 items-center gap-2 rounded-md border px-2 py-1.5',
+                      checked ? 'border-accent/40 bg-accent-soft' : 'border-transparent',
+                      disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-sunken')}>
+                    <Checkbox checked={checked} disabled={disabled} onCheckedChange={() => toggle(choice)}/>
+                    <span className="min-w-0 flex-1 truncate text-sm">{choice.name}</span>
+                  </label>
+                })}
+              </div> : <p role="status" className="text-xs text-foreground-3">{schema ? '正在读取训练方法…' : '先选择数据版本'}</p>}
+              {initialNote ? <p role="status" className="text-xs text-amber-deep">{initialNote}</p> : null}
               {selectedMethods.length ? <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
                 {selectedMethods.map(choice => <li key={choice.method} className="px-3 py-2.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <Check className="size-3.5 shrink-0 text-accent" aria-hidden="true"/>
-                    <span className="min-w-0 flex-1 text-sm font-medium [overflow-wrap:anywhere]">{choice.name}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{choice.name}</span>
+                    <Button type="button" size="xs" variant="ghost" disabled={busy}
+                      onClick={() => { setLibraryMethod(choice.method); setLibraryOpen(true) }}>
+                      <BookOpenText aria-hidden="true" size={13}/>算法说明
+                    </Button>
                     <Button type="button" size="icon-xs" variant="ghost" disabled={busy} aria-label={'移除 ' + choice.name} onClick={() => toggle(choice)}>
                       <X aria-hidden="true"/>
                     </Button>
                   </div>
+                  <p className="mt-0.5 pl-5.5 text-xs leading-5 text-foreground-3">{choice.guide.summary}</p>
                   {choice.params.length ? <details className="group mt-0.5 pl-5.5">
                     <summary className="flex w-fit cursor-pointer list-none items-center gap-1 py-1 text-xs font-medium text-foreground-3 hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
                       参数<ChevronDown className="size-3 group-open:rotate-180" aria-hidden="true"/>
@@ -299,6 +315,6 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
         </div>
       </DialogFooter>
     </DialogContent>
-    <AlgorithmLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} methods={methods} schema={schema ?? '—'}/>
+    <AlgorithmLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} methods={methods} schema={schema ?? '—'} initialMethod={libraryMethod}/>
   </Dialog>
 }
