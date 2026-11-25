@@ -253,7 +253,7 @@ export async function cancelUserTask(taskId: string): Promise<TrainingTask> {
 }
 
 export async function retryUserTask(taskId: string): Promise<TrainingTask> {
-  return trainingTask(await apiRequest({ path: `/api/v1/user/training-tasks/${encodeURIComponent(taskId)}/retry`, method: 'POST', body: {} }))
+  return trainingTask(await apiRequest({ path: `/api/v1/user/training-tasks/${encodeURIComponent(taskId)}/retry`, method: 'POST', body: {}, timeoutMs: 45_000 }))
 }
 
 export function useUserSession() {

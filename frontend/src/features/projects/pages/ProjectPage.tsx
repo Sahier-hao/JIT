@@ -174,7 +174,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
   }
 
   return <section className="grid gap-4">
-    <header className="grid min-w-0 gap-2 rounded-xl border border-border-soft bg-card px-5 py-4">
+    <header className="grid min-w-0 gap-2 rounded-xl border border-border-soft bg-card px-4 py-4 [overflow-wrap:anywhere] sm:px-5">
             <Button className="justify-self-start" aria-label="全部项目" variant="ghost" size="sm" onClick={() => navigate({ name: 'repositories' })} type="button">{<ArrowLeft aria-hidden="true" focusable="false" strokeWidth={1.5} size={14}/>}全部项目</Button>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-sans text-2xl font-semibold leading-title tracking-tight text-foreground" title={repository.url}>{repository.displayName}</h1>
@@ -186,7 +186,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
             </div>
     </header>
 
-    <nav aria-label="项目工作台视图" className="flex gap-1 rounded-xl border border-border-soft bg-card p-1 shadow-[var(--sh-1)]">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分支分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={cn('rounded-lg border-0 px-4', String(activeTab) === String(option.value) ? 'bg-accent-soft text-accent' : 'text-foreground-3 hover:bg-hover')}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
+    <nav aria-label="项目工作台视图" className="flex flex-wrap gap-1 rounded-xl border border-border-soft bg-card p-1 shadow-[var(--sh-1)]">{([{ value: 'overview', label: '概览' }, { value: 'analyses', label: '分支分析' }, { value: 'prs', label: 'PR 审查' }]).map(option => <Button key={option.value} asChild variant="ghost" className={cn('rounded-lg border-0 px-4', String(activeTab) === String(option.value) ? 'bg-accent-soft text-accent' : 'text-foreground-3 hover:bg-hover')}><a {...linkTo(repositoryRoute(repositoryId, option.value as 'overview' | 'analyses' | 'prs' | 'trends'), navigate)} aria-current={String(activeTab) === String(option.value) ? 'page' : undefined}>{option.label}</a></Button>)}</nav>
 
     {activeTab === 'overview' ? <>
       <RepositoryOverviewView repositoryId={repositoryId} repository={repository} actions={<>

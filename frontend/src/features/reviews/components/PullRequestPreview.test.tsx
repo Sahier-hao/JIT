@@ -81,11 +81,16 @@ it('searches commits and explains one commit without leaving the read-only detai
   expect(screen.getByText('appOrder')).toBeVisible()
 })
 
-it('analyzes static candidates directly in the read-only preview', async () => {
+it('links a candidate outside the diff to fixed source and continues directly in its work sheet', async () => {
+  let checked = false
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
     const path = String(input)
     if (path.endsWith('/repository-models')) return response({ models: modelChoices })
-    if (path.includes('/candidates') && options?.method === 'POST') {
+    if (path.includes('/context?')) return response({ snapshotId: 'v1', path: 'src/token.py', side: 'head', ref: source.headSha,
+      complete: true, absent: false, totalLines: 4, content: 'try:\n    run()\nexcept:\n    pass\n' })
+    if (path.includes('/candidates')) {
+      if (options?.method === 'POST') checked = true
+      if (!checked) return response({ snapshotId: 'v1', coverage: null, candidates: [] })
       return response({
         snapshotId: 'v1',
         coverage: { analyzed: ['src/token.py'], skipped: [], analyzerVersion: 'python-ast-v1', side: 'head', selected: 1, totalFiles: 1 },
@@ -101,13 +106,18 @@ it('analyzes static candidates directly in the read-only preview', async () => {
   render(<PullRequestPreview source={source} repositoryId={PROJECT} navigate={navigate} onStart={vi.fn()}/>)
   const user = userEvent.setup()
   await user.click(await screen.findByText('handle expiry'))
-  await user.click(screen.getByRole('button', { name: '分析代码候选' }))
-  expect(await screen.findByText(/裸 except 会吞掉所有异常/)).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '检查当前文件' }))
+  await user.click(await screen.findByRole('button', { name: '定位目标第 3 行' }))
+  const marked = await screen.findByRole('button', { name: '查看目标第 3 行的可疑项' })
+  expect(marked.closest('[data-code-line="head:3"]')).not.toBeNull()
+  expect(screen.getByText(/裸 except 会吞掉所有异常/)).toBeVisible()
   expect(screen.getByText('指明需要捕获的异常类型')).toBeVisible()
-  expect(screen.getByText(/候选只作线索/)).toBeVisible()
   await user.click(screen.getByRole('button', { name: '加入问题草稿' }))
-  expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ name: 'pr-work', snapshotId: 'v1', number: 12 }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'pr-work', repositoryId: PROJECT, owner: 'example', repositoryName: 'project', number: 12 })
   const saved = JSON.parse(localStorage.getItem(accountWorkKey(TEST_REVIEW_ACCOUNT)) ?? '{}')
-  const work = Object.values(saved)[0] as { rounds: Record<string, { questions: { kind: string }[] }> }
-  expect(work.rounds.v1.questions.some(item => item.kind === 'suggestion')).toBe(true)
+  expect(Object.values(saved)[0]).toMatchObject({ viewedSnapshotId: 'v1', rounds: { v1: {
+    currentFile: 'src/token.py', location: { side: 'head', line: 3 }, questions: expect.arrayContaining([
+      expect.objectContaining({ kind: 'suggestion', evidence: [expect.objectContaining({ snapshotId: 'v1', path: 'src/token.py', side: 'head', line: 3 })] }),
+    ]),
+  } } })
 })

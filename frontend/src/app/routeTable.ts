@@ -59,6 +59,7 @@ function adminExperimentRuns(params: Params, query: URLSearchParams): Route {
   return {
     name: 'admin', view: 'experiment-runs',
     ...(params.candidateId ? { resourceId: params.candidateId } : {}),
+    ...(!params.candidateId && query.get('focus') ? { focusCandidateId: query.get('focus')! } : {}),
     ...(['registered', 'unregistered'].includes(query.get('registrationState') ?? '')
       ? { registrationState: query.get('registrationState') as 'registered' | 'unregistered' } : {}),
     ...(['repository-analysis', 'offline-only', 'input-unsupported', 'schema-incompatible'].includes(query.get('compatibility') ?? '')

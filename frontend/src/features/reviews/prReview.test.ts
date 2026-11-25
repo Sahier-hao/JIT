@@ -69,9 +69,10 @@ it('backup preserves missing notes and requires conflict choices', () => {
 it('keeps a candidate suggestion bound to its original snapshot when a new version arrives', () => {
   const work = createWork(snapshot())
   const suggestion = candidateQuestion(work.rounds.v1.source, {
-    path: 'src/token.py', line: 12, ruleId: 'py-bare-except', ruleVersion: '1',
+    path: 'src/token.py', side: 'head', line: 12, ruleId: 'py-bare-except', ruleVersion: '1',
     message: '裸 except 会吞掉所有异常', evidence: 'except:',
-    suggestion: { title: '指明需要捕获的异常类型', rationale: '吞掉异常', manualChecks: ['确认范围'], example: null },
+    suggestion: { ruleId: 'py-bare-except', ruleVersion: '1', location: { path: 'src/token.py', side: 'head', line: 12 },
+      title: '指明需要捕获的异常类型', rationale: '吞掉异常', manualChecks: ['确认范围'], example: null },
   })
   work.rounds.v1.questions.push(suggestion)
   const next = snapshot('v2', 'e'.repeat(40))
@@ -82,6 +83,7 @@ it('keeps a candidate suggestion bound to its original snapshot when a new versi
   const carried = updated.rounds.v2.questions.find(item => item.kind === 'suggestion')
   expect(carried?.originSnapshotId).toBe('v1')
   expect(carried?.body).toContain('src/token.py:12')
+  expect(carried?.evidence).toMatchObject([{ snapshotId: 'v1', path: 'src/token.py', side: 'head', line: 12 }])
 })
 
 it('keeps the same PR work separate for two confirmed accounts', () => {

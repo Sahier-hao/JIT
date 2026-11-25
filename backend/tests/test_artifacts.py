@@ -820,7 +820,7 @@ def test_rebuilt_six_field_run_still_matches_the_archived_evidence(real_run):
 
 
 def _known_unloadable_defect(path):
-    """已知缺陷：模型 pickle 引用了已被删除的预处理符号（见 docs/团队分工.md 的缺陷行）。
+    """已知缺陷：模型 pickle 引用了已被删除的预处理符号（见 docs/缺陷记录.md 的 D-001）。
 
     只对这一种原因跳过，其它加载失败照常判为失败，避免掩盖新的破坏。
     """

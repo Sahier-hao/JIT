@@ -5,6 +5,8 @@ import { MyDataPage } from '@/features/datasets/pages/MyDataPage'
 import { MyModelsPage } from '@/features/models/pages/MyModelsPage'
 import { UserAccount } from '@/features/account/components/UserAccount'
 import { MyTrainingPage } from '@/features/training/pages/MyTrainingPage'
+import { useActiveUserJobs } from '@/features/account/activeJobs'
+import { ActiveJobsIndicator } from '@/components/layout/ActiveJobsIndicator'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -57,6 +59,8 @@ it('shows data details and sends training to the training workspace', async () =
   await waitFor(() => expect(train).toBeEnabled())
   await user.click(train)
   expect(navigate).toHaveBeenCalledWith({ name: 'my-training', datasetVersion: DATASET.version })
+  await user.click(screen.getByRole('button', { name: '查看训练记录' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'my-training', historyDatasetVersion: DATASET.version })
 })
 
 it('opens the data version linked by a training record, including shared data', async () => {
@@ -185,8 +189,8 @@ it('follows real epoch updates and hides comparison while fewer than two tasks h
         error: null, metrics: active ? null : { averagePrecision: { value: 0.42 } }, updatedAt: facts.createdAt, queuePosition: null,
         trainingHistory: {
           unit: 'epoch', epochs: 2, complete: !active,
-          entries: active ? [{ epoch: 1, trainLoss: 0.71, seconds: 1 }] : [
-            { epoch: 1, trainLoss: 0.71, seconds: 1 }, { epoch: 2, trainLoss: 0.65, seconds: 1 },
+          entries: active ? [{ epoch: 1, trainLoss: 0.71, validationLoss: 0.48, seconds: 1 }] : [
+            { epoch: 1, trainLoss: 0.71, validationLoss: 0.48, seconds: 1 }, { epoch: 2, trainLoss: 0.65, validationLoss: 0.59, seconds: 1 },
           ],
         } }],
     })
@@ -198,8 +202,37 @@ it('follows real epoch updates and hides comparison while fewer than two tasks h
   await waitFor(() => expect(screen.getByRole('button', { name: '登记本次模型' })).toBeEnabled(), { timeout: 6_000 })
   expect(screen.getByRole('progressbar', { name: '训练轮次进度' })).toHaveAttribute('aria-valuenow', '100')
   expect(screen.getByText('0.420')).toBeVisible()
+  expect(screen.getByText('第 1 轮 · 0.4800')).toBeVisible()
+  expect(screen.getByText('已保存结果')).toBeVisible()
   expect(fetch.mock.calls.some(([input]) => String(input).endsWith('/comparison'))).toBe(false)
   expect(reads).toBeGreaterThanOrEqual(2)
+})
+
+it('switches to the accepted retry while the experiment is refreshing', async () => {
+  const facts = {
+    datasetVersion: DATASET.version, datasetManifest: 'demo.json', manifestSha256: 'a'.repeat(64),
+    metricSet: 'metric-set-v2', createdBy: 'reader', createdAt: '2026-10-01T00:00:00Z',
+  }
+  const finished = { ...facts, taskId: 'interrupted-task', experimentId: 'retry-exp', method: 'ft-transformer-v1',
+    metrics: null, status: 'interrupted', stage: 'interrupted', queuePosition: null, updatedAt: facts.createdAt,
+    error: { code: 'TRAINING_INTERRUPTED', message: '服务重启时训练尚未完成' } }
+  const retry = { ...finished, taskId: 'retry-task', parentTaskId: finished.taskId, status: 'queued', stage: 'queued',
+    queuePosition: 1, error: null }
+  let reads = 0
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    if (String(input).endsWith('/retry')) return Response.json(retry)
+    if (++reads > 1) return new Promise<Response>(() => undefined)
+    return Response.json({ ...facts, experimentId: 'retry-exp', status: 'interrupted', seed: 7,
+      splitPreset: 'temporal-70-15-15', tasks: [finished] })
+  })
+  const user = userEvent.setup()
+  render(<MyTrainingPage account="reader" experimentId="retry-exp" navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  const reason = await screen.findByRole('region', { name: '训练停止原因' })
+  expect(within(reason).getByText('服务重启时训练尚未完成')).toBeVisible()
+  expect(within(reason).getByText('重试会创建新任务，从头训练。')).toBeVisible()
+  await user.click(within(reason).getByRole('button', { name: '重试' }))
+  expect(await screen.findByText('队列第 1 位')).toBeVisible()
+  expect(screen.queryByText('服务重启时训练尚未完成')).not.toBeInTheDocument()
 })
 
 it('previews and derives a cleaned dataset version', async () => {
@@ -285,8 +318,12 @@ it('adds and reorders dataset preprocessing operations', async () => {
   expect(within(dialog).getByText('保留分位区间')).toBeVisible()
 })
 
-it('starts a new experiment from my training', async () => {
+it('shows submission feedback and immediately publishes the accepted training to the header', async () => {
   const navigate = vi.fn()
+  let accept: () => void = () => undefined
+  function Header() {
+    return <ActiveJobsIndicator jobs={useActiveUserJobs('reader')} navigate={navigate}/>
+  }
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
     const value = String(input)
     if (value.includes('/api/v1/user/training-experiments') && options?.method === 'GET') return Response.json({ experiments: [] })
@@ -294,11 +331,12 @@ it('starts a new experiment from my training', async () => {
     if (value.includes('/training-methods')) return Response.json(METHODS)
     if (value.includes('/split-preview')) return Response.json(SPLIT)
     if (value.endsWith('/api/v1/user/training-experiments') && options?.method === 'POST') {
+      await new Promise<void>(resolve => { accept = resolve })
       return Response.json({ experimentId: 'e1', datasetVersion: DATASET.version, datasetManifest: 'm', manifestSha256: 'b'.repeat(64), metricSet: 'metric-set-v2', splitPreset: 'temporal-70-15-15', classPolicy: null, seed: 2026, requestId: null, createdBy: 'reader', createdAt: '2026-11-09T00:00:00Z', status: 'queued', statusCounts: {}, tasks: [] })
     }
     return Response.json({})
   })
-  render(<MyTrainingPage navigate={navigate} onLoginRequired={vi.fn()}/>)
+  render(<><Header/><MyTrainingPage account="reader" navigate={navigate} onLoginRequired={vi.fn()}/></>)
   const user = userEvent.setup()
   await user.click(await screen.findByRole('button', { name: '开始训练' }))
   const dialog = await screen.findByRole('dialog')
@@ -306,6 +344,10 @@ it('starts a new experiment from my training', async () => {
   await user.click(await screen.findByRole('checkbox', { name: /逻辑回归/ }))
   await user.click(screen.getByRole('button', { name: '完成' }))
   await user.click(within(dialog).getByRole('button', { name: '开始训练（1 个方法）' }))
+  expect(within(dialog).getByRole('button', { name: '正在提交训练…' })).toBeDisabled()
+  expect(navigate).not.toHaveBeenCalled()
+  accept()
+  expect(await screen.findByRole('button', { name: /返回训练任务/ })).toBeVisible()
   await waitFor(() => expect(navigate).toHaveBeenCalledWith({ name: 'my-training', experimentId: 'e1' }))
 })
 

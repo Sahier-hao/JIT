@@ -40,6 +40,31 @@ it('adds an explicit historical round without moving latest snapshot backwards',
   await user.click(await screen.findByRole('button', { name: '明确进入历史复盘轮次' }))
   expect(readWorks(TEST_REVIEW_ACCOUNT)[0]).toMatchObject({ latestSnapshotId: 'v2', viewedSnapshotId: 'v1' })
 })
+
+it('restores rule markers in a fixed notification and explicitly saves a candidate into its historical round', async () => {
+  const current = snapshot('v2', 'e'.repeat(40)); current.repositoryId = PROJECT; current.capturedAt = '2026-10-29T00:00:00Z'
+  saveWork(TEST_REVIEW_ACCOUNT, createWork(current))
+  const frozen = snapshot(); frozen.repositoryId = PROJECT
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const path = String(input)
+    if (path.endsWith('/candidates')) return response({ snapshotId: 'v1', coverage: {
+      side: 'head', analyzerVersion: 'python-ast-v1', files: [{ path: 'src/token.py', side: 'head', reason: null }],
+    }, candidates: [{ side: 'head', path: 'src/token.py', line: 1, ruleId: 'py-mutable-default', ruleVersion: '1',
+      evidence: 'def collect(items=[]):', message: '可变默认参数会在调用之间共享状态' }] })
+    if (path.endsWith('/repository-models')) return response({ models: [] })
+    if (path.endsWith('/analyses')) return response({ snapshotId: 'v1', analyses: [] })
+    return response(frozen)
+  })
+  const navigate = vi.fn(), user = userEvent.setup()
+  render(<FixedPRSnapshot owner="example" repositoryName="project" number={12} repositoryId={PROJECT} snapshotId="v1" navigate={navigate}/>)
+  await user.click(await screen.findByRole('button', { name: '查看目标第 1 行的可疑项' }))
+  expect(readWorks(TEST_REVIEW_ACCOUNT)[0].viewedSnapshotId).toBe('v2')
+  await user.click(screen.getByRole('button', { name: '加入问题草稿' }))
+  expect(readWorks(TEST_REVIEW_ACCOUNT)[0]).toMatchObject({ latestSnapshotId: 'v2', viewedSnapshotId: 'v1', rounds: { v1: {
+    questions: expect.arrayContaining([expect.objectContaining({ kind: 'suggestion', originSnapshotId: 'v1' })]),
+  } } })
+  expect(navigate).toHaveBeenCalledWith({ name: 'pr-work', repositoryId: PROJECT, owner: 'example', repositoryName: 'project', number: 12 })
+})
 it('rejects foreign project snapshots and never mutates local work', async () => {
   sourceApi(snapshot()); const before = localStorage.getItem(accountWorkKey(TEST_REVIEW_ACCOUNT))
   render(<FixedPRSnapshot owner="example" repositoryName="project" number={12} repositoryId="foreign" snapshotId="v1" navigate={vi.fn()}/>)

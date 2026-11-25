@@ -142,8 +142,11 @@ it('lists experiment runs and promotes an explicit batch with partial results', 
 
 it('shows an experiment detail with provenance and metric limitations', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => session(String(path)) ?? Response.json(FULL_RUN))
-  render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs', resourceId: FULL_RUN.candidateId }} navigate={vi.fn()}/>)
+  const navigate = vi.fn()
+  render(<AdminWorkspace route={{ name: 'admin', view: 'experiment-runs', resourceId: FULL_RUN.candidateId, registrationState: 'unregistered', offset: 20 }} navigate={navigate}/>)
   expect(await screen.findByRole('heading', { name: '实验甲' })).toBeVisible()
+  await userEvent.setup().click(screen.getByRole('button', { name: '返回实验运行' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'admin', view: 'experiment-runs', registrationState: 'unregistered', offset: 20, focusCandidateId: FULL_RUN.candidateId })
   expect(screen.getByText('suites/demo/logistic-regression-l2-v1')).toBeVisible()
   expect(screen.getByText('提交级聚合')).toBeVisible()
   expect(screen.getByText(/可用于仓库分析/)).toBeVisible()
