@@ -1,0 +1,212 @@
+{
+  "kind": "ai-test-provenance",
+  "change": "deliver-ide-handoff-and-integration-tests",
+  "tools": [
+    "OpenAI Codex (GPT-5)"
+  ],
+  "prompt": "docs/evidence/deliver-ide-handoff-and-integration-tests/ai-test-provenance/prompt.md",
+  "tests": [
+    {
+      "name": "test_real_inventory_has_95_business_operations_and_four_admin_auth",
+      "file": "backend/tests/test_openapi_operation_inventory.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "99 个操作、95 项业务、4 个 admin 认证排除，字段和 key 唯一性完整。"
+    },
+    {
+      "name": "test_high_risk_domains_are_present_and_classified_high",
+      "file": "backend/tests/test_openapi_operation_inventory.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "七个高风险域均存在且风险级别为 high。"
+    },
+    {
+      "name": "test_drift_detection_reports_renamed_and_missing_operations",
+      "file": "backend/tests/test_openapi_operation_inventory.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "operationId 改名和操作缺失都被漂移检查报告。"
+    },
+    {
+      "name": "test_valid_matrix_passes",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "完整矩阵通过校验。"
+    },
+    {
+      "name": "test_missing_cell_fails",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "缺少任一场景格校验失败。"
+    },
+    {
+      "name": "test_high_risk_not_applicable_fails",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "高风险接口不得将四类场景标为不适用。"
+    },
+    {
+      "name": "test_normal_not_applicable_fails",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "正常与异常场景不得标为不适用。"
+    },
+    {
+      "name": "test_stale_test_node_fails",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "引用不存在的测试节点校验失败。"
+    },
+    {
+      "name": "test_failed_status_fails",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "失败状态不计为通过。"
+    },
+    {
+      "name": "test_pending_human_review_fails",
+      "file": "backend/tests/test_integration_test_matrix.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "待人工复核的不适用格校验失败。"
+    },
+    {
+      "name": "test_real_sample_report_and_read_only_workflow_pass",
+      "file": "backend/tests/test_commit_analysis_handoff.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "真实样例报告和只读 CI 工作流通过交接校验。"
+    },
+    {
+      "name": "test_report_without_limitations_or_identity_fails",
+      "file": "backend/tests/test_commit_analysis_handoff.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "缺少限制或内容哈希的报告校验失败。"
+    },
+    {
+      "name": "test_workflow_with_write_permission_or_comment_fails",
+      "file": "backend/tests/test_commit_analysis_handoff.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "CI 写权限或 PR 评论被拒绝。"
+    },
+    {
+      "name": "test_upload_must_fail_when_report_missing",
+      "file": "backend/tests/test_commit_analysis_handoff.py",
+      "marker": "# [AI生成]",
+      "source": "ai",
+      "language": "python",
+      "assertion": "报告缺失时产物上传必须失败。"
+    },
+    {
+      "name": "real repository identity handles match, dirty, branch switch, stale, rename and delete",
+      "file": "vscode-extension/test/real-repository.test.js",
+      "marker": "// [AI生成]",
+      "source": "ai",
+      "language": "js",
+      "assertion": "真实 Git 仓库中的匹配、脏工作树、分支切换、过期、重命名和删除状态正确。"
+    }
+  ],
+  "review": {
+    "status": "completed",
+    "reviewer": "徐卓航",
+    "reviewedAt": "2026-11-25"
+  },
+  "manualReviewDecisions": [
+    {
+      "test": "test_real_inventory_has_95_business_operations_and_four_admin_auth",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_high_risk_domains_are_present_and_classified_high",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_drift_detection_reports_renamed_and_missing_operations",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_valid_matrix_passes",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_missing_cell_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_high_risk_not_applicable_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_normal_not_applicable_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_stale_test_node_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_failed_status_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_pending_human_review_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_real_sample_report_and_read_only_workflow_pass",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_report_without_limitations_or_identity_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_workflow_with_write_permission_or_comment_fails",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "test_upload_must_fail_when_report_missing",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    },
+    {
+      "test": "real repository identity handles match, dirty, branch switch, stale, rename and delete",
+      "verdict": "reviewed",
+      "comment": "Reviewed: assertions match implementation; no risk, identity or security boundary relaxed."
+    }
+  ]
+}

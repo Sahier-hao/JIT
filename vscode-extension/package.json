@@ -66,12 +66,13 @@
   },
   "scripts": {
     "compile": "tsc -p .",
-    "test": "npm run compile && node --test test/report.test.js test/command.test.js",
+    "test": "npm run compile && node --test test/report.test.js test/command.test.js test/real-repository.test.js",
     "package": "npx --yes @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^3.1.0",
     "typescript": "^5.6.3"
   }
 }

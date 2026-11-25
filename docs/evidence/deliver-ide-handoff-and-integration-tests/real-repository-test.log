@@ -1,0 +1,18 @@
+TAP version 13
+# warning: in the working copy of 'src/app.py', LF will be replaced by CRLF the next time Git touches it
+# warning: in the working copy of 'src/app.py', LF will be replaced by CRLF the next time Git touches it
+# Subtest: real repository identity handles match, dirty, branch switch, stale, rename and delete
+ok 1 - real repository identity handles match, dirty, branch switch, stale, rename and delete
+  ---
+  duration_ms: 1275.1725
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1436.5419

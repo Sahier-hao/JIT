@@ -1,0 +1,348 @@
+
+> jit-review-workbench@0.0.0 test
+> vitest run
+
+
+ RUN  v5.1.1 C:/Users/fgdvf/Desktop/openspec/JIT/frontend
+
+ ✓ src/features/reviews/pages/PullRequestJourney.test.tsx (9 tests) 6555ms
+   ✓ keeps writing and reports unsaved text when browser storage fails 2059ms
+   ✓ returns from evidence to the original version and code line 419ms
+   ✓ resumes the question being edited after leaving and reopening 1646ms
+   ✓ restores an unfinished delivery note and conclusion choice after reopening 1486ms
+   ✓ opens an old evidence version directly instead of returning to the commit list 302ms
+ ✓ src/features/admin/AdminTrainingWorkspace.test.tsx (19 tests) 11337ms
+   ✓ loads a successful training task with metrics and lineage 637ms
+   ✓ polls an active task list and stops after it reaches a terminal state 6255ms
+   ✓ previews and confirms PR dataset cleanup 451ms
+   ✓ searches older versions and keeps the directory beside a fixed version link 747ms
+   ✓ creates a training task from a dataset detail page 423ms
+   ✓ shows model metrics and compares two models without declaring a winner 422ms
+   ✓ pages past the first twenty training tasks 426ms
+   ✓ creates a multi-method experiment with per-method parameters 702ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/projects/pages/ProjectPage.test.tsx (24 tests) 7143ms
+   ✓ opens a comparison of a historical success against the pinned current result without changing it 506ms
+   ✓ turns a cancelled legacy training request into scoring after explicit model selection 501ms
+   ✓ shows queue position and confirms cancellation while preserving the current result 538ms
+   ✓ keeps a cancellation error actionable and prevents repeated submissions 378ms
+   ✓ posts a new analysis with the chosen branch and the default strategy 461ms
+   ✓ switches the current result from an older completed record 349ms
+   ✓ deletes an ended analysis record from the list 387ms
+   ✓ restores the bound fallback model on retry even if the administrator default changed 360ms
+   ✓ opens a branch update in the branch analysis tab with the discovered branch 479ms
+   ✓ keeps overview refresh with repository details and uses the branch tab for existing results 342ms
+   ✓ lands on the repository overview before any analysis and starts analysis explicitly 341ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/app/userWorkspace.test.tsx (12 tests) 6806ms
+   ✓ shows data details and sends training to the training workspace 326ms
+   ✓ keeps active training distinct and filters the history by method and status 553ms
+   ✓ follows real epoch updates and hides comparison while fewer than two tasks have succeeded 3083ms
+   ✓ previews and derives a cleaned dataset version 916ms
+   ✓ adds and reorders dataset preprocessing operations 610ms
+   ✓ starts a new experiment from my training 598ms
+ ✓ src/app/ProductWorkspace.test.tsx (8 tests) 6161ms
+   ✓ offers the new successful result and comparison while preserving the open analysis 736ms
+   ✓ keeps repository B and its fixed analysis when visiting a report and returning 2440ms
+   ✓ traverses all repository pages and can select an item beyond the first 100 1564ms
+   ✓ ignores an earlier repository response after navigating to another repository 459ms
+   ✓ returns from a report to the same pinned analysis instead of a newer result 674ms
+ ✓ src/features/projects/components/ProjectPullRequests.test.tsx (13 tests) 3973ms
+   ✓ loads missing PR cache once without submitting analysis and preserves the project context 396ms
+   ✓ retries failed discovery and paginates closed and all ranges explicitly 434ms
+   ✓ requires an explicit existing PR confirmation and pins the selected model rather than the new default 593ms
+   ✓ submits a limited batch from the PR toolbar and preserves the chosen model on retry 950ms
+ ✓ src/app/FocusedProduct.test.tsx (10 tests) 3333ms
+   ✓ opens projects immediately without a credential or role step 678ms
+   ✓ opens account settings in a dialog instead of a full personal-center page 551ms
+   ✓ opens administrator sign-in instead of showing maintenance data to visitors 1440ms
+ ✓ src/features/datasets/components/RepositoryDatasetBuildDialog.test.tsx (5 tests) 2884ms
+   ✓ starts a fresh build instead of restoring an old completed task 394ms
+   ✓ builds only a dataset, keeps project analysis untouched, and offers explicit follow-up 2181ms
+ ✓ src/features/admin/AdminModelPolicy.test.tsx (4 tests) 2096ms
+   ✓ searches the model directory and scopes policy actions to the visible selection 945ms
+   ✓ switches default before allowing disable, confirms impact and refreshes saved policy 695ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/projects/components/ProjectTrends.test.tsx (7 tests) 1934ms
+   ✓ opens fixed views via GET only, leaves new sources unapplied, and renders null gaps plus equivalent table 516ms
+   ✓ supports keyboard and touch-compatible bucket actions and preserves each commit sourceSyncId 372ms
+   ✓ does not select another group on a source conflict and allows explicit single-analysis query 305ms
+ ✓ src/features/admin/AdminModelsCoverage.test.tsx (5 tests) 1817ms
+   ✓ waits for a chosen model pair before reading comparison details 682ms
+   ✓ shows the nine-method coverage matrix and opens registered model details 526ms
+ ✓ src/features/admin/AdminExperimentsWorkspace.test.tsx (4 tests) 1645ms
+   ✓ renders reports while the independent evidence request is still pending 665ms
+   ✓ shows four protocols, macro mean and variance, fusion weights and failure reasons without filling missing metrics with zero 577ms
+ ✓ src/features/reviews/components/PullRequestPreview.test.tsx (2 tests) 1791ms
+   ✓ searches commits and explains one commit without leaving the read-only detail 1514ms
+ ✓ src/features/research/TrendPage.test.tsx (15 tests) 1712ms
+   ✓ 分区带与分区清单按时间排序，不跟随 JSON 的键序 319ms
+   ✓ DTD-07 下钻范围由桶自身端点派生：跨月、跨年与非月粒度都不假定"次月" 326ms
+ ✓ src/features/projects/pages/ProjectsPage.test.tsx (8 tests) 2060ms
+   ✓ renames a project from the management menu without leaving the list 745ms
+   ✓ creates a project from a dialog and keeps the list in place 743ms
+ ✓ src/features/research/pages/AnalysisComparison.test.tsx (6 tests) 1606ms
+   ✓ opens both exact source analyses and never claims that different-model score changes are improvements 669ms
+   ✓ keeps both pins while changing filters and pages 538ms
+ ✓ src/features/admin/AdminExperimentRunsPage.test.tsx (4 tests) 1239ms
+   ✓ lists experiment runs and promotes an explicit batch with partial results 963ms
+ ✓ src/features/reviews/pages/ProjectPRJourney.test.tsx (5 tests) 1227ms
+   ✓ opens notification snapshots read-only without creating a work sheet or changing an existing draft 453ms
+   ✓ uses base-project context when starting a fork PR and returns to the project 573ms
+ ✓ src/features/datasets/components/DatasetImportDialog.test.tsx (4 tests) 1111ms
+   ✓ selects the Kamei 2013 format from the CSV header 367ms
+   ✓ asks for the source version when three formats share the same header 382ms
+ ✓ src/features/projects/components/RepositoryUpdates.test.tsx (5 tests) 1186ms
+   ✓ checks immediately and shows checking separately from no changes 532ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/projects/components/NewProjectForm.test.tsx (3 tests) 1648ms
+   ✓ creates a project from the trimmed url and opens the project page 638ms
+   ✓ keeps the input and explains a server rejection 582ms
+   ✓ rejects a non-http address before calling the api 426ms
+ ✓ src/features/training/components/TrainingComparisonResults.test.tsx (3 tests) 1001ms
+   ✓ renders all methods with three explicit partition results and failures 430ms
+   ✓ switches performance metrics and requests frozen tests for the chosen pair 567ms
+ ✓ src/features/projects/components/AnalysisForm.test.tsx (5 tests) 1244ms
+   ✓ opens a read-only model card without changing the selected model or draft 467ms
+ ✓ src/features/projects/repositoryExplanation.test.tsx (8 tests) 1235ms
+   ✓ reads saved explanations without posting and exposes the method selector 303ms
+ ✓ src/features/research/pages/lineResearch.test.tsx (2 tests) 994ms
+   ✓ shows the research evidence and scores pasted code 921ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/predictions/predictionPage.test.tsx (2 tests) 852ms
+   ✓ creates a fixed dataset/model prediction and opens its result 505ms
+   ✓ reopens saved thresholds, metrics and top-risk attribution 345ms
+ ✓ src/features/admin/AdminModelBenefit.test.tsx (3 tests) 768ms
+   ✓ shows model, time and random review coverage with honest sample and label limits 537ms
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+ ✓ src/features/admin/AdminTrainingExperimentPage.test.tsx (1 test) 714ms
+   ✓ shows experiment comparison and the real epoch history 712ms
+ ✓ src/app/entryFlow.test.tsx (2 tests) 959ms
+   ✓ shows the product introduction and routes to each login role 434ms
+   ✓ logs a user in and continues to the requested page 522ms
+ ✓ src/features/projects/components/ProjectDatasetDialog.test.tsx (4 tests) 689ms
+   ✓ loads the pinned analysis dataset and clears the previous version when the analysis changes 397ms
+ ✓ src/components/ui/componentInteractions.test.tsx (2 tests) 782ms
+   ✓ 标准控件的键盘交互 (2)
+     ✓ 方向键移动后可以选择下一项，重复选择不会清空单选 406ms
+     ✓ 受控弹窗用 Esc 关闭后回到原按钮，重开保留表单草稿 374ms
+ ✓ src/features/training/algorithmLibraryPage.test.tsx (1 test) 669ms
+   ✓ browses visual algorithm structures and method details 667ms
+ ✓ src/components/layout/ActiveJobsIndicator.test.tsx (3 tests) 603ms
+ ✓ src/features/training/pages/MyTrainingPage.test.tsx (1 test) 560ms
+   ✓ shows all three partitions in the user-owned experiment comparison 558ms
+ ✓ src/features/models/components/ModelCardView.test.tsx (3 tests) 468ms
+   ✓ separates fit, validation and frozen test evidence and shows adverse benefit 322ms
+ ✓ src/features/projects/components/ProjectActivity.test.tsx (3 tests) 461ms
+   ✓ marks notifications read locally without completing reviews or uploading any personal state 337ms
+ ✓ src/features/training/algorithmLibrary.test.tsx (1 test) 409ms
+   ✓ explains algorithms, training flow and parameter meaning 407ms
+ ✓ src/features/models/components/ModelEvaluationEvidence.test.tsx (2 tests) 338ms
+   ✓ shows method-matched cross-repository evidence and line coverage 312ms
+ ✓ src/features/research/useDataset.test.tsx (4 tests) 414ms
+ ✓ src/features/reviews/components/PRModelClues.test.tsx (2 tests) 348ms
+   ✓ keeps legacy HEAD scores readable while disclosing their binding limits 328ms
+ ✓ src/components/shared/surfaces.test.tsx (4 tests) 296ms
+ ✓ src/features/projects/components/AnalysisScopeCard.test.tsx (4 tests) 282ms
+ ✓ src/components/shared/Icon.test.tsx (42 tests) 239ms
+ ✓ src/components/shared/risk.test.tsx (3 tests) 239ms
+ ✓ src/features/projects/projectClient.test.ts (10 tests) 214ms
+ ✓ scripts/check-styles.test.mjs (7 tests) 188ms
+ ✓ src/app/routeTable.test.ts (56 tests) 66ms
+ ✓ src/components/shared/iconSource.test.ts (1 test) 57ms
+ ✓ src/components/shared/material.test.ts (2 tests) 45ms
+ ✓ src/lib/apiClient.test.ts (7 tests) 42ms
+ ✓ src/features/research/historical.test.tsx (11 tests) 34ms
+ ✓ src/features/projects/projectActivityClient.test.ts (7 tests) 32ms
+ ✓ src/features/research/named.test.tsx (8 tests) 31ms
+ ✓ src/features/reviews/prReview.test.ts (10 tests) 31ms
+ ✓ src/app/workspaceRoutes.test.ts (53 tests) 28ms
+ ✓ src/lib/sprint2Core.test.ts (33 tests) 25ms
+ ✓ src/features/admin/multiProjectReportContracts.test.ts (1 test) 23ms
+ ✓ src/features/projects/repositoryContract.test.ts (19 tests) 22ms
+ ✓ src/features/reviews/workbenchSeed.test.tsx (1 test) 21ms
+ ✓ src/features/research/trendContract.test.ts (8 tests) 21ms
+ ✓ src/lib/domain.test.ts (29 tests) 22ms
+ ✓ src/features/projects/repositoryExplanation.parser.test.ts (7 tests) 15ms
+ ✓ src/features/admin/benefitContracts.test.ts (2 tests) 16ms
+ ✓ src/features/datasets/repositoryDataset.test.ts (4 tests) 15ms
+ ✓ src/features/research/trendInsights.test.ts (6 tests) 13ms
+ ✓ src/components/shared/chartTokens.test.ts (7 tests) 12ms
+ ✓ src/components/shared/theme.test.ts (4 tests) 12ms
+ ✓ src/components/shared/contrast.test.ts (5 tests) 12ms
+ ✓ src/components/layout/navActive.test.ts (20 tests) 11ms
+ ✓ src/components/shared/tokens.test.ts (6 tests) 12ms
+ ✓ src/components/shared/typography.test.ts (1 test) 9ms
+ ✓ src/features/datasets/mydata/DatasetDetail.test.ts (2 tests) 6ms
+
+ Test Files  72 passed (72)
+      Tests  604 passed (604)
+   Start at  11:10:41
+   Duration  151.55s (environment 43%, tests 30%, import 17%, setup 9%, transform 1%)
+
+Environment  jsdom was created 72 times · 120.92s total, 43% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JSON report written to C:/Users/fgdvf/Desktop/openspec/JIT/docs/evidence/_run/unit-results.json

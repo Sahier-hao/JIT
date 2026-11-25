@@ -1,0 +1,68 @@
+
+> jit-commit-analysis@0.2.0 test
+> npm run compile && node --test test/report.test.js test/command.test.js test/real-repository.test.js
+
+
+> jit-commit-analysis@0.2.0 compile
+> tsc -p .
+
+TAP version 13
+# Subtest: builds a copyable report command with all real inputs
+ok 1 - builds a copyable report command with all real inputs
+  ---
+  duration_ms: 1.9933
+  type: 'test'
+  ...
+# Subtest: rejects missing or multiline inputs
+ok 2 - rejects missing or multiline inputs
+  ---
+  duration_ms: 0.8445
+  type: 'test'
+  ...
+# warning: in the working copy of 'src/app.py', LF will be replaced by CRLF the next time Git touches it
+# warning: in the working copy of 'src/app.py', LF will be replaced by CRLF the next time Git touches it
+# Subtest: real repository identity handles match, dirty, branch switch, stale, rename and delete
+ok 3 - real repository identity handles match, dirty, branch switch, stale, rename and delete
+  ---
+  duration_ms: 1306.0102
+  type: 'test'
+  ...
+# Subtest: parses a supported report and keeps suggestion text as data
+ok 4 - parses a supported report and keeps suggestion text as data
+  ---
+  duration_ms: 2.2077
+  type: 'test'
+  ...
+# Subtest: rejects wrong format and missing identity
+ok 5 - rejects wrong format and missing identity
+  ---
+  duration_ms: 0.8106
+  type: 'test'
+  ...
+# Subtest: rejects absolute or traversing candidate paths
+ok 6 - rejects absolute or traversing candidate paths
+  ---
+  duration_ms: 0.5121
+  type: 'test'
+  ...
+# Subtest: identity distinguishes match, stale and unknown
+ok 7 - identity distinguishes match, stale and unknown
+  ---
+  duration_ms: 0.5717
+  type: 'test'
+  ...
+# Subtest: line numbers must stay inside the document
+ok 8 - line numbers must stay inside the document
+  ---
+  duration_ms: 0.5309
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1538.776

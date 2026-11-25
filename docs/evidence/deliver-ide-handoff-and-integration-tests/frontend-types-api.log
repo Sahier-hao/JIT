@@ -1,0 +1,9 @@
+
+> jit-review-workbench@0.0.0 types:api
+> node scripts/generate-api-types.mjs
+
+[90m@hey-api/openapi-ts v0.99.0[39m
+
+[90m[Job 1] [39m[90m~[39m [36mGenerating...[39m
+[90m[Job 1] [39m[36m  [1] [39m../docs/api/openapi.yaml
+[90m[Job 1] [39m[32m✓[39m [96m./src\lib\api-generated[39m [90m· 2 files · 660ms[39m

@@ -1,0 +1,220 @@
+{
+  "copiedFromWorkspace": [
+    "api-inventory.json",
+    "backend-full-junit.xml",
+    "backend-full.log",
+    "browser-e2e.log",
+    "browser-results.json",
+    "explanation-requests.json",
+    "extension-compile.log",
+    "frontend-api-types.log",
+    "frontend-build.log",
+    "frontend-lint.log",
+    "frontend-modules.log",
+    "frontend-styles.log",
+    "frontend-typecheck.log",
+    "frontend-types-api.log",
+    "frontend-unit-results.json",
+    "frontend-unit.log",
+    "handoff-validation.json",
+    "handoff-validation.log",
+    "integration-report.json",
+    "integration-report.md",
+    "matrix-junit.xml",
+    "matrix-results.json",
+    "matrix-validation.json",
+    "provenance-validation.json",
+    "real-repository-test.log",
+    "recheck-js-test.log",
+    "recheck-python-tests.log",
+    "scenario-matrix.json",
+    "screenshots/explanation-methods-multi-method-explanations.png",
+    "screenshots/explanation-narrow-multi-method-explanations.png",
+    "screenshots/explanation-occlusion-multi-method-explanations.png",
+    "screenshots/vscode-extension-host.png",
+    "smoke-host-ok.txt",
+    "smoke-host.log",
+    "smoke-screenshot-done.txt",
+    "smoke-screenshot-ready.txt",
+    "smoke-screenshot.log",
+    "vscode-extension-tests.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 42,
+  "files": [
+    {
+      "path": "ai-test-provenance/manifest.json",
+      "sha256": "517a43cfe74ad12aa2e1a43278d62a03c4f9b65dc0b57807b6a397fb50b14f73"
+    },
+    {
+      "path": "ai-test-provenance/manual-review-checklist.md",
+      "sha256": "fa185cfdf6cba931589a10f40cf4da45f23767dc41ed220fe4af7a3ad3966e16"
+    },
+    {
+      "path": "ai-test-provenance/prompt.md",
+      "sha256": "6c3b7964c2010c284563ea5d6407ba70831ab15613fb327796865d2286066505"
+    },
+    {
+      "path": "api-inventory.json",
+      "sha256": "9cdee94a4a14fd374aeb36ca9e97ff16093528404db995c50b55d6cb73e175c5"
+    },
+    {
+      "path": "backend-full-junit.xml",
+      "sha256": "56e83fd3e612cb7e502a81c86fa0092e6cb0335aba5426df5f1c52a05b2e348a"
+    },
+    {
+      "path": "backend-full.log",
+      "sha256": "3d0a6da9c5a04a0900f2296b4df796414fd5bab1165de8dd2b58a8f7a9fa4510"
+    },
+    {
+      "path": "browser-e2e.log",
+      "sha256": "61a21c1c67f703a392d021661461bf6be09d8279893e6a513db60e2de235aa54"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "51a2563aaee93f3237ac639fcbf9350285828563f77b476fa289712f17c9d42b"
+    },
+    {
+      "path": "explanation-requests.json",
+      "sha256": "69370d5fda4123fedb31473c1a0389a48c94c65966d82bacff30f885fb67ab3a"
+    },
+    {
+      "path": "extension-compile.log",
+      "sha256": "eb705df88ffa663d1a7accc112aa1ee6caa83e20fe00603741916100b6511b65"
+    },
+    {
+      "path": "frontend-api-types.log",
+      "sha256": "b326a5670cea8a1e87bf7a329bf23a90956a033871eed5aede24f9e99e2f417f"
+    },
+    {
+      "path": "frontend-build.log",
+      "sha256": "7adba94eaf180fb6ab4128d9fbb6f68905135ec9cf0584fe0a579ac1911d289c"
+    },
+    {
+      "path": "frontend-lint.log",
+      "sha256": "a1cf2dcb715f51ec4bc5d732c59f177c4fb3f35fa707c66697a38c63158556ce"
+    },
+    {
+      "path": "frontend-modules.log",
+      "sha256": "1bb4c7ae158966707d4411734a79228acbbdfc606ed7afaafc3e8cbb65803ce8"
+    },
+    {
+      "path": "frontend-styles.log",
+      "sha256": "5224e37a293f23f01bbe677f35c07d3f1290faeeb290d2145e34aa0d8805b2ba"
+    },
+    {
+      "path": "frontend-typecheck.log",
+      "sha256": "3f51a9dda6b72d52a9f098dd063385a0da4e87c8a435dd0bc08bdf1e0d3bee50"
+    },
+    {
+      "path": "frontend-types-api.log",
+      "sha256": "f2df73c0cdc037c9ad2fa20ba782133234f407ccf78eda0fe185867f6ac4fb67"
+    },
+    {
+      "path": "frontend-unit-results.json",
+      "sha256": "36966c6ec15ef031b41fc8b7ae9f0e16eb13f17297e9e5d1e0149254a8fdbc5e"
+    },
+    {
+      "path": "frontend-unit.log",
+      "sha256": "cf37e5d06628b642c5d86a6eb8dd4a4ac6d01fc03a646b6c59b5f2564cba616c"
+    },
+    {
+      "path": "handoff-validation.json",
+      "sha256": "ce21509dcdb9cec12620ecf16f08e52b0a08fd2c9ceffd2cdf98950b8bb5f70a"
+    },
+    {
+      "path": "handoff-validation.log",
+      "sha256": "636ceb2f90a9bfaac132bc0d312a16cb4c7a0d1918228d6135276ac6a8ba1f41"
+    },
+    {
+      "path": "integration-report.json",
+      "sha256": "a406bd1a2c673651b775c73df695add0327c03edc3754e6cbb4d097ded195897"
+    },
+    {
+      "path": "integration-report.md",
+      "sha256": "1464f5ba2fa4361b496d51c4f4dfe389bca11c5ca5f887245f4796814568570e"
+    },
+    {
+      "path": "matrix-junit.xml",
+      "sha256": "0d7492d8e0a08f9a527bc17c8c020825a7859eabf6034138d45a081c9daf9feb"
+    },
+    {
+      "path": "matrix-results.json",
+      "sha256": "1fb68d7ea7315711930f0a43196180c9ad1207f09863f4626632c37bd0c539ca"
+    },
+    {
+      "path": "matrix-validation.json",
+      "sha256": "17b10decf2f75cf06c5a0c972154c1621b56bd0e8facac3a37510c8ea11d6296"
+    },
+    {
+      "path": "provenance-validation.json",
+      "sha256": "80f27332ee488ab4d5fa026b2ac0dfb7d36bbd7977b08dcc7c551c36dd458210"
+    },
+    {
+      "path": "real-repository-test.log",
+      "sha256": "d86f5cf92412b8f489c0c80882a9b8567483bbd31c88fd73875a2c66054f1598"
+    },
+    {
+      "path": "recheck-js-test.log",
+      "sha256": "85d6012092b15b56d67ac0546ef1f850e4da7e226d0b39705e6275c722dca4cd"
+    },
+    {
+      "path": "recheck-python-tests.log",
+      "sha256": "9b7d692ee055ee0330856615769efed063ba0f92d89de5dcab74efc5cb43781c"
+    },
+    {
+      "path": "scenario-mapping.json",
+      "sha256": "ef5e6314bd1fb747623f260c5b22187d47aadb717febef5f3cc174650e76aa31"
+    },
+    {
+      "path": "scenario-matrix.json",
+      "sha256": "08b7e9bc2331ddfb98af80cde6616e1e36a20b5aaa21d13b0ca8f558a7307b2b"
+    },
+    {
+      "path": "screenshots/explanation-methods-multi-method-explanations.png",
+      "sha256": "cd4f997fa493ef889dafe67e1287226fdf34089b3be3e3a6f4408740658dfc4b"
+    },
+    {
+      "path": "screenshots/explanation-narrow-multi-method-explanations.png",
+      "sha256": "e208b7d8cdfa199d040a12168d818462cf4ad6851b5ddb851be9950e820c4783"
+    },
+    {
+      "path": "screenshots/explanation-occlusion-multi-method-explanations.png",
+      "sha256": "5964d0269e62a9ba0b41a6fb9060f69199ef0800e0ef28bcb0404f12ca3792b4"
+    },
+    {
+      "path": "screenshots/vscode-extension-host.png",
+      "sha256": "efa599c38ec6993b9291c122d18d2f0ea9932831bc7b67d3fafaf06bf1f018d6"
+    },
+    {
+      "path": "smoke-host-ok.txt",
+      "sha256": "2689367b205c16ce32ed4200942b8b8b1e262dfc70d9bc9fbc77c49699a4f1df"
+    },
+    {
+      "path": "smoke-host.log",
+      "sha256": "a84383cea095616b07006048b64c14afa01b9aa73ea960d30625caec48fd1ce2"
+    },
+    {
+      "path": "smoke-screenshot-done.txt",
+      "sha256": "12e5cb1d6521d6a9f0369978cca6ec93c52582896608bf12882764ae21a0c6e4"
+    },
+    {
+      "path": "smoke-screenshot-ready.txt",
+      "sha256": "b24d6d33736ecd5604a4b17bc9c6481039fac362bb7df044ef1c10a2bfd21db6"
+    },
+    {
+      "path": "smoke-screenshot.log",
+      "sha256": "c67dc5e7574b362a584350de39a486b1b93e7ef0f7fe2e1e1af030bbc8f6fa00"
+    },
+    {
+      "path": "vscode-extension-tests.log",
+      "sha256": "08dbdc2183302b88263b1c79ca08f287d6d34da378212b67656328d4cf589866"
+    }
+  ],
+  "frozenUtc": "2026-11-25T04:28:47.442803+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "2b37f83ee9d39ca9783ce8c900038ae82fbab8811f19b3ee3648b0e5e3c1d4f0",
+  "workspace": "docs/evidence/_run/deliver-ide-handoff-and-integration-tests"
+}

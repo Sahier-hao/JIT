@@ -63,7 +63,11 @@ def validate(manifest_path=DEFAULT_MANIFEST, *, source_overrides=None):
             errors.append(f"{name} 的测试文件不存在：{relative}")
             continue
         text = (source_overrides or {}).get(relative, path.read_text(encoding="utf-8"))
-        expected = f"{marker}\ndef {name}("
+        language = item.get("language", "python")
+        if language == "js":
+            expected = f"{marker}\ntest('{name}'"
+        else:
+            expected = f"{marker}\ndef {name}("
         if not isinstance(marker, str) or expected not in text:
             errors.append(f"{name} 缺少来源标记：{marker}")
         if not isinstance(item.get("assertion"), str) or not item["assertion"].strip():

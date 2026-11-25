@@ -4,12 +4,16 @@ docs/evidence/register-promotable-experiment-models/** -text whitespace=cr-at-eo
 docs/evidence/separate-run-evidence-from-archive/** -text
 docs/evidence/register-existing-models-and-predict-json/** -text whitespace=cr-at-eol
 docs/evidence/review-model-training-results-and-explanations/** -text whitespace=cr-at-eol
+docs/evidence/deliver-ide-handoff-and-integration-tests/** -text
 
 docs/evidence/add-repository-workspace-closeout-20261019/** -text whitespace=-blank-at-eof,cr-at-eol
 docs/evidence/restyle-review-workbench-closeout-20261019/** -text whitespace=-blank-at-eof,cr-at-eol
 
 # Versioned model releases are reviewed binary assets, never line-normalized.
 backend/model-packages/*.zip binary
+
+# Generated OpenAPI types are byte-compared by check:api-types; keep LF exact bytes.
+frontend/src/lib/api-generated/** -text
 
 # Dataset descriptors and CSVs are content-addressed; keep checkout bytes stable.
 backend/data/datasets/kamei14-git-v1-cc-switch/kamei14-git-v1-cc-switch-2026-08-01_2026-10-30.json -text

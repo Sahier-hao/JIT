@@ -1,0 +1,26 @@
+{
+  "summary": {
+    "operations": 95,
+    "highRiskOperations": 73,
+    "cells": {
+      "normal": {
+        "test": 95,
+        "not-applicable": 0
+      },
+      "boundary": {
+        "test": 85,
+        "not-applicable": 10
+      },
+      "error": {
+        "test": 95,
+        "not-applicable": 0
+      },
+      "concurrency": {
+        "test": 85,
+        "not-applicable": 10
+      }
+    }
+  },
+  "problems": [],
+  "passed": true
+}

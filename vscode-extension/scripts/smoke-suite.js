@@ -4,6 +4,17 @@ const os = require('os')
 const path = require('path')
 const vscode = require('vscode')
 
+function gitEnv() {
+  const env = { ...process.env }
+  for (const key of Object.keys(env)) {
+    if (key === 'GIT_CONFIG_PARAMETERS' || key === 'GIT_CONFIG_COUNT'
+      || key.startsWith('GIT_CONFIG_KEY_') || key.startsWith('GIT_CONFIG_VALUE_')) {
+      delete env[key]
+    }
+  }
+  return env
+}
+
 exports.run = async function run() {
   const extension = vscode.extensions.getExtension('local.jit-commit-analysis')
   if (!extension) throw new Error('扩展 local.jit-commit-analysis 未加载')
@@ -23,7 +34,7 @@ exports.run = async function run() {
   if (state.commits !== 1 || state.candidates !== 2) throw new Error('导入后数量不符：' + JSON.stringify(state))
   if (state.identity.state !== 'stale' && state.identity.state !== 'unknown') throw new Error('过期报告未标记：' + JSON.stringify(state.identity))
 
-  const head = cp.execSync('git rev-parse HEAD', { cwd: folder.uri.fsPath }).toString().trim()
+  const head = cp.execSync('git rev-parse HEAD', { cwd: folder.uri.fsPath, env: gitEnv() }).toString().trim()
   const data = JSON.parse(fs.readFileSync(fixture, 'utf8'))
   data.repository.headSha = head
   const matched = path.join(os.tmpdir(), 'jit-smoke-matched.json')

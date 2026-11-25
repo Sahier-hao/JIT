@@ -1,0 +1,108 @@
+
+> jit-review-workbench@0.0.0 test:e2e:explanations
+> node scripts/e2e.mjs multi-method-explanations
+
+[WebServer] INFO:     Started server process [28480]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18822 (Press CTRL+C to quit)
+[WebServer] (node:30576) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:43864) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] INFO jit.catalog operation=POST requestId=0553f4aa-c1d7-4ee0-8a57-3b49855012af status=201 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=POST requestId=58eaab70-7500-4f23-be73-da60077a54f0 status=201 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=83b4dc7a-cbe3-440c-b6ec-696e7241adf4 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=b87b91c0-2d75-4921-9f31-0eb5a7982f5a status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=a44edb2c-40d3-423b-8e2c-8f49ce2e66c4 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=e1895c01-c1d8-4115-a837-2af91641391c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=26100ead-ec29-4693-835f-62525e61be74 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=87d1573b-fb9a-4618-a6cb-3175ce4d697a status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=200e550f-43bd-4e0d-a9b6-ef0fc855782c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=260a424e-9ee0-49ea-94e4-6a78394a9c32 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=4859cb7b-53c0-4303-8d29-4c5699ff543b status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=5dc03425-bbac-4ac7-94c3-69025f27291c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=eafad744-abff-4953-ac83-5384502a3a24 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=db770301-b6c8-407d-82b0-833ccc88de80 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=f168761f-0fac-41bd-848e-73f191d6547d status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=2e447400-399e-443d-a9a8-2bb3b6cd3d79 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=9b093e94-89f7-49aa-8fac-a44300165d62 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=6a92636e-3feb-4730-844e-cd7ed86214d1 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c016df48-febc-4576-9a75-84ece2124b54 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=ea075c1e-a013-4efe-8b88-b428b8663398 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=POST requestId=0c7e1311-bfa5-4504-9cc1-f61847229f89 status=202 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=02fd2247-e524-4221-8a31-e1aa8dfc77e9 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=908a6f49-d924-459a-981c-1eba76a2ee5e status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=5e31cb3d-d663-4f8d-9d2e-702592842a56 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=42aebba1-666f-4157-bfcd-8253e5fb802f status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=7ee14c5a-e8ef-4ea2-b55d-06a5170c1094 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=bf4f4d66-690d-4607-9209-088e8e8d5bc4 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=fa42ab6c-3130-4edb-b7e0-b43cdfeec8f2 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=75dc3115-4c24-4d41-aa79-8eafd0479a18 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c028e506-de5b-4edb-80a0-6e3ade269950 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=2a489a41-e72c-4ca6-a161-88578b8e8cea status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=70d67467-2e3e-49b3-981b-860cc747c9dc status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=11858e09-d5ee-4ca8-ade7-c7ac2153cc91 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=7e9b2e62-55ab-47c4-9f97-61e30b4c42ae status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=1173dee7-6b07-4179-88bb-d409f85b1562 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=4f0af3a3-c653-421b-aef3-e2b55e97e132 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=26214254-b89e-4780-82cf-32c2b71d1acc status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=1ed3b840-f2b3-4b8a-9f89-412ea8f5d148 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=60a6d1ee-1771-46b7-bd61-d15d69da9110 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=9fb5bda5-b3e5-4fef-9968-82ac5e8e1714 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=de9d88c5-adbe-487c-b19c-5f1d8e6cb971 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=8d47f6ab-4d43-43a1-ab15-e16bfc91315e status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=22d33bfc-35ae-4f15-8025-77bbf1abcaa1 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c9e10930-d997-4aa8-bf5b-77876967eaab status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=fcb8fdb7-e221-450b-b4db-ee57608d0a3b status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=0dca268c-9364-490a-9a61-a8f3e77116d9 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=e6714448-ae28-48b2-b89e-fb030a4b8f66 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=f4d848c0-1558-4eed-9750-8bace09bff4d status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=1c7cbf63-b2a0-4243-a244-9e717abe5eb9 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=db178ec5-891d-4eb2-92bd-7a63c6cb097e status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=f5696e37-2677-4eb4-ac70-d78744a4d803 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=ada86868-c3c9-47da-aad8-0defea9bf583 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=f3532c9a-88b3-4e87-999c-22ec0907d492 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=f08cd94f-a3fe-43d5-b1f4-ae00dbe5a9fc status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=3ef795bb-dfcd-4c7b-aaa5-f0f1bb32aa44 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c0a200d5-30b8-4914-a3ae-aab3a548e190 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=e69e3cf5-5a41-452a-a67f-81d4720855bd status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=9e6871a8-5286-49fd-b037-52c6abf70fe6 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=3b2ab25b-0d41-4aef-a545-50d0922d5a72 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=456011ce-be13-4db8-85f4-2ded07ad28b1 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=066391c4-1425-40cd-bd16-a6ad17ebbc6e status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=POST requestId=13342d77-738a-4ba1-a3c9-a88a6358e23a status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=42f3a4a8-a8b6-4daf-8c12-314bd23b5dce status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=dc849d6d-4ef5-41dd-b2c8-c815ccb5bb5d status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=9c4bb812-cdf3-4aa9-be37-1577161016f0 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=POST requestId=0b63992f-3e43-4ade-afc6-0a6001b1c06c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=cd9779ed-8d80-4089-a763-b8a46ac0c7f4 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=7480fea6-5d5f-4e6b-8bb6-ccd137da4432 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c3826484-2d11-4d4b-86dc-3e820f64792a status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=559a86a4-8a8c-4ac2-aa40-6a608ada8f26 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=5c7d2b80-95dd-449e-829f-fdacee643436 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=e4e47e40-f364-46a3-bbdc-7b0a7513c83e status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=a5691d82-d734-435e-9f76-59a2d6a99f9b status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=05b5c7f3-fb31-41a4-b1d7-c46f3f7e6791 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=97f315de-1496-416b-b4ef-621245c3ae2c status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c40b9fb1-15b1-4d39-8269-e8318c548aef status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c9219937-063c-4e0a-a5fe-86f1362e2746 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=cde2a56b-4f5a-46e8-8897-b2bfb555d370 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=bfd79927-67a1-4f2f-917d-c52aaef88b0b status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=82054d96-6909-4266-b95f-e2c13a2e6657 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=12b055be-42d1-4b4f-836b-ec1ccca723a5 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=5f754ac6-f5ce-4a4b-b75a-2ed9cad1a46b status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=96fc332d-19f5-4741-bafb-6fddce446d03 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=c161836e-2b10-44c3-87d3-05fd599743db status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=4adf55a7-f66e-4811-92b9-16b88bdda55d status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=326fbc59-4abe-4b22-90e1-ad2e0c2f5fca status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=0ea359d5-3af8-4b7b-b16f-0719ae283fbf status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=b1a6fad1-344b-41ef-87d5-4aefc6e0a973 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=40761500-3dcf-469f-8af7-8cb9105388c4 status=200 modelId=None runId=None batchId=None
+[WebServer] INFO jit.catalog operation=GET requestId=5a10b986-1e45-45e5-8ec8-6af51f600168 status=200 modelId=None runId=None batchId=None
+  ok 1 [multi-method-explanations] › e2e\explanation-methods.spec.ts:43:1 › 固定分析生成两种解释并刷新重开、切换提交和窄屏核对 (21.9s)
+
+  1 passed (2.2m)

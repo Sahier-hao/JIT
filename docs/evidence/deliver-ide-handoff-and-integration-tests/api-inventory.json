@@ -1,0 +1,1502 @@
+{
+  "kind": "openapi-operation-inventory",
+  "source": "docs/api/openapi.yaml",
+  "sourceSha256": "cc13aece170d55062a35a9ac09c6431df38e40f78851c5f0ae7a97489069ce1a",
+  "generatedAt": "2026-11-25T02:56:38.118879+00:00",
+  "totalOperations": 99,
+  "adminAuthOperations": [
+    {
+      "method": "GET",
+      "path": "/api/admin/session",
+      "operationId": "adminSession",
+      "key": "GET /api/admin/session",
+      "summary": "Administrator session",
+      "tags": [],
+      "security": [],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high",
+      "exclusionReason": "管理员会话查询不属于业务 API，由独立账户流程验证。"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/login",
+      "operationId": "adminLogin",
+      "key": "POST /api/admin/login",
+      "summary": "Administrator login",
+      "tags": [],
+      "security": [],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high",
+      "exclusionReason": "管理员登录不属于业务 API，由独立账户流程验证。"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/logout",
+      "operationId": "adminLogout",
+      "key": "POST /api/admin/logout",
+      "summary": "Administrator logout",
+      "tags": [],
+      "security": [],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high",
+      "exclusionReason": "管理员登出不属于业务 API，由独立账户流程验证。"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/setup",
+      "operationId": "adminSetup",
+      "key": "POST /api/admin/setup",
+      "summary": "Administrator setup",
+      "tags": [],
+      "security": [],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high",
+      "exclusionReason": "管理员初始化不属于业务 API，由独立账户流程验证。"
+    }
+  ],
+  "businessOperations": 95,
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/api/admin/datasets/prunable",
+      "operationId": "listPrunableDatasets",
+      "key": "GET /api/admin/datasets/prunable",
+      "summary": "列出可清理的 PR 数据集版本",
+      "tags": [
+        "管理工作区"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "admin",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/datasets/{datasetVersion}/split-preview",
+      "operationId": "previewDatasetSplit",
+      "key": "GET /api/admin/datasets/{datasetVersion}/split-preview",
+      "summary": "只读预览已登记数据集的注册时间切分",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "admin",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/evaluation-evidence",
+      "operationId": "listEvaluationEvidence",
+      "key": "GET /api/admin/evaluation-evidence",
+      "summary": "列出固定目录中的评价矩阵与候选集证据",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/evaluation-evidence/{evidenceId}",
+      "operationId": "getEvaluationEvidence",
+      "key": "GET /api/admin/evaluation-evidence/{evidenceId}",
+      "summary": "读取指定评价证据",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/multi-project-reports",
+      "operationId": "listMultiProjectReports",
+      "key": "GET /api/admin/multi-project-reports",
+      "summary": "列出管理工作区可见的多项目实验报告",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/multi-project-reports/{reportId}",
+      "operationId": "getMultiProjectReport",
+      "key": "GET /api/admin/multi-project-reports/{reportId}",
+      "summary": "读取指定多项目实验报告",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "admin",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/review-batch",
+      "operationId": "getHistoricalReviewBatch",
+      "key": "GET /api/review-batch",
+      "summary": "当前固定六字段真实历史批次",
+      "tags": [
+        "现有历史回放"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "historical",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/commits",
+      "operationId": "listCommits",
+      "key": "GET /api/v1/commits",
+      "summary": "提交级数据分页列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/commits/{commitId}",
+      "operationId": "getCommit",
+      "key": "GET /api/v1/commits/{commitId}",
+      "summary": "单条提交的完整特征",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/comparisons",
+      "operationId": "compareRuns",
+      "key": "GET /api/v1/comparisons",
+      "summary": "同口径成功实验比较",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasets",
+      "operationId": "listDatasets",
+      "key": "GET /api/v1/datasets",
+      "summary": "已登记数据来源与版本列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasets/versions/{datasetVersion}/quality",
+      "operationId": "getDatasetQuality",
+      "key": "GET /api/v1/datasets/versions/{datasetVersion}/quality",
+      "summary": "数据版本质量报告",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/datasets/{name}/versions",
+      "operationId": "listDatasetVersions",
+      "key": "GET /api/v1/datasets/{name}/versions",
+      "summary": "单个数据来源的版本列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/experiment-runs",
+      "operationId": "listExperimentRuns",
+      "key": "GET /api/v1/experiment-runs",
+      "summary": "盘点受控实验运行及其登记和用户分析兼容状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/experiment-runs/{candidateId}",
+      "operationId": "getExperimentRun",
+      "key": "GET /api/v1/experiment-runs/{candidateId}",
+      "summary": "读取实验运行详情、兼容性和登记状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/experiments/{runId}",
+      "operationId": "getExperiment",
+      "key": "GET /api/v1/experiments/{runId}",
+      "summary": "查询实验状态与结果",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/experiments/{runId}/report",
+      "operationId": "getExperimentReport",
+      "key": "GET /api/v1/experiments/{runId}/report",
+      "summary": "导出完整成功实验报告",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/feature-schemas/{featureSchemaVersion}",
+      "operationId": "getFeatureSchema",
+      "key": "GET /api/v1/feature-schemas/{featureSchemaVersion}",
+      "summary": "字段定义与映射状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/model-candidates",
+      "operationId": "listModelCandidates",
+      "key": "GET /api/v1/model-candidates",
+      "summary": "受控运行候选",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/model-cards/{modelId}",
+      "operationId": "getPublicModelCard",
+      "key": "GET /api/v1/model-cards/{modelId}",
+      "summary": "读取普通用户可访问的只读模型卡",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models",
+      "operationId": "listModels",
+      "key": "GET /api/v1/models",
+      "summary": "可追溯模型列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/coverage",
+      "operationId": "getModelCoverage",
+      "key": "GET /api/v1/models/coverage",
+      "summary": "数据集版本与方法训练覆盖",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/{modelId}",
+      "operationId": "getRegisteredModelDetail",
+      "key": "GET /api/v1/models/{modelId}",
+      "summary": "读取已校验模型详情、训练指标与运行谱系",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/{modelId}/benefit",
+      "operationId": "getModelBenefit",
+      "key": "GET /api/v1/models/{modelId}/benefit",
+      "summary": "读取模型在冻结测试分区上的审查收益评估",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/models/{modelId}/release",
+      "operationId": "getModelReleaseQualification",
+      "key": "GET /api/v1/models/{modelId}/release",
+      "summary": "读取模型发布资格报告",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pr-snapshots/{snapshotId}",
+      "operationId": "getPRSnapshot",
+      "key": "GET /api/v1/pr-snapshots/{snapshotId}",
+      "summary": "读取不可变 PR 来源快照",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pr-snapshots/{snapshotId}/analyses",
+      "operationId": "getPRModelClues",
+      "key": "GET /api/v1/pr-snapshots/{snapshotId}/analyses",
+      "summary": "读取该固定版本的模型任务与已覆盖提交分数",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pr-snapshots/{snapshotId}/context",
+      "operationId": "getPRFileContext",
+      "key": "GET /api/v1/pr-snapshots/{snapshotId}/context",
+      "summary": "读取固定 SHA 的文件上下文",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/prediction-batches/{batchId}",
+      "operationId": "getPredictionBatch",
+      "key": "GET /api/v1/prediction-batches/{batchId}",
+      "summary": "重开新输入预测批次",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "prediction",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/predictions/{predictionId}/explanation",
+      "operationId": "getExplanation",
+      "key": "GET /api/v1/predictions/{predictionId}/explanation",
+      "summary": "查询同预测的解释状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "explanation",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/project-events",
+      "operationId": "listProjectEvents",
+      "key": "GET /api/v1/project-events",
+      "summary": "跨项目的持久站内事件",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "project-events",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories",
+      "operationId": "listRepositories",
+      "key": "GET /api/v1/repositories",
+      "summary": "已同步过的仓库列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}",
+      "operationId": "getRepository",
+      "key": "GET /api/v1/repositories/{repositoryId}",
+      "summary": "仓库详情",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/commits",
+      "operationId": "listRepositoryCommits",
+      "key": "GET /api/v1/repositories/{repositoryId}/commits",
+      "summary": "仓库当前视图的提交分页",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/commits/{commitId}",
+      "operationId": "getRepositoryCommit",
+      "key": "GET /api/v1/repositories/{repositoryId}/commits/{commitId}",
+      "summary": "仓库单条提交的特征、风险与标签说明",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation",
+      "operationId": "getRepositoryExplanation",
+      "key": "GET /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation",
+      "summary": "读取固定分析提交的保存解释，不触发推理",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "explanation",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation-methods",
+      "operationId": "listRepositoryExplanationMethods",
+      "key": "GET /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation-methods",
+      "summary": "查询固定分析模型实际可用的解释方法",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "explanation",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/commits/{commitId}/explanations",
+      "operationId": "listRepositoryExplanations",
+      "key": "GET /api/v1/repositories/{repositoryId}/commits/{commitId}/explanations",
+      "summary": "列出固定分析提交已保存的全部解释",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "explanation",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/comparison",
+      "operationId": "compareSavedRepositoryAnalyses",
+      "key": "GET /api/v1/repositories/{repositoryId}/comparison",
+      "summary": "对照同一项目两次固定成功分析的保存分数与度量",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/dataset-builds",
+      "operationId": "listProjectDatasetBuilds",
+      "key": "GET /api/v1/repositories/{repositoryId}/dataset-builds",
+      "summary": "当前项目的数据集构建任务",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/dataset-builds/{taskId}",
+      "operationId": "getProjectDatasetBuild",
+      "key": "GET /api/v1/repositories/{repositoryId}/dataset-builds/{taskId}",
+      "summary": "读取一次数据集构建任务及冻结结果",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/events",
+      "operationId": "listRepositoryEvents",
+      "key": "GET /api/v1/repositories/{repositoryId}/events",
+      "summary": "当前项目的持久站内事件",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "project-events",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/overview",
+      "operationId": "repositoryOverview",
+      "key": "GET /api/v1/repositories/{repositoryId}/overview",
+      "summary": "读取公开 GitHub 仓库概览",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/pr-tracking",
+      "operationId": "getProjectPRTracking",
+      "key": "GET /api/v1/repositories/{repositoryId}/pr-tracking",
+      "summary": "项目 PR 自动跟踪设置与实际检查状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/pull-request-batches/latest",
+      "operationId": "getLatestRepositoryPullRequestBatch",
+      "key": "GET /api/v1/repositories/{repositoryId}/pull-request-batches/latest",
+      "summary": "读取项目最近一次批量分析批次",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}",
+      "operationId": "getRepositoryPullRequestBatch",
+      "key": "GET /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}",
+      "summary": "读取指定批量分析批次的真实进度",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/pull-requests",
+      "operationId": "listRepositoryPullRequests",
+      "key": "GET /api/v1/repositories/{repositoryId}/pull-requests",
+      "summary": "读取项目已缓存的公开 PR 清单",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/pull-requests/count",
+      "operationId": "countRepositoryPullRequests",
+      "key": "GET /api/v1/repositories/{repositoryId}/pull-requests/count",
+      "summary": "读取开放 PR 的真实总数",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/summary",
+      "operationId": "getRepositorySummary",
+      "key": "GET /api/v1/repositories/{repositoryId}/summary",
+      "summary": "仓库当前视图的风险分布",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/trend-groups",
+      "operationId": "listProjectTrendGroups",
+      "key": "GET /api/v1/repositories/{repositoryId}/trend-groups",
+      "summary": "项目成功分支分析的可比口径",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/trend-views/{viewId}",
+      "operationId": "getProjectTrendView",
+      "key": "GET /api/v1/repositories/{repositoryId}/trend-views/{viewId}",
+      "summary": "读取已冻结来源的项目趋势",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/trend-views/{viewId}/commits",
+      "operationId": "listProjectTrendCommits",
+      "key": "GET /api/v1/repositories/{repositoryId}/trend-views/{viewId}/commits",
+      "summary": "固定来源和日期桶内的去重提交下钻",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "low"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repositories/{repositoryId}/updates",
+      "operationId": "getRepositoryUpdates",
+      "key": "GET /api/v1/repositories/{repositoryId}/updates",
+      "summary": "仓库自动更新设置及实际检查状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repository-models",
+      "operationId": "repositoryModelChoices",
+      "key": "GET /api/v1/repository-models",
+      "summary": "Public registered model choice metadata without maintenance evidence",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repository-syncs",
+      "operationId": "listRepositorySyncs",
+      "key": "GET /api/v1/repository-syncs",
+      "summary": "同步作业列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repository-syncs/{syncId}",
+      "operationId": "getRepositorySync",
+      "key": "GET /api/v1/repository-syncs/{syncId}",
+      "summary": "单个同步作业的状态与产物",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repository-syncs/{syncId}/commits",
+      "operationId": "listRepositorySyncCommits",
+      "key": "GET /api/v1/repository-syncs/{syncId}/commits",
+      "summary": "同步作业内提交的风险列表",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/repository-syncs/{syncId}/commits/{commitId}",
+      "operationId": "getRepositorySyncCommit",
+      "key": "GET /api/v1/repository-syncs/{syncId}/commits/{commitId}",
+      "summary": "单个仓库提交的特征与风险",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/training-methods",
+      "operationId": "listTrainingMethods",
+      "key": "GET /api/v1/training-methods",
+      "summary": "项目分析可选的训练方法",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/training-tasks",
+      "operationId": "listTrainingTasks",
+      "key": "GET /api/v1/training-tasks",
+      "summary": "分页查询训练任务",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/training-tasks/{taskId}",
+      "operationId": "getTrainingTask",
+      "key": "GET /api/v1/training-tasks/{taskId}",
+      "summary": "读取训练任务、指标及运行/模型谱系",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/trends",
+      "operationId": "getTrend",
+      "key": "GET /api/v1/trends",
+      "summary": "冻结历史观测与风险趋势",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "low"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/models/{modelId}/policy",
+      "operationId": "updateModelPolicy",
+      "key": "PATCH /api/v1/models/{modelId}/policy",
+      "summary": "设置仓库分析默认模型及启停状态",
+      "tags": [],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/repositories/{repositoryId}/pr-tracking",
+      "operationId": "configureProjectPRTracking",
+      "key": "PATCH /api/v1/repositories/{repositoryId}/pr-tracking",
+      "summary": "显式启停项目 PR 自动分析并固定模型",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/repositories/{repositoryId}/updates",
+      "operationId": "configureRepositoryUpdates",
+      "key": "PATCH /api/v1/repositories/{repositoryId}/updates",
+      "summary": "保存提醒开关、分支或频率",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/datasets/prune",
+      "operationId": "pruneDatasets",
+      "key": "POST /api/admin/datasets/prune",
+      "summary": "删除选定的 PR 数据集版本",
+      "tags": [
+        "管理工作区"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "admin",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/datasets/import",
+      "operationId": "importDataset",
+      "key": "POST /api/v1/datasets/import",
+      "summary": "注册并校验公开CSV数据",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/experiment-runs/promote",
+      "operationId": "promoteExperimentRuns",
+      "key": "POST /api/v1/experiment-runs/promote",
+      "summary": "选择性登记实验运行并逐项返回结果",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/experiments",
+      "operationId": "createExperiment",
+      "key": "POST /api/v1/experiments",
+      "summary": "创建冻结协议实验",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/models/register",
+      "operationId": "registerExistingModel",
+      "key": "POST /api/v1/models/register",
+      "summary": "登记经完整校验的已有运行",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "model-registry",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/pr-snapshots/{snapshotId}/analyses",
+      "operationId": "createPRModelClues",
+      "key": "POST /api/v1/pr-snapshots/{snapshotId}/analyses",
+      "summary": "主动创建绑定 PR HEAD 的现成模型分析",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/pr-sources/{owner}/{name}/{number}/refresh",
+      "operationId": "refreshPublicPR",
+      "key": "POST /api/v1/pr-sources/{owner}/{name}/{number}/refresh",
+      "summary": "检查 PR 基准、目标和远端状态",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/prediction-batches",
+      "operationId": "createPredictionBatch",
+      "key": "POST /api/v1/prediction-batches",
+      "summary": "CSV特征整批预测",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "prediction",
+      "riskTier": "medium"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/predictions",
+      "operationId": "createPrediction",
+      "key": "POST /api/v1/predictions",
+      "summary": "JSON单条新特征预测",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "prediction",
+      "riskTier": "medium"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories",
+      "operationId": "createRepository",
+      "key": "POST /api/v1/repositories",
+      "summary": "接入仓库并准备首次分析",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "repository-read",
+      "riskTier": "medium"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/commits/{commitId}/explanation",
+      "operationId": "generateRepositoryExplanation",
+      "key": "POST /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation",
+      "summary": "主动生成并保存原模型对固定提交的解释",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "explanation",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/dataset-builds",
+      "operationId": "createProjectDatasetBuild",
+      "key": "POST /api/v1/repositories/{repositoryId}/dataset-builds",
+      "summary": "从当前项目公开仓库构建只采集、登记的数据集",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/dataset-builds/{taskId}/cancel",
+      "operationId": "cancelProjectDatasetBuild",
+      "key": "POST /api/v1/repositories/{repositoryId}/dataset-builds/{taskId}/cancel",
+      "summary": "取消排队或执行中的数据集构建",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/dataset-builds/{taskId}/retry",
+      "operationId": "retryProjectDatasetBuild",
+      "key": "POST /api/v1/repositories/{repositoryId}/dataset-builds/{taskId}/retry",
+      "summary": "按原仓库、分支、范围重试已失败的数据集构建",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "dataset-import",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/pr-tracking/check",
+      "operationId": "checkProjectPullRequests",
+      "key": "POST /api/v1/repositories/{repositoryId}/pr-tracking/check",
+      "summary": "请求立即检查公开 PR，复用在途检查及限流等待",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/cancel",
+      "operationId": "cancelRepositoryPullRequestBatch",
+      "key": "POST /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/cancel",
+      "summary": "取消进行中的批量分析",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/retry",
+      "operationId": "retryRepositoryPullRequestBatch",
+      "key": "POST /api/v1/repositories/{repositoryId}/pull-request-batches/{batchId}/retry",
+      "summary": "按状态重试上一批次的条目",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/pull-requests/analyze",
+      "operationId": "analyzeRepositoryPullRequests",
+      "key": "POST /api/v1/repositories/{repositoryId}/pull-requests/analyze",
+      "summary": "创建或复用一次可追踪的批量分析",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/pull-requests/refresh",
+      "operationId": "refreshRepositoryPullRequests",
+      "key": "POST /api/v1/repositories/{repositoryId}/pull-requests/refresh",
+      "summary": "显式刷新项目公开 PR 清单的一页",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/pull-requests/{number}/analyze",
+      "operationId": "analyzeRepositoryPullRequest",
+      "key": "POST /api/v1/repositories/{repositoryId}/pull-requests/{number}/analyze",
+      "summary": "为单个项目 PR 读取固定快照并创建模型分析",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/refresh",
+      "operationId": "refreshRepository",
+      "key": "POST /api/v1/repositories/{repositoryId}/refresh",
+      "summary": "立即检查仓库并在新 HEAD 时提醒",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repositories/{repositoryId}/trend-views",
+      "operationId": "createProjectTrendView",
+      "key": "POST /api/v1/repositories/{repositoryId}/trend-views",
+      "summary": "准备可重开的固定项目趋势视图",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "trend-comparison",
+      "riskTier": "medium"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repository-syncs",
+      "operationId": "createRepositorySync",
+      "key": "POST /api/v1/repository-syncs",
+      "summary": "从公开仓库采集提交并打分",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/repository-syncs/{syncId}/cancel",
+      "operationId": "cancelRepositorySync",
+      "key": "POST /api/v1/repository-syncs/{syncId}/cancel",
+      "summary": "取消排队或执行中的项目分析",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "sync-control",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/review-sources",
+      "operationId": "preparePublicPRSource",
+      "key": "POST /api/v1/review-sources",
+      "summary": "从公开 GitHub 仓库或 PR 接入真实工作",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [],
+      "role": "public",
+      "riskDomain": "pr-analysis-report",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/training-experiments/{experimentId}/comparison/thresholds",
+      "operationId": "evaluateTrainingExperimentThresholds",
+      "key": "POST /api/v1/training-experiments/{experimentId}/comparison/thresholds",
+      "summary": "按验证集选择阈值并复核冻结测试（管理员）",
+      "tags": [],
+      "security": [],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/training-tasks",
+      "operationId": "createTrainingTask",
+      "key": "POST /api/v1/training-tasks",
+      "summary": "创建管理员数据集训练任务",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/training-tasks/{taskId}/cancel",
+      "operationId": "cancelTrainingTask",
+      "key": "POST /api/v1/training-tasks/{taskId}/cancel",
+      "summary": "取消排队或运行中的训练任务",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/training-tasks/{taskId}/retry",
+      "operationId": "retryTrainingTask",
+      "key": "POST /api/v1/training-tasks/{taskId}/retry",
+      "summary": "显式重试失败、取消或中断任务",
+      "tags": [
+        "目标共享产品"
+      ],
+      "security": [
+        {
+          "AdminSession": []
+        }
+      ],
+      "role": "public",
+      "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/user/training-experiments/{experimentId}/comparison/thresholds",
+      "operationId": "evaluateUserTrainingExperimentThresholds",
+      "key": "POST /api/v1/user/training-experiments/{experimentId}/comparison/thresholds",
+      "summary": "按验证集选择阈值并复核自有实验的冻结测试",
+      "tags": [],
+      "security": [],
+      "role": "user",
+      "riskDomain": "training",
+      "riskTier": "high"
+    }
+  ]
+}
