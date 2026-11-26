@@ -46,6 +46,7 @@ export interface RepositoryExplanation {
   explanationMethod: string | null
   explanationUnit: ExplanationUnit
   explanationSummary: string | null
+  featureSummary: string | null
   explanationReason: string | null
   reasonCode: string | null
   contributionTotal: number | null
@@ -220,6 +221,7 @@ export function parseRepositoryExplanation(
     explanationMethod: method,
     explanationUnit: unit,
     explanationSummary: summary,
+    featureSummary: textOrNull(raw.featureSummary),
     explanationReason: textOrNull(raw.explanationReason),
     reasonCode: textOrNull(raw.reasonCode),
     contributionTotal,

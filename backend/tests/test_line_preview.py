@@ -40,6 +40,39 @@ def test_scores_non_blank_lines_and_ranks_them():
     assert scores == sorted(scores, reverse=True)
     assert [row["rank"] for row in result["lines"]] == [1, 2, 3, 4]
     assert all(0.0 <= score <= 1.0 for score in scores)
+    assert result["contributionCaveat"] == "行级特征贡献，不是缺陷原因。"
+    assert result["contributionUnit"] == "logit"
+    assert all(len(row["contributions"]) == 3 for row in result["lines"])
+
+
+def test_contributions_plus_intercept_equal_raw_logit():
+    result = score_lines("function f(value: number) {\n  return value + 1\n}\n",
+                         "typescript")
+    for row in result["lines"]:
+        total = result["intercept"] + row["contributionTotal"]
+        assert total == pytest.approx(row["logit"], rel=1e-12, abs=1e-12)
+        displayed = sum(item["contribution"] for item in row["contributions"])
+        assert displayed + row["otherContribution"] == pytest.approx(
+            row["contributionTotal"], rel=1e-12, abs=1e-12,
+        )
+        assert row["contributions"] == sorted(
+            row["contributions"],
+            key=lambda item: (-abs(item["contribution"]), item["feature"]),
+        )
+        for item in row["contributions"]:
+            assert item["contribution"] == pytest.approx(
+                item["value"] * item["weight"], rel=1e-12, abs=1e-12,
+            )
+
+
+def test_language_feature_is_only_added_for_the_active_covered_language():
+    typescript = score_lines("const value = 1\n", "typescript")["lines"][0]
+    javascript = score_lines("const value = 1\n", "javascript")["lines"][0]
+    assert any(item["feature"] == "language:typescript"
+               for item in typescript["contributions"])
+    assert not any(item["feature"].startswith("language:")
+                   for item in javascript["contributions"])
+    assert typescript["logit"] != javascript["logit"]
 
 
 def test_rejects_language_outside_training_coverage():
@@ -56,6 +89,13 @@ def test_rejects_empty_and_oversized_input():
         score_lines("\n".join(f"const v{index} = {index}" for index in range(MAX_LINES + 1)),
                     "typescript")
     assert oversized.value.code == "LINE_PREVIEW_TOO_LARGE"
+
+
+def test_blank_lines_are_skipped_without_contributions():
+    result = score_lines("const a = 1\n\n\n// note\n", "javascript")
+    assert {row["line"] for row in result["lines"]} == {1, 4}
+    assert all(row["text"].strip() for row in result["lines"])
+    assert result["skippedBlank"] == 2
 
 
 def test_tampered_artifact_is_unavailable(tmp_path):

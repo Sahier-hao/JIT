@@ -604,6 +604,7 @@ export type PrAnalyses = {
             addedLines: number;
             deletedLines: number;
             fileCount: number;
+            labelEvidence?: Array<RepositoryLabelEvidence>;
         }>;
         /**
          * 该分析中 PR 提交触达的文件及其最高提交分数；仅用于排序参考，不是文件级缺陷概率。
@@ -1323,6 +1324,7 @@ export type RepositoryLabelEvidence = {
     path: string;
     fixTime: string | null;
     ruleVersion: string | null;
+    diffAnchor?: string | null;
     lineRanges?: Array<unknown> | null;
     parentRanges?: Array<unknown> | null;
 };
@@ -2179,6 +2181,10 @@ export type RepositoryExplanation = {
     explanationMethod: string | null;
     explanationUnit: 'probability' | 'logit';
     explanationSummary: string | null;
+    /**
+     * 由已保存贡献项生成的模板化中文摘要；旧解释可缺省。
+     */
+    featureSummary?: string | null;
     explanationReason: string | null;
     /**
      * 生成失败的领域原因；不包含内部路径和异常详情。

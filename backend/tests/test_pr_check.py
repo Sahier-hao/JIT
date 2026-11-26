@@ -1,4 +1,5 @@
 """离线 PR 检查包与报告：身份、覆盖、哈希和个人数据边界。"""
+import hashlib
 import json
 
 import pytest
@@ -37,6 +38,22 @@ def _fixture(tmp_path):
                    "deleted_lines,files,features_json,label,label_note,subject,author_name) "
                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                    ('sync1', 'd' * 40, 2, 0.2, 3, 0, 1, '{}', 0, None, 'safe', 'B'))
+        db.execute(
+            "INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,"
+            "source_sha256,row_count,created_at) VALUES (?,?,?,?,?,?,?)",
+            ('demo-v1', 'fixture', '{}', 'fixture', 'fixture', 1, utc_now()),
+        )
+        db.execute(
+            "INSERT INTO commit_record VALUES (?,?,?,?,?)",
+            ('demo-v1', 'c' * 40, utc_now(), 0, 'fixture'),
+        )
+        db.execute(
+            "INSERT INTO commit_label_evidence(dataset_version,commit_id,fix_commit_id,path,"
+            "fix_time,rule_version,line_ranges_json,parent_ranges_json) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            ('demo-v1', 'c' * 40, 'e' * 40, 'src/a.py', '2026-10-30T00:00:00Z',
+             'szz-full-v1', '[[3,4]]', '[[9,10]]'),
+        )
     return storage
 
 
@@ -51,11 +68,19 @@ def test_export_and_report_keep_identity_and_coverage(tmp_path):
     assert report['baseSha'] == 'a' * 40 and report['headSha'] == 'b' * 40
     assert report['model'] == {'modelId': 'model-1', 'runId': 'run-1'}
     assert report['commits'][0]['risk'] == 0.9
+    evidence = report['commits'][0]['repairEvidence'][0]
+    assert evidence['fixCommit'] == 'e' * 40
+    assert evidence['lineRanges'] == [[3, 4]] and evidence['parentRanges'] == [[9, 10]]
+    assert evidence['diffAnchor'].startswith('diff-') and len(evidence['diffAnchor']) == 37
     assert any('缺陷概率' in item for item in report['limitations'])
 
     path = tmp_path / 'report.md'
     write_report(bundle, path, 'markdown')
-    assert 'PR 检查报告' in path.read_text(encoding='utf-8')
+    markdown = path.read_text(encoding='utf-8')
+    assert 'PR 检查报告' in markdown
+    assert '后续修复证据' in markdown
+    assert '修复 diff 行' in markdown
+    assert f"#diff-{hashlib.md5(b'src/a.py', usedforsecurity=False).hexdigest()}L9" in markdown
 
 
 def test_identity_and_tampering_are_rejected(tmp_path):

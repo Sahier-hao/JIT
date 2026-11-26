@@ -4829,6 +4829,10 @@ components:
                     fileCount:
                       type: integer
                       minimum: 0
+                    labelEvidence:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RepositoryLabelEvidence'
                   required:
                   - commitId
                   - risk
@@ -6773,6 +6777,9 @@ components:
         path: {type: string}
         fixTime: {type: [string, 'null']}
         ruleVersion: {type: [string, 'null']}
+        diffAnchor:
+          type: [string, 'null']
+          pattern: '^diff-[a-f0-9]{32}$'
         lineRanges: {type: [array, 'null'], items: {}}
         parentRanges: {type: [array, 'null'], items: {}}
       required: [fixCommit, path, fixTime, ruleVersion]
@@ -8859,6 +8866,9 @@ components:
           enum: [probability, logit]
         explanationSummary:
           type: [string, 'null']
+        featureSummary:
+          type: [string, 'null']
+          description: 由已保存贡献项生成的模板化中文摘要；旧解释可缺省。
         explanationReason:
           type: [string, 'null']
         reasonCode:

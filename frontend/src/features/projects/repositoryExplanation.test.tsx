@@ -59,6 +59,45 @@ it('reads saved explanations without posting and exposes the method selector', a
   expect(fetch.mock.calls.every(([, init]) => (init as RequestInit)?.method !== 'POST')).toBe(true)
 })
 
+it('prefers the saved template summary and keeps legacy summary fallback', async () => {
+  const templated = { ...occlusionSupported, featureSummary: '本次分数主要受新增行数推高模型分数。' }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody())
+    if (url.includes('/explanations?')) return response(listBody([templated]))
+    return response(notSupported)
+  })
+  renderDetail()
+  expect(await screen.findByText('本次分数主要受新增行数推高模型分数。')).toBeVisible()
+  expect(screen.queryByText('新增行数推高模型分数。')).not.toBeInTheDocument()
+})
+
+it('links saved repair evidence to the fix diff file and line', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody({ modelAvailable: false, methods: [] }))
+    if (url.includes('/explanations?')) return response(listBody([]))
+    return response(notSupported)
+  })
+  const evidence = {
+    fixCommit: 'f'.repeat(40), path: 'src/token.py', fixTime: '2026-11-01T00:00:00Z',
+    ruleVersion: 'szz-full-v1', diffAnchor: `diff-${'b'.repeat(32)}`,
+    lineRanges: [[3, 4]] as Array<[number, number]>,
+    parentRanges: [[9, 10]] as Array<[number, number]>,
+  }
+  const withEvidence: Dataset = {
+    ...data,
+    records: [{ ...data.records[0], labelStatus: 'positive', labelEvidence: [evidence] }],
+  }
+  renderDetail(withEvidence)
+  expect(await screen.findByRole('heading', { name: '后续修复证据' })).toBeVisible()
+  expect(screen.getByText('修复 diff 行 9–10')).toBeVisible()
+  expect(screen.getByText('引入行 3–4')).toBeVisible()
+  expect(screen.getByRole('link', { name: 'f'.repeat(12) })).toHaveAttribute(
+    'href', `https://github.com/example/repo/commit/${'f'.repeat(40)}#diff-${'b'.repeat(32)}L9`,
+  )
+})
+
 it('generates a selected method only after an explicit choice and keeps the risk unchanged', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, _init) => {
     const url = String(input)

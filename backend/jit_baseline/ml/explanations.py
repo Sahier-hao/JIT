@@ -51,6 +51,64 @@ METHODS = {
     },
 }
 
+FEATURE_LABELS = {
+    "ns": "子系统数",
+    "nd": "目录数",
+    "nf": "文件数",
+    "ent": "改动分散度",
+    "entropy": "改动分散度",
+    "la": "新增行数",
+    "ld": "删除行数",
+    "lt": "变更前规模",
+    "fix": "修复标记",
+    "ndev": "参与开发者数",
+    "age": "变更间隔",
+    "nuc": "历史变更数",
+    "exp": "作者经验",
+    "rexp": "作者近期经验",
+    "sexp": "子系统经验",
+}
+
+
+def feature_label(feature):
+    """复用产品现有中文名；未知字段保留原始键但不推测含义。"""
+    return FEATURE_LABELS.get(feature, feature)
+
+
+def feature_summary(items, unit, stability=None):
+    """只用已保存贡献项生成模板摘要，不推断原因或补充未出现的特征。"""
+    if unit not in ("probability", "logit"):
+        raise ValueError("unknown explanation unit")
+    ordered = sorted(
+        (item for item in items if item.get("feature")),
+        key=lambda item: abs(float(item.get("delta") or 0.0)),
+        reverse=True,
+    )
+    increases = [
+        feature_label(item["feature"]) for item in ordered
+        if item.get("direction") == "increases"
+    ][:2]
+    decreases = [
+        feature_label(item["feature"]) for item in ordered
+        if item.get("direction") == "decreases"
+    ][:2]
+    clauses = []
+    effect = "log-odds" if unit == "logit" else "模型分数"
+    separator = " " if unit == "logit" else ""
+    if increases:
+        clauses.append(f"{'、'.join(increases)}推高{separator}{effect}")
+    if decreases:
+        clauses.append(f"{'、'.join(decreases)}拉低{separator}{effect}")
+    if not clauses:
+        return None
+    if unit == "logit":
+        summary = "相对保存的基线，" + "；".join(clauses) + "。"
+    else:
+        summary = "本次分数主要受" + "；".join(clauses) + "。"
+    if isinstance(stability, dict) and stability.get("status") == "unstable":
+        summary += "特征排序不稳定，不作为确定主因。"
+    return summary
+
 
 def method(method_id=DEFAULT_METHOD):
     """Return one registered method declaration; unknown ids never fall back."""

@@ -1,5 +1,6 @@
 """Explicitly migrated catalog. Every connection is local to one operation."""
 import json
+import hashlib
 import sqlite3
 import uuid
 from contextlib import contextmanager, nullcontext
@@ -299,6 +300,9 @@ class CatalogStorage:
                           (version, commit_id)).fetchall()
         return [{'fixCommit': row['fix_commit_id'], 'path': row['path'],
                  'fixTime': row['fix_time'], 'ruleVersion': row['rule_version'],
+                 'diffAnchor': 'diff-' + hashlib.md5(
+                     row['path'].encode('utf-8'), usedforsecurity=False,
+                 ).hexdigest(),
                  'lineRanges': json.loads(row['line_ranges_json']) if row['line_ranges_json'] else None,
                  'parentRanges': json.loads(row['parent_ranges_json']) if row['parent_ranges_json'] else None}
                 for row in rows]

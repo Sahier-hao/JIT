@@ -26,6 +26,7 @@ CAVEATS = [
     "排序只使用行内文本与结构特征，不使用上下文、提交信息或完整候选集。",
     "研究预览不参与项目分析、PR 审查、模型目录或默认模型。",
 ]
+CONTRIBUTION_CAVEAT = "行级特征贡献，不是缺陷原因。"
 
 
 def model_path(configured: str | Path | None = None) -> Path:
@@ -72,6 +73,47 @@ def _supported(model: dict[str, Any]) -> list[str]:
     features = model["features"]
     supported = features.get("supported") or features.get("language") or []
     return [value for value in supported if isinstance(value, str) and value]
+
+
+def line_logit(
+    model: dict[str, Any],
+    row: dict[str, Any],
+    language: str,
+    *,
+    position_features: bool | None = None,
+) -> tuple[float, list[dict[str, Any]]]:
+    """返回原始 logit 与全部特征贡献；贡献和加截距恒等于 logit。"""
+    numeric_names = model["features"]["numeric"]
+    coefficients = model["coefficients"]
+    if position_features is None:
+        position_features = (model.get("model") or {}).get("positionFeatures") is not False
+    values = numeric_values(row, include_commit=False,
+                            position_features=position_features)
+    if len(values) != len(numeric_names):
+        raise _invalid()
+    score = float(model["intercept"])
+    contributions = []
+    for name, value in zip(numeric_names, values):
+        weight = float(coefficients[name])
+        contribution = value * weight
+        score += contribution
+        contributions.append({
+            "feature": name,
+            "value": value,
+            "weight": weight,
+            "contribution": contribution,
+        })
+    language_feature = f"language:{language}"
+    if language_feature in coefficients:
+        weight = float(coefficients[language_feature])
+        score += weight
+        contributions.append({
+            "feature": language_feature,
+            "value": 1.0,
+            "weight": weight,
+            "contribution": weight,
+        })
+    return score, contributions
 
 
 def metadata(path: str | Path | None = None) -> dict[str, Any]:
@@ -134,12 +176,7 @@ def score_lines(code: str, language: str, path: str | Path | None = None) -> dic
         raise RequestError("LINE_PREVIEW_TOO_LARGE")
     if not any(line.strip() for line in lines):
         raise RequestError("LINE_PREVIEW_EMPTY")
-    covered = model["features"]["language"]
-    numeric_names = model["features"]["numeric"]
-    coefficients = model["coefficients"]
-    weights = [float(coefficients[name]) for name in numeric_names]
     position_features = (model.get("model") or {}).get("positionFeatures") is not False
-    language_weights = [float(coefficients[f"language:{value}"]) for value in covered]
     intercept = float(model["intercept"])
     total = len(lines)
     results = []
@@ -155,19 +192,25 @@ def score_lines(code: str, language: str, path: str | Path | None = None) -> dic
             "fileLines": total,
             "lineRatio": number / total if total else 0.0,
         }
-        values = numeric_values(row, include_commit=False,
-                                position_features=position_features)
-        if len(values) != len(weights):
-            raise _invalid()
-        score = intercept
-        for value, weight in zip(values, weights):
-            score += value * weight
-        for language_name, weight in zip(covered, language_weights):
-            if language_name == language:
-                score += weight
-        score = max(-60.0, min(60.0, score))
-        probability = 1.0 / (1.0 + math.exp(-score))
-        results.append({"line": number, "text": line, "score": round(probability, 4)})
+        raw_logit, contributions = line_logit(
+            model, row, language, position_features=position_features,
+        )
+        bounded_logit = max(-60.0, min(60.0, raw_logit))
+        probability = 1.0 / (1.0 + math.exp(-bounded_logit))
+        contribution_total = sum(item["contribution"] for item in contributions)
+        contributions.sort(key=lambda item: (-abs(item["contribution"]), item["feature"]))
+        top = contributions[:3]
+        results.append({
+            "line": number,
+            "text": line,
+            "score": round(probability, 4),
+            "logit": raw_logit,
+            "contributions": top,
+            "contributionTotal": contribution_total,
+            "otherContribution": contribution_total - sum(
+                item["contribution"] for item in top
+            ),
+        })
     results.sort(key=lambda item: (-item["score"], item["line"]))
     for rank, item in enumerate(results, 1):
         item["rank"] = rank
@@ -177,6 +220,9 @@ def score_lines(code: str, language: str, path: str | Path | None = None) -> dic
         "lines": results,
         "count": len(results),
         "skippedBlank": total - len(results),
+        "intercept": intercept,
+        "contributionUnit": "logit",
+        "contributionCaveat": CONTRIBUTION_CAVEAT,
         "artifactSha256": model.get("artifactSha256"),
         "caveats": CAVEATS,
     }

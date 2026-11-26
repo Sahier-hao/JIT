@@ -96,6 +96,15 @@ describe('parseRepositoryExplanation', () => {
     expect(() => parseRepositoryExplanation(explanation(), context, { method: 'linear-logodds-v1' })).toThrow()
     expect(() => parseRepositoryExplanation(explanation(), context, { method: 'occlusion-mean-v1' })).not.toThrow()
   })
+
+  it('解析模板摘要，并允许旧解释没有该字段', () => {
+    const legacy = parseRepositoryExplanation(explanation(), context)
+    expect(legacy.featureSummary).toBeNull()
+    const templated = parseRepositoryExplanation(explanation({
+      featureSummary: '本次分数主要受新增行数推高模型分数。',
+    }), context)
+    expect(templated.featureSummary).toBe('本次分数主要受新增行数推高模型分数。')
+  })
 })
 
 describe('parseRepositoryExplanationMethods / List', () => {

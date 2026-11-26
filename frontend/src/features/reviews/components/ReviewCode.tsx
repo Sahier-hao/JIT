@@ -156,7 +156,7 @@ export function ReviewCode({ source, file, checks, view, onViewChange, location,
         </TabsList>
         <TabsContent value="checks" className="min-h-0 overflow-auto">
           {analysisError ? <p className="px-4 py-3 text-xs text-rose-deep" role="alert">{errorMessage(analysisError)}</p> : null}
-          {result.candidates.length ? <ReviewCandidates candidates={result.candidates} target={target} onLocate={locate}
+          {result.candidates.length ? <ReviewCandidates candidates={result.candidates} ruleSet={result.ruleSet} target={target} onLocate={locate}
             onAdd={candidate => { onAdd(candidate); if (drafts) openInspector('drafts') }}
             decisionsByKey={decisions} onDecision={onDecision}/> :
             <p className="px-4 py-4 text-sm text-foreground-3" role="status">{result.reason ??
