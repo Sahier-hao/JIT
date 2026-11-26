@@ -42,3 +42,9 @@ continuous-regression、分支保护或 PR 必过规则。
 - 测试文件：`backend/tests/test_sprint2_unit_core.py`
 - 用例到核心函数的映射：`docs/test-delivery/sprint2-unit-test/core-tests.json`
 - 人工审核待办：`docs/test-delivery/sprint2-unit-test/manual-review.json`
+
+## 2026-11-26 补充轮次
+
+本轮新增正式预测、特征矩阵、预测输入、类别策略、切分与指标断言的完整提示词见
+[`unit_test_sprint2_extension_01.md`](unit_test_sprint2_extension_01.md)。本轮新增用例
+仍标记为 `[AI生成]`，核心业务断言等待负责人逐条复核，未由 AI 代签。

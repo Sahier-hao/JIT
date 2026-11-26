@@ -1,5 +1,21 @@
-// Sprint2 fast-unit coverage for domain-only behavior.
+// === AI 辅助说明 ===
+// 本文件共 52 条测试用例
+// [AI生成]：52 条（核心断言待负责人逐条复核）
+// [AI生成-人工修改]：0 条
+// [手写]：0 条
+// 使用工具：OpenAI Codex
+// 提示词见：prompts/frontend-sprint2-unit-core.md
+// Sprint2 fast-unit coverage for domain and pure projection behavior.
 import { describe, expect, it } from 'vitest'
+import type { ChartColors } from '@/components/shared/EChartCanvas'
+import { repositoryModelStatus, repositorySchemaReason } from '@/features/models/modelCompatibility'
+import {
+  bandsOption,
+  histogramOption,
+  scoreBand,
+  scoreHistogram,
+} from '@/features/projects/analysisScore'
+import type { SyncCommit } from '@/features/projects/repositoryContract'
 import {
   applyQuery,
   contextKey,
@@ -62,6 +78,29 @@ const dataset = (records: unknown[] = [record()]) => ({
   version: 'demo-v1',
   records,
 })
+
+const scoredCommits = (risks: number[]) =>
+  risks.map((risk, index) => ({ commitId: `c${index}`, risk } as unknown as SyncCommit))
+
+const COLORS: ChartColors = {
+  series: '#series',
+  seriesInk: '#series-ink',
+  grid: '#grid',
+  axis: '#axis',
+  text: '#text',
+  textStrong: '#text-strong',
+  surface: '#surface',
+  border: '#border',
+  categorical: ['#low', '#medium', '#third', '#high'],
+  other: '#unknown',
+}
+
+interface OptionView {
+  tooltip: { formatter: (params: unknown) => string }
+  xAxis: { data: string[] }
+  yAxis: { max: number }
+  series: Array<{ data: Array<{ value: number; itemStyle: { color: string } }> }>
+}
 
 describe('Sprint2 前端纯函数三场景', () => {
   it('contextKey 正常组合区分数据来源与运行 [AI生成]', () => {
@@ -173,6 +212,15 @@ describe('Sprint2 前端纯函数三场景', () => {
     }).map((item) => item.id)).toEqual(['demo-a'])
   })
 
+  it('queryCommits 边界同分按时间降序再按标识升序 [AI生成]', () => {
+    const records = parseDataset(dataset([
+      record('b', '2026-10-01T09:00:00+08:00', 0.8),
+      record('a', '2026-10-01T09:00:00+08:00', 0.8),
+      record('c', '2026-10-02T09:00:00+08:00', 0.8),
+    ])).records
+    expect(queryCommits(records, emptyQuery).map((item) => item.id)).toEqual(['c', 'a', 'b'])
+  })
+
   it('queryCommits 异常风险数据排在有效风险之后 [AI生成]', () => {
     const records = parseDataset(dataset([
       record('bad', '2026-10-03T09:00:00+08:00', NaN),
@@ -262,5 +310,170 @@ describe('Sprint2 前端纯函数三场景', () => {
       sync: SYNC,
       page: { ...PAGE, syncId: 'bc7e0a31-7e07-4ac9-b076-46c88e260d40' },
     })).toThrow('同步作业身份不一致')
+  })
+})
+
+describe('Sprint2 风险分档与模型可用性 [AI生成]', () => {
+  it('scoreBand 正常按 0.25 与 0.10 分档 [AI生成]', () => {
+    expect(scoreBand(0.30)).toBe('high')
+    expect(scoreBand(0.20)).toBe('medium')
+    expect(scoreBand(0.05)).toBe('low')
+  })
+
+  it('scoreBand 边界命中 0.10 与 0.25 阈值 [AI生成]', () => {
+    expect(scoreBand(0.25)).toBe('high')
+    expect(scoreBand(0.2499)).toBe('medium')
+    expect(scoreBand(0.10)).toBe('medium')
+    expect(scoreBand(0.0999)).toBe('low')
+    expect(scoreBand(0)).toBe('low')
+    expect(scoreBand(1)).toBe('high')
+  })
+
+  it('scoreBand 异常 NaN 不进入高或中档 [AI生成]', () => {
+    expect(scoreBand(Number.NaN)).toBe('low')
+    expect(scoreBand(-0.01)).toBe('low')
+  })
+
+  it('scoreHistogram 正常按 0.05 一档累计 [AI生成]', () => {
+    const counts = scoreHistogram(scoredCommits([0.01, 0.04, 0.05, 0.099, 0.10, 0.249, 0.25, 0.99, 1]))
+    const expected = Array.from({ length: 20 }, () => 0)
+    expected[0] = 2
+    expected[1] = 2
+    expected[2] = 1
+    expected[4] = 1
+    expected[5] = 1
+    expected[19] = 2
+    expect(counts).toEqual(expected)
+  })
+
+  it('scoreHistogram 边界空集合与 1.0 都保持 20 档 [AI生成]', () => {
+    expect(scoreHistogram([])).toEqual(Array.from({ length: 20 }, () => 0))
+    const counts = scoreHistogram(scoredCommits([0, 1]))
+    expect(counts).toHaveLength(20)
+    expect(counts[0]).toBe(1)
+    expect(counts[19]).toBe(1)
+    expect(counts.reduce((sum, value) => sum + value, 0)).toBe(2)
+  })
+
+  it('scoreHistogram 异常分数不污染有效档计数 [AI生成]', () => {
+    const counts = scoreHistogram(scoredCommits([Number.NaN, 0.4]))
+    expect(counts).toHaveLength(20)
+    expect(counts[8]).toBe(1)
+    expect(counts.reduce((sum, value) => sum + value, 0)).toBe(1)
+  })
+
+  it('repositorySchemaReason 正常当前 schema 可用于仓库分析 [AI生成]', () => {
+    expect(repositorySchemaReason('openstack-six-v1')).toBeNull()
+    expect(repositorySchemaReason('kamei14-git-v2')).toBeNull()
+  })
+
+  it('repositorySchemaReason 边界区分旧版与离线 schema [AI生成]', () => {
+    expect(repositorySchemaReason('kamei14-git-v1')).toContain('旧版')
+    expect(repositorySchemaReason('kamei14-git-v1')).toContain('v2')
+    expect(repositorySchemaReason('kamei14-2013-v1')).toContain('离线')
+  })
+
+  it('repositorySchemaReason 异常缺失或未知 schema 明确不可用 [AI生成]', () => {
+    expect(repositorySchemaReason(null)).toContain('未记录')
+    expect(repositorySchemaReason(undefined)).toContain('未记录')
+    expect(repositorySchemaReason('custom-schema-v9')).toContain('custom-schema-v9')
+  })
+
+  it('repositoryModelStatus 正常 ready 且启用的当前模型可用于仓库分析 [AI生成]', () => {
+    expect(repositoryModelStatus({
+      state: 'ready',
+      enabled: true,
+      featureSchemaVersion: 'kamei14-git-v2',
+    })).toEqual({ supported: true, label: '可用于仓库分析', reason: null })
+  })
+
+  it('repositoryModelStatus 边界未就绪或停用时不声明可用 [AI生成]', () => {
+    expect(repositoryModelStatus({
+      state: 'training',
+      enabled: true,
+      featureSchemaVersion: 'kamei14-git-v2',
+    })).toEqual({ supported: false, label: '模型未就绪', reason: '模型产物尚未通过校验。' })
+    expect(repositoryModelStatus({
+      state: 'ready',
+      enabled: false,
+      featureSchemaVersion: 'kamei14-git-v2',
+    })).toEqual({ supported: false, label: '已停用', reason: '模型已停用，不能用于新分析。' })
+  })
+
+  it('repositoryModelStatus 异常 schema 不兼容时给出具体原因 [AI生成]', () => {
+    const legacy = repositoryModelStatus({
+      state: 'ready',
+      enabled: true,
+      featureSchemaVersion: 'kamei14-git-v1',
+    })
+    expect(legacy.supported).toBe(false)
+    expect(legacy.label).toBe('不可用于仓库分析')
+    expect(legacy.reason).toContain('旧版')
+    const missing = repositoryModelStatus({
+      state: 'ready',
+      enabled: true,
+      featureSchemaVersion: null,
+    })
+    expect(missing.supported).toBe(false)
+    expect(missing.reason).toContain('未记录')
+  })
+
+  it('histogramOption 正常把风险桶和分档颜色写入图表 [AI生成]', () => {
+    const option = histogramOption(
+      scoredCommits([0.01, 0.99]),
+      COLORS,
+    ) as unknown as OptionView
+    expect(option.xAxis.data[0]).toBe('0.00')
+    expect(option.series[0].data).toHaveLength(20)
+    expect(option.series[0].data[0]).toMatchObject({ value: 1, itemStyle: { color: '#low' } })
+    expect(option.series[0].data[19]).toMatchObject({ value: 1, itemStyle: { color: '#high' } })
+    expect(option.tooltip.formatter([{ dataIndex: 0 }])).toBe('0.00 – 0.05：1 条')
+  })
+
+  it('histogramOption 边界把 1.0 放入末档并保留空分档 [AI生成]', () => {
+    const option = histogramOption(scoredCommits([1]), COLORS) as unknown as OptionView
+    expect(option.series[0].data[18]).toMatchObject({ value: 0 })
+    expect(option.series[0].data[19]).toMatchObject({ value: 1 })
+    expect(option.tooltip.formatter([{ dataIndex: 19 }])).toBe('0.95 – 1.00：1 条')
+    expect(option.yAxis.max).toBe(4)
+  })
+
+  it('histogramOption 异常 tooltip 参数回退到首档且缺省分类色回退到主色 [AI生成]', () => {
+    const colors = { ...COLORS, categorical: [] }
+    const option = histogramOption(scoredCommits([0.01]), colors) as unknown as OptionView
+    expect(option.tooltip.formatter(undefined)).toBe('0.00 – 0.05：1 条')
+    expect(option.tooltip.formatter([{ dataIndex: 'bad' }])).toBe('0.00 – 0.05：1 条')
+    expect(option.series[0].data[0].itemStyle.color).toBe(COLORS.series)
+  })
+
+  it('bandsOption 正常包含四档并显示未评分 [AI生成]', () => {
+    const option = bandsOption(
+      { high: 2, medium: 1, low: 3, unknown: 1 },
+      COLORS,
+    ) as unknown as OptionView
+    expect(option.xAxis.data).toEqual(['0.25 及以上', '0.10 – 0.25', '0.10 以下', '未评分'])
+    expect(option.series[0].data.map((item) => item.value)).toEqual([2, 1, 3, 1])
+    expect(option.series[0].data.map((item) => item.itemStyle.color))
+      .toEqual(['#high', '#medium', '#low', '#unknown'])
+    expect(option.tooltip.formatter([{ dataIndex: 3 }])).toBe('未评分：1 条')
+  })
+
+  it('bandsOption 边界未评分数量为零时不渲染该档 [AI生成]', () => {
+    const option = bandsOption(
+      { high: 1, medium: 2, low: 3, unknown: 0 },
+      COLORS,
+    ) as unknown as OptionView
+    expect(option.xAxis.data).toEqual(['0.25 及以上', '0.10 – 0.25', '0.10 以下'])
+    expect(option.series[0].data.map((item) => item.value)).toEqual([1, 2, 3])
+    expect(option.tooltip.formatter([{ dataIndex: 2 }])).toBe('0.10 以下：3 条')
+  })
+
+  it('bandsOption 异常 tooltip 下标越界时返回空字符串 [AI生成]', () => {
+    const option = bandsOption(
+      { high: 1, medium: 0, low: 0, unknown: 0 },
+      COLORS,
+    ) as unknown as OptionView
+    expect(option.tooltip.formatter([{ dataIndex: 99 }])).toBe('')
+    expect(option.tooltip.formatter(undefined)).toBe('0.25 及以上：1 条')
   })
 })

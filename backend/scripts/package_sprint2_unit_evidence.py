@@ -52,12 +52,22 @@ def main():
         ROOT / "backend/scripts/validate_sprint2_unit_inventory.py",
         ROOT / "backend/scripts/run_sprint2_clean_checkout.py",
         ROOT / "backend/scripts/package_sprint2_unit_evidence.py",
+        ROOT / "backend/scripts/package_unit_test_submission.py",
         ROOT / "backend/tests/test_sprint2_unit_core.py",
         ROOT / "backend/tests/test_sprint2_unit_report.py",
+        ROOT / "backend/jit_baseline/data.py",
+        ROOT / "backend/jit_baseline/catalog_input.py",
+        ROOT / "backend/jit_baseline/ml/algorithms.py",
+        ROOT / "backend/jit_baseline/ml/metrics.py",
+        ROOT / "backend/jit_baseline/ml/model.py",
+        ROOT / "backend/jit_baseline/ml/splits.py",
         ROOT / "frontend/package.json",
         ROOT / "frontend/package-lock.json",
         ROOT / "frontend/vitest.sprint2.config.ts",
         ROOT / "frontend/src/lib/sprint2Core.test.ts",
+        ROOT / "frontend/src/lib/domain.ts",
+        ROOT / "frontend/src/features/projects/analysisScore.ts",
+        ROOT / "frontend/src/features/models/modelCompatibility.ts",
     ]
     for path in source_files:
         _copy(path, DEST / "source" / path.relative_to(ROOT))

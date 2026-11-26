@@ -47,6 +47,8 @@ def _copy_untracked(target):
         if not raw:
             continue
         relative = raw.decode("utf-8").replace("\\", "/")
+        if relative.startswith(("backend/data/", ".agents/", ".cache/", "unit_test/")):
+            continue
         source = ROOT / relative
         if not source.is_file():
             continue
@@ -96,6 +98,11 @@ def main():
     clean_report = target / "docs/test-delivery/sprint2-unit-test/generated/report.json"
     if not clean_report.is_file():
         raise SystemExit("干净检出没有生成 report.json")
+    clean_payload = json.loads(clean_report.read_text(encoding="utf-8"))
+    local_tests_passed = all(
+        value for name, value in clean_payload.get("checks", {}).items()
+        if name != "manualReviewComplete"
+    )
     DELIVERY.mkdir(parents=True, exist_ok=True)
     copied_report = DELIVERY / "generated/clean-checkout-report.json"
     copied_report.parent.mkdir(parents=True, exist_ok=True)
@@ -104,6 +111,9 @@ def main():
     summary = {
         "kind": "sprint2-clean-checkout-verification",
         "passed": completed.returncode == 0,
+        "localTestsPassed": local_tests_passed,
+        "deliveryReviewPending": not clean_payload.get("checks", {}).get(
+            "manualReviewComplete", False),
         "sourceCommit": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip(),

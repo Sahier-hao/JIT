@@ -21,6 +21,10 @@ def run(command, cwd):
 
 def main():
     CACHE.mkdir(parents=True, exist_ok=True)
+    for name in ("backend-coverage", "frontend-coverage"):
+        stale = CACHE / name
+        if stale.exists():
+            shutil.rmtree(stale)
     python = BACKEND / ".venv/Scripts/python.exe"
     if not python.is_file():
         raise SystemExit(f"后端虚拟环境不存在：{python}")

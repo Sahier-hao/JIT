@@ -36,3 +36,9 @@ React 渲染、浏览器、真实 HTTP 或开发机存储的领域与契约纯�
 - 测试文件：`frontend/src/lib/sprint2Core.test.ts`
 - 用例到核心函数的映射：`docs/test-delivery/sprint2-unit-test/core-tests.json`
 - 人工审核待办：`docs/test-delivery/sprint2-unit-test/manual-review.json`
+
+## 2026-11-26 补充轮次
+
+本轮新增风险分档、直方图、分档图、schema 与模型可用性断言的完整提示词见
+[`unit_test_sprint2_extension_01.md`](unit_test_sprint2_extension_01.md)。本轮新增用例
+仍标记为 `[AI生成]`，核心业务断言等待负责人逐条复核，未由 AI 代签。
