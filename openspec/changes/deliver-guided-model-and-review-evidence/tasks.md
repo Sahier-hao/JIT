@@ -36,4 +36,4 @@
 - [x] 5.3 运行后端受影响测试、前端 `npm test`、`npm run typecheck`、`npm run lint`、`npm run check:styles`、`npm run check:modules`、`npm run build`、OpenAPI 路径检查和生成类型一致性检查
 - [x] 5.4 在 `docs/evidence/deliver-guided-model-and-review-evidence/` 记录命令、计数、浏览器结果和截图，明确插件截图实际证明范围与任何未覆盖限制
 - [x] 5.5 复核训练算法、模型风险算法、默认模型及原分析/解释口径无差异，更新本 change 的任务状态并运行 `openspec validate --strict`
-- [ ] 5.6 从最新 `origin/main` 创建独立变更分支，提交实现与证据，推送后创建单个 PR，并核对 CI、mergeability 与最终状态
+- [x] 5.6 从最新 `origin/main` 创建独立变更分支，提交实现与证据，推送后创建单个 PR，并核对 CI、mergeability 与最终状态
