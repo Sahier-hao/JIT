@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { CodeDiff } from '@/features/reviews/components/CodeDiff'
+import { LineRiskPanel } from '@/features/reviews/components/LineRiskPanel'
 import { ReviewCandidates } from '@/features/reviews/components/ReviewCandidates'
 import { getPRContext, type PRCandidate, type PRCodeLocation, type PRContext, type PRFile, type PRSnapshot } from '@/features/reviews/prReviewClient'
 import { codeSideLabels, type CandidateDecision } from '@/features/reviews/prReview'
@@ -12,6 +13,7 @@ import { changeLabels } from '@/features/reviews/pages/reviewShared'
 import { cn } from '@/lib/utils'
 import { useReviewAccount } from '@/features/reviews/reviewAccount'
 import type { PRCandidateChecks } from '@/features/reviews/usePRCandidateChecks'
+import { lineRiskLanguage } from '@/features/reviews/lineRisk'
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : '暂时无法读取'
 
@@ -37,11 +39,12 @@ export function ReviewCode({ source, file, checks, view, onViewChange, location,
   const code = useRef<HTMLDivElement>(null)
   const [codeView, setCodeView] = useState<'diff' | PRCodeLocation['side']>('diff')
   const [requestedSources, setRequestedSources] = useState(false)
-  const [inspector, setInspector] = useState(drafts ? 'drafts' : 'checks')
+  const [inspector, setInspector] = useState<'drafts' | 'checks' | 'line-risk'>(drafts ? 'drafts' : 'checks')
   const [inspectorOpen, setInspectorOpen] = useState(false)
   const inspectorId = useId()
+  const lineRisk = lineRiskLanguage(file.path)
 
-  function openInspector(panel: 'drafts' | 'checks') {
+  function openInspector(panel: 'drafts' | 'checks' | 'line-risk') {
     setInspector(panel)
     setInspectorOpen(true)
   }
@@ -80,6 +83,10 @@ export function ReviewCode({ source, file, checks, view, onViewChange, location,
     setManualViewAt(undefined)
     setSelection({ location: { side: location.side, line: location.line }, request: locationRequest })
   }
+  function focusLine(line: number) {
+    setManualViewAt(undefined)
+    setSelection({ location: { side: 'head', line }, request: locationRequest })
+  }
   function selectCodeView(value: string) {
     if (value !== 'diff' && value !== 'base' && value !== 'head') return
     setManualViewAt(jumpKey)
@@ -110,10 +117,13 @@ export function ReviewCode({ source, file, checks, view, onViewChange, location,
             {file.previousPath ? ` · 重命名自 ${file.previousPath}` : ''}
           </p>
         </div>
-        <Button type="button" size="sm" onClick={() => { openInspector('checks'); checks.run(file.path) }} disabled={!checks.canCheck}>
-          {result.label === '正在检查' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <ScanLine aria-hidden="true"/>}
-          检查当前文件
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {lineRisk ? <Button type="button" size="sm" variant="outline" onClick={() => openInspector('line-risk')}>行级排序</Button> : null}
+          <Button type="button" size="sm" onClick={() => { openInspector('checks'); checks.run(file.path) }} disabled={!checks.canCheck}>
+            {result.label === '正在检查' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <ScanLine aria-hidden="true"/>}
+            检查当前文件
+          </Button>
+        </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-1.5 border-b border-border-soft bg-sunken px-3 py-1">
         <ToggleGroup type="single" size="sm" value={codeView} onValueChange={selectCodeView} aria-label="代码内容">
@@ -149,10 +159,13 @@ export function ReviewCode({ source, file, checks, view, onViewChange, location,
 
     <aside id={inspectorId} className={cn('min-h-0 min-w-0 border-t border-border-soft bg-sunken xl:border-t-0 xl:border-l',
       compactInspector && !inspectorOpen && 'hidden xl:block')} aria-label="审查侧栏">
-      <Tabs className="min-h-0 gap-0 xl:h-full" value={inspector} onValueChange={setInspector}>
+      <Tabs className="min-h-0 gap-0 xl:h-full" value={inspector} onValueChange={value => {
+        if (value === 'drafts' || value === 'checks' || value === 'line-risk') setInspector(value)
+      }}>
         <TabsList variant="line" aria-label="审查侧栏" className="w-full shrink-0 justify-start border-b border-border-soft px-3">
           <TabsTrigger value="checks" className="flex-none">检查结果</TabsTrigger>
           {drafts ? <TabsTrigger value="drafts" className="flex-none">问题草稿</TabsTrigger> : null}
+          {lineRisk ? <TabsTrigger value="line-risk" className="flex-none">行级排序</TabsTrigger> : null}
         </TabsList>
         <TabsContent value="checks" className="min-h-0 overflow-auto">
           {analysisError ? <p className="px-4 py-3 text-xs text-rose-deep" role="alert">{errorMessage(analysisError)}</p> : null}
@@ -163,6 +176,9 @@ export function ReviewCode({ source, file, checks, view, onViewChange, location,
               (result.label === '无规则命中' ? '未发现当前规则命中' : result.label || '当前文件尚未检查')}</p>}
         </TabsContent>
         {drafts ? <TabsContent value="drafts" className="flex min-h-0 flex-col">{drafts}</TabsContent> : null}
+        {lineRisk ? <TabsContent value="line-risk" className="min-h-0 overflow-auto">
+          <LineRiskPanel source={source} file={file} onLocate={focusLine}/>
+        </TabsContent> : null}
       </Tabs>
     </aside>
   </div>

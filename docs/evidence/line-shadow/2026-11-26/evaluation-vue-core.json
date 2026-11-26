@@ -1,0 +1,440 @@
+{
+  "generatedAt": "2026-11-26",
+  "inputs": [
+    {
+      "comparison": {
+        "betterOnEveryMetric": false,
+        "byMetric": {
+          "meanLinesToFirstPositive": {
+            "baselines": {
+              "file-order": 5.868012422360248,
+              "random-42": 4.555900621118012,
+              "random-43": 4.509316770186335,
+              "random-44": 4.5854037267080745
+            },
+            "betterThanAll": false,
+            "model": 4.599378881987578
+          },
+          "mrr": {
+            "baselines": {
+              "file-order": 0.5693025977465742,
+              "random-42": 0.6018590130502203,
+              "random-43": 0.598078468094284,
+              "random-44": 0.614163884905624
+            },
+            "betterThanAll": true,
+            "model": 0.6157631382567039
+          },
+          "recallAt1": {
+            "baselines": {
+              "file-order": 0.24903695165402395,
+              "random-42": 0.25650373192376796,
+              "random-43": 0.24306063443121972,
+              "random-44": 0.2632208229874268
+            },
+            "betterThanAll": false,
+            "model": 0.25730497173318984
+          },
+          "recallAt10": {
+            "baselines": {
+              "file-order": 0.7411753026049579,
+              "random-42": 0.7645170698895624,
+              "random-43": 0.7437947015483081,
+              "random-44": 0.7550509478752461
+            },
+            "betterThanAll": true,
+            "model": 0.7791242414702263
+          },
+          "recallAt5": {
+            "baselines": {
+              "file-order": 0.5855420944742601,
+              "random-42": 0.5836298462455796,
+              "random-43": 0.5772601673682899,
+              "random-44": 0.5896033019964044
+            },
+            "betterThanAll": true,
+            "model": 0.6121019084308049
+          }
+        }
+      },
+      "invalidRows": 0,
+      "languages": {
+        "javascript": 28301,
+        "json": 1308,
+        "other": 2758,
+        "shell": 21,
+        "yaml": 1416
+      },
+      "path": "artifacts\\line-candidates\\express-mature.jsonl",
+      "positiveRate": 0.11278753400939896,
+      "reason": null,
+      "relationshipToModel": "unseen",
+      "repo": "kamei14-git-v2-express-mature",
+      "scorers": {
+        "file-order": {
+          "commitsWithPositive": 644,
+          "hitAtK": {
+            "hitAt1": 0.42701863354037267,
+            "hitAt10": 0.8649068322981367,
+            "hitAt5": 0.7468944099378882
+          },
+          "meanLinesToFirstPositive": 5.868012422360248,
+          "medianLinesToFirstPositive": 2,
+          "microRecallAtK": {
+            "recallAt1": 0.08615288220551379,
+            "recallAt10": 0.45050125313283207,
+            "recallAt5": 0.299812030075188
+          },
+          "mrr": 0.5693025977465742,
+          "positives": 3192,
+          "recallAtK": {
+            "recallAt1": 0.24903695165402395,
+            "recallAt10": 0.7411753026049579,
+            "recallAt5": 0.5855420944742601
+          }
+        },
+        "model": {
+          "commitsWithPositive": 644,
+          "hitAtK": {
+            "hitAt1": 0.4642857142857143,
+            "hitAt10": 0.9130434782608695,
+            "hitAt5": 0.8229813664596274
+          },
+          "meanLinesToFirstPositive": 4.599378881987578,
+          "medianLinesToFirstPositive": 2,
+          "microRecallAtK": {
+            "recallAt1": 0.09367167919799499,
+            "recallAt10": 0.487468671679198,
+            "recallAt5": 0.31641604010025065
+          },
+          "mrr": 0.6157631382567039,
+          "positives": 3192,
+          "recallAtK": {
+            "recallAt1": 0.25730497173318984,
+            "recallAt10": 0.7791242414702263,
+            "recallAt5": 0.6121019084308049
+          }
+        },
+        "random-42": {
+          "commitsWithPositive": 644,
+          "hitAtK": {
+            "hitAt1": 0.4472049689440994,
+            "hitAt10": 0.9130434782608695,
+            "hitAt5": 0.7996894409937888
+          },
+          "meanLinesToFirstPositive": 4.555900621118012,
+          "medianLinesToFirstPositive": 2,
+          "microRecallAtK": {
+            "recallAt1": 0.09022556390977443,
+            "recallAt10": 0.47462406015037595,
+            "recallAt5": 0.3057644110275689
+          },
+          "mrr": 0.6018590130502203,
+          "positives": 3192,
+          "recallAtK": {
+            "recallAt1": 0.25650373192376796,
+            "recallAt10": 0.7645170698895624,
+            "recallAt5": 0.5836298462455796
+          }
+        },
+        "random-43": {
+          "commitsWithPositive": 644,
+          "hitAtK": {
+            "hitAt1": 0.44875776397515527,
+            "hitAt10": 0.9006211180124224,
+            "hitAt5": 0.7934782608695652
+          },
+          "meanLinesToFirstPositive": 4.509316770186335,
+          "medianLinesToFirstPositive": 2,
+          "microRecallAtK": {
+            "recallAt1": 0.09053884711779449,
+            "recallAt10": 0.4617794486215539,
+            "recallAt5": 0.3026315789473684
+          },
+          "mrr": 0.598078468094284,
+          "positives": 3192,
+          "recallAtK": {
+            "recallAt1": 0.24306063443121972,
+            "recallAt10": 0.7437947015483081,
+            "recallAt5": 0.5772601673682899
+          }
+        },
+        "random-44": {
+          "commitsWithPositive": 644,
+          "hitAtK": {
+            "hitAt1": 0.47360248447204967,
+            "hitAt10": 0.90527950310559,
+            "hitAt5": 0.796583850931677
+          },
+          "meanLinesToFirstPositive": 4.5854037267080745,
+          "medianLinesToFirstPositive": 2,
+          "microRecallAtK": {
+            "recallAt1": 0.09555137844611529,
+            "recallAt10": 0.46459899749373434,
+            "recallAt5": 0.30357142857142855
+          },
+          "mrr": 0.614163884905624,
+          "positives": 3192,
+          "recallAtK": {
+            "recallAt1": 0.2632208229874268,
+            "recallAt10": 0.7550509478752461,
+            "recallAt5": 0.5896033019964044
+          }
+        }
+      },
+      "sha256": "c7a358fc8ef59c0fee68ab03597d292af87f84c76d07962b90bac82e9f1c50a7",
+      "status": "evaluated",
+      "supportedRows": 28301,
+      "thresholdEligible": true,
+      "thresholdReason": "样本量满足门槛",
+      "totalRows": 33804,
+      "unsupportedRows": 5503
+    },
+    {
+      "comparison": {
+        "betterOnEveryMetric": true,
+        "byMetric": {
+          "meanLinesToFirstPositive": {
+            "baselines": {
+              "file-order": 24.577225130890053,
+              "random-42": 14.74607329842932,
+              "random-43": 13.548429319371728,
+              "random-44": 12.801047120418849
+            },
+            "betterThanAll": true,
+            "model": 12.323298429319372
+          },
+          "mrr": {
+            "baselines": {
+              "file-order": 0.3270572426990839,
+              "random-42": 0.4130043616110228,
+              "random-43": 0.40584074368682305,
+              "random-44": 0.4020020203424624
+            },
+            "betterThanAll": true,
+            "model": 0.44342392537272685
+          },
+          "recallAt1": {
+            "baselines": {
+              "file-order": 0.1095485637058746,
+              "random-42": 0.12545089342547952,
+              "random-43": 0.12114057108422993,
+              "random-44": 0.1236711493112754
+            },
+            "betterThanAll": true,
+            "model": 0.13492821209262026
+          },
+          "recallAt10": {
+            "baselines": {
+              "file-order": 0.3902177471953335,
+              "random-42": 0.4533594340908565,
+              "random-43": 0.45140662885815225,
+              "random-44": 0.45715746808287766
+            },
+            "betterThanAll": true,
+            "model": 0.5127543003116412
+          },
+          "recallAt5": {
+            "baselines": {
+              "file-order": 0.2778287127111631,
+              "random-42": 0.31157809159189037,
+              "random-43": 0.3027789102393934,
+              "random-44": 0.3029049013381437
+            },
+            "betterThanAll": true,
+            "model": 0.3678661164851558
+          }
+        }
+      },
+      "invalidRows": 0,
+      "languages": {
+        "css": 7,
+        "html": 443,
+        "javascript": 3769,
+        "json": 3669,
+        "other": 17036,
+        "toml": 3,
+        "typescript": 99934,
+        "yaml": 52106
+      },
+      "path": "artifacts\\line-candidates\\vue-core-mature.jsonl",
+      "positiveRate": 0.059120758319431456,
+      "reason": null,
+      "relationshipToModel": "unseen",
+      "repo": "kamei14-git-v2-vue-core",
+      "scorers": {
+        "file-order": {
+          "commitsWithPositive": 764,
+          "hitAtK": {
+            "hitAt1": 0.21465968586387435,
+            "hitAt10": 0.5366492146596858,
+            "hitAt5": 0.418848167539267
+          },
+          "meanLinesToFirstPositive": 24.577225130890053,
+          "medianLinesToFirstPositive": 8,
+          "microRecallAtK": {
+            "recallAt1": 0.02674930680150057,
+            "recallAt10": 0.17664328820747024,
+            "recallAt5": 0.1024302723862339
+          },
+          "mrr": 0.3270572426990839,
+          "positives": 6131,
+          "recallAtK": {
+            "recallAt1": 0.1095485637058746,
+            "recallAt10": 0.3902177471953335,
+            "recallAt5": 0.2778287127111631
+          }
+        },
+        "model": {
+          "commitsWithPositive": 764,
+          "hitAtK": {
+            "hitAt1": 0.306282722513089,
+            "hitAt10": 0.75,
+            "hitAt5": 0.6020942408376964
+          },
+          "meanLinesToFirstPositive": 12.323298429319372,
+          "medianLinesToFirstPositive": 4,
+          "microRecallAtK": {
+            "recallAt1": 0.03816669385092154,
+            "recallAt10": 0.24335344968194422,
+            "recallAt5": 0.14565323764475616
+          },
+          "mrr": 0.44342392537272685,
+          "positives": 6131,
+          "recallAtK": {
+            "recallAt1": 0.13492821209262026,
+            "recallAt10": 0.5127543003116412,
+            "recallAt5": 0.3678661164851558
+          }
+        },
+        "random-42": {
+          "commitsWithPositive": 764,
+          "hitAtK": {
+            "hitAt1": 0.2801047120418848,
+            "hitAt10": 0.7133507853403142,
+            "hitAt5": 0.556282722513089
+          },
+          "meanLinesToFirstPositive": 14.74607329842932,
+          "medianLinesToFirstPositive": 4,
+          "microRecallAtK": {
+            "recallAt1": 0.0349045832653727,
+            "recallAt10": 0.2175827760561083,
+            "recallAt5": 0.12722231283640514
+          },
+          "mrr": 0.4130043616110228,
+          "positives": 6131,
+          "recallAtK": {
+            "recallAt1": 0.12545089342547952,
+            "recallAt10": 0.4533594340908565,
+            "recallAt5": 0.31157809159189037
+          }
+        },
+        "random-43": {
+          "commitsWithPositive": 764,
+          "hitAtK": {
+            "hitAt1": 0.27356020942408377,
+            "hitAt10": 0.7133507853403142,
+            "hitAt5": 0.5654450261780105
+          },
+          "meanLinesToFirstPositive": 13.548429319371728,
+          "medianLinesToFirstPositive": 5,
+          "microRecallAtK": {
+            "recallAt1": 0.03408905561898548,
+            "recallAt10": 0.21138476594356548,
+            "recallAt5": 0.12298156907519164
+          },
+          "mrr": 0.40584074368682305,
+          "positives": 6131,
+          "recallAtK": {
+            "recallAt1": 0.12114057108422993,
+            "recallAt10": 0.45140662885815225,
+            "recallAt5": 0.3027789102393934
+          }
+        },
+        "random-44": {
+          "commitsWithPositive": 764,
+          "hitAtK": {
+            "hitAt1": 0.2643979057591623,
+            "hitAt10": 0.7172774869109948,
+            "hitAt5": 0.5484293193717278
+          },
+          "meanLinesToFirstPositive": 12.801047120418849,
+          "medianLinesToFirstPositive": 4,
+          "microRecallAtK": {
+            "recallAt1": 0.03294731691404339,
+            "recallAt10": 0.20893818300440384,
+            "recallAt5": 0.11988256401892024
+          },
+          "mrr": 0.4020020203424624,
+          "positives": 6131,
+          "recallAtK": {
+            "recallAt1": 0.1236711493112754,
+            "recallAt10": 0.45715746808287766,
+            "recallAt5": 0.3029049013381437
+          }
+        }
+      },
+      "sha256": "56240b51f2a5b4ea5b60d25a45c3eddd508113acf42768e43cd54ec3c3cca929",
+      "status": "evaluated",
+      "supportedRows": 103703,
+      "thresholdEligible": true,
+      "thresholdReason": "样本量满足门槛",
+      "totalRows": 176967,
+      "unsupportedRows": 73264
+    }
+  ],
+  "limitations": [
+    "标签是历史 SZZ 弱标签；未被标记的候选行仍是未观测，不是已证实无缺陷。",
+    "冻结模型只覆盖 JavaScript/TypeScript；Python 候选仓库不适用，不能通过换语言绕过模型边界。",
+    "axios 是冻结模型原实验的留出仓库，但未参与系数训练；express 相对该模型未参与训练或留出。两者都没有人工复核的新盲测标签。",
+    "完整候选集是提交 diff 的新增/修改行，不是整个文件或 PR 的全部行；指标不能直接换算成审查节省。"
+  ],
+  "model": {
+    "artifactSha256": "271a6c6b590796660fe350580c20ec886f3f29a6b0f1af8cc83752add5598123",
+    "priorHoldout": "axios",
+    "supportedLanguages": [
+      "javascript",
+      "typescript"
+    ],
+    "trainRepos": [
+      "JIT",
+      "cc-switch"
+    ]
+  },
+  "protocol": {
+    "fileOrder": "sort candidates by path then line, equivalent to reading diff files in order",
+    "labels": "historical SZZ positives; unobserved is not confirmed clean",
+    "linesToFirstPositive": "1-based rank of the first positive line; mean is lower-is-better",
+    "microRecall": "all positives captured in each commit's top-k divided by all positives",
+    "minimumSamples": {
+      "candidates": 1000,
+      "commitsWithPositive": 20
+    },
+    "model": "frozen line-preview-model-v1; no retraining or tuning",
+    "mrr": "mean reciprocal rank of the first positive line per commit",
+    "population": "introduced-added-lines-v1 complete candidate rows",
+    "random": [
+      42,
+      43,
+      44
+    ],
+    "recall": "macro mean across commits with at least one positive; top-k rows per commit",
+    "threshold": "at least two eligible, previously-unseen repositories must beat every baseline on all five localization metrics"
+  },
+  "schema": "line-shadow-evaluation-v1",
+  "summary": {
+    "applicableRepos": 2,
+    "conclusion": "未通过门槛：不足两个适用仓库在全部指标上稳定优于随机与文件顺序基线，保留研究预览，不接入 A3",
+    "passingRepos": [
+      "kamei14-git-v2-vue-core"
+    ],
+    "repositoriesBeatingAllBaselines": 1,
+    "thresholdEligibleRepos": 2,
+    "thresholdPassed": false,
+    "unseenEligible": [
+      "kamei14-git-v2-express-mature",
+      "kamei14-git-v2-vue-core"
+    ],
+    "unseenEligibleRepos": 2
+  }
+}
