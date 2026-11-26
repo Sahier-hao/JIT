@@ -1,13 +1,13 @@
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { LoaderCircle, AlertTriangle } from 'lucide-react'
+import { LoaderCircle, AlertTriangle, ChevronDown } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import type { Route } from '@/app/navigation'
 import {
-  lineResearchMetadata, scoreLineResearch,
+  lineFeatureLabel, lineResearchMetadata, scoreLineResearch,
   type LineResearchMetadata, type LineScoreResult,
 } from '@/features/research/lineResearch'
 
@@ -28,6 +28,12 @@ function count(value: number | null): string {
   return value === null ? '—' : value.toLocaleString('zh-CN')
 }
 
+function signed(value: number | null): string {
+  if (value === null) return '—'
+  const normalized = Math.abs(value) < 0.0005 ? 0 : value
+  return `${normalized >= 0 ? '+' : ''}${normalized.toFixed(3)}`
+}
+
 /** 独立的行级模型研究预览：只读口径 + 请求内按行打分，不进入项目分析。 */
 export function LineResearchPage({ navigate }: { navigate: (route: Route) => void }) {
   const [meta, setMeta] = useState<LineResearchMetadata | null>(null)
@@ -36,6 +42,7 @@ export function LineResearchPage({ navigate }: { navigate: (route: Route) => voi
   const [language, setLanguage] = useState('')
   const [code, setCode] = useState('')
   const [result, setResult] = useState<LineScoreResult | null>(null)
+  const [expandedLine, setExpandedLine] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const resultRef = useRef<HTMLElement>(null)
@@ -61,6 +68,7 @@ export function LineResearchPage({ navigate }: { navigate: (route: Route) => voi
     try {
       const value = await scoreLineResearch(code, language)
       setResult(value)
+      setExpandedLine(null)
       window.requestAnimationFrame(() => resultRef.current?.scrollIntoView?.({ block: 'nearest' }))
     } catch (failure) {
       setError(failure instanceof ApiError || failure instanceof Error ? failure.message : '分析失败')
@@ -130,12 +138,46 @@ export function LineResearchPage({ navigate }: { navigate: (route: Route) => voi
           <Table className="w-full border-collapse text-xs [&_caption]:pb-2 [&_caption]:text-left [&_caption]:text-xs [&_caption]:text-foreground-3 [&_th]:border-b [&_th]:border-border-soft [&_th]:px-2.5 [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-foreground-3 [&_th]:whitespace-nowrap [&_td]:border-b [&_td]:border-border-soft [&_td]:px-2.5 [&_td]:py-2 [&_td]:align-top [&_td:first-child]:tabular-nums [&_td:first-child]:text-foreground-3">
             <caption>按分数降序；分数不是缺陷概率。</caption>
             <TableHeader><TableRow><TableHead scope="col">排名</TableHead><TableHead scope="col">行</TableHead><TableHead scope="col">代码</TableHead><TableHead scope="col">分数</TableHead></TableRow></TableHeader>
-            <TableBody>{result.lines.map(row => <TableRow key={row.line}>
-              <TableCell>{row.rank}</TableCell>
-              <TableCell>{row.line}</TableCell>
-              <TableCell><code className="block max-w-[520px] truncate font-mono" title={row.text}>{row.text || ' '}</code></TableCell>
-              <TableCell><span className="flex items-center gap-2"><span className="block h-1 w-20 overflow-hidden rounded-full bg-strong"><span className="block h-full bg-accent" style={{ width: `${row.score * 100}%` }}/></span><b className="font-semibold tabular-nums text-foreground">{row.score.toFixed(3)}</b></span></TableCell>
-            </TableRow>)}</TableBody>
+            <TableBody>{result.lines.map(row => {
+              const isExpanded = expandedLine === row.line
+              return <Fragment key={row.line}>
+                <TableRow>
+                  <TableCell>{row.rank}</TableCell>
+                  <TableCell>{row.line}</TableCell>
+                  <TableCell>
+                    <button
+                      type="button"
+                      className="flex min-w-0 max-w-[560px] items-center gap-2 text-left"
+                      aria-expanded={isExpanded}
+                      aria-label={`第 ${row.line} 行，${isExpanded ? '收起' : '展开'}特征贡献`}
+                      disabled={!row.contributions.length}
+                      onClick={() => setExpandedLine(isExpanded ? null : row.line)}
+                    >
+                      <code className="block min-w-0 flex-1 truncate font-mono" title={row.text}>{row.text || ' '}</code>
+                      {row.contributions.length ? <ChevronDown aria-hidden="true" size={14} className={`shrink-0 text-foreground-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`}/> : null}
+                    </button>
+                  </TableCell>
+                  <TableCell><span className="flex items-center gap-2"><span className="block h-1 w-20 overflow-hidden rounded-full bg-strong"><span className="block h-full bg-accent" style={{ width: `${row.score * 100}%` }}/></span><b className="font-semibold tabular-nums text-foreground">{row.score.toFixed(3)}</b></span></TableCell>
+                </TableRow>
+                {isExpanded ? <TableRow>
+                  <TableCell colSpan={4} className="bg-sunken/60">
+                    <div className="grid gap-2 py-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className="font-medium text-foreground">{result.contributionCaveat}</p>
+                        <span className="text-foreground-3">截距 {number(result.intercept)} · 其余特征 {signed(row.otherContribution)}</span>
+                      </div>
+                      <div className="grid gap-1.5 sm:grid-cols-3">
+                        {row.contributions.map(item => <div key={item.feature} className="rounded-sm border border-border-soft px-2.5 py-2">
+                          <p className="font-medium text-foreground">{lineFeatureLabel(item.feature)}</p>
+                          <p className="mt-0.5 text-foreground-3">本次值 {number(item.value, 2)} · 权重 {signed(item.weight)}</p>
+                          <p className="tabular-nums text-foreground-2">贡献 {signed(item.contribution)}</p>
+                        </div>)}
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow> : null}
+              </Fragment>
+            })}</TableBody>
           </Table>
         </div>
       </section> : null}

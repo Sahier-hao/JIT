@@ -40,10 +40,18 @@ def export_bundle(storage, snapshot_id, sync_id):
             "FROM repository_commit WHERE sync_id=? ORDER BY risk DESC, epoch DESC, commit_id ASC",
             (sync_id,)).fetchall()
     snapshot = json.loads(snapshot_row["payload_json"])
-    commits = [{"commitId": row["commit_id"], "epoch": row["epoch"], "risk": row["risk"],
-                "addedLines": row["added_lines"], "deletedLines": row["deleted_lines"],
-                "files": row["files"], "subject": row["subject"], "authorName": row["author_name"]}
-               for row in rows]
+    commits = []
+    for row in rows:
+        evidence = (
+            storage.commit_label_evidence(sync["dataset_version"], row["commit_id"])
+            if sync["dataset_version"] else []
+        )
+        commits.append({
+            "commitId": row["commit_id"], "epoch": row["epoch"], "risk": row["risk"],
+            "addedLines": row["added_lines"], "deletedLines": row["deleted_lines"],
+            "files": row["files"], "subject": row["subject"], "authorName": row["author_name"],
+            "repairEvidence": evidence,
+        })
     body = {
         "format": BUNDLE_FORMAT,
         "exportedAt": utc_now(),
@@ -87,6 +95,7 @@ def build_report(bundle):
     limitations = [
         "模型分数是提交级估计，不是缺陷概率，也不是行级定位。",
         "报告只读取已保存分数，不重新推理、不训练、不选择模型。",
+        "后续修复证据来自历史 SZZ，只是参考证据，不是模型生成的修复建议。",
         "默认不包含个人草稿、笔记或反馈；报告不修改远端 PR，也不构成合并门禁。",
     ]
     if scored < total:
@@ -114,6 +123,11 @@ def build_report(bundle):
 
 
 def markdown_report(report):
+    evidence_rows = [
+        (commit, evidence)
+        for commit in report["commits"]
+        for evidence in commit.get("repairEvidence") or []
+    ]
     lines = [
         "# PR 检查报告",
         "",
@@ -132,9 +146,33 @@ def markdown_report(report):
     for item in report["commits"]:
         lines.append(f"| `{item['commitId'][:12]}` | {item['risk']:.4f} | {item['addedLines']} | "
                      f"{item['deletedLines']} | {item['files']} | {(item['subject'] or '').splitlines()[0][:80]} |")
+    if evidence_rows:
+        lines += ["", "## 后续修复证据", "",
+                  "| 引入提交 | 修复提交 | 文件 | 修复 diff 行 | 引入行 |",
+                  "| --- | --- | --- | --- | --- |"]
+        for commit, evidence in evidence_rows:
+            fix = f"`{evidence['fixCommit'][:12]}`"
+            anchor = evidence.get("diffAnchor")
+            parent = evidence.get("parentRanges") or []
+            if anchor and parent:
+                fix = f"[{evidence['fixCommit'][:12]}](https://github.com/{report['repository']['owner']}/"
+                fix += f"{report['repository']['name']}/commit/{evidence['fixCommit']}#{anchor}L{parent[0][0]})"
+            lines.append(
+                f"| `{commit['commitId'][:12]}` | {fix} | {evidence['path']} | "
+                f"{_ranges(evidence.get('parentRanges'))} | {_ranges(evidence.get('lineRanges'))} |"
+            )
     lines += ["", "## 限制", ""]
     lines += [f"- {item}" for item in report["limitations"]]
     return "\n".join(lines) + "\n"
+
+
+def _ranges(value):
+    if not value:
+        return "—"
+    return "、".join(
+        f"{start}" if start == end else f"{start}–{end}"
+        for start, end in value[:4]
+    ) + ("…" if len(value) > 4 else "")
 
 
 def write_report(bundle, output, fmt="json"):

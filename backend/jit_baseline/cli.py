@@ -278,6 +278,15 @@ def main():
     evaluate_candidates.add_argument("--output", type=Path, required=True, help="评价报告 JSON")
     evaluate_candidates.add_argument("--cases", type=Path, default=None, help="可选：案例包 JSON 输出")
     evaluate_candidates.add_argument("--cases-limit", type=int, default=30)
+    line_shadow = commands.add_parser(
+        "evaluate-line-shadow",
+        help="Evaluate the frozen line research model on complete candidate JSONL files",
+    )
+    line_shadow.add_argument("--input", action="append", type=Path, required=True,
+                             help="Repeatable complete candidate JSONL input")
+    line_shadow.add_argument("--output", type=Path, required=True, help="Evaluation JSON output")
+    line_shadow.add_argument("--model", type=Path, default=None,
+                             help="Optional frozen line-preview model path")
     line_train = commands.add_parser("line-train")
     line_train.add_argument("--input", action="append", type=Path, required=True, help="可重复：line-szz-v1 JSONL")
     line_train.add_argument("--test-repo", default=None, help="留出整个仓库做跨项目测试")
@@ -449,6 +458,13 @@ def main():
             if args.cases:
                 result["cases"] = candidates_module.case_pack(
                     args.input, args.cases, limit=args.cases_limit)
+        elif args.command == 'evaluate-line-shadow':
+            from . import line_shadow as shadow_module
+            report = shadow_module.evaluate_line_shadow(
+                args.input, args.output, model_path=args.model,
+            )
+            result = {"kind": report["schema"], "output": str(args.output),
+                      **report["summary"]}
         elif args.command == 'line-dataset':
             import json as json_module
             from . import line_dataset as line_module

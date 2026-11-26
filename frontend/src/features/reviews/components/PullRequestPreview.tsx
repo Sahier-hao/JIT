@@ -16,6 +16,7 @@ import { ReviewCode } from '@/features/reviews/components/ReviewCode'
 import { PRModelClues } from '@/features/reviews/components/PRModelClues'
 import { Markdown } from '@/components/shared/Markdown'
 import { RepositoryExplanation } from '@/features/projects/components/RepositoryExplanation'
+import { HistoricRepairEvidence } from '@/features/projects/components/HistoricRepairEvidence'
 import type { PRCandidate, PRSnapshot } from '@/features/reviews/prReviewClient'
 import { addCandidateToRound, openReviewVersion, readWorks, saveWork, workKey, type PRWork } from '@/features/reviews/prReview'
 import { requireAccount, useReviewAccount } from '@/features/reviews/reviewAccount'
@@ -85,6 +86,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
   const scoredCommitCount = source.commits.filter(commit => commitRisks[commit.sha] != null).length
   const explanationRepository = analysis.primary?.sync.repositoryId ?? repositoryId ?? null
   const explanationRisk = selectedCommit ? commitRisks[selectedCommit]?.risk : undefined
+  const selectedEvidence = selectedCommit ? commitRisks[selectedCommit]?.labelEvidence ?? [] : []
   function openCommit(sha: string) {
     setSelectedCommit(sha)
     setFilesOpen(true)
@@ -149,6 +151,7 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           : <span className="text-xs text-foreground-3" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="text-xs text-foreground-3">全部 {source.files.length} 个文件</span>}
         {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)} type="button">模型解释</Button> : null}
       </div>
+      <HistoricRepairEvidence evidence={selectedEvidence} repositoryUrl={source.url} limit={4}/>
       <Dialog open={explanationOpen && Boolean(selectedCommit && explanationRepository && explanationRisk != null && analysis.primary)} onOpenChange={setExplanationOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${560}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"模型解释"}</DialogTitle></DialogHeader>{selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <RepositoryExplanation heading={false} context={{
           repositoryId: explanationRepository,
           viewSyncId: analysis.primary.sync.syncId,

@@ -66,6 +66,7 @@ class RepositoryExplanationService:
             explanationMethod=declaration['method'],
             explanationUnit=declaration['unit'],
             explanationSummary=None,
+            featureSummary=None,
             explanationReason=None,
             reasonCode=None,
             contributionTotal=None,
@@ -255,6 +256,9 @@ class RepositoryExplanationService:
                     explanationMethod=method_id,
                     explanationUnit=declaration['unit'],
                     explanationSummary=summary,
+                    featureSummary=explanations.feature_summary(
+                        items, declaration['unit'], stable,
+                    ),
                     contributionTotal=explained.get('contributionTotal'),
                     featureSchemaVersion=snapshot.schema.name,
                     modelSha256=model['sha256'],

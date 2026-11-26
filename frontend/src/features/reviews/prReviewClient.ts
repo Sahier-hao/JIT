@@ -28,6 +28,12 @@ export interface PRCandidates {
   snapshotId: string
   coverage: { files: PRFileCoverage[]; analyzerVersion: string } | null
   candidates: PRCandidate[]
+  ruleSet: PRRuleSet | null
+}
+export interface PRRuleSet {
+  analyzerVersion: string
+  ruleVersion: string
+  status: 'current' | 'legacy'
 }
 const string = (v: unknown) => typeof v === 'string' ? v : contractFailed()
 const integer = (v: unknown) => { const n = finiteNumber(v); if (!Number.isSafeInteger(n) || n < 0) contractFailed(); return n }
@@ -106,6 +112,9 @@ function candidates(raw: unknown, snapshotId: string): PRCandidates {
   const b = record(raw)
   if (b.snapshotId !== snapshotId) contractFailed('候选位置不属于当前快照')
   const coverage = b.coverage == null ? null : record(b.coverage)
+  const ruleSetValue = b.ruleSet == null ? null : record(b.ruleSet)
+  const ruleSetStatus = ruleSetValue ? text(ruleSetValue.status) : null
+  if (ruleSetStatus !== null && ruleSetStatus !== 'current' && ruleSetStatus !== 'legacy') contractFailed('候选规则版本状态无效')
   const items = recordList(b.candidates).map(item => {
     const side = candidateSide(item.side), path = text(item.path), line = integer(item.line)
     const ruleId = text(item.ruleId), ruleVersion = text(item.ruleVersion), advice = suggestion(item.suggestion)
@@ -113,13 +122,18 @@ function candidates(raw: unknown, snapshotId: string): PRCandidates {
       || advice.ruleId !== ruleId || advice.ruleVersion !== ruleVersion)) contractFailed('修复建议与候选位置不一致')
     return { side, path, line, ruleId, ruleVersion, message: text(item.message), evidence: text(item.evidence), suggestion: advice }
   })
-  if (!coverage) return { snapshotId, coverage: null, candidates: items }
+  const ruleSet: PRRuleSet | null = ruleSetValue ? {
+    analyzerVersion: text(ruleSetValue.analyzerVersion),
+    ruleVersion: text(ruleSetValue.ruleVersion),
+    status: ruleSetStatus as PRRuleSet['status'],
+  } : null
+  if (!coverage) return { snapshotId, coverage: null, candidates: items, ruleSet }
   const side = candidateSide(coverage.side)
   const files = coverage.files === undefined ? [
     ...(Array.isArray(coverage.analyzed) ? coverage.analyzed.map(path => ({ path: text(path), side, reason: null })) : []),
     ...recordList(coverage.skipped).map(item => ({ path: text(item.path), side, reason: text(item.reason) })),
   ] : recordList(coverage.files).map(item => ({ path: text(item.path), side: candidateSide(item.side), reason: textOrNull(item.reason) }))
-  return { snapshotId, coverage: { files, analyzerVersion: text(coverage.analyzerVersion) }, candidates: items }
+  return { snapshotId, coverage: { files, analyzerVersion: text(coverage.analyzerVersion) }, candidates: items, ruleSet }
 }
 
 export async function getPRCandidates(snapshotId: string, signal?: AbortSignal): Promise<PRCandidates> {

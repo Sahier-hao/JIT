@@ -272,7 +272,7 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
           ) : null}
           {selectedMethod && selectedSaved && selectedSaved.explanationStatus === 'supported' ? (
             <>
-              <p>{selectedSaved.explanationSummary}</p>
+              <p>{selectedSaved.featureSummary ?? selectedSaved.explanationSummary}</p>
               {selectedSaved.contributionTotal != null ? <p className="text-xs text-foreground-2">贡献合计：{selectedSaved.contributionTotal > 0 ? '+' : ''}{selectedSaved.contributionTotal.toFixed(6)}（log-odds）</p> : null}
               <ContributionBars items={selectedSaved.explanation} unit={selectedSaved.explanationUnit} />
               <ExplanationTable result={selectedSaved} />
