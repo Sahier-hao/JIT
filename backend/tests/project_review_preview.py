@@ -55,7 +55,20 @@ def build_preview(parent):
         text = (f'value = {index}\ndef collect(items=[]):\n    return items\n'
                 + '# 验收代码\n' * 30 + 'def remember(previous={}):\n    return previous\n')
         (repository / 'review.py').write_text(text, encoding='utf-8')
-        git('add', 'review.py')
+        (repository / 'review.ts').write_text(
+            f'export const value = {index}\n'
+            'export function collect(items: number[] = []) {\n'
+            '  return items.map(item => item + value)\n'
+            '}\n',
+            encoding='utf-8',
+        )
+        (repository / 'review2.ts').write_text(
+            'export function normalize(value: number) {\n'
+            f'  return value / {index + 1}\n'
+            '}\n',
+            encoding='utf-8',
+        )
+        git('add', 'review.py', 'review.ts', 'review2.ts')
         git('commit', '-q', '-m', f'调整审查示例 {index}', moment=moment)
         revisions.append(git('rev-parse', 'HEAD'))
         dates.append(moment)
@@ -107,13 +120,15 @@ def build_preview(parent):
 
     app.state.repository_overview.request = overview_request
 
-    def public_pr():
+    def public_pr(number=1):
         index = state['index']
-        return dict(number=1, title=f'修正审查示例 · 版本 {index}', body='检查固定代码来源与作者更新后的私人进度保护。',
+        title = (f'修正审查示例 · 版本 {index}' if number == 1
+                 else f'TypeScript 行级证据 · 版本 {index}')
+        return dict(number=number, title=title, body='检查固定代码来源与作者更新后的私人进度保护。',
             state=state['remoteState'], merged=False, draft=state['draft'], user=dict(login='preview-author'),
             updated_at=dates[index], base=dict(sha=revisions[0], ref='main', repo=dict(full_name='preview/project', private=False)),
             head=dict(sha=revisions[index], ref='review-change', repo=dict(full_name='preview/fork', private=False)),
-            changed_files=1, commits=index)
+            changed_files=1 if number == 1 else 2, commits=index)
 
     def request(path):
         from jit_baseline.errors import BaselineError
@@ -127,27 +142,56 @@ def build_preview(parent):
             return dict(status='ahead')
         if '/contents/' in path:
             revision = query['ref'][0]
-            content = git('show', revision+':review.py')+'\n'
+            name = parsed.path.rsplit('/', 1)[-1]
+            if name not in ('review.py', 'review.ts', 'review2.ts'):
+                raise ValueError('未定义的固定文件：' + name)
+            content = git('show', revision+':'+name)+'\n'
             return dict(type='file', encoding='base64', size=len(content.encode()),
                         content=base64.b64encode(content.encode()).decode())
         if path.startswith('/repos/preview/project/pulls?'):
             wanted = query.get('state', ['open'])[0]
-            return [deepcopy(public_pr())] if wanted in ('all', state['remoteState']) and query.get('page', ['1']) == ['1'] else []
+            items = [deepcopy(public_pr(1)), deepcopy(public_pr(2))]
+            return [item for item in items if wanted in ('all', state['remoteState'])] if query.get('page', ['1']) == ['1'] else []
+        pr_number = 2 if path.startswith('/repos/preview/project/pulls/2') else 1
         if '/files?' in path:
-            diff = git('diff', revisions[0], revisions[index], '--', 'review.py')
-            patch = diff[diff.index('@@ '):]
-            return [dict(filename='review.py', sha=git('rev-parse', revisions[index]+':review.py'), status='modified',
-                         additions=1, deletions=1, patch=patch)]
+            names = ['review.py'] if pr_number == 1 else ['review.ts', 'review2.ts']
+            result = []
+            for name in names:
+                diff = git('diff', revisions[0], revisions[index], '--', name)
+                patch = diff[diff.index('@@ '):]
+                additions = sum(line.startswith('+') for line in patch.splitlines())
+                deletions = sum(line.startswith('-') for line in patch.splitlines())
+                result.append(dict(filename=name, sha=git('rev-parse', revisions[index]+':'+name),
+                                   status='modified', additions=additions, deletions=deletions,
+                                   patch=patch))
+            return result
         if '/commits?' in path:
             return [dict(sha=revisions[i], commit=dict(message=f'调整审查示例 {i}', author=dict(date=dates[i])))
                     for i in range(1, index+1)]
-        if '/pulls/1' == parsed.path[-8:]:
-            return deepcopy(public_pr())
+        if parsed.path.startswith('/repos/preview/project/commits/'):
+            commit = parsed.path.rsplit('/', 1)[-1]
+            if commit not in revisions:
+                raise ValueError('未定义的固定提交：' + commit)
+            revision_index = revisions.index(commit)
+            if revision_index == 0:
+                diff = git('show', '--format=', '--unified=0', commit, '--', 'review.ts')
+            else:
+                diff = git('diff', revisions[revision_index - 1], commit, '--', 'review.ts')
+            patch = diff[diff.index('@@ '):]
+            return dict(sha=commit, files=[dict(
+                filename='review.ts', status='modified',
+                additions=sum(line.startswith('+') for line in patch.splitlines()),
+                deletions=sum(line.startswith('-') for line in patch.splitlines()),
+                patch=patch,
+            )])
+        if parsed.path.endswith('/pulls/1') or parsed.path.endswith('/pulls/2'):
+            return deepcopy(public_pr(int(parsed.path.rsplit('/', 1)[-1])))
         if parsed.path == '/repos/preview/project':
             return dict(private=False, default_branch='main')
         raise ValueError('未定义的验收远端请求：'+path)
 
     app.state.pr_review.request = request
+    service.commit_evidence_request = request
     # 预置成功分支分析仍走真实采集、登记和模型推理；不伪造完成状态或风险分数。
     job, _ = service.create(dict(repositoryUrl=URL, branch='main', strategy='generic-model', modelId=model_id,
                                  since=(first-timedelta(days=1)).date().isoformat(),

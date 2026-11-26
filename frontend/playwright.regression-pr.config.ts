@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
 /** 持续回归专用：真实隔离服务 + 两个账户的 PR 续审旅程；shadcn 旅程复用同一隔离服务。 */
-const python = process.env.JIT_PYTHON ?? 'python'
+const python = process.env.JIT_PYTHON ?? '.venv\\Scripts\\python.exe'
 
 export default defineConfig({
   testDir: './e2e',
@@ -22,6 +22,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'pr-account', testMatch: 'pr-account-continuation.spec.ts' },
+    { name: 'guided-evidence', testMatch: 'guided-model-review-evidence.spec.ts' },
     {
       name: 'shadcn',
       testMatch: 'shadcn-workspaces.spec.ts',

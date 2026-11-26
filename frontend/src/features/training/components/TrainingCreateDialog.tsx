@@ -1,4 +1,4 @@
-import { Activity, BookOpenText, Check, ChevronDown, LoaderCircle, X } from 'lucide-react'
+import { Activity, BookOpenText, Check, ChevronDown, LoaderCircle, RotateCcw, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -288,15 +288,55 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
                     <summary className="flex w-fit cursor-pointer list-none items-center gap-1 py-1 text-xs font-medium text-foreground-3 hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
                       参数<ChevronDown className="size-3 group-open:rotate-180" aria-hidden="true"/>
                     </summary>
+                    <p className="pb-2 pt-1 text-[11px] leading-4 text-foreground-3">
+                      参数只改变模型如何拟合；不会改变数据切分、风险分数定义，也不会自动调参。
+                    </p>
                     <div className="grid gap-x-3 gap-y-2.5 pb-1 pt-2 sm:grid-cols-2">
-                      {choice.params.map(spec => <label key={spec.name} className="grid min-w-0 gap-1 text-xs text-foreground-2">
-                        {spec.label}<Input aria-label={choice.name + ' ' + spec.name} min={spec.min} max={spec.max} step="any"
-                          disabled={busy} value={params[choice.method]?.[spec.name] ?? ''} type="number"
-                          onChange={event => {
-                            const value = event.target.value
-                            setParams(values => ({ ...values, [choice.method]: { ...values[choice.method], [spec.name]: value } }))
-                          }}/>
-                      </label>)}
+                      {choice.params.map(spec => {
+                        const currentValue = params[choice.method]?.[spec.name] ?? ''
+                        const defaultText = spec.default == null ? '' : String(spec.default)
+                        const modified = spec.default == null
+                          ? currentValue.trim() !== ''
+                          : currentValue.trim() !== '' && Number(currentValue) !== spec.default
+                        const inputId = `training-param-${choice.method}-${spec.name}`
+                        const helpId = `${inputId}-help`
+                        return <div key={spec.name} className="grid min-w-0 gap-1 text-xs text-foreground-2">
+                          <label htmlFor={inputId} className="flex flex-wrap items-center gap-1.5 font-medium">
+                            <span>{spec.label}</span>
+                            <span className="rounded-sm bg-sunken px-1.5 py-0.5 font-normal text-foreground-4">{spec.type === 'int' ? '整数' : '数值'}</span>
+                            {modified ? <span className="rounded-sm bg-amber-soft px-1.5 py-0.5 text-[10px] font-normal text-amber-deep">已修改</span> : null}
+                            <span className="select-none font-normal text-foreground-4">{spec.name}</span>
+                          </label>
+                          <Input id={inputId} aria-describedby={helpId}
+                            aria-label={`${choice.name} ${spec.name}`}
+                            min={spec.min} max={spec.max} step={spec.type === 'int' ? 1 : 'any'}
+                            disabled={busy} value={currentValue} type="number"
+                            onChange={event => {
+                              const value = event.target.value
+                              setParams(values => ({ ...values, [choice.method]: { ...values[choice.method], [spec.name]: value } }))
+                            }}/>
+                          <p id={helpId} className="leading-4 text-foreground-3">{spec.description}</p>
+                          <p className="flex flex-wrap items-center gap-x-2 text-[10px] text-foreground-4">
+                            <span>默认 {defaultText || '—'}</span>
+                            <span>范围 {spec.min}–{spec.max}</span>
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            <Button type="button" size="xs" variant="ghost" disabled={busy || !modified}
+                              aria-label={`恢复 ${choice.name} ${spec.label} 默认值`}
+                              onClick={() => setParams(values => ({
+                                ...values,
+                                [choice.method]: { ...values[choice.method], [spec.name]: defaultText },
+                              }))}>
+                              <RotateCcw aria-hidden="true" size={12}/>恢复默认
+                            </Button>
+                            <Button type="button" size="xs" variant="ghost" disabled={busy}
+                              aria-label={`查看 ${choice.name} ${spec.label} 的算法库说明`}
+                              onClick={() => { setLibraryMethod(choice.method); setLibraryOpen(true) }}>
+                              <BookOpenText aria-hidden="true" size={12}/>算法库说明
+                            </Button>
+                          </div>
+                        </div>
+                      })}
                     </div>
                   </details> : null}
                 </li>)}

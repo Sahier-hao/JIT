@@ -149,6 +149,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     from ..pr_review import PullRequestReview
     pr_review = PullRequestReview(sync_service)
     app.state.pr_review = pr_review
+    sync_service.commit_evidence_request = pr_review.request
     from ..pr_updates import PullRequestUpdates
     from ..project_trends import ProjectTrendService
     from ..repository_overview import RepositoryOverview
@@ -294,6 +295,10 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/pr-snapshots/{snapshot_id}/context')
     def pull_request_context(snapshot_id: str, path: str, side: str = 'head'):
         return pr_review.context(snapshot_id, path, side)
+
+    @app.get('/api/v1/pr-snapshots/{snapshot_id}/line-evidence')
+    def pull_request_line_evidence(snapshot_id: str, path: str, side: str = 'head'):
+        return pr_review.line_evidence(snapshot_id, path, side)
 
     @app.get('/api/v1/pr-snapshots/{snapshot_id}/analyses')
     def pull_request_analyses(snapshot_id: str):
@@ -823,6 +828,13 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}')
     def repository_commit(repository_id: str, commit_id: str, viewSyncId: str | None = None):
         return sync_service.repository_commit(repository_id, commit_id, view_sync_id=viewSyncId)
+
+    @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/line-evidence')
+    def repository_commit_line_evidence(repository_id: str, commit_id: str, viewSyncId: str,
+                                        path: str):
+        return sync_service.repository_commit_line_evidence(
+            repository_id, commit_id, viewSyncId, path,
+        )
 
     @app.get('/api/v1/repositories/{repository_id}/commits/{commit_id}/explanation')
     def repository_explanation(repository_id: str, commit_id: str, viewSyncId: str,

@@ -114,6 +114,7 @@ export interface SyncCommit {
   authorName?: string | null
   originalCommitUrl?: string | null
   metrics: Record<string, number>
+  filePaths: string[]
   /** 项目分析分区；旧接口没有时为 null。 */
   partition: CommitPartition | null
 }
@@ -315,6 +316,11 @@ export function parseSyncCommit(value: unknown): SyncCommit {
     authorName: textOrNull(raw.authorName),
     originalCommitUrl: textOrNull(raw.originalCommitUrl),
     metrics: measures(raw.features),
+    filePaths: raw.filePaths == null
+      ? []
+      : Array.isArray(raw.filePaths)
+        ? raw.filePaths.map(item => text(item))
+        : contractFailed('提交文件路径格式无效'),
     partition: raw.partition == null ? null : oneOf(raw.partition, COMMIT_PARTITIONS),
   }
 }

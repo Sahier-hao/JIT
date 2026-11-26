@@ -145,13 +145,13 @@ def managed_path(path):
     if path == '/api/v1/project-events' or re.fullmatch(
             r'/api/v1/repositories/[^/]+/(?:overview|events|pull-requests(?:/(?:refresh|analyze|count|\d+/analyze))?|pull-request-batches(?:/(?:latest|[^/]+(?:/(?:retry|cancel))?))?|pr-tracking(?:/check)?|trend-groups|trend-views(?:/[^/]+(?:/commits)?)?|dataset-builds(?:/[^/]+(?:/(?:cancel|retry))?)?)', path):
         return True
-    if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
+    if path == '/api/v1/review-sources' or re.fullmatch(r'/api/v1/pr-snapshots/[^/]+(?:/context|/analyses|/candidates|/line-evidence)?|/api/v1/pr-sources/[^/]+/[^/]+/[^/]+/refresh', path):
         return True
     return path.startswith('/api/admin/') or path.startswith('/api/user') or path.startswith('/api/v1/user') or path.startswith('/api/v1/research/') or path.startswith('/api/v1/models/') or path.startswith('/api/v1/model-cards/') or path.startswith('/api/v1/training-tasks') or path.startswith('/api/v1/training-experiments') or path.startswith('/api/v1/experiment-runs') or path in API_PATHS or bool(re.fullmatch(
         r'/api/v1/(?:feature-schemas|prediction-batches)/[^/]+'
         r'|/api/v1/datasets(?:/[^/]+(?:/versions|/split-preview)?)?'
         r'|/api/v1/repository-syncs(?:/[^/]+(?:/cancel|/commits(?:/[^/]+)?)?)?'
-        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/(?:explanation|explanations|explanation-methods))?)?|summary|syncs|updates|refresh|comparison|analyses/[^/]+/dataset(?:/export/[^/]+)?))?)?'
+        r'|/api/v1/repositories(?:/[^/]+(?:/(?:commits(?:/[^/]+(?:/(?:explanation|explanations|explanation-methods|line-evidence))?)?|summary|syncs|updates|refresh|comparison|analyses/[^/]+/dataset(?:/export/[^/]+)?))?)?'
         r'|/api/v1/commits(?:/[^/]+)?', path))
 
 

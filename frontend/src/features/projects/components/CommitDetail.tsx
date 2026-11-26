@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { displayTime, validRisk, type Commit, type Dataset } from '@/lib/domain'
 import { RepositoryExplanation } from '@/features/projects/components/RepositoryExplanation'
 import { CommitEvidenceBadge } from '@/features/projects/components/CommitEvidenceBadge'
+import { CommitLineEvidence } from '@/features/projects/components/CommitLineEvidence'
 import { HistoricRepairEvidence } from '@/features/projects/components/HistoricRepairEvidence'
 import { Risk } from '@/components/shared/Risk'
 
@@ -45,16 +46,25 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
         {record.observedThrough ? <span className="text-xs text-foreground-3">观察到 {displayTime(record.observedThrough).slice(0, 10)}</span> : null}
       </div> : null}
     </div>
-    {data.mode === 'repository' && record.labelStatus === 'positive'
-      ? record.labelEvidence?.length
-        ? <HistoricRepairEvidence evidence={record.labelEvidence} repositoryUrl={safeOriginal}/>
-        : <p className="text-xs text-foreground-3">这份分析保存了正例标签，修复记录明细缺失。</p>
-      : null}
     <div className="grid grid-cols-2 gap-3">
       <div className="grid gap-0.5"><span className="text-xs text-foreground-3">变更行</span><strong className="text-lg font-semibold text-foreground">{record.lines ?? '未提供'}</strong></div>
       <div className="grid gap-0.5"><span className="text-xs text-foreground-3">文件</span><strong className="text-lg font-semibold text-foreground">{record.files ?? '未提供'}</strong></div>
     </div>
     {data.mode === 'repository' && data.repository?.repositoryId && validRisk(record.risk) ? <RepositoryExplanation key={`${data.repository.repositoryId}:${data.repository.syncId}:${record.id}`} context={{ repositoryId: data.repository.repositoryId, viewSyncId: data.repository.syncId, commitId: record.id, risk: record.risk, modelId: data.repository.modelId, runId: data.repository.runId, datasetVersion: data.repository.datasetVersion }}/> : <p className="flex items-start gap-1.5 text-xs text-foreground-3"><Info aria-hidden="true" focusable="false" strokeWidth={1.5} size={14} className="mt-0.5 shrink-0"/>当前分析未提供逐条模型归因。</p>}
+    {data.mode === 'repository' && data.repository?.repositoryId
+      ? <CommitLineEvidence repositoryId={data.repository.repositoryId}
+          viewSyncId={data.repository.syncId} commitId={record.id}
+          filePaths={record.filePaths ?? []}/>
+      : null}
+    <section className="rounded-sm border border-border-soft px-3 py-2" aria-label="规则命中">
+      <h3 className="text-sm font-medium">规则命中</h3>
+      <p className="mt-1 text-xs leading-5 text-foreground-3">当前仓库提交分析没有关联的规则运行记录。这里不复制 PR 候选或把原始字段称为规则命中。</p>
+    </section>
+    {data.mode === 'repository' && record.labelStatus === 'positive'
+      ? record.labelEvidence?.length
+        ? <HistoricRepairEvidence evidence={record.labelEvidence} repositoryUrl={safeOriginal}/>
+        : <p className="text-xs text-foreground-3">这份分析保存了正例标签，修复记录明细缺失。</p>
+      : null}
     <div className="flex flex-wrap gap-2 border-t border-border-soft pt-3">
       <Button size="sm" variant="outline" type="button" onClick={() => setMetricsOpen(true)}>原始变更度量（{Object.keys(record.metrics ?? {}).length} 项）</Button>
       <Button size="sm" variant="outline" type="button" onClick={() => setSourceOpen(true)}>来源与局限</Button>

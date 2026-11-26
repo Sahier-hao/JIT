@@ -1,0 +1,44 @@
+{
+  "change": "deliver-guided-model-and-review-evidence",
+  "backendAffectedTests": {
+    "passed": 91,
+    "durationSeconds": 117.14
+  },
+  "frontendVitest": {
+    "filesPassed": 82,
+    "testsPassed": 653,
+    "durationSeconds": 177.68
+  },
+  "typecheck": "passed",
+  "lint": {
+    "exitCode": 0,
+    "warnings": "retained"
+  },
+  "styleCheck": "passed",
+  "moduleBoundaryCheck": {
+    "status": "passed",
+    "sourceFiles": 302,
+    "appEntries": 1
+  },
+  "productionBuild": {
+    "status": "passed",
+    "modules": 4149,
+    "warnings": [
+      "chunks-larger-than-500k",
+      "ineffective-dynamic-import"
+    ]
+  },
+  "openapi": {
+    "generatedOperations": 149,
+    "pathDrift": "passed",
+    "generatedTypes": "consistent"
+  },
+  "e2e": {
+    "project": "guided-evidence",
+    "passed": 1,
+    "durationSeconds": 60,
+    "realIsolatedBackend": true,
+    "realGit": true,
+    "responseMocked": false
+  }
+}

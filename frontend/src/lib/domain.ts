@@ -7,6 +7,7 @@ export interface Commit {
   authorName?: string | null; originalCommitUrl?: string | null; metrics?: Record<string, number>
   explanation?: string[]; partition?: string | null
   labelStatus?: CommitLabelStatus; observedThrough?: string | null; labelEvidence?: CommitLabelEvidence[]
+  filePaths?: string[]
 }
 /** 仓库来源的上下文：同步作业身份与它实际采用的打分模型，供界面如实标注来源（RCL-08/09）。 */
 export interface RepositoryMeta {
@@ -134,6 +135,7 @@ export function toCommit(commit: SyncCommit): Commit {
     labelStatus: commit.labelStatus,
     observedThrough: commit.observedThrough,
     labelEvidence: commit.labelEvidence,
+    filePaths: commit.filePaths,
   }
 }
 

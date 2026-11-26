@@ -24,6 +24,7 @@ const CANONICAL: Route[] = [
   { name: 'my-training', method: 'mlp-v1' },
   { name: 'algorithms' },
   { name: 'algorithms', method: 'mlp-v1' },
+  { name: 'ide-plugin' },
   { name: 'my-models' },
   { name: 'my-predictions' },
   { name: 'my-predictions', datasetVersion: 'data-1' },

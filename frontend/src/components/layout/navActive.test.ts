@@ -17,6 +17,7 @@ const quiet: Route[] = [
   { name: 'my-data' },
   { name: 'my-training' },
   { name: 'algorithms' },
+  { name: 'ide-plugin' },
   { name: 'my-models' },
   { name: 'my-reviews' },
   { name: 'profile' },

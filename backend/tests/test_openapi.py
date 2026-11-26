@@ -48,6 +48,33 @@ def test_prediction_explanation_is_documented():
     assert explanation['additionalProperties'] is False
 
 
+def test_fixed_line_evidence_contract_is_documented():
+    schemas = document()['components']['schemas']
+    evidence = schemas['LineReviewEvidence']
+    assert evidence['properties']['explanationUnit']['enum'] == ['logit']
+    assert evidence['properties']['status']['enum'] == [
+        'supported',
+        'unsupported-language',
+        'generated-or-skipped-path',
+        'deleted',
+        'patch-incomplete',
+        'no-candidates',
+        'content-unavailable',
+        'source-unavailable',
+        'model-unavailable',
+    ]
+    row = schemas['LineEvidenceRow']
+    assert row['properties']['contributions']['maxItems'] == 3
+    assert {
+        'score', 'logit', 'languageContribution', 'contributionTotal',
+        'otherContribution',
+    } <= set(row['properties'])
+    assert 'filePaths' in schemas['RepositoryCommit']['properties']
+    paths = document()['paths']
+    assert '/api/v1/pr-snapshots/{snapshotId}/line-evidence' in paths
+    assert '/api/v1/repositories/{repositoryId}/commits/{commitId}/line-evidence' in paths
+
+
 def test_supported_explanation_matches_documented_schema(settings):
     from admin_support import AdminTestClient as TestClient
     from jit_baseline.api import create_app

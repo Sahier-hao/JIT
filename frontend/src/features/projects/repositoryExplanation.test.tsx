@@ -40,6 +40,24 @@ function methodsBody(overrides: Record<string, unknown> = {}) {
     methods: [occlusionMethod, linearMethod], savedMethods: [], ...overrides }
 }
 function listBody(items: unknown[]) { return { ...base, explanations: items } }
+function lineEvidenceBody() {
+  return {
+    schema: 'line-review-evidence-v1', status: 'supported', reason: null,
+    sourceKind: 'repository-commit', resourceId: REPO, repositoryId: REPO,
+    commitId: SHA, ref: SHA, path: 'src/token.ts', side: 'head', language: 'typescript',
+    coverage: { patchComplete: true, status: 'supported', addedLines: 1, eligibleLines: 1, skippedBlank: 0 },
+    explanationMethod: 'linear-logodds-line-v1', explanationUnit: 'logit',
+    contributionCaveat: '行级特征贡献，不是缺陷原因。',
+    artifactSha256: 'b'.repeat(64), intercept: -1,
+    lines: [{
+      rank: 1, path: 'src/token.ts', side: 'head', line: 9, text: 'return token',
+      score: .7, logit: .847, languageContribution: .2,
+      contributions: [{ feature: 'return', label: 'return 语句', value: 1, weight: 1.5, contribution: 1.5, direction: 'increases' }],
+      contributionTotal: 1.5, otherContribution: 0,
+    }],
+    caveats: ['研究预览，不是缺陷概率。'],
+  }
+}
 function response(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status }) }
 function renderDetail(dataset = data, id = SHA) {
   return render(<CommitDetail data={dataset} id={id} onClose={vi.fn()} />)
@@ -96,6 +114,29 @@ it('links saved repair evidence to the fix diff file and line', async () => {
   expect(screen.getByRole('link', { name: 'f'.repeat(12) })).toHaveAttribute(
     'href', `https://github.com/example/repo/commit/${'f'.repeat(40)}#diff-${'b'.repeat(32)}L9`,
   )
+})
+
+it('loads fixed-commit line evidence lazily and shows explicit rule unavailability', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = String(input)
+    if (url.includes('/explanation-methods?')) return response(methodsBody({ methods: [], modelAvailable: false }))
+    if (url.includes('/explanations?')) return response(listBody([]))
+    if (url.includes('/line-evidence?')) return response(lineEvidenceBody())
+    return response(notSupported)
+  })
+  const withFiles: Dataset = {
+    ...data,
+    records: [{ ...data.records[0], filePaths: ['src/token.ts'] }],
+  }
+  renderDetail(withFiles)
+  expect(screen.getByText(/当前仓库提交分析没有关联的规则运行记录/)).toBeVisible()
+  const user = userEvent.setup()
+  await user.click(screen.getByText('行级研究证据', { selector: 'summary span' }))
+  expect(await screen.findByRole('heading', { name: '行级研究证据' })).toBeVisible()
+  expect(screen.getByText(/第 9 行排序分数为 0.7000/)).toBeVisible()
+  const request = fetch.mock.calls.find(([input]) => String(input).includes('/line-evidence?'))
+  expect(String(request?.[0])).toContain(`viewSyncId=${SYNC}`)
+  expect(String(request?.[0])).toContain('path=src%2Ftoken.ts')
 })
 
 it('generates a selected method only after an explicit choice and keeps the risk unchanged', async () => {

@@ -461,7 +461,8 @@ class SyncStorage:
                 "addedLines": row["added_lines"], "deletedLines": row["deleted_lines"],
                 "files": row["files"], "label": row["label"], "labelNote": row["label_note"],
                 "subject": row["subject"], "authorName": row["author_name"],
-                "features": json.loads(row["features_json"])}
+                "features": json.loads(row["features_json"]),
+                "filePaths": json.loads(row["file_paths_json"]) if row["file_paths_json"] else []}
 
     def repository_create(self, row):
         columns = ", ".join(REPOSITORY_COLUMNS)
@@ -805,6 +806,7 @@ class SyncService:
         self._closing = threading.Event()
         self._scope_cache: dict[tuple, dict] = {}
         self._lineage_cache: dict[tuple, tuple] = {}
+        self.commit_evidence_request = None
 
     def analysis_scope(self, sync_id: str):
         """已保存分析的模型、数据集、切分与分区口径；只读并缓存。"""
@@ -1257,6 +1259,19 @@ class SyncService:
         labels = self._lineage(self.sync.get(repo["viewSyncId"]) or {})[1]
         self._add_commit_evidence(record, repo.get("datasetVersion"))
         return self._display_commit(repo, record, labels)
+
+    def repository_commit_line_evidence(self, repository_id, commit_id, view_sync_id, path):
+        repo = self.repository(repository_id, view_sync_id=view_sync_id)
+        record = self.sync.commit(repo["viewSyncId"], commit_id)
+        if record is None:
+            raise BaselineError("NOT_FOUND", "该仓库里没有这个提交")
+        if path not in (record.get("filePaths") or []):
+            raise BaselineError("INPUT_INVALID", "文件不属于该固定提交的分析范围")
+        from .commit_line_evidence import commit_line_evidence
+        options = {"allow_local": self.allow_local}
+        if self.commit_evidence_request is not None:
+            options["request"] = self.commit_evidence_request
+        return commit_line_evidence(repo, commit_id, path, **options)
 
     def repository_summary(self, repository_id, *, view_sync_id=None):
         repo = self.repository(repository_id, view_sync_id=view_sync_id)

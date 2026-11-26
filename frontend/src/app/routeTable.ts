@@ -106,6 +106,7 @@ export const ROUTES: RouteObject[] = [
     return { name: 'algorithms', ...(method ? { method } : {}) }
   }) },
   { path: '/algorithms/:method', handle: build(params => ({ name: 'algorithms', method: params.method ?? '' })) },
+  { path: '/plugins/vscode', handle: build(() => ({ name: 'ide-plugin' })) },
   { path: '/my-models', handle: build(() => ({ name: 'my-models' })) },
   { path: '/my-predictions', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))

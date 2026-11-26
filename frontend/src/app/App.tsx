@@ -36,6 +36,7 @@ const MyPredictionsPage = lazy(() => import('@/features/predictions/pages/MyPred
 const LandingPage = lazy(() => import('@/features/account/pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('@/features/account/pages/LoginPage').then(module => ({ default: module.LoginPage })))
 const LineResearchPage = lazy(() => import('@/features/research/pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
+const VSCodePluginPage = lazy(() => import('@/features/plugins/pages/VSCodePluginPage').then(module => ({ default: module.VSCodePluginPage })))
 
 export default function App() {
   const [router] = useState(() => createHashRouter([{
@@ -88,6 +89,7 @@ function Workspace() {
     importHistory={route.view === 'imports'} importTaskId={route.view === 'imports' ? route.taskId : undefined} buildProjectId={route.buildProjectId}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={`${account}:${route.experimentId ?? 'list'}:${route.datasetVersion ?? ''}:${route.method ?? ''}:${route.schema ?? ''}`} account={account} experimentId={route.experimentId} initialDatasetVersion={route.datasetVersion} initialMethod={route.method} initialSchema={route.schema} historyDatasetVersion={route.historyDatasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'algorithms') content = <AlgorithmLibraryPage method={route.method} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'ide-plugin') content = <VSCodePluginPage/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-predictions') content = <MyPredictionsPage key={`${route.batchId ?? 'new'}:${route.datasetVersion ?? ''}`} batchId={route.batchId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'profile') content = <ProjectsPage navigate={navigate}/>
