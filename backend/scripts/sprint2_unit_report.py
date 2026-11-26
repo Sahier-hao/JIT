@@ -2,6 +2,7 @@
 from argparse import ArgumentParser
 from datetime import datetime, timezone
 import hashlib
+from html import escape
 import json
 from pathlib import Path
 import platform
@@ -341,22 +342,23 @@ def _report():
 
 
 def _markdown(report):
+    status = "通过" if report["status"] == "passed" else "未通过"
     lines = [
         "# Sprint2 单元测试报告",
         "",
-        f"- 状态：**{report['status']}**",
+        f"- 状态：**{status}**",
         f"- 提交：`{report['identity']['gitCommit']}`",
         f"- 测试身份：`{report['identity']['identitySha256']}`",
         f"- 函数：{report['inventory']['functions']} 个，正常/边界/异常各 "
         f"{report['inventory']['scenarioCounts']['normal']} 个",
         "",
-        "| 端 | 通过 | 失败 | 跳过 | 进程耗时 | 行覆盖 | 分支覆盖 |",
+        "| 测试端 | 通过 | 失败 | 跳过 | 进程耗时 | 行覆盖 | 分支覆盖 |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-    for name in ("backend", "frontend"):
+    for name, label in (("backend", "后端"), ("frontend", "前端")):
         item = report[name]
         lines.append(
-            f"| {name} | {item['passed']} | {item['failed']} | {item['skipped']} | "
+            f"| {label} | {item['passed']} | {item['failed']} | {item['skipped']} | "
             f"{item['processSeconds']:.2f}s | {item['coverage']['linePercent']:.2f}% | "
             f"{item['coverage']['branchPercent']:.2f}% |"
         )
@@ -376,7 +378,9 @@ def _markdown(report):
         "",
         "## 来源",
         "",
-        json.dumps(report["inventory"]["sourceCounts"], ensure_ascii=False),
+        "AI 生成：" + str(report["inventory"]["sourceCounts"].get("ai", 0)) + " 个；"
+        "AI 生成后人工修改：" + str(report["inventory"]["sourceCounts"].get("humanModified", 0)) + " 个；"
+        "手写：" + str(report["inventory"]["sourceCounts"].get("human", 0)) + " 个。",
         "",
         "## 人工复核",
         "",
@@ -391,6 +395,121 @@ def _markdown(report):
         "",
     ])
     return "\n".join(lines)
+
+
+def _html(report):
+    status = "通过" if report["status"] == "passed" else "未通过"
+    source = report["inventory"]["sourceCounts"]
+    result_rows = []
+    coverage_rows = []
+    for name, label in (("backend", "后端"), ("frontend", "前端")):
+        item = report[name]
+        result_rows.append(
+            f"<tr><td>{label}</td><td>{item['passed']}</td><td>{item['failed']}</td>"
+            f"<td>{item['skipped']}</td><td>{item['processSeconds']:.2f} 秒</td>"
+            f"<td>{item['coverage']['linePercent']:.2f}%</td>"
+            f"<td>{item['coverage']['branchPercent']:.2f}%</td></tr>"
+        )
+        for file in item["coverage"]["files"]:
+            coverage_rows.append(
+                f"<tr><td><code>{escape(file['file'])}</code></td>"
+                f"<td>{file['linePercent']:.2f}%</td><td>{file['lines']}/{file['statements']}</td>"
+                f"<td>{file['branchPercent']:.2f}%</td><td>{file['branches']}/{file['branchTotal']}</td></tr>"
+            )
+    review = report["manualReview"]
+    review_status = "已完成" if review["passed"] else "待人工完成"
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint2 单元测试报告</title>
+<style>
+  :root {{ color-scheme: light; }}
+  * {{ box-sizing: border-box; }}
+  body {{
+    margin: 0; background: #f5f7f6; color: #1f2328;
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "PingFang SC", sans-serif;
+    font-size: 13px; line-height: 1.65;
+  }}
+  main {{ width: 980px; margin: 32px auto; padding: 42px 48px; background: #fff; border: 1px solid #d8dee4; }}
+  h1 {{ margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -.02em; }}
+  h2 {{ margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e7eb; font-size: 17px; }}
+  p {{ margin: 6px 0; }}
+  .eyebrow {{ color: #59636e; font-size: 12px; letter-spacing: .08em; }}
+  .status {{ display: inline-block; margin-top: 12px; padding: 3px 10px; border-radius: 999px; background: #e2efe9; color: #1f5d4c; font-weight: 600; }}
+  .meta {{ display: grid; grid-template-columns: 130px 1fr; gap: 5px 12px; margin-top: 22px; padding: 16px 18px; background: #f6f8fa; }}
+  .meta dt {{ color: #59636e; }}
+  .meta dd {{ margin: 0; word-break: break-all; }}
+  table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+  th, td {{ padding: 7px 9px; border-bottom: 1px solid #e2e7eb; text-align: left; vertical-align: top; }}
+  th {{ color: #59636e; font-size: 12px; font-weight: 600; background: #f6f8fa; }}
+  td:not(:first-child), th:not(:first-child) {{ text-align: right; font-variant-numeric: tabular-nums; }}
+  code {{ font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; }}
+  ul {{ margin: 8px 0; padding-left: 20px; }}
+  li {{ margin: 4px 0; }}
+  .note {{ margin-top: 12px; padding: 11px 14px; border-left: 3px solid #1f5d4c; background: #f6f8fa; color: #424a53; }}
+  footer {{ margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e7eb; color: #6e7781; font-size: 12px; }}
+  @media print {{
+    @page {{ size: A4; margin: 12mm; }}
+    body {{ background: #fff; }}
+    main {{ width: auto; margin: 0; padding: 0; border: 0; }}
+    h2 {{ break-after: avoid; }}
+    table {{ break-inside: auto; }}
+    tr {{ break-inside: avoid; }}
+  }}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">软件缺陷预测系统 · Sprint 2 交付物</div>
+  <h1>Sprint2 单元测试报告</h1>
+  <div class="status">报告状态：{status}</div>
+  <dl class="meta">
+    <dt>代码提交</dt><dd><code>{escape(report['identity']['gitCommit'])}</code></dd>
+    <dt>测试身份</dt><dd><code>{escape(report['identity']['identitySha256'])}</code></dd>
+    <dt>生成时间</dt><dd>{escape(report['generatedAt'])}</dd>
+    <dt>测试函数</dt><dd>{report['inventory']['functions']} 个；正常、边界、异常各 {report['inventory']['scenarioCounts']['normal']} 个</dd>
+    <dt>人工复核</dt><dd>{review_status}，{review['reviewed']}/{review['total']} 个核心函数；审核人：{escape(review['reviewer'] or '未填写')}</dd>
+  </dl>
+
+  <h2>一、测试结果汇总</h2>
+  <table>
+    <thead><tr><th>测试端</th><th>通过</th><th>失败</th><th>跳过</th><th>进程耗时</th><th>行覆盖</th><th>分支覆盖</th></tr></thead>
+    <tbody>{''.join(result_rows)}</tbody>
+  </table>
+  <p>参数化展开后共执行 {report['backend']['tests'] + report['frontend']['tests']} 条测试；测试函数共 {sum(report['inventory']['suiteTests'].values())} 个。</p>
+
+  <h2>二、覆盖率明细</h2>
+  <table>
+    <thead><tr><th>文件</th><th>行覆盖</th><th>行分子/分母</th><th>分支覆盖</th><th>分支分子/分母</th></tr></thead>
+    <tbody>{''.join(coverage_rows)}</tbody>
+  </table>
+
+  <h2>三、用例来源</h2>
+  <ul>
+    <li>AI 生成：{source.get('ai', 0)} 个</li>
+    <li>AI 生成后人工修改：{source.get('humanModified', 0)} 个</li>
+    <li>手写：{source.get('human', 0)} 个</li>
+  </ul>
+  <p class="note">本报告是中文提交版。`coverage.py` 生成的英文 HTML/PDF 仅作为原始工具底稿保留，不作为报告正文。</p>
+
+  <h2>四、运行环境与复现</h2>
+  <ul>
+    <li>Python：{escape(report['environment']['python'])}；Node：{escape(report['environment']['node'])}；npm：{escape(report['environment']['npm'])}</li>
+    <li>后端：<code>{escape(report['commands']['backend'])}</code></li>
+    <li>前端：<code>{escape(report['commands']['frontend'])}</code></li>
+    <li>一键运行：<code>{escape(report['commands']['all'])}</code></li>
+  </ul>
+
+  <h2>五、结论</h2>
+  <p>本次 Sprint2 单元测试共执行 {report['backend']['tests'] + report['frontend']['tests']} 条，失败 {report['backend']['failed'] + report['frontend']['failed']} 条，跳过 {report['backend']['skipped'] + report['frontend']['skipped']} 条。后端行覆盖率 {report['backend']['coverage']['linePercent']:.2f}%，前端行覆盖率 {report['frontend']['coverage']['linePercent']:.2f}%，达到本次交付门槛。测试结果、覆盖率和人工复核记录均来自已保存的原始结果。</p>
+
+  <footer>本报告由原始 JUnit、Vitest JSON 和两端覆盖率 JSON 生成；Sprint2 一次性交付，不改变持续回归或 PR 门禁。</footer>
+</main>
+</body>
+</html>
+"""
 
 
 def _check(path, expected_commit=None):
@@ -419,12 +538,15 @@ def main():
         args.output_dir.mkdir(parents=True, exist_ok=True)
         json_path = args.output_dir / "report.json"
         markdown_path = args.output_dir / "report.md"
+        html_path = args.output_dir / "report-zh.html"
         _write_json(json_path, report)
         markdown_path.write_text(_markdown(report), encoding="utf-8")
+        html_path.write_text(_html(report), encoding="utf-8")
         result = {
             "passed": report["status"] == "passed",
             "report": str(json_path.resolve()),
             "markdown": str(markdown_path.resolve()),
+            "html": str(html_path.resolve()),
             "status": report["status"],
             "checks": report["checks"],
         }

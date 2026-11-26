@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "sprint2-unit-test-report",
-  "generatedAt": "2026-11-26T11:19:35Z",
+  "generatedAt": "2026-11-26T14:44:37Z",
   "status": "passed",
   "checks": {
     "inventoryComplete": true,
@@ -15,8 +15,8 @@
   },
   "identity": {
     "repository": "D:\\code\\jit-defect-prediction",
-    "gitCommit": "be2d7b1f8a6c9bea69f17ea20e8c34374be93d72",
-    "identitySha256": "27543f650be7a0da3bfc7a7bd22bf46fea16aa2281c9261aea78b588180fb1d8",
+    "gitCommit": "16e0c119c8e0b4bacc97baf3509256106b4058a0",
+    "identitySha256": "50216663b461a0680403f2f709e3ee9d635e05fbb035654758fc570945684b5b",
     "files": {
       "backend/jit_baseline/catalog_input.py": "c008d19c49dbe975f3cddda1a6f48a4ed69c58ddf416a01a59a7ac63711fd1ff",
       "backend/jit_baseline/data.py": "f73d9bae7fdb99a77a1a8dfb4407b861bf3f419c3a2e0008c47b7ac084119192",
@@ -26,14 +26,14 @@
       "backend/jit_baseline/ml/splits.py": "511b1210724469ac0887983a19240eb4fa5bcd7a52bb899f8ea83e9e84498f5e",
       "backend/pytest.sprint2.ini": "8b572a496a7a8c63784dd6057b4dc7a4b389efd14ecde79b9e0e7bb8f63e0683",
       "backend/requirements.txt": "e3268fafc27c0003e0d1390412385f556be9462ccdc13167bc4925f96e892fa3",
-      "backend/tests/test_sprint2_unit_core.py": "0cf1f90d07d94de5ab19259b1496afc94d6d91490601d9b939c29d923dd8c27f",
+      "backend/tests/test_sprint2_unit_core.py": "cbc99dd4cf59c10e7020c8e19fee632323f803c8e265b9bb459c6abee683f5d1",
       "docs/test-delivery/sprint2-unit-test/core-tests.json": "d875bccff0c8602279b76b3a7cb8e7e2a049a78ad150ef56e41dcf806571d794",
-      "frontend/package-lock.json": "b64ef1b583b0d8788e6c35c7a108b212b399cfa998ae8bab7cdb77b28f05d9a0",
-      "frontend/package.json": "00e02b5a866022bb977057ea0a59a51848f9d8cecec32d4a3e1c60ad82fb44c4",
+      "frontend/package-lock.json": "41c1b96e77125e2a683027d44c1ee4ff8a14881b3c18c1b7e116cce4a2fdd1ae",
+      "frontend/package.json": "1564379711a244a6a1d4e52cc15ca52cc6367876460bfe8fc7b6ce959ba080fd",
       "frontend/src/features/models/modelCompatibility.ts": "f4138ecff811f041eec990ded6707485a56c9bf36147560fb6b44b6df008c665",
       "frontend/src/features/projects/analysisScore.ts": "b07096750ac160793e820a10bec8308501d7806f82222cb95b1064fab545e1b1",
-      "frontend/src/lib/domain.ts": "9a03f2d341b1348ddd480aba8c65ab7d4bd95dd31dd046e83623866669e2ef3c",
-      "frontend/src/lib/sprint2Core.test.ts": "528a31538df9a99fed9bee5b213723f8cd9e4867df323bab217716c436826a18",
+      "frontend/src/lib/domain.ts": "37851131db567fda9107eabb6c0c0ce8fb905e17f23046796c07f5d9faf15777",
+      "frontend/src/lib/sprint2Core.test.ts": "571a041dd97ca4124da884bc9eb66d3ab2016e952c46eb53cf6204f50123c4ca",
       "frontend/vitest.sprint2.config.ts": "c495716b856576837242f38fbe84568a0a94af029f6405cef44cca0030f757f3"
     }
   },
@@ -102,7 +102,7 @@
     "passed": 144,
     "failed": 0,
     "skipped": 0,
-    "durationSeconds": 7.914,
+    "durationSeconds": 7.38,
     "failures": [],
     "skippedCases": [],
     "coverage": {
@@ -193,14 +193,14 @@
         }
       ]
     },
-    "processSeconds": 9.996796799998265
+    "processSeconds": 9.293265499989502
   },
   "frontend": {
     "tests": 52,
     "passed": 52,
     "failed": 0,
     "skipped": 0,
-    "durationSeconds": 0.262173095703125,
+    "durationSeconds": 0.30715234375,
     "failures": [],
     "skippedCases": [],
     "coverage": {
@@ -239,14 +239,14 @@
           "branches": 104,
           "branchTotal": 127,
           "missingLines": [
-            58,
-            63
+            59,
+            64
           ],
           "linePercent": 96.49122807017544,
           "branchPercent": 81.88976377952756
         }
       ]
     },
-    "processSeconds": 1.635917299950961
+    "processSeconds": 1.6869143000221811
   }
 }

@@ -70,7 +70,11 @@ def main():
         readme.read_text(encoding="utf-8")
         .replace("](core-tests.json)", "](tests/core-tests.json)")
         .replace("](manual-review-checklist.md)", "](tests/manual-review-checklist.md)")
-        .replace("](mutation-checks.md)", "](tests/mutation-checks.md)"),
+        .replace("](mutation-checks.md)", "](tests/mutation-checks.md)")
+        .replace("generated/report-zh.pdf", "coverage_report/report-zh.pdf")
+        .replace("generated/report-zh.html", "coverage_report/report-zh.html")
+        .replace("generated/report-zh.png", "coverage_report/report-zh.png")
+        .replace("generated/report.md", "coverage_report/report.md"),
         encoding="utf-8",
     )
     _copy(DELIVERY / "core-tests.json", DEST / "tests/core-tests.json")
@@ -97,6 +101,9 @@ def main():
         "backend-coverage.png",
         "frontend-coverage.pdf",
         "frontend-coverage.png",
+        "report-zh.html",
+        "report-zh.pdf",
+        "report-zh.png",
         "report.json",
         "report.md",
         "clean-checkout.json",
@@ -111,10 +118,11 @@ def main():
     (DEST / "coverage_report/README.md").write_text(
         "# 覆盖率与运行证据\n\n"
         "- `backend-coverage.html/`、`frontend-coverage.html/`：coverage.py 与 Vitest 生成的交互式 HTML。\n"
-        "- `backend-coverage.pdf`、`frontend-coverage.pdf`：覆盖率页面 PDF 快照。\n"
+        "- `backend-coverage.pdf`、`frontend-coverage.pdf`：coverage.py 原始英文界面快照，仅作底稿。\n"
         "- `backend-junit.xml`、`frontend-results.json`：原始测试结果。\n"
         "- `backend-coverage.json`、`frontend-coverage-final.json`：机器可读覆盖率。\n"
-        "- `report.md`、`report.json`：由原始结果生成的交付报告；人工复核未完成时报告保持 failed。\n"
+        "- `report-zh.html`、`report-zh.pdf`、`report-zh.png`：中文提交版报告。\n"
+        "- `report.md`、`report.json`：中文 Markdown 报告与机器可读报告；人工复核未完成时状态为未通过。\n"
         "- `clean-checkout.json`、`clean-checkout-report.*`：隔离副本运行证据。\n",
         encoding="utf-8",
     )
