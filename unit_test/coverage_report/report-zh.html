@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprint2 单元测试报告</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f5f7f6; color: #1f2328;
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", "PingFang SC", sans-serif;
+    font-size: 13px; line-height: 1.65;
+  }
+  main { width: 980px; margin: 32px auto; padding: 42px 48px; background: #fff; border: 1px solid #d8dee4; }
+  h1 { margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -.02em; }
+  h2 { margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e7eb; font-size: 17px; }
+  p { margin: 6px 0; }
+  .eyebrow { color: #59636e; font-size: 12px; letter-spacing: .08em; }
+  .status { display: inline-block; margin-top: 12px; padding: 3px 10px; border-radius: 999px; background: #e2efe9; color: #1f5d4c; font-weight: 600; }
+  .meta { display: grid; grid-template-columns: 130px 1fr; gap: 5px 12px; margin-top: 22px; padding: 16px 18px; background: #f6f8fa; }
+  .meta dt { color: #59636e; }
+  .meta dd { margin: 0; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 7px 9px; border-bottom: 1px solid #e2e7eb; text-align: left; vertical-align: top; }
+  th { color: #59636e; font-size: 12px; font-weight: 600; background: #f6f8fa; }
+  td:not(:first-child), th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; }
+  ul { margin: 8px 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  .note { margin-top: 12px; padding: 11px 14px; border-left: 3px solid #1f5d4c; background: #f6f8fa; color: #424a53; }
+  footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e7eb; color: #6e7781; font-size: 12px; }
+  @media print {
+    @page { size: A4; margin: 12mm; }
+    body { background: #fff; }
+    main { width: auto; margin: 0; padding: 0; border: 0; }
+    h2 { break-after: avoid; }
+    table { break-inside: auto; }
+    tr { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">软件缺陷预测系统 · Sprint 2 交付物</div>
+  <h1>Sprint2 单元测试报告</h1>
+  <div class="status">报告状态：通过</div>
+  <dl class="meta">
+    <dt>代码提交</dt><dd><code>16e0c119c8e0b4bacc97baf3509256106b4058a0</code></dd>
+    <dt>测试身份</dt><dd><code>50216663b461a0680403f2f709e3ee9d635e05fbb035654758fc570945684b5b</code></dd>
+    <dt>生成时间</dt><dd>2026-11-26T14:44:37Z</dd>
+    <dt>测试函数</dt><dd>48 个；正常、边界、异常各 48 个</dd>
+    <dt>人工复核</dt><dd>已完成，48/48 个核心函数；审核人：荀浩</dd>
+  </dl>
+
+  <h2>一、测试结果汇总</h2>
+  <table>
+    <thead><tr><th>测试端</th><th>通过</th><th>失败</th><th>跳过</th><th>进程耗时</th><th>行覆盖</th><th>分支覆盖</th></tr></thead>
+    <tbody><tr><td>后端</td><td>144</td><td>0</td><td>0</td><td>9.29 秒</td><td>83.77%</td><td>72.39%</td></tr><tr><td>前端</td><td>52</td><td>0</td><td>0</td><td>1.69 秒</td><td>98.04%</td><td>86.06%</td></tr></tbody>
+  </table>
+  <p>参数化展开后共执行 196 条测试；测试函数共 174 个。</p>
+
+  <h2>二、覆盖率明细</h2>
+  <table>
+    <thead><tr><th>文件</th><th>行覆盖</th><th>行分子/分母</th><th>分支覆盖</th><th>分支分子/分母</th></tr></thead>
+    <tbody><tr><td><code>jit_baseline/catalog_input.py</code></td><td>57.94%</td><td>62/107</td><td>50.00%</td><td>24/48</td></tr><tr><td><code>jit_baseline/data.py</code></td><td>83.53%</td><td>142/170</td><td>70.59%</td><td>48/68</td></tr><tr><td><code>jit_baseline/ml/algorithms.py</code></td><td>92.63%</td><td>88/95</td><td>80.56%</td><td>29/36</td></tr><tr><td><code>jit_baseline/ml/metrics.py</code></td><td>93.00%</td><td>93/100</td><td>66.67%</td><td>16/24</td></tr><tr><td><code>jit_baseline/ml/model.py</code></td><td>84.86%</td><td>157/185</td><td>83.33%</td><td>55/66</td></tr><tr><td><code>jit_baseline/ml/splits.py</code></td><td>94.74%</td><td>72/76</td><td>84.62%</td><td>22/26</td></tr><tr><td><code>src/features/models/modelCompatibility.ts</code></td><td>100.00%</td><td>12/12</td><td>100.00%</td><td>16/16</td></tr><tr><td><code>src/features/projects/analysisScore.ts</code></td><td>100.00%</td><td>33/33</td><td>100.00%</td><td>22/22</td></tr><tr><td><code>src/lib/domain.ts</code></td><td>96.49%</td><td>55/57</td><td>81.89%</td><td>104/127</td></tr></tbody>
+  </table>
+
+  <h2>三、用例来源</h2>
+  <ul>
+    <li>AI 生成：174 个</li>
+    <li>AI 生成后人工修改：0 个</li>
+    <li>手写：0 个</li>
+  </ul>
+  <p class="note">本报告是中文提交版。`coverage.py` 生成的英文 HTML/PDF 仅作为原始工具底稿保留，不作为报告正文。</p>
+
+  <h2>四、运行环境与复现</h2>
+  <ul>
+    <li>Python：3.14.2；Node：v24.13.0；npm：11.6.2</li>
+    <li>后端：<code>.venv\Scripts\python.exe -m pytest -c pytest.sprint2.ini tests\test_sprint2_unit_core.py</code></li>
+    <li>前端：<code>npm.cmd run test:unit:sprint2</code></li>
+    <li>一键运行：<code>backend\.venv\Scripts\python.exe -m scripts.run_sprint2_unit</code></li>
+  </ul>
+
+  <h2>五、结论</h2>
+  <p>本次 Sprint2 单元测试共执行 196 条，失败 0 条，跳过 0 条。后端行覆盖率 83.77%，前端行覆盖率 98.04%，达到本次交付门槛。测试结果、覆盖率和人工复核记录均来自已保存的原始结果。</p>
+
+  <footer>本报告由原始 JUnit、Vitest JSON 和两端覆盖率 JSON 生成；Sprint2 一次性交付，不改变持续回归或 PR 门禁。</footer>
+</main>
+</body>
+</html>

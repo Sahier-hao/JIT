@@ -38,6 +38,24 @@ Set-Location backend
 `run_sprint2_unit` 的退出码为 0，报告 `checks` 全部为 true。若只看本地测试，请执行上面的
 pytest 与 vitest 命令。
 
+## 中文报告
+
+提交版报告使用中文：
+
+- `coverage_report/report-zh.pdf`：可直接提交的中文 PDF。
+- `coverage_report/report-zh.html`、`coverage_report/report-zh.png`：中文网页与截图版。
+- `coverage_report/report.md`：中文 Markdown 源报告。
+
+`coverage.py` 自动生成的 `backend-coverage.pdf`、`frontend-coverage.pdf` 保留英文工具界面，
+仅作为原始覆盖率底稿，不再作为报告正文。重新生成中文报告：
+
+```powershell
+Set-Location backend
+.\.venv\Scripts\python.exe -m scripts.run_sprint2_unit
+.\.venv\Scripts\python.exe -m scripts.render_sprint2_unit_report
+.\.venv\Scripts\python.exe -m scripts.package_unit_test_submission
+```
+
 ## 范围
 
 - 后端：`jit_baseline/data.py`、`jit_baseline/ml/metrics.py`、`jit_baseline/ml/splits.py`、
@@ -118,7 +136,11 @@ unit_test/
 │   ├── frontend-results.json
 │   ├── backend-coverage.pdf
 │   ├── frontend-coverage.pdf
-│   └── report.md
+│   ├── report-zh.html
+│   ├── report-zh.pdf
+│   ├── report-zh.png
+│   ├── report.md
+│   └── report.json
 ├── prompts/
 ├── README.md
 └── MANIFEST.json
