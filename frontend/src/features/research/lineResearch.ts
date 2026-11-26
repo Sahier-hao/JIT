@@ -120,9 +120,13 @@ export async function lineResearchMetadata(signal?: AbortSignal): Promise<LineRe
   }
 }
 
-export async function scoreLineResearch(code: string, language: string): Promise<LineScoreResult> {
+export async function scoreLineResearch(
+  code: string,
+  language: string,
+  signal?: AbortSignal,
+): Promise<LineScoreResult> {
   const body = record(await apiRequest({
-    path: '/api/v1/research/line-model/score', method: 'POST', body: { code, language },
+    path: '/api/v1/research/line-model/score', method: 'POST', body: { code, language }, signal,
   }))
   return {
     language: text(body.language),
