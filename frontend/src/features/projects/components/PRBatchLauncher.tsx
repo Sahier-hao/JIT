@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ModelSelect, usableModel } from '@/features/models/components/ModelSelect'
+import { modelUnavailableReason, ModelSelect, usableModel } from '@/features/models/components/ModelSelect'
 import { repositoryModels, type ModelChoice } from '@/features/models/modelClient'
 import { analyzeAllProjectPRs, projectPROpenCount, type PRBatch, type PRBatchScope } from '@/features/projects/projectActivityClient'
 
@@ -42,9 +42,11 @@ export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted, va
       setOpenCount(count.status === 'fulfilled' ? count.value : null)
       if (catalog.status === 'fulfilled') {
         const usable = catalog.value.filter(usableModel)
-        setModels(usable)
-        const preferred = usable.find(model => model.modelId === modelId) ?? usable.find(model => model.isDefault) ?? usable[0]
-        setSelectedModel(previous => previous || preferred?.modelId || '')
+        setModels(catalog.value)
+        const requested = modelId ? catalog.value.find(model => model.modelId === modelId) : undefined
+        const fallback = usable.find(model => model.isDefault) ?? usable.find(model => model.mine) ?? usable[0]
+        const initialId = requested?.modelId ?? modelId ?? fallback?.modelId ?? ''
+        setSelectedModel(previous => previous || initialId)
       } else {
         setModels([])
         setReadError(catalog.reason instanceof Error ? catalog.reason.message : '读取模型失败')
@@ -62,7 +64,10 @@ export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted, va
     : effectiveKind === 'page' && openPage != null ? { kind: 'page', page: openPage }
     : { kind: 'all' }
   const valid = scope.kind !== 'limit' || limitValid
-  const modelAvailable = models.some(model => model.modelId === selectedModel)
+  const selected = models.find(model => model.modelId === selectedModel)
+  const modelAvailable = Boolean(selected && usableModel(selected))
+  const selectedReason = selected && !modelAvailable ? modelUnavailableReason(selected) : null
+  const hasUnavailable = models.some(model => !usableModel(model))
 
   async function submit() {
     if (loading || submitting || !modelAvailable || !valid) return
@@ -103,10 +108,16 @@ export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted, va
         : <div className="grid gap-3">
           <label className="grid gap-1.5 text-sm">
             模型
-            <ModelSelect models={models} value={modelAvailable ? selectedModel : ''} onValueChange={setSelectedModel}
+            <ModelSelect models={models} value={selectedModel} onValueChange={setSelectedModel}
               label="批量分析模型" disabled={submitting || models.length === 0}
+              allowUnavailable unavailableReason={modelUnavailableReason}
               placeholder={models.length ? '选择模型' : '没有可用模型'}/>
           </label>
+          {selectedReason ? <p className="text-xs text-amber-deep" role="status">
+            原分析模型不可用（{selectedReason}），未自动替换；请明确选择可用模型。
+          </p> : hasUnavailable ? <p className="text-xs text-foreground-3">
+            灰色模型不可用于仓库分析；标签中已标明原因。
+          </p> : null}
           <label className="grid gap-1.5 text-sm">
             范围
             <Select value={effectiveKind} onValueChange={value => setScopeKind(value as ScopeKind)} disabled={submitting}>

@@ -6,6 +6,15 @@ export function usableModel(model?: ModelChoice | null): boolean {
   return Boolean(model && model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
 }
 
+export function modelUnavailableReason(model: ModelChoice): string {
+  if (model.state !== 'ready') return '模型未就绪'
+  if (!model.enabled) return '已停用'
+  if (!model.repositoryPredictionSupported) {
+    return `字段规范 ${model.featureSchemaVersion ?? '未知'} 不适用于仓库分析`
+  }
+  return '不可用'
+}
+
 function optionLabel(model: ModelChoice, duplicate: boolean): string {
   const name = duplicate ? `${model.name} · ${model.modelId.slice(0, 8)}` : model.name
   return `${name}${model.isDefault ? ' · 默认' : ''}`
@@ -23,13 +32,15 @@ export interface ModelSelectProps {
   excludeIds?: string[]
   /** 原选模型不在当前可选范围时的说明。 */
   missingLabel?: string
+  /** 不可用模型的明确原因；缺省时使用通用原因。 */
+  unavailableReason?: (model: ModelChoice) => string
 }
 
 /**
  * 统一的模型选择器：按“我的模型 / 共享模型”分组，只列可选模型。
  * 原选模型不可见时保留为禁用项，避免静默替换。
  */
-export function ModelSelect({ models, value, onValueChange, label, placeholder = '选择模型', disabled, allowUnavailable = false, excludeIds = [], missingLabel }: ModelSelectProps) {
+export function ModelSelect({ models, value, onValueChange, label, placeholder = '选择模型', disabled, allowUnavailable = false, excludeIds = [], missingLabel, unavailableReason }: ModelSelectProps) {
   const excluded = new Set(excludeIds)
   const pool = models.filter(model => !excluded.has(model.modelId))
   const shown = allowUnavailable ? pool : pool.filter(usableModel)
@@ -51,11 +62,13 @@ export function ModelSelect({ models, value, onValueChange, label, placeholder =
       </SelectGroup> : null}
       {groups.map(group => <SelectGroup key={group.key}>
         <SelectLabel>{group.label}</SelectLabel>
-        {group.items.map(model => <SelectItem key={model.modelId} value={model.modelId}
-          disabled={allowUnavailable && !usableModel(model)}>
-          {optionLabel(model, (names.get(model.name) ?? 0) > 1)}
-          {allowUnavailable && !usableModel(model) ? model.enabled ? '（不可用）' : '（已停用）' : ''}
-        </SelectItem>)}
+        {group.items.map(model => {
+          const unavailable = allowUnavailable && !usableModel(model)
+          return <SelectItem key={model.modelId} value={model.modelId} disabled={unavailable}>
+            {optionLabel(model, (names.get(model.name) ?? 0) > 1)}
+            {unavailable ? `（${unavailableReason?.(model) ?? modelUnavailableReason(model)}）` : ''}
+          </SelectItem>
+        })}
       </SelectGroup>)}
     </SelectContent>
   </Select>
