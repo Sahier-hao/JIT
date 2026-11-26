@@ -14,7 +14,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       enabled: true,
-      include: ['src/lib/domain.ts'],
+      include: [
+        'src/lib/domain.ts',
+        'src/features/projects/analysisScore.ts',
+        'src/features/models/modelCompatibility.ts',
+      ],
       reporter: ['text', 'json', 'html'],
       reportsDirectory: '../.cache/sprint2-unit/frontend-coverage',
     },

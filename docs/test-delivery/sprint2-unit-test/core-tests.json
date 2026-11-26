@@ -7,9 +7,11 @@
       ],
       "coverageFiles": [
         "jit_baseline/data.py",
-        "jit_baseline/metrics.py",
-        "jit_baseline/splits.py",
-        "jit_baseline/algorithms.py"
+        "jit_baseline/ml/metrics.py",
+        "jit_baseline/ml/splits.py",
+        "jit_baseline/ml/algorithms.py",
+        "jit_baseline/ml/model.py",
+        "jit_baseline/catalog_input.py"
       ],
       "excluded": [
         "真实模型训练",
@@ -24,7 +26,9 @@
         "src/lib/sprint2Core.test.ts"
       ],
       "coverageFiles": [
-        "src/lib/domain.ts"
+        "src/lib/domain.ts",
+        "src/features/projects/analysisScore.ts",
+        "src/features/models/modelCompatibility.ts"
       ],
       "excluded": [
         "React 组件",
@@ -130,7 +134,7 @@
     {
       "id": "backend.classification",
       "side": "backend",
-      "module": "jit_baseline/metrics.py",
+      "module": "jit_baseline/ml/metrics.py",
       "function": "classification",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -143,12 +147,16 @@
     {
       "id": "backend.evaluate",
       "side": "backend",
-      "module": "jit_baseline/metrics.py",
+      "module": "jit_baseline/ml/metrics.py",
       "function": "evaluate",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
         "normal": ["test_evaluate_normal_returns_declared_metrics"],
-        "boundary": ["test_evaluate_boundary_reports_undefined_auc_for_single_class"],
+        "boundary": [
+          "test_evaluate_boundary_reports_undefined_auc_for_single_class",
+          "test_evaluate_boundary_includes_commit_when_budget_is_exactly_reached",
+          "test_evaluate_boundary_ties_use_time_then_identity_and_stop_at_exact_budget"
+        ],
         "error": ["test_evaluate_error_rejects_out_of_range_risk"]
       },
       "source": "ai"
@@ -156,7 +164,7 @@
     {
       "id": "backend.get_metric_set",
       "side": "backend",
-      "module": "jit_baseline/metrics.py",
+      "module": "jit_baseline/ml/metrics.py",
       "function": "get_metric_set",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -169,12 +177,18 @@
     {
       "id": "backend.split_records",
       "side": "backend",
-      "module": "jit_baseline/splits.py",
+      "module": "jit_baseline/ml/splits.py",
       "function": "split_records",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
-        "normal": ["test_split_records_normal_keeps_timestamp_groups_and_preserves_members"],
-        "boundary": ["test_split_records_boundary_omitted_preset_keeps_default_identity"],
+        "normal": [
+          "test_split_records_normal_keeps_timestamp_groups_and_preserves_members",
+          "test_split_records_normal_assigns_exact_commits_to_hand_computed_partitions"
+        ],
+        "boundary": [
+          "test_split_records_boundary_omitted_preset_keeps_default_identity",
+          "test_split_records_boundary_keeps_same_timestamp_group_in_one_partition"
+        ],
         "error": [
           "test_split_records_error_rejects_unknown_preset",
           "test_split_records_error_rejects_empty_input",
@@ -188,7 +202,7 @@
     {
       "id": "backend.resolve_preset",
       "side": "backend",
-      "module": "jit_baseline/splits.py",
+      "module": "jit_baseline/ml/splits.py",
       "function": "resolve_preset",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -201,7 +215,7 @@
     {
       "id": "backend.preset_view",
       "side": "backend",
-      "module": "jit_baseline/splits.py",
+      "module": "jit_baseline/ml/splits.py",
       "function": "preset_view",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -214,7 +228,7 @@
     {
       "id": "backend.policy_for_partitions",
       "side": "backend",
-      "module": "jit_baseline/splits.py",
+      "module": "jit_baseline/ml/splits.py",
       "function": "policy_for_partitions",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -227,7 +241,7 @@
     {
       "id": "backend.rule_text",
       "side": "backend",
-      "module": "jit_baseline/splits.py",
+      "module": "jit_baseline/ml/splits.py",
       "function": "rule_text",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -240,7 +254,7 @@
     {
       "id": "backend.resolve_params",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "resolve_params",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -253,7 +267,7 @@
     {
       "id": "backend.param_specs",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "param_specs",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -266,7 +280,7 @@
     {
       "id": "backend.validate_declared_params",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "validate_declared_params",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -279,7 +293,7 @@
     {
       "id": "backend.params_display",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "params_display",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -292,12 +306,12 @@
     {
       "id": "backend.get_algorithm",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "get_algorithm",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
         "normal": ["test_get_algorithm_normal_returns_registered_entry"],
-        "boundary": ["test_get_algorithm_boundary_returns_last_registered_entry"],
+        "boundary": ["test_get_algorithm_boundary_resolves_first_and_last_registry_entries"],
         "error": ["test_get_algorithm_error_rejects_unregistered_name"]
       },
       "source": "ai"
@@ -305,7 +319,7 @@
     {
       "id": "backend.resolve_algorithm",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "resolve_algorithm",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -318,7 +332,7 @@
     {
       "id": "backend.method_missing_dependencies",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "method_missing_dependencies",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -331,7 +345,7 @@
     {
       "id": "backend.method_catalog",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "method_catalog",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -344,7 +358,7 @@
     {
       "id": "backend.check_method",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "check_method",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
@@ -357,13 +371,140 @@
     {
       "id": "backend.model_descriptor",
       "side": "backend",
-      "module": "jit_baseline/algorithms.py",
+      "module": "jit_baseline/ml/algorithms.py",
       "function": "model_descriptor",
       "testFile": "tests/test_sprint2_unit_core.py",
       "cases": {
         "normal": ["test_model_descriptor_normal_preserves_known_identity"],
         "boundary": ["test_model_descriptor_boundary_derives_custom_identity"],
         "error": ["test_model_descriptor_error_rejects_unknown_method"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.feature_matrix",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "feature_matrix",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": [
+          "test_feature_matrix_normal_organizes_openstack_columns_in_schema_order",
+          "test_feature_matrix_normal_preserves_kamei14_git_v2_column_order",
+          "test_feature_matrix_normal_appends_semantic_vectors_after_experts"
+        ],
+        "boundary": [
+          "test_feature_matrix_boundary_accepts_all_zero_values",
+          "test_feature_matrix_boundary_accepts_semantic_only_schema"
+        ],
+        "error": ["test_feature_matrix_error_rejects_empty_width_nonfinite_and_negative"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.predict_risks",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "predict_risks",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": [
+          "test_predict_risks_normal_selects_label_one_column_when_classes_are_reversed",
+          "test_predict_risks_normal_selects_label_one_column_when_classes_are_sorted"
+        ],
+        "boundary": ["test_predict_risks_boundary_accepts_zero_and_one"],
+        "error": ["test_predict_risks_error_rejects_count_nan_range_missing_positive_and_failure"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.prediction_input",
+      "side": "backend",
+      "module": "jit_baseline/catalog_input.py",
+      "function": "prediction_input",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_prediction_input_normal_accepts_client_features_and_normalizes_identity"],
+        "boundary": ["test_prediction_input_boundary_accepts_persisted_commit_without_client_features"],
+        "error": [
+          "test_prediction_input_error_rejects_conflicting_or_incomplete_source",
+          "test_prediction_input_error_rejects_feature_contract_mismatch",
+          "test_prediction_input_error_rejects_naive_time_without_normalizing_it"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.build_estimator",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "build_estimator",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_build_estimator_normal_uses_the_declared_method_factory"],
+        "boundary": ["test_build_estimator_boundary_replaces_only_declared_override"],
+        "error": ["test_build_estimator_error_rejects_unimplemented_estimator"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.apply_class_policy",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "apply_class_policy",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_apply_class_policy_normal_returns_weights_without_reordering_records"],
+        "boundary": [
+          "test_apply_class_policy_boundary_sample_is_seeded_and_does_not_mutate_input",
+          "test_apply_class_policy_boundary_sample_can_expand_negatives"
+        ],
+        "error": [
+          "test_apply_class_policy_error_rejects_invalid_policy",
+          "test_apply_class_policy_error_rejects_sample_with_single_class"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.fit_model",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "fit_model",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_fit_model_normal_builds_declared_pipeline_and_predicts_all_records"],
+        "boundary": ["test_fit_model_boundary_accepts_declared_class_policy_on_training_records"],
+        "error": [
+          "test_fit_model_error_rejects_single_class_or_unknown_method",
+          "test_fit_model_error_does_not_publish_a_nonconverged_estimator"
+        ]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.log1p_columns",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "Log1pColumns",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_log1p_columns_normal_transforms_only_declared_columns"],
+        "boundary": ["test_log1p_columns_boundary_without_columns_returns_an_independent_copy"],
+        "error": ["test_log1p_columns_error_rejects_out_of_range_column"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "backend.expert_standard_scaler",
+      "side": "backend",
+      "module": "jit_baseline/ml/model.py",
+      "function": "ExpertStandardScaler",
+      "testFile": "tests/test_sprint2_unit_core.py",
+      "cases": {
+        "normal": ["test_expert_standard_scaler_normal_scales_experts_and_preserves_semantic_tail"],
+        "boundary": ["test_expert_standard_scaler_boundary_without_expert_columns_keeps_values"],
+        "error": ["test_expert_standard_scaler_error_rejects_more_experts_than_columns"]
       },
       "source": "ai"
     },
@@ -453,7 +594,10 @@
       "testFile": "src/lib/sprint2Core.test.ts",
       "cases": {
         "normal": ["queryCommits 正常按风险稳定排序 [AI生成]"],
-        "boundary": ["queryCommits 边界组合搜索与包含端点的日期 [AI生成]"],
+        "boundary": [
+          "queryCommits 边界组合搜索与包含端点的日期 [AI生成]",
+          "queryCommits 边界同分按时间降序再按标识升序 [AI生成]"
+        ],
         "error": ["queryCommits 异常风险数据排在有效风险之后 [AI生成]"]
       },
       "source": "ai"
@@ -507,6 +651,84 @@
         "normal": ["parseRepository 正常返回同步来源与首屏记录 [AI生成]"],
         "boundary": ["parseRepository 边界接受空提交页 [AI生成]"],
         "error": ["parseRepository 异常拒绝同步与分页身份不一致 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.scoreBand",
+      "side": "frontend",
+      "module": "src/features/projects/analysisScore.ts",
+      "function": "scoreBand",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["scoreBand 正常按 0.25 与 0.10 分档 [AI生成]"],
+        "boundary": ["scoreBand 边界命中 0.10 与 0.25 阈值 [AI生成]"],
+        "error": ["scoreBand 异常 NaN 不进入高或中档 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.scoreHistogram",
+      "side": "frontend",
+      "module": "src/features/projects/analysisScore.ts",
+      "function": "scoreHistogram",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["scoreHistogram 正常按 0.05 一档累计 [AI生成]"],
+        "boundary": ["scoreHistogram 边界空集合与 1.0 都保持 20 档 [AI生成]"],
+        "error": ["scoreHistogram 异常分数不污染有效档计数 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.histogramOption",
+      "side": "frontend",
+      "module": "src/features/projects/analysisScore.ts",
+      "function": "histogramOption",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["histogramOption 正常把风险桶和分档颜色写入图表 [AI生成]"],
+        "boundary": ["histogramOption 边界把 1.0 放入末档并保留空分档 [AI生成]"],
+        "error": ["histogramOption 异常 tooltip 参数回退到首档且缺省分类色回退到主色 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.bandsOption",
+      "side": "frontend",
+      "module": "src/features/projects/analysisScore.ts",
+      "function": "bandsOption",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["bandsOption 正常包含四档并显示未评分 [AI生成]"],
+        "boundary": ["bandsOption 边界未评分数量为零时不渲染该档 [AI生成]"],
+        "error": ["bandsOption 异常 tooltip 下标越界时返回空字符串 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.repositorySchemaReason",
+      "side": "frontend",
+      "module": "src/features/models/modelCompatibility.ts",
+      "function": "repositorySchemaReason",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["repositorySchemaReason 正常当前 schema 可用于仓库分析 [AI生成]"],
+        "boundary": ["repositorySchemaReason 边界区分旧版与离线 schema [AI生成]"],
+        "error": ["repositorySchemaReason 异常缺失或未知 schema 明确不可用 [AI生成]"]
+      },
+      "source": "ai"
+    },
+    {
+      "id": "frontend.repositoryModelStatus",
+      "side": "frontend",
+      "module": "src/features/models/modelCompatibility.ts",
+      "function": "repositoryModelStatus",
+      "testFile": "src/lib/sprint2Core.test.ts",
+      "cases": {
+        "normal": ["repositoryModelStatus 正常 ready 且启用的当前模型可用于仓库分析 [AI生成]"],
+        "boundary": ["repositoryModelStatus 边界未就绪或停用时不声明可用 [AI生成]"],
+        "error": ["repositoryModelStatus 异常 schema 不兼容时给出具体原因 [AI生成]"]
       },
       "source": "ai"
     }

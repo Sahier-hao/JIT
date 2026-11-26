@@ -1,16 +1,40 @@
 {
   "kind": "sprint2-clean-checkout-verification",
   "passed": true,
-  "sourceCommit": "a505859ff70f16a31c2a1e914b2598e1fef07146",
-  "checkout": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\.cache\\sprint2-clean-kkvp9qm7",
-  "backendAndFrontendProcessSeconds": 12.24213719999534,
-  "reportSha256": "bbe66da7d52e4728236fb5bb485d72d77626db7317577d7c2eb5198140823c1e",
+  "localTestsPassed": true,
+  "deliveryReviewPending": false,
+  "sourceCommit": "be2d7b1f8a6c9bea69f17ea20e8c34374be93d72",
+  "checkout": "D:\\code\\jit-defect-prediction\\.cache\\sprint2-clean-52azokzc",
+  "backendAndFrontendProcessSeconds": 11.583409299957566,
+  "reportSha256": "ce42747b7c95d4c115e961666d39ef00f56a77cb9944c36d057067956a5c0f73",
   "copiedModified": [
+    "backend/pytest.sprint2.ini",
+    "backend/scripts/package_sprint2_unit_evidence.py",
+    "backend/scripts/run_sprint2_clean_checkout.py",
+    "backend/scripts/run_sprint2_unit.py",
+    "backend/scripts/sprint2_unit_report.py",
+    "backend/tests/test_sprint2_unit_core.py",
+    "docs/test-delivery/sprint2-unit-test/README.md",
     "docs/test-delivery/sprint2-unit-test/core-tests.json",
     "docs/test-delivery/sprint2-unit-test/generated/backend-coverage.png",
+    "docs/test-delivery/sprint2-unit-test/generated/clean-checkout-report.json",
+    "docs/test-delivery/sprint2-unit-test/generated/clean-checkout-report.md",
+    "docs/test-delivery/sprint2-unit-test/generated/clean-checkout.json",
     "docs/test-delivery/sprint2-unit-test/generated/frontend-coverage.png",
     "docs/test-delivery/sprint2-unit-test/generated/report.json",
-    "docs/test-delivery/sprint2-unit-test/generated/report.md"
+    "docs/test-delivery/sprint2-unit-test/generated/report.md",
+    "docs/test-delivery/sprint2-unit-test/manual-review.json",
+    "docs/test-delivery/sprint2-unit-test/prompts/backend-sprint2-unit-core.md",
+    "docs/test-delivery/sprint2-unit-test/prompts/frontend-sprint2-unit-core.md",
+    "frontend/src/lib/sprint2Core.test.ts",
+    "frontend/vitest.sprint2.config.ts"
   ],
-  "copiedUntracked": []
+  "copiedUntracked": [
+    "backend/scripts/package_unit_test_submission.py",
+    "docs/test-delivery/sprint2-unit-test/generated/backend-coverage.pdf",
+    "docs/test-delivery/sprint2-unit-test/generated/frontend-coverage.pdf",
+    "docs/test-delivery/sprint2-unit-test/manual-review-checklist.md",
+    "docs/test-delivery/sprint2-unit-test/mutation-checks.md",
+    "docs/test-delivery/sprint2-unit-test/prompts/unit_test_sprint2_extension_01.md"
+  ]
 }

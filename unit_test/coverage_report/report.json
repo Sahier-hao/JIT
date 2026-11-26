@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "kind": "sprint2-unit-test-report",
+  "generatedAt": "2026-11-26T11:19:35Z",
+  "status": "passed",
+  "checks": {
+    "inventoryComplete": true,
+    "noFailedTests": true,
+    "noUnexplainedSkips": true,
+    "backendWithin60Seconds": true,
+    "frontendWithin60Seconds": true,
+    "backendLinesAtLeast80": true,
+    "frontendLinesAtLeast80": true,
+    "manualReviewComplete": true
+  },
+  "identity": {
+    "repository": "D:\\code\\jit-defect-prediction",
+    "gitCommit": "be2d7b1f8a6c9bea69f17ea20e8c34374be93d72",
+    "identitySha256": "27543f650be7a0da3bfc7a7bd22bf46fea16aa2281c9261aea78b588180fb1d8",
+    "files": {
+      "backend/jit_baseline/catalog_input.py": "c008d19c49dbe975f3cddda1a6f48a4ed69c58ddf416a01a59a7ac63711fd1ff",
+      "backend/jit_baseline/data.py": "f73d9bae7fdb99a77a1a8dfb4407b861bf3f419c3a2e0008c47b7ac084119192",
+      "backend/jit_baseline/ml/algorithms.py": "65746e3310b933c0a648ff02f4b649e104310f653f67ddac0e8dacd5999b459d",
+      "backend/jit_baseline/ml/metrics.py": "a9e9c7a52dc400b4de520b4f65da859f1454114eb43c8ed3ff848f011c8fb1a8",
+      "backend/jit_baseline/ml/model.py": "2a3c4cdbf9fd3033b33d1e04029db469cb1751f3e3667b91d9538bd010517e04",
+      "backend/jit_baseline/ml/splits.py": "511b1210724469ac0887983a19240eb4fa5bcd7a52bb899f8ea83e9e84498f5e",
+      "backend/pytest.sprint2.ini": "8b572a496a7a8c63784dd6057b4dc7a4b389efd14ecde79b9e0e7bb8f63e0683",
+      "backend/requirements.txt": "e3268fafc27c0003e0d1390412385f556be9462ccdc13167bc4925f96e892fa3",
+      "backend/tests/test_sprint2_unit_core.py": "0cf1f90d07d94de5ab19259b1496afc94d6d91490601d9b939c29d923dd8c27f",
+      "docs/test-delivery/sprint2-unit-test/core-tests.json": "d875bccff0c8602279b76b3a7cb8e7e2a049a78ad150ef56e41dcf806571d794",
+      "frontend/package-lock.json": "b64ef1b583b0d8788e6c35c7a108b212b399cfa998ae8bab7cdb77b28f05d9a0",
+      "frontend/package.json": "00e02b5a866022bb977057ea0a59a51848f9d8cecec32d4a3e1c60ad82fb44c4",
+      "frontend/src/features/models/modelCompatibility.ts": "f4138ecff811f041eec990ded6707485a56c9bf36147560fb6b44b6df008c665",
+      "frontend/src/features/projects/analysisScore.ts": "b07096750ac160793e820a10bec8308501d7806f82222cb95b1064fab545e1b1",
+      "frontend/src/lib/domain.ts": "9a03f2d341b1348ddd480aba8c65ab7d4bd95dd31dd046e83623866669e2ef3c",
+      "frontend/src/lib/sprint2Core.test.ts": "528a31538df9a99fed9bee5b213723f8cd9e4867df323bab217716c436826a18",
+      "frontend/vitest.sprint2.config.ts": "c495716b856576837242f38fbe84568a0a94af029f6405cef44cca0030f757f3"
+    }
+  },
+  "environment": {
+    "python": "3.14.2",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "node": "v24.13.0",
+    "npm": "11.6.2",
+    "durationSource": "runner-meta"
+  },
+  "commands": {
+    "backend": ".venv\\Scripts\\python.exe -m pytest -c pytest.sprint2.ini tests\\test_sprint2_unit_core.py",
+    "frontend": "npm.cmd run test:unit:sprint2",
+    "all": "backend\\.venv\\Scripts\\python.exe -m scripts.run_sprint2_unit"
+  },
+  "inventory": {
+    "passed": true,
+    "manifest": "D:\\code\\jit-defect-prediction\\docs\\test-delivery\\sprint2-unit-test\\core-tests.json",
+    "suiteTests": {
+      "backend/tests/test_sprint2_unit_core.py": 122,
+      "frontend/src/lib/sprint2Core.test.ts": 52
+    },
+    "functions": 48,
+    "scenarioCounts": {
+      "boundary": 48,
+      "error": 48,
+      "normal": 48
+    },
+    "sourceCounts": {
+      "ai": 174
+    },
+    "sourceByFile": {
+      "backend/tests/test_sprint2_unit_core.py": {
+        "ai": 122,
+        "total": 122,
+        "percentages": {
+          "ai": 100.0
+        }
+      },
+      "frontend/src/lib/sprint2Core.test.ts": {
+        "ai": 52,
+        "total": 52,
+        "percentages": {
+          "ai": 100.0
+        }
+      }
+    },
+    "promptFiles": {
+      "backend/tests/test_sprint2_unit_core.py": "docs/test-delivery/sprint2-unit-test/prompts/backend-sprint2-unit-core.md",
+      "frontend/src/lib/sprint2Core.test.ts": "docs/test-delivery/sprint2-unit-test/prompts/frontend-sprint2-unit-core.md"
+    },
+    "errors": []
+  },
+  "manualReview": {
+    "passed": true,
+    "reviewer": "荀浩",
+    "reviewedAt": "2026-11-26",
+    "reviewed": 48,
+    "total": 48,
+    "pending": [],
+    "missing": [],
+    "invalid": []
+  },
+  "backend": {
+    "tests": 144,
+    "passed": 144,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 7.914,
+    "failures": [],
+    "skippedCases": [],
+    "coverage": {
+      "linePercent": 83.76534788540246,
+      "branchPercent": 72.38805970149254,
+      "coveredLines": 614,
+      "totalLines": 733,
+      "coveredBranches": 194,
+      "totalBranches": 268,
+      "branchGaps": [
+        {
+          "file": "jit_baseline/catalog_input.py",
+          "branchPercent": 50.0,
+          "missingBranches": 24
+        },
+        {
+          "file": "jit_baseline/ml/metrics.py",
+          "branchPercent": 66.66666666666667,
+          "missingBranches": 8
+        }
+      ],
+      "files": [
+        {
+          "file": "jit_baseline/catalog_input.py",
+          "lines": 62,
+          "statements": 107,
+          "linePercent": 57.94392523364486,
+          "branches": 24,
+          "branchTotal": 48,
+          "branchPercent": 50.0,
+          "missingLines": 45,
+          "missingBranches": 24
+        },
+        {
+          "file": "jit_baseline/data.py",
+          "lines": 142,
+          "statements": 170,
+          "linePercent": 83.52941176470588,
+          "branches": 48,
+          "branchTotal": 68,
+          "branchPercent": 70.58823529411765,
+          "missingLines": 28,
+          "missingBranches": 20
+        },
+        {
+          "file": "jit_baseline/ml/algorithms.py",
+          "lines": 88,
+          "statements": 95,
+          "linePercent": 92.63157894736842,
+          "branches": 29,
+          "branchTotal": 36,
+          "branchPercent": 80.55555555555556,
+          "missingLines": 7,
+          "missingBranches": 7
+        },
+        {
+          "file": "jit_baseline/ml/metrics.py",
+          "lines": 93,
+          "statements": 100,
+          "linePercent": 93.0,
+          "branches": 16,
+          "branchTotal": 24,
+          "branchPercent": 66.66666666666667,
+          "missingLines": 7,
+          "missingBranches": 8
+        },
+        {
+          "file": "jit_baseline/ml/model.py",
+          "lines": 157,
+          "statements": 185,
+          "linePercent": 84.86486486486487,
+          "branches": 55,
+          "branchTotal": 66,
+          "branchPercent": 83.33333333333333,
+          "missingLines": 28,
+          "missingBranches": 11
+        },
+        {
+          "file": "jit_baseline/ml/splits.py",
+          "lines": 72,
+          "statements": 76,
+          "linePercent": 94.73684210526316,
+          "branches": 22,
+          "branchTotal": 26,
+          "branchPercent": 84.61538461538461,
+          "missingLines": 4,
+          "missingBranches": 4
+        }
+      ]
+    },
+    "processSeconds": 9.996796799998265
+  },
+  "frontend": {
+    "tests": 52,
+    "passed": 52,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 0.262173095703125,
+    "failures": [],
+    "skippedCases": [],
+    "coverage": {
+      "linePercent": 98.03921568627452,
+      "branchPercent": 86.06060606060606,
+      "coveredLines": 100,
+      "totalLines": 102,
+      "coveredBranches": 142,
+      "totalBranches": 165,
+      "branchGaps": [],
+      "files": [
+        {
+          "file": "src/features/models/modelCompatibility.ts",
+          "lines": 12,
+          "statements": 12,
+          "branches": 16,
+          "branchTotal": 16,
+          "missingLines": [],
+          "linePercent": 100.0,
+          "branchPercent": 100.0
+        },
+        {
+          "file": "src/features/projects/analysisScore.ts",
+          "lines": 33,
+          "statements": 33,
+          "branches": 22,
+          "branchTotal": 22,
+          "missingLines": [],
+          "linePercent": 100.0,
+          "branchPercent": 100.0
+        },
+        {
+          "file": "src/lib/domain.ts",
+          "lines": 55,
+          "statements": 57,
+          "branches": 104,
+          "branchTotal": 127,
+          "missingLines": [
+            58,
+            63
+          ],
+          "linePercent": 96.49122807017544,
+          "branchPercent": 81.88976377952756
+        }
+      ]
+    },
+    "processSeconds": 1.635917299950961
+  }
+}

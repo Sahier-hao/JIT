@@ -1,8 +1,10 @@
 {
   "schemaVersion": 1,
   "status": "completed",
-  "reviewer": "徐卓航",
-  "reviewedAt": "2026-11-19",
+  "reviewer": "荀浩",
+  "reviewedAt": "2026-11-26",
+  "historicalReviewer": "徐卓航",
+  "historicalReviewedAt": "2026-11-19",
   "scope": "Sprint2 正式快速单元套件的核心业务断言",
   "decisions": [
     {
@@ -38,7 +40,7 @@
     {
       "function": "backend.evaluate",
       "verdict": "reviewed",
-      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+      "comment": "负责人已逐条核对通过：新增预算刚好触线和同分时间/标识排序断言，评价口径一致。"
     },
     {
       "function": "backend.get_metric_set",
@@ -48,7 +50,7 @@
     {
       "function": "backend.split_records",
       "verdict": "reviewed",
-      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+      "comment": "负责人已逐条核对通过：新增手算分区归属和同时间戳成组断言，边界计算一致。"
     },
     {
       "function": "backend.resolve_preset",
@@ -93,7 +95,7 @@
     {
       "function": "backend.get_algorithm",
       "verdict": "reviewed",
-      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+      "comment": "负责人已逐条核对通过：边界用例已从“返回最后一个注册项”改为首尾注册项精确标识，不再只断言 category。"
     },
     {
       "function": "backend.resolve_algorithm",
@@ -153,7 +155,7 @@
     {
       "function": "frontend.queryCommits",
       "verdict": "reviewed",
-      "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+      "comment": "负责人已逐条核对通过：新增同分样例，风险降序、时间降序、标识升序的稳定排序一致。"
     },
     {
       "function": "frontend.applyQuery",
@@ -174,6 +176,76 @@
       "function": "frontend.parseRepository",
       "verdict": "reviewed",
       "comment": "项目负责人确认三类断言有效；Codex 二次技术复核未发现弱断言或错误期望。"
+    },
+    {
+      "function": "backend.feature_matrix",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：schema 列序、语义向量拼接、空输入/错列/非有限值与负值错误码一致。"
+    },
+    {
+      "function": "backend.predict_risks",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：[1,0] 与 [0,1] 类别顺序、风险列选择、样本顺序及数量/NaN/越界/缺正类错误码一致。"
+    },
+    {
+      "function": "backend.prediction_input",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：客户端特征与已存储提交两种来源、冲突、字段不符、时间与特征值拒绝行为一致。"
+    },
+    {
+      "function": "backend.build_estimator",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：方法声明到估计器的映射、受控参数覆盖和未知估计器错误码一致。"
+    },
+    {
+      "function": "backend.apply_class_policy",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：权重、带种子采样、单类采样拒绝及输入不被原地修改一致。"
+    },
+    {
+      "function": "backend.fit_model",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：流水线步骤、类别策略、单类标签和未收敛产物拒绝一致。"
+    },
+    {
+      "function": "backend.log1p_columns",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：仅转换声明列、空列返回副本和越界列拒绝一致。"
+    },
+    {
+      "function": "backend.expert_standard_scaler",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：专家列标准化、语义尾列保持和列数不一致拒绝一致。"
+    },
+    {
+      "function": "frontend.scoreBand",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：0.10 与 0.25 阈值包含关系及非法分数不进入高/中档一致。"
+    },
+    {
+      "function": "frontend.scoreHistogram",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：0.05 分桶、末档 1.0 和非法分数不污染有效桶计数一致。"
+    },
+    {
+      "function": "frontend.histogramOption",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：图表桶、分档颜色、tooltip 文案和缺省分类色回退一致。"
+    },
+    {
+      "function": "frontend.bandsOption",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：四档顺序、未评分为零时省略、tooltip 越界返回空字符串一致。"
+    },
+    {
+      "function": "frontend.repositorySchemaReason",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：当前、旧版、离线和缺失/未知 schema 的原因文案一致。"
+    },
+    {
+      "function": "frontend.repositoryModelStatus",
+      "verdict": "reviewed",
+      "comment": "负责人已逐条核对通过：未就绪、停用、schema 不兼容时不得声明可用于仓库分析一致。"
     }
   ]
 }

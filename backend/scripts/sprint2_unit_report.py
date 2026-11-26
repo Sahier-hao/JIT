@@ -236,6 +236,8 @@ def _manual_review(manifest):
             "invalid": [f"人工审核记录不可读：{exc}"],
         }
     decisions = {}
+    reviewed_ids = set()
+    pending = []
     invalid = []
     for item in review.get("decisions", []):
         function_id = item.get("function")
@@ -244,14 +246,19 @@ def _manual_review(manifest):
         if not function_id or function_id in decisions:
             invalid.append(f"人工审核函数标识为空或重复：{function_id}")
             continue
-        if verdict != "reviewed" or not isinstance(comment, str) or not comment.strip():
+        if verdict == "reviewed" and isinstance(comment, str) and comment.strip():
+            reviewed_ids.add(function_id)
+        elif verdict == "pending":
+            pending.append(function_id)
+        else:
             invalid.append(f"{function_id} 没有有效复核结论")
         decisions[function_id] = item
     expected = [item["id"] for item in manifest["functions"]]
-    missing = [function_id for function_id in expected if function_id not in decisions]
+    missing = [function_id for function_id in expected
+               if function_id not in reviewed_ids]
     reviewer = review.get("reviewer")
     reviewed_at = review.get("reviewedAt")
-    if review.get("status") != "completed":
+    if review.get("status") not in ("completed", "pending"):
         invalid.append("人工审核状态不是 completed")
     if not isinstance(reviewer, str) or not reviewer.strip():
         invalid.append("人工审核人缺失")
@@ -261,8 +268,9 @@ def _manual_review(manifest):
         "passed": not missing and not invalid,
         "reviewer": reviewer,
         "reviewedAt": reviewed_at,
-        "reviewed": len(expected) - len(missing),
+        "reviewed": len(reviewed_ids),
         "total": len(expected),
+        "pending": [function_id for function_id in expected if function_id in pending],
         "missing": missing,
         "invalid": invalid,
     }
@@ -322,7 +330,7 @@ def _report():
         },
         "commands": {
             "backend": ".venv\\Scripts\\python.exe -m pytest -c pytest.sprint2.ini tests\\test_sprint2_unit_core.py",
-            "frontend": "npm run test:unit:sprint2",
+            "frontend": "npm.cmd run test:unit:sprint2",
             "all": "backend\\.venv\\Scripts\\python.exe -m scripts.run_sprint2_unit",
         },
         "inventory": inventory,
@@ -357,9 +365,14 @@ def _markdown(report):
         for item in report[name]["coverage"]["files"]:
             lines.append(
                 f"- `{item['file']}`：行 {item['linePercent']:.2f}%，"
-                f"分支 {item['branchPercent']:.2f}%"
+                f"分支 {item['branchPercent']:.2f}%；"
+                f"行分子/分母 {item['lines']}/{item['statements']}，"
+                f"分支分子/分母 {item['branches']}/{item['branchTotal']}"
             )
     lines.extend([
+        "",
+        f"- 用例定义：{sum(report['inventory']['suiteTests'].values())} 个测试函数；"
+        f"参数化展开后执行 {report['backend']['tests'] + report['frontend']['tests']} 条",
         "",
         "## 来源",
         "",
@@ -369,6 +382,7 @@ def _markdown(report):
         "",
         f"- 状态：{'完成' if report['manualReview']['passed'] else '待人工完成'}",
         f"- 进度：{report['manualReview']['reviewed']}/{report['manualReview']['total']} 个核心函数",
+        f"- 待复核：{len(report['manualReview'].get('pending', []))} 个核心函数",
         f"- 审核人：{report['manualReview']['reviewer'] or '未填写'}",
         f"- 审核日期：{report['manualReview']['reviewedAt'] or '未填写'}",
         "",
