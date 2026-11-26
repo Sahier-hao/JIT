@@ -78,6 +78,50 @@ it('shows the selected method in the algorithm library dialog', async () => {
   expect(screen.queryByRole('heading', { name: /决策树/ })).not.toBeInTheDocument()
 })
 
+it('explains, marks and restores a changed training parameter', async () => {
+  const parameterized = {
+    ...METHODS,
+    methods: [{
+      ...choice('mlp-v1', '多层感知机', 'deep'),
+      params: [
+        {
+          name: 'C', label: '正则强度倒数 C', description: '数值越大，正则约束越弱。',
+          type: 'float', min: 0.01, max: 100, default: 1,
+        },
+        {
+          name: 'max_iter', label: '最大迭代次数', description: '不足时训练可能不收敛。',
+          type: 'int', min: 100, max: 5000, default: 1000,
+        },
+      ],
+    }],
+  }
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    if (String(input).includes('/training-methods')) return Response.json(parameterized)
+    return respond(input)
+  })
+  render(<TrainingCreateDialog open initialMethod="mlp-v1" onOpenChange={vi.fn()} onCreated={vi.fn()}
+    onLoginRequired={vi.fn()} onOpenData={vi.fn()}/>)
+
+  const user = userEvent.setup()
+  await user.click(await screen.findByText('参数', { selector: 'summary' }))
+  expect(screen.getByText('数值越大，正则约束越弱。')).toBeVisible()
+  expect(screen.getByText('不足时训练可能不收敛。')).toBeVisible()
+  expect(screen.getByText('默认 1')).toBeVisible()
+  expect(screen.getByText('范围 0.01–100')).toBeVisible()
+  const input = screen.getByLabelText('多层感知机 C')
+  expect(input).toHaveValue(1)
+  await user.clear(input)
+  await user.type(input, '2')
+  expect(screen.getByText('已修改')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '恢复 多层感知机 正则强度倒数 C 默认值' }))
+  expect(input).toHaveValue(1)
+  expect(screen.queryByText('已修改')).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: '查看 多层感知机 正则强度倒数 C 的算法库说明' }))
+  expect(await screen.findByText('本次所选')).toBeVisible()
+  expect(screen.getAllByText('数值越大，正则约束越弱。').length).toBeGreaterThanOrEqual(2)
+})
+
 it('explains the method that the current data cannot train', async () => {
   const blocked = { ...choice('tabular-resnet-v1', '表格残差网络', 'deep'), available: false, reason: '缺少依赖：torch' }
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {

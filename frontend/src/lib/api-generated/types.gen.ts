@@ -425,6 +425,60 @@ export type PrFileContext = {
     totalLines: number;
 };
 
+export type LineContributionEffect = {
+    feature: string;
+    label: string;
+    value: number;
+    weight: number;
+    /**
+     * 有限 log-odds 贡献；绝对值可以大于 1。
+     */
+    contribution: number;
+    direction: 'increases' | 'decreases';
+};
+
+export type LineEvidenceRow = {
+    rank: number;
+    path: string;
+    side: 'head';
+    line: number;
+    text: string;
+    score: number;
+    logit: number;
+    languageContribution: number;
+    contributions: Array<LineContributionEffect>;
+    contributionTotal: number;
+    otherContribution: number;
+};
+
+export type LineReviewEvidence = {
+    schema: 'line-review-evidence-v1';
+    status: 'supported' | 'unsupported-language' | 'generated-or-skipped-path' | 'deleted' | 'patch-incomplete' | 'no-candidates' | 'content-unavailable' | 'source-unavailable' | 'model-unavailable';
+    reason: string | null;
+    sourceKind: 'pr-snapshot' | 'repository-commit';
+    resourceId: string;
+    repositoryId: string | null;
+    commitId: string;
+    ref: string;
+    path: string;
+    side: 'head';
+    language: 'javascript' | 'typescript' | null;
+    coverage: {
+        patchComplete: boolean;
+        status: string;
+        addedLines: number | null;
+        eligibleLines: number;
+        skippedBlank: number | null;
+    };
+    explanationMethod: 'linear-logodds-line-v1';
+    explanationUnit: 'logit';
+    contributionCaveat: string;
+    artifactSha256: string | null;
+    intercept: number | null;
+    lines: Array<LineEvidenceRow>;
+    caveats: Array<string>;
+};
+
 export type PrBatchAnalyzeRequest = {
     modelId?: string;
     scope?: PrBatchScope;
@@ -1598,6 +1652,10 @@ export type RepositoryCommit = {
     addedLines: number;
     deletedLines: number;
     files: number;
+    /**
+     * 仅单条提交详情返回分析时保存的真实文件路径。
+     */
+    filePaths?: Array<string>;
     features: CollectedFeatures;
     label: 0 | 1;
     labelNote: string | null;
@@ -3637,6 +3695,44 @@ export type GetPrFileContextResponses = {
 };
 
 export type GetPrFileContextResponse = GetPrFileContextResponses[keyof GetPrFileContextResponses];
+
+export type GetPrLineEvidenceData = {
+    body?: never;
+    path: {
+        snapshotId: Uuid;
+    };
+    query: {
+        path: string;
+        side?: 'head';
+    };
+    url: '/api/v1/pr-snapshots/{snapshotId}/line-evidence';
+};
+
+export type GetPrLineEvidenceErrors = {
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+    /**
+     * 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+     */
+    503: SharedError;
+};
+
+export type GetPrLineEvidenceError = GetPrLineEvidenceErrors[keyof GetPrLineEvidenceErrors];
+
+export type GetPrLineEvidenceResponses = {
+    /**
+     * 行级研究证据或明确不可用状态
+     */
+    200: LineReviewEvidence;
+};
+
+export type GetPrLineEvidenceResponse = GetPrLineEvidenceResponses[keyof GetPrLineEvidenceResponses];
 
 export type GetPrModelCluesData = {
     body?: never;
@@ -5758,6 +5854,45 @@ export type GetRepositoryCommitResponses = {
 };
 
 export type GetRepositoryCommitResponse = GetRepositoryCommitResponses[keyof GetRepositoryCommitResponses];
+
+export type GetRepositoryCommitLineEvidenceData = {
+    body?: never;
+    path: {
+        repositoryId: Uuid;
+        commitId: string;
+    };
+    query: {
+        viewSyncId: string;
+        path: string;
+    };
+    url: '/api/v1/repositories/{repositoryId}/commits/{commitId}/line-evidence';
+};
+
+export type GetRepositoryCommitLineEvidenceErrors = {
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+    /**
+     * 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+     */
+    503: SharedError;
+};
+
+export type GetRepositoryCommitLineEvidenceError = GetRepositoryCommitLineEvidenceErrors[keyof GetRepositoryCommitLineEvidenceErrors];
+
+export type GetRepositoryCommitLineEvidenceResponses = {
+    /**
+     * 行级研究证据或明确不可用状态
+     */
+    200: LineReviewEvidence;
+};
+
+export type GetRepositoryCommitLineEvidenceResponse = GetRepositoryCommitLineEvidenceResponses[keyof GetRepositoryCommitLineEvidenceResponses];
 
 export type GetRepositoryExplanationData = {
     body?: never;

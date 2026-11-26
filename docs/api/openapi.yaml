@@ -860,6 +860,45 @@ paths:
           - base
           - head
           default: head
+  /api/v1/pr-snapshots/{snapshotId}/line-evidence:
+    get:
+      operationId: getPRLineEvidence
+      summary: 读取固定 PR 快照真实新增行的行级研究证据
+      description: 只使用已保存的完整 patch、固定 head SHA 与完整文件内容；patch 不完整、语言不支持或源码不可用时返回结构化状态，不读取当前远端或工作树。
+      security: []
+      x-implementation-status: implemented
+      parameters:
+      - name: snapshotId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: side
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [head]
+          default: head
+      responses:
+        '200':
+          description: 行级研究证据或明确不可用状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineReviewEvidence'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/pr-snapshots/{snapshotId}/analyses:
     get:
       operationId: getPRModelClues
@@ -3070,6 +3109,50 @@ paths:
           $ref: '#/components/responses/StorageUnavailable'
       description: 提交不在当前视图里返回 404，不跨仓库查询。
       security: []
+  /api/v1/repositories/{repositoryId}/commits/{commitId}/line-evidence:
+    get:
+      operationId: getRepositoryCommitLineEvidence
+      summary: 读取固定仓库提交真实新增行的行级研究证据
+      description: 只读取明确分析、完整提交 SHA 和单文件路径对应的 GitHub 固定 patch/内容；缺 patch 或来源不可读时返回结构化状态，不读取当前工作树或替代提交。
+      security: []
+      x-implementation-status: implemented
+      parameters:
+      - name: repositoryId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: commitId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-f0-9]{40,64}$
+      - name: viewSyncId
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: 行级研究证据或明确不可用状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineReviewEvidence'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /api/v1/repositories/{repositoryId}/commits/{commitId}/explanation:
     parameters:
     - name: repositoryId
@@ -4540,6 +4623,160 @@ components:
       - complete
       - absent
       - totalLines
+    LineContributionEffect:
+      type: object
+      additionalProperties: false
+      required: [feature, label, value, weight, contribution, direction]
+      properties:
+        feature:
+          type: string
+        label:
+          type: string
+        value:
+          type: number
+        weight:
+          type: number
+        contribution:
+          type: number
+          description: 有限 log-odds 贡献；绝对值可以大于 1。
+        direction:
+          type: string
+          enum: [increases, decreases]
+    LineEvidenceRow:
+      type: object
+      additionalProperties: false
+      required: [rank, path, side, line, text, score, logit, languageContribution, contributions, contributionTotal, otherContribution]
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        path:
+          type: string
+        side:
+          type: string
+          enum: [head]
+        line:
+          type: integer
+          minimum: 1
+        text:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        logit:
+          type: number
+        languageContribution:
+          type: number
+        contributions:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/LineContributionEffect'
+        contributionTotal:
+          type: number
+        otherContribution:
+          type: number
+    LineReviewEvidence:
+      type: object
+      additionalProperties: false
+      required:
+      - schema
+      - status
+      - reason
+      - sourceKind
+      - resourceId
+      - repositoryId
+      - commitId
+      - ref
+      - path
+      - side
+      - language
+      - coverage
+      - explanationMethod
+      - explanationUnit
+      - contributionCaveat
+      - artifactSha256
+      - intercept
+      - lines
+      - caveats
+      properties:
+        schema:
+          type: string
+          enum: [line-review-evidence-v1]
+        status:
+          type: string
+          enum:
+          - supported
+          - unsupported-language
+          - generated-or-skipped-path
+          - deleted
+          - patch-incomplete
+          - no-candidates
+          - content-unavailable
+          - source-unavailable
+          - model-unavailable
+        reason:
+          type: [string, 'null']
+        sourceKind:
+          type: string
+          enum: [pr-snapshot, repository-commit]
+        resourceId:
+          type: string
+          minLength: 1
+        repositoryId:
+          type: [string, 'null']
+        commitId:
+          type: string
+        ref:
+          type: string
+        path:
+          type: string
+        side:
+          type: string
+          enum: [head]
+        language:
+          type: [string, 'null']
+          enum: [javascript, typescript, null]
+        coverage:
+          type: object
+          additionalProperties: false
+          required: [patchComplete, status, addedLines, eligibleLines, skippedBlank]
+          properties:
+            patchComplete:
+              type: boolean
+            status:
+              type: string
+            addedLines:
+              type: [integer, 'null']
+              minimum: 0
+            eligibleLines:
+              type: integer
+              minimum: 0
+            skippedBlank:
+              type: [integer, 'null']
+              minimum: 0
+        explanationMethod:
+          type: string
+          enum: [linear-logodds-line-v1]
+        explanationUnit:
+          type: string
+          enum: [logit]
+        contributionCaveat:
+          type: string
+        artifactSha256:
+          type: [string, 'null']
+          pattern: ^[a-f0-9]{64}$
+        intercept:
+          type: [number, 'null']
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineEvidenceRow'
+        caveats:
+          type: array
+          items:
+            type: string
     PRBatchAnalyzeRequest:
       type: object
       additionalProperties: false
@@ -7515,6 +7752,12 @@ components:
         files:
           type: integer
           minimum: 0
+        filePaths:
+          type: array
+          description: 仅单条提交详情返回分析时保存的真实文件路径。
+          items:
+            type: string
+            minLength: 1
         features:
           $ref: '#/components/schemas/CollectedFeatures'
         label:

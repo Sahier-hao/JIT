@@ -94,7 +94,10 @@ export default function globalSetup() {
   git('init', '-q', '-b', 'main')
   git('config', 'user.email', 'e2e@example.com')
   git('config', 'user.name', 'E2E')
-  commit('add module', { 'pkg/a.py': LINES }, '2024-01-01T00:00:00+0000')
+  commit('add module', {
+    'pkg/a.py': LINES,
+    'pkg/a.ts': 'export const value = 1\n\nexport function calculate(input: number) {\n  return input + value\n}\n',
+  }, '2024-01-01T00:00:00+0000')
   commit('add helper', { 'pkg/b.py': 'helper\n'.repeat(30) }, '2024-01-02T00:00:00+0000')
   commit('fix: adjust module', { 'pkg/a.py': 'line 0 fixed\n' + REST }, '2024-01-03T00:00:00+0000')
   commit('add docs', { 'README.md': 'docs\n' }, '2024-01-04T00:00:00+0000')

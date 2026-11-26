@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import {
   Boxes, CheckCircle2, Cpu, RefreshCw, ShieldCheck, TriangleAlert,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { trainingMethods, type MethodChoice } from '@/features/models/modelClient'
 import { AlgorithmDiagram } from '@/features/training/components/AlgorithmDiagram'
 import type { Route } from '@/app/navigation'
@@ -50,6 +50,7 @@ export function AlgorithmLibraryPage({ onLoginRequired, method, navigate }: {
   const [selected, setSelected] = useState('')
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
+  const parametersRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -83,6 +84,14 @@ export function AlgorithmLibraryPage({ onLoginRequired, method, navigate }: {
     classic: methods?.filter(method => method.category === 'classic').length ?? 0,
     deep: methods?.filter(method => method.category === 'deep').length ?? 0,
   }), [methods])
+
+  useEffect(() => {
+    if (!method || selectedMethod?.method !== method) return
+    const section = parametersRef.current
+    if (!section) return
+    section.scrollIntoView?.({ block: 'start' })
+    section.focus({ preventScroll: true })
+  }, [method, selectedMethod])
 
   function select(methodId: string) {
     setSelected(methodId)
@@ -174,7 +183,8 @@ export function AlgorithmLibraryPage({ onLoginRequired, method, navigate }: {
           </dl>
         </section>
 
-        <section className="grid gap-2 border-t border-border-soft pt-3" aria-labelledby="algorithm-parameters">
+        <section ref={parametersRef} tabIndex={-1} className="grid scroll-mt-4 gap-2 border-t border-border-soft pt-3 outline-none"
+          aria-labelledby="algorithm-parameters">
           <div className="flex items-center justify-between gap-2">
             <h3 id="algorithm-parameters" className="text-xs font-medium text-foreground-2">可配置参数</h3>
             <span className="text-[10px] text-foreground-4">{selectedMethod.params.length ? `${selectedMethod.params.length} 项` : '使用冻结声明'}</span>

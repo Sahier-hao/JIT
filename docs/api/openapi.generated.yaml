@@ -767,6 +767,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/pr-snapshots/{snapshot_id}/line-evidence:
+    get:
+      summary: Pull Request Line Evidence
+      operationId: pull_request_line_evidence_api_v1_pr_snapshots__snapshot_id__line_evidence_get
+      parameters:
+      - name: snapshot_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Snapshot Id
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Path
+      - name: side
+        in: query
+        required: false
+        schema:
+          type: string
+          default: head
+          title: Side
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/pr-snapshots/{snapshot_id}/analyses:
     get:
       summary: Pull Request Analyses
@@ -1036,6 +1072,14 @@ paths:
           - type: string
           - type: 'null'
           title: State
+      - name: view
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: View
       responses:
         '200':
           description: Successful Response
@@ -1143,29 +1187,6 @@ paths:
           content:
             application/json:
               schema: {}
-  /api/v1/training-experiments/{experiment_id}/comparison/thresholds:
-    post:
-      summary: Training Experiment Thresholds
-      operationId: training_experiment_thresholds_api_v1_training_experiments__experiment_id__comparison_thresholds_post
-      parameters:
-      - name: experiment_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Experiment Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/training-tasks:
     post:
       summary: Create Training Task
@@ -1243,6 +1264,29 @@ paths:
     get:
       summary: Training Experiment Comparison
       operationId: training_experiment_comparison_api_v1_training_experiments__experiment_id__comparison_get
+      parameters:
+      - name: experiment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Experiment Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/training-experiments/{experiment_id}/comparison/thresholds:
+    post:
+      summary: Training Experiment Thresholds
+      operationId: training_experiment_thresholds_api_v1_training_experiments__experiment_id__comparison_thresholds_post
       parameters:
       - name: experiment_id
         in: path
@@ -1623,6 +1667,29 @@ paths:
     patch:
       summary: Model Policy
       operationId: model_policy_api_v1_models__model_id__policy_patch
+      parameters:
+      - name: model_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Model Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/models/{model_id}/sharing:
+    put:
+      summary: Model Sharing
+      operationId: model_sharing_api_v1_models__model_id__sharing_put
       parameters:
       - name: model_id
         in: path
@@ -2520,6 +2587,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/repositories/{repository_id}/commits/{commit_id}/line-evidence:
+    get:
+      summary: Repository Commit Line Evidence
+      operationId: repository_commit_line_evidence_api_v1_repositories__repository_id__commits__commit_id__line_evidence_get
+      parameters:
+      - name: repository_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Repository Id
+      - name: commit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Commit Id
+      - name: viewSyncId
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Viewsyncid
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/repositories/{repository_id}/commits/{commit_id}/explanation:
     get:
       summary: Repository Explanation
@@ -2781,6 +2889,16 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/v1/user/github/link:
+    post:
+      summary: Link User Github
+      operationId: link_user_github_api_v1_user_github_link_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
   /api/v1/user/datasets:
     get:
       summary: User Datasets
@@ -2925,6 +3043,109 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/v1/user/datasets/import-zip:
+    post:
+      summary: Import User Dataset Zip
+      operationId: import_user_dataset_zip_api_v1_user_datasets_import_zip_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/user/dataset-imports:
+    post:
+      summary: Start Dataset Import
+      operationId: start_dataset_import_api_v1_user_dataset_imports_post
+      parameters:
+      - name: format
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Format
+      - name: filename
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Filename
+      - name: schema
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Schema
+      - name: dataset
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      summary: List Dataset Imports
+      operationId: list_dataset_imports_api_v1_user_dataset_imports_get
+      parameters:
+      - name: activeOnly
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Activeonly
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/dataset-imports/{task_id}:
+    get:
+      summary: Get Dataset Import
+      operationId: get_dataset_import_api_v1_user_dataset_imports__task_id__get
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/user/datasets/{version}:
     delete:
       summary: User Delete Dataset
@@ -3258,6 +3479,113 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/v1/user/prediction-models:
+    get:
+      summary: User Prediction Models
+      operationId: user_prediction_models_api_v1_user_prediction_models_get
+      parameters:
+      - name: datasetVersion
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Datasetversion
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/prediction-batches:
+    get:
+      summary: User Prediction Batches
+      operationId: user_prediction_batches_api_v1_user_prediction_batches_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      summary: Create User Prediction Batch
+      operationId: create_user_prediction_batch_api_v1_user_prediction_batches_post
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/user/prediction-batches/{batch_id}:
+    get:
+      summary: User Prediction Batch
+      operationId: user_prediction_batch_api_v1_user_prediction_batches__batch_id__get
+      parameters:
+      - name: batch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Batch Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          default: risk
+          title: Sort
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/research/line-model:
     get:
       summary: Line Model Metadata

@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from jit_baseline.api_errors import RequestError, install_errors
 from jit_baseline.line_artifact import preview_digest
 from jit_baseline.line_preview import (MAX_LINES, install_research_routes,
-                                       load_model, metadata, score_lines)
+                                       line_logit, load_model, metadata, score_lines)
 
 ARTIFACT = Path(__file__).resolve().parents[1] / "research" / "line-model-v1.json"
 
@@ -42,7 +42,11 @@ def test_scores_non_blank_lines_and_ranks_them():
     assert all(0.0 <= score <= 1.0 for score in scores)
     assert result["contributionCaveat"] == "行级特征贡献，不是缺陷原因。"
     assert result["contributionUnit"] == "logit"
-    assert all(len(row["contributions"]) == 3 for row in result["lines"])
+    assert all(0 < len(row["contributions"]) <= 3 for row in result["lines"])
+    assert all(item["contribution"] != 0
+               for row in result["lines"] for item in row["contributions"])
+    assert all(item["label"] and item["direction"] in ("increases", "decreases")
+               for row in result["lines"] for item in row["contributions"])
 
 
 def test_contributions_plus_intercept_equal_raw_logit():
@@ -51,6 +55,12 @@ def test_contributions_plus_intercept_equal_raw_logit():
     for row in result["lines"]:
         total = result["intercept"] + row["contributionTotal"]
         assert total == pytest.approx(row["logit"], rel=1e-12, abs=1e-12)
+        assert row["languageContribution"] == pytest.approx(
+            next((item["contribution"] for item in row["contributions"]
+                  if item["feature"] == "language:typescript"),
+                 row["languageContribution"]),
+            rel=1e-12, abs=1e-12,
+        )
         displayed = sum(item["contribution"] for item in row["contributions"])
         assert displayed + row["otherContribution"] == pytest.approx(
             row["contributionTotal"], rel=1e-12, abs=1e-12,
@@ -73,6 +83,24 @@ def test_language_feature_is_only_added_for_the_active_covered_language():
     assert not any(item["feature"].startswith("language:")
                    for item in javascript["contributions"])
     assert typescript["logit"] != javascript["logit"]
+
+
+def test_large_finite_logit_contribution_is_valid():
+    model = load_model(ARTIFACT)
+    model["coefficients"]["lineLength"] = 1_000.0
+    row = {
+        "text": "const value = 1",
+        "indent": 0,
+        "blank": False,
+        "comment": False,
+        "fileLines": 1,
+        "lineRatio": 1.0,
+    }
+    logit, contributions = line_logit(model, row, "typescript")
+    line_length = next(item for item in contributions if item["feature"] == "lineLength")
+    assert abs(line_length["contribution"]) > 1
+    assert pytest.approx(sum(item["contribution"] for item in contributions)
+                         + model["intercept"]) == logit
 
 
 def test_rejects_language_outside_training_coverage():

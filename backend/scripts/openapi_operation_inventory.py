@@ -168,10 +168,10 @@ def _drift(expected: dict, actual: dict) -> list[str]:
     for key in sorted(set(before) & set(after)):
         if before[key] != after[key]:
             problems.append(f"operationId 漂移：{key} {before[key]} -> {after[key]}")
-    if actual.get("totalOperations") != 99:
-        problems.append(f"OpenAPI 操作总数应为 99，实际 {actual.get('totalOperations')}")
-    if actual.get("businessOperations") != 95:
-        problems.append(f"业务操作应为 95，实际 {actual.get('businessOperations')}")
+    if actual.get("totalOperations") != 102:
+        problems.append(f"OpenAPI 操作总数应为 102，实际 {actual.get('totalOperations')}")
+    if actual.get("businessOperations") != 98:
+        problems.append(f"业务操作应为 98，实际 {actual.get('businessOperations')}")
     if len(actual.get("adminAuthOperations", [])) != 4:
         problems.append("admin 认证排除项应恰好为 4")
     return problems

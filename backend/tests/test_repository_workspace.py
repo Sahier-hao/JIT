@@ -72,8 +72,10 @@ def test_repository_view_tracks_the_completed_job(harness):
         validate(page, 'RepositoryCommitPage')
         assert all(row['authorName'] for row in page['commits'])
         sha = page['commits'][0]['commitId']
-        validate(client.get(f'/api/v1/repositories/{repository_id}/commits/{sha}',
-                 headers=HEADERS, params={'viewSyncId': done['syncId']}).json(), 'RepositoryCommit')
+        commit = client.get(f'/api/v1/repositories/{repository_id}/commits/{sha}',
+                            headers=HEADERS, params={'viewSyncId': done['syncId']}).json()
+        validate(commit, 'RepositoryCommit')
+        assert isinstance(commit['filePaths'], list)
         validate(client.get(f'/api/v1/repositories/{repository_id}/summary',
                  headers=HEADERS, params={'viewSyncId': done['syncId']}).json(), 'RepositorySummary')
         assert client.get(f'/api/v1/repositories/{repository_id}', headers=HEADERS,

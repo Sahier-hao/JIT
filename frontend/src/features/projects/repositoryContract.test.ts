@@ -101,16 +101,19 @@ describe('parseSyncPage 与 parseSyncCommitPage', () => {
   })
 
   it('提交把 features 投影为 metrics，并保留标签说明', () => {
-    const page = parseSyncCommitPage({ syncId: SYNC.syncId, status: 'completed', total: 1, limit: 200, offset: 0, commits: [COMMIT] })
+    const page = parseSyncCommitPage({ syncId: SYNC.syncId, status: 'completed', total: 1, limit: 200, offset: 0,
+      commits: [{ ...COMMIT, filePaths: ['src/value.ts'] }] })
     expect(page.commits[0]).toMatchObject({ commitId: COMMIT.commitId, risk: 0.42, label: 0 })
     expect(page.commits[0].metrics).toEqual(COMMIT.features)
     expect(page.commits[0].labelNote).toContain('简化 SZZ')
+    expect(page.commits[0].filePaths).toEqual(['src/value.ts'])
   })
 
   it('拒绝非 0/1 标签与负数度量', () => {
     const base = { syncId: SYNC.syncId, status: 'completed', total: 1, limit: 200, offset: 0 }
     expect(() => parseSyncCommitPage({ ...base, commits: [{ ...COMMIT, label: 2 }] })).toThrow()
     expect(() => parseSyncCommitPage({ ...base, commits: [{ ...COMMIT, features: { la: -1 } }] })).toThrow()
+    expect(() => parseSyncCommitPage({ ...base, commits: [{ ...COMMIT, filePaths: [1] }] })).toThrow()
   })
 })
 

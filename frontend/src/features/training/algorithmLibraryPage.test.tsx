@@ -90,6 +90,26 @@ it('opens the method named by the address and hands it to training', async () =>
   expect(navigate).toHaveBeenCalledWith({ name: 'algorithms', method: 'decision-tree-v1' })
 })
 
+it('focuses the selected method parameter region and falls back for unknown methods', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    if (String(input).includes('/training-methods')) return Response.json({
+      schema: 'kamei14-git-v2',
+      methods: DEFINITIONS.map(method),
+    })
+    return Response.json({})
+  })
+  const view = render(<AlgorithmLibraryPage method="logistic-regression-l2-v1"
+    onLoginRequired={vi.fn()}/>)
+
+  const region = await screen.findByRole('region', { name: '可配置参数' })
+  await waitFor(() => expect(region).toHaveFocus())
+  expect(region).toHaveAttribute('tabindex', '-1')
+
+  view.rerender(<AlgorithmLibraryPage method="missing-method" onLoginRequired={vi.fn()}/>)
+  expect(await screen.findByRole('heading', { name: '逻辑回归 · L2', level: 2 })).toBeVisible()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
 it('keeps an unavailable method from starting a training', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     if (String(input).includes('/training-methods')) return Response.json({

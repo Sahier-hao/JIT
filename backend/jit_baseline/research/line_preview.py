@@ -27,6 +27,29 @@ CAVEATS = [
     "研究预览不参与项目分析、PR 审查、模型目录或默认模型。",
 ]
 CONTRIBUTION_CAVEAT = "行级特征贡献，不是缺陷原因。"
+FEATURE_LABELS = {
+    "lineLength": "行长",
+    "indent": "缩进",
+    "blank": "空行标记",
+    "comment": "注释标记",
+    "fileLines": "文件行数",
+    "lineRatio": "文件位置",
+    "if": "if 分支",
+    "for": "for 循环",
+    "while": "while 循环",
+    "return": "return 语句",
+    "try": "try 块",
+    "catch": "catch 块",
+    "assign": "赋值",
+    "compare": "比较",
+    "call": "调用",
+    "member": "成员访问",
+    "index": "索引访问",
+    "identifier": "标识符",
+    "digit": "数字字符",
+    "language:typescript": "TypeScript 语言项",
+    "language:javascript": "JavaScript 语言项",
+}
 
 
 def model_path(configured: str | Path | None = None) -> Path:
@@ -99,9 +122,11 @@ def line_logit(
         score += contribution
         contributions.append({
             "feature": name,
+            "label": FEATURE_LABELS.get(name, name),
             "value": value,
             "weight": weight,
             "contribution": contribution,
+            "direction": "increases" if contribution > 0 else "decreases",
         })
     language_feature = f"language:{language}"
     if language_feature in coefficients:
@@ -109,9 +134,11 @@ def line_logit(
         score += weight
         contributions.append({
             "feature": language_feature,
+            "label": FEATURE_LABELS.get(language_feature, language_feature),
             "value": 1.0,
             "weight": weight,
             "contribution": weight,
+            "direction": "increases" if weight > 0 else "decreases",
         })
     return score, contributions
 
@@ -195,16 +222,27 @@ def score_lines(code: str, language: str, path: str | Path | None = None) -> dic
         raw_logit, contributions = line_logit(
             model, row, language, position_features=position_features,
         )
+        if not math.isfinite(raw_logit) or not all(
+            math.isfinite(item["contribution"]) for item in contributions
+        ):
+            raise _invalid()
         bounded_logit = max(-60.0, min(60.0, raw_logit))
         probability = 1.0 / (1.0 + math.exp(-bounded_logit))
         contribution_total = sum(item["contribution"] for item in contributions)
-        contributions.sort(key=lambda item: (-abs(item["contribution"]), item["feature"]))
-        top = contributions[:3]
+        language_contribution = next(
+            (item["contribution"] for item in contributions
+             if item["feature"] == f"language:{language}"),
+            0.0,
+        )
+        nonzero = [item for item in contributions if item["contribution"] != 0]
+        nonzero.sort(key=lambda item: (-abs(item["contribution"]), item["feature"]))
+        top = nonzero[:3]
         results.append({
             "line": number,
             "text": line,
             "score": round(probability, 4),
             "logit": raw_logit,
+            "languageContribution": language_contribution,
             "contributions": top,
             "contributionTotal": contribution_total,
             "otherContribution": contribution_total - sum(

@@ -57,17 +57,20 @@ it('ranks only changed lines, shows contributions, and locates a line', async ()
 it('is reachable from the PR code reading toolbar', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
-    if (path.includes('/context?')) return response({
-      snapshotId: 'v1', path: file.path, side: 'head', ref: snapshot.headSha,
-      content: 'const x = 1\nconst y = 2\nreturn y\n', complete: true, absent: false, totalLines: 3,
-    })
-    if (path.endsWith('/research/line-model/score')) return response({
-      language: 'typescript', count: 2, skippedBlank: 0, intercept: 0,
-      contributionUnit: 'logit', contributionCaveat: '行级特征贡献，不是缺陷原因。', caveats: [],
-      lines: [
-        { rank: 1, line: 3, text: 'return y', score: 0.8, logit: 1, contributions: [], contributionTotal: 0, otherContribution: 0 },
-        { rank: 2, line: 2, text: 'const y = 2', score: 0.4, logit: 0, contributions: [], contributionTotal: 0, otherContribution: 0 },
-      ],
+    if (path.includes('/line-evidence?')) return response({
+      schema: 'line-review-evidence-v1', status: 'supported', reason: null,
+      sourceKind: 'pr-snapshot', resourceId: 'v1', repositoryId: 'repo',
+      commitId: snapshot.headSha, ref: snapshot.headSha, path: file.path, side: 'head',
+      language: 'typescript', coverage: { patchComplete: true, status: 'supported', addedLines: 2, eligibleLines: 2, skippedBlank: 0 },
+      explanationMethod: 'linear-logodds-line-v1', explanationUnit: 'logit',
+      contributionCaveat: '行级特征贡献，不是缺陷原因。', artifactSha256: 'd'.repeat(64), intercept: 0,
+      lines: [{
+        rank: 1, path: file.path, side: 'head', line: 3, text: 'return y', score: .8, logit: 1,
+        languageContribution: 0, contributions: [
+          { feature: 'return', label: 'return 语句', value: 1, weight: 1, contribution: 1, direction: 'increases' },
+        ], contributionTotal: 1, otherContribution: 0,
+      }],
+      caveats: [],
     })
     return response({})
   })
@@ -79,6 +82,6 @@ it('is reachable from the PR code reading toolbar', async () => {
   } as unknown as PRCandidateChecks
   render(<ReviewCode source={snapshot} file={file} checks={checks} view="unified"
     onViewChange={vi.fn()} onAdd={vi.fn()}/>)
-  await userEvent.click(screen.getByRole('button', { name: '行级排序' }))
-  expect(await screen.findByRole('heading', { name: '行级排序（研究）' })).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: '行级证据' }))
+  expect(await screen.findByRole('heading', { name: '行级研究证据' })).toBeVisible()
 })

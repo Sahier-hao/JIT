@@ -9,6 +9,7 @@ export type Route =
   | { name: 'my-data'; view?: 'builds' | 'imports'; datasetVersion?: string; taskId?: string; buildProjectId?: string }
   | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string; method?: string; schema?: string }
   | { name: 'algorithms'; method?: string }
+  | { name: 'ide-plugin' }
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
   | { name: 'profile' }
@@ -91,6 +92,7 @@ export function parseHash(hash: string): Route {
       const method = parts[1] || params.get('method') || undefined
       return { name: 'algorithms', ...(method ? { method } : {}) }
     }
+    if (path === '/plugins/vscode') return { name: 'ide-plugin' }
     if (path === '/my-models') return { name: 'my-models' }
     if (path === '/my-predictions') return {
       name: 'my-predictions',
@@ -177,6 +179,7 @@ export function hashFor(route: Route): string {
       return params.size ? `${path}?${params}` : path
     }
     case 'algorithms': return route.method ? `#/algorithms/${encodeURIComponent(route.method)}` : '#/algorithms'
+    case 'ide-plugin': return '#/plugins/vscode'
     case 'my-models': return '#/my-models'
     case 'my-predictions': {
       if (route.batchId) return `#/my-predictions/${encodeURIComponent(route.batchId)}`

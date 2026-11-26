@@ -67,6 +67,41 @@ def test_context_uses_saved_sha_and_path_membership(review):
         service.context(source['snapshotId'], '../private', 'head')
 
 
+def test_line_evidence_uses_only_fixed_pr_patch_and_content(review):
+    service, _, files, calls, _ = review
+    files[0].update(
+        filename='src/token.ts',
+        patch='@@ -1 +1 @@\n-old\n+new\n',
+    )
+    source = service.refresh('example', 'project', 12)['snapshot']
+    result = service.line_evidence(source['snapshotId'], 'src/token.ts')
+    assert result['status'] == 'supported'
+    assert result['resourceId'] == source['snapshotId']
+    assert result['commitId'] == source['headSha']
+    assert result['path'] == 'src/token.ts' and result['side'] == 'head'
+    assert result['explanationUnit'] == 'logit'
+    assert [row['line'] for row in result['lines']] == [1]
+    assert result['lines'][0]['rank'] == 1
+    assert all('ref=' + source['headSha'] in path for path in calls if '/contents/' in path)
+
+
+def test_pr_line_evidence_is_explicit_when_patch_or_language_is_unavailable(review):
+    service, pr, files, _, _ = review
+    source = service.refresh('example', 'project', 12)['snapshot']
+    unsupported = service.line_evidence(source['snapshotId'], 'src/token.py')
+    assert unsupported['status'] == 'unsupported-language'
+    assert unsupported['lines'] == []
+
+    pr['head']['sha'] = 'd' * 40
+    files[0]['filename'] = 'src/token.ts'
+    files[0].pop('patch')
+    source = service.refresh('example', 'project', 12)['snapshot']
+    missing = service.line_evidence(source['snapshotId'], 'src/token.ts')
+    assert missing['status'] == 'patch-incomplete'
+    with pytest.raises(BaselineError):
+        service.line_evidence(source['snapshotId'], 'src/token.ts', 'base')
+
+
 def test_race_and_remote_failure_do_not_replace_snapshot(review):
     service, pr, _, _, _ = review
     first = service.refresh('example', 'project', 12)['snapshot']
