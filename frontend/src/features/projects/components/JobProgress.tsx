@@ -1,27 +1,11 @@
 import { Progress } from '@/components/ui/progress'
 import { useEffect, useState } from 'react'
 import { STATUS_LABELS, type SyncStatus } from '@/features/projects/repositoryContract'
+import {
+  SYNC_ACTIVE_STAGES, SYNC_SCORING_STAGES, SYNC_STAGES,
+  syncProgressValue, syncStageIndex,
+} from '@/features/projects/syncProgress'
 import { cn } from '@/lib/utils'
-
-const STAGES = [
-  { key: 'queued', label: '排队' },
-  { key: 'collecting', label: '采集' },
-  { key: 'registering', label: '登记' },
-  { key: 'training', label: '训练' },
-  { key: 'scoring', label: '评分' },
-] as const
-
-const ACTIVE: readonly string[] = ['queued', 'collecting', 'registering', 'training', 'scoring']
-const RUNNING: readonly string[] = ['collecting', 'registering', 'training', 'scoring']
-const SCORING_STAGES = STAGES.filter(stage => stage.key !== 'training')
-
-function stageIndex(status: SyncStatus, stage: SyncStatus, stages: ReadonlyArray<typeof STAGES[number]>) {
-  if (status === 'completed') return stages.length
-  if (status === 'queued') return 0
-  const current = (RUNNING.includes(status) ? status : stage) as string
-  const index = stages.findIndex(item => item.key === current)
-  return index < 0 ? 0 : index
-}
 
 function elapsed(startedAt?: string | null) {
   if (!startedAt) return ''
@@ -47,18 +31,18 @@ export function JobProgress({ status, stage, queuePosition, startedAt, compact, 
   scoresOnly?: boolean
 }) {
   const [tick, setTick] = useState(0)
-  const running = ACTIVE.includes(status)
+  const running = SYNC_ACTIVE_STAGES.includes(status)
   useEffect(() => {
     if (!running || !startedAt) return
     const timer = setInterval(() => setTick(value => value + 1), 1000)
     return () => clearInterval(timer)
   }, [running, startedAt])
-  const stages = scoresOnly && status !== 'training' && stage !== 'training' ? SCORING_STAGES : STAGES
-  const index = stageIndex(status, stage, stages)
+  const stages = scoresOnly && status !== 'training' && stage !== 'training' ? SYNC_SCORING_STAGES : SYNC_STAGES
+  const index = syncStageIndex(status, stage, stages)
   const done = status === 'completed'
   const failed = status === 'failed'
   const stopped = status === 'cancelled' || status === 'interrupted'
-  const value = done ? 100 : index === 0 ? 0 : Math.round((index / (stages.length - 1)) * 100)
+  const value = syncProgressValue(status, stage, scoresOnly)
   const fill = done ? '[&_[data-slot=progress-indicator]]:bg-teal' : failed ? '[&_[data-slot=progress-indicator]]:bg-rose' : stopped ? '[&_[data-slot=progress-indicator]]:bg-foreground-4' : '[&_[data-slot=progress-indicator]]:bg-accent'
   const meta = status === 'queued' && queuePosition
     ? `排队第 ${queuePosition} 位`

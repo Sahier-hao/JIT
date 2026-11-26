@@ -28,6 +28,7 @@ export function datasetImportTask(raw: unknown) {
     }),
     error: error ? { code: text(error.code), message: text(error.message) } : null,
     createdAt: text(value.createdAt),
+    legacy: value.legacy === true,
   }
 }
 

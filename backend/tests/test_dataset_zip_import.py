@@ -89,6 +89,26 @@ def test_import_six_projects_retry_export_and_training_preview(workspace):
     assert client.get(f'/api/v1/user/datasets/{version}').status_code == 403
 
 
+def test_import_history_restores_versions_created_before_background_jobs(workspace):
+    client, _, _ = workspace
+    assert client.post('/api/user/register', json=ACCOUNT).status_code == 201
+    blob = package({'bugzilla.csv': project_csv(), 'jdt.csv': project_csv()})
+    imported = client.post(ENDPOINT, content=blob, headers=HEADERS)
+    assert imported.status_code == 201, imported.text
+
+    history = client.get('/api/v1/user/dataset-imports').json()['tasks']
+    assert len(history) == 1
+    task = history[0]
+    assert task['legacy'] is True
+    assert task['filename'] == 'jit.zip'
+    assert task['status'] == 'completed'
+    assert {item['version'] for item in task['versions']} == {
+        item['version'] for item in imported.json()['datasets']}
+    detail = client.get('/api/v1/user/dataset-imports/' + task['taskId'])
+    assert detail.status_code == 200
+    assert detail.json()['versions'] == task['versions']
+
+
 @pytest.mark.parametrize('member,content', [
     ('../outside.csv', project_csv()),
     ('input/columba.csv', b'unrelated,columns\n1,2\n'),

@@ -6,10 +6,26 @@
  * - 存储不可用时静默回落默认值，不阻塞任何功能。
  */
 export const THEMES = [
-  { id: 'concrete', name: '冷灰', preview: { bg: '#F7F8FA', rail: '#FFFFFF', accent: '#277452' } },
-  { id: 'steel', name: '钢青', preview: { bg: '#F5F7FA', rail: '#FFFFFF', accent: '#277452' } },
-  { id: 'charcoal', name: '炭黑', preview: { bg: '#0B1120', rail: '#070C16', accent: '#7BA3F7' } },
-  { id: 'paper', name: '纸墨', preview: { bg: '#FAFAFA', rail: '#FFFFFF', accent: '#333333' } },
+  {
+    id: 'concrete',
+    name: '冷灰',
+    preview: { workspace: '#F6F8FA', card: '#FFFFFF', rail: '#FFFFFF', accent: '#1F5D4C', ink: '#1F2328', line: '#D8DEE4' },
+  },
+  {
+    id: 'steel',
+    name: '钢青',
+    preview: { workspace: '#E2E5E3', card: '#FFFFFF', rail: '#F7F9F8', accent: '#17503F', ink: '#0E1211', line: '#D2D6D4' },
+  },
+  {
+    id: 'charcoal',
+    name: '炭黑',
+    preview: { workspace: '#0B0E0D', card: '#101413', rail: '#070908', accent: '#86C4AD', ink: '#EDF1EF', line: '#232927' },
+  },
+  {
+    id: 'paper',
+    name: '纸墨',
+    preview: { workspace: '#E6E8E6', card: '#FFFFFF', rail: '#FFFFFF', accent: '#343A39', ink: '#101413', line: '#D5D9D6' },
+  },
 ] as const
 
 export type ThemeId = (typeof THEMES)[number]['id']

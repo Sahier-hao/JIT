@@ -13,7 +13,7 @@ const source = { ...snapshot(), repositoryId: PROJECT, totalCommits: 2, body: '#
 function analyses() {
   return { snapshotId: 'v1', analyses: [{ sync: job(), contextValid: true, bindingKind: 'snapshot-model-v1', bindingLimitations: [], scores: [
     { commitId: SHA_A, risk: 0.8, files: ['src/token.py'], addedLines: 1, deletedLines: 1, fileCount: 1,
-      labelEvidence: [{ fixCommit: 'f'.repeat(40), path: 'src/token.py', fixTime: '2026-11-01T00:00:00Z',
+      labelEvidence: [{ fixCommit: SHA_B, path: 'src/token.py', fixTime: '2026-11-01T00:00:00Z',
         ruleVersion: 'szz-full-v1', diffAnchor: `diff-${'a'.repeat(32)}`, lineRanges: [[3, 4]], parentRanges: [[9, 10]] }] },
     { commitId: SHA_B, risk: 0.3, files: ['tests/token.py'], addedLines: 1, deletedLines: 0, fileCount: 1 },
   ], fileRisks: [{ path: 'src/token.py', risk: 0.8 }, { path: 'tests/token.py', risk: 0.3 }] }] }
@@ -66,10 +66,12 @@ it('searches commits and explains one commit without leaving the read-only detai
   await user.clear(screen.getByLabelText('搜索 PR 提交'))
 
   await user.click(screen.getByText('handle expiry'))
-  expect(await screen.findByRole('heading', { name: '后续修复证据' })).toBeVisible()
+  expect(await screen.findByRole('heading', { name: 'PR 内后续修正' })).toBeVisible()
+  expect(screen.getByText('当前 PR')).toBeVisible()
+  expect(screen.getByText('这些修复提交也在当前 PR 中，只说明 PR 内后续改过相关行；不代表合并后修复或已确认缺陷。')).toBeVisible()
   expect(screen.getByText('修复 diff 行 9–10')).toBeVisible()
-  expect(screen.getByRole('link', { name: 'f'.repeat(12) })).toHaveAttribute(
-    'href', `https://github.com/example/project/commit/${'f'.repeat(40)}#diff-${'a'.repeat(32)}L9`,
+  expect(screen.getByRole('link', { name: SHA_B.slice(0, 12) })).toHaveAttribute(
+    'href', `https://github.com/example/project/commit/${SHA_B}#diff-${'a'.repeat(32)}L9`,
   )
   await user.click(screen.getByRole('button', { name: '模型解释' }))
   expect(await screen.findByRole('dialog')).toBeVisible()

@@ -70,7 +70,9 @@ export function DatasetImportStatusDialog({ account, taskId, onClose, onInspect,
         {task.error ? <p className="text-sm text-rose-deep" role="alert">{task.error.message}</p> : null}
         {task.status === 'completed' ? <>
           <p className="text-sm text-foreground-2" role="status">
-            新登记 {task.createdCount} 个版本 · 复用 {task.versions.length - task.createdCount} 个版本
+            {task.legacy
+              ? `历史导入 · ${task.versions.length} 个版本`
+              : `新登记 ${task.createdCount} 个版本 · 复用 ${task.versions.length - task.createdCount} 个版本`}
           </p>
           <div className="grid gap-1" aria-label="导入的数据版本">
             {task.versions.map(item => <Button key={item.version} type="button" variant="outline"
@@ -88,9 +90,11 @@ export function DatasetImportStatusDialog({ account, taskId, onClose, onInspect,
           className="grid h-auto w-full gap-1 rounded-lg border border-border-soft px-3 py-2 text-left hover:bg-sunken"
           onClick={() => onInspect(item.taskId)}>
           <span className="flex justify-between gap-2 text-sm"><strong className="truncate">{item.filename}</strong>
-            <span className="shrink-0 text-foreground-3">{importStage(item)}</span></span>
+            <span className="shrink-0 text-foreground-3">{item.legacy ? '历史导入' : importStage(item)}</span></span>
           {importIsActive(item) ? <Progress inline value={importPercent(item)} aria-label={`${item.filename} 导入进度`}/>
-            : <span className="text-xs text-foreground-3">{formatDate(item.createdAt)}</span>}
+            : <span className="text-xs text-foreground-3">
+              {formatDate(item.createdAt)}{item.versions.length ? ` · ${item.versions.length} 个版本` : ''}
+            </span>}
         </Button>) : <p className="text-sm text-foreground-3">还没有导入记录</p>}
       </div> : null}
       <DialogFooter>

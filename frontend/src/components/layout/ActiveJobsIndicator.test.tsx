@@ -17,6 +17,14 @@ const trainingJob: ActiveJob = {
   detail: '训练中 · 2 个方法',
   route: { name: 'my-training', experimentId: 'experiment-1' },
 }
+const analysisJob: ActiveJob = {
+  id: 'analysis:1',
+  kind: 'analysis',
+  label: '分支分析 · example/project',
+  detail: '正在采集 · 队列第 2 位',
+  progress: 25,
+  route: { name: 'repository', repositoryId: 'project-1', tab: 'analyses' },
+}
 
 it('returns directly to the only active job', async () => {
   const navigate = vi.fn()
@@ -43,5 +51,14 @@ it('shows measured import progress and reopens the matching task', async () => {
   }]}/>)
   expect(screen.getByRole('progressbar', { name: '数据集导入进度' })).toHaveAttribute('aria-valuenow', '50')
   await userEvent.setup().click(screen.getByRole('button', { name: '返回导入任务：导入 · jit.zip' }))
+  expect(navigate).toHaveBeenCalledWith(route)
+})
+
+it('shows analysis stage progress and returns to the project analysis view', async () => {
+  const navigate = vi.fn()
+  const route = analysisJob.route
+  render(<ActiveJobsIndicator jobs={[analysisJob]} navigate={navigate}/>)
+  expect(screen.getByRole('progressbar', { name: '分析进度' })).toHaveAttribute('aria-valuenow', '25')
+  await userEvent.setup().click(screen.getByRole('button', { name: '返回分析任务：分支分析 · example/project' }))
   expect(navigate).toHaveBeenCalledWith(route)
 })

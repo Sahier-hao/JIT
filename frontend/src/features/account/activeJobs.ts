@@ -1,9 +1,15 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import type { ActiveJob } from '@/components/layout/ActiveJobsIndicator'
+import { ApiError } from '@/lib/apiContract'
+import { fetchRepositorySync } from '@/lib/apiClient'
 import { userExperiments } from '@/features/account/userClient'
 import { listUserDatasetBuilds, type DatasetBuildTask } from '@/features/datasets/datasetBuildClient'
 import { importIsActive, importPercent, importStage, useDatasetImportJobs } from '@/features/datasets/datasetImportClient'
 import type { TrainingExperiment } from '@/features/admin/adminContracts'
+import { getProjectPRBatch, type PRBatch } from '@/features/projects/projectActivityClient'
+import { forgetAnalysisJobs, trackedAnalysisJobs, type TrackedAnalysisJob } from '@/features/projects/analysisJobs'
+import { syncProgressValue } from '@/features/projects/syncProgress'
+import { ACTIVE_STATUSES, STATUS_LABELS, type SyncView } from '@/features/projects/repositoryContract'
 import { trainingMethodName, trainingPhase } from '@/features/training/trainingPresentation'
 import { queryKeys } from '@/lib/queryKeys'
 
@@ -52,6 +58,45 @@ function trainingJob(experiment: TrainingExperiment): ActiveJob {
   }
 }
 
+function syncJob(sync: SyncView, tracked: TrackedAnalysisJob): ActiveJob | null {
+  if (!(ACTIVE_STATUSES as readonly string[]).includes(sync.status)) return null
+  const currentStage = STATUS_LABELS[sync.status === 'queued' ? 'queued' : sync.stage]
+  const queue = sync.status === 'queued' && sync.queuePosition ? ` · 队列第 ${sync.queuePosition} 位` : ''
+  return {
+    id: `analysis:${sync.syncId}`,
+    kind: 'analysis',
+    statusLabel: currentStage,
+    label: tracked.label,
+    detail: `${currentStage}${queue}`,
+    progress: syncProgressValue(sync.status, sync.stage, sync.requestedStrategy === 'generic-model'),
+    route: tracked.route,
+  }
+}
+
+function batchIsActive(batch: PRBatch): boolean {
+  return batch.status === 'discovering' || batch.status === 'running'
+    || batch.counts.queued > 0 || batch.counts.running > 0
+}
+
+function batchJob(batch: PRBatch, tracked: TrackedAnalysisJob): ActiveJob | null {
+  if (!batchIsActive(batch)) return null
+  const finished = batch.counts.completed + batch.counts.failed
+    + batch.counts.cancelled + batch.counts.interrupted
+  const running = batch.counts.queued + batch.counts.running
+  const phase = batch.status === 'discovering' ? '发现开放 PR'
+    : batch.submission.pending > 0 ? '提交分析任务'
+      : running > 0 ? '分析中' : '等待完成'
+  return {
+    id: `analysis-batch:${batch.batchId}`,
+    kind: 'analysis',
+    statusLabel: phase,
+    label: tracked.label,
+    detail: `${phase} · 已处理 ${finished}/${batch.discovered}${running ? ` · 运行 ${running}` : ''}`,
+    progress: batch.discovered ? Math.round(100 * finished / batch.discovered) : null,
+    route: tracked.route,
+  }
+}
+
 /** 服务端确认入队后，直接用返回的实验刷新任务入口。 */
 export function publishTrainingExperiment(client: QueryClient, account: string | null, experiment: TrainingExperiment) {
   client.setQueryData(queryKeys.userTrainingExperiment(account, experiment.experimentId), experiment)
@@ -89,6 +134,52 @@ export function useActiveUserJobs(account: string | null): ActiveJob[] {
     refetchInterval: 6000,
     retry: false,
   })
+  const analyses = useQuery({
+    queryKey: [...queryKeys.activeUserJobs(account), 'analysis'],
+    enabled: Boolean(account),
+    queryFn: async ({ signal }) => {
+      const tracked = trackedAnalysisJobs()
+      if (!tracked.length) return []
+      const completed: string[] = []
+      const jobs = await Promise.all(tracked.map(async item => {
+        try {
+          if (item.batchId) {
+            const batch = await getProjectPRBatch(item.repositoryId, item.batchId, signal)
+            const job = batchJob(batch, item)
+            if (!job) completed.push(item.id)
+            return job
+          }
+          if (item.syncId) {
+            const sync = await fetchRepositorySync(item.syncId, signal)
+            const job = syncJob(sync, item)
+            if (!job) completed.push(item.id)
+            return job
+          }
+          completed.push(item.id)
+          return null
+        } catch (failure) {
+          if (signal.aborted) return null
+          if (failure instanceof ApiError && failure.status === 404) {
+            completed.push(item.id)
+            return null
+          }
+          return {
+            id: `analysis:${item.id}`,
+            kind: 'analysis' as const,
+            statusLabel: '进度读取失败',
+            label: item.label,
+            detail: '点击返回任务页面查看最新状态',
+            progress: null,
+            route: item.route,
+          }
+        }
+      }))
+      if (completed.length) forgetAnalysisJobs(completed)
+      return jobs.filter((job): job is ActiveJob => job !== null)
+    },
+    refetchInterval: query => (query.state.data?.length ?? 0) > 0 ? 3000 : false,
+    retry: false,
+  })
   const importsInProgress: ActiveJob[] = (imports.data ?? []).filter(importIsActive).map(task => ({
     id: `import:${task.taskId}`,
     kind: 'import',
@@ -97,5 +188,5 @@ export function useActiveUserJobs(account: string | null): ActiveJob[] {
     progress: importPercent(task),
     route: { name: 'my-data', view: 'imports', taskId: task.taskId },
   }))
-  return [...importsInProgress, ...(query.data ?? [])]
+  return [...importsInProgress, ...(analyses.data ?? []), ...(query.data ?? [])]
 }

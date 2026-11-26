@@ -17,6 +17,7 @@ import type { BranchAnalysisSeed } from '@/features/projects/components/Analysis
 import { ACTIVE_STATUSES, DEGRADE_LABELS, type SyncView } from '@/features/projects/repositoryContract'
 import { projectsChanged } from '@/features/projects/projectEvents'
 import { AnalysisLauncher } from '@/features/projects/components/AnalysisLauncher'
+import { trackAnalysisJob } from '@/features/projects/analysisJobs'
 import { RepositoryUpdates } from '@/features/projects/components/RepositoryUpdates'
 import { RepositoryOverviewView } from '@/features/projects/components/RepositoryOverview'
 import { ProjectPullRequests } from '@/features/projects/components/ProjectPullRequests'
@@ -211,7 +212,21 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     <div className="flex flex-wrap items-center justify-between gap-2">
       {analysisViewNav}
       <AnalysisLauncher key={analysisSeed?.key ?? 'new'} initial={analysisSeed?.form} repositoryUrl={repository.url} defaultBranch={repository.defaultBranch}
-        onClose={() => setAnalysisSeed(null)} onStarted={() => { records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses')) }}/>
+        onClose={() => setAnalysisSeed(null)} onStarted={job => {
+          if ((ACTIVE_STATUSES as readonly string[]).includes(job.status)) {
+            trackAnalysisJob({
+              id: `branch:${job.syncId}`,
+              kind: 'branch',
+              repositoryId,
+              repositoryName: repository.displayName,
+              label: `分支分析 · ${repository.displayName}`,
+              route: repositoryRoute(repositoryId, 'analyses'),
+              createdAt: job.createdAt,
+              syncId: job.syncId,
+            })
+          }
+          records.retry(); detail.retry(); navigate(repositoryRoute(repositoryId, 'analyses'))
+        }}/>
     </div>
     {activeJob ? <section className="rounded-md border border-border-soft bg-card p-card" aria-label="当前分析进度">
       <JobProgress status={activeJob.status} stage={activeJob.stage} queuePosition={activeJob.queuePosition} startedAt={activeJob.startedAt} scoresOnly={activeJob.requestedStrategy === 'generic-model'}/>
@@ -247,7 +262,7 @@ export function ProjectPage({ repositoryId, tab, viewId, navigate }: { repositor
     </>}
     </> : null}
 
-    {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} modelId={repository.modelId ?? undefined} batchModelId={context?.modelId ?? null} navigate={navigate}/> : null}
+    {activeTab === 'prs' ? <ProjectPullRequests repositoryId={repositoryId} repositoryName={repository.displayName} modelId={repository.modelId ?? undefined} batchModelId={context?.modelId ?? null} navigate={navigate}/> : null}
 
     <Dialog open={Boolean(detailJob)} onOpenChange={next => { if (!next) setDetailJob(null) }}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${480}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"分析详情"}</DialogTitle></DialogHeader>{detailJob ? <RecordDetails job={detailJob} active={(ACTIVE_STATUSES as readonly string[]).includes(detailJob.status)}/> : null}</DialogContent></Dialog>
     <AlertDialog open={Boolean(deleteJob)} onOpenChange={next => { if (!next) setDeleteJob(null) }}><AlertDialogContent className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${460}px)`, maxWidth: 'none'}}><AlertDialogHeader><AlertDialogTitle>{"删除这条分析记录？"}</AlertDialogTitle><AlertDialogDescription>{deleteJob && deleteJob.syncId === context?.syncId ? '这是当前结果，删除后项目将暂时没有当前结果，其他成功记录仍可重新选择。此操作无法撤销。' : '这次分析与对应的提交结果将被删除。此操作无法撤销。'}</AlertDialogDescription></AlertDialogHeader>{null}<AlertDialogFooter>{<>
