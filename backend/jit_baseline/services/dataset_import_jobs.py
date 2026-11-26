@@ -6,6 +6,8 @@ import tempfile
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
+from hashlib import sha256 as digest
 from pathlib import Path
 
 from .. import datasets, store
@@ -18,6 +20,27 @@ from .published_dataset_imports import import_projects
 
 ACTIVE = {"queued", "running"}
 MAX_ACTIVE = 4
+LEGACY_PREFIX = "legacy-"
+LEGACY_GROUP_WINDOW = timedelta(minutes=15)
+
+
+def _timestamp(value):
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError):
+        return datetime.now(timezone.utc)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def _legacy_source(manifest, dataset_name):
+    upload = (manifest.get("benchmark") or {}).get("upload")
+    if isinstance(upload, str) and upload.strip():
+        return Path(upload.replace("\\", "/")).name
+    url = manifest.get("url")
+    if isinstance(url, str) and url.startswith("upload://"):
+        return Path(url.replace("\\", "/")).name
+    path = (manifest.get("file") or {}).get("path")
+    return Path(path or dataset_name).name
 
 
 def _import_name(value, username, filename):
@@ -92,6 +115,71 @@ class DatasetImportJobs:
     def _tasks(self):
         return [json.loads(path.read_text(encoding='utf-8')) for path in self.directory.glob('*.json')]
 
+    def _legacy_tasks(self, owner, covered):
+        """把导入任务落盘前登记的旧数据还原成只读历史记录。"""
+        with self.storage.connection() as db:
+            rows = db.execute(
+                'SELECT o.dataset_version, o.created_at AS owned_at, d.dataset_name, d.manifest_json '
+                'FROM dataset_owner o JOIN dataset_record d '
+                'ON d.dataset_version=o.dataset_version WHERE o.username=? ORDER BY o.created_at',
+                (owner,),
+            ).fetchall()
+        groups = []
+        for row in rows:
+            if row['dataset_version'] in covered:
+                continue
+            try:
+                manifest = json.loads(row['manifest_json'])
+            except (TypeError, ValueError):
+                continue
+            if manifest.get('usage') != 'import':
+                continue
+            owned_at = _timestamp(row['owned_at'])
+            filename = _legacy_source(manifest, row['dataset_name'])
+            version = {
+                'version': row['dataset_version'],
+                'project': (manifest.get('benchmark') or {}).get('project'),
+                'dataset': manifest.get('dataset') or row['dataset_name'],
+                'records': manifest.get('quality', {}).get('includedRows', 0),
+            }
+            previous = groups[-1] if groups else None
+            if (previous is not None and previous['filename'] == filename
+                    and owned_at - previous['lastAt'] <= LEGACY_GROUP_WINDOW):
+                previous['versions'].append(version)
+                previous['lastAt'] = owned_at
+                continue
+            groups.append({
+                'filename': filename,
+                'firstAt': owned_at,
+                'lastAt': owned_at,
+                'versions': [version],
+            })
+        tasks = []
+        for group in groups:
+            first = group['firstAt'].isoformat()
+            task_id = LEGACY_PREFIX + digest(
+                f"{owner}\0{group['filename']}\0{first}".encode('utf-8')
+            ).hexdigest()[:32]
+            tasks.append({
+                'taskId': task_id,
+                'filename': group['filename'],
+                'status': 'completed',
+                'stage': 'completed',
+                'processed': len(group['versions']),
+                'total': len(group['versions']),
+                'currentFile': None,
+                'rowsTotal': None,
+                'rowsWritten': 0,
+                'versions': group['versions'],
+                'preferredVersion': group['versions'][-1]['version'],
+                'createdCount': len(group['versions']),
+                'error': None,
+                'createdAt': first,
+                'updatedAt': group['lastAt'].isoformat(),
+                'legacy': True,
+            })
+        return tasks
+
     def _write(self, task):
         target = self.directory / f"{task['taskId']}.json"
         temporary = target.with_suffix('.tmp')
@@ -109,7 +197,9 @@ class DatasetImportJobs:
 
     @staticmethod
     def _view(task):
-        return {key: value for key, value in task.items() if key not in {'owner', 'digest', 'dataset'}}
+        view = {key: value for key, value in task.items() if key not in {'owner', 'digest', 'dataset'}}
+        view['legacy'] = bool(task.get('legacy'))
+        return view
 
     def _payload(self, task_id):
         return self.directory / f'{task_id}.upload'
@@ -122,6 +212,13 @@ class DatasetImportJobs:
 
     def get(self, owner, task_id):
         with self._lock:
+            if task_id.startswith(LEGACY_PREFIX):
+                jobs = self._tasks()
+                covered = {item['version'] for task in jobs for item in task.get('versions', [])}
+                for task in self._legacy_tasks(owner, covered):
+                    if task['taskId'] == task_id:
+                        return self._view(task)
+                raise BaselineError('NOT_FOUND', '导入任务不存在')
             task = self._read(task_id)
             if task['owner'] != owner:
                 raise BaselineError('NOT_FOUND', '导入任务不存在')
@@ -129,8 +226,12 @@ class DatasetImportJobs:
 
     def list(self, owner, active_only=False):
         with self._lock:
-            tasks = [task for task in self._tasks() if task['owner'] == owner
+            jobs = self._tasks()
+            tasks = [task for task in jobs if task['owner'] == owner
                      and (not active_only or task['status'] in ACTIVE)]
+            if not active_only:
+                covered = {item['version'] for task in jobs for item in task.get('versions', [])}
+                tasks.extend(self._legacy_tasks(owner, covered))
         return [self._view(task) for task in sorted(tasks, key=lambda row: row['createdAt'], reverse=True)[:20]]
 
     def create(self, owner, blob, *, filename, kind, schema, dataset):

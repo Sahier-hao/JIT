@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectPullRequests } from '@/features/projects/components/ProjectPullRequests'
 import { PRTrackingPanel } from '@/features/reviews/components/PRTrackingPanel'
-import { modelChoices, PROJECT, prBatch, prPage, response, tracking } from '@/features/projects/projectActivity.fixture'
+import { modelChoices, NOW, PROJECT, prBatch, prPage, response, tracking } from '@/features/projects/projectActivity.fixture'
 import { WORK_KEY } from '@/features/reviews/prReview'
 afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })
 it('loads missing PR cache once without submitting analysis and preserves the project context', async () => {
@@ -80,6 +80,7 @@ it('shows real batch progress and retries only failed items', async () => {
   const user = userEvent.setup()
   expect(await screen.findByText(/已入队 1 · 复用 0 · 失败 1/)).toBeVisible()
   expect(screen.getByText(/范围 2 个开放 PR/)).toBeVisible()
+  expect(screen.getByLabelText('批量分析阶段')).toBeVisible()
   await user.click(screen.getByRole('button', { name: '仅重试失败项' }))
   await waitFor(() => expect(fetch.mock.calls.some(([path, init]) => String(path).endsWith('/retry') && init?.method === 'POST' && JSON.parse(String(init.body)).kind === 'failed')).toBe(true))
 })
@@ -119,6 +120,9 @@ it('submits a limited batch from the PR toolbar and preserves the chosen model o
   await waitFor(() => expect(dialog).not.toBeInTheDocument())
   expect(submitted).toEqual(Array(2).fill({ modelId: 'model-new', scope: { kind: 'limit', limit: 2 } }))
   expect(await screen.findByText(/模型 新默认模型/)).toBeVisible()
+  expect(JSON.parse(localStorage.getItem('jit:tracked-analysis-jobs') ?? '[]')[0]).toMatchObject({
+    kind: 'pr-batch', batchId: 'batch-1', label: 'PR 批量分析 · 当前项目',
+  })
   expect(fetch.mock.calls.some(([path]) => String(path).includes('/repository-syncs'))).toBe(false)
 })
 
@@ -143,10 +147,18 @@ it('keeps an unavailable current model instead of silently substituting the defa
 })
 
 it('submits a single unanalyzed PR with the project model', async () => {
+  const sync = {
+    syncId: '55555555-5555-4555-8555-555555555555', repositoryId: PROJECT,
+    repositoryUrl: 'https://github.com/example/project', branch: 'feature', since: null, until: null,
+    commitLimit: 500, requestedStrategy: 'generic-model', status: 'queued', stage: 'queued',
+    datasetVersion: null, runId: null, modelId: 'model-current', modelStrategy: 'generic-model',
+    degradeReason: null, trainRecords: null, trainPositives: null, createdAt: NOW, updatedAt: NOW,
+    requestId: null, error: null, sourceKind: 'pr', sourceSnapshotId: 'v1',
+  }
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path) => {
     if (String(path).includes('pull-request-batches')) return response(null)
     if (String(path).includes('/repository-models')) return response({ models: modelChoices })
-    if (String(path).includes('/analyze')) return response({ snapshotId: 'v1', analyses: [] })
+    if (String(path).includes('/analyze')) return response({ snapshotId: 'v1', analyses: [{ sync, scores: [], fileRisks: [] }] })
     return response(prPage({ pullRequests: [{ ...prPage().pullRequests[0], analysisStatus: null, modelId: null, syncId: null, snapshotId: null }] }))
   })
   render(<ProjectPullRequests repositoryId={PROJECT} modelId="model-current" navigate={vi.fn()}/>)
@@ -155,6 +167,9 @@ it('submits a single unanalyzed PR with the project model', async () => {
   await waitFor(() => expect(fetch.mock.calls.some(([path, init]) => String(path).endsWith('/pull-requests/12/analyze') && init?.method === 'POST')).toBe(true))
   const call = fetch.mock.calls.find(([path]) => String(path).endsWith('/pull-requests/12/analyze'))
   expect(JSON.parse(String(call?.[1]?.body))).toEqual({ modelId: 'model-current' })
+  expect(JSON.parse(localStorage.getItem('jit:tracked-analysis-jobs') ?? '[]')[0]).toMatchObject({
+    kind: 'pr', syncId: sync.syncId, label: 'PR 分析 · #12 修复边界',
+  })
 })
 it('marks a PR that reused saved features', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {

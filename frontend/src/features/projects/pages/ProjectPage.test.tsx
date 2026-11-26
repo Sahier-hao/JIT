@@ -120,7 +120,7 @@ it('opens a comparison of a historical success against the pinned current result
   expect(fetch.mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(false)
 })
 
-afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear() })
+afterEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); localStorage.clear() })
 
 it('reports how many of the top holdout commits carry defect evidence', async () => {
   const fetch = mockApi(); const original = fetch.getMockImplementation()!
@@ -353,6 +353,9 @@ it('keeps following a queued job until the result is available', async () => {
   await user.click(screen.getByRole('button', { name: '分析分支提交' }))
   await waitFor(() => expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled())
   await user.click(await screen.findByRole('button', { name: '开始分析' }))
+  await waitFor(() => expect(JSON.parse(localStorage.getItem('jit:tracked-analysis-jobs') ?? '[]')[0]).toMatchObject({
+    kind: 'branch', syncId: SYNC, repositoryId: REPO,
+  }))
   await waitFor(() => expect(document.querySelectorAll('[data-current]').length).toBeGreaterThan(0), { timeout: 7000 })
 })
 

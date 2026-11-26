@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 
 
@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { EmptyState, FailureNotice, LoadingNotice } from '@/components/shared/Feedback'
 import { Risk } from '@/components/shared/Risk'
+import { record, recordList } from '@/lib/apiContract'
 import { displayTime } from '@/lib/domain'
 import { repositoryModels, type ModelChoice } from '@/features/models/modelClient'
 import { ModelSelect, usableModel } from '@/features/models/components/ModelSelect'
@@ -21,10 +22,12 @@ import { analyzeProjectPR, cancelProjectPRBatch, getTracking, latestProjectPRBat
 import { cacheKey, readCache, writeCache } from '@/lib/localCache'
 import { readWorks, remoteStateLabels as remoteLabel, workKey } from '@/features/reviews/prReview'
 import { useReviewAccount } from '@/features/reviews/reviewAccount'
-import type { Route } from '@/app/navigation'
+import { repositoryRoute, type Route } from '@/app/navigation'
 import { PRBatchLauncher } from '@/features/projects/components/PRBatchLauncher'
 import { PRTrackingPanel } from '@/features/reviews/components/PRTrackingPanel'
 import { ProgressBar } from '@/features/projects/components/JobProgress'
+import { ACTIVE_STATUSES, parseSync, type SyncView } from '@/features/projects/repositoryContract'
+import { hasTrackedAnalysisJob, trackAnalysisJob } from '@/features/projects/analysisJobs'
 import { cn } from '@/lib/utils'
 
 const analysisLabel: Record<string, string> = { checking: '检查中', unchanged: '版本未变', 'snapshot-ready': '快照就绪', queued: '排队中', running: '分析中', completed: '分析完成', failed: '分析失败', cancelled: '已取消', interrupted: '已中断', collecting: '采集中', registering: '登记中', training: '处理中', scoring: '评分中' }
@@ -45,8 +48,27 @@ function analysisGroup(status: string | null): Exclude<AnalysisFilter, 'all'> {
   return 'unscored'
 }
 
-export function ProjectPullRequests({ repositoryId, modelId, batchModelId = modelId, navigate }: {
+const BATCH_STAGES = ['发现 PR', '提交任务', '分析评分', '完成'] as const
+
+function BatchStageBar({ batch }: { batch: PRBatch }) {
+  const finished = batch.counts.completed + batch.counts.failed
+    + batch.counts.cancelled + batch.counts.interrupted
+  const current = batch.status === 'discovering' ? 0
+    : batch.counts.queued + batch.counts.running > 0 ? 2
+      : finished >= batch.discovered && batch.discovered > 0 ? 3
+        : 1
+  return <div className="grid grid-cols-4 gap-2" aria-label="批量分析阶段">
+    {BATCH_STAGES.map((label, index) => <span key={label}
+      className={cn('flex items-center gap-1.5 text-[11px]', index === current ? 'font-medium text-foreground' : index < current ? 'text-foreground-2' : 'text-foreground-4')}>
+      <span className={cn('size-1.5 shrink-0 rounded-full', index <= current ? 'bg-accent' : 'bg-border-strong')} aria-hidden="true"/>
+      {label}
+    </span>)}
+  </div>
+}
+
+export function ProjectPullRequests({ repositoryId, repositoryName = '当前项目', modelId, batchModelId = modelId, navigate }: {
   repositoryId: string
+  repositoryName?: string
   modelId?: string
   batchModelId?: string | null
   navigate: (r: Route) => void
@@ -78,6 +100,47 @@ export function ProjectPullRequests({ repositoryId, modelId, batchModelId = mode
   const [reanalyzeBusy, setReanalyzeBusy] = useState(false)
   const [models, setModels] = useState<ModelChoice[]>([])
   const automatic = useRef(new Set<string>()), refreshRequested = useRef(false)
+  const trackBatch = useCallback((value: PRBatch) => {
+    const id = `pr-batch:${value.batchId}`
+    if (hasTrackedAnalysisJob(id)) return
+    trackAnalysisJob({
+      id,
+      kind: 'pr-batch',
+      repositoryId,
+      repositoryName,
+      label: `PR 批量分析 · ${repositoryName}`,
+      route: repositoryRoute(repositoryId, 'prs'),
+      createdAt: value.createdAt,
+      batchId: value.batchId,
+    })
+  }, [repositoryId, repositoryName])
+  const trackSync = useCallback((job: SyncView, pr: ProjectPR) => {
+    if (!(ACTIVE_STATUSES as readonly string[]).includes(job.status)) return
+    const id = `pr:${job.syncId}`
+    if (hasTrackedAnalysisJob(id)) return
+    trackAnalysisJob({
+      id,
+      kind: 'pr',
+      repositoryId,
+      repositoryName,
+      label: `PR 分析 · #${pr.number} ${pr.title}`,
+      route: repositoryRoute(repositoryId, 'prs'),
+      createdAt: job.createdAt,
+      syncId: job.syncId,
+      snapshotId: job.sourceSnapshotId ?? undefined,
+    })
+  }, [repositoryId, repositoryName])
+  const trackActiveSyncs = (raw: unknown, pr: ProjectPR) => {
+    try {
+      const body = record(raw)
+      for (const item of recordList(body.analyses)) {
+        const sync = parseSync(record(item).sync)
+        if (ACTIVE_STATUSES.includes(sync.status as typeof ACTIVE_STATUSES[number])) trackSync(sync, pr)
+      }
+    } catch {
+      // 响应损坏时不发布无法追踪的任务，原错误仍由调用方处理。
+    }
+  }
   useEffect(() => {
     const controller = new AbortController(); setBusy(true); setError(null)
     const cached = readCache<ProjectPRPage>(listKey, 10 * 60_000)
@@ -110,15 +173,22 @@ export function ProjectPullRequests({ repositoryId, modelId, batchModelId = mode
   useEffect(() => {
     const controller = new AbortController()
     latestProjectPRBatch(repositoryId, controller.signal)
-      .then(value => { if (!controller.signal.aborted) { setBatch(value); setBatchError('') } })
+      .then(value => {
+        if (controller.signal.aborted) return
+        setBatch(value)
+        setBatchError('')
+        if (value && (value.status === 'discovering' || value.status === 'running'
+            || value.counts.queued > 0 || value.counts.running > 0)) trackBatch(value)
+      })
       .catch(failure => { if (!controller.signal.aborted) setBatchError(failure instanceof Error ? failure.message : '批次进度读取失败') })
     return () => controller.abort()
-  }, [repositoryId, attempt])
+  }, [repositoryId, attempt, trackBatch])
   async function retryItems(kind: 'failed' | 'interrupted') {
     if (!batch) return
     setBatchBusy(true); setBatchError('')
     try {
       const next = await retryProjectPRBatch(repositoryId, batch.batchId, kind)
+      trackBatch(next)
       setBatch(next); setAttempt(value => value + 1)
     } catch (failure) {
       setBatchError(failure instanceof Error ? failure.message : '重试批次失败')
@@ -142,7 +212,7 @@ export function ProjectPullRequests({ repositoryId, modelId, batchModelId = mode
     if (!reanalyzing || !reanalyzeModel) return
     setReanalyzeBusy(true); setAnalysisError('')
     try {
-      await analyzeProjectPR(repositoryId, reanalyzing.number, reanalyzeModel)
+      trackActiveSyncs(await analyzeProjectPR(repositoryId, reanalyzing.number, reanalyzeModel), reanalyzing)
       setReanalyzing(null); setAttempt(value => value + 1)
     } catch (failure) {
       setAnalysisError(failure instanceof Error ? failure.message : `提交 #${reanalyzing.number} 重新分析失败`)
@@ -153,7 +223,7 @@ export function ProjectPullRequests({ repositoryId, modelId, batchModelId = mode
     setAnalyzingNumber(pr.number); setAnalysisError('')
     try {
       const retry = analysisGroup(pr.analysisStatus) === 'failed'
-      await analyzeProjectPR(repositoryId, pr.number, modelId, retry)
+      trackActiveSyncs(await analyzeProjectPR(repositoryId, pr.number, modelId, retry), pr)
       setAttempt(value => value + 1)
     } catch (failure) {
       setAnalysisError(failure instanceof Error ? failure.message : `提交 #${pr.number} 分析失败`)
@@ -202,7 +272,7 @@ export function ProjectPullRequests({ repositoryId, modelId, batchModelId = mode
               </Button>
               <PRBatchLauncher key={repositoryId} repositoryId={repositoryId} modelId={batchModelId ?? undefined} variant="default"
                 openPage={state === 'open' ? page : undefined}
-                onStarted={next => { setBatch(next); setBatchError(''); setAttempt(value => value + 1) }}/>
+                onStarted={next => { trackBatch(next); setBatch(next); setBatchError(''); setAttempt(value => value + 1) }}/>
             </div>
           </header>
 
@@ -222,6 +292,7 @@ export function ProjectPullRequests({ repositoryId, modelId, batchModelId = mode
             <ProgressBar value={batch.discovered ? Math.round(((batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted) / batch.discovered) * 100) : null}
               state={batch.status === 'failed' ? 'failed' : batch.status === 'completed' && batch.counts.completed + batch.counts.failed + batch.counts.cancelled + batch.counts.interrupted >= batch.discovered ? 'done' : batch.status === 'discovering' ? 'queued' : 'running'}
               label="批量分析进度"/>
+            <BatchStageBar batch={batch}/>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3">
               <span className={cn('font-medium', batch.status === 'failed' ? 'text-rose' : batch.status === 'completed' ? 'text-teal-deep' : 'text-foreground-2')}>批量分析 · {batchLabel[batch.status] ?? batch.status}</span>
               <span>{batch.discoveryComplete ? `范围 ${batch.discovered} 个开放 PR` : `已发现 ${batch.discovered} 个，范围未完整获取`}</span>

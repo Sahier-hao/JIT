@@ -151,7 +151,8 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           : <span className="text-xs text-foreground-3" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="text-xs text-foreground-3">全部 {source.files.length} 个文件</span>}
         {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)} type="button">模型解释</Button> : null}
       </div>
-      <HistoricRepairEvidence evidence={selectedEvidence} repositoryUrl={source.url} limit={4}/>
+      <HistoricRepairEvidence evidence={selectedEvidence} repositoryUrl={source.url} limit={4}
+        snapshotCommits={source.commits.map(commit => commit.sha)}/>
       <Dialog open={explanationOpen && Boolean(selectedCommit && explanationRepository && explanationRisk != null && analysis.primary)} onOpenChange={setExplanationOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${560}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"模型解释"}</DialogTitle></DialogHeader>{selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <RepositoryExplanation heading={false} context={{
           repositoryId: explanationRepository,
           viewSyncId: analysis.primary.sync.syncId,
