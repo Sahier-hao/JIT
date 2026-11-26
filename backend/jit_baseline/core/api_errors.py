@@ -23,7 +23,7 @@ MESSAGES = {
     'RATE_LIMITED': '尝试过于频繁，请稍后重试',
     'USERNAME_TAKEN': '账户名已被使用',
     'QUOTA_EXCEEDED': '超出允许的使用配额，请清理或等待当前任务结束',
-    'MODEL_FORBIDDEN': '该模型属于其他用户，不能使用',
+    'MODEL_FORBIDDEN': '该模型未对当前账户开放，不能使用',
     'DATASET_FORBIDDEN': '该数据版本属于其他用户，不能访问',
     'DATASET_OWNED': '用户自有数据版本不能开放共享',
     'DATASET_NOT_TRAINABLE': '该数据版本未通过训练准入，不能开放共享；请改用当前协议版本或重新构建',

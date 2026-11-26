@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { NativeSelect } from '@/components/ui/native-select'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 import { useRef, useState } from 'react'
 
@@ -64,18 +65,29 @@ export function DeliveryForm({ onPrepare, busy, draft, onDraft }: { onPrepare: (
 export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: (work: PRWork) => unknown; account: string | null }) {
   const [incoming, setIncoming] = useState<PRWork | null>(null), [choices, setChoices] = useState<Record<string, boolean>>({}), [error, setError] = useState('')
   const [accountHint, setAccountHint] = useState<string | null>(null)
+  const [pending, setPending] = useState<ReturnType<typeof parseBackupInfo> | null>(null)
   const file = useRef<HTMLInputElement | null>(null)
   const preview = incoming ? mergeBackup(work, incoming, choices) : null
+  async function apply(info: ReturnType<typeof parseBackupInfo>) {
+    await verifyBackupSources(info.work)
+    mergeBackup(work, info.work, {})
+    setIncoming(info.work); setAccountHint(info.accountHint); setChoices({}); setError('')
+  }
   async function pick(picked: File) {
     try {
       if (picked.size > 1024 * 1024) throw new Error('备份超过 1 MiB')
       const info = parseBackupInfo(await picked.text(), work.key)
-      if (info.accountHint && info.accountHint !== account
-          && !window.confirm(`备份归属 ${info.accountHint}，将导入当前账户 ${account}。继续？`)) return
-      await verifyBackupSources(info.work)
-      mergeBackup(work, info.work, {})
-      setIncoming(info.work); setAccountHint(info.accountHint); setChoices({}); setError('')
+      if (info.accountHint && info.accountHint !== account) {
+        setPending(info)
+        return
+      }
+      await apply(info)
     } catch (failure) { setError(message(failure)) }
+  }
+  function confirmPending() {
+    const info = pending
+    setPending(null)
+    if (info) void apply(info).catch(failure => setError(message(failure)))
   }
   return <section className="grid gap-3">
     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -103,6 +115,9 @@ export function WorkBackup({ work, onMerge, account }: { work: PRWork; onMerge: 
       </div>
       <div className="flex items-center flex-wrap gap-2" style={{gap: 8}}><Button variant='default' onClick={() => { onMerge(mergeBackup(work, incoming!, choices).work); setIncoming(null) }} type="button">确认合并草稿</Button><Button onClick={() => setIncoming(null)} variant="outline" type="button">取消恢复</Button></div>
     </div> : null}
+    <ConfirmDialog open={pending !== null} title="备份归属不同"
+      description={pending ? `备份归属 ${pending.accountHint}，将导入当前账户 ${account ?? '未登录'}。继续？` : ''}
+      confirmLabel="继续导入" onCancel={() => setPending(null)} onConfirm={confirmPending}/>
   </section>
 }
 

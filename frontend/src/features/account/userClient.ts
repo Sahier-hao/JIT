@@ -67,6 +67,8 @@ export interface UserModel {
   enabled: boolean
   parameters: Row | null
   datasetVersion: string | null
+  mine: boolean
+  shared: boolean
 }
 
 export interface UserSplitPreview {
@@ -156,6 +158,7 @@ export async function userModels(signal?: AbortSignal): Promise<UserModel[]> {
       featureSchemaVersion: text(value.featureSchemaVersion), state: text(value.state),
       enabled: value.enabled === true, parameters: value.parameters == null ? null : record(value.parameters),
       datasetVersion: textOrNull(value.datasetVersion),
+      mine: value.mine === true, shared: value.shared === true,
     }
   })
 }

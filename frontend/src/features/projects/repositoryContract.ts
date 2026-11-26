@@ -125,6 +125,9 @@ export interface CommitLabelEvidence {
   path: string
   fixTime: string | null
   ruleVersion: string | null
+  diffAnchor: string | null
+  lineRanges: Array<[number, number]> | null
+  parentRanges: Array<[number, number]> | null
 }
 
 export const COMMIT_PARTITIONS = ['train', 'validation', 'test', 'holdout', 'excluded', 'notIncluded', 'unassigned', 'scored', 'unknown'] as const
@@ -141,6 +144,34 @@ export interface SyncCommitPage {
   limit: number
   offset: number
   commits: SyncCommit[]
+}
+
+function lineRanges(value: unknown): Array<[number, number]> | null {
+  if (value == null) return null
+  if (!Array.isArray(value)) contractFailed('修复行号范围无效')
+  return value.map(item => {
+    if (!Array.isArray(item) || item.length !== 2) contractFailed('修复行号范围无效')
+    const start = finiteNumber(item[0])
+    const end = finiteNumber(item[1])
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 1 || end < start) {
+      contractFailed('修复行号范围无效')
+    }
+    return [start, end] as [number, number]
+  })
+}
+
+export function parseCommitLabelEvidence(value: unknown): CommitLabelEvidence {
+  const item = record(value)
+  const anchor = textOrNull(item.diffAnchor)
+  return {
+    fixCommit: text(item.fixCommit),
+    path: text(item.path),
+    fixTime: textOrNull(item.fixTime),
+    ruleVersion: textOrNull(item.ruleVersion),
+    diffAnchor: anchor && /^diff-[a-f0-9]{32}$/.test(anchor) ? anchor : null,
+    lineRanges: lineRanges(item.lineRanges),
+    parentRanges: lineRanges(item.parentRanges),
+  }
 }
 
 /** 一个项目名下的分析记录分页（change `add-project-management`）。 */
@@ -279,10 +310,7 @@ export function parseSyncCommit(value: unknown): SyncCommit {
     labelNote: textOrNull(raw.labelNote),
     labelStatus: raw.labelStatus == null ? (label === 1 ? 'positive' : 'unknown') : oneOf(raw.labelStatus, COMMIT_LABEL_STATUSES),
     observedThrough: textOrNull(raw.observedThrough),
-    labelEvidence: raw.labelEvidence == null ? [] : recordList(raw.labelEvidence).map(item => ({
-      fixCommit: text(item.fixCommit), path: text(item.path),
-      fixTime: textOrNull(item.fixTime), ruleVersion: textOrNull(item.ruleVersion),
-    })),
+    labelEvidence: raw.labelEvidence == null ? [] : recordList(raw.labelEvidence).map(parseCommitLabelEvidence),
     subject: textOrNull(raw.subject),
     authorName: textOrNull(raw.authorName),
     originalCommitUrl: textOrNull(raw.originalCommitUrl),

@@ -1,5 +1,5 @@
 import { AlertTriangle, Check, LoaderCircle } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import type { DatasetBuildTask } from '@/features/datasets/datasetBuildClient'
@@ -94,8 +94,8 @@ export function DatasetBuildRangeField({
       </Select>
     </label>
     {mode === 'custom' ? <div className="grid gap-3 sm:grid-cols-2">
-      <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">开始日期</span><Input aria-label={labelPrefix ? `${labelPrefix}开始日期` : '开始日期'} type="date" value={since} onChange={event => onSinceChange(event.target.value)} disabled={disabled}/></label>
-      <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">结束日期</span><Input aria-label={labelPrefix ? `${labelPrefix}结束日期` : '结束日期'} type="date" value={until} min={since || undefined} onChange={event => onUntilChange(event.target.value)} disabled={disabled}/></label>
+      <div className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">开始日期</span><DatePicker ariaLabel={labelPrefix ? `${labelPrefix}开始日期` : '开始日期'} value={since} max={until || undefined} onChange={onSinceChange} disabled={disabled} clearable={false}/></div>
+      <div className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">结束日期</span><DatePicker ariaLabel={labelPrefix ? `${labelPrefix}结束日期` : '结束日期'} value={until} min={since || undefined} onChange={onUntilChange} disabled={disabled} clearable={false}/></div>
     </div> : null}
   </>
 }

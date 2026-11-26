@@ -73,7 +73,7 @@ it('keeps a group view with only one original source in group mode when new sour
   const user = userEvent.setup()
   render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={vi.fn()}/>)
   await screen.findByRole('table')
-  await user.click(screen.getByRole('button', { name: '调整口径' }))
+  await user.click(screen.getByRole('button', { name: '统计范围' }))
   expect(screen.getByLabelText('单次固定分析标识')).toHaveValue('')
   await user.click(screen.getByRole('button', { name: '生成新的固定视图' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(true))
@@ -123,7 +123,7 @@ it('shows verified partition boundaries as text in the chart legend and equivale
 it('keeps branch, model, query window and source count together in the trend header', async () => {
   api()
   render(<ProjectTrends repositoryId={PROJECT} viewId="view-fixed" navigate={vi.fn()}/>)
-  const heading = await screen.findByRole('heading', { name: '风险走势' })
+  const heading = await screen.findByRole('heading', { name: '风险趋势' })
   const meta = heading.parentElement?.textContent ?? ''
   expect(meta).toContain('main')
   expect(meta).toContain('model-original')

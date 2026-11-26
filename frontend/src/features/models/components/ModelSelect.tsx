@@ -1,0 +1,62 @@
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { ModelChoice } from '@/features/models/modelClient'
+
+/** 可参与仓库分析/试算的模型：已校验、启用且字段规范兼容。 */
+export function usableModel(model?: ModelChoice | null): boolean {
+  return Boolean(model && model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
+}
+
+function optionLabel(model: ModelChoice, duplicate: boolean): string {
+  const name = duplicate ? `${model.name} · ${model.modelId.slice(0, 8)}` : model.name
+  return `${name}${model.isDefault ? ' · 默认' : ''}`
+}
+
+export interface ModelSelectProps {
+  models: ModelChoice[]
+  value: string
+  onValueChange: (value: string) => void
+  label: string
+  placeholder?: string
+  disabled?: boolean
+  /** 保留不可用模型并标出原因；默认只列可选模型。 */
+  allowUnavailable?: boolean
+  excludeIds?: string[]
+  /** 原选模型不在当前可选范围时的说明。 */
+  missingLabel?: string
+}
+
+/**
+ * 统一的模型选择器：按“我的模型 / 共享模型”分组，只列可选模型。
+ * 原选模型不可见时保留为禁用项，避免静默替换。
+ */
+export function ModelSelect({ models, value, onValueChange, label, placeholder = '选择模型', disabled, allowUnavailable = false, excludeIds = [], missingLabel }: ModelSelectProps) {
+  const excluded = new Set(excludeIds)
+  const pool = models.filter(model => !excluded.has(model.modelId))
+  const shown = allowUnavailable ? pool : pool.filter(usableModel)
+  const groups = [
+    { key: 'mine', label: '我的模型', items: shown.filter(model => model.mine) },
+    { key: 'shared', label: '共享模型', items: shown.filter(model => model.shared && !model.mine) },
+    { key: 'other', label: '其他模型', items: shown.filter(model => !model.mine && !model.shared) },
+  ].filter(group => group.items.length)
+  const names = new Map<string, number>()
+  for (const model of shown) names.set(model.name, (names.get(model.name) ?? 0) + 1)
+  const missing = Boolean(value) && !shown.some(model => model.modelId === value)
+  const triggerPlaceholder = missing ? (missingLabel ?? '原选模型（不可用）') : placeholder
+  return <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+    <SelectTrigger aria-label={label}><SelectValue placeholder={triggerPlaceholder}/></SelectTrigger>
+    <SelectContent>
+      {missing ? <SelectGroup>
+        <SelectLabel>原选模型</SelectLabel>
+        <SelectItem value={value} disabled>{missingLabel ?? '原选模型（不可用）'}</SelectItem>
+      </SelectGroup> : null}
+      {groups.map(group => <SelectGroup key={group.key}>
+        <SelectLabel>{group.label}</SelectLabel>
+        {group.items.map(model => <SelectItem key={model.modelId} value={model.modelId}
+          disabled={allowUnavailable && !usableModel(model)}>
+          {optionLabel(model, (names.get(model.name) ?? 0) > 1)}
+          {allowUnavailable && !usableModel(model) ? model.enabled ? '（不可用）' : '（已停用）' : ''}
+        </SelectItem>)}
+      </SelectGroup>)}
+    </SelectContent>
+  </Select>
+}

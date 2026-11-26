@@ -53,7 +53,11 @@ export function usePRCandidateChecks(snapshotId: string) {
       : reason ? '未覆盖'
       : lines ? `${lines} 处可疑`
       : coverage ? '无规则命中' : ''
-    return { candidates, label, reason: reason ? reasons[reason] ?? '源码暂时无法检查' : undefined }
+    return {
+      candidates, label,
+      reason: reason ? reasons[reason] ?? '源码暂时无法检查' : undefined,
+      ruleSet: saved.data?.ruleSet ?? null,
+    }
   }
 
   return {

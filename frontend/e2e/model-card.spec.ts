@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import { loginOrCreateUser } from './support/user-session.ts'
+import { chooseModel } from './support/model-select.ts'
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
 test.beforeEach(async ({ page }) => loginOrCreateUser(page))
@@ -11,7 +12,7 @@ test('项目与管理端复用只读模型卡并保持分析草稿', async ({ pa
   test.setTimeout(180_000)
   const modelsResponse = await page.request.get('/api/v1/repository-models')
   expect(modelsResponse.ok()).toBeTruthy()
-  const models = (await modelsResponse.json()).models as Array<{ modelId: string; repositoryPredictionSupported: boolean }>
+  const models = (await modelsResponse.json()).models as Array<{ modelId: string; name: string; repositoryPredictionSupported: boolean }>
   const model = models.find(item => item.repositoryPredictionSupported)
   expect(model).toBeTruthy()
 
@@ -34,7 +35,7 @@ test('项目与管理端复用只读模型卡并保持分析草稿', async ({ pa
   await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
   const branch = page.getByLabel('分支', { exact: true })
   await branch.fill('model-card-draft')
-  await page.getByLabel('模型来源', { exact: true }).selectOption(model!.modelId)
+  await chooseModel(page, model!)
   await page.getByRole('button', { name: '查看模型卡', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: '模型卡' })
   await expect(dialog).toBeVisible()
@@ -46,7 +47,7 @@ test('项目与管理端复用只读模型卡并保持分析草稿', async ({ pa
   await expect(dialog.getByText(card.benefit.conclusion.sentence, { exact: true })).toBeVisible()
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/model-card-project-1280.png`, fullPage: true })
   await dialog.getByRole('button', { name: '关闭', exact: true }).last().click()
-  await expect(page.getByLabel('模型来源', { exact: true })).toHaveValue(model!.modelId)
+  await expect(page.getByRole('combobox', { name: '模型来源' })).toContainText(model!.name)
   await expect(branch).toHaveValue('model-card-draft')
 
   const setup = await page.request.post('/api/admin/setup', { data: account })

@@ -162,11 +162,11 @@ function ProfileSettings({ onLoginRequired, navigate, onClose }: {
               { icon: Database, label: '数据版本', value: profile.datasetCount, route: { name: 'my-data' } as Route },
               { icon: FlaskConical, label: '训练实验', value: profile.experimentCount, route: { name: 'my-training' } as Route },
               { icon: Layers3, label: '模型', value: profile.modelCount, route: { name: 'my-models' } as Route },
-            ]).map(item => <button key={item.label} type="button" className="grid min-w-0 gap-2 rounded-md border border-border-soft bg-card p-3 text-left transition-colors hover:bg-hover" onClick={() => { onClose(); navigate(item.route) }}>
+            ]).map(item => <Button key={item.label} variant="ghost" type="button" className="grid h-auto min-w-0 gap-2 rounded-md border border-border-soft bg-card p-3 text-left hover:bg-hover" onClick={() => { onClose(); navigate(item.route) }}>
               <span className="flex items-center gap-2 text-xs text-foreground-3"><item.icon aria-hidden="true" size={15}/>{item.label}</span>
               <strong className="text-2xl font-semibold tabular-nums text-foreground">{item.value}</strong>
               <span className="flex items-center justify-between text-xs text-foreground-3">查看记录<ChevronRight aria-hidden="true" size={14}/></span>
-            </button>)}
+            </Button>)}
           </div>
           <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-soft bg-card px-3 py-3">
             <div className="grid min-w-0 gap-0.5">
@@ -184,10 +184,10 @@ function ProfileSettings({ onLoginRequired, navigate, onClose }: {
           </section>
           <section className="grid gap-2">
             <div className="flex items-baseline justify-between gap-2"><h2 className="text-sm font-semibold text-foreground">最近训练</h2><Button type="button" variant="ghost" size="sm" onClick={() => { onClose(); navigate({ name: 'my-training' }) }}>全部训练<ChevronRight aria-hidden="true"/></Button></div>
-            {recent.length ? recent.map(item => <button key={item.experimentId} type="button" className="flex min-w-0 items-center justify-between gap-3 rounded-sm border border-border-soft bg-card px-3 py-2.5 text-left transition-colors hover:bg-hover" onClick={() => { onClose(); navigate({ name: 'my-training', experimentId: item.experimentId }) }}>
+            {recent.length ? recent.map(item => <Button key={item.experimentId} variant="ghost" type="button" className="flex h-auto min-w-0 items-center justify-between gap-3 rounded-sm border border-border-soft bg-card px-3 py-2.5 text-left hover:bg-hover" onClick={() => { onClose(); navigate({ name: 'my-training', experimentId: item.experimentId }) }}>
               <span className="grid min-w-0 gap-0.5"><strong className="truncate text-sm font-medium text-foreground">{item.datasetVersion}</strong><span className="text-xs text-foreground-3">{item.tasks.length} 个方法 · {item.splitPreset}</span></span>
               <span className="shrink-0 text-xs text-foreground-3">{STATUS_LABELS[item.status] ?? item.status}</span>
-            </button>) : <div className="rounded-sm border border-dashed border-border-soft px-3 py-4 text-sm text-foreground-3">还没有训练记录</div>}
+            </Button>) : <div className="rounded-sm border border-dashed border-border-soft px-3 py-4 text-sm text-foreground-3">还没有训练记录</div>}
           </section>
           <section className="flex items-center justify-between gap-3 rounded-md border border-border-soft bg-card px-3 py-3">
             <div className="grid gap-0.5"><span className="text-sm font-medium text-foreground">模型可用状态</span><span className="text-xs text-foreground-3">{readyModels} 个可用 · {profile.modelCount} 个模型</span></div>

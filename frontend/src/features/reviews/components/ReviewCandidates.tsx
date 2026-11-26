@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { candidateKey, codeSideLabels, type CandidateDecision } from '@/features/reviews/prReview'
-import type { PRCandidate, PRCodeLocation } from '@/features/reviews/prReviewClient'
+import type { PRCandidate, PRCodeLocation, PRRuleSet } from '@/features/reviews/prReviewClient'
 
 const decisions = { confirmed: '确认', rejected: '驳回', deferred: '暂缓' } as const
 
-export function ReviewCandidates({ candidates, target, onLocate, onAdd, decisionsByKey, onDecision }: {
+export function ReviewCandidates({ candidates, target, ruleSet, onLocate, onAdd, decisionsByKey, onDecision }: {
   candidates: PRCandidate[]
   target?: PRCodeLocation
+  ruleSet?: PRRuleSet | null
   onLocate: (location: PRCodeLocation) => void
   onAdd: (candidate: PRCandidate) => void
   decisionsByKey?: Record<string, CandidateDecision>
@@ -18,6 +19,7 @@ export function ReviewCandidates({ candidates, target, onLocate, onAdd, decision
   return <section aria-label="可疑行与修复建议">
     <div className="flex flex-wrap items-center gap-1.5 border-b border-border-soft px-4 py-3">
       <h3 className="mr-1 text-xs font-medium text-foreground-2">{positions.size} 处规则命中</h3>
+      {ruleSet?.status === 'legacy' ? <span className="mr-1 rounded-sm bg-amber-soft px-1.5 py-0.5 text-[11px] text-amber-deep" title={ruleSet.analyzerVersion}>旧规则结果，未重算</span> : null}
       {[...positions.values()].map(item => <Button key={`${item.side}:${item.line}`} size="xs" type="button" variant="ghost"
         className="aria-pressed:bg-amber-soft aria-pressed:text-amber-deep"
         aria-label={`定位${codeSideLabels[item.side]}第 ${item.line} 行`}

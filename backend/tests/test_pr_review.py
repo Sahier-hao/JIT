@@ -173,6 +173,36 @@ def finish_job(service, source, job):
         feature_schema_version='kamei14-git-v1')
 
 
+def test_pr_analysis_exposes_saved_repair_evidence_without_changing_scores(bound_review):
+    service, _, _, _, storage = bound_review
+    source = service.refresh('example', 'project', 12)['snapshot']
+    job = service.analyze(source['snapshotId'], {'modelId': 'chosen-model'})['analyses'][0]['sync']
+    finish_job(service, source, job)
+    with storage.connection(write=True) as db:
+        db.execute(
+            'INSERT INTO dataset_record(dataset_version,dataset_name,manifest_json,manifest_sha256,'
+            'source_sha256,row_count,created_at) VALUES (?,?,?,?,?,?,?)',
+            ('fixture-data', 'fixture', '{}', 'fixture', 'fixture', 1, '2026-11-01T00:00:00Z'),
+        )
+        db.execute(
+            'INSERT INTO commit_record VALUES (?,?,?,?,?)',
+            ('fixture-data', source['headSha'], '2026-11-01T00:00:00Z', 0, 'fixture'),
+        )
+        db.execute(
+            'INSERT INTO commit_label_evidence(dataset_version,commit_id,fix_commit_id,path,'
+            'fix_time,rule_version,line_ranges_json,parent_ranges_json) VALUES (?,?,?,?,?,?,?,?)',
+            ('fixture-data', source['headSha'], 'f' * 40, 'src/token.py',
+             '2026-11-01T00:00:00Z', 'szz-full-v1', '[[4,5]]', '[[8,9]]'),
+        )
+    analysis = service.analyses(source['snapshotId'])['analyses'][0]
+    score = analysis['scores'][0]
+    assert score['risk'] == .4
+    evidence = score['labelEvidence'][0]
+    assert evidence['fixCommit'] == 'f' * 40
+    assert evidence['lineRanges'] == [[4, 5]] and evidence['parentRanges'] == [[8, 9]]
+    assert evidence['diffAnchor'].startswith('diff-')
+
+
 @pytest.mark.parametrize('fork', [False, True])
 def test_pr_creation_and_completion_never_publish_branch_or_fork_project(bound_review, fork):
     service, pr, _, _, storage = bound_review

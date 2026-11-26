@@ -2,7 +2,7 @@ import { apiRequest } from '@/lib/apiClient'
 import { record, recordList, text } from '@/lib/apiContract'
 import { useQuery } from '@tanstack/react-query'
 
-export interface ModelChoice { modelId: string; name: string; method: string; state: string; featureSchemaVersion?: string; repositoryPredictionSupported: boolean; enabled: boolean; isDefault: boolean }
+export interface ModelChoice { modelId: string; name: string; method: string; state: string; featureSchemaVersion?: string; repositoryPredictionSupported: boolean; enabled: boolean; isDefault: boolean; mine: boolean; shared: boolean }
 export interface MethodParam {
   name: string
   label: string
@@ -88,7 +88,7 @@ export async function trainingMethods(schema?: string, signal?: AbortSignal): Pr
 }
 export async function repositoryModels(signal?: AbortSignal): Promise<ModelChoice[]> {
   const body = record(await apiRequest({ path: '/api/v1/repository-models', method: 'GET', signal }))
-  return recordList(body.models).map(raw => ({ modelId: text(raw.modelId), name: text(raw.name), method: text(raw.method), state: text(raw.state), enabled: raw.enabled !== false, isDefault: raw.isDefault === true, repositoryPredictionSupported: raw.repositoryPredictionSupported === true, featureSchemaVersion: typeof raw.featureSchemaVersion === 'string' ? raw.featureSchemaVersion : undefined }))
+  return recordList(body.models).map(raw => ({ modelId: text(raw.modelId), name: text(raw.name), method: text(raw.method), state: text(raw.state), enabled: raw.enabled !== false, isDefault: raw.isDefault === true, mine: raw.mine === true, shared: raw.shared === true, repositoryPredictionSupported: raw.repositoryPredictionSupported === true, featureSchemaVersion: typeof raw.featureSchemaVersion === 'string' ? raw.featureSchemaVersion : undefined }))
 }
 
 /** 项目可选模型：按缓存共享，避免每个组件各自请求同一列表。 */

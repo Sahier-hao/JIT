@@ -24,6 +24,7 @@ const dedicatedSpecs = [
   '**/project-workspace.spec.ts',
   '**/admin-experiments.spec.ts',
   '**/pr-account-continuation.spec.ts',
+  '**/shadcn-workspaces.spec.ts',
 ]
 
 export default defineConfig({

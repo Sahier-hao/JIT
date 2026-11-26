@@ -85,8 +85,13 @@ it('builds only a dataset, keeps project analysis untouched, and offers explicit
   expect(await screen.findByLabelText('构建分支')).toHaveValue('main')
   await user.click(screen.getByRole('combobox', { name: '采集范围' }))
   await user.click(await screen.findByRole('option', { name: '自定义日期' }))
-  await user.type(screen.getByLabelText('开始日期'), '2024-01-01')
-  await user.type(screen.getByLabelText('结束日期'), '2025-01-01')
+  async function pickDate(label: string, value: string) {
+    await user.click(screen.getByLabelText(label))
+    await user.type(screen.getByLabelText(`${label}手动输入`), value)
+    await user.click(screen.getByRole('button', { name: '应用日期' }))
+  }
+  await pickDate('开始日期', '2024-01-01')
+  await pickDate('结束日期', '2025-01-01')
   await user.click(screen.getByRole('button', { name: '开始构建' }))
   expect(await screen.findByText('已完成', {}, { timeout: 3000 })).toBeVisible()
   expect(screen.getByText('kamei14-git-v2-project-2024-01-01_2024-12-31')).toBeVisible()

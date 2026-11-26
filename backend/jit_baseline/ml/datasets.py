@@ -8,6 +8,7 @@
 """
 import json
 import re
+from functools import lru_cache
 from pathlib import Path
 
 from . import admission
@@ -280,11 +281,23 @@ def register(csv_path, schema=None, dataset=None, version=None, root=None, cohor
             "path": manifest_relative(target), "sha256": sha256(text.encode("utf-8")), "created": True}
 
 
-def load_all(root=None):
-    """加载全部已登记描述文件；目录为空即失败，不退回内建常量（DSR-06）。"""
-    root = Path(root) if root is not None else DATASETS
-    if not root.is_dir():
-        raise BaselineError("DATASET_REGISTRY_EMPTY", f"数据集描述目录不存在：{root}")
+def _registry_signature(root):
+    """描述文件的轻量签名；文件增删或修改后签名变化，缓存随之失效。"""
+    entries = []
+    for path in sorted(root.glob("*/*.json")):
+        if path.name.endswith(".tmp"):
+            continue
+        try:
+            stat = path.stat()
+        except OSError as exc:
+            raise BaselineError("DATASET_UNAVAILABLE", f"描述文件不可用：{path.name}") from exc
+        entries.append((path.relative_to(root).as_posix(), stat.st_mtime_ns, stat.st_size))
+    return tuple(entries)
+
+
+@lru_cache(maxsize=8)
+def _load_all_cached(root_text, signature):
+    root = Path(root_text)
     registered = {}
     for path in sorted(root.glob("*/*.json")):
         if path.name.endswith(".tmp"):
@@ -293,9 +306,25 @@ def load_all(root=None):
         if manifest["version"] in registered:
             raise BaselineError("DATASET_INVALID", f"数据集版本重复登记：{manifest['version']}")
         registered[manifest["version"]] = dict(manifest, manifestPath=manifest_relative(path))
-    if not registered:
-        raise BaselineError("DATASET_REGISTRY_EMPTY", f"没有已登记的数据集描述文件：{root}")
     return registered
+
+
+def load_all(root=None):
+    """加载全部已登记描述文件；目录为空即失败，不退回内建常量（DSR-06）。
+
+    目录内描述文件较多时逐次解析会明显拖慢每个请求；按文件路径、修改时间与大小
+    生成签名后缓存解析结果。任何登记、覆盖或删除都会改变签名并触发重新解析，
+    因此读到的仍是当前文件内容，而不是长期缓存。
+    """
+    root = Path(root) if root is not None else DATASETS
+    if not root.is_dir():
+        raise BaselineError("DATASET_REGISTRY_EMPTY", f"数据集描述目录不存在：{root}")
+    signature = _registry_signature(root)
+    if not signature:
+        raise BaselineError("DATASET_REGISTRY_EMPTY", f"没有已登记的数据集描述文件：{root}")
+    registered = _load_all_cached(str(root.resolve()), signature)
+    # 调用方可能按版本增删顶层条目；返回浅拷贝，描述文件本身保持只读。
+    return dict(registered)
 
 
 def check_run(registry, config):

@@ -60,6 +60,9 @@ def test_read_does_not_infer_and_explicit_generation_saves_exact_model_explanati
     assert body['baselineSource'] == 'zero' and body['limitations']
     assert 0 < len(body['explanation']) <= 5
     assert all(item['feature'] in ('ns', 'nd', 'nf', 'ent', 'la', 'ld') for item in body['explanation'])
+    assert body['featureSummary']
+    assert body['featureSummary'].startswith(('本次分数主要受', '相对保存的基线，'))
+    assert '不是缺陷' not in body['featureSummary']
     assert c['client'].get(c['path'], params=c['params']).json() == body
     monkeypatch.setattr(c['catalog'], 'load_model', lambda *_: pytest.fail(
         'saved explanation must not infer',
@@ -97,6 +100,8 @@ def test_method_catalog_and_independent_generation_preserve_each_saved_explanati
     assert linear['explanationUnit'] == 'logit'
     assert isinstance(linear['contributionTotal'], float)
     assert linear['stability']['status'] in ('stable', 'unstable')
+    assert linear['featureSummary']
+    assert 'log-odds' in linear['featureSummary']
 
     saved = c['client'].get(root + '/explanations', params=c['params']).json()
     assert [item['explanationMethod'] for item in saved['explanations']] == [
@@ -429,3 +434,23 @@ def test_real_registered_fourteen_field_model_uses_its_own_dataset_baseline(cont
     assert body['explanationStatus'] == 'supported', body
     assert body['featureSchemaVersion'] == schema.name and body['modelId'] == model['modelId']
     assert body['baselineSource'] == 'training-partition-mean' and body['missingBaselineFeatures'] == []
+
+
+def test_feature_summary_uses_only_supplied_saved_items_and_reuses_chinese_names():
+    from jit_baseline.ml import explanations
+
+    summary = explanations.feature_summary([
+        {"feature": "nf", "delta": 2.0, "direction": "increases"},
+        {"feature": "la", "delta": 1.0, "direction": "increases"},
+        {"feature": "ld", "delta": -0.5, "direction": "decreases"},
+        {"feature": "ndev", "delta": 0.1, "direction": "increases"},
+    ], "probability")
+    assert summary == "本次分数主要受文件数、新增行数推高模型分数；删除行数拉低模型分数。"
+    assert "参与开发者数" not in summary
+    assert "文件数" in summary and "新增行数" in summary and "删除行数" in summary
+
+    unstable = explanations.feature_summary([
+        {"feature": "la", "delta": 1.0, "direction": "increases"},
+    ], "logit", {"status": "unstable"})
+    assert unstable == "相对保存的基线，新增行数推高 log-odds。特征排序不稳定，不作为确定主因。"
+    assert explanations.feature_summary([], "probability") is None

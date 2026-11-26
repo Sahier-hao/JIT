@@ -99,6 +99,33 @@ it('keeps the saved policy and a recovery message when a write is rejected', asy
   expect(screen.getByRole('button', { name: '刷新' })).toBeEnabled()
 })
 
+it('opens a ready model to users and confirms before stopping sharing', async () => {
+  let shared = false
+  const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
+    if (String(path).endsWith('/session')) return Response.json({ authenticated: true, username: 'admin' })
+    if (String(path).endsWith('/sharing')) {
+      shared = JSON.parse(String(options?.body)).shared === true
+      return Response.json({ modelId: 'lr', shared })
+    }
+    if (String(path).endsWith('/models?view=registered')) return Response.json({ models: [{
+      modelId: 'lr', name: '逻辑回归', state: 'ready', featureSchemaVersion: 'openstack-six-v1',
+      enabled: true, isDefault: true, shared,
+    }], methods: [], readiness: READINESS })
+    return Response.json({ candidates: [] })
+  })
+  render(<AdminWorkspace route={{ name: 'admin', view: 'models' }} navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  const toggle = await screen.findByRole('switch', { name: '开放给所有用户' })
+  await user.click(toggle)
+  await waitFor(() => expect(shared).toBe(true))
+  expect(await screen.findByText('模型已对用户开放。')).toBeVisible()
+  await user.click(toggle)
+  expect(await screen.findByText(/停止开放「逻辑回归」/)).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '停止开放' }))
+  await waitFor(() => expect(shared).toBe(false))
+  expect(fetch.mock.calls.filter(([, options]) => options?.method === 'PUT')).toHaveLength(2)
+})
+
 it('shows unregistered experiment readiness without counting them as models', async () => {
   const navigate = vi.fn()
   vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {

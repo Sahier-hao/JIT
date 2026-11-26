@@ -7,6 +7,7 @@ import { FailureNotice, LoadingNotice } from '@/components/shared/Feedback'
 import { displayTime } from '@/lib/domain'
 import { checkTracking, getTracking, projectPRs, updateTracking, type PRTracking, type ProjectPRPage } from '@/features/projects/projectActivityClient'
 import { repositoryModels, type ModelChoice } from '@/features/models/modelClient'
+import { ModelSelect, usableModel } from '@/features/models/components/ModelSelect'
 import { cn } from '@/lib/utils'
 
 const INTERVALS = [300, 600, 900, 1800, 3600]
@@ -32,7 +33,7 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
       .catch(failure => { if (!controller.signal.aborted) setError(failure) })
     return () => controller.abort()
   }, [repositoryId, attempt, onTracking])
-  const compatible = (m: ModelChoice) => m.state === 'ready' && m.enabled && m.repositoryPredictionSupported
+  const compatible = (m: ModelChoice) => usableModel(m)
   const validModel = models.some(m => m.modelId === modelId && compatible(m))
   const validInterval = INTERVALS.includes(cadence)
   const eligible = scope?.pullRequests.filter(p => p.remoteState === 'open' && !p.draft).length ?? 0
@@ -72,10 +73,9 @@ export function PRTrackingPanel({ repositoryId, onTracking }: { repositoryId: st
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="grid gap-1.5">
         <span className="text-xs font-medium text-foreground-2">固定分析模型</span>
-        <Select value={modelId == null ? '' : String(modelId)} onValueChange={nextValue => (value => { setModelId(value); setConfirm(false) })(nextValue === '__jit_empty__' ? '' : nextValue)} disabled={busy}><SelectTrigger aria-label="固定自动分析模型"><SelectValue placeholder={"选择真实兼容模型"}/></SelectTrigger><SelectContent>{([
-          ...(modelId && !models.some(m => m.modelId === modelId) ? [{ value: modelId, label: `原选模型 ${modelId}（不可用）`, disabled: true }] : []),
-          ...models.map(m => ({ value: m.modelId, label: `${m.name} · ${m.modelId}${compatible(m) ? '' : '（不可用）'}`, disabled: !compatible(m) })),
-        ]).map(option => <SelectItem key={String(option.value)} value={String(option.value) || '__jit_empty__'} disabled={'disabled' in option && option.disabled === true}>{option.label}</SelectItem>)}</SelectContent></Select>
+        <ModelSelect models={models} value={modelId} onValueChange={value => { setModelId(value); setConfirm(false) }}
+          label="固定自动分析模型" placeholder="选择真实兼容模型" disabled={busy} allowUnavailable
+          missingLabel={`原选模型 ${modelId.slice(0, 8)}（不可用）`}/>
       </div>
       <div className="grid gap-1.5">
         <span className="text-xs font-medium text-foreground-2">检查间隔</span>

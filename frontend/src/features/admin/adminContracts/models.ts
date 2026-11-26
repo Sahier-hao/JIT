@@ -10,6 +10,7 @@ export interface AdminModel {
   state: string
   enabled: boolean
   isDefault: boolean
+  shared: boolean
   featureSchemaVersion: string
   repositorySchemaCompatible?: boolean
   validationMessage?: string
@@ -142,12 +143,14 @@ function registeredModels(catalog: Row): AdminModel[] {
         state: text(value.state),
         enabled: value.enabled === true,
         isDefault: value.isDefault === true,
+        shared: value.shared === true,
         featureSchemaVersion: text(value.featureSchemaVersion),
         repositorySchemaCompatible: typeof value.repositorySchemaCompatible === 'boolean' ? value.repositorySchemaCompatible : undefined,
         validationMessage: value.error == null ? undefined : textOrNull(record(value.error).message) ?? undefined,
         runId: typeof value.runId === 'string' ? value.runId : '',
         artifactRunId: typeof value.artifactRunId === 'string' ? value.artifactRunId : '',
         artifactDatasetVersion: typeof value.artifactDatasetVersion === 'string' ? value.artifactDatasetVersion : '',
+        ownerUserId: textOrNull(value.ownerUserId),
         limitations: Array.isArray(value.limitations) ? textList(value.limitations) : [],
       }
   })
@@ -168,6 +171,7 @@ export async function fetchAdminModel(modelId: string, signal?: AbortSignal): Pr
     state: text(body.state),
     enabled: body.enabled === true,
     isDefault: body.isDefault === true,
+    shared: body.shared === true,
     featureSchemaVersion: text(body.featureSchemaVersion),
     runId: text(body.runId),
     artifactRunId: text(body.artifactRunId),

@@ -176,7 +176,8 @@ def test_model_coverage_contract_requires_admin(settings):
         )
         assert {'datasets', 'total', 'limit', 'offset', 'latestImport'} == set(page)
         listing = validate_response(client.get('/api/v1/models'), '/api/v1/models')
-        assert listing['readiness']['userSelectableModels'] == listing['readiness']['repositorySelectableModels']
+        assert (listing['readiness']['userSelectableModels']
+                <= listing['readiness']['repositorySelectableModels'])
     with PublicTestClient(app) as public:
         assert public.get('/api/v1/models/coverage').status_code == 401
 

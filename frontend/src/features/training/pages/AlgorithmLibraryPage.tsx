@@ -26,8 +26,8 @@ function MethodListItem({ method, selected, onSelect }: {
   selected: boolean
   onSelect: () => void
 }) {
-  return <button type="button" onClick={onSelect} aria-current={selected ? 'true' : undefined}
-    className={cn('grid min-w-0 gap-1 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+  return <Button variant="ghost" type="button" onClick={onSelect} aria-current={selected ? 'true' : undefined}
+    className={cn('grid h-auto w-full min-w-0 gap-1 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
       selected ? 'border-accent/35 bg-accent-soft' : 'border-transparent hover:bg-sunken')}>
     <span className="flex min-w-0 items-start justify-between gap-2">
       <strong className="min-w-0 text-sm font-medium text-foreground">{method.name}</strong>
@@ -36,7 +36,7 @@ function MethodListItem({ method, selected, onSelect }: {
       </span>
     </span>
     <span className="truncate text-[11px] text-foreground-3">{method.guide.summary}</span>
-  </button>
+  </Button>
 }
 
 export function AlgorithmLibraryPage({ onLoginRequired, method, navigate }: {

@@ -27,7 +27,7 @@ export function AnalysisLauncher({ repositoryUrl, defaultBranch, onStarted, onCl
     <Button variant="default" size="sm" onClick={() => setOpen(true)} type="button"><Plus aria-hidden="true" focusable="false" size={15}/>分析分支提交</Button>
     <Dialog open={open} onOpenChange={next => { if (!next) close() }}><DialogContent className="max-h-[90vh] overflow-auto sm:max-w-[600px]"><DialogHeader>
       <DialogTitle>分析分支提交</DialogTitle>
-      <DialogDescription>用已有模型给分支的历史提交打分。结果会与缺陷引入证据并排显示。</DialogDescription>
+      <DialogDescription>将采集该范围的提交、登记数据版本，然后用已有模型逐条打分；结果与缺陷引入证据并排显示。</DialogDescription>
     </DialogHeader><AnalysisForm
         key={initial ? JSON.stringify(initial) : 'new'}
         repositoryUrl={repositoryUrl}

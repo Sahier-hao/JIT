@@ -357,6 +357,8 @@ class ModelCatalog:
                                if model.get('featureSchemaVersion') not in REPOSITORY_SCHEMAS]
         selectable = [model for model in ready_models if model.get('enabled')
                       and model.get('featureSchemaVersion') in REPOSITORY_SCHEMAS]
+        user_selectable = [model for model in selectable
+                           if model.get('shared') or model.get('ownerUserId')]
         with self.store.connection() as db:
             default_id = db.execute('SELECT model_id FROM model_default WHERE singleton=1').fetchone()[0]
         default = next((model for model in registered if model['modelId'] == default_id), None)
@@ -395,8 +397,11 @@ class ModelCatalog:
         if not selectable:
             issues.append({'code': 'NO_REPOSITORY_MODEL',
                            'message': '没有可用于当前用户仓库分析的已登记模型。'})
+        elif not user_selectable:
+            issues.append({'code': 'NO_USER_MODEL',
+                           'message': '没有对用户开放的模型；管理员需在模型设置中开放，用户才能选择。'})
         return {
-            'ready': bool(ready_models) and default_available and bool(selectable),
+            'ready': bool(ready_models) and default_available and bool(user_selectable),
             'completeArtifacts': len(complete),
             'unregisteredExperiments': unregistered,
             'completeUnregisteredExperiments': unregistered,
@@ -404,7 +409,7 @@ class ModelCatalog:
             'registeredModels': len(registered),
             'readyModels': len(ready_models),
             'repositorySelectableModels': len(selectable),
-            'userSelectableModels': len(selectable),
+            'userSelectableModels': len(user_selectable),
             'invalidModels': len(invalid_models),
             'artifactInvalidModels': artifact_invalid,
             'dependencyUnavailableModels': dependency_unavailable,
@@ -615,8 +620,11 @@ class ModelCatalog:
 
     def _row(self, model_id):
         with self.store.connection() as db:
-            row = db.execute('SELECT m.*,l.relative_key,l.manifest_json FROM model_version m '
-                             'JOIN run_location l ON l.id=m.preferred_location_id WHERE m.id=?', (model_id,)).fetchone()
+            row = db.execute('SELECT m.*,l.relative_key,l.manifest_json,'
+                             's.model_id IS NOT NULL AS shared '
+                             'FROM model_version m '
+                             'JOIN run_location l ON l.id=m.preferred_location_id '
+                             'LEFT JOIN model_share s ON s.model_id=m.id WHERE m.id=?', (model_id,)).fetchone()
         if row is None:
             raise RequestError('NOT_FOUND')
         return dict(row)
@@ -640,6 +648,8 @@ class ModelCatalog:
         return dict(
             payload,
             state=row['state'],
+            ownerUserId=row['owner_user_id'],
+            shared=bool(row['shared']),
             **self.policy(model_id),
         )
 
@@ -665,7 +675,7 @@ class ModelCatalog:
             raise RequestError(code) from exc
         row = self._row(model_id)
         return snapshot, dict(payload, state='ready', ownerUserId=row['owner_user_id'],
-                              **self.policy(model_id))
+                              shared=bool(row['shared']), **self.policy(model_id))
 
     def model_directory(self, model_id):
         """Return the verified artifact directory for a registered model."""
@@ -760,20 +770,44 @@ class ModelCatalog:
         row = self._row(model_id)
         return row['owner_user_id']
 
+    def model_access(self, model_id):
+        row = self._row(model_id)
+        return {'ownerUserId': row['owner_user_id'], 'shared': bool(row['shared'])}
+
+    def can_use_model(self, model_id, viewer):
+        """用户可选：本人模型或管理员已开放的模型。
+
+        没有用户会话的本机操作（命令行、既有测试）沿用“无归属模型可用”，
+        避免把本地维护流程误判成越权。
+        """
+        access = self.model_access(model_id)
+        if viewer is None:
+            return access['ownerUserId'] is None or access['shared']
+        return access['ownerUserId'] == viewer or access['shared']
+
+    def set_shared(self, model_id, shared, actor):
+        row = self._row(model_id)
+        if shared and row['state'] != 'ready':
+            raise RequestError('MODEL_NOT_READY')
+        return self.store.set_model_share(model_id, shared, actor)
+
     def registered_models(self, state=None):
-        """Read the saved verification state and current policy in one catalog snapshot."""
+        """Read the saved verification state, current policy and sharing in one snapshot."""
         with self.store.connection() as db:
             rows = db.execute(
                 'SELECT m.payload_json,m.state,m.error_code,m.owner_user_id,'
-                'COALESCE(p.enabled,1) AS enabled,d.model_id=m.id AS is_default '
+                'COALESCE(p.enabled,1) AS enabled,d.model_id=m.id AS is_default,'
+                's.model_id IS NOT NULL AS shared '
                 'FROM model_version m LEFT JOIN model_policy p ON p.model_id=m.id '
+                'LEFT JOIN model_share s ON s.model_id=m.id '
                 'CROSS JOIN model_default d WHERE (? IS NULL OR m.state=?) ORDER BY m.id',
                 (state, state),
             ).fetchall()
         models = []
         for row in rows:
             model = dict(json.loads(row['payload_json']), state=row['state'], ownerUserId=row['owner_user_id'],
-                         enabled=bool(row['enabled']), isDefault=bool(row['is_default']))
+                         enabled=bool(row['enabled']), isDefault=bool(row['is_default']),
+                         shared=bool(row['shared']))
             if row['state'] == 'invalid':
                 model['error'] = {'code': row['error_code'], 'message': MESSAGES.get(row['error_code'], '运行不可用')}
             models.append(model)
@@ -790,7 +824,8 @@ class ModelCatalog:
                     raise
                 row = self._row(model_id)
                 payload = dict(json.loads(row['payload_json']), state='invalid',
-                               ownerUserId=row['owner_user_id'], **self.policy(model_id),
+                               ownerUserId=row['owner_user_id'], shared=bool(row['shared']),
+                               **self.policy(model_id),
                                error={'code': row['error_code'], 'message': MESSAGES.get(row['error_code'], '运行不可用')})
             return payload
         # Artifact verification is I/O-heavy; keep catalog listing responsive without

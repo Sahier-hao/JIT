@@ -3,16 +3,18 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ModelSelect, usableModel } from '@/features/models/components/ModelSelect'
 import { repositoryModels, type ModelChoice } from '@/features/models/modelClient'
 import { analyzeAllProjectPRs, projectPROpenCount, type PRBatch, type PRBatchScope } from '@/features/projects/projectActivityClient'
 
 type ScopeKind = 'all' | 'limit' | 'page'
 
-export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted }: {
+export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted, variant = 'outline' }: {
   repositoryId: string
   modelId?: string
   openPage?: number
   onStarted: (batch: PRBatch) => void
+  variant?: 'default' | 'outline'
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -39,7 +41,7 @@ export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted }: 
       if (controller.signal.aborted) return
       setOpenCount(count.status === 'fulfilled' ? count.value : null)
       if (catalog.status === 'fulfilled') {
-        const usable = catalog.value.filter(model => model.state === 'ready' && model.enabled && model.repositoryPredictionSupported)
+        const usable = catalog.value.filter(usableModel)
         setModels(usable)
         const preferred = usable.find(model => model.modelId === modelId) ?? usable.find(model => model.isDefault) ?? usable[0]
         setSelectedModel(previous => previous || preferred?.modelId || '')
@@ -87,7 +89,7 @@ export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted }: 
     }
     setOpen(next)
   }}>
-    <DialogTrigger asChild><Button variant="outline" type="button">批量分析 PR</Button></DialogTrigger>
+    <DialogTrigger asChild><Button variant={variant} type="button">批量分析 PR</Button></DialogTrigger>
     <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>批量分析 PR</DialogTitle>
@@ -101,12 +103,9 @@ export function PRBatchLauncher({ repositoryId, modelId, openPage, onStarted }: 
         : <div className="grid gap-3">
           <label className="grid gap-1.5 text-sm">
             模型
-            <Select value={modelAvailable ? selectedModel : ''} onValueChange={setSelectedModel} disabled={submitting || models.length === 0}>
-              <SelectTrigger aria-label="批量分析模型"><SelectValue placeholder={models.length ? '请选择可用模型' : '没有可用模型'}/></SelectTrigger>
-              <SelectContent>{models.map(model => <SelectItem key={model.modelId} value={model.modelId}>
-                {model.modelId === modelId ? '当前项目模型 · ' : model.isDefault ? '默认模型 · ' : ''}{model.name}
-              </SelectItem>)}</SelectContent>
-            </Select>
+            <ModelSelect models={models} value={modelAvailable ? selectedModel : ''} onValueChange={setSelectedModel}
+              label="批量分析模型" disabled={submitting || models.length === 0}
+              placeholder={models.length ? '选择模型' : '没有可用模型'}/>
           </label>
           <label className="grid gap-1.5 text-sm">
             范围

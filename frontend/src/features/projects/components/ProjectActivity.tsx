@@ -119,15 +119,15 @@ export function NotificationEntry({ navigate }: { navigate: (r: Route) => void }
         <ul className="divide-y divide-border-soft">{page?.events.slice(0, 5).map(event => {
           const isUnread = read !== null && !readError && !read.has(event.eventId)
           return <li key={event.eventId}>
-            <button type="button" onClick={() => { if (isUnread) mark([event.eventId]); go(eventRoute(event)) }}
-              className="grid w-full grid-cols-[0.4rem_minmax(0,1fr)_auto] items-center gap-2.5 px-4 py-3 text-left hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
+            <Button variant="ghost" type="button" onClick={() => { if (isUnread) mark([event.eventId]); go(eventRoute(event)) }}
+              className="grid h-auto w-full grid-cols-[0.4rem_minmax(0,1fr)_auto] items-center gap-2.5 rounded-none px-4 py-3 text-left hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
               <span className={`size-1.5 self-start rounded-full ${isUnread ? 'mt-1.5 bg-accent' : ''}`} aria-hidden="true"/>
               <span className="min-w-0">
                 <span className={`block text-sm [overflow-wrap:anywhere] ${isUnread ? 'font-semibold' : 'font-medium'}`}>{isUnread ? <span className="sr-only">未读 · </span> : null}{event.title}</span>
                 <time dateTime={event.createdAt} className="mt-0.5 block text-xs tabular-nums text-foreground-3">{displayTime(event.createdAt)}</time>
               </span>
               <ChevronRight size={15} className="text-foreground-3" aria-hidden="true"/>
-            </button>
+            </Button>
           </li>
         })}</ul>
       </div>

@@ -21,6 +21,17 @@ export interface LineScore {
   line: number
   text: string
   score: number
+  logit: number | null
+  contributions: LineContribution[]
+  contributionTotal: number | null
+  otherContribution: number | null
+}
+
+export interface LineContribution {
+  feature: string
+  value: number
+  weight: number
+  contribution: number
 }
 
 export interface LineScoreResult {
@@ -28,7 +39,38 @@ export interface LineScoreResult {
   lines: LineScore[]
   count: number
   skippedBlank: number
+  intercept: number | null
+  contributionUnit: string | null
+  contributionCaveat: string
   caveats: string[]
+}
+
+export const LINE_FEATURE_LABELS: Record<string, string> = {
+  lineLength: '行长度',
+  indent: '缩进',
+  blank: '空行标记',
+  comment: '注释标记',
+  fileLines: '文件行数',
+  lineRatio: '文件位置',
+  if: 'if 分支',
+  for: 'for 循环',
+  while: 'while 循环',
+  return: 'return 语句',
+  try: 'try 块',
+  catch: 'catch 块',
+  assign: '赋值',
+  compare: '比较',
+  call: '调用',
+  member: '成员访问',
+  index: '索引访问',
+  identifier: '标识符',
+  digit: '数字字符',
+  'language:typescript': 'TypeScript 语言项',
+  'language:javascript': 'JavaScript 语言项',
+}
+
+export function lineFeatureLabel(feature: string): string {
+  return LINE_FEATURE_LABELS[feature] ?? feature
 }
 
 function numberOrNull(value: unknown): number | null {
@@ -86,13 +128,33 @@ export async function scoreLineResearch(code: string, language: string): Promise
     language: text(body.language),
     lines: recordList(body.lines).map(raw => {
       const value = record(raw)
+      const contributions = Array.isArray(value.contributions)
+        ? value.contributions.map(rawContribution => {
+            const contribution = record(rawContribution)
+            return {
+              feature: text(contribution.feature),
+              value: finiteNumber(contribution.value),
+              weight: finiteNumber(contribution.weight),
+              contribution: finiteNumber(contribution.contribution),
+            }
+          })
+        : []
       return {
         rank: finiteNumber(value.rank), line: finiteNumber(value.line),
         text: typeof value.text === 'string' ? value.text : '', score: finiteNumber(value.score),
+        logit: numberOrNull(value.logit),
+        contributions,
+        contributionTotal: numberOrNull(value.contributionTotal),
+        otherContribution: numberOrNull(value.otherContribution),
       }
     }),
     count: finiteNumber(body.count),
     skippedBlank: finiteNumber(body.skippedBlank),
+    intercept: numberOrNull(body.intercept),
+    contributionUnit: textOrNull(body.contributionUnit),
+    contributionCaveat: typeof body.contributionCaveat === 'string'
+      ? body.contributionCaveat
+      : '行级特征贡献，不是缺陷原因。',
     caveats: textList(body.caveats),
   }
 }

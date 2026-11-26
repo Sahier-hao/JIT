@@ -366,9 +366,16 @@ class PullRequestReview:
                         path = snapshot_paths.get(raw_path)
                         if path is not None and path not in files:
                             files.append(path)
-                    scores.append(dict(commitId=item['sha'], risk=risk, files=files,
-                                       addedLines=row['added_lines'], deletedLines=row['deleted_lines'],
-                                       fileCount=row['file_count']))
+                    evidence = (
+                        self.storage.commit_label_evidence(job['datasetVersion'], item['sha'])
+                        if job.get('datasetVersion') else []
+                    )
+                    score = dict(commitId=item['sha'], risk=risk, files=files,
+                                 addedLines=row['added_lines'], deletedLines=row['deleted_lines'],
+                                 fileCount=row['file_count'])
+                    if evidence:
+                        score['labelEvidence'] = evidence
+                    scores.append(score)
                     for path in files:
                         known = file_risks.get(path)
                         if known is None or risk > known:
@@ -413,7 +420,8 @@ class PullRequestReview:
             analyzed.append(file['path'])
             unique_rules = {(item['line'], item['ruleId'], item['ruleVersion']): item for item in items}
             results.extend(dict(item, suggestion=candidate.suggestion(item)) for item in unique_rules.values())
-        coverage = {'analyzerVersion': candidate.ANALYZER_VERSION, 'side': side,
+        coverage = {'analyzerVersion': candidate.ANALYZER_VERSION,
+                    'ruleVersion': candidate.RULE_VERSION, 'side': side,
                     'analyzed': analyzed, 'skipped': skipped,
                     'selected': len(selected), 'totalFiles': len(files)}
         with self.storage.connection(write=True) as db:
@@ -432,7 +440,9 @@ class PullRequestReview:
                            (snapshot_id, candidate.ANALYZER_VERSION, item['side'], item['path'],
                             item['line'], item['ruleId'], item['ruleVersion'], item['message'],
                             item['evidence']))
-        return {'snapshotId': snapshot_id, 'coverage': coverage, 'candidates': results}
+        return {'snapshotId': snapshot_id, 'coverage': coverage, 'candidates': results,
+                'ruleSet': {'analyzerVersion': candidate.ANALYZER_VERSION,
+                            'ruleVersion': candidate.RULE_VERSION, 'status': 'current'}}
 
     @staticmethod
     def _candidate_file_coverage(coverage):
@@ -445,20 +455,47 @@ class PullRequestReview:
 
     def stored_candidates(self, snapshot_id):
         self.get(snapshot_id)
-        key = (snapshot_id, candidate.ANALYZER_VERSION)
+        versions = [candidate.ANALYZER_VERSION, *candidate.LEGACY_RULE_VERSIONS]
         with self.storage.connection() as db:
-            run = db.execute('SELECT coverage_json FROM pr_candidate_run WHERE snapshot_id=? AND analyzer_version=?', key).fetchone()
-            rows = db.execute('SELECT * FROM pr_candidate WHERE snapshot_id=? AND analyzer_version=? ORDER BY path, line, rule_id',
-                              key).fetchall()
-        coverage = json.loads(run[0]) if run else None
+            placeholders = ','.join('?' for _ in versions)
+            runs = db.execute(
+                f'SELECT analyzer_version,coverage_json FROM pr_candidate_run '
+                f'WHERE snapshot_id=? AND analyzer_version IN ({placeholders})',
+                (snapshot_id, *versions),
+            ).fetchall()
+            by_version = {row['analyzer_version']: row['coverage_json'] for row in runs}
+            version = next((item for item in versions if item in by_version), None)
+            if version is None:
+                return {'snapshotId': snapshot_id, 'coverage': None,
+                        'candidates': [], 'ruleSet': None}
+            key = (snapshot_id, version)
+            rows = db.execute(
+                'SELECT * FROM pr_candidate WHERE snapshot_id=? AND analyzer_version=? '
+                'ORDER BY path, line, rule_id',
+                key,
+            ).fetchall()
+            run = by_version[version]
+        coverage = json.loads(run) if run else None
         if coverage is not None:
             files = self._candidate_file_coverage(coverage)
+            coverage.setdefault(
+                'ruleVersion',
+                candidate.LEGACY_RULE_VERSIONS.get(version, candidate.RULE_VERSION),
+            )
             for row in rows:
                 files.setdefault((row['path'], row['side']), dict(path=row['path'], side=row['side'], reason=None))
             coverage['files'] = list(files.values())
             rows = [row for row in rows if files[row['path'], row['side']]['reason'] is None]
         return {'snapshotId': snapshot_id,
                 'coverage': coverage,
+                'ruleSet': {
+                    'analyzerVersion': version,
+                    'ruleVersion': (
+                        coverage.get('ruleVersion') if coverage
+                        else candidate.LEGACY_RULE_VERSIONS.get(version, candidate.RULE_VERSION)
+                    ),
+                    'status': 'current' if version == candidate.ANALYZER_VERSION else 'legacy',
+                },
                 'candidates': [dict({
                     'side': row['side'], 'path': row['path'], 'line': row['line'],
                     'ruleId': row['rule_id'], 'ruleVersion': row['rule_version'],

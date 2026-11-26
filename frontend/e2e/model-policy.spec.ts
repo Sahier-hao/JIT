@@ -2,6 +2,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import { loginOrCreateUser } from './support/user-session.ts'
+import { chooseModel } from './support/model-select.ts'
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
 test.beforeEach(async ({ page }) => loginOrCreateUser(page))
@@ -57,8 +58,7 @@ test('管理员设置默认、用户指定优先、停用拦截及历史保留',
     const project = await (await page.request.post('/api/v1/repositories', { data: { repositoryUrl: REPOSITORY.replaceAll('\\', '/') } })).json()
     await page.goto(`/#/projects/${project.repositoryId}/analyses`)
     await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
-    await expect(page.getByRole('option', { name: `使用默认模型：${tree.name}`, exact: true })).toBeAttached({ timeout })
-    await page.getByLabel('模型来源', { exact: true }).selectOption('default')
+    await chooseModel(page, tree)
     let response = page.waitForResponse(r => r.url().endsWith('/api/v1/repository-syncs') && r.request().method() === 'POST')
     await page.getByRole('button', { name: '开始分析', exact: true }).click()
     const defaultJob = await (await response).json()
@@ -66,7 +66,7 @@ test('管理员设置默认、用户指定优先、停用拦截及历史保留',
     expect(defaultJob.requestedModelId).toBe(tree.modelId)
     expect((await finished(page.request, defaultJob.syncId)).modelId).toBe(tree.modelId)
     await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
-    await page.getByLabel('模型来源', { exact: true }).selectOption(lr.modelId)
+    await chooseModel(page, lr)
     response = page.waitForResponse(r => r.url().endsWith('/api/v1/repository-syncs') && r.request().method() === 'POST')
     await page.getByRole('button', { name: '开始分析', exact: true }).click()
     const explicit = await (await response).json()
@@ -84,11 +84,11 @@ test('管理员设置默认、用户指定优先、停用拦截及历史保留',
     expect((await page.request.get(`/api/v1/repository-syncs/${explicit.syncId}/commits`)).ok()).toBe(true)
     await page.goto(`/#/projects/${project.repositoryId}/analyses`)
     await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
-    await expect(page.getByText(/原选模型已停用或不可用/)).toBeVisible({ timeout })
+    await expect(page.getByText(/原选模型已停用、未开放或不可用/)).toBeVisible({ timeout })
     await expect(page.getByRole('button', { name: '开始分析', exact: true })).toBeDisabled()
-    await page.getByLabel('模型来源', { exact: true }).selectOption('default')
+    await chooseModel(page, tree)
     await expect(page.getByRole('button', { name: '开始分析', exact: true })).toBeEnabled()
-    await expect(page.getByLabel('模型来源', { exact: true }).locator('option:checked')).toHaveText(`使用默认模型：${tree.name}`, { timeout })
+    await expect(page.getByRole('combobox', { name: '模型来源' })).toContainText(tree.name)
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/model-policy-project-${info.project.name}.png`, fullPage: true })
     await expectNoOverflow(page)

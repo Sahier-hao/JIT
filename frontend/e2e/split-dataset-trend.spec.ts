@@ -163,7 +163,7 @@ test('large repository builds a dataset, trains with a preset, and renders verif
   const merged = await mergedResponse.json()
   expect(merged.sourceSyncIds).toEqual(expect.arrayContaining([sync.syncId, replicaId]))
   await page.goto(`/#/projects/${project.repositoryId}/trends/${merged.viewId}`)
-  await expect(page.getByText('口径与来源（2 次分析）')).toBeVisible()
+  await expect(page.getByText('数据来源（2 次分析）')).toBeVisible()
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/trend-partitions-merged-1280.png`, fullPage: true })
 
   const genericResponse = await request.post('/api/v1/repository-syncs', {

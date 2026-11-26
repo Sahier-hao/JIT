@@ -96,7 +96,7 @@ export function RepositoryUpdates({ repositoryId, onUpdated, onAnalyze, ref }: {
   return <>
     <Button variant="ghost" type="button" className="inline-flex items-center gap-1.5 rounded-sm border border-border-soft bg-card px-2 py-1 text-xs text-foreground-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent" onClick={() => setOpen(true)} aria-haspopup="dialog">
       <span className={cn('size-1.5 rounded-full', TONE_DOT[tone])} aria-hidden="true"/>
-      <b className="font-medium">订阅分支更新</b>
+      <b className="font-medium">检查分支更新</b>
       <span className="text-foreground-3">{state ? state.enabled && state.status === 'idle' ? '已开启' : SHORT[state.status] : '读取中'}</span>
       <ChevronRight aria-hidden="true" focusable="false" strokeWidth={1.5} size={13} className="text-foreground-4"/>
     </Button>

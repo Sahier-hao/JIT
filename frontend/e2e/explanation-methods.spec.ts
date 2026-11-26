@@ -3,6 +3,7 @@ import { writeFileSync } from 'node:fs'
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runEvidenceDir, runScreenshotDir } from '../evidence.ts'
 import { loginOrCreateUser } from './support/user-session.ts'
+import { chooseModel } from './support/model-select.ts'
 
 const explanationCalls: { method: string; url: string; status: number | null }[] = []
 
@@ -52,7 +53,7 @@ test('固定分析生成两种解释并刷新重开、切换提交和窄屏核�
   const logistic = choices.models.find((model: { method: string; featureSchemaVersion: string }) =>
     model.method === 'logistic-regression-l2-v1' && model.featureSchemaVersion === 'openstack-six-v1')
   expect(logistic).toBeTruthy()
-  await page.getByLabel('模型来源', { exact: true }).selectOption(logistic.modelId)
+  await chooseModel(page, logistic)
   const posted = page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/api/v1/repository-syncs'))
   await page.getByRole('button', { name: '开始分析', exact: true }).click()
   const job = await (await posted).json()

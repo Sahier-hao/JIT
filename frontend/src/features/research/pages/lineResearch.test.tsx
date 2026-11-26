@@ -27,11 +27,30 @@ const score = {
   schema: 'line-preview-score-v1',
   language: 'typescript',
   lines: [
-    { rank: 1, line: 2, text: 'eval("x")', score: 0.62 },
-    { rank: 2, line: 1, text: 'const a = 1', score: 0.41 },
+    {
+      rank: 1, line: 2, text: 'eval("x")', score: 0.62, logit: 0.49,
+      contributionTotal: 0.977, otherContribution: 0.12,
+      contributions: [
+        { feature: 'language:typescript', value: 1, weight: -0.487, contribution: -0.487 },
+        { feature: 'call', value: 1, weight: 0.35, contribution: 0.35 },
+        { feature: 'lineLength', value: 9, weight: 0.011, contribution: 0.099 },
+      ],
+    },
+    {
+      rank: 2, line: 1, text: 'const a = 1', score: 0.41, logit: -0.36,
+      contributionTotal: 0.127, otherContribution: 0.05,
+      contributions: [
+        { feature: 'indent', value: 0, weight: 0.058, contribution: 0 },
+        { feature: 'assign', value: 1, weight: 0.122, contribution: 0.122 },
+        { feature: 'lineLength', value: 11, weight: 0.0036, contribution: 0.04 },
+      ],
+    },
   ],
   count: 2,
   skippedBlank: 0,
+  intercept: -0.487,
+  contributionUnit: 'logit',
+  contributionCaveat: '行级特征贡献，不是缺陷原因。',
   artifactSha256: 'a'.repeat(64),
   caveats: ['不是缺陷概率。'],
 }
@@ -57,6 +76,32 @@ it('shows the research evidence and scores pasted code', async () => {
   expect(await screen.findByRole('table')).toBeVisible()
   expect(screen.getByText('eval("x")')).toBeVisible()
   expect(screen.getByText('0.620')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: /第 2 行.*展开特征贡献/ }))
+  expect(screen.getByText('行级特征贡献，不是缺陷原因。')).toBeVisible()
+  expect(screen.getByText('TypeScript 语言项')).toBeVisible()
+  expect(screen.getByText('调用')).toBeVisible()
+  expect(screen.getByText('贡献 -0.487')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: /第 2 行.*收起特征贡献/ }))
+  expect(screen.queryByText('行级特征贡献，不是缺陷原因。')).not.toBeInTheDocument()
+})
+
+it('keeps the ranking readable when an older response has no contributions', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const url = String(input)
+    if (url.endsWith('/api/v1/research/line-model/score')) {
+      const lines = score.lines.map(item => Object.fromEntries(
+        Object.entries(item).filter(([key]) => key !== 'contributions'),
+      ))
+      return Response.json({ ...score, lines })
+    }
+    return Response.json(metadata)
+  })
+  render(<LineResearchPage navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.type(screen.getByLabelText('代码'), 'const a = 1\neval("x")')
+  await user.click(screen.getByRole('button', { name: '分析这些行' }))
+  expect(await screen.findByText('eval("x")')).toBeVisible()
+  expect(screen.getByRole('button', { name: /第 2 行.*展开特征贡献/ })).toBeDisabled()
 })
 
 it('keeps an explicit unavailable state when the artifact cannot load', async () => {

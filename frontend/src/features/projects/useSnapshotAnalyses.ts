@@ -2,11 +2,21 @@ import { useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiRequest } from '@/lib/apiClient'
 import { contractFailed, finiteNumber, flag, record, recordList, riskNumber, text, textList } from '@/lib/apiContract'
-import { ACTIVE_STATUSES, parseSync, type SyncView } from '@/features/projects/repositoryContract'
+import {
+  ACTIVE_STATUSES, parseCommitLabelEvidence, parseSync,
+  type CommitLabelEvidence, type SyncView,
+} from '@/features/projects/repositoryContract'
 import { useRepositoryModels } from '@/features/models/modelClient'
 
 export type BindingKind = 'snapshot-model-v1' | 'legacy-head-v1'
-export interface CommitRisk { risk: number; files: string[]; addedLines?: number; deletedLines?: number; fileCount?: number }
+export interface CommitRisk {
+  risk: number
+  files: string[]
+  addedLines?: number
+  deletedLines?: number
+  fileCount?: number
+  labelEvidence?: CommitLabelEvidence[]
+}
 export interface SnapshotAnalysis {
   sync: SyncView
   contextValid: boolean
@@ -60,6 +70,9 @@ export function parseSnapshotAnalyses(raw: unknown, snapshotId: string): Snapsho
         addedLines: score.addedLines === undefined ? undefined : finiteNumber(score.addedLines),
         deletedLines: score.deletedLines === undefined ? undefined : finiteNumber(score.deletedLines),
         fileCount: score.fileCount === undefined ? undefined : finiteNumber(score.fileCount),
+        labelEvidence: score.labelEvidence === undefined
+          ? []
+          : recordList(score.labelEvidence).map(parseCommitLabelEvidence),
       })),
     }
   })

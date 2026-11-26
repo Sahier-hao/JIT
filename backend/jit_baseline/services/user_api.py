@@ -614,13 +614,22 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
     @app.get('/api/v1/user/models')
     def user_models(request: Request):
         username = _user(request)
-        mine = [model for model in catalog.models() if model.get('ownerUserId') == username]
-        return {'models': [{
-            'modelId': model['modelId'], 'name': model['name'], 'method': model['method'],
-            'featureSchemaVersion': model['featureSchemaVersion'], 'state': model['state'],
-            'enabled': model['enabled'], 'parameters': model.get('parameters'),
-            'datasetVersion': model.get('artifactDatasetVersion'),
-        } for model in mine]}
+        # 列表读取已保存的校验状态；模型详情或实际使用会重新加载并校验产物。
+        registered = catalog.registered_models()
+        mine = [model for model in registered if model.get('ownerUserId') == username]
+        shared = [model for model in registered
+                  if model.get('shared') and model.get('ownerUserId') != username
+                  and model.get('state') == 'ready' and model.get('enabled')]
+        def view(model, *, owned):
+            return {
+                'modelId': model['modelId'], 'name': model['name'], 'method': model['method'],
+                'featureSchemaVersion': model['featureSchemaVersion'], 'state': model['state'],
+                'enabled': model['enabled'], 'parameters': model.get('parameters'),
+                'datasetVersion': model.get('artifactDatasetVersion'),
+                'mine': owned, 'shared': bool(model.get('shared')),
+            }
+        return {'models': [view(model, owned=True) for model in mine] +
+                          [view(model, owned=False) for model in shared]}
 
     @app.get('/api/v1/user/prediction-models')
     def user_prediction_models(request: Request, datasetVersion: str):

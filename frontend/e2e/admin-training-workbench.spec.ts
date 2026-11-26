@@ -18,7 +18,7 @@ async function startAnalysis(page: Page) {
   await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  await dialog.getByLabel('模型来源', { exact: true }).selectOption('default')
+  await expect(dialog.getByRole('button', { name: '开始分析', exact: true })).toBeEnabled()
   await expect(dialog.getByLabel('时间切分预设')).toHaveCount(0)
   const response = page.waitForResponse(item => item.url().endsWith('/api/v1/repository-syncs') && item.request().method() === 'POST')
   await dialog.getByRole('button', { name: '开始分析', exact: true }).click()

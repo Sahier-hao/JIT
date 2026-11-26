@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
+import { chooseModel } from './support/model-select.ts'
 // 浏览器验收只声明实际读取的公开字段，不把应用的 Bundler 模块图拉入 NodeNext。
 interface PRWork {
   viewedSnapshotId: string
@@ -60,12 +61,14 @@ test('项目持续审查保留私人轮次，后台更新绑定固定提醒，�
   await expect(page.getByRole('heading', { name: '语言构成' })).toBeVisible()
   await page.screenshot({ path: `${evidence}/${info.project.name}-repo-overview.png`, fullPage: true })
   await page.getByRole('link', { name: 'PR 审查', exact: true }).click()
-  await page.getByRole('button', { name: '同步 PR 列表', exact: true }).click()
+  await page.getByRole('button', { name: '刷新 PR 列表', exact: true }).click()
   await expect(page.getByRole('heading', { name: '#1 修正审查示例 · 版本 25', exact: true })).toBeVisible()
   expect(await page.evaluate(key => localStorage.getItem(key), workKey)).toBeNull()
   await page.getByRole('button', { name: /PR 自动打分设置/ }).click()
-  await page.getByRole('combobox', { name: '固定自动分析模型' }).click()
-  await page.getByRole('option', { name: new RegExp(fixture.modelId) }).click()
+  const trackedModels = await (await page.request.get('/api/v1/repository-models')).json()
+  const trackedModel = trackedModels.models.find((model: { modelId: string }) => model.modelId === fixture.modelId)
+  expect(trackedModel).toBeTruthy()
+  await chooseModel(page, trackedModel, '固定自动分析模型')
   await page.getByRole('button', { name: '启用自动分析', exact: true }).click()
   await expect(page.getByRole('alertdialog', { name: '确认项目 PR 自动分析' })).toContainText(fixture.modelId)
   await page.getByRole('button', { name: '确认启用并处理现有开放 PR', exact: true }).click()

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, ChevronDown, LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Slider } from '@/components/ui/slider'
 import { NativeSelect } from '@/components/ui/native-select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { chartTooltip, EChartCanvas, useChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
@@ -202,13 +204,12 @@ export function TrainingThresholdComparison({ candidates, onEvaluate, result, on
       <div className="grid min-w-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_260px]">
         <div className="grid min-w-0 grid-cols-1 content-start gap-3 p-4 sm:p-5">
           <ValidationCurve rows={rows} metric={metric} tick={tick}/>
-          <label className="grid gap-2 text-xs text-foreground-3">
+          <div className="grid gap-2 text-xs text-foreground-3">
             <span className="flex items-center justify-between gap-2">预览阈值
               <strong className="rounded-md bg-accent-soft px-2 py-0.5 font-mono text-sm tabular-nums text-accent">{(tick / 100).toFixed(2)}</strong>
             </span>
-            <input type="range" aria-valuetext={(tick / 100).toFixed(2)} className="w-full accent-accent"
-              min={0} max={100} value={tick} onChange={event => { if (strategy === 'fixed') reset(); setTick(event.currentTarget.valueAsNumber) }}/>
-          </label>
+            <Slider label="预览阈值" value={[tick]} onValueChange={values => { if (strategy === 'fixed') reset(); setTick(values[0]) }}/>
+          </div>
         </div>
         <div className="grid content-start gap-3 border-t border-border-soft bg-sunken/65 p-4 sm:p-5 xl:border-t-0 xl:border-l" aria-busy={busy}>
           <h4 className="text-sm font-semibold">测试复核</h4>
@@ -222,8 +223,7 @@ export function TrainingThresholdComparison({ candidates, onEvaluate, result, on
           </label>
           {strategy === 'fixed' ? <p className="text-xs tabular-nums text-foreground-3">两个模型均使用阈值 <strong className="text-foreground">{(tick / 100).toFixed(2)}</strong></p> : null}
           {strategy === 'target-recall' ? <label className="grid gap-1 text-xs text-foreground-3">目标召回率 (%)
-            <input className="h-8 w-24 rounded-md border border-input bg-card px-2 tabular-nums text-foreground"
-              type="number" min={1} max={100} value={target} onChange={event => { reset(); setTarget(event.currentTarget.value) }}/>
+            <Input className="h-8 w-24 tabular-nums" type="number" min={1} max={100} value={target} onChange={event => { reset(); setTarget(event.currentTarget.value) }}/>
           </label> : null}
           <Button type="button" size="sm" className="mt-1 justify-self-start xl:w-full" disabled={busy || targetInvalid} onClick={() => void evaluate()}>
             {busy ? <LoaderCircle aria-hidden="true" className="animate-spin"/> : <ArrowRight aria-hidden="true"/>}

@@ -4,27 +4,35 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { AnalysisForm } from '@/features/projects/components/AnalysisForm'
 
 afterEach(() => vi.restoreAllMocks())
+
+function model(id: string, name: string, overrides: Record<string, unknown> = {}) {
+  return { modelId: id, name, method: 'lr', state: 'ready', enabled: true, isDefault: false, mine: true, shared: false, repositoryPredictionSupported: true, ...overrides }
+}
+
 it('shows a loading state while model metadata is pending without claiming the model is missing', () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}))
-  render(<AnalysisForm repositoryUrl="https://github.com/example/pending" initial={{ modelId: 'saved-model' }} onStarted={vi.fn()}/>);
-  expect(screen.getByRole('option', { name: '正在核对原选模型…' })).toBeInTheDocument()
-  expect(screen.queryByText(/尚未设置默认模型/)).not.toBeInTheDocument()
-  expect(screen.queryByText(/原选模型已停用或不可用/)).not.toBeInTheDocument()
+  render(<AnalysisForm repositoryUrl="https://github.com/example/pending" initial={{ modelId: 'saved-model' }} onStarted={vi.fn()}/>)
+  expect(screen.getByRole('combobox', { name: '模型来源' })).toBeDisabled()
+  expect(screen.getByRole('combobox', { name: '模型来源' })).toHaveTextContent('正在核对原选模型')
+  expect(screen.queryByText(/原选模型已停用、未开放或不可用/)).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
 })
 
-it('explains the administrator default and blocks a saved disabled selection until corrected', async () => {
+it('keeps a saved disabled selection visible and blocks until corrected', async () => {
   sessionStorage.clear()
   const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ models: [
-    { modelId: 'lr', name: '逻辑回归', method: 'lr', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
-    { modelId: 'dt', name: '决策树', method: 'dt', state: 'ready', enabled: false, isDefault: false, repositoryPredictionSupported: false },
+    model('lr', '逻辑回归', { isDefault: true }),
+    model('dt', '决策树', { enabled: false }),
   ] }), { status: 200 }))
-  render(<AnalysisForm repositoryUrl="https://github.com/example/policy" initial={{ modelId: 'dt' }} onStarted={vi.fn()}/>);
-  expect(await screen.findByRole('option', { name: '使用默认模型：逻辑回归' })).toBeInTheDocument()
-  expect(await screen.findByText(/原选模型已停用或不可用/)).toBeVisible()
+  render(<AnalysisForm repositoryUrl="https://github.com/example/policy" initial={{ modelId: 'dt' }} onStarted={vi.fn()}/>)
+  const user = userEvent.setup()
+  const select = await screen.findByRole('combobox', { name: '模型来源' })
+  expect(select).toHaveTextContent(/原选模型/)
+  expect(await screen.findByText(/原选模型已停用、未开放或不可用/)).toBeVisible()
   expect(screen.getByRole('button', { name: '开始分析' })).toBeDisabled()
   expect(fetch.mock.calls.every(([, options]) => options?.method !== 'POST')).toBe(true)
-  await userEvent.setup().selectOptions(screen.getByLabelText('模型来源'), 'default')
+  await user.click(select)
+  await user.click(await screen.findByRole('option', { name: '逻辑回归 · 默认' }))
   expect(screen.getByRole('button', { name: '开始分析' })).toBeEnabled()
 })
 
@@ -32,12 +40,14 @@ it('offers real registered models and sends the explicitly selected model', asyn
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_path, options) => {
     if (options?.method === 'POST') return new Response('{}', { status: 422 })
     return new Response(JSON.stringify({ models: [
-      { modelId: 'lr', name: '逻辑回归', method: 'logistic-regression-l2-v1', state: 'ready', repositoryPredictionSupported: true },
-      { modelId: 'dt', name: '决策树', method: 'decision-tree-v1', state: 'ready', repositoryPredictionSupported: true },
+      model('lr', '逻辑回归', { method: 'logistic-regression-l2-v1' }),
+      model('dt', '决策树', { method: 'decision-tree-v1' }),
     ] }), { status: 200 })
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/repo" onStarted={vi.fn()}/>); const user = userEvent.setup()
-  await user.selectOptions(await screen.findByLabelText('模型来源'), 'dt')
+  const select = await screen.findByRole('combobox', { name: '模型来源' })
+  await user.click(select)
+  await user.click(await screen.findByRole('option', { name: '决策树' }))
   expect(screen.queryByLabelText('训练方法')).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: '开始分析' }))
   await waitFor(() => expect(fetch.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(true))
@@ -45,7 +55,7 @@ it('offers real registered models and sends the explicitly selected model', asyn
   expect(JSON.parse(String(call[1]?.body))).toMatchObject({ modelId: 'dt', strategy: 'generic-model' })
 })
 
-it('scores with the displayed default model and omits all training settings', async () => {
+it('scores with the automatically selected default model and omits all training settings', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, options) => {
     if (options?.method === 'POST') return new Response('{}', { status: 202 })
     if (String(path).includes('/training-methods')) return new Response(JSON.stringify({
@@ -55,12 +65,12 @@ it('scores with the displayed default model and omits all training settings', as
       ],
     }), { status: 200 })
     return new Response(JSON.stringify({ models: [
-      { modelId: 'dt', name: '决策树', method: 'decision-tree-v1', state: 'ready', enabled: true, isDefault: true, repositoryPredictionSupported: true },
+      model('dt', '决策树', { isDefault: true, method: 'decision-tree-v1' }),
     ] }), { status: 200 })
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/default" onStarted={vi.fn()}/>)
   const user = userEvent.setup()
-  expect(await screen.findByRole('option', { name: '使用默认模型：决策树' })).toBeInTheDocument()
+  expect(await screen.findByRole('combobox', { name: '模型来源' })).toHaveTextContent('决策树 · 默认')
   expect(screen.queryByLabelText('训练方法')).not.toBeInTheDocument()
   expect(screen.queryByLabelText('时间切分预设')).not.toBeInTheDocument()
   expect(screen.queryByLabelText('标签成熟策略')).not.toBeInTheDocument()
@@ -92,13 +102,15 @@ it('opens a read-only model card without changing the selected model or draft', 
       benefit: { available: false, reason: '尚无收益报告' }, limitations: ['测试限制'],
     })
     if (String(path).includes('/api/v1/repository-models')) return Response.json({ models: [
-      { modelId: 'dt', name: '决策树', method: 'decision-tree-v1', state: 'ready', enabled: true, isDefault: false, repositoryPredictionSupported: true },
+      model('dt', '决策树', { method: 'decision-tree-v1' }),
     ] })
     return Response.json({ schema: 'kamei14-git-v2', methods: [] })
   })
   render(<AnalysisForm repositoryUrl="https://github.com/example/card" initial={{ branch: 'develop' }} onStarted={vi.fn()}/>)
   const user = userEvent.setup()
-  await user.selectOptions(await screen.findByLabelText('模型来源'), 'dt')
+  const select = await screen.findByRole('combobox', { name: '模型来源' })
+  await user.click(select)
+  await user.click(await screen.findByRole('option', { name: '决策树' }))
   await user.type(screen.getByLabelText('分支'), '-draft')
   await user.click(screen.getByRole('button', { name: '查看模型卡' }))
   const cardDialog = await screen.findByRole('dialog', { name: '模型卡' })
@@ -106,6 +118,6 @@ it('opens a read-only model card without changing the selected model or draft', 
   expect(screen.getByRole('heading', { name: '拟合诊断' })).toBeVisible()
   expect(screen.getByRole('heading', { name: '冻结泛化评价' })).toBeVisible()
   await user.click(within(cardDialog).getAllByRole('button', { name: '关闭' }).at(-1)!)
-  expect(screen.getByLabelText('模型来源')).toHaveValue('dt')
+  expect(screen.getByRole('combobox', { name: '模型来源' })).toHaveTextContent('决策树')
   expect(screen.getByLabelText('分支')).toHaveValue('develop-draft')
 })

@@ -2,6 +2,7 @@ import { test, expect, type APIRequestContext, type Page } from '@playwright/tes
 import { REPOSITORY } from './repository-setup.ts'
 import { ensureDir, runScreenshotDir } from '../evidence.ts'
 import { loginOrCreateUser } from './support/user-session.ts'
+import { chooseModel } from './support/model-select.ts'
 
 const account = { username: 'e2e-admin', password: 'isolated-e2e-admin-password' }
 // These reads validate real model artifacts; allow the API to finish on a busy host.
@@ -44,7 +45,7 @@ test('建立项目只登记地址，不产生分析', async ({ page }, info) => 
   await expect(page.getByRole('button', { name: '分析分支提交', exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: '分支分析', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: '等待分析' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '当前分析结果', exact: true })).toBeVisible()
+  await expect(page.getByText(/还没有可用的分析结果/)).toBeVisible()
   await expect(page.getByText('还没有分析记录。发起第一次分析后，这里按时间排列。')).toBeVisible()
   await expect(page.getByRole('button', { name: '分析分支提交', exact: true }).first()).toBeVisible()
 })
@@ -60,7 +61,7 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   const modelChoices = await (await page.request.get('/api/v1/repository-models')).json()
   const tree = modelChoices.models.find((model: { method: string }) => model.method === 'decision-tree-v1')
   expect(tree).toBeTruthy()
-  await page.getByLabel('模型来源', { exact: true }).selectOption(tree.modelId)
+  await chooseModel(page, tree)
   const posted = page.waitForResponse(response => response.request().method() === 'POST' && response.url().endsWith('/api/v1/repository-syncs'))
   await page.getByRole('button', { name: '开始分析', exact: true }).click()
   const job = await (await posted).json()
@@ -90,7 +91,7 @@ test('真实本地 Git：选择决策树、等待完成、打开提交详情和�
   await page.getByRole('button', { name: /^返回项目 / }).click()
   await expect(page).toHaveURL(new RegExp(`/projects/${project.repositoryId}$`))
   await page.getByRole('link', { name: '分支分析', exact: true }).click()
-  await expect(page.getByText(tree.name, { exact: false })).toBeVisible({ timeout: catalogTimeout })
+  await expect(page.getByText(tree.name, { exact: false }).first()).toBeVisible({ timeout: catalogTimeout })
   await page.setViewportSize({ width: 390, height: 844 })
   await noOverflow(page)
   await page.screenshot({ path: `${ensureDir(runScreenshotDir)}/project-narrow-${info.project.name}.png`, fullPage: true })
@@ -108,9 +109,9 @@ test('九种模型都实际用于仓库分析', async ({ page }) => {
   expect(baselineModels).toHaveLength(9)
   for (const model of baselineModels) {
     expect(model?.repositoryPredictionSupported).toBe(true)
-    const modelSelect = page.getByLabel('模型来源', { exact: true })
+    const modelSelect = page.getByRole('combobox', { name: '模型来源' })
     if (!await modelSelect.isVisible()) await page.getByRole('button', { name: '分析分支提交', exact: true }).first().click()
-    await modelSelect.selectOption(model.modelId)
+    await chooseModel(page, model)
     const posted = page.waitForResponse(result => result.request().method() === 'POST' && result.url().endsWith('/api/v1/repository-syncs'))
     await page.getByRole('button', { name: '开始分析', exact: true }).click()
     const job = await (await posted).json()
@@ -154,7 +155,7 @@ test('管理员登录、模型产物登记、验证报告和退出权限', async
   await page.getByRole('link', { name: /验证报告/ }).click()
   await expect(page.getByRole('heading', { name: '验证报告', exact: true })).toBeVisible()
   await expect(page.getByRole('navigation', { name: '模型评估视图' })).toBeVisible()
-  await expect(page.getByText('公开历史数据', { exact: true })).toBeVisible()
+  await expect(page.getByText(/公开历史数据/)).toBeVisible()
   await page.getByRole('button', { name: account.username, exact: true }).click()
   await page.getByRole('menuitem', { name: '退出管理', exact: true }).click()
   await expect(page.getByRole('heading', { name: '进入管理工作区', exact: true })).toBeVisible()

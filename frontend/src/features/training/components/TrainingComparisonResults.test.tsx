@@ -61,18 +61,17 @@ const COMPARISON: TrainingExperimentComparison = {
   }],
 }
 
-it('renders all methods with three explicit partition results and failures', () => {
+it('renders the test comparison, train and validation details, and failures', () => {
   render(<TrainingComparisonResults comparison={COMPARISON}/>)
-  expect(screen.getByRole('heading', { name: '三档结果比较' })).toBeVisible()
-  const details = screen.getByText('模型训练详情', { exact: true }).closest('details')
+  expect(screen.getByRole('heading', { name: '模型对比' })).toBeVisible()
+  const details = screen.getByText('模型参数与训练详情', { exact: true }).closest('details')
   expect(details).not.toHaveAttribute('open')
-  fireEvent.click(screen.getByText('模型训练详情', { exact: true }))
-  expect(screen.getByRole('heading', { name: '逻辑回归' })).toBeVisible()
+  fireEvent.click(screen.getByText('模型参数与训练详情', { exact: true }))
+  expect(screen.getAllByRole('heading', { name: '逻辑回归' }).length).toBeGreaterThan(0)
   expect(screen.getByRole('heading', { name: '决策树' })).toBeVisible()
-  expect(screen.getAllByText('训练档').length).toBeGreaterThan(0)
-  expect(screen.getAllByText('验证档').length).toBeGreaterThan(0)
-  expect(screen.getAllByText('测试档').length).toBeGreaterThan(0)
-  expect(screen.getByText(/记录 10 · 正例 4/)).toBeVisible()
+  expect(screen.getAllByText('训练集').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('验证集').length).toBeGreaterThan(0)
+  expect(screen.getByText(/记录 10 · 正例 4/)).toBeInTheDocument()
   expect(within(screen.getByRole('table', { name: '模型性能对比' })).getByText('测试分区没有足够类别')).toBeVisible()
   expect(screen.getByText('MODEL_NOT_CONVERGED · 未收敛')).toBeVisible()
   expect(screen.getByText(/max_depth=4/)).toBeVisible()
@@ -110,9 +109,9 @@ it('switches performance metrics and requests frozen tests for the chosen pair',
   const table = screen.getByRole('table', { name: '模型性能对比' })
   expect(table).toHaveTextContent('AP')
   expect(screen.queryByLabelText('模型一')).toBeNull()
+  fireEvent.click(screen.getByText('阈值调整评估'))
   fireEvent.click(screen.getByRole('radio', { name: '召回率' }))
   expect(screen.getByRole('img', { name: '验证集召回率随阈值变化' })).toBeVisible()
-  fireEvent.change(screen.getByLabelText('性能指标'), { target: { value: 'f1' } })
   expect(table).toHaveTextContent('0.400')
   fireEvent.change(screen.getByLabelText('阈值选择方式'), { target: { value: 'max-f1' } })
   fireEvent.click(screen.getByRole('button', { name: '用选定阈值评估测试集' }))

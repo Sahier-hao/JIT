@@ -3419,14 +3419,52 @@ paths:
           $ref: '#/components/responses/InputInvalid'
         '503':
           description: 产物或存储不可用，未更改策略
+  /api/v1/models/{modelId}/sharing:
+    put:
+      operationId: updateModelSharing
+      summary: 开放或撤销模型给所有用户
+      description: 仅管理员可修改。开放后普通用户可在分析、PR 批量分析和模型试算中选择此模型；撤销后新选择不再出现，历史分析与评分保留。
+      security:
+      - AdminSession: []
+      parameters:
+      - name: modelId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelSharingUpdate'
+      responses:
+        '200':
+          description: 已保存的共享状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelSharing'
+        '401':
+          description: 管理员会话缺失或过期
+        '403':
+          description: 跨来源写入被拒绝
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: MODEL_NOT_READY，未更改共享状态
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          description: 产物或存储不可用，未更改共享状态
   /api/v1/repository-models:
     get:
       operationId: repositoryModelChoices
       security: []
-      summary: Public registered model choice metadata without maintenance evidence
+      summary: Public model choices limited to the caller's own models and administrator-opened models
       responses:
         '200':
-          description: Registered model choices and compatibility, including disabled historical identities
+          description: 本人模型与管理员已开放的模型，含不可用或停用的历史身份
           content:
             application/json:
               schema:
@@ -4791,6 +4829,10 @@ components:
                     fileCount:
                       type: integer
                       minimum: 0
+                    labelEvidence:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RepositoryLabelEvidence'
                   required:
                   - commitId
                   - risk
@@ -4909,6 +4951,22 @@ components:
           type: boolean
       required: [modelId, enabled, isDefault]
       additionalProperties: false
+    ModelSharingUpdate:
+      type: object
+      properties:
+        shared:
+          type: boolean
+      required: [shared]
+      additionalProperties: false
+    ModelSharing:
+      type: object
+      properties:
+        modelId:
+          $ref: '#/components/schemas/Uuid'
+        shared:
+          type: boolean
+      required: [modelId, shared]
+      additionalProperties: false
     ModelChoiceList:
       type: object
       properties:
@@ -4935,7 +4993,9 @@ components:
                 type: boolean
               mine:
                 type: boolean
-            required: [modelId, name, method, state, featureSchemaVersion, enabled, isDefault, repositoryPredictionSupported, mine]
+              shared:
+                type: boolean
+            required: [modelId, name, method, state, featureSchemaVersion, enabled, isDefault, repositoryPredictionSupported, mine, shared]
             additionalProperties: false
       required: [models]
       additionalProperties: false
@@ -6717,6 +6777,9 @@ components:
         path: {type: string}
         fixTime: {type: [string, 'null']}
         ruleVersion: {type: [string, 'null']}
+        diffAnchor:
+          type: [string, 'null']
+          pattern: '^diff-[a-f0-9]{32}$'
         lineRanges: {type: [array, 'null'], items: {}}
         parentRanges: {type: [array, 'null'], items: {}}
       required: [fixCommit, path, fixTime, ruleVersion]
@@ -7901,6 +7964,8 @@ components:
           type:
           - string
           - 'null'
+        shared:
+          type: boolean
         error:
           type: object
           properties:
@@ -8101,6 +8166,8 @@ components:
           type:
           - string
           - 'null'
+        shared:
+          type: boolean
         error:
           type: object
           properties:
@@ -8799,6 +8866,9 @@ components:
           enum: [probability, logit]
         explanationSummary:
           type: [string, 'null']
+        featureSummary:
+          type: [string, 'null']
+          description: 由已保存贡献项生成的模板化中文摘要；旧解释可缺省。
         explanationReason:
           type: [string, 'null']
         reasonCode:
