@@ -122,6 +122,26 @@ it('submits a limited batch from the PR toolbar and preserves the chosen model o
   expect(fetch.mock.calls.some(([path]) => String(path).includes('/repository-syncs'))).toBe(false)
 })
 
+it('keeps an unavailable current model instead of silently substituting the default', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    const url = new URL(String(path), 'http://localhost')
+    if (url.pathname.endsWith('/repository-models')) return response({ models: modelChoices })
+    if (url.pathname.endsWith('/pull-requests/count')) return response({ count: 5 })
+    if (url.pathname.endsWith('/pull-request-batches/latest')) return response(null)
+    return response(prPage())
+  })
+  render(<ProjectPullRequests repositoryId={PROJECT} modelId="model-disabled" navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '批量分析 PR' }))
+  const dialog = await screen.findByRole('dialog', { name: '批量分析 PR' })
+  expect(await within(dialog).findByText(/原分析模型不可用（已停用）/)).toBeVisible()
+  const submit = within(dialog).getByRole('button', { name: '提交批量分析' })
+  expect(submit).toBeDisabled()
+  await user.click(within(dialog).getByRole('combobox', { name: '批量分析模型' }))
+  await user.click(await screen.findByRole('option', { name: /新默认模型/ }))
+  expect(submit).toBeEnabled()
+})
+
 it('submits a single unanalyzed PR with the project model', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path) => {
     if (String(path).includes('pull-request-batches')) return response(null)

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { metricReason, metricValue, type Row } from '@/features/admin/adminContracts'
 import type { ModelCard, ModelCardBenefit, ModelCardPartition } from '@/features/models/modelCardClient'
 import { releaseEffortDeltas, releaseWorstProject } from '@/releaseEvidence'
+import { repositorySchemaReason } from '@/features/models/modelCompatibility'
 
 
 const METRICS = [
@@ -121,11 +122,13 @@ export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => 
   const maturityCounts = record(maturity.statusCounts)
   const worstReleaseProject = releaseWorstProject(card.release)
   const releaseEffort = releaseEffortDeltas(card.release)
+  const schemaReason = repositorySchemaReason(card.featureSchemaVersion)
   return <div className="grid gap-3">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="text-lg font-semibold text-foreground">{card.name}</h2><p className="text-xs text-foreground-3">{card.method ?? '方法未提供'} · {card.featureSchemaVersion ?? 'schema 未提供'}</p></div>
-      <span className="text-xs text-foreground-3" data-available={card.available}>{card.available ? '可用于项目分析' : card.reason ?? '不可用'}</span>
+      <span className="text-xs text-foreground-3" data-available={card.available}>{card.available ? schemaReason ? '不可用于当前仓库分析' : '可用于仓库分析' : card.reason ?? '不可用'}</span>
     </header>
+    {card.available && schemaReason ? <p className="rounded-sm border border-amber/30 bg-amber-soft px-2.5 py-2 text-xs leading-body text-amber-deep" role="status">{schemaReason}</p> : null}
     {!card.available ? <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>当前模型不可用</strong><p>{card.reason ?? '无法加载模型产物'}{retry ? <Button size="sm" onClick={retry} variant="outline" type="button">重试</Button> : null}</p></div> : null}
     <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[110px_minmax(0,1fr)] [&>div]:gap-2 [&>div]:border-t [&>div]:border-border-soft [&>div]:py-1.5 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
       <div><dt>数据规模</dt><dd>{valueText(scale.records)} 条 · {valueText(scale.featureWidth)} 维输入</dd></div>

@@ -25,11 +25,12 @@ import { isActiveTraining, trainingStatus } from '@/features/training/trainingPr
 import { TrainingComparisonResults } from '@/features/training/components/TrainingComparisonResults'
 import { comparisonExportText, fetchThresholdEvaluation, type ThresholdEvaluation, type ThresholdRequest } from '@/features/training/trainingComparison'
 
-export function MyTrainingPage({ account = null, experimentId, initialDatasetVersion, initialMethod, historyDatasetVersion, navigate, onLoginRequired }: {
+export function MyTrainingPage({ account = null, experimentId, initialDatasetVersion, initialMethod, initialSchema, historyDatasetVersion, navigate, onLoginRequired }: {
   account?: string | null
   experimentId?: string
   initialDatasetVersion?: string
   initialMethod?: string
+  initialSchema?: string
   historyDatasetVersion?: string
   navigate: (route: Route) => void
   onLoginRequired: () => void
@@ -45,7 +46,7 @@ export function MyTrainingPage({ account = null, experimentId, initialDatasetVer
   const [error, setError] = useState('')
   const [busy, setBusy] = useState('')
   const [revision, setRevision] = useState(0)
-  const [createOpen, setCreateOpen] = useState(Boolean(initialDatasetVersion || initialMethod))
+  const [createOpen, setCreateOpen] = useState(Boolean(initialDatasetVersion || initialMethod || initialSchema))
   const userRevision = useUserRevision()
   const returnToList = () => navigate({ name: 'my-training', ...(historyDatasetVersion ? { historyDatasetVersion } : {}) })
 
@@ -172,7 +173,7 @@ export function MyTrainingPage({ account = null, experimentId, initialDatasetVer
       {!records ? <CardListSkeleton label="正在读取训练记录" rows={3}/> : records.length === 0
         ? <EmptyState title={historyDatasetVersion ? '这个数据版本还没有训练记录' : '还没有训练记录'}><Button variant="outline" onClick={() => navigate({ name: 'my-data', ...(historyDatasetVersion ? { datasetVersion: historyDatasetVersion } : {}) })} type="button">{historyDatasetVersion ? '打开数据版本' : '管理我的数据'}</Button></EmptyState>
         : <TrainingExperimentList records={records} navigate={navigate} historyDatasetVersion={historyDatasetVersion}/>}
-      <TrainingCreateDialog open={createOpen} onOpenChange={setCreateOpen} initialDatasetVersion={initialDatasetVersion ?? historyDatasetVersion} initialMethod={initialMethod}
+      <TrainingCreateDialog open={createOpen} onOpenChange={setCreateOpen} initialDatasetVersion={initialDatasetVersion ?? historyDatasetVersion} initialMethod={initialMethod} preferredSchema={initialSchema}
         onOpenData={() => { setCreateOpen(false); navigate({ name: 'my-data' }) }}
         onCreated={created => {
           publishTrainingExperiment(client, account, created)
