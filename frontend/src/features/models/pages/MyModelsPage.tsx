@@ -8,6 +8,7 @@ import { EmptyState, FailureNotice } from '@/components/shared/Feedback'
 import { CardListSkeleton } from '@/components/shared/Skeletons'
 
 import { ModelCardDialog } from '@/features/models/components/ModelCardDialog'
+import { repositoryModelStatus } from '@/features/models/modelCompatibility'
 import { trainingMethodName } from '@/features/training/trainingPresentation'
 import type { Route } from '@/app/navigation'
 
@@ -22,6 +23,7 @@ function ModelRow({ model, openCard, navigate }: {
   openCard: (id: string) => void
   navigate: (route: Route) => void
 }) {
+  const compatibility = repositoryModelStatus(model)
   return <article className="grid gap-1.5 rounded-xl border border-border-soft bg-card p-card">
     <div className="flex flex-wrap items-baseline justify-between gap-2">
       <strong className="text-sm font-medium text-foreground">{model.name}</strong>
@@ -31,10 +33,13 @@ function ModelRow({ model, openCard, navigate }: {
     <div className="flex flex-wrap items-center gap-2">
       <span className={model.state === 'ready' ? 'rounded-sm bg-teal-soft px-1.5 py-0.5 text-[11px] text-teal-deep' : 'rounded-sm bg-rose-soft px-1.5 py-0.5 text-[11px] text-rose-deep'}>{model.state === 'ready' ? '已校验' : '不可用'}</span>
       <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] text-foreground-3">{model.enabled ? '已启用' : '已停用'}</span>
+      <span className={compatibility.supported ? 'rounded-sm bg-teal-soft px-1.5 py-0.5 text-[11px] text-teal-deep' : 'rounded-sm bg-amber-soft px-1.5 py-0.5 text-[11px] text-amber-deep'}>{compatibility.label}</span>
       {!model.mine ? <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 text-[11px] text-accent">管理员开放</span>
         : model.shared ? <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 text-[11px] text-accent">已开放</span> : null}
       <Button size="sm" variant="ghost" onClick={() => openCard(model.modelId)} type="button">查看模型卡</Button>
+      {!compatibility.supported ? <Button size="sm" variant="outline" onClick={() => navigate({ name: 'my-training', schema: 'kamei14-git-v2' })} type="button">用 v2 口径重训</Button> : null}
     </div>
+    {compatibility.reason ? <p className="text-xs leading-body text-foreground-3">{compatibility.reason}</p> : null}
     {model.mine && model.datasetVersion ? <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 border-t border-border-soft pt-1.5">
       <CopyIdentifier value={model.datasetVersion} label="训练数据版本"/>
       <Button size="sm" variant="link" className="h-auto p-0 text-xs" onClick={() => navigate({ name: 'my-data', datasetVersion: model.datasetVersion! })} type="button">打开训练数据</Button>

@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { ModelChoice } from '@/features/models/modelClient'
+import { repositorySchemaReason } from '@/features/models/modelCompatibility'
 
 /** 可参与仓库分析/试算的模型：已校验、启用且字段规范兼容。 */
 export function usableModel(model?: ModelChoice | null): boolean {
@@ -10,7 +11,7 @@ export function modelUnavailableReason(model: ModelChoice): string {
   if (model.state !== 'ready') return '模型未就绪'
   if (!model.enabled) return '已停用'
   if (!model.repositoryPredictionSupported) {
-    return `字段规范 ${model.featureSchemaVersion ?? '未知'} 不适用于仓库分析`
+    return repositorySchemaReason(model.featureSchemaVersion) ?? '不可用于仓库分析'
   }
   return '不可用'
 }

@@ -96,3 +96,23 @@ it('explains the method that the current data cannot train', async () => {
   expect(screen.getByText('已选 0 / 4')).toBeVisible()
   expect(screen.getByRole('checkbox', { name: /表格残差网络/ })).toBeDisabled()
 })
+
+it('prefers a repository-compatible dataset when opened for retraining', async () => {
+  const old = { ...DATASET, version: 'kamei14-2013-old', dataset: 'old', schema: 'kamei14-2013-v1' }
+  const methodPaths: string[] = []
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+    const path = String(input)
+    if (path.includes('/training-methods')) {
+      methodPaths.push(path)
+      return Response.json(METHODS)
+    }
+    if (path.includes('/split-preview')) return Response.json(SPLIT)
+    if (path.includes('/user/datasets')) return Response.json({ datasets: [old, DATASET] })
+    return Response.json({})
+  })
+  render(<TrainingCreateDialog open preferredSchema="kamei14-git-v2" onOpenChange={vi.fn()} onCreated={vi.fn()}
+    onLoginRequired={vi.fn()} onOpenData={vi.fn()}/>)
+
+  await waitFor(() => expect(methodPaths.some(path => path.includes('schema=kamei14-git-v2'))).toBe(true))
+  expect(methodPaths.some(path => path.includes('schema=kamei14-2013-v1'))).toBe(false)
+})

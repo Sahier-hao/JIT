@@ -7,7 +7,7 @@ export type Route =
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
   | { name: 'my-data'; view?: 'builds' | 'imports'; datasetVersion?: string; taskId?: string; buildProjectId?: string }
-  | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string; method?: string }
+  | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string; method?: string; schema?: string }
   | { name: 'algorithms'; method?: string }
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
@@ -81,6 +81,7 @@ export function parseHash(hash: string): Route {
       ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion')! } : {}),
       ...(params.get('method') ? { method: params.get('method')! } : {}),
       ...(params.get('historyDatasetVersion') ? { historyDatasetVersion: params.get('historyDatasetVersion')! } : {}),
+      ...(params.get('schema') ? { schema: params.get('schema')! } : {}),
     }
     if (parts[0] === 'my-training' && parts.length === 2) {
       const historyDatasetVersion = params.get('historyDatasetVersion')
@@ -171,6 +172,7 @@ export function hashFor(route: Route): string {
       const params = new URLSearchParams()
       if (!route.experimentId && route.datasetVersion) params.set('datasetVersion', route.datasetVersion)
       if (!route.experimentId && route.method) params.set('method', route.method)
+      if (!route.experimentId && route.schema) params.set('schema', route.schema)
       if (route.historyDatasetVersion) params.set('historyDatasetVersion', route.historyDatasetVersion)
       return params.size ? `${path}?${params}` : path
     }

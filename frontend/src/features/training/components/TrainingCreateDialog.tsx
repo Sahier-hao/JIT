@@ -56,11 +56,12 @@ function SplitSummary({ preview }: { preview: UserSplitPreview }) {
   </div>
 }
 
-export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion, initialMethod, onCreated, onLoginRequired, onOpenData }: {
+export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion, initialMethod, preferredSchema, onCreated, onLoginRequired, onOpenData }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialDatasetVersion?: string
   initialMethod?: string
+  preferredSchema?: string
   onCreated: (experiment: TrainingExperiment) => void
   onLoginRequired: () => void
   onOpenData: () => void
@@ -96,14 +97,16 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
     setLibraryMethod(undefined)
     userDatasets('usable', controller.signal).then(({ datasets: value }) => {
       if (controller.signal.aborted) return
-      const preferred = value.find(item => item.version === initialDatasetVersion) ?? value[0]
+      const preferred = value.find(item => item.version === initialDatasetVersion)
+        ?? (preferredSchema ? value.find(item => item.schema === preferredSchema) : undefined)
+        ?? value[0]
       setDatasets(value)
       setSelected(preferred?.version ?? '')
     }).catch(failure => {
       if (!controller.signal.aborted) reportFailure(failure, '数据读取失败')
     })
     return () => controller.abort()
-  }, [open, initialDatasetVersion, onLoginRequired])
+  }, [open, initialDatasetVersion, preferredSchema, onLoginRequired])
 
   const current = datasets?.find(item => item.version === selected)
   const version = current?.version
@@ -228,6 +231,7 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
                 {current ? <div className="grid gap-1 text-xs text-foreground-3">
                   <p className="truncate font-mono" title={current.version}>{current.version}</p>
                   <p>{current.mine ? '我的数据' : '共享数据'} · {current.schema}</p>
+                  {preferredSchema && current.schema !== preferredSchema ? <p className="text-amber-deep">当前数据不是 {preferredSchema}；请选择仓库口径数据，或先在我的数据中构建。</p> : null}
                 </div> : null}
               </div>
               <div className="grid gap-1.5">
