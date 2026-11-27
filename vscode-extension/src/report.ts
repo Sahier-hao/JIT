@@ -10,6 +10,7 @@ export interface AnalysisCommit {
   deletedLines: number
   files: number
   filePaths: string[]
+  explanation: AnalysisExplanation | null
 }
 
 export interface AnalysisCandidate {
@@ -21,6 +22,21 @@ export interface AnalysisCandidate {
   message: string
   evidence: string
   suggestion?: { title: string; rationale: string; manualChecks: string[] } | null
+}
+
+export interface AnalysisExplanationItem {
+  feature: string
+  value: number
+  baseline: number
+  delta: number
+  direction: 'increases' | 'decreases'
+}
+
+export interface AnalysisExplanation {
+  status: 'supported' | 'not-supported'
+  method: string | null
+  items: AnalysisExplanationItem[]
+  summary: string
 }
 
 export interface CommitAnalysisReport {
@@ -69,6 +85,45 @@ function safeRelativePath(value: unknown): string {
   return parts.join('/')
 }
 
+function explanation(value: unknown, commitId: string): AnalysisExplanation | null {
+  if (value == null) return null
+  if (typeof value !== 'object' || Array.isArray(value)) fail(`提交 ${commitId} 的解释无效`)
+  const raw = value as Record<string, unknown>
+  if (raw.status !== 'supported' && raw.status !== 'not-supported') {
+    fail(`提交 ${commitId} 的解释状态无效`)
+  }
+  if (!Array.isArray(raw.items)) fail(`提交 ${commitId} 的解释贡献列表无效`)
+  const items = raw.items.map((item, index) => {
+    if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+      fail(`提交 ${commitId} 的解释项 ${index} 无效`)
+    }
+    const entry = item as Record<string, unknown>
+    if (entry.direction !== 'increases' && entry.direction !== 'decreases') {
+      fail(`提交 ${commitId} 的解释项 ${index} 方向无效`)
+    }
+    return {
+      feature: text(entry.feature, 'explanation.feature'),
+      value: number(entry.value, 'explanation.value'),
+      baseline: number(entry.baseline, 'explanation.baseline'),
+      delta: number(entry.delta, 'explanation.delta'),
+      direction: entry.direction,
+    } satisfies AnalysisExplanationItem
+  })
+  if (items.length > 5) fail(`提交 ${commitId} 的解释项超过 5 条`)
+  if (raw.status === 'supported' && (typeof raw.method !== 'string' || !raw.method.trim())) {
+    fail(`提交 ${commitId} 的已支持解释缺少方法`)
+  }
+  if (raw.status === 'not-supported' && items.length) {
+    fail(`提交 ${commitId} 的未支持解释不应包含贡献项`)
+  }
+  return {
+    status: raw.status,
+    method: typeof raw.method === 'string' && raw.method.trim() ? raw.method : null,
+    items,
+    summary: text(raw.summary, 'explanation.summary'),
+  }
+}
+
 /** 把报告解析为固定结构；格式或关键字段不合法时直接拒绝。内容一律视为数据。 */
 export function parseReport(raw: unknown): CommitAnalysisReport {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail('报告不是 JSON 对象')
@@ -112,6 +167,7 @@ export function parseReport(raw: unknown): CommitAnalysisReport {
         deletedLines: number(commit.deletedLines ?? 0, 'commit.deletedLines'),
         files: number(commit.files ?? 0, 'commit.files'),
         filePaths: Array.isArray(commit.filePaths) ? commit.filePaths.map(path => safeRelativePath(path)) : [],
+        explanation: explanation(commit.explanation, text(commit.commitId, 'commit.commitId')),
       }
     }),
     candidates: list(value.candidates).map(item => {

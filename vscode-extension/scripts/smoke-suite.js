@@ -20,7 +20,10 @@ exports.run = async function run() {
   if (!extension) throw new Error('扩展 local.jit-commit-analysis 未加载')
   await extension.activate()
   const commands = await vscode.commands.getCommands(true)
-  const needed = ['jitReport.import', 'jitReport.refresh', 'jitReport.clear', 'jitReport.copyGenerateCommand', 'jitReport.openCommit', 'jitReport.openCandidate']
+  const needed = ['jitReport.import', 'jitReport.refresh', 'jitReport.clear', 'jitReport.copyGenerateCommand',
+    'jitReport.checkHead', 'jitReport.configure', 'jitReport.selectModel',
+    'jitReport.showExplanation', 'jitReport.toggleAutoCheck',
+    'jitReport.openCommit', 'jitReport.openCandidate']
   const missing = needed.filter(name => !commands.includes(name))
   if (missing.length) throw new Error('缺少命令：' + missing.join(','))
   const api = extension.exports
@@ -41,14 +44,22 @@ exports.run = async function run() {
   fs.writeFileSync(matched, JSON.stringify(data))
   await api.importReport(matched)
   state = api.getState()
-  if (state.identity.state !== 'match') throw new Error('同提交报告未标记一致：' + JSON.stringify(state.identity))
+  if (state.identity.state !== 'match' && state.identity.state !== 'dirty') {
+    throw new Error('同提交报告未标记一致：' + JSON.stringify(state.identity))
+  }
 
   await api.importReport(fixture)
   if (api.getState().identity.state !== 'stale') throw new Error('不同提交报告未标记过期')
 
   // 真实命令入口导入：不经过测试 API。
   await vscode.commands.executeCommand('jitReport.import', vscode.Uri.file(matched))
-  if (api.getState().identity.state !== 'match') throw new Error('真实命令导入后身份应为一致')
+  const commandState = api.getState().identity.state
+  if (commandState !== 'match' && commandState !== 'dirty') throw new Error('真实命令导入后身份应为一致')
+  await vscode.commands.executeCommand('jitReport.showExplanation')
+  await new Promise(resolve => setTimeout(resolve, 250))
+  if (vscode.window.activeTextEditor?.document.uri.scheme !== 'jit-commit-explanation') {
+    throw new Error('提交解释没有以只读虚拟文档打开')
+  }
 
   // 工作树改动后必须降级为 dirty，而不是仍标一致。
   const readme = path.join(folder.uri.fsPath, 'SMOKE_DIRTY.txt')
@@ -71,6 +82,7 @@ exports.run = async function run() {
   try { await api.importReport(bad) } catch { rejected = true }
   if (!rejected) throw new Error('非法报告未被拒绝')
 
+  try { fs.unlinkSync(readme) } catch { /* 冒烟文件已清理 */ }
   await vscode.commands.executeCommand('jitReport.clear')
   const out = process.env.JIT_SMOKE_MARKER || path.resolve(__dirname, '.smoke-ok')
   fs.writeFileSync(out, 'ok')

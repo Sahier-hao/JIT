@@ -68,6 +68,10 @@ def test_scores_a_real_commit_range_with_live_features(tmp_path):
     commit = report["commits"][0]
     assert commit["commitId"] == head and 0 <= commit["risk"] <= 1
     assert commit["files"] == 1
+    assert commit["explanation"]["status"] == "supported"
+    assert commit["explanation"]["method"] == "occlusion-mean-v1"
+    assert isinstance(commit["explanation"]["items"], list)
+    assert commit["explanation"]["summary"]
     rules = {item["ruleId"] for item in report["candidates"]}
     assert {"py-eval-exec", "py-bare-except"} <= rules
     assert all(item["suggestion"] for item in report["candidates"])
@@ -104,3 +108,63 @@ def test_load_model_failure_is_analysis_incomplete(tmp_path):
     with pytest.raises(commit_analysis.CommitAnalysisError) as info:
         commit_analysis.analyze(repo, base, head, Missing(), "missing")
     assert info.value.exit_code == 2
+
+
+def test_explanation_failure_does_not_change_the_saved_score(tmp_path, monkeypatch):
+    repo, base, head = make_repo(tmp_path)
+
+    def fail(*_args, **_kwargs):
+        raise RuntimeError("attribution failed")
+
+    monkeypatch.setattr(commit_analysis.attribution, "explain", fail)
+    report = commit_analysis.analyze(repo, base, head, StubCatalog(), "model-1")
+    commit = report["commits"][0]
+    assert 0 <= commit["risk"] <= 1
+    assert commit["explanation"] == {
+        "status": "not-supported", "method": None, "items": [],
+        "summary": "本次归因计算不可用。 提交级预测分数仍然有效。",
+    }
+
+
+def test_compatible_models_only_lists_enabled_commit_schema_models():
+    schema = resolve("kamei14-git-v2")
+    unsupported = SimpleNamespace(
+        schema=resolve("openstack-six-v1"), model=object(),
+        summary={"modelSha256": "c" * 64},
+        manifest={"runId": "d" * 64, "config": {"algorithmVersion": "method-u"}},
+    )
+    offline = SimpleNamespace(
+        schema=resolve("kamei14-2013-v1"), model=object(),
+        summary={"modelSha256": "e" * 64},
+        manifest={"runId": "f" * 64, "config": {"algorithmVersion": "method-o"}},
+    )
+    good = make_snapshot()
+
+    class Catalog:
+        def registered_models(self, state=None):
+            assert state == "ready"
+            return [
+                {"modelId": "good", "enabled": True, "isDefault": False},
+                {"modelId": "disabled", "enabled": False, "isDefault": False},
+                {"modelId": "unsupported", "enabled": True, "isDefault": False},
+                {"modelId": "offline", "enabled": True, "isDefault": False},
+            ]
+
+        def load_model(self, model_id):
+            if model_id == "unsupported":
+                return unsupported, {"name": "六字段模型"}
+            if model_id == "offline":
+                return offline, {"name": "离线模型"}
+            if model_id == "disabled":
+                raise AssertionError("禁用模型不应被加载")
+            return good, {
+                "name": "可用模型", "artifactRunId": "run-good",
+                "method": "logistic-regression-l2-v1",
+            }
+
+    models = commit_analysis.compatible_models(Catalog())
+    assert models == [{
+        "modelId": "good", "name": "可用模型",
+        "method": "logistic-regression-l2-v1",
+        "featureSchema": schema.name, "isDefault": False, "runId": "run-good",
+    }]

@@ -1,46 +1,90 @@
-# JIT Commit Analysis（VS Code 只读扩展）
+# JIT Commit Analysis（VS Code 扩展）
 
-只读消费 `pr-check-analyze` 生成的 `jit-commit-analysis-v1` 报告：核对仓库提交身份，展示提交风险、静态候选与修复建议，并跳转到对应文件行。不修改源码、不执行报告内容、不发起网络请求。
+提交后在本地运行 JIT 提交检查：状态栏显示**提交级预测分数**，Problems 和侧栏标出**可疑代码行**；也可以从提交节点只读查看提交解释。扩展只读代码和报告，不修改源码、不自动提交、不访问网络执行远端内容。
 
-## 构建
+## 提交后检查
 
-```bash
+1. 用 VS Code 打开 Git 仓库根目录，运行 `JIT: 配置提交后检查`。
+2. 选择 Python、目录库和产物根目录后，从 QuickPick 中选择真实模型；候选来自 `pr-check-models`，只包含已启用、ready 且提交采集字段兼容的模型。
+3. 之后每次提交，扩展对 `HEAD~1..HEAD` 运行 `pr-check-analyze`。达到阈值时状态栏标黄并提醒，不阻断提交。
+4. 手动检查用 `JIT: 检查最近一次提交`；自动检查可用 `JIT: 开启/关闭提交后自动检查` 控制。
+5. 独立换模型用 `JIT: 选择模型`。模型列表命令不可用时，扩展才回退到手工输入真实 `modelId`，不会编造或静默替换模型。
+
+配置项：
+
+- `jitCommitAnalysis.modelId`：真实已登记模型 ID。
+- `jitCommitAnalysis.pythonPath`：默认使用后端 `.venv` 或系统 `python`。
+- `jitCommitAnalysis.backendPath`、`databasePath`、`artifactRoot`：JIT 后端、目录库和模型产物目录。
+- `jitCommitAnalysis.riskThreshold`：状态栏提醒阈值，默认 0.5。
+- `jitCommitAnalysis.showCandidates`：是否把可疑代码行写入 Problems。
+
+## 模型列表 CLI
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m jit_baseline.cli pr-check-models `
+  --database storage\catalog.sqlite3 `
+  --artifact-root artifacts --json
+```
+
+当前本机目录库实测返回 13 个可用模型（kamei14-git-v2 10 个、kamei14-git-v1 3 个），未混入离线六字段或 2013 模型。
+
+## 提交解释
+
+`pr-check-analyze` 会为评分提交附带 `explanation`：
+
+- `status=supported` 时包含 `method`、Top 特征贡献和中文摘要；
+- 归因失败时为 `not-supported`，不改分数；
+- 报告仍是 `jit-commit-analysis-v1`，旧报告可继续导入。
+
+扩展从侧栏提交节点、通知和命令面板打开 `JIT: 查看提交解释`，使用只读虚拟 Markdown 文档展示提交 SHA、模型身份、提交级预测分数、中文摘要和 Top 特征贡献。报告文本只作数据展示，不注入 HTML 或执行命令。
+
+## 构建与验证
+
+```powershell
 cd vscode-extension
 npm install
-npm run compile
-npm test            # 解析、身份核对与行号边界测试
-npm run package     # 生成 jit-commit-analysis-<version>.vsix
+npm test
+npm run package
 ```
 
-## 安装与使用
+2026-11-28 实测：
 
-1. 生成报告：
+- `npm test`：25 项通过。
+- `npm run package`：生成 `jit-commit-analysis-0.4.0.vsix`，23 个文件、41.06 KB。
+- 隔离扩展目录安装后 `--list-extensions --show-versions` 显示 `local.jit-commit-analysis@0.4.0`。
+- 扩展宿主冒烟被本机 VS Code 安装目录 ACL 阻止，Electron 在加载扩展前退出；错误原文与复现命令见 `docs/审计/2026-11-28-ide-plugin-0.4.0.md`。未把该尝试记作宿主通过。
 
-```bash
-cd backend
-./.venv/Scripts/python.exe -m jit_baseline.cli pr-check-analyze \
-  --repo ../ --base <base-sha> --head <head-sha> --model-id <已登记模型 ID> \
-  --database <目录库> --artifact-root <模型产物根目录> \
-  --output ../report.json --markdown ../report.md
+## 真实临时仓库实测
+
+用两个提交的真实临时 Git 仓库，第二次提交引入 `eval` 与裸 `except`，运行：
+
+```powershell
+python -m jit_baseline.cli pr-check-analyze `
+  --repo <temp-repo> --base <base> --head <head> `
+  --model-id cbc89403-33a8-4643-90ab-40f9938e2dcd `
+  --database storage\catalog.sqlite3 --artifact-root artifacts `
+  --output report.json
 ```
 
-也可在资源管理器「JIT 提交分析」视图点击「JIT: 复制报告生成命令」，按提示填写基准/目标提交、真实模型 ID、目录库和产物根目录；扩展只复制命令，不执行命令。运行后把生成的 `jit-report.json` 通过「JIT: 导入提交分析报告」导入。
+实测模型为「逻辑回归 · kamei14-git-v2」，提交级预测分数 `0.1659685471`；解释为 `supported / occlusion-mean-v1`、5 条贡献；可疑代码行：
 
-2. 安装扩展：`code --install-extension vscode-extension/jit-commit-analysis-0.2.0.vsix --force`
-   （开发调试也可在 VS Code 打开 `vscode-extension/` 后按 F5 启动扩展宿主。）
-3. 用 VS Code 打开被分析仓库的根目录，在资源管理器「JIT 提交分析」视图点击「JIT: 导入提交分析报告」，选择 `report.json`。
-4. 点提交或候选条目跳转到文件；报告目标提交与当前 `HEAD` 不一致时只读展示并拒绝定位。
+- `app.py:3` `py-eval-exec`，证据 `return eval(items)`
+- `app.py:4` `py-bare-except`，证据 `except:`
 
-## 验证范围
+原始摘要、报告和完整命令见 `docs/evidence/deliver-user-prediction-and-ide-workflows/`。
 
-- `npm test`：报告格式、路径越界拒绝、身份 match/stale/unknown、行号边界与命令生成校验。
-- `npm test` 同时运行 `test/real-repository.test.js`：在一次性真实 Git 仓库中核对 match、脏工作树、分支切换、过期报告、文件重命名与删除，不把候选定位到错误文件。
-- 扩展宿主冒烟：`node scripts/smoke.js`（需本机安装 VS Code，可设 `JIT_VSCODE_EXE`）实际加载并激活扩展，确认 6 个命令注册并执行只读命令。
-- 未做：报告在真实大型仓库中的逐条 GUI 跳转巡览；导入过期报告后文件内容变化的完整人工截图旅程。真实仓库身份回归与 CI 报告交接已有自动证据，不宣称 GUI 走查完成。
+## 现场演示
 
-## CI 报告交接
+1. 打开一个真实 Git 仓库，执行 `JIT: 选择模型`，确认 QuickPick 显示真实模型。
+2. 修改一个有明确问题的文件并提交，不点「分析」，等待状态栏出现**提交级预测分数**。
+3. 打开 Problems，指出可疑代码行的规则 ID、命中证据和说明，点击跳到文件和行号。
+4. 在侧栏提交节点打开「查看提交解释」，核对 SHA、模型、分数、中文摘要和 Top 贡献。
+5. 声明边界：分数是模型估计，不是已确认缺陷；解释是模型敏感度，不是缺陷原因；静态规则不是行级概率。
 
-1. 在 PR 的 Actions 运行中下载 `commit-analysis-*` 产物（失败运行不产生替代报告）。
-2. 解压得到 `jit-commit-analysis-v1` JSON，在 VS Code 打开被分析仓库根目录。
-3. 通过「JIT: 导入提交分析报告」显式选择报告；扩展核对仓库/提交/工作树身份后再允许定位。
-4. CI 只上传报告产物，不评论 PR、不阻断合并；报告仍是提交级模型估计，不是缺陷概率或根因。
+## 边界
+
+- 合并提交不评分；首个提交没有父提交，无法计算历史特征。
+- 工作树中已修改的文件不标旧报告行号。
+- 自动检查只读本地 Git、目录库和模型产物，不访问网络。
+- 提交解释只使用报告保存的归因；缺失时明确显示不可用。

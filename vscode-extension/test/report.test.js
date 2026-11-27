@@ -55,3 +55,37 @@ test('line numbers must stay inside the document', () => {
   assert.equal(validLine('a\nb\nc', 4), false)
   assert.equal(validLine('a', 0), false)
 })
+
+test('parses a saved commit explanation and keeps unsupported status honest', () => {
+  const base = report()
+  base.commits[0].explanation = {
+    status: 'supported', method: 'occlusion-mean-v1',
+    items: [{ feature: 'la', value: 4, baseline: 2, delta: 0.1, direction: 'increases' }],
+    summary: '摘要',
+  }
+  const parsed = parseReport(base)
+  assert.equal(parsed.commits[0].explanation.status, 'supported')
+  assert.equal(parsed.commits[0].explanation.items[0].feature, 'la')
+
+  base.commits[0].explanation = {
+    status: 'not-supported', method: null, items: [], summary: '归因不可用',
+  }
+  assert.equal(parseReport(base).commits[0].explanation.status, 'not-supported')
+  assert.equal(parseReport(report()).commits[0].explanation, null)
+})
+
+test('rejects malformed explanation contributions', () => {
+  const base = report()
+  base.commits[0].explanation = {
+    status: 'supported', method: 'occlusion-mean-v1',
+    items: [{ feature: 'la', value: 4, baseline: 2, delta: Number.NaN, direction: 'increases' }],
+    summary: '摘要',
+  }
+  assert.throws(() => parseReport(base), /explanation.delta/)
+  base.commits[0].explanation = {
+    status: 'not-supported', method: 'x',
+    items: [{ feature: 'la', value: 4, baseline: 2, delta: 0.1, direction: 'increases' }],
+    summary: '摘要',
+  }
+  assert.throws(() => parseReport(base), /不应包含贡献项/)
+})
