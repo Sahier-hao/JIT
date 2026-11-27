@@ -74,4 +74,4 @@
 - [x] 8.2 运行 OpenAPI 导出、操作清单校验、矩阵生成与矩阵测试，确认没有陈旧计数或跳过项冒充通过
 - [x] 8.3 运行任务 7 的真实隔离浏览器旅程并核对截图与冻结证据，确认未修改训练算法、风险算法或默认模型
 - [x] 8.4 运行 `openspec validate align-training-and-model-evaluation --strict`，确认所有 artifacts 有效且任务状态与实现一致
-- [ ] 8.5 检查 `git diff --check`、工作树内容和最终提交范围，确认只有一个 change、一个独立 PR 且未包含无关修改
+- [x] 8.5 检查 `git diff --check`、工作树内容和最终提交范围，确认只有一个 change、一个独立 PR 且未包含无关修改
