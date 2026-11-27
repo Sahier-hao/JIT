@@ -63,6 +63,11 @@ export function CurationPreviewPanel({ preview }: { preview: CurationPreview }) 
   const comparison = currentStep && selectedFeature ? comparisonFor(currentStep, selectedFeature) : null
   const excluded = Object.entries(preview.stats.excluded).filter((entry): entry is [string, number] =>
     typeof entry[1] === 'number' && entry[1] > 0)
+  const beforeRows = preview.beforeStats?.includedRows ?? preview.beforeStats?.rawRows ?? preview.stats.rawRows
+  const beforePositive = preview.beforeStats?.positiveLabels ?? 0
+  const afterRows = preview.stats.includedRows
+  const afterPositive = preview.stats.positiveLabels
+  const samples = (currentStep?.afterStats.sampleExcluded ?? []).slice(0, 8)
 
   const datasetOption: ChartOption = {
     animation: false,
@@ -156,6 +161,9 @@ export function CurationPreviewPanel({ preview }: { preview: CurationPreview }) 
           {EXCLUSION_LABELS[reason] ?? reason} {numberText(count)}
         </span>)}
       </div> : null}
+      <p className="text-[11px] text-foreground-3">
+        标签分布：正例 {numberText(beforePositive)} → {numberText(afterPositive)}，负例 {numberText(beforeRows - beforePositive)} → {numberText(afterRows - afterPositive)}
+      </p>
     </section>
 
     <section className="grid gap-2" aria-labelledby="curation-step-chart">
@@ -183,6 +191,33 @@ export function CurationPreviewPanel({ preview }: { preview: CurationPreview }) 
           </tr>)}</tbody>
         </table>
       </div>
+    </section>
+
+    <section className="grid gap-2 border-t border-border-soft pt-3" aria-labelledby="curation-samples">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 id="curation-samples" className="text-xs font-medium text-foreground-2">代表性记录</h3>
+        <span className="text-[11px] text-foreground-4">步骤 {currentStep?.index ?? '—'} 排除的记录，最多 8 条</span>
+      </div>
+      {samples.length ? <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] border-collapse text-left text-[11px]">
+          <thead className="text-foreground-3"><tr className="border-y border-border-soft">
+            <th className="py-1.5 pr-3 font-normal">记录</th><th className="py-1.5 pr-3 font-normal">时间</th>
+            <th className="py-1.5 pr-3 font-normal">标签</th><th className="py-1.5 font-normal">处理原因</th>
+          </tr></thead>
+          <tbody>{samples.map((sample, index) => {
+            const id = typeof sample.id === 'string' ? sample.id : '—'
+            const time = typeof sample.time === 'string' ? sample.time.slice(0, 10) : '—'
+            const label = sample.label === 1 ? '正例' : sample.label === 0 ? '负例' : '未知'
+            const reason = typeof sample.reason === 'string' ? EXCLUSION_LABELS[sample.reason] ?? sample.reason : '—'
+            return <tr key={`${id}:${index}`} className="border-b border-border-soft text-foreground-2">
+              <td className="py-1.5 pr-3 font-mono">{id.slice(0, 12)}</td>
+              <td className="py-1.5 pr-3 tabular-nums">{time}</td>
+              <td className="py-1.5 pr-3">{label}</td>
+              <td className="py-1.5">{reason}</td>
+            </tr>
+          })}</tbody>
+        </table>
+      </div> : <p className="text-xs text-foreground-3">这一步没有保留可展示的排除记录。</p>}
     </section>
 
     <section className="grid gap-2 border-t border-border-soft pt-3" aria-labelledby="curation-feature-chart">

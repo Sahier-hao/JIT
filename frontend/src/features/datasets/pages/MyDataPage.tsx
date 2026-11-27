@@ -15,7 +15,6 @@ import type { Route } from '@/app/navigation'
 import { DatasetImportDialog } from '@/features/datasets/components/DatasetImportDialog'
 import { DatasetImportStatusDialog } from '@/features/datasets/components/DatasetImportStatusDialog'
 import { datasetImportJobsKey, useDatasetImportJobs, type DatasetImportTask } from '@/features/datasets/datasetImportClient'
-import { DatasetCurationDialog } from '@/features/datasets/components/DatasetCurationDialog'
 import { RepositoryDatasetBuildDialog } from '@/features/datasets/components/RepositoryDatasetBuildDialog'
 import { useRepository } from '@/features/projects/repositoryWorkspace'
 import {
@@ -64,7 +63,6 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialD
   const [buildOpen, setBuildOpen] = useState(false)
   const [buildSeed, setBuildSeed] = useState<{ repositoryUrl: string; branch: string } | null>(null)
   const projectSeed = useRepository(buildOpen && buildProjectId && !initialTaskId ? buildProjectId : '')
-  const [curationOpen, setCurationOpen] = useState(false)
   const completedTasks = useRef(new Set<string>())
   const tabInitialized = useRef(false)
   const viewingDatasets = tab !== 'builds' || Boolean(initialDatasetVersion && !initialTab)
@@ -346,7 +344,7 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialD
           onHistory: () => navigate({ name: 'my-training', historyDatasetVersion: current.version }),
           onPredict: () => navigate({ name: 'my-predictions', datasetVersion: current.version }),
           onExport: () => exportDataset(current.version),
-          onCuration: () => setCurationOpen(true),
+          onCuration: () => navigate({ name: 'my-data-clean', version: current?.version }),
           onDelete: () => setConfirmDelete(true),
           onRebuild: (repositoryUrl, branch) => { setBuildSeed({ repositoryUrl, branch }); setBuildOpen(true) },
         }}/> : initialDatasetVersion && datasets ? <EmptyState title="这个数据版本当前不可用" description={<code className="font-mono text-xs">{initialDatasetVersion}</code>}>
@@ -362,12 +360,6 @@ export function MyDataPage({ account = null, navigate, onLoginRequired, initialD
       onChooseFile={() => { navigate({ name: 'my-data' }, true); setImportOpen(true) }}
       onViewVersion={openImportedVersion}/> : null}
     {buildDialog}
-    <DatasetCurationDialog key={`${current?.version ?? 'none'}:${curationOpen ? 'open' : 'closed'}`} open={curationOpen} onOpenChange={setCurationOpen} dataset={current} onDerived={version => {
-      setPreferred({ version })
-      setTab('mine')
-      setReload(value => value + 1)
-      setNotice('已生成清洗版本')
-    }} onLoginRequired={onLoginRequired}/>
     <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
       <AlertDialogContent className="max-h-[90vh] overflow-auto" style={{ width: 'min(92vw, 460px)', maxWidth: 'none' }}>
         <AlertDialogHeader><AlertDialogTitle>删除这个数据版本？</AlertDialogTitle><AlertDialogDescription>会删除该版本的登记、提交特征和文件，无法恢复；被模型或分析引用的版本会被拒绝。</AlertDialogDescription></AlertDialogHeader>

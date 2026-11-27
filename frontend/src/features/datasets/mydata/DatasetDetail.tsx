@@ -2,7 +2,7 @@ import { CopyIdentifier } from '@/components/shared/CopyIdentifier'
 import { Button } from '@/components/ui/button'
 import {
   AlertTriangle, CheckCircle2, Clock3, Database, ExternalLink, FileArchive,
-  Gauge, GitBranch, ShieldAlert, Trash2,
+  Gauge, GitBranch, ShieldAlert, Table2, Trash2,
 } from 'lucide-react'
 import { DatasetFact as Fact, DatasetMetric as HeroMetric, DatasetSection as DetailSection } from '@/features/datasets/DatasetPresentation'
 import { formatDate, valueLabel } from '@/features/admin/adminContracts'
@@ -10,6 +10,7 @@ import type { UserDataset, UserSplitPreview } from '@/features/account/userClien
 import { labelMaturityItems } from '@/lib/datasetMaturity'
 import { BenchmarkFieldsDialog } from '@/features/datasets/components/BenchmarkFieldsDialog'
 import { KAMEI_2013_SCHEMA } from '@/features/datasets/components/datasetImportFormats'
+import { DatasetRowsTable } from '@/features/datasets/mydata/DatasetRowsTable'
 import {
   EXCLUSION_LABELS, asRow, bytesText, commitText, numeric, numberText,
   datasetTitle, ratioText, usageLabel,
@@ -118,6 +119,10 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
       {previewError ? <div className="border-t border-rose/20 bg-rose-soft px-5 py-3 text-xs text-rose-deep" role="alert">{previewError}</div>
         : preview && !preview.available ? <div className="flex items-start gap-2 border-t border-rose/20 bg-rose-soft px-5 py-3 text-xs text-rose-deep" role="status"><AlertTriangle aria-hidden="true" className="mt-0.5 shrink-0" size={14}/><div className="min-w-0"><span>{preview.reason?.message ?? '训练准入未通过'}</span>{needsRebuild && /^https?:\/\//.test(sourceUrl) ? <div className="mt-2"><Button size="sm" variant="outline" type="button" onClick={() => actions.onRebuild(sourceUrl, branch || 'HEAD')}>重新构建</Button></div> : null}</div></div> : null}
     </section>
+
+    <DetailSection title="数据明细" icon={Table2}>
+      <DatasetRowsTable version={dataset.version}/>
+    </DetailSection>
 
     <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
       <div className="grid min-w-0 gap-4">

@@ -78,6 +78,18 @@ def test_import_six_projects_retry_export_and_training_preview(workspace):
     with zipfile.ZipFile(io.BytesIO(exported.content)) as archive:
         assert archive.read(next(name for name in archive.namelist() if name.endswith('.csv'))) == project_csv()
 
+    rows = client.get(f'/api/v1/user/datasets/{version}/rows?limit=5').json()
+    assert rows['version'] == version
+    assert rows['columns'][:3] == ['transactionid', 'commitdate', 'ns']
+    assert rows['total'] == 20
+    assert len(rows['rows']) == 5
+    assert rows['rows'][0][0] == '1'
+    tail = client.get(f'/api/v1/user/datasets/{version}/rows?offset=18&limit=5').json()
+    assert len(tail['rows']) == 2
+    assert client.get(f'/api/v1/user/datasets/{version}/rows?limit=0').status_code in (400, 422)
+    assert client.get(f'/api/v1/user/datasets/{version}/rows?limit=101').status_code in (400, 422)
+    assert client.get(f'/api/v1/user/datasets/{version}/rows?offset=-1').status_code in (400, 422)
+
     retry = client.post(ENDPOINT, content=blob, headers=HEADERS)
     assert retry.status_code == 200, retry.text
     assert retry.json()['createdCount'] == 0
@@ -87,6 +99,7 @@ def test_import_six_projects_retry_export_and_training_preview(workspace):
     client.post('/api/user/logout')
     assert client.post('/api/user/register', json={**ACCOUNT, 'username': 'other'}).status_code == 201
     assert client.get(f'/api/v1/user/datasets/{version}').status_code == 403
+    assert client.get(f'/api/v1/user/datasets/{version}/rows').status_code == 403
 
 
 def test_import_history_restores_versions_created_before_background_jobs(workspace):

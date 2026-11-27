@@ -30,6 +30,7 @@ const FixedPRSnapshot = lazy(() => import('@/features/reviews/pages/PullRequestJ
 const ProjectEvents = lazy(() => import('@/features/projects/components/ProjectActivity').then(module => ({ default: module.ProjectEvents })))
 const MyDataPage = lazy(() => import('@/features/datasets/pages/MyDataPage').then(module => ({ default: module.MyDataPage })))
 const MyTrainingPage = lazy(() => import('@/features/training/pages/MyTrainingPage').then(module => ({ default: module.MyTrainingPage })))
+const CurationPage = lazy(() => import('@/features/datasets/pages/CurationPage').then(module => ({ default: module.CurationPage })))
 const AlgorithmLibraryPage = lazy(() => import('@/features/training/pages/AlgorithmLibraryPage').then(module => ({ default: module.AlgorithmLibraryPage })))
 const MyModelsPage = lazy(() => import('@/features/models/pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
 const MyPredictionsPage = lazy(() => import('@/features/predictions/pages/MyPredictionsPage').then(module => ({ default: module.MyPredictionsPage })))
@@ -88,6 +89,7 @@ function Workspace() {
     initialDatasetVersion={route.datasetVersion} initialTab={route.view === 'builds' ? 'builds' : undefined} initialTaskId={route.view !== 'imports' ? route.taskId : undefined}
     importHistory={route.view === 'imports'} importTaskId={route.view === 'imports' ? route.taskId : undefined} buildProjectId={route.buildProjectId}/>
   else if (route.name === 'my-training') content = <MyTrainingPage key={`${account}:${route.experimentId ?? 'list'}:${route.datasetVersion ?? ''}:${route.method ?? ''}:${route.schema ?? ''}`} account={account} experimentId={route.experimentId} initialDatasetVersion={route.datasetVersion} initialMethod={route.method} initialSchema={route.schema} historyDatasetVersion={route.historyDatasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-data-clean') content = <CurationPage version={route.version} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'algorithms') content = <AlgorithmLibraryPage method={route.method} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'ide-plugin') content = <VSCodePluginPage/>
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>

@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@/lib/test-utils'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { MyDataPage } from '@/features/datasets/pages/MyDataPage'
+import { CurationPage } from '@/features/datasets/pages/CurationPage'
 import { MyModelsPage } from '@/features/models/pages/MyModelsPage'
 import { UserAccount } from '@/features/account/components/UserAccount'
 import { MyTrainingPage } from '@/features/training/pages/MyTrainingPage'
@@ -235,16 +236,29 @@ it('switches to the accepted retry while the experiment is refreshing', async ()
   expect(screen.queryByText('服务重启时训练尚未完成')).not.toBeInTheDocument()
 })
 
-it('previews and derives a cleaned dataset version', async () => {
+it('opens the cleaning page from a dataset version', async () => {
   const navigate = vi.fn()
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const value = String(input)
     if (value.includes('/api/v1/user/datasets?scope=')) return Response.json({ datasets: [DATASET] })
     if (value.includes('/api/v1/user/dataset-builds?')) return Response.json({ tasks: [] })
     if (value.includes('/split-preview')) return Response.json(SPLIT)
+    return Response.json({})
+  })
+  render(<MyDataPage navigate={navigate} onLoginRequired={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '清洗数据' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'my-data-clean', version: DATASET.version })
+})
+
+it('previews, invalidates and derives from the cleaning page', async () => {
+  const navigate = vi.fn()
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
+    const value = String(input)
+    if (value.includes('/api/v1/user/datasets?scope=')) return Response.json({ datasets: [DATASET] })
     if (value.includes('/curation/preview') && options?.method === 'POST') return Response.json({
       sourceVersion: DATASET.version, recipeSha256: 'c'.repeat(64),
-      stats: { rawRows: 20, includedRows: 18, excludedRows: 2, positiveLabels: 5, timeRange: null, excluded: { duplicate: 2 }, sampleExcluded: [] },
+      stats: { rawRows: 20, includedRows: 18, excludedRows: 2, positiveLabels: 5, timeRange: null, excluded: { duplicate: 2 }, sampleExcluded: [{ id: 'c1', reason: 'duplicate', time: '2026-01-01', label: 1 }] },
       beforeStats: { rawRows: 20, includedRows: 20, excludedRows: 0, positiveLabels: 6, timeRange: null, excluded: {}, sampleExcluded: [] },
       featureComparison: [{
         field: 'la',
@@ -257,7 +271,7 @@ it('previews and derives a cleaned dataset version', async () => {
         rule: { id: 'quantile-range', field: 'la', lower: 0.05, upper: 0.95 },
         details: { la: { min: 1, max: 20, lower: 0.05, upper: 0.95 } },
         beforeStats: { rawRows: 20, includedRows: 20, excludedRows: 0, positiveLabels: 6, timeRange: null, excluded: {}, sampleExcluded: [] },
-        afterStats: { rawRows: 20, includedRows: 18, excludedRows: 2, positiveLabels: 5, timeRange: null, excluded: { duplicate: 2 }, sampleExcluded: [] },
+        afterStats: { rawRows: 20, includedRows: 18, excludedRows: 2, positiveLabels: 5, timeRange: null, excluded: { duplicate: 2 }, sampleExcluded: [{ id: 'c1', reason: 'duplicate', time: '2026-01-01', label: 1 }] },
         featureComparison: [{
           field: 'la',
           bins: [{ start: 1, end: 10 }, { start: 10, end: 20 }],
@@ -273,49 +287,45 @@ it('previews and derives a cleaned dataset version', async () => {
     })
     return Response.json({})
   })
-  render(<MyDataPage navigate={navigate} onLoginRequired={vi.fn()}/>)
+  render(<CurationPage version={DATASET.version} navigate={navigate} onLoginRequired={vi.fn()}/>)
   const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '清洗数据' }))
-  const dialog = await screen.findByRole('dialog')
-  await user.click(within(dialog).getByRole('button', { name: '预览结果' }))
+  const panel = await screen.findByRole('region', { name: '清洗与预处理' })
+  await user.click(within(panel).getByRole('button', { name: '预览结果' }))
   expect(await screen.findByText('清洗预览')).toBeVisible()
   expect(screen.getByText('数据集变化')).toBeVisible()
-  expect(screen.getByText('指定特征变化')).toBeVisible()
-  expect(screen.getByRole('img', { name: '每一步清洗前后的记录数' })).toBeVisible()
   expect(screen.getByRole('img', { name: 'la 在步骤 1 前后的分布' })).toBeVisible()
-  const lower = within(dialog).getByLabelText('下分位百分比')
+  const lower = within(panel).getByLabelText('下分位百分比')
   await user.clear(lower)
   await user.type(lower, '10')
   expect(screen.getByText('操作已变化，请重新预览。')).toBeVisible()
-  expect(within(dialog).getByRole('button', { name: '生成新版本' })).toBeDisabled()
-  await user.click(within(dialog).getByRole('button', { name: '预览结果' }))
-  await waitFor(() => expect(within(dialog).getByRole('button', { name: '生成新版本' })).toBeEnabled())
-  await user.click(within(dialog).getByRole('button', { name: '生成新版本' }))
-  expect(await screen.findByText('已生成清洗版本')).toBeVisible()
+  expect(within(panel).getByRole('button', { name: '生成新版本' })).toBeDisabled()
+  await user.click(within(panel).getByRole('button', { name: '预览结果' }))
+  await waitFor(() => expect(within(panel).getByRole('button', { name: '生成新版本' })).toBeEnabled())
+  await user.click(within(panel).getByRole('button', { name: '生成新版本' }))
+  expect(await screen.findByText('已生成新版本')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '去训练' }))
+  expect(navigate).toHaveBeenCalledWith({ name: 'my-training', datasetVersion: 'demo-cleaned' })
 })
 
-it('adds and reorders dataset preprocessing operations', async () => {
+it('adds and reorders dataset preprocessing operations on the cleaning page', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const value = String(input)
     if (value.includes('/api/v1/user/datasets?scope=')) return Response.json({ datasets: [DATASET] })
-    if (value.includes('/api/v1/user/dataset-builds?')) return Response.json({ tasks: [] })
-    if (value.includes('/split-preview')) return Response.json(SPLIT)
     return Response.json({})
   })
-  render(<MyDataPage navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
+  render(<CurationPage version={DATASET.version} navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
   const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: '清洗数据' }))
-  const dialog = await screen.findByRole('dialog')
-  expect(within(dialog).getAllByRole('article')).toHaveLength(1)
-  await user.click(within(dialog).getByRole('button', { name: '添加操作' }))
+  const panel = await screen.findByRole('region', { name: '清洗与预处理' })
+  expect(within(panel).getAllByRole('article')).toHaveLength(1)
+  await user.click(within(panel).getByRole('button', { name: '添加操作' }))
   await user.click(await screen.findByRole('menuitem', { name: '保留日期范围' }))
-  expect(within(dialog).getAllByRole('article')).toHaveLength(2)
-  expect(within(dialog).getByLabelText('开始日期')).toHaveTextContent('2026-01-01')
-  await user.click(within(dialog).getAllByRole('button', { name: '上移' })[1])
-  expect(within(dialog).getAllByRole('article')[0]).toHaveTextContent('保留日期范围')
-  await user.click(within(dialog).getAllByRole('button', { name: '删除操作' })[0])
-  expect(within(dialog).getAllByRole('article')).toHaveLength(1)
-  expect(within(dialog).getByText('保留分位区间')).toBeVisible()
+  expect(within(panel).getAllByRole('article')).toHaveLength(2)
+  expect(within(panel).getByLabelText('开始日期')).toHaveTextContent('2026-01-01')
+  await user.click(within(panel).getAllByRole('button', { name: '上移' })[1])
+  expect(within(panel).getAllByRole('article')[0]).toHaveTextContent('保留日期范围')
+  await user.click(within(panel).getAllByRole('button', { name: '删除操作' })[0])
+  expect(within(panel).getAllByRole('article')).toHaveLength(1)
+  expect(within(panel).getByText('保留分位区间')).toBeVisible()
 })
 
 it('shows submission feedback and immediately publishes the accepted training to the header', async () => {

@@ -206,7 +206,7 @@ def _apply_rule(records, rule):
             elif "end" in rule and day > rule["end"]:
                 reason = "after-date"
         if reason:
-            excluded.append({"id": record["id"], "reason": reason})
+            excluded.append({"id": record["id"], "reason": reason, "time": record.get("time"), "label": record.get("label")})
         else:
             kept.append(record)
     return kept, excluded, quantile_bounds

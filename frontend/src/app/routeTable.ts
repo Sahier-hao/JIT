@@ -86,6 +86,10 @@ export const ROUTES: RouteObject[] = [
   { path: '/reviews', handle: build(() => ({ name: 'my-reviews' })) },
   { path: '/reviews/:owner/:repositoryName/:number', handle: build(prWorkRoute) },
   { path: '/my-data', handle: build((_params, query) => myDataRoute(query)) },
+  { path: '/my-data/clean', handle: build((_params, query) => {
+    const version = text(query.get('version'))
+    return { name: 'my-data-clean', ...(version ? { version } : {}) }
+  }) },
   { path: '/my-training', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))
     const method = text(query.get('method'))

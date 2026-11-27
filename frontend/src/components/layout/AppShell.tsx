@@ -1,4 +1,4 @@
-import { type LucideIcon, BookOpenText, ClipboardCheck, CodeXml, Folder, List, TrendingUp, SlidersHorizontal, Gauge } from 'lucide-react'
+import { type LucideIcon, BookOpenText, ClipboardCheck, CodeXml, Folder, List, Sparkles, TrendingUp, SlidersHorizontal, Gauge } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WorkspaceNavigation } from '@/components/layout/WorkspaceNavigation'
 import { BrandLogo } from '@/components/shared/BrandLogo'
@@ -23,6 +23,7 @@ const NAV: { label: string; items: { label: string; icon: LucideIcon; route: Rou
   ] },
   { label: '数据与模型', items: [
     { label: '我的数据', icon: List, route: { name: 'my-data' } },
+    { label: '数据清洗', icon: Sparkles, route: { name: 'my-data-clean' } },
     { label: '我的训练', icon: TrendingUp, route: { name: 'my-training' } },
     { label: '算法库', icon: BookOpenText, route: { name: 'algorithms' } },
     { label: '我的模型', icon: SlidersHorizontal, route: { name: 'my-models' } },
@@ -33,7 +34,7 @@ const NAV: { label: string; items: { label: string; icon: LucideIcon; route: Rou
 export function AppShell({ route, navigate, repositories, session, onSession, children }: { route: Route; navigate: (route: Route) => void; repositories: RepositoryView[]; session: UserSession | null; onSession: (session: UserSession) => void; children: ReactNode }) {
   const activeJobs = useActiveUserJobs(session?.username ?? null)
   const label = route.name === 'notifications' ? '站内提醒' : route.name === 'my-reviews' ? '我的审查'
-    : route.name === 'my-data' ? '我的数据' : route.name === 'my-training' ? '我的训练'
+    : route.name === 'my-data' ? '我的数据' : route.name === 'my-data-clean' ? '数据清洗' : route.name === 'my-training' ? '我的训练'
     : route.name === 'algorithms' ? '算法库' : route.name === 'ide-plugin' ? 'IDE 插件' : route.name === 'my-models' ? '我的模型' : route.name === 'profile' ? '个人中心' : route.name === 'pr-work' ? 'PR 审查'
     : route.name === 'my-predictions' ? '模型试算'
     : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细'

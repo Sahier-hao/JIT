@@ -7,6 +7,7 @@ export type Route =
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
   | { name: 'my-reviews' }
   | { name: 'my-data'; view?: 'builds' | 'imports'; datasetVersion?: string; taskId?: string; buildProjectId?: string }
+  | { name: 'my-data-clean'; version?: string }
   | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string; method?: string; schema?: string }
   | { name: 'algorithms'; method?: string }
   | { name: 'ide-plugin' }
@@ -76,6 +77,10 @@ export function parseHash(hash: string): Route {
       ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
       ...(params.get('buildProjectId') ? { buildProjectId: params.get('buildProjectId')! } : {}),
       ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion')! } : {}),
+    }
+    if (path === '/my-data/clean') return {
+      name: 'my-data-clean',
+      ...(params.get('version') ? { version: params.get('version')! } : {}),
     }
     if (path === '/my-training') return {
       name: 'my-training',
@@ -169,6 +174,7 @@ export function hashFor(route: Route): string {
       if (route.datasetVersion) params.set('datasetVersion', route.datasetVersion)
       return params.size ? `#/my-data?${params}` : '#/my-data'
     }
+    case 'my-data-clean': return route.version ? `#/my-data/clean?version=${encodeURIComponent(route.version)}` : '#/my-data/clean'
     case 'my-training': {
       const path = route.experimentId ? `#/my-training/${encodeURIComponent(route.experimentId)}` : '#/my-training'
       const params = new URLSearchParams()

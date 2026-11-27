@@ -341,3 +341,27 @@ export async function updateUserProfile(displayName: string): Promise<{ displayN
 export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<void> {
   await apiRequest({ path: '/api/user/password', method: 'POST', body: { currentPassword, newPassword } })
 }
+
+export interface DatasetRowsPage {
+  version: string
+  columns: string[]
+  rows: string[][]
+  total: number
+  offset: number
+  limit: number
+}
+
+export async function datasetRows(version: string, offset: number, limit: number, signal?: AbortSignal): Promise<DatasetRowsPage> {
+  const body = record(await apiRequest({
+    path: `/api/v1/user/datasets/${encodeURIComponent(version)}/rows?offset=${offset}&limit=${limit}`,
+    method: 'GET', signal,
+  }))
+  return {
+    version: text(body.version),
+    columns: textList(body.columns),
+    rows: (Array.isArray(body.rows) ? body.rows : []).map(row => textList(row)),
+    total: finiteNumber(body.total),
+    offset: finiteNumber(body.offset),
+    limit: finiteNumber(body.limit),
+  }
+}

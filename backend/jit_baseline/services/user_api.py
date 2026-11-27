@@ -1,6 +1,8 @@
 """End-user data and training API; every route is scoped to the signed-in user."""
+import csv
 import io
 import json
+import threading
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +26,38 @@ from .published_dataset_imports import MAX_UPLOAD_BYTES, import_projects
 from .user_predictions import UserPredictionService
 
 MAX_EXPORT_BYTES = 64 * 1024 * 1024
+# 明细表分页上限与缓存上限：只缓存中小体量 CSV，超大文件按请求流式读取。
+DATASET_ROW_LIMIT = 100
+DATASET_TABLE_CACHE_BYTES = 32 * 1024 * 1024
+_TABLE_CACHE: dict[str, tuple[tuple[int, int], list[str], list[list[str]]]] = {}
+_TABLE_LOCK = threading.Lock()
+
+
+def _table(csv_path):
+    """读取并缓存 CSV 的列与行；文件变化（mtime/size）后重新读取。"""
+    try:
+        stat = csv_path.stat()
+    except OSError as exc:
+        raise BaselineError('DATASET_UNAVAILABLE', '原始 CSV 不可用') from exc
+    key = (stat.st_mtime_ns, stat.st_size)
+    cached = _TABLE_CACHE.get(str(csv_path))
+    if cached and cached[0] == key:
+        return cached[1], cached[2]
+    try:
+        with csv_path.open('r', encoding='utf-8-sig', newline='') as handle:
+            reader = csv.reader(handle)
+            columns = next(reader, None)
+            if not columns:
+                raise BaselineError('DATASET_UNAVAILABLE', '数据文件没有表头')
+            rows = [row for row in reader]
+    except OSError as exc:
+        raise BaselineError('DATASET_UNAVAILABLE', '原始 CSV 不可读') from exc
+    except csv.Error as exc:
+        raise BaselineError('DATASET_INVALID', '数据文件不是合法 CSV') from exc
+    if stat.st_size <= DATASET_TABLE_CACHE_BYTES:
+        with _TABLE_LOCK:
+            _TABLE_CACHE[str(csv_path)] = (key, columns, rows)
+    return columns, rows
 
 
 def _user(request):
@@ -446,6 +480,24 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         registry = _registry(root)
         manifest, owners = _visible(storage, version, username, registry)
         return _view(storage, manifest, version, owners, username)
+
+    @app.get('/api/v1/user/datasets/{version}/rows')
+    def user_dataset_rows(version: str, request: Request, offset: int = 0, limit: int = 50):
+        username = _user(request)
+        registry = _registry(root)
+        manifest, _ = _visible(storage, version, username, registry)
+        if offset < 0 or limit < 1 or limit > DATASET_ROW_LIMIT:
+            raise BaselineError('INPUT_INVALID',
+                                f'offset 不能为负，limit 必须在 1 到 {DATASET_ROW_LIMIT} 之间')
+        columns, rows = _table(_csv_path(manifest))
+        return {
+            'version': version,
+            'columns': columns,
+            'rows': rows[offset:offset + limit],
+            'total': len(rows),
+            'offset': offset,
+            'limit': limit,
+        }
 
     @app.get('/api/v1/user/datasets/{version}/split-preview')
     def user_split_preview(version: str, request: Request, preset: str | None = None):

@@ -11,7 +11,7 @@ import {
   ArrowDown, ArrowUp, CalendarDays, Check, ChevronDown, CopyX, LoaderCircle,
   Plus, Rows3, SlidersHorizontal, Trash2, X,
 } from 'lucide-react'
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ApiError } from '@/lib/apiContract'
 import {
   deriveCuration, previewCuration,
@@ -194,19 +194,31 @@ function StepEditor({ step, dataset, onChange }: {
   </div>
 }
 
-export function DatasetCurationDialog({ open, onOpenChange, dataset, onDerived, onLoginRequired }: {
+export function DatasetCurationDialog({ open, onOpenChange, dataset: seed, datasets, inline = false, onDerived, onLoginRequired }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  dataset: UserDataset | null
+  dataset?: UserDataset | null
+  datasets?: UserDataset[]
+  inline?: boolean
   onDerived: (version: string) => void
   onLoginRequired: () => void
 }) {
+  const options = useMemo(() => datasets ?? (seed ? [seed] : []), [datasets, seed])
+  const [version, setVersion] = useState(seed?.version ?? options[0]?.version ?? '')
+  const dataset = options.find(item => item.version === version) ?? options[0] ?? null
   const [steps, setSteps] = useState<EditorStep[]>(() => initialSteps(dataset))
   const [preview, setPreview] = useState<UserCurationPreview | null>(null)
   const [previewRecipe, setPreviewRecipe] = useState('')
   const [busy, setBusy] = useState<'preview' | 'derive' | ''>('')
   const [error, setError] = useState('')
   const sequence = useRef(0)
+
+  useEffect(() => {
+    setSteps(initialSteps(dataset))
+    setPreview(null)
+    setPreviewRecipe('')
+    setError('')
+  }, [dataset?.version])
 
   const ready = steps.length > 0 && steps.every(step => validRule(step.rule))
   const recipe = useMemo(() => ({
@@ -270,14 +282,14 @@ export function DatasetCurationDialog({ open, onOpenChange, dataset, onDerived, 
     }
   }
 
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent aria-describedby={undefined} className="max-h-[92dvh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0" style={{ width: 'min(96vw, 920px)', maxWidth: 'none' }}>
-      <DialogHeader className="border-b border-border-soft px-5 py-4 pr-12 sm:px-6"><DialogTitle>清洗与预处理</DialogTitle></DialogHeader>
-      <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6">
+  const body = <div className={inline ? 'grid gap-4' : 'min-h-0 overflow-y-auto px-4 py-4 sm:px-6'}>
       {!dataset ? <p className="py-6 text-center text-xs text-foreground-3">选择一个数据版本后再清洗。</p> : <div className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2 bg-sunken px-3 py-2.5">
           <div className="min-w-0">
-            <strong className="block truncate text-sm text-foreground">{dataset.dataset}</strong>
+            {options.length > 1 ? <Select value={version} onValueChange={setVersion}>
+              <SelectTrigger aria-label="清洗数据版本" className="h-8 max-w-full text-sm"><SelectValue/></SelectTrigger>
+              <SelectContent>{options.map(item => <SelectItem key={item.version} value={item.version}>{item.dataset} · {item.version}</SelectItem>)}</SelectContent>
+            </Select> : <strong className="block truncate text-sm text-foreground">{dataset.dataset}</strong>}
             <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-foreground-3">
               <span>{numberText(dataset.quality.includedRows)} 行</span>
               <span>{numberText(dataset.quality.positiveLabels)} 正例</span>
@@ -322,12 +334,20 @@ export function DatasetCurationDialog({ open, onOpenChange, dataset, onDerived, 
           : <CurationPreviewPanel key={preview.recipeSha256} preview={preview}/> : null}
         {error ? <p className="text-xs text-rose" role="alert">{error}</p> : null}
       </div>}
-      </div>
-      <DialogFooter className="border-t border-border-soft bg-background px-4 py-3 sm:px-6">
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-        <Button type="button" variant="outline" onClick={() => void runPreview()} disabled={!dataset || !ready || Boolean(busy)}>{busy === 'preview' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览结果</Button>
-        <Button type="button" onClick={() => void derive()} disabled={!dataset || !preview || stale || Boolean(busy)}>{busy === 'derive' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成新版本</Button>
-      </DialogFooter>
+  </div>
+  const actions = <>
+    <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+    <Button type="button" variant="outline" onClick={() => void runPreview()} disabled={!dataset || !ready || Boolean(busy)}>{busy === 'preview' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}预览结果</Button>
+    <Button type="button" onClick={() => void derive()} disabled={!dataset || !preview || stale || Boolean(busy)}>{busy === 'derive' ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : undefined}生成新版本</Button>
+  </>
+  if (inline) return <div className="grid gap-4" role="region" aria-label="清洗与预处理">{body}
+    <div className="flex flex-wrap justify-end gap-2 border-t border-border-soft pt-3">{actions}</div>
+  </div>
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent aria-describedby={undefined} className="max-h-[92dvh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0" style={{ width: 'min(96vw, 920px)', maxWidth: 'none' }}>
+      <DialogHeader className="border-b border-border-soft px-5 py-4 pr-12 sm:px-6"><DialogTitle>清洗与预处理</DialogTitle></DialogHeader>
+      {body}
+      <DialogFooter className="border-t border-border-soft bg-background px-4 py-3 sm:px-6">{actions}</DialogFooter>
     </DialogContent>
   </Dialog>
 }
