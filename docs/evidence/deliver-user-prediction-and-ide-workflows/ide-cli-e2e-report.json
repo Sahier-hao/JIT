@@ -1,0 +1,161 @@
+{
+  "format": "jit-commit-analysis-v1",
+  "generatedAt": "2026-11-27T17:39:10.300273Z",
+  "analysisId": "67de7a6cf6866e7b",
+  "contentSha256": "58d3f97b0fda232140dadf0829fbed2bb8d775ff5ed5a59e531b7fd8df99f683",
+  "repository": {
+    "path": "C:\\Users\\荀浩\\AppData\\Local\\Temp\\jit-cli-evidence-c75b61e9",
+    "baseSha": "e4856dbbe08bee5afb41f03356c01e1cfa58b3aa",
+    "headSha": "aa7c603b77309e692e9f53c95899f5d748b669d9",
+    "commitsInRange": 1
+  },
+  "model": {
+    "modelId": "cbc89403-33a8-4643-90ab-40f9938e2dcd",
+    "name": "逻辑回归 · kamei14-git-v2",
+    "runId": "45f418b71d0b1a77cde3addca9c335d0a64810aab9acc16990d483ffe38395e1",
+    "method": "logistic-regression-l2-v1",
+    "featureSchema": "kamei14-git-v2",
+    "parameters": {
+      "C": 1.0,
+      "class_weight": null,
+      "max_iter": 1000,
+      "regularization": "L2",
+      "seed": 2026,
+      "solver": "lbfgs",
+      "threads": 1,
+      "tol": 0.0001
+    },
+    "modelSha256": "24a99953805d7196b424dd0159c949976a282827073ec766b354e102fbe7345b"
+  },
+  "coverage": {
+    "commitsTotal": 1,
+    "commitsScored": 1,
+    "commitsWithoutChanges": 0,
+    "unparsedHistory": 0,
+    "candidateFiles": 1,
+    "candidates": [
+      "app.py"
+    ],
+    "candidatesSkipped": []
+  },
+  "commits": [
+    {
+      "commitId": "aa7c603b77309e692e9f53c95899f5d748b669d9",
+      "epoch": 1795801146,
+      "time": "2026-11-27T17:39:06Z",
+      "subject": "fix: unsafe handler",
+      "authorName": "E2E",
+      "risk": 0.16596854707220818,
+      "addedLines": 4,
+      "deletedLines": 1,
+      "files": 1,
+      "filePaths": [
+        "app.py"
+      ],
+      "explanation": {
+        "status": "supported",
+        "method": "occlusion-mean-v1",
+        "items": [
+          {
+            "feature": "fix",
+            "value": 1,
+            "baseline": 0.0,
+            "delta": 0.105579,
+            "direction": "increases"
+          },
+          {
+            "feature": "la",
+            "value": 4,
+            "baseline": 0.0,
+            "delta": 0.045512,
+            "direction": "increases"
+          },
+          {
+            "feature": "ndev",
+            "value": 1,
+            "baseline": 0.0,
+            "delta": 0.036688,
+            "direction": "increases"
+          },
+          {
+            "feature": "nuc",
+            "value": 1,
+            "baseline": 0.0,
+            "delta": -0.035754,
+            "direction": "decreases"
+          },
+          {
+            "feature": "ns",
+            "value": 1,
+            "baseline": 0.0,
+            "delta": 0.034435,
+            "direction": "increases"
+          }
+        ],
+        "summary": "本次预测风险为 0.166，影响最大的是 fix（推高 0.106），另有 4 个特征有可测影响。归因来自模型推理，不是缺陷结论。（训练分区基线不可用，缺失字段按零基线计算。）"
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "side": "head",
+      "path": "app.py",
+      "line": 4,
+      "ruleId": "py-bare-except",
+      "ruleVersion": "2",
+      "message": "裸 except 会吞掉所有异常",
+      "evidence": "except:",
+      "suggestion": {
+        "ruleId": "py-bare-except",
+        "ruleVersion": "2",
+        "title": "指明需要捕获的异常类型",
+        "rationale": "裸 except 会吞掉 KeyboardInterrupt、SystemExit 和编程错误，使失败难以发现。",
+        "location": {
+          "path": "app.py",
+          "line": 4,
+          "side": "head"
+        },
+        "manualChecks": [
+          "确认哪些异常可以安全处理",
+          "确认无法处理时继续向上抛出"
+        ],
+        "example": {
+          "before": "try:\n    run()\nexcept:\n    pass",
+          "after": "try:\n    run()\nexcept ValueError as error:\n    logger.warning('输入无效: %s', error)"
+        }
+      }
+    },
+    {
+      "side": "head",
+      "path": "app.py",
+      "line": 3,
+      "ruleId": "py-eval-exec",
+      "ruleVersion": "2",
+      "message": "动态执行字符串，需确认输入来源",
+      "evidence": "return eval(items)",
+      "suggestion": {
+        "ruleId": "py-eval-exec",
+        "ruleVersion": "2",
+        "title": "核对动态执行的输入来源并改为显式解析",
+        "rationale": "eval/exec 会执行任意字符串；替代方案取决于输入格式，不能统一替换成另一个动态执行函数。",
+        "location": {
+          "path": "app.py",
+          "line": 3,
+          "side": "head"
+        },
+        "manualChecks": [
+          "确认输入是否来自不可信来源",
+          "确认是否只需解析字面量（可用 ast.literal_eval）",
+          "确认是否需要完整的表达式求值"
+        ],
+        "example": null
+      }
+    }
+  ],
+  "limitations": [
+    "分数是提交级模型估计，不是缺陷概率，也不是行级定位。",
+    "候选位置来自静态规则，与模型分数分属不同依据，不换算成行级概率。",
+    "历史特征依赖第一父链；合并提交不进入评分。",
+    "报告默认不评论 PR、不阻断合并、不修改远端配置。"
+  ]
+}
