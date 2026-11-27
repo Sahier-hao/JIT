@@ -12,6 +12,7 @@ export type Route =
   | { name: 'ide-plugin' }
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
+  | { name: 'model-evaluation'; source?: 'training' | 'prediction'; experimentId?: string; taskId?: string; modelId?: string; batchId?: string }
   | { name: 'profile' }
   | { name: 'research-line' }
   | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string; mode?: 'preview' }
@@ -99,6 +100,17 @@ export function parseHash(hash: string): Route {
       ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}),
     }
     if (parts[0] === 'my-predictions' && parts.length === 2) return { name: 'my-predictions', batchId: parts[1] }
+    if (path === '/model-evaluation') {
+      const source = params.get('source')
+      return {
+        name: 'model-evaluation',
+        ...(source === 'training' || source === 'prediction' ? { source } : {}),
+        ...(params.get('experimentId') ? { experimentId: params.get('experimentId')! } : {}),
+        ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
+        ...(params.get('modelId') ? { modelId: params.get('modelId')! } : {}),
+        ...(params.get('batchId') ? { batchId: params.get('batchId')! } : {}),
+      }
+    }
     if (path === '/profile') return { name: 'profile' }
     if (path === '/research/line-model') return { name: 'research-line' }
     if (path === '/notifications') return { name: 'notifications' }
@@ -186,6 +198,15 @@ export function hashFor(route: Route): string {
       return route.datasetVersion
         ? `#/my-predictions?datasetVersion=${encodeURIComponent(route.datasetVersion)}`
         : '#/my-predictions'
+    }
+    case 'model-evaluation': {
+      const params = new URLSearchParams()
+      if (route.source) params.set('source', route.source)
+      if (route.experimentId) params.set('experimentId', route.experimentId)
+      if (route.taskId) params.set('taskId', route.taskId)
+      if (route.modelId) params.set('modelId', route.modelId)
+      if (route.batchId) params.set('batchId', route.batchId)
+      return params.size ? `#/model-evaluation?${params}` : '#/model-evaluation'
     }
     case 'profile': return '#/profile'
     case 'research-line': return '#/research/line-model'

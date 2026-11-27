@@ -14,6 +14,7 @@ from jit_baseline.catalog_storage import CatalogStorage, MIGRATIONS, utc_now
 from jit_baseline.config import BACKEND
 from jit_baseline.data import BaselineError
 from jit_baseline.datasets import load_manifest
+from jit_baseline.split_preview import validate_dataset_split
 from jit_baseline.training_tasks import TrainingTaskService
 
 OPENSTACK_MANIFEST = (
@@ -34,6 +35,10 @@ def wait_for(test, timeout=8):
 
 def successful_runner(manifest, algorithm, metric_set, **kwargs):
     requested = kwargs.get("maturity_policy", "mature-only")
+    split_policy = validate_dataset_split(
+        BACKEND / "data" / "datasets", DATASET_VERSION,
+        kwargs.get("split_preset"), requested,
+    )["policy"]
     return {
         "artifactKey": kwargs["output_key"],
         "artifactRunId": "a" * 64,
@@ -54,14 +59,7 @@ def successful_runner(manifest, algorithm, metric_set, **kwargs):
         "dataScale": {"records": 6, "featureWidth": 6},
         "trainingPerformance": {"durationSeconds": 0.01, "trainingRecords": 3},
         "trainingSeconds": 0.01,
-        "splitPolicy": {
-            "id": kwargs.get("split_preset", "temporal-70-15-15"),
-            "ratios": {"train": 70, "validation": 15, "test": 15},
-            "timezone": "UTC",
-            "boundaries": [],
-            "partitionCounts": {},
-            "memberSha256": "c" * 64,
-        },
+        "splitPolicy": split_policy,
         "maturity": {
             "requestedPolicy": requested,
             "effectivePolicy": "mature-only",
@@ -137,6 +135,33 @@ def test_split_preset_is_part_of_active_reuse_identity(service):
         release.set()
 
 
+def test_custom_split_ratios_are_persisted_and_reopened(service):
+    task, created = service.create(
+        dict(payload(), splitRatios={"train": 65, "validation": 20, "test": 15}),
+        created_by="admin",
+    )
+    assert created
+    completed = wait_for(lambda: (lambda item: item if item["status"] == "succeeded" else None)(
+        service.get(task["taskId"])))
+    assert completed["splitPreset"] == "temporal-custom-65-20-15"
+    assert completed["splitPolicy"]["ratios"] == {
+        "train": 65, "validation": 20, "test": 15,
+    }
+    reopened = service.get(task["taskId"])
+    assert reopened["splitPreset"] == completed["splitPreset"]
+    assert reopened["splitPolicy"]["memberSha256"] == completed["splitPolicy"]["memberSha256"]
+
+
+def test_conflicting_split_inputs_are_rejected_before_queuing(service):
+    with pytest.raises(BaselineError) as error:
+        service.create(
+            dict(payload(), splitPreset="temporal-70-15-15",
+                 splitRatios={"train": 65, "validation": 20, "test": 15}),
+            created_by="admin",
+        )
+    assert error.value.code == "SPLIT_POLICY_INVALID"
+
+
 def test_maturity_policy_is_preserved_and_part_of_active_reuse_identity(service):
     release = threading.Event()
     service._executor.submit(release.wait)
@@ -169,6 +194,33 @@ def test_success_returns_real_metrics_and_lineage(service):
     assert completed["trainingPerformance"]["trainingRecords"] == 3
     assert completed["maturity"]["effectivePolicy"] == "mature-only"
     assert completed["error"] is None
+
+
+def test_split_member_mismatch_fails_without_published_model(storage, tmp_path):
+    def mismatched_runner(manifest, algorithm, metric_set, **kwargs):
+        result = successful_runner(manifest, algorithm, metric_set, **kwargs)
+        result["splitPolicy"] = {
+            **result["splitPolicy"],
+            "memberSha256": "f" * 64,
+        }
+        return result
+
+    service = TrainingTaskService(
+        storage, artifact_root=tmp_path / "artifacts", timeout=10,
+        runner=mismatched_runner,
+    )
+    try:
+        task, _ = service.create(payload(), created_by="admin")
+        failed = wait_for(
+            lambda: (lambda item: item if item["status"] == "failed" else None)(
+                service.get(task["taskId"])
+            )
+        )
+        assert failed["error"]["code"] == "SPLIT_MEMBER_MISMATCH"
+        assert failed["modelId"] is None
+        assert service.catalog.registered_models() == []
+    finally:
+        service.close()
 
 
 def test_failure_is_recorded_and_retry_creates_parented_task(tmp_path, storage):
@@ -552,7 +604,8 @@ def test_retry_keeps_parameters_and_split(tmp_path, storage):
         storage, artifact_root=tmp_path / "artifacts", timeout=10, runner=failing)
     try:
         first, _ = service.create(
-            dict(payload(), splitPreset="temporal-80-10-10", params={"C": 0.25}),
+            dict(payload(), splitRatios={"train": 65, "validation": 20, "test": 15},
+                 params={"C": 0.25}),
             created_by="admin")
         wait_for(lambda: (lambda item: item if item["status"] == "failed" else None)(
             service.get(first["taskId"])))
@@ -561,8 +614,9 @@ def test_retry_keeps_parameters_and_split(tmp_path, storage):
         wait_for(lambda: (lambda item: item if item["status"] == "failed" else None)(
             service.get(retried["taskId"])))
         assert retried["parameters"]["C"] == 0.25
-        assert seen == [({"C": 0.25}, "temporal-80-10-10"),
-                        ({"C": 0.25}, "temporal-80-10-10")]
+        assert retried["splitPreset"] == "temporal-custom-65-20-15"
+        assert seen == [({"C": 0.25}, "temporal-custom-65-20-15"),
+                        ({"C": 0.25}, "temporal-custom-65-20-15")]
     finally:
         service.close()
 
@@ -693,6 +747,12 @@ def test_experiment_evaluates_validation_thresholds_on_frozen_test(tmp_path, sto
         assert result["selection"] == {"strategy": "max-f1"}
         for task, method in zip(terminal["tasks"], result["methods"], strict=True):
             assert method["artifactRunId"] == task["artifactRunId"]
+            assert method["evaluation"]["source"] == "training"
+            assert method["evaluation"]["partition"]["kind"] == "test"
+            assert method["evaluation"]["sampleCounts"]["included"] > 0
+            assert method["evaluation"]["formalAvailable"] is False
+            assert "成熟" in method["evaluation"]["formalUnavailableReason"]
+            assert method["evaluation"]["labelPolicy"]["excludedCounts"]["immature"] >= 0
             snapshot = service.artifact_root / task["artifactKey"]
             scores = json.loads((snapshot / "reference-predictions.json").read_text(encoding="utf-8"))
             labels = json.loads((snapshot / "test-labels.json").read_text(encoding="utf-8"))
@@ -707,6 +767,11 @@ def test_experiment_evaluates_validation_thresholds_on_frozen_test(tmp_path, sto
             assert method["validation"]["confusion"]["tp"] == tp
             assert method["test"]["confusion"]["tp"] == expected_hits
             assert method["defaultTest"]["confusion"] == task["metrics"]["confusion"]
+        single = service.evaluate_experiment_thresholds(identity, {
+            **request, "taskIds": [terminal["tasks"][0]["taskId"]],
+        })
+        assert len(single["methods"]) == 1
+        assert single["methods"][0]["test"]["confusion"]["tp"] >= 0
         identical = service.evaluate_experiment_thresholds(identity, {
             **request, "strategy": "fixed", "threshold": .5,
         })

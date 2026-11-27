@@ -113,7 +113,7 @@ function record(value: unknown): Row {
 
 export function ModelCardView({ card, retry }: { card: ModelCard; retry?: () => void }) {
   if (!card.available && !card.method) {
-    return <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>{card.name}</strong><p>{card.reason ?? '模型卡不可用'}</p>{retry ? <Button size="sm" onClick={retry} variant="outline" type="button">重试</Button> : null}</div>
+    return <div className="grid justify-items-start gap-2 rounded-sm border border-rose/30 bg-rose-soft p-3 text-xs text-rose-deep" role="alert"><strong>{card.name}</strong><p>{card.reason ?? '模型详情不可用'}</p>{retry ? <Button size="sm" onClick={retry} variant="outline" type="button">重试</Button> : null}</div>
   }
   const scale = card.dataScale ?? {}
   const performance = card.trainingPerformance ?? {}

@@ -75,7 +75,7 @@ def _valid():
 
 # [AI生成]
 def test_valid_matrix_passes():
-    assert matrix.validate(_valid(), _inventory(), ROOT, expected_count=2) == []
+    assert matrix.validate(_valid(), _inventory(), ROOT) == []
 
 
 # [AI生成]

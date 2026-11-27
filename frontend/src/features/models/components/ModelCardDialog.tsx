@@ -25,7 +25,7 @@ export function ModelCardDialog({ modelId, open, onOpenChange }: {
       .catch(failure => { if (!controller.signal.aborted) setError(failure) })
     return () => controller.abort()
   }, [modelId, open, revision])
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${760}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"模型卡"}</DialogTitle></DialogHeader>{error ? <FailureNotice error={error} onRetry={() => setRevision(value => value + 1)}/> : card
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${760}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"模型详情"}</DialogTitle></DialogHeader>{error ? <FailureNotice error={error} onRetry={() => setRevision(value => value + 1)}/> : card
       ? <ModelCardView card={card} retry={() => setRevision(value => value + 1)}/>
       : <LoadingNotice label="正在校验模型与读取诊断"/>}<DialogFooter>{<Button onClick={() => onOpenChange(false)} variant="outline" type="button">关闭</Button>}</DialogFooter></DialogContent></Dialog>
 }

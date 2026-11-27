@@ -1,5 +1,6 @@
 """普通用户账户、数据归属与训练配额。"""
 import threading
+import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -104,6 +105,91 @@ def test_user_training_quota_and_owner(storage, tmp_path):
             assert client.post('/api/v1/user' + owned, json={}).json()['error']['code'] == 'INPUT_INVALID'
     finally:
         release.set()
+        service.close()
+
+
+def test_user_registers_one_exact_training_model(storage, tmp_path):
+    from jit_baseline.config import BACKEND
+    from jit_baseline.datasets import load_manifest
+
+    manifest = BACKEND / 'data/datasets/openstack-six-v1/openstack-six-v1-2011-11-29_2014-02-28.json'
+    if not manifest.exists():
+        pytest.skip('开放数据集未取得')
+    version = load_manifest(manifest)['version']
+    service = TrainingTaskService(
+        storage, artifact_root=tmp_path / 'artifacts',
+        dataset_root=BACKEND / 'data/datasets', timeout=60,
+    )
+    app = create_app(tmp_path / 'missing', database=storage.path,
+                     artifact_root=tmp_path / 'artifacts', training_service=service)
+    try:
+        with TestClient(app) as client:
+            assert client.post('/api/user/register', json=ACCOUNT).status_code == 201
+            response = client.post('/api/v1/user/training-experiments', json={
+                'datasetVersion': version,
+                'splitRatios': {'train': 65, 'validation': 20, 'test': 15},
+                'methods': [
+                    {'method': 'logistic-regression-l2-v1'},
+                    {'method': 'decision-tree-v1'},
+                ],
+            })
+            assert response.status_code == 202, response.text
+            experiment_id = response.json()['experimentId']
+            deadline = time.monotonic() + 90
+            while time.monotonic() < deadline:
+                experiment = client.get(
+                    f'/api/v1/user/training-experiments/{experiment_id}').json()
+                if experiment['status'] not in ('queued', 'running'):
+                    break
+                time.sleep(.1)
+            assert experiment['status'] == 'succeeded', experiment
+            assert experiment['splitPreset'] == 'temporal-custom-65-20-15'
+            selected = experiment['tasks'][0]
+            unselected = experiment['tasks'][1]
+            blocked = client.post(
+                f'/api/v1/user/training-experiments/{experiment_id}/comparison/thresholds',
+                json={'taskIds': [selected['taskId']], 'strategy': 'max-f1'},
+            )
+            assert blocked.status_code == 409, blocked.text
+            assert blocked.json()['error']['code'] == 'TASK_NOT_READY'
+            registered = client.post(
+                f'/api/v1/user/training-experiments/{experiment_id}'
+                f"/tasks/{selected['taskId']}/register",
+            )
+            assert registered.status_code == 200, registered.text
+            assert registered.json()['modelId']
+            reopened = client.get(
+                f'/api/v1/user/training-experiments/{experiment_id}').json()
+            by_id = {task['taskId']: task for task in reopened['tasks']}
+            assert by_id[selected['taskId']]['modelId'] == registered.json()['modelId']
+            assert by_id[unselected['taskId']]['modelId'] is None
+            repeated = client.post(
+                f'/api/v1/user/training-experiments/{experiment_id}'
+                f"/tasks/{selected['taskId']}/register",
+            )
+            assert repeated.status_code == 200, repeated.text
+            assert repeated.json()['status'] == 'already-registered'
+            assert repeated.json()['modelId'] == registered.json()['modelId']
+            release = threading.Event()
+            service._executor.submit(release.wait)
+            queued = client.post('/api/v1/user/training-experiments', json={
+                'datasetVersion': version,
+                'methods': [{'method': 'mlp-v1', 'params': {'epochs': 2}}],
+                'splitPreset': 'temporal-70-15-15',
+            }).json()
+            try:
+                not_ready = client.post(
+                    f"/api/v1/user/training-experiments/{queued['experimentId']}"
+                    f"/tasks/{queued['tasks'][0]['taskId']}/register",
+                )
+                assert not_ready.status_code == 409
+                assert not_ready.json()['error']['code'] == 'TASK_NOT_READY'
+            finally:
+                release.set()
+                client.post(
+                    f"/api/v1/user/training-tasks/{queued['tasks'][0]['taskId']}/cancel",
+                )
+    finally:
         service.close()
 
 

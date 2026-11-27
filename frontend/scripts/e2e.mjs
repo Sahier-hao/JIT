@@ -16,6 +16,8 @@ const suites = {
   'bundled-models': { JIT_E2E_BUNDLED_MODEL_MODE: '1' },
   'multi-method': { JIT_FRONTEND_PORT: '18821', JIT_SERVICE_PORT: '18820' },
   'multi-method-explanations': { JIT_FRONTEND_PORT: '18823', JIT_SERVICE_PORT: '18822' },
+  'training-evaluation': { JIT_E2E_TRAINING_EVALUATION_MODE: '1',
+    JIT_FRONTEND_PORT: '18831', JIT_SERVICE_PORT: '18830' },
 }
 
 const name = process.argv[2]

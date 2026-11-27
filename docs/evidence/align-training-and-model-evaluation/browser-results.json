@@ -1,0 +1,319 @@
+{
+  "config": {
+    "argv": [
+      "D:\\Node\\node.exe",
+      "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--project=training-evaluation"
+    ],
+    "configFile": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\playwright.config.ts",
+    "rootDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e\\repository-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "acceptance",
+        "name": "acceptance",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [
+          "**/admin-training-workbench.spec.ts",
+          "**/experiment-model-promotion.spec.ts",
+          "**/model-package-recovery.spec.ts",
+          "**/current-schema-release.spec.ts",
+          "**/bundled-model-bootstrap.spec.ts",
+          "**/admin-multi-method-experiment.spec.ts",
+          "**/explanation-methods.spec.ts",
+          "**/project-workspace.spec.ts",
+          "**/admin-experiments.spec.ts",
+          "**/pr-account-continuation.spec.ts",
+          "**/shadcn-workspaces.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "acceptance-wide",
+        "name": "acceptance-wide",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [
+          "**/admin-training-workbench.spec.ts",
+          "**/experiment-model-promotion.spec.ts",
+          "**/model-package-recovery.spec.ts",
+          "**/current-schema-release.spec.ts",
+          "**/bundled-model-bootstrap.spec.ts",
+          "**/admin-multi-method-experiment.spec.ts",
+          "**/explanation-methods.spec.ts",
+          "**/project-workspace.spec.ts",
+          "**/admin-experiments.spec.ts",
+          "**/pr-account-continuation.spec.ts",
+          "**/shadcn-workspaces.spec.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "admin-training",
+        "name": "admin-training",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "admin-training-workbench.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "experiments",
+        "name": "experiments",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "experiment-model-promotion.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "model-package",
+        "name": "model-package",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "model-package-recovery.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "current-schema",
+        "name": "current-schema",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "current-schema-release.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "bundled-models",
+        "name": "bundled-models",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "bundled-model-bootstrap.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "multi-method",
+        "name": "multi-method",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "admin-multi-method-experiment.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "multi-method-explanations",
+        "name": "multi-method-explanations",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "explanation-methods.spec.ts"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "training-evaluation",
+        "name": "training-evaluation",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "training-model-evaluation.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\test-results\\default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "training-evaluation",
+        "testDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "snapshotDir": "C:\\Users\\fgdvf\\Desktop\\openspec\\JIT\\frontend\\e2e",
+        "testIgnore": [],
+        "testMatch": "training-model-evaluation.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:18831",
+          "browserName": "chromium",
+          "channel": "msedge",
+          "trace": "retain-on-failure",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "training-evaluation"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "../docs/evidence/_run/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "training-model-evaluation.spec.ts",
+      "file": "training-model-evaluation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "trains, registers and evaluates exact models through the isolated service",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 360000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "training-evaluation",
+              "projectName": "training-evaluation",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22776,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-27T12:17:24.316Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c9a7d817eb011261ee10-8e56811c48c23bcc6bba",
+          "file": "training-model-evaluation.spec.ts",
+          "line": 19,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-27T12:15:38.004Z",
+    "duration": 132221.58200000002,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

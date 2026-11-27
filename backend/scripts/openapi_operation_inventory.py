@@ -1,4 +1,4 @@
-"""Generate and check the 95-operation business API inventory.
+"""Generate and check the OpenAPI business API inventory.
 
 The curated OpenAPI contract is the single source of truth. The four admin
 authentication operations are listed separately and excluded from the business
@@ -168,17 +168,21 @@ def _drift(expected: dict, actual: dict) -> list[str]:
     for key in sorted(set(before) & set(after)):
         if before[key] != after[key]:
             problems.append(f"operationId 漂移：{key} {before[key]} -> {after[key]}")
-    if actual.get("totalOperations") != 102:
-        problems.append(f"OpenAPI 操作总数应为 102，实际 {actual.get('totalOperations')}")
-    if actual.get("businessOperations") != 98:
-        problems.append(f"业务操作应为 98，实际 {actual.get('businessOperations')}")
+    if actual.get("totalOperations") != expected.get("totalOperations"):
+        problems.append(
+            f"OpenAPI 操作总数漂移：{expected.get('totalOperations')} -> "
+            f"{actual.get('totalOperations')}")
+    if actual.get("businessOperations") != expected.get("businessOperations"):
+        problems.append(
+            f"业务操作数漂移：{expected.get('businessOperations')} -> "
+            f"{actual.get('businessOperations')}")
     if len(actual.get("adminAuthOperations", [])) != 4:
         problems.append("admin 认证排除项应恰好为 4")
     return problems
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="生成或校验 95 项业务 API 清单")
+    parser = argparse.ArgumentParser(description="生成或校验 OpenAPI 业务 API 清单")
     parser.add_argument("--openapi", type=Path, default=DEFAULT_OPENAPI)
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--check", action="store_true", help="与 output 中已有清单比较并报告漂移")

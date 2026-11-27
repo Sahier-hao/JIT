@@ -10,6 +10,7 @@ from ..ml.model import predict_risks
 
 MAX_RECORDS = 20_000
 EXPLANATION_LIMIT = 10
+RELIABLE_LABEL_STATUSES = {"positive", "unobserved"}
 
 
 def _threshold_preview(records, risks):
@@ -36,6 +37,61 @@ def _label_status_counts(records):
         status = record.get("labelStatus") or "unknown"
         counts[status] = counts.get(status, 0) + 1
     return counts
+
+
+def _evaluation_summary(records, risks, manifest):
+    included = [
+        (record, risk) for record, risk in zip(records, risks, strict=True)
+        if record["labelStatus"] in RELIABLE_LABEL_STATUSES
+    ]
+    status_counts = _label_status_counts(records)
+    included_records = [record for record, _ in included]
+    included_risks = [risk for _, risk in included]
+    preview = _threshold_preview(included_records, included_risks)
+    positive_count = preview["positives"]
+    negative_count = preview["negatives"]
+    partition = manifest.get("evaluationPartition")
+    fixed_partition = (
+        isinstance(partition, dict)
+        and partition.get("kind") == "test"
+        and isinstance(partition.get("memberSha256"), str)
+        and len(partition["memberSha256"]) == 64
+    )
+    if positive_count == 0 or negative_count == 0:
+        reason = "缺少可靠的{}标签".format(
+            "正例" if positive_count == 0 else "负例")
+    elif not fixed_partition:
+        reason = "预测批次未声明固定测试分区，只能进行探索性复核"
+    else:
+        reason = None
+    formal = reason is None
+    return {
+        "format": "model-evaluation-v1",
+        "source": "prediction-batch",
+        "mode": "formal" if formal else "exploratory",
+        "formalAvailable": formal,
+        "formalUnavailableReason": reason,
+        "partition": {
+            "kind": "test" if fixed_partition else "batch",
+            "memberSha256": partition.get("memberSha256") if fixed_partition else None,
+            "labelSnapshot": True,
+        },
+        "labelPolicy": {
+            "version": "mature-binary-v1",
+            "included": sorted(RELIABLE_LABEL_STATUSES),
+            "excludedCounts": {
+                status: count for status, count in status_counts.items()
+                if status not in RELIABLE_LABEL_STATUSES
+            },
+        },
+        "sampleCounts": {
+            "included": len(included_records),
+            "positives": positive_count,
+            "negatives": negative_count,
+            "excluded": len(records) - len(included_records),
+        },
+        "thresholdPreview": preview,
+    }
 
 
 def _model_view(model):
@@ -147,6 +203,22 @@ class UserPredictionService:
                 "features": features,
                 "explanation": explanation,
             })
+        if "evaluation" not in payload:
+            payload = {
+                **payload,
+                "evaluation": {
+                    "format": "model-evaluation-v1",
+                    "source": "prediction-batch",
+                    "mode": "exploratory",
+                    "formalAvailable": False,
+                    "formalUnavailableReason": "历史批次未保存可靠标签资格，只能按保存标签复核",
+                    "partition": {"kind": "batch", "memberSha256": None,
+                                  "labelSnapshot": True},
+                    "labelPolicy": None,
+                    "sampleCounts": None,
+                    "thresholdPreview": payload.get("thresholdPreview"),
+                },
+            }
         return {**payload, "records": records, "limit": limit, "offset": offset, "sort": sort}
 
     def create(self, username, dataset_version, manifest, model_id, threshold=0.5):
@@ -208,6 +280,7 @@ class UserPredictionService:
         created_at = utc_now()
         preview = _threshold_preview(prepared, risks)
         label_status_counts = _label_status_counts(prepared)
+        evaluation = _evaluation_summary(prepared, risks, manifest)
         flagged = sum(1 for risk in risks if risk >= threshold)
         limitation_explanation = (
             f"仅为风险最高的 {EXPLANATION_LIMIT} 条记录保存归因；其余记录只显示模型分数。"
@@ -227,6 +300,7 @@ class UserPredictionService:
             },
             "labelStatusCounts": label_status_counts,
             "thresholdPreview": preview,
+            "evaluation": evaluation,
             "explanationCoverage": {
                 "method": attribution.METHOD,
                 "limit": EXPLANATION_LIMIT,
@@ -238,6 +312,9 @@ class UserPredictionService:
             "limitations": [
                 "阈值指标按数据版本现有标签试算，不等同于独立测试集验证。",
                 "风险是提交级模型估计，不是缺陷概率，也不提供行级定位。",
+                "正式评估只使用可靠正例和成熟未观察负例；其余状态单独排除。",
+                *([evaluation["formalUnavailableReason"]]
+                  if evaluation["formalUnavailableReason"] else []),
                 limitation_explanation,
                 *explanations["limitations"],
             ],

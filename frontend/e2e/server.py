@@ -1,6 +1,8 @@
 """Fresh isolated backend for Playwright: reset catalog, seed models, then serve."""
 import json
 import hashlib
+import csv
+import io
 import os
 import shutil
 import sys
@@ -31,6 +33,7 @@ EXPERIMENT_MODE = os.environ.get("JIT_E2E_EXPERIMENT_MODE") == "1"
 PACKAGE_MODE = os.environ.get("JIT_E2E_MODEL_PACKAGE_MODE") == "1"
 BUNDLED_MODEL_MODE = os.environ.get("JIT_E2E_BUNDLED_MODEL_MODE") == "1"
 CURRENT_SCHEMA_MODE = os.environ.get("JIT_E2E_CURRENT_SCHEMA_MODE") == "1"
+TRAINING_EVALUATION_MODE = os.environ.get("JIT_E2E_TRAINING_EVALUATION_MODE") == "1"
 
 
 def _rewrite_run_identity(directory, marker):
@@ -232,6 +235,126 @@ def _current_schema_setup():
         json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _training_evaluation_datasets():
+    """Seed deterministic mature/immature and legacy datasets without mocked APIs."""
+    from jit_baseline import admission, datasets
+    from jit_baseline.catalog_storage import CatalogStorage
+    from jit_baseline.data import parse_source, sha256
+
+    source = DATASET_ROOT / "model-evaluation-labeled.csv"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    fields = ["commit_id", "author_date", "bugcount", "ns", "nd", "nf", "entropy",
+              "la", "ld", "lt", "fix", "ndev", "age", "nuc", "exp", "rexp", "sexp"]
+    stream = io.StringIO()
+    writer = csv.DictWriter(stream, fieldnames=fields)
+    writer.writeheader()
+    base = 1_600_000_000
+    cohort = {
+        "startEpochInclusive": base,
+        "endEpochExclusive": base + 80 * 7 * 86_400,
+        "addedLinesGreaterThan": None, "maxChurnInclusive": None,
+        "maxFilesInclusive": None,
+    }
+    for index in range(80):
+        epoch = base + index * 7 * 86_400
+        writer.writerow({
+            "commit_id": f"{index + 1:040x}", "author_date": str(epoch),
+            "bugcount": "1" if index % 2 else "0",
+            "ns": str(1 + index % 3), "nd": str(1 + index % 2),
+            "nf": str(1 + index % 4), "entropy": f"{0.2 + index / 100:.2f}",
+            "la": str(1 + index), "ld": str(1 + index % 5),
+            "lt": str(2 + index), "fix": "0", "ndev": str(1 + index % 3),
+            "age": str(1 + index % 20), "nuc": str(1 + index % 2),
+            "exp": str(1 + index % 7), "rexp": str(1 + index % 9),
+            "sexp": str(1 + index % 11),
+        })
+    source.write_text(stream.getvalue(), encoding="utf-8")
+
+    manifest = datasets.register(
+        source, schema="kamei14-git-v1", dataset="model-evaluation-labeled",
+        root=DATASET_ROOT, cohort=cohort,
+        provenance={"publisher": "e2e-fixture", "revision": "a" * 40,
+                    "url": "https://github.com/example/model-evaluation"},
+    )
+    records, _ = parse_source(source.read_bytes(), "kamei14-git-v1", cohort)
+    observed = max(record["epoch"] for record in records) + 10 * 86_400
+    status = admission.build_status(records, observed, 90)
+    status_blob = admission.status_bytes(status)
+    status_digest = hashlib.sha256(status_blob).hexdigest()
+    status_path = DATASET_ROOT / "model-evaluation-labeled-status.jsonl"
+    status_path.write_bytes(status_blob)
+    status_meta = {
+        "path": datasets.manifest_relative(status_path),
+        "sha256": status_digest,
+        "records": len(status),
+        "rule": admission.STATUS_RULE,
+    }
+    labeling = admission.declaration(
+        label_rule="szz-full-v1",
+        sample_window={"since": None, "until": None, "startEpoch": None, "endEpoch": None},
+        observation_window={"fromEpoch": None, "throughEpoch": observed, "through": None},
+        observed_through=observed, maturity_days=90,
+        revision="a" * 40, revision_epoch=observed,
+        history_status="complete",
+        coverage={"complete": True, "truncated": False, "historyBounded": False,
+                  "unresolvedRanges": 0, "reason": None},
+        entries=status, status_file=status_meta,
+    )
+    registry_manifest = Path(DATASET_ROOT) / manifest["dataset"] / f"{manifest['version']}.json"
+    manifest_doc = json.loads(registry_manifest.read_text(encoding="utf-8"))
+    manifest_doc["labeling"] = labeling
+    manifest_doc["labelStatusFile"] = status_meta
+    manifest_doc["label"] = {
+        "version": "szz-full-v1",
+        "observedThrough": observed,
+        "maturityDays": 90,
+        "statusCounts": {
+            "positive": sum(item["evidenceStatus"] == "positive" for item in status),
+            "unobserved": sum(item["evidenceStatus"] == "unobserved"
+                              and item["maturityStatus"] == "mature" for item in status),
+            "immature": sum(item["maturityStatus"] == "immature" for item in status),
+            "unrecorded": 0,
+        },
+    }
+    registry_manifest.write_text(
+        json.dumps(manifest_doc, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    manifest_doc["manifestPath"] = datasets.manifest_relative(registry_manifest)
+
+    legacy_source = DATASET_ROOT / "model-evaluation-legacy.csv"
+    legacy_source.write_text(stream.getvalue(), encoding="utf-8")
+    legacy = datasets.register(
+        legacy_source, schema="kamei14-git-v1", dataset="model-evaluation-legacy",
+        root=DATASET_ROOT, cohort=cohort,
+    )
+    legacy_records, _ = parse_source(legacy_source.read_bytes(), "kamei14-git-v1", cohort)
+    legacy_manifest_path = Path(legacy["path"])
+    if not legacy_manifest_path.is_absolute():
+        legacy_manifest_path = BACKEND / legacy_manifest_path
+    legacy_manifest = json.loads(legacy_manifest_path.read_text(encoding="utf-8"))
+    legacy_manifest["manifestPath"] = datasets.manifest_relative(legacy_manifest_path)
+
+    storage = CatalogStorage(DATABASE)
+    storage.initialize()
+    storage.import_dataset(manifest_doc, records)
+    storage.import_dataset(legacy_manifest, legacy_records)
+    storage.set_dataset_share(manifest["version"], True, "e2e-admin")
+    storage.set_dataset_share(legacy["version"], True, "e2e-admin")
+    evidence = {
+        "labeledDatasetVersion": manifest["version"],
+        "legacyDatasetVersion": legacy["version"],
+        "statusCounts": {
+            name: sum(item["maturityStatus"] == name or item["evidenceStatus"] == name
+                      for item in status)
+            for name in ("positive", "unobserved", "immature")
+        },
+        "sourceSha256": sha256(source.read_bytes()),
+    }
+    (DATABASE.parent / "training-evaluation-datasets.json").write_text(
+        json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def main():
     DATABASE.unlink(missing_ok=True)
     shutil.rmtree(ARTIFACT_ROOT, ignore_errors=True)
@@ -290,6 +413,8 @@ def main():
         catalog = ModelCatalog(storage, ARTIFACT_ROOT)
         for model in catalog.registered_models():
             storage.set_model_share(model["modelId"], True, "e2e-admin")
+    if TRAINING_EVALUATION_MODE:
+        _training_evaluation_datasets()
     uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=int(sys.argv[1]), workers=1)
 
 

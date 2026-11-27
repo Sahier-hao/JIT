@@ -43,7 +43,7 @@ it('opens account settings in a dialog instead of a full personal-center page', 
   expect(screen.getByRole('menuitem', { name: '退出登录' })).toBeVisible()
   expect(screen.queryByRole('menuitem', { name: '我的数据' })).not.toBeInTheDocument()
   expect(screen.queryByRole('menuitem', { name: '我的训练' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('menuitem', { name: '我的模型' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('menuitem', { name: '模型库' })).not.toBeInTheDocument()
   await user.click(screen.getByRole('menuitem', { name: '个人中心' }))
   const dialog = await screen.findByRole('dialog')
   expect(within(dialog).getByRole('heading', { name: '个人中心' })).toBeVisible()

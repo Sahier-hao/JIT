@@ -115,6 +115,11 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
     assert batch["counts"]["flagged"] == (
         preview["truePositives"][65] + preview["falsePositives"][65]
     )
+    assert batch["evaluation"]["mode"] == "exploratory"
+    assert batch["evaluation"]["formalAvailable"] is False
+    assert 0 <= batch["evaluation"]["sampleCounts"]["included"] <= total
+    assert any(text in batch["evaluation"]["formalUnavailableReason"]
+               for text in ("固定测试分区", "可靠"))
 
     reopened = service.get(ACCOUNT, batch["batchId"], limit=10, sort="risk")
     assert reopened["batchId"] == batch["batchId"]
@@ -147,6 +152,70 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
             2,
         )
     assert getattr(invalid.value, "code", None) == "INPUT_INVALID"
+
+
+def test_reliable_label_evaluation_is_counted_separately_from_excluded_statuses():
+    from jit_baseline.services.user_predictions import _evaluation_summary
+
+    records = [
+        {"id": "p1", "label": 1, "labelStatus": "positive"},
+        {"id": "n1", "label": 0, "labelStatus": "unobserved"},
+        {"id": "i1", "label": 0, "labelStatus": "immature"},
+        {"id": "u1", "label": 0, "labelStatus": "unknown"},
+        {"id": "r1", "label": 0, "labelStatus": "unrecorded"},
+    ]
+    risks = [.9, .2, .95, .8, .7]
+    summary = _evaluation_summary(records, risks, {
+        "evaluationPartition": {"kind": "test", "memberSha256": "a" * 64},
+    })
+    assert summary["formalAvailable"] is True
+    assert summary["sampleCounts"] == {
+        "included": 2, "positives": 1, "negatives": 1, "excluded": 3,
+    }
+    assert summary["labelPolicy"]["excludedCounts"] == {
+        "immature": 1, "unknown": 1, "unrecorded": 1,
+    }
+    preview = summary["thresholdPreview"]
+    assert preview["truePositives"][50] == 1
+    assert preview["falsePositives"][50] == 0
+    assert preview["truePositives"][20] == 1
+    assert preview["falsePositives"][20] == 1
+
+    missing_partition = _evaluation_summary(records, risks, {})
+    assert missing_partition["formalAvailable"] is False
+    assert "固定测试分区" in missing_partition["formalUnavailableReason"]
+
+    one_class = _evaluation_summary(records[:1], risks[:1], {
+        "evaluationPartition": {"kind": "test", "memberSha256": "b" * 64},
+    })
+    assert one_class["formalAvailable"] is False
+    assert "负例" in one_class["formalUnavailableReason"]
+
+
+def test_old_prediction_batch_reopens_as_exploratory(prediction_fixture):
+    from jit_baseline.services.user_predictions import UserPredictionService
+
+    service = UserPredictionService(
+        prediction_fixture["storage"], prediction_fixture["catalog"],
+    )
+    batch = service.create(
+        ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"],
+        prediction_fixture["model"]["modelId"],
+    )
+    with prediction_fixture["storage"].connection(write=True) as db:
+        payload = json.loads(db.execute(
+            "SELECT payload_json FROM user_prediction_batch WHERE id=?",
+            (batch["batchId"],),
+        ).fetchone()["payload_json"])
+        payload.pop("evaluation", None)
+        db.execute(
+            "UPDATE user_prediction_batch SET payload_json=? WHERE id=?",
+            (json.dumps(payload), batch["batchId"]),
+        )
+    reopened = service.get(ACCOUNT, batch["batchId"])
+    assert reopened["evaluation"]["mode"] == "exploratory"
+    assert reopened["evaluation"]["formalAvailable"] is False
+    assert "历史批次" in reopened["evaluation"]["formalUnavailableReason"]
 
 
 def test_private_model_stays_out_of_other_users_scope(prediction_fixture):

@@ -101,9 +101,10 @@ def _frozen_test(task, artifact_root):
 
 def evaluate_thresholds(view, request, artifact_root):
     task_ids = request.get("taskIds")
-    if (not isinstance(task_ids, list) or len(task_ids) != 2
-            or any(not isinstance(key, str) for key in task_ids) or task_ids[0] == task_ids[1]):
-        raise BaselineError("INPUT_INVALID", "请选择两个不同的训练结果")
+    if (not isinstance(task_ids, list) or not 1 <= len(task_ids) <= 2
+            or any(not isinstance(key, str) for key in task_ids)
+            or len(set(task_ids)) != len(task_ids)):
+        raise BaselineError("INPUT_INVALID", "请选择一个或两个不同的训练结果")
     selection = _selection(request)
     successful = {task["taskId"]: task for task in view["tasks"] if task["status"] == "succeeded"}
     if any(key not in successful for key in task_ids):
@@ -117,14 +118,62 @@ def evaluate_thresholds(view, request, artifact_root):
     methods = []
     for task, (threshold, validation) in zip(tasks, points, strict=True):
         labels, risks = _frozen_test(task, artifact_root)
+        positives = sum(labels)
+        negatives = len(labels) - positives
+        maturity = task.get("maturity") or {}
+        status_counts = maturity.get("statusCounts") or {}
+        effective_policy = maturity.get("effectivePolicy")
+        mature_policy = (
+            maturity.get("requestedPolicy") == "mature-only"
+            and effective_policy in ("mature-only", "mature-observed-v1", "recorded-maturity-v1")
+            and maturity.get("releaseEligible") is True
+        )
+        unavailable_reason = None
+        if not mature_policy:
+            unavailable_reason = "训练使用了未成熟或成熟状态未记录的标签，不能生成正式测试评估"
+        elif positives == 0 or negatives == 0:
+            unavailable_reason = "测试分区缺少可靠正例或可靠负例，不能生成正式指标"
+        formal = unavailable_reason is None
         methods.append({
             "taskId": task["taskId"],
             "artifactRunId": task["artifactRunId"],
+            "runId": task.get("runId"),
+            "modelId": task.get("modelId"),
+            "method": task["method"],
             "threshold": threshold,
             "validation": validation,
             "test": classification(labels, [risk >= threshold for risk in risks]),
             "defaultThreshold": THRESHOLD,
             "defaultTest": classification(labels, [risk >= THRESHOLD for risk in risks]),
+            "evaluation": {
+                "format": "model-evaluation-v1",
+                "source": "training",
+                "mode": "formal" if formal else "exploratory",
+                "formalAvailable": formal,
+                "formalUnavailableReason": unavailable_reason,
+                "partition": {
+                    "kind": "test",
+                    "memberSha256": members,
+                    "labelSnapshot": True,
+                },
+                "labelPolicy": {
+                    "version": "mature-binary-v1",
+                    "included": ["positive", "unobserved"],
+                    "excludedCounts": {
+                        "immature": int(maturity.get("excludedImmature")
+                                        or status_counts.get("immature", 0)),
+                        "unknown": int(maturity.get("excludedUnknown")
+                                       or status_counts.get("unknown", 0)),
+                        "unrecorded": status_counts.get("unrecorded", 0),
+                    },
+                },
+                "sampleCounts": {
+                    "included": len(labels),
+                    "positives": positives,
+                    "negatives": negatives,
+                    "excluded": int(maturity.get("excludedImmature") or 0),
+                },
+            },
         })
     return {
         "format": "training-threshold-evaluation-v1",

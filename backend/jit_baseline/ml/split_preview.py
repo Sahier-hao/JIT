@@ -8,7 +8,16 @@ from ..config import BACKEND
 from ..data import BaselineError, parse_source, sha256
 from .datasets import load_all, load_manifest
 from .label_maturity import resolve_policy
-from .splits import PARTITIONS, preset_view, resolve_preset, split_records
+from .splits import PARTITIONS, preset_view, resolve_split, split_records
+
+
+def request_ratios(train=None, validation=None, test=None):
+    values = (train, validation, test)
+    if all(value is None for value in values):
+        return None
+    if any(value is None for value in values):
+        raise BaselineError("SPLIT_POLICY_INVALID", "自定义切分必须同时提交训练、验证、测试三个比例")
+    return {"train": train, "validation": validation, "test": test}
 
 
 def _records(manifest):
@@ -27,9 +36,10 @@ def _records(manifest):
 
 
 def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
+                          ratios=None,
                           allow_legacy=False, allow_restricted=False, manifest=None):
     """Return a no-write preview; invalid membership is data, not a failed request."""
-    preset = resolve_preset(preset)
+    preset = resolve_split(preset, ratios)
     maturity_policy = resolve_policy(maturity_policy)
     if manifest is None:
         dataset = load_all(dataset_root).get(dataset_version)
@@ -96,10 +106,10 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
         }
         for name in PARTITIONS
     }
-    invalid = [name for name in ("train", "test")
+    invalid = [name for name in PARTITIONS
                if {record["label"] for record in split[name]} != {0, 1}]
     if invalid:
-        labels = {"train": "训练集", "test": "测试集"}
+        labels = {"train": "训练集", "validation": "验证集", "test": "测试集"}
         details = "；".join(
             f"{labels[name]} {partitions[name]['records']} 行、{partitions[name]['positives']} 正例"
             for name in invalid
@@ -124,10 +134,12 @@ def dataset_split_preview(dataset_root, dataset_version, preset=None, maturity_p
 
 
 def validate_dataset_split(dataset_root, dataset_version, preset=None, maturity_policy=None, *,
+                           ratios=None,
                            allow_legacy=False, allow_restricted=False, manifest=None):
     preview = dataset_split_preview(dataset_root, dataset_version, preset,
                                      maturity_policy, allow_legacy=allow_legacy,
-                                     allow_restricted=allow_restricted, manifest=manifest)
+                                     allow_restricted=allow_restricted, manifest=manifest,
+                                     ratios=ratios)
     if not preview["available"]:
         reason = preview["reason"]
         raise BaselineError(reason["code"], reason["message"])

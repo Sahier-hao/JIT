@@ -24,6 +24,7 @@
     "test:e2e:multi-method": "node scripts/e2e.mjs multi-method",
     "test:e2e:explanations": "node scripts/e2e.mjs multi-method-explanations",
     "test:e2e:guided-evidence": "playwright test --config playwright.regression-pr.config.ts --project=guided-evidence",
+    "test:e2e:training-evaluation": "node scripts/e2e.mjs training-evaluation",
     "test:e2e:acceptance": "node scripts/e2e.mjs acceptance"
   },
   "dependencies": {

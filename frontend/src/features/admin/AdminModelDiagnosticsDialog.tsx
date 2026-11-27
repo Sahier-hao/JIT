@@ -181,7 +181,7 @@ function CatalogState({ readiness, imported, coverageKnown }: {
   return <section className="grid gap-2 rounded-md border border-border-soft bg-card p-card text-xs text-foreground-3" aria-label="模型目录为空">
     <strong>尚无已登记模型</strong>
     <p>{hasCandidates
-      ? '本机已有训练产物，但还没有登记为可用模型。'
+      ? '本机已有训练产物，但还没有登记到模型库。'
       : !coverageKnown
         ? '目录库没有已登记模型；模型包导入状态暂不可读。'
       : imported

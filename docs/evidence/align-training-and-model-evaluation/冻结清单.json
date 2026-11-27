@@ -1,0 +1,89 @@
+﻿{
+    "kind":  "verification-evidence-freeze",
+    "change":  "align-training-and-model-evaluation",
+    "frozenUtc":  "2026-11-27T12:28:53.9680728Z",
+    "workspace":  "docs/evidence/align-training-and-model-evaluation",
+    "fileCount":  19,
+    "sourceRunId":  "767859fb4bf5b685bfc37f0cc7aa108fd8d6c01605429f498fd46aa331b843d3",
+    "excluded":  [
+                     "冻结清单.json"
+                 ],
+    "files":  [
+                  {
+                      "path":  "ai-test-provenance/manifest.json",
+                      "sha256":  "450da503b43e8553951d20748ced3779e41dc3c662117ab89ba21655bbd720b4"
+                  },
+                  {
+                      "path":  "ai-test-provenance/manual-review.md",
+                      "sha256":  "44771dafc6bd98b27f41e25965783ba2eac9bdb2b3f87d0975c64d7a1a9edc6b"
+                  },
+                  {
+                      "path":  "ai-test-provenance/prompt.md",
+                      "sha256":  "46d3ed8708531a15262a52ab4ab2d729fc5543b9d03a0d846677375d0c4e8e00"
+                  },
+                  {
+                      "path":  "api-inventory.json",
+                      "sha256":  "7b2dbb344f8117e5b9fb9eccb55234e37b1bef8d5254f4c2404469add9c5717f"
+                  },
+                  {
+                      "path":  "backend-targeted-junit.xml",
+                      "sha256":  "88c63899398f1dac6ef84ef9cddba25dcbb15b1beb4eabba0a684e284ad02528"
+                  },
+                  {
+                      "path":  "browser-results.json",
+                      "sha256":  "67f06d6f6d1e7fae754b381fd45102739ed10ab22bdb1d497fcf1f8e56f516d0"
+                  },
+                  {
+                      "path":  "docs-links.log",
+                      "sha256":  "b34a406b6f1ec4c6aaa02aeedb6dd10750d28c1221b8b34f8bcc9dbc57e0715f"
+                  },
+                  {
+                      "path":  "e2e-identities.json",
+                      "sha256":  "96321ecb6b10fc0079754f5a2d1a98e708fdac388a12decaa9bade2bdef7a01d"
+                  },
+                  {
+                      "path":  "frontend-unit-results.json",
+                      "sha256":  "7575dc0cf6583d7da2f0a0119d9d86bf0403730f3171e59a2ff3fe3d11096d70"
+                  },
+                  {
+                      "path":  "integration-report.json",
+                      "sha256":  "2dd35ea3399f1dc4d949060d5310d36c4de0678e920769721336c2fbf41056b5"
+                  },
+                  {
+                      "path":  "integration-report.md",
+                      "sha256":  "04a305e5bd7fd2bade17d928801dc9f1f4a9d3870879f1415abfd8ea4136ec3e"
+                  },
+                  {
+                      "path":  "matrix-junit.xml",
+                      "sha256":  "9be0cb6a5c675be24517465c603f3bc36bb8a217883abf0f5965a86688d712e1"
+                  },
+                  {
+                      "path":  "matrix-results.json",
+                      "sha256":  "4781afc1b1b5bf9ab879c24d45ca26fcdaeb2d23681d071b36c8866a4c7c04c4"
+                  },
+                  {
+                      "path":  "openapi.generated.yaml",
+                      "sha256":  "9faf83cfc9eb12dc9e5223b4a5c875ed588d20013b8b51d25d1afee58f24d1f3"
+                  },
+                  {
+                      "path":  "scenario-mapping.json",
+                      "sha256":  "70b74316272f671543e1c0df105e6060c6fad4b4cbd76fddee5a69427b94cb0d"
+                  },
+                  {
+                      "path":  "scenario-matrix.json",
+                      "sha256":  "6a86d374771e335f78ba6640efe705e9569e5bea42dafe3f6915ce80ac537cbd"
+                  },
+                  {
+                      "path":  "screenshots/training-evaluation-1280-training-evaluation.png",
+                      "sha256":  "c5680dc068e9133461b8753d7fbfc7be9670d48beadac360b8b1a3fc7b61e7ed"
+                  },
+                  {
+                      "path":  "screenshots/training-evaluation-1440-training-evaluation.png",
+                      "sha256":  "336821e3795c2f1a3e4c5a91abb90e0346fdbeb314b828117adb5de59e8e8182"
+                  },
+                  {
+                      "path":  "screenshots/training-evaluation-390-training-evaluation.png",
+                      "sha256":  "0859ff4985d24224c6c48e61d0754143ace0ebed4097e089de49f1350102b5cc"
+                  }
+              ]
+}

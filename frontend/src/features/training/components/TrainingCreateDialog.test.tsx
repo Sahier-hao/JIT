@@ -18,6 +18,8 @@ const DATASET = {
 const SPLIT = {
   datasetVersion: DATASET.version, schemaName: 'kamei14-git-v2', timezone: 'UTC', datasetRecords: 18,
   preset: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 }, timezone: 'UTC' },
+  policy: { id: 'temporal-70-15-15', ratios: { train: 70, validation: 15, test: 15 },
+    timezone: 'UTC', memberSha256: 'b'.repeat(64) },
   available: true, reason: null,
   partitions: {
     train: { records: 12, positives: 3, start: '2026-01-01', end: '2026-06-01' },
@@ -159,4 +161,74 @@ it('prefers a repository-compatible dataset when opened for retraining', async (
 
   await waitFor(() => expect(methodPaths.some(path => path.includes('schema=kamei14-git-v2'))).toBe(true))
   expect(methodPaths.some(path => path.includes('schema=kamei14-2013-v1'))).toBe(false)
+})
+
+it('previews and submits the three custom split ratios', async () => {
+  const calls: { path: string; options?: RequestInit }[] = []
+  const created = vi.fn()
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
+    const path = String(input)
+    calls.push({ path, options })
+    if (path.includes('/training-methods')) return Response.json(METHODS)
+    if (path.includes('/split-preview')) {
+      return Response.json({
+        ...SPLIT,
+        preset: {
+          kind: 'custom', id: 'temporal-custom-65-20-15',
+          ratios: { train: 65, validation: 20, test: 15 }, timezone: 'UTC',
+        },
+        policy: {
+          id: 'temporal-custom-65-20-15',
+          ratios: { train: 65, validation: 20, test: 15 },
+          timezone: 'UTC', memberSha256: 'c'.repeat(64),
+        },
+      })
+    }
+    if (path.includes('/user/datasets')) return Response.json({ datasets: [DATASET] })
+    if (path.endsWith('/api/v1/user/training-experiments')) {
+      return Response.json({
+        experimentId: 'custom-exp', datasetVersion: DATASET.version,
+        datasetManifest: 'demo.json', manifestSha256: 'a'.repeat(64),
+        metricSet: 'metric-set-v2', splitPreset: 'temporal-custom-65-20-15',
+        classPolicy: null, seed: 2026, requestId: null, createdBy: 'reader',
+        ownerUserId: 'reader', createdAt: '2026-11-20T00:00:00Z',
+        status: 'queued', statusCounts: { queued: 1 }, tasks: [],
+      })
+    }
+    return Response.json({})
+  })
+  render(<TrainingCreateDialog open initialMethod="mlp-v1" onOpenChange={vi.fn()} onCreated={created}
+    onLoginRequired={vi.fn()} onOpenData={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '自定义比例' }))
+  const train = screen.getByRole('spinbutton', { name: '训练比例' })
+  await user.clear(train)
+  await user.type(train, '65')
+  const validation = screen.getByRole('spinbutton', { name: '验证比例' })
+  await user.clear(validation)
+  await user.type(validation, '20')
+  await waitFor(() => expect(calls.some(call =>
+    call.path.includes('split-preview?train=65&validation=20&test=15'))).toBe(true))
+  expect(screen.getByText(/temporal-custom-65-20-15/)).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '开始训练（1 个方法）' }))
+  await waitFor(() => expect(created).toHaveBeenCalled())
+  const submit = calls.find(call => call.path.endsWith('/api/v1/user/training-experiments')
+    && call.options?.method === 'POST')
+  expect(JSON.parse(String(submit?.options?.body))).toMatchObject({
+    splitRatios: { train: 65, validation: 20, test: 15 },
+  })
+  expect(JSON.parse(String(submit?.options?.body))).not.toHaveProperty('splitPreset')
+})
+
+it('blocks submission while custom ratios do not total 100', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async input => respond(input))
+  render(<TrainingCreateDialog open initialMethod="mlp-v1" onOpenChange={vi.fn()} onCreated={vi.fn()}
+    onLoginRequired={vi.fn()} onOpenData={vi.fn()}/>)
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '自定义比例' }))
+  const test = screen.getByRole('spinbutton', { name: '测试比例' })
+  await user.clear(test)
+  await user.type(test, '20')
+  expect(screen.getByRole('alert')).toHaveTextContent('合计 105%')
+  expect(screen.getByRole('button', { name: '开始训练（1 个方法）' })).toBeDisabled()
 })

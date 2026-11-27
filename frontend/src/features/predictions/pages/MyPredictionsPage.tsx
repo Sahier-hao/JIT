@@ -14,7 +14,7 @@ import { userDatasets, userExperiments, userModels, type UserDataset, type UserM
 import { formatDate, type TrainingExperiment } from '@/features/admin/adminContracts'
 import {
   createPredictionBatch, predictionBatch, predictionBatches, predictionModels,
-  type PredictionBatch, type PredictionBatchDetail, type PredictionModel,
+  type PredictionBatchDetail, type PredictionBatchSummary, type PredictionModel,
 } from '@/features/predictions/predictionClient'
 
 type Metric = 'precision' | 'recall' | 'f1'
@@ -22,7 +22,7 @@ type Metric = 'precision' | 'recall' | 'f1'
 const LABEL_STATUS: Record<string, string> = {
   positive: '已确认正例',
   immature: '观察未满',
-  unobserved: '观察未见修复',
+  unobserved: '可靠负例（成熟未观察）',
   unknown: '标签状态未知',
 }
 
@@ -45,7 +45,7 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
   onLoginRequired: () => void
 }) {
   const [datasets, setDatasets] = useState<UserDataset[] | null>(null)
-  const [batches, setBatches] = useState<PredictionBatch[] | null>(null)
+  const [batches, setBatches] = useState<PredictionBatchSummary[] | null>(null)
   const [datasetVersion, setDatasetVersion] = useState(initialDatasetVersion ?? '')
   const [models, setModels] = useState<PredictionModel[] | null>(null)
   const [registeredModels, setRegisteredModels] = useState<UserModel[] | null>(null)
@@ -81,7 +81,7 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
     }).catch(failure => {
       if (controller.signal.aborted) return
       if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
-      else setError(failure instanceof Error ? failure.message : '模型试算数据读取失败')
+      else setError(failure instanceof Error ? failure.message : '预测结果数据读取失败')
     })
     return () => controller.abort()
   }, [batchId, onLoginRequired, revision])
@@ -135,7 +135,7 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
       setRevision(value => value + 1)
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
-      else setError(failure instanceof Error ? failure.message : '模型试算失败')
+      else setError(failure instanceof Error ? failure.message : '预测生成失败')
     } finally {
       setBusy(false)
     }
@@ -151,8 +151,8 @@ export function MyPredictionsPage({ batchId, initialDatasetVersion, navigate, on
     task.status === 'succeeded' && !task.modelId && task.featureSchemaVersion === selectedDataset?.schema).length ?? 0
   return <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
     <div className="grid min-w-0 content-start gap-4">
-      <WorkspacePageHeader title="模型试算" meta="使用已登记模型为数据集打分，并试算分类阈值。"
-        actions={<Button variant="outline" size="sm" type="button" onClick={() => navigate({ name: 'my-predictions' })}>新建试算</Button>}/>
+      <WorkspacePageHeader title="预测结果" meta="使用已登记模型保存一次固定预测；分类阈值请在模型评估中核对。"
+        actions={<Button variant="outline" size="sm" type="button" onClick={() => navigate({ name: 'my-predictions' })}>新建预测</Button>}/>
       {error ? <div className="flex flex-wrap items-center gap-2 rounded-lg border border-rose/20 bg-rose-soft px-3 py-2 text-xs text-rose-deep" role="alert">
         <span>{error}</span><Button size="sm" variant="outline" type="button" onClick={() => setRevision(value => value + 1)}>重试</Button>
       </div> : null}
@@ -221,7 +221,7 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
   return <section className="grid gap-4 rounded-xl border border-border-soft bg-card p-5 shadow-sm">
     <div className="flex items-center gap-2">
       <span className="grid size-9 place-items-center rounded-lg bg-accent-soft text-accent"><Gauge aria-hidden="true" size={18}/></span>
-      <div><h2 className="text-sm font-semibold">新建一次试算</h2><p className="mt-0.5 text-[11px] text-foreground-4">最多 {countText(20000)} 条提交</p></div>
+      <div><h2 className="text-sm font-semibold">保存一次预测结果</h2><p className="mt-0.5 text-[11px] text-foreground-4">最多 {countText(20000)} 条提交</p></div>
     </div>
     <div className="grid gap-4 md:grid-cols-2">
       <label className="grid gap-1.5">
@@ -246,10 +246,10 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
     </dl> : null}
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-foreground-2">初始风险阈值</span>
+        <span className="text-xs font-medium text-foreground-2">初始缺陷阈值</span>
         <strong className="text-sm tabular-nums text-foreground">{threshold.toFixed(2)}</strong>
       </div>
-      <Slider label="初始风险阈值" value={[Math.round(threshold * 100)]} onValueChange={values => onThreshold(values[0] / 100)}/>
+      <Slider label="初始缺陷阈值" value={[Math.round(threshold * 100)]} onValueChange={values => onThreshold(values[0] / 100)}/>
     </div>
     {selectedDataset && models && models.length === 0 ? <div className="grid gap-2 rounded-lg border border-amber/25 bg-amber-soft px-3 py-2 text-xs text-amber-deep" role="status">
       <div className="flex gap-2">
@@ -274,7 +274,7 @@ function PredictionSetup({ datasets, selectedDataset, datasetVersion, models, mo
     <div className="flex justify-end">
       <Button type="button" disabled={!datasetVersion || !modelId || busy} onClick={onSubmit}>
         {busy ? <LoaderCircle className="animate-spin" aria-hidden="true"/> : <Activity aria-hidden="true"/>}
-        {busy ? '正在生成结果…' : '开始试算'}
+        {busy ? '正在生成结果…' : '保存预测结果'}
       </Button>
     </div>
   </section>
@@ -335,7 +335,7 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
       <dl className="grid grid-cols-2 divide-x divide-y divide-border-soft border-t border-border-soft sm:grid-cols-4 sm:divide-y-0">
         <MetricCell label="试算提交" value={countText(detail.counts.records)}/>
         <MetricCell label="现有正例" value={countText(detail.counts.positives)}/>
-        <MetricCell label="初始阈值" value={detail.threshold.toFixed(2)}/>
+        <MetricCell label="初始缺陷阈值" value={detail.threshold.toFixed(2)}/>
         <MetricCell label="归因覆盖" value={`${detail.explanationCoverage.recorded}/${detail.explanationCoverage.limit}`}/>
       </dl>
     </section>
@@ -344,11 +344,11 @@ function PredictionResult({ detail }: { detail: PredictionBatchDetail }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 id="prediction-threshold-title" className="text-sm font-semibold">阈值与指标</h2><p className="mt-0.5 text-[11px] text-foreground-4">分数达到阈值的提交计入告警</p></div>
         <div className="flex items-center gap-2">
-          <output className="rounded-lg bg-sunken px-3 py-1.5 text-sm font-semibold tabular-nums" htmlFor="prediction-threshold">阈值 {(tick / 100).toFixed(2)}</output>
+          <output className="rounded-lg bg-sunken px-3 py-1.5 text-sm font-semibold tabular-nums" htmlFor="prediction-threshold">缺陷阈值 {(tick / 100).toFixed(2)}</output>
           {tick !== savedTick ? <Button variant="ghost" size="sm" type="button" onClick={() => setTick(savedTick)}>重置为初始值</Button> : null}
         </div>
       </div>
-      <Slider label="风险分数阈值" value={[tick]} onValueChange={values => setTick(values[0])}/>
+      <Slider label="缺陷阈值" value={[tick]} onValueChange={values => setTick(values[0])}/>
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 [&>div]:rounded-lg [&>div]:bg-sunken">
         <MetricCell label="告警" value={countText(flagged)}/>
         <MetricCell label="命中" value={countText(hit)}/>
@@ -457,5 +457,5 @@ function ThresholdCurve({ detail, metric, tick }: { detail: PredictionBatchDetai
       markPoint: { silent: true, symbol: 'circle', symbolSize: 9, label: { show: false }, data: [{ name: '当前阈值', coord: [preview.thresholds[tick].toFixed(2), series[tick]] }] },
     }],
   }
-  return <EChartCanvas option={option} height={260} label="随风险阈值变化的指标曲线"/>
+  return <EChartCanvas option={option} height={260} label="随缺陷阈值变化的指标曲线"/>
 }

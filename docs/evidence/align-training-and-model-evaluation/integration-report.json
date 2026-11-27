@@ -1,0 +1,64 @@
+{
+  "kind": "training-model-evaluation-delivery-report",
+  "change": "align-training-and-model-evaluation",
+  "generatedAt": "2026-11-27T12:22:33.8726410Z",
+  "branch": "feature/align-training-and-model-evaluation",
+  "baseCommit": "420696fa4d9a858ee32106dbbd90de98e7456905",
+  "inventory": {
+    "totalOperations": 103,
+    "businessOperations": 99,
+    "adminAuthOperations": 4,
+    "highRiskOperations": 76
+  },
+  "matrix": {
+    "operations": 99,
+    "highRiskOperations": 76,
+    "normalPassed": 99,
+    "boundaryPassed": 88,
+    "boundaryNotApplicable": 11,
+    "errorPassed": 99,
+    "concurrencyPassed": 88,
+    "concurrencyNotApplicable": 11,
+    "tests": 93,
+    "failed": 0
+  },
+  "backendTargeted": {
+    "tests": 159,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontendUnit": {
+    "tests": 697,
+    "passed": 697,
+    "failed": 0
+  },
+  "browserE2E": {
+    "expected": 1,
+    "passed": 1,
+    "unexpected": 0,
+    "skipped": 0,
+    "flaky": 0
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed-with-existing-warnings",
+    "build": "passed",
+    "styles": "passed",
+    "modules": "passed",
+    "apiTypes": "passed",
+    "openapiPaths": "passed"
+  },
+  "provenance": {
+    "manifest": "ai-test-provenance/manifest.json",
+    "reviewStatus": "pending"
+  },
+  "machineChecksPassed": true,
+  "humanReviewComplete": false,
+  "passed": false,
+  "knownLimitations": [
+    "AI 新增测试等待 PR 审核人签署人工复核。",
+    "预测结果来源只有在数据版本显式声明固定可靠测试分区时才可标为正式评估；普通保存批次仍为探索性复核。",
+    "全仓文档链接检查仍报告 428 个既有历史文档目标缺失；本次新增文档未引入相对文件链接。"
+  ]
+}
