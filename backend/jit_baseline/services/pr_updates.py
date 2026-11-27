@@ -624,8 +624,32 @@ class PullRequestUpdates:
                                         'AND lower(name)=? AND number=?',
                                         (repository_id, owner.lower(), name.lower(), number)).fetchone()
                     snapshot_id = latest['snapshot_id'] if latest else None
+                snapshot_payload = None
                 if snapshot_id:
                     item['snapshotId'] = snapshot_id
+                    snapshot_row = db.execute(
+                        'SELECT payload_json FROM pr_snapshot WHERE id=?', (snapshot_id,),
+                    ).fetchone()
+                    if snapshot_row:
+                        try:
+                            snapshot_payload = json.loads(snapshot_row['payload_json'])
+                        except (TypeError, ValueError):
+                            snapshot_payload = None
+                    if snapshot_payload:
+                        commits = snapshot_payload.get('commits')
+                        item['headSha'] = snapshot_payload.get('headSha')
+                        item['commitsComplete'] = bool(snapshot_payload.get('commitsComplete'))
+                        item['commitCount'] = snapshot_payload.get('totalCommits')
+                        item['commits'] = [
+                            {
+                                'sha': commit.get('sha'),
+                                'message': commit.get('message'),
+                                'time': commit.get('time'),
+                            }
+                            for commit in (commits if isinstance(commits, list) else [])
+                            if isinstance(commit, dict) and isinstance(commit.get('sha'), str)
+                        ]
+                    item['checkedAt'] = snapshot_payload.get('capturedAt') if snapshot_payload else row['checked_at']
                     intent = None
                     if row['snapshot_id']:
                         intent = db.execute('SELECT * FROM pr_auto_intent WHERE repository_id=? AND number=? AND snapshot_id=? '
@@ -655,8 +679,11 @@ class PullRequestUpdates:
                             if manual['feature_source_json']:
                                 item['featureSource'] = json.loads(manual['feature_source_json'])
                     if analysis_sync and item.get('analysisStatus') == 'completed':
-                        snapshot = db.execute('SELECT payload_json FROM pr_snapshot WHERE id=?', (snapshot_id,)).fetchone()
-                        shas = [commit.get('sha') for commit in (json.loads(snapshot['payload_json']).get('commits', []) if snapshot else []) if commit.get('sha')]
+                        shas = [
+                            commit.get('sha')
+                            for commit in ((snapshot_payload or {}).get('commits') or [])
+                            if isinstance(commit, dict) and commit.get('sha')
+                        ]
                         if shas:
                             marks = ','.join('?' for _ in shas)
                             stats = db.execute(f'SELECT COUNT(*), MAX(risk) FROM repository_commit WHERE sync_id=? AND commit_id IN ({marks})',

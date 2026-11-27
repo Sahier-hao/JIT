@@ -234,11 +234,12 @@ export function ProjectPullRequests({ repositoryId, repositoryName = '当前项�
     ? models.filter(model => usableModel(model) && model.modelId !== reanalyzing.modelId)
     : []
   const hasRunning = Boolean(result?.pullRequests.some(pr => analysisGroup(pr.analysisStatus) === 'running'))
+  const autoPolling = Boolean(tracking?.enabled)
   useEffect(() => {
-    if (busy || (!hasRunning && !batchPolling)) return
-    const timer = setTimeout(() => setAttempt(value => value + 1), 4000)
+    if (busy || (!hasRunning && !batchPolling && !autoPolling)) return
+    const timer = setTimeout(() => setAttempt(value => value + 1), hasRunning || batchPolling ? 4000 : 10000)
     return () => clearTimeout(timer)
-  }, [busy, hasRunning, batchPolling, attempt])
+  }, [busy, hasRunning, batchPolling, autoPolling, attempt])
   let localWorks: Set<string> = new Set()
   const { account } = useReviewAccount()
   try { localWorks = account ? new Set(readWorks(account).map(work => work.key)) : new Set() } catch { /* 本地存储损坏时仍允许查看远端 PR */ }
@@ -333,7 +334,10 @@ export function ProjectPullRequests({ repositoryId, repositoryName = '当前项�
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-3">
                     <span>{pr.author}</span>
                     <span>更新于 {displayTime(pr.updatedAt)}</span>
+                    {pr.checkedAt ? <span>检查于 {displayTime(pr.checkedAt)}</span> : null}
                     {pr.modelId ? <span>{modelName(pr.modelId)}</span> : null}
+                    {pr.headSha ? <span>head <code className="font-mono text-[11px]">{pr.headSha.slice(0, 10)}</code></span> : null}
+                    {pr.commitCount != null ? <span>{pr.commitCount} 个提交{pr.commitsComplete === false ? '（列表不完整）' : ''}</span> : null}
                     {pr.featureSource ? <span>复用已保存特征</span> : null}
                     {pr.maxRisk != null ? <div className="flex items-center gap-1.5 text-foreground-2" title="该 PR 已分析提交中的最高分数；排序参考，不是 PR 整体缺陷概率">
                       <span className="whitespace-nowrap">最高风险</span>
@@ -341,6 +345,16 @@ export function ProjectPullRequests({ repositoryId, repositoryName = '当前项�
                       {pr.scoredCommits != null ? <span className="whitespace-nowrap text-foreground-4">{pr.scoredCommits} 条有分数</span> : null}
                     </div> : null}
                   </div>
+                  {pr.commits.length ? <details className="rounded-md border border-border-soft bg-sunken/30 px-2.5 py-1.5">
+                    <summary className="cursor-pointer text-xs text-foreground-3">提交列表（{pr.commits.length}）</summary>
+                    <ul className="mt-1.5 max-h-36 overflow-y-auto text-[11px] text-foreground-3">
+                      {pr.commits.map(commit => <li key={commit.sha} className="flex min-w-0 gap-2 border-t border-border-soft py-1 first:border-t-0">
+                        <code className="shrink-0 font-mono text-foreground-2">{commit.sha.slice(0, 10)}</code>
+                        <span className="min-w-0 truncate">{commit.message ?? '无提交说明'}</span>
+                        {commit.time ? <span className="ml-auto shrink-0 text-foreground-4">{displayTime(commit.time)}</span> : null}
+                      </li>)}
+                    </ul>
+                  </details> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 lg:self-start">
                   {result.owner && result.name ? <>
