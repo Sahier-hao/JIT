@@ -3506,7 +3506,7 @@ paths:
     put:
       operationId: updateModelSharing
       summary: 开放或撤销模型给所有用户
-      description: 仅管理员可修改。开放后普通用户可在分析、PR 批量分析和模型试算中选择此模型；撤销后新选择不再出现，历史分析与评分保留。
+      description: 仅管理员可修改。开放后普通用户可在分析、PR 批量分析和缺陷预测中选择此模型；撤销后新选择不再出现，历史分析与评分保留。
       security:
       - AdminSession: []
       parameters:
@@ -3607,6 +3607,377 @@ paths:
           $ref: '#/components/responses/NotFound'
         '503':
           $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/user/prediction-models:
+    get:
+      operationId: listUserPredictionModels
+      summary: 列出本人可见且可用的缺陷预测模型
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: datasetVersion
+        in: query
+        required: false
+        schema: {type: string}
+      - name: schema
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: 本人可见、已启用、ready 且与请求 schema 兼容的模型。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionModelList'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/user/prediction-samples:
+    get:
+      operationId: listUserPredictionSamples
+      summary: 分页读取数据版本中可供单条预测的记录
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: datasetVersion
+        in: query
+        required: true
+        schema: {type: string}
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      - name: search
+        in: query
+        required: false
+        schema: {type: string, maxLength: 200}
+      responses:
+        '200':
+          description: 数据行及其可用标签状态；不可用标签不会伪装成 0 或 1。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionSamplePage'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/user/prediction-splits:
+    get:
+      operationId: listUserPredictionSplits
+      summary: 读取模型冻结分区与时间切分预设
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: datasetVersion
+        in: query
+        required: true
+        schema: {type: string}
+      - name: modelId
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 完整数据、模型冻结分区和已注册时间切分预设的真实成员摘要。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionSplitOptions'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 模型没有该数据版本的冻结分区。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/user/prediction-batches:
+    get:
+      operationId: listUserPredictionBatches
+      summary: 分页读取本人预测记录
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 50, default: 20}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      responses:
+        '200':
+          description: 批次摘要。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionBatchList'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+    post:
+      operationId: createUserPredictionBatch
+      summary: 按完整数据版本或固定分区批量预测
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPredictionBatchRequest'
+      responses:
+        '201':
+          description: 已保存的预测批次；模型与分区身份固定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionBatch'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 模型、分区或特征 schema 不匹配。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /api/v1/user/prediction-batches/single:
+    post:
+      operationId: createUserSinglePrediction
+      summary: 单条预测
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPredictionSingleRequest'
+      responses:
+        '201':
+          description: 已保存的单条预测；单条与批量共用同一推理函数。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionBatch'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/user/prediction-batches/unlabeled:
+    post:
+      operationId: createUserUnlabeledPrediction
+      summary: 上传无标签 CSV 进行批量预测
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: modelId
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: threshold
+        in: query
+        required: false
+        schema: {type: number, minimum: 0, maximum: 1, default: 0.5}
+      - name: filename
+        in: query
+        required: false
+        schema: {type: string, maxLength: 200}
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: 无标签预测批次；不会写入训练数据或生成真实标签。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionBatch'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '413':
+          $ref: '#/components/responses/InputLimitExceeded'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/user/prediction-batches/{batchId}:
+    get:
+      operationId: getUserPredictionBatch
+      summary: 重开本人预测批次
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: batchId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      - name: limit
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1, maximum: 500, default: 100}
+      - name: offset
+        in: query
+        required: false
+        schema: {type: integer, minimum: 0, default: 0}
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [risk, time]
+          default: risk
+      - name: search
+        in: query
+        required: false
+        schema: {type: string, maxLength: 200}
+      responses:
+        '200':
+          description: 已保存的分数、模型身份和当前阈值预览；不触发重新推理。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionBatch'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InputInvalid'
+  /api/v1/user/prediction-batches/{batchId}/evaluation:
+    get:
+      operationId: getUserPredictionEvaluation
+      summary: 读取预测批次的只读评估交接
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: batchId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 模型、数据版本、分区、阈值与只使用可用真实标签的指标。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPredictionEvaluation'
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/user/prediction-batches/{batchId}/export:
+    get:
+      operationId: exportUserPredictionBatch
+      summary: 导出本人预测批次 CSV
+      tags: [缺陷预测]
+      x-implementation-status: implemented
+      security:
+      - UserSession: []
+      parameters:
+      - name: batchId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: 含分数、阈值分类、标签可用性、来源与特征的 CSV。
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: 需要用户登录。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedError'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   schemas:
     TrainingThresholdSelection:
@@ -3796,6 +4167,20 @@ components:
           type: boolean
         snapshotId:
           type: string
+        headSha:
+          type: [string, 'null']
+        commits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectPullRequestCommit'
+        commitCount:
+          type: [integer, 'null']
+          minimum: 0
+        commitsComplete:
+          type: [boolean, 'null']
+        checkedAt:
+          type: [string, 'null']
+          format: date-time
         analysisStatus:
           type: string
           enum: [pending, queued, running, backoff, completed, failed, cancelled, interrupted, superseded]
@@ -3811,6 +4196,19 @@ components:
           type: integer
           minimum: 0
       required: [number, title, author, url, updatedAt, remoteState, draft]
+    ProjectPullRequestCommit:
+      type: object
+      additionalProperties: false
+      properties:
+        sha:
+          type: string
+          minLength: 1
+        message:
+          type: [string, 'null']
+        time:
+          type: [string, 'null']
+          format: date-time
+      required: [sha, message, time]
     ProjectPullRequestPage:
       type: object
       additionalProperties: false
@@ -9791,7 +10189,7 @@ components:
     DatasetBuildTaskCreate:
       type: object
       properties:
-        branch: {type: string, minLength: 1, default: HEAD}
+        branch: {type: string, minLength: 1, default: HEAD, description: '省略或留空时使用仓库默认分支。'}
         since: {type: string, minLength: 1}
         until: {type: string, minLength: 1}
         commitLimit: {type: integer, minimum: 1, maximum: 50000, default: 50000}
@@ -10085,6 +10483,358 @@ components:
       - project
       - file
       additionalProperties: false
+    UserPredictionModel:
+      type: object
+      properties:
+        modelId: {$ref: '#/components/schemas/Uuid'}
+        name: {type: string, minLength: 1}
+        method: {type: [string, 'null']}
+        runId: {type: [string, 'null']}
+        artifactRunId: {type: [string, 'null']}
+        featureSchemaVersion: {type: string, minLength: 1}
+        artifactDatasetVersion: {type: [string, 'null']}
+        featureNames:
+          type: array
+          items: {type: string, minLength: 1}
+        parameters: {type: [object, 'null']}
+        isDefault: {type: boolean}
+        mine: {type: boolean}
+        shared: {type: boolean}
+      required: [modelId, name, method, runId, featureSchemaVersion, featureNames, isDefault, mine, shared]
+      additionalProperties: false
+    UserPredictionModelList:
+      type: object
+      properties:
+        models:
+          type: array
+          items: {$ref: '#/components/schemas/UserPredictionModel'}
+        maxRecords: {type: integer, minimum: 1}
+      required: [models, maxRecords]
+      additionalProperties: false
+    UserPredictionSource:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [dataset, dataset-partition, single-dataset, single-project, single-manual, unlabeled-csv]
+        label: {type: string, minLength: 1}
+        reference: {type: object, additionalProperties: true}
+      required: [kind, label, reference]
+      additionalProperties: false
+    UserPredictionCounts:
+      type: object
+      properties:
+        records: {type: integer, minimum: 0}
+        labeledAvailable: {type: integer, minimum: 0}
+        unavailable: {type: integer, minimum: 0}
+        positives: {type: integer, minimum: 0}
+        negatives: {type: integer, minimum: 0}
+        flagged: {type: integer, minimum: 0}
+      required: [records, labeledAvailable, unavailable, positives, negatives, flagged]
+      additionalProperties: false
+    UserPredictionThresholdPreview:
+      type: object
+      properties:
+        thresholds:
+          type: array
+          minItems: 101
+          maxItems: 101
+          items: {type: number, minimum: 0, maximum: 1}
+        positives: {type: integer, minimum: 0}
+        negatives: {type: integer, minimum: 0}
+        truePositives:
+          type: array
+          minItems: 101
+          maxItems: 101
+          items: {type: integer, minimum: 0}
+        falsePositives:
+          type: array
+          minItems: 101
+          maxItems: 101
+          items: {type: integer, minimum: 0}
+      required: [thresholds, positives, negatives, truePositives, falsePositives]
+      additionalProperties: false
+    UserPredictionExplanationItem:
+      type: object
+      properties:
+        feature: {type: string, minLength: 1}
+        value: {type: number}
+        baseline: {type: number}
+        delta: {type: number}
+        direction:
+          type: string
+          enum: [increases, decreases]
+      required: [feature, value, baseline, delta, direction]
+      additionalProperties: false
+    UserPredictionExplanation:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [supported, not-supported]
+        method: {type: [string, 'null']}
+        items:
+          type: array
+          maxItems: 5
+          items: {$ref: '#/components/schemas/UserPredictionExplanationItem'}
+        summary: {type: string, minLength: 1}
+      required: [status, method, items, summary]
+      additionalProperties: false
+    UserPredictionRecord:
+      type: object
+      properties:
+        predictionId: {$ref: '#/components/schemas/Uuid'}
+        recordId: {type: string, minLength: 1}
+        authorTime: {type: [string, 'null']}
+        label: {type: [integer, 'null'], enum: [0, 1, null]}
+        labelStatus: {type: string, minLength: 1}
+        labelAvailability:
+          type: string
+          enum: [available, unavailable]
+        sourceKind: {type: string, minLength: 1}
+        sourceRef: {type: [string, 'null']}
+        risk: {type: number, minimum: 0, maximum: 1}
+        features:
+          type: object
+          additionalProperties: {type: number}
+        explanation: {anyOf: [{$ref: '#/components/schemas/UserPredictionExplanation'}, {type: 'null'}]}
+      required: [predictionId, recordId, authorTime, label, labelStatus, labelAvailability,
+                 sourceKind, sourceRef, risk, features, explanation]
+      additionalProperties: false
+    UserPredictionBatch:
+      type: object
+      properties:
+        format: {const: user-prediction-batch-v1}
+        batchId: {$ref: '#/components/schemas/Uuid'}
+        mode: {type: string, enum: [single, batch]}
+        sourceKind: {type: string, minLength: 1}
+        source: {$ref: '#/components/schemas/UserPredictionSource'}
+        datasetVersion: {type: [string, 'null']}
+        dataset: {type: string, minLength: 1}
+        splitPreset: {type: [string, 'null']}
+        partition: {type: [string, 'null'], enum: [train, validation, test, null]}
+        memberSha256: {type: [string, 'null']}
+        model: {$ref: '#/components/schemas/UserPredictionModel'}
+        threshold: {type: number, minimum: 0, maximum: 1}
+        counts: {$ref: '#/components/schemas/UserPredictionCounts'}
+        labelStatusCounts: {type: object, additionalProperties: {type: integer, minimum: 0}}
+        labelAvailabilityCounts:
+          type: object
+          properties:
+            available: {type: integer, minimum: 0}
+            unavailable: {type: integer, minimum: 0}
+          required: [available, unavailable]
+          additionalProperties: false
+        thresholdPreview: {$ref: '#/components/schemas/UserPredictionThresholdPreview'}
+        evaluationEligible: {type: boolean}
+        evaluationReason: {type: string, minLength: 1}
+        explanationCoverage:
+          type: object
+          properties:
+            method: {type: string, minLength: 1}
+            limit: {type: integer, minimum: 0}
+            recorded: {type: integer, minimum: 0}
+            failed: {type: integer, minimum: 0}
+          required: [method, limit, recorded, failed]
+          additionalProperties: false
+        featureNames:
+          type: array
+          items: {type: string, minLength: 1}
+        createdAt: {type: string, format: date-time}
+        limitations:
+          type: array
+          items: {type: string, minLength: 1}
+        records:
+          type: array
+          items: {$ref: '#/components/schemas/UserPredictionRecord'}
+        limit: {type: integer, minimum: 1}
+        offset: {type: integer, minimum: 0}
+        sort: {type: string, enum: [risk, time]}
+        search: {type: [string, 'null']}
+      required: [format, batchId, mode, sourceKind, source, datasetVersion, dataset, splitPreset,
+                 partition, memberSha256, model, threshold, counts, labelStatusCounts,
+                 labelAvailabilityCounts, thresholdPreview, evaluationEligible,
+                 evaluationReason, explanationCoverage, featureNames, createdAt, limitations]
+      additionalProperties: false
+    UserPredictionBatchList:
+      type: object
+      properties:
+        batches:
+          type: array
+          items: {$ref: '#/components/schemas/UserPredictionBatch'}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1}
+        offset: {type: integer, minimum: 0}
+      required: [batches, total, limit, offset]
+      additionalProperties: false
+    UserPredictionSample:
+      type: object
+      properties:
+        recordId: {type: string, minLength: 1}
+        authorTime: {type: [string, 'null']}
+        label: {type: [integer, 'null'], enum: [0, 1, null]}
+        labelStatus: {type: string, minLength: 1}
+        labelAvailability: {type: string, enum: [available, unavailable]}
+        features:
+          type: object
+          additionalProperties: {type: number}
+        sourceKind: {type: string, minLength: 1}
+      required: [recordId, authorTime, label, labelStatus, labelAvailability, features, sourceKind]
+      additionalProperties: false
+    UserPredictionSamplePage:
+      type: object
+      properties:
+        datasetVersion: {type: string}
+        dataset: {type: string}
+        schema: {type: string}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1}
+        offset: {type: integer, minimum: 0}
+        search: {type: [string, 'null']}
+        samples:
+          type: array
+          items: {$ref: '#/components/schemas/UserPredictionSample'}
+      required: [datasetVersion, dataset, schema, total, limit, offset, search, samples]
+      additionalProperties: false
+    UserPredictionPartitionStat:
+      type: object
+      properties:
+        count: {type: integer, minimum: 0}
+        positives: {type: [integer, 'null']}
+        start: {type: [string, 'null']}
+        end: {type: [string, 'null']}
+      required: [count, positives, start, end]
+      additionalProperties: false
+    UserPredictionPartitions:
+      type: object
+      properties:
+        train: {$ref: '#/components/schemas/UserPredictionPartitionStat'}
+        validation: {$ref: '#/components/schemas/UserPredictionPartitionStat'}
+        test: {$ref: '#/components/schemas/UserPredictionPartitionStat'}
+      required: [train, validation, test]
+      additionalProperties: false
+    UserPredictionSplitOptions:
+      type: object
+      properties:
+        datasetVersion: {type: string}
+        modelId: {$ref: '#/components/schemas/Uuid'}
+        featureSchemaVersion: {type: string}
+        full:
+          type: object
+          properties:
+            count: {type: integer, minimum: 0}
+            memberSha256: {type: string}
+          required: [count, memberSha256]
+          additionalProperties: false
+        modelSplit:
+          anyOf:
+          - type: object
+            properties:
+              source: {const: model}
+              modelId: {$ref: '#/components/schemas/Uuid'}
+              splitPreset: {type: [string, 'null']}
+              memberSha256: {type: string}
+              partitions: {$ref: '#/components/schemas/UserPredictionPartitions'}
+            required: [source, modelId, splitPreset, memberSha256, partitions]
+            additionalProperties: false
+          - type: 'null'
+        presets:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: string}
+              available: {type: boolean}
+              reason: {type: [string, 'null']}
+              ratios:
+                type: object
+                additionalProperties: {type: integer}
+              memberSha256: {type: string}
+              partitions: {$ref: '#/components/schemas/UserPredictionPartitions'}
+            required: [id, available, reason, ratios]
+            additionalProperties: false
+      required: [datasetVersion, modelId, featureSchemaVersion, full, modelSplit, presets]
+      additionalProperties: false
+    UserPredictionBatchRequest:
+      type: object
+      properties:
+        datasetVersion: {type: string, minLength: 1}
+        modelId: {$ref: '#/components/schemas/Uuid'}
+        threshold: {type: number, minimum: 0, maximum: 1, default: 0.5}
+        partition: {type: string, enum: [train, validation, test]}
+        splitSource: {type: string, enum: [model, preset]}
+        splitPreset: {type: string}
+      required: [datasetVersion, modelId]
+      additionalProperties: false
+    UserPredictionSingleSource:
+      type: object
+      properties:
+        kind: {type: string, enum: [dataset, project, manual]}
+        datasetVersion: {type: string}
+        recordId: {type: string}
+        repositoryId: {$ref: '#/components/schemas/Uuid'}
+        syncId: {$ref: '#/components/schemas/Uuid'}
+        commitId: {type: string}
+        features:
+          type: object
+          additionalProperties: {type: number}
+      required: [kind]
+      additionalProperties: false
+    UserPredictionSingleRequest:
+      type: object
+      properties:
+        modelId: {$ref: '#/components/schemas/Uuid'}
+        threshold: {type: number, minimum: 0, maximum: 1, default: 0.5}
+        source: {$ref: '#/components/schemas/UserPredictionSingleSource'}
+      required: [modelId, source]
+      additionalProperties: false
+    UserPredictionEvaluation:
+      type: object
+      properties:
+        format: {const: user-prediction-evaluation-v1}
+        batchId: {$ref: '#/components/schemas/Uuid'}
+        mode: {type: string, enum: [single, batch]}
+        model: {$ref: '#/components/schemas/UserPredictionModel'}
+        datasetVersion: {type: [string, 'null']}
+        dataset: {type: [string, 'null']}
+        source: {anyOf: [{$ref: '#/components/schemas/UserPredictionSource'}, {type: 'null'}]}
+        sourceKind: {type: string}
+        splitPreset: {type: [string, 'null']}
+        partition: {type: [string, 'null'], enum: [train, validation, test, null]}
+        memberSha256: {type: [string, 'null']}
+        threshold: {type: number, minimum: 0, maximum: 1}
+        eligible: {type: boolean}
+        reason: {type: string}
+        counts: {$ref: '#/components/schemas/UserPredictionCounts'}
+        labelStatusCounts: {type: object, additionalProperties: {type: integer, minimum: 0}}
+        labelAvailabilityCounts:
+          type: object
+          properties:
+            available: {type: integer, minimum: 0}
+            unavailable: {type: integer, minimum: 0}
+          required: [available, unavailable]
+          additionalProperties: false
+        thresholdPreview: {$ref: '#/components/schemas/UserPredictionThresholdPreview'}
+        confusion:
+          type: object
+          properties:
+            tp: {type: integer, minimum: 0}
+            fp: {type: integer, minimum: 0}
+            tn: {type: integer, minimum: 0}
+            fn: {type: integer, minimum: 0}
+          required: [tp, fp, tn, fn]
+          additionalProperties: false
+        precision: {type: [number, 'null'], minimum: 0, maximum: 1}
+        recall: {type: [number, 'null'], minimum: 0, maximum: 1}
+        f1: {type: [number, 'null'], minimum: 0, maximum: 1}
+        limitations:
+          type: array
+          items: {type: string}
+      required: [format, batchId, mode, model, datasetVersion, dataset, source, sourceKind,
+                 splitPreset, partition, memberSha256, threshold, eligible, reason, counts,
+                 labelStatusCounts, labelAvailabilityCounts, thresholdPreview, confusion,
+                 precision, recall, f1, limitations]
+      additionalProperties: false
   headers:
     ProjectRequestId:
       description: 服务端为本次请求分配的诊断标识；标准错误中的 requestId 与其一致。
@@ -10321,6 +11071,10 @@ components:
           schema:
             $ref: '#/components/schemas/SharedError'
   securitySchemes:
+    UserSession:
+      type: apiKey
+      in: cookie
+      name: jit_user_session
     AdminSession:
       type: apiKey
       in: cookie

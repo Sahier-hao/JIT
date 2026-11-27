@@ -55,7 +55,8 @@ MIGRATIONS = ((1, Path(__file__).parent / 'migrations/001_catalog.sql'),
               (41, Path(__file__).parent / 'migrations/041_dataset_sharing.sql'),
               (42, Path(__file__).parent / 'migrations/042_user_predictions.sql'),
               (43, Path(__file__).parent / 'migrations/043_repository_explanation_method.sql'),
-              (44, Path(__file__).parent / 'migrations/044_model_sharing.sql'))
+              (44, Path(__file__).parent / 'migrations/044_model_sharing.sql'),
+              (45, Path(__file__).parent / 'migrations/045_prediction_modes_and_sources.sql'))
 VERSION = MIGRATIONS[-1][0]
 LABEL_RULE = 'bugcount > 0; blank = 0'
 
@@ -476,13 +477,20 @@ class CatalogStorage:
                 'sourceSha256': row['source_sha256'], 'rowCount': row['row_count'],
                 'importedAt': row['created_at']}
 
-    def commits(self, version, limit=None, offset=0, summary=False):
+    def commits(self, version, limit=None, offset=0, summary=False, search=None, order='asc'):
         with self.connection() as db:
             if db.execute('SELECT 1 FROM dataset_record WHERE dataset_version=?', (version,)).fetchone() is None:
                 return None
-            query = ('SELECT * FROM commit_record WHERE dataset_version=? '
-                     'ORDER BY author_time, commit_id')
+            clauses = ['dataset_version=?']
             params = [version]
+            text = (search or '').strip()
+            if text:
+                escaped = text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+                clauses.append("commit_id LIKE ? ESCAPE '\\'")
+                params.append(f'%{escaped}%')
+            direction = 'DESC' if order == 'desc' else 'ASC'
+            query = (f"SELECT * FROM commit_record WHERE {' AND '.join(clauses)} "
+                     f'ORDER BY author_time {direction}, commit_id {direction}')
             if limit is not None:
                 query += ' LIMIT ? OFFSET ?'
                 params.extend((limit, offset))
@@ -494,12 +502,20 @@ class CatalogStorage:
             meta = self._label_meta(db, version)
         return [self._commit_row(row, features[row['commit_id']], meta) for row in rows]
 
-    def count_commits(self, version):
+    def count_commits(self, version, search=None):
         with self.connection() as db:
             if db.execute('SELECT 1 FROM dataset_record WHERE dataset_version=?', (version,)).fetchone() is None:
                 return None
-            return db.execute('SELECT COUNT(*) FROM commit_record WHERE dataset_version=?',
-                              (version,)).fetchone()[0]
+            clauses = ['dataset_version=?']
+            params = [version]
+            text = (search or '').strip()
+            if text:
+                escaped = text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+                clauses.append("commit_id LIKE ? ESCAPE '\\'")
+                params.append(f'%{escaped}%')
+            return db.execute(
+                f"SELECT COUNT(*) FROM commit_record WHERE {' AND '.join(clauses)}",
+                params).fetchone()[0]
 
     def commit(self, version, commit_id):
         with self.connection() as db:
