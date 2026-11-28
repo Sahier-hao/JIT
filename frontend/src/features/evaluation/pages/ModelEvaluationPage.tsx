@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider'
 import { EmptyState, LoadingNotice } from '@/components/shared/Feedback'
 import { EChartCanvas, useChartColors, type ChartOption } from '@/components/shared/EChartCanvas'
+import { DocsHelpLink } from '@/features/docs/components/DocsHelpLink'
 import { ApiError } from '@/lib/apiContract'
 import { cn } from '@/lib/utils'
 import type { Route } from '@/app/navigation'
@@ -226,7 +227,8 @@ export function ModelEvaluationPage({
 
   return <section className="mx-auto grid w-full max-w-[78rem] min-w-0 gap-5">
     <WorkspacePageHeader title={source ? sourceLabel(source) : '模型评估'}
-      meta="用真实保存的模型输出、标签和缺陷阈值核对分类结果。"/>
+      meta="用真实保存的模型输出、标签和缺陷阈值核对分类结果。"
+      actions={<DocsHelpLink article="labels-and-metrics" section="evaluation-metrics" label="怎么看评估指标"/>}/>
 
     <section className="grid gap-3 rounded-xl border border-border-soft bg-card p-4 sm:p-5" aria-label="评估入口">
       <div className="flex flex-wrap items-start justify-between gap-3">

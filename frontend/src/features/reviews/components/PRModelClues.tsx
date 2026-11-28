@@ -1,4 +1,5 @@
 import { FailureNotice } from '@/components/shared/Feedback'
+import { DocsHelpLink } from '@/features/docs/components/DocsHelpLink'
 import type { SnapshotAnalyses } from '@/features/projects/useSnapshotAnalyses'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +12,7 @@ export function PRModelClues({ analysis }: { analysis: SnapshotAnalyses }) {
     <span className="text-foreground-3">模型分数</span>
     <span className="text-sm font-medium text-foreground">{primary ? `${coverage} 有分数 · 最高 ${topRisk!.toFixed(3)}` : running ? '分析中' : '尚无分数'}</span>
     {modelName ? <span className="text-foreground-3">{modelName}</span> : null}
+    <DocsHelpLink article="reading-results" section="code-clues" label="怎么看代码线索" className="ml-auto h-auto px-0 text-xs"/>
     {error ? <span className="w-full" role="alert"><FailureNotice error={error}/></span> : null}
     {primary?.bindingKind === 'legacy-head-v1' ? <details className="w-full rounded-sm border border-border-soft">
       <summary className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground-2">旧版 HEAD 绑定</summary>

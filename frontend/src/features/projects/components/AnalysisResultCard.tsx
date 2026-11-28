@@ -7,6 +7,7 @@ import { PARTITION_LABELS, type SyncCommit } from '@/features/projects/repositor
 import type { AnalysisScope, RepositoryDistribution } from '@/features/projects/repositoryWorkspace'
 import { AnalysisScopeCard } from '@/features/projects/components/AnalysisScopeCard'
 import { CommitEvidenceBadge } from '@/features/projects/components/CommitEvidenceBadge'
+import { DocsHelpLink } from '@/features/docs/components/DocsHelpLink'
 import {
   HIGH_THRESHOLD, MID_THRESHOLD, SCORE_BIN, bandColors, bandsOption, histogramOption,
 } from '@/features/projects/analysisScore'
@@ -89,8 +90,9 @@ export function AnalysisResultCard({ syncId, scope, distribution, activeView, hi
   return <section className="grid min-w-0 grid-cols-1 gap-4 rounded-md border border-border-soft bg-card p-card" aria-label="当前分析结果">
     <div className="grid min-w-0 grid-cols-1 gap-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">模型分数分布
+        <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-foreground">模型分数分布
           {historical ? <span className="rounded-sm bg-soft px-1.5 py-0.5 text-[11px] font-normal text-foreground-3">历史固定结果</span> : null}
+          <DocsHelpLink article="reading-results" section="commit-score" label="怎么看分数" className="h-auto px-0 text-xs font-normal"/>
         </h3>
         <span className="text-xs tabular-nums text-foreground-3">{viewLabel(activeView, scope)} · {scored.toLocaleString()} 条已评分{distribution.unknown ? ` · ${distribution.unknown.toLocaleString()} 条未评分` : ''}</span>
       </div>

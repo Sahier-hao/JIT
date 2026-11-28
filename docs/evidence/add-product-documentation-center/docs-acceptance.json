@@ -1,0 +1,58 @@
+{
+  "landingEntry": "text link opened docs anonymously",
+  "backendOffline": {
+    "docsLoaded": true,
+    "apiRequests": [
+      "/api/user/session"
+    ]
+  },
+  "desktopHomeOverflow": {
+    "scrollWidth": 1280,
+    "clientWidth": 1280
+  },
+  "search": {
+    "opened": "http://127.0.0.1:14273/#/docs/faq?section=private-repository",
+    "section": "private-repository"
+  },
+  "keyboardSearch": "http://127.0.0.1:14273/#/docs/vscode-commit-check?section=configure",
+  "directSection": {
+    "top": 92,
+    "scrollY": 250
+  },
+  "reloadedSection": 92,
+  "history": {
+    "back": "commit-score",
+    "forward": "code-clues"
+  },
+  "invalidSection": "kept article and showed alert",
+  "unknownArticle": "docs-local empty state",
+  "mobileHomeOverflow": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "mobileArticleOverflow": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "mobileTable": {
+    "overflowX": "auto",
+    "scrollWidth": 544,
+    "clientWidth": 358
+  },
+  "mobileCodeOverflow": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "authenticatedEntry": {
+    "workspaceOpenedDocs": true,
+    "docsOpenedProtectedProjects": true
+  },
+  "workbenchDraft": {
+    "helpOpenedInNewTab": true,
+    "diffAndDraftPreserved": true
+  },
+  "branchHelp": {
+    "target": "reading-results#commit-score",
+    "pagePreserved": true
+  }
+}

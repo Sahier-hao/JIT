@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240" role="img" aria-labelledby="title desc">
+  <title id="title">完成第一次 PR 审查的流程</title>
+  <desc id="desc">从登录、添加项目、打开 PR、创建个人工作单到记录证据并导出 Markdown 的五个步骤。</desc>
+  <rect width="960" height="240" rx="16" fill="#F7F8F6"/>
+  <g font-family="Inter, 'Noto Sans SC', system-ui, sans-serif">
+    <g transform="translate(32 56)">
+      <rect width="148" height="128" rx="12" fill="#FFFFFF" stroke="#C8D0CB"/>
+      <circle cx="26" cy="30" r="13" fill="#1F5D4C"/>
+      <text x="26" y="35" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">1</text>
+      <text x="18" y="70" font-size="16" font-weight="700" fill="#1E2623">登录账户</text>
+      <text x="18" y="94" font-size="12" fill="#64706B">建立本机用户会话</text>
+    </g>
+    <path d="M190 120h32" stroke="#9AA7A1" stroke-width="2"/>
+    <path d="m216 115 6 5-6 5" fill="none" stroke="#9AA7A1" stroke-width="2"/>
+    <g transform="translate(232 56)">
+      <rect width="148" height="128" rx="12" fill="#FFFFFF" stroke="#C8D0CB"/>
+      <circle cx="26" cy="30" r="13" fill="#1F5D4C"/>
+      <text x="26" y="35" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">2</text>
+      <text x="18" y="70" font-size="16" font-weight="700" fill="#1E2623">添加项目</text>
+      <text x="18" y="94" font-size="12" fill="#64706B">登记公开 GitHub 仓库</text>
+    </g>
+    <path d="M390 120h32" stroke="#9AA7A1" stroke-width="2"/>
+    <path d="m416 115 6 5-6 5" fill="none" stroke="#9AA7A1" stroke-width="2"/>
+    <g transform="translate(432 56)">
+      <rect width="148" height="128" rx="12" fill="#FFFFFF" stroke="#C8D0CB"/>
+      <circle cx="26" cy="30" r="13" fill="#1F5D4C"/>
+      <text x="26" y="35" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">3</text>
+      <text x="18" y="70" font-size="16" font-weight="700" fill="#1E2623">打开 PR</text>
+      <text x="18" y="94" font-size="12" fill="#64706B">阅读 Diff 与可选线索</text>
+    </g>
+    <path d="M590 120h32" stroke="#9AA7A1" stroke-width="2"/>
+    <path d="m616 115 6 5-6 5" fill="none" stroke="#9AA7A1" stroke-width="2"/>
+    <g transform="translate(632 56)">
+      <rect width="148" height="128" rx="12" fill="#FFFFFF" stroke="#C8D0CB"/>
+      <circle cx="26" cy="30" r="13" fill="#1F5D4C"/>
+      <text x="26" y="35" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">4</text>
+      <text x="18" y="70" font-size="16" font-weight="700" fill="#1E2623">记录证据</text>
+      <text x="18" y="94" font-size="12" fill="#64706B">创建工作单与问题草稿</text>
+    </g>
+    <path d="M790 120h32" stroke="#9AA7A1" stroke-width="2"/>
+    <path d="m816 115 6 5-6 5" fill="none" stroke="#9AA7A1" stroke-width="2"/>
+    <g transform="translate(832 56)">
+      <rect width="96" height="128" rx="12" fill="#E2EFEA" stroke="#1F5D4C"/>
+      <circle cx="26" cy="30" r="13" fill="#1F5D4C"/>
+      <text x="26" y="35" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">5</text>
+      <text x="18" y="70" font-size="16" font-weight="700" fill="#164537">导出</text>
+      <text x="18" y="94" font-size="12" fill="#335A4D">Markdown</text>
+    </g>
+    <text x="32" y="224" font-size="11" fill="#64706B">模型不可用时仍可人工阅读、记录证据并导出意见。分数是未经校准的模型估计。</text>
+  </g>
+</svg>

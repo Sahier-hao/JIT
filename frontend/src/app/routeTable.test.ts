@@ -11,6 +11,9 @@ function locationOf(route: Route) {
 const CANONICAL: Route[] = [
   { name: 'landing' },
   { name: 'login', role: 'admin', next: '#/admin/models' },
+  { name: 'docs' },
+  { name: 'docs', slug: 'first-pr-review' },
+  { name: 'docs', slug: 'reading-results', section: 'commit-score' },
   { name: 'my-reviews' },
   { name: 'my-data', view: 'builds', taskId: 'build-1' },
   { name: 'my-data', view: 'builds', buildProjectId: 'repo-a' },

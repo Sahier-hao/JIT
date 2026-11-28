@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "check:styles": "node scripts/check-styles.mjs",
     "check:modules": "node scripts/check-module-boundaries.mjs",
+    "check:docs": "vitest run src/features/docs src/components/shared/Markdown.test.tsx",
     "types:api": "node scripts/generate-api-types.mjs",
     "check:api-types": "node scripts/check-api-types.mjs",
     "preview": "vite preview",

@@ -64,6 +64,16 @@
 .md-prose th,
 .md-prose td { padding: 6px 9px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .md-prose th { color: var(--fg-3); font-weight: 500; }
+.docs-prose { max-width: none; font-size: 14px; line-height: 1.8; }
+.docs-prose h1,
+.docs-prose h2,
+.docs-prose h3,
+.docs-prose h4 { scroll-margin-top: 92px; outline: none; }
+.docs-prose h2 { margin-top: 1.8em; font-size: 20px; }
+.docs-prose h3 { margin-top: 1.5em; font-size: 16px; }
+.docs-prose h4 { margin-top: 1.3em; font-size: 14px; }
+.docs-prose img { display: block; margin: 1rem auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); }
+.docs-prose table { min-width: 34rem; }
 
 /* ---------- 模型解释 ---------- */
 .repository-explanation { margin-block: 18px; padding-block: 14px; border-block: 1px solid var(--line); }

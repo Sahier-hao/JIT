@@ -1,4 +1,4 @@
-import { User, SlidersHorizontal } from 'lucide-react'
+import { BookOpenText, User, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Route } from '@/app/navigation'
 import type { UserSession } from '@/features/account/userClient'
@@ -15,7 +15,10 @@ export function LandingPage({ navigate, session }: {
   return <EntryPage>
     <EntryHeader
       onHome={() => navigate({ name: 'landing' })}
-      right={<span className="hidden text-xs text-foreground-3 sm:inline">提交级风险 · 静态行级线索 · 可复核实验</span>}
+      right={<>
+        <Button variant="ghost" size="sm" asChild><a href="#/docs"><BookOpenText aria-hidden="true" size={15}/>文档</a></Button>
+        <span className="hidden text-xs text-foreground-3 sm:inline">提交级风险 · 静态行级线索 · 可复核实验</span>
+      </>}
     />
     <main className="mx-auto grid w-full max-w-[1160px] flex-1 gap-10 px-5 py-10 sm:gap-14 sm:px-8 sm:py-16">
       <section className="grid items-start gap-8 md:grid-cols-[minmax(0,1.25fr)_minmax(300px,.75fr)] md:gap-14">
