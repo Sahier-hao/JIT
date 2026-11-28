@@ -14,6 +14,7 @@ from ..catalog_storage import CatalogStorage, utc_now
 from ..config import BACKEND, USER_DATASET_LIMIT
 from ..data import BaselineError, sha256
 from ..datasets import load_manifest
+from ..repository_probe import probe_repository
 from .repository_datasets import dataset_manifest_path, persist_collected_dataset
 from ..task_process import OwnedProcess
 
@@ -248,13 +249,15 @@ class DatasetBuildStorage:
 
 class DatasetBuildService:
     def __init__(self, storage=None, dataset_root=None, *, allow_local=False,
-                 timeout=BUILD_TIMEOUT, collect_fn=None, runner=None):
+                 timeout=BUILD_TIMEOUT, collect_fn=None, runner=None, probe=None):
         self.storage = storage if storage is not None else CatalogStorage()
         self.tasks = DatasetBuildStorage(self.storage)
         self.dataset_root = Path(dataset_root) if dataset_root is not None else None
         self.allow_local = allow_local
         self.timeout = timeout
         self.collect = collect_fn or collect.collect_repository
+        self.probe = probe or (lambda url, branch: probe_repository(
+            url, branch, threading.Event(), allow_local=self.allow_local))
         self._runner = runner
         self._isolated = runner is None and collect_fn is None
         self._executor = ThreadPoolExecutor(max_workers=1)
@@ -289,19 +292,32 @@ class DatasetBuildService:
                 "INPUT_INVALID",
                 "数据集构建只接受当前项目公开仓库的分支、范围与提交上限",
             )
-        branch = payload.get("branch") or "HEAD"
-        if not isinstance(branch, str) or not branch.strip():
-            raise BaselineError("INPUT_INVALID", "分支必须是非空字符串")
+        branch = payload.get("branch")
+        if branch is None:
+            branch = "HEAD"
+        if not isinstance(branch, str):
+            raise BaselineError("INPUT_INVALID", "分支必须是字符串")
+        branch = branch.strip() or "HEAD"
         limit = payload.get("commitLimit", DEFAULT_LIMIT)
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_LIMIT:
             raise BaselineError("INPUT_INVALID", f"提交上限必须是 1 到 {MAX_LIMIT} 之间的整数")
         since, until = _window(payload)
         return {
-            "branch": branch.strip(),
+            "branch": branch,
             "since": since,
             "until": until,
             "commitLimit": limit,
         }
+
+    def _resolve_branch(self, repository_url, branch):
+        """把空白或 HEAD 解析成远端默认分支名，便于展示、复用和按原参数重试。"""
+        if branch != "HEAD":
+            return branch
+        try:
+            resolved = self.probe(repository_url, "HEAD").get("branch") or "HEAD"
+        except BaselineError as exc:
+            raise BaselineError(exc.code, f"无法读取仓库默认分支：{exc}") from exc
+        return resolved
 
     def _positions(self, items):
         with self.storage.connection() as db:
@@ -383,6 +399,7 @@ class DatasetBuildService:
         repository = self._repository(repository_id)
         collect.validate_source(repository["url"], allow_local=self.allow_local)
         data = self._payload(payload)
+        data["branch"] = self._resolve_branch(repository["url"], data["branch"])
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "数据集构建服务正在停止")
@@ -396,6 +413,7 @@ class DatasetBuildService:
         """从任意公开仓库 URL 采集，不创建或修改项目记录。"""
         collect.validate_source(repository_url, allow_local=self.allow_local)
         data = self._payload(payload)
+        data["branch"] = self._resolve_branch(repository_url, data["branch"])
         repository = {"id": None, "url": repository_url}
         with self._lock:
             if self._closing.is_set():

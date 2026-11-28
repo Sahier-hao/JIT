@@ -72,7 +72,7 @@ export function BuildTaskList({ tasks, busyTaskId, onOpen, onInspect, onAction }
         </div>
         <span className="truncate text-[11px] text-foreground-4">{task.branch} · {formatDate(task.createdAt)}</span>
         {active ? <span className="text-[11px] text-foreground-3">{BUILD_STAGE_LABELS[task.stage] ?? task.stage}{task.queuePosition ? ` · 队列 ${task.queuePosition}` : ''}</span> : null}
-        {task.error ? <span className="break-all text-[11px] text-rose">{task.error.code}</span> : null}
+        {task.error ? <span className="line-clamp-2 break-all text-[11px] text-rose">{task.error.message}</span> : null}
         <div className="flex flex-wrap gap-1.5">
           <Button size="sm" variant="ghost" type="button" onClick={() => onInspect(task.taskId)}>任务详情</Button>
           {task.status === 'completed' && task.datasetVersion ? <Button size="sm" variant="outline" type="button" onClick={() => onOpen(task.datasetVersion!)}>查看数据</Button> : null}

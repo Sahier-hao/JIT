@@ -1,0 +1,252 @@
+{
+  "benchmark": {
+    "interpretedTimeZone": "UTC",
+    "member": "input/postgres.csv",
+    "project": "postgres",
+    "sourceSha256": "87f518f7f94fe4d41131c5a91e354327c2ecc77420a7f36de3c4d984f733b2cb",
+    "sourceTimeZone": "unknown",
+    "upload": "jit.zip"
+  },
+  "citation": "Kamei et al. (2013), A Large-Scale Empirical Study of Just-in-Time Quality Assurance",
+  "cohort": {
+    "addedLinesGreaterThan": null,
+    "endEpochExclusive": 253402300800,
+    "maxChurnInclusive": null,
+    "maxFilesInclusive": null,
+    "startEpochInclusive": 0
+  },
+  "dataset": "kamei-2013-948fe603f61d-postgres",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nm",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "pd",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "nuc",
+      "reason": "",
+      "source": "npt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 1952251,
+    "name": "postgres.csv",
+    "path": "data/datasets/kamei-2013-948fe603f61d-postgres/kamei-2013-948fe603f61d-postgres-1996-07-09_2010-05-15-87f518f7.csv",
+    "sha256": "87f518f7f94fe4d41131c5a91e354327c2ecc77420a7f36de3c4d984f733b2cb"
+  },
+  "label": {
+    "kind": "kamei-2013-publisher",
+    "limitations": [
+      "特征与标签沿用发布者口径。原始时间无时区，切分按 UTC 解释。"
+    ],
+    "rule": "发布者 bug 标签（1：引入缺陷；0：未被标记）"
+  },
+  "publisher": "Kamei et al. (2013)",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 0,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 0
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 20431,
+    "positiveLabels": 5119,
+    "rawRows": 20431
+  },
+  "revision": "87f518f7f94fe4d41131c5a91e354327c2ecc77420a7f36de3c4d984f733b2cb",
+  "samples": [
+    {
+      "id": "0189bbdcbd0fd088a0c743489edc1aa46b1b9846",
+      "time": "1996-07-09T02:21:00Z"
+    },
+    {
+      "id": "02617a6a7fea15911e5bacdbc8e6a256f238b6aa",
+      "time": "1996-07-09T02:21:00Z"
+    },
+    {
+      "id": "08347b029539fae82dfe4e1fb1835dfaa268a84a",
+      "time": "1996-07-09T02:21:00Z"
+    },
+    {
+      "id": "b2cb18ae55f7411703c3c8f29dea2a31af270ff7",
+      "time": "2010-05-15T17:41:00Z"
+    },
+    {
+      "id": "c56871fd5d0836e4d129813d14134afe4242bfec",
+      "time": "2010-05-15T17:41:00Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-2013-v1",
+  "timeRange": {
+    "end": "2010-05-15T17:41:00Z",
+    "endEpoch": 1273945260,
+    "start": "1996-07-09T02:21:00Z",
+    "startEpoch": 836878860
+  },
+  "url": "upload://client/jit.zip",
+  "usage": "import",
+  "version": "kamei-2013-948fe603f61d-postgres-1996-07-09_2010-05-15-87f518f7"
+}

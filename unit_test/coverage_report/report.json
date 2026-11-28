@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "sprint2-unit-test-report",
-  "generatedAt": "2026-11-26T14:44:37Z",
+  "generatedAt": "2026-11-26T17:01:28Z",
   "status": "passed",
   "checks": {
     "inventoryComplete": true,
@@ -15,7 +15,7 @@
   },
   "identity": {
     "repository": "D:\\code\\jit-defect-prediction",
-    "gitCommit": "16e0c119c8e0b4bacc97baf3509256106b4058a0",
+    "gitCommit": "420696fa4d9a858ee32106dbbd90de98e7456905",
     "identitySha256": "50216663b461a0680403f2f709e3ee9d635e05fbb035654758fc570945684b5b",
     "files": {
       "backend/jit_baseline/catalog_input.py": "c008d19c49dbe975f3cddda1a6f48a4ed69c58ddf416a01a59a7ac63711fd1ff",
@@ -53,8 +53,8 @@
     "passed": true,
     "manifest": "D:\\code\\jit-defect-prediction\\docs\\test-delivery\\sprint2-unit-test\\core-tests.json",
     "suiteTests": {
-      "backend/tests/test_sprint2_unit_core.py": 122,
-      "frontend/src/lib/sprint2Core.test.ts": 52
+      "frontend/src/lib/sprint2Core.test.ts": 52,
+      "backend/tests/test_sprint2_unit_core.py": 122
     },
     "functions": 48,
     "scenarioCounts": {
@@ -102,7 +102,7 @@
     "passed": 144,
     "failed": 0,
     "skipped": 0,
-    "durationSeconds": 7.38,
+    "durationSeconds": 4.814,
     "failures": [],
     "skippedCases": [],
     "coverage": {
@@ -193,14 +193,14 @@
         }
       ]
     },
-    "processSeconds": 9.293265499989502
+    "processSeconds": 7.356140499992762
   },
   "frontend": {
     "tests": 52,
     "passed": 52,
     "failed": 0,
     "skipped": 0,
-    "durationSeconds": 0.30715234375,
+    "durationSeconds": 1.141179931640625,
     "failures": [],
     "skippedCases": [],
     "coverage": {
@@ -247,6 +247,6 @@
         }
       ]
     },
-    "processSeconds": 1.6869143000221811
+    "processSeconds": 9.168743299960624
   }
 }

@@ -107,7 +107,7 @@ export function DatasetBuildTaskSummary({ task }: { task: DatasetBuildTask | nul
       <strong className="text-sm font-semibold text-foreground">{STATUS_LABELS[task.status] ?? task.status}</strong>
       <span className="text-xs text-foreground-3">{STAGE_LABELS[task.stage] ?? task.stage}{task.queuePosition ? ` · 队列 ${task.queuePosition}` : ''}</span>
     </div>
-    {task.error ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2 text-xs text-rose-deep" role="alert"><strong>{task.error.code}</strong><p className="mt-0.5">{task.error.message}</p></div> : null}
+    {task.error ? <div className="rounded-sm border border-rose/30 bg-rose-soft p-2 text-xs text-rose-deep" role="alert">{task.error.message}</div> : null}
     {task.status === 'completed' ? <>
       <dl className="grid gap-1 text-sm [&>div]:grid [&>div]:grid-cols-[88px_minmax(0,1fr)] [&>div]:gap-2 [&_dt]:text-xs [&_dt]:text-foreground-3 [&_dd]:m-0 [&_dd]:break-all">
         <div><dt>数据版本</dt><dd><code>{task.datasetVersion}</code></dd></div>

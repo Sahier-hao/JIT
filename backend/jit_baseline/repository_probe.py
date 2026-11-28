@@ -8,7 +8,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from .collect import validate_source
+from .collect import git_tls_args, validate_source
 from .config import BACKEND
 from .errors import BaselineError
 from .task_process import OwnedProcess
@@ -26,7 +26,9 @@ def parse_remote(text, branch):
         elif re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', parts[0]):
             head = parts[0]
     if not head:
-        raise BaselineError('REPOSITORY_UNAVAILABLE', '仓库或分支不可用')
+        if wanted == 'HEAD':
+            raise BaselineError('REPOSITORY_UNAVAILABLE', '仓库不可用或没有任何提交')
+        raise BaselineError('REPOSITORY_UNAVAILABLE', f'分支 {branch} 不存在')
     return {'head': head, 'branch': resolved or branch}
 
 
@@ -47,7 +49,7 @@ def probe_repository(url, branch, stop, *, allow_local=False, timeout=35):
                 raise BaselineError('REPOSITORY_UNAVAILABLE', '无法检查远端仓库')
             result = json.loads(output.read_text(encoding='utf-8'))
             if 'error' in result:
-                raise BaselineError(result['error'], '无法检查远端仓库')
+                raise BaselineError(result['error'], result.get('message') or '无法检查远端仓库')
             return result
         finally:
             owner.close()
@@ -58,7 +60,8 @@ def main():
     try:
         branch = payload['branch']
         ref = 'HEAD' if branch == 'HEAD' else f'refs/heads/{branch}'
-        result = subprocess.run(['git', '-c', 'credential.helper=', '-c', 'http.lowSpeedLimit=1000',
+        result = subprocess.run(['git', '-c', 'credential.helper=', *git_tls_args(),
+                                 '-c', 'http.lowSpeedLimit=1000',
                                  '-c', 'http.lowSpeedTime=20', 'ls-remote', '--symref', '--', payload['url'], ref],
                                 capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30,
                                 env=dict(os.environ, GIT_TERMINAL_PROMPT='0', GCM_INTERACTIVE='never'))
@@ -66,9 +69,9 @@ def main():
             raise BaselineError('REPOSITORY_UNAVAILABLE', '仓库不可用')
         output = parse_remote(result.stdout, branch)
     except subprocess.TimeoutExpired:
-        output = {'error': 'REPOSITORY_CHECK_TIMEOUT'}
+        output = {'error': 'REPOSITORY_CHECK_TIMEOUT', 'message': '仓库检查超时'}
     except (BaselineError, OSError) as exc:
-        output = {'error': getattr(exc, 'code', 'REPOSITORY_UNAVAILABLE')}
+        output = {'error': getattr(exc, 'code', 'REPOSITORY_UNAVAILABLE'), 'message': str(exc)}
     Path(payload['output']).write_text(json.dumps(output), encoding='utf-8')
 
 

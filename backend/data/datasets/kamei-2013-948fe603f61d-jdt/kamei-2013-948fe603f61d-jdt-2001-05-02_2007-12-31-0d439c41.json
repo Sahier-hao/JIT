@@ -1,0 +1,252 @@
+{
+  "benchmark": {
+    "interpretedTimeZone": "UTC",
+    "member": "input/jdt.csv",
+    "project": "jdt",
+    "sourceSha256": "0d439c41fc905fa6e8c7028d0a29cb58dc908613a972490486948e503276d367",
+    "sourceTimeZone": "unknown",
+    "upload": "jit.zip"
+  },
+  "citation": "Kamei et al. (2013), A Large-Scale Empirical Study of Just-in-Time Quality Assurance",
+  "cohort": {
+    "addedLinesGreaterThan": null,
+    "endEpochExclusive": 253402300800,
+    "maxChurnInclusive": null,
+    "maxFilesInclusive": null,
+    "startEpochInclusive": 0
+  },
+  "dataset": "kamei-2013-948fe603f61d-jdt",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nm",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "pd",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "nuc",
+      "reason": "",
+      "source": "npt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 3198405,
+    "name": "jdt.csv",
+    "path": "data/datasets/kamei-2013-948fe603f61d-jdt/kamei-2013-948fe603f61d-jdt-2001-05-02_2007-12-31-0d439c41.csv",
+    "sha256": "0d439c41fc905fa6e8c7028d0a29cb58dc908613a972490486948e503276d367"
+  },
+  "label": {
+    "kind": "kamei-2013-publisher",
+    "limitations": [
+      "特征与标签沿用发布者口径。原始时间无时区，切分按 UTC 解释。"
+    ],
+    "rule": "发布者 bug 标签（1：引入缺陷；0：未被标记）"
+  },
+  "publisher": "Kamei et al. (2013)",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 0,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 0
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 35386,
+    "positiveLabels": 5089,
+    "rawRows": 35386
+  },
+  "revision": "0d439c41fc905fa6e8c7028d0a29cb58dc908613a972490486948e503276d367",
+  "samples": [
+    {
+      "id": "272284b2b49e713e9a137dc31118873f50b41655",
+      "time": "2001-05-02T17:31:00Z"
+    },
+    {
+      "id": "32e7a8ed65ab4cdd818e10c8bf884c6ef189b25f",
+      "time": "2001-05-02T17:31:00Z"
+    },
+    {
+      "id": "8e3900f6c482cb0ecd41a23eb8982cea19574cac",
+      "time": "2001-05-02T17:31:00Z"
+    },
+    {
+      "id": "e66d8debcf3df7ddd4596a5b4254b7c267ce4b51",
+      "time": "2007-12-29T02:36:00Z"
+    },
+    {
+      "id": "85ba4fa1329f69d5461dcfc07154f6d98d168022",
+      "time": "2007-12-31T08:33:00Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-2013-v1",
+  "timeRange": {
+    "end": "2007-12-31T08:33:00Z",
+    "endEpoch": 1199089980,
+    "start": "2001-05-02T17:31:00Z",
+    "startEpoch": 988824660
+  },
+  "url": "upload://client/jit.zip",
+  "usage": "import",
+  "version": "kamei-2013-948fe603f61d-jdt-2001-05-02_2007-12-31-0d439c41"
+}

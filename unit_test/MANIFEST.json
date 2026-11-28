@@ -1,7 +1,7 @@
 {
   "kind": "unit-test-submission",
-  "generatedAt": "2026-11-26T14:50:10Z",
-  "sourceCommit": "16e0c119c8e0b4bacc97baf3509256106b4058a0",
+  "generatedAt": "2026-11-26T17:01:44Z",
+  "sourceCommit": "420696fa4d9a858ee32106dbbd90de98e7456905",
   "sourceRoot": "D:\\code\\jit-defect-prediction",
   "files": [
     {
@@ -11,7 +11,7 @@
     },
     {
       "path": "coverage_report/backend-coverage.html/class_index.html",
-      "sha256": "113c862a0b63c415f82c0953e0774ebabd81dd796bdacb397afde030192efae3",
+      "sha256": "3f1567346d1e58ad81add60d826d107780e2c47be9eb842fb605ddc9564634aa",
       "bytes": 12139
     },
     {
@@ -26,12 +26,12 @@
     },
     {
       "path": "coverage_report/backend-coverage.html/function_index.html",
-      "sha256": "ed88b5c1d146b8b449568b57c65da5fe4dff86b7cccca949822da3297265d228",
+      "sha256": "e5d37ffe367256099490cca4f23589b1de0663dcd386684f80e2e95de7717142",
       "bytes": 59188
     },
     {
       "path": "coverage_report/backend-coverage.html/index.html",
-      "sha256": "0d4ca9b20a7dab66851a77b043e528cb9d35756ba7b1e74e661fe2d5c52b9120",
+      "sha256": "8c0d48cbaeb64df8f3cc97d85dfd3f7e06980d7012a9468dd0009c6b38008cb8",
       "bytes": 9485
     },
     {
@@ -51,37 +51,37 @@
     },
     {
       "path": "coverage_report/backend-coverage.html/z_898ce35ffb3f2fc8_algorithms_py.html",
-      "sha256": "4daaf3701d82c68184c0284eeb9dd5c524740485c7a47a68e2f09cb28230439a",
+      "sha256": "60e3e73f8982990ed0d580215fad6d5f839242220f7e6fe20be6def212e6cf6d",
       "bytes": 176931
     },
     {
       "path": "coverage_report/backend-coverage.html/z_898ce35ffb3f2fc8_metrics_py.html",
-      "sha256": "cfe7deceb5b831850e3b35d87474e2da7c8d840f5dd5bd862649dbc8e7469297",
+      "sha256": "bd11bdd3c04ee22c08ed9371e4615c55a08d782bc7b923a597d139efbdc53ea7",
       "bytes": 78058
     },
     {
       "path": "coverage_report/backend-coverage.html/z_898ce35ffb3f2fc8_model_py.html",
-      "sha256": "892cbfa9c487c71defbc08ee4172cdb6c7651e159721895e2cceef4312b2de31",
+      "sha256": "f85c9c203d42d980a9ae6ec92d1359326acc1aed3ef5f9c3fc7883e1907a7eb8",
       "bytes": 111073
     },
     {
       "path": "coverage_report/backend-coverage.html/z_898ce35ffb3f2fc8_splits_py.html",
-      "sha256": "395f9f791a3518e6455dfd23c4380d9ac0946638d465b6e9bdae261ee9744317",
+      "sha256": "c4ba886e202a2fd9c344cd5ac7a1a5ed230ae687155ad2b6e8c756a4f48e0012",
       "bytes": 63550
     },
     {
       "path": "coverage_report/backend-coverage.html/z_fb31413b84834d1c_catalog_input_py.html",
-      "sha256": "69310033b08d223702398b3ea610199b47db1f9dc44368f1480d476ba31f0597",
+      "sha256": "ee6c1d0670ff6a909d80d914d535292819436bf73233ae4e9544d6c1d1a8bf3b",
       "bytes": 57747
     },
     {
       "path": "coverage_report/backend-coverage.html/z_fb31413b84834d1c_data_py.html",
-      "sha256": "6d183f75095bf5427e43e3f31d196721456ddb25f344617aa35a2d3ea5ce9151",
+      "sha256": "53c7799c5fe6cc83b578d958ac0a39a129b3473cb0b54d250bf4ce7c3edf3d39",
       "bytes": 99742
     },
     {
       "path": "coverage_report/backend-coverage.json",
-      "sha256": "4bf7622dedbf3887aaf86d57fd7f86932705b9978c49172a67867d029d6f3eb4",
+      "sha256": "d7fde88f7d3a0aa4c535850e09f14b527a91ac6f45d22115164b1379f32e7c2c",
       "bytes": 66415
     },
     {
@@ -96,7 +96,7 @@
     },
     {
       "path": "coverage_report/backend-junit.xml",
-      "sha256": "73ab288c7bfe9fd5d33fc87c982a832b256a495dbfd76a6990d1c1e6692e483c",
+      "sha256": "2e772588851231390fd948cdb233fbaf822eae6563827620721dc2c6cac6fda6",
       "bytes": 19969
     },
     {
@@ -141,37 +141,37 @@
     },
     {
       "path": "coverage_report/frontend-coverage.html/features/models/index.html",
-      "sha256": "e6267d7cede22d46f48d70b8e9e2f71317ddaa26bb0d45df9b9cec23345e4f28",
+      "sha256": "dfc47006d769d38e2e57c11d705a9172c55932061f027d4945d12fa4b4085fc3",
       "bytes": 4860
     },
     {
       "path": "coverage_report/frontend-coverage.html/features/models/modelCompatibility.ts.html",
-      "sha256": "29eb43b1ee132f36c75205b470e7344b339772edabcbee2ba2cb9e498268a6ca",
+      "sha256": "968379463e921ace2c0de774b18219f0f833011065f37a1f3385d33a223e8248",
       "bytes": 7846
     },
     {
       "path": "coverage_report/frontend-coverage.html/features/projects/analysisScore.ts.html",
-      "sha256": "e195797a7ff7035d2eddd33f3e5db7a9038c2f8267c2202dddf3edf1efe84dde",
+      "sha256": "3455d440d11d83425c1437128f3e156aae8673f90d28cbcbd82192ecf71c084e",
       "bytes": 20069
     },
     {
       "path": "coverage_report/frontend-coverage.html/features/projects/index.html",
-      "sha256": "ee6b44a8bf8c9eea112ba9a08395b2526a3c33b1d55916a971adf04c5223d4d9",
+      "sha256": "83238e3c702170479b9896cd51794c4cde2ef6b9b83d80702dad7f7518564a44",
       "bytes": 4854
     },
     {
       "path": "coverage_report/frontend-coverage.html/index.html",
-      "sha256": "1c656ef97b8e273effc998ea34fd09c3f8990727c87c191459f8749148f64838",
+      "sha256": "baee1e0c5affa5e7ee25b339fd38d4f49811dde976aeef201a50b38d4000d449",
       "bytes": 6143
     },
     {
       "path": "coverage_report/frontend-coverage.html/lib/domain.ts.html",
-      "sha256": "9b576b903fb634d9b2af77e2fafdbbf1585f325bff90c9289e2031d17ce07680",
+      "sha256": "bb945f5a3bc1b6d832cdcd75aef0ef50455a9d3963cce31237c440cfa64e2cf3",
       "bytes": 30851
     },
     {
       "path": "coverage_report/frontend-coverage.html/lib/index.html",
-      "sha256": "d0cc7e73d316aff1b36e1c427e232e241da76ec4941a7dd8cd0e2604b53d6aaa",
+      "sha256": "d4ade2776c93b296033d11fcef1d66208a7e9b06842c83c11889c5c46d18ed40",
       "bytes": 4789
     },
     {
@@ -221,8 +221,8 @@
     },
     {
       "path": "coverage_report/frontend-results.json",
-      "sha256": "1749926b9c8d1570245bc4495a3dde8ec85b07927d608480a6e0211856ec2e04",
-      "bytes": 62564
+      "sha256": "5782c143c0f5146cda33408bf1db84b0bab0646184f069bb0b9c305f43654a2d",
+      "bytes": 62557
     },
     {
       "path": "coverage_report/README.md",
@@ -231,7 +231,7 @@
     },
     {
       "path": "coverage_report/report-zh.html",
-      "sha256": "6fca6e305a70a46773026049c6d105d50df6b318e549de4865eb395c24bfda57",
+      "sha256": "0e89b702f35640e1073b2cf6ee5bd9b0c44e06c1b6fd37c567449d7e83dd6bcd",
       "bytes": 5868
     },
     {
@@ -246,18 +246,18 @@
     },
     {
       "path": "coverage_report/report.json",
-      "sha256": "c3aa5f41a79993183b292a46ac005c25436a5a3915144d2b4de76c70981fd68b",
-      "bytes": 8580
+      "sha256": "1a78e21066543f9f29289e3c052646036f52024b82b8d28043eb6077c03f38db",
+      "bytes": 8584
     },
     {
       "path": "coverage_report/report.md",
-      "sha256": "3bcfd6f12a8918508cb0f253cb393def666e1b3da3d11882c2a462f8b97db938",
+      "sha256": "f819f69751d005b2f2976385600f81ad22a5287ca80c456d1104e3c81b64387a",
       "bytes": 2024
     },
     {
       "path": "coverage_report/run-meta.json",
-      "sha256": "daa0b228c9d417623370df62e54ba46e9bca6dee1a9e687e52d5d0f12144c0cf",
-      "bytes": 138
+      "sha256": "ff81b33c88dda4fc26812037207565838b10d7875a9248eaf8900e94a1047940",
+      "bytes": 137
     },
     {
       "path": "prompts/backend-sprint2-unit-core.md",

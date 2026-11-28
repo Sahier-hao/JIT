@@ -64,7 +64,7 @@ export function parseDatasetBuild(raw: unknown, repositoryId?: string): DatasetB
   }
 }
 
-export async function createDatasetBuild(repositoryId: string, body: { branch: string; since?: string; until?: string }) {
+export async function createDatasetBuild(repositoryId: string, body: { branch?: string; since?: string; until?: string }) {
   const id = encodeURIComponent(repositoryId)
   return parseDatasetBuild(await apiRequest({
     path: `/api/v1/repositories/${id}/dataset-builds`,
@@ -75,7 +75,7 @@ export async function createDatasetBuild(repositoryId: string, body: { branch: s
 
 export async function createUserDatasetBuild(body: {
   repositoryUrl: string
-  branch: string
+  branch?: string
   since?: string
   until?: string
   commitLimit?: number
