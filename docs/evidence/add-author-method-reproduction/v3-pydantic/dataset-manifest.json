@@ -1,0 +1,7156 @@
+{
+  "citation": "由本地 Git 仓库采集生成",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1704067200
+  },
+  "collection": {
+    "counts": {
+      "binaryFiles": 7,
+      "commitsInWindow": 1029,
+      "datasetRecords": 1009,
+      "excluded": {
+        "empty": 0,
+        "merges": 0,
+        "outsideWindow": 4894,
+        "unparsed": 0
+      },
+      "negativeAuthorAgeCommits": 0,
+      "negativeFileAgeFiles": 0,
+      "records": 1029
+    },
+    "featureSchema": {
+      "decayYearDays": 365.25,
+      "name": "kamei14-git-v3",
+      "rexpRule": "同一作者父链历史提交的 1/(1+ageDays/365.25) 累加"
+    },
+    "fixSignals": [
+      {
+        "fixCommit": "1e1b2573b1e184b96f02659facda955eee6f4af9",
+        "fixTime": "2024-01-02T08:07:05Z",
+        "issueRefs": [
+          8467
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c067c1b9d0e5ffdf5b0fd53bf0e138cb5924f750",
+        "fixTime": "2024-01-04T11:54:12Z",
+        "issueRefs": [
+          8483
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ace2748cb44fe6e704410ecb716127d7389b7cde",
+        "fixTime": "2024-01-05T16:07:16Z",
+        "issueRefs": [
+          8494
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2213f3cab9aceb65c0b98b02c890cc3d1f91aeaa",
+        "fixTime": "2024-01-05T16:07:33Z",
+        "issueRefs": [
+          8500
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "383290f65dcd209b53357f190cbf2f83ec604b38",
+        "fixTime": "2024-01-05T16:38:39Z",
+        "issueRefs": [
+          8470
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "56d4e9206c32453b2cde9405b61abc28ed93d9fd",
+        "fixTime": "2024-01-08T15:16:18Z",
+        "issueRefs": [
+          8513
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1a5d08499045e3d598c84ccba00c1eda9890e18c",
+        "fixTime": "2024-01-09T12:56:48Z",
+        "issueRefs": [
+          8479
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "54d1185fc09ce3514a702239f034832bca523268",
+        "fixTime": "2024-01-09T15:26:47Z",
+        "issueRefs": [
+          8294
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1fe90b4007badaf49b9bfe8878e9a05a2718ccf0",
+        "fixTime": "2024-01-12T16:26:13Z",
+        "issueRefs": [
+          8526
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2e459bb563dbc296c2bcffbfd1a3caf21241b8e0",
+        "fixTime": "2024-01-12T19:47:59Z",
+        "issueRefs": [
+          8511
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "48d0df43be6e662585484cfd9a28b7f81f057efe",
+        "fixTime": "2024-01-19T14:34:24Z",
+        "issueRefs": [
+          8512,
+          8567
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "d67eff2bacff301e7bbd255ce9907698352a3490",
+        "fixTime": "2024-01-25T16:55:39Z",
+        "issueRefs": [
+          8614
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "b838cc951c90ad8a116b7bafdc31b5b1c54d9e08",
+        "fixTime": "2024-01-29T21:27:31Z",
+        "issueRefs": [
+          8650
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c1dff153c8ba2894e2b060cf6e53de6851ba4cd9",
+        "fixTime": "2024-01-30T02:07:57Z",
+        "issueRefs": [
+          8651
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "0404872a7ff406fc9768889c82dab6bb33c5be07",
+        "fixTime": "2024-01-30T13:23:54Z",
+        "issueRefs": [
+          8666
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c3ec15cdd3a628fb371f3ef1144cae97a1d3d0f1",
+        "fixTime": "2024-01-30T18:59:08Z",
+        "issueRefs": [
+          8681
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "d58286c4b4d3392abf032430de811ad6ca5c4d7c",
+        "fixTime": "2024-02-01T13:55:07Z",
+        "issueRefs": [
+          8679
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8898b8fee91c5a9dd99f4eb0c05f6950c2f684e0",
+        "fixTime": "2024-02-02T01:28:18Z",
+        "issueRefs": [
+          8702
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "417b8cf01503286429cbe0e94583ee7c3b2537aa",
+        "fixTime": "2024-02-02T18:30:40Z",
+        "issueRefs": [
+          8710
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8364920acb272e2df5c6e261ca67622f3d6d1874",
+        "fixTime": "2024-02-02T19:19:03Z",
+        "issueRefs": [
+          8718
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ace0e535abe0a686d25492cfc19a533d76cb2363",
+        "fixTime": "2024-02-06T14:54:05Z",
+        "issueRefs": [
+          8742
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "b1bb24e8b7687e5891bce33f551625ac01b74b66",
+        "fixTime": "2024-02-06T16:43:05Z",
+        "issueRefs": [
+          8734
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "825a6920e177a3b65836c13c7f37d82b810ce482",
+        "fixTime": "2024-02-06T22:55:45Z",
+        "issueRefs": [
+          8678
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "332eac4beb9f620fe8b13dc1aa59ef59ac5c67ae",
+        "fixTime": "2024-02-13T16:41:43Z",
+        "issueRefs": [
+          8801
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "467266294937dc405bae0492836637e1dc40fa79",
+        "fixTime": "2024-02-13T17:48:34Z",
+        "issueRefs": [
+          8751
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "3d1355f1683c345350891e562ff26ffaab948ebf",
+        "fixTime": "2024-02-13T18:30:13Z",
+        "issueRefs": [
+          7680
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "b290b31fed18b77f7e168e5f58dbb91b0131606a",
+        "fixTime": "2024-02-13T21:43:15Z",
+        "issueRefs": [
+          8806
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "42ec73ddeb4c3dd23620080c23a8421107ba9718",
+        "fixTime": "2024-02-15T01:39:33Z",
+        "issueRefs": [
+          8810
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ef8cecf39c163442f7d733324c5990e71acaf6b4",
+        "fixTime": "2024-02-15T13:36:06Z",
+        "issueRefs": [
+          8823
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "12ebdfc6790ab0c29cc8aefd1d97dd04603eb7cb",
+        "fixTime": "2024-02-16T17:06:01Z",
+        "issueRefs": [
+          8837
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9baad294497122fca99a2c389e53898feb2c3aa9",
+        "fixTime": "2024-02-19T10:26:26Z",
+        "issueRefs": [
+          8847
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "5d09b4754d4abcdfefaae554de4dae36124a683c",
+        "fixTime": "2024-02-19T19:58:48Z",
+        "issueRefs": [
+          8851
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9fc5e18209ac484ceaecbb270d22c4f93929699b",
+        "fixTime": "2024-02-22T13:48:00Z",
+        "issueRefs": [
+          8826
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "deeb110e711ba38f91326430b2bbdf4e72d08976",
+        "fixTime": "2024-02-23T12:29:41Z",
+        "issueRefs": [
+          8860
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "5a4c056684ef61a982376810212dc9998f4e5ee2",
+        "fixTime": "2024-02-27T18:05:40Z",
+        "issueRefs": [
+          8904
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2ff76ab1cef5e187218a9150e08acbd6a54626db",
+        "fixTime": "2024-03-01T12:51:22Z",
+        "issueRefs": [
+          8920
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "b345c01cf21a06840924cceb9ca5135c5ab49726",
+        "fixTime": "2024-03-04T13:22:56Z",
+        "issueRefs": [
+          8943
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "af41c8e7510c8578bdbb70fdb981d02341293f89",
+        "fixTime": "2024-03-04T14:12:45Z",
+        "issueRefs": [
+          8932
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a25882ce34b2912cc7fcc1eace6646aa5f838018",
+        "fixTime": "2024-03-05T17:29:45Z",
+        "issueRefs": [
+          8950
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "534a446032adaa7576f7ac7aa9c2c41d55695d7f",
+        "fixTime": "2024-03-14T00:10:47Z",
+        "issueRefs": [
+          8990,
+          9001
+        ],
+        "issues": [],
+        "source": "issueRef"
+      },
+      {
+        "fixCommit": "22f86ad2ae1df0e1ca33a93275a1dd69d9d50988",
+        "fixTime": "2024-03-16T08:57:41Z",
+        "issueRefs": [
+          8995,
+          9024
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "325ddf65af3ce01619b6ed028a6322d71f3c3c49",
+        "fixTime": "2024-03-17T15:11:42Z",
+        "issueRefs": [
+          9008
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "5c8afe65a69d9fb127c32fbf288156d7c13da346",
+        "fixTime": "2024-03-17T21:41:29Z",
+        "issueRefs": [
+          9031
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "243b8dac28e977a9f6b0b0cc170a6039d2cbb41e",
+        "fixTime": "2024-03-19T14:03:49Z",
+        "issueRefs": [
+          9050
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a3b7214a1d6ac8e32c29e9d4436ea6a9e253ead7",
+        "fixTime": "2024-03-20T02:34:37Z",
+        "issueRefs": [
+          9058
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a80e0347f947e444f7b3b8cfe4ce5dc17300d181",
+        "fixTime": "2024-03-21T17:08:58Z",
+        "issueRefs": [
+          9066
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "f794f6598bf23895bed6d01242efb47aa50ecff6",
+        "fixTime": "2024-03-22T17:18:56Z",
+        "issueRefs": [
+          9082
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "4af968dec92a0ec93e596bf6288b85a19f0b60db",
+        "fixTime": "2024-03-25T14:22:49Z",
+        "issueRefs": [
+          9097
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "426402af51602aaa773e283c4f12ae17a36c38b5",
+        "fixTime": "2024-03-25T21:57:37Z",
+        "issueRefs": [
+          5992,
+          9023
+        ],
+        "issues": [],
+        "source": "issueRef"
+      },
+      {
+        "fixCommit": "af3d3353fbbb04240c7f150274bce65b8487a00f",
+        "fixTime": "2024-03-26T01:51:59Z",
+        "issueRefs": [
+          8977
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "e9346383abc00306caabc61fba0c45c3ad5b9833",
+        "fixTime": "2024-03-26T20:56:01Z",
+        "issueRefs": [
+          9112
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "b9ec63fe68b40a356c5003996d5e866aeb4aae7e",
+        "fixTime": "2024-03-26T22:00:02Z",
+        "issueRefs": [
+          7143,
+          8965
+        ],
+        "issues": [],
+        "source": "issueRef"
+      },
+      {
+        "fixCommit": "7ac7881ff6c11a66f0bf09d65062cd798853fb30",
+        "fixTime": "2024-03-27T17:33:32Z",
+        "issueRefs": [
+          9124
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "fc0cb917c9462466661ed5402179ce4687abbb8d",
+        "fixTime": "2024-04-02T13:17:58Z",
+        "issueRefs": [
+          9144
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a7d32534779a1fd2ea5d10cbb0eed6db5584149e",
+        "fixTime": "2024-04-09T14:23:18Z",
+        "issueRefs": [
+          9193
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "6aab43e47e32f667319aaf63c6345a6525ba2e09",
+        "fixTime": "2024-04-12T20:18:29Z",
+        "issueRefs": [
+          9223
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ae71183f5853336f7b3a17899db20ede3a5de5f8",
+        "fixTime": "2024-04-16T14:23:14Z",
+        "issueRefs": [
+          9240
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "6322b24d97ec3cc12795e1ce70fc3f882c6a7633",
+        "fixTime": "2024-04-19T00:53:35Z",
+        "issueRefs": [
+          9279
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a0f18e33773e5464bc83144442253a5725c5c4e5",
+        "fixTime": "2024-04-21T12:58:32Z",
+        "issueRefs": [
+          9296
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "82e46640f0af1fd55c1d11bbb018b128e895d753",
+        "fixTime": "2024-04-22T13:29:28Z",
+        "issueRefs": [
+          9287
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c4d2edc4ebac009eb7669084f8174038070af64f",
+        "fixTime": "2024-04-28T17:57:47Z",
+        "issueRefs": [
+          9303
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "fixTime": "2024-04-28T21:57:54Z",
+        "issueRefs": [
+          8939
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cff0f37339c09deabea1d139c0ca6b86b048d51c",
+        "fixTime": "2024-04-30T19:12:48Z",
+        "issueRefs": [
+          9353
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a590b98aea6e40a42c565cc00023117d0f5c9634",
+        "fixTime": "2024-05-07T08:38:57Z",
+        "issueRefs": [
+          9403
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "07b64739a251760a71082324e358c9d8291b7ab6",
+        "fixTime": "2024-05-07T12:53:49Z",
+        "issueRefs": [
+          9387
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "77c1b4eb70299efab50659088d9c83276a81ece1",
+        "fixTime": "2024-05-09T09:29:09Z",
+        "issueRefs": [
+          9421
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "7061f36bc721ef4f173ef8f2e098f25e1eaea705",
+        "fixTime": "2024-05-09T11:09:40Z",
+        "issueRefs": [
+          9405
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1ea211609225ac7bb1bfb2b5e6da5cd3fd9d58c3",
+        "fixTime": "2024-05-14T18:53:52Z",
+        "issueRefs": [
+          9433
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "903041574c49de873498b36daea5aadd5db63e50",
+        "fixTime": "2024-05-20T19:12:20Z",
+        "issueRefs": [
+          9450
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c48850877745c3a9b2f5a717f0758d312a212975",
+        "fixTime": "2024-05-21T20:15:28Z",
+        "issueRefs": [
+          9476
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "90d60bd9102e5ca985100bea95867d9a6aae275c",
+        "fixTime": "2024-05-26T10:21:39Z",
+        "issueRefs": [
+          9500
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "e874535ab471cd50bbcff8e062335d5567e291aa",
+        "fixTime": "2024-05-28T17:08:49Z",
+        "issueRefs": [
+          9508
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1f474734b344ce134f319d1f7710db26445b4ea1",
+        "fixTime": "2024-05-30T15:16:59Z",
+        "issueRefs": [
+          9529
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "e67524c0a546c9a2639ff4f998882d53a5cdbaea",
+        "fixTime": "2024-05-30T17:19:40Z",
+        "issueRefs": [
+          9530
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8a896c51561fe9aa51cd7a8adabdb79b70bd5bce",
+        "fixTime": "2024-06-05T13:47:06Z",
+        "issueRefs": [
+          9570
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8333bd59dd3424811f4e73cdd6e9414fd15bb6d7",
+        "fixTime": "2024-06-07T17:49:07Z",
+        "issueRefs": [
+          9606
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "13dc7c3450df07dc5faa7311451b26d51ad027ca",
+        "fixTime": "2024-06-11T12:48:31Z",
+        "issueRefs": [
+          9623
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "45813eb78f3503ce5582b61a8f385d2a8333bee4",
+        "fixTime": "2024-06-12T13:51:49Z",
+        "issueRefs": [
+          9640
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c08dacdebc3a35a1a76ffbded593cab583e9f951",
+        "fixTime": "2024-06-21T16:53:19Z",
+        "issueRefs": [
+          9725
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "fcd20108b3a3efaeb7038566bd40f570e556fb96",
+        "fixTime": "2024-06-26T16:02:02Z",
+        "issueRefs": [
+          9760
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a002e6977d463da80321be91214459f704f14bc0",
+        "fixTime": "2024-06-27T18:44:41Z",
+        "issueRefs": [
+          9781
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "aca3b967f04d92f6bebc873c1b6fbfce0bb05651",
+        "fixTime": "2024-07-01T16:58:03Z",
+        "issueRefs": [
+          9809
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "7a7005194c5ccbdbe1f2141e1af00f54cd1e54f2",
+        "fixTime": "2024-07-01T17:38:01Z",
+        "issueRefs": [
+          9813
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cd3c67204751167209a05025a9b46036feaeee62",
+        "fixTime": "2024-07-01T17:38:25Z",
+        "issueRefs": [
+          9812
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "fixTime": "2024-07-02T17:19:07Z",
+        "issueRefs": [
+          9818
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cd3b0ad3943829a00d22da9a9156256b97fad9ae",
+        "fixTime": "2024-07-03T21:02:08Z",
+        "issueRefs": [
+          9706,
+          9764
+        ],
+        "issues": [],
+        "source": "issueRef"
+      },
+      {
+        "fixCommit": "c1101a930e2b33c6bc6c4cb0ff7fcfabd9e9ff78",
+        "fixTime": "2024-07-03T22:25:55Z",
+        "issueRefs": [
+          9838
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "520d52e05d356d65d50ec70673b80809fee42ef3",
+        "fixTime": "2024-07-18T17:40:08Z",
+        "issueRefs": [
+          9914
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "7cfaebaba63f377e7c3673c5b679470d955b1b34",
+        "fixTime": "2024-07-18T19:43:09Z",
+        "issueRefs": [
+          9892
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cc90fb060d9f7b9abb7cecafc118a06f2b5df4f9",
+        "fixTime": "2024-07-19T13:38:30Z",
+        "issueRefs": [
+          9924
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "630cc566a447fa072d46d274c0bca1dafde756ff",
+        "fixTime": "2024-07-24T18:45:49Z",
+        "issueRefs": [
+          9958
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "548c2315f5cf559bd82458018f44612b40a3a1e6",
+        "fixTime": "2024-07-24T19:12:10Z",
+        "issueRefs": [
+          9961
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1483433b6cd43959c3d824abf929ab04dd0c6697",
+        "fixTime": "2024-07-24T19:15:38Z",
+        "issueRefs": [
+          9960
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "d7931c064db56cef78b62f9ed662469a37638b5a",
+        "fixTime": "2024-07-25T15:04:26Z",
+        "issueRefs": [
+          9971
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2d37b66882ddd9b885299f4bd8117179a8a5f618",
+        "fixTime": "2024-07-29T12:55:51Z",
+        "issueRefs": [
+          9980
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "fe081817235a6102c171732fbc73efd6f2964e2d",
+        "fixTime": "2024-07-30T16:08:55Z",
+        "issueRefs": [
+          9990
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "22265f6cc357ef8df319b6172a827d18afe6f335",
+        "fixTime": "2024-07-31T10:05:00Z",
+        "issueRefs": [
+          9938
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1e413857f48a807d3c81281b52c571f07c7077ee",
+        "fixTime": "2024-08-01T22:47:57Z",
+        "issueRefs": [
+          10020
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "facbf9300089cda419642907229ce6dbf58f0127",
+        "fixTime": "2024-08-07T11:35:53Z",
+        "issueRefs": [
+          10070
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "87deca9ec93c59f26a1af5b0ce25482256f6dbd3",
+        "fixTime": "2024-08-07T13:43:16Z",
+        "issueRefs": [
+          10066
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "07151edc4874c753cbbf168334fb7de18f20e0ce",
+        "fixTime": "2024-08-09T14:15:40Z",
+        "issueRefs": [
+          10072
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "bf710b9d8cf2a9b77576038633c421c9ab39d48b",
+        "fixTime": "2024-08-11T15:49:35Z",
+        "issueRefs": [
+          10101
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "37536f6e2bb2433919e1456a1036c88354e9a27e",
+        "fixTime": "2024-08-13T15:21:04Z",
+        "issueRefs": [
+          10112
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9d553652ea5a11e69901b1f0e507795033448319",
+        "fixTime": "2024-08-15T00:28:40Z",
+        "issueRefs": [
+          10137
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "72124848b53bfc648af2d3f28ba54ff392c623ec",
+        "fixTime": "2024-08-16T13:08:35Z",
+        "issueRefs": [
+          10155
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "061e62ca0900a6d7c09d280792f6532192c06921",
+        "fixTime": "2024-08-19T12:10:58Z",
+        "issueRefs": [
+          10172
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "0d3b0c3adf9346cc37f83af3eef57d8fec300447",
+        "fixTime": "2024-08-19T16:28:15Z",
+        "issueRefs": [
+          10167
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "dfe84151aadfe12057dfbfd7b79d8140ac16d2ae",
+        "fixTime": "2024-08-20T12:58:33Z",
+        "issueRefs": [
+          10185
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "5d99a659c8f4d593b9fafd3cf1a69d5f32b7d8dd",
+        "fixTime": "2024-08-20T14:17:38Z",
+        "issueRefs": [
+          10188
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "484ae8398ab7a5d765bb5e31480802df85dce4dd",
+        "fixTime": "2024-08-21T15:31:33Z",
+        "issueRefs": [
+          10200
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ed8df669fd12e221649bcd75139665c9ee00bdc5",
+        "fixTime": "2024-08-27T07:39:53Z",
+        "issueRefs": [
+          10241
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9ad349a78dfe13dcec77a26657eb3b522716ab5a",
+        "fixTime": "2024-08-27T13:12:56Z",
+        "issueRefs": [
+          10242
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ac1cfecda2d8106f07546054d6b19bdbecd4e754",
+        "fixTime": "2024-08-28T19:13:36Z",
+        "issueRefs": [
+          10259
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c71313015e97afc944ec17169d0288c5dce9136a",
+        "fixTime": "2024-08-29T01:26:31Z",
+        "issueRefs": [
+          10257
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "0a78494236e3c121febe58cb556407c273f430de",
+        "fixTime": "2024-09-04T09:59:36Z",
+        "issueRefs": [
+          10298
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "0061aabcfd6a521d9801282af88e5b2f146b2780",
+        "fixTime": "2024-09-05T19:24:32Z",
+        "issueRefs": [
+          10321
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c19e3bd647e1c5a0de241a419b510faba32e647d",
+        "fixTime": "2024-09-07T15:45:27Z",
+        "issueRefs": [
+          10347
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "issueRefs": [
+          10339
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8138311e4c779519f8e981aaef2be1cef328fee1",
+        "fixTime": "2024-09-10T14:50:48Z",
+        "issueRefs": [
+          10369
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cb57c131aef2b1988be8d93a6e7874ec9e12784c",
+        "fixTime": "2024-09-10T17:15:18Z",
+        "issueRefs": [
+          10100
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8b6d5fc48541b7411b5ebfe74c8e5f6951f74203",
+        "fixTime": "2024-09-12T14:00:31Z",
+        "issueRefs": [
+          10391
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "899ff2ca81ead76b66f1bd4ede7639343ce6e22c",
+        "fixTime": "2024-09-12T18:58:15Z",
+        "issueRefs": [
+          10380
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "661490066c4598b8cc9396e9e45c151622885f6f",
+        "fixTime": "2024-09-13T14:37:16Z",
+        "issueRefs": [
+          10405
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "7daa2cd3fd24ac51cc98cb202d28faa9a4c94dd9",
+        "fixTime": "2024-09-13T19:27:58Z",
+        "issueRefs": [
+          10408
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2e38ec444b4db0a3da5498fe6c39c4e58d7af142",
+        "fixTime": "2024-09-16T16:57:23Z",
+        "issueRefs": [
+          10414
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cf671c808fba1a78bc4995e8276dd9e48876f2d9",
+        "fixTime": "2024-09-17T08:27:49Z",
+        "issueRefs": [
+          10421
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "00b376218a7574ab2a4e9df80f5003fcaeda0ce9",
+        "fixTime": "2024-09-17T14:24:49Z",
+        "issueRefs": [
+          10427
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "61818e281d3f4f1143ec6bb449615d4301c2894c",
+        "fixTime": "2024-09-19T13:42:40Z",
+        "issueRefs": [
+          10444
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "b195eecb21c1b392b4a89f4a9cf5a2f115de97b3",
+        "fixTime": "2024-09-25T14:15:04Z",
+        "issueRefs": [
+          10480
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c9190eedd8c536cd1445876c4a078c29b04d3aa1",
+        "fixTime": "2024-09-25T15:47:48Z",
+        "issueRefs": [
+          10479
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "520495f0907fc2e3f91436c008ca08a6314035f5",
+        "fixTime": "2024-09-25T19:24:48Z",
+        "issueRefs": [
+          10490
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ebe80206074857d1c7ab41cfdbc6a74c9f9be621",
+        "fixTime": "2024-09-30T16:37:05Z",
+        "issueRefs": [
+          10514
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "03276265596485cb15487df380e08c534dbe391d",
+        "fixTime": "2024-09-30T16:46:51Z",
+        "issueRefs": [
+          10520
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "beda9c0257e1985d6b8df848ae87dc4427a615f1",
+        "fixTime": "2024-10-01T13:00:29Z",
+        "issueRefs": [
+          10526
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "050972eb42e0d42fa5a7cf0da8cd480506e2af3e",
+        "fixTime": "2024-10-10T14:30:35Z",
+        "issueRefs": [
+          10594
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2b2dffcc5cf8cb01116a87c1c8072a6ee63ba159",
+        "fixTime": "2024-10-13T11:24:55Z",
+        "issueRefs": [
+          10610
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9b3e212ff40df7807a055cba726a26f98d4c4bb4",
+        "fixTime": "2024-10-25T16:28:10Z",
+        "issueRefs": [
+          10717
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "21563d72ef3ce3df232ebbb1ecc2cac3205c657b",
+        "fixTime": "2024-10-30T15:07:14Z",
+        "issueRefs": [
+          10740
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "e7f75aee3f219398bf293399c569b66fda845a2a",
+        "fixTime": "2024-11-02T15:54:43Z",
+        "issueRefs": [
+          10755
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "fba836a616d301b8dadf48d404bb4791642f1bf5",
+        "fixTime": "2024-11-05T17:48:33Z",
+        "issueRefs": [
+          10766
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "f946add590e4b5fb86ef4279de1f03ea9fac46cb",
+        "fixTime": "2024-11-06T15:14:35Z",
+        "issueRefs": [
+          10777
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "dad96c5aca6f49266fa0789bca0edc72b8a5585a",
+        "fixTime": "2024-11-08T14:40:22Z",
+        "issueRefs": [
+          10795
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "71d7d0dd28a9a25e71ece6d5ff47211e00956955",
+        "fixTime": "2024-11-09T14:05:00Z",
+        "issueRefs": [
+          10800
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "96876ef7c81999b0cdb8a1edf7599e754e14a78c",
+        "fixTime": "2024-11-11T22:17:43Z",
+        "issueRefs": [
+          10807
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ff4a325cb1a1d4e00584366d086c652463c1ea35",
+        "fixTime": "2024-11-12T13:42:00Z",
+        "issueRefs": [
+          10809
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8bad227e7557519307a9ea9b0ca129aca1997667",
+        "fixTime": "2024-11-12T19:32:24Z",
+        "issueRefs": [
+          10813
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "dbc77d3fa7f77a66c3a90977923762ebdc414d00",
+        "fixTime": "2024-11-13T13:20:28Z",
+        "issueRefs": [
+          10828
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9783bc8f28b47f809c2b2a0954e6edc0d8d5b6fb",
+        "fixTime": "2024-11-13T16:19:18Z",
+        "issueRefs": [
+          10833
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ac7d86a5739de27e05a5d2e1772a37e0e918a24a",
+        "fixTime": "2024-11-13T19:44:10Z",
+        "issueRefs": [
+          10837
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "d20da15dd1f63e9bd3d1a40d2386e0f538679712",
+        "fixTime": "2024-11-20T15:15:06Z",
+        "issueRefs": [
+          10897
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9915abf995f1315d6ee1e0d85bf40ffb6d765b2b",
+        "fixTime": "2024-11-21T15:02:36Z",
+        "issueRefs": [
+          10911
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "73509eda4ef49c90c699092788ee454eed29a585",
+        "fixTime": "2024-11-21T17:48:07Z",
+        "issueRefs": [
+          10922
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "309d4ed94df344e3839414558b4ff0dfd4b579bd",
+        "fixTime": "2024-11-21T22:35:56Z",
+        "issueRefs": [
+          10934
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ed29a35c17caae7c26ec648ece1b5fbdaf48e724",
+        "fixTime": "2024-11-22T00:07:10Z",
+        "issueRefs": [
+          10936
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a67002aeba9237f15b2fe58e657279cdc215c607",
+        "fixTime": "2024-11-25T18:18:31Z",
+        "issueRefs": [
+          10972
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "aee6057378ccfec02126bf9c984a9b6d6b411777",
+        "fixTime": "2024-12-02T22:38:28Z",
+        "issueRefs": [
+          11027
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "f5efa43b1a6be5c1b5aab3fc8aaa8ff67e4d02fa",
+        "fixTime": "2024-12-03T14:42:47Z",
+        "issueRefs": [
+          11035
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "32f405bcf6171602ffe754f1fca1681c5ddee96e",
+        "fixTime": "2024-12-04T14:52:58Z",
+        "issueRefs": [
+          11048
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "6fa92d139a297a26725dec0a7f9b0cce912d6a7f",
+        "fixTime": "2024-12-11T19:24:53Z",
+        "issueRefs": [
+          11082
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "6fe85091aa325c792937b98908ea66c1795cfb49",
+        "fixTime": "2024-12-13T14:33:35Z",
+        "issueRefs": [
+          11106
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "26379711fda08d1c455fbf28df663dd77f68dac1",
+        "fixTime": "2024-12-18T14:16:13Z",
+        "issueRefs": [
+          11135
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "2b48bd09b9cdf27f8e0078d1b0d8eb2a67900ca4",
+        "fixTime": "2024-12-18T15:22:55Z",
+        "issueRefs": [
+          11140
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "7b9561fd8f083ca8660d763706539670610853d8",
+        "fixTime": "2024-12-20T18:59:37Z",
+        "issueRefs": [
+          11162
+        ],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "50be97bf4347c9f2fd9e21082c2bd1cb34c78eab",
+        "fixTime": "2024-01-22T13:09:25Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "9279bc893274e233b543019b50415c27a25a488b",
+        "fixTime": "2024-01-25T15:29:12Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "53807d4d702bcfd4c00a7a8321cbd3abf1d316f6",
+        "fixTime": "2024-02-01T14:04:09Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "1d2c97c58d39a1ef2759cec6181d727c07596973",
+        "fixTime": "2024-02-01T18:57:54Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a1765155bce0d50f41cef070d4a39417fb8124b9",
+        "fixTime": "2024-02-20T10:44:45Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a20a4873d803838482d713e6c8d11a9388a22fda",
+        "fixTime": "2024-02-26T16:56:23Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a0904c2e7a0eb53245b408225ddc1d97f4c90949",
+        "fixTime": "2024-03-05T17:56:21Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cb3c697060d3dae71a95f1674184d64e02c8c4df",
+        "fixTime": "2024-03-18T15:15:56Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "98eb061472adc6aee7413fe34981465d03bb7366",
+        "fixTime": "2024-04-02T14:00:16Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cde281a5f7c4502a46e895c073afc5eaeadbcb30",
+        "fixTime": "2024-04-02T18:33:48Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "43afbdc4f1426adeb93bdf05e5ca184b97f0d474",
+        "fixTime": "2024-04-18T17:07:34Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c4adc530553d8fe95c7ea5e40fa6d6f7bd4e0879",
+        "fixTime": "2024-04-22T13:13:11Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "90a3273f2a4f0e71e6fc32c668dfb19ac1a69ac7",
+        "fixTime": "2024-04-22T15:49:08Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a18d3cd322930d331cec410b79c226caf8cd8e8b",
+        "fixTime": "2024-05-16T18:20:04Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "8f7e1fd532cd067316c6193cf64b8b929d5fa1bf",
+        "fixTime": "2024-05-18T22:33:49Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "915be6480c1463b39d7c51378049619db00494eb",
+        "fixTime": "2024-05-21T14:19:44Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "c58dc073b4e17ddd9537f18c5394ceed639affe0",
+        "fixTime": "2024-05-22T13:40:03Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cd694a0c4105601ee20550d53d279e6deec64768",
+        "fixTime": "2024-05-22T14:44:10Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a1053096b4a15b99cec27a10f654d47cad6b44b9",
+        "fixTime": "2024-06-02T18:20:25Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a7a174175c6d5d31475a4c3fcb1440f76b595ad8",
+        "fixTime": "2024-06-03T16:34:06Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "acd2386f2a3a42ed2bce7c82409629a69d4fd62b",
+        "fixTime": "2024-06-03T16:55:35Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "112abc0575818742deffceb4248960161b7cfc49",
+        "fixTime": "2024-06-20T12:12:24Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "a73a15097ab999c6f39e9180e60ba00e61788b16",
+        "fixTime": "2024-07-17T16:59:24Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "583657feb41347dad0bbe5875c0a5193cadba40d",
+        "fixTime": "2024-07-18T18:56:10Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "590579680aeba2a20e5ec077c4a9fdce964e3471",
+        "fixTime": "2024-07-30T15:42:57Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "0ad1b70c1ee8cc9795367bc61519140a1b617692",
+        "fixTime": "2024-08-13T08:09:02Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "59654d6f7dd364268f53ac5b3d305fd677f4410c",
+        "fixTime": "2024-09-06T11:37:54Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "6c075747163287894e13935eadfa7ef346a8bd13",
+        "fixTime": "2024-09-06T14:27:54Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "d921f18d2b35d4ded117a1621576f34a5112ff63",
+        "fixTime": "2024-09-16T14:40:50Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "ae44a08bdff8ea35f39619b0a0e020af1ad3d54f",
+        "fixTime": "2024-09-25T16:36:31Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "cbee263c5332269e19e9068cf7c19bff994a150a",
+        "fixTime": "2024-11-01T11:12:19Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "26d91ed83a4d04da82227d56584dc63d35da92a7",
+        "fixTime": "2024-11-04T09:18:58Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "49f9e0b2cd2c00486710842665875972e8510555",
+        "fixTime": "2024-11-05T16:08:31Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "6295877cdf16c608f6f18542a45d4fcd356eb231",
+        "fixTime": "2024-11-07T10:53:30Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "3535fea52cea327be20ce62f77081c96cc9485ca",
+        "fixTime": "2024-11-11T14:31:31Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "548748da4d19ef030cf83e905628b8e00054d475",
+        "fixTime": "2024-11-12T13:02:42Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "094434168a0c8e7badd9edcef20c27ac0faadee0",
+        "fixTime": "2024-11-21T18:36:52Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "e30696e374847906bc3251d8f30eeec97ef95059",
+        "fixTime": "2024-11-21T23:42:43Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "d0dedb622d92e3aba14a5ddf7e79b81ecc91d79c",
+        "fixTime": "2024-12-09T12:42:29Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "bdf600b9b952ad9c489ed155b690b4040086b96b",
+        "fixTime": "2024-12-12T20:27:26Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      },
+      {
+        "fixCommit": "99c44e2030e6c0e9fe87d9bb487bf5df39350bf4",
+        "fixTime": "2024-12-18T09:22:43Z",
+        "issueRefs": [],
+        "issues": [],
+        "source": "keyword"
+      }
+    ],
+    "gitVersion": "git version 2.53.0.windows.1",
+    "kind": "git-repository",
+    "label": {
+      "binarizationRule": "label = 1 when introduced by an observed fix commit; otherwise 0",
+      "kind": "szz-full",
+      "limitations": [
+        "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+        "标签由完整 SZZ 流程生成：修复提交优先用 issue/PR 关联确认，关键词兜底；删除/修改行用 git blame 回溯到引入提交。",
+        "issue 元数据是采集时的快照；离线或未配置 token 时退化为关键词识别，无法确认 issue 类型。",
+        "未关联 issue、纯新增式修复、强制推送改写历史与跨仓库搬运仍可能漏标；文档/测试/纯空白/重构不参与。",
+        "人工抽样复核不自动改变标签；可用 szz-sample 导出复核表，结论由人填写。",
+        "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。"
+      ],
+      "maturityDays": 90,
+      "observedThrough": 1735689600,
+      "protocol": "mature-observed-v1",
+      "rule": "szz-full-v1",
+      "statusCounts": {
+        "immature": 234,
+        "positive": 113,
+        "unobserved": 682
+      },
+      "version": "szz-full-v1"
+    },
+    "labelEvidence": [
+      {
+        "fixCommit": "c067c1b9d0e5ffdf5b0fd53bf0e138cb5924f750",
+        "fixSource": "keyword",
+        "fixTime": "2024-01-04T11:54:12Z",
+        "introducedCommit": "097dc7d111acb87d4935ca30a67d96c6d59c87ae",
+        "issueRefs": [
+          8483
+        ],
+        "lineRanges": [
+          [
+            305,
+            305
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            305,
+            305
+          ]
+        ],
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "fixCommit": "c3ec15cdd3a628fb371f3ef1144cae97a1d3d0f1",
+        "fixSource": "keyword",
+        "fixTime": "2024-01-30T18:59:08Z",
+        "introducedCommit": "c7d965c6f273b9600c0972726558061826dc42cd",
+        "issueRefs": [
+          8681
+        ],
+        "lineRanges": [
+          [
+            1790,
+            1790
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1790,
+            1790
+          ]
+        ],
+        "path": "pydantic/types.py"
+      },
+      {
+        "fixCommit": "d58286c4b4d3392abf032430de811ad6ca5c4d7c",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-01T13:55:07Z",
+        "introducedCommit": "2e459bb563dbc296c2bcffbfd1a3caf21241b8e0",
+        "issueRefs": [
+          8679
+        ],
+        "lineRanges": [
+          [
+            156,
+            162
+          ],
+          [
+            164,
+            165
+          ],
+          [
+            167,
+            169
+          ],
+          [
+            171,
+            173
+          ],
+          [
+            175,
+            175
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            156,
+            162
+          ],
+          [
+            164,
+            165
+          ],
+          [
+            167,
+            169
+          ],
+          [
+            171,
+            173
+          ],
+          [
+            175,
+            175
+          ]
+        ],
+        "path": "pydantic/dataclasses.py"
+      },
+      {
+        "fixCommit": "8898b8fee91c5a9dd99f4eb0c05f6950c2f684e0",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-02T01:28:18Z",
+        "introducedCommit": "1fe90b4007badaf49b9bfe8878e9a05a2718ccf0",
+        "issueRefs": [
+          8702
+        ],
+        "lineRanges": [
+          [
+            231,
+            231
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            231,
+            231
+          ]
+        ],
+        "path": "pydantic/_internal/_core_utils.py"
+      },
+      {
+        "fixCommit": "417b8cf01503286429cbe0e94583ee7c3b2537aa",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-02T18:30:40Z",
+        "introducedCommit": "48d0df43be6e662585484cfd9a28b7f81f057efe",
+        "issueRefs": [
+          8710
+        ],
+        "lineRanges": [
+          [
+            157,
+            157
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            157,
+            157
+          ]
+        ],
+        "path": "pydantic/functional_validators.py"
+      },
+      {
+        "fixCommit": "8364920acb272e2df5c6e261ca67622f3d6d1874",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-02T19:19:03Z",
+        "introducedCommit": "b2aa36a80904773d7db2e4c007fc00a5a4d7653b",
+        "issueRefs": [
+          8718
+        ],
+        "lineRanges": [
+          [
+            440,
+            441
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            441,
+            442
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "467266294937dc405bae0492836637e1dc40fa79",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-13T17:48:34Z",
+        "introducedCommit": "54a157607bbdb8d2b558b545123d8df4acccb332",
+        "issueRefs": [
+          8751
+        ],
+        "lineRanges": [
+          [
+            1452,
+            1452
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1474,
+            1474
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "467266294937dc405bae0492836637e1dc40fa79",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-13T17:48:34Z",
+        "introducedCommit": "a2a4281a6eeb3cf6e8296600ff13ac25815ccc20",
+        "issueRefs": [
+          8751
+        ],
+        "lineRanges": [
+          [
+            1474,
+            1474
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1494,
+            1494
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "42ec73ddeb4c3dd23620080c23a8421107ba9718",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-15T01:39:33Z",
+        "introducedCommit": "b290b31fed18b77f7e168e5f58dbb91b0131606a",
+        "issueRefs": [
+          8810
+        ],
+        "lineRanges": [
+          [
+            1053,
+            1053
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1053,
+            1053
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "12ebdfc6790ab0c29cc8aefd1d97dd04603eb7cb",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-16T17:06:01Z",
+        "introducedCommit": "6e596197d93062614905872fc10bdfdfa90c2f5d",
+        "issueRefs": [
+          8837
+        ],
+        "lineRanges": [
+          [
+            28,
+            29
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            28,
+            29
+          ]
+        ],
+        "path": "pydantic/_internal/_docs_extraction.py"
+      },
+      {
+        "fixCommit": "af41c8e7510c8578bdbb70fdb981d02341293f89",
+        "fixSource": "keyword",
+        "fixTime": "2024-03-04T14:12:45Z",
+        "introducedCommit": "5a4c056684ef61a982376810212dc9998f4e5ee2",
+        "issueRefs": [
+          8932
+        ],
+        "lineRanges": [
+          [
+            57,
+            62
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            57,
+            62
+          ]
+        ],
+        "path": "pydantic/_internal/_discriminated_union.py"
+      },
+      {
+        "fixCommit": "325ddf65af3ce01619b6ed028a6322d71f3c3c49",
+        "fixSource": "keyword",
+        "fixTime": "2024-03-17T15:11:42Z",
+        "introducedCommit": "0404872a7ff406fc9768889c82dab6bb33c5be07",
+        "issueRefs": [
+          9008
+        ],
+        "lineRanges": [
+          [
+            479,
+            480
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            489,
+            490
+          ]
+        ],
+        "path": "pydantic/mypy.py"
+      },
+      {
+        "fixCommit": "325ddf65af3ce01619b6ed028a6322d71f3c3c49",
+        "fixSource": "keyword",
+        "fixTime": "2024-03-17T15:11:42Z",
+        "introducedCommit": "640ba4a7cb078d58ec6f4721e6f1b9b63233dbf9",
+        "issueRefs": [
+          9008
+        ],
+        "lineRanges": [
+          [
+            864,
+            864
+          ],
+          [
+            866,
+            866
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            874,
+            874
+          ],
+          [
+            876,
+            876
+          ]
+        ],
+        "path": "pydantic/mypy.py"
+      },
+      {
+        "fixCommit": "325ddf65af3ce01619b6ed028a6322d71f3c3c49",
+        "fixSource": "keyword",
+        "fixTime": "2024-03-17T15:11:42Z",
+        "introducedCommit": "9fc5e18209ac484ceaecbb270d22c4f93929699b",
+        "issueRefs": [
+          9008
+        ],
+        "lineRanges": [
+          [
+            371,
+            372
+          ],
+          [
+            491,
+            491
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            371,
+            372
+          ],
+          [
+            491,
+            491
+          ]
+        ],
+        "path": "pydantic/mypy.py"
+      },
+      {
+        "fixCommit": "a7d32534779a1fd2ea5d10cbb0eed6db5584149e",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-09T14:23:18Z",
+        "introducedCommit": "8b90de86033fbdfea01f775e25ece8222e6a4d8f",
+        "issueRefs": [
+          9193
+        ],
+        "lineRanges": [
+          [
+            544,
+            544
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            539,
+            539
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "6aab43e47e32f667319aaf63c6345a6525ba2e09",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-12T20:18:29Z",
+        "introducedCommit": "2213f3cab9aceb65c0b98b02c890cc3d1f91aeaa",
+        "issueRefs": [
+          9223
+        ],
+        "lineRanges": [
+          [
+            223,
+            223
+          ],
+          [
+            225,
+            225
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            233,
+            233
+          ],
+          [
+            235,
+            235
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "6aab43e47e32f667319aaf63c6345a6525ba2e09",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-12T20:18:29Z",
+        "introducedCommit": "fc0cb917c9462466661ed5402179ce4687abbb8d",
+        "issueRefs": [
+          9223
+        ],
+        "lineRanges": [
+          [
+            228,
+            230
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            228,
+            230
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "ae71183f5853336f7b3a17899db20ede3a5de5f8",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-16T14:23:14Z",
+        "introducedCommit": "1c91c8627b541b22354b9ed56b9ef1bb21ac6fbd",
+        "issueRefs": [
+          9240
+        ],
+        "lineRanges": [
+          [
+            1567,
+            1567
+          ],
+          [
+            1569,
+            1570
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1568,
+            1568
+          ],
+          [
+            1570,
+            1571
+          ]
+        ],
+        "path": "pydantic/types.py"
+      },
+      {
+        "fixCommit": "82e46640f0af1fd55c1d11bbb018b128e895d753",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-22T13:29:28Z",
+        "introducedCommit": "a80e0347f947e444f7b3b8cfe4ce5dc17300d181",
+        "issueRefs": [
+          9287
+        ],
+        "lineRanges": [
+          [
+            1996,
+            1996
+          ],
+          [
+            2002,
+            2002
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            2040,
+            2040
+          ],
+          [
+            2046,
+            2046
+          ]
+        ],
+        "path": "pydantic/json_schema.py"
+      },
+      {
+        "fixCommit": "c4d2edc4ebac009eb7669084f8174038070af64f",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-28T17:57:47Z",
+        "introducedCommit": "477e0a2e23fa7262a1365129a99acb586ee3baa5",
+        "issueRefs": [
+          9303
+        ],
+        "lineRanges": [
+          [
+            1455,
+            1455
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1458,
+            1458
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-28T21:57:54Z",
+        "introducedCommit": "383290f65dcd209b53357f190cbf2f83ec604b38",
+        "issueRefs": [
+          8939
+        ],
+        "lineRanges": [
+          [
+            207,
+            207
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            221,
+            221
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-28T21:57:54Z",
+        "introducedCommit": "953bbea8636742232dc659f8d92936c4b1ea94c1",
+        "issueRefs": [
+          8939
+        ],
+        "lineRanges": [
+          [
+            6,
+            6
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            6,
+            6
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-28T21:57:54Z",
+        "introducedCommit": "b09e06cedd18fe8f3bd5983682e81ffe72bb63e9",
+        "issueRefs": [
+          8939
+        ],
+        "lineRanges": [
+          [
+            453,
+            453
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            461,
+            461
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-28T21:57:54Z",
+        "introducedCommit": "b30f44dbc2dd4f57b55fbfaeb6162a949504b048",
+        "issueRefs": [
+          8939
+        ],
+        "lineRanges": [
+          [
+            649,
+            651
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            652,
+            654
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "cff0f37339c09deabea1d139c0ca6b86b048d51c",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-30T19:12:48Z",
+        "introducedCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "issueRefs": [
+          9353
+        ],
+        "lineRanges": [
+          [
+            25,
+            25
+          ],
+          [
+            131,
+            132
+          ],
+          [
+            134,
+            134
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            25,
+            25
+          ],
+          [
+            131,
+            132
+          ],
+          [
+            134,
+            134
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "a590b98aea6e40a42c565cc00023117d0f5c9634",
+        "fixSource": "keyword",
+        "fixTime": "2024-05-07T08:38:57Z",
+        "introducedCommit": "4d7bef62aeff10985fe67d13477fe666b13ba070",
+        "issueRefs": [
+          9403
+        ],
+        "lineRanges": [
+          [
+            6,
+            8
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            6,
+            8
+          ]
+        ],
+        "path": ".github/labeler.yml"
+      },
+      {
+        "fixCommit": "77c1b4eb70299efab50659088d9c83276a81ece1",
+        "fixSource": "keyword",
+        "fixTime": "2024-05-09T09:29:09Z",
+        "introducedCommit": "4d7bef62aeff10985fe67d13477fe666b13ba070",
+        "issueRefs": [
+          9421
+        ],
+        "lineRanges": [
+          [
+            4,
+            4
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            4,
+            4
+          ]
+        ],
+        "path": ".github/workflows/labeler.yml"
+      },
+      {
+        "fixCommit": "903041574c49de873498b36daea5aadd5db63e50",
+        "fixSource": "keyword",
+        "fixTime": "2024-05-20T19:12:20Z",
+        "introducedCommit": "5c8afe65a69d9fb127c32fbf288156d7c13da346",
+        "issueRefs": [
+          9450
+        ],
+        "lineRanges": [
+          [
+            288,
+            288
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            296,
+            296
+          ]
+        ],
+        "path": "pydantic/_internal/_typing_extra.py"
+      },
+      {
+        "fixCommit": "8a896c51561fe9aa51cd7a8adabdb79b70bd5bce",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-05T13:47:06Z",
+        "introducedCommit": "575f473ac94d119261e2bb682bc76980734a8c13",
+        "issueRefs": [
+          9570
+        ],
+        "lineRanges": [
+          [
+            129,
+            129
+          ],
+          [
+            143,
+            143
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            174,
+            174
+          ],
+          [
+            188,
+            188
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "8333bd59dd3424811f4e73cdd6e9414fd15bb6d7",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-07T17:49:07Z",
+        "introducedCommit": "325ddf65af3ce01619b6ed028a6322d71f3c3c49",
+        "issueRefs": [
+          9606
+        ],
+        "lineRanges": [
+          [
+            366,
+            366
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            366,
+            366
+          ]
+        ],
+        "path": "pydantic/mypy.py"
+      },
+      {
+        "fixCommit": "8333bd59dd3424811f4e73cdd6e9414fd15bb6d7",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-07T17:49:07Z",
+        "introducedCommit": "9fc5e18209ac484ceaecbb270d22c4f93929699b",
+        "issueRefs": [
+          9606
+        ],
+        "lineRanges": [
+          [
+            352,
+            352
+          ],
+          [
+            361,
+            361
+          ],
+          [
+            376,
+            376
+          ],
+          [
+            383,
+            383
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            348,
+            348
+          ],
+          [
+            357,
+            357
+          ],
+          [
+            369,
+            369
+          ],
+          [
+            376,
+            376
+          ]
+        ],
+        "path": "pydantic/mypy.py"
+      },
+      {
+        "fixCommit": "13dc7c3450df07dc5faa7311451b26d51ad027ca",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-11T12:48:31Z",
+        "introducedCommit": "99821e9532f548f5e602240ff782aed8aaf6dd67",
+        "issueRefs": [
+          9623
+        ],
+        "lineRanges": [
+          [
+            290,
+            290
+          ],
+          [
+            294,
+            296
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            316,
+            316
+          ],
+          [
+            320,
+            322
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "13dc7c3450df07dc5faa7311451b26d51ad027ca",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-11T12:48:31Z",
+        "introducedCommit": "c4d2edc4ebac009eb7669084f8174038070af64f",
+        "issueRefs": [
+          9623
+        ],
+        "lineRanges": [
+          [
+            1445,
+            1445
+          ],
+          [
+            1459,
+            1459
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1447,
+            1447
+          ],
+          [
+            1461,
+            1461
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "13dc7c3450df07dc5faa7311451b26d51ad027ca",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-11T12:48:31Z",
+        "introducedCommit": "c4d2edc4ebac009eb7669084f8174038070af64f",
+        "issueRefs": [
+          9623
+        ],
+        "lineRanges": [
+          [
+            6,
+            6
+          ],
+          [
+            105,
+            106
+          ],
+          [
+            108,
+            109
+          ],
+          [
+            111,
+            116
+          ],
+          [
+            270,
+            272
+          ],
+          [
+            280,
+            282
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            6,
+            6
+          ],
+          [
+            105,
+            106
+          ],
+          [
+            108,
+            109
+          ],
+          [
+            111,
+            116
+          ],
+          [
+            270,
+            272
+          ],
+          [
+            280,
+            282
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "45813eb78f3503ce5582b61a8f385d2a8333bee4",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-12T13:51:49Z",
+        "introducedCommit": "b09e06cedd18fe8f3bd5983682e81ffe72bb63e9",
+        "issueRefs": [
+          9640
+        ],
+        "lineRanges": [
+          [
+            656,
+            657
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            694,
+            695
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "c08dacdebc3a35a1a76ffbded593cab583e9f951",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-21T16:53:19Z",
+        "introducedCommit": "2852700fff1eb99eeec64384327ecf0110529970",
+        "issueRefs": [
+          9725
+        ],
+        "lineRanges": [
+          [
+            10,
+            12
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            10,
+            12
+          ]
+        ],
+        "path": ".github/labels/first_pass.yml"
+      },
+      {
+        "fixCommit": "fcd20108b3a3efaeb7038566bd40f570e556fb96",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-26T16:02:02Z",
+        "introducedCommit": "8060fa1cff965850e5e08a67ca73d5272dcdcf9f",
+        "issueRefs": [
+          9760
+        ],
+        "lineRanges": [
+          [
+            285,
+            285
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            318,
+            318
+          ]
+        ],
+        "path": "pydantic/_internal/_typing_extra.py"
+      },
+      {
+        "fixCommit": "a002e6977d463da80321be91214459f704f14bc0",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-27T18:44:41Z",
+        "introducedCommit": "76c191d9d53c0ee02855d6f6ec84cee669867a64",
+        "issueRefs": [
+          9781
+        ],
+        "lineRanges": [
+          [
+            259,
+            259
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            259,
+            259
+          ]
+        ],
+        "path": "pydantic/_internal/_typing_extra.py"
+      },
+      {
+        "fixCommit": "aca3b967f04d92f6bebc873c1b6fbfce0bb05651",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-01T16:58:03Z",
+        "introducedCommit": "2852700fff1eb99eeec64384327ecf0110529970",
+        "issueRefs": [
+          9809
+        ],
+        "lineRanges": [
+          [
+            23,
+            23
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            23,
+            23
+          ]
+        ],
+        "path": ".github/workflows/labeler.yml"
+      },
+      {
+        "fixCommit": "aca3b967f04d92f6bebc873c1b6fbfce0bb05651",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-01T16:58:03Z",
+        "introducedCommit": "33e994dfeb322a9a0e65294f27ec6bdfc1e3facc",
+        "issueRefs": [
+          9809
+        ],
+        "lineRanges": [
+          [
+            172,
+            172
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            175,
+            175
+          ]
+        ],
+        "path": "pyproject.toml"
+      },
+      {
+        "fixCommit": "7a7005194c5ccbdbe1f2141e1af00f54cd1e54f2",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-01T17:38:01Z",
+        "introducedCommit": "aca3b967f04d92f6bebc873c1b6fbfce0bb05651",
+        "issueRefs": [
+          9813
+        ],
+        "lineRanges": [
+          [
+            23,
+            23
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            23,
+            23
+          ]
+        ],
+        "path": ".github/workflows/labeler.yml"
+      },
+      {
+        "fixCommit": "cd3c67204751167209a05025a9b46036feaeee62",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-01T17:38:25Z",
+        "introducedCommit": "5694da3addd72c21d20ea2b2a63b6a22d7d30da2",
+        "issueRefs": [
+          9812
+        ],
+        "lineRanges": [
+          [
+            52,
+            60
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            52,
+            60
+          ]
+        ],
+        "path": "pydantic/alias_generators.py"
+      },
+      {
+        "fixCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-02T17:19:07Z",
+        "introducedCommit": "13dc7c3450df07dc5faa7311451b26d51ad027ca",
+        "issueRefs": [
+          9818
+        ],
+        "lineRanges": [
+          [
+            190,
+            198
+          ],
+          [
+            200,
+            208
+          ],
+          [
+            234,
+            234
+          ],
+          [
+            236,
+            241
+          ],
+          [
+            246,
+            247
+          ],
+          [
+            250,
+            250
+          ],
+          [
+            263,
+            264
+          ],
+          [
+            266,
+            266
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            194,
+            202
+          ],
+          [
+            204,
+            212
+          ],
+          [
+            238,
+            238
+          ],
+          [
+            240,
+            245
+          ],
+          [
+            250,
+            251
+          ],
+          [
+            254,
+            254
+          ],
+          [
+            267,
+            268
+          ],
+          [
+            270,
+            270
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-02T17:19:07Z",
+        "introducedCommit": "32f49189c62be59112214947ebac807723ff2285",
+        "issueRefs": [
+          9818
+        ],
+        "lineRanges": [
+          [
+            19,
+            19
+          ],
+          [
+            34,
+            36
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            19,
+            19
+          ],
+          [
+            34,
+            36
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-02T17:19:07Z",
+        "introducedCommit": "99821e9532f548f5e602240ff782aed8aaf6dd67",
+        "issueRefs": [
+          9818
+        ],
+        "lineRanges": [
+          [
+            23,
+            23
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            24,
+            24
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-02T17:19:07Z",
+        "introducedCommit": "ac9e6ee3e40845014fc2f9c79d95c5896dc3eca7",
+        "issueRefs": [
+          9818
+        ],
+        "lineRanges": [
+          [
+            93,
+            94
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            103,
+            104
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-02T17:19:07Z",
+        "introducedCommit": "f024d03b832d1bbcbadf76184ed14d92571a71ca",
+        "issueRefs": [
+          9818
+        ],
+        "lineRanges": [
+          [
+            105,
+            106
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            105,
+            106
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "c1101a930e2b33c6bc6c4cb0ff7fcfabd9e9ff78",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-03T22:25:55Z",
+        "introducedCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "issueRefs": [
+          9838
+        ],
+        "lineRanges": [
+          [
+            3,
+            3
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            3,
+            3
+          ]
+        ],
+        "path": "pydantic/_internal/_mock_val_ser.py"
+      },
+      {
+        "fixCommit": "c1101a930e2b33c6bc6c4cb0ff7fcfabd9e9ff78",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-03T22:25:55Z",
+        "introducedCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "issueRefs": [
+          9838
+        ],
+        "lineRanges": [
+          [
+            252,
+            252
+          ],
+          [
+            310,
+            310
+          ],
+          [
+            312,
+            312
+          ],
+          [
+            314,
+            314
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            256,
+            256
+          ],
+          [
+            314,
+            314
+          ],
+          [
+            316,
+            316
+          ],
+          [
+            318,
+            318
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "cc90fb060d9f7b9abb7cecafc118a06f2b5df4f9",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-19T13:38:30Z",
+        "introducedCommit": "071c2c83844986d6d9c7235720242aea7fcc536b",
+        "issueRefs": [
+          9924
+        ],
+        "lineRanges": [
+          [
+            40,
+            41
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            57,
+            58
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "630cc566a447fa072d46d274c0bca1dafde756ff",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-24T18:45:49Z",
+        "introducedCommit": "2171b20f311be66d9e7e55184ee29011688f26a3",
+        "issueRefs": [
+          9958
+        ],
+        "lineRanges": [
+          [
+            20,
+            20
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            20,
+            20
+          ]
+        ],
+        "path": "pydantic/_internal/_signature.py"
+      },
+      {
+        "fixCommit": "1483433b6cd43959c3d824abf929ab04dd0c6697",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-24T19:15:38Z",
+        "introducedCommit": "af3d3353fbbb04240c7f150274bce65b8487a00f",
+        "issueRefs": [
+          9960
+        ],
+        "lineRanges": [
+          [
+            337,
+            337
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            372,
+            372
+          ]
+        ],
+        "path": "pydantic/_internal/_std_types_schema.py"
+      },
+      {
+        "fixCommit": "2d37b66882ddd9b885299f4bd8117179a8a5f618",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-29T12:55:51Z",
+        "introducedCommit": "13dc7c3450df07dc5faa7311451b26d51ad027ca",
+        "issueRefs": [
+          9980
+        ],
+        "lineRanges": [
+          [
+            1460,
+            1460
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1673,
+            1673
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "fe081817235a6102c171732fbc73efd6f2964e2d",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-30T16:08:55Z",
+        "introducedCommit": "45813eb78f3503ce5582b61a8f385d2a8333bee4",
+        "issueRefs": [
+          9990
+        ],
+        "lineRanges": [
+          [
+            656,
+            656
+          ],
+          [
+            658,
+            660
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            656,
+            656
+          ],
+          [
+            658,
+            660
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "fe081817235a6102c171732fbc73efd6f2964e2d",
+        "fixSource": "keyword",
+        "fixTime": "2024-07-30T16:08:55Z",
+        "introducedCommit": "b09e06cedd18fe8f3bd5983682e81ffe72bb63e9",
+        "issueRefs": [
+          9990
+        ],
+        "lineRanges": [
+          [
+            574,
+            575
+          ],
+          [
+            614,
+            615
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            612,
+            613
+          ],
+          [
+            652,
+            653
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "facbf9300089cda419642907229ce6dbf58f0127",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-07T11:35:53Z",
+        "introducedCommit": "8b90de86033fbdfea01f775e25ece8222e6a4d8f",
+        "issueRefs": [
+          10070
+        ],
+        "lineRanges": [
+          [
+            541,
+            543
+          ],
+          [
+            546,
+            550
+          ],
+          [
+            557,
+            557
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            686,
+            688
+          ],
+          [
+            691,
+            695
+          ],
+          [
+            702,
+            702
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "facbf9300089cda419642907229ce6dbf58f0127",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-07T11:35:53Z",
+        "introducedCommit": "a7d32534779a1fd2ea5d10cbb0eed6db5584149e",
+        "issueRefs": [
+          10070
+        ],
+        "lineRanges": [
+          [
+            539,
+            539
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            689,
+            689
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "37536f6e2bb2433919e1456a1036c88354e9a27e",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-13T15:21:04Z",
+        "introducedCommit": "c94049b44368d8f179020411e6580b705d3cfc53",
+        "issueRefs": [
+          10112
+        ],
+        "lineRanges": [
+          [
+            1498,
+            1498
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            526,
+            526
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "061e62ca0900a6d7c09d280792f6532192c06921",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-19T12:10:58Z",
+        "introducedCommit": "ac9e6ee3e40845014fc2f9c79d95c5896dc3eca7",
+        "issueRefs": [
+          10172
+        ],
+        "lineRanges": [
+          [
+            745,
+            745
+          ],
+          [
+            782,
+            782
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            751,
+            751
+          ],
+          [
+            790,
+            790
+          ]
+        ],
+        "path": "pydantic/json_schema.py"
+      },
+      {
+        "fixCommit": "0d3b0c3adf9346cc37f83af3eef57d8fec300447",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-19T16:28:15Z",
+        "introducedCommit": "417b8cf01503286429cbe0e94583ee7c3b2537aa",
+        "issueRefs": [
+          10167
+        ],
+        "lineRanges": [
+          [
+            165,
+            165
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            165,
+            165
+          ]
+        ],
+        "path": "pydantic/functional_validators.py"
+      },
+      {
+        "fixCommit": "0d3b0c3adf9346cc37f83af3eef57d8fec300447",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-19T16:28:15Z",
+        "introducedCommit": "72124848b53bfc648af2d3f28ba54ff392c623ec",
+        "issueRefs": [
+          10167
+        ],
+        "lineRanges": [
+          [
+            215,
+            215
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            215,
+            215
+          ]
+        ],
+        "path": "pydantic/_internal/_core_utils.py"
+      },
+      {
+        "fixCommit": "9ad349a78dfe13dcec77a26657eb3b522716ab5a",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-27T13:12:56Z",
+        "introducedCommit": "9e3d461b22b0f8815cddb014f9676b3ef3e00b2c",
+        "issueRefs": [
+          10242
+        ],
+        "lineRanges": [
+          [
+            239,
+            239
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            246,
+            246
+          ]
+        ],
+        "path": "pydantic/_internal/_model_construction.py"
+      },
+      {
+        "fixCommit": "c71313015e97afc944ec17169d0288c5dce9136a",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-29T01:26:31Z",
+        "introducedCommit": "4bc2da6f15b1dd9e72b7c4d14806ba4fc68434a1",
+        "issueRefs": [
+          10257
+        ],
+        "lineRanges": [
+          [
+            187,
+            189
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            200,
+            202
+          ]
+        ],
+        "path": "pydantic/_internal/_typing_extra.py"
+      },
+      {
+        "fixCommit": "c71313015e97afc944ec17169d0288c5dce9136a",
+        "fixSource": "keyword",
+        "fixTime": "2024-08-29T01:26:31Z",
+        "introducedCommit": "f0d8f6593e95d787fa0b5f5f375632c52cdabd6d",
+        "issueRefs": [
+          10257
+        ],
+        "lineRanges": [
+          [
+            192,
+            194
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            211,
+            213
+          ]
+        ],
+        "path": "pydantic/_internal/_typing_extra.py"
+      },
+      {
+        "fixCommit": "c19e3bd647e1c5a0de241a419b510faba32e647d",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T15:45:27Z",
+        "introducedCommit": "ed54f2865c0989044bb1f4380876b7465f5e96fd",
+        "issueRefs": [
+          10347
+        ],
+        "lineRanges": [
+          [
+            14,
+            14
+          ],
+          [
+            446,
+            446
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            14,
+            14
+          ],
+          [
+            449,
+            449
+          ]
+        ],
+        "path": "pydantic/_internal/_model_construction.py"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "introducedCommit": "071c2c83844986d6d9c7235720242aea7fcc536b",
+        "issueRefs": [
+          10339
+        ],
+        "lineRanges": [
+          [
+            39,
+            39
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            57,
+            57
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "introducedCommit": "3d1355f1683c345350891e562ff26ffaab948ebf",
+        "issueRefs": [
+          10339
+        ],
+        "lineRanges": [
+          [
+            35,
+            36
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            54,
+            55
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "introducedCommit": "44815be0fcbd4e71b166bf781e6bbcd5941f0989",
+        "issueRefs": [
+          10339
+        ],
+        "lineRanges": [
+          [
+            9,
+            9
+          ],
+          [
+            12,
+            12
+          ],
+          [
+            16,
+            16
+          ],
+          [
+            18,
+            18
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            10,
+            10
+          ],
+          [
+            13,
+            13
+          ],
+          [
+            18,
+            18
+          ],
+          [
+            20,
+            20
+          ]
+        ],
+        "path": "pydantic/type_adapter.py"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "introducedCommit": "cc90fb060d9f7b9abb7cecafc118a06f2b5df4f9",
+        "issueRefs": [
+          10339
+        ],
+        "lineRanges": [
+          [
+            57,
+            57
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            58,
+            58
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "introducedCommit": "ed92d0a921d3464f08c5aa67dcbd262bf67110b1",
+        "issueRefs": [
+          10339
+        ],
+        "lineRanges": [
+          [
+            53,
+            53
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            53,
+            53
+          ]
+        ],
+        "path": "pyproject.toml"
+      },
+      {
+        "fixCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-07T16:01:59Z",
+        "introducedCommit": "eeea647f0b2a1107a923d4c0e3369344c985d38a",
+        "issueRefs": [
+          10339
+        ],
+        "lineRanges": [
+          [
+            53,
+            53
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            56,
+            56
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "8b6d5fc48541b7411b5ebfe74c8e5f6951f74203",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-12T14:00:31Z",
+        "introducedCommit": "0eb31fce2c21fd8f93040caf3bbfce51e37421d5",
+        "issueRefs": [
+          10391
+        ],
+        "lineRanges": [
+          [
+            597,
+            597
+          ],
+          [
+            624,
+            624
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            693,
+            693
+          ],
+          [
+            720,
+            720
+          ]
+        ],
+        "path": "pydantic/_internal/_model_construction.py"
+      },
+      {
+        "fixCommit": "899ff2ca81ead76b66f1bd4ede7639343ce6e22c",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-12T18:58:15Z",
+        "introducedCommit": "fcd20108b3a3efaeb7038566bd40f570e556fb96",
+        "issueRefs": [
+          10380
+        ],
+        "lineRanges": [
+          [
+            49,
+            49
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            49,
+            49
+          ]
+        ],
+        "path": "pydantic/_internal/_validate_call.py"
+      },
+      {
+        "fixCommit": "7daa2cd3fd24ac51cc98cb202d28faa9a4c94dd9",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-13T19:27:58Z",
+        "introducedCommit": "c94049b44368d8f179020411e6580b705d3cfc53",
+        "issueRefs": [
+          10408
+        ],
+        "lineRanges": [
+          [
+            1492,
+            1492
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1653,
+            1653
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "2e38ec444b4db0a3da5498fe6c39c4e58d7af142",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-16T16:57:23Z",
+        "introducedCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "issueRefs": [
+          10414
+        ],
+        "lineRanges": [
+          [
+            73,
+            73
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            73,
+            73
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "2e38ec444b4db0a3da5498fe6c39c4e58d7af142",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-16T16:57:23Z",
+        "introducedCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "issueRefs": [
+          10414
+        ],
+        "lineRanges": [
+          [
+            53,
+            53
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            54,
+            54
+          ]
+        ],
+        "path": "pyproject.toml"
+      },
+      {
+        "fixCommit": "00b376218a7574ab2a4e9df80f5003fcaeda0ce9",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-17T14:24:49Z",
+        "introducedCommit": "0d3b0c3adf9346cc37f83af3eef57d8fec300447",
+        "issueRefs": [
+          10427
+        ],
+        "lineRanges": [
+          [
+            165,
+            168
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            193,
+            196
+          ]
+        ],
+        "path": "pydantic/functional_validators.py"
+      },
+      {
+        "fixCommit": "00b376218a7574ab2a4e9df80f5003fcaeda0ce9",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-17T14:24:49Z",
+        "introducedCommit": "74c81a8c0d8018e4b436c547c74df01f5c3155ee",
+        "issueRefs": [
+          10427
+        ],
+        "lineRanges": [
+          [
+            210,
+            210
+          ],
+          [
+            215,
+            215
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            210,
+            210
+          ],
+          [
+            215,
+            215
+          ]
+        ],
+        "path": "pydantic/functional_validators.py"
+      },
+      {
+        "fixCommit": "520495f0907fc2e3f91436c008ca08a6314035f5",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-25T19:24:48Z",
+        "introducedCommit": "a2f7271fd394e9d2a5b19cf41f531d7fb0a6b6f0",
+        "issueRefs": [
+          10490
+        ],
+        "lineRanges": [
+          [
+            256,
+            256
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            282,
+            282
+          ]
+        ],
+        "path": "pydantic/_internal/_known_annotated_metadata.py"
+      },
+      {
+        "fixCommit": "520495f0907fc2e3f91436c008ca08a6314035f5",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-25T19:24:48Z",
+        "introducedCommit": "a2f7271fd394e9d2a5b19cf41f531d7fb0a6b6f0",
+        "issueRefs": [
+          10490
+        ],
+        "lineRanges": [
+          [
+            16,
+            16
+          ],
+          [
+            245,
+            245
+          ],
+          [
+            248,
+            254
+          ],
+          [
+            256,
+            261
+          ],
+          [
+            263,
+            270
+          ],
+          [
+            273,
+            273
+          ],
+          [
+            277,
+            295
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            17,
+            17
+          ],
+          [
+            256,
+            256
+          ],
+          [
+            259,
+            265
+          ],
+          [
+            267,
+            272
+          ],
+          [
+            274,
+            281
+          ],
+          [
+            284,
+            284
+          ],
+          [
+            288,
+            306
+          ]
+        ],
+        "path": "pydantic/_internal/_validators.py"
+      },
+      {
+        "fixCommit": "ebe80206074857d1c7ab41cfdbc6a74c9f9be621",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-30T16:37:05Z",
+        "introducedCommit": "cb8d3002ab6febd3f2d579acf46006cbb4f6fcfe",
+        "issueRefs": [
+          10514
+        ],
+        "lineRanges": [
+          [
+            1267,
+            1267
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1268,
+            1268
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "03276265596485cb15487df380e08c534dbe391d",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-30T16:46:51Z",
+        "introducedCommit": "54d1185fc09ce3514a702239f034832bca523268",
+        "issueRefs": [
+          10520
+        ],
+        "lineRanges": [
+          [
+            253,
+            253
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            354,
+            354
+          ]
+        ],
+        "path": "pydantic/_internal/_model_construction.py"
+      },
+      {
+        "fixCommit": "03276265596485cb15487df380e08c534dbe391d",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-30T16:46:51Z",
+        "introducedCommit": "54d1185fc09ce3514a702239f034832bca523268",
+        "issueRefs": [
+          10520
+        ],
+        "lineRanges": [
+          [
+            991,
+            991
+          ],
+          [
+            1018,
+            1018
+          ],
+          [
+            1043,
+            1043
+          ],
+          [
+            1064,
+            1064
+          ],
+          [
+            1174,
+            1174
+          ],
+          [
+            1260,
+            1260
+          ],
+          [
+            1290,
+            1290
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1119,
+            1119
+          ],
+          [
+            1146,
+            1146
+          ],
+          [
+            1171,
+            1171
+          ],
+          [
+            1192,
+            1192
+          ],
+          [
+            1302,
+            1302
+          ],
+          [
+            1388,
+            1388
+          ],
+          [
+            1418,
+            1418
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "beda9c0257e1985d6b8df848ae87dc4427a615f1",
+        "fixSource": "keyword",
+        "fixTime": "2024-10-01T13:00:29Z",
+        "introducedCommit": "8c1d235e37d2be2967b91a83291cb5879daca855",
+        "issueRefs": [
+          10526
+        ],
+        "lineRanges": [
+          [
+            217,
+            217
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            217,
+            217
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "050972eb42e0d42fa5a7cf0da8cd480506e2af3e",
+        "fixSource": "keyword",
+        "fixTime": "2024-10-10T14:30:35Z",
+        "introducedCommit": "37536f6e2bb2433919e1456a1036c88354e9a27e",
+        "issueRefs": [
+          10594
+        ],
+        "lineRanges": [
+          [
+            521,
+            521
+          ],
+          [
+            534,
+            534
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            500,
+            500
+          ],
+          [
+            513,
+            513
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "050972eb42e0d42fa5a7cf0da8cd480506e2af3e",
+        "fixSource": "keyword",
+        "fixTime": "2024-10-10T14:30:35Z",
+        "introducedCommit": "3b3a899827df1b28acd9f94062fb1e8b6fde78ee",
+        "issueRefs": [
+          10594
+        ],
+        "lineRanges": [
+          [
+            12,
+            12
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            14,
+            14
+          ]
+        ],
+        "path": "pydantic/_internal/_validators.py"
+      },
+      {
+        "fixCommit": "050972eb42e0d42fa5a7cf0da8cd480506e2af3e",
+        "fixSource": "keyword",
+        "fixTime": "2024-10-10T14:30:35Z",
+        "introducedCommit": "d17bc7dc36abb1fa09dbd4496ade571dc517c2ec",
+        "issueRefs": [
+          10594
+        ],
+        "lineRanges": [
+          [
+            311,
+            311
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            416,
+            416
+          ]
+        ],
+        "path": "pydantic/_internal/_validators.py"
+      },
+      {
+        "fixCommit": "050972eb42e0d42fa5a7cf0da8cd480506e2af3e",
+        "fixSource": "keyword",
+        "fixTime": "2024-10-10T14:30:35Z",
+        "introducedCommit": "e1b0e1b4025d007ffc01032d66571ad2c6090bf2",
+        "issueRefs": [
+          10594
+        ],
+        "lineRanges": [
+          [
+            486,
+            486
+          ],
+          [
+            488,
+            488
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            489,
+            489
+          ],
+          [
+            491,
+            491
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "21563d72ef3ce3df232ebbb1ecc2cac3205c657b",
+        "fixSource": "keyword",
+        "fixTime": "2024-10-30T15:07:14Z",
+        "introducedCommit": "b2938de4c820e390f91886b04d88c2f0bcedd50e",
+        "issueRefs": [
+          10740
+        ],
+        "lineRanges": [
+          [
+            166,
+            166
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            166,
+            166
+          ]
+        ],
+        "path": "pydantic/functional_validators.py"
+      },
+      {
+        "fixCommit": "fba836a616d301b8dadf48d404bb4791642f1bf5",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-05T17:48:33Z",
+        "introducedCommit": "27afdfc9120c7a5b1071d907a25c37b46b103292",
+        "issueRefs": [
+          10766
+        ],
+        "lineRanges": [
+          [
+            98,
+            99
+          ],
+          [
+            102,
+            103
+          ],
+          [
+            106,
+            106
+          ],
+          [
+            108,
+            108
+          ],
+          [
+            121,
+            121
+          ],
+          [
+            125,
+            125
+          ],
+          [
+            127,
+            127
+          ],
+          [
+            165,
+            165
+          ],
+          [
+            180,
+            180
+          ],
+          [
+            266,
+            266
+          ],
+          [
+            281,
+            281
+          ],
+          [
+            297,
+            297
+          ],
+          [
+            345,
+            345
+          ],
+          [
+            374,
+            374
+          ],
+          [
+            397,
+            397
+          ],
+          [
+            420,
+            420
+          ],
+          [
+            453,
+            453
+          ],
+          [
+            521,
+            521
+          ],
+          [
+            541,
+            541
+          ],
+          [
+            562,
+            562
+          ],
+          [
+            581,
+            581
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            98,
+            99
+          ],
+          [
+            102,
+            103
+          ],
+          [
+            106,
+            106
+          ],
+          [
+            108,
+            108
+          ],
+          [
+            121,
+            121
+          ],
+          [
+            125,
+            125
+          ],
+          [
+            127,
+            127
+          ],
+          [
+            165,
+            165
+          ],
+          [
+            180,
+            180
+          ],
+          [
+            266,
+            266
+          ],
+          [
+            281,
+            281
+          ],
+          [
+            297,
+            297
+          ],
+          [
+            345,
+            345
+          ],
+          [
+            374,
+            374
+          ],
+          [
+            397,
+            397
+          ],
+          [
+            420,
+            420
+          ],
+          [
+            453,
+            453
+          ],
+          [
+            521,
+            521
+          ],
+          [
+            541,
+            541
+          ],
+          [
+            562,
+            562
+          ],
+          [
+            581,
+            581
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "dad96c5aca6f49266fa0789bca0edc72b8a5585a",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-08T14:40:22Z",
+        "introducedCommit": "53bf2f2839ce82ab56ea6340abec667b1ff55a92",
+        "issueRefs": [
+          10795
+        ],
+        "lineRanges": [
+          [
+            45,
+            45
+          ],
+          [
+            74,
+            74
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            45,
+            45
+          ],
+          [
+            74,
+            74
+          ]
+        ],
+        "path": ".github/workflows/docs-update.yml"
+      },
+      {
+        "fixCommit": "dad96c5aca6f49266fa0789bca0edc72b8a5585a",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-08T14:40:22Z",
+        "introducedCommit": "53bf2f2839ce82ab56ea6340abec667b1ff55a92",
+        "issueRefs": [
+          10795
+        ],
+        "lineRanges": [
+          [
+            12,
+            12
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            12,
+            12
+          ]
+        ],
+        "path": "build-docs.sh"
+      },
+      {
+        "fixCommit": "96876ef7c81999b0cdb8a1edf7599e754e14a78c",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-11T22:17:43Z",
+        "introducedCommit": "ba50d9443e015775d6101f904ba4e6e2a540a2c3",
+        "issueRefs": [
+          10807
+        ],
+        "lineRanges": [
+          [
+            103,
+            103
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            100,
+            100
+          ]
+        ],
+        "path": "pydantic/_internal/_generate_schema.py"
+      },
+      {
+        "fixCommit": "96876ef7c81999b0cdb8a1edf7599e754e14a78c",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-11T22:17:43Z",
+        "introducedCommit": "ba50d9443e015775d6101f904ba4e6e2a540a2c3",
+        "issueRefs": [
+          10807
+        ],
+        "lineRanges": [
+          [
+            6,
+            7
+          ],
+          [
+            17,
+            26
+          ],
+          [
+            28,
+            28
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            6,
+            7
+          ],
+          [
+            17,
+            26
+          ],
+          [
+            28,
+            28
+          ]
+        ],
+        "path": "pydantic/_internal/_validate_call.py"
+      },
+      {
+        "fixCommit": "96876ef7c81999b0cdb8a1edf7599e754e14a78c",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-11T22:17:43Z",
+        "introducedCommit": "ba50d9443e015775d6101f904ba4e6e2a540a2c3",
+        "issueRefs": [
+          10807
+        ],
+        "lineRanges": [
+          [
+            25,
+            25
+          ],
+          [
+            27,
+            27
+          ],
+          [
+            105,
+            105
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            25,
+            25
+          ],
+          [
+            27,
+            27
+          ],
+          [
+            105,
+            105
+          ]
+        ],
+        "path": "pydantic/validate_call_decorator.py"
+      },
+      {
+        "fixCommit": "96876ef7c81999b0cdb8a1edf7599e754e14a78c",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-11T22:17:43Z",
+        "introducedCommit": "c772b43edb952c5fe54bb28da5124b10d5470caf",
+        "issueRefs": [
+          10807
+        ],
+        "lineRanges": [
+          [
+            11,
+            11
+          ],
+          [
+            49,
+            49
+          ],
+          [
+            66,
+            66
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            13,
+            13
+          ],
+          [
+            85,
+            85
+          ],
+          [
+            102,
+            102
+          ]
+        ],
+        "path": "pydantic/_internal/_validate_call.py"
+      },
+      {
+        "fixCommit": "96876ef7c81999b0cdb8a1edf7599e754e14a78c",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-11T22:17:43Z",
+        "introducedCommit": "fcd20108b3a3efaeb7038566bd40f570e556fb96",
+        "issueRefs": [
+          10807
+        ],
+        "lineRanges": [
+          [
+            8,
+            8
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            9,
+            9
+          ]
+        ],
+        "path": "pydantic/validate_call_decorator.py"
+      },
+      {
+        "fixCommit": "8bad227e7557519307a9ea9b0ca129aca1997667",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-12T19:32:24Z",
+        "introducedCommit": "2e38ec444b4db0a3da5498fe6c39c4e58d7af142",
+        "issueRefs": [
+          10813
+        ],
+        "lineRanges": [
+          [
+            74,
+            76
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            77,
+            79
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "8bad227e7557519307a9ea9b0ca129aca1997667",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-12T19:32:24Z",
+        "introducedCommit": "cdca7aebba33770416c260335e914c1755c48f13",
+        "issueRefs": [
+          10813
+        ],
+        "lineRanges": [
+          [
+            72,
+            72
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            76,
+            76
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "9783bc8f28b47f809c2b2a0954e6edc0d8d5b6fb",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-13T16:19:18Z",
+        "introducedCommit": "e9cde451034f4c9359a92ec7e4bddc0bfc0af0d1",
+        "issueRefs": [
+          10833
+        ],
+        "lineRanges": [
+          [
+            46,
+            46
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            44,
+            44
+          ]
+        ],
+        "path": ".github/workflows/docs-update.yml"
+      },
+      {
+        "fixCommit": "ac7d86a5739de27e05a5d2e1772a37e0e918a24a",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-13T19:44:10Z",
+        "introducedCommit": "c2647ab2c1555d62901bd44fdd57669fe3b9aec6",
+        "issueRefs": [
+          10837
+        ],
+        "lineRanges": [
+          [
+            126,
+            126
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            126,
+            126
+          ]
+        ],
+        "path": "pydantic/_internal/_mock_val_ser.py"
+      },
+      {
+        "fixCommit": "9915abf995f1315d6ee1e0d85bf40ffb6d765b2b",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T15:02:36Z",
+        "introducedCommit": "728d3d9f41c480d35c1188f56cc360bae93f0543",
+        "issueRefs": [
+          10911
+        ],
+        "lineRanges": [
+          [
+            223,
+            228
+          ],
+          [
+            230,
+            231
+          ],
+          [
+            233,
+            237
+          ],
+          [
+            239,
+            241
+          ],
+          [
+            243,
+            244
+          ],
+          [
+            246,
+            250
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            243,
+            248
+          ],
+          [
+            250,
+            251
+          ],
+          [
+            253,
+            257
+          ],
+          [
+            259,
+            261
+          ],
+          [
+            263,
+            264
+          ],
+          [
+            266,
+            270
+          ]
+        ],
+        "path": "pydantic/main.py"
+      },
+      {
+        "fixCommit": "73509eda4ef49c90c699092788ee454eed29a585",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T17:48:07Z",
+        "introducedCommit": "27afdfc9120c7a5b1071d907a25c37b46b103292",
+        "issueRefs": [
+          10922
+        ],
+        "lineRanges": [
+          [
+            95,
+            95
+          ],
+          [
+            107,
+            107
+          ],
+          [
+            109,
+            118
+          ],
+          [
+            126,
+            126
+          ],
+          [
+            128,
+            137
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            99,
+            99
+          ],
+          [
+            257,
+            257
+          ],
+          [
+            274,
+            283
+          ],
+          [
+            419,
+            419
+          ],
+          [
+            436,
+            445
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "73509eda4ef49c90c699092788ee454eed29a585",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T17:48:07Z",
+        "introducedCommit": "b838cc951c90ad8a116b7bafdc31b5b1c54d9e08",
+        "issueRefs": [
+          10922
+        ],
+        "lineRanges": [
+          [
+            492,
+            492
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            272,
+            272
+          ],
+          [
+            434,
+            434
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "73509eda4ef49c90c699092788ee454eed29a585",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T17:48:07Z",
+        "introducedCommit": "fba836a616d301b8dadf48d404bb4791642f1bf5",
+        "issueRefs": [
+          10922
+        ],
+        "lineRanges": [
+          [
+            256,
+            264
+          ],
+          [
+            266,
+            268
+          ],
+          [
+            270,
+            270
+          ],
+          [
+            415,
+            423
+          ],
+          [
+            425,
+            427
+          ],
+          [
+            429,
+            429
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            259,
+            267
+          ],
+          [
+            269,
+            271
+          ],
+          [
+            273,
+            273
+          ],
+          [
+            421,
+            429
+          ],
+          [
+            431,
+            433
+          ],
+          [
+            435,
+            435
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "309d4ed94df344e3839414558b4ff0dfd4b579bd",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T22:35:56Z",
+        "introducedCommit": "fba836a616d301b8dadf48d404bb4791642f1bf5",
+        "issueRefs": [
+          10934
+        ],
+        "lineRanges": [
+          [
+            107,
+            107
+          ],
+          [
+            288,
+            288
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            122,
+            122
+          ],
+          [
+            294,
+            294
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "ed29a35c17caae7c26ec648ece1b5fbdaf48e724",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-22T00:07:10Z",
+        "introducedCommit": "80353c29a824c55dea4667b328ba8f329879ac9f",
+        "issueRefs": [
+          10936
+        ],
+        "lineRanges": [
+          [
+            1499,
+            1499
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            1498,
+            1498
+          ]
+        ],
+        "path": "pydantic/json_schema.py"
+      },
+      {
+        "fixCommit": "a67002aeba9237f15b2fe58e657279cdc215c607",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-25T18:18:31Z",
+        "introducedCommit": "a056abeebabe254c82f48a263a92c68383a61aa3",
+        "issueRefs": [
+          10972
+        ],
+        "lineRanges": [
+          [
+            731,
+            731
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            737,
+            737
+          ]
+        ],
+        "path": "pydantic/fields.py"
+      },
+      {
+        "fixCommit": "aee6057378ccfec02126bf9c984a9b6d6b411777",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-02T22:38:28Z",
+        "introducedCommit": "27afdfc9120c7a5b1071d907a25c37b46b103292",
+        "issueRefs": [
+          11027
+        ],
+        "lineRanges": [
+          [
+            145,
+            145
+          ],
+          [
+            151,
+            151
+          ],
+          [
+            160,
+            160
+          ],
+          [
+            162,
+            164
+          ],
+          [
+            172,
+            172
+          ],
+          [
+            175,
+            175
+          ],
+          [
+            187,
+            187
+          ],
+          [
+            261,
+            261
+          ],
+          [
+            273,
+            273
+          ],
+          [
+            276,
+            276
+          ],
+          [
+            288,
+            288
+          ],
+          [
+            292,
+            292
+          ],
+          [
+            294,
+            296
+          ],
+          [
+            313,
+            313
+          ],
+          [
+            316,
+            316
+          ],
+          [
+            473,
+            473
+          ],
+          [
+            476,
+            478
+          ],
+          [
+            500,
+            500
+          ],
+          [
+            529,
+            529
+          ],
+          [
+            535,
+            535
+          ],
+          [
+            549,
+            549
+          ],
+          [
+            556,
+            556
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            459,
+            459
+          ],
+          [
+            465,
+            465
+          ],
+          [
+            474,
+            474
+          ],
+          [
+            476,
+            478
+          ],
+          [
+            490,
+            490
+          ],
+          [
+            493,
+            493
+          ],
+          [
+            500,
+            500
+          ],
+          [
+            574,
+            574
+          ],
+          [
+            581,
+            581
+          ],
+          [
+            584,
+            584
+          ],
+          [
+            591,
+            591
+          ],
+          [
+            595,
+            595
+          ],
+          [
+            597,
+            599
+          ],
+          [
+            621,
+            621
+          ],
+          [
+            624,
+            624
+          ],
+          [
+            781,
+            781
+          ],
+          [
+            784,
+            786
+          ],
+          [
+            808,
+            808
+          ],
+          [
+            832,
+            832
+          ],
+          [
+            838,
+            838
+          ],
+          [
+            847,
+            847
+          ],
+          [
+            854,
+            854
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "aee6057378ccfec02126bf9c984a9b6d6b411777",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-02T22:38:28Z",
+        "introducedCommit": "372d4e2f51f348bcb6b4f00966872e8efe9e4d13",
+        "issueRefs": [
+          11027
+        ],
+        "lineRanges": [
+          [
+            478,
+            478
+          ],
+          [
+            610,
+            613
+          ],
+          [
+            625,
+            628
+          ],
+          [
+            740,
+            743
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            479,
+            479
+          ],
+          [
+            611,
+            614
+          ],
+          [
+            626,
+            629
+          ],
+          [
+            741,
+            744
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "aee6057378ccfec02126bf9c984a9b6d6b411777",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-02T22:38:28Z",
+        "introducedCommit": "fba836a616d301b8dadf48d404bb4791642f1bf5",
+        "issueRefs": [
+          11027
+        ],
+        "lineRanges": [
+          [
+            604,
+            604
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            600,
+            600
+          ]
+        ],
+        "path": "pydantic/networks.py"
+      },
+      {
+        "fixCommit": "7b9561fd8f083ca8660d763706539670610853d8",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-20T18:59:37Z",
+        "introducedCommit": "debffa50f0d200b0d260dfa84c0d7268d08a4b52",
+        "issueRefs": [
+          11162
+        ],
+        "lineRanges": [
+          [
+            13,
+            13
+          ],
+          [
+            29,
+            34
+          ],
+          [
+            72,
+            77
+          ],
+          [
+            120,
+            128
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            13,
+            13
+          ],
+          [
+            29,
+            34
+          ],
+          [
+            72,
+            77
+          ],
+          [
+            120,
+            128
+          ]
+        ],
+        "path": ".github/workflows/third_party.yml"
+      },
+      {
+        "fixCommit": "53807d4d702bcfd4c00a7a8321cbd3abf1d316f6",
+        "fixSource": "keyword",
+        "fixTime": "2024-02-01T14:04:09Z",
+        "introducedCommit": "3bc8d687421c2f7337997238817033821fe51012",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            76,
+            89
+          ],
+          [
+            93,
+            116
+          ],
+          [
+            118,
+            118
+          ],
+          [
+            139,
+            139
+          ],
+          [
+            141,
+            149
+          ],
+          [
+            153,
+            163
+          ],
+          [
+            190,
+            206
+          ],
+          [
+            210,
+            241
+          ],
+          [
+            243,
+            243
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            76,
+            89
+          ],
+          [
+            93,
+            116
+          ],
+          [
+            118,
+            118
+          ],
+          [
+            139,
+            139
+          ],
+          [
+            141,
+            149
+          ],
+          [
+            153,
+            163
+          ],
+          [
+            190,
+            206
+          ],
+          [
+            210,
+            241
+          ],
+          [
+            243,
+            243
+          ]
+        ],
+        "path": "src/serializers/type_serializers/tuple.rs"
+      },
+      {
+        "fixCommit": "cb3c697060d3dae71a95f1674184d64e02c8c4df",
+        "fixSource": "keyword",
+        "fixTime": "2024-03-18T15:15:56Z",
+        "introducedCommit": "1d2c97c58d39a1ef2759cec6181d727c07596973",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            78,
+            78
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            78,
+            78
+          ]
+        ],
+        "path": "src/serializers/computed_fields.rs"
+      },
+      {
+        "fixCommit": "c4adc530553d8fe95c7ea5e40fa6d6f7bd4e0879",
+        "fixSource": "keyword",
+        "fixTime": "2024-04-22T13:13:11Z",
+        "introducedCommit": "28bc8d8957d076f2432c0e3db697e079a709c67d",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            159,
+            161
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            159,
+            161
+          ]
+        ],
+        "path": "src/validators/typed_dict.rs"
+      },
+      {
+        "fixCommit": "a18d3cd322930d331cec410b79c226caf8cd8e8b",
+        "fixSource": "keyword",
+        "fixTime": "2024-05-16T18:20:04Z",
+        "introducedCommit": "2d2084585eb0d8ae20baecbba85d24730894aaba",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            149,
+            150
+          ],
+          [
+            158,
+            159
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            152,
+            153
+          ],
+          [
+            161,
+            162
+          ]
+        ],
+        "path": "src/input/shared.rs"
+      },
+      {
+        "fixCommit": "a18d3cd322930d331cec410b79c226caf8cd8e8b",
+        "fixSource": "keyword",
+        "fixTime": "2024-05-16T18:20:04Z",
+        "introducedCommit": "43afbdc4f1426adeb93bdf05e5ca184b97f0d474",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            117,
+            118
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            117,
+            118
+          ]
+        ],
+        "path": "src/input/shared.rs"
+      },
+      {
+        "fixCommit": "915be6480c1463b39d7c51378049619db00494eb",
+        "fixSource": "keyword",
+        "fixTime": "2024-05-21T14:19:44Z",
+        "introducedCommit": "bbce76fa511c886e2dee549f67488f650fecba87",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            7,
+            7
+          ],
+          [
+            162,
+            162
+          ],
+          [
+            164,
+            164
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            7,
+            7
+          ],
+          [
+            170,
+            170
+          ],
+          [
+            172,
+            172
+          ]
+        ],
+        "path": "src/validators/enum_.rs"
+      },
+      {
+        "fixCommit": "a1053096b4a15b99cec27a10f654d47cad6b44b9",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-02T18:20:25Z",
+        "introducedCommit": "688b7a7b188dae2f7ccf3f136ef22f177c409020",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            104,
+            104
+          ],
+          [
+            134,
+            134
+          ],
+          [
+            151,
+            151
+          ],
+          [
+            179,
+            179
+          ],
+          [
+            209,
+            209
+          ],
+          [
+            281,
+            281
+          ],
+          [
+            324,
+            324
+          ],
+          [
+            367,
+            367
+          ],
+          [
+            431,
+            431
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            92,
+            92
+          ],
+          [
+            122,
+            122
+          ],
+          [
+            139,
+            139
+          ],
+          [
+            167,
+            167
+          ],
+          [
+            197,
+            197
+          ],
+          [
+            270,
+            270
+          ],
+          [
+            316,
+            316
+          ],
+          [
+            362,
+            362
+          ],
+          [
+            437,
+            437
+          ]
+        ],
+        "path": "python/pydantic_core/_pydantic_core.pyi"
+      },
+      {
+        "fixCommit": "a7a174175c6d5d31475a4c3fcb1440f76b595ad8",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-03T16:34:06Z",
+        "introducedCommit": "d06a6f66325ad70004e3207628850f34366f3662",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            93,
+            95
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            93,
+            95
+          ]
+        ],
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "fixCommit": "112abc0575818742deffceb4248960161b7cfc49",
+        "fixSource": "keyword",
+        "fixTime": "2024-06-20T12:12:24Z",
+        "introducedCommit": "9f57bd2d6a2ac09f8748edc273141cf03fa10901",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            207,
+            207
+          ],
+          [
+            247,
+            247
+          ],
+          [
+            251,
+            251
+          ],
+          [
+            290,
+            290
+          ],
+          [
+            294,
+            294
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            207,
+            207
+          ],
+          [
+            247,
+            247
+          ],
+          [
+            251,
+            251
+          ],
+          [
+            290,
+            290
+          ],
+          [
+            294,
+            294
+          ]
+        ],
+        "path": "src/validators/model.rs"
+      },
+      {
+        "fixCommit": "59654d6f7dd364268f53ac5b3d305fd677f4410c",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-06T11:37:54Z",
+        "introducedCommit": "80defa7d0aad84ce718240bd25e526725f69c80e",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            12,
+            12
+          ],
+          [
+            442,
+            445
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            11,
+            11
+          ],
+          [
+            441,
+            444
+          ]
+        ],
+        "path": "src/serializers/type_serializers/union.rs"
+      },
+      {
+        "fixCommit": "d921f18d2b35d4ded117a1621576f34a5112ff63",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-16T14:40:50Z",
+        "introducedCommit": "6c075747163287894e13935eadfa7ef346a8bd13",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            240,
+            240
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            240,
+            240
+          ]
+        ],
+        "path": "python/pydantic_core/_pydantic_core.pyi"
+      },
+      {
+        "fixCommit": "ae44a08bdff8ea35f39619b0a0e020af1ad3d54f",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-25T16:36:31Z",
+        "introducedCommit": "64963eb8f304b9599f78866413d4e656e8d03d00",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            94,
+            94
+          ],
+          [
+            96,
+            96
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            94,
+            94
+          ],
+          [
+            96,
+            96
+          ]
+        ],
+        "path": "src/validators/literal.rs"
+      },
+      {
+        "fixCommit": "ae44a08bdff8ea35f39619b0a0e020af1ad3d54f",
+        "fixSource": "keyword",
+        "fixTime": "2024-09-25T16:36:31Z",
+        "introducedCommit": "bbce76fa511c886e2dee549f67488f650fecba87",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            89,
+            89
+          ],
+          [
+            91,
+            92
+          ],
+          [
+            94,
+            94
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            90,
+            90
+          ],
+          [
+            92,
+            93
+          ],
+          [
+            95,
+            95
+          ]
+        ],
+        "path": "src/validators/literal.rs"
+      },
+      {
+        "fixCommit": "cbee263c5332269e19e9068cf7c19bff994a150a",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-01T11:12:19Z",
+        "introducedCommit": "c47cf2ef85d7c6a25219a356285fd80df2f273a8",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            211,
+            211
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            211,
+            211
+          ]
+        ],
+        "path": "src/validators/string.rs"
+      },
+      {
+        "fixCommit": "26d91ed83a4d04da82227d56584dc63d35da92a7",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-04T09:18:58Z",
+        "introducedCommit": "ec5ea06345c6c9227e89e0a07fb7baa6d344c788",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            232,
+            235
+          ],
+          [
+            287,
+            290
+          ],
+          [
+            422,
+            425
+          ],
+          [
+            672,
+            672
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            235,
+            238
+          ],
+          [
+            290,
+            293
+          ],
+          [
+            425,
+            428
+          ],
+          [
+            675,
+            675
+          ]
+        ],
+        "path": "src/serializers/infer.rs"
+      },
+      {
+        "fixCommit": "26d91ed83a4d04da82227d56584dc63d35da92a7",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-04T09:18:58Z",
+        "introducedCommit": "ec5ea06345c6c9227e89e0a07fb7baa6d344c788",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            36,
+            51
+          ],
+          [
+            73,
+            82
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            36,
+            51
+          ],
+          [
+            73,
+            82
+          ]
+        ],
+        "path": "src/serializers/type_serializers/complex.rs"
+      },
+      {
+        "fixCommit": "6295877cdf16c608f6f18542a45d4fcd356eb231",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-07T10:53:30Z",
+        "introducedCommit": "80defa7d0aad84ce718240bd25e526725f69c80e",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            100,
+            100
+          ],
+          [
+            113,
+            114
+          ],
+          [
+            142,
+            142
+          ],
+          [
+            155,
+            156
+          ],
+          [
+            189,
+            189
+          ],
+          [
+            202,
+            203
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            92,
+            92
+          ],
+          [
+            101,
+            102
+          ],
+          [
+            125,
+            125
+          ],
+          [
+            134,
+            135
+          ],
+          [
+            163,
+            163
+          ],
+          [
+            172,
+            173
+          ]
+        ],
+        "path": "src/serializers/type_serializers/union.rs"
+      },
+      {
+        "fixCommit": "3535fea52cea327be20ce62f77081c96cc9485ca",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-11T14:31:31Z",
+        "introducedCommit": "d921f18d2b35d4ded117a1621576f34a5112ff63",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            241,
+            241
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            256,
+            256
+          ]
+        ],
+        "path": "python/pydantic_core/_pydantic_core.pyi"
+      },
+      {
+        "fixCommit": "548748da4d19ef030cf83e905628b8e00054d475",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-12T13:02:42Z",
+        "introducedCommit": "66e1bc886fd0470f6c2948816c28a257fee79433",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            215,
+            223
+          ],
+          [
+            230,
+            230
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            215,
+            223
+          ],
+          [
+            230,
+            230
+          ]
+        ],
+        "path": "src/serializers/fields.rs"
+      },
+      {
+        "fixCommit": "094434168a0c8e7badd9edcef20c27ac0faadee0",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T18:36:52Z",
+        "introducedCommit": "26d91ed83a4d04da82227d56584dc63d35da92a7",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            288,
+            289
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            288,
+            289
+          ]
+        ],
+        "path": "src/serializers/infer.rs"
+      },
+      {
+        "fixCommit": "e30696e374847906bc3251d8f30eeec97ef95059",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T23:42:43Z",
+        "introducedCommit": "66e1bc886fd0470f6c2948816c28a257fee79433",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            448,
+            448
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            348,
+            348
+          ]
+        ],
+        "path": "src/serializers/type_serializers/union.rs"
+      },
+      {
+        "fixCommit": "e30696e374847906bc3251d8f30eeec97ef95059",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T23:42:43Z",
+        "introducedCommit": "80defa7d0aad84ce718240bd25e526725f69c80e",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            123,
+            124
+          ],
+          [
+            126,
+            126
+          ],
+          [
+            128,
+            129
+          ],
+          [
+            198,
+            200
+          ],
+          [
+            208,
+            208
+          ],
+          [
+            223,
+            223
+          ],
+          [
+            225,
+            225
+          ],
+          [
+            348,
+            348
+          ],
+          [
+            350,
+            350
+          ],
+          [
+            423,
+            423
+          ],
+          [
+            425,
+            425
+          ],
+          [
+            439,
+            439
+          ],
+          [
+            441,
+            441
+          ],
+          [
+            446,
+            448
+          ],
+          [
+            461,
+            461
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            126,
+            128
+          ],
+          [
+            130,
+            131
+          ],
+          [
+            148,
+            150
+          ],
+          [
+            156,
+            156
+          ],
+          [
+            277,
+            278
+          ],
+          [
+            289,
+            290
+          ],
+          [
+            310,
+            311
+          ],
+          [
+            329,
+            329
+          ],
+          [
+            331,
+            331
+          ],
+          [
+            345,
+            347
+          ],
+          [
+            359,
+            359
+          ]
+        ],
+        "path": "src/serializers/type_serializers/union.rs"
+      },
+      {
+        "fixCommit": "e30696e374847906bc3251d8f30eeec97ef95059",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T23:42:43Z",
+        "introducedCommit": "d4f10b2ebbf91fb5517fc972ab9ce8ba958ce4d3",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            120,
+            125
+          ],
+          [
+            129,
+            129
+          ],
+          [
+            133,
+            136
+          ],
+          [
+            138,
+            147
+          ],
+          [
+            152,
+            155
+          ],
+          [
+            270,
+            272
+          ],
+          [
+            284,
+            286
+          ],
+          [
+            303,
+            305
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            120,
+            125
+          ],
+          [
+            129,
+            129
+          ],
+          [
+            133,
+            136
+          ],
+          [
+            138,
+            147
+          ],
+          [
+            152,
+            155
+          ],
+          [
+            270,
+            272
+          ],
+          [
+            284,
+            286
+          ],
+          [
+            303,
+            305
+          ]
+        ],
+        "path": "src/serializers/type_serializers/union.rs"
+      },
+      {
+        "fixCommit": "e30696e374847906bc3251d8f30eeec97ef95059",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-21T23:42:43Z",
+        "introducedCommit": "dc8a637de4525d621f08a5f4efa09b8c327bcb30",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            429,
+            436
+          ],
+          [
+            443,
+            449
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            336,
+            343
+          ],
+          [
+            350,
+            356
+          ]
+        ],
+        "path": "src/serializers/type_serializers/union.rs"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "introducedCommit": "0b99df44bcbbb63daf1225975f1d1acadf5254bc",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            55,
+            55
+          ],
+          [
+            67,
+            67
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            49,
+            49
+          ],
+          [
+            61,
+            61
+          ]
+        ],
+        "path": ".github/workflows/codspeed.yml"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "introducedCommit": "32f4f0aa99c97d646b41d20d8905807c41b09bcc",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            574,
+            574
+          ],
+          [
+            587,
+            587
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            586,
+            586
+          ],
+          [
+            599,
+            599
+          ]
+        ],
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "introducedCommit": "5e71933f7599b4225cb899dd813b35f857717643",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            583,
+            585
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            583,
+            585
+          ]
+        ],
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "introducedCommit": "5e71933f7599b4225cb899dd813b35f857717643",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            33,
+            33
+          ],
+          [
+            55,
+            55
+          ],
+          [
+            69,
+            69
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            33,
+            33
+          ],
+          [
+            55,
+            55
+          ],
+          [
+            69,
+            69
+          ]
+        ],
+        "path": ".github/workflows/codspeed.yml"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "introducedCommit": "6744688730ba17ac24a523e4f690b4ee731776da",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            564,
+            564
+          ],
+          [
+            592,
+            592
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            575,
+            575
+          ],
+          [
+            602,
+            602
+          ]
+        ],
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "fixCommit": "7aa4735ddec2ccc1bccbd57eba4281e2299ee330",
+        "fixSource": "keyword",
+        "fixTime": "2024-11-26T12:47:25Z",
+        "introducedCommit": "d895666937fec5154ab04c2281152be1605baa15",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            542,
+            542
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            559,
+            559
+          ]
+        ],
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "fixCommit": "bdf600b9b952ad9c489ed155b690b4040086b96b",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-12T20:27:26Z",
+        "introducedCommit": "cfc72006e657343e9e7e7b906866ef7fd8c9a510",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            234,
+            234
+          ],
+          [
+            275,
+            275
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            266,
+            266
+          ],
+          [
+            307,
+            307
+          ]
+        ],
+        "path": "src/validators/model.rs"
+      },
+      {
+        "fixCommit": "bdf600b9b952ad9c489ed155b690b4040086b96b",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-12T20:27:26Z",
+        "introducedCommit": "cfc72006e657343e9e7e7b906866ef7fd8c9a510",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            137,
+            137
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            160,
+            160
+          ]
+        ],
+        "path": "src/validators/with_default.rs"
+      },
+      {
+        "fixCommit": "99c44e2030e6c0e9fe87d9bb487bf5df39350bf4",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-18T09:22:43Z",
+        "introducedCommit": "0613bf293736f070ed3fd027ac08469804559f15",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            50,
+            53
+          ],
+          [
+            55,
+            55
+          ],
+          [
+            58,
+            58
+          ],
+          [
+            61,
+            61
+          ],
+          [
+            281,
+            284
+          ],
+          [
+            286,
+            286
+          ],
+          [
+            288,
+            299
+          ],
+          [
+            302,
+            302
+          ],
+          [
+            304,
+            304
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            50,
+            53
+          ],
+          [
+            55,
+            55
+          ],
+          [
+            58,
+            58
+          ],
+          [
+            61,
+            61
+          ],
+          [
+            281,
+            284
+          ],
+          [
+            286,
+            286
+          ],
+          [
+            288,
+            299
+          ],
+          [
+            302,
+            302
+          ],
+          [
+            304,
+            304
+          ]
+        ],
+        "path": "src/input/datetime.rs"
+      },
+      {
+        "fixCommit": "99c44e2030e6c0e9fe87d9bb487bf5df39350bf4",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-18T09:22:43Z",
+        "introducedCommit": "0613bf293736f070ed3fd027ac08469804559f15",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            4,
+            4
+          ],
+          [
+            101,
+            101
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            4,
+            4
+          ],
+          [
+            101,
+            101
+          ]
+        ],
+        "path": "src/validators/date.rs"
+      },
+      {
+        "fixCommit": "99c44e2030e6c0e9fe87d9bb487bf5df39350bf4",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-18T09:22:43Z",
+        "introducedCommit": "0613bf293736f070ed3fd027ac08469804559f15",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            5,
+            5
+          ],
+          [
+            134,
+            134
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            5,
+            5
+          ],
+          [
+            134,
+            134
+          ]
+        ],
+        "path": "src/validators/datetime.rs"
+      },
+      {
+        "fixCommit": "99c44e2030e6c0e9fe87d9bb487bf5df39350bf4",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-18T09:22:43Z",
+        "introducedCommit": "84908847a9d62c231d89679eb29ccb3406807f51",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            59,
+            59
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            57,
+            57
+          ]
+        ],
+        "path": "src/input/datetime.rs"
+      },
+      {
+        "fixCommit": "99c44e2030e6c0e9fe87d9bb487bf5df39350bf4",
+        "fixSource": "keyword",
+        "fixTime": "2024-12-18T09:22:43Z",
+        "introducedCommit": "c119e1516ac41ed7c2f87966a33915d6beef1d2c",
+        "issueRefs": [],
+        "lineRanges": [
+          [
+            48,
+            48
+          ]
+        ],
+        "oldPath": null,
+        "parentRanges": [
+          [
+            63,
+            63
+          ]
+        ],
+        "path": "src/input/datetime.rs"
+      }
+    ],
+    "limitations": [
+      "特征为提交级聚合，与 Kamei 论文的文件级样本单位不同。",
+      "标签由完整 SZZ 流程生成：修复提交优先用 issue/PR 关联确认，关键词兜底；删除/修改行用 git blame 回溯到引入提交。",
+      "issue 元数据是采集时的快照；离线或未配置 token 时退化为关键词识别，无法确认 issue 类型。",
+      "未关联 issue、纯新增式修复、强制推送改写历史与跨仓库搬运仍可能漏标；文档/测试/纯空白/重构不参与。",
+      "人工抽样复核不自动改变标签；可用 szz-sample 导出复核表，结论由人填写。",
+      "历史只沿第一父链推进；合并提交不进入记录，合并分支的变化不会汇入主线历史。"
+    ],
+    "observation": {
+      "counts": {
+        "eligibleRecords": 761,
+        "excludedImmature": 248,
+        "excludedUnknown": 0,
+        "originalRecords": 1009,
+        "positivesEligible": 93,
+        "positivesOriginal": 113
+      },
+      "coverage": {
+        "complete": true,
+        "historyBounded": false,
+        "reason": null,
+        "truncated": false,
+        "unresolvedRanges": 0
+      },
+      "historyStatus": "complete",
+      "labelRule": "szz-full-v1",
+      "maturityDays": 90,
+      "observationWindow": {
+        "fromEpoch": 1704067200,
+        "through": "2025-01-01T00:00:00Z",
+        "throughEpoch": 1735689600
+      },
+      "observedThrough": 1735689600,
+      "observedThroughIso": "2025-01-01T00:00:00Z",
+      "protocol": "mature-observed-v1",
+      "requestedThrough": null,
+      "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+      "revisionEpoch": 1795016590,
+      "sampleWindow": {
+        "endEpoch": 1735689600,
+        "since": "2024-01-01",
+        "startEpoch": 1704067200,
+        "until": "2025-01-01"
+      },
+      "statusRule": "commit-label-status-v1"
+    },
+    "repository": {
+      "branch": "HEAD",
+      "head": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+      "path": "D:\\code\\jit-defect-prediction\\backend\\.cache\\repositories\\6249314697cb9c14.git",
+      "resolvedBranch": "main",
+      "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+      "revisionEpoch": 1795016590
+    },
+    "szz": {
+      "budgetHits": {},
+      "budgetSeconds": 588,
+      "evidencePairs": 149,
+      "fixCommits": 205,
+      "fixSignals": {
+        "issue": 0,
+        "issueRef": 4,
+        "keyword": 201
+      },
+      "issueLookup": {
+        "attempted": 0,
+        "failed": 0,
+        "succeeded": 0,
+        "unavailable": 1
+      },
+      "labeledCommits": 113,
+      "mode": "full",
+      "outsideWindow": 312,
+      "rule": "szz-full-v1",
+      "skippedDocsOnly": 45,
+      "skippedExcluded": 66,
+      "skippedFiles": 181,
+      "skippedNoiseLines": 8,
+      "skippedWhitespace": 3,
+      "truncated": false,
+      "unresolvedRanges": 0
+    },
+    "window": {
+      "endEpoch": 1735689600,
+      "since": "2024-01-01",
+      "startEpoch": 1704067200,
+      "until": "2025-01-01"
+    }
+  },
+  "dataset": "pydantic-decay",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nd",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "zero",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "采集规则 fix := 提交消息命中修复关键词",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "age",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "nuc",
+      "reason": "",
+      "source": "nuc",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": false,
+      "name": "rexp",
+      "reason": "同一作者在父链历史上更早提交的连续时间衰减累计；权重 1/(1+ageDays/365.25)，不是近 90 天计数",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "exclude",
+      "inModel": true,
+      "integer": true,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 137811,
+    "name": "pydantic-decay.csv",
+    "path": ".cache/author-repro/v3-datasets/pydantic-decay.csv",
+    "sha256": "8723d014bd5f623e585cb99d469547bef87c0baa420230029f1aff0ace9a7989"
+  },
+  "labelEvidenceFile": {
+    "path": ".cache/author-repro/v3-datasets/pydantic-decay.label-evidence.jsonl",
+    "records": 149,
+    "rule": "szz-full-v1",
+    "sha256": "c2ee0b8c78c75b8d10d29f4e9215dae426a32f70863468c925740663cb1eddfc"
+  },
+  "labelStatusFile": {
+    "path": ".cache/author-repro/v3-datasets/pydantic-decay.label-status.jsonl",
+    "records": 1009,
+    "rule": "commit-label-status-v1",
+    "sha256": "86e5b889122696e60d7c4797f4adafd8b06abb8f4b7cbbdd5b3002be67c003f5"
+  },
+  "labeling": {
+    "counts": {
+      "eligibleRecords": 761,
+      "excludedImmature": 248,
+      "excludedUnknown": 0,
+      "originalRecords": 1009,
+      "positivesEligible": 93,
+      "positivesOriginal": 113
+    },
+    "coverage": {
+      "complete": true,
+      "historyBounded": false,
+      "reason": null,
+      "truncated": false,
+      "unresolvedRanges": 0
+    },
+    "historyStatus": "complete",
+    "identity": "24d8d042358c9fad8cb69980b36f90588ac0cc865b00d45ce46cca3ef75a0275",
+    "labelRule": "szz-full-v1",
+    "maturityDays": 90,
+    "observationWindow": {
+      "fromEpoch": 1704067200,
+      "through": "2025-01-01T00:00:00Z",
+      "throughEpoch": 1735689600
+    },
+    "observedThrough": 1735689600,
+    "observedThroughIso": "2025-01-01T00:00:00Z",
+    "protocol": "mature-observed-v1",
+    "requestedThrough": null,
+    "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+    "revisionEpoch": 1795016590,
+    "sampleWindow": {
+      "endEpoch": 1735689600,
+      "since": "2024-01-01",
+      "startEpoch": 1704067200,
+      "until": "2025-01-01"
+    },
+    "statusFile": {
+      "path": ".cache/author-repro/v3-datasets/pydantic-decay.label-status.jsonl",
+      "records": 1009,
+      "rule": "commit-label-status-v1",
+      "sha256": "86e5b889122696e60d7c4797f4adafd8b06abb8f4b7cbbdd5b3002be67c003f5"
+    },
+    "statusRule": "commit-label-status-v1",
+    "statusSha256": "86e5b889122696e60d7c4797f4adafd8b06abb8f4b7cbbdd5b3002be67c003f5"
+  },
+  "publisher": "collected",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 18,
+      "outsideWindow": 0,
+      "tooManyFiles": 1,
+      "tooMuchChurn": 1
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 1009,
+    "positiveLabels": 113,
+    "rawRows": 1029
+  },
+  "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+  "samples": [
+    {
+      "id": "1e1b2573b1e184b96f02659facda955eee6f4af9",
+      "time": "2024-01-02T08:07:05Z"
+    },
+    {
+      "id": "3f84e44103ec3e913f43db144db75fc1af6293ac",
+      "time": "2024-01-02T08:15:57Z"
+    },
+    {
+      "id": "097dc7d111acb87d4935ca30a67d96c6d59c87ae",
+      "time": "2024-01-04T11:27:35Z"
+    },
+    {
+      "id": "601e8b896fce4c455efd5da08423816a152bd6fb",
+      "time": "2024-12-31T11:01:21Z"
+    },
+    {
+      "id": "59b35de6564af0a971aae99807f0f562fa051e3e",
+      "time": "2024-12-31T11:50:47Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-git-v3",
+  "timeRange": {
+    "end": "2024-12-31T11:50:47Z",
+    "endEpoch": 1735645847,
+    "start": "2024-01-02T08:07:05Z",
+    "startEpoch": 1704182825
+  },
+  "url": ".cache\\repositories\\6249314697cb9c14.git",
+  "usage": "branch",
+  "version": "pydantic-decay-2024-01-02_2024-12-31"
+}

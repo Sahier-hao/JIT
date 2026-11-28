@@ -1,0 +1,1 @@
+'D:\code\jit-defect-prediction\backend\jit_baseline\cli.py' author-run --method kamei --mode author --output '..\.cache\author-repro\runs\kamei-author-final'

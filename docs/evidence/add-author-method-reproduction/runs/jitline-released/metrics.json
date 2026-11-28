@@ -1,0 +1,167 @@
+{
+  "commit": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.2776130787386496
+    },
+    "confusion": {
+      "fn": 209,
+      "fp": 1305,
+      "tn": 3566,
+      "tp": 291
+    },
+    "effort": {
+      "budgetLoc": 114010.20000000001,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 370,
+      "totalLoc": 570051.0,
+      "usedLoc": 113943.0
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.2776717557251908
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": "存在零成本提交，Popt 未定义",
+      "value": null
+    },
+    "positives": 500,
+    "precision": {
+      "reason": null,
+      "value": 0.18233082706766918
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.582
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.256
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 500,
+          "fp": 0,
+          "tn": 4871,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.0930925339787749
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.7291601313898582
+    },
+    "samples": 5371,
+    "threshold": 0.5
+  },
+  "data": {
+    "authorOriginalSplit": false,
+    "description": "JITLine released OpenStack tables with reconstructed split",
+    "kind": "released-openstack",
+    "missingAuthorPickles": true,
+    "splitRule": "chronological 80/20 reconstruction; original pickle split unavailable"
+  },
+  "limitations": [
+    "JIT-Fine baseline variant uses the JIT-Fine authors' fixed input, not JITLine's original OpenStack/Qt pickle split.",
+    "Released-table variants reconstruct a chronological split because the author-split pickles are absent.",
+    "LIME explains only a declared sample of correctly predicted positive commits.",
+    "Git line numbers are unavailable in the author tables; only file/index identity is emitted."
+  ],
+  "line": {
+    "baselines": {
+      "fileOrder": {
+        "commitsWithPositives": 1,
+        "firstPositiveInspectionMean": 3.0,
+        "firstPositiveInspectionMedian": 3.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 0.25,
+        "positives": 18,
+        "recallAt20PercentLines": 0.16666666666666666,
+        "recallAt20PercentPerCommitMean": 0.16666666666666666,
+        "topKHitRate": {
+          "top1": 0.0,
+          "top10": 1.0,
+          "top5": 1.0
+        }
+      },
+      "random": {
+        "firstPositiveInspectionMean": 1.94,
+        "mrr": 0.5825642135642135,
+        "recallAt20PercentLines": 0.2288888888888889,
+        "runs": 50,
+        "seed": 42,
+        "topKHitRate": {
+          "top1": 0.4,
+          "top10": 0.98,
+          "top5": 0.82
+        }
+      }
+    },
+    "coverage": {
+      "explainedLines": 61,
+      "limeBackgroundRows": 256,
+      "limeSamples": 128,
+      "lineExplainedCommits": 1,
+      "positiveLinesInExplainedCommits": 18,
+      "selectedCommits": 1,
+      "skipped": {
+        "noCommitLines": 1,
+        "noPositiveTokens": 0
+      },
+      "testCommits": 5371,
+      "testPositiveCommits": 500
+    },
+    "metricDefinitions": {
+      "firstPositiveInspection": "number of lines ranked before the first positive line",
+      "mrr": "mean reciprocal rank of the first positive line",
+      "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+      "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+    },
+    "model": {
+      "commitsWithPositives": 1,
+      "firstPositiveInspectionMean": 1.0,
+      "firstPositiveInspectionMedian": 1.0,
+      "lineBudget": "ceil(20% of each commit's eligible lines)",
+      "mrr": 0.5,
+      "positives": 18,
+      "recallAt20PercentLines": 0.2222222222222222,
+      "recallAt20PercentPerCommitMean": 0.2222222222222222,
+      "topKHitRate": {
+        "top1": 0.0,
+        "top10": 1.0,
+        "top5": 1.0
+      }
+    },
+    "positives": 18,
+    "samples": 61,
+    "tieRule": "score desc, path asc, idx asc"
+  },
+  "schema": "author-jitline-metrics-v1",
+  "training": {
+    "afterSmote": 2000,
+    "features": 769,
+    "smoteK": 9,
+    "testRows": 5371,
+    "trainRows": 2000
+  }
+}

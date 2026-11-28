@@ -1,0 +1,259 @@
+{
+  "command": [
+    "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\cli.py",
+    "author-run",
+    "--method",
+    "jitsmart",
+    "--max-train",
+    "4",
+    "--max-valid",
+    "2",
+    "--max-test",
+    "4",
+    "--epochs",
+    "1",
+    "--batch-size",
+    "1",
+    "--test-project",
+    "commons-math",
+    "--output",
+    "..\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1"
+  ],
+  "completedAt": "2026-11-28T15:26:36.464742+00:00",
+  "config": {
+    "batchSize": 1,
+    "compatibility": [
+      "HAN initial states use zeros instead of unseeded randn for rerunnable runs.",
+      "Line ordering comes from the released JIT-Smart line table, preserving file and idx identity."
+    ],
+    "device": "cpu",
+    "dlLossWeight": 0.7,
+    "dpLossWeight": 0.3,
+    "epochs": 1,
+    "focalAlpha": 0.25,
+    "focalGamma": 2.0,
+    "fullProtocol": false,
+    "hardwareBlocker": {
+      "reason": "CPU-only environment cannot complete the author 50-epoch joint protocol or full cross-project matrix in the available window.",
+      "required": "CUDA GPU or a longer dedicated CPU run with the same frozen data and hyperparameters."
+    },
+    "learningRate": 1e-05,
+    "maxLineTokens": 64,
+    "maxLines": 256,
+    "maxSeqLength": 512,
+    "model": "microsoft/codebert-base",
+    "sampleLimits": {
+      "test": 4,
+      "train": 4,
+      "valid": 2
+    },
+    "splitKind": "cross-project",
+    "testProject": "commons-math"
+  },
+  "environment": {
+    "cudaAvailable": false,
+    "env": {
+      "PYTHONHASHSEED": "42"
+    },
+    "executable": "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+    "machine": "",
+    "packages": {
+      "numpy": "2.5.3",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.1",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.21.1"
+    },
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.14.2"
+  },
+  "fidelity": "real-smoke",
+  "materialHashes": {
+    "codebert-base": {
+      "config.json": "742474d6148a061fa975dadc09ce93725fa9673c55421ed316ef75532cc6b7aa",
+      "merges.txt": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5",
+      "pytorch_model.bin": "28b61fd8fa069f6bc966f4cb9572a4026ab2a784fca8fb224020d91b744e32d6",
+      "vocab.json": "06b4d46c8e752d410213d9548eb27a54db70fda0319b6271fb8d59dead5e1cab"
+    },
+    "jit-fine-jit-defect4j": {
+      "sha256": "9e5ca1a393b70ee7e87c410b162005958775f3f3732f9f83da9dd24a7dfe2b47"
+    },
+    "jit-smart-line-labels": {
+      "test_buggy_commit_lines_df.pkl": "5439f526c1d632442815d6a022e8f148f84ffaec1c96b073f0caa136d4ea1ddc",
+      "train_buggy_commit_lines_df.pkl": "24b75e1c6f2f574fa8049504c8fa5252777223f2ffd70ee035ef6e7dffafcd48",
+      "valid_buggy_commit_lines_df.pkl": "180765af27896d2dbecb40c0d011fc11c7fb727912bd6e24ee0b89e685916e5a"
+    }
+  },
+  "method": "jitsmart",
+  "methodVersion": "jitsmart-author-code-v1",
+  "output": "..\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1",
+  "runId": "49c349b5c8266d5d408b",
+  "schema": "author-repro-run-v1",
+  "seed": 42,
+  "split": {
+    "kind": "author-cross-project-sample",
+    "seed": 42,
+    "testProject": "commons-math"
+  },
+  "startedAt": "2026-11-28T15:26:12.036914+00:00",
+  "status": "completed",
+  "summary": {
+    "commitMetrics": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.75
+      },
+      "confusion": {
+        "fn": 1,
+        "fp": 1,
+        "tn": 1,
+        "tp": 1
+      },
+      "effort": {
+        "budgetLoc": 1150.0,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 3,
+        "totalLoc": 5750.0,
+        "usedLoc": 191.0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.5
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.996294924045943
+      },
+      "positives": 2,
+      "precision": {
+        "reason": null,
+        "value": 0.5
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.5
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.5
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 2,
+            "fp": 0,
+            "tn": 2,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.5
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.5
+      },
+      "samples": 4,
+      "threshold": 0.5
+    },
+    "lineMetrics": {
+      "baselines": {
+        "fileOrder": {
+          "commitsWithPositives": 2,
+          "firstPositiveInspectionMean": 0.0,
+          "firstPositiveInspectionMedian": 0.0,
+          "lineBudget": "ceil(20% of each commit's eligible lines)",
+          "mrr": 1.0,
+          "positives": 17,
+          "recallAt20PercentLines": 0.5882352941176471,
+          "recallAt20PercentPerCommitMean": 0.6439393939393939,
+          "topKHitRate": {
+            "top1": 1.0,
+            "top10": 1.0,
+            "top5": 1.0
+          }
+        },
+        "random": {
+          "firstPositiveInspectionMean": 13.19,
+          "mrr": 0.4240831912470653,
+          "recallAt20PercentLines": 0.20470588235294118,
+          "runs": 50,
+          "seed": 42,
+          "topKHitRate": {
+            "top1": 0.29,
+            "top10": 0.66,
+            "top5": 0.59
+          }
+        }
+      },
+      "coverage": {
+        "lineRows": 187,
+        "positiveLines": 17,
+        "testCommits": 4,
+        "testPositiveCommits": 2,
+        "testProjects": [
+          "commons-math"
+        ],
+        "trainProjects": [
+          "ant-ivy",
+          "commons-collections",
+          "commons-dbcp",
+          "opennlp"
+        ],
+        "truncation": {
+          "lineTruncations": 0,
+          "tokenTruncations": 0
+        }
+      },
+      "metricDefinitions": {
+        "firstPositiveInspection": "number of lines ranked before the first positive line",
+        "mrr": "mean reciprocal rank of the first positive line",
+        "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+        "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+      },
+      "model": {
+        "commitsWithPositives": 2,
+        "firstPositiveInspectionMean": 0.0,
+        "firstPositiveInspectionMedian": 0.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 1.0,
+        "positives": 17,
+        "recallAt20PercentLines": 0.4117647058823529,
+        "recallAt20PercentPerCommitMean": 0.4318181818181818,
+        "topKHitRate": {
+          "top1": 1.0,
+          "top10": 1.0,
+          "top5": 1.0
+        }
+      },
+      "positives": 17,
+      "samples": 187,
+      "tieRule": "score desc, path asc, idx asc"
+    },
+    "lineRows": 187,
+    "mode": "real-smoke",
+    "samples": {
+      "test": 4,
+      "train": 4,
+      "valid": 2
+    }
+  },
+  "updatedAt": "2026-11-28T15:26:36.464751+00:00"
+}

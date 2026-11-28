@@ -1,0 +1,189 @@
+{
+  "schema": "author-repro-catalog-v1",
+  "methods": {
+    "kamei": {
+      "name": "Kamei et al. TSE 2013",
+      "methodVersion": "kamei-2013-author-v1",
+      "paper": "DOI 10.1109/TSE.2012.70",
+      "source": "existing six-project Kamei 2013 published tables",
+      "sourceRevision": "948fe603f61d",
+      "sourceLicense": "publication-replication-data; redistribution not re-verified",
+      "dataMaterials": ["kamei-published-six"],
+      "supportsCommit": true,
+      "supportsLine": false,
+      "entrypoint": "author-run --method kamei --mode author"
+    },
+    "deepjit": {
+      "name": "DeepJIT",
+      "methodVersion": "deepjit-author-code-v1",
+      "paper": "MSR 2019, soarsmu/DeepJIT README",
+      "source": "https://github.com/soarsmu/DeepJIT",
+      "sourceRevision": "bb3dd8a10dcfc44383c15734bb18e6a1ddc6ba45",
+      "sourceLicense": "no license file observed; source not redistributed",
+      "dataMaterials": ["deepjit-openstack-train", "deepjit-openstack-test", "deepjit-openstack-dict", "deepjit-openstack-model"],
+      "supportsCommit": true,
+      "supportsLine": false,
+      "entrypoint": "author-run --method deepjit --mode evaluate"
+    },
+    "jitline": {
+      "name": "JITLine",
+      "methodVersion": "jitline-author-code-v1",
+      "paper": "arXiv 2103.07068",
+      "source": "https://github.com/awsm-research/JITLine-replication-package",
+      "sourceRevision": "1e06d33b44c19565301d31fce9984afbb8b3127c",
+      "sourceLicense": "no license file observed in source repository; Zenodo releases CC-BY-4.0",
+      "dataMaterials": ["jitline-source", "jit-fine-jit-defect4j", "jit-smart-line-labels"],
+      "supportsCommit": true,
+      "supportsLine": true,
+      "entrypoint": "author-run --method jitline --mode smoke"
+    },
+    "jitfine": {
+      "name": "JIT-Fine",
+      "methodVersion": "jitfine-author-code-v1",
+      "paper": "The Best of Both Worlds, 2023",
+      "source": "https://github.com/jacknichao/JIT-Fine",
+      "sourceRevision": "584799fdec6095ab75a45fd2a5f8db5b12163aa5",
+      "sourceLicense": "NOASSERTION; no license file observed",
+      "dataMaterials": ["jit-fine-jit-defect4j", "codebert-base"],
+      "supportsCommit": true,
+      "supportsLine": true,
+      "entrypoint": "author-run --method jitfine --mode smoke"
+    },
+    "jitsmart": {
+      "name": "JIT-Smart",
+      "methodVersion": "jitsmart-author-code-v1",
+      "paper": "JIT-Smart multi-task learning",
+      "source": "https://github.com/JIT-A/JIT-Smart",
+      "sourceRevision": "e87569c56c8faa4ad236969d4a99074a76da3887",
+      "sourceLicense": "NOASSERTION; no license file observed",
+      "dataMaterials": ["jit-smart-source", "jit-fine-jit-defect4j", "jit-smart-line-labels", "codebert-base"],
+      "supportsCommit": true,
+      "supportsLine": true,
+      "entrypoint": "author-run --method jitsmart --mode smoke"
+    }
+  },
+  "materials": {
+    "kamei-published-six": {
+      "kind": "local-dataset-group",
+      "required": true,
+      "root": "data/datasets",
+      "members": [
+        {"path": "kamei-2013-948fe603f61d-bugzilla/kamei-2013-948fe603f61d-bugzilla-1998-08-26_2006-12-16-e39d42c6.csv", "sha256": "e39d42c64896c92121a75596d2d08192e1aa1b184ea3d9610c1da190844e4366"},
+        {"path": "kamei-2013-948fe603f61d-columba/kamei-2013-948fe603f61d-columba-2002-11-25_2006-07-27-729afb5c.csv", "sha256": "729afb5cd01046c16694e9885a4dd15606e8bc6a5d05b066c5431b3909b04a78"},
+        {"path": "kamei-2013-948fe603f61d-jdt/kamei-2013-948fe603f61d-jdt-2001-05-02_2007-12-31-0d439c41.csv", "sha256": "0d439c41fc905fa6e8c7028d0a29cb58dc908613a972490486948e503276d367"},
+        {"path": "kamei-2013-948fe603f61d-mozilla/kamei-2013-948fe603f61d-mozilla-2000-01-01_2006-12-17-34b969b1.csv", "sha256": "34b969b1b558faab8669cdf33384f246250d83f5ab1a255441520ec682802124"},
+        {"path": "kamei-2013-948fe603f61d-platform/kamei-2013-948fe603f61d-platform-2001-05-02_2007-12-31-36ed1055.csv", "sha256": "36ed105596afb90ccb491063875cb009b86e8f053f9cc0ee70f6c48e8a630585"},
+        {"path": "kamei-2013-948fe603f61d-postgres/kamei-2013-948fe603f61d-postgres-1996-07-09_2010-05-15-87f518f7.csv", "sha256": "87f518f7f94fe4d41131c5a91e354327c2ecc77420a7f36de3c4d984f733b2cb"}
+      ],
+      "license": "publication-replication-data; redistribution not re-verified",
+      "acquisition": "already registered under backend/data/datasets"
+    },
+    "deepjit-source": {
+      "kind": "git",
+      "path": ".cache/author-repos/DeepJIT",
+      "url": "https://github.com/soarsmu/DeepJIT.git",
+      "revision": "bb3dd8a10dcfc44383c15734bb18e6a1ddc6ba45",
+      "license": "no license file observed",
+      "required": true
+    },
+    "deepjit-openstack-train": {
+      "kind": "zenodo-file",
+      "path": ".cache/author-repro/deepjit-3965246/openstack_train.pkl",
+      "url": "https://zenodo.org/api/records/3965246/files/openstack_train.pkl/content",
+      "md5": "7c23832a5d3022dabe363f6974a67931",
+      "size": 7644964,
+      "license": "CC-BY-4.0",
+      "required": true
+    },
+    "deepjit-openstack-test": {
+      "kind": "zenodo-file",
+      "path": ".cache/author-repro/deepjit-3965246/openstack_test.pkl",
+      "url": "https://zenodo.org/api/records/3965246/files/openstack_test.pkl/content",
+      "md5": "bad168282ac4273f62bf58c7ecc1be5b",
+      "size": 845606,
+      "license": "CC-BY-4.0",
+      "required": true
+    },
+    "deepjit-openstack-dict": {
+      "kind": "zenodo-file",
+      "path": ".cache/author-repro/deepjit-3965246/openstack_dict.pkl",
+      "url": "https://zenodo.org/api/records/3965246/files/openstack_dict.pkl/content",
+      "md5": "4211e5ffd0fa08793bf2732a3c56a4c5",
+      "size": 3083351,
+      "license": "CC-BY-4.0",
+      "required": true
+    },
+    "deepjit-openstack-model": {
+      "kind": "zenodo-file",
+      "path": ".cache/author-repro/deepjit-3965246/openstack_model.pt",
+      "url": "https://zenodo.org/api/records/3965246/files/openstack_model.pt/content",
+      "md5": "d569bef94da08184048baa393fb9ee7e",
+      "size": 29719015,
+      "license": "CC-BY-4.0",
+      "required": true
+    },
+    "jitline-source": {
+      "kind": "git",
+      "path": ".cache/author-repos/JITLine",
+      "url": "https://github.com/awsm-research/JITLine-replication-package.git",
+      "revision": "1e06d33b44c19565301d31fce9984afbb8b3127c",
+      "license": "no source license observed; Zenodo release CC-BY-4.0",
+      "required": true,
+      "releaseZip": {
+        "url": "https://zenodo.org/api/records/4596503/files/JITLine-replication-package-master.zip/content",
+        "md5": "400187a8dbfd9b680c975265f32dedd5",
+        "size": 6785832
+      }
+    },
+    "jit-fine-source": {
+      "kind": "git",
+      "path": ".cache/author-repos/JIT-Fine",
+      "url": "https://github.com/jacknichao/JIT-Fine.git",
+      "revision": "584799fdec6095ab75a45fd2a5f8db5b12163aa5",
+      "license": "NOASSERTION",
+      "required": true
+    },
+    "jit-smart-source": {
+      "kind": "git",
+      "path": ".cache/author-repos/JIT-Smart-code",
+      "url": "https://github.com/JIT-A/JIT-Smart.git",
+      "revision": "e87569c56c8faa4ad236969d4a99074a76da3887",
+      "license": "NOASSERTION",
+      "required": true
+    },
+    "jit-fine-jit-defect4j": {
+      "kind": "zip",
+      "path": ".cache/author-repos/JIT-Fine/data.zip",
+      "url": "https://github.com/jacknichao/JIT-Fine/raw/584799fdec6095ab75a45fd2a5f8db5b12163aa5/data.zip",
+      "sha256": "9e5ca1a393b70ee7e87c410b162005958775f3f3732f9f83da9dd24a7dfe2b47",
+      "size": 75326372,
+      "license": "NOASSERTION",
+      "required": true,
+      "extractTo": ".cache/author-repro/jit-defect4j-584799fd"
+    },
+    "jit-smart-line-labels": {
+      "kind": "derived-author-labels",
+      "path": ".cache/author-repos/JIT-Smart-code/JITSmart/process and label defect code lines",
+      "sourceRevision": "e87569c56c8faa4ad236969d4a99074a76da3887",
+      "license": "NOASSERTION",
+      "required": true,
+      "members": [
+        {"name": "train_buggy_commit_lines_df.pkl", "sha256": "computed-at-run"},
+        {"name": "valid_buggy_commit_lines_df.pkl", "sha256": "computed-at-run"},
+        {"name": "test_buggy_commit_lines_df.pkl", "sha256": "computed-at-run"}
+      ]
+    },
+    "codebert-base": {
+      "kind": "huggingface",
+      "path": ".cache/author-repro/codebert-base-3b0952fe",
+      "model": "microsoft/codebert-base",
+      "revision": "3b0952feddeffad0063f274080e3c23d75e7eb39",
+      "license": "MIT",
+      "required": true,
+      "files": ["config.json", "pytorch_model.bin", "vocab.json", "merges.txt"],
+      "fileHashes": {
+        "pytorch_model.bin": "28b61fd8fa069f6bc966f4cb9572a4026ab2a784fca8fb224020d91b744e32d6"
+      }
+    }
+  }
+}

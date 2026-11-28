@@ -13,8 +13,10 @@ httpx==0.28.1
 httpx2==2.16.0
 huggingface-hub==2.3.0
 idna==3.20
+imbalanced-learn==0.14.2
 iniconfig==2.3.1
 joblib==1.6.0
+lime==0.2.0.1
 narwhals==2.27.1
 numpy==2.5.3
 openpyxl==3.1.5

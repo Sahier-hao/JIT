@@ -1,0 +1,4 @@
+{"commitId": "c6af3ed8a52ddfc3c54c69dab18e36345ba5b92e", "label": 0, "project": "giraph", "score": 0.5571834444999695}
+{"commitId": "3c92830ec51fb6b6e9a7ca2fb8fda324cd33e48a", "label": 1, "project": "commons-lang", "score": 0.546596348285675}
+{"commitId": "cd64fa339a97300c64dfc434483e478a58f507a8", "label": 0, "project": "commons-math", "score": 0.5449082255363464}
+{"commitId": "eec10fcf0c795bdfacef4c9933585f65f953fd58", "label": 1, "project": "commons-compress", "score": 0.5446397066116333}

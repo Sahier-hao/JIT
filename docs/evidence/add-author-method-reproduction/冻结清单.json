@@ -1,0 +1,364 @@
+{
+  "copiedFromWorkspace": [
+    "metrics-summary.json",
+    "README.md",
+    "runs/deepjit-evaluate/command.txt",
+    "runs/deepjit-evaluate/metrics.json",
+    "runs/deepjit-evaluate/predictions.jsonl",
+    "runs/deepjit-evaluate/run.json",
+    "runs/deepjit-evaluate/run.log",
+    "runs/deepjit-train-smoke/command.txt",
+    "runs/deepjit-train-smoke/metrics.json",
+    "runs/deepjit-train-smoke/predictions.jsonl",
+    "runs/deepjit-train-smoke/run.json",
+    "runs/deepjit-train-smoke/run.log",
+    "runs/jitfine-smoke/command.txt",
+    "runs/jitfine-smoke/line-predictions.jsonl",
+    "runs/jitfine-smoke/metrics.json",
+    "runs/jitfine-smoke/predictions.jsonl",
+    "runs/jitfine-smoke/run.json",
+    "runs/jitfine-smoke/run.log",
+    "runs/jitfine-smoke/token-line-map.jsonl",
+    "runs/jitline-baseline/command.txt",
+    "runs/jitline-baseline/line-predictions.jsonl",
+    "runs/jitline-baseline/metrics.json",
+    "runs/jitline-baseline/predictions.jsonl",
+    "runs/jitline-baseline/run.json",
+    "runs/jitline-baseline/run.log",
+    "runs/jitline-baseline/token-line-map.jsonl",
+    "runs/jitline-released/command.txt",
+    "runs/jitline-released/line-predictions.jsonl",
+    "runs/jitline-released/metrics.json",
+    "runs/jitline-released/predictions.jsonl",
+    "runs/jitline-released/run.json",
+    "runs/jitline-released/run.log",
+    "runs/jitline-released/token-line-map.jsonl",
+    "runs/jitsmart-cross/command.txt",
+    "runs/jitsmart-cross/line-predictions.jsonl",
+    "runs/jitsmart-cross/metrics.json",
+    "runs/jitsmart-cross/predictions.jsonl",
+    "runs/jitsmart-cross/run.json",
+    "runs/jitsmart-cross/run.log",
+    "runs/jitsmart-project/command.txt",
+    "runs/jitsmart-project/line-predictions.jsonl",
+    "runs/jitsmart-project/metrics.json",
+    "runs/jitsmart-project/predictions.jsonl",
+    "runs/jitsmart-project/run.json",
+    "runs/jitsmart-project/run.log",
+    "runs/kamei-author/coefficients.json",
+    "runs/kamei-author/command.txt",
+    "runs/kamei-author/folds.json",
+    "runs/kamei-author/metrics.json",
+    "runs/kamei-author/predictions.sample.jsonl",
+    "runs/kamei-author/run.json",
+    "runs/kamei-author/run.log",
+    "runs/kamei-unified14/coefficients.json",
+    "runs/kamei-unified14/command.txt",
+    "runs/kamei-unified14/folds.json",
+    "runs/kamei-unified14/metrics.json",
+    "runs/kamei-unified14/predictions.sample.jsonl",
+    "runs/kamei-unified14/run.json",
+    "runs/kamei-unified14/run.log",
+    "source-audit.md",
+    "source-index.json",
+    "status.json",
+    "v3-pydantic/dataset-manifest.json",
+    "v3-pydantic/run-manifest.json",
+    "v3-pydantic/run-metrics.json",
+    "v3-pydantic/run-model.joblib",
+    "v3-pydantic/run-summary.json",
+    "verification/baseline-known-failures.log",
+    "verification/full-suite-summary.json",
+    "verification/targeted-tests.log"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 70,
+  "files": [
+    {
+      "path": "metrics-summary.json",
+      "sha256": "9493ca0f8ab7239ed7fcb9c0918766529fa4f1c84bb6506268a7368816d145f5"
+    },
+    {
+      "path": "README.md",
+      "sha256": "6abda041c4d56707126d1c64597349b53cb5267b4c2846e22b338dcee03eabab"
+    },
+    {
+      "path": "runs/deepjit-evaluate/command.txt",
+      "sha256": "204186334624a3b0dfb97ca25b9a55680ed46da561f9dade54ed4c0712dd8f4e"
+    },
+    {
+      "path": "runs/deepjit-evaluate/metrics.json",
+      "sha256": "809d0c3e87c681faa64b3a77e71b8a17e1a1af71ae6d6758c78a1860e47bd18a"
+    },
+    {
+      "path": "runs/deepjit-evaluate/predictions.jsonl",
+      "sha256": "9ea014a53c9e17077d74475c5e9a815b9d79857f7db21f7aa0cdb51fbe9ef53e"
+    },
+    {
+      "path": "runs/deepjit-evaluate/run.json",
+      "sha256": "135b80ebfd32d97f738a6892e349423a5e562d181e469ad056556cc1e5665370"
+    },
+    {
+      "path": "runs/deepjit-evaluate/run.log",
+      "sha256": "bf9fe754dc0cb1393476f9dcc2738464e6084b8e16d91fce4e1655c2c28750a7"
+    },
+    {
+      "path": "runs/deepjit-train-smoke/command.txt",
+      "sha256": "014ad8653a160b8cef81e9c6707cb5a14ac8a6eeac01a4a91c7b4791f080a7bb"
+    },
+    {
+      "path": "runs/deepjit-train-smoke/metrics.json",
+      "sha256": "9d7ecc493f25ebe0fb6b24ec922148f77b3f363ef0b2c64043b5ef7c55e5eeec"
+    },
+    {
+      "path": "runs/deepjit-train-smoke/predictions.jsonl",
+      "sha256": "8bbab7004afe04505144bed63c308dd99df0eb2168aef458248f7ac46dd6e176"
+    },
+    {
+      "path": "runs/deepjit-train-smoke/run.json",
+      "sha256": "82e45fc0edd2c0bd07ac055111d93a3aa5641417140e439bc6dd2ebfd0733cad"
+    },
+    {
+      "path": "runs/deepjit-train-smoke/run.log",
+      "sha256": "ec232b8ee7f1226c80ee902bf0270e4952e696a9c4d82de4704f932d0914dae1"
+    },
+    {
+      "path": "runs/jitfine-smoke/command.txt",
+      "sha256": "d3a15f07f93ddcfe91c7d80864ab0aabe546356b48a444e1d987c6dc39953e2d"
+    },
+    {
+      "path": "runs/jitfine-smoke/line-predictions.jsonl",
+      "sha256": "a8a326336b3062689c1375cf2d193af5faf84f373f3f14af239ca60a48e0d323"
+    },
+    {
+      "path": "runs/jitfine-smoke/metrics.json",
+      "sha256": "bfcafbddb2f50d4a70c87a2ab2b78584acc925a125ed3a88a6dd8c246399f0e3"
+    },
+    {
+      "path": "runs/jitfine-smoke/predictions.jsonl",
+      "sha256": "ff72ea555cad47e5e59817d34474b3e96c6d6ef85d420be9514f011718e3cf82"
+    },
+    {
+      "path": "runs/jitfine-smoke/run.json",
+      "sha256": "14e27142581bedc16e5ca14e8379c6fa22c2f86cc0168ff9c84599f5fae21a1b"
+    },
+    {
+      "path": "runs/jitfine-smoke/run.log",
+      "sha256": "6ca96e84823f06e115e094662ca8b40f2889e73baec73b64bc0a844d6d4f39af"
+    },
+    {
+      "path": "runs/jitfine-smoke/token-line-map.jsonl",
+      "sha256": "65b6392b293a330ad4eebc9f39bbb7c39017a9d436d7c8bec2591ccdd0208a9f"
+    },
+    {
+      "path": "runs/jitline-baseline/command.txt",
+      "sha256": "8284ec9777c44c692fe5b2761336103c130764ed3b52fd1758a36e8d6e6d44b0"
+    },
+    {
+      "path": "runs/jitline-baseline/line-predictions.jsonl",
+      "sha256": "817a2306934fe95d9122ad13b060b3cf09aa8c8a8c0b5a582c99edbf3c9bc58e"
+    },
+    {
+      "path": "runs/jitline-baseline/metrics.json",
+      "sha256": "ca9a3592533692b6ebe92be3479146b7ecd6e190b91f4c607aa7e72c0356d53e"
+    },
+    {
+      "path": "runs/jitline-baseline/predictions.jsonl",
+      "sha256": "962a1935de87d3d4530b3e8091244e864588c27585cd40225e871b3aeccf0314"
+    },
+    {
+      "path": "runs/jitline-baseline/run.json",
+      "sha256": "8047f3096a414e48fdf9efb2662771b9747a7e64bc13af9fd5e1942696370a00"
+    },
+    {
+      "path": "runs/jitline-baseline/run.log",
+      "sha256": "62b482f37231158afb89a9f156ae115163e7231761a8748f054543e20c2cd8b1"
+    },
+    {
+      "path": "runs/jitline-baseline/token-line-map.jsonl",
+      "sha256": "fb65b0e892df7044e8b5344f6b7d0553dae541de892225003c9842a6da7e69d8"
+    },
+    {
+      "path": "runs/jitline-released/command.txt",
+      "sha256": "a0e2590d52d5d27d2abab96f8db9aea7de459971e865af71227c5e4bf87e26f4"
+    },
+    {
+      "path": "runs/jitline-released/line-predictions.jsonl",
+      "sha256": "2044c0cc8a63892fc3eb809462e6d0a35ca2793043c1d81e9b97f89d63aa7261"
+    },
+    {
+      "path": "runs/jitline-released/metrics.json",
+      "sha256": "01d138a278ca4fffc8f9171017f263d47d42bba8ff8da8b7644f308a34828117"
+    },
+    {
+      "path": "runs/jitline-released/predictions.jsonl",
+      "sha256": "f5b86fdb8cf152e361507756e45c51ad214edf8d812d86b8b700c6960edb689e"
+    },
+    {
+      "path": "runs/jitline-released/run.json",
+      "sha256": "a9fd793699b7b1d89b7a610f51c5cbfd94883342cd24a91e1de129a3a2c9decf"
+    },
+    {
+      "path": "runs/jitline-released/run.log",
+      "sha256": "a5203260f91b617a2eea7fe8770518af4460feb4910240bab8307201a0d5ca18"
+    },
+    {
+      "path": "runs/jitline-released/token-line-map.jsonl",
+      "sha256": "994ea5d81c5725093c01819f10d62ef6b81efa614be2194dee4047266e415574"
+    },
+    {
+      "path": "runs/jitsmart-cross/command.txt",
+      "sha256": "8778638cea6f3f415178dcd464f0fac3abaff1bc87e2a4828edd99ac5dec6962"
+    },
+    {
+      "path": "runs/jitsmart-cross/line-predictions.jsonl",
+      "sha256": "2063b6b1027d0ca7af3d233479830a25ab74cc88ad1b37fc7e1f9a37118f9a51"
+    },
+    {
+      "path": "runs/jitsmart-cross/metrics.json",
+      "sha256": "578fabec6a3bfad3af152f340c19a4092ceb12f70530f16724c80386237a7958"
+    },
+    {
+      "path": "runs/jitsmart-cross/predictions.jsonl",
+      "sha256": "db0f1a00caaa28e2b3dc9b3ed3897d1bd6082004b714f51359f7c124150d4d36"
+    },
+    {
+      "path": "runs/jitsmart-cross/run.json",
+      "sha256": "8a128454bf8001924f5ec816ddd3b09bfa92528f55af126f0e67c405f51e32c3"
+    },
+    {
+      "path": "runs/jitsmart-cross/run.log",
+      "sha256": "dbd4f40b1e41c491c3b1c02cfcc14e8f713445ccd4b5dd0f46d935373d421740"
+    },
+    {
+      "path": "runs/jitsmart-project/command.txt",
+      "sha256": "71d7c8f92ec4dfb78de4d2d41052bd4bc2a27bc924cbdb870e3dba68f2198800"
+    },
+    {
+      "path": "runs/jitsmart-project/line-predictions.jsonl",
+      "sha256": "8f35d76b484dee70dfea5695e49099184aeb279833d13408756c19066395e591"
+    },
+    {
+      "path": "runs/jitsmart-project/metrics.json",
+      "sha256": "5fe5a94cbc9a2d74635232baa292bbd5abb1f65c923f9a29876a68560c76f753"
+    },
+    {
+      "path": "runs/jitsmart-project/predictions.jsonl",
+      "sha256": "a0f2b7ce72a47f3ee7f19ac569c38118db5a77bb91cd819d469a3deae5341ee8"
+    },
+    {
+      "path": "runs/jitsmart-project/run.json",
+      "sha256": "3528112fe051c259580c88ca04fdc53421c8afbd2c30b5109e7d5bc8afc49f46"
+    },
+    {
+      "path": "runs/jitsmart-project/run.log",
+      "sha256": "22b61e2154551274827cf6ae30bedbd90c4089710c148e9084aa9c4428bbebd6"
+    },
+    {
+      "path": "runs/kamei-author/coefficients.json",
+      "sha256": "c53a428d50cb7fd6323fa58f2c26e70ec427c4d21b3eba9bb179339d0ebc55cb"
+    },
+    {
+      "path": "runs/kamei-author/command.txt",
+      "sha256": "57327fafa2f7b78e6323d571c97f501a071293d1dc47f1e85f0cc7145610119a"
+    },
+    {
+      "path": "runs/kamei-author/folds.json",
+      "sha256": "0c6df97f71667041556001011b46ea7f1a8aadfbf43a56de9db7705a43d86e26"
+    },
+    {
+      "path": "runs/kamei-author/metrics.json",
+      "sha256": "b9dc3720d96a7ba4a10324fa723911e15d28de08a459791a686bea86b23c05e3"
+    },
+    {
+      "path": "runs/kamei-author/predictions.sample.jsonl",
+      "sha256": "737dbc66b7ba0994957a5454f8e93ff2bdd2a8707279b657e1dc8d4ab788bdf8"
+    },
+    {
+      "path": "runs/kamei-author/run.json",
+      "sha256": "6858a61bf5ee711215db79805ee8eeb9eb5c63235f135861eeb8bb82f5544724"
+    },
+    {
+      "path": "runs/kamei-author/run.log",
+      "sha256": "5aef816c14277cee4c163255f911fe447da9aed07b69a2b7c6a89595079a8efc"
+    },
+    {
+      "path": "runs/kamei-unified14/coefficients.json",
+      "sha256": "08a6df66bd5c421025e3b81c7f1e5d6258ed1536c0c18b7031d1cc1ba8397bbb"
+    },
+    {
+      "path": "runs/kamei-unified14/command.txt",
+      "sha256": "24a72f025f7582997c77ec13268146dd499e0b53d74a12ce2fc2ef731984c172"
+    },
+    {
+      "path": "runs/kamei-unified14/folds.json",
+      "sha256": "69effc31ed2e936dae034202bd772a1f0847cdb47851e55c17ea281dd6fb8b36"
+    },
+    {
+      "path": "runs/kamei-unified14/metrics.json",
+      "sha256": "6e2fd097cf123b19c76e2b222405140c44cebb3515df378d1bbadf0b3de22955"
+    },
+    {
+      "path": "runs/kamei-unified14/predictions.sample.jsonl",
+      "sha256": "4675070c8057fbcb597ce419cffd1bbfeb8dc7c9b9e5d91699ed8e0b35ba1c0e"
+    },
+    {
+      "path": "runs/kamei-unified14/run.json",
+      "sha256": "7affb09b7dbcc40236dd54c03f0bd9406302d805f08bd21452e04511b221e673"
+    },
+    {
+      "path": "runs/kamei-unified14/run.log",
+      "sha256": "92c9dac55be79b7562e5a4dfaf888bb709e32fc03e5c6feed910613f6a0b9f66"
+    },
+    {
+      "path": "source-audit.md",
+      "sha256": "876319b0a981db4c2083969dbb462e9bfa9c41d2630926972844bcba3fea6d75"
+    },
+    {
+      "path": "source-index.json",
+      "sha256": "3d00e4217ceeea50d9da6b218abca22e96cc1cb9c1b6907ccd8e5015a05ecb76"
+    },
+    {
+      "path": "status.json",
+      "sha256": "8af8a4d6a8ad9f8eee9a500dbd0a2e38a6310734b35d4d3b0575cf3be3f5e136"
+    },
+    {
+      "path": "v3-pydantic/dataset-manifest.json",
+      "sha256": "2e1eee34fc8635858230f8884d04fa981ff3bb87fd2905f8be9b556fa139dc14"
+    },
+    {
+      "path": "v3-pydantic/run-manifest.json",
+      "sha256": "f0ad3d94f1a5535be7345a93167977b39943f55d71acebebd6cec4cfae7cb84a"
+    },
+    {
+      "path": "v3-pydantic/run-metrics.json",
+      "sha256": "128bafe4e3488528900cec1030c690b118528a815ba073da2e2059174456dcb1"
+    },
+    {
+      "path": "v3-pydantic/run-model.joblib",
+      "sha256": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61"
+    },
+    {
+      "path": "v3-pydantic/run-summary.json",
+      "sha256": "5676337fd0882f02082b0cb54f7aa0a8d20ed1b6a2deb66368b089671ef36c58"
+    },
+    {
+      "path": "verification/baseline-known-failures.log",
+      "sha256": "e6025ac592a6deb0b6f3d5d0c6a48197621e1c74b1074dff55f17b3a8870492f"
+    },
+    {
+      "path": "verification/full-suite-summary.json",
+      "sha256": "034a15a8b814b2fabcd16bb90f645ce6412049e88940a3d67a149b8fc714f3f3"
+    },
+    {
+      "path": "verification/targeted-tests.log",
+      "sha256": "87b0e646ca355b16c002b350e22136df6199b12b8181d92f2341a563ee14272b"
+    }
+  ],
+  "frozenUtc": "2026-11-28T16:13:12.322508+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "70c275065e927170d4f6cd3522158e53058f6731fb486d9287b6e0851b272d68",
+  "workspace": "docs/evidence/_run/author-repro-20261128"
+}

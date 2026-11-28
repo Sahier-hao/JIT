@@ -1,0 +1,87 @@
+{
+  "averagePrecision": {
+    "reason": null,
+    "value": 0.29013336206772666
+  },
+  "confusion": {
+    "fn": 6,
+    "fp": 3,
+    "tn": 104,
+    "tp": 2
+  },
+  "counts": {
+    "negative": 107,
+    "positive": 8,
+    "records": 115
+  },
+  "effort": {
+    "budgetLoc": 1948.4,
+    "name": "Recall@20%LOC (risk-ranked)",
+    "ordering": "risk-desc,time-desc,id-asc",
+    "policy": "whole-commit-prefix-stop",
+    "selectedCount": 4,
+    "totalLoc": 9742,
+    "usedLoc": 823
+  },
+  "f1": {
+    "reason": null,
+    "value": 0.3076923076923077
+  },
+  "ifa": {
+    "reason": null,
+    "value": 0
+  },
+  "popt": {
+    "reason": null,
+    "value": 0.8078722221468954
+  },
+  "poptEffort": {
+    "areaModel": 0.7913480291521247,
+    "areaOracle": 0.9731638780537879,
+    "areaWorst": 0.026836121946212273,
+    "name": "Popt (density-ranked, full-range)",
+    "ordering": "density-desc,time-desc,id-asc",
+    "policy": "trapezoid-full-range",
+    "totalLoc": 9742
+  },
+  "precision": {
+    "reason": null,
+    "value": 0.4
+  },
+  "recall": {
+    "reason": null,
+    "value": 0.25
+  },
+  "recall20Loc": {
+    "reason": null,
+    "value": 0.25
+  },
+  "reference": {
+    "allNegative": {
+      "confusion": {
+        "fn": 8,
+        "fp": 0,
+        "tn": 107,
+        "tp": 0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.0
+      },
+      "precision": {
+        "reason": "没有预测为正的提交",
+        "value": null
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0
+      }
+    },
+    "apNoInformation": 0.06956521739130435
+  },
+  "rocAuc": {
+    "reason": null,
+    "value": 0.5899532710280374
+  },
+  "threshold": 0.5
+}

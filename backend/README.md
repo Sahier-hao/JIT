@@ -658,6 +658,19 @@ npm --prefix frontend exec -- playwright test --config=frontend/playwright.proje
 
 HTTP 测试在本机运行；受限制的执行环境必须允许本机 socket。测试使用明确标识的临时真实模型夹具及独立小样例；正式结果见 [本轮报告](../docs/evidence/connect-public-data-baseline-review/baseline-report.md)。测试与验证的输出写入运行工作区 `../docs/evidence/_run/`，该目录可被后续运行覆盖、不进入版本控制；归档证据由显式冻结从运行工作区产生，测试不写任何已归档目录。测试日志中的预期 RED 失败与开发故障记录保留，不代表最终验收失败或已通过。
 
+## 公开 JIT 方法复现
+
+五套作者方法的统一入口：
+
+```powershell
+& .venv/Scripts/python.exe -m jit_baseline.cli author-catalog
+& .venv/Scripts/python.exe -m jit_baseline.cli author-prepare --method deepjit
+& .venv/Scripts/python.exe -m jit_baseline.cli author-run --method deepjit --mode evaluate
+& .venv/Scripts/python.exe -m jit_baseline.cli author-report --run <run目录>
+```
+
+材料 revision/哈希、输入输出示例、真实指标、作者协议等级和阻塞见 [作者方法复现](../docs/作者方法复现.md)。原始源码、数据和权重位于忽略缓存；仓库不因成功加载权重就宣称完整训练复现。
+
 ## 验证证据的冻结
 
 验证运行与归档证据分开存放。测试与验证脚本把输出写进**运行工作区** `docs/evidence/_run/`；该目录可被后续运行覆盖，也不进入版本控制。**归档目录 `docs/evidence/<change>/` 只由显式冻结写入**，测试、构建和验证脚本都不会写它，也不会自动触发冻结。

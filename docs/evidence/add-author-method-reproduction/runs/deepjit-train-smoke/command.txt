@@ -1,0 +1,1 @@
+'D:\code\jit-defect-prediction\backend\jit_baseline\cli.py' author-run --method deepjit --mode train --max-train 128 --epochs 1 --batch-size 64 --output '..\.cache\author-repro\runs\deepjit-train-smoke-2'

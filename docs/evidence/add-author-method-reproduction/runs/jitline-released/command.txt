@@ -1,0 +1,1 @@
+'D:\code\jit-defect-prediction\backend\jit_baseline\cli.py' author-run --method jitline --variant released-openstack --max-train 2000 --line-commits 1 --lime-samples 128 --output '..\.cache\author-repro\runs\jitline-openstack-tables-3'

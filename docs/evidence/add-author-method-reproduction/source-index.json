@@ -1,0 +1,554 @@
+{
+  "kamei-author": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\run.json",
+      "evidencePath": "runs/kamei-author/run.json",
+      "sourceSha256": "6858a61bf5ee711215db79805ee8eeb9eb5c63235f135861eeb8bb82f5544724",
+      "bytes": 5084,
+      "includedBytes": 5084,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\metrics.json",
+      "evidencePath": "runs/kamei-author/metrics.json",
+      "sourceSha256": "b9dc3720d96a7ba4a10324fa723911e15d28de08a459791a686bea86b23c05e3",
+      "bytes": 13184,
+      "includedBytes": 13184,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\run.log",
+      "evidencePath": "runs/kamei-author/run.log",
+      "sourceSha256": "5aef816c14277cee4c163255f911fe447da9aed07b69a2b7c6a89595079a8efc",
+      "bytes": 93,
+      "includedBytes": 93,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\command.txt",
+      "evidencePath": "runs/kamei-author/command.txt",
+      "sourceSha256": "57327fafa2f7b78e6323d571c97f501a071293d1dc47f1e85f0cc7145610119a",
+      "bytes": 159,
+      "includedBytes": 159,
+      "sampleRows": null
+    },
+    "folds.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\folds.json",
+      "evidencePath": "runs/kamei-author/folds.json",
+      "sourceSha256": "0c6df97f71667041556001011b46ea7f1a8aadfbf43a56de9db7705a43d86e26",
+      "bytes": 13840,
+      "includedBytes": 13840,
+      "sampleRows": null
+    },
+    "coefficients.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\coefficients.json",
+      "evidencePath": "runs/kamei-author/coefficients.json",
+      "sourceSha256": "c53a428d50cb7fd6323fa58f2c26e70ec427c4d21b3eba9bb179339d0ebc55cb",
+      "bytes": 33331,
+      "includedBytes": 33331,
+      "sampleRows": null
+    },
+    "predictions.sample.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-author-final\\predictions.jsonl",
+      "evidencePath": "runs/kamei-author/predictions.sample.jsonl",
+      "sourceSha256": "8ce9150885918bbc65d2e77d681393489eee403ce6c51eec8d9b9602c05d5d71",
+      "bytes": 39223775,
+      "includedBytes": 17100,
+      "sampleRows": 100
+    }
+  },
+  "kamei-unified14": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\run.json",
+      "evidencePath": "runs/kamei-unified14/run.json",
+      "sourceSha256": "7affb09b7dbcc40236dd54c03f0bd9406302d805f08bd21452e04511b221e673",
+      "bytes": 5128,
+      "includedBytes": 5128,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\metrics.json",
+      "evidencePath": "runs/kamei-unified14/metrics.json",
+      "sourceSha256": "6e2fd097cf123b19c76e2b222405140c44cebb3515df378d1bbadf0b3de22955",
+      "bytes": 13199,
+      "includedBytes": 13199,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\run.log",
+      "evidencePath": "runs/kamei-unified14/run.log",
+      "sourceSha256": "92c9dac55be79b7562e5a4dfaf888bb709e32fc03e5c6feed910613f6a0b9f66",
+      "bytes": 96,
+      "includedBytes": 96,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\command.txt",
+      "evidencePath": "runs/kamei-unified14/command.txt",
+      "sourceSha256": "24a72f025f7582997c77ec13268146dd499e0b53d74a12ce2fc2ef731984c172",
+      "bytes": 165,
+      "includedBytes": 165,
+      "sampleRows": null
+    },
+    "folds.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\folds.json",
+      "evidencePath": "runs/kamei-unified14/folds.json",
+      "sourceSha256": "69effc31ed2e936dae034202bd772a1f0847cdb47851e55c17ea281dd6fb8b36",
+      "bytes": 13840,
+      "includedBytes": 13840,
+      "sampleRows": null
+    },
+    "coefficients.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\coefficients.json",
+      "evidencePath": "runs/kamei-unified14/coefficients.json",
+      "sourceSha256": "08a6df66bd5c421025e3b81c7f1e5d6258ed1536c0c18b7031d1cc1ba8397bbb",
+      "bytes": 37821,
+      "includedBytes": 37821,
+      "sampleRows": null
+    },
+    "predictions.sample.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\kamei-unified14-final\\predictions.jsonl",
+      "evidencePath": "runs/kamei-unified14/predictions.sample.jsonl",
+      "sourceSha256": "fe94643b0cea053903c4aff7965af474351d787dcf51a3fade99d62474d8a6db",
+      "bytes": 39223842,
+      "includedBytes": 17114,
+      "sampleRows": 100
+    }
+  },
+  "deepjit-evaluate": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\deepjit-author-eval-2\\run.json",
+      "evidencePath": "runs/deepjit-evaluate/run.json",
+      "sourceSha256": "135b80ebfd32d97f738a6892e349423a5e562d181e469ad056556cc1e5665370",
+      "bytes": 3870,
+      "includedBytes": 3870,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\deepjit-author-eval-2\\metrics.json",
+      "evidencePath": "runs/deepjit-evaluate/metrics.json",
+      "sourceSha256": "809d0c3e87c681faa64b3a77e71b8a17e1a1af71ae6d6758c78a1860e47bd18a",
+      "bytes": 2080,
+      "includedBytes": 2080,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\deepjit-author-eval-2\\run.log",
+      "evidencePath": "runs/deepjit-evaluate/run.log",
+      "sourceSha256": "bf9fe754dc0cb1393476f9dcc2738464e6084b8e16d91fce4e1655c2c28750a7",
+      "bytes": 162,
+      "includedBytes": 162,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\deepjit-author-eval-2\\command.txt",
+      "evidencePath": "runs/deepjit-evaluate/command.txt",
+      "sourceSha256": "204186334624a3b0dfb97ca25b9a55680ed46da561f9dade54ed4c0712dd8f4e",
+      "bytes": 3,
+      "includedBytes": 3,
+      "sampleRows": null
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\deepjit-author-eval-2\\predictions.jsonl",
+      "evidencePath": "runs/deepjit-evaluate/predictions.jsonl",
+      "sourceSha256": "9ea014a53c9e17077d74475c5e9a815b9d79857f7db21f7aa0cdb51fbe9ef53e",
+      "bytes": 123760,
+      "includedBytes": 123760,
+      "sampleRows": null
+    }
+  },
+  "deepjit-train-smoke": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\run.json",
+      "evidencePath": "runs/deepjit-train-smoke/run.json",
+      "sourceSha256": "82e45fc0edd2c0bd07ac055111d93a3aa5641417140e439bc6dd2ebfd0733cad",
+      "bytes": 4105,
+      "includedBytes": 4105,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\metrics.json",
+      "evidencePath": "runs/deepjit-train-smoke/metrics.json",
+      "sourceSha256": "9d7ecc493f25ebe0fb6b24ec922148f77b3f363ef0b2c64043b5ef7c55e5eeec",
+      "bytes": 2041,
+      "includedBytes": 2041,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\run.log",
+      "evidencePath": "runs/deepjit-train-smoke/run.log",
+      "sourceSha256": "ec232b8ee7f1226c80ee902bf0270e4952e696a9c4d82de4704f932d0914dae1",
+      "bytes": 131,
+      "includedBytes": 131,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\command.txt",
+      "evidencePath": "runs/deepjit-train-smoke/command.txt",
+      "sourceSha256": "014ad8653a160b8cef81e9c6707cb5a14ac8a6eeac01a4a91c7b4791f080a7bb",
+      "bytes": 206,
+      "includedBytes": 206,
+      "sampleRows": null
+    },
+    "model.pt.sha256": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\model.pt",
+      "sourceSha256": "53101931b6bba6c34edc9b8f8e950b1a566bcf02f80fe318cfdb02138078f6f3",
+      "bytes": 29721823,
+      "notCopied": "large model binary"
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\predictions.jsonl",
+      "evidencePath": "runs/deepjit-train-smoke/predictions.jsonl",
+      "sourceSha256": "8bbab7004afe04505144bed63c308dd99df0eb2168aef458248f7ac46dd6e176",
+      "bytes": 11758,
+      "includedBytes": 11758,
+      "sampleRows": null
+    }
+  },
+  "jitline-baseline": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\run.json",
+      "evidencePath": "runs/jitline-baseline/run.json",
+      "sourceSha256": "8047f3096a414e48fdf9efb2662771b9747a7e64bc13af9fd5e1942696370a00",
+      "bytes": 8229,
+      "includedBytes": 8229,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\metrics.json",
+      "evidencePath": "runs/jitline-baseline/metrics.json",
+      "sourceSha256": "ca9a3592533692b6ebe92be3479146b7ecd6e190b91f4c607aa7e72c0356d53e",
+      "bytes": 4705,
+      "includedBytes": 4705,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\run.log",
+      "evidencePath": "runs/jitline-baseline/run.log",
+      "sourceSha256": "62b482f37231158afb89a9f156ae115163e7231761a8748f054543e20c2cd8b1",
+      "bytes": 111,
+      "includedBytes": 111,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\command.txt",
+      "evidencePath": "runs/jitline-baseline/command.txt",
+      "sourceSha256": "8284ec9777c44c692fe5b2761336103c130764ed3b52fd1758a36e8d6e6d44b0",
+      "bytes": 207,
+      "includedBytes": 207,
+      "sampleRows": null
+    },
+    "model.joblib.sha256": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\model.joblib",
+      "sourceSha256": "b24ffbddf0f560be64c66676638c9635c187c45d24e2297ed8787935cd9194af",
+      "bytes": 195972657,
+      "notCopied": "large model binary"
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\predictions.jsonl",
+      "evidencePath": "runs/jitline-baseline/predictions.jsonl",
+      "sourceSha256": "962a1935de87d3d4530b3e8091244e864588c27585cd40225e871b3aeccf0314",
+      "bytes": 836514,
+      "includedBytes": 836514,
+      "sampleRows": null
+    },
+    "line-predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\line-predictions.jsonl",
+      "evidencePath": "runs/jitline-baseline/line-predictions.jsonl",
+      "sourceSha256": "817a2306934fe95d9122ad13b060b3cf09aa8c8a8c0b5a582c99edbf3c9bc58e",
+      "bytes": 246691,
+      "includedBytes": 246691,
+      "sampleRows": null
+    },
+    "token-line-map.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-full-1\\token-line-map.jsonl",
+      "evidencePath": "runs/jitline-baseline/token-line-map.jsonl",
+      "sourceSha256": "fb65b0e892df7044e8b5344f6b7d0553dae541de892225003c9842a6da7e69d8",
+      "bytes": 209794,
+      "includedBytes": 209794,
+      "sampleRows": null
+    }
+  },
+  "jitline-released": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\run.json",
+      "evidencePath": "runs/jitline-released/run.json",
+      "sourceSha256": "a9fd793699b7b1d89b7a610f51c5cbfd94883342cd24a91e1de129a3a2c9decf",
+      "bytes": 7604,
+      "includedBytes": 7604,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\metrics.json",
+      "evidencePath": "runs/jitline-released/metrics.json",
+      "sourceSha256": "01d138a278ca4fffc8f9171017f263d47d42bba8ff8da8b7644f308a34828117",
+      "bytes": 4761,
+      "includedBytes": 4761,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\run.log",
+      "evidencePath": "runs/jitline-released/run.log",
+      "sourceSha256": "a5203260f91b617a2eea7fe8770518af4460feb4910240bab8307201a0d5ca18",
+      "bytes": 111,
+      "includedBytes": 111,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\command.txt",
+      "evidencePath": "runs/jitline-released/command.txt",
+      "sourceSha256": "a0e2590d52d5d27d2abab96f8db9aea7de459971e865af71227c5e4bf87e26f4",
+      "bytes": 237,
+      "includedBytes": 237,
+      "sampleRows": null
+    },
+    "model.joblib.sha256": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\model.joblib",
+      "sourceSha256": "dbb6ccd72baabd43e2a3d692f577d6694eebc01c3e43d9af2dbb8b26a8254162",
+      "bytes": 19006640,
+      "notCopied": "large model binary"
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\predictions.jsonl",
+      "evidencePath": "runs/jitline-released/predictions.jsonl",
+      "sourceSha256": "f5b86fdb8cf152e361507756e45c51ad214edf8d812d86b8b700c6960edb689e",
+      "bytes": 802970,
+      "includedBytes": 802970,
+      "sampleRows": null
+    },
+    "line-predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\line-predictions.jsonl",
+      "evidencePath": "runs/jitline-released/line-predictions.jsonl",
+      "sourceSha256": "2044c0cc8a63892fc3eb809462e6d0a35ca2793043c1d81e9b97f89d63aa7261",
+      "bytes": 21896,
+      "includedBytes": 21896,
+      "sampleRows": null
+    },
+    "token-line-map.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitline-openstack-tables-3\\token-line-map.jsonl",
+      "evidencePath": "runs/jitline-released/token-line-map.jsonl",
+      "sourceSha256": "994ea5d81c5725093c01819f10d62ef6b81efa614be2194dee4047266e415574",
+      "bytes": 14406,
+      "includedBytes": 14406,
+      "sampleRows": null
+    }
+  },
+  "jitfine-smoke": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\run.json",
+      "evidencePath": "runs/jitfine-smoke/run.json",
+      "sourceSha256": "14e27142581bedc16e5ca14e8379c6fa22c2f86cc0168ff9c84599f5fae21a1b",
+      "bytes": 6879,
+      "includedBytes": 6879,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\metrics.json",
+      "evidencePath": "runs/jitfine-smoke/metrics.json",
+      "sourceSha256": "bfcafbddb2f50d4a70c87a2ab2b78584acc925a125ed3a88a6dd8c246399f0e3",
+      "bytes": 3910,
+      "includedBytes": 3910,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\run.log",
+      "evidencePath": "runs/jitfine-smoke/run.log",
+      "sourceSha256": "6ca96e84823f06e115e094662ca8b40f2889e73baec73b64bc0a844d6d4f39af",
+      "bytes": 150,
+      "includedBytes": 150,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\command.txt",
+      "evidencePath": "runs/jitfine-smoke/command.txt",
+      "sourceSha256": "d3a15f07f93ddcfe91c7d80864ab0aabe546356b48a444e1d987c6dc39953e2d",
+      "bytes": 212,
+      "includedBytes": 212,
+      "sampleRows": null
+    },
+    "model.pt.sha256": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\model.pt",
+      "sourceSha256": "96b99aac5a059c9969d523f6ea89f9a57749ef1582106c693221a68f5d0d9e2e",
+      "bytes": 498702535,
+      "notCopied": "large model binary"
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\predictions.jsonl",
+      "evidencePath": "runs/jitfine-smoke/predictions.jsonl",
+      "sourceSha256": "ff72ea555cad47e5e59817d34474b3e96c6d6ef85d420be9514f011718e3cf82",
+      "bytes": 1998,
+      "includedBytes": 1998,
+      "sampleRows": null
+    },
+    "line-predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\line-predictions.jsonl",
+      "evidencePath": "runs/jitfine-smoke/line-predictions.jsonl",
+      "sourceSha256": "a8a326336b3062689c1375cf2d193af5faf84f373f3f14af239ca60a48e0d323",
+      "bytes": 32415,
+      "includedBytes": 32415,
+      "sampleRows": null
+    },
+    "token-line-map.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitfine-smoke-2\\token-line-map.jsonl",
+      "evidencePath": "runs/jitfine-smoke/token-line-map.jsonl",
+      "sourceSha256": "65b6392b293a330ad4eebc9f39bbb7c39017a9d436d7c8bec2591ccdd0208a9f",
+      "bytes": 93276,
+      "includedBytes": 93276,
+      "sampleRows": null
+    }
+  },
+  "jitsmart-project": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\run.json",
+      "evidencePath": "runs/jitsmart-project/run.json",
+      "sourceSha256": "3528112fe051c259580c88ca04fdc53421c8afbd2c30b5109e7d5bc8afc49f46",
+      "bytes": 7145,
+      "includedBytes": 7145,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\metrics.json",
+      "evidencePath": "runs/jitsmart-project/metrics.json",
+      "sourceSha256": "5fe5a94cbc9a2d74635232baa292bbd5abb1f65c923f9a29876a68560c76f753",
+      "bytes": 3920,
+      "includedBytes": 3920,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\run.log",
+      "evidencePath": "runs/jitsmart-project/run.log",
+      "sourceSha256": "22b61e2154551274827cf6ae30bedbd90c4089710c148e9084aa9c4428bbebd6",
+      "bytes": 152,
+      "includedBytes": 152,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\command.txt",
+      "evidencePath": "runs/jitsmart-project/command.txt",
+      "sourceSha256": "71d7c8f92ec4dfb78de4d2d41052bd4bc2a27bc924cbdb870e3dba68f2198800",
+      "bytes": 213,
+      "includedBytes": 213,
+      "sampleRows": null
+    },
+    "model.pt.sha256": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\model.pt",
+      "sourceSha256": "ed90c2e819987c76611efc3d0c0186ce5a6f3b2e76cd8cfeab995b2f50a23409",
+      "bytes": 515792679,
+      "notCopied": "large model binary"
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\predictions.jsonl",
+      "evidencePath": "runs/jitsmart-project/predictions.jsonl",
+      "sourceSha256": "a0f2b7ce72a47f3ee7f19ac569c38118db5a77bb91cd819d469a3deae5341ee8",
+      "bytes": 497,
+      "includedBytes": 497,
+      "sampleRows": null
+    },
+    "line-predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-smoke-1\\line-predictions.jsonl",
+      "evidencePath": "runs/jitsmart-project/line-predictions.jsonl",
+      "sourceSha256": "8f35d76b484dee70dfea5695e49099184aeb279833d13408756c19066395e591",
+      "bytes": 43828,
+      "includedBytes": 43828,
+      "sampleRows": null
+    }
+  },
+  "jitsmart-cross": {
+    "run.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\run.json",
+      "evidencePath": "runs/jitsmart-cross/run.json",
+      "sourceSha256": "8a128454bf8001924f5ec816ddd3b09bfa92528f55af126f0e67c405f51e32c3",
+      "bytes": 7578,
+      "includedBytes": 7578,
+      "sampleRows": null
+    },
+    "metrics.json": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\metrics.json",
+      "evidencePath": "runs/jitsmart-cross/metrics.json",
+      "sourceSha256": "578fabec6a3bfad3af152f340c19a4092ceb12f70530f16724c80386237a7958",
+      "bytes": 4164,
+      "includedBytes": 4164,
+      "sampleRows": null
+    },
+    "run.log": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\run.log",
+      "evidencePath": "runs/jitsmart-cross/run.log",
+      "sourceSha256": "dbd4f40b1e41c491c3b1c02cfcc14e8f713445ccd4b5dd0f46d935373d421740",
+      "bytes": 152,
+      "includedBytes": 152,
+      "sampleRows": null
+    },
+    "command.txt": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\command.txt",
+      "evidencePath": "runs/jitsmart-cross/command.txt",
+      "sourceSha256": "8778638cea6f3f415178dcd464f0fac3abaff1bc87e2a4828edd99ac5dec6962",
+      "bytes": 247,
+      "includedBytes": 247,
+      "sampleRows": null
+    },
+    "model.pt.sha256": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\model.pt",
+      "sourceSha256": "76bfe95e6e7da1e7d64d8fdbfca2aea0adb26a2b499a189768ef479fafcb9702",
+      "bytes": 515792679,
+      "notCopied": "large model binary"
+    },
+    "predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\predictions.jsonl",
+      "evidencePath": "runs/jitsmart-cross/predictions.jsonl",
+      "sourceSha256": "db0f1a00caaa28e2b3dc9b3ed3897d1bd6082004b714f51359f7c124150d4d36",
+      "bytes": 502,
+      "includedBytes": 502,
+      "sampleRows": null
+    },
+    "line-predictions.jsonl": {
+      "source": "D:\\code\\jit-defect-prediction\\.cache\\author-repro\\runs\\jitsmart-cross-smoke-1\\line-predictions.jsonl",
+      "evidencePath": "runs/jitsmart-cross/line-predictions.jsonl",
+      "sourceSha256": "2063b6b1027d0ca7af3d233479830a25ab74cc88ad1b37fc7e1f9a37118f9a51",
+      "bytes": 73605,
+      "includedBytes": 73605,
+      "sampleRows": null
+    }
+  },
+  "v3-pydantic": {
+    "dataset-manifest": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\v3-datasets\\registry\\pydantic-decay\\pydantic-decay-2024-01-02_2024-12-31.json",
+      "evidencePath": "v3-pydantic/dataset-manifest.json",
+      "sourceSha256": "2e1eee34fc8635858230f8884d04fa981ff3bb87fd2905f8be9b556fa139dc14",
+      "bytes": 166662,
+      "includedBytes": 166662,
+      "sampleRows": null
+    },
+    "run-summary": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\kamei-v3-pydantic\\summary.json",
+      "evidencePath": "v3-pydantic/run-summary.json",
+      "sourceSha256": "5676337fd0882f02082b0cb54f7aa0a8d20ed1b6a2deb66368b089671ef36c58",
+      "bytes": 22388,
+      "includedBytes": 22388,
+      "sampleRows": null
+    },
+    "run-metrics": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\kamei-v3-pydantic\\metrics.json",
+      "evidencePath": "v3-pydantic/run-metrics.json",
+      "sourceSha256": "128bafe4e3488528900cec1030c690b118528a815ba073da2e2059174456dcb1",
+      "bytes": 1747,
+      "includedBytes": 1747,
+      "sampleRows": null
+    },
+    "run-model": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\kamei-v3-pydantic\\model.joblib",
+      "evidencePath": "v3-pydantic/run-model.joblib",
+      "sourceSha256": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61",
+      "bytes": 2065,
+      "includedBytes": 2065,
+      "sampleRows": null
+    },
+    "run-manifest": {
+      "source": "D:\\code\\jit-defect-prediction\\backend\\.cache\\author-repro\\runs\\kamei-v3-pydantic\\manifest.json",
+      "evidencePath": "v3-pydantic/run-manifest.json",
+      "sourceSha256": "f0ad3d94f1a5535be7345a93167977b39943f55d71acebebd6cec4cfae7cb84a",
+      "bytes": 7476,
+      "includedBytes": 7476,
+      "sampleRows": null
+    }
+  }
+}

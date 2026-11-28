@@ -1,0 +1,2367 @@
+........................................................................ [ 98%]
+
+.                                                                        [100%]
+
+============================== warnings summary ===============================
+
+tests/test_collect.py::test_collect_computes_declared_metrics
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-24 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_computes_declared_metrics
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-22 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_computes_declared_metrics
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-18 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_computes_declared_metrics
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-16 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_computes_declared_metrics
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-10 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_v3_uses_decay_rexp_without_changing_v2
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-69 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_v3_uses_decay_rexp_without_changing_v2
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-67 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_v3_uses_decay_rexp_without_changing_v2
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-61 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_szz_labels_the_previous_modification
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-115 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_szz_labels_the_previous_modification
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-113 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_szz_labels_the_previous_modification
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-107 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_commit_is_excluded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-168 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_commit_is_excluded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-166 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_commit_is_excluded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-162 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_commit_is_excluded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-160 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_commit_is_excluded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-158 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_commit_is_excluded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-152 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_binary_change_counts_no_lines
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-195 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_window_limit_is_rejected
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-234 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_window_limit_is_rejected
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-232 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_window_limit_is_rejected
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-226 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_registers_manifest_with_evidence
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-262 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_registers_manifest_with_evidence
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-260 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_registers_manifest_with_evidence
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-254 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_text_sidecar_is_deterministic_and_bounded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-307 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_text_sidecar_is_deterministic_and_bounded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-305 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_text_sidecar_is_deterministic_and_bounded
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-299 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_repository_writes_text_sidecar_and_registers_it
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-383 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_repository_writes_text_sidecar_and_registers_it
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-381 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_repository_writes_text_sidecar_and_registers_it
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-375 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-432 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-430 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-428 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-424 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-422 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-420 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_parallel_branches_use_their_own_parent_history
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-414 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-506 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-504 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-502 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-498 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-496 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-494 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-490 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-488 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-486 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_merge_uses_first_parent_history_and_discloses_limit
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-480 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_negative_file_age_is_clamped_and_counted
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-543 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_negative_file_age_is_clamped_and_counted
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-541 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_negative_file_age_is_clamped_and_counted
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-535 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_reuses_clone_and_fetches_new_commits
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-594 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_reuses_clone_and_fetches_new_commits
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-592 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_reuses_clone_and_fetches_new_commits
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-572 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_rebuilds_corrupted_clone
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-614 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_eviction_skips_leased_clone
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-650 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_eviction_skips_leased_clone
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-638 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_local_repository_is_not_written_to_cache
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-670 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_repository_cache_rejects_missing_branch_without_other_source
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-701 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_recent_unobserved_commit_is_immature
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-719 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_repository_does_not_overwrite_existing_output
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-777 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_repository_does_not_overwrite_existing_output
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-775 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+tests/test_collect.py::test_collect_repository_does_not_overwrite_existing_output
+
+  D:\code\jit-defect-prediction\backend\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-750 (_readerthread)
+
+
+
+  Traceback (most recent call last):
+
+    File "C:\Python314\Lib\threading.py", line 1082, in _bootstrap_inner
+
+      self._context.run(self.run)
+
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+
+    File "C:\Python314\Lib\threading.py", line 1024, in run
+
+      self._target(*self._args, **self._kwargs)
+
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    File "C:\Python314\Lib\subprocess.py", line 1613, in _readerthread
+
+      buffer.append(fh.read())
+
+                    ~~~~~~~^^
+
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 38: illegal multibyte sequence
+
+
+
+  Enable tracemalloc to get traceback where the object was allocated.
+
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+73 passed, 62 warnings in 67.45s (0:01:07)
+
+硥瑩损摯㵥ര�
