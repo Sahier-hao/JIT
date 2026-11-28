@@ -1,0 +1,1268 @@
+{
+  "schema": "author-method-metrics-v1",
+  "kamei": {
+    "author12": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.32539892884799465
+      },
+      "confusion": {
+        "fn": 9437,
+        "fp": 53671,
+        "tn": 145880,
+        "tp": 18429
+      },
+      "effort": {
+        "budgetLoc": 1564607.4113508037,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 20451,
+        "totalLoc": 7823037.056754018,
+        "usedLoc": 1564011.6406564978
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.3687053598223396
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 27866,
+      "precision": {
+        "reason": null,
+        "value": 0.2556033287101248
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6613435728127467
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.29824876193210365
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 27866,
+            "fp": 0,
+            "tn": 199551,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.12253261629517583
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7614061074109151
+      },
+      "samples": 227417,
+      "threshold": 0.5
+    },
+    "unified14": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.32667841710518186
+      },
+      "confusion": {
+        "fn": 9403,
+        "fp": 53691,
+        "tn": 145860,
+        "tp": 18463
+      },
+      "effort": {
+        "budgetLoc": 1564607.4113508037,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 20605,
+        "totalLoc": 7823037.056754018,
+        "usedLoc": 1564593.6834582896
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.36918616276744654
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 27866,
+      "precision": {
+        "reason": null,
+        "value": 0.25588324971588544
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6625636976961171
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.3014785042704371
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 27866,
+            "fp": 0,
+            "tn": 199551,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.12253261629517583
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7624238184982949
+      },
+      "samples": 227417,
+      "threshold": 0.5
+    }
+  },
+  "deepjit": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.250559327325653
+    },
+    "confusion": {
+      "fn": 163,
+      "fp": 0,
+      "tn": 1168,
+      "tp": 0
+    },
+    "effort": {
+      "budgetLoc": 0.0,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 1331,
+      "totalLoc": 0.0,
+      "usedLoc": 0.0
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.0
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": "总工作量为零",
+      "value": null
+    },
+    "positives": 163,
+    "precision": {
+      "reason": "没有预测为正的提交",
+      "value": null
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.0
+    },
+    "recall20Loc": {
+      "reason": "总工作量为零",
+      "value": null
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 163,
+          "fp": 0,
+          "tn": 1168,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.12246431254695718
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.7511135389528532
+    },
+    "samples": 1331,
+    "threshold": 0.5
+  },
+  "deepjitTrainSmoke": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.5782368117362349
+    },
+    "confusion": {
+      "fn": 0,
+      "fp": 64,
+      "tn": 0,
+      "tp": 64
+    },
+    "effort": {
+      "budgetLoc": 0.0,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 128,
+      "totalLoc": 0.0,
+      "usedLoc": 0.0
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.6666666666666666
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": "总工作量为零",
+      "value": null
+    },
+    "positives": 64,
+    "precision": {
+      "reason": null,
+      "value": 0.5
+    },
+    "recall": {
+      "reason": null,
+      "value": 1.0
+    },
+    "recall20Loc": {
+      "reason": "总工作量为零",
+      "value": null
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 64,
+          "fp": 0,
+          "tn": 64,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.5
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.58203125
+    },
+    "samples": 128,
+    "threshold": 0.5
+  },
+  "jitlineBaseline": {
+    "commit": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.39571992421191854
+      },
+      "confusion": {
+        "fn": 399,
+        "fp": 43,
+        "tn": 4962,
+        "tp": 76
+      },
+      "effort": {
+        "budgetLoc": 191680.40000000002,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 228,
+        "totalLoc": 958402.0,
+        "usedLoc": 191605.0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.2558922558922559
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.8570490324137651
+      },
+      "positives": 475,
+      "precision": {
+        "reason": null,
+        "value": 0.6386554621848739
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.16
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.25473684210526315
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 475,
+            "fp": 0,
+            "tn": 5005,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.08667883211678833
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.8063071665176929
+      },
+      "samples": 5480,
+      "threshold": 0.5
+    },
+    "data": {
+      "authorOriginalSplit": false,
+      "description": "JIT-Fine authors' fixed JIT-Defect4J JITLine baseline",
+      "kind": "jitfine-baseline",
+      "missingAuthorPickles": true
+    },
+    "limitations": [
+      "JIT-Fine baseline variant uses the JIT-Fine authors' fixed input, not JITLine's original OpenStack/Qt pickle split.",
+      "Released-table variants reconstruct a chronological split because the author-split pickles are absent.",
+      "LIME explains only a declared sample of correctly predicted positive commits.",
+      "Git line numbers are unavailable in the author tables; only file/index identity is emitted."
+    ],
+    "line": {
+      "baselines": {
+        "fileOrder": {
+          "commitsWithPositives": 10,
+          "firstPositiveInspectionMean": 0.0,
+          "firstPositiveInspectionMedian": 0.0,
+          "lineBudget": "ceil(20% of each commit's eligible lines)",
+          "mrr": 1.0,
+          "positives": 92,
+          "recallAt20PercentLines": 0.7391304347826086,
+          "recallAt20PercentPerCommitMean": 0.7315476190476191,
+          "topKHitRate": {
+            "top1": 1.0,
+            "top10": 1.0,
+            "top5": 1.0
+          }
+        },
+        "random": {
+          "firstPositiveInspectionMean": 4.298000000000001,
+          "mrr": 0.4616694615325011,
+          "recallAt20PercentLines": 0.20804347826086958,
+          "runs": 50,
+          "seed": 42,
+          "topKHitRate": {
+            "top1": 0.28,
+            "top10": 0.862,
+            "top5": 0.6880000000000002
+          }
+        }
+      },
+      "coverage": {
+        "explainedLines": 594,
+        "limeBackgroundRows": 256,
+        "limeSamples": 512,
+        "lineExplainedCommits": 10,
+        "positiveLinesInExplainedCommits": 92,
+        "selectedCommits": 10,
+        "skipped": {
+          "noCommitLines": 0,
+          "noPositiveTokens": 0
+        },
+        "testCommits": 5480,
+        "testPositiveCommits": 475
+      },
+      "metricDefinitions": {
+        "firstPositiveInspection": "number of lines ranked before the first positive line",
+        "mrr": "mean reciprocal rank of the first positive line",
+        "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+        "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+      },
+      "model": {
+        "commitsWithPositives": 10,
+        "firstPositiveInspectionMean": 7.3,
+        "firstPositiveInspectionMedian": 5.5,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 0.23514468864468868,
+        "positives": 92,
+        "recallAt20PercentLines": 0.1956521739130435,
+        "recallAt20PercentPerCommitMean": 0.1769230769230769,
+        "topKHitRate": {
+          "top1": 0.1,
+          "top10": 0.8,
+          "top5": 0.4
+        }
+      },
+      "positives": 92,
+      "samples": 594,
+      "tieRule": "score desc, path asc, idx asc"
+    },
+    "schema": "author-jitline-metrics-v1",
+    "training": {
+      "afterSmote": 29968,
+      "features": 24217,
+      "smoteK": 9,
+      "testRows": 5480,
+      "trainRows": 16374
+    }
+  },
+  "jitlineReleased": {
+    "commit": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.2776130787386496
+      },
+      "confusion": {
+        "fn": 209,
+        "fp": 1305,
+        "tn": 3566,
+        "tp": 291
+      },
+      "effort": {
+        "budgetLoc": 114010.20000000001,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 370,
+        "totalLoc": 570051.0,
+        "usedLoc": 113943.0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.2776717557251908
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 500,
+      "precision": {
+        "reason": null,
+        "value": 0.18233082706766918
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.582
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.256
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 500,
+            "fp": 0,
+            "tn": 4871,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.0930925339787749
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7291601313898582
+      },
+      "samples": 5371,
+      "threshold": 0.5
+    },
+    "data": {
+      "authorOriginalSplit": false,
+      "description": "JITLine released OpenStack tables with reconstructed split",
+      "kind": "released-openstack",
+      "missingAuthorPickles": true,
+      "splitRule": "chronological 80/20 reconstruction; original pickle split unavailable"
+    },
+    "limitations": [
+      "JIT-Fine baseline variant uses the JIT-Fine authors' fixed input, not JITLine's original OpenStack/Qt pickle split.",
+      "Released-table variants reconstruct a chronological split because the author-split pickles are absent.",
+      "LIME explains only a declared sample of correctly predicted positive commits.",
+      "Git line numbers are unavailable in the author tables; only file/index identity is emitted."
+    ],
+    "line": {
+      "baselines": {
+        "fileOrder": {
+          "commitsWithPositives": 1,
+          "firstPositiveInspectionMean": 3.0,
+          "firstPositiveInspectionMedian": 3.0,
+          "lineBudget": "ceil(20% of each commit's eligible lines)",
+          "mrr": 0.25,
+          "positives": 18,
+          "recallAt20PercentLines": 0.16666666666666666,
+          "recallAt20PercentPerCommitMean": 0.16666666666666666,
+          "topKHitRate": {
+            "top1": 0.0,
+            "top10": 1.0,
+            "top5": 1.0
+          }
+        },
+        "random": {
+          "firstPositiveInspectionMean": 1.94,
+          "mrr": 0.5825642135642135,
+          "recallAt20PercentLines": 0.2288888888888889,
+          "runs": 50,
+          "seed": 42,
+          "topKHitRate": {
+            "top1": 0.4,
+            "top10": 0.98,
+            "top5": 0.82
+          }
+        }
+      },
+      "coverage": {
+        "explainedLines": 61,
+        "limeBackgroundRows": 256,
+        "limeSamples": 128,
+        "lineExplainedCommits": 1,
+        "positiveLinesInExplainedCommits": 18,
+        "selectedCommits": 1,
+        "skipped": {
+          "noCommitLines": 1,
+          "noPositiveTokens": 0
+        },
+        "testCommits": 5371,
+        "testPositiveCommits": 500
+      },
+      "metricDefinitions": {
+        "firstPositiveInspection": "number of lines ranked before the first positive line",
+        "mrr": "mean reciprocal rank of the first positive line",
+        "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+        "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+      },
+      "model": {
+        "commitsWithPositives": 1,
+        "firstPositiveInspectionMean": 1.0,
+        "firstPositiveInspectionMedian": 1.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 0.5,
+        "positives": 18,
+        "recallAt20PercentLines": 0.2222222222222222,
+        "recallAt20PercentPerCommitMean": 0.2222222222222222,
+        "topKHitRate": {
+          "top1": 0.0,
+          "top10": 1.0,
+          "top5": 1.0
+        }
+      },
+      "positives": 18,
+      "samples": 61,
+      "tieRule": "score desc, path asc, idx asc"
+    },
+    "schema": "author-jitline-metrics-v1",
+    "training": {
+      "afterSmote": 2000,
+      "features": 769,
+      "smoteK": 9,
+      "testRows": 5371,
+      "trainRows": 2000
+    }
+  },
+  "jitfineSmoke": {
+    "commit": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.7514204545454545
+      },
+      "confusion": {
+        "fn": 6,
+        "fp": 0,
+        "tn": 8,
+        "tp": 2
+      },
+      "effort": {
+        "budgetLoc": 944.8000000000001,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 0,
+        "totalLoc": 4724.0,
+        "usedLoc": 0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.4
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.8801707445872207
+      },
+      "positives": 8,
+      "precision": {
+        "reason": null,
+        "value": 1.0
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.25
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.0
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 8,
+            "fp": 0,
+            "tn": 8,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.5
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.703125
+      },
+      "samples": 16,
+      "threshold": 0.5
+    },
+    "limitations": [
+      "This is a real-sample CPU smoke run, not the author 50-epoch full protocol.",
+      "Author per-split feature standardization is preserved and is not a clean train-only scaling protocol.",
+      "Line labels do not contain Git line numbers; only table index/file identity is available."
+    ],
+    "line": {
+      "baselines": {
+        "fileOrder": {
+          "commitsWithPositives": 2,
+          "firstPositiveInspectionMean": 20.0,
+          "firstPositiveInspectionMedian": 20.0,
+          "lineBudget": "ceil(20% of each commit's eligible lines)",
+          "mrr": 0.05357142857142857,
+          "positives": 6,
+          "recallAt20PercentLines": 0.0,
+          "recallAt20PercentPerCommitMean": 0.0,
+          "topKHitRate": {
+            "top1": 0.0,
+            "top10": 0.0,
+            "top5": 0.0
+          }
+        },
+        "random": {
+          "firstPositiveInspectionMean": 9.87,
+          "mrr": 0.21614634205379876,
+          "recallAt20PercentLines": 0.21333333333333332,
+          "runs": 50,
+          "seed": 42,
+          "topKHitRate": {
+            "top1": 0.07,
+            "top10": 0.64,
+            "top5": 0.34
+          }
+        }
+      },
+      "coverage": {
+        "explainedCommits": 2,
+        "lineRows": 93,
+        "tokenLinks": 682,
+        "uncoveredReason": null
+      },
+      "metricDefinitions": {
+        "firstPositiveInspection": "number of lines ranked before the first positive line",
+        "mrr": "mean reciprocal rank of the first positive line",
+        "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+        "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+      },
+      "model": {
+        "commitsWithPositives": 2,
+        "firstPositiveInspectionMean": 7.0,
+        "firstPositiveInspectionMedian": 7.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 0.125,
+        "positives": 6,
+        "recallAt20PercentLines": 0.16666666666666666,
+        "recallAt20PercentPerCommitMean": 0.16666666666666666,
+        "topKHitRate": {
+          "top1": 0.0,
+          "top10": 1.0,
+          "top5": 0.0
+        }
+      },
+      "positives": 6,
+      "samples": 93,
+      "tieRule": "score desc, path asc, idx asc"
+    },
+    "samples": {
+      "test": 16,
+      "train": 8,
+      "valid": 4
+    },
+    "schema": "author-jitfine-metrics-v1"
+  },
+  "jitsmartProjectSmoke": {
+    "commit": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.5
+      },
+      "confusion": {
+        "fn": 0,
+        "fp": 2,
+        "tn": 0,
+        "tp": 2
+      },
+      "effort": {
+        "budgetLoc": 63.400000000000006,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 0,
+        "totalLoc": 317.0,
+        "usedLoc": 0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.6666666666666666
+      },
+      "ifa": {
+        "reason": null,
+        "value": 1
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.5235457063711911
+      },
+      "positives": 2,
+      "precision": {
+        "reason": null,
+        "value": 0.5
+      },
+      "recall": {
+        "reason": null,
+        "value": 1.0
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.0
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 2,
+            "fp": 0,
+            "tn": 2,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.5
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.25
+      },
+      "samples": 4,
+      "threshold": 0.5
+    },
+    "limitations": [
+      "This is a real-sample CPU smoke run, not the author 50-epoch full protocol.",
+      "The line branch is evaluated on the selected test commits, not the full 5,480-commit test split.",
+      "Author tables do not provide Git line numbers; file and table idx are preserved."
+    ],
+    "line": {
+      "baselines": {
+        "fileOrder": {
+          "commitsWithPositives": 2,
+          "firstPositiveInspectionMean": 0.0,
+          "firstPositiveInspectionMedian": 0.0,
+          "lineBudget": "ceil(20% of each commit's eligible lines)",
+          "mrr": 1.0,
+          "positives": 3,
+          "recallAt20PercentLines": 1.0,
+          "recallAt20PercentPerCommitMean": 1.0,
+          "topKHitRate": {
+            "top1": 1.0,
+            "top10": 1.0,
+            "top5": 1.0
+          }
+        },
+        "random": {
+          "firstPositiveInspectionMean": 23.25,
+          "mrr": 0.08442577098438184,
+          "recallAt20PercentLines": 0.24,
+          "runs": 50,
+          "seed": 42,
+          "topKHitRate": {
+            "top1": 0.01,
+            "top10": 0.22,
+            "top5": 0.08
+          }
+        }
+      },
+      "coverage": {
+        "lineRows": 121,
+        "positiveLines": 3,
+        "testCommits": 4,
+        "testPositiveCommits": 2,
+        "truncation": {
+          "lineTruncations": 0,
+          "tokenTruncations": 0
+        }
+      },
+      "metricDefinitions": {
+        "firstPositiveInspection": "number of lines ranked before the first positive line",
+        "mrr": "mean reciprocal rank of the first positive line",
+        "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+        "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+      },
+      "model": {
+        "commitsWithPositives": 2,
+        "firstPositiveInspectionMean": 1.5,
+        "firstPositiveInspectionMedian": 1.5,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 0.625,
+        "positives": 3,
+        "recallAt20PercentLines": 1.0,
+        "recallAt20PercentPerCommitMean": 1.0,
+        "topKHitRate": {
+          "top1": 0.5,
+          "top10": 1.0,
+          "top5": 1.0
+        }
+      },
+      "positives": 3,
+      "samples": 121,
+      "tieRule": "score desc, path asc, idx asc"
+    },
+    "samples": {
+      "test": 4,
+      "train": 4,
+      "valid": 2
+    },
+    "schema": "author-jitsmart-metrics-v1"
+  },
+  "jitsmartCrossSmoke": {
+    "commit": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.75
+      },
+      "confusion": {
+        "fn": 1,
+        "fp": 1,
+        "tn": 1,
+        "tp": 1
+      },
+      "effort": {
+        "budgetLoc": 1150.0,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 3,
+        "totalLoc": 5750.0,
+        "usedLoc": 191.0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.5
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.996294924045943
+      },
+      "positives": 2,
+      "precision": {
+        "reason": null,
+        "value": 0.5
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.5
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.5
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 2,
+            "fp": 0,
+            "tn": 2,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.5
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.5
+      },
+      "samples": 4,
+      "threshold": 0.5
+    },
+    "limitations": [
+      "This is a real-sample CPU smoke run, not the author 50-epoch full protocol.",
+      "The line branch is evaluated on the selected test commits, not the full 5,480-commit test split.",
+      "Author tables do not provide Git line numbers; file and table idx are preserved."
+    ],
+    "line": {
+      "baselines": {
+        "fileOrder": {
+          "commitsWithPositives": 2,
+          "firstPositiveInspectionMean": 0.0,
+          "firstPositiveInspectionMedian": 0.0,
+          "lineBudget": "ceil(20% of each commit's eligible lines)",
+          "mrr": 1.0,
+          "positives": 17,
+          "recallAt20PercentLines": 0.5882352941176471,
+          "recallAt20PercentPerCommitMean": 0.6439393939393939,
+          "topKHitRate": {
+            "top1": 1.0,
+            "top10": 1.0,
+            "top5": 1.0
+          }
+        },
+        "random": {
+          "firstPositiveInspectionMean": 13.19,
+          "mrr": 0.4240831912470653,
+          "recallAt20PercentLines": 0.20470588235294118,
+          "runs": 50,
+          "seed": 42,
+          "topKHitRate": {
+            "top1": 0.29,
+            "top10": 0.66,
+            "top5": 0.59
+          }
+        }
+      },
+      "coverage": {
+        "lineRows": 187,
+        "positiveLines": 17,
+        "testCommits": 4,
+        "testPositiveCommits": 2,
+        "testProjects": [
+          "commons-math"
+        ],
+        "trainProjects": [
+          "ant-ivy",
+          "commons-collections",
+          "commons-dbcp",
+          "opennlp"
+        ],
+        "truncation": {
+          "lineTruncations": 0,
+          "tokenTruncations": 0
+        }
+      },
+      "metricDefinitions": {
+        "firstPositiveInspection": "number of lines ranked before the first positive line",
+        "mrr": "mean reciprocal rank of the first positive line",
+        "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+        "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+      },
+      "model": {
+        "commitsWithPositives": 2,
+        "firstPositiveInspectionMean": 0.0,
+        "firstPositiveInspectionMedian": 0.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 1.0,
+        "positives": 17,
+        "recallAt20PercentLines": 0.4117647058823529,
+        "recallAt20PercentPerCommitMean": 0.4318181818181818,
+        "topKHitRate": {
+          "top1": 1.0,
+          "top10": 1.0,
+          "top5": 1.0
+        }
+      },
+      "positives": 17,
+      "samples": 187,
+      "tieRule": "score desc, path asc, idx asc"
+    },
+    "samples": {
+      "test": 4,
+      "train": 4,
+      "valid": 2
+    },
+    "schema": "author-jitsmart-metrics-v1"
+  },
+  "kameiV3Pydantic": {
+    "runId": "c70fa1c9662d7a3efa6a2ca8f244a2721a83731c4fe0a9af3613dec63ff842ee",
+    "datasetVersion": "pydantic-decay-2024-01-02_2024-12-31",
+    "featureSchema": "kamei14-git-v3",
+    "model": {
+      "id": "logistic-regression@kamei14-git-v3",
+      "name": "逻辑回归 · kamei14-git-v3"
+    },
+    "modelSha256": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61",
+    "metrics": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.29013336206772666
+      },
+      "confusion": {
+        "fn": 6,
+        "fp": 3,
+        "tn": 104,
+        "tp": 2
+      },
+      "counts": {
+        "negative": 107,
+        "positive": 8,
+        "records": 115
+      },
+      "effort": {
+        "budgetLoc": 1948.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 4,
+        "totalLoc": 9742,
+        "usedLoc": 823
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.3076923076923077
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.8078722221468954
+      },
+      "poptEffort": {
+        "areaModel": 0.7913480291521247,
+        "areaOracle": 0.9731638780537879,
+        "areaWorst": 0.026836121946212273,
+        "name": "Popt (density-ranked, full-range)",
+        "ordering": "density-desc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 9742
+      },
+      "precision": {
+        "reason": null,
+        "value": 0.4
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.25
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.25
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 8,
+            "fp": 0,
+            "tn": 107,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.06956521739130435
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.5899532710280374
+      },
+      "threshold": 0.5
+    },
+    "samples": {
+      "negative": 107,
+      "positive": 8,
+      "records": 115
+    },
+    "admission": {
+      "available": true,
+      "counts": {
+        "eligibleRecords": 761,
+        "excludedImmature": 248,
+        "excludedUnknown": 0,
+        "originalRecords": 1009,
+        "positivesEligible": 93,
+        "positivesOriginal": 113
+      },
+      "coverage": {
+        "complete": true,
+        "historyBounded": false,
+        "reason": null,
+        "truncated": false,
+        "unresolvedRanges": 0
+      },
+      "historyStatus": "complete",
+      "identity": "24d8d042358c9fad8cb69980b36f90588ac0cc865b00d45ce46cca3ef75a0275",
+      "maturityDays": 90,
+      "observationWindow": {
+        "fromEpoch": 1704067200,
+        "through": "2025-01-01T00:00:00Z",
+        "throughEpoch": 1735689600
+      },
+      "observedThrough": 1735689600,
+      "observedThroughIso": "2025-01-01T00:00:00Z",
+      "policy": "mature-observed-v1",
+      "protocol": "mature-observed-v1",
+      "reason": null,
+      "restricted": false,
+      "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+      "revisionEpoch": 1795016590,
+      "sampleWindow": {
+        "endEpoch": 1735689600,
+        "since": "2024-01-01",
+        "startEpoch": 1704067200,
+        "until": "2025-01-01"
+      },
+      "statusRule": "commit-label-status-v1"
+    },
+    "split": {
+      "test": {
+        "count": 115,
+        "end": "2024-10-02T19:32:18Z",
+        "positiveCount": 8,
+        "start": "2024-08-30T16:48:40Z"
+      },
+      "train": {
+        "count": 532,
+        "end": "2024-08-01T12:53:45Z",
+        "positiveCount": 73,
+        "start": "2024-01-02T08:07:05Z"
+      },
+      "validation": {
+        "count": 114,
+        "end": "2024-08-30T00:52:05Z",
+        "positiveCount": 12,
+        "start": "2024-08-01T18:44:57Z"
+      }
+    },
+    "labelEligible": true,
+    "modelReleaseEligible": false,
+    "releaseFailure": "ROC-AUC 0.58995 is below jit-release-v1 threshold 0.65."
+  }
+}

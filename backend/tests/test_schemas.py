@@ -8,6 +8,7 @@ import pytest
 def test_two_schemas_are_registered_with_declared_order():
     from jit_baseline.schemas import SCHEMAS, get_schema
     assert set(SCHEMAS) == {"openstack-six-v1", "kamei14-v1", "kamei14-git-v1", "kamei14-git-v2",
+                            "kamei14-git-v3",
                             "kamei14-semantic-codebert-v1", "code-semantic-codebert-v1",
                             "kamei14-benchmark-v1", "kamei14-2013-v1"}
     assert get_schema("openstack-six-v1").in_model_names() == ("ns", "nd", "nf", "ent", "la", "ld")
@@ -26,6 +27,10 @@ def test_two_schemas_are_registered_with_declared_order():
         "ndev", "age", "nuc", "exp", "rexp", "sexp")
     assert benchmark.input_width() == 14 and benchmark.unavailable() == ()
     assert benchmark.log1p_indices() == (0, 1, 2, 4, 5, 6, 8, 10, 11, 12, 13)
+    v3 = get_schema("kamei14-git-v3")
+    assert v3.in_model_names() == benchmark.in_model_names()
+    assert v3.by_name("rexp").integer is False
+    assert "365.25" in v3.by_name("rexp").reason
 
 
 def test_schema_identity_ignores_default_extension_declarations():

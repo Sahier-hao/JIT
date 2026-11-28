@@ -1,0 +1,155 @@
+FF                                                                       [100%]
+
+================================== FAILURES ===================================
+
+___ test_split_records_boundary_keeps_same_timestamp_group_in_one_partition ___
+
+
+
+    def test_split_records_boundary_keeps_same_timestamp_group_in_one_partition():
+
+        """�߽�·����ͬһʱ����Ķ����ύ�����������ͬһ��������������й©��"""
+
+        records = [
+
+            {"id": "a" * 40, "epoch": 100, "time": "2020-01-01T00:00:00Z", "label": 1},
+
+            {"id": "b" * 40, "epoch": 200, "time": "2020-01-02T00:00:00Z", "label": 0},
+
+            {"id": "c" * 40, "epoch": 300, "time": "2020-01-03T00:00:00Z", "label": 1},
+
+            {"id": "d" * 40, "epoch": 300, "time": "2020-01-03T00:00:00Z", "label": 0},
+
+            {"id": "e" * 40, "epoch": 400, "time": "2020-01-04T00:00:00Z", "label": 0},
+
+            {"id": "f" * 40, "epoch": 500, "time": "2020-01-05T00:00:00Z", "label": 1},
+
+            {"id": "g" * 40, "epoch": 500, "time": "2020-01-05T00:00:00Z", "label": 0},
+
+        ]
+
+>       split, boundaries, _ = split_records(records, "temporal-60-20-20")
+
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+tests\test_sprint2_unit_core.py:626:
+
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+
+
+records = [{'id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'epoch': 100, 'time': '2020-01-01T00:00:00Z', 'label': 1}, {'id': ... 0}, {'id': 'ffffffffffffffffffffffffffffffffffffffff', 'epoch': 500, 'time': '2020-01-05T00:00:00Z', 'label': 1}, ...]
+
+preset = 'temporal-60-20-20', require_classes = True
+
+
+
+    def split_records(records, preset=None, *, require_classes=True):
+
+        """Split unique records by sorted timestamp groups without crossing a boundary."""
+
+        preset = resolve_preset(preset)
+
+        if not records or len({record["id"] for record in records}) != len(records):
+
+            raise BaselineError("SPLIT_INVALID", "����Ϊ�ջ��ύ����ظ�")
+
+        if any(not isinstance(record["epoch"], int) or isinstance(record["epoch"], bool)
+
+               for record in records):
+
+            raise BaselineError("SPLIT_INVALID", "����ʱ����Ч")
+
+        ordered = sorted(records, key=lambda record: (record["epoch"], record["id"]))
+
+        times = sorted({record["epoch"] for record in ordered})
+
+        if len(times) < 3:
+
+            raise BaselineError("SPLIT_INVALID", "ʱ���鲻�㣬�����γ������ǿշ���")
+
+        ratios = preset_view(preset)["ratios"]
+
+        first = math.floor(ratios["train"] / 100 * len(times))
+
+        second = math.floor((ratios["train"] + ratios["validation"]) / 100 * len(times))
+
+        if first <= 0 or second <= first or second >= len(times):
+
+            raise BaselineError("SPLIT_INVALID", "ʱ���鲻���԰���ѡԤ���γ������ǿշ���")
+
+        boundaries = [times[first], times[second]]
+
+        split = {name: [] for name in PARTITIONS}
+
+        for record in ordered:
+
+            partition = ("train" if record["epoch"] < boundaries[0]
+
+                         else "validation" if record["epoch"] < boundaries[1]
+
+                         else "test")
+
+            split[partition].append(record)
+
+        if any(not part for part in split.values()):
+
+            raise BaselineError("SPLIT_INVALID", "ʱ����������ռ���")
+
+        if require_classes and any({record["label"] for record in split[name]} != {0, 1}
+
+                                   for name in PARTITIONS):
+
+>           raise BaselineError("SPLIT_INVALID", "ѵ��������֤������Լ�ֻ��һ���ǩ")
+
+E           jit_baseline.core.errors.BaselineError: ѵ��������֤������Լ�ֻ��һ���ǩ
+
+
+
+jit_baseline\ml\splits.py:162: BaselineError
+
+________________ test_preset_view_normal_returns_frozen_ratios ________________
+
+
+
+    def test_preset_view_normal_returns_frozen_ratios():
+
+        """����·����Ԥ����ͼ���뷵�ع̶�������ʱ�����ȶ���ʶ��"""
+
+>       assert preset_view("temporal-80-10-10") == {
+
+            "id": "temporal-80-10-10",
+
+            "ratios": {"train": 80, "validation": 10, "test": 10},
+
+            "timezone": "UTC",
+
+        }
+
+E       AssertionError: assert {'kind': 'pre...ezone': 'UTC'} == {'id': 'tempo...ezone': 'UTC'}
+
+E
+
+E         Omitting 3 identical items, use -vv to show
+
+E         Left contains 1 more item:
+
+E         {'kind': 'preset'}
+
+E         Use -v to get more diff
+
+
+
+tests\test_sprint2_unit_core.py:708: AssertionError
+
+=========================== short test summary info ===========================
+
+FAILED tests/test_sprint2_unit_core.py::test_split_records_boundary_keeps_same_timestamp_group_in_one_partition
+
+FAILED tests/test_sprint2_unit_core.py::test_preset_view_normal_returns_frozen_ratios
+
+2 failed in 3.25s
+
+硥瑩损摯㵥റ�

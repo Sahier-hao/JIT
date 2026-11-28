@@ -1,0 +1,162 @@
+{
+  "commit": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.75
+    },
+    "confusion": {
+      "fn": 1,
+      "fp": 1,
+      "tn": 1,
+      "tp": 1
+    },
+    "effort": {
+      "budgetLoc": 1150.0,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 3,
+      "totalLoc": 5750.0,
+      "usedLoc": 191.0
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.5
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": null,
+      "value": 0.996294924045943
+    },
+    "positives": 2,
+    "precision": {
+      "reason": null,
+      "value": 0.5
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.5
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.5
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 2,
+          "fp": 0,
+          "tn": 2,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.5
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.5
+    },
+    "samples": 4,
+    "threshold": 0.5
+  },
+  "limitations": [
+    "This is a real-sample CPU smoke run, not the author 50-epoch full protocol.",
+    "The line branch is evaluated on the selected test commits, not the full 5,480-commit test split.",
+    "Author tables do not provide Git line numbers; file and table idx are preserved."
+  ],
+  "line": {
+    "baselines": {
+      "fileOrder": {
+        "commitsWithPositives": 2,
+        "firstPositiveInspectionMean": 0.0,
+        "firstPositiveInspectionMedian": 0.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 1.0,
+        "positives": 17,
+        "recallAt20PercentLines": 0.5882352941176471,
+        "recallAt20PercentPerCommitMean": 0.6439393939393939,
+        "topKHitRate": {
+          "top1": 1.0,
+          "top10": 1.0,
+          "top5": 1.0
+        }
+      },
+      "random": {
+        "firstPositiveInspectionMean": 13.19,
+        "mrr": 0.4240831912470653,
+        "recallAt20PercentLines": 0.20470588235294118,
+        "runs": 50,
+        "seed": 42,
+        "topKHitRate": {
+          "top1": 0.29,
+          "top10": 0.66,
+          "top5": 0.59
+        }
+      }
+    },
+    "coverage": {
+      "lineRows": 187,
+      "positiveLines": 17,
+      "testCommits": 4,
+      "testPositiveCommits": 2,
+      "testProjects": [
+        "commons-math"
+      ],
+      "trainProjects": [
+        "ant-ivy",
+        "commons-collections",
+        "commons-dbcp",
+        "opennlp"
+      ],
+      "truncation": {
+        "lineTruncations": 0,
+        "tokenTruncations": 0
+      }
+    },
+    "metricDefinitions": {
+      "firstPositiveInspection": "number of lines ranked before the first positive line",
+      "mrr": "mean reciprocal rank of the first positive line",
+      "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+      "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+    },
+    "model": {
+      "commitsWithPositives": 2,
+      "firstPositiveInspectionMean": 0.0,
+      "firstPositiveInspectionMedian": 0.0,
+      "lineBudget": "ceil(20% of each commit's eligible lines)",
+      "mrr": 1.0,
+      "positives": 17,
+      "recallAt20PercentLines": 0.4117647058823529,
+      "recallAt20PercentPerCommitMean": 0.4318181818181818,
+      "topKHitRate": {
+        "top1": 1.0,
+        "top10": 1.0,
+        "top5": 1.0
+      }
+    },
+    "positives": 17,
+    "samples": 187,
+    "tieRule": "score desc, path asc, idx asc"
+  },
+  "samples": {
+    "test": 4,
+    "train": 4,
+    "valid": 2
+  },
+  "schema": "author-jitsmart-metrics-v1"
+}

@@ -77,6 +77,29 @@ def test_collect_computes_declared_metrics(tmp_path):
     assert modified["nuc"] == 1 and modified["ndev"] == 1 and modified["exp"] == 1
 
 
+def test_collect_v3_uses_decay_rexp_without_changing_v2(tmp_path):
+    repo = _make_repo(tmp_path / "repo")
+    first = _commit(repo, "add module", {"pkg/a.py": "value = 1\n"},
+                    "2024-01-01T00:00:00+00:00")
+    second = _commit(repo, "fix: adjust", {"pkg/a.py": "value = 2\n"},
+                     "2025-01-01T00:00:00+00:00")
+
+    v2 = collect(repo, since="2024-01-01", until="2025-01-10", szz="simple")
+    v3 = collect(repo, since="2024-01-01", until="2025-01-10", szz="simple",
+                 schema="kamei14-git-v3")
+    v2_record = next(record for record in v2["records"] if record["id"] == second)
+    v3_record = next(record for record in v3["records"] if record["id"] == second)
+
+    # The prior commit is outside v2's 90-day window but still contributes
+    # one year's decayed weight under v3.
+    assert v2_record["metrics"]["rexp"] == 0
+    assert v3_record["metrics"]["rexp"] == pytest.approx(
+        1.0 / (1.0 + 366.0 / 365.25), rel=1e-12)
+    assert v3["collection"]["featureSchema"]["name"] == "kamei14-git-v3"
+    assert v3["collection"]["featureSchema"]["decayYearDays"] == 365.25
+    assert v3["collection"]["counts"]["negativeAuthorAgeCommits"] == 0
+
+
 def test_szz_labels_the_previous_modification(tmp_path):
     repo = _make_repo(tmp_path / "repo")
     first = _commit(repo, "add module", {"pkg/a.py": LINES}, "2024-01-01T00:00:00+00:00")

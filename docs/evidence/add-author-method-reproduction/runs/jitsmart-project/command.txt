@@ -1,0 +1,1 @@
+'D:\code\jit-defect-prediction\backend\jit_baseline\cli.py' author-run --method jitsmart --max-train 4 --max-valid 2 --max-test 4 --epochs 1 --batch-size 1 --output '..\.cache\author-repro\runs\jitsmart-smoke-1'

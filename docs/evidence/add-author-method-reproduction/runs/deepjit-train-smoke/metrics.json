@@ -1,0 +1,86 @@
+{
+  "limitations": [
+    "OpenStack author data stores changed code strings but not per-commit epochs/LOC for all metrics.",
+    "Popt and Recall@20%LOC are undefined when no whole-commit work cost is available.",
+    "The evaluate mode is a model/data inference reproduction, not a fresh 25-epoch training rerun."
+  ],
+  "metrics": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.5782368117362349
+    },
+    "confusion": {
+      "fn": 0,
+      "fp": 64,
+      "tn": 0,
+      "tp": 64
+    },
+    "effort": {
+      "budgetLoc": 0.0,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 128,
+      "totalLoc": 0.0,
+      "usedLoc": 0.0
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.6666666666666666
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": "总工作量为零",
+      "value": null
+    },
+    "positives": 64,
+    "precision": {
+      "reason": null,
+      "value": 0.5
+    },
+    "recall": {
+      "reason": null,
+      "value": 1.0
+    },
+    "recall20Loc": {
+      "reason": "总工作量为零",
+      "value": null
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 64,
+          "fp": 0,
+          "tn": 64,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.5
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.58203125
+    },
+    "samples": 128,
+    "threshold": 0.5
+  },
+  "mode": "train",
+  "model": "locally trained author architecture",
+  "schema": "author-deepjit-metrics-v1",
+  "source": "author Zenodo 3965246 OpenStack"
+}

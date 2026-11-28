@@ -115,6 +115,16 @@ _GIT14 = Schema("kamei14-git-v1", (
 # 祖先链口径：字段与 v1 相同，但历史状态只沿父链推进。
 # 用独立名称避免把旧模型静默套到新口径数据上。
 _GIT14_V2 = Schema("kamei14-git-v2", _GIT14.fields)
+_GIT14_V3 = Schema("kamei14-git-v3", tuple(
+    replace(
+        field,
+        integer=False if field.name == "rexp" else field.integer,
+        reason=("同一作者在父链历史上更早提交的连续时间衰减累计；"
+                "权重 1/(1+ageDays/365.25)，不是近 90 天计数")
+        if field.name == "rexp" else field.reason,
+    )
+    for field in _GIT14.fields
+))
 
 
 _SEMANTIC_BLOCK = {
@@ -153,7 +163,7 @@ _KAMEI_2013 = Schema(KAMEI_2013_SCHEMA, tuple(
 ))
 
 SCHEMAS = {schema.name: schema
-           for schema in (_SIX, _KAMEI14, _GIT14, _GIT14_V2,
+           for schema in (_SIX, _KAMEI14, _GIT14, _GIT14_V2, _GIT14_V3,
                           _GIT14_SEMANTIC, _SEMANTIC_ONLY, _BENCHMARK14, _KAMEI_2013)}
 DEFAULT_SCHEMA = "openstack-six-v1"
 

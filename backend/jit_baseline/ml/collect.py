@@ -32,10 +32,17 @@ from .szz import (SZZ_FULL_LIMITATIONS, SZZ_FULL_RULE, SZZ_LINE_LIMITATIONS, SZZ
                    build_resolver, label_repository as label_repository_lines)
 
 SCHEMA_NAME = "kamei14-git-v2"
+REXP_DECAY_SCHEMA = "kamei14-git-v3"
+SUPPORTED_SCHEMAS = (SCHEMA_NAME, REXP_DECAY_SCHEMA)
 LEGACY_SCHEMA_NAME = "kamei14-git-v1"
 SZZ_RULE = "szz-simple-v1"
 SZZ_PATTERN = r"(?i)\b(fix(?:es|ed)?|hotfix|bug(?:fix)?|defect|issue)\b"
 RECENT_DAYS = 90
+REXP_DECAY_YEAR_DAYS = 365.25
+REXP_RULES = {
+    SCHEMA_NAME: "同一作者在父链历史上最近 90 天内的提交数",
+    REXP_DECAY_SCHEMA: "同一作者父链历史提交的 1/(1+ageDays/365.25) 累加",
+}
 MAX_COMMITS = 50000
 TEXT_RULE = "diff-bound-v1"
 TEXT_MAX_LINES_PER_FILE = 80
@@ -383,7 +390,7 @@ class _History:
             key = (commit["email"], subsystem)
             self.author_dirs[key] = self.author_dirs.get(key, 0) + 1
 
-    def features(self, commit):
+    def features(self, commit, *, schema=SCHEMA_NAME):
         files = commit["files"]
         paths = [item["path"] for item in files]
         subsystems = {_subsystem(path) for path in paths}
@@ -403,6 +410,17 @@ class _History:
         ages = [max(0.0, value) for value in raw_ages]
         author_epochs = self.author_epochs.get(commit["email"], [])
         recent = commit["epoch"] - RECENT_DAYS * 86400
+        negative_author_ages = 0
+        if schema == REXP_DECAY_SCHEMA:
+            rexp = 0.0
+            for epoch in author_epochs:
+                age_days = (commit["epoch"] - epoch) / 86400
+                if age_days < 0:
+                    negative_author_ages += 1
+                    continue
+                rexp += 1.0 / (1.0 + age_days / REXP_DECAY_YEAR_DAYS)
+        else:
+            rexp = sum(1 for epoch in author_epochs if epoch >= recent)
         return {
             "ns": len(subsystems),
             "nd": len(directories),
@@ -416,9 +434,10 @@ class _History:
             "age": (sum(ages) / len(ages)) if ages else 0.0,
             "nuc": sum(self.file_count.get(path, 0) for path in paths),
             "exp": len(author_epochs),
-            "rexp": sum(1 for epoch in author_epochs if epoch >= recent),
+            "rexp": rexp,
             "sexp": sum(self.author_dirs.get((commit["email"], subsystem), 0) for subsystem in subsystems),
             "_negativeFileAges": negative_ages,
+            "_negativeAuthorAges": negative_author_ages,
         }
 
 
@@ -450,7 +469,8 @@ def _iso_epoch(epoch):
 
 
 def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=False, szz="full",
-            observe_through=None, revision=None, maturity_days=RECENT_DAYS):
+            observe_through=None, revision=None, maturity_days=RECENT_DAYS,
+            schema=SCHEMA_NAME):
     """采集一个仓库的提交窗口；返回记录、标签统计、采集证据与 CSV 字节。
 
     `since`/`until` 只决定哪些提交进入样本；`observe_through` 决定修复观察到哪个时刻，
@@ -459,6 +479,8 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     `revision` 固定采集使用的提交；省略时把 `branch` 解析成具体 SHA 并贯穿本次采集。
     `szz="full"` 使用完整流程（szz-full-v1）；`szz="line"` 行级兼容；`szz="simple"` 文件级兼容。
     """
+    if schema not in SUPPORTED_SCHEMAS:
+        raise BaselineError("SCHEMA_UNKNOWN", f"仓库采集不支持 schema：{schema}")
     if szz not in ("full", "line", "simple"):
         raise BaselineError("INPUT_INVALID", "标签规则必须是 full、line 或 simple")
     if not isinstance(maturity_days, int) or isinstance(maturity_days, bool) or maturity_days < 0:
@@ -515,6 +537,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     labels, evidence, records = set(), [], []
     skipped = {"noEarlierChange": 0, "outsideWindow": 0}
     negative_file_ages = 0
+    negative_author_ages = 0
     fix_commits = 0
     for commit in entries:
         parent = commit["parents"][0] if commit["parents"] else None
@@ -549,8 +572,9 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
             if not commit["files"]:
                 excluded["empty"] += 1
             else:
-                metrics = state.features(commit)
+                metrics = state.features(commit, schema=schema)
                 negative_file_ages += metrics.pop("_negativeFileAges", 0)
+                negative_author_ages += metrics.pop("_negativeAuthorAges", 0)
                 records.append({"id": commit["id"], "epoch": commit["epoch"],
                                 "time": commit["time"].isoformat(timespec="seconds").replace("+00:00", "Z"),
                                 "subject": commit["subject"], "authorName": commit["author"],
@@ -588,7 +612,7 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
     }
     rule = (SZZ_FULL_RULE if line_result is not None and szz == "full" else
             SZZ_LINE_RULE if line_result is not None else SZZ_RULE)
-    names = resolve(SCHEMA_NAME).in_model_names()
+    names = resolve(schema).in_model_names()
     for record in records:
         record["label"] = 1 if record["id"] in labels else 0
         record["labelRule"] = rule if record["label"] else None
@@ -659,10 +683,17 @@ def collect(repo, since=None, until=None, branch="HEAD", limit=None, with_text=F
         "labelEvidence": evidence,
         "fixSignals": (line_result.fix_signal_evidence[:500] if line_result is not None else []),
         "szz": szz_info,
+        "featureSchema": {
+            "name": schema,
+            "rexpRule": REXP_RULES[schema],
+            "decayYearDays": (REXP_DECAY_YEAR_DAYS
+                              if schema == REXP_DECAY_SCHEMA else None),
+        },
         "counts": {"commitsInWindow": len(window), "records": len(records),
                    "datasetRecords": len(status_records),
                    "excluded": excluded,
                    "negativeFileAgeFiles": negative_file_ages,
+                   "negativeAuthorAgeCommits": negative_author_ages,
                    "binaryFiles": sum(1 for commit in window for item in commit["files"]
                                       if item["binary"])},
         "limitations": limitations,
@@ -1030,7 +1061,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                        dataset=None, register=False, limit=None, root=None,
                        allow_local=True, return_blob=False, with_text=False, szz="full",
                        observe_through=None, revision=None, maturity_days=RECENT_DAYS,
-                       storage=None):
+                       storage=None, schema=SCHEMA_NAME):
     """采集 → 写 CSV 与逐提交状态旁车 → 可选登记；远程来源克隆到临时目录并在结束时清理。
 
     `allow_local=False` 时只接受公开 HTTP(S) 地址（同步接口使用）；
@@ -1056,12 +1087,15 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
                 target = clone
         collected = collect(target, since, until, branch, limit, with_text=with_text, szz=szz,
                             observe_through=observe_through, revision=revision,
-                            maturity_days=maturity_days)
+                            maturity_days=maturity_days, schema=schema)
         if not collected["records"]:
             raise BaselineError("DATASET_INVALID", "采集范围内没有可纳入的提交")
         blob = collected["csv"]
         path = Path(output) if output is not None else None
-        dataset_name_value = dataset or dataset_name(repo)
+        default_name = dataset_name(repo)
+        if schema == REXP_DECAY_SCHEMA:
+            default_name += "-decay"
+        dataset_name_value = dataset or default_name
         days = [record["time"][:10] for record in collected["records"]]
         version = f"{dataset_name_value}-{min(days)}_{max(days)}"
         if path is not None and not register:
@@ -1122,7 +1156,7 @@ def collect_repository(repo, since=None, until=None, branch="HEAD", output=None,
             if path is None:
                 raise BaselineError("INPUT_INVALID", "登记需要 --output 指定 CSV 路径")
             register_kwargs = dict(
-                schema=SCHEMA_NAME, dataset=dataset_name_value,
+                schema=schema, dataset=dataset_name_value,
                 cohort=cohort(since, until), root=root,
                 extra={"collection": collected["collection"],
                        "labeling": labeling,

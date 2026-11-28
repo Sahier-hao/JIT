@@ -1,0 +1,51 @@
+{
+  "schema": "author-repro-verification-summary-v1",
+  "asOf": "2026-11-29",
+  "commands": [
+    {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider",
+      "scope": "backend full suite",
+      "exitCode": 1,
+      "passed": 1184,
+      "failed": 8,
+      "errors": 2,
+      "durationSeconds": 1223.88,
+      "log": "not preserved in full because the terminal output was truncated; affected logs and baseline comparison are preserved"
+    },
+    {
+      "command": ".venv\\Scripts\\python.exe -m pytest tests\\test_author_repro.py tests\\test_schemas.py tests\\test_datasets.py tests\\test_cli.py tests\\test_collect.py -q -p no:cacheprovider",
+      "scope": "affected backend layers",
+      "exitCode": 0,
+      "passed": 73,
+      "failed": 0,
+      "errors": 0,
+      "log": "verification/targeted-tests.log"
+    },
+    {
+      "command": "clean HEAD archive: pytest two split tests",
+      "scope": "baseline comparison for unrelated failures",
+      "exitCode": 1,
+      "failed": 2,
+      "log": "verification/baseline-known-failures.log"
+    }
+  ],
+  "fullSuiteFailures": [
+    "ERROR tests/test_end_to_end.py::test_repository_collection_reaches_prediction_with_explanation",
+    "ERROR tests/test_end_to_end.py::test_unknown_dataset_version_is_404_without_fallback",
+    "FAILED tests/test_multi_project.py::test_load_projects_supports_current_v2_and_filters_before_split",
+    "FAILED tests/test_multi_project.py::test_run_multi_project_uses_each_protocol_training_cohort",
+    "FAILED tests/test_multi_project.py::test_failure_isolation_records_target_and_continues",
+    "FAILED tests/test_multi_project.py::test_project_split_failure_keeps_other_projects_running",
+    "FAILED tests/test_sprint2_unit_core.py::test_split_records_boundary_keeps_same_timestamp_group_in_one_partition",
+    "FAILED tests/test_sprint2_unit_core.py::test_preset_view_normal_returns_frozen_ratios",
+    "FAILED tests/test_verification_guard.py::test_verification_reports_protected_changes_even_when_a_check_fails[False]",
+    "FAILED tests/test_verification_guard.py::test_verification_reports_protected_changes_even_when_a_check_fails[True]"
+  ],
+  "interpretation": [
+    "The two split tests fail identically from a clean HEAD archive, so they are pre-existing repository test/current-code mismatches, not introduced by this change.",
+    "The verification-guard tests fail because the local pwsh shim returns WinError 1920; this change does not touch frontend/scripts/verify.ps1 or verification logic.",
+    "The modified/affected backend layers pass 73/73.",
+    "No frontend source changed; frontend test/build commands were not run for this change."
+  ],
+  "workspace": "docs/evidence/_run/author-repro-20261128"
+}

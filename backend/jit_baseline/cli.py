@@ -29,6 +29,39 @@ def main():
     parser = argparse.ArgumentParser(description="OpenStack 回顾性基线与具名方法")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("fetch")
+    author_catalog = commands.add_parser("author-catalog",
+                                         help="Show fixed sources and materials for five public methods")
+    author_catalog.add_argument("--method", choices=["kamei", "deepjit", "jitline", "jitfine", "jitsmart"],
+                                default=None)
+    author_prepare = commands.add_parser("author-prepare",
+                                         help="Verify source, data and model materials for one author method")
+    author_prepare.add_argument("--method", choices=["kamei", "deepjit", "jitline", "jitfine", "jitsmart"],
+                                required=True)
+    author_run = commands.add_parser("author-run", help="Run an author-method reproduction entry")
+    author_run.add_argument("--method", choices=["kamei", "deepjit", "jitline", "jitfine", "jitsmart"],
+                            required=True)
+    author_run.add_argument("--mode", default=None,
+                            help="Method mode (kamei author/unified14, deepjit evaluate/train, or a JITLine variant)")
+    author_run.add_argument("--variant", default=None,
+                            help="JITLine data variant")
+    author_run.add_argument("--output", type=Path, default=None)
+    author_run.add_argument("--seed", type=int, default=42)
+    author_run.add_argument("--max-train", type=int, default=None)
+    author_run.add_argument("--max-valid", type=int, default=None)
+    author_run.add_argument("--max-test", type=int, default=None)
+    author_run.add_argument("--epochs", type=int, default=1)
+    author_run.add_argument("--batch-size", type=int, default=None)
+    author_run.add_argument("--learning-rate-source", choices=["author-code", "paper-intent"],
+                            default="author-code")
+    author_run.add_argument("--data-dir", type=Path, default=None)
+    author_run.add_argument("--model", type=Path, default=None)
+    author_run.add_argument("--line-commits", type=int, default=10)
+    author_run.add_argument("--lime-samples", type=int, default=512)
+    author_run.add_argument("--smote-k", type=int, default=9)
+    author_run.add_argument("--test-project", default=None,
+                            help="JIT-Smart cross-project target project")
+    author_report = commands.add_parser("author-report", help="Read a saved author reproduction run")
+    author_report.add_argument("--run", type=Path, required=True)
     run = commands.add_parser("run")
     run.add_argument("--output", type=Path, default=DEFAULT_RUN)
     run.add_argument("--schema", default=None, help="具名特征 schema；默认 openstack-six-v1")
@@ -227,6 +260,9 @@ def main():
     dataset_import.add_argument('--manifest', type=Path, required=True)
     dataset_import.add_argument('--database', type=Path, default=os.environ.get('JIT_CATALOG_DATABASE', DEFAULT_DATABASE))
     collect = commands.add_parser('collect-repository')
+    collect.add_argument('--schema', choices=['kamei14-git-v2', 'kamei14-git-v3'],
+                         default='kamei14-git-v2',
+                         help='Feature schema; v3 uses time-decayed rexp; v2 remains default')
     collect.add_argument('--repo', required=True, help='本地仓库路径或远程仓库地址')
     collect.add_argument('--since', default=None, help='起始时间（YYYY-MM-DD 或 ISO）')
     collect.add_argument('--until', default=None, help='样本截止时间（YYYY-MM-DD 或 ISO），之后提交不进入样本')
@@ -403,7 +439,7 @@ def main():
                                                   limit=args.limit, root=args.root,
                                                   with_text=args.with_text, szz=args.szz,
                                                   observe_through=args.observe_through,
-                                                  revision=args.revision,
+                                                  schema=args.schema, revision=args.revision,
                                                   maturity_days=(args.maturity_days
                                                                  if args.maturity_days is not None else 90))
         elif args.command == 'collect-batch':
@@ -712,6 +748,18 @@ def main():
             if not result["passed"]:
                 sys.exit(1)
             return
+        elif args.command == "author-catalog":
+            from .author_repro.cli import catalog_result
+            result = catalog_result(args.method)
+        elif args.command == "author-prepare":
+            from .author_repro.cli import prepare_result
+            result = prepare_result(args.method)
+        elif args.command == "author-run":
+            from .author_repro.cli import run_method
+            result = run_method(args)
+        elif args.command == "author-report":
+            from .author_repro.cli import report_result
+            result = report_result(args.run)
         else:
             import uvicorn
             uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=args.port, workers=1)

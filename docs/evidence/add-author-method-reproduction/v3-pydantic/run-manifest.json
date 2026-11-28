@@ -1,0 +1,198 @@
+{
+  "command": "python -m jit_baseline.cli run --output .cache/author-repro/runs/kamei-v3-pydantic --schema kamei14-git-v3 --algorithm logistic-regression-l2-v1 --dataset-manifest .cache/author-repro/v3-datasets/registry/pydantic-decay/pydantic-decay-2024-01-02_2024-12-31.json",
+  "config": {
+    "admission": {
+      "available": true,
+      "counts": {
+        "eligibleRecords": 761,
+        "excludedImmature": 248,
+        "excludedUnknown": 0,
+        "originalRecords": 1009,
+        "positivesEligible": 93,
+        "positivesOriginal": 113
+      },
+      "coverage": {
+        "complete": true,
+        "historyBounded": false,
+        "reason": null,
+        "truncated": false,
+        "unresolvedRanges": 0
+      },
+      "historyStatus": "complete",
+      "identity": "24d8d042358c9fad8cb69980b36f90588ac0cc865b00d45ce46cca3ef75a0275",
+      "maturityDays": 90,
+      "observationWindow": {
+        "fromEpoch": 1704067200,
+        "through": "2025-01-01T00:00:00Z",
+        "throughEpoch": 1735689600
+      },
+      "observedThrough": 1735689600,
+      "observedThroughIso": "2025-01-01T00:00:00Z",
+      "policy": "mature-observed-v1",
+      "protocol": "mature-observed-v1",
+      "reason": null,
+      "restricted": false,
+      "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+      "revisionEpoch": 1795016590,
+      "sampleWindow": {
+        "endEpoch": 1735689600,
+        "since": "2024-01-01",
+        "startEpoch": 1704067200,
+        "until": "2025-01-01"
+      },
+      "statusRule": "commit-label-status-v1"
+    },
+    "algorithmVersion": "logistic-regression-l2-v1",
+    "cohort": {
+      "addedLinesGreaterThan": 0,
+      "endEpochExclusive": 1735689600,
+      "maxChurnInclusive": 10000,
+      "maxFilesInclusive": 100,
+      "startEpochInclusive": 1704067200
+    },
+    "coreFiles": {
+      "metrics.json": "128bafe4e3488528900cec1030c690b118528a815ba073da2e2059174456dcb1",
+      "model.joblib": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61",
+      "reference-predictions.json": "7f384c1aed4b652f7d256d6896fe8e5a90c1f35919ab9b0973fb1c32041d6f32",
+      "source.json": "ed422e2ba1ef309cc4318a67b8c427a382decebb9b9c1b4ca687d027d65c6bf0",
+      "split.json": "9870414c93c5b3a2b41a10465e7bd6d1114ab390069661fc4dd4cfa173abb00d",
+      "test-input.json": "89930e519a51d4c4c96dd066ef554d33b1a7adff6b93350a4ea60a3c114cbfcf",
+      "test-labels.json": "c0b481160a396440c742f5ec71c65a3a98f12c6290399aa67cf196f11cfcb679"
+    },
+    "datasetManifest": {
+      "path": ".cache/author-repro/v3-datasets/registry/pydantic-decay/pydantic-decay-2024-01-02_2024-12-31.json",
+      "sha256": "2e1eee34fc8635858230f8884d04fa981ff3bb87fd2905f8be9b556fa139dc14"
+    },
+    "datasetVersion": "pydantic-decay-2024-01-02_2024-12-31",
+    "diagnosticsVersion": "partition-diagnostics-v1",
+    "features": [
+      "ns",
+      "nd",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "rexp",
+      "sexp"
+    ],
+    "maturityPolicy": {
+      "effectivePolicy": "mature-observed-v1",
+      "excludedImmature": 248,
+      "excludedUnknown": 0,
+      "inputRecords": 1009,
+      "maturityDays": 90,
+      "observedThroughEpoch": 1735689600,
+      "releaseEligible": true,
+      "requestedPolicy": "mature-only",
+      "statusCounts": {
+        "immature": 0,
+        "positive": 0,
+        "unobserved": 0,
+        "unrecorded": 1009
+      }
+    },
+    "metricSet": "metric-set-v2",
+    "model": {
+      "C": 1.0,
+      "class_weight": null,
+      "max_iter": 1000,
+      "regularization": "L2",
+      "seed": 2026,
+      "solver": "lbfgs",
+      "threads": 1,
+      "tol": 0.0001
+    },
+    "modelSha256": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61",
+    "protocol": "kamei14-git-v3",
+    "schema": "kamei14-git-v3",
+    "sourceCode": {
+      "algorithms.py": "65746e3310b933c0a648ff02f4b649e104310f653f67ddac0e8dacd5999b459d",
+      "artifacts.py": "385596cab664c43cfe2e6780858582987ef4e6923836f0f0f8c6921bca43ba4a",
+      "config.py": "78c658d9b675edd7f21e26774d39da346ffc0730fd163c84ca791984bb64f276",
+      "data.py": "f73d9bae7fdb99a77a1a8dfb4407b861bf3f419c3a2e0008c47b7ac084119192",
+      "deep.py": "350325287abb2bdd34478c6ea7d004829036a2e61f155b2020b2488c864d9390",
+      "errors.py": "24636229e8bafe36d405aeb04e5fe44b9cec8898c64bc23224720efe0d97b364",
+      "label_maturity.py": "a0120576f87e5cf8d1094c91835a513e883108e73e7a529c8d974eaa2743eca7",
+      "metrics.py": "a9e9c7a52dc400b4de520b4f65da859f1454114eb43c8ed3ff848f011c8fb1a8",
+      "model.py": "2a3c4cdbf9fd3033b33d1e04029db469cb1751f3e3667b91d9538bd010517e04",
+      "schemas.py": "4f6d6405dfa20aa448dc33687a562be2c8961d29aa36579215e4d08c629b799f",
+      "splits.py": "93674d54b4ee9c52f44e948bf5eb07670594f316c467a68f96b9f09770c1ba90",
+      "trends.py": "658cf22004d321c6dae6f0a69b44ed4ad1c2c8763e9a5f1f7346eb37074d5f4d"
+    },
+    "splitPolicy": {
+      "boundaries": [
+        {
+          "epoch": 1722537897,
+          "time": "2024-08-01T18:44:57Z"
+        },
+        {
+          "epoch": 1725036520,
+          "time": "2024-08-30T16:48:40Z"
+        }
+      ],
+      "id": "temporal-70-15-15",
+      "kind": "preset",
+      "memberSha256": "789d110c00a205b84fccd8dcc1ae0edf3b1a3197fc68278c1bd07bf8bd937fd9",
+      "partitionCounts": {
+        "test": {
+          "end": "2024-10-02T19:32:18Z",
+          "positives": 8,
+          "records": 115,
+          "start": "2024-08-30T16:48:40Z"
+        },
+        "train": {
+          "end": "2024-08-01T12:53:45Z",
+          "positives": 73,
+          "records": 532,
+          "start": "2024-01-02T08:07:05Z"
+        },
+        "validation": {
+          "end": "2024-08-30T00:52:05Z",
+          "positives": 12,
+          "records": 114,
+          "start": "2024-08-01T18:44:57Z"
+        }
+      },
+      "ratios": {
+        "test": 15,
+        "train": 70,
+        "validation": 15
+      },
+      "timezone": "UTC"
+    },
+    "splitPreset": "temporal-70-15-15",
+    "threshold": 0.5,
+    "trainingEnvironment": {
+      "packages": {
+        "fastapi": "0.143.0",
+        "joblib": "1.6.0",
+        "numpy": "2.5.3",
+        "scikit-learn": "1.9.1",
+        "scipy": "1.18.1",
+        "threadpoolctl": "3.7.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "3.14.2"
+    }
+  },
+  "files": {
+    "metrics.json": "128bafe4e3488528900cec1030c690b118528a815ba073da2e2059174456dcb1",
+    "model.joblib": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61",
+    "reference-predictions.json": "7f384c1aed4b652f7d256d6896fe8e5a90c1f35919ab9b0973fb1c32041d6f32",
+    "source.json": "ed422e2ba1ef309cc4318a67b8c427a382decebb9b9c1b4ca687d027d65c6bf0",
+    "split.json": "9870414c93c5b3a2b41a10465e7bd6d1114ab390069661fc4dd4cfa173abb00d",
+    "summary.json": "5676337fd0882f02082b0cb54f7aa0a8d20ed1b6a2deb66368b089671ef36c58",
+    "test-input.json": "89930e519a51d4c4c96dd066ef554d33b1a7adff6b93350a4ea60a3c114cbfcf",
+    "test-labels.json": "c0b481160a396440c742f5ec71c65a3a98f12c6290399aa67cf196f11cfcb679"
+  },
+  "generatedAt": "2026-11-28T15:12:00.777646+00:00",
+  "runId": "c70fa1c9662d7a3efa6a2ca8f244a2721a83731c4fe0a9af3613dec63ff842ee",
+  "schema": 1
+}

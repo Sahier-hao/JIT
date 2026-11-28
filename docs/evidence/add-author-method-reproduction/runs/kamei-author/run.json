@@ -1,0 +1,163 @@
+{
+  "command": [
+    "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\cli.py",
+    "author-run",
+    "--method",
+    "kamei",
+    "--mode",
+    "author",
+    "--output",
+    "..\\.cache\\author-repro\\runs\\kamei-author-final"
+  ],
+  "completedAt": "2026-11-28T15:30:09.326910+00:00",
+  "config": {
+    "effortCost": "(la + ld) * lt from published normalized ratios",
+    "features": [
+      "ns",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "sexp"
+    ],
+    "folds": 10,
+    "limitations": [
+      "Kamei lab replicates the paper's feature deletion and model family on published tables; it is not a rerun of the authors' original R script.",
+      "Published LA/LD are ratios; effort cost reconstruction through LT is approximate.",
+      "The 14-feature run is a local unified control, not an original-paper result."
+    ],
+    "localControl": false,
+    "model": "LogisticRegression",
+    "paperProtocol": true,
+    "penalty": "none (C=inf)",
+    "solver": "lbfgs",
+    "threshold": 0.5,
+    "transforms": "log1p non-fix features then train-fold StandardScaler",
+    "underSampling": "majority down to minority inside each training fold",
+    "validation": "per-project StratifiedKFold"
+  },
+  "environment": {
+    "cudaAvailable": false,
+    "env": {},
+    "executable": "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+    "machine": "",
+    "packages": {
+      "numpy": "2.5.3",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.1",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.21.1"
+    },
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.14.2"
+  },
+  "fidelity": "author-protocol",
+  "materialHashes": {
+    "kamei-2013-948fe603f61d-bugzilla-1998-08-26_2006-12-16-e39d42c6.csv": "e39d42c64896c92121a75596d2d08192e1aa1b184ea3d9610c1da190844e4366",
+    "kamei-2013-948fe603f61d-columba-2002-11-25_2006-07-27-729afb5c.csv": "729afb5cd01046c16694e9885a4dd15606e8bc6a5d05b066c5431b3909b04a78",
+    "kamei-2013-948fe603f61d-jdt-2001-05-02_2007-12-31-0d439c41.csv": "0d439c41fc905fa6e8c7028d0a29cb58dc908613a972490486948e503276d367",
+    "kamei-2013-948fe603f61d-mozilla-2000-01-01_2006-12-17-34b969b1.csv": "34b969b1b558faab8669cdf33384f246250d83f5ab1a255441520ec682802124",
+    "kamei-2013-948fe603f61d-platform-2001-05-02_2007-12-31-36ed1055.csv": "36ed105596afb90ccb491063875cb009b86e8f053f9cc0ee70f6c48e8a630585",
+    "kamei-2013-948fe603f61d-postgres-1996-07-09_2010-05-15-87f518f7.csv": "87f518f7f94fe4d41131c5a91e354327c2ecc77420a7f36de3c4d984f733b2cb"
+  },
+  "method": "kamei",
+  "methodVersion": "kamei-2013-author-v1",
+  "metricsWritten": true,
+  "output": "..\\.cache\\author-repro\\runs\\kamei-author-final",
+  "runId": "57e492090f8a5bf5c73d",
+  "schema": "author-repro-run-v1",
+  "seed": 42,
+  "split": {
+    "kind": "project-stratified-10-fold",
+    "seed": 42
+  },
+  "startedAt": "2026-11-28T15:30:02.955019+00:00",
+  "status": "completed",
+  "summary": {
+    "featureCount": 12,
+    "metrics": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.32539892884799465
+      },
+      "confusion": {
+        "fn": 9437,
+        "fp": 53671,
+        "tn": 145880,
+        "tp": 18429
+      },
+      "effort": {
+        "budgetLoc": 1564607.4113508037,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 20451,
+        "totalLoc": 7823037.056754018,
+        "usedLoc": 1564011.6406564978
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.3687053598223396
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 27866,
+      "precision": {
+        "reason": null,
+        "value": 0.2556033287101248
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6613435728127467
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.29824876193210365
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 27866,
+            "fp": 0,
+            "tn": 199551,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.12253261629517583
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7614061074109151
+      },
+      "samples": 227417,
+      "threshold": 0.5
+    },
+    "mode": "author",
+    "records": 227417
+  },
+  "updatedAt": "2026-11-28T15:30:09.326922+00:00"
+}

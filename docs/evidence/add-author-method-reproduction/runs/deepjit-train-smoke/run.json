@@ -1,0 +1,163 @@
+{
+  "command": [
+    "D:\\code\\jit-defect-prediction\\backend\\jit_baseline\\cli.py",
+    "author-run",
+    "--method",
+    "deepjit",
+    "--mode",
+    "train",
+    "--max-train",
+    "128",
+    "--epochs",
+    "1",
+    "--batch-size",
+    "64",
+    "--output",
+    "..\\.cache\\author-repro\\runs\\deepjit-train-smoke-2"
+  ],
+  "completedAt": "2026-11-28T15:03:07.442061+00:00",
+  "config": {
+    "authorCodeDifference": "Author train.py passes l2_reg_lambda (default 1e-5) to Adam while learning_rate is unused. paper-intent instead uses learning_rate=1e-4.",
+    "batchSize": 64,
+    "dropout": 0.5,
+    "embeddingDim": 64,
+    "epochs": 1,
+    "filterSizes": [
+      1,
+      2,
+      3
+    ],
+    "hiddenUnits": 512,
+    "learningRateSource": "author-code",
+    "maxLines": 10,
+    "maxMessageLength": 256,
+    "maxTokensPerLine": 512,
+    "numFilters": 64,
+    "seed": 42
+  },
+  "environment": {
+    "cudaAvailable": false,
+    "env": {
+      "PYTHONHASHSEED": "42"
+    },
+    "executable": "D:\\code\\jit-defect-prediction\\backend\\.venv\\Scripts\\python.exe",
+    "machine": "",
+    "packages": {
+      "numpy": "2.5.3",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.1",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.21.1"
+    },
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.14.2"
+  },
+  "fidelity": "real-smoke",
+  "materialHashes": {
+    "deepjit-openstack-dict": {
+      "md5": "4211e5ffd0fa08793bf2732a3c56a4c5"
+    },
+    "deepjit-openstack-model": {
+      "md5": "d569bef94da08184048baa393fb9ee7e"
+    },
+    "deepjit-openstack-test": {
+      "md5": "bad168282ac4273f62bf58c7ecc1be5b"
+    },
+    "deepjit-openstack-train": {
+      "md5": "7c23832a5d3022dabe363f6974a67931"
+    }
+  },
+  "method": "deepjit",
+  "methodVersion": "deepjit-author-code-v1",
+  "modelFile": "..\\.cache\\author-repro\\runs\\deepjit-train-smoke-2\\model.pt",
+  "output": "..\\.cache\\author-repro\\runs\\deepjit-train-smoke-2",
+  "predictionCount": 128,
+  "runId": "8d3013ffe3398356d7a2",
+  "schema": "author-repro-run-v1",
+  "seed": 42,
+  "split": {
+    "kind": "author-openstack-train-subset"
+  },
+  "startedAt": "2026-11-28T15:02:59.029693+00:00",
+  "status": "completed",
+  "summary": {
+    "metrics": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.5782368117362349
+      },
+      "confusion": {
+        "fn": 0,
+        "fp": 64,
+        "tn": 0,
+        "tp": 64
+      },
+      "effort": {
+        "budgetLoc": 0.0,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 128,
+        "totalLoc": 0.0,
+        "usedLoc": 0.0
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.6666666666666666
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": "总工作量为零",
+        "value": null
+      },
+      "positives": 64,
+      "precision": {
+        "reason": null,
+        "value": 0.5
+      },
+      "recall": {
+        "reason": null,
+        "value": 1.0
+      },
+      "recall20Loc": {
+        "reason": "总工作量为零",
+        "value": null
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 64,
+            "fp": 0,
+            "tn": 64,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.5
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.58203125
+      },
+      "samples": 128,
+      "threshold": 0.5
+    },
+    "mode": "train",
+    "predictions": 128
+  },
+  "updatedAt": "2026-11-28T15:03:07.442073+00:00"
+}

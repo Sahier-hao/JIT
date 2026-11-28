@@ -1,0 +1,75 @@
+{
+  "schema": "author-method-status-v1",
+  "asOf": "2026-11-28",
+  "environment": {
+    "python": "3.14.2",
+    "torch": "2.14.1+cpu",
+    "cuda": false
+  },
+  "methods": {
+    "kamei": {
+      "materials": true,
+      "interface": true,
+      "realSmoke": true,
+      "authorProtocol": true,
+      "authorProtocolNote": "12-field published-table 10-fold lab implementation; not original R script",
+      "lineSupported": false,
+      "productRegistered": false
+    },
+    "deepjit": {
+      "materials": true,
+      "interface": true,
+      "realSmoke": true,
+      "authorProtocolEvaluation": true,
+      "authorProtocolTraining": false,
+      "lineSupported": false,
+      "productRegistered": false,
+      "blocker": "Full 25-epoch training not rerun; author weights + test inference complete."
+    },
+    "jitline": {
+      "materials": true,
+      "interface": true,
+      "realSmoke": true,
+      "authorProtocol": false,
+      "lineSupported": true,
+      "lineUnit": "author table index, not Git line",
+      "productRegistered": false,
+      "blocker": "Author train/test/dict pickles are absent from Zenodo 4433499 and 4596503; two named data variants were used."
+    },
+    "jitfine": {
+      "materials": true,
+      "interface": true,
+      "realSmoke": true,
+      "authorProtocol": false,
+      "lineSupported": true,
+      "lineUnit": "author table index, not Git line",
+      "productRegistered": false,
+      "blocker": "CPU-only; no author fine-tuned checkpoint; 50-epoch protocol not completed."
+    },
+    "jitsmart": {
+      "materials": true,
+      "interface": true,
+      "realSmoke": true,
+      "authorProtocol": false,
+      "lineSupported": true,
+      "lineUnit": "author table index, not Git line",
+      "crossProjectSmoke": true,
+      "productRegistered": false,
+      "blocker": "CPU-only; 50-epoch joint protocol and full cross-project matrix not completed."
+    }
+  },
+  "v3": {
+    "schema": "kamei14-git-v3",
+    "formula": "sum 1/(1+ageDays/365.25)",
+    "realCollection": true,
+    "independentModel": true,
+    "releaseEligible": false,
+    "defaultChanged": false
+  },
+  "boundaries": [
+    "No reproduction artifact is registered as a product model.",
+    "No v2 data, model, analysis, or user data was overwritten.",
+    "File-order and random line baselines are reported separately and are not treated as causal evidence.",
+    "Small-sample metrics are not method performance claims."
+  ]
+}

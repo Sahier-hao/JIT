@@ -1,0 +1,551 @@
+{
+  "features": [
+    "ns",
+    "nd",
+    "nf",
+    "entropy",
+    "la",
+    "ld",
+    "lt",
+    "fix",
+    "ndev",
+    "age",
+    "nuc",
+    "exp",
+    "rexp",
+    "sexp"
+  ],
+  "mode": "unified14",
+  "paperComparison": {
+    "reason": "The paper reports a project table; this run records actual local values and does not invent omitted paper cells.",
+    "status": "not-machine-readable"
+  },
+  "pooled": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.32667841710518186
+    },
+    "confusion": {
+      "fn": 9403,
+      "fp": 53691,
+      "tn": 145860,
+      "tp": 18463
+    },
+    "effort": {
+      "budgetLoc": 1564607.4113508037,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 20605,
+      "totalLoc": 7823037.056754018,
+      "usedLoc": 1564593.6834582896
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.36918616276744654
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": "存在零成本提交，Popt 未定义",
+      "value": null
+    },
+    "positives": 27866,
+    "precision": {
+      "reason": null,
+      "value": 0.25588324971588544
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.6625636976961171
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.3014785042704371
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 27866,
+          "fp": 0,
+          "tn": 199551,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.12253261629517583
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.7624238184982949
+    },
+    "samples": 227417,
+    "threshold": 0.5
+  },
+  "projects": {
+    "bugzilla": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.592788710507653
+      },
+      "confusion": {
+        "fn": 549,
+        "fp": 994,
+        "tn": 1930,
+        "tp": 1147
+      },
+      "effort": {
+        "budgetLoc": 25487.44993961119,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 536,
+        "totalLoc": 127437.24969805594,
+        "usedLoc": 25458.753606412763
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.5978629137346886
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 1696,
+      "precision": {
+        "reason": null,
+        "value": 0.5357309668379262
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6762971698113207
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.22287735849056603
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 1696,
+            "fp": 0,
+            "tn": 2924,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.3670995670995671
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7384934859200372
+      },
+      "samples": 4620,
+      "threshold": 0.5
+    },
+    "columba": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.5904776991998453
+      },
+      "confusion": {
+        "fn": 474,
+        "fp": 826,
+        "tn": 2268,
+        "tp": 887
+      },
+      "effort": {
+        "budgetLoc": 37024.55237773288,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 335,
+        "totalLoc": 185122.7618886644,
+        "usedLoc": 36831.86776459511
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.5770982433311646
+      },
+      "ifa": {
+        "reason": null,
+        "value": 1
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 1361,
+      "precision": {
+        "reason": null,
+        "value": 0.5178050204319906
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6517266715650257
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.1888317413666422
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 1361,
+            "fp": 0,
+            "tn": 3094,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.30549943883277214
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7552488355314997
+      },
+      "samples": 4455,
+      "threshold": 0.5
+    },
+    "jdt": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.315734550605182
+      },
+      "confusion": {
+        "fn": 1774,
+        "fp": 9245,
+        "tn": 21052,
+        "tp": 3315
+      },
+      "effort": {
+        "budgetLoc": 204536.47277657455,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 2796,
+        "totalLoc": 1022682.3638828726,
+        "usedLoc": 204533.66965965377
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.37565867754547
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 5089,
+      "precision": {
+        "reason": null,
+        "value": 0.26393312101910826
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6514049911573984
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.22892513263902534
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 5089,
+            "fp": 0,
+            "tn": 30297,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.1438139377154807
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.735910724088289
+      },
+      "samples": 35386,
+      "threshold": 0.5
+    },
+    "mozilla": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.198054606046472
+      },
+      "confusion": {
+        "fn": 1914,
+        "fp": 20780,
+        "tn": 72346,
+        "tp": 3235
+      },
+      "effort": {
+        "budgetLoc": 730124.9609862017,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 10922,
+        "totalLoc": 3650624.8049310083,
+        "usedLoc": 730099.0979076414
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.22184885475243452
+      },
+      "ifa": {
+        "reason": null,
+        "value": 14
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 5149,
+      "precision": {
+        "reason": null,
+        "value": 0.13470747449510723
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.628277335404933
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.43367644202757816
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 5149,
+            "fp": 0,
+            "tn": 93126,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.05239379292800814
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.771388022952149
+      },
+      "samples": 98275,
+      "threshold": 0.5
+    },
+    "platform": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.34609043900535824
+      },
+      "confusion": {
+        "fn": 2869,
+        "fp": 18502,
+        "tn": 36296,
+        "tp": 6583
+      },
+      "effort": {
+        "budgetLoc": 369250.1376531753,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 5646,
+        "totalLoc": 1846250.6882658764,
+        "usedLoc": 369204.80714166485
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.381214349827721
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 9452,
+      "precision": {
+        "reason": null,
+        "value": 0.26242774566473986
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6964663563267034
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.2633305120609395
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 9452,
+            "fp": 0,
+            "tn": 54798,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.14711284046692608
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7473768584336452
+      },
+      "samples": 64250,
+      "threshold": 0.5
+    },
+    "postgres": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.5714596662025939
+      },
+      "confusion": {
+        "fn": 1823,
+        "fp": 3344,
+        "tn": 11968,
+        "tp": 3296
+      },
+      "effort": {
+        "budgetLoc": 198183.83761750802,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 1864,
+        "totalLoc": 990919.1880875401,
+        "usedLoc": 196125.3756782922
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.5605918870652267
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": "存在零成本提交，Popt 未定义",
+        "value": null
+      },
+      "positives": 5119,
+      "precision": {
+        "reason": null,
+        "value": 0.4963855421686747
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.6438757569837859
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.26333268216448524
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 5119,
+            "fp": 0,
+            "tn": 15312,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.25055063384073223
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7883125347145461
+      },
+      "samples": 20431,
+      "threshold": 0.5
+    }
+  },
+  "schema": "author-kamei-metrics-v1"
+}

@@ -1,0 +1,890 @@
+{
+  "admission": {
+    "available": true,
+    "counts": {
+      "eligibleRecords": 761,
+      "excludedImmature": 248,
+      "excludedUnknown": 0,
+      "originalRecords": 1009,
+      "positivesEligible": 93,
+      "positivesOriginal": 113
+    },
+    "coverage": {
+      "complete": true,
+      "historyBounded": false,
+      "reason": null,
+      "truncated": false,
+      "unresolvedRanges": 0
+    },
+    "historyStatus": "complete",
+    "identity": "24d8d042358c9fad8cb69980b36f90588ac0cc865b00d45ce46cca3ef75a0275",
+    "maturityDays": 90,
+    "observationWindow": {
+      "fromEpoch": 1704067200,
+      "through": "2025-01-01T00:00:00Z",
+      "throughEpoch": 1735689600
+    },
+    "observedThrough": 1735689600,
+    "observedThroughIso": "2025-01-01T00:00:00Z",
+    "policy": "mature-observed-v1",
+    "protocol": "mature-observed-v1",
+    "reason": null,
+    "restricted": false,
+    "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+    "revisionEpoch": 1795016590,
+    "sampleWindow": {
+      "endEpoch": 1735689600,
+      "since": "2024-01-01",
+      "startEpoch": 1704067200,
+      "until": "2025-01-01"
+    },
+    "statusRule": "commit-label-status-v1"
+  },
+  "algorithmVersion": "logistic-regression-l2-v1",
+  "cohort": {
+    "addedLinesGreaterThan": 0,
+    "endEpochExclusive": 1735689600,
+    "maxChurnInclusive": 10000,
+    "maxFilesInclusive": 100,
+    "startEpochInclusive": 1704067200
+  },
+  "dataScale": {
+    "expertFeatureWidth": 14,
+    "featureWidth": 14,
+    "partitions": {
+      "test": {
+        "negatives": 107,
+        "positives": 8,
+        "records": 115
+      },
+      "train": {
+        "negatives": 459,
+        "positives": 73,
+        "records": 532
+      },
+      "validation": {
+        "negatives": 102,
+        "positives": 12,
+        "records": 114
+      }
+    },
+    "records": 1009,
+    "semanticFeatureWidth": 0,
+    "trainableRecords": 761
+  },
+  "datasetVersion": "pydantic-decay-2024-01-02_2024-12-31",
+  "diagnosticsVersion": "partition-diagnostics-v1",
+  "featureSchema": {
+    "inModel": [
+      "ns",
+      "nd",
+      "nf",
+      "entropy",
+      "la",
+      "ld",
+      "lt",
+      "fix",
+      "ndev",
+      "age",
+      "nuc",
+      "exp",
+      "rexp",
+      "sexp"
+    ],
+    "name": "kamei14-git-v3",
+    "unavailable": []
+  },
+  "features": [
+    "ns",
+    "nd",
+    "nf",
+    "entropy",
+    "la",
+    "ld",
+    "lt",
+    "fix",
+    "ndev",
+    "age",
+    "nuc",
+    "exp",
+    "rexp",
+    "sexp"
+  ],
+  "limitations": [
+    "特征为具名 schema kamei14-git-v3（ns、nd、nf、entropy、la、ld、lt、fix、ndev、age、nuc、exp、rexp、sexp），Kamei14 专家字段完整；预测解释由服务端按遮挡法实时计算，不在此产物内冻结。",
+    "回顾性历史评价，未验证历史当时标签可获得性及在线预测效果。",
+    "标签来自发布者历史观测；零或空计数表示未观测到缺陷引入，不是已证实无缺陷。",
+    "未逐条复核 SZZ 修复链路，也未重新审计发布者全部特征提取实现。",
+    "结果只覆盖固定纳入范围，排除了纯删除和极大变更，不能外推全仓库。",
+    "一个固定基线不代表完整课程模型、解释和非功能验收已经完成。"
+  ],
+  "maturity": {
+    "effectivePolicy": "mature-observed-v1",
+    "excludedImmature": 248,
+    "excludedUnknown": 0,
+    "inputRecords": 1009,
+    "maturityDays": 90,
+    "observedThroughEpoch": 1735689600,
+    "releaseEligible": true,
+    "requestedPolicy": "mature-only",
+    "statusCounts": {
+      "immature": 0,
+      "positive": 0,
+      "unobserved": 0,
+      "unrecorded": 1009
+    }
+  },
+  "metricSet": "metric-set-v2",
+  "metrics": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.29013336206772666
+    },
+    "confusion": {
+      "fn": 6,
+      "fp": 3,
+      "tn": 104,
+      "tp": 2
+    },
+    "counts": {
+      "negative": 107,
+      "positive": 8,
+      "records": 115
+    },
+    "effort": {
+      "budgetLoc": 1948.4,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 4,
+      "totalLoc": 9742,
+      "usedLoc": 823
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.3076923076923077
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": null,
+      "value": 0.8078722221468954
+    },
+    "poptEffort": {
+      "areaModel": 0.7913480291521247,
+      "areaOracle": 0.9731638780537879,
+      "areaWorst": 0.026836121946212273,
+      "name": "Popt (density-ranked, full-range)",
+      "ordering": "density-desc,time-desc,id-asc",
+      "policy": "trapezoid-full-range",
+      "totalLoc": 9742
+    },
+    "precision": {
+      "reason": null,
+      "value": 0.4
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.25
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.25
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 8,
+          "fp": 0,
+          "tn": 107,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.06956521739130435
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.5899532710280374
+    },
+    "threshold": 0.5
+  },
+  "metricsByPartition": {
+    "test": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.29013336206772666
+      },
+      "confusion": {
+        "fn": 6,
+        "fp": 3,
+        "tn": 104,
+        "tp": 2
+      },
+      "counts": {
+        "negative": 107,
+        "positive": 8,
+        "records": 115
+      },
+      "effort": {
+        "budgetLoc": 1948.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 4,
+        "totalLoc": 9742,
+        "usedLoc": 823
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.3076923076923077
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.8078722221468954
+      },
+      "poptEffort": {
+        "areaModel": 0.7913480291521247,
+        "areaOracle": 0.9731638780537879,
+        "areaWorst": 0.026836121946212273,
+        "name": "Popt (density-ranked, full-range)",
+        "ordering": "density-desc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 9742
+      },
+      "precision": {
+        "reason": null,
+        "value": 0.4
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.25
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.25
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 8,
+            "fp": 0,
+            "tn": 107,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.06956521739130435
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.5899532710280374
+      },
+      "threshold": 0.5
+    },
+    "train": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.3762576799710888
+      },
+      "confusion": {
+        "fn": 69,
+        "fp": 3,
+        "tn": 456,
+        "tp": 4
+      },
+      "counts": {
+        "negative": 459,
+        "positive": 73,
+        "records": 532
+      },
+      "effort": {
+        "budgetLoc": 9633.4,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 33,
+        "totalLoc": 48167,
+        "usedLoc": 8625
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.1
+      },
+      "ifa": {
+        "reason": null,
+        "value": 0
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.8306061714942536
+      },
+      "poptEffort": {
+        "areaModel": 0.800368068742568,
+        "areaOracle": 0.954268695870048,
+        "areaWorst": 0.045731304129951876,
+        "name": "Popt (density-ranked, full-range)",
+        "ordering": "density-desc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 48167
+      },
+      "precision": {
+        "reason": null,
+        "value": 0.5714285714285714
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0547945205479452
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.2054794520547945
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 73,
+            "fp": 0,
+            "tn": 459,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.13721804511278196
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.7929387889097801
+      },
+      "threshold": 0.5
+    },
+    "validation": {
+      "averagePrecision": {
+        "reason": null,
+        "value": 0.3965643392680067
+      },
+      "confusion": {
+        "fn": 12,
+        "fp": 1,
+        "tn": 101,
+        "tp": 0
+      },
+      "counts": {
+        "negative": 102,
+        "positive": 12,
+        "records": 114
+      },
+      "effort": {
+        "budgetLoc": 2156.6,
+        "name": "Recall@20%LOC (risk-ranked)",
+        "ordering": "risk-desc,time-desc,id-asc",
+        "policy": "whole-commit-prefix-stop",
+        "selectedCount": 9,
+        "totalLoc": 10783,
+        "usedLoc": 1856
+      },
+      "f1": {
+        "reason": null,
+        "value": 0.0
+      },
+      "ifa": {
+        "reason": null,
+        "value": 2
+      },
+      "popt": {
+        "reason": null,
+        "value": 0.8118339444196965
+      },
+      "poptEffort": {
+        "areaModel": 0.7813147237936258,
+        "areaOracle": 0.9510649479118365,
+        "areaWorst": 0.04893505208816348,
+        "name": "Popt (density-ranked, full-range)",
+        "ordering": "density-desc,time-desc,id-asc",
+        "policy": "trapezoid-full-range",
+        "totalLoc": 10783
+      },
+      "precision": {
+        "reason": null,
+        "value": 0.0
+      },
+      "recall": {
+        "reason": null,
+        "value": 0.0
+      },
+      "recall20Loc": {
+        "reason": null,
+        "value": 0.4166666666666667
+      },
+      "reference": {
+        "allNegative": {
+          "confusion": {
+            "fn": 12,
+            "fp": 0,
+            "tn": 102,
+            "tp": 0
+          },
+          "f1": {
+            "reason": null,
+            "value": 0.0
+          },
+          "precision": {
+            "reason": "没有预测为正的提交",
+            "value": null
+          },
+          "recall": {
+            "reason": null,
+            "value": 0.0
+          }
+        },
+        "apNoInformation": 0.10526315789473684
+      },
+      "rocAuc": {
+        "reason": null,
+        "value": 0.8504901960784313
+      },
+      "threshold": 0.5
+    }
+  },
+  "model": {
+    "id": "logistic-regression@kamei14-git-v3",
+    "name": "逻辑回归 · kamei14-git-v3"
+  },
+  "modelSha256": "1d2f21d3846fd80ef528dea3903d271fc15b90d6843547ab38bf42a12bbb2c61",
+  "parameters": {
+    "C": 1.0,
+    "class_weight": null,
+    "max_iter": 1000,
+    "regularization": "L2",
+    "seed": 2026,
+    "solver": "lbfgs",
+    "threads": 1,
+    "tol": 0.0001
+  },
+  "protocolVersion": "kamei14-git-v3",
+  "runId": "c70fa1c9662d7a3efa6a2ca8f244a2721a83731c4fe0a9af3613dec63ff842ee",
+  "source": {
+    "citation": "由本地 Git 仓库采集生成",
+    "files": {
+      "pydantic-decay.csv": {
+        "bytes": 137811,
+        "sha256": "8723d014bd5f623e585cb99d469547bef87c0baa420230029f1aff0ace9a7989",
+        "url": ".cache\\repositories\\6249314697cb9c14.git"
+      }
+    },
+    "labelRule": "bugcount > 0 为 1；零或空计数为未观测到缺陷引入（0），并非已证实无缺陷。",
+    "publisher": "collected",
+    "quality": {
+      "blankLabels": 0,
+      "excluded": {
+        "missingRequiredField": 0,
+        "noAddedLines": 18,
+        "outsideWindow": 0,
+        "tooManyFiles": 1,
+        "tooMuchChurn": 1
+      },
+      "featureMissing": {
+        "age": 0,
+        "entropy": 0,
+        "exp": 0,
+        "fix": 0,
+        "la": 0,
+        "ld": 0,
+        "lt": 0,
+        "nd": 0,
+        "ndev": 0,
+        "nf": 0,
+        "ns": 0,
+        "nuc": 0,
+        "rexp": 0,
+        "sexp": 0
+      },
+      "includedRows": 1009,
+      "positiveLabels": 113,
+      "rawRows": 1029
+    },
+    "revision": "328b88b52694a64ecd05f3acc92f2b6a160bc2ee",
+    "sha256": "8723d014bd5f623e585cb99d469547bef87c0baa420230029f1aff0ace9a7989",
+    "url": ".cache\\repositories\\6249314697cb9c14.git"
+  },
+  "split": {
+    "test": {
+      "count": 115,
+      "end": "2024-10-02T19:32:18Z",
+      "positiveCount": 8,
+      "start": "2024-08-30T16:48:40Z"
+    },
+    "train": {
+      "count": 532,
+      "end": "2024-08-01T12:53:45Z",
+      "positiveCount": 73,
+      "start": "2024-01-02T08:07:05Z"
+    },
+    "validation": {
+      "count": 114,
+      "end": "2024-08-30T00:52:05Z",
+      "positiveCount": 12,
+      "start": "2024-08-01T18:44:57Z"
+    }
+  },
+  "splitPolicy": {
+    "boundaries": [
+      {
+        "epoch": 1722537897,
+        "time": "2024-08-01T18:44:57Z"
+      },
+      {
+        "epoch": 1725036520,
+        "time": "2024-08-30T16:48:40Z"
+      }
+    ],
+    "id": "temporal-70-15-15",
+    "kind": "preset",
+    "memberSha256": "789d110c00a205b84fccd8dcc1ae0edf3b1a3197fc68278c1bd07bf8bd937fd9",
+    "partitionCounts": {
+      "test": {
+        "end": "2024-10-02T19:32:18Z",
+        "positives": 8,
+        "records": 115,
+        "start": "2024-08-30T16:48:40Z"
+      },
+      "train": {
+        "end": "2024-08-01T12:53:45Z",
+        "positives": 73,
+        "records": 532,
+        "start": "2024-01-02T08:07:05Z"
+      },
+      "validation": {
+        "end": "2024-08-30T00:52:05Z",
+        "positives": 12,
+        "records": 114,
+        "start": "2024-08-01T18:44:57Z"
+      }
+    },
+    "ratios": {
+      "test": 15,
+      "train": 70,
+      "validation": 15
+    },
+    "timezone": "UTC"
+  },
+  "splitRule": "UTC distinct timestamps, floor(0.70G), floor(0.85G)",
+  "threshold": 0.5,
+  "trainingPerformance": {
+    "durationSeconds": 0.291011,
+    "recordsPerSecond": 1828.10959,
+    "trainingRecords": 532
+  },
+  "trainingSeconds": 0.291011,
+  "trendBuckets": {
+    "buckets": [
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 93,
+            "positives": 22
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 93,
+        "end": "2024-02-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.23655913978494625
+        },
+        "positives": 22,
+        "risk": null,
+        "start": "2024-01-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 75,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 75,
+        "end": "2024-03-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.10666666666666667
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2024-02-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 86,
+            "positives": 13
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 86,
+        "end": "2024-04-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.1511627906976744
+        },
+        "positives": 13,
+        "risk": null,
+        "start": "2024-03-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 56,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 56,
+        "end": "2024-05-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.14285714285714285
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2024-04-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 53,
+            "positives": 2
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 53,
+        "end": "2024-06-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.03773584905660377
+        },
+        "positives": 2,
+        "risk": null,
+        "start": "2024-05-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 97,
+            "positives": 12
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 97,
+        "end": "2024-07-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.12371134020618557
+        },
+        "positives": 12,
+        "risk": null,
+        "start": "2024-06-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 0,
+            "positives": 0
+          },
+          "train": {
+            "commits": 68,
+            "positives": 8
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 68,
+        "end": "2024-08-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.11764705882352941
+        },
+        "positives": 8,
+        "risk": null,
+        "start": "2024-07-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 3,
+            "positives": 0
+          },
+          "train": {
+            "commits": 4,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 114,
+            "positives": 12
+          }
+        },
+        "commits": 121,
+        "end": "2024-09-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.09917355371900827
+        },
+        "positives": 12,
+        "risk": {
+          "count": 3,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 3 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-08-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 97,
+            "positives": 8
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 97,
+        "end": "2024-10-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": null,
+          "value": 0.08247422680412371
+        },
+        "positives": 8,
+        "risk": {
+          "count": 97,
+          "median": 0.09132846355279875,
+          "p90": 0.32852939126182823,
+          "reason": null
+        },
+        "start": "2024-09-01T00:00:00+08:00"
+      },
+      {
+        "byPartition": {
+          "test": {
+            "commits": 15,
+            "positives": 0
+          },
+          "train": {
+            "commits": 0,
+            "positives": 0
+          },
+          "validation": {
+            "commits": 0,
+            "positives": 0
+          }
+        },
+        "commits": 15,
+        "end": "2024-11-01T00:00:00+08:00",
+        "observedRate": {
+          "reason": "桶内提交数 15 少于最小样本 20，观测比例不足以比较",
+          "value": null
+        },
+        "positives": 0,
+        "risk": {
+          "count": 15,
+          "median": null,
+          "p90": null,
+          "reason": "桶内测试提交数 15 少于最小样本 20，风险分布不足以比较"
+        },
+        "start": "2024-10-01T00:00:00+08:00"
+      }
+    ],
+    "grain": "month",
+    "minSample": 20,
+    "timezone": "UTC+08:00"
+  }
+}

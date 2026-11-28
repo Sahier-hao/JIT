@@ -1,0 +1,16 @@
+{"commitId": "eec10fcf0c795bdfacef4c9933585f65f953fd58", "label": 1, "project": "commons-compress", "score": 0.3907686471939087}
+{"commitId": "635e41ea181c5fee8860a7044c84ae3557b51189", "label": 1, "project": "commons-lang", "score": 0.37248024344444275}
+{"commitId": "1170279dc85c2bbdea594b053c56b379a72a2104", "label": 1, "project": "commons-io", "score": 0.5677847266197205}
+{"commitId": "64a64f5ef90dfb4b3b862d0943437f11e35db938", "label": 0, "project": "ant-ivy", "score": 0.3080776333808899}
+{"commitId": "05164d24d77b4f05a309cef5375792b08316f1b6", "label": 0, "project": "commons-bcel", "score": 0.40275558829307556}
+{"commitId": "3c92830ec51fb6b6e9a7ca2fb8fda324cd33e48a", "label": 1, "project": "commons-lang", "score": 0.401802122592926}
+{"commitId": "a2ba6d54852aceda5e3bf9285730da743ef04e77", "label": 1, "project": "commons-compress", "score": 0.3259030878543854}
+{"commitId": "277321564dd18c68fce97594652d5aea50ff221c", "label": 0, "project": "commons-math", "score": 0.36064088344573975}
+{"commitId": "640670bd862d008990c442d2d7cc26d7fb3b6e86", "label": 0, "project": "commons-collections", "score": 0.34285280108451843}
+{"commitId": "0a75cbc380f537c06e26fa5bd9654cf878a9587a", "label": 1, "project": "commons-math", "score": 0.43943414092063904}
+{"commitId": "3c047a1e700c4e47c80745d0e9145578b95f36be", "label": 0, "project": "ant-ivy", "score": 0.49464714527130127}
+{"commitId": "2ddabf3b84d42184d9781e02a936fa1160177866", "label": 1, "project": "giraph", "score": 0.41780808568000793}
+{"commitId": "3e08af573f8b50da5202f55df62c925f88a47f3d", "label": 0, "project": "commons-lang", "score": 0.3806551992893219}
+{"commitId": "fdf05fa29babe21e64f9a5b268dc8406d449d4f1", "label": 0, "project": "commons-lang", "score": 0.4099051058292389}
+{"commitId": "cd64fa339a97300c64dfc434483e478a58f507a8", "label": 0, "project": "commons-math", "score": 0.3337390124797821}
+{"commitId": "08dc6300117b9137b6df1ad6b54fec47e2c310ff", "label": 1, "project": "ant-ivy", "score": 0.6622093319892883}

@@ -1,0 +1,149 @@
+{
+  "commit": {
+    "averagePrecision": {
+      "reason": null,
+      "value": 0.7514204545454545
+    },
+    "confusion": {
+      "fn": 6,
+      "fp": 0,
+      "tn": 8,
+      "tp": 2
+    },
+    "effort": {
+      "budgetLoc": 944.8000000000001,
+      "name": "Recall@20%LOC (risk-ranked)",
+      "ordering": "risk-desc,time-desc,id-asc",
+      "policy": "whole-commit-prefix-stop",
+      "selectedCount": 0,
+      "totalLoc": 4724.0,
+      "usedLoc": 0
+    },
+    "f1": {
+      "reason": null,
+      "value": 0.4
+    },
+    "ifa": {
+      "reason": null,
+      "value": 0
+    },
+    "popt": {
+      "reason": null,
+      "value": 0.8801707445872207
+    },
+    "positives": 8,
+    "precision": {
+      "reason": null,
+      "value": 1.0
+    },
+    "recall": {
+      "reason": null,
+      "value": 0.25
+    },
+    "recall20Loc": {
+      "reason": null,
+      "value": 0.0
+    },
+    "reference": {
+      "allNegative": {
+        "confusion": {
+          "fn": 8,
+          "fp": 0,
+          "tn": 8,
+          "tp": 0
+        },
+        "f1": {
+          "reason": null,
+          "value": 0.0
+        },
+        "precision": {
+          "reason": "没有预测为正的提交",
+          "value": null
+        },
+        "recall": {
+          "reason": null,
+          "value": 0.0
+        }
+      },
+      "apNoInformation": 0.5
+    },
+    "rocAuc": {
+      "reason": null,
+      "value": 0.703125
+    },
+    "samples": 16,
+    "threshold": 0.5
+  },
+  "limitations": [
+    "This is a real-sample CPU smoke run, not the author 50-epoch full protocol.",
+    "Author per-split feature standardization is preserved and is not a clean train-only scaling protocol.",
+    "Line labels do not contain Git line numbers; only table index/file identity is available."
+  ],
+  "line": {
+    "baselines": {
+      "fileOrder": {
+        "commitsWithPositives": 2,
+        "firstPositiveInspectionMean": 20.0,
+        "firstPositiveInspectionMedian": 20.0,
+        "lineBudget": "ceil(20% of each commit's eligible lines)",
+        "mrr": 0.05357142857142857,
+        "positives": 6,
+        "recallAt20PercentLines": 0.0,
+        "recallAt20PercentPerCommitMean": 0.0,
+        "topKHitRate": {
+          "top1": 0.0,
+          "top10": 0.0,
+          "top5": 0.0
+        }
+      },
+      "random": {
+        "firstPositiveInspectionMean": 9.87,
+        "mrr": 0.21614634205379876,
+        "recallAt20PercentLines": 0.21333333333333332,
+        "runs": 50,
+        "seed": 42,
+        "topKHitRate": {
+          "top1": 0.07,
+          "top10": 0.64,
+          "top5": 0.34
+        }
+      }
+    },
+    "coverage": {
+      "explainedCommits": 2,
+      "lineRows": 93,
+      "tokenLinks": 682,
+      "uncoveredReason": null
+    },
+    "metricDefinitions": {
+      "firstPositiveInspection": "number of lines ranked before the first positive line",
+      "mrr": "mean reciprocal rank of the first positive line",
+      "recallAt20PercentLines": "share of positives captured by the first ceil(20% lines) per commit",
+      "topKHitRate": "fraction of positive commits with at least one positive in the first K lines"
+    },
+    "model": {
+      "commitsWithPositives": 2,
+      "firstPositiveInspectionMean": 7.0,
+      "firstPositiveInspectionMedian": 7.0,
+      "lineBudget": "ceil(20% of each commit's eligible lines)",
+      "mrr": 0.125,
+      "positives": 6,
+      "recallAt20PercentLines": 0.16666666666666666,
+      "recallAt20PercentPerCommitMean": 0.16666666666666666,
+      "topKHitRate": {
+        "top1": 0.0,
+        "top10": 1.0,
+        "top5": 0.0
+      }
+    },
+    "positives": 6,
+    "samples": 93,
+    "tieRule": "score desc, path asc, idx asc"
+  },
+  "samples": {
+    "test": 16,
+    "train": 8,
+    "valid": 4
+  },
+  "schema": "author-jitfine-metrics-v1"
+}

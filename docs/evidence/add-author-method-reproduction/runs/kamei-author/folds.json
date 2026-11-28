@@ -1,0 +1,494 @@
+{
+  "bugzilla": [
+    {
+      "fold": 0,
+      "scoreSha256": "ca6b1f42da07810bcbdb6e37b8dc9c4460e4eb94ef56b7f0faa1b328b9371d14",
+      "test": 462,
+      "testPositives": 170,
+      "train": 4158,
+      "underSampledTrain": 3052
+    },
+    {
+      "fold": 1,
+      "scoreSha256": "111920a5760e90a1b5358107c5876d4089e17b0447e981def0bd046798c703ab",
+      "test": 462,
+      "testPositives": 170,
+      "train": 4158,
+      "underSampledTrain": 3052
+    },
+    {
+      "fold": 2,
+      "scoreSha256": "039fd4c2da266dd9f4b94f53b9f928cb29f1dc0429c148fa581c28ee675b89b2",
+      "test": 462,
+      "testPositives": 170,
+      "train": 4158,
+      "underSampledTrain": 3052
+    },
+    {
+      "fold": 3,
+      "scoreSha256": "65f881c4820d05170d43dacfec5afb41dd9aaa713837e9a4cafd567ece0919ff",
+      "test": 462,
+      "testPositives": 170,
+      "train": 4158,
+      "underSampledTrain": 3052
+    },
+    {
+      "fold": 4,
+      "scoreSha256": "526ed887e0d3670846fde92670cee7909098798087dfc05658c66b9a6689c015",
+      "test": 462,
+      "testPositives": 170,
+      "train": 4158,
+      "underSampledTrain": 3052
+    },
+    {
+      "fold": 5,
+      "scoreSha256": "e6256ecc0897157f911d9f6db136e3160af47e89ba09082ce2716cd13c4d7984",
+      "test": 462,
+      "testPositives": 170,
+      "train": 4158,
+      "underSampledTrain": 3052
+    },
+    {
+      "fold": 6,
+      "scoreSha256": "6071196fc96444f26294bfc735cf731a81e82cc4b0c4bbd74162addb21a74896",
+      "test": 462,
+      "testPositives": 169,
+      "train": 4158,
+      "underSampledTrain": 3054
+    },
+    {
+      "fold": 7,
+      "scoreSha256": "079e555d30c89155fe5716b05af3a74181c401c4b6583fc50c723963f8e03253",
+      "test": 462,
+      "testPositives": 169,
+      "train": 4158,
+      "underSampledTrain": 3054
+    },
+    {
+      "fold": 8,
+      "scoreSha256": "ab8038a45ac79346b3f9d743c19fd59c181173fb25806dae36acaf73607b3bf7",
+      "test": 462,
+      "testPositives": 169,
+      "train": 4158,
+      "underSampledTrain": 3054
+    },
+    {
+      "fold": 9,
+      "scoreSha256": "893a4a0cf0d47cc3c2681150cdccd1bdde6f73c7e170105d5c2672833b7e6727",
+      "test": 462,
+      "testPositives": 169,
+      "train": 4158,
+      "underSampledTrain": 3054
+    }
+  ],
+  "columba": [
+    {
+      "fold": 0,
+      "scoreSha256": "2ef2a1f6a7c92e017c613301c176a93aeb1a62bed0632a57587c01518aa9e0d1",
+      "test": 446,
+      "testPositives": 136,
+      "train": 4009,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 1,
+      "scoreSha256": "7b8475b1e9740da159eb420f0d7977c5e7fa55b2ea9a5c6ef0a6f87bf61fa528",
+      "test": 446,
+      "testPositives": 136,
+      "train": 4009,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 2,
+      "scoreSha256": "39afeafd918272079a60ac2b1aa70c135b695e45d47fd0b47d921a9e027a08f3",
+      "test": 446,
+      "testPositives": 136,
+      "train": 4009,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 3,
+      "scoreSha256": "598d15ea0ec0672db82c5fc5b0828e3dabafacf4d700bac64e0ab897646c90a2",
+      "test": 446,
+      "testPositives": 136,
+      "train": 4009,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 4,
+      "scoreSha256": "df026da2adf6ec7d088d3184b4b4bd73ba55fb5b2038e911438255a2ce94294c",
+      "test": 446,
+      "testPositives": 137,
+      "train": 4009,
+      "underSampledTrain": 2448
+    },
+    {
+      "fold": 5,
+      "scoreSha256": "de2404eacff694e9fd4e7ef26ef2a393f5a81a310c54341d9f01a36f637d8777",
+      "test": 445,
+      "testPositives": 136,
+      "train": 4010,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 6,
+      "scoreSha256": "8e9d1104927096d47900bbd31add6143a47fab90fe4499518387f375077186fd",
+      "test": 445,
+      "testPositives": 136,
+      "train": 4010,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 7,
+      "scoreSha256": "6c7251ce6e20839fcd6f3cacb4be36a8eff6d3154f5f75914e08121cb58790a5",
+      "test": 445,
+      "testPositives": 136,
+      "train": 4010,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 8,
+      "scoreSha256": "04f8f0c755ec309efed839921c2aa3e4e08d5856935ff58a80f4d8d61b059774",
+      "test": 445,
+      "testPositives": 136,
+      "train": 4010,
+      "underSampledTrain": 2450
+    },
+    {
+      "fold": 9,
+      "scoreSha256": "6facd66dffdb2df9e183f7c3bd7ec65bc120bf62f7fd28c965e257f480db10dd",
+      "test": 445,
+      "testPositives": 136,
+      "train": 4010,
+      "underSampledTrain": 2450
+    }
+  ],
+  "jdt": [
+    {
+      "fold": 0,
+      "scoreSha256": "5196961e8a5378a2b19b67658caab0218f663d0f0fd6d2ac3b753738f62409b9",
+      "test": 3539,
+      "testPositives": 509,
+      "train": 31847,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 1,
+      "scoreSha256": "a2a04c73feabfd2e6cf0010a3b4d136e9d0e309dd59053fdfe8b3721a80a0529",
+      "test": 3539,
+      "testPositives": 509,
+      "train": 31847,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 2,
+      "scoreSha256": "f0b38768c2d3486e76940c6f1e59519f4125ae07cf4c464378bd28d7699262e8",
+      "test": 3539,
+      "testPositives": 509,
+      "train": 31847,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 3,
+      "scoreSha256": "3948dde2d8e7f4c6a67bfff124002b0f5e186a26dab4ee77d7d374d44d6b6781",
+      "test": 3539,
+      "testPositives": 509,
+      "train": 31847,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 4,
+      "scoreSha256": "d60d81d102a234820cc77ff2921526c9c15d57a368991b8da69969b6a79efecd",
+      "test": 3539,
+      "testPositives": 509,
+      "train": 31847,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 5,
+      "scoreSha256": "c8823c950ab86a9fc2b0feb3df47c2d1082364807a36e65514506de3094ef6c8",
+      "test": 3539,
+      "testPositives": 509,
+      "train": 31847,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 6,
+      "scoreSha256": "21eb5ee9baa3a1b225bedff660f810ca2e21ec0eb378d6f86e0fe1b939a1df8b",
+      "test": 3538,
+      "testPositives": 509,
+      "train": 31848,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 7,
+      "scoreSha256": "034714adc5160e7ff41382915f92516aee52e1bb97d98a6a18445fffa70375fc",
+      "test": 3538,
+      "testPositives": 509,
+      "train": 31848,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 8,
+      "scoreSha256": "d29e474d3ac08a302ef38b190a0b5cc2edfb859f90e5875c8c8d1903ce61275f",
+      "test": 3538,
+      "testPositives": 509,
+      "train": 31848,
+      "underSampledTrain": 9160
+    },
+    {
+      "fold": 9,
+      "scoreSha256": "cc58b446dd046c55247cd9db26efd2b6f8caa9a54b5d29d3670ebaf67d43c17f",
+      "test": 3538,
+      "testPositives": 508,
+      "train": 31848,
+      "underSampledTrain": 9162
+    }
+  ],
+  "mozilla": [
+    {
+      "fold": 0,
+      "scoreSha256": "64e12865875dafd4a68587fba06f7c39f43cde07c2c33deea7362196f948c8cc",
+      "test": 9828,
+      "testPositives": 515,
+      "train": 88447,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 1,
+      "scoreSha256": "e2020d8c460c43b0cf489204e8f19b6788503cc657a16dbeab4894a344f20b7d",
+      "test": 9828,
+      "testPositives": 515,
+      "train": 88447,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 2,
+      "scoreSha256": "c282d873c0e69be4afc333331231d332b6c4844f377439dcfffd8dee1eb23504",
+      "test": 9828,
+      "testPositives": 515,
+      "train": 88447,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 3,
+      "scoreSha256": "c191b96399fd486d07947ee46cdfef0377da5a74004dfa42912387c9bd93a2e2",
+      "test": 9828,
+      "testPositives": 515,
+      "train": 88447,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 4,
+      "scoreSha256": "18e169a770a54a4ea46fdc25ec6499c8363c4a1e6d2fdadcdee0c15e6201fb26",
+      "test": 9828,
+      "testPositives": 515,
+      "train": 88447,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 5,
+      "scoreSha256": "9d8a8b56814c684e7f204dd82d8e0b90fcf9c7aae80c4eea6f8eec9531b20310",
+      "test": 9827,
+      "testPositives": 514,
+      "train": 88448,
+      "underSampledTrain": 9270
+    },
+    {
+      "fold": 6,
+      "scoreSha256": "3eb252a7432929dfcee631213c73d19a843bbaae79b2ce4e578153d92cb14328",
+      "test": 9827,
+      "testPositives": 515,
+      "train": 88448,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 7,
+      "scoreSha256": "dc5135b58829b1dc2449877ed717038df4f3037c0c9ab758266402dbe431f7f7",
+      "test": 9827,
+      "testPositives": 515,
+      "train": 88448,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 8,
+      "scoreSha256": "d4b120d0bf1c7ef458b7403c9dc4bf544fa3354a8fd34c4425bde41253c7383e",
+      "test": 9827,
+      "testPositives": 515,
+      "train": 88448,
+      "underSampledTrain": 9268
+    },
+    {
+      "fold": 9,
+      "scoreSha256": "760a9caeb961c2df293f83d7bc12c0a744b7150b4e73c25324a30839fd799b5d",
+      "test": 9827,
+      "testPositives": 515,
+      "train": 88448,
+      "underSampledTrain": 9268
+    }
+  ],
+  "platform": [
+    {
+      "fold": 0,
+      "scoreSha256": "08a47154a787dd036094458b8e83ecf7669990c8b3c05114c6df4bcb84174624",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 1,
+      "scoreSha256": "526b7a15ffd5e8341ee11b47969ab2389225755127774ff7e6fd73ebcd184d27",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 2,
+      "scoreSha256": "e66dde4750b8604560d6c8922aaec7e763ab43805911a4158a09e5df882a2402",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 3,
+      "scoreSha256": "fb30efa057c0095091c33375f919afda5a0de37527464ec06de5e0816a5b241f",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 4,
+      "scoreSha256": "932488a52260b7f956c83d372779abb8a6ea667203837ed464356eb47bf2f271",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 5,
+      "scoreSha256": "f05a3a5602a3d47c2c3a7fc5206eba6e9d088c8bb881c8734d0b587ad0aba34a",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 6,
+      "scoreSha256": "8b4e00fe79ac64178cfc063a8954c11214c62a020b8d1628a3ee7c9d4b5e1e7d",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 7,
+      "scoreSha256": "0f8e21700effbe4e50b1ea2435bab61a40c338aa8aedf9b8443cc57841ccb638",
+      "test": 6425,
+      "testPositives": 945,
+      "train": 57825,
+      "underSampledTrain": 17014
+    },
+    {
+      "fold": 8,
+      "scoreSha256": "3febf54dc643ff8baa83f662794b2e8779708150329da7197866170ee7938148",
+      "test": 6425,
+      "testPositives": 946,
+      "train": 57825,
+      "underSampledTrain": 17012
+    },
+    {
+      "fold": 9,
+      "scoreSha256": "48cff0bc6d8357ba2ff1de5ce761d7c1fc304f6ca87e1cf2a7127b0780e352bc",
+      "test": 6425,
+      "testPositives": 946,
+      "train": 57825,
+      "underSampledTrain": 17012
+    }
+  ],
+  "postgres": [
+    {
+      "fold": 0,
+      "scoreSha256": "42d0d8276531f456675be80ac861d56efd67a9331dc47200b584856ebb4e8f63",
+      "test": 2044,
+      "testPositives": 512,
+      "train": 18387,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 1,
+      "scoreSha256": "d31751dd208865953d78a2177c108c2f55a0af9643ccf6364f469e86a5b3d851",
+      "test": 2043,
+      "testPositives": 511,
+      "train": 18388,
+      "underSampledTrain": 9216
+    },
+    {
+      "fold": 2,
+      "scoreSha256": "b1d97dc4cab110e6dca9beb26bbb6024308bfd87fd442127c2af031f0622d074",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 3,
+      "scoreSha256": "b3a258aa62811de75f0829d33b004a8ee911a7ccd90858826e68c3521c675153",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 4,
+      "scoreSha256": "7e1e9c6f8da9a82e18d22ab3966f198a8ab6fab08c84327d166ec37c218bdb09",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 5,
+      "scoreSha256": "67757c001b2715acd242c3ee2358f971e7a125279ea8b056055a75c6b81aea1e",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 6,
+      "scoreSha256": "c3b644b8cce16c42609b609b4578818178384b529c06076c76e377908b3bb8a5",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 7,
+      "scoreSha256": "ff2fc19ffb494a7ffc8c8a0d65208fcf70619fd078af32d1b8d44d574edb2337",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 8,
+      "scoreSha256": "0e9fa0abc9593b65935474933868da1dbd18cce3843be1f3fb1ca8a1776b9501",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    },
+    {
+      "fold": 9,
+      "scoreSha256": "4bd70396e2084c295f3168b738d5b41c0cb6555e6516e8f2556fc04d96d77361",
+      "test": 2043,
+      "testPositives": 512,
+      "train": 18388,
+      "underSampledTrain": 9214
+    }
+  ]
+}
