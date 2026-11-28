@@ -9,12 +9,12 @@ ROOT = Path(__file__).resolve().parents[2]
 # [AI生成]
 def test_real_inventory_counts_and_four_admin_auth():
     data = inventory.build_inventory(inventory.DEFAULT_OPENAPI)
-    assert data["totalOperations"] == 102
-    assert data["businessOperations"] == 98
+    assert data["totalOperations"] == 113
+    assert data["businessOperations"] == 109
     assert {item["operationId"] for item in data["adminAuthOperations"]} == {
         "adminSetup", "adminLogin", "adminSession", "adminLogout",
     }
-    assert len({item["key"] for item in data["operations"]}) == 98
+    assert len({item["key"] for item in data["operations"]}) == 109
     for item in data["operations"]:
         assert item["method"] and item["path"] and item["operationId"]
         assert item["riskDomain"] and item["riskTier"] in {"high", "medium", "low"}
@@ -48,3 +48,17 @@ def test_drift_detection_reports_renamed_and_missing_operations():
     problems = inventory._drift(data, changed)
     assert any("operationId 漂移" in problem for problem in problems)
     assert any("清单多出操作" in problem for problem in problems)
+
+
+def test_drift_detection_reports_count_changes_from_saved_inventory():
+    data = inventory.build_inventory(inventory.DEFAULT_OPENAPI)
+    changed = {
+        **data,
+        "totalOperations": data["totalOperations"] - 1,
+        "businessOperations": data["businessOperations"] - 1,
+        "operations": [dict(item) for item in data["operations"]],
+    }
+    changed["operations"].pop()
+    problems = inventory._drift(data, changed)
+    assert any("操作总数漂移" in problem for problem in problems)
+    assert any("业务操作数漂移" in problem for problem in problems)

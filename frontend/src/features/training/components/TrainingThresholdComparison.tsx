@@ -41,7 +41,7 @@ function ValidationCurve({ rows, metric, tick }: {
     tooltip: chartTooltip(colors),
     grid: { left: 40, right: 21, top: 14, bottom: 42 },
     xAxis: {
-      type: 'value', min: 0, max: 1, interval: .25, name: '风险分数阈值', nameLocation: 'center', nameGap: 27,
+      type: 'value', min: 0, max: 1, interval: .25, name: '缺陷阈值', nameLocation: 'center', nameGap: 27,
       axisLabel: { color: colors.text, formatter: (value: number) => value.toFixed(2) },
       nameTextStyle: { color: colors.text },
       splitLine: { show: false },
@@ -205,10 +205,10 @@ export function TrainingThresholdComparison({ candidates, onEvaluate, result, on
         <div className="grid min-w-0 grid-cols-1 content-start gap-3 p-4 sm:p-5">
           <ValidationCurve rows={rows} metric={metric} tick={tick}/>
           <div className="grid gap-2 text-xs text-foreground-3">
-            <span className="flex items-center justify-between gap-2">预览阈值
+            <span className="flex items-center justify-between gap-2">预览缺陷阈值
               <strong className="rounded-md bg-accent-soft px-2 py-0.5 font-mono text-sm tabular-nums text-accent">{(tick / 100).toFixed(2)}</strong>
             </span>
-            <Slider label="预览阈值" value={[tick]} onValueChange={values => { if (strategy === 'fixed') reset(); setTick(values[0]) }}/>
+            <Slider label="预览缺陷阈值" value={[tick]} onValueChange={values => { if (strategy === 'fixed') reset(); setTick(values[0]) }}/>
           </div>
         </div>
         <div className="grid content-start gap-3 border-t border-border-soft bg-sunken/65 p-4 sm:p-5 xl:border-t-0 xl:border-l" aria-busy={busy}>
@@ -216,7 +216,7 @@ export function TrainingThresholdComparison({ candidates, onEvaluate, result, on
           <label className="grid gap-1 text-xs text-foreground-3">阈值选择方式
             <NativeSelect size="sm" className="bg-card" value={strategy}
               onChange={event => { reset(); setStrategy(event.currentTarget.value as ThresholdSelection['strategy']) }}>
-              <option value="fixed">使用当前预览阈值</option>
+              <option value="fixed">使用当前缺陷阈值</option>
               <option value="max-f1">各自验证集 F1 最高</option>
               <option value="target-recall">按目标召回率</option>
             </NativeSelect>

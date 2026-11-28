@@ -15,7 +15,7 @@ from ..catalog_input import read_object
 from ..config import BACKEND, USER_DATASET_LIMIT
 from ..data import BaselineError, sha256
 from ..schemas import KAMEI_2013_SCHEMA, resolve
-from ..split_preview import dataset_split_preview
+from ..split_preview import dataset_split_preview, request_ratios
 from ..store import dataset_references
 from ..users import current_user
 from .dataset_import_jobs import DatasetImportJobs, import_csv, upload_name
@@ -449,11 +449,15 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog,
         return _view(storage, manifest, version, owners, username)
 
     @app.get('/api/v1/user/datasets/{version}/split-preview')
-    def user_split_preview(version: str, request: Request, preset: str | None = None):
+    def user_split_preview(version: str, request: Request, preset: str | None = None,
+                           train: int | None = None, validation: int | None = None,
+                           test: int | None = None):
         username = _user(request)
         registry = _registry(root)
         _visible(storage, version, username, registry)
-        return dataset_split_preview(root, version, preset)
+        return dataset_split_preview(
+            root, version, preset, ratios=request_ratios(train, validation, test),
+        )
 
     @app.get('/api/v1/user/datasets/{version}/export')
     def user_dataset_export(version: str, request: Request):
@@ -557,9 +561,16 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog,
 
     @app.post('/api/v1/user/training-experiments/{experiment_id}/comparison/thresholds')
     async def user_experiment_thresholds(experiment_id: str, request: Request):
-        _owned_experiment(experiment_id, _user(request))
+        view = _owned_experiment(experiment_id, _user(request))
+        payload = await read_object(request)
+        requested = payload.get('taskIds') if isinstance(payload, dict) else None
+        if isinstance(requested, list):
+            tasks = {task['taskId']: task for task in view['tasks']}
+            if any(task_id in tasks and not tasks[task_id].get('modelId')
+                   for task_id in requested):
+                raise BaselineError('TASK_NOT_READY', '训练模型尚未登记到模型库，不能开始正式评估')
         return await run_in_threadpool(training_service.evaluate_experiment_thresholds,
-                                       experiment_id, await read_object(request))
+                                       experiment_id, payload)
 
     @app.post('/api/v1/user/training-experiments/{experiment_id}/register')
     async def user_register_experiment(experiment_id: str, request: Request):
@@ -588,6 +599,44 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog,
                 training_service.tasks.update(task['taskId'], model_id=entry['modelId'],
                                               run_id=entry['runId'])
         return promoted
+
+    @app.post('/api/v1/user/training-experiments/{experiment_id}/tasks/{task_id}/register')
+    async def user_register_experiment_task(experiment_id: str, task_id: str, request: Request):
+        username = _user(request)
+        view = _owned_experiment(experiment_id, username)
+        task = next((item for item in view['tasks'] if item['taskId'] == task_id), None)
+        if task is None:
+            raise BaselineError('NOT_FOUND', '训练任务不存在')
+        if task['status'] != 'succeeded':
+            raise BaselineError('TASK_NOT_READY', '只有已成功完成的训练任务可以登记模型')
+        if task.get('modelId'):
+            model = next((item for item in catalog.registered_models()
+                          if item['modelId'] == task['modelId']), None)
+            if model is not None:
+                return {
+                    'status': 'already-registered',
+                    'modelId': model['modelId'],
+                    'runId': model.get('runId'),
+                    'artifactRunId': model.get('artifactRunId'),
+                }
+        candidates = catalog.experiment_runs(registration_state='unregistered')['runs']
+        candidate = next((item for item in candidates
+                          if item.get('artifactKey') == task.get('artifactKey')), None)
+        if candidate is None:
+            raise BaselineError('ARTIFACT_UNAVAILABLE', '该训练任务的模型产物不可登记或已失效')
+        promoted = await run_in_threadpool(
+            catalog.promote_experiments,
+            [{'candidateId': candidate['candidateId'],
+              'expectedManifestSha256': candidate['manifestSha256']}],
+            request_id=getattr(request.state, 'request_id', None),
+            owner_user_id=username,
+        )
+        entry = promoted['items'][0]
+        if entry.get('modelId'):
+            training_service.tasks.update(
+                task_id, model_id=entry['modelId'], run_id=entry.get('runId'),
+            )
+        return entry
 
     def _owned_task(task_id, username):
         task = training_service.get(task_id)

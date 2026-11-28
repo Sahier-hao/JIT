@@ -9,7 +9,7 @@ export type ThresholdSelection =
   | { strategy: 'fixed'; threshold: number }
   | { strategy: 'max-f1' }
   | { strategy: 'target-recall'; targetRecall: number }
-export type ThresholdRequest = ThresholdSelection & { taskIds: [string, string] }
+export type ThresholdRequest = ThresholdSelection & { taskIds: [string] | [string, string] }
 
 function counts(value: unknown, max: number): value is number[] {
   return Array.isArray(value) && value.length === 101
@@ -56,12 +56,43 @@ function classification(raw: unknown) {
 }
 
 function evaluatedMethod(raw: unknown) {
-  const method = record(raw)
+    const method = record(raw)
+    const evaluationRaw = method.evaluation == null ? null : record(method.evaluation)
+    const partition = evaluationRaw?.partition == null ? null : record(evaluationRaw.partition)
+    const labelPolicy = evaluationRaw?.labelPolicy == null ? null : record(evaluationRaw.labelPolicy)
+    const excluded = labelPolicy?.excludedCounts == null ? null : record(labelPolicy.excludedCounts)
+    const samples = evaluationRaw?.sampleCounts == null ? null : record(evaluationRaw.sampleCounts)
   return {
     taskId: text(method.taskId), artifactRunId: text(method.artifactRunId),
+    runId: textOrNull(method.runId), modelId: textOrNull(method.modelId), method: text(method.method),
     threshold: riskNumber(method.threshold), defaultThreshold: riskNumber(method.defaultThreshold),
     validation: classification(method.validation), test: classification(method.test),
     defaultTest: classification(method.defaultTest),
+    evaluation: evaluationRaw && partition && labelPolicy && excluded && samples ? {
+      format: text(evaluationRaw.format),
+      source: text(evaluationRaw.source),
+      mode: evaluationRaw.mode === 'formal' ? 'formal' as const : 'exploratory' as const,
+      formalAvailable: evaluationRaw.formalAvailable === true,
+      formalUnavailableReason: textOrNull(evaluationRaw.formalUnavailableReason),
+      partition: {
+        kind: text(partition.kind),
+        memberSha256: textOrNull(partition.memberSha256),
+        labelSnapshot: partition.labelSnapshot === true,
+      },
+      labelPolicy: {
+        version: text(labelPolicy.version),
+        included: Array.isArray(labelPolicy.included) ? labelPolicy.included.map(value => text(value)) : [],
+        excludedCounts: Object.fromEntries(
+          Object.entries(excluded).map(([key, value]) => [key, finiteNumber(value)]),
+        ),
+      },
+      sampleCounts: {
+        included: finiteNumber(samples.included),
+        positives: finiteNumber(samples.positives),
+        negatives: finiteNumber(samples.negatives),
+        excluded: finiteNumber(samples.excluded),
+      },
+    } : null,
   }
 }
 

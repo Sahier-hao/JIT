@@ -1,38 +1,24 @@
 import { Activity, BookOpenText, Check, CircleAlert, Clock3, LoaderCircle } from 'lucide-react'
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { TrainingLossChart } from '@/components/shared/TrainingLossChart'
 import { formatMethodParams } from '@/lib/methodParams'
 import { cn } from '@/lib/utils'
-import type { Row, TrainingExperiment, TrainingTask } from '@/features/admin/adminContracts'
+import type { TrainingExperiment, TrainingTask } from '@/features/admin/adminContracts'
 import { datasetVersionLabel, splitPresetLabel } from '@/lib/datasetLabel'
 import { isActiveTraining, trainingMethodName, trainingPhase, trainingStatus } from '@/features/training/trainingPresentation'
-import { TrainingThresholdPreview } from '@/features/training/components/TrainingThresholdPreview'
 
 const DEEP = new Set(['mlp-v1', 'wide-deep-v1', 'tabular-resnet-v1', 'ft-transformer-v1'])
 const RETRYABLE = new Set(['failed', 'cancelled', 'interrupted'])
 const PHASE_LABELS = ['排队', '训练', '评估与保存', '已保存结果']
-const PARTITIONS = [
-  { key: 'test', label: '测试集' },
-  { key: 'validation', label: '验证集' },
-  { key: 'train', label: '训练集' },
-] as const
-
 function TaskStatus({ task }: { task: TrainingTask }) {
   const style = trainingStatus[task.status]
   return <span className={cn('inline-flex items-center gap-1.5 text-xs', style.color)}>
     <span className={cn('size-1.5 shrink-0 rounded-full', style.dot)} aria-hidden="true"/>
     {task.cancelRequestedAt && isActiveTraining(task.status) ? '正在取消' : style.label}
   </span>
-}
-
-export function trainingMetric(metrics: Row | null, key: string): string {
-  const entry = metrics?.[key]
-  const value = entry && typeof entry === 'object' ? (entry as Row).value : entry
-  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(3) : '—'
 }
 
 function LossPlaceholder({ task }: { task: TrainingTask }) {
@@ -63,22 +49,21 @@ function remainingFitTime(history: TrainingTask['trainingHistory']) {
   return seconds < 60 ? `约 ${seconds} 秒` : `约 ${Math.ceil(seconds / 60)} 分钟`
 }
 
-export function TrainingExperimentMonitor({ experiment, busy, onAction, registration, onOpenDataset, onOpenAlgorithm }: {
+export function TrainingExperimentMonitor({ experiment, busy, onAction, onRegister, onEvaluate, onOpenDataset, onOpenAlgorithm }: {
   experiment: TrainingExperiment
   busy: string
   onAction: (task: TrainingTask, action: 'cancel' | 'retry') => void
-  registration: ReactNode
+  onRegister: (task: TrainingTask) => void
+  onEvaluate: (task: TrainingTask) => void
   onOpenDataset?: () => void
   onOpenAlgorithm?: (method: string) => void
 }) {
   const [selectedMethod, setSelectedMethod] = useState<string>()
-  const [partitionKey, setPartitionKey] = useState('test')
   const monitor = useRef<HTMLElement>(null)
   const tasks = experiment.tasks
   const selected = tasks.find(task => task.method === selectedMethod)
     ?? tasks.find(task => task.status === 'running') ?? tasks[0]
   const finished = tasks.filter(task => !isActiveTraining(task.status)).length
-  const successful = tasks.filter(task => task.status === 'succeeded').length
   const history = selected?.trainingHistory
   const last = history?.entries.at(-1)
   const latestTrain = last?.trainEvalLoss ?? last?.trainLoss
@@ -90,11 +75,6 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
   const active = selected ? isActiveTraining(selected.status) : false
   const phase = selected ? trainingPhase(selected) : null
   const retryable = selected ? RETRYABLE.has(selected.status) : false
-  const availablePartitions = PARTITIONS.flatMap(part => {
-    const metrics = selected?.metricsByPartition?.[part.key] ?? (part.key === 'test' ? selected?.metrics : null)
-    return metrics && typeof metrics === 'object' ? [{ ...part, metrics: metrics as Row }] : []
-  })
-  const partition = availablePartitions.find(part => part.key === partitionKey) ?? availablePartitions[0]
 
   function selectTask(method: string) {
     setSelectedMethod(method)
@@ -149,17 +129,23 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
         <h3 className="px-4 pb-1 text-xs font-medium text-foreground-2">损失曲线</h3>
         <TrainingLossChart history={history} method={method ?? selected.method} height={253} stopped={!active}/>
       </div> : <LossPlaceholder task={selected}/> : null}
-      {selected ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-soft pt-3">
-        {selected.parameters ? <details className="min-w-0 text-xs text-foreground-3">
+        {selected ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-soft pt-3">
+          {selected.parameters ? <details className="min-w-0 text-xs text-foreground-3">
           <summary className="cursor-pointer">训练参数</summary>
           <p className="mt-2 [overflow-wrap:anywhere]">{formatMethodParams(selected.parameters)}</p>
         </details> : <span className="text-xs text-foreground-3">默认参数</span>}
-        {active ? <Button size="sm" type="button" variant="outline" disabled={Boolean(busy || selected.cancelRequestedAt)}
+          {active ? <Button size="sm" type="button" variant="outline" disabled={Boolean(busy || selected.cancelRequestedAt)}
           onClick={() => onAction(selected, 'cancel')}>
           {busy === selected.taskId ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true"/> : null}
           {busy === selected.taskId || selected.cancelRequestedAt ? '正在取消…' : '取消'}
-        </Button> : null}
-      </div> : null}
+          </Button> : null}
+          {selected.status === 'succeeded' ? selected.modelId
+            ? <Button size="sm" type="button" onClick={() => onEvaluate(selected)}>评估本次训练</Button>
+            : <Button size="sm" type="button" disabled={Boolean(busy)} onClick={() => onRegister(selected)}>
+              {busy === selected.taskId ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true"/> : null}
+              登记到模型库
+            </Button> : null}
+        </div> : null}
     </section>
 
     <aside aria-label="实验概况" className="grid min-w-0 grid-cols-1 content-start gap-4 rounded-xl border border-border-soft bg-card p-4">
@@ -171,7 +157,12 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
         {tasks.map(task => <li className="min-w-0" key={task.taskId}>
           <Button type="button" variant="ghost" aria-pressed={task.taskId === selected?.taskId} onClick={() => selectTask(task.method)}
             className="grid h-auto w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] justify-items-start gap-2 whitespace-normal rounded-md border border-transparent px-2.5 py-2 text-left aria-pressed:border-accent/30 aria-pressed:bg-accent-soft">
-            <span className="text-sm [overflow-wrap:anywhere]">{trainingMethodName(task.method)}</span>
+            <span className="min-w-0 text-sm [overflow-wrap:anywhere]">
+              {trainingMethodName(task.method)}
+              {task.status === 'succeeded' ? <span className="ml-1 text-[10px] font-normal text-foreground-4">
+                {task.modelId ? '已登记到模型库' : '尚未登记'}
+              </span> : null}
+            </span>
             <TaskStatus task={task}/>
           </Button>
         </li>)}
@@ -183,25 +174,7 @@ export function TrainingExperimentMonitor({ experiment, busy, onAction, registra
         </div>
         <div><dt>时间切分</dt><dd className="text-sm">{split}</dd></div>
       </dl>
-      {successful && registration ? <div className="grid gap-2 border-t border-border-soft pt-3">{registration}</div> : null}
     </aside>
 
-    {selected?.status === 'succeeded' && partition ? <section className="grid min-w-0 gap-2 xl:col-span-2" aria-label={`${partition.label}指标`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">{partition.label}指标</h2>
-        {availablePartitions.length > 1 ? <ToggleGroup type="single" value={partition.key} aria-label="数据分区"
-          onValueChange={value => { if (value) setPartitionKey(value) }}>
-          {availablePartitions.map(part => <ToggleGroupItem key={part.key} value={part.key} size="sm">{part.label}</ToggleGroupItem>)}
-        </ToggleGroup> : null}
-      </div>
-      <dl className="grid grid-cols-2 divide-x divide-y divide-border-soft rounded-xl border border-border-soft bg-card sm:grid-cols-4 sm:divide-y-0">
-        {([['AP', 'averagePrecision'], ['ROC-AUC', 'rocAuc'], ['F1', 'f1'], ['召回率', 'recall']] as const).map(([label, key]) =>
-          <div key={key} className="space-y-1 px-4 py-3"><dt className="text-xs text-foreground-3">{label}</dt><dd className="text-xl font-semibold tabular-nums">{trainingMetric(partition.metrics, key)}</dd></div>)}
-      </dl>
-    </section> : null}
-    {selected?.status === 'succeeded' ? <div className="min-w-0 xl:col-span-2">
-      <TrainingThresholdPreview key={selected.taskId}
-        data={(selected.metricsByPartition?.validation as Row | undefined)?.thresholdPreview}/>
-    </div> : null}
   </div>
 }

@@ -1651,6 +1651,30 @@ paths:
           - type: string
           - type: 'null'
           title: Maturitypolicy
+      - name: train
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Train
+      - name: validation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Validation
+      - name: test
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Test
       responses:
         '200':
           description: Successful Response
@@ -3210,6 +3234,30 @@ paths:
           - type: string
           - type: 'null'
           title: Preset
+      - name: train
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Train
+      - name: validation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Validation
+      - name: test
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Test
       responses:
         '200':
           description: Successful Response
@@ -3411,6 +3459,35 @@ paths:
         schema:
           type: string
           title: Experiment Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/training-experiments/{experiment_id}/tasks/{task_id}/register:
+    post:
+      summary: User Register Experiment Task
+      operationId: user_register_experiment_task_api_v1_user_training_experiments__experiment_id__tasks__task_id__register_post
+      parameters:
+      - name: experiment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Experiment Id
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
       responses:
         '200':
           description: Successful Response

@@ -1,0 +1,109 @@
+{
+  "copiedFromWorkspace": [
+    "ai-test-provenance/manifest.json",
+    "ai-test-provenance/manual-review.md",
+    "ai-test-provenance/prompt.md",
+    "api-inventory.json",
+    "backend-targeted-junit.xml",
+    "browser-results.json",
+    "docs-links.log",
+    "e2e-identities.json",
+    "frontend-unit-results.json",
+    "integration-report.json",
+    "integration-report.md",
+    "matrix-junit.xml",
+    "matrix-results.json",
+    "openapi.generated.yaml",
+    "scenario-mapping.json",
+    "scenario-matrix.json",
+    "screenshots/training-evaluation-1280-training-evaluation.png",
+    "screenshots/training-evaluation-1440-training-evaluation.png",
+    "screenshots/training-evaluation-390-training-evaluation.png"
+  ],
+  "excluded": [
+    "fixtures/"
+  ],
+  "fileCount": 19,
+  "files": [
+    {
+      "path": "ai-test-provenance/manifest.json",
+      "sha256": "450da503b43e8553951d20748ced3779e41dc3c662117ab89ba21655bbd720b4"
+    },
+    {
+      "path": "ai-test-provenance/manual-review.md",
+      "sha256": "b9be5eaf3f214787f8eec88e7f41f85dccf4309acde5d6a4151a24adf8f75af5"
+    },
+    {
+      "path": "ai-test-provenance/prompt.md",
+      "sha256": "46d3ed8708531a15262a52ab4ab2d729fc5543b9d03a0d846677375d0c4e8e00"
+    },
+    {
+      "path": "api-inventory.json",
+      "sha256": "54aeefcda69d5990517e9217abd95c1a7d8ff2841a69fea0591abd7cbb747045"
+    },
+    {
+      "path": "backend-targeted-junit.xml",
+      "sha256": "cc3b0a000f3f62ab4b8a5b65f9cf0b38e404096d8ebeb78c6c716999bbb8cc35"
+    },
+    {
+      "path": "browser-results.json",
+      "sha256": "c42afd2410fdb1f564ea1ffa6c3c70944687606246f54d7717cbedb9e98e7268"
+    },
+    {
+      "path": "docs-links.log",
+      "sha256": "1bfa54bc3b04baae233ee7760c2b879faa0b9aa626f3495b60ba4588461ebd93"
+    },
+    {
+      "path": "e2e-identities.json",
+      "sha256": "368eff53f8881e2f02a380c394df269f0969c1f89ed6a2eedf2dfb228d48412e"
+    },
+    {
+      "path": "frontend-unit-results.json",
+      "sha256": "37e7abd7ae5c6a54a2ffb0f2e209a813e75288e204b66782683a4d1195fe1ae7"
+    },
+    {
+      "path": "integration-report.json",
+      "sha256": "f6e6c49f3576b1702a231d22749d876d15dc236e4659e0bee46f6387a7d637c5"
+    },
+    {
+      "path": "integration-report.md",
+      "sha256": "35a86e9e64bbcdae3737a1f19cfc89697acdec6e80550841ceb54fb40427c4e5"
+    },
+    {
+      "path": "matrix-junit.xml",
+      "sha256": "7e85eced5b94f0f46c8b0001f9582bcaad3e5b097a31c23186fb2e991da2040d"
+    },
+    {
+      "path": "matrix-results.json",
+      "sha256": "1729771103e2a4d4611658f6ebddac5076a2fdb74713e54a2cc532e96dcfffcd"
+    },
+    {
+      "path": "openapi.generated.yaml",
+      "sha256": "d348c4fc6820a61209e7c23cdaca2ec0966133ec6c7b571636cc79d1706c5149"
+    },
+    {
+      "path": "scenario-mapping.json",
+      "sha256": "70b74316272f671543e1c0df105e6060c6fad4b4cbd76fddee5a69427b94cb0d"
+    },
+    {
+      "path": "scenario-matrix.json",
+      "sha256": "a5d55b93a3929c301d56c4cd1433127b6c37105e3ee3cb7e67c6439f18a9a52c"
+    },
+    {
+      "path": "screenshots/training-evaluation-1280-training-evaluation.png",
+      "sha256": "80cd79884537bcb2db463a0927c1f4eaad585c594eb235cca4c00cb4866734e9"
+    },
+    {
+      "path": "screenshots/training-evaluation-1440-training-evaluation.png",
+      "sha256": "2fbb9ca0d2d8fd4a4d1ca3901605f763b326c3d12aab147baeaa709f5d2a2b3b"
+    },
+    {
+      "path": "screenshots/training-evaluation-390-training-evaluation.png",
+      "sha256": "4efefc5ee8df6c4e93b9966ac0ec71ccba70a81784863b76471c14d06b958d1d"
+    }
+  ],
+  "frozenUtc": "2026-11-28T05:21:52.947843+00:00",
+  "kind": "verification-evidence-freeze",
+  "sourceRunId": "c81bc7adb8e28fe611a4515714737661eb4de9965a75ac8f4d3941015c1f1c9e",
+  "workspace": "backend/.tmp-tests/pr96-evidence-stage"
+}

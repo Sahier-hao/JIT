@@ -125,7 +125,6 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
     assert batch["counts"]["flagged"] == (
         preview["truePositives"][65] + preview["falsePositives"][65]
     )
-
     reopened = service.get(ACCOUNT, batch["batchId"], limit=10, sort="risk")
     assert reopened["batchId"] == batch["batchId"]
     assert reopened["records"] and len(reopened["records"]) == 10
@@ -164,6 +163,66 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
             2,
         )
     assert getattr(invalid.value, "code", None) == "INPUT_INVALID"
+
+
+def test_prediction_evaluation_excludes_unavailable_labels():
+    from jit_baseline.services.user_predictions import (
+        _evaluation_state, _label_availability, _threshold_preview,
+    )
+
+    values = [
+        (1, "positive"), (0, "unobserved"), (0, "immature"),
+        (0, "unknown"), (0, "unrecorded"),
+    ]
+    prepared = []
+    for index, (label, status) in enumerate(values):
+        available_label, label_status, availability = _label_availability(label, status)
+        if availability == "available":
+            prepared.append({
+                "label": available_label,
+                "labelStatus": label_status,
+                "labelAvailability": availability,
+                "risk": [0.9, 0.2, 0.95, 0.8, 0.7][index],
+            })
+
+    preview = _threshold_preview(prepared)
+    assert preview["positives"] == 1
+    assert preview["negatives"] == 1
+    assert preview["truePositives"][50] == 1
+    assert preview["falsePositives"][50] == 0
+    assert preview["truePositives"][20] == 1
+    assert preview["falsePositives"][20] == 1
+    assert _evaluation_state({
+        "labeledAvailable": 2, "positives": 1, "negatives": 1,
+    }) == (True, "包含可用真实标签，可进入评估")
+    assert _evaluation_state({
+        "labeledAvailable": 1, "positives": 1, "negatives": 0,
+    })[0] is False
+
+
+def test_old_prediction_batch_reopens_as_exploratory(prediction_fixture):
+    from jit_baseline.services.user_predictions import UserPredictionService
+
+    service = UserPredictionService(
+        prediction_fixture["storage"], prediction_fixture["catalog"],
+    )
+    batch = service.create(
+        ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"],
+        prediction_fixture["model"]["modelId"],
+    )
+    with prediction_fixture["storage"].connection(write=True) as db:
+        payload = json.loads(db.execute(
+            "SELECT payload_json FROM user_prediction_batch WHERE id=?",
+            (batch["batchId"],),
+        ).fetchone()["payload_json"])
+        payload.pop("evaluation", None)
+        db.execute(
+            "UPDATE user_prediction_batch SET payload_json=? WHERE id=?",
+            (json.dumps(payload), batch["batchId"]),
+        )
+    reopened = service.get(ACCOUNT, batch["batchId"])
+    assert reopened["evaluationEligible"] is True
+    assert reopened["labelAvailabilityCounts"]["available"] > 0
 
 
 def test_private_model_stays_out_of_other_users_scope(prediction_fixture):

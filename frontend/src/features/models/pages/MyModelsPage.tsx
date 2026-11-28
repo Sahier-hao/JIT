@@ -36,7 +36,7 @@ function ModelRow({ model, openCard, navigate }: {
       <span className={compatibility.supported ? 'rounded-sm bg-teal-soft px-1.5 py-0.5 text-[11px] text-teal-deep' : 'rounded-sm bg-amber-soft px-1.5 py-0.5 text-[11px] text-amber-deep'}>{compatibility.label}</span>
       {!model.mine ? <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 text-[11px] text-accent">管理员开放</span>
         : model.shared ? <span className="rounded-sm bg-accent-soft px-1.5 py-0.5 text-[11px] text-accent">已开放</span> : null}
-      <Button size="sm" variant="ghost" onClick={() => openCard(model.modelId)} type="button">查看模型卡</Button>
+      <Button size="sm" variant="ghost" onClick={() => openCard(model.modelId)} type="button">查看模型详情</Button>
       {!compatibility.supported ? <Button size="sm" variant="outline" onClick={() => navigate({ name: 'my-training', schema: 'kamei14-git-v2' })} type="button">用 v2 口径重训</Button> : null}
     </div>
     {compatibility.reason ? <p className="text-xs leading-body text-foreground-3">{compatibility.reason}</p> : null}
@@ -68,7 +68,7 @@ export function MyModelsPage({ navigate, onLoginRequired }: {
     return () => controller.abort()
   }, [onLoginRequired, userRevision, revision])
   if (models === null) return <section className="grid gap-4">
-    <WorkspacePageHeader title="我的模型"/>
+    <WorkspacePageHeader title="模型库"/>
     {error ? <FailureNotice error={error} onRetry={() => setRevision(value => value + 1)}/>
       : <CardListSkeleton label="正在读取我的模型" rows={3}/>}
   </section>
@@ -77,7 +77,7 @@ export function MyModelsPage({ navigate, onLoginRequired }: {
   const meta = [mine.length ? `${mine.length} 个我的模型` : null, shared.length ? `${shared.length} 个管理员开放` : null]
     .filter(Boolean).join(' · ') || '没有可选模型'
   return <section className="mx-auto grid w-full max-w-[68rem] gap-5">
-    <WorkspacePageHeader title="我的模型" meta={meta}/>
+    <WorkspacePageHeader title="模型库" meta={meta}/>
     {!models.length ? <EmptyState title="还没有自己的模型" description="完成训练后，登记结果即可在这里查看；管理员开放的模型也会出现在这里。">
       <Button variant='default' onClick={() => navigate({ name: 'my-training' })} type="button">去训练</Button>
     </EmptyState> : <>

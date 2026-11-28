@@ -1288,6 +1288,21 @@ paths:
         schema:
           type: string
           enum: [mature-only, include-immature]
+      - name: train
+        in: query
+        required: false
+        description: 自定义训练比例；与 validation、test 同时提交，三者合计 100。
+        schema: {type: integer, minimum: 1, maximum: 98}
+      - name: validation
+        in: query
+        required: false
+        description: 自定义验证比例；与 train、test 同时提交。
+        schema: {type: integer, minimum: 1, maximum: 98}
+      - name: test
+        in: query
+        required: false
+        description: 自定义测试比例；与 train、validation 同时提交。
+        schema: {type: integer, minimum: 1, maximum: 98}
       responses:
         '200':
           description: 可用时返回三个分区；不可用时 available=false 并给出具体原因。预览不创建任务、运行或模型。
@@ -2318,8 +2333,42 @@ paths:
           description: 需要用户会话
         '404':
           description: 实验不存在或不属于当前用户
+        '409':
+          description: 训练模型尚未登记到模型库
         '422':
           description: 任务、阈值、分区或冻结产物无法用于复核
+  /api/v1/user/training-experiments/{experimentId}/tasks/{taskId}/register:
+    post:
+      operationId: registerUserTrainingExperimentTask
+      summary: 将用户实验中的一个成功方法精确登记到模型库
+      description: 仅登记路径指定的成功且未登记任务；重复登记复用同一模型身份，不登记同一实验的其他方法。
+      parameters:
+      - name: experimentId
+        in: path
+        required: true
+        schema: {type: string}
+      - name: taskId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: 登记结果。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExactModelRegistrationResult'
+        '401':
+          description: 需要用户会话
+        '404':
+          description: 实验、任务或产物不存在，或不属于当前用户
+        '409':
+          description: 任务尚未成功或已经处于不能登记的状态
+        '422':
+          description: 任务不匹配或产物不可登记
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+      security: []
   /api/v1/training-tasks:
     post:
       operationId: createTrainingTask
@@ -4014,6 +4063,58 @@ components:
       properties:
         value: {type: [number, 'null'], minimum: 0, maximum: 1}
         reason: {type: [string, 'null']}
+    ModelEvaluationEvidence:
+      type: object
+      required: [format, source, mode, formalAvailable, formalUnavailableReason,
+                 partition, labelPolicy, sampleCounts]
+      additionalProperties: false
+      properties:
+        format: {const: model-evaluation-v1}
+        source: {type: string, enum: [training, prediction-batch]}
+        mode: {type: string, enum: [formal, exploratory]}
+        formalAvailable: {type: boolean}
+        formalUnavailableReason: {type: [string, 'null']}
+        partition:
+          type: object
+          required: [kind, memberSha256, labelSnapshot]
+          additionalProperties: false
+          properties:
+            kind: {type: string, enum: [test, batch]}
+            memberSha256: {type: [string, 'null'], pattern: '^[a-f0-9]{64}$'}
+            labelSnapshot: {type: boolean}
+        labelPolicy:
+          type: object
+          required: [version, included, excludedCounts]
+          additionalProperties: false
+          properties:
+            version: {type: string}
+            included:
+              type: array
+              items: {type: string}
+            excludedCounts:
+              type: object
+              additionalProperties: {type: integer, minimum: 0}
+        sampleCounts:
+          type: object
+          required: [included, positives, negatives, excluded]
+          additionalProperties: false
+          properties:
+            included: {type: integer, minimum: 0}
+            positives: {type: integer, minimum: 0}
+            negatives: {type: integer, minimum: 0}
+            excluded: {type: integer, minimum: 0}
+    ExactModelRegistrationResult:
+      type: object
+      required: [status, modelId, runId, artifactRunId]
+      additionalProperties: false
+      properties:
+        status: {type: string, enum: [registered, reused, already-registered, failed]}
+        modelId:
+          oneOf:
+          - $ref: '#/components/schemas/Uuid'
+          - type: 'null'
+        runId: {type: [string, 'null']}
+        artifactRunId: {type: [string, 'null']}
     TrainingThresholdEvaluation:
       type: object
       required: [format, experimentId, datasetVersion, manifestSha256, splitMemberSha256, selection, methods]
@@ -4026,19 +4127,24 @@ components:
         selection: {$ref: '#/components/schemas/TrainingThresholdSelection'}
         methods:
           type: array
-          minItems: 2
+          minItems: 1
           maxItems: 2
           items:
             type: object
-            required: [taskId, artifactRunId, threshold, validation, test, defaultThreshold, defaultTest]
+            required: [taskId, artifactRunId, runId, modelId, method, threshold,
+                       validation, test, defaultThreshold, defaultTest, evaluation]
             properties:
               taskId: {type: string}
               artifactRunId: {type: string}
+              runId: {type: [string, 'null']}
+              modelId: {type: [string, 'null']}
+              method: {type: string}
               threshold: {type: number, minimum: 0, maximum: 1}
               validation: {$ref: '#/components/schemas/TrainingThresholdMetrics'}
               test: {$ref: '#/components/schemas/TrainingThresholdMetrics'}
               defaultThreshold: {type: number, const: 0.5}
               defaultTest: {$ref: '#/components/schemas/TrainingThresholdMetrics'}
+              evaluation: {$ref: '#/components/schemas/ModelEvaluationEvidence'}
     ProjectEvent:
       type: object
       additionalProperties: false
@@ -10083,8 +10189,12 @@ components:
     SplitPolicy:
       type: object
       properties:
+        kind:
+          type: string
+          enum: [preset, custom]
         id:
-          $ref: '#/components/schemas/SplitPreset'
+          type: string
+          pattern: '^temporal-(?:70-15-15|80-10-10|60-20-20|custom-[1-9][0-9]*-[1-9][0-9]*-[1-9][0-9]*)$'
         ratios:
           type: object
           properties:
@@ -10118,7 +10228,10 @@ components:
             additionalProperties: false
         memberSha256:
           type: string
-          pattern: ^[a-f0-9]{64}$
+          pattern: '^[a-f0-9]{64}$'
+        admission:
+          type: object
+          additionalProperties: true
       required: [id, ratios, timezone, boundaries, partitionCounts, memberSha256]
       additionalProperties: false
     SplitPreview:
@@ -10129,7 +10242,12 @@ components:
         preset:
           type: object
           properties:
-            id: {$ref: '#/components/schemas/SplitPreset'}
+            kind:
+              type: string
+              enum: [preset, custom]
+            id:
+              type: string
+              minLength: 1
             ratios:
               type: object
               properties:
@@ -10138,7 +10256,7 @@ components:
                 test: {type: integer}
               required: [train, validation, test]
             timezone: {type: string}
-          required: [id, ratios, timezone]
+          required: [kind, id, ratios, timezone]
           additionalProperties: false
         timezone: {type: string, enum: [UTC]}
         datasetRecords: {type: integer, minimum: 0}
@@ -10175,7 +10293,7 @@ components:
             required: [train, validation, test]
             additionalProperties: false
       required: [datasetVersion, schemaName, preset, timezone, datasetRecords,
-                 eligibleRecords, maturityPolicy, maturity, available, reason, partitions]
+                 eligibleRecords, maturityPolicy, maturity, available, reason, policy, partitions]
       additionalProperties: false
     SplitPreviewPartition:
       type: object
@@ -10897,13 +11015,13 @@ components:
               properties:
                 taskIds:
                   type: array
-                  minItems: 2
+                  minItems: 1
                   maxItems: 2
                   uniqueItems: true
                   items: {type: string}
   responses:
     TrainingThresholdEvaluationResult:
-      description: 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
+      description: 一个或两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标与标签资格。
       content:
         application/json:
           schema:

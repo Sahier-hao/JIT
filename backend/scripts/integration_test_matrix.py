@@ -66,10 +66,12 @@ def _test_ref_problem(root: Path, reference: str) -> str | None:
     return None
 
 
-def validate(matrix: dict, inventory: dict, root: Path = ROOT, expected_count: int = 95) -> list[str]:
+def validate(matrix: dict, inventory: dict, root: Path = ROOT,
+             expected_count: int | None = None) -> list[str]:
     problems: list[str] = []
     expected = {item["key"] for item in inventory.get("operations", [])}
     actual = {item.get("key") for item in matrix.get("operations", [])}
+    expected_count = len(expected) if expected_count is None else expected_count
     for key in sorted(expected - actual):
         problems.append(f"矩阵缺少操作：{key}")
     for key in sorted(actual - expected):

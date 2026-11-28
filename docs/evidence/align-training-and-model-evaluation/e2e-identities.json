@@ -1,0 +1,13 @@
+{
+  "datasetVersion": "model-evaluation-labeled-2020-09-13_2022-03-20",
+  "legacyDatasetVersion": "model-evaluation-legacy-2020-09-13_2022-03-20",
+  "experimentId": "1dd75811-10ab-44f7-b94b-5ec3dac2f47e",
+  "taskId": "e8212335-10eb-466d-a0ad-ba6e2782b0d9",
+  "modelId": "3c9ce636-135a-4cee-a3af-49d7f25d3728",
+  "predictionBatchId": "c17862f5-de6b-463c-bbbb-87592bcc5494",
+  "legacyPredictionBatchId": "b9c42f89-1646-4cd8-af18-ee6b79d82669",
+  "splitPreset": "temporal-custom-65-20-15",
+  "splitMemberSha256": "116024aba6381239f398f41701951b053d3d73a9dfe81c534a4415c48c254240",
+  "evaluationMode": "formal-training-test",
+  "predictionMode": "exploratory-saved-batch"
+}

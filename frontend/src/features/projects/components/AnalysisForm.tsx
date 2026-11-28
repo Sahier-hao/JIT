@@ -111,7 +111,7 @@ export function AnalysisForm({ repositoryUrl, defaultBranch, onStarted, onCancel
               placeholder={models === null ? '正在读取模型' : noneUsable ? '没有可用模型' : '选择模型'}
               missingLabel={models === null ? '正在核对原选模型…' : '原选模型（已停用或不可用）'}/>
           </div>
-          {selected ? <Button type="button" size="sm" className="justify-self-start" onClick={() => setModelCardOpen(true)} variant="ghost">查看模型卡</Button> : null}
+          {selected ? <Button type="button" size="sm" className="justify-self-start" onClick={() => setModelCardOpen(true)} variant="ghost">查看模型详情</Button> : null}
         </div>
         {modelError ? <p className="text-xs text-rose sm:col-span-2" role="alert">模型列表暂时不可用。<Button variant="link" size="sm" onClick={() => { setModelError(''); setModels(null); setRevision(value => value + 1) }} type="button">重新读取</Button></p>
           : noneUsable ? <p className="text-xs text-rose sm:col-span-2" role="alert">没有可用的模型。可在「我的训练」完成训练并登记模型，或请管理员开放模型。</p>

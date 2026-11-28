@@ -113,6 +113,17 @@ export const ROUTES: RouteObject[] = [
     return { name: 'my-predictions', ...(datasetVersion ? { datasetVersion } : {}) }
   }) },
   { path: '/my-predictions/:batchId', handle: build(params => ({ name: 'my-predictions', batchId: params.batchId })) },
+  { path: '/model-evaluation', handle: build((_params, query) => {
+    const source = text(query.get('source'))
+    return {
+      name: 'model-evaluation',
+      ...(source === 'training' || source === 'prediction' ? { source } : {}),
+      ...(text(query.get('experimentId')) ? { experimentId: text(query.get('experimentId')) } : {}),
+      ...(text(query.get('taskId')) ? { taskId: text(query.get('taskId')) } : {}),
+      ...(text(query.get('modelId')) ? { modelId: text(query.get('modelId')) } : {}),
+      ...(text(query.get('batchId')) ? { batchId: text(query.get('batchId')) } : {}),
+    }
+  }) },
   { path: '/defect-predictions', handle: build((_params, query) => {
     const datasetVersion = text(query.get('datasetVersion'))
     return { name: 'my-predictions', ...(datasetVersion ? { datasetVersion } : {}) }
@@ -122,6 +133,10 @@ export const ROUTES: RouteObject[] = [
     const partition = query.get('partition')
     return {
       name: 'my-evaluation',
+      ...(text(query.get('source')) === 'training' || text(query.get('source')) === 'prediction'
+        ? { source: text(query.get('source')) as 'training' | 'prediction' } : {}),
+      ...(text(query.get('experimentId')) ? { experimentId: text(query.get('experimentId')) } : {}),
+      ...(text(query.get('taskId')) ? { taskId: text(query.get('taskId')) } : {}),
       ...(text(query.get('batchId')) ? { batchId: text(query.get('batchId')) } : {}),
       ...(text(query.get('modelId')) ? { modelId: text(query.get('modelId')) } : {}),
       ...(text(query.get('datasetVersion')) ? { datasetVersion: text(query.get('datasetVersion')) } : {}),

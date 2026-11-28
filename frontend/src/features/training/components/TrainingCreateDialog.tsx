@@ -22,6 +22,17 @@ const PARTITIONS = [
   { key: 'test', label: '测试', color: 'bg-accent/30' },
 ] as const
 const MAX_METHODS = 4
+const DEFAULT_RATIOS = { train: 70, validation: 15, test: 15 }
+
+function ratiosFromPreset(preset: string) {
+  const values = preset.match(/^temporal-(\d+)-(\d+)-(\d+)$/)
+  if (!values) return DEFAULT_RATIOS
+  return {
+    train: Number(values[1]),
+    validation: Number(values[2]),
+    test: Number(values[3]),
+  }
+}
 
 function SplitSummary({ preview }: { preview: UserSplitPreview }) {
   const partitions = preview.partitions
@@ -33,6 +44,10 @@ function SplitSummary({ preview }: { preview: UserSplitPreview }) {
         {preview.available ? preview.eligibleRecords.toLocaleString('zh-CN') + ' 行可训练' : '不可训练'}
       </span>
     </div>
+    {preview.policy ? <p className="font-mono text-[11px] tabular-nums text-foreground-3">
+      {preview.policy.id} · {preview.policy.ratios.train} / {preview.policy.ratios.validation} / {preview.policy.ratios.test}
+      {preview.policy.memberSha256 ? ` · ${preview.policy.memberSha256.slice(0, 12)}…` : ''}
+    </p> : null}
     {partitions ? <>
       <div className="flex h-1.5 overflow-hidden rounded-full bg-soft" aria-hidden="true">
         {PARTITIONS.map(part => <div key={part.key} className={part.color} style={{ flexGrow: partitions[part.key].records }}/>)}
@@ -44,7 +59,12 @@ function SplitSummary({ preview }: { preview: UserSplitPreview }) {
         <tbody className="divide-y divide-border-soft">
           {PARTITIONS.map(part => <tr key={part.key}>
             <th scope="row" className="py-1.5 font-medium">{part.label}</th>
-            <td className="text-right">{partitions[part.key].records.toLocaleString('zh-CN')}</td>
+            <td className="text-right">
+              <span className="block">{partitions[part.key].records.toLocaleString('zh-CN')}</span>
+              <span className="block text-[10px] font-normal text-foreground-4">
+                {partitions[part.key].start || '—'} 至 {partitions[part.key].end || '—'}
+              </span>
+            </td>
             <td className="text-right">{partitions[part.key].positives.toLocaleString('zh-CN')}</td>
           </tr>)}
         </tbody>
@@ -69,6 +89,8 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
   const [datasets, setDatasets] = useState<UserDataset[] | null>(null)
   const [selected, setSelected] = useState('')
   const [preset, setPreset] = useState('temporal-70-15-15')
+  const [splitMode, setSplitMode] = useState<'preset' | 'custom'>('preset')
+  const [ratios, setRatios] = useState(DEFAULT_RATIOS)
   const [methods, setMethods] = useState<MethodChoice[]>([])
   const [chosen, setChosen] = useState<string[]>([])
   const [params, setParams] = useState<Record<string, Record<string, string>>>({})
@@ -111,6 +133,10 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
   const current = datasets?.find(item => item.version === selected)
   const version = current?.version
   const schema = current?.schema
+  const ratioTotal = ratios.train + ratios.validation + ratios.test
+  const ratiosValid = [ratios.train, ratios.validation, ratios.test]
+    .every(value => Number.isInteger(value) && value >= 1 && value <= 98)
+    && ratioTotal === 100
 
   useEffect(() => {
     setMethods([])
@@ -139,14 +165,16 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
   useEffect(() => {
     setPreview(null)
     if (!open || !version) return
+    if (splitMode === 'custom' && !ratiosValid) return
     const controller = new AbortController()
-    splitPreview(version, preset, controller.signal).then(value => {
+    splitPreview(version, splitMode === 'custom' ? { ratios } : preset, controller.signal).then(value => {
       if (!controller.signal.aborted) setPreview(value)
     }).catch(failure => {
       if (!controller.signal.aborted) reportFailure(failure, '时间切分读取失败')
     })
     return () => controller.abort()
-  }, [open, version, preset, onLoginRequired])
+  }, [open, version, preset, splitMode, ratios.train, ratios.validation, ratios.test,
+    ratiosValid, onLoginRequired])
 
   const selectedMethods = chosen.flatMap(method => {
     const choice = methods.find(item => item.method === method)
@@ -187,7 +215,8 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
         return { method: choice.method, params: values }
       })
       const experiment = await createUserExperiment({
-        datasetVersion: current.version, methods: payload, splitPreset: preset,
+        datasetVersion: current.version, methods: payload,
+        ...(splitMode === 'custom' ? { splitRatios: ratios } : { splitPreset: preset }),
       }, controller.signal)
       if (controller.signal.aborted) return
       onCreated(experiment)
@@ -236,10 +265,34 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
               </div>
               <div className="grid gap-1.5">
                 <label htmlFor="training-split" className="text-xs font-medium text-foreground-2">时间切分</label>
-                <Select value={preset} disabled={busy} onValueChange={value => { setPreview(null); setError(''); setPreset(value) }}>
+                <div className="inline-flex w-fit rounded-lg border border-border-soft bg-sunken p-0.5" role="group" aria-label="切分方式">
+                  <Button type="button" size="xs" variant={splitMode === 'preset' ? 'default' : 'ghost'}
+                    aria-pressed={splitMode === 'preset'} disabled={busy}
+                    onClick={() => { setSplitMode('preset'); setPreview(null); setError('') }}>使用预设</Button>
+                  <Button type="button" size="xs" variant={splitMode === 'custom' ? 'default' : 'ghost'}
+                    aria-pressed={splitMode === 'custom'} disabled={busy}
+                    onClick={() => { setSplitMode('custom'); setPreview(null); setError('') }}>自定义比例</Button>
+                </div>
+                {splitMode === 'preset' ? <Select value={preset} disabled={busy} onValueChange={value => {
+                  setPreview(null); setError(''); setPreset(value); setRatios(ratiosFromPreset(value))
+                }}>
                   <SelectTrigger id="training-split" className="bg-card"><SelectValue/></SelectTrigger>
                   <SelectContent>{SPLIT_PRESETS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
-                </Select>
+                </Select> : <div className="grid grid-cols-3 gap-2">
+                  {PARTITIONS.map(part => <label key={part.key} className="grid gap-1 text-xs text-foreground-3">
+                    <span>{part.label} %</span>
+                    <Input aria-label={`${part.label}比例`} type="number" min={1} max={98} step={1}
+                      value={ratios[part.key]} disabled={busy}
+                      onChange={event => {
+                        setPreview(null)
+                        setRatios(value => ({ ...value, [part.key]: Number(event.target.value) }))
+                      }}/>
+                  </label>)}
+                  <p className={cn('col-span-3 text-xs tabular-nums', ratioTotal === 100 ? 'text-foreground-3' : 'text-rose-deep')}
+                    role={ratioTotal === 100 ? undefined : 'alert'}>
+                    合计 {ratioTotal}%，必须为 100%；三档均需包含正负例。
+                  </p>
+                </div>}
               </div>
               {preview ? <SplitSummary preview={preview}/> : current && !error ? <p role="status" className="text-xs text-foreground-3">正在检查时间切分…</p> : null}
             </section>
@@ -352,7 +405,7 @@ export function TrainingCreateDialog({ open, onOpenChange, initialDatasetVersion
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>取消</Button>
-          {datasets?.length === 0 ? <Button type="button" onClick={onOpenData}>打开我的数据</Button> : <Button type="button" disabled={!current || !selectedMethods.length || !preview?.available || busy} onClick={() => void submit()}>
+          {datasets?.length === 0 ? <Button type="button" onClick={onOpenData}>打开我的数据</Button> : <Button type="button" disabled={!current || !selectedMethods.length || !preview?.available || busy || (splitMode === 'custom' && !ratiosValid)} onClick={() => void submit()}>
             {busy ? <><LoaderCircle className="animate-spin" aria-hidden="true"/>正在提交训练…</>
               : selectedMethods.length ? '开始训练（' + selectedMethods.length + ' 个方法）' : '开始训练'}
           </Button>}

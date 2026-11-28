@@ -16,7 +16,7 @@ from ...core.api_errors import RequestError
 from ...core.config import BACKEND
 from ...errors import BaselineError
 from ...ml import curation
-from ...ml.split_preview import dataset_split_preview
+from ...ml.split_preview import dataset_split_preview, request_ratios
 from ...storage import store
 from ..schemas.common import SharingResponse, SharingUpdate
 
@@ -128,7 +128,13 @@ def install_admin_routes(app, *, storage, registry_root, dataset_root, dataset_m
 
     @router.get('/datasets/{dataset_version}/split-preview')
     def dataset_split_preview_route(dataset_version: str, preset: str | None = None,
-                                    maturityPolicy: str | None = None):
-        return dataset_split_preview(registry_root, dataset_version, preset, maturityPolicy)
+                                    maturityPolicy: str | None = None,
+                                    train: int | None = None,
+                                    validation: int | None = None,
+                                    test: int | None = None):
+        return dataset_split_preview(
+            registry_root, dataset_version, preset, maturityPolicy,
+            ratios=request_ratios(train, validation, test),
+        )
 
     app.include_router(router)

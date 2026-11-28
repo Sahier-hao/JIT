@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import math
+import re
 
 from ..data import BaselineError
 
@@ -20,19 +21,61 @@ PRESETS = {
 DEFAULT_PRESET = "temporal-70-15-15"
 TIMEZONE = "UTC"
 PARTITIONS = ("train", "validation", "test")
+CUSTOM_PATTERN = re.compile(r"^temporal-custom-(\d+)-(\d+)-(\d+)$")
 
 
 def resolve_preset(value=None):
     """Resolve an omitted preset to the legacy 70/15/15 policy; reject aliases."""
     preset = DEFAULT_PRESET if value is None else value
-    if not isinstance(preset, str) or preset not in PRESETS:
-        raise BaselineError("SPLIT_POLICY_INVALID", "第一版只支持已注册的时间切分预设")
+    if not isinstance(preset, str) or (preset not in PRESETS and not _custom_ratios(preset)):
+        raise BaselineError("SPLIT_POLICY_INVALID", "切分只支持已注册预设或合计为 100 的三个整数比例")
     return preset
+
+
+def _custom_ratios(preset):
+    match = CUSTOM_PATTERN.fullmatch(preset)
+    if match is None:
+        return None
+    ratios = {name: int(value) for name, value in zip(PARTITIONS, match.groups(), strict=True)}
+    try:
+        return validate_ratios(ratios)
+    except BaselineError:
+        return None
+
+
+def validate_ratios(ratios):
+    if not isinstance(ratios, dict) or set(ratios) != set(PARTITIONS):
+        raise BaselineError("SPLIT_POLICY_INVALID", "自定义切分必须包含训练、验证、测试三个比例")
+    normalized = {}
+    for name in PARTITIONS:
+        value = ratios[name]
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 98:
+            raise BaselineError("SPLIT_POLICY_INVALID", "三个比例必须是 1 到 98 之间的整数")
+        normalized[name] = value
+    if sum(normalized.values()) != 100:
+        raise BaselineError("SPLIT_POLICY_INVALID", "训练、验证、测试比例合计必须为 100")
+    return normalized
+
+
+def resolve_split(preset=None, ratios=None):
+    """Return the canonical id for a preset or integer ratio policy."""
+    if preset is not None and ratios is not None:
+        raise BaselineError("SPLIT_POLICY_INVALID", "splitPreset 与 splitRatios 只能提交一个")
+    if ratios is not None:
+        values = validate_ratios(ratios)
+        return f"temporal-custom-{values['train']}-{values['validation']}-{values['test']}"
+    return resolve_preset(preset)
 
 
 def preset_view(value=None):
     preset = resolve_preset(value)
-    return {"id": preset, "ratios": dict(PRESETS[preset]), "timezone": TIMEZONE}
+    custom = _custom_ratios(preset)
+    return {
+        "kind": "custom" if custom is not None else "preset",
+        "id": preset,
+        "ratios": custom or dict(PRESETS[preset]),
+        "timezone": TIMEZONE,
+    }
 
 
 def _time(epoch):
@@ -100,7 +143,7 @@ def split_records(records, preset=None, *, require_classes=True):
     times = sorted({record["epoch"] for record in ordered})
     if len(times) < 3:
         raise BaselineError("SPLIT_INVALID", "时间组不足，不能形成三个非空分区")
-    ratios = PRESETS[preset]
+    ratios = preset_view(preset)["ratios"]
     first = math.floor(ratios["train"] / 100 * len(times))
     second = math.floor((ratios["train"] + ratios["validation"]) / 100 * len(times))
     if first <= 0 or second <= first or second >= len(times):
@@ -115,8 +158,8 @@ def split_records(records, preset=None, *, require_classes=True):
     if any(not part for part in split.values()):
         raise BaselineError("SPLIT_INVALID", "时间分区包含空集合")
     if require_classes and any({record["label"] for record in split[name]} != {0, 1}
-                               for name in ("train", "test")):
-        raise BaselineError("SPLIT_INVALID", "训练集或测试集只有一类标签")
+                               for name in PARTITIONS):
+        raise BaselineError("SPLIT_INVALID", "训练集、验证集或测试集只有一类标签")
     members = {name: [record["id"] for record in split[name]] for name in PARTITIONS}
     counts = {
         name: {

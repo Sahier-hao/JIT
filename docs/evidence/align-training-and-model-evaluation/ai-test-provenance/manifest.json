@@ -1,0 +1,26 @@
+{
+  "kind": "ai-test-provenance",
+  "change": "align-training-and-model-evaluation",
+  "generator": "Codex",
+  "prompt": "docs/evidence/align-training-and-model-evaluation/ai-test-provenance/prompt.md",
+  "tests": [
+    "backend/tests/test_splits.py",
+    "backend/tests/test_training_tasks.py",
+    "backend/tests/test_user_predictions.py",
+    "backend/tests/test_user_workspace.py",
+    "backend/tests/test_openapi_operation_inventory.py",
+    "backend/tests/test_integration_test_matrix.py",
+    "frontend/src/features/evaluation/evaluationMetrics.test.ts",
+    "frontend/src/features/evaluation/pages/ModelEvaluationPage.test.tsx",
+    "frontend/src/features/training/components/TrainingCreateDialog.test.tsx",
+    "frontend/src/features/training/pages/MyTrainingPage.test.tsx",
+    "frontend/e2e/training-model-evaluation.spec.ts"
+  ],
+  "review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewedAt": null,
+    "reason": "等待 PR 人工复核"
+  }
+}
+

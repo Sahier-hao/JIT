@@ -30,6 +30,39 @@ export type TrainingThresholdMetric = {
     reason: string | null;
 };
 
+export type ModelEvaluationEvidence = {
+    format: 'model-evaluation-v1';
+    source: 'training' | 'prediction-batch';
+    mode: 'formal' | 'exploratory';
+    formalAvailable: boolean;
+    formalUnavailableReason: string | null;
+    partition: {
+        kind: 'test' | 'batch';
+        memberSha256: string | null;
+        labelSnapshot: boolean;
+    };
+    labelPolicy: {
+        version: string;
+        included: Array<string>;
+        excludedCounts: {
+            [key: string]: number;
+        };
+    };
+    sampleCounts: {
+        included: number;
+        positives: number;
+        negatives: number;
+        excluded: number;
+    };
+};
+
+export type ExactModelRegistrationResult = {
+    status: 'registered' | 'reused' | 'already-registered' | 'failed';
+    modelId: Uuid | null;
+    runId: string | null;
+    artifactRunId: string | null;
+};
+
 export type TrainingThresholdEvaluation = {
     format: 'training-threshold-evaluation-v1';
     experimentId: string;
@@ -37,26 +70,19 @@ export type TrainingThresholdEvaluation = {
     manifestSha256: string;
     splitMemberSha256: string;
     selection: TrainingThresholdSelection;
-    methods: [
-        {
-            taskId: string;
-            artifactRunId: string;
-            threshold: number;
-            validation: TrainingThresholdMetrics;
-            test: TrainingThresholdMetrics;
-            defaultThreshold: 0.5;
-            defaultTest: TrainingThresholdMetrics;
-        },
-        {
-            taskId: string;
-            artifactRunId: string;
-            threshold: number;
-            validation: TrainingThresholdMetrics;
-            test: TrainingThresholdMetrics;
-            defaultThreshold: 0.5;
-            defaultTest: TrainingThresholdMetrics;
-        }
-    ];
+    methods: Array<{
+        taskId: string;
+        artifactRunId: string;
+        runId: string | null;
+        modelId: string | null;
+        method: string;
+        threshold: number;
+        validation: TrainingThresholdMetrics;
+        test: TrainingThresholdMetrics;
+        defaultThreshold: 0.5;
+        defaultTest: TrainingThresholdMetrics;
+        evaluation: ModelEvaluationEvidence;
+    }>;
 };
 
 export type ProjectEvent = unknown & {
@@ -2442,7 +2468,8 @@ export type ExperimentReport = {
 export type SplitPreset = 'temporal-70-15-15' | 'temporal-80-10-10' | 'temporal-60-20-20';
 
 export type SplitPolicy = {
-    id: SplitPreset;
+    kind?: 'preset' | 'custom';
+    id: string;
     ratios: {
         train: number;
         validation: number;
@@ -2468,13 +2495,17 @@ export type SplitPolicy = {
         };
     };
     memberSha256: string;
+    admission?: {
+        [key: string]: unknown;
+    };
 };
 
 export type SplitPreview = {
     datasetVersion: string;
     schemaName: string;
     preset: {
-        id: SplitPreset;
+        kind: 'preset' | 'custom';
+        id: string;
         ratios: {
             train: number;
             validation: number;
@@ -2494,7 +2525,7 @@ export type SplitPreview = {
         code: string;
         message: string;
     };
-    policy?: null | SplitPolicy;
+    policy: null | SplitPolicy;
     partitions: null | {
         train: SplitPreviewPartition;
         validation: SplitPreviewPartition;
@@ -3219,10 +3250,7 @@ export type ProjectPrState = 'open' | 'closed' | 'all';
 export type ProjectPrPage = number;
 
 export type TrainingThresholdEvaluationRequest = TrainingThresholdSelection & {
-    taskIds: [
-        string,
-        string
-    ];
+    taskIds: Array<string>;
 };
 
 export type ListProjectEventsData = {
@@ -4645,6 +4673,18 @@ export type PreviewDatasetSplitData = {
     query?: {
         preset?: SplitPreset;
         maturityPolicy?: 'mature-only' | 'include-immature';
+        /**
+         * 自定义训练比例；与 validation、test 同时提交，三者合计 100。
+         */
+        train?: number;
+        /**
+         * 自定义验证比例；与 train、test 同时提交。
+         */
+        validation?: number;
+        /**
+         * 自定义测试比例；与 train、validation 同时提交。
+         */
+        test?: number;
     };
     url: '/api/admin/datasets/{datasetVersion}/split-preview';
 };
@@ -5630,7 +5670,7 @@ export type EvaluateTrainingExperimentThresholdsErrors = {
 
 export type EvaluateTrainingExperimentThresholdsResponses = {
     /**
-     * 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
+     * 一个或两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标与标签资格。
      */
     200: TrainingThresholdEvaluation;
 };
@@ -5656,6 +5696,10 @@ export type EvaluateUserTrainingExperimentThresholdsErrors = {
      */
     404: unknown;
     /**
+     * 训练模型尚未登记到模型库
+     */
+    409: unknown;
+    /**
      * 任务、阈值、分区或冻结产物无法用于复核
      */
     422: unknown;
@@ -5663,12 +5707,56 @@ export type EvaluateUserTrainingExperimentThresholdsErrors = {
 
 export type EvaluateUserTrainingExperimentThresholdsResponses = {
     /**
-     * 两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标。
+     * 一个或两个工作点及固定 0.50 的测试基准。使用冻结测试分数，返回汇总指标与标签资格。
      */
     200: TrainingThresholdEvaluation;
 };
 
 export type EvaluateUserTrainingExperimentThresholdsResponse = EvaluateUserTrainingExperimentThresholdsResponses[keyof EvaluateUserTrainingExperimentThresholdsResponses];
+
+export type RegisterUserTrainingExperimentTaskData = {
+    body?: never;
+    path: {
+        experimentId: string;
+        taskId: string;
+    };
+    query?: never;
+    url: '/api/v1/user/training-experiments/{experimentId}/tasks/{taskId}/register';
+};
+
+export type RegisterUserTrainingExperimentTaskErrors = {
+    /**
+     * 需要用户会话
+     */
+    401: unknown;
+    /**
+     * 实验、任务或产物不存在，或不属于当前用户
+     */
+    404: unknown;
+    /**
+     * 任务尚未成功或已经处于不能登记的状态
+     */
+    409: unknown;
+    /**
+     * 任务不匹配或产物不可登记
+     */
+    422: unknown;
+    /**
+     * 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+     */
+    503: SharedError;
+};
+
+export type RegisterUserTrainingExperimentTaskError = RegisterUserTrainingExperimentTaskErrors[keyof RegisterUserTrainingExperimentTaskErrors];
+
+export type RegisterUserTrainingExperimentTaskResponses = {
+    /**
+     * 登记结果。
+     */
+    200: ExactModelRegistrationResult;
+};
+
+export type RegisterUserTrainingExperimentTaskResponse = RegisterUserTrainingExperimentTaskResponses[keyof RegisterUserTrainingExperimentTaskResponses];
 
 export type ListTrainingTasksData = {
     body?: never;

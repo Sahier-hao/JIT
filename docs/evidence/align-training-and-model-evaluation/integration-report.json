@@ -1,0 +1,63 @@
+{
+  "kind": "training-model-evaluation-delivery-report",
+  "change": "align-training-and-model-evaluation",
+  "generatedAt": "2026-11-28T05:35:00Z",
+  "branch": "feature/align-training-and-model-evaluation",
+  "baseCommit": "e8fb166d2ff6c0616be308e3d9134ce4b8933218",
+  "inventory": {
+    "totalOperations": 113,
+    "businessOperations": 109,
+    "adminAuthOperations": 4,
+    "highRiskOperations": 86
+  },
+  "matrix": {
+    "operations": 109,
+    "highRiskOperations": 86,
+    "normalPassed": 109,
+    "boundaryPassed": 98,
+    "boundaryNotApplicable": 11,
+    "errorPassed": 109,
+    "concurrencyPassed": 98,
+    "concurrencyNotApplicable": 11,
+    "tests": 95,
+    "failed": 0
+  },
+  "backendTargeted": {
+    "tests": 106,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontendUnit": {
+    "tests": 708,
+    "passed": 708,
+    "failed": 0
+  },
+  "browserE2E": {
+    "expected": 1,
+    "passed": 1,
+    "unexpected": 0,
+    "skipped": 0,
+    "flaky": 0
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed-with-existing-warnings",
+    "build": "passed",
+    "styles": "passed",
+    "modules": "passed",
+    "apiTypes": "passed",
+    "openapiPaths": "passed"
+  },
+  "provenance": {
+    "manifest": "ai-test-provenance/manifest.json",
+    "reviewStatus": "pending"
+  },
+  "machineChecksPassed": true,
+  "humanReviewComplete": false,
+  "passed": false,
+  "knownLimitations": [
+    "AI 新增测试等待 PR 审核人签署人工复核。",
+    "普通预测批次只提供探索性复核；正式训练测试评估必须来自训练实验的冻结测试分区。"
+  ]
+}

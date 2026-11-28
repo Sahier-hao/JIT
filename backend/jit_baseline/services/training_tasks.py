@@ -18,7 +18,7 @@ from ..datasets import load_all, load_manifest, manifest_relative
 from ..metrics import get_metric_set
 from ..task_process import OwnedProcess
 from ..training import TrainingExecutor
-from ..splits import resolve_preset
+from ..splits import resolve_preset, resolve_split
 from ..split_preview import validate_dataset_split
 from ..label_maturity import resolve_policy
 from .training_evaluation import evaluate_thresholds, split_member_sha
@@ -414,7 +414,7 @@ class TrainingTaskService:
     def _payload(payload):
         if not isinstance(payload, dict) or set(payload) - {
             "datasetVersion", "method", "metricSet", "classPolicy", "splitPreset",
-            "maturityPolicy", "params",
+            "splitRatios", "maturityPolicy", "params",
         }:
             raise BaselineError(
                 "INPUT_INVALID",
@@ -423,7 +423,7 @@ class TrainingTaskService:
         method = payload.get("method")
         metric_set = payload.get("metricSet") or "metric-set-v2"
         class_policy = payload.get("classPolicy")
-        split_preset = resolve_preset(payload.get("splitPreset"))
+        split_preset = resolve_split(payload.get("splitPreset"), payload.get("splitRatios"))
         maturity_policy = resolve_policy(payload.get("maturityPolicy"))
         if not isinstance(dataset_version, str) or not dataset_version.strip():
             raise BaselineError("INPUT_INVALID", "缺少数据集版本")
@@ -473,14 +473,14 @@ class TrainingTaskService:
         dataset, path, digest = self._dataset(dataset_version)
         if dataset["schemaName"] not in TRAINING_SCHEMAS:
             raise BaselineError("INPUT_SCHEMA_MISMATCH", "数据集 schema 不支持批量训练")
-        validate_dataset_split(self.dataset_root, dataset_version, split_preset,
-                               maturity_policy, manifest=dataset)
-        return manifest_relative(path), digest
+        preview = validate_dataset_split(self.dataset_root, dataset_version, split_preset,
+                                         maturity_policy, manifest=dataset)
+        return manifest_relative(path), digest, preview["policy"]
 
     def _plan_task(self, *, dataset_version, manifest_path, digest, method, metric_set,
                    created_by, request_id, split_preset, maturity_policy,
                    parent_task_id=None, class_policy=None, params=None,
-                   experiment_id=None, owner_user_id=None):
+                   experiment_id=None, owner_user_id=None, split_policy=None):
         class_policy_json = json.dumps(class_policy, ensure_ascii=False, sort_keys=True) if class_policy else None
         overrides = self._overrides(method, params)
         params_json = (json.dumps(params, ensure_ascii=False, sort_keys=True)
@@ -509,6 +509,8 @@ class TrainingTaskService:
             "updated_at": now,
             "class_policy_json": class_policy_json,
             "split_preset": split_preset,
+            "split_policy_json": (json.dumps(split_policy, ensure_ascii=False, sort_keys=True)
+                                  if split_policy is not None else None),
             "maturity_policy": maturity_policy,
             "experiment_id": experiment_id,
             "params_json": params_json,
@@ -518,10 +520,12 @@ class TrainingTaskService:
     def _enqueue(self, *, dataset_version, split_preset=None, maturity_policy="mature-only", **task):
         split_preset = resolve_preset(split_preset)
         maturity_policy = resolve_policy(maturity_policy)
-        manifest_path, digest = self._prepare_dataset(dataset_version, split_preset, maturity_policy)
+        manifest_path, digest, split_policy = self._prepare_dataset(
+            dataset_version, split_preset, maturity_policy)
         task_id, row = self._plan_task(
             dataset_version=dataset_version, manifest_path=manifest_path, digest=digest,
-            split_preset=split_preset, maturity_policy=maturity_policy, **task,
+            split_preset=split_preset, maturity_policy=maturity_policy,
+            split_policy=split_policy, **task,
         )
         if row is not None:
             self.tasks.create(row)
@@ -583,7 +587,7 @@ class TrainingTaskService:
 
     @staticmethod
     def _experiment_payload(payload):
-        allowed = {"datasetVersion", "metricSet", "classPolicy", "splitPreset",
+        allowed = {"datasetVersion", "metricSet", "classPolicy", "splitPreset", "splitRatios",
                    "maturityPolicy", "methods"}
         if not isinstance(payload, dict) or set(payload) - allowed:
             raise BaselineError(
@@ -595,7 +599,7 @@ class TrainingTaskService:
         metric_set = payload.get("metricSet") or "metric-set-v2"
         get_metric_set(metric_set)
         class_policy = TrainingTaskService._class_policy(payload.get("classPolicy"))
-        split_preset = resolve_preset(payload.get("splitPreset"))
+        split_preset = resolve_split(payload.get("splitPreset"), payload.get("splitRatios"))
         maturity_policy = resolve_policy(payload.get("maturityPolicy"))
         methods = payload.get("methods")
         if not isinstance(methods, list) or not methods:
@@ -709,7 +713,8 @@ class TrainingTaskService:
         with self._lock:
             if self._closing.is_set():
                 raise BaselineError("TASK_SERVICE_STOPPING", "训练服务正在停止，请稍后重试")
-            manifest_path, digest = self._prepare_dataset(dataset_version, split_preset, maturity_policy)
+            manifest_path, digest, split_policy = self._prepare_dataset(
+                dataset_version, split_preset, maturity_policy)
             signature = self._experiment_signature(dataset_version, digest, metric_set,
                                                    class_policy, split_preset,
                                                    maturity_policy, items,
@@ -730,6 +735,7 @@ class TrainingTaskService:
                     class_policy=class_policy, split_preset=split_preset,
                     maturity_policy=maturity_policy, params=item["params"],
                     experiment_id=experiment_id, owner_user_id=owner_user_id,
+                    split_policy=split_policy,
                 )
                 for item in items
             ]
@@ -872,6 +878,17 @@ class TrainingTaskService:
             )
             result = dict(result)
             result.pop("snapshot", None)
+            expected_split = (json.loads(item["split_policy_json"])
+                              if "split_policy_json" in item.keys()
+                              and item["split_policy_json"] else None)
+            actual_split = result.get("splitPolicy")
+            expected_members = (expected_split or {}).get("memberSha256")
+            actual_members = (actual_split or {}).get("memberSha256")
+            if expected_members and actual_members != expected_members:
+                raise BaselineError(
+                    "SPLIT_MEMBER_MISMATCH",
+                    "训练实际分区成员与预览摘要不一致，已停止发布模型",
+                )
             release_report = None
             release_status = "not-evaluated"
             release_report_id = None

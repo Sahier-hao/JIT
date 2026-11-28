@@ -76,6 +76,13 @@ export interface UserSplitPreview {
   reason: { code: string; message: string } | null
   eligibleRecords: number
   admission: Row | null
+  policy: {
+    id: string
+    kind: 'preset' | 'custom'
+    ratios: { train: number; validation: number; test: number }
+    timezone: string
+    memberSha256: string | null
+  } | null
   partitions: Record<'train' | 'validation' | 'test', {
     records: number
     positives: number
@@ -171,10 +178,23 @@ export function exportDataset(version: string): void {
   window.location.href = `/api/v1/user/datasets/${encodeURIComponent(version)}/export`
 }
 
-export async function splitPreview(version: string, preset: string, signal?: AbortSignal): Promise<UserSplitPreview> {
-  const body = record(await apiRequest({ path: `/api/v1/user/datasets/${encodeURIComponent(version)}/split-preview?preset=${encodeURIComponent(preset)}`, method: 'GET', signal }))
+export async function splitPreview(
+  version: string,
+  selection: string | { ratios: { train: number; validation: number; test: number } },
+  signal?: AbortSignal,
+): Promise<UserSplitPreview> {
+  const query = typeof selection === 'string'
+    ? new URLSearchParams({ preset: selection })
+    : new URLSearchParams(Object.entries(selection.ratios).map(([key, value]) => [key, String(value)]))
+  const body = record(await apiRequest({
+    path: `/api/v1/user/datasets/${encodeURIComponent(version)}/split-preview?${query}`,
+    method: 'GET', signal,
+  }))
   const reason = body.reason == null ? null : record(body.reason)
   const parts = body.partitions == null ? null : record(body.partitions)
+  const profile = record(body.preset)
+  const ratios = record(profile.ratios)
+  const policy = body.policy == null ? null : record(body.policy)
   const partition = (raw: unknown) => {
     const value = record(raw)
     return {
@@ -189,6 +209,17 @@ export async function splitPreview(version: string, preset: string, signal?: Abo
     reason: reason ? { code: text(reason.code), message: text(reason.message) } : null,
     eligibleRecords: finiteNumber(body.eligibleRecords ?? body.datasetRecords),
     admission: body.admission == null ? null : record(body.admission),
+    policy: {
+      id: text(profile.id),
+      kind: profile.kind === 'custom' ? 'custom' : 'preset',
+      ratios: {
+        train: finiteNumber(ratios.train),
+        validation: finiteNumber(ratios.validation),
+        test: finiteNumber(ratios.test),
+      },
+      timezone: text(profile.timezone),
+      memberSha256: policy ? textOrNull(policy.memberSha256) : null,
+    },
     partitions: parts == null ? null : {
       train: partition(parts.train),
       validation: partition(parts.validation),
@@ -210,12 +241,16 @@ export async function createUserExperiment(options: {
   datasetVersion: string
   methods: { method: string; params?: Row }[]
   splitPreset?: string
+  splitRatios?: { train: number; validation: number; test: number }
   metricSet?: string
 }, signal?: AbortSignal): Promise<TrainingExperiment> {
   return trainingExperiment(await apiRequest({
     path: '/api/v1/user/training-experiments', method: 'POST', signal, timeoutMs: 45_000,
     body: { datasetVersion: options.datasetVersion, methods: options.methods,
-      splitPreset: options.splitPreset ?? 'temporal-70-15-15', metricSet: options.metricSet ?? 'metric-set-v2' },
+      ...(options.splitRatios ? { splitRatios: options.splitRatios } : {
+        splitPreset: options.splitPreset ?? 'temporal-70-15-15',
+      }),
+      metricSet: options.metricSet ?? 'metric-set-v2' },
   }))
 }
 
@@ -248,6 +283,15 @@ export async function registerUserExperiment(experimentId: string) {
   return record(await apiRequest({
     path: `/api/v1/user/training-experiments/${encodeURIComponent(experimentId)}/register`,
     method: 'POST',
+  }))
+}
+
+export async function registerUserExperimentTask(experimentId: string, taskId: string) {
+  return record(await apiRequest({
+    path: `/api/v1/user/training-experiments/${encodeURIComponent(experimentId)}`
+      + `/tasks/${encodeURIComponent(taskId)}/register`,
+    method: 'POST',
+    timeoutMs: 45_000,
   }))
 }
 

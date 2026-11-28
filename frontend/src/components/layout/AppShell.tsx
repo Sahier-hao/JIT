@@ -27,6 +27,7 @@ const NAV: { label: string; items: { label: string; icon: LucideIcon; route: Rou
     { label: '算法库', icon: BookOpenText, route: { name: 'algorithms' } },
     { label: '我的模型', icon: SlidersHorizontal, route: { name: 'my-models' } },
     { label: '缺陷预测', icon: Gauge, route: { name: 'my-predictions' } },
+    { label: '模型评估', icon: Gauge, route: { name: 'model-evaluation' } },
   ] },
 ]
 
@@ -36,6 +37,7 @@ export function AppShell({ route, navigate, repositories, session, onSession, ch
     : route.name === 'my-data' ? '我的数据' : route.name === 'my-training' ? '我的训练'
     : route.name === 'algorithms' ? '算法库' : route.name === 'ide-plugin' ? 'IDE 插件' : route.name === 'my-models' ? '我的模型' : route.name === 'profile' ? '个人中心' : route.name === 'pr-work' ? 'PR 审查'
     : route.name === 'my-predictions' ? '缺陷预测' : route.name === 'my-evaluation' ? '预测评估'
+    : route.name === 'model-evaluation' ? '模型评估'
     : route.name === 'sources' ? '新建项目' : route.name === 'analysis' ? '提交明细'
     : route.name === 'comparison' ? '分析对比' : '项目'
   const projectsActive = projectsNavActive(route)
