@@ -37,6 +37,9 @@ it('charts the score distribution, keeps the top commits and the source in one c
   expect(first).toHaveTextContent('高分提交')
   expect(card).toHaveTextContent('现成模型')
   expect(card).not.toHaveTextContent('ECharts')
+  const help = screen.getByRole('link', { name: /怎么看分数/ })
+  expect(help).toHaveAttribute('href', '#/docs/reading-results?section=commit-score')
+  expect(help).toHaveAttribute('target', '_blank')
 
   const user = userEvent.setup()
   const openDataset = vi.fn()

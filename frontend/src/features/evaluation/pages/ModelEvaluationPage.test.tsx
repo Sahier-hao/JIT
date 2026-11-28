@@ -77,6 +77,7 @@ it('evaluates one exact training model on the frozen test partition', async () =
   render(<ModelEvaluationPage source="training" experimentId="experiment-1" taskId="task-1"
     modelId="model-1" navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
   expect(await screen.findByRole('heading', { name: '评估本次训练' })).toBeVisible()
+  expect(screen.getByRole('link', { name: /怎么看评估指标/ })).toHaveAttribute('href', '#/docs/labels-and-metrics?section=evaluation-metrics')
   expect(await screen.findByText('model-1')).toBeVisible()
   await userEvent.setup().click(await screen.findByRole('button', { name: '在测试集复核' }))
   const section = await screen.findByRole('region', { name: '测试集正式复核' })

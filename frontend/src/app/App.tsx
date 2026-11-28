@@ -37,6 +37,7 @@ const ModelEvaluationPage = lazy(() => import('@/features/evaluation/pages/Model
 const MyEvaluationPage = lazy(() => import('@/features/predictions/pages/MyEvaluationPage').then(module => ({ default: module.MyEvaluationPage })))
 const LandingPage = lazy(() => import('@/features/account/pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('@/features/account/pages/LoginPage').then(module => ({ default: module.LoginPage })))
+const DocsPage = lazy(() => import('@/features/docs/pages/DocsPage').then(module => ({ default: module.DocsPage })))
 const LineResearchPage = lazy(() => import('@/features/research/pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
 const VSCodePluginPage = lazy(() => import('@/features/plugins/pages/VSCodePluginPage').then(module => ({ default: module.VSCodePluginPage })))
 
@@ -52,7 +53,7 @@ function Workspace() {
   const { route, navigate } = useRoute()
   const { session, setSession, generation, verifying } = useUserSession()
   const administrative = route.name === 'admin' || route.name === 'report'
-  const repositories = useRepositories(session?.authenticated === true && !administrative && route.name !== 'landing' && route.name !== 'login')
+  const repositories = useRepositories(session?.authenticated === true && !administrative && !['landing', 'login', 'docs'].includes(route.name))
   const account = session?.authenticated ? session.username : null
   const accountStatus: ReviewAccountStatus = session === null || verifying ? 'verifying' : session.status
   const accountValue = { status: accountStatus, account, generation }
@@ -63,6 +64,9 @@ function Workspace() {
   }
   if (route.name === 'login') {
     return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载页面"/>}><LoginPage route={route} session={session} navigate={navigate} onUser={setSession}/></Suspense></ErrorBoundary>
+  }
+  if (route.name === 'docs') {
+    return <ErrorBoundary><Suspense fallback={<LoadingNotice label="正在加载文档"/>}><DocsPage route={route} navigate={navigate}/></Suspense></ErrorBoundary>
   }
   // 研究预览是公开的独立页面，不属于用户工作区，也不参与项目分析。
   if (route.name === 'research-line') {

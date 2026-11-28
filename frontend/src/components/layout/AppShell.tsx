@@ -88,7 +88,12 @@ export function AppShell({ route, navigate, repositories, session, onSession, ch
       <header className="sticky top-0 z-30 flex min-h-12 min-w-0 items-center justify-between gap-2 border-b border-border-soft bg-card px-3 py-1.5 sm:min-h-14 sm:px-6">
         <WorkspaceNavigation label={label}>{primaryNav}</WorkspaceNavigation>
         <span className="hidden min-w-0 truncate text-xs font-medium text-foreground-3 lg:inline">工作空间 <span className="opacity-60">/</span> <b className="font-medium text-foreground">{label}</b></span>
-        <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2"><ActiveJobsIndicator jobs={activeJobs} navigate={navigate}/><UserAccount session={session} onChange={onSession} navigate={navigate} route={route}/><NotificationEntry navigate={navigate}/><AppearanceControl/></div>
+        <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="sm" asChild aria-label="打开产品文档">
+            <a href="#/docs" target="_blank" rel="noopener noreferrer"><BookOpenText aria-hidden="true" size={16}/><span className="hidden sm:inline">文档</span></a>
+          </Button>
+          <ActiveJobsIndicator jobs={activeJobs} navigate={navigate}/><UserAccount session={session} onChange={onSession} navigate={navigate} route={route}/><NotificationEntry navigate={navigate}/><AppearanceControl/>
+        </div>
       </header>
       <main id="product-main" tabIndex={-1} className="mx-auto w-full max-w-[1440px] px-page-x py-6 pb-14 outline-none max-[640px]:px-page-x-narrow">{children}</main>
     </div>

@@ -54,6 +54,11 @@ function adminModels(query: URLSearchParams): Route {
   return { name: 'admin', view: 'models', ...(selectedModelId ? { selectedModelId } : {}) }
 }
 
+function docsRoute(params: Params, query: URLSearchParams): Route {
+  const section = text(query.get('section'))
+  return { name: 'docs', ...(params.slug ? { slug: params.slug } : {}), ...(section ? { section } : {}) }
+}
+
 function adminExperimentRuns(params: Params, query: URLSearchParams): Route {
   const offset = Number(query.get('offset'))
   return {
@@ -83,6 +88,8 @@ export const ROUTES: RouteObject[] = [
   { path: '/', handle: build(() => ({ name: 'landing' })) },
   { path: '/welcome', handle: build(() => ({ name: 'landing' })) },
   { path: '/login', handle: build((_params, query) => loginRoute(query)) },
+  { path: '/docs', handle: build(docsRoute) },
+  { path: '/docs/:slug', handle: build(docsRoute) },
   { path: '/reviews', handle: build(() => ({ name: 'my-reviews' })) },
   { path: '/reviews/:owner/:repositoryName/:number', handle: build(prWorkRoute) },
   { path: '/my-data', handle: build((_params, query) => myDataRoute(query)) },

@@ -5,6 +5,7 @@ import { routeFromLocation } from '@/app/routeTable'
 export type Route =
   | { name: 'landing' }
   | { name: 'login'; role?: 'user' | 'admin'; next?: string }
+  | { name: 'docs'; slug?: string; section?: string }
   | { name: 'my-reviews' }
   | { name: 'my-data'; view?: 'builds' | 'imports'; datasetVersion?: string; taskId?: string; buildProjectId?: string }
   | { name: 'my-training'; experimentId?: string; datasetVersion?: string; historyDatasetVersion?: string; method?: string; schema?: string }
@@ -80,6 +81,10 @@ export function parseHash(hash: string): Route {
       return { name: 'login', ...(role ? { role } : {}), ...(next ? { next } : {}) }
     }
     if (path === '/welcome') return { name: 'landing' }
+    if (path === '/docs') return { name: 'docs' }
+    if (parts[0] === 'docs' && parts.length === 2 && /^[A-Za-z0-9_-]+$/.test(parts[1])) {
+      return { name: 'docs', slug: parts[1], ...(params.get('section') ? { section: params.get('section')! } : {}) }
+    }
     if (path === '/reviews') return { name: 'my-reviews' }
     if (path === '/my-data') return {
       name: 'my-data',
@@ -201,6 +206,12 @@ export function hashFor(route: Route): string {
       if (route.role) params.set('role', route.role)
       if (route.next) params.set('next', route.next)
       return params.size ? `#/login?${params}` : '#/login'
+    }
+    case 'docs': {
+      const path = route.slug ? `#/docs/${encodeURIComponent(route.slug)}` : '#/docs'
+      if (!route.section) return path
+      const params = new URLSearchParams({ section: route.section })
+      return `${path}?${params}`
     }
     case 'my-reviews': return '#/reviews'
     case 'my-data': {
