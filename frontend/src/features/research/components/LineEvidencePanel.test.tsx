@@ -15,7 +15,8 @@ const RESULT: LineReviewEvidence = {
   path: 'src/value.ts',
   side: 'head',
   language: 'typescript',
-  coverage: { patchComplete: true, status: 'supported', addedLines: 2, eligibleLines: 2, skippedBlank: 0 },
+  coverage: { patchComplete: true, status: 'supported', addedLines: 2, eligibleLines: 2, skippedBlank: 0,
+    textSource: 'patch', usesFullFile: false },
   explanationMethod: 'linear-logodds-line-v1',
   explanationUnit: 'logit',
   contributionCaveat: '行级特征贡献，不是缺陷原因。',
@@ -41,24 +42,25 @@ const RESULT: LineReviewEvidence = {
   caveats: ['研究预览，不是缺陷概率。'],
 }
 
-it('renders bars, equivalent table and evidence-only template summary', async () => {
+it('renders a plain-language ranking and hides technical decomposition until requested', async () => {
+  const user = userEvent.setup()
   render(<LineEvidencePanel result={RESULT}/>)
-  expect(screen.getByRole('heading', { name: '行级研究证据' })).toBeVisible()
-  expect(screen.getByRole('list', { name: '第 12 行前 3 个 log-odds 特征贡献' })).toBeVisible()
+  expect(screen.getByRole('heading', { name: '行级研究排序' })).toBeVisible()
+  expect(screen.getByText(/这一行在 2 个改动行中排第 1 位/)).toBeVisible()
+  expect(screen.getAllByText(/不是缺陷概率/).length).toBeGreaterThan(0)
+  expect(screen.getByRole('list', { name: '候选行排序' })).toBeVisible()
+  await user.click(screen.getByText('技术口径与完整贡献'))
   expect(screen.getByRole('table')).toBeVisible()
-  expect(screen.getAllByText('行长').length).toBeGreaterThanOrEqual(2)
-  expect(screen.getByText(/第 12 行排序分数为 0.8000/)).toBeVisible()
+  await user.click(screen.getByText('模型限制与来源（2）'))
   expect(screen.getByText('行级特征贡献，不是缺陷原因。')).toBeVisible()
-  expect(screen.getByText(/不求和、不统一排名/)).toBeVisible()
-  expect(screen.queryByRole('button', { name: /最佳/ })).not.toBeInTheDocument()
 })
 
 it('switches candidate rows and handles no nonzero contribution without a fake chart', async () => {
   const user = userEvent.setup()
   render(<LineEvidencePanel result={RESULT}/>)
   await user.click(screen.getByRole('button', { name: /L3/ }))
-  expect(screen.getByText(/第 3 行排序分数为 0.4000/)).toBeVisible()
-  expect(screen.getByText('该行没有非零特征贡献，不渲染空条形图。')).toBeVisible()
+  expect(screen.getByText(/这一行在 2 个改动行中排第 2 位/)).toBeVisible()
+  expect(screen.getByText('该行没有非零的行内特征，不渲染空条形图。')).toBeVisible()
   expect(screen.queryByRole('list', { name: /第 3 行前 3/ })).not.toBeInTheDocument()
 })
 

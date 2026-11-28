@@ -56,10 +56,10 @@ export function CommitDetail({ data, id, record: supplied, onClose }: DetailProp
           viewSyncId={data.repository.syncId} commitId={record.id}
           filePaths={record.filePaths ?? []}/>
       : null}
-    <section className="rounded-sm border border-border-soft px-3 py-2" aria-label="规则命中">
-      <h3 className="text-sm font-medium">规则命中</h3>
-      <p className="mt-1 text-xs leading-5 text-foreground-3">当前仓库提交分析没有关联的规则运行记录。这里不复制 PR 候选或把原始字段称为规则命中。</p>
-    </section>
+    <details className="rounded-sm border border-border-soft bg-card">
+      <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-foreground-2">规则命中</summary>
+      <p className="border-t border-border-soft px-3 py-2 text-xs leading-5 text-foreground-3">当前仓库提交分析没有关联的规则运行记录。这里不复制 PR 候选或把原始字段称为规则命中。</p>
+    </details>
     {data.mode === 'repository' && record.labelStatus === 'positive'
       ? record.labelEvidence?.length
         ? <HistoricRepairEvidence evidence={record.labelEvidence} repositoryUrl={safeOriginal}/>

@@ -506,6 +506,8 @@ export type LineReviewEvidence = {
         addedLines: number | null;
         eligibleLines: number;
         skippedBlank: number | null;
+        textSource: 'patch';
+        usesFullFile: false;
     };
     explanationMethod: 'linear-logodds-line-v1';
     explanationUnit: 'logit';

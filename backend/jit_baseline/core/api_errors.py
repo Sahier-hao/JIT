@@ -100,6 +100,7 @@ MESSAGES = {
     'LINE_PREVIEW_UNAVAILABLE': '行级研究预览模型不可用，请核验研究产物后重启服务',
     'LINE_PREVIEW_LANGUAGE': '该语言不在行级研究模型覆盖范围内',
     'LINE_PREVIEW_TOO_LARGE': '提交的代码超过研究预览的行数或字符上限',
+    'LINE_PREVIEW_CONTEXT_REQUIRED': '当前行级研究模型需要完整源码上下文，无法只用 patch 打分',
     'LINE_PREVIEW_EMPTY': '没有可分析的非空代码行',
 }
 STATUS = {'NOT_FOUND': 404, 'TREND_SOURCE_CONFLICT': 409, 'TREND_SOURCE_UNAVAILABLE': 409,

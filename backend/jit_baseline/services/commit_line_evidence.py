@@ -1,7 +1,6 @@
-"""Fixed-commit line evidence backed by immutable GitHub commit content."""
+"""Fixed-commit line evidence backed by immutable commit patches."""
 from __future__ import annotations
 
-import base64
 import re
 from pathlib import Path
 from urllib.parse import quote
@@ -20,21 +19,6 @@ def _file_from_commit(commit, path):
         if item.get("filename") == path:
             return item
     return None
-
-
-def _content(request, repository, path, ref):
-    data = request(
-        f'/repos/{repository}/contents/{quote(path, safe="/")}?ref={quote(ref, safe="")}'
-    )
-    if data.get("type") != "file" or data.get("encoding") != "base64":
-        return None
-    if not isinstance(data.get("size"), int) or data["size"] < 0 or data["size"] > 1_048_576:
-        return None
-    try:
-        content = base64.b64decode(data["content"]).decode("utf-8")
-    except (KeyError, TypeError, ValueError, UnicodeError):
-        return None
-    return None if "\0" in content else content
 
 
 def commit_line_evidence(
@@ -73,7 +57,6 @@ def commit_line_evidence(
                 ],
                 timeout=120,
             )
-            content = _git(root, ["show", f"{commit_id}:{path}"], timeout=120)
             lowered = patch or ""
             status = (
                 "added" if "new file mode" in lowered
@@ -94,9 +77,6 @@ def commit_line_evidence(
                 patch_status=status,
                 patch_complete=patch is not None,
                 expected_additions=added if patch is not None else None,
-                code=content,
-                content_complete=content is not None,
-                content_absent=False,
                 model_path=model_path,
             )
     try:
@@ -163,12 +143,6 @@ def commit_line_evidence(
         and added == file.get("additions")
         and removed == file.get("deletions")
     )
-    content = None
-    if complete:
-        try:
-            content = _content(request, slug, path, commit_id)
-        except BaselineError:
-            content = None
     return build_line_evidence(
         source_kind="repository-commit",
         resource_id=repository_id or repository_url or "",
@@ -181,8 +155,5 @@ def commit_line_evidence(
         patch_status=file.get("status") or "modified",
         patch_complete=complete,
         expected_additions=file.get("additions"),
-        code=content,
-        content_complete=content is not None,
-        content_absent=False,
         model_path=model_path,
     )

@@ -5,9 +5,10 @@ import math
 
 from ..api_errors import RequestError
 from .line_patch import patch_candidates
-from .line_preview import CONTRIBUTION_CAVEAT, MAX_CHARS, MAX_LINES, load_model, score_lines
+from .line_preview import CONTRIBUTION_CAVEAT, MAX_LINES, load_model, score_patch_candidates
 
 METHOD = "linear-logodds-line-v1"
+TEXT_BASIS_CAVEAT = "只使用固定 patch 中新增行的文本与结构特征，不读取完整文件，也不使用上下文。"
 
 
 def _result(
@@ -77,6 +78,8 @@ def unavailable_line_evidence(
             "addedLines": None,
             "eligibleLines": 0,
             "skippedBlank": None,
+            "textSource": "patch",
+            "usesFullFile": False,
         },
         model=None,
     )
@@ -95,9 +98,6 @@ def build_line_evidence(
     patch_status: str,
     patch_complete: bool,
     expected_additions: int | None,
-    code: str | None,
-    content_complete: bool,
-    content_absent: bool = False,
     model_path=None,
 ) -> dict:
     parsed = patch_candidates(
@@ -113,6 +113,8 @@ def build_line_evidence(
         "addedLines": parsed.get("addedLines"),
         "eligibleLines": len(parsed["candidates"]),
         "skippedBlank": parsed.get("skippedBlank"),
+        "textSource": "patch",
+        "usesFullFile": False,
     }
     base = dict(
         source_kind=source_kind,
@@ -127,31 +129,23 @@ def build_line_evidence(
     )
     if parsed["status"] != "supported":
         return _result(status=parsed["status"], reason=parsed["status"], model=None, **base)
-    if content_absent or not content_complete or not isinstance(code, str):
+    if len(parsed["candidates"]) > MAX_LINES:
         return _result(
             status="content-unavailable",
-            reason="content-absent" if content_absent else "content-incomplete",
-            model=None,
-            **base,
-        )
-    if len(code) > MAX_CHARS or len(code.splitlines()) > MAX_LINES:
-        return _result(
-            status="content-unavailable",
-            reason="content-too-large",
+            reason="patch-candidate-limit",
             model=None,
             **base,
         )
     try:
         model = load_model(model_path)
-        scored = score_lines(code, parsed["language"], model_path)
+        scored = score_patch_candidates(parsed["candidates"], parsed["language"], model)
     except RequestError as exc:
-        status = "model-unavailable" if exc.code == "LINE_PREVIEW_UNAVAILABLE" else "content-unavailable"
+        status = "model-unavailable" if exc.code in (
+            "LINE_PREVIEW_UNAVAILABLE", "LINE_PREVIEW_CONTEXT_REQUIRED",
+        ) else "content-unavailable"
         return _result(status=status, reason=exc.code, model=None, **base)
-    wanted = {item["line"]: item for item in parsed["candidates"]}
     rows = []
     for item in scored["lines"]:
-        if item["line"] not in wanted:
-            continue
         contributions = item.get("contributions") or []
         values = [
             item["score"], item.get("logit"), item.get("languageContribution"),
@@ -183,18 +177,9 @@ def build_line_evidence(
             "contributions": contributions,
             "contributionTotal": item["contributionTotal"],
             "otherContribution": item["otherContribution"],
+            "rank": item["rank"],
         })
-    if len(rows) != len(wanted):
-        return _result(
-            status="content-unavailable",
-            reason="candidate-line-missing",
-            model=model,
-            **base,
-        )
-    rows.sort(key=lambda item: (-item["score"], item["line"]))
-    for rank, row in enumerate(rows, 1):
-        row["rank"] = rank
     result = _result(status="supported", reason=None, model=model, **base)
     result["lines"] = rows
-    result["caveats"] = list(scored["caveats"])
+    result["caveats"] = [TEXT_BASIS_CAVEAT, *scored["caveats"]]
     return result

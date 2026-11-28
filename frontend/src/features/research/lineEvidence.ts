@@ -61,6 +61,8 @@ export interface LineReviewEvidence {
     addedLines: number | null
     eligibleLines: number
     skippedBlank: number | null
+    textSource: 'patch'
+    usesFullFile: false
   }
   explanationMethod: 'linear-logodds-line-v1'
   explanationUnit: 'logit'
@@ -130,12 +132,17 @@ export function parseLineReviewEvidence(value: unknown, expected: LineEvidenceCo
   if (language !== null && language !== 'javascript' && language !== 'typescript') contractFailed('未知行级证据语言')
   if (raw.explanationMethod !== 'linear-logodds-line-v1' || raw.explanationUnit !== 'logit') contractFailed('行级证据方法或单位无效')
   const coverageRaw = record(raw.coverage)
+  if (coverageRaw.textSource !== 'patch' || coverageRaw.usesFullFile !== false) {
+    contractFailed('行级证据文本来源无效')
+  }
   const coverage = {
     patchComplete: coverageRaw.patchComplete === true,
     status: text(coverageRaw.status),
     addedLines: nullableCount(coverageRaw.addedLines),
     eligibleLines: integer(coverageRaw.eligibleLines),
     skippedBlank: nullableCount(coverageRaw.skippedBlank),
+    textSource: 'patch' as const,
+    usesFullFile: false as const,
   }
   const artifactSha256 = raw.artifactSha256 == null ? null : hexDigest(raw.artifactSha256)
   const intercept = nullableNumber(raw.intercept)
@@ -146,7 +153,7 @@ export function parseLineReviewEvidence(value: unknown, expected: LineEvidenceCo
     const rank = integer(row.rank, 1)
     const line = integer(row.line, 1)
     const score = finiteNumber(row.score)
-    if (rank !== index + 1 || score < 0 || score > 1) contractFailed('行级证据排名或概率无效')
+    if (rank !== index + 1 || score < 0 || score > 1) contractFailed('行级证据排名或研究分无效')
     const contributions = recordList(row.contributions).map(contribution)
     if (contributions.length > 3
       || new Set(contributions.map(item => item.feature)).size !== contributions.length

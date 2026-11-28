@@ -24,7 +24,7 @@ MAX_BODY_BYTES = 1_000_000
 CAVEATS = [
     "分数来自历史 SZZ 弱标签与正负 1:1 抽样，未做概率校准，不是缺陷概率。",
     "排序只使用行内文本与结构特征，不使用上下文、提交信息或完整候选集。",
-    "研究预览不参与项目分析、PR 审查、模型目录或默认模型。",
+    "研究预览不参与项目分析、提交风险或默认模型；在 PR 与提交详情中只作为独立排序。",
 ]
 CONTRIBUTION_CAVEAT = "行级特征贡献，不是缺陷原因。"
 FEATURE_LABELS = {
@@ -189,6 +189,64 @@ def metadata(path: str | Path | None = None) -> dict[str, Any]:
     }
 
 
+def _scored_line(
+    model: dict[str, Any],
+    line: str,
+    number: int,
+    language: str,
+    *,
+    file_lines: int | None,
+) -> dict[str, Any]:
+    """按训练口径为单行打分；score 是 0–1 的排序分，不是校准概率。"""
+    stripped = line.strip()
+    position_features = (model.get("model") or {}).get("positionFeatures") is not False
+    row = {
+        "text": line,
+        "indent": len(line) - len(line.lstrip()),
+        "blank": False,
+        "comment": stripped.startswith(("#", "//", "/*", "*", "--", ";", "<!--")),
+        "fileLines": file_lines or 0,
+        "lineRatio": number / file_lines if file_lines else 0.0,
+    }
+    raw_logit, contributions = line_logit(
+        model, row, language, position_features=position_features,
+    )
+    if not math.isfinite(raw_logit) or not all(
+        math.isfinite(item["contribution"]) for item in contributions
+    ):
+        raise _invalid()
+    bounded_logit = max(-60.0, min(60.0, raw_logit))
+    probability = 1.0 / (1.0 + math.exp(-bounded_logit))
+    contribution_total = sum(item["contribution"] for item in contributions)
+    language_contribution = next(
+        (item["contribution"] for item in contributions
+         if item["feature"] == f"language:{language}"),
+        0.0,
+    )
+    nonzero = [item for item in contributions if item["contribution"] != 0]
+    nonzero.sort(key=lambda item: (-abs(item["contribution"]), item["feature"]))
+    top = nonzero[:3]
+    return {
+        "line": number,
+        "text": line,
+        "score": round(probability, 4),
+        "logit": raw_logit,
+        "languageContribution": language_contribution,
+        "contributions": top,
+        "contributionTotal": contribution_total,
+        "otherContribution": contribution_total - sum(
+            item["contribution"] for item in top
+        ),
+    }
+
+
+def _rank(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows.sort(key=lambda item: (-item["score"], item["line"]))
+    for rank, item in enumerate(rows, 1):
+        item["rank"] = rank
+    return rows
+
+
 def score_lines(code: str, language: str, path: str | Path | None = None) -> dict[str, Any]:
     model = load_model(path)
     if language not in _supported(model):
@@ -203,62 +261,59 @@ def score_lines(code: str, language: str, path: str | Path | None = None) -> dic
         raise RequestError("LINE_PREVIEW_TOO_LARGE")
     if not any(line.strip() for line in lines):
         raise RequestError("LINE_PREVIEW_EMPTY")
-    position_features = (model.get("model") or {}).get("positionFeatures") is not False
-    intercept = float(model["intercept"])
     total = len(lines)
     results = []
     for number, line in enumerate(lines, 1):
-        stripped = line.strip()
-        if not stripped:
+        if not line.strip():
             continue
-        row = {
-            "text": line,
-            "indent": len(line) - len(line.lstrip()),
-            "blank": False,
-            "comment": stripped.startswith(("#", "//", "/*", "*", "--", ";", "<!--")),
-            "fileLines": total,
-            "lineRatio": number / total if total else 0.0,
-        }
-        raw_logit, contributions = line_logit(
-            model, row, language, position_features=position_features,
-        )
-        if not math.isfinite(raw_logit) or not all(
-            math.isfinite(item["contribution"]) for item in contributions
-        ):
-            raise _invalid()
-        bounded_logit = max(-60.0, min(60.0, raw_logit))
-        probability = 1.0 / (1.0 + math.exp(-bounded_logit))
-        contribution_total = sum(item["contribution"] for item in contributions)
-        language_contribution = next(
-            (item["contribution"] for item in contributions
-             if item["feature"] == f"language:{language}"),
-            0.0,
-        )
-        nonzero = [item for item in contributions if item["contribution"] != 0]
-        nonzero.sort(key=lambda item: (-abs(item["contribution"]), item["feature"]))
-        top = nonzero[:3]
-        results.append({
-            "line": number,
-            "text": line,
-            "score": round(probability, 4),
-            "logit": raw_logit,
-            "languageContribution": language_contribution,
-            "contributions": top,
-            "contributionTotal": contribution_total,
-            "otherContribution": contribution_total - sum(
-                item["contribution"] for item in top
-            ),
-        })
-    results.sort(key=lambda item: (-item["score"], item["line"]))
-    for rank, item in enumerate(results, 1):
-        item["rank"] = rank
+        results.append(_scored_line(model, line, number, language, file_lines=total))
+    _rank(results)
     return {
         "schema": "line-preview-score-v1",
         "language": language,
         "lines": results,
         "count": len(results),
         "skippedBlank": total - len(results),
-        "intercept": intercept,
+        "intercept": float(model["intercept"]),
+        "contributionUnit": "logit",
+        "contributionCaveat": CONTRIBUTION_CAVEAT,
+        "artifactSha256": model.get("artifactSha256"),
+        "caveats": CAVEATS,
+    }
+
+
+def score_patch_candidates(
+    candidates: list[dict[str, Any]],
+    language: str,
+    model: dict[str, Any],
+) -> dict[str, Any]:
+    """只用固定 patch 中新增行的文本打分，不读取完整源码。
+
+    当前产物不启用位置特征，因此与整文件打分的逐行结果一致；若未来模型
+    依赖文件位置，必须显式失败，不能伪造上下文。
+    """
+    if language not in _supported(model):
+        raise RequestError("LINE_PREVIEW_LANGUAGE")
+    if (model.get("model") or {}).get("positionFeatures") is not False:
+        raise RequestError("LINE_PREVIEW_CONTEXT_REQUIRED")
+    results = []
+    for item in candidates:
+        line = item.get("text")
+        number = item.get("line")
+        if (not isinstance(line, str) or not line.strip()
+                or type(number) is not int or number < 1):
+            raise _invalid()
+        results.append(_scored_line(model, line, number, language, file_lines=None))
+    if not results:
+        raise RequestError("LINE_PREVIEW_EMPTY")
+    _rank(results)
+    return {
+        "schema": "line-preview-score-v1",
+        "language": language,
+        "lines": results,
+        "count": len(results),
+        "skippedBlank": None,
+        "intercept": float(model["intercept"]),
         "contributionUnit": "logit",
         "contributionCaveat": CONTRIBUTION_CAVEAT,
         "artifactSha256": model.get("artifactSha256"),
