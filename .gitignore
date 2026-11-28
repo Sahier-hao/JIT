@@ -23,6 +23,7 @@ backend/.pytest-tmp/
 backend/tests/.tmp/
 # 本地工具链与验证脚本的临时目录，可由命令重新生成
 .cache/
+.worktrees/
 .dsh-tmp/
 .memsearch/
 temp/
