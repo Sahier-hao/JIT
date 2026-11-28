@@ -13,9 +13,6 @@ GET /api/v1/repositories/{}/syncs
 GET /api/v1/research/line-model
 GET /api/v1/user/dataset-imports
 GET /api/v1/user/dataset-imports/{}
-GET /api/v1/user/prediction-batches
-GET /api/v1/user/prediction-batches/{}
-GET /api/v1/user/prediction-models
 GET /api/v1/training-experiments/{}
 GET /api/v1/training-experiments/{}/comparison
 GET /api/v1/user/dataset-builds
@@ -42,7 +39,6 @@ POST /api/v1/research/line-model/score
 POST /api/v1/user/dataset-imports
 POST /api/v1/user/datasets/import-zip
 POST /api/v1/user/github/link
-POST /api/v1/user/prediction-batches
 POST /api/v1/training-experiments
 POST /api/v1/user/dataset-builds
 POST /api/v1/user/dataset-builds/{}/cancel

@@ -40,6 +40,7 @@ MESSAGES = {
     'NOT_FOUND': '指定资源不存在',
     'INPUT_INVALID': '请求格式或字段值无效',
     'INPUT_SCHEMA_MISMATCH': '输入与所选模型的 schema 不匹配或未支持',
+    'FEATURES_INVALID': '输入特征缺失、含非有限数值或与模型 schema 不匹配',
     'ALGORITHM_UNKNOWN': '训练方法未注册',
     'METHOD_DEPENDENCY_UNAVAILABLE': '所选训练方法缺少运行依赖，请安装后重试',
     'METHOD_SCHEMA_MISMATCH': '所选训练方法与当前特征 schema 不兼容',
@@ -73,6 +74,7 @@ MESSAGES = {
     'SYNC_TIMEOUT': '同步超时，请缩小时间范围或提交上限后重试',
     'SYNC_INTERRUPTED': '服务重启时同步未完成，请重新同步',
     'SPLIT_INVALID': '数据无法完成时间切分，请调整时间范围或改用现成模型',
+    'SPLIT_UNAVAILABLE': '所选模型没有该数据版本的冻结分区',
     'SPLIT_POLICY_INVALID': '第一版只支持三个注册的时间切分预设',
     'OUTPUT_EXISTS': '同步产物目录已存在，请稍后重试',
     'REPOSITORY_UNKNOWN': '仓库不存在，请刷新仓库列表后重试',
@@ -166,7 +168,9 @@ def install_errors(app):
             response = await call_next(request)
         except BaselineError as exc:
             code = 'NOT_FOUND' if exc.code == 'SCHEMA_UNKNOWN' else exc.code
-            error = {'code': code, 'message': MESSAGES.get(code, '运行声明无效，请核验产物'),
+            message = str(exc) if code == 'FEATURES_INVALID' and str(exc) else MESSAGES.get(
+                code, '运行声明无效，请核验产物')
+            error = {'code': code, 'message': message,
                      'requestId': request.state.request_id}
             if getattr(exc, 'details', None):
                 error['details'] = exc.details

@@ -67,6 +67,12 @@ def prediction_fixture(tmp_path):
             (ACCOUNT, "00" * 16, "test-only-password-hash", 0, None),
         )
     storage.import_dataset(dataset_manifest, records)
+    with storage.connection(write=True) as db:
+        db.execute(
+            "UPDATE dataset_record SET observed_through=?, maturity_days=0 "
+            "WHERE dataset_version=?",
+            (2000000000, DATASET_VERSION),
+        )
     catalog = ModelCatalog(storage, root)
     model = catalog.register_key("baseline")["model"]
     storage.set_model_share(model["modelId"], True, "admin")
@@ -104,6 +110,10 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
     total = prediction_fixture["storage"].count_commits(DATASET_VERSION)
     assert batch["counts"]["records"] == total
     assert batch["counts"]["positives"] + batch["counts"]["negatives"] == total
+    assert batch["counts"]["labeledAvailable"] == total
+    assert batch["evaluationEligible"] is True
+    assert batch["partition"] is None and batch["splitPreset"] is None
+    assert batch["memberSha256"]
     preview = batch["thresholdPreview"]
     assert len(preview["thresholds"]) == 101
     assert len(preview["truePositives"]) == 101
@@ -115,12 +125,6 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
     assert batch["counts"]["flagged"] == (
         preview["truePositives"][65] + preview["falsePositives"][65]
     )
-    assert batch["evaluation"]["mode"] == "exploratory"
-    assert batch["evaluation"]["formalAvailable"] is False
-    assert 0 <= batch["evaluation"]["sampleCounts"]["included"] <= total
-    assert any(text in batch["evaluation"]["formalUnavailableReason"]
-               for text in ("固定测试分区", "可靠"))
-
     reopened = service.get(ACCOUNT, batch["batchId"], limit=10, sort="risk")
     assert reopened["batchId"] == batch["batchId"]
     assert reopened["records"] and len(reopened["records"]) == 10
@@ -131,6 +135,7 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
         set(item["features"]) == {"ns", "nd", "nf", "ent", "la", "ld"}
         for item in reopened["records"]
     )
+    assert all(item["labelAvailability"] == "available" for item in reopened["records"])
     explained = [item for item in reopened["records"] if item["explanation"]]
     assert explained
     assert all(item["explanation"]["status"] == "supported" for item in explained)
@@ -140,6 +145,12 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
 
     listed = service.list(ACCOUNT)
     assert listed["batches"][0]["batchId"] == batch["batchId"]
+    assert listed["batches"][0]["mode"] == "batch"
+    evaluation = service.evaluation(ACCOUNT, batch["batchId"])
+    assert evaluation["eligible"] is True
+    assert evaluation["batchId"] == batch["batchId"]
+    assert evaluation["confusion"]["tp"] + evaluation["confusion"]["fn"] == evaluation["counts"]["positives"]
+    assert evaluation["confusion"]["tn"] + evaluation["confusion"]["fp"] == evaluation["counts"]["negatives"]
     with pytest.raises(Exception) as missing:
         service.get("prediction-other", batch["batchId"])
     assert getattr(missing.value, "code", None) == "NOT_FOUND"
@@ -154,42 +165,39 @@ def test_user_batch_prediction_supports_thresholds_and_reopens(prediction_fixtur
     assert getattr(invalid.value, "code", None) == "INPUT_INVALID"
 
 
-def test_reliable_label_evaluation_is_counted_separately_from_excluded_statuses():
-    from jit_baseline.services.user_predictions import _evaluation_summary
+def test_prediction_evaluation_excludes_unavailable_labels():
+    from jit_baseline.services.user_predictions import (
+        _evaluation_state, _label_availability, _threshold_preview,
+    )
 
-    records = [
-        {"id": "p1", "label": 1, "labelStatus": "positive"},
-        {"id": "n1", "label": 0, "labelStatus": "unobserved"},
-        {"id": "i1", "label": 0, "labelStatus": "immature"},
-        {"id": "u1", "label": 0, "labelStatus": "unknown"},
-        {"id": "r1", "label": 0, "labelStatus": "unrecorded"},
+    values = [
+        (1, "positive"), (0, "unobserved"), (0, "immature"),
+        (0, "unknown"), (0, "unrecorded"),
     ]
-    risks = [.9, .2, .95, .8, .7]
-    summary = _evaluation_summary(records, risks, {
-        "evaluationPartition": {"kind": "test", "memberSha256": "a" * 64},
-    })
-    assert summary["formalAvailable"] is True
-    assert summary["sampleCounts"] == {
-        "included": 2, "positives": 1, "negatives": 1, "excluded": 3,
-    }
-    assert summary["labelPolicy"]["excludedCounts"] == {
-        "immature": 1, "unknown": 1, "unrecorded": 1,
-    }
-    preview = summary["thresholdPreview"]
+    prepared = []
+    for index, (label, status) in enumerate(values):
+        available_label, label_status, availability = _label_availability(label, status)
+        if availability == "available":
+            prepared.append({
+                "label": available_label,
+                "labelStatus": label_status,
+                "labelAvailability": availability,
+                "risk": [0.9, 0.2, 0.95, 0.8, 0.7][index],
+            })
+
+    preview = _threshold_preview(prepared)
+    assert preview["positives"] == 1
+    assert preview["negatives"] == 1
     assert preview["truePositives"][50] == 1
     assert preview["falsePositives"][50] == 0
     assert preview["truePositives"][20] == 1
     assert preview["falsePositives"][20] == 1
-
-    missing_partition = _evaluation_summary(records, risks, {})
-    assert missing_partition["formalAvailable"] is False
-    assert "固定测试分区" in missing_partition["formalUnavailableReason"]
-
-    one_class = _evaluation_summary(records[:1], risks[:1], {
-        "evaluationPartition": {"kind": "test", "memberSha256": "b" * 64},
-    })
-    assert one_class["formalAvailable"] is False
-    assert "负例" in one_class["formalUnavailableReason"]
+    assert _evaluation_state({
+        "labeledAvailable": 2, "positives": 1, "negatives": 1,
+    }) == (True, "包含可用真实标签，可进入评估")
+    assert _evaluation_state({
+        "labeledAvailable": 1, "positives": 1, "negatives": 0,
+    })[0] is False
 
 
 def test_old_prediction_batch_reopens_as_exploratory(prediction_fixture):
@@ -213,9 +221,8 @@ def test_old_prediction_batch_reopens_as_exploratory(prediction_fixture):
             (json.dumps(payload), batch["batchId"]),
         )
     reopened = service.get(ACCOUNT, batch["batchId"])
-    assert reopened["evaluation"]["mode"] == "exploratory"
-    assert reopened["evaluation"]["formalAvailable"] is False
-    assert "历史批次" in reopened["evaluation"]["formalUnavailableReason"]
+    assert reopened["evaluationEligible"] is True
+    assert reopened["labelAvailabilityCounts"]["available"] > 0
 
 
 def test_private_model_stays_out_of_other_users_scope(prediction_fixture):
@@ -241,6 +248,121 @@ def test_private_model_stays_out_of_other_users_scope(prediction_fixture):
     assert getattr(forbidden.value, "code", None) == "MODEL_FORBIDDEN"
 
 
+def test_single_batch_and_unlabeled_csv_share_inference_contract(prediction_fixture):
+    from jit_baseline.services.user_predictions import UserPredictionService
+
+    service = UserPredictionService(
+        prediction_fixture["storage"], prediction_fixture["catalog"],
+    )
+    model = prediction_fixture["model"]
+    records = prediction_fixture["storage"].commits(DATASET_VERSION)
+    chosen = records[len(records) // 2]
+    batch = service.create(
+        ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"],
+        model["modelId"], 0.5,
+    )
+    single = service.create_single_dataset(
+        ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"],
+        model["modelId"], chosen["commitId"], 0.5,
+    )
+    with prediction_fixture["storage"].connection() as db:
+        batch_risk = db.execute(
+            "SELECT risk FROM user_prediction_record WHERE batch_id=? AND record_id=?",
+            (batch["batchId"], chosen["commitId"]),
+        ).fetchone()[0]
+        single_risk = db.execute(
+            "SELECT risk FROM user_prediction_record WHERE batch_id=? AND record_id=?",
+            (single["batchId"], chosen["commitId"]),
+        ).fetchone()[0]
+    assert single_risk == pytest.approx(batch_risk, abs=1e-12)
+    assert single["mode"] == "single" and single["sourceKind"] == "single-dataset"
+    manual = service.create_single_manual(
+        ACCOUNT, model["modelId"], chosen["features"], "manual-a", 0.5,
+    )
+    project = service.create_single_project(
+        ACCOUNT, model["modelId"],
+        {"commitId": chosen["commitId"], "authorTime": chosen["authorTime"],
+         "features": chosen["features"]},
+        {"kind": "single-project", "label": "项目分析提交",
+         "datasetName": "测试项目",
+         "reference": {"repositoryId": "repo-1", "syncId": "sync-1",
+                       "commitId": chosen["commitId"]}},
+        0.5,
+    )
+    with prediction_fixture["storage"].connection() as db:
+        manual_risk = db.execute(
+            "SELECT risk FROM user_prediction_record WHERE batch_id=?",
+            (manual["batchId"],),
+        ).fetchone()[0]
+        project_risk = db.execute(
+            "SELECT risk FROM user_prediction_record WHERE batch_id=?",
+            (project["batchId"],),
+        ).fetchone()[0]
+    assert manual_risk == pytest.approx(batch_risk, abs=1e-12)
+    assert project_risk == pytest.approx(batch_risk, abs=1e-12)
+    project_reopened = service.get(ACCOUNT, project["batchId"], limit=1)
+    assert project_reopened["sourceKind"] == "single-project"
+    assert project_reopened["records"][0]["label"] is None
+    assert project_reopened["evaluationEligible"] is False
+
+    header = ["recordId"] + list(manual["model"]["featureNames"])
+    row = ["csv-1"] + [str(chosen["features"][name]) for name in manual["model"]["featureNames"]]
+    second = ["csv-2"] + [str(chosen["features"][name]) for name in manual["model"]["featureNames"]]
+    blob = (",".join(header) + "\n" + ",".join(row) + "\n" + ",".join(second) + "\n").encode()
+    unlabeled = service.create_unlabeled(
+        ACCOUNT, model["modelId"], blob, "unlabeled.csv", 0.5,
+    )
+    assert unlabeled["mode"] == "batch" and unlabeled["sourceKind"] == "unlabeled-csv"
+    assert unlabeled["evaluationEligible"] is False
+    reopened = service.get(ACCOUNT, unlabeled["batchId"], limit=10)
+    assert reopened["labelAvailabilityCounts"] == {"available": 0, "unavailable": 2}
+    assert all(item["label"] is None for item in reopened["records"])
+
+    with pytest.raises(Exception) as missing:
+        service.create_single_manual(
+            ACCOUNT, model["modelId"], {"ns": 1}, "missing", 0.5,
+        )
+    assert getattr(missing.value, "code", None) == "FEATURES_INVALID"
+    bad_blob = (",".join(header) + "\n" + "bad,NaN," + ",".join(["1"] * (len(header) - 2)) + "\n").encode()
+    with pytest.raises(Exception) as bad:
+        service.create_unlabeled(ACCOUNT, model["modelId"], bad_blob, "bad.csv")
+    assert getattr(bad.value, "code", None) == "FEATURES_INVALID"
+
+
+def test_registered_split_presets_and_model_partitions_are_frozen_into_batch(prediction_fixture):
+    from jit_baseline.services.user_predictions import UserPredictionService
+
+    service = UserPredictionService(
+        prediction_fixture["storage"], prediction_fixture["catalog"],
+    )
+    model = prediction_fixture["model"]
+    options = service.split_options(
+        ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"], model["modelId"],
+    )
+    preset = next(item for item in options["presets"] if item["available"])
+    batch = service.create(
+        ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"], model["modelId"],
+        0.5, partition="validation", split_source="preset", split_preset=preset["id"],
+    )
+    assert batch["partition"] == "validation"
+    assert batch["splitPreset"] == preset["id"]
+    assert batch["memberSha256"] == preset["memberSha256"]
+    assert batch["counts"]["records"] == preset["partitions"]["validation"]["count"]
+    reopened = service.get(ACCOUNT, batch["batchId"], limit=10)
+    assert reopened["partition"] == "validation"
+    assert reopened["splitPreset"] == preset["id"]
+    assert reopened["memberSha256"] == preset["memberSha256"]
+    if options["modelSplit"] is not None:
+        model_partition = "test"
+        frozen = service.create(
+            ACCOUNT, DATASET_VERSION, prediction_fixture["manifest"], model["modelId"],
+            0.5, partition=model_partition, split_source="model",
+        )
+        assert frozen["partition"] == model_partition
+        assert frozen["memberSha256"] == options["modelSplit"]["memberSha256"]
+        assert frozen["splitPreset"] == options["modelSplit"]["splitPreset"]
+
+
 def test_user_prediction_routes_are_registered(prediction_fixture):
     from jit_baseline.api import create_app
 
@@ -252,5 +374,91 @@ def test_user_prediction_routes_are_registered(prediction_fixture):
     )
     paths = set(app.openapi()["paths"])
     assert "/api/v1/user/prediction-models" in paths
+    assert "/api/v1/user/prediction-samples" in paths
+    assert "/api/v1/user/prediction-splits" in paths
     assert "/api/v1/user/prediction-batches" in paths
+    assert "/api/v1/user/prediction-batches/single" in paths
+    assert "/api/v1/user/prediction-batches/unlabeled" in paths
     assert "/api/v1/user/prediction-batches/{batch_id}" in paths
+    assert "/api/v1/user/prediction-batches/{batch_id}/evaluation" in paths
+
+
+def test_prediction_migration_preserves_old_batches_and_marks_label_availability(tmp_path):
+    from jit_baseline.catalog_storage import CatalogStorage, MIGRATIONS
+    import sqlite3
+    from pathlib import Path
+
+    database = tmp_path / "upgrade.sqlite3"
+    raw = sqlite3.connect(database)
+    raw.execute("PRAGMA foreign_keys=ON")
+    for _number, path in MIGRATIONS[:44]:
+        for statement in Path(path).read_text(encoding="utf-8").split(";"):
+            if statement.strip():
+                raw.execute(statement)
+    raw.execute("INSERT INTO schema_migration VALUES (44,'fixture')")
+    raw.commit()
+    payload = {
+        "batchId": "old-batch", "datasetVersion": "old-data",
+        "dataset": "旧数据", "threshold": .5,
+        "model": {
+            "modelId": "old-model", "name": "旧模型",
+            "method": "logistic-regression-l2-v1", "runId": "old-run",
+            "featureSchemaVersion": "kamei14-git-v2",
+        },
+        "counts": {"records": 2}, "labelStatusCounts": {},
+        "thresholdPreview": {"thresholds": [i / 100 for i in range(101)],
+                             "positives": 1, "negatives": 1,
+                             "truePositives": [0] * 101, "falsePositives": [0] * 101},
+        "createdAt": "2026-01-01T00:00:00Z", "limitations": [],
+    }
+    with raw:
+        db = raw
+        db.execute(
+            "INSERT INTO user_account(username,salt,password_hash,created_at,display_name) "
+            "VALUES (?,?,?,?,?)", (ACCOUNT, "00" * 16, "hash", 0, None),
+        )
+        db.execute(
+            "INSERT INTO dataset_version(id,artifact_version,source_json) VALUES (?,?,?)",
+            ("dataset-1", "old-data", "{}"),
+        )
+        db.execute(
+            "INSERT INTO experiment_run(id,artifact_run_id,dataset_id,config_json,schema_json) "
+            "VALUES (?,?,?,?,?)",
+            ("run-1", "old-run", "dataset-1", "{}", "{}"),
+        )
+        db.execute(
+            "INSERT INTO model_version(id,run_id,preferred_location_id,state,error_code,payload_json) "
+            "VALUES (?,?,?,?,?,?)",
+            ("old-model", "run-1", None, "ready", None, json.dumps(payload["model"])),
+        )
+        db.execute(
+            "INSERT INTO user_prediction_batch VALUES (?,?,?,?,?,?)",
+            ("old-batch", ACCOUNT, "old-data", "old-model",
+             json.dumps(payload, ensure_ascii=False), "2026-01-01T00:00:00Z"),
+        )
+        db.executemany(
+            "INSERT INTO user_prediction_record VALUES (?,?,?,?,?,?,?,?,?)",
+            [
+                ("r1", "old-batch", "commit-1", "2025-01-01T00:00:00Z", 1,
+                 "positive", .8, "{}", None),
+                ("r2", "old-batch", "commit-2", "2025-01-02T00:00:00Z", 0,
+                 "immature", .2, "{}", None),
+            ],
+        )
+    raw.close()
+    upgraded = CatalogStorage(database)
+    upgraded.initialize()
+    with upgraded.connection() as db:
+        batch = db.execute(
+            "SELECT mode,source_kind,model_name,feature_schema_version "
+            "FROM user_prediction_batch WHERE id='old-batch'"
+        ).fetchone()
+        records = db.execute(
+            "SELECT record_id,label,label_availability FROM user_prediction_record "
+            "WHERE batch_id='old-batch' ORDER BY record_id"
+        ).fetchall()
+    assert tuple(batch) == ("batch", "dataset", "旧模型", "kamei14-git-v2")
+    assert [tuple(row) for row in records] == [
+        ("commit-1", 1, "available"),
+        ("commit-2", None, "unavailable"),
+    ]

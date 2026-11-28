@@ -1,8 +1,8 @@
 {
   "name": "jit-commit-analysis",
   "displayName": "JIT Commit Analysis",
-  "description": "只读导入 JIT 提交范围检查报告并定位到代码行",
-  "version": "0.2.0",
+  "description": "提交后自动检查 JIT 提交级预测分数与可疑代码行",
+  "version": "0.4.0",
   "publisher": "local",
   "private": true,
   "engines": {
@@ -15,6 +15,11 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:jitReport.import",
+    "onCommand:jitReport.checkHead",
+    "onCommand:jitReport.configure",
+    "onCommand:jitReport.selectModel",
+    "onCommand:jitReport.showExplanation",
+    "onCommand:jitReport.toggleAutoCheck",
     "onView:jitReport.view"
   ],
   "contributes": {
@@ -34,6 +39,26 @@
       {
         "command": "jitReport.copyGenerateCommand",
         "title": "JIT: 复制报告生成命令"
+      },
+      {
+        "command": "jitReport.checkHead",
+        "title": "JIT: 检查最近一次提交"
+      },
+      {
+        "command": "jitReport.configure",
+        "title": "JIT: 配置提交后检查"
+      },
+      {
+        "command": "jitReport.selectModel",
+        "title": "JIT: 选择模型"
+      },
+      {
+        "command": "jitReport.showExplanation",
+        "title": "JIT: 查看提交解释"
+      },
+      {
+        "command": "jitReport.toggleAutoCheck",
+        "title": "JIT: 开启/关闭提交后自动检查"
       }
     ],
     "views": {
@@ -46,6 +71,12 @@
     },
     "menus": {
       "view/title": [
+        {
+          "command": "jitReport.checkHead",
+          "when": "view == jitReport.view",
+          "group": "navigation@0",
+          "icon": "$(play)"
+        },
         {
           "command": "jitReport.import",
           "when": "view == jitReport.view",
@@ -62,11 +93,58 @@
           "group": "navigation"
         }
       ]
+    },
+    "configuration": {
+      "title": "JIT 提交分析",
+      "properties": {
+        "jitCommitAnalysis.autoCheck": {
+          "type": "boolean",
+          "default": true,
+          "description": "提交后自动分析最近一次提交。"
+        },
+        "jitCommitAnalysis.backendPath": {
+          "type": "string",
+          "default": "",
+          "description": "后端目录；留空时使用工作区下的 backend。"
+        },
+        "jitCommitAnalysis.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "运行 jit_baseline 的 Python 解释器；留空时使用 python。"
+        },
+        "jitCommitAnalysis.modelId": {
+          "type": "string",
+          "default": "",
+          "description": "已启用、ready 且支持提交采集字段的已登记模型 ID；留空时不自动检查。"
+        },
+        "jitCommitAnalysis.databasePath": {
+          "type": "string",
+          "default": "",
+          "description": "目录库路径；留空时使用 backend/storage/catalog.sqlite3。"
+        },
+        "jitCommitAnalysis.artifactRoot": {
+          "type": "string",
+          "default": "",
+          "description": "模型产物根目录；留空时使用 backend/artifacts。"
+        },
+        "jitCommitAnalysis.riskThreshold": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "达到该分数时状态栏标黄并弹出提醒。"
+        },
+        "jitCommitAnalysis.showCandidates": {
+          "type": "boolean",
+          "default": true,
+          "description": "把可疑代码行写入 Problems 并标在对应行号。"
+        }
+      }
     }
   },
   "scripts": {
     "compile": "tsc -p .",
-    "test": "npm run compile && node --test test/report.test.js test/command.test.js test/real-repository.test.js",
+    "test": "npm run compile && node --test test/report.test.js test/command.test.js test/checker.test.js test/models.test.js test/explanation.test.js test/python.test.js test/real-repository.test.js",
     "package": "npx --yes @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {

@@ -34,6 +34,9 @@ PACKAGE_MODE = os.environ.get("JIT_E2E_MODEL_PACKAGE_MODE") == "1"
 BUNDLED_MODEL_MODE = os.environ.get("JIT_E2E_BUNDLED_MODEL_MODE") == "1"
 CURRENT_SCHEMA_MODE = os.environ.get("JIT_E2E_CURRENT_SCHEMA_MODE") == "1"
 TRAINING_EVALUATION_MODE = os.environ.get("JIT_E2E_TRAINING_EVALUATION_MODE") == "1"
+PREDICTION_MODE = os.environ.get("JIT_E2E_PREDICTION_MODE") == "1"
+PREDICTION_DATASET = "e2e-prediction"
+PREDICTION_VERSION = "e2e-prediction-2024-01-01_2024-01-12"
 
 
 def _rewrite_run_identity(directory, marker):
@@ -355,6 +358,57 @@ def _training_evaluation_datasets():
         json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _seed_prediction_dataset(storage):
+    """Shared, mature-labeled six-field data for the prediction browser journey."""
+    from jit_baseline import datasets
+    from jit_baseline.data import parse_source
+
+    csv_path = DATASET_ROOT / PREDICTION_DATASET / "prediction.csv"
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = ["commit_id,author_date,bugcount,ns,nd,nf,ent,la,ld"]
+    for index in range(12):
+        epoch = 1704067200 + index * 86400
+        label = index % 2
+        commit_id = f"{index + 1:014x}" + "0" * 26
+        rows.append(
+            f"{commit_id},{epoch},{label},{index + 1},{index % 3 + 1},"
+            f"{index % 2 + 1},{0.2 + index / 20:.2f},{index + 2},1"
+        )
+    csv_path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    registered = datasets.register(
+        csv_path, schema="openstack-six-v1", dataset=PREDICTION_DATASET,
+        version=PREDICTION_VERSION, root=DATASET_ROOT,
+        cohort={
+            "startEpochInclusive": 1704067200,
+            "endEpochExclusive": 1705104000,
+            "addedLinesGreaterThan": 0,
+            "maxChurnInclusive": 10000,
+            "maxFilesInclusive": 100,
+        },
+    )
+    manifest = datasets.load_all(DATASET_ROOT)[PREDICTION_VERSION]
+    records, _quality = parse_source(
+        csv_path.read_bytes(), "openstack-six-v1", manifest["cohort"],
+    )
+    storage.import_dataset(manifest, records)
+    storage.set_dataset_share(PREDICTION_VERSION, True, "e2e-admin")
+    with storage.connection(write=True) as db:
+        db.execute(
+            "UPDATE dataset_record SET observed_through=?,maturity_days=0 "
+            "WHERE dataset_version=?",
+            (2000000000, PREDICTION_VERSION),
+        )
+    evidence = {
+        "datasetVersion": PREDICTION_VERSION,
+        "registered": registered,
+        "records": len(records),
+        "positives": sum(record["label"] for record in records),
+    }
+    (DATABASE.parent / "prediction-dataset.json").write_text(
+        json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8",
+    )
+
+
 def main():
     DATABASE.unlink(missing_ok=True)
     shutil.rmtree(ARTIFACT_ROOT, ignore_errors=True)
@@ -413,6 +467,8 @@ def main():
         catalog = ModelCatalog(storage, ARTIFACT_ROOT)
         for model in catalog.registered_models():
             storage.set_model_share(model["modelId"], True, "e2e-admin")
+        if PREDICTION_MODE:
+            _seed_prediction_dataset(storage)
     if TRAINING_EVALUATION_MODE:
         _training_evaluation_datasets()
     uvicorn.run("jit_baseline.api:app", host="127.0.0.1", port=int(sys.argv[1]), workers=1)

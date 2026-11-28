@@ -124,6 +124,27 @@ export const ROUTES: RouteObject[] = [
       ...(text(query.get('batchId')) ? { batchId: text(query.get('batchId')) } : {}),
     }
   }) },
+  { path: '/defect-predictions', handle: build((_params, query) => {
+    const datasetVersion = text(query.get('datasetVersion'))
+    return { name: 'my-predictions', ...(datasetVersion ? { datasetVersion } : {}) }
+  }) },
+  { path: '/defect-predictions/:batchId', handle: build(params => ({ name: 'my-predictions', batchId: params.batchId })) },
+  { path: '/my-evaluation', handle: build((_params, query) => {
+    const partition = query.get('partition')
+    return {
+      name: 'my-evaluation',
+      ...(text(query.get('source')) === 'training' || text(query.get('source')) === 'prediction'
+        ? { source: text(query.get('source')) as 'training' | 'prediction' } : {}),
+      ...(text(query.get('experimentId')) ? { experimentId: text(query.get('experimentId')) } : {}),
+      ...(text(query.get('taskId')) ? { taskId: text(query.get('taskId')) } : {}),
+      ...(text(query.get('batchId')) ? { batchId: text(query.get('batchId')) } : {}),
+      ...(text(query.get('modelId')) ? { modelId: text(query.get('modelId')) } : {}),
+      ...(text(query.get('datasetVersion')) ? { datasetVersion: text(query.get('datasetVersion')) } : {}),
+      ...(partition === 'train' || partition === 'validation' || partition === 'test'
+        ? { partition } : {}),
+      ...(text(query.get('splitPreset')) ? { splitPreset: text(query.get('splitPreset')) } : {}),
+    }
+  }) },
   { path: '/profile', handle: build(() => ({ name: 'profile' })) },
   { path: '/research/line-model', handle: build(() => ({ name: 'research-line' })) },
   { path: '/notifications', handle: build(() => ({ name: 'notifications' })) },

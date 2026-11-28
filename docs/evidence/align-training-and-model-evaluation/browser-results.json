@@ -43,7 +43,8 @@
           "**/project-workspace.spec.ts",
           "**/admin-experiments.spec.ts",
           "**/pr-account-continuation.spec.ts",
-          "**/shadcn-workspaces.spec.ts"
+          "**/shadcn-workspaces.spec.ts",
+          "**/prediction-workflows.spec.ts"
         ],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -71,7 +72,8 @@
           "**/project-workspace.spec.ts",
           "**/admin-experiments.spec.ts",
           "**/pr-account-continuation.spec.ts",
-          "**/shadcn-workspaces.spec.ts"
+          "**/shadcn-workspaces.spec.ts",
+          "**/prediction-workflows.spec.ts"
         ],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -205,6 +207,22 @@
           "training-model-evaluation.spec.ts"
         ],
         "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/test-results/default",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "predictions",
+        "name": "predictions",
+        "testDir": "C:/Users/fgdvf/Desktop/openspec/JIT/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "prediction-workflows.spec.ts"
+        ],
+        "timeout": 60000
       }
     ],
     "filteredProjects": [
@@ -286,12 +304,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 22776,
+                  "duration": 29642,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-27T12:17:24.316Z",
+                  "startTime": "2026-11-28T05:18:52.769Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -309,8 +327,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-27T12:15:38.004Z",
-    "duration": 132221.58200000002,
+    "startTime": "2026-11-28T05:17:06.727Z",
+    "duration": 138793.57799999998,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

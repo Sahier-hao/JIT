@@ -1651,6 +1651,30 @@ paths:
           - type: string
           - type: 'null'
           title: Maturitypolicy
+      - name: train
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Train
+      - name: validation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Validation
+      - name: test
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Test
       responses:
         '200':
           description: Successful Response
@@ -3210,6 +3234,30 @@ paths:
           - type: string
           - type: 'null'
           title: Preset
+      - name: train
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Train
+      - name: validation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Validation
+      - name: test
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Test
       responses:
         '200':
           description: Successful Response
@@ -3423,6 +3471,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/training-experiments/{experiment_id}/tasks/{task_id}/register:
+    post:
+      summary: User Register Experiment Task
+      operationId: user_register_experiment_task_api_v1_user_training_experiments__experiment_id__tasks__task_id__register_post
+      parameters:
+      - name: experiment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Experiment Id
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/user/training-tasks/{task_id}/cancel:
     post:
       summary: User Cancel Task
@@ -3486,10 +3563,94 @@ paths:
       parameters:
       - name: datasetVersion
         in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Datasetversion
+      - name: schema
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Schema
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/prediction-samples:
+    get:
+      summary: User Prediction Samples
+      operationId: user_prediction_samples_api_v1_user_prediction_samples_get
+      parameters:
+      - name: datasetVersion
+        in: query
         required: true
         schema:
           type: string
           title: Datasetversion
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/prediction-splits:
+    get:
+      summary: User Prediction Splits
+      operationId: user_prediction_splits_api_v1_user_prediction_splits_get
+      parameters:
+      - name: datasetVersion
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Datasetversion
+      - name: modelId
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Modelid
       responses:
         '200':
           description: Successful Response
@@ -3542,6 +3703,54 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/v1/user/prediction-batches/single:
+    post:
+      summary: Create User Single Prediction
+      operationId: create_user_single_prediction_api_v1_user_prediction_batches_single_post
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/user/prediction-batches/unlabeled:
+    post:
+      summary: Create User Unlabeled Prediction
+      operationId: create_user_unlabeled_prediction_api_v1_user_prediction_batches_unlabeled_post
+      parameters:
+      - name: modelId
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Modelid
+      - name: threshold
+        in: query
+        required: false
+        schema:
+          type: number
+          default: 0.5
+          title: Threshold
+      - name: filename
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Filename
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/user/prediction-batches/{batch_id}:
     get:
       summary: User Prediction Batch
@@ -3574,6 +3783,60 @@ paths:
           type: string
           default: risk
           title: Sort
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/prediction-batches/{batch_id}/evaluation:
+    get:
+      summary: User Prediction Evaluation
+      operationId: user_prediction_evaluation_api_v1_user_prediction_batches__batch_id__evaluation_get
+      parameters:
+      - name: batch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Batch Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/user/prediction-batches/{batch_id}/export:
+    get:
+      summary: User Prediction Export
+      operationId: user_prediction_export_api_v1_user_prediction_batches__batch_id__export_get
+      parameters:
+      - name: batch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Batch Id
       responses:
         '200':
           description: Successful Response

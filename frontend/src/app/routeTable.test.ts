@@ -32,6 +32,8 @@ const CANONICAL: Route[] = [
   { name: 'model-evaluation' },
   { name: 'model-evaluation', source: 'training', experimentId: 'experiment-1', taskId: 'task-1', modelId: 'model-1' },
   { name: 'model-evaluation', source: 'prediction', batchId: 'batch-1' },
+  { name: 'my-evaluation' },
+  { name: 'my-evaluation', batchId: 'batch-1', modelId: 'model-1', datasetVersion: 'data-1', partition: 'test', splitPreset: 'temporal-70-15-15' },
   { name: 'profile' },
   { name: 'research-line' },
   { name: 'notifications' },

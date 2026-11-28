@@ -58,20 +58,20 @@
   "exitCode": 0,
   "junit": "..\\docs\\evidence\\align-training-and-model-evaluation\\matrix-junit.xml",
   "summary": {
-    "operations": 99,
+    "operations": 109,
     "cells": {
       "normal": {
-        "test": 99
+        "test": 109
       },
       "boundary": {
-        "test": 88,
+        "test": 98,
         "not-applicable": 11
       },
       "error": {
-        "test": 99
+        "test": 109
       },
       "concurrency": {
-        "test": 88,
+        "test": 98,
         "not-applicable": 11
       }
     }
@@ -81,7 +81,7 @@
   "matrix": {
     "kind": "integration-test-matrix",
     "change": "align-training-and-model-evaluation",
-    "generatedAt": "2026-11-27T12:05:07.658649+00:00",
+    "generatedAt": "2026-11-28T04:49:12.648615+00:00",
     "scenarios": [
       "normal",
       "boundary",
@@ -3192,6 +3192,370 @@
         }
       },
       {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-batches",
+        "operationId": "listUserPredictionBatches",
+        "key": "GET /api/v1/user/prediction-batches",
+        "summary": "分页读取本人预测记录",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-batches/{batchId}",
+        "operationId": "getUserPredictionBatch",
+        "key": "GET /api/v1/user/prediction-batches/{batchId}",
+        "summary": "重开本人预测批次",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-batches/{batchId}/evaluation",
+        "operationId": "getUserPredictionEvaluation",
+        "key": "GET /api/v1/user/prediction-batches/{batchId}/evaluation",
+        "summary": "读取预测批次的只读评估交接",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-batches/{batchId}/export",
+        "operationId": "exportUserPredictionBatch",
+        "key": "GET /api/v1/user/prediction-batches/{batchId}/export",
+        "summary": "导出本人预测批次 CSV",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-models",
+        "operationId": "listUserPredictionModels",
+        "key": "GET /api/v1/user/prediction-models",
+        "summary": "列出本人可见且可用的缺陷预测模型",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-samples",
+        "operationId": "listUserPredictionSamples",
+        "key": "GET /api/v1/user/prediction-samples",
+        "summary": "分页读取数据版本中可供单条预测的记录",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/prediction-splits",
+        "operationId": "listUserPredictionSplits",
+        "key": "GET /api/v1/user/prediction-splits",
+        "summary": "读取模型冻结分区与时间切分预设",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
         "method": "PATCH",
         "path": "/api/v1/models/{modelId}/policy",
         "operationId": "updateModelPolicy",
@@ -4755,6 +5119,162 @@
             "status": "passed",
             "tests": [
               "backend/tests/test_training_tasks.py::test_running_cancel_stops_owned_process_tree"
+            ]
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/user/prediction-batches",
+        "operationId": "createUserPredictionBatch",
+        "key": "POST /api/v1/user/prediction-batches",
+        "summary": "按完整数据版本或固定分区批量预测",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/user/prediction-batches/single",
+        "operationId": "createUserSinglePrediction",
+        "key": "POST /api/v1/user/prediction-batches/single",
+        "summary": "单条预测",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
+            ]
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/user/prediction-batches/unlabeled",
+        "operationId": "createUserUnlabeledPrediction",
+        "key": "POST /api/v1/user/prediction-batches/unlabeled",
+        "summary": "上传无标签 CSV 进行批量预测",
+        "tags": [
+          "缺陷预测"
+        ],
+        "security": [
+          {
+            "UserSession": []
+          }
+        ],
+        "role": "user",
+        "riskDomain": "auth-permissions",
+        "riskTier": "high",
+        "cells": {
+          "normal": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_admin_setup_login_logout_and_no_password_in_response"
+            ]
+          },
+          "boundary": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_weak_password_and_cross_origin_setup_rejected"
+            ]
+          },
+          "error": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_route_security.py::test_admin_paths_are_not_authenticated_by_the_legacy_prefix_list"
+            ]
+          },
+          "concurrency": {
+            "kind": "test",
+            "level": "runtime",
+            "status": "passed",
+            "tests": [
+              "backend/tests/test_admin_workspace.py::test_expired_sessions_and_local_password_reset"
             ]
           }
         }

@@ -18,6 +18,7 @@ const suites = {
   'multi-method-explanations': { JIT_FRONTEND_PORT: '18823', JIT_SERVICE_PORT: '18822' },
   'training-evaluation': { JIT_E2E_TRAINING_EVALUATION_MODE: '1',
     JIT_FRONTEND_PORT: '18831', JIT_SERVICE_PORT: '18830' },
+  predictions: { JIT_FRONTEND_PORT: '18825', JIT_SERVICE_PORT: '18824', JIT_E2E_PREDICTION_MODE: '1' },
 }
 
 const name = process.argv[2]

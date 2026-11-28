@@ -8,10 +8,12 @@ from pathlib import Path
 from .. import candidate as candidate_rules
 
 from . import collect
+from . import attribution
 
 from .catalog import ModelCatalog
 from ..catalog_storage import utc_now
 from ..errors import BaselineError
+from ..schemas import resolve
 
 
 class CommitAnalysisError(BaselineError):
@@ -26,6 +28,47 @@ def _canonical(value):
 
 def _digest(value):
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _commit_feature_names():
+    return frozenset(resolve(collect.SCHEMA_NAME).in_model_names())
+
+
+def compatible_models(catalog):
+    """列出可由提交采集直接生成特征的真实模型。
+
+    只返回目录库状态为 ready、当前启用且所有入模字段都能由提交采集生成的模型；
+    产物加载或 schema 校验失败时跳过，不猜测、不回退到其他模型。
+    """
+    required = _commit_feature_names()
+    result = []
+    for saved in catalog.registered_models(state="ready"):
+        if not saved.get("enabled"):
+            continue
+        model_id = saved.get("modelId")
+        if not model_id:
+            continue
+        try:
+            snapshot, payload = catalog.load_model(model_id)
+        except BaselineError:
+            continue
+        if snapshot.schema.name not in (collect.SCHEMA_NAME, collect.LEGACY_SCHEMA_NAME):
+            continue
+        if snapshot.schema.semantic is not None:
+            continue
+        if not set(snapshot.schema.in_model_names()).issubset(required):
+            continue
+        result.append({
+            "modelId": model_id,
+            "name": payload.get("name"),
+            "method": payload.get("method")
+            or snapshot.manifest.get("config", {}).get("algorithmVersion"),
+            "featureSchema": snapshot.schema.name,
+            "isDefault": bool(saved.get("isDefault")),
+            "runId": payload.get("artifactRunId") or snapshot.manifest.get("runId"),
+        })
+    result.sort(key=lambda item: (not item["isDefault"], item["name"] or "", item["modelId"]))
+    return result
 
 
 def _git(repo, args, code="REPOSITORY_UNAVAILABLE", message="Git 命令失败", exit_code=4):
@@ -125,6 +168,57 @@ def _candidate_coverage(repo, head_sha, paths, limit=50):
             "analyzerVersion": candidate_rules.ANALYZER_VERSION, "side": "head"}
 
 
+def _not_supported(reason):
+    return {"status": "not-supported", "method": None, "items": [],
+            "summary": f"{reason} 提交级预测分数仍然有效。"}
+
+
+def _commit_explanations(catalog, model_id, payload, snapshot, names, records):
+    """为已评分提交生成独立的特征归因；失败逐条降级，不影响分数。"""
+    from .model import predict_risks
+
+    baseline, note = {}, None
+    try:
+        directory = catalog.model_directory(model_id)
+        partition_ids = attribution.training_partition_ids(directory)
+        dataset_version = payload.get("artifactDatasetVersion")
+        store = getattr(catalog, "store", None)
+        if store is not None and dataset_version:
+            baseline = attribution.feature_baseline(
+                store, dataset_version, names, partition_ids,
+            )
+        if not baseline:
+            note = "训练分区基线不可用，缺失字段按零基线计算。"
+        elif any(name not in baseline for name in names):
+            note = "部分字段缺少训练分区均值，缺失字段按零基线计算。"
+    except Exception:
+        note = "训练分区基线不可用，缺失字段按零基线计算。"
+
+    def predictor(values):
+        return predict_risks(
+            snapshot.model, [{"features": values}], snapshot.schema,
+        )
+
+    result = {}
+    for record in records:
+        try:
+            explained = attribution.explain(
+                predictor, record["features"], baseline, names,
+            )
+            summary = explained["summary"]
+            if note:
+                summary = f"{summary}（{note}）"
+            result[record["id"]] = {
+                "status": "supported",
+                "method": explained["method"],
+                "items": explained["items"],
+                "summary": summary,
+            }
+        except Exception:
+            result[record["id"]] = _not_supported("本次归因计算不可用。")
+    return result
+
+
 def analyze(repo_path, base, head_ref, catalog, model_id, *, max_commits=200,
             max_candidate_files=50):
     repo, base_sha, head_sha, ids = resolve_range(repo_path, base, head_ref)
@@ -149,12 +243,16 @@ def analyze(repo_path, base, head_ref, catalog, model_id, *, max_commits=200,
         record["features"] = [record["metrics"][name] for name in names]
     from .model import predict_risks
     risks = predict_risks(snapshot.model, records, snapshot.schema)
+    explanations = _commit_explanations(
+        catalog, model_id, payload, snapshot, names, records,
+    )
     commits = [{
         "commitId": record["id"], "epoch": record["epoch"], "time": record["time"],
         "subject": record["subject"], "authorName": record["authorName"],
         "risk": float(risk), "addedLines": record["metrics"]["la"],
         "deletedLines": record["metrics"]["ld"], "files": record["metrics"]["nf"],
         "filePaths": record["filePaths"],
+        "explanation": explanations[record["id"]],
     } for record, risk in zip(records, risks, strict=True)]
     paths = sorted({path for record in records for path in record["filePaths"]})
     participants = _candidate_coverage(repo, head_sha, paths, max_candidate_files)

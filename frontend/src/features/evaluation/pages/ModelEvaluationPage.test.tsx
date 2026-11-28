@@ -88,33 +88,11 @@ it('evaluates one exact training model on the frozen test partition', async () =
 })
 
 it('reopens a saved prediction as an exploratory evaluation without inference', async () => {
-  const batch = {
-    batchId: 'batch-1', datasetVersion: 'dataset-v1', dataset: 'demo',
-    model: {
-      modelId: 'model-1', name: '逻辑回归 · 六字段', method: 'logistic-regression-l2-v1',
-      runId: 'run-1', featureSchemaVersion: 'openstack-six-v1', artifactDatasetVersion: 'dataset-v1',
-      isDefault: false, mine: true, shared: false,
-    },
-    threshold: .5,
-    counts: { records: 4, positives: 2, negatives: 2, flagged: 2 },
-    labelStatusCounts: { positive: 2, unobserved: 2, immature: 2, unknown: 1 },
-    thresholdPreview: preview,
-    evaluation: {
-      format: 'model-evaluation-v1', source: 'prediction-batch', mode: 'exploratory',
-      formalAvailable: false, formalUnavailableReason: '预测批次未声明固定测试分区，只能进行探索性复核',
-      partition: { kind: 'batch', memberSha256: null, labelSnapshot: true },
-      labelPolicy: { version: 'mature-binary-v1', included: ['positive', 'unobserved'],
-        excludedCounts: { immature: 2, unknown: 1 } },
-      sampleCounts: { included: 4, positives: 2, negatives: 2, excluded: 3 },
-      thresholdPreview: preview,
-    },
-    explanationCoverage: { method: 'occlusion-mean-v1', limit: 10, recorded: 0, failed: 0 },
-    featureNames: ['ns'], createdAt: '2026-11-20T00:00:00Z', limitations: [],
-    records: [], limit: 1, offset: 0, sort: 'risk',
-  }
+  const batch = evaluationBase('batch-1', '逻辑回归 · 六字段')
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
-    if (path.includes('/prediction-batches/batch-1')) return Response.json(batch)
+    if (path.includes('/prediction-batches?limit=')) return Response.json({ batches: [] })
+    if (path.endsWith('/prediction-batches/batch-1/evaluation')) return Response.json(batch)
     throw new Error(path)
   })
   render(<ModelEvaluationPage source="prediction" batchId="batch-1"
@@ -129,19 +107,17 @@ it('reopens a saved prediction as an exploratory evaluation without inference', 
 
 it('ignores a delayed response after the selected batch changes', async () => {
   const first = new Promise<Response>(resolve => {
-    setTimeout(() => resolve(Response.json({
-      ...(batchBase('batch-a', '旧模型')),
-    })), 120)
+    setTimeout(() => resolve(Response.json(evaluationBase('batch-a', '旧模型'))), 120)
   })
-  const second = Response.json({ ...(batchBase('batch-b', '新模型')) })
+  const second = Response.json(evaluationBase('batch-b', '新模型'))
   vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
     const path = String(input)
     if (path.includes('prediction-batches?limit=')) {
       return Response.json({
-        batches: [batchBase('batch-a', '旧模型'), batchBase('batch-b', '新模型')],
+        batches: [batchSummary('batch-a', '旧模型'), batchSummary('batch-b', '新模型')],
       })
     }
-    return path.includes('batch-a') ? first : second
+    return path.includes('/batch-a/evaluation') ? first : second
   })
   const view = render(<ModelEvaluationPage source="prediction" batchId="batch-a"
     navigate={vi.fn()} onLoginRequired={vi.fn()}/>)
@@ -152,27 +128,42 @@ it('ignores a delayed response after the selected batch changes', async () => {
   expect(screen.queryByText('旧模型')).not.toBeInTheDocument()
 })
 
-function batchBase(batchId: string, name: string) {
+function evaluationBase(batchId: string, name: string) {
+  return {
+    format: 'user-prediction-evaluation-v1',
+    batchId, mode: 'batch', datasetVersion: 'dataset-v1', dataset: 'demo',
+    source: { kind: 'dataset', label: '数据版本', reference: {} },
+    sourceKind: 'dataset', splitPreset: null, partition: null, memberSha256: null,
+    model: {
+      modelId: `model-${batchId}`, name, method: 'logistic-regression-l2-v1',
+      runId: `run-${batchId}`, featureSchemaVersion: 'openstack-six-v1',
+      artifactDatasetVersion: 'dataset-v1', featureNames: ['ns'],
+      isDefault: false, mine: true, shared: false,
+    },
+    threshold: .5,
+    eligible: true, reason: '包含可用真实标签，可进入评估',
+    counts: { records: 4, labeledAvailable: 4, unavailable: 0, positives: 2, negatives: 2, flagged: 2 },
+    labelStatusCounts: { positive: 2, unobserved: 2, immature: 2, unknown: 1 },
+    labelAvailabilityCounts: { available: 4, unavailable: 0 },
+    thresholdPreview: preview,
+    confusion: { tp: 1, fp: 1, tn: 1, fn: 1 },
+    precision: .5, recall: .5, f1: .5,
+    limitations: ['评估只使用成熟且可用的真实标签。'],
+  }
+}
+
+function batchSummary(batchId: string, name: string) {
   return {
     batchId, datasetVersion: 'dataset-v1', dataset: 'demo',
     model: {
       modelId: `model-${batchId}`, name, method: 'logistic-regression-l2-v1',
       runId: `run-${batchId}`, featureSchemaVersion: 'openstack-six-v1',
-      artifactDatasetVersion: 'dataset-v1', isDefault: false, mine: true, shared: false,
+      artifactDatasetVersion: 'dataset-v1', featureNames: ['ns'],
+      isDefault: false, mine: true, shared: false,
     },
-    threshold: .5, counts: { records: 4, positives: 2, negatives: 2, flagged: 2 },
-    labelStatusCounts: { positive: 2, unobserved: 2 }, thresholdPreview: preview,
-    evaluation: {
-      format: 'model-evaluation-v1', source: 'prediction-batch', mode: 'exploratory',
-      formalAvailable: false, formalUnavailableReason: '固定测试分区缺失',
-      partition: { kind: 'batch', memberSha256: null, labelSnapshot: true },
-      labelPolicy: { version: 'mature-binary-v1', included: ['positive', 'unobserved'],
-        excludedCounts: {} },
-      sampleCounts: { included: 4, positives: 2, negatives: 2, excluded: 0 },
-      thresholdPreview: preview,
-    },
-    explanationCoverage: { method: 'occlusion-mean-v1', limit: 10, recorded: 0, failed: 0 },
-    featureNames: ['ns'], createdAt: '2026-11-20T00:00:00Z', limitations: [],
-    records: [], limit: 1, offset: 0, sort: 'risk',
+    threshold: .5,
+    counts: { records: 4, labeledAvailable: 4, unavailable: 0, positives: 2, negatives: 2, flagged: 2 },
+    labelStatusCounts: { positive: 2, unobserved: 2 },
+    createdAt: '2026-11-20T00:00:00Z',
   }
 }

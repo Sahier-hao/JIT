@@ -177,6 +177,14 @@ def main():
     pr_analyze.add_argument("--artifact-root", type=Path,
                             default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
     pr_analyze.add_argument("--max-commits", type=int, default=200, help="范围内提交数上限")
+    pr_models = commands.add_parser(
+        "pr-check-models", help="列出可由提交检查直接使用的已登记模型")
+    pr_models.add_argument("--database", type=Path,
+                           default=os.environ.get('JIT_CATALOG_DATABASE', None))
+    pr_models.add_argument("--artifact-root", type=Path,
+                           default=os.environ.get('JIT_ARTIFACT_ROOT', BACKEND / 'artifacts'))
+    pr_models.add_argument("--json", action="store_true",
+                           help="以 JSON 输出（该命令默认即为 JSON）")
     serve = commands.add_parser("serve")
     serve.add_argument('--port', type=service_port, default=8000, help='本机服务端口；隔离验证应显式指定')
     from .catalog_storage import DEFAULT_DATABASE
@@ -663,6 +671,16 @@ def main():
                       "commits": len(report["commits"]),
                       "candidates": len(report["candidates"]),
                       "output": str(args.output)}
+        elif args.command == "pr-check-models":
+            from . import commit_analysis
+            from .catalog import ModelCatalog
+            from .catalog_storage import CatalogStorage, DEFAULT_DATABASE
+            catalog = ModelCatalog(CatalogStorage(args.database or DEFAULT_DATABASE),
+                                   args.artifact_root)
+            result = {
+                "format": "jit-pr-check-models-v1",
+                "models": commit_analysis.compatible_models(catalog),
+            }
         elif args.command == "build-embeddings":
             from .semantic import build_embeddings
             options = {"batch_size": args.batch_size}

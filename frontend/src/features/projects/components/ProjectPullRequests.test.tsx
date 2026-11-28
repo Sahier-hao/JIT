@@ -180,6 +180,32 @@ it('marks a PR that reused saved features', async () => {
   render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
   expect(await screen.findByText(/复用已保存特征/)).toBeVisible()
 })
+it('shows the fixed head SHA, commit list, model identity and check time after auto analysis', async () => {
+  const head = 'b'.repeat(40)
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async path => {
+    if (String(path).includes('pull-request-batches')) return response(null)
+    if (String(path).includes('/repository-models')) return response({ models: modelChoices })
+    return response(prPage({
+      pullRequests: [{
+        ...prPage().pullRequests[0],
+        headSha: head,
+        commitCount: 1,
+        commitsComplete: true,
+        commits: [{ sha: head, message: 'fix: background update', time: NOW }],
+        checkedAt: NOW,
+        analysisStatus: 'completed',
+        modelId: 'model-original',
+      }],
+    }))
+  })
+  render(<ProjectPullRequests repositoryId={PROJECT} navigate={vi.fn()}/>)
+  const user = userEvent.setup()
+  expect((await screen.findAllByText(head.slice(0, 10), { selector: 'code' })).length).toBeGreaterThan(0)
+  expect(screen.getByText(/检查于/)).toBeVisible()
+  expect(screen.getByText('原固定模型')).toBeVisible()
+  await user.click(screen.getByText('提交列表（1）'))
+  expect(screen.getByText('fix: background update')).toBeVisible()
+})
 it('cancels a running batch only after confirmation', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (path) => {
     if (String(path).endsWith('/cancel')) return response(prBatch({ status: 'cancelled', cancelledAt: '2026-10-29T00:00:00Z', cancelRequested: true }))

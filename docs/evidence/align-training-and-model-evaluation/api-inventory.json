@@ -1,9 +1,9 @@
 {
   "kind": "openapi-operation-inventory",
   "source": "docs/api/openapi.yaml",
-  "sourceSha256": "1f00b467363567f93e98ae62e971a92efe4063e2d6bcabd93663b213b66a1765",
-  "generatedAt": "2026-11-27T12:22:06.725217+00:00",
-  "totalOperations": 103,
+  "sourceSha256": "2ffde9d523f9ebfebda3c17f4f3e46f05616a453da7c42f2265759a1b61bbe74",
+  "generatedAt": "2026-11-28T04:49:10.611191+00:00",
+  "totalOperations": 113,
   "adminAuthOperations": [
     {
       "method": "GET",
@@ -58,7 +58,7 @@
       "exclusionReason": "管理员初始化不属于业务 API，由独立账户流程验证。"
     }
   ],
-  "businessOperations": 99,
+  "businessOperations": 109,
   "operations": [
     {
       "method": "GET",
@@ -1031,6 +1031,132 @@
       "riskTier": "low"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-batches",
+      "operationId": "listUserPredictionBatches",
+      "key": "GET /api/v1/user/prediction-batches",
+      "summary": "分页读取本人预测记录",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-batches/{batchId}",
+      "operationId": "getUserPredictionBatch",
+      "key": "GET /api/v1/user/prediction-batches/{batchId}",
+      "summary": "重开本人预测批次",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-batches/{batchId}/evaluation",
+      "operationId": "getUserPredictionEvaluation",
+      "key": "GET /api/v1/user/prediction-batches/{batchId}/evaluation",
+      "summary": "读取预测批次的只读评估交接",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-batches/{batchId}/export",
+      "operationId": "exportUserPredictionBatch",
+      "key": "GET /api/v1/user/prediction-batches/{batchId}/export",
+      "summary": "导出本人预测批次 CSV",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-models",
+      "operationId": "listUserPredictionModels",
+      "key": "GET /api/v1/user/prediction-models",
+      "summary": "列出本人可见且可用的缺陷预测模型",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-samples",
+      "operationId": "listUserPredictionSamples",
+      "key": "GET /api/v1/user/prediction-samples",
+      "summary": "分页读取数据版本中可供单条预测的记录",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/prediction-splits",
+      "operationId": "listUserPredictionSplits",
+      "key": "GET /api/v1/user/prediction-splits",
+      "summary": "读取模型冻结分区与时间切分预设",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
       "method": "PATCH",
       "path": "/api/v1/models/{modelId}/policy",
       "operationId": "updateModelPolicy",
@@ -1508,6 +1634,60 @@
       ],
       "role": "public",
       "riskDomain": "training",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/user/prediction-batches",
+      "operationId": "createUserPredictionBatch",
+      "key": "POST /api/v1/user/prediction-batches",
+      "summary": "按完整数据版本或固定分区批量预测",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/user/prediction-batches/single",
+      "operationId": "createUserSinglePrediction",
+      "key": "POST /api/v1/user/prediction-batches/single",
+      "summary": "单条预测",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
+      "riskTier": "high"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/user/prediction-batches/unlabeled",
+      "operationId": "createUserUnlabeledPrediction",
+      "key": "POST /api/v1/user/prediction-batches/unlabeled",
+      "summary": "上传无标签 CSV 进行批量预测",
+      "tags": [
+        "缺陷预测"
+      ],
+      "security": [
+        {
+          "UserSession": []
+        }
+      ],
+      "role": "user",
+      "riskDomain": "auth-permissions",
       "riskTier": "high"
     },
     {

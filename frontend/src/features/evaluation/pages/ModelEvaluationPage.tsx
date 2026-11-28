@@ -20,12 +20,23 @@ import {
 } from '@/features/training/trainingComparison'
 import { trainingMethodName } from '@/features/training/trainingPresentation'
 import {
-  predictionBatch, predictionBatches,
-  type EvaluationSummary, type PredictionBatchDetail, type PredictionBatchSummary,
+  predictionBatches, predictionEvaluation,
+  type PredictionBatch, type PredictionEvaluation,
 } from '@/features/predictions/predictionClient'
 import { evaluationPoint, type EvaluationPoint } from '@/features/evaluation/evaluationMetrics'
 
 type Source = 'training' | 'prediction'
+type LabelPolicyView = {
+  version: string
+  included: string[]
+  excludedCounts: Record<string, number>
+} | null
+type SampleCountsView = {
+  included: number
+  positives: number
+  negatives: number
+  excluded: number
+} | null
 
 function percent(value: number | null) {
   return value == null ? '—' : `${(value * 100).toFixed(1)}%`
@@ -51,9 +62,9 @@ export function ModelEvaluationPage({
   onLoginRequired: () => void
 }) {
   const [experiments, setExperiments] = useState<TrainingExperiment[] | null>(null)
-  const [batches, setBatches] = useState<PredictionBatchSummary[] | null>(null)
+  const [batches, setBatches] = useState<PredictionBatch[] | null>(null)
   const [comparison, setComparison] = useState<TrainingExperimentComparison | null>(null)
-  const [prediction, setPrediction] = useState<PredictionBatchDetail | null>(null)
+  const [prediction, setPrediction] = useState<PredictionEvaluation | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState(taskId ?? '')
   const [tick, setTick] = useState(50)
   const [testEvaluation, setTestEvaluation] = useState<ThresholdEvaluation | null>(null)
@@ -130,7 +141,7 @@ export function ModelEvaluationPage({
     const controller = new AbortController()
     setLoading(true)
     setPrediction(null)
-    predictionBatch(batchId, { limit: 1, sort: 'risk' }, controller.signal).then(value => {
+    predictionEvaluation(batchId, controller.signal).then(value => {
       if (!controller.signal.aborted) setPrediction(value)
     }).catch(failure => {
       if (!controller.signal.aborted) fail(failure, '预测评估读取失败')
@@ -149,8 +160,7 @@ export function ModelEvaluationPage({
   const methods = comparison?.methods.filter(method => method.status === 'succeeded' && method.modelId) ?? []
   const method = methods.find(item => item.taskId === selectedTaskId) ?? null
   const trainingCandidate = method ? thresholdCandidate(method) : null
-  const predictionEvaluation = prediction?.evaluation ?? null
-  const preview = source === 'training' ? trainingCandidate?.preview ?? null : predictionEvaluation?.thresholdPreview ?? null
+  const preview = source === 'training' ? trainingCandidate?.preview ?? null : prediction?.thresholdPreview ?? null
   const point = preview ? evaluationPoint(preview, tick) : null
 
   async function evaluateTrainingTest() {
@@ -182,18 +192,37 @@ export function ModelEvaluationPage({
   }
 
   const testEvidence = testEvaluation?.methods[0]?.evaluation ?? null
+  const predictionFormal = prediction?.eligible === true && prediction.partition === 'test'
   const formal = source === 'training'
     ? testEvidence?.formalAvailable === true
-    : predictionEvaluation?.formalAvailable === true
+    : predictionFormal
   const mode = source === 'training'
     ? testEvidence?.mode
-    : predictionEvaluation?.mode
+    : predictionFormal ? 'formal' as const : 'exploratory' as const
   const reason = source === 'training'
     ? testEvidence?.formalUnavailableReason
-    : predictionEvaluation?.formalUnavailableReason
+    : prediction
+      ? predictionFormal ? null
+        : prediction.eligible
+          ? '预测批次未声明固定测试分区，只能进行探索性复核'
+          : prediction.reason
+      : null
   const sampleCounts = source === 'training'
     ? testEvidence?.sampleCounts
-    : predictionEvaluation?.sampleCounts
+    : prediction ? {
+        included: prediction.counts.labeledAvailable,
+        positives: prediction.counts.positives,
+        negatives: prediction.counts.negatives,
+        excluded: prediction.counts.unavailable,
+      } : null
+  const predictionPolicy = prediction ? {
+    version: 'mature-binary-v1',
+    included: ['positive', 'unobserved'],
+    excludedCounts: Object.fromEntries(
+      Object.entries(prediction.labelStatusCounts)
+        .filter(([status]) => status !== 'positive' && status !== 'unobserved'),
+    ),
+  } : null
 
   return <section className="mx-auto grid w-full max-w-[78rem] min-w-0 gap-5">
     <WorkspacePageHeader title={source ? sourceLabel(source) : '模型评估'}
@@ -264,7 +293,7 @@ export function ModelEvaluationPage({
         datasetVersion={comparison.datasetVersion}
         partition="冻结测试分区"
         memberSha256={comparison.methods.find(item => item.taskId === method.taskId)?.splitMemberSha256}
-        mode={mode} formal={formal} reason={reason} sampleCounts={sampleCounts}
+        mode={mode} formal={formal} reason={reason} sampleCounts={sampleCounts ?? null}
       />
       <section className="grid gap-4 rounded-xl border border-border-soft bg-card p-4 sm:p-5" aria-label="验证集缺陷阈值">
         <div><h2 className="text-sm font-semibold">在验证集选择缺陷阈值</h2>
@@ -293,20 +322,20 @@ export function ModelEvaluationPage({
           </span>
         </div>
         <ClassificationPanel value={testEvaluation.methods[0].test} threshold={testEvaluation.methods[0].threshold}/>
-        <LabelPolicy policy={testEvidence.labelPolicy} sampleCounts={testEvidence.sampleCounts}/>
+        <LabelPolicy policy={testEvidence.labelPolicy} sampleCounts={testEvidence.sampleCounts ?? null}/>
       </section> : null}
     </> : null}
 
-    {source === 'prediction' && prediction?.evaluation && preview && point ? <>
+    {source === 'prediction' && prediction && preview && point ? <>
       <IdentityCard
         modelName={prediction.model.name}
         modelId={prediction.model.modelId}
         runId={prediction.model.runId}
         method={prediction.model.method}
-        datasetVersion={prediction.datasetVersion}
-        partition={prediction.evaluation.partition.kind === 'test' ? '固定测试分区' : '已保存预测批次'}
-        memberSha256={prediction.evaluation.partition.memberSha256}
-        mode={mode} formal={formal} reason={reason} sampleCounts={sampleCounts}
+        datasetVersion={prediction.datasetVersion ?? '数据集未记录'}
+        partition={prediction.partition === 'test' ? '固定测试分区' : '已保存预测批次'}
+        memberSha256={prediction.memberSha256}
+        mode={mode} formal={formal} reason={reason} sampleCounts={sampleCounts ?? null}
       />
       <section className="grid gap-4 rounded-xl border border-border-soft bg-card p-4 sm:p-5" aria-label="预测结果缺陷阈值">
         <div><h2 className="text-sm font-semibold">按保存结果调整缺陷阈值</h2>
@@ -317,7 +346,7 @@ export function ModelEvaluationPage({
         </div>
         <Slider label="缺陷阈值" value={[tick]} onValueChange={values => setTick(values[0])}/>
         <EvaluationPanel point={point}/>
-        <LabelPolicy policy={prediction.evaluation.labelPolicy} sampleCounts={prediction.evaluation.sampleCounts}/>
+        <LabelPolicy policy={predictionPolicy} sampleCounts={sampleCounts ?? null}/>
       </section>
     </> : null}
   </section>
@@ -399,8 +428,8 @@ function ClassificationPanel({ value, threshold }: { value: { confusion: { tp: n
 }
 
 function LabelPolicy({ policy, sampleCounts }: {
-  policy: EvaluationSummary['labelPolicy']
-  sampleCounts: EvaluationSummary['sampleCounts']
+  policy: LabelPolicyView
+  sampleCounts: SampleCountsView
 }) {
   if (!policy) return null
   return <div className="grid gap-2 border-t border-border-soft pt-3">

@@ -130,11 +130,22 @@ export type ProjectPullRequest = {
     remoteState: 'open' | 'closed' | 'merged';
     draft: boolean;
     snapshotId?: string;
+    headSha?: string | null;
+    commits?: Array<ProjectPullRequestCommit>;
+    commitCount?: number | null;
+    commitsComplete?: boolean | null;
+    checkedAt?: string | null;
     analysisStatus?: 'pending' | 'queued' | 'running' | 'backoff' | 'completed' | 'failed' | 'cancelled' | 'interrupted' | 'superseded';
     modelId?: string;
     syncId?: string | null;
     maxRisk?: number;
     scoredCommits?: number;
+};
+
+export type ProjectPullRequestCommit = {
+    sha: string;
+    message: string | null;
+    time: string | null;
 };
 
 export type ProjectPullRequestPage = unknown & {
@@ -2530,6 +2541,9 @@ export type SplitPreviewPartition = {
 };
 
 export type DatasetBuildTaskCreate = {
+    /**
+     * 省略或留空时使用仓库默认分支。
+     */
     branch?: string;
     since?: string;
     until?: string;
@@ -2664,6 +2678,563 @@ export type PredictionCsvForm = {
     featureSchemaVersion: 'openstack-six-v1' | 'kamei14-v1';
     project: string;
     file: Blob | File;
+};
+
+export type UserPredictionModel = {
+    modelId: Uuid;
+    name: string;
+    method: string | null;
+    runId: string | null;
+    artifactRunId?: string | null;
+    featureSchemaVersion: string;
+    artifactDatasetVersion?: string | null;
+    featureNames: Array<string>;
+    parameters?: {
+        [key: string]: unknown;
+    } | null;
+    isDefault: boolean;
+    mine: boolean;
+    shared: boolean;
+};
+
+export type UserPredictionModelList = {
+    models: Array<UserPredictionModel>;
+    maxRecords: number;
+};
+
+export type UserPredictionSource = {
+    kind: 'dataset' | 'dataset-partition' | 'single-dataset' | 'single-project' | 'single-manual' | 'unlabeled-csv';
+    label: string;
+    reference: {
+        [key: string]: unknown;
+    };
+};
+
+export type UserPredictionCounts = {
+    records: number;
+    labeledAvailable: number;
+    unavailable: number;
+    positives: number;
+    negatives: number;
+    flagged: number;
+};
+
+export type UserPredictionThresholdPreview = {
+    thresholds: [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number
+    ];
+    positives: number;
+    negatives: number;
+    truePositives: [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number
+    ];
+    falsePositives: [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number
+    ];
+};
+
+export type UserPredictionExplanationItem = {
+    feature: string;
+    value: number;
+    baseline: number;
+    delta: number;
+    direction: 'increases' | 'decreases';
+};
+
+export type UserPredictionExplanation = {
+    status: 'supported' | 'not-supported';
+    method: string | null;
+    items: Array<UserPredictionExplanationItem>;
+    summary: string;
+};
+
+export type UserPredictionRecord = {
+    predictionId: Uuid;
+    recordId: string;
+    authorTime: string | null;
+    label: 0 | 1 | null;
+    labelStatus: string;
+    labelAvailability: 'available' | 'unavailable';
+    sourceKind: string;
+    sourceRef: string | null;
+    risk: number;
+    features: {
+        [key: string]: number;
+    };
+    explanation: UserPredictionExplanation | null;
+};
+
+export type UserPredictionBatch = {
+    format: 'user-prediction-batch-v1';
+    batchId: Uuid;
+    mode: 'single' | 'batch';
+    sourceKind: string;
+    source: UserPredictionSource;
+    datasetVersion: string | null;
+    dataset: string;
+    splitPreset: string | null;
+    partition: 'train' | 'validation' | 'test' | null;
+    memberSha256: string | null;
+    model: UserPredictionModel;
+    threshold: number;
+    counts: UserPredictionCounts;
+    labelStatusCounts: {
+        [key: string]: number;
+    };
+    labelAvailabilityCounts: {
+        available: number;
+        unavailable: number;
+    };
+    thresholdPreview: UserPredictionThresholdPreview;
+    evaluationEligible: boolean;
+    evaluationReason: string;
+    explanationCoverage: {
+        method: string;
+        limit: number;
+        recorded: number;
+        failed: number;
+    };
+    featureNames: Array<string>;
+    createdAt: string;
+    limitations: Array<string>;
+    records?: Array<UserPredictionRecord>;
+    limit?: number;
+    offset?: number;
+    sort?: 'risk' | 'time';
+    search?: string | null;
+};
+
+export type UserPredictionBatchList = {
+    batches: Array<UserPredictionBatch>;
+    total: number;
+    limit: number;
+    offset: number;
+};
+
+export type UserPredictionSample = {
+    recordId: string;
+    authorTime: string | null;
+    label: 0 | 1 | null;
+    labelStatus: string;
+    labelAvailability: 'available' | 'unavailable';
+    features: {
+        [key: string]: number;
+    };
+    sourceKind: string;
+};
+
+export type UserPredictionSamplePage = {
+    datasetVersion: string;
+    dataset: string;
+    schema: string;
+    total: number;
+    limit: number;
+    offset: number;
+    search: string | null;
+    samples: Array<UserPredictionSample>;
+};
+
+export type UserPredictionPartitionStat = {
+    count: number;
+    positives: number | null;
+    start: string | null;
+    end: string | null;
+};
+
+export type UserPredictionPartitions = {
+    train: UserPredictionPartitionStat;
+    validation: UserPredictionPartitionStat;
+    test: UserPredictionPartitionStat;
+};
+
+export type UserPredictionSplitOptions = {
+    datasetVersion: string;
+    modelId: Uuid;
+    featureSchemaVersion: string;
+    full: {
+        count: number;
+        memberSha256: string;
+    };
+    modelSplit: {
+        source: 'model';
+        modelId: Uuid;
+        splitPreset: string | null;
+        memberSha256: string;
+        partitions: UserPredictionPartitions;
+    } | null;
+    presets: Array<{
+        id: string;
+        available: boolean;
+        reason: string | null;
+        ratios: {
+            [key: string]: number;
+        };
+        memberSha256?: string;
+        partitions?: UserPredictionPartitions;
+    }>;
+};
+
+export type UserPredictionBatchRequest = {
+    datasetVersion: string;
+    modelId: Uuid;
+    threshold?: number;
+    partition?: 'train' | 'validation' | 'test';
+    splitSource?: 'model' | 'preset';
+    splitPreset?: string;
+};
+
+export type UserPredictionSingleSource = {
+    kind: 'dataset' | 'project' | 'manual';
+    datasetVersion?: string;
+    recordId?: string;
+    repositoryId?: Uuid;
+    syncId?: Uuid;
+    commitId?: string;
+    features?: {
+        [key: string]: number;
+    };
+};
+
+export type UserPredictionSingleRequest = {
+    modelId: Uuid;
+    threshold?: number;
+    source: UserPredictionSingleSource;
+};
+
+export type UserPredictionEvaluation = {
+    format: 'user-prediction-evaluation-v1';
+    batchId: Uuid;
+    mode: 'single' | 'batch';
+    model: UserPredictionModel;
+    datasetVersion: string | null;
+    dataset: string | null;
+    source: UserPredictionSource | null;
+    sourceKind: string;
+    splitPreset: string | null;
+    partition: 'train' | 'validation' | 'test' | null;
+    memberSha256: string | null;
+    threshold: number;
+    eligible: boolean;
+    reason: string;
+    counts: UserPredictionCounts;
+    labelStatusCounts: {
+        [key: string]: number;
+    };
+    labelAvailabilityCounts: {
+        available: number;
+        unavailable: number;
+    };
+    thresholdPreview: UserPredictionThresholdPreview;
+    confusion: {
+        tp: number;
+        fp: number;
+        tn: number;
+        fn: number;
+    };
+    precision: number | null;
+    recall: number | null;
+    f1: number | null;
+    limitations: Array<string>;
 };
 
 export type ProjectRepositoryId = Uuid;
@@ -6574,3 +7145,358 @@ export type GetModelReleaseQualificationResponses = {
 };
 
 export type GetModelReleaseQualificationResponse = GetModelReleaseQualificationResponses[keyof GetModelReleaseQualificationResponses];
+
+export type ListUserPredictionModelsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        datasetVersion?: string;
+        schema?: string;
+    };
+    url: '/api/v1/user/prediction-models';
+};
+
+export type ListUserPredictionModelsErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type ListUserPredictionModelsError = ListUserPredictionModelsErrors[keyof ListUserPredictionModelsErrors];
+
+export type ListUserPredictionModelsResponses = {
+    /**
+     * 本人可见、已启用、ready 且与请求 schema 兼容的模型。
+     */
+    200: UserPredictionModelList;
+};
+
+export type ListUserPredictionModelsResponse = ListUserPredictionModelsResponses[keyof ListUserPredictionModelsResponses];
+
+export type ListUserPredictionSamplesData = {
+    body?: never;
+    path?: never;
+    query: {
+        datasetVersion: string;
+        limit?: number;
+        offset?: number;
+        search?: string;
+    };
+    url: '/api/v1/user/prediction-samples';
+};
+
+export type ListUserPredictionSamplesErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type ListUserPredictionSamplesError = ListUserPredictionSamplesErrors[keyof ListUserPredictionSamplesErrors];
+
+export type ListUserPredictionSamplesResponses = {
+    /**
+     * 数据行及其可用标签状态；不可用标签不会伪装成 0 或 1。
+     */
+    200: UserPredictionSamplePage;
+};
+
+export type ListUserPredictionSamplesResponse = ListUserPredictionSamplesResponses[keyof ListUserPredictionSamplesResponses];
+
+export type ListUserPredictionSplitsData = {
+    body?: never;
+    path?: never;
+    query: {
+        datasetVersion: string;
+        modelId: Uuid;
+    };
+    url: '/api/v1/user/prediction-splits';
+};
+
+export type ListUserPredictionSplitsErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 模型没有该数据版本的冻结分区。
+     */
+    409: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type ListUserPredictionSplitsError = ListUserPredictionSplitsErrors[keyof ListUserPredictionSplitsErrors];
+
+export type ListUserPredictionSplitsResponses = {
+    /**
+     * 完整数据、模型冻结分区和已注册时间切分预设的真实成员摘要。
+     */
+    200: UserPredictionSplitOptions;
+};
+
+export type ListUserPredictionSplitsResponse = ListUserPredictionSplitsResponses[keyof ListUserPredictionSplitsResponses];
+
+export type ListUserPredictionBatchesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        limit?: number;
+        offset?: number;
+    };
+    url: '/api/v1/user/prediction-batches';
+};
+
+export type ListUserPredictionBatchesErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type ListUserPredictionBatchesError = ListUserPredictionBatchesErrors[keyof ListUserPredictionBatchesErrors];
+
+export type ListUserPredictionBatchesResponses = {
+    /**
+     * 批次摘要。
+     */
+    200: UserPredictionBatchList;
+};
+
+export type ListUserPredictionBatchesResponse = ListUserPredictionBatchesResponses[keyof ListUserPredictionBatchesResponses];
+
+export type CreateUserPredictionBatchData = {
+    body: UserPredictionBatchRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/user/prediction-batches';
+};
+
+export type CreateUserPredictionBatchErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 模型、分区或特征 schema 不匹配。
+     */
+    409: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+    /**
+     * 数据目录未初始化或数据库不可用；当前实现返回 503 STORAGE_UNAVAILABLE。
+     */
+    503: SharedError;
+};
+
+export type CreateUserPredictionBatchError = CreateUserPredictionBatchErrors[keyof CreateUserPredictionBatchErrors];
+
+export type CreateUserPredictionBatchResponses = {
+    /**
+     * 已保存的预测批次；模型与分区身份固定。
+     */
+    201: UserPredictionBatch;
+};
+
+export type CreateUserPredictionBatchResponse = CreateUserPredictionBatchResponses[keyof CreateUserPredictionBatchResponses];
+
+export type CreateUserSinglePredictionData = {
+    body: UserPredictionSingleRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/user/prediction-batches/single';
+};
+
+export type CreateUserSinglePredictionErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type CreateUserSinglePredictionError = CreateUserSinglePredictionErrors[keyof CreateUserSinglePredictionErrors];
+
+export type CreateUserSinglePredictionResponses = {
+    /**
+     * 已保存的单条预测；单条与批量共用同一推理函数。
+     */
+    201: UserPredictionBatch;
+};
+
+export type CreateUserSinglePredictionResponse = CreateUserSinglePredictionResponses[keyof CreateUserSinglePredictionResponses];
+
+export type CreateUserUnlabeledPredictionData = {
+    body: Blob | File;
+    path?: never;
+    query: {
+        modelId: Uuid;
+        threshold?: number;
+        filename?: string;
+    };
+    url: '/api/v1/user/prediction-batches/unlabeled';
+};
+
+export type CreateUserUnlabeledPredictionErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 请求大小、行数或趋势分桶数量超过上限。
+     */
+    413: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type CreateUserUnlabeledPredictionError = CreateUserUnlabeledPredictionErrors[keyof CreateUserUnlabeledPredictionErrors];
+
+export type CreateUserUnlabeledPredictionResponses = {
+    /**
+     * 无标签预测批次；不会写入训练数据或生成真实标签。
+     */
+    201: UserPredictionBatch;
+};
+
+export type CreateUserUnlabeledPredictionResponse = CreateUserUnlabeledPredictionResponses[keyof CreateUserUnlabeledPredictionResponses];
+
+export type GetUserPredictionBatchData = {
+    body?: never;
+    path: {
+        batchId: Uuid;
+    };
+    query?: {
+        limit?: number;
+        offset?: number;
+        sort?: 'risk' | 'time';
+        search?: string;
+    };
+    url: '/api/v1/user/prediction-batches/{batchId}';
+};
+
+export type GetUserPredictionBatchErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+    /**
+     * 输入、hash、schema或数值不合法。
+     */
+    422: SharedError;
+};
+
+export type GetUserPredictionBatchError = GetUserPredictionBatchErrors[keyof GetUserPredictionBatchErrors];
+
+export type GetUserPredictionBatchResponses = {
+    /**
+     * 已保存的分数、模型身份和当前阈值预览；不触发重新推理。
+     */
+    200: UserPredictionBatch;
+};
+
+export type GetUserPredictionBatchResponse = GetUserPredictionBatchResponses[keyof GetUserPredictionBatchResponses];
+
+export type GetUserPredictionEvaluationData = {
+    body?: never;
+    path: {
+        batchId: Uuid;
+    };
+    query?: never;
+    url: '/api/v1/user/prediction-batches/{batchId}/evaluation';
+};
+
+export type GetUserPredictionEvaluationErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+};
+
+export type GetUserPredictionEvaluationError = GetUserPredictionEvaluationErrors[keyof GetUserPredictionEvaluationErrors];
+
+export type GetUserPredictionEvaluationResponses = {
+    /**
+     * 模型、数据版本、分区、阈值与只使用可用真实标签的指标。
+     */
+    200: UserPredictionEvaluation;
+};
+
+export type GetUserPredictionEvaluationResponse = GetUserPredictionEvaluationResponses[keyof GetUserPredictionEvaluationResponses];
+
+export type ExportUserPredictionBatchData = {
+    body?: never;
+    path: {
+        batchId: Uuid;
+    };
+    query?: never;
+    url: '/api/v1/user/prediction-batches/{batchId}/export';
+};
+
+export type ExportUserPredictionBatchErrors = {
+    /**
+     * 需要用户登录。
+     */
+    401: SharedError;
+    /**
+     * 资源标识不存在。
+     */
+    404: SharedError;
+};
+
+export type ExportUserPredictionBatchError = ExportUserPredictionBatchErrors[keyof ExportUserPredictionBatchErrors];
+
+export type ExportUserPredictionBatchResponses = {
+    /**
+     * 含分数、阈值分类、标签可用性、来源与特征的 CSV。
+     */
+    200: Blob | File;
+};
+
+export type ExportUserPredictionBatchResponse = ExportUserPredictionBatchResponses[keyof ExportUserPredictionBatchResponses];

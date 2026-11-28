@@ -60,7 +60,7 @@ export function AdminModelPolicyPanel({ model, busy, saving, update, updateShari
       <div className="flex items-start justify-between gap-3">
         <div className="grid gap-0.5">
           <span className="text-sm font-medium text-foreground">开放给所有用户</span>
-          <span className="text-xs text-foreground-3">用户可在分析与预测结果中选用；撤销后保留已有结果。</span>
+          <span className="text-xs text-foreground-3">用户可在分析与缺陷预测中选用；撤销后保留已有结果。</span>
         </div>
         <Switch checked={model.shared} disabled={busy || (!model.shared && !ready)} aria-label="开放给所有用户"
           onCheckedChange={next => next ? void updateSharing(model.modelId, true) : setShareConfirm(true)}/>

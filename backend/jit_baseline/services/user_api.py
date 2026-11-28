@@ -184,7 +184,8 @@ async def _upload(request):
     return bytes(blob)
 
 
-def install_user_routes(app, storage, dataset_root, training_service, catalog):
+def install_user_routes(app, storage, dataset_root, training_service, catalog,
+                        sync_service=None):
     root = Path(dataset_root) if dataset_root is not None else None
     predictions = UserPredictionService(storage, catalog)
     imports = DatasetImportJobs(storage, root)
@@ -681,11 +682,33 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
                           [view(model, owned=False) for model in shared]}
 
     @app.get('/api/v1/user/prediction-models')
-    def user_prediction_models(request: Request, datasetVersion: str):
+    def user_prediction_models(request: Request, datasetVersion: str | None = None,
+                               schema: str | None = None):
+        username = _user(request)
+        if datasetVersion:
+            registry = _registry(root)
+            manifest, _ = _visible(storage, datasetVersion, username, registry)
+            if schema and schema != manifest['schemaName']:
+                raise BaselineError('INPUT_SCHEMA_MISMATCH', '查询 schema 与数据版本不一致')
+            schema = manifest['schemaName']
+        elif schema:
+            resolve(schema)
+        return predictions.models(username, schema)
+
+    @app.get('/api/v1/user/prediction-samples')
+    def user_prediction_samples(request: Request, datasetVersion: str, limit: int = 20,
+                                offset: int = 0, search: str | None = None):
         username = _user(request)
         registry = _registry(root)
         manifest, _ = _visible(storage, datasetVersion, username, registry)
-        return predictions.models(username, manifest['schemaName'])
+        return predictions.samples(username, datasetVersion, manifest, limit, offset, search)
+
+    @app.get('/api/v1/user/prediction-splits')
+    def user_prediction_splits(request: Request, datasetVersion: str, modelId: str):
+        username = _user(request)
+        registry = _registry(root)
+        manifest, _ = _visible(storage, datasetVersion, username, registry)
+        return predictions.split_options(username, datasetVersion, manifest, modelId)
 
     @app.get('/api/v1/user/prediction-batches')
     def user_prediction_batches(request: Request, limit: int = 20, offset: int = 0):
@@ -695,7 +718,8 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
     async def create_user_prediction_batch(request: Request):
         username = _user(request)
         data = await read_object(request)
-        if set(data) - {'datasetVersion', 'modelId', 'threshold'}:
+        if set(data) - {'datasetVersion', 'modelId', 'threshold', 'partition',
+                        'splitSource', 'splitPreset'}:
             raise BaselineError('INPUT_INVALID', '预测请求包含未声明字段')
         version = data.get('datasetVersion')
         model_id = data.get('modelId')
@@ -707,7 +731,101 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
         manifest, _ = _visible(storage, version.strip(), username, registry)
         result = await run_in_threadpool(
             predictions.create, username, version.strip(), manifest, model_id.strip(),
-            data.get('threshold', 0.5),
+            data.get('threshold', 0.5), data.get('partition'),
+            data.get('splitSource'), data.get('splitPreset'),
+        )
+        request.state.business_ids = (
+            result['model']['modelId'], result['model']['runId'], result['batchId'],
+        )
+        return result
+
+    @app.post('/api/v1/user/prediction-batches/single', status_code=201)
+    async def create_user_single_prediction(request: Request):
+        username = _user(request)
+        data = await read_object(request)
+        if set(data) - {'modelId', 'threshold', 'source'}:
+            raise BaselineError('INPUT_INVALID', '单条预测请求包含未声明字段')
+        model_id = data.get('modelId')
+        source = data.get('source')
+        if not isinstance(model_id, str) or not model_id.strip():
+            raise BaselineError('INPUT_INVALID', '缺少模型')
+        if not isinstance(source, dict):
+            raise BaselineError('INPUT_INVALID', '缺少预测来源')
+        kind = source.get('kind')
+        threshold = data.get('threshold', 0.5)
+        if kind == 'dataset':
+            version = source.get('datasetVersion')
+            record_id = source.get('recordId')
+            if not isinstance(version, str) or not version.strip():
+                raise BaselineError('INPUT_INVALID', '缺少数据版本')
+            if not isinstance(record_id, str) or not record_id.strip():
+                raise BaselineError('INPUT_INVALID', '缺少数据行标识')
+            registry = _registry(root)
+            manifest, _ = _visible(storage, version.strip(), username, registry)
+            result = await run_in_threadpool(
+                predictions.create_single_dataset, username, version.strip(), manifest,
+                model_id.strip(), record_id.strip(), threshold,
+            )
+        elif kind == 'project':
+            if sync_service is None:
+                raise BaselineError('PROJECT_UNAVAILABLE', '项目分析来源不可用')
+            repository_id = source.get('repositoryId')
+            sync_id = source.get('syncId')
+            commit_id = source.get('commitId')
+            if not all(isinstance(value, str) and value.strip()
+                       for value in (repository_id, sync_id, commit_id)):
+                raise BaselineError('INPUT_INVALID', '项目来源缺少仓库、分析或提交标识')
+            job = sync_service.get(sync_id.strip())
+            if job.get('repositoryId') != repository_id.strip() or job.get('status') != 'completed':
+                raise BaselineError('NOT_FOUND', '项目分析提交不存在或分析未完成')
+            record = sync_service.commit(sync_id.strip(), commit_id.strip())
+            if record is None:
+                raise BaselineError('NOT_FOUND', '项目分析中没有该提交')
+            features = record.get('features')
+            if not isinstance(features, dict) or not features:
+                raise BaselineError('FEATURES_INVALID', '项目分析没有保存该提交的入模特征')
+            project = sync_service.repository(repository_id.strip())
+            project_source = {
+                'kind': 'single-project',
+                'label': '项目分析提交',
+                'datasetName': project.get('displayName') or job.get('repositoryUrl'),
+                'reference': {
+                    'repositoryId': repository_id.strip(),
+                    'syncId': sync_id.strip(),
+                    'commitId': commit_id.strip(),
+                    'branch': job.get('branch'),
+                },
+            }
+            result = await run_in_threadpool(
+                predictions.create_single_project, username, model_id.strip(),
+                record, project_source, threshold,
+            )
+        elif kind == 'manual':
+            features = source.get('features')
+            result = await run_in_threadpool(
+                predictions.create_single_manual, username, model_id.strip(), features,
+                source.get('recordId'), threshold,
+            )
+        else:
+            raise BaselineError('INPUT_INVALID', '单条预测来源只能是 dataset、project 或 manual')
+        request.state.business_ids = (
+            result['model']['modelId'], result['model']['runId'], result['batchId'],
+        )
+        return result
+
+    @app.post('/api/v1/user/prediction-batches/unlabeled', status_code=201)
+    async def create_user_unlabeled_prediction(request: Request, modelId: str,
+                                               threshold: float = 0.5,
+                                               filename: str | None = None):
+        username = _user(request)
+        content_type = (request.headers.get('content-type') or '').split(';', 1)[0].strip().lower()
+        if content_type not in ('text/csv', 'application/octet-stream',
+                                'application/vnd.ms-excel'):
+            raise BaselineError('INPUT_INVALID', '无标签预测只接受 CSV 请求体')
+        blob = await _upload(request)
+        name = upload_name(filename, 'csv')
+        result = await run_in_threadpool(
+            predictions.create_unlabeled, username, modelId, blob, name, threshold,
         )
         request.state.business_ids = (
             result['model']['modelId'], result['model']['runId'], result['batchId'],
@@ -716,9 +834,26 @@ def install_user_routes(app, storage, dataset_root, training_service, catalog):
 
     @app.get('/api/v1/user/prediction-batches/{batch_id}')
     def user_prediction_batch(batch_id: str, request: Request, limit: int = 100,
-                              offset: int = 0, sort: str = 'risk'):
-        result = predictions.get(_user(request), batch_id, limit, offset, sort)
+                              offset: int = 0, sort: str = 'risk',
+                              search: str | None = None):
+        result = predictions.get(_user(request), batch_id, limit, offset, sort, search)
         request.state.business_ids = (
             result['model']['modelId'], result['model']['runId'], result['batchId'],
         )
         return result
+
+    @app.get('/api/v1/user/prediction-batches/{batch_id}/evaluation')
+    def user_prediction_evaluation(batch_id: str, request: Request):
+        result = predictions.evaluation(_user(request), batch_id)
+        request.state.business_ids = (
+            result['model']['modelId'], result['model']['runId'], result['batchId'],
+        )
+        return result
+
+    @app.get('/api/v1/user/prediction-batches/{batch_id}/export')
+    def user_prediction_export(batch_id: str, request: Request):
+        blob, filename = predictions.export_csv(_user(request), batch_id)
+        return Response(
+            blob, media_type='text/csv; charset=utf-8',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+        )

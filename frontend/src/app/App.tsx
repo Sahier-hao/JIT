@@ -34,6 +34,7 @@ const AlgorithmLibraryPage = lazy(() => import('@/features/training/pages/Algori
 const MyModelsPage = lazy(() => import('@/features/models/pages/MyModelsPage').then(module => ({ default: module.MyModelsPage })))
 const MyPredictionsPage = lazy(() => import('@/features/predictions/pages/MyPredictionsPage').then(module => ({ default: module.MyPredictionsPage })))
 const ModelEvaluationPage = lazy(() => import('@/features/evaluation/pages/ModelEvaluationPage').then(module => ({ default: module.ModelEvaluationPage })))
+const MyEvaluationPage = lazy(() => import('@/features/predictions/pages/MyEvaluationPage').then(module => ({ default: module.MyEvaluationPage })))
 const LandingPage = lazy(() => import('@/features/account/pages/LandingPage').then(module => ({ default: module.LandingPage })))
 const LoginPage = lazy(() => import('@/features/account/pages/LoginPage').then(module => ({ default: module.LoginPage })))
 const LineResearchPage = lazy(() => import('@/features/research/pages/LineResearchPage').then(module => ({ default: module.LineResearchPage })))
@@ -94,6 +95,7 @@ function Workspace() {
   else if (route.name === 'my-models') content = <MyModelsPage navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'my-predictions') content = <MyPredictionsPage key={`${route.batchId ?? 'new'}:${route.datasetVersion ?? ''}`} batchId={route.batchId} initialDatasetVersion={route.datasetVersion} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'model-evaluation') content = <ModelEvaluationPage key={`${route.source ?? 'none'}:${route.experimentId ?? ''}:${route.taskId ?? ''}:${route.batchId ?? ''}`} source={route.source} experimentId={route.experimentId} taskId={route.taskId} modelId={route.modelId} batchId={route.batchId} navigate={navigate} onLoginRequired={requestLogin}/>
+  else if (route.name === 'my-evaluation') content = <MyEvaluationPage key={`${route.batchId ?? 'none'}:${route.modelId ?? ''}:${route.partition ?? ''}`} route={route} navigate={navigate} onLoginRequired={requestLogin}/>
   else if (route.name === 'profile') content = <ProjectsPage navigate={navigate}/>
   else if (route.name === 'sources') content = <ProjectsPage navigate={navigate} createOpen/>
   else if (route.name === 'repository') content = <ProjectPage key={route.repositoryId} repositoryId={route.repositoryId} tab={route.tab} viewId={route.viewId} navigate={navigate}/>

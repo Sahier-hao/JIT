@@ -2,7 +2,7 @@
 
 - change：`align-training-and-model-evaluation`
 - 分支：`feature/align-training-and-model-evaluation`
-- 基线提交：`420696fa4d9a858ee32106dbbd90de98e7456905`
+- 基线提交：`e8fb166d2ff6c0616be308e3d9134ce4b8933218`
 - 机器检查：通过
 - 人工复核：等待 PR 审核
 
@@ -10,14 +10,14 @@
 
 | 项目 | 结果 |
 | --- | --- |
-| OpenAPI 操作总数 | 103 |
-| 业务 API 清单 | 99 |
+| OpenAPI 操作总数 | 113 |
+| 业务 API 清单 | 109 |
 | admin 认证单独排除 | 4 |
-| 高风险业务操作 | 76 |
-| 矩阵操作数 | 99 |
-| 矩阵引用测试 | 93 passed / 0 failed |
-| 受影响后端测试 | 159 passed / 0 failed / 0 skipped |
-| 前端单测 | 697/697 passed |
+| 高风险业务操作 | 86 |
+| 矩阵操作数 | 109 |
+| 矩阵引用测试 | 95 passed / 0 failed |
+| 受影响后端测试 | 106 passed / 0 failed / 0 skipped |
+| 前端单测 | 708/708 passed |
 | 真实 E2E | 1 passed / 0 unexpected |
 | typecheck / lint / build | 通过 |
 | 样式 / 模块 / API 类型检查 | 通过 |
@@ -56,5 +56,4 @@ AI 生成或修改的测试已列明来源和提示词。人工复核仍待 PR �
 
 ## 已知限制
 
-- 预测批次只有在数据版本显式声明固定可靠测试分区时才可标为正式评估；普通保存批次保持探索性复核。
-- 全仓文档链接检查仍报告 428 个既有历史文档目标缺失；本次新增文档未引入相对文件链接。
+- 普通预测批次只提供探索性复核；正式训练测试评估必须来自训练实验的冻结测试分区。

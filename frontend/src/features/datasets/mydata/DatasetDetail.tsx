@@ -102,7 +102,7 @@ export function DatasetDetail({ dataset, preview, previewError, busy, actions }:
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={actions.onTrain} disabled={!preview?.available} type="button">用于训练</Button>
             {actions.onHistory ? <Button size="sm" onClick={actions.onHistory} variant="ghost" type="button">查看训练记录</Button> : null}
-            <Button size="sm" onClick={actions.onPredict} variant="outline" type="button"><Gauge aria-hidden="true" size={14}/>生成预测</Button>
+            <Button size="sm" onClick={actions.onPredict} variant="outline" type="button"><Gauge aria-hidden="true" size={14}/>缺陷预测</Button>
             <Button size="sm" onClick={actions.onExport} variant="outline" type="button">导出</Button>
             {dataset.mine ? <Button size="sm" variant="outline" onClick={actions.onCuration} type="button">清洗数据</Button> : null}
             {dataset.mine ? <Button size="sm" variant="ghost" onClick={actions.onDelete} disabled={busy} type="button" aria-label="删除数据版本"><Trash2 aria-hidden="true" size={15}/>删除</Button> : null}

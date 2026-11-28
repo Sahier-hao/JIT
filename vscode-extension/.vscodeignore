@@ -2,5 +2,9 @@ src/**
 test/**
 node_modules/**
 scripts/**
+.code-host-*/
+.vscode-test/**
+.smoke-*/
+*.vsix
 tsconfig.json
 package-lock.json

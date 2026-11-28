@@ -1,36 +1,36 @@
 {
   "kind": "training-model-evaluation-delivery-report",
   "change": "align-training-and-model-evaluation",
-  "generatedAt": "2026-11-27T12:22:33.8726410Z",
+  "generatedAt": "2026-11-28T05:35:00Z",
   "branch": "feature/align-training-and-model-evaluation",
-  "baseCommit": "420696fa4d9a858ee32106dbbd90de98e7456905",
+  "baseCommit": "e8fb166d2ff6c0616be308e3d9134ce4b8933218",
   "inventory": {
-    "totalOperations": 103,
-    "businessOperations": 99,
+    "totalOperations": 113,
+    "businessOperations": 109,
     "adminAuthOperations": 4,
-    "highRiskOperations": 76
+    "highRiskOperations": 86
   },
   "matrix": {
-    "operations": 99,
-    "highRiskOperations": 76,
-    "normalPassed": 99,
-    "boundaryPassed": 88,
+    "operations": 109,
+    "highRiskOperations": 86,
+    "normalPassed": 109,
+    "boundaryPassed": 98,
     "boundaryNotApplicable": 11,
-    "errorPassed": 99,
-    "concurrencyPassed": 88,
+    "errorPassed": 109,
+    "concurrencyPassed": 98,
     "concurrencyNotApplicable": 11,
-    "tests": 93,
+    "tests": 95,
     "failed": 0
   },
   "backendTargeted": {
-    "tests": 159,
+    "tests": 106,
     "failures": 0,
     "errors": 0,
     "skipped": 0
   },
   "frontendUnit": {
-    "tests": 697,
-    "passed": 697,
+    "tests": 708,
+    "passed": 708,
     "failed": 0
   },
   "browserE2E": {
@@ -58,7 +58,6 @@
   "passed": false,
   "knownLimitations": [
     "AI 新增测试等待 PR 审核人签署人工复核。",
-    "预测结果来源只有在数据版本显式声明固定可靠测试分区时才可标为正式评估；普通保存批次仍为探索性复核。",
-    "全仓文档链接检查仍报告 428 个既有历史文档目标缺失；本次新增文档未引入相对文件链接。"
+    "普通预测批次只提供探索性复核；正式训练测试评估必须来自训练实验的冻结测试分区。"
   ]
 }

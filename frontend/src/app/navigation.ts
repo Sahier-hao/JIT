@@ -13,6 +13,17 @@ export type Route =
   | { name: 'my-models' }
   | { name: 'my-predictions'; batchId?: string; datasetVersion?: string }
   | { name: 'model-evaluation'; source?: 'training' | 'prediction'; experimentId?: string; taskId?: string; modelId?: string; batchId?: string }
+  | {
+      name: 'my-evaluation'
+      source?: 'training' | 'prediction'
+      experimentId?: string
+      taskId?: string
+      batchId?: string
+      modelId?: string
+      datasetVersion?: string
+      partition?: 'train' | 'validation' | 'test'
+      splitPreset?: string
+    }
   | { name: 'profile' }
   | { name: 'research-line' }
   | { name: 'pr-work'; owner: string; repositoryName: string; number: number; repositoryId?: string; snapshotId?: string; mode?: 'preview' }
@@ -95,7 +106,7 @@ export function parseHash(hash: string): Route {
     }
     if (path === '/plugins/vscode') return { name: 'ide-plugin' }
     if (path === '/my-models') return { name: 'my-models' }
-    if (path === '/my-predictions') return {
+    if (path === '/my-predictions' || path === '/defect-predictions') return {
       name: 'my-predictions',
       ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion') as string } : {}),
     }
@@ -109,6 +120,25 @@ export function parseHash(hash: string): Route {
         ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
         ...(params.get('modelId') ? { modelId: params.get('modelId')! } : {}),
         ...(params.get('batchId') ? { batchId: params.get('batchId')! } : {}),
+      }
+    }
+    if ((parts[0] === 'my-predictions' || parts[0] === 'defect-predictions') && parts.length === 2) {
+      return { name: 'my-predictions', batchId: parts[1] }
+    }
+    if (path === '/my-evaluation') {
+      const partition = params.get('partition')
+      const source = params.get('source')
+      return {
+        name: 'my-evaluation',
+        ...(source === 'training' || source === 'prediction' ? { source } : {}),
+        ...(params.get('experimentId') ? { experimentId: params.get('experimentId')! } : {}),
+        ...(params.get('taskId') ? { taskId: params.get('taskId')! } : {}),
+        ...(params.get('batchId') ? { batchId: params.get('batchId')! } : {}),
+        ...(params.get('modelId') ? { modelId: params.get('modelId')! } : {}),
+        ...(params.get('datasetVersion') ? { datasetVersion: params.get('datasetVersion')! } : {}),
+        ...(partition === 'train' || partition === 'validation' || partition === 'test'
+          ? { partition } : {}),
+        ...(params.get('splitPreset') ? { splitPreset: params.get('splitPreset')! } : {}),
       }
     }
     if (path === '/profile') return { name: 'profile' }
@@ -207,6 +237,18 @@ export function hashFor(route: Route): string {
       if (route.modelId) params.set('modelId', route.modelId)
       if (route.batchId) params.set('batchId', route.batchId)
       return params.size ? `#/model-evaluation?${params}` : '#/model-evaluation'
+    }
+    case 'my-evaluation': {
+      const params = new URLSearchParams()
+      if (route.source) params.set('source', route.source)
+      if (route.experimentId) params.set('experimentId', route.experimentId)
+      if (route.taskId) params.set('taskId', route.taskId)
+      if (route.batchId) params.set('batchId', route.batchId)
+      if (route.modelId) params.set('modelId', route.modelId)
+      if (route.datasetVersion) params.set('datasetVersion', route.datasetVersion)
+      if (route.partition) params.set('partition', route.partition)
+      if (route.splitPreset) params.set('splitPreset', route.splitPreset)
+      return params.size ? `#/my-evaluation?${params}` : '#/my-evaluation'
     }
     case 'profile': return '#/profile'
     case 'research-line': return '#/research/line-model'

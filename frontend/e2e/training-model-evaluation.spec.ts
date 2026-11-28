@@ -143,9 +143,15 @@ test('trains, registers and evaluates exact models through the isolated service'
   })
   expect(predictionResponse.status()).toBe(201)
   const prediction = await predictionResponse.json()
-  expect(prediction.evaluation.formalAvailable).toBe(false)
-  expect(prediction.evaluation.sampleCounts.positives).toBeGreaterThan(0)
-  const immatureExcluded = prediction.evaluation.labelPolicy.excludedCounts.immature
+  expect(prediction.evaluationEligible).toBe(true)
+  const predictionEvaluationResponse = await page.request.get(
+    `/api/v1/user/prediction-batches/${encodeURIComponent(prediction.batchId)}/evaluation`,
+  )
+  expect(predictionEvaluationResponse.ok()).toBeTruthy()
+  const predictionEvaluation = await predictionEvaluationResponse.json()
+  expect(predictionEvaluation.partition).toBeNull()
+  expect(predictionEvaluation.counts.positives).toBeGreaterThan(0)
+  const immatureExcluded = predictionEvaluation.labelStatusCounts.immature
   expect(immatureExcluded).toBeGreaterThan(0)
 
   const legacyPrediction = await page.request.post('/api/v1/user/prediction-batches', {
@@ -153,7 +159,12 @@ test('trains, registers and evaluates exact models through the isolated service'
   })
   expect(legacyPrediction.status()).toBe(201)
   const legacyBatch = await legacyPrediction.json()
-  expect(Object.keys(legacyBatch.evaluation.labelPolicy.excludedCounts)).toContain('unknown')
+  const legacyEvaluationResponse = await page.request.get(
+    `/api/v1/user/prediction-batches/${encodeURIComponent(legacyBatch.batchId)}/evaluation`,
+  )
+  expect(legacyEvaluationResponse.ok()).toBeTruthy()
+  const legacyEvaluation = await legacyEvaluationResponse.json()
+  expect(Object.keys(legacyEvaluation.labelStatusCounts)).toContain('unknown')
 
   await page.goto(`/#/model-evaluation?source=prediction&batchId=${encodeURIComponent(prediction.batchId)}`)
   await expect(page.getByRole('heading', { name: '评估预测结果' })).toBeVisible()

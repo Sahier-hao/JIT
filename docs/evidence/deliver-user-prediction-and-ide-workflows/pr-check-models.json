@@ -1,0 +1,109 @@
+﻿{
+  "format": "jit-pr-check-models-v1",
+  "models": [
+    {
+      "modelId": "07ba6ef1-d260-4342-874b-ade285cd1139",
+      "name": "sub2api · 逻辑回归 · L2 · 2025-12-18→2026-11-04",
+      "method": "logistic-regression-l2-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "14d0929051cabeb199d1fc933a8b27390ed6b15d6dd39244959c111efa049bf4"
+    },
+    {
+      "modelId": "7fb1252c-ab1f-42ed-a501-98690a0a1a04",
+      "name": "决策树 · kamei14-git-v2",
+      "method": "decision-tree-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "ea0f1435431f42e8484b4e3f5bf24d19af6bfc637ee2ec0ba0203bb67dd19a1b"
+    },
+    {
+      "modelId": "72a0b0a5-68ad-488b-a397-9307e9c9e97e",
+      "name": "梯度提升树 · kamei14-git-v2",
+      "method": "gradient-boosting-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "d119cd2e16612d25038ebb0798463b5d1d3a65a28f34481a03d427da6eea64ed"
+    },
+    {
+      "modelId": "086d8f50-d2ea-4e40-997e-96a0f8ddf56b",
+      "name": "深度 · FT-Transformer · kamei14-git-v2",
+      "method": "ft-transformer-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "a3a5b52dffde3a63072c75fcc4769fd84397928cd138c7935dc2f1b1967cb6d1"
+    },
+    {
+      "modelId": "31984905-224c-42d9-8efd-f7ea675d7ce6",
+      "name": "深度 · MLP · kamei14-git-v2",
+      "method": "mlp-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "9d63a121af57cb2a9f811a66c57e18e30cac1e0fbdf8e5a63ffda5cce8c48dd9"
+    },
+    {
+      "modelId": "3e515aae-0b51-47d5-b3ec-4f6bffd49289",
+      "name": "深度 · Wide&Deep · kamei14-git-v1",
+      "method": "wide-deep-v1",
+      "featureSchema": "kamei14-git-v1",
+      "isDefault": false,
+      "runId": "ecfaa5eec52f22959ea490f3c5b8300e8d55ae4ea6897eb387ca94abe0bc85d7"
+    },
+    {
+      "modelId": "1245ab1a-bff6-4639-9530-dda4c88e8cf3",
+      "name": "深度 · Wide&Deep · kamei14-git-v2",
+      "method": "wide-deep-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "1fbf2c54325d739833da51fd223c02d8b017bece9615a9347a520b804e30c58c"
+    },
+    {
+      "modelId": "a93c71c1-cc31-40af-acb6-0cc15528dd59",
+      "name": "深度 · Wide&Deep · kamei14-git-v2",
+      "method": "wide-deep-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "8dc3768c37d82a45c16ab2806242f961cb66623a15492e7bd826b5089a2210f0"
+    },
+    {
+      "modelId": "3a28d18e-986a-4749-99ab-bb7d0c765617",
+      "name": "深度 · 表格 ResNet · kamei14-git-v2",
+      "method": "tabular-resnet-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "91ce294b2a2ea8a22be29c95659e0096bf181699d64cb0484b4a88e7693b205d"
+    },
+    {
+      "modelId": "162bd955-532a-437c-8586-7f765c9ed741",
+      "name": "逻辑回归 · kamei14-git-v1",
+      "method": "logistic-regression-l2-v1",
+      "featureSchema": "kamei14-git-v1",
+      "isDefault": false,
+      "runId": "34d5a903e7dd0b48025e18607c554cda5d83a95b924c598fe99c6ac3270fb865"
+    },
+    {
+      "modelId": "8f254a85-7ea6-4058-b240-5901712e0646",
+      "name": "逻辑回归 · kamei14-git-v1",
+      "method": "logistic-regression-l2-v1",
+      "featureSchema": "kamei14-git-v1",
+      "isDefault": false,
+      "runId": "0478bb0251550a9d38a8a9e186be9ae2acf5cdae16718eb9bb4798c497e92196"
+    },
+    {
+      "modelId": "cbc89403-33a8-4643-90ab-40f9938e2dcd",
+      "name": "逻辑回归 · kamei14-git-v2",
+      "method": "logistic-regression-l2-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "45f418b71d0b1a77cde3addca9c335d0a64810aab9acc16990d483ffe38395e1"
+    },
+    {
+      "modelId": "c6016ed4-5b27-445f-9b41-a6e675916c14",
+      "name": "随机森林 · kamei14-git-v2",
+      "method": "random-forest-v1",
+      "featureSchema": "kamei14-git-v2",
+      "isDefault": false,
+      "runId": "f475f3e5923f1d9f82116f33839fec16f3c7f35c9d901880bdfb806b29be0ca4"
+    }
+  ]
+}
