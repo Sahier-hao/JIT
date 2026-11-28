@@ -1,0 +1,25 @@
+﻿{
+    "repository":  "C:\\Users\\荀浩\\AppData\\Local\\Temp\\jit-cli-evidence-c75b61e9",
+    "baseSha":  "e4856dbbe08bee5afb41f03356c01e1cfa58b3aa",
+    "headSha":  "aa7c603b77309e692e9f53c95899f5d748b669d9",
+    "modelId":  "cbc89403-33a8-4643-90ab-40f9938e2dcd",
+    "modelName":  "逻辑回归 · kamei14-git-v2",
+    "risk":  0.16596854707220818,
+    "explanationStatus":  "supported",
+    "explanationMethod":  "occlusion-mean-v1",
+    "explanationSummary":  "本次预测风险为 0.166，影响最大的是 fix（推高 0.106），另有 4 个特征有可测影响。归因来自模型推理，不是缺陷结论。（训练分区基线不可用，缺失字段按零基线计算。）",
+    "candidates":  [
+                       {
+                           "path":  "app.py",
+                           "line":  4,
+                           "ruleId":  "py-bare-except",
+                           "evidence":  "except:"
+                       },
+                       {
+                           "path":  "app.py",
+                           "line":  3,
+                           "ruleId":  "py-eval-exec",
+                           "evidence":  "return eval(items)"
+                       }
+                   ]
+}

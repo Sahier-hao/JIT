@@ -863,7 +863,7 @@ def create_app(directory: Path | None = None, *, database=None, artifact_root=No
     def repository_summary(repository_id: str, viewSyncId: str | None = None):
         return sync_service.repository_summary(repository_id, view_sync_id=viewSyncId)
     from ..user_api import install_user_routes
-    install_user_routes(app, storage, registry_root, training_service, catalog)
+    install_user_routes(app, storage, registry_root, training_service, catalog, sync_service)
     from ..line_preview import install_research_routes
     install_research_routes(app)
     app.state.snapshot, app.state.error = None, None

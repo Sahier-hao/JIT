@@ -2,7 +2,7 @@
   "format": "jit-commit-analysis-v1",
   "generatedAt": "2026-11-08T17:50:36.856575Z",
   "analysisId": "0d8a1e962113c07c",
-  "contentSha256": "353a2124934bfe5e38a325440351292471ed745537d2227971558f391cb78fd1",
+  "contentSha256": "b09036f23738f172662f86cff5b92a07f04099cc625c48466919e594ad663c50",
   "repository": {
     "path": "D:\\tmp\\jit-ext-fixture",
     "baseSha": "f7ee55cc733b9c785a8cb9424a0e014e6470cc6c",
@@ -51,7 +51,28 @@
       "files": 1,
       "filePaths": [
         "app.py"
-      ]
+      ],
+      "explanation": {
+        "status": "supported",
+        "method": "occlusion-mean-v1",
+        "items": [
+          {
+            "feature": "la",
+            "value": 4,
+            "baseline": 2.5,
+            "delta": 0.012341,
+            "direction": "increases"
+          },
+          {
+            "feature": "entropy",
+            "value": 0.8,
+            "baseline": 0.5,
+            "delta": -0.004321,
+            "direction": "decreases"
+          }
+        ],
+        "summary": "本次预测风险为 0.087，影响最大的是 la（推高 0.012），另有 1 个特征有可测影响。归因来自模型推理，不是缺陷结论。"
+      }
     }
   ],
   "candidates": [

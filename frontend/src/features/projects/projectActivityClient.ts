@@ -7,11 +7,41 @@ const count = (v: unknown) => { const n = finiteNumber(v); if (!Number.isSafeInt
 const optionalCount = (v: unknown) => v == null ? null : count(v)
 const identity = (raw: unknown, id: string) => { const b = record(raw); if (b.repositoryId !== id) contractFailed('返回内容不属于当前项目'); return b }
 export type PRState = 'open' | 'closed' | 'all'
-export interface ProjectPR extends PRItem { draft: boolean; snapshotId: string | null; analysisStatus: string | null; modelId: string | null; syncId: string | null; maxRisk: number | null; scoredCommits: number | null; featureSource: Record<string, unknown> | null }
+export interface ProjectPRCommit { sha: string; message: string | null; time: string | null }
+export interface ProjectPR extends PRItem { draft: boolean; snapshotId: string | null; headSha: string | null; commits: ProjectPRCommit[]; commitCount: number | null; commitsComplete: boolean | null; checkedAt: string | null; analysisStatus: string | null; modelId: string | null; syncId: string | null; maxRisk: number | null; scoredCommits: number | null; featureSource: Record<string, unknown> | null }
 export interface ProjectPRPage { repositoryId: string; supported: boolean; owner: string | null; name: string | null; pullRequests: ProjectPR[]; page: number; hasMore: boolean; checkedAt: string | null; errorCode: string | null }
 export function parseProjectPRs(raw: unknown, id: string): ProjectPRPage {
   const b = identity(raw, id)
-  return { repositoryId: id, supported: flag(b.supported), owner: textOrNull(b.owner), name: textOrNull(b.name), pullRequests: recordList(b.pullRequests).map(p => ({ ...parseItem(p), draft: flag(p.draft), snapshotId: textOrNull(p.snapshotId), analysisStatus: textOrNull(p.analysisStatus), modelId: textOrNull(p.modelId), syncId: textOrNull(p.syncId), maxRisk: p.maxRisk == null ? null : riskNumber(p.maxRisk), scoredCommits: p.scoredCommits == null ? null : count(p.scoredCommits), featureSource: p.featureSource == null ? null : record(p.featureSource) })), page: count(b.page), hasMore: flag(b.hasMore), checkedAt: textOrNull(b.checkedAt), errorCode: textOrNull(b.errorCode) }
+  return {
+    repositoryId: id,
+    supported: flag(b.supported),
+    owner: textOrNull(b.owner),
+    name: textOrNull(b.name),
+    pullRequests: recordList(b.pullRequests).map(p => ({
+      ...parseItem(p),
+      draft: flag(p.draft),
+      snapshotId: textOrNull(p.snapshotId),
+      headSha: textOrNull(p.headSha),
+      commits: p.commits == null ? [] : recordList(p.commits).map(item => ({
+        sha: text(item.sha),
+        message: textOrNull(item.message),
+        time: textOrNull(item.time),
+      })),
+      commitCount: optionalCount(p.commitCount),
+      commitsComplete: p.commitsComplete == null ? null : flag(p.commitsComplete),
+      checkedAt: textOrNull(p.checkedAt),
+      analysisStatus: textOrNull(p.analysisStatus),
+      modelId: textOrNull(p.modelId),
+      syncId: textOrNull(p.syncId),
+      maxRisk: p.maxRisk == null ? null : riskNumber(p.maxRisk),
+      scoredCommits: p.scoredCommits == null ? null : count(p.scoredCommits),
+      featureSource: p.featureSource == null ? null : record(p.featureSource),
+    })),
+    page: count(b.page),
+    hasMore: flag(b.hasMore),
+    checkedAt: textOrNull(b.checkedAt),
+    errorCode: textOrNull(b.errorCode),
+  }
 }
 /** 为当前开放 PR 创建或复用一次可追踪批次；进度通过批次接口读取。 */
 export async function analyzeAllProjectPRs(repositoryId: string, modelId?: string, scope: PRBatchScope = { kind: 'all' }) {

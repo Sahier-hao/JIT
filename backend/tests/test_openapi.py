@@ -632,3 +632,42 @@ def test_model_benefit_contract_documents_read_only_evaluation():
     assert {'modelId', 'runId', 'available', 'reason', 'report'} <= set(benefit['properties'])
     report = document_['components']['schemas']['BenefitReport']
     assert {'kind', 'artifact', 'test', 'strategies', 'conclusion', 'limitations', 'boundary'} <= set(report['required'])
+
+
+def test_user_prediction_routes_document_modes_labels_partitions_and_evaluation():
+    document_ = document()
+    paths = document_['paths']
+    for path in (
+        '/api/v1/user/prediction-models',
+        '/api/v1/user/prediction-samples',
+        '/api/v1/user/prediction-splits',
+        '/api/v1/user/prediction-batches',
+        '/api/v1/user/prediction-batches/single',
+        '/api/v1/user/prediction-batches/unlabeled',
+        '/api/v1/user/prediction-batches/{batchId}',
+        '/api/v1/user/prediction-batches/{batchId}/evaluation',
+        '/api/v1/user/prediction-batches/{batchId}/export',
+    ):
+        assert path in paths
+    schemas = document_['components']['schemas']
+    batch = schemas['UserPredictionBatch']
+    assert batch['additionalProperties'] is False
+    assert {'mode', 'source', 'splitPreset', 'partition', 'memberSha256', 'model',
+            'thresholdPreview', 'evaluationEligible'} <= set(batch['properties'])
+    record = schemas['UserPredictionRecord']
+    assert record['properties']['label']['enum'] == [0, 1, None]
+    assert record['properties']['labelAvailability']['enum'] == ['available', 'unavailable']
+    split = schemas['UserPredictionSplitOptions']
+    assert {'full', 'modelSplit', 'presets'} <= set(split['properties'])
+    evaluation = schemas['UserPredictionEvaluation']
+    assert {'eligible', 'thresholdPreview', 'confusion', 'precision', 'recall', 'f1'} <= set(evaluation['properties'])
+    assert 'UserSession' in document_['components']['securitySchemes']
+
+
+def test_project_pr_contract_exposes_fixed_head_commits_and_auto_status():
+    schemas = document()['components']['schemas']
+    pull = schemas['ProjectPullRequest']['properties']
+    assert {'headSha', 'commits', 'commitCount', 'commitsComplete', 'checkedAt',
+            'analysisStatus', 'modelId', 'snapshotId'} <= set(pull)
+    commit = schemas['ProjectPullRequestCommit']
+    assert commit['required'] == ['sha', 'message', 'time']

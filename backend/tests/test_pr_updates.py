@@ -227,6 +227,54 @@ def test_same_snapshot_model_reuses_and_base_change_creates_new_intent_without_f
     assert env.service.sync.repository_get(repo)['viewSyncId'] is None
 
 
+def test_background_tick_discovers_new_pr_and_pushed_head_without_manual_analysis(env):
+    repo = env.repository()
+    env.enable(repo)
+    assert env.watcher.tick() == 1
+    env.worker.run()
+    assert env.jobs(repo) == []
+
+    pr = env.github.add(number=7)
+    env.clock.advance(301)
+    assert env.watcher.tick() == 1
+    env.worker.run()
+    queued = env.watcher.list_prs(repo)['pullRequests'][0]
+    assert queued['number'] == 7
+    assert queued['analysisStatus'] == 'queued'
+    assert queued['modelId'] == 'fixed-model'
+    first_job = next(job for job in env.jobs(repo) if job['origin'] == 'automatic')
+    assert first_job['requestedModelId'] == 'fixed-model'
+
+    env.complete(first_job, .3)
+    env.watcher.tick()
+    ready = env.watcher.list_prs(repo)['pullRequests'][0]
+    assert ready['analysisStatus'] == 'completed'
+    assert ready['headSha'] == pr['head']['sha']
+    assert ready['commits'] == [{
+        'sha': pr['head']['sha'],
+        'message': '修复',
+        'time': '2026-10-29T00:00:00Z',
+    }]
+
+    pr['head']['sha'] = 'b' * 40
+    pr['updated_at'] = '2026-10-29T01:00:00Z'
+    env.clock.advance(301)
+    assert env.watcher.tick() == 1
+    env.worker.run()
+    updated = env.watcher.list_prs(repo)['pullRequests'][0]
+    assert updated['analysisStatus'] == 'queued'
+    assert updated['headSha'] == 'b' * 40
+    assert updated['commits'][0]['sha'] == 'b' * 40
+    second_job = next(job for job in env.jobs(repo)
+                      if job['origin'] == 'automatic' and job['syncId'] != first_job['syncId'])
+    env.complete(second_job, .4)
+    env.watcher.tick()
+    final = env.watcher.list_prs(repo)['pullRequests'][0]
+    assert final['analysisStatus'] == 'completed'
+    assert final['headSha'] == 'b' * 40
+    assert final['maxRisk'] == .4
+
+
 def test_deep_budget_persistent_rotation_and_initial_summary_coalescing(env):
     repo = env.repository()
     for number in range(1, 46):
