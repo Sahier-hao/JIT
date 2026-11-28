@@ -14,9 +14,27 @@
 
 ## 本地启动
 
+首次运行先在 `backend` 下初始化目录库并恢复内置模型包：
+
 ```bash
 cd backend
 ./.venv/Scripts/python.exe -m jit_baseline.cli catalog-init
+```
+
+日常启动在项目根目录打开一个普通 PowerShell 或命令提示符窗口，运行：
+
+```powershell
+.\scripts\dev.cmd
+```
+
+前后端输出会同时显示在当前窗口，并分别写入 `temp/dev/backend.log` 和 `temp/dev/frontend.log`。按 `Ctrl+C` 会同时停止两个服务。脚本不会隐藏窗口，也不会结束未被它记录的端口占用进程；上次由脚本启动的服务可用 `.\scripts\dev.cmd -Stop` 清理。
+
+如果系统允许执行 PowerShell 脚本，也可以运行 `.\scripts\dev.ps1`；执行策略禁止时用 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev.ps1`。
+
+仍可分开启动：
+
+```bash
+cd backend
 ./.venv/Scripts/python.exe -m jit_baseline.cli serve --port 8000
 ```
 

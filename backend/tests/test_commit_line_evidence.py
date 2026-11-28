@@ -1,4 +1,3 @@
-import base64
 import subprocess
 
 import pytest
@@ -29,27 +28,23 @@ def _request(*, patch='@@ -1 +1 @@\n-old\n+const value = 1\n'):
                     'patch': patch,
                 }],
             }
-        if '/contents/' in path:
-            return {
-                'type': 'file',
-                'encoding': 'base64',
-                'size': 16,
-                'content': base64.b64encode(b'const value = 1\n').decode(),
-            }
         raise AssertionError(path)
 
     return request, calls
 
 
-def test_commit_line_evidence_reads_fixed_sha_and_full_content():
+def test_commit_line_evidence_reads_fixed_sha_and_patch_text():
     request, calls = _request()
     result = commit_line_evidence(_repository(), SHA, 'src/value.ts', request=request)
     assert result['status'] == 'supported'
     assert result['commitId'] == SHA and result['ref'] == SHA
     assert result['path'] == 'src/value.ts'
+    assert result['coverage']['textSource'] == 'patch'
+    assert result['coverage']['usesFullFile'] is False
     assert result['lines'][0]['line'] == 1
+    assert result['lines'][0]['text'] == 'const value = 1'
     assert any('/commits/' + SHA in path for path in calls)
-    assert any('ref=' + SHA in path for path in calls if '/contents/' in path)
+    assert not any('/contents/' in path for path in calls)
 
 
 def test_missing_patch_does_not_guess_candidates_or_content():

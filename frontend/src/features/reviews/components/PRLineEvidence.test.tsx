@@ -19,7 +19,8 @@ function result(path: string, line = 7) {
     schema: 'line-review-evidence-v1', status: 'supported', reason: null,
     sourceKind: 'pr-snapshot', resourceId: 'v1', repositoryId: SOURCE.repositoryId,
     commitId: SOURCE.headSha, ref: SOURCE.headSha, path, side: 'head', language: 'typescript',
-    coverage: { patchComplete: true, status: 'supported', addedLines: 1, eligibleLines: 1, skippedBlank: 0 },
+    coverage: { patchComplete: true, status: 'supported', addedLines: 1, eligibleLines: 1, skippedBlank: 0,
+      textSource: 'patch', usesFullFile: false },
     explanationMethod: 'linear-logodds-line-v1', explanationUnit: 'logit',
     contributionCaveat: '行级特征贡献，不是缺陷原因。',
     artifactSha256: 'd'.repeat(64), intercept: -1,
@@ -41,9 +42,9 @@ it('binds evidence to the current file and keeps a late old-file response out', 
   const view = render(<PRLineEvidence source={SOURCE} file={file('src/one.ts')}/>)
   expect(screen.getByText(/正在读取当前文件/)).toBeVisible()
   view.rerender(<PRLineEvidence source={SOURCE} file={file('src/two.ts')}/>)
-  expect(await screen.findByText(/第 11 行排序分数/)).toBeVisible()
+  expect(await screen.findByText(/第 11 行/)).toBeVisible()
   resolveFirst(response(result('src/one.ts')))
-  await waitFor(() => expect(screen.queryByText(/第 7 行排序分数/)).not.toBeInTheDocument())
+  await waitFor(() => expect(screen.queryByText(/第 7 行/)).not.toBeInTheDocument())
   expect(screen.getByText(/当前文件/)).toHaveTextContent('src/two.ts')
 })
 

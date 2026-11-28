@@ -61,7 +61,8 @@ it('is reachable from the PR code reading toolbar', async () => {
       schema: 'line-review-evidence-v1', status: 'supported', reason: null,
       sourceKind: 'pr-snapshot', resourceId: 'v1', repositoryId: 'repo',
       commitId: snapshot.headSha, ref: snapshot.headSha, path: file.path, side: 'head',
-      language: 'typescript', coverage: { patchComplete: true, status: 'supported', addedLines: 2, eligibleLines: 2, skippedBlank: 0 },
+      language: 'typescript', coverage: { patchComplete: true, status: 'supported', addedLines: 2, eligibleLines: 2, skippedBlank: 0,
+        textSource: 'patch', usesFullFile: false },
       explanationMethod: 'linear-logodds-line-v1', explanationUnit: 'logit',
       contributionCaveat: '行级特征贡献，不是缺陷原因。', artifactSha256: 'd'.repeat(64), intercept: 0,
       lines: [{
@@ -82,6 +83,6 @@ it('is reachable from the PR code reading toolbar', async () => {
   } as unknown as PRCandidateChecks
   render(<ReviewCode source={snapshot} file={file} checks={checks} view="unified"
     onViewChange={vi.fn()} onAdd={vi.fn()}/>)
-  await userEvent.click(screen.getByRole('button', { name: '行级证据' }))
-  expect(await screen.findByRole('heading', { name: '行级研究证据' })).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: '行级排序' }))
+  expect(await screen.findByRole('heading', { name: '行级研究排序' })).toBeVisible()
 })

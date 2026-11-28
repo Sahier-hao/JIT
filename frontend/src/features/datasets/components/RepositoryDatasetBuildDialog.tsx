@@ -17,6 +17,10 @@ import {
 
 const ACTIVE = ['queued', 'running']
 
+function branchSeed(value?: string) {
+  return value && value !== 'HEAD' ? value : ''
+}
+
 function readBuild(taskId: string, projectId: string | undefined, signal: AbortSignal) {
   return (projectId ? getDatasetBuild(projectId, taskId, signal) : getUserDatasetBuild(taskId, signal)).then(task => {
     if (task.taskId !== taskId) throw new Error('读取的任务与打开的链接不一致')
@@ -36,7 +40,7 @@ export function RepositoryDatasetBuildDialog({ open, onOpenChange, onCompleted, 
   onRetried?: (taskId: string) => void
 }) {
   const [repositoryUrl, setRepositoryUrl] = useState(initialRepositoryUrl ?? '')
-  const [branch, setBranch] = useState(initialBranch ?? 'main')
+  const [branch, setBranch] = useState(branchSeed(initialBranch))
   const [rangeMode, setRangeMode] = useState<DatasetBuildRangeMode>('all')
   const [since, setSince] = useState('')
   const [until, setUntil] = useState('')
@@ -52,7 +56,7 @@ export function RepositoryDatasetBuildDialog({ open, onOpenChange, onCompleted, 
     setError('')
     setTask(null)
     setRepositoryUrl(initialRepositoryUrl ?? '')
-    setBranch(initialBranch ?? 'main')
+    setBranch(branchSeed(initialBranch))
     setRangeMode('all')
     setSince('')
     setUntil('')
@@ -62,7 +66,7 @@ export function RepositoryDatasetBuildDialog({ open, onOpenChange, onCompleted, 
       if (controller.signal.aborted) return
       setTask(selected)
       setRepositoryUrl(selected.repositoryUrl)
-      setBranch(selected.branch)
+      setBranch(branchSeed(selected.branch))
       setRangeMode(selected.since || selected.until ? 'custom' : 'all')
       setSince(selected.since?.slice(0, 10) ?? '')
       setUntil(selected.until?.slice(0, 10) ?? '')
@@ -97,14 +101,17 @@ export function RepositoryDatasetBuildDialog({ open, onOpenChange, onCompleted, 
 
   async function submit() {
     const selectedWindow = buildWindowForRange(rangeMode, since, until)
-    if (initialTaskId || !repositoryUrl.trim() || !branch.trim() || busy || !rangeIsValid(rangeMode, since, until)) return
+    if (initialTaskId || !repositoryUrl.trim() || busy || !rangeIsValid(rangeMode, since, until)) return
     setBusy(true)
     setError('')
     try {
-      const inputs = { branch: branch.trim(), ...selectedWindow }
-      setTask(projectId
+      const selectedBranch = branch.trim()
+      const inputs = { ...selectedWindow, ...(selectedBranch ? { branch: selectedBranch } : {}) }
+      const created = projectId
         ? await createDatasetBuild(projectId, inputs)
-        : await createUserDatasetBuild({ repositoryUrl: repositoryUrl.trim(), ...inputs }))
+        : await createUserDatasetBuild({ repositoryUrl: repositoryUrl.trim(), ...inputs })
+      setTask(created)
+      if (!selectedBranch) setBranch(branchSeed(created.branch))
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 401) onLoginRequired()
       else setError(failure instanceof Error ? failure.message : '仓库采集启动失败')
@@ -146,7 +153,7 @@ export function RepositoryDatasetBuildDialog({ open, onOpenChange, onCompleted, 
       {!loadingTask && (!initialTaskId || task) ? <div className="grid gap-4">
         <DatasetBuildFlow task={task}/>
         <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">公开仓库</span><Input aria-label="公开仓库" value={repositoryUrl} onChange={event => setRepositoryUrl(event.target.value)} placeholder="https://github.com/owner/repository" readOnly={Boolean(projectId || initialTaskId)} disabled={busy || active}/></label>
-        <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">分支或提交</span><Input aria-label="构建分支" value={branch} onChange={event => setBranch(event.target.value)} disabled={busy || active || Boolean(initialTaskId)}/></label>
+        <label className="grid gap-1.5"><span className="text-xs font-medium text-foreground-2">分支或提交</span><Input aria-label="构建分支" value={branch} onChange={event => setBranch(event.target.value)} placeholder="留空使用仓库默认分支" disabled={busy || active || Boolean(initialTaskId)}/></label>
         <DatasetBuildRangeField mode={rangeMode} onModeChange={setRangeMode} since={since} until={until}
           onSinceChange={setSince} onUntilChange={setUntil} disabled={busy || active || Boolean(initialTaskId)}/>
         <DatasetBuildTaskSummary task={task}/>
@@ -157,7 +164,7 @@ export function RepositoryDatasetBuildDialog({ open, onOpenChange, onCompleted, 
         {error && initialTaskId && !task ? <Button type="button" onClick={() => setAttempt(value => value + 1)} disabled={loadingTask}>重试读取</Button> : null}
         {task && active ? <Button type="button" variant="destructive" onClick={() => void cancel()} disabled={busy}><LoaderCircle className={`${busy ? 'animate-spin' : 'hidden'}`}/>取消任务</Button> : null}
         {task && ['failed', 'cancelled', 'interrupted'].includes(task.status) ? <Button type="button" variant="outline" onClick={() => void retry()} disabled={busy}><LoaderCircle className={`${busy ? 'animate-spin' : 'hidden'}`}/>按原参数重试</Button> : null}
-        {task?.status === 'completed' && task.datasetVersion ? <Button type="button" onClick={() => { onCompleted(task.datasetVersion!); onOpenChange(false) }}>查看数据</Button> : !initialTaskId ? <Button type="button" disabled={!repositoryUrl.trim() || !branch.trim() || active || busy || !rangeIsValid(rangeMode, since, until)} onClick={() => void submit()}>{busy ? <LoaderCircle className="animate-spin"/> : null}开始构建</Button> : null}
+        {task?.status === 'completed' && task.datasetVersion ? <Button type="button" onClick={() => { onCompleted(task.datasetVersion!); onOpenChange(false) }}>查看数据</Button> : !initialTaskId ? <Button type="button" disabled={!repositoryUrl.trim() || active || busy || !rangeIsValid(rangeMode, since, until)} onClick={() => void submit()}>{busy ? <LoaderCircle className="animate-spin"/> : null}开始构建</Button> : null}
       </DialogFooter>
     </DialogContent>
   </Dialog>

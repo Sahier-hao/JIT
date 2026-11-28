@@ -513,10 +513,6 @@ class PullRequestReview:
         file = next((item for item in source['files'] if item['path'] == path), None)
         if file is None:
             raise BaselineError('INPUT_INVALID', '文件不属于当前固定 PR 快照')
-        try:
-            context = self.context(snapshot_id, path, 'head')
-        except BaselineError:
-            context = {'content': None, 'complete': False, 'absent': False}
         return build_line_evidence(
             source_kind='pr-snapshot',
             resource_id=snapshot_id,
@@ -529,9 +525,6 @@ class PullRequestReview:
             patch_status=file.get('status') or 'modified',
             patch_complete=bool(file.get('patchComplete')),
             expected_additions=file.get('additions'),
-            code=context.get('content'),
-            content_complete=bool(context.get('complete')),
-            content_absent=bool(context.get('absent')),
         )
 
     def context(self, snapshot_id, path, side):

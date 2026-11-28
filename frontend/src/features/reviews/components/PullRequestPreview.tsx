@@ -149,10 +149,18 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
         {selectedCommit ? <><code className="font-mono text-xs text-foreground-3">{selectedCommit.slice(0, 12)}</code>{commitRisks[selectedCommit]?.files.length
           ? <Button size="sm" variant="ghost" title="退出这次提交的范围，看整个 PR" onClick={() => setSelectedCommit('')} type="button">全部 {source.files.length} 个文件</Button>
           : <span className="text-xs text-foreground-3" title="这条提交没有文件映射，文件栏展示整个 PR">全部 {source.files.length} 个文件</span>}</> : <span className="text-xs text-foreground-3">全部 {source.files.length} 个文件</span>}
-        {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)} type="button">模型解释</Button> : null}
+        {selectedCommit && explanationRisk != null && explanationRepository ? <Button size="sm" variant="ghost" onClick={() => setExplanationOpen(true)} type="button">查看模型解释</Button> : null}
       </div>
-      <HistoricRepairEvidence evidence={selectedEvidence} repositoryUrl={source.url} limit={4}
-        snapshotCommits={source.commits.map(commit => commit.sha)}/>
+      {selectedEvidence.length ? <details className="rounded-sm border border-border-soft bg-card">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-xs text-foreground-2 [&::-webkit-details-marker]:hidden">
+          <span>后续修复证据 <b className="font-mono font-normal text-foreground-3">{selectedEvidence.length}</b></span>
+          <span className="text-[11px] text-foreground-4">展开查看修复提交与行号</span>
+        </summary>
+        <div className="border-t border-border-soft p-3">
+          <HistoricRepairEvidence evidence={selectedEvidence} repositoryUrl={source.url} limit={4}
+            snapshotCommits={source.commits.map(commit => commit.sha)}/>
+        </div>
+      </details> : null}
       <Dialog open={explanationOpen && Boolean(selectedCommit && explanationRepository && explanationRisk != null && analysis.primary)} onOpenChange={setExplanationOpen}><DialogContent aria-describedby={undefined} className="max-h-[90vh] overflow-auto" style={{width: `min(92vw, ${560}px)`, maxWidth: 'none'}}><DialogHeader><DialogTitle>{"模型解释"}</DialogTitle></DialogHeader>{selectedCommit && explanationRepository && explanationRisk != null && analysis.primary ? <RepositoryExplanation heading={false} context={{
           repositoryId: explanationRepository,
           viewSyncId: analysis.primary.sync.syncId,
@@ -162,16 +170,18 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
           runId: analysis.primary.sync.runId,
           datasetVersion: analysis.primary.sync.datasetVersion,
         }}/> : null}</DialogContent></Dialog>
-      <div className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:grid-cols-[minmax(156px,18%)_minmax(0,1fr)] xl:h-[clamp(436px,calc(100dvh-280px),790px)]">
+      <div className="grid min-w-0 overflow-hidden rounded-lg border border-border-strong bg-card lg:grid-cols-[220px_minmax(0,1fr)] xl:h-[clamp(436px,calc(100dvh-280px),790px)]">
         <aside className="flex min-h-0 flex-col border-b border-border-soft lg:border-b-0 lg:border-r" aria-label="PR 文件">
           <div className="flex items-baseline justify-between gap-2 px-3 py-2">
             <h2 className="text-sm font-semibold text-foreground">文件</h2><span className="text-xs text-foreground-3">{source.files.length}/{source.totalFiles}</span>
           </div>
-          <div className="px-3 pb-2"><ToggleGroup type="single" value={String(fileOrder)} onValueChange={nextValue => { if (nextValue) (value => setFileOrder(value as 'risk' | 'path'))(nextValue as typeof fileOrder); }} aria-label="文件排序">{([{ label: '按风险', value: 'risk' }, { label: '按路径', value: 'path' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup></div>
+          <div className="px-3 pb-2"><ToggleGroup type="single" value={String(fileOrder)} onValueChange={nextValue => { if (nextValue) (value => setFileOrder(value as 'risk' | 'path'))(nextValue as typeof fileOrder); }} aria-label="文件排序">{([{ label: '按提交分', value: 'risk' }, { label: '按路径', value: 'path' }]).map(option => <ToggleGroupItem key={String(option.value)} value={String(option.value)} disabled={'disabled' in option && option.disabled === true}>{option.label}</ToggleGroupItem>) }</ToggleGroup></div>
           {selectedCommit && !(commitRisks[selectedCommit]?.files.length) ? <p className="px-3 pb-2 text-xs text-amber-deep">{scoredCommitCount === 0 ? '此版本尚未分析，无法按提交筛选文件；显示全部文件。' : '这条提交没有文件映射（旧分析），显示全部文件。'}</p> : null}
           <div className="px-3 pb-2"><Input placeholder="筛选路径" aria-label="筛选 PR 文件路径" value={filter} onChange={event => setFilter(event.target.value)}/></div>
           <div className="max-h-44 min-h-0 flex-1 overflow-auto px-2 pb-2 lg:max-h-none" role="listbox" aria-label="PR 文件列表">
-            {files.map((item, index) => <Button variant="ghost" key={item.path} type="button" role="option" aria-selected={path === item.path} className={cn('h-auto min-w-0 flex w-full items-start justify-between gap-2 whitespace-normal rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === item.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => setPath(item.path)}>
+            {files.map((item, index) => {
+              const check = checks.fileResult(item.path)
+              return <Button variant="ghost" key={item.path} type="button" role="option" aria-selected={path === item.path} className={cn('h-auto min-w-0 flex w-full items-start justify-between gap-2 whitespace-normal rounded-sm border-0 bg-transparent px-1.5 py-1.5 text-left text-xs transition-colors', path === item.path ? 'bg-accent-soft text-foreground' : 'text-foreground-2 hover:bg-hover')} onClick={() => setPath(item.path)}>
               <span className="min-w-0 flex-1" title={item.path}>
                 <span className="block truncate font-medium">{item.path.slice(item.path.lastIndexOf('/') + 1)}</span>
                 <span className="block truncate text-[11px] text-foreground-4">{files[index - 1]?.path.slice(0, files[index - 1].path.lastIndexOf('/')) === item.path.slice(0, item.path.lastIndexOf('/')) ? '' : item.path.slice(0, item.path.lastIndexOf('/'))}</span>
@@ -180,11 +190,12 @@ export function PullRequestPreview({ source, remoteState, repositoryId, navigate
                 <span className="flex gap-1">
                   <em className="not-italic text-teal-deep">+{item.additions}</em>
                   {item.deletions ? <em className="not-italic text-rose-deep">−{item.deletions}</em> : null}
-                  {fileRisks[item.path] != null ? <em className="not-italic text-foreground-3" title="该文件涉及提交的最高模型分数；排序参考">{fileRisks[item.path].toFixed(3)}</em> : null}
                 </span>
-                <span className="text-amber-deep">{checks.fileResult(item.path).label}</span>
+                {check.label && check.label !== '未覆盖'
+                  ? <span className="text-amber-deep">{check.label}</span> : null}
               </span>
-            </Button>)}
+              </Button>
+            })}
             {!files.length ? <p className="py-4 text-center text-xs text-foreground-3">没有匹配的文件。</p> : null}
           </div>
           {!source.filesComplete ? <p className="border-t border-border-soft px-3 py-2 text-xs text-amber-deep">文件范围未完整加载，已获取 {source.files.length}/{source.totalFiles}；未覆盖不等于没有问题。</p> : null}

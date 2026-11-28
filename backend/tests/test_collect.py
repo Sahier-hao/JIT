@@ -213,6 +213,26 @@ def test_command_without_proxy_keeps_options(monkeypatch):
     assert command[:4] == ["git", "--no-pager", "-c", "core.quotepath=false"]
 
 
+def test_command_uses_openssl_tls_backend_on_windows(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setattr(module.os, "name", "nt")
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    command = module._command("C:/repo", ["version"])
+
+    assert "http.sslBackend=openssl" in command
+
+
+def test_command_keeps_default_tls_backend_off_windows(monkeypatch):
+    module = _clear_proxy_env(monkeypatch)
+    monkeypatch.setattr(module.os, "name", "posix")
+    monkeypatch.setattr(module, "windows_proxy", lambda: None)
+
+    command = module._command("C:/repo", ["version"])
+
+    assert not any(part.startswith("http.sslBackend=") for part in command)
+
+
 def test_stall_seconds_defaults_and_overrides(monkeypatch):
     module = _clear_proxy_env(monkeypatch)
     monkeypatch.delenv(module.STALL_ENV, raising=False)
@@ -504,6 +524,10 @@ def test_repository_cache_rejects_missing_branch_without_other_source(tmp_path, 
             pass
 
     assert raised.value.code == "REPOSITORY_UNAVAILABLE"
+    message = str(raised.value)
+    assert "分支 missing 不存在" in message
+    assert "可用分支" in message
+    assert "main" in message
 
 
 def test_recent_unobserved_commit_is_immature(tmp_path):

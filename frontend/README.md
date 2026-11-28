@@ -34,7 +34,9 @@ src/lib/                  请求基础设施、领域工具和测试工具
 
 ## 运行
 
-首次安装执行 `npm ci`。后端先备份并运行 `catalog-init` 升级目录库；该命令同时恢复仓库内置九模型包，再分别启动：
+首次安装执行 `npm ci`。后端先备份并运行 `catalog-init` 升级目录库；该命令同时恢复仓库内置九模型包。日常开发在项目根目录运行 `.\scripts\dev.cmd`，前后端会显示在同一个前台窗口，并写入 `temp/dev/backend.log` 与 `temp/dev/frontend.log`；按 `Ctrl+C` 同时停止。
+
+也可以分别启动：
 
 ```powershell
 cd backend

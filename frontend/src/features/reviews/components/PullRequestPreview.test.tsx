@@ -66,6 +66,7 @@ it('searches commits and explains one commit without leaving the read-only detai
   await user.clear(screen.getByLabelText('搜索 PR 提交'))
 
   await user.click(screen.getByText('handle expiry'))
+  await user.click(screen.getByText(/后续修复证据/))
   expect(await screen.findByRole('heading', { name: 'PR 内后续修正' })).toBeVisible()
   expect(screen.getByText('当前 PR')).toBeVisible()
   expect(screen.getByText('这些修复提交也在当前 PR 中，只说明 PR 内后续改过相关行；不代表合并后修复或已确认缺陷。')).toBeVisible()
@@ -73,7 +74,7 @@ it('searches commits and explains one commit without leaving the read-only detai
   expect(screen.getByRole('link', { name: SHA_B.slice(0, 12) })).toHaveAttribute(
     'href', `https://github.com/example/project/commit/${SHA_B}#diff-${'a'.repeat(32)}L9`,
   )
-  await user.click(screen.getByRole('button', { name: '模型解释' }))
+  await user.click(screen.getByRole('button', { name: '查看模型解释' }))
   expect(await screen.findByRole('dialog')).toBeVisible()
   expect(await screen.findByText(/尚未生成该方法的模型解释/)).toBeVisible()
   expect(fetch.mock.calls.some(([path]) => String(path).includes(`/commits/${SHA_A}/explanation-methods?viewSyncId=${SYNC}`))).toBe(true)
@@ -82,7 +83,7 @@ it('searches commits and explains one commit without leaving the read-only detai
   await user.click(screen.getByRole('button', { name: '提交列表' }))
   await user.click(screen.getByText('docs note'))
   expect(screen.queryByText(/尚未生成该方法的模型解释/)).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '模型解释' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '查看模型解释' })).toBeVisible()
 
   await user.click(screen.getByText('作者说明'))
   expect(screen.getByRole('heading', { name: 'Human Note' })).toBeVisible()
@@ -115,7 +116,7 @@ it('links a candidate outside the diff to fixed source and continues directly in
   render(<PullRequestPreview source={source} repositoryId={PROJECT} navigate={navigate} onStart={vi.fn()}/>)
   const user = userEvent.setup()
   await user.click(await screen.findByText('handle expiry'))
-  await user.click(screen.getByRole('button', { name: '检查当前文件' }))
+  await user.click(screen.getByRole('button', { name: '检查文件' }))
   await user.click(await screen.findByRole('button', { name: '定位目标第 3 行' }))
   const marked = await screen.findByRole('button', { name: '查看目标第 3 行的可疑项' })
   expect(marked.closest('[data-code-line="head:3"]')).not.toBeNull()

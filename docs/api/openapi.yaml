@@ -5245,7 +5245,7 @@ components:
         coverage:
           type: object
           additionalProperties: false
-          required: [patchComplete, status, addedLines, eligibleLines, skippedBlank]
+          required: [patchComplete, status, addedLines, eligibleLines, skippedBlank, textSource, usesFullFile]
           properties:
             patchComplete:
               type: boolean
@@ -5260,6 +5260,12 @@ components:
             skippedBlank:
               type: [integer, 'null']
               minimum: 0
+            textSource:
+              type: string
+              enum: [patch]
+            usesFullFile:
+              type: boolean
+              enum: [false]
         explanationMethod:
           type: string
           enum: [linear-logodds-line-v1]

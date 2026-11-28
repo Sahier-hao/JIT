@@ -9,7 +9,8 @@ from fastapi.testclient import TestClient
 from jit_baseline.api_errors import RequestError, install_errors
 from jit_baseline.line_artifact import preview_digest
 from jit_baseline.line_preview import (MAX_LINES, install_research_routes,
-                                       line_logit, load_model, metadata, score_lines)
+                                       line_logit, load_model, metadata, score_lines,
+                                       score_patch_candidates)
 
 ARTIFACT = Path(__file__).resolve().parents[1] / "research" / "line-model-v1.json"
 
@@ -73,6 +74,26 @@ def test_contributions_plus_intercept_equal_raw_logit():
             assert item["contribution"] == pytest.approx(
                 item["value"] * item["weight"], rel=1e-12, abs=1e-12,
             )
+
+
+def test_patch_candidate_scores_match_full_file_for_current_model():
+    code = "const a = 1\n\nfunction f(value: number) {\n  return value + 1\n}\n"
+    full = {row["line"]: row for row in score_lines(code, "typescript")["lines"]}
+    model = load_model(ARTIFACT)
+    patch = score_patch_candidates([
+        {"line": 1, "text": "const a = 1"},
+        {"line": 3, "text": "function f(value: number) {"},
+        {"line": 4, "text": "  return value + 1"},
+        {"line": 5, "text": "}"},
+    ], "typescript", model)
+    assert patch["count"] == 4
+    for row in patch["lines"]:
+        expected = full[row["line"]]
+        assert row["score"] == expected["score"]
+        assert row["logit"] == pytest.approx(expected["logit"], rel=1e-12, abs=1e-12)
+        assert [item["feature"] for item in row["contributions"]] == [
+            item["feature"] for item in expected["contributions"]
+        ]
 
 
 def test_language_feature_is_only_added_for_the_active_covered_language():

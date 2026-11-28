@@ -16,7 +16,11 @@ type State = {
   error?: string
 }
 
-export function PRLineEvidence({ source, file }: { source: PRSnapshot; file: PRFile }) {
+export function PRLineEvidence({ source, file, onLocate }: {
+  source: PRSnapshot
+  file: PRFile
+  onLocate?: (line: number) => void
+}) {
   const key = `${source.snapshotId}:${source.headSha}:${file.path}`
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<State>({ key: '', loading: true })
@@ -51,9 +55,9 @@ export function PRLineEvidence({ source, file }: { source: PRSnapshot; file: PRF
     <Button type="button" size="sm" variant="outline" onClick={() => setAttempt(value => value + 1)}>重新读取</Button>
   </div>
   return <div className="p-4">
-    <p className="mb-3 text-xs leading-5 text-foreground-3">
-      当前文件：<code className="font-mono text-foreground-2">{file.path}</code> · 规则候选与行级研究证据独立展示；行级结果不改变提交风险。
+    <p className="mb-3 truncate text-xs leading-5 text-foreground-3">
+      当前文件：<code className="font-mono text-foreground-2">{file.path}</code>
     </p>
-    {current.value ? <LineEvidencePanel result={current.value}/> : null}
+    {current.value ? <LineEvidencePanel result={current.value} onLocate={onLocate}/> : null}
   </div>
 }

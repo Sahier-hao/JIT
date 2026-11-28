@@ -1,0 +1,252 @@
+{
+  "benchmark": {
+    "interpretedTimeZone": "UTC",
+    "member": "input/columba.csv",
+    "project": "columba",
+    "sourceSha256": "729afb5cd01046c16694e9885a4dd15606e8bc6a5d05b066c5431b3909b04a78",
+    "sourceTimeZone": "unknown",
+    "upload": "jit.zip"
+  },
+  "citation": "Kamei et al. (2013), A Large-Scale Empirical Study of Just-in-Time Quality Assurance",
+  "cohort": {
+    "addedLinesGreaterThan": null,
+    "endEpochExclusive": 253402300800,
+    "maxChurnInclusive": null,
+    "maxFilesInclusive": null,
+    "startEpochInclusive": 0
+  },
+  "dataset": "kamei-2013-948fe603f61d-columba",
+  "fields": [
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ns",
+      "reason": "",
+      "source": "ns",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nd",
+      "reason": "",
+      "source": "nm",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "nf",
+      "reason": "",
+      "source": "nf",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "entropy",
+      "reason": "",
+      "source": "entropy",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "la",
+      "reason": "",
+      "source": "la",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "ld",
+      "reason": "",
+      "source": "ld",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "lt",
+      "reason": "",
+      "source": "lt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": true,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "fix",
+      "reason": "",
+      "source": "fix",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": true,
+      "name": "ndev",
+      "reason": "",
+      "source": "ndev",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "age",
+      "reason": "",
+      "source": "pd",
+      "status": "verified",
+      "transform": "raw"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "nuc",
+      "reason": "",
+      "source": "npt",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "exp",
+      "reason": "",
+      "source": "exp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "rexp",
+      "reason": "",
+      "source": "rexp",
+      "status": "verified",
+      "transform": "log1p"
+    },
+    {
+      "binary": false,
+      "blank": "error",
+      "inModel": true,
+      "integer": false,
+      "name": "sexp",
+      "reason": "",
+      "source": "sexp",
+      "status": "verified",
+      "transform": "log1p"
+    }
+  ],
+  "file": {
+    "bytes": 391039,
+    "name": "columba.csv",
+    "path": "data/datasets/kamei-2013-948fe603f61d-columba/kamei-2013-948fe603f61d-columba-2002-11-25_2006-07-27-729afb5c.csv",
+    "sha256": "729afb5cd01046c16694e9885a4dd15606e8bc6a5d05b066c5431b3909b04a78"
+  },
+  "label": {
+    "kind": "kamei-2013-publisher",
+    "limitations": [
+      "特征与标签沿用发布者口径。原始时间无时区，切分按 UTC 解释。"
+    ],
+    "rule": "发布者 bug 标签（1：引入缺陷；0：未被标记）"
+  },
+  "publisher": "Kamei et al. (2013)",
+  "quality": {
+    "blankLabels": 0,
+    "excluded": {
+      "missingRequiredField": 0,
+      "noAddedLines": 0,
+      "outsideWindow": 0,
+      "tooManyFiles": 0,
+      "tooMuchChurn": 0
+    },
+    "featureMissing": {
+      "age": 0,
+      "entropy": 0,
+      "exp": 0,
+      "fix": 0,
+      "la": 0,
+      "ld": 0,
+      "lt": 0,
+      "nd": 0,
+      "ndev": 0,
+      "nf": 0,
+      "ns": 0,
+      "nuc": 0,
+      "rexp": 0,
+      "sexp": 0
+    },
+    "includedRows": 4455,
+    "positiveLabels": 1361,
+    "rawRows": 4455
+  },
+  "revision": "729afb5cd01046c16694e9885a4dd15606e8bc6a5d05b066c5431b3909b04a78",
+  "samples": [
+    {
+      "id": "72fa6e1dfa7e1cfde4d7f05873a4e173a22f10fc",
+      "time": "2002-11-25T07:05:00Z"
+    },
+    {
+      "id": "00f4615162b2d5b5a279fbf5cfa3c504f86a0c4e",
+      "time": "2002-11-25T07:06:00Z"
+    },
+    {
+      "id": "1a0d6087457034f5abdbb8a57ce21414aa344b18",
+      "time": "2002-11-25T07:06:00Z"
+    },
+    {
+      "id": "3460364d31e3ff417659d2e97f5d106b104c1e89",
+      "time": "2006-07-09T05:24:00Z"
+    },
+    {
+      "id": "ef29000f371708570d6652b7aad757e16d49a008",
+      "time": "2006-07-27T21:55:00Z"
+    }
+  ],
+  "schema": 1,
+  "schemaName": "kamei14-2013-v1",
+  "timeRange": {
+    "end": "2006-07-27T21:55:00Z",
+    "endEpoch": 1154037300,
+    "start": "2002-11-25T07:05:00Z",
+    "startEpoch": 1038207900
+  },
+  "url": "upload://client/jit.zip",
+  "usage": "import",
+  "version": "kamei-2013-948fe603f61d-columba-2002-11-25_2006-07-27-729afb5c"
+}

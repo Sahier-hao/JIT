@@ -50,6 +50,71 @@ it('starts a fresh build instead of restoring an old completed task', async () =
   expect(screen.queryByRole('button', { name: '查看数据' })).not.toBeInTheDocument()
 })
 
+it('leaves the branch blank so the backend can use the repository default', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
+    tasks: [completedTask()], total: 1, limit: 20, offset: 0,
+  }))
+
+  render(<RepositoryDatasetBuildDialog
+    open
+    onOpenChange={vi.fn()}
+    onCompleted={vi.fn()}
+    onLoginRequired={vi.fn()}
+    initialRepositoryUrl="https://github.com/example/current"
+  />)
+
+  const input = await screen.findByLabelText('构建分支')
+  expect(input).toHaveValue('')
+  expect(input).toHaveAttribute('placeholder', '留空使用仓库默认分支')
+  expect(screen.getByRole('button', { name: '开始构建' })).toBeEnabled()
+})
+
+it('treats HEAD as the repository default instead of showing it as a branch', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
+    tasks: [completedTask()], total: 1, limit: 20, offset: 0,
+  }))
+
+  render(<RepositoryDatasetBuildDialog
+    open
+    onOpenChange={vi.fn()}
+    onCompleted={vi.fn()}
+    onLoginRequired={vi.fn()}
+    initialRepositoryUrl="https://github.com/example/current"
+    initialBranch="HEAD"
+  />)
+
+  expect(await screen.findByLabelText('构建分支')).toHaveValue('')
+})
+
+it('submits without a branch and shows the resolved default branch', async () => {
+  let posted: Record<string, unknown> | undefined
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (path, init) => {
+    if (String(path).endsWith('/user/dataset-builds') && init?.method === 'POST') {
+      posted = JSON.parse(String(init.body))
+      return response(task({
+        repositoryId: null, branch: 'master', status: 'completed', stage: 'completed',
+        datasetName: 'current', datasetVersion: 'current-2024-01-01_2024-12-31',
+        queuePosition: null,
+      }))
+    }
+    throw new Error(`unexpected request ${String(path)}`)
+  })
+
+  render(<RepositoryDatasetBuildDialog
+    open
+    onOpenChange={vi.fn()}
+    onCompleted={vi.fn()}
+    onLoginRequired={vi.fn()}
+    initialRepositoryUrl="https://github.com/example/current"
+  />)
+
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: '开始构建' }))
+
+  expect(posted).toEqual({ repositoryUrl: 'https://github.com/example/current' })
+  expect(await screen.findByLabelText('构建分支')).toHaveValue('master')
+})
+
 afterEach(() => vi.restoreAllMocks())
 
 function task(overrides: Record<string, unknown> = {}) {

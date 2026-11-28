@@ -67,7 +67,7 @@ def test_context_uses_saved_sha_and_path_membership(review):
         service.context(source['snapshotId'], '../private', 'head')
 
 
-def test_line_evidence_uses_only_fixed_pr_patch_and_content(review):
+def test_line_evidence_uses_only_fixed_pr_patch_and_does_not_fetch_source(review):
     service, _, files, calls, _ = review
     files[0].update(
         filename='src/token.ts',
@@ -80,9 +80,12 @@ def test_line_evidence_uses_only_fixed_pr_patch_and_content(review):
     assert result['commitId'] == source['headSha']
     assert result['path'] == 'src/token.ts' and result['side'] == 'head'
     assert result['explanationUnit'] == 'logit'
+    assert result['coverage']['textSource'] == 'patch'
+    assert result['coverage']['usesFullFile'] is False
+    assert result['lines'][0]['text'] == 'new'
     assert [row['line'] for row in result['lines']] == [1]
     assert result['lines'][0]['rank'] == 1
-    assert all('ref=' + source['headSha'] in path for path in calls if '/contents/' in path)
+    assert not any('/contents/' in path for path in calls)
 
 
 def test_pr_line_evidence_is_explicit_when_patch_or_language_is_unavailable(review):

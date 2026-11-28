@@ -52,12 +52,12 @@ function ContributionBars({ items, unit }: { items: FeatureEffect[]; unit: Expla
       {items.map((item) => {
         const width = Math.max(4, Math.round((Math.abs(item.delta) / max) * 100))
         return (
-          <li key={item.feature} className="grid grid-cols-[120px_minmax(0,1fr)_96px] items-center gap-2 text-xs">
+          <li key={item.feature} className="grid grid-cols-[minmax(88px,124px)_minmax(0,1fr)_64px] items-center gap-2 text-xs">
             <span className="truncate text-foreground-2" title={item.feature}>{featureLabel(item.feature)}</span>
-            <span className="h-4 overflow-hidden rounded-sm bg-strong" aria-hidden="true">
+            <span className="h-1.5 overflow-hidden rounded-sm bg-strong" aria-hidden="true">
               <i className={cn('block h-full', item.delta > 0 ? 'bg-rose' : 'bg-teal')} style={{ width: `${width}%` }} />
             </span>
-            <span className="text-right tabular-nums text-foreground">{item.delta > 0 ? '+' : ''}{item.delta.toFixed(6)}</span>
+            <span className="text-right font-mono tabular-nums text-foreground-3">{item.delta > 0 ? '+' : ''}{item.delta.toFixed(3)}</span>
           </li>
         )
       })}
@@ -85,9 +85,9 @@ function ExplanationTable({ result }: { result: Explanation }) {
           {result.explanation.map((item) => (
             <TableRow key={item.feature}>
               <TableHead scope="row">{featureLabel(item.feature)}</TableHead>
-              <TableCell className="tabular-nums">{item.value.toLocaleString(undefined, { maximumFractionDigits: 6 })}</TableCell>
-              <TableCell className="tabular-nums">{item.baseline.toLocaleString(undefined, { maximumFractionDigits: 6 })}</TableCell>
-              <TableCell className="tabular-nums"><b>{item.delta > 0 ? '+' : ''}{item.delta.toFixed(6)}</b></TableCell>
+              <TableCell className="tabular-nums">{item.value.toLocaleString(undefined, { maximumFractionDigits: 3 })}</TableCell>
+              <TableCell className="tabular-nums">{item.baseline.toLocaleString(undefined, { maximumFractionDigits: 3 })}</TableCell>
+              <TableCell className="tabular-nums"><b>{item.delta > 0 ? '+' : ''}{item.delta.toFixed(3)}</b></TableCell>
               <TableCell>{item.direction === 'increases' ? '推高分数' : '拉低分数'}</TableCell>
             </TableRow>
           ))}
@@ -242,21 +242,26 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
     }
   }
   const noMethods = current?.directory ? methods.length === 0 : false
+  const supported = saved.filter((item) => item.explanationStatus === 'supported')
   return (
-    <section className="repository-explanation grid gap-2" aria-label="模型解释" aria-busy={loading || current?.busy === true}>
-      {heading ? <h3>模型解释</h3> : null}
-      <p className="text-xs leading-body text-foreground-3">单特征敏感度，不是缺陷结论、因果解释或代码定位；保存的模型分数不会改变。</p>
+    <section className="repository-explanation grid gap-3" aria-label="模型解释" aria-busy={loading || current?.busy === true}>
+      {heading ? <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3>模型为什么给这个分数</h3>
+        <span className="rounded-sm bg-sunken px-2 py-0.5 text-[10px] text-foreground-3">单特征敏感度</span>
+      </div> : null}
+      <p className="text-xs leading-5 text-foreground-3">看哪些输入把分数推高或拉低；不是缺陷结论、因果解释或代码定位，保存的模型分数不会改变。</p>
       {loading ? <p role="status">正在读取模型解释…</p> : null}
       {loadError ? <div role="alert"><p>{loadError}</p><Button variant="link" size="sm" onClick={() => { setState({ key: '', loading: true, saved: [] }); setAttempt((value) => value + 1) }} type="button">重新读取解释</Button></div> : null}
       {current && !loading && !loadError ? (
         <>
-          {options.length > 0 ? (
-            <label className="grid gap-1">
-              <span className="text-xs text-foreground-3">解释方法</span>
+          {options.length > 1 ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-3">
+              <span>解释方法</span>
               <NativeSelect
                 aria-label="解释方法"
                 value={selectedMethod ?? ''}
                 disabled={current.busy}
+                className="max-w-xs"
                 onChange={(event) => setState((previous) => ({ ...previous, selectedMethod: event.target.value, error: undefined }))}
               >
                 {options.map((method) => (
@@ -265,21 +270,28 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
                   </NativeSelectOption>
                 ))}
               </NativeSelect>
-            </label>
+            </div>
+          ) : options.length === 1 ? (
+            <p className="text-xs text-foreground-4">方法：{options[0].name}（{unitLabel(options[0].unit)}）</p>
           ) : null}
           {noMethods ? (
             <p role="status">当前分析没有可生成的解释方法{current.directory?.reasonCode ? `：${current.directory.reasonCode}` : ''}，原分数保持不变。</p>
           ) : null}
           {selectedMethod && selectedSaved && selectedSaved.explanationStatus === 'supported' ? (
-            <>
-              <p>{selectedSaved.featureSummary ?? selectedSaved.explanationSummary}</p>
-              {selectedSaved.contributionTotal != null ? <p className="text-xs text-foreground-2">贡献合计：{selectedSaved.contributionTotal > 0 ? '+' : ''}{selectedSaved.contributionTotal.toFixed(6)}（log-odds）</p> : null}
+            <div className="grid gap-2.5 rounded-md border border-border-soft bg-card p-3">
+              <p className="text-sm leading-6 text-foreground">{selectedSaved.featureSummary ?? selectedSaved.explanationSummary}</p>
               <ContributionBars items={selectedSaved.explanation} unit={selectedSaved.explanationUnit} />
-              <ExplanationTable result={selectedSaved} />
-              <p className="text-xs leading-body text-foreground-3">{baselineText(selectedSaved.baselineSource)}</p>
-              {selectedSaved.stability?.status === 'unstable' ? <p className="text-xs text-amber-deep">合法扰动下主要贡献特征排序不稳定，不把首位特征表述为确定的主因。</p> : null}
-              <MethodMetadata result={selectedSaved} meta={selectedMeta} context={context} />
-            </>
+              <details className="rounded-sm border border-border-soft">
+                <summary className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground-2">完整依据（{selectedSaved.explanation.length} 项）</summary>
+                <div className="grid gap-2 border-t border-border-soft p-2.5">
+                  <ExplanationTable result={selectedSaved} />
+                  {selectedSaved.contributionTotal != null ? <p className="text-xs text-foreground-2">贡献合计：{selectedSaved.contributionTotal > 0 ? '+' : ''}{selectedSaved.contributionTotal.toFixed(3)}（log-odds）</p> : null}
+                  <p className="text-xs leading-5 text-foreground-3">{baselineText(selectedSaved.baselineSource)}</p>
+                  {selectedSaved.stability?.status === 'unstable' ? <p className="text-xs text-amber-deep">合法扰动下主要贡献特征排序不稳定，不把首位特征表述为确定的主因。</p> : null}
+                  <MethodMetadata result={selectedSaved} meta={selectedMeta} context={context} />
+                </div>
+              </details>
+            </div>
           ) : selectedMethod && selectedSaved && selectedSaved.explanationStatus === 'not-supported' ? (
             <div className="grid gap-1">
               <p role="status">{selectedSaved.explanationReason ?? '本次暂不能提供解释，原分数保持不变。'}</p>
@@ -292,7 +304,10 @@ export function RepositoryExplanation({ context, heading = true }: { context: Ex
             </div>
           ) : null}
           {current.error ? <p className="text-xs text-rose" role="alert">{current.error}</p> : null}
-          <Comparison explanations={saved} methods={methods} />
+          {supported.length > 1 ? <details className="rounded-md border border-border-soft">
+            <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-foreground-2">与其他已保存方法核对（{supported.length}）</summary>
+            <div className="border-t border-border-soft p-3"><Comparison explanations={saved} methods={methods} /></div>
+          </details> : null}
         </>
       ) : null}
     </section>

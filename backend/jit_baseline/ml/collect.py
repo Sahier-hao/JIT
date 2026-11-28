@@ -127,12 +127,24 @@ def stall_seconds():
     return value if value >= 0 else STALL_SECONDS
 
 
+def git_tls_args():
+    """Windows 上优先使用 Git 自带的 OpenSSL TLS 后端。
+
+    Schannel 在无用户证书凭据的采集进程里会报
+    `AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS`，
+    导致代理和直连都无法建立 HTTPS 连接；OpenSSL 后端不依赖该凭据。
+    """
+    if os.name == "nt":
+        return ["-c", "http.sslBackend=openssl"]
+    return []
+
+
 def _command(cwd, args, use_proxy=True):
     """git 命令：附带代理与停滞阈值，确保克隆既走代理也不会无限等待。
 
     `use_proxy=False` 生成显式直连命令（不带 `http.proxy`），供代理失败后回退使用。
     """
-    command = ["git", "--no-pager", "-c", "core.quotepath=false"]
+    command = ["git", "--no-pager", "-c", "core.quotepath=false", *git_tls_args()]
     seconds = stall_seconds()
     if seconds:
         command += ["-c", f"http.lowSpeedLimit={STALL_LIMIT}",
@@ -173,7 +185,7 @@ def repository(path):
 def head(repo, branch="HEAD"):
     result = _run(repo, ["rev-parse", branch], check=False)
     if result.returncode != 0:
-        raise BaselineError("REPOSITORY_UNAVAILABLE", f"分支或提交不可用：{branch}")
+        raise BaselineError("REPOSITORY_UNAVAILABLE", _missing_revision_message(repo, branch))
     return result.stdout.strip()
 
 
@@ -843,6 +855,29 @@ def _cache_has(target, branch):
     return result.returncode == 0
 
 
+def _cache_branch_names(target):
+    """列出缓存里的本地分支，供“分支不存在”提示说明可选分支。"""
+    result = _run(target, ["for-each-ref", "--format=%(refname:short)", "refs/heads"], check=False)
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def _missing_revision_message(target, branch, refresh_failed=False):
+    """区分“分支/提交不存在”和真正的缓存或网络故障。"""
+    if branch.upper() == "HEAD":
+        return "仓库没有任何提交或默认分支不可用"
+    names = _cache_branch_names(target)
+    label = "提交" if re.fullmatch(r"[0-9a-fA-F]{7,64}", branch) else "分支"
+    if not names:
+        return "仓库没有任何提交，无法采集"
+    shown = "、".join(names[:8])
+    if len(names) > 8:
+        shown += f" 等 {len(names)} 个"
+    source = "远端刷新失败，以下为本地缓存分支" if refresh_failed else "可用分支"
+    return f"{label} {branch} 不存在；{source}：{shown}"
+
+
 def _cache_fetch(target):
     attempts = [True, False] if proxy_url() else [False]
     for use_proxy in attempts:
@@ -871,10 +906,14 @@ def _cache_ensure(url, target, branch):
         _remove_tree(target)
         hit = False
     if target.exists():
+        refresh_failed = False
         if _cache_stale(target) or not _cache_has(target, branch):
-            _cache_fetch(target)
+            refresh_failed = not _cache_fetch(target)
         if not _cache_has(target, branch):
-            raise BaselineError("REPOSITORY_UNAVAILABLE", "仓库缓存无法读取指定提交，请稍后重试")
+            raise BaselineError(
+                "REPOSITORY_UNAVAILABLE",
+                _missing_revision_message(target, branch, refresh_failed),
+            )
         return hit
 
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -889,8 +928,9 @@ def _cache_ensure(url, target, branch):
     finally:
         _remove_tree(temporary)
     if not _cache_has(target, branch):
+        message = _missing_revision_message(target, branch)
         _remove_tree(target)
-        raise BaselineError("REPOSITORY_UNAVAILABLE", "仓库缓存无法读取指定提交，请稍后重试")
+        raise BaselineError("REPOSITORY_UNAVAILABLE", message)
     return False
 
 
